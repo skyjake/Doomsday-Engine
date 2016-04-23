@@ -25,8 +25,8 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(Asset, StateChange)
 {
-    int selectedIndex = -1;
-    int previousSelectedIndex = 0;
+    ui::DataPos selectedIndex = ui::Data::InvalidPos;
+    ui::DataPos previousSelectedIndex = 0;
 
     Instance(Public *i) : Base(i)
     {
@@ -46,7 +46,6 @@ DENG_GUI_PIMPL(HomeMenuWidget)
                              thisPublic, SLOT(mouseActivityInItem()));
 
             QObject::connect(&widget, SIGNAL(selected()), thisPublic, SLOT(itemSelectionChanged()));
-            //QObject::connect(&widget, SIGNAL(deselected()), thisPublic, SLOT(itemSelectionChanged()));
         }
     }
 
@@ -61,10 +60,12 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void scrollToSelected()
     {
-        if(selectedIndex >= 0 && self.hasRoot())
+        if(self.hasRoot())
         {
-            self.findTopmostScrollable().scrollToWidget(
-                        self.childWidgets().at(selectedIndex)->as<GuiWidget>());
+            if(auto *widget = self.itemWidget<GuiWidget>(selectedIndex))
+            {
+                self.findTopmostScrollable().scrollToWidget(*widget);
+            }
         }
     }
 };
@@ -84,7 +85,7 @@ void HomeMenuWidget::unselectAll()
 {
     if(d->selectedIndex >= 0)
     {
-        d->selectedIndex = -1;
+        d->selectedIndex = ui::Data::InvalidPos;
 
         // Unselect all items.
         for(auto *w : childWidgets())
@@ -106,73 +107,51 @@ void HomeMenuWidget::restorePreviousSelection()
     setSelectedIndex(d->previousSelectedIndex);
 }
 
-int HomeMenuWidget::selectedIndex() const
+ui::DataPos HomeMenuWidget::selectedIndex() const
 {
     return d->selectedIndex;
 }
 
-void HomeMenuWidget::setSelectedIndex(int index)
+void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
-    if(index >= 0 && index < childWidgets().size())
+    if(auto *widget = itemWidget<HomeItemWidget>(index))
     {
-        if(HomeItemWidget *widget = childWidgets().at(index)->maybeAs<HomeItemWidget>())
-        {
-            widget->acquireFocus();
+        widget->acquireFocus();
 
-            // Check if we can scroll to the selected widget right away.
-            // If not, we are observing the asset and will scroll when it is ready.
-            if(assets().isReady())
-            {
-                d->scrollToSelected();
-            }
-            else
-            {
-                assets().audienceForStateChange() += d;
-            }
+        // Check if we can scroll to the selected widget right away.
+        // If not, we are observing the asset and will scroll when it is ready.
+        if(assets().isReady())
+        {
+            d->scrollToSelected();
+        }
+        else
+        {
+            assets().audienceForStateChange() += d;
         }
     }
 }
 
 void HomeMenuWidget::mouseActivityInItem()
 {
-    auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
-
-    emit itemClicked(childWidgets().indexOf(clickedItem));
-/*
-    // Radio button behavior: other items will be deselected.
-    for(int i = 0; i < childWidgets().size(); ++i)
+    if(auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
     {
-        if(auto *item = childWidgets().at(i)->maybeAs<HomeItemWidget>())
-        {
-            item->setSelected(item == clickedItem);
-
-            if(item == clickedItem)
-            {
-                d->selectedIndex = i;
-            }
-        }
-    }*/
+        emit itemClicked(findItem(*clickedWidget));
+    }
 }
 
 void HomeMenuWidget::itemSelectionChanged()
 {
     if(auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
     {
-        int const newSelection = childWidgets().indexOf(clickedItem);
+        ui::DataPos const newSelection = findItem(*clickedItem);
         if(d->selectedIndex != newSelection)
         {
-            if(d->selectedIndex >= 0)
+            // Deselect the previous selection.
+            if(auto *item = itemWidget<HomeItemWidget>(d->selectedIndex))
             {
-                auto children = childWidgets();
-                if(d->selectedIndex < children.size())
-                {
-                    // Deselect the previous selection.
-                    if(auto *item = children.at(d->selectedIndex)->maybeAs<HomeItemWidget>())
-                    {
-                        item->setSelected(false);
-                    }
-                }
+                item->setSelected(false);
             }
+
             d->selectedIndex = d->previousSelectedIndex = newSelection;
 
             emit selectedIndexChanged(d->selectedIndex);

@@ -39,7 +39,7 @@ public:
     /**
      * Returns the selected widget's index number in the list of menu children.
      */
-    int selectedIndex() const;
+    de::ui::DataPos selectedIndex() const;
 
     /**
      * @brief setSelectedIndex
@@ -47,7 +47,7 @@ public:
      *
      * @return The highlighted widget, if one was highlighted. Otherwise, returns nullptr.
      */
-    void setSelectedIndex(int index);
+    void setSelectedIndex(de::ui::DataPos index);
 
 signals:
     void selectedIndexChanged(int index);

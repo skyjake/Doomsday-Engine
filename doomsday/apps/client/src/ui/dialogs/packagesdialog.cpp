@@ -202,7 +202,6 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
         {
-            // Update the remove button position.
             if(index >= 0)
             {
                 browser->scrollToPackage(menu->items().at(index)
@@ -297,13 +296,12 @@ DENG_GUI_PIMPL(PackagesDialog)
         {
             selectedPackages.append(packageId);
             menu->items() << new SelectedPackageItem(packageId);
+            updateNothingIndicator();
         }
         else
         {
             removePackage(packageId);
         }
-
-        updateNothingIndicator();
     }
 
     void removePackage(String const &packageId)
@@ -312,12 +310,19 @@ DENG_GUI_PIMPL(PackagesDialog)
         auto pos = menu->items().findData(packageId);
         DENG2_ASSERT(pos != ui::Data::InvalidPos);
         menu->items().remove(pos);
+        updateNothingIndicator();
     }
 
     void widgetChildAdded(Widget &child)
     {
-        menu->setSelectedIndex(menu->items().find(
-                *menu->organizer().findItemForWidget(child.as<GuiWidget>())));
+        ui::DataPos pos = menu->findItem(child.as<GuiWidget>());
+        // We use a delay here because ScrollAreaWidget does scrolling based on
+        // the current geometry of the widget and HomeItemWidget uses an animation
+        // for its height.
+        Loop::get().timer(0.3, [this, pos] ()
+        {
+            menu->setSelectedIndex(pos);
+        });
     }
 };
 
