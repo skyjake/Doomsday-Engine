@@ -123,12 +123,10 @@ void HomeMenuWidget::setSelectedIndex(int index)
             // If not, we are observing the asset and will scroll when it is ready.
             if(assets().isReady())
             {
-                qDebug() << "immediate scroll";
                 d->scrollToSelected();
             }
             else
             {
-                qDebug() << "deferred scroll";
                 assets().audienceForStateChange() += d;
             }
         }
