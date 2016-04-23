@@ -45,6 +45,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
 , public PackagesWidget::IButtonHandler
+, DENG2_OBSERVES(Widget, ChildAddition)
 {
     StringList requiredPackages; // loaded first, cannot be changed
     StringList selectedPackages;
@@ -89,13 +90,6 @@ DENG_GUI_PIMPL(PackagesDialog)
             return _file;
         }
 
-        /*void setFile(File const &packFile)
-        {
-            file = &packFile;
-            info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
-            notifyChange();
-        }*/
-
     private:
         File   const *_file = nullptr;
         Record const *_info = nullptr;
@@ -108,26 +102,24 @@ DENG_GUI_PIMPL(PackagesDialog)
     class SelectedPackageWidget : public HomeItemWidget
     {
     public:
-        SelectedPackageWidget(SelectedPackageItem const &item)
-            : _item(&item)
+        SelectedPackageWidget(SelectedPackageItem const &item,
+                              PackagesDialog &owner)
+            : _owner(owner)
+            , _item(&item)
         {
-            useColorTheme(Normal, Inverted);
+            useColorTheme(Normal, Normal);
 
-            _infoButton = new PopupButtonWidget;
-            _infoButton->setText(tr("..."));
-            _infoButton->setFont("small");
-            _infoButton->margins().setTopBottom("unit");
-            _infoButton->setPopup([this] (PopupButtonWidget const &)
+            _removeButton = new ButtonWidget;
+            _removeButton->setImage(new StyleProceduralImage("close.ringless", *_removeButton));
+            _removeButton->setOverrideImageSize(style().fonts().font("small").height().value());
+            _removeButton->margins().setTopBottom("unit");
+            _removeButton->setActionFn([this] ()
             {
-                auto *pop = new PopupMenuWidget;
-                pop->setColorTheme(Inverted);
-                pop->items() << new ui::SubwidgetItem(
-                                    tr("Info"), ui::Down,
-                                    [this] () -> PopupWidget * { return makeInfoPopup(); });
-                return pop;
-            }
-            , ui::Down);
-            addButton(_infoButton);
+                _owner.d->removePackage(packageId());
+                _owner.d->browser->updateItems();
+            });
+            addButton(_removeButton);
+            setKeepButtonsVisible(true);
 
             // Package icon.
             icon().set(Background());
@@ -137,89 +129,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             Rule const &height = style().fonts().font("default").height();
             icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
-
-            /*
-            add(_title = new LabelWidget);
-            _title->setSizePolicy(ui::Fixed, ui::Expand);
-            _title->setAlignment(ui::AlignLeft);
-            _title->setTextLineAlignment(ui::AlignLeft);
-            _title->margins().setBottom("").setLeft("unit");
-
-            add(_subtitle = new LabelWidget);
-            _subtitle->setSizePolicy(ui::Fixed, ui::Expand);
-            _subtitle->setAlignment(ui::AlignLeft);
-            _subtitle->setTextLineAlignment(ui::AlignLeft);
-            _subtitle->setFont("small");
-            _subtitle->setTextColor("accent");
-            _subtitle->margins().setTop("").setBottom("unit").setLeft("unit");
-
-            add(_loadButton = new ButtonWidget);
-            _loadButton->setSizePolicy(ui::Expand, ui::Expand);
-            _loadButton->setAction(new LoadAction(*this));
-
-            add(_infoButton = new PopupButtonWidget);
-            _infoButton->setSizePolicy(ui::Expand, ui::Fixed);
-            _infoButton->setText(_E(s)_E(B) + tr("..."));
-            _infoButton->setPopup([this] (PopupButtonWidget const &) {
-                return makeInfoPopup();
-            }, ui::Left);
-
-            createTagButtons();
-
-            AutoRef<Rule> titleWidth(rule().width() -
-                                     _loadButton->rule().width() -
-                                     _infoButton->rule().width());
-
-            _title->rule()
-                    .setInput(Rule::Width, titleWidth)
-                    .setInput(Rule::Left,  rule().left())
-                    .setInput(Rule::Top,   rule().top());
-            _subtitle->rule()
-                    .setInput(Rule::Width, titleWidth)
-                    .setInput(Rule::Left,  rule().left())
-                    .setInput(Rule::Top,   _title->rule().bottom());
-
-            _loadButton->rule()
-                    .setInput(Rule::Right, rule().right() - _infoButton->rule().width())
-                    .setMidAnchorY(rule().midY());
-            _infoButton->rule()
-                    .setInput(Rule::Right,  rule().right())
-                    .setInput(Rule::Height, _loadButton->rule().height())
-                    .setMidAnchorY(rule().midY());
-
-            rule().setInput(Rule::Width,  rule("dialog.packages.width"))
-                  .setInput(Rule::Height, _title->rule().height() +
-                            _subtitle->rule().height() + _tags.at(0)->rule().height());
-                            */
         }
-/*
-        void createTagButtons()
-        {
-            SequentialLayout layout(_subtitle->rule().left(),
-                                    _subtitle->rule().bottom(), ui::Right);
-
-            for(QString tag : Package::tags(*_item->file))
-            {
-                auto *btn = new ButtonWidget;
-                btn->setText(_E(l) + tag.toLower());
-                updateTagButtonStyle(btn, "accent");
-                btn->setSizePolicy(ui::Expand, ui::Expand);
-                btn->margins()
-                        .setTop("unit").setBottom("unit")
-                        .setLeft("gap").setRight("gap");
-                add(btn);
-
-                layout << *btn;
-                _tags.append(btn);
-            }
-        }
-
-        void updateTagButtonStyle(ButtonWidget *tag, String const &color)
-        {
-            tag->setFont("small");
-            tag->setTextColor(color);
-            tag->set(Background(Background::Rounded, style().colors().colorf(color), 6));
-        }*/
 
         void updateContents()
         {
@@ -231,33 +141,6 @@ DENG_GUI_PIMPL(PackagesDialog)
             {
                 label().setText(_item->packageId());
             }
-
-            /*
-            _subtitle->setText(packageId());
-
-            String auxColor = "accent";
-
-            if(isLoaded())
-            {
-                _loadButton->setText(tr("Unload"));
-                _loadButton->setTextColor("altaccent");
-                _loadButton->setBorderColor("altaccent");
-                _title->setFont("choice.selected");
-                auxColor = "altaccent";
-            }
-            else
-            {
-                _loadButton->setText(tr("Load"));
-                _loadButton->setTextColor("text");
-                _loadButton->setBorderColor("text");
-                _title->setFont("default");
-            }
-
-            _subtitle->setTextColor(auxColor);
-            for(ButtonWidget *b : _tags)
-            {
-                updateTagButtonStyle(b, auxColor);
-            }*/
         }
 
         String packageId() const
@@ -271,13 +154,9 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
 
     private:
+        PackagesDialog &_owner;
         SelectedPackageItem const *_item;
-        //LabelWidget *_title;
-        //LabelWidget *_subtitle;
-        //QList<ButtonWidget *> _tags;
-        PopupButtonWidget *_infoButton;
-        //ButtonWidget *_loadButton;
-        //PopupButtonWidget *_infoButton;
+        ButtonWidget *_removeButton;
     };
 
     Instance(Public *i) : Base(i)
@@ -318,19 +197,38 @@ DENG_GUI_PIMPL(PackagesDialog)
                 .setInput(Rule::Top,   gameTitle->rule().bottom())
                 .setInput(Rule::Width, rule("dialog.packages.width"));
         menu->organizer().setWidgetFactory(*this);
+        menu->audienceForChildAddition() += this;
         self.leftArea().enableIndicatorDraw(true);
+
+        QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
+        {
+            // Update the remove button position.
+            if(index >= 0)
+            {
+                browser->scrollToPackage(menu->items().at(index)
+                                         .as<SelectedPackageItem>().packageId());
+            }
+        });
 
         // Package browser.
         self.rightArea().add(browser = new PackagesWidget);
+        browser->setActionButtonAlwaysShown(true);
         browser->setPackageStatus(*this);
         browser->setButtonHandler(*this);
-        browser->setButtonLabels(tr("Add"), tr("Remove"));
+        //browser->setButtonLabels(tr("Add"), tr("Remove"));
+        browser->setButtonLabels("", "");
+        browser->setButtonImages("create", "close.ringless");
         //browser->setColorTheme(Normal, Normal, Normal, Normal);
         browser->rule()
                 .setInput(Rule::Left,  self.rightArea().contentRule().left())
                 .setInput(Rule::Top,   self.rightArea().contentRule().top())
                 .setInput(Rule::Width, menu->rule().width());
         self.rightArea().enableIndicatorDraw(true);
+    }
+
+    ~Instance()
+    {
+        menu->audienceForChildAddition() -= this;
     }
 
     void populate()
@@ -380,7 +278,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new SelectedPackageWidget(item.as<SelectedPackageItem>());
+        return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self);
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)
@@ -402,13 +300,24 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
         else
         {
-            selectedPackages.removeOne(packageId);
-            auto pos = menu->items().findData(packageId);
-            DENG2_ASSERT(pos != ui::Data::InvalidPos);
-            menu->items().remove(pos);
+            removePackage(packageId);
         }
 
         updateNothingIndicator();
+    }
+
+    void removePackage(String const &packageId)
+    {
+        selectedPackages.removeOne(packageId);
+        auto pos = menu->items().findData(packageId);
+        DENG2_ASSERT(pos != ui::Data::InvalidPos);
+        menu->items().remove(pos);
+    }
+
+    void widgetChildAdded(Widget &child)
+    {
+        menu->setSelectedIndex(menu->items().find(
+                *menu->organizer().findItemForWidget(child.as<GuiWidget>())));
     }
 };
 
@@ -426,7 +335,8 @@ PackagesDialog::PackagesDialog(String const &titleText)
     }
     heading().setImage(style().images().image("package"));
     buttons()
-            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Default | Accept, tr("OK"))
+            << new DialogButtonItem(Reject, tr("Cancel"))
             << new DialogButtonItem(Action, style().images().image("refresh"),
                                     new SignalAction(this, SLOT(refreshPackages())));
 

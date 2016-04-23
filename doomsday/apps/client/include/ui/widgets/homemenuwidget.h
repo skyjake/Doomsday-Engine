@@ -49,6 +49,10 @@ public:
      */
     void setSelectedIndex(int index);
 
+signals:
+    void selectedIndexChanged(int index);
+    void itemClicked(int index);
+
 protected slots:
     void mouseActivityInItem();
     void itemSelectionChanged();

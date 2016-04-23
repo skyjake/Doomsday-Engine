@@ -123,10 +123,12 @@ void HomeMenuWidget::setSelectedIndex(int index)
             // If not, we are observing the asset and will scroll when it is ready.
             if(assets().isReady())
             {
+                qDebug() << "immediate scroll";
                 d->scrollToSelected();
             }
             else
             {
+                qDebug() << "deferred scroll";
                 assets().audienceForStateChange() += d;
             }
         }
@@ -135,8 +137,10 @@ void HomeMenuWidget::setSelectedIndex(int index)
 
 void HomeMenuWidget::mouseActivityInItem()
 {
-    /*auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
+    auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
 
+    emit itemClicked(childWidgets().indexOf(clickedItem));
+/*
     // Radio button behavior: other items will be deselected.
     for(int i = 0; i < childWidgets().size(); ++i)
     {
@@ -161,13 +165,19 @@ void HomeMenuWidget::itemSelectionChanged()
         {
             if(d->selectedIndex >= 0)
             {
-                // Deselect the previous selection.
-                if(auto *item = childWidgets().at(d->selectedIndex)->maybeAs<HomeItemWidget>())
+                auto children = childWidgets();
+                if(d->selectedIndex < children.size())
                 {
-                    item->setSelected(false);
+                    // Deselect the previous selection.
+                    if(auto *item = children.at(d->selectedIndex)->maybeAs<HomeItemWidget>())
+                    {
+                        item->setSelected(false);
+                    }
                 }
             }
             d->selectedIndex = d->previousSelectedIndex = newSelection;
+
+            emit selectedIndexChanged(d->selectedIndex);
         }
     }
 }

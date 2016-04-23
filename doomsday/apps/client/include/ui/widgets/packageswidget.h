@@ -55,11 +55,24 @@ public:
     void setButtonHandler(IButtonHandler &buttonHandler);
     void setButtonLabels(de::String const &buttonLabel,
                          de::String const &highlightedButtonLabel);
+    void setButtonImages(de::DotPath const &styleId,
+                         de::DotPath const &highlightedStyleId);
+    void setActionButtonAlwaysShown(bool showActions);
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
                        ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);
 
     void populate();
+    void updateItems();
+
+    /**
+     * Finds the item for a package, if it is currently listed.
+     * @param packageId  Package identifier.
+     * @return  Item.
+     */
+    de::ui::Item const *itemForPackage(de::String const &packageId) const;
+
+    void scrollToPackage(de::String const &packageId) const;
 
     de::LineEditWidget &searchTermsEditor();
 

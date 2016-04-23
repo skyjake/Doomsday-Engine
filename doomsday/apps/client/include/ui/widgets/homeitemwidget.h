@@ -43,6 +43,7 @@ public:
     de::LabelWidget &label();
 
     void addButton(de::ButtonWidget *button);
+    void setKeepButtonsVisible(bool yes);
 
     virtual void setSelected(bool selected);
     bool isSelected() const;

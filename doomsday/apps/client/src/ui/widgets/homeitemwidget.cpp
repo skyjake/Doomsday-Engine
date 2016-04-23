@@ -96,6 +96,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     AnimationRule *labelRightMargin;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
+    bool keepButtonsVisible = false;
     DotPath bgColor           { "transparent" };
     DotPath selectedBgColor   { "background" };
     DotPath textColor         { "text" };
@@ -242,7 +243,7 @@ void HomeItemWidget::setSelected(bool selected)
         {
             d->showButtons(true);
         }
-        else
+        else if(!d->keepButtonsVisible)
         {
             d->showButtons(false);
         }
@@ -369,4 +370,17 @@ void HomeItemWidget::addButton(ButtonWidget *button)
     d->label->add(button);
     button->hide();
     d->updateButtonLayout();
+}
+
+void HomeItemWidget::setKeepButtonsVisible(bool yes)
+{
+    d->keepButtonsVisible = yes;
+    if(yes)
+    {
+        d->showButtons(true);
+    }
+    else if(!d->selected)
+    {
+        d->showButtons(false);
+    }
 }

@@ -87,8 +87,10 @@ DENG_GUI_PIMPL(PackagesWidget)
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
     String buttonLabels[2];
+    DotPath buttonImages[2];
     QStringList filterTerms;
     bool showHidden = false;
+    bool actionOnlyForSelection = true;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
     IButtonHandler       *buttonHandler = &loadOrUnloadPackage;
@@ -119,6 +121,11 @@ DENG_GUI_PIMPL(PackagesWidget)
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
             notifyChange();
         }
+
+        void update()
+        {
+            notifyChange();
+        }
     };
 
     /**
@@ -140,16 +147,18 @@ DENG_GUI_PIMPL(PackagesWidget)
             icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
 
-            _loadButton = new ButtonWidget;
-            _loadButton->setActionFn([this] ()
+            _actionButton = new ButtonWidget;
+            _actionButton->setOverrideImageSize(style().fonts().font("default").height().value());
+            _actionButton->setActionFn([this] ()
             {
-                _owner.d->buttonHandler->packageButtonClicked(*_loadButton, packageId());
+                _owner.d->buttonHandler->packageButtonClicked(*_actionButton, packageId());
                 updateContents();
             });
             connect(this, &HomeItemWidget::doubleClicked, [this] () {
-                _loadButton->trigger();
+                _actionButton->trigger();
             });
-            addButton(_loadButton);
+            addButton(_actionButton);
+            setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
             /*add(_title = new LabelWidget);
             _title->setSizePolicy(ui::Fixed, ui::Expand);
@@ -255,18 +264,30 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             String auxColor = "accent";
 
+            auto &imageIds = _owner.d->buttonImages;
+
             if(_owner.d->packageStatus->isPackageHighlighted(packageId()))
             {
-                _loadButton->setText(_owner.d->buttonLabels[1]);
-                _loadButton->setColorTheme(invertColorTheme(_owner.d->loadedSelectedItem));
+                _actionButton->setText(_owner.d->buttonLabels[1]);
+                if(!imageIds[1].isEmpty())
+                {
+                    _actionButton->setImage(new StyleProceduralImage(imageIds[1], *this));
+                    _actionButton->setImageColor(style().colors().colorf("text"));
+                }
+                _actionButton->setColorTheme(invertColorTheme(_owner.d->loadedSelectedItem));
                 icon().setImageColor(style().colors().colorf("accent"));
                 useColorTheme(_owner.d->loadedUnselectedItem, _owner.d->loadedSelectedItem);
                 auxColor = "background";
             }
             else
             {
-                _loadButton->setText(_owner.d->buttonLabels[0]);
-                _loadButton->setColorTheme(invertColorTheme(_owner.d->selectedItem));
+                _actionButton->setText(_owner.d->buttonLabels[0]);
+                if(!imageIds[0].isEmpty())
+                {
+                    _actionButton->setImage(new StyleProceduralImage(imageIds[0], *this));
+                    _actionButton->setImageColor(style().colors().colorf("inverted.text"));
+                }
+                _actionButton->setColorTheme(invertColorTheme(_owner.d->selectedItem));
                 icon().setImageColor(style().colors().colorf("text"));
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
             }
@@ -293,7 +314,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         //LabelWidget *_title;
         //LabelWidget *_subtitle;
         QList<ButtonWidget *> _tags;
-        ButtonWidget *_loadButton;
+        ButtonWidget *_actionButton;
         //PopupButtonWidget *_infoButton;
     };
 
@@ -377,6 +398,15 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
+    void updateItems()
+    {
+        menu->items().forAll([this] (ui::Item &item)
+        {
+            item.as<PackageItem>().update();
+            return LoopContinue;
+        });
+    }
+
     void updateFilterTerms()
     {
         /// @todo Parse quoted terms. -jk
@@ -451,19 +481,7 @@ PackagesWidget::PackagesWidget(String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
-    /*buttons()
-            << new DialogButtonItem(Default | Accept, tr("Close"))
-            << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new CallbackAction([this] ()
-            {
-                App::fileSystem().refresh();
-                d->populate();
-            }));*/
-
-    //area().setContentSize(d->menu->rule().width(), d->menu->rule().height());
-    rule().setInput(Rule::Height,
-                    d->search->rule().height() +
-                    d->menu->rule().height());
+    rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
 
     refreshPackages();
 }
@@ -486,6 +504,28 @@ void PackagesWidget::setButtonLabels(String const &buttonLabel, String const &hi
     d->populate();
 }
 
+void PackagesWidget::setButtonImages(DotPath const &styleId, DotPath const &highlightedStyleId)
+{
+    d->buttonImages[0] = styleId;
+    d->buttonImages[1] = highlightedStyleId;
+
+    d->populate();
+}
+
+void PackagesWidget::setActionButtonAlwaysShown(bool showActions)
+{
+    d->actionOnlyForSelection = !showActions;
+
+    // Update existing widgets.
+    for(auto *w : d->menu->childWidgets())
+    {
+        if(HomeItemWidget *item = w->maybeAs<HomeItemWidget>())
+        {
+            item->setKeepButtonsVisible(showActions);
+        }
+    }
+}
+
 void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
                                    ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem)
 {
@@ -500,6 +540,32 @@ void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selecte
 void PackagesWidget::populate()
 {
     d->populate();
+}
+
+void PackagesWidget::updateItems()
+{
+    d->updateItems();
+}
+
+ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
+{
+    ui::DataPos found = d->menu->items().findData(packageId);
+    if(found != ui::Data::InvalidPos)
+    {
+        return &d->menu->items().at(found);
+    }
+    return nullptr;
+}
+
+void PackagesWidget::scrollToPackage(String const &packageId) const
+{
+    if(auto const *item = itemForPackage(packageId))
+    {
+        if(auto const *widget = d->menu->organizer().itemWidget(*item))
+        {
+            d->menu->findTopmostScrollable().scrollToWidget(*widget);
+        }
+    }
 }
 
 LineEditWidget &PackagesWidget::searchTermsEditor()
