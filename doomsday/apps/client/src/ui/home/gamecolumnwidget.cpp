@@ -34,7 +34,6 @@
 #include <de/MenuWidget>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
-#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -120,7 +119,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         area.add(newProfileButton = new ButtonWidget);
         newProfileButton->audienceForStateChange() += this;
         newProfileButton->setText(tr("New Profile..."));
-        newProfileButton->setImage(new StyleProceduralImage("create", *newProfileButton));
+        newProfileButton->setStyleImage("create");
         newProfileButton->setOverrideImageSize(style().fonts().font("default").height().value() * 1.5f);
         newProfileButton->set(Background());
         newProfileButton->setSizePolicy(ui::Filled, ui::Expand);

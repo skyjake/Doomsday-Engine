@@ -18,7 +18,6 @@
 
 #include "de/ProgressWidget"
 #include "de/GuiRootWidget"
-#include "de/StyleProceduralImage"
 
 #include <de/Animation>
 #include <de/Lockable>
@@ -174,7 +173,7 @@ ProgressWidget::ProgressWidget(String const &name)
     setSizePolicy(ui::Filled, ui::Filled);
 
     // Set up the static progress ring image.
-    setImage(new StyleProceduralImage("progress.wheel", *this));
+    setStyleImage("progress.wheel");
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 

@@ -34,7 +34,6 @@
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/PopupMenuWidget>
-#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -74,9 +73,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
-        playButton->setImage(new StyleProceduralImage("play", self));
+        playButton->setStyleImage("play", "default");
         playButton->setImageColor(style().colors().colorf("inverted.text"));
-        playButton->setOverrideImageSize(style().fonts().font("default").height().value());
         playButton->setActionFn([this] () { playButtonPressed(); });
         self.addButton(playButton);
 
@@ -88,8 +86,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         saves->setItems(savedItems);
 
         deleteSaveButton = new ButtonWidget;
-        deleteSaveButton->setImage(new StyleProceduralImage("close.ring", self));
-        deleteSaveButton->setOverrideImageSize(style().fonts().font("default").height().value());
+        deleteSaveButton->setStyleImage("close.ring", "default");
         deleteSaveButton->setSizePolicy(ui::Expand, ui::Expand);
         deleteSaveButton->set(Background());
         deleteSaveButton->hide();

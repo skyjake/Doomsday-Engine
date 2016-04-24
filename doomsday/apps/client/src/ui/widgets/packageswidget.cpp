@@ -32,7 +32,6 @@
 #include <de/PopupButtonWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
-#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -141,10 +140,9 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             icon().set(Background());
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setImage(new StyleProceduralImage("package", *this));
+            icon().setStyleImage("package", "default");
             icon().margins().set("gap");
             Rule const &height = style().fonts().font("default").height();
-            icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
 
             _actionButton = new ButtonWidget;
@@ -271,7 +269,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _actionButton->setText(_owner.d->buttonLabels[1]);
                 if(!imageIds[1].isEmpty())
                 {
-                    _actionButton->setImage(new StyleProceduralImage(imageIds[1], *this));
+                    _actionButton->setStyleImage(imageIds[1]);
                     _actionButton->setImageColor(style().colors().colorf("text"));
                 }
                 _actionButton->setColorTheme(invertColorTheme(_owner.d->loadedSelectedItem));
@@ -284,7 +282,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _actionButton->setText(_owner.d->buttonLabels[0]);
                 if(!imageIds[0].isEmpty())
                 {
-                    _actionButton->setImage(new StyleProceduralImage(imageIds[0], *this));
+                    _actionButton->setStyleImage(imageIds[0]);
                     _actionButton->setImageColor(style().colors().colorf("inverted.text"));
                 }
                 _actionButton->setColorTheme(invertColorTheme(_owner.d->selectedItem));
@@ -335,8 +333,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         self.add(clearSearch = new ButtonWidget);
         clearSearch->set(Background());
-        clearSearch->setImage(new StyleProceduralImage("close.ring", self));
-        clearSearch->setOverrideImageSize(style().fonts().font("default").height().value());
+        clearSearch->setStyleImage("close.ring", "default");
         clearSearch->setSizePolicy(ui::Expand, ui::Expand);
         clearSearch->rule()
                 .setInput(Rule::Right, search->rule().right())

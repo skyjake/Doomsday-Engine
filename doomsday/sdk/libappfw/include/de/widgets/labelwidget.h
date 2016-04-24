@@ -86,6 +86,15 @@ public:
      */
     void setImage(ProceduralImage *procImage);
 
+    /**
+     * Sets the image drawn in the label using a procedural image from the UI style.
+     *
+     * @param id  Image ID.
+     * @param heightFromFont  Optionally overrides the image size using the height of
+     *             this font. Default is to use the image's own size.
+     */
+    void setStyleImage(DotPath const &id, String const &heightFromFont = "");
+
     ProceduralImage *image() const;
 
     /**

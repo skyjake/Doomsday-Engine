@@ -20,7 +20,6 @@
 #include "ui/dialogs/packagesdialog.h"
 
 #include <de/CallbackAction>
-#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -36,7 +35,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 
     void updateLabel()
     {
-        self.setImage(new StyleProceduralImage("package", self));
+        self.setStyleImage("package");
 
         if(packages.isEmpty())
         {

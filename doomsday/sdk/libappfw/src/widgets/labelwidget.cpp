@@ -19,6 +19,7 @@
 #include "de/LabelWidget"
 #include "de/TextDrawable"
 #include "de/AtlasProceduralImage"
+#include "de/StyleProceduralImage"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>
@@ -609,6 +610,15 @@ void LabelWidget::setImage(Image const &image)
 void LabelWidget::setImage(ProceduralImage *procImage)
 {
     d->image.reset(procImage);
+}
+
+void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
+{
+    setImage(new StyleProceduralImage(id, *this));
+    if(!heightFromFont.isEmpty())
+    {
+        setOverrideImageSize(style().fonts().font(heightFromFont).height().value());
+    }
 }
 
 ProceduralImage *LabelWidget::image() const

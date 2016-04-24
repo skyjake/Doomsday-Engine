@@ -23,7 +23,6 @@
 #include <de/ButtonWidget>
 #include <de/PanelWidget>
 #include <de/CallbackAction>
-#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -167,14 +166,14 @@ PanelWidget &HeaderWidget::infoPanel()
     return *d->infoPanel;
 }
 
-void HeaderWidget::setLogoImage(const DotPath &imageId)
+void HeaderWidget::setLogoImage(DotPath const &imageId)
 {
-    d->logo->setImage(new StyleProceduralImage(imageId, *d->logo));
+    d->logo->setStyleImage(imageId);
     d->logo->rule().setInput(Rule::Width, Const(toDevicePixels(160)));
     d->title->margins().setLeft("gap");
 }
 
-void HeaderWidget::setLogoBackground(const DotPath &imageId)
+void HeaderWidget::setLogoBackground(DotPath const &imageId)
 {
-    d->logoBg->setImage(new StyleProceduralImage(imageId, *d->logoBg));
+    d->logoBg->setStyleImage(imageId);
 }

@@ -36,7 +36,6 @@
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
-#include <de/StyleProceduralImage>
 #include <de/ui/SubwidgetItem>
 
 using namespace de;
@@ -110,8 +109,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             useColorTheme(Normal, Normal);
 
             _removeButton = new ButtonWidget;
-            _removeButton->setImage(new StyleProceduralImage("close.ringless", *_removeButton));
-            _removeButton->setOverrideImageSize(style().fonts().font("small").height().value());
+            _removeButton->setStyleImage("close.ringless", "small");
             _removeButton->margins().setTopBottom("unit");
             _removeButton->setActionFn([this] ()
             {
@@ -124,10 +122,9 @@ DENG_GUI_PIMPL(PackagesDialog)
             // Package icon.
             icon().set(Background());
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setImage(new StyleProceduralImage("package", *this));
+            icon().setStyleImage("package", "default");
             icon().margins().set("dialog.gap");
             Rule const &height = style().fonts().font("default").height();
-            icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
         }
 
