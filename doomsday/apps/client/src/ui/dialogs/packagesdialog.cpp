@@ -343,7 +343,10 @@ PackagesDialog::PackagesDialog(String const &titleText)
                                     new SignalAction(this, SLOT(refreshPackages())));
 
     // The individual menus will be scrolling independently.
-    leftArea() .setContentSize(d->menu->rule().width(),    d->menu->rule().height() + d->gameTitle->rule().height());
+    leftArea() .setContentSize(d->menu->rule().width(),
+                               OperatorRule::maximum(d->menu->rule().height(),
+                                                     d->nothingSelected->rule().height()) +
+                               d->gameTitle->rule().height());
     rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
 
     refreshPackages();
