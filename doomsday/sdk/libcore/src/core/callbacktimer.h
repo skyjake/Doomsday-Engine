@@ -1,8 +1,8 @@
 /**
  * @file callbacktimer.h
- * Internal helper class for making callbacks to C code.
+ * Internal helper class for making callbacks.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -22,6 +22,7 @@
 #define LIBDENG2_CALLBACKTIMER_H
 
 #include <QTimer>
+#include <functional>
 
 namespace de {
 namespace internal {
