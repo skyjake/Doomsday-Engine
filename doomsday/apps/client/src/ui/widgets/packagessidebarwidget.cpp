@@ -38,6 +38,20 @@ PackagesSidebarWidget::PackagesSidebarWidget()
     : SidebarWidget("Packages", "packages-sidebar")
     , d(new Instance(this))
 {
+    // Button for refreshing the available packages.
+    auto *refreshButton = new ButtonWidget;
+    containerWidget().add(refreshButton);
+    refreshButton->setSizePolicy(ui::Expand, ui::Fixed);
+    refreshButton->rule()
+            .setInput(Rule::Right,  closeButton().rule().left())
+            .setInput(Rule::Top,    closeButton().rule().top())
+            .setInput(Rule::Height, closeButton().rule().height());
+    refreshButton->setStyleImage("refresh", "default");
+    refreshButton->setActionFn([this] ()
+    {
+        d->browser->refreshPackages();
+    });
+
     layout() << *d->browser;
 
     updateSidebarLayout(Const(0), Const(0));

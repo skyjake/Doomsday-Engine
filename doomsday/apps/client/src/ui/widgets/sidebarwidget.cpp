@@ -141,6 +141,11 @@ ScrollAreaWidget &SidebarWidget::containerWidget()
     return *d->container;
 }
 
+ButtonWidget &SidebarWidget::closeButton()
+{
+    return *d->close;
+}
+
 void SidebarWidget::preparePanelForOpening()
 {
     PanelWidget::preparePanelForOpening();

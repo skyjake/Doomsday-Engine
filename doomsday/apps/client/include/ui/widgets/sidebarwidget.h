@@ -22,7 +22,7 @@
 #include <de/PanelWidget>
 #include <de/ScrollAreaWidget>
 #include <de/SequentialLayout>
-#include <de/LabelWidget>
+#include <de/ButtonWidget>
 
 /**
  * Editor for changing model asset parameters.
@@ -37,6 +37,7 @@ public:
     de::SequentialLayout &layout();
     de::LabelWidget &title();
     de::ScrollAreaWidget &containerWidget();
+    de::ButtonWidget &closeButton();
     de::IndirectRule &firstColumnWidth();
     de::Rule const &maximumOfAllGroupFirstColumns() const;
 
