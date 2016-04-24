@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     DialogContentStylist stylist;
     bool editing = false;
     String oldName;
+    std::unique_ptr<GameProfile> tempProfile;
 
     Instance(Public *i) : Base(i) {}
 
@@ -67,6 +68,12 @@ DENG_GUI_PIMPL(CreateProfileDialog)
 
         self.buttonWidget(Id1)->enable(valid);
     }
+
+    void gameChanged()
+    {
+        // Used with the PackagesButtonWidget.
+        tempProfile->setGame(gameChoice->selectedItem().data().toString());
+    }
 };
 
 CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
@@ -95,6 +102,8 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     // Packages selection.
     form->add(d->packages = new PackagesButtonWidget);
     d->packages->setNoneLabel(tr("None"));
+    d->tempProfile.reset(new GameProfile);
+    d->packages->setGameProfile(*d->tempProfile);
 
     GridLayout layout(form->rule().left(), form->rule().top() + rule("dialog.gap"));
     layout.setGridSize(2, 0);
@@ -115,6 +124,8 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
 
     updateLayout();
 
+    d->gameChanged();
+    connect(d->gameChoice, &ChoiceWidget::selectionChanged, [this] () { d->gameChanged(); });
     connect(&editor(), &LineEditWidget::editorContentChanged,
             [this] () { d->checkValidProfileName(); });
 }
