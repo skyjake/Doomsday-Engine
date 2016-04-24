@@ -83,7 +83,7 @@ HomeMenuWidget::HomeMenuWidget(String const &name)
 
 void HomeMenuWidget::unselectAll()
 {
-    if(d->selectedIndex >= 0)
+    if(d->selectedIndex < items().size())
     {
         d->selectedIndex = ui::Data::InvalidPos;
 

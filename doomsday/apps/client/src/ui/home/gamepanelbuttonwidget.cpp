@@ -17,6 +17,7 @@
  */
 
 #include "ui/home/gamepanelbuttonwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/savedsessionlistdata.h"
 #include "ui/dialogs/packagesdialog.h"
@@ -240,6 +241,10 @@ void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
 {
     if(savePos != ui::Data::InvalidPos)
     {
+        // Ensure that this game is selected.
+        DENG2_ASSERT(parentMenu() != nullptr);
+        parentMenu()->setSelectedIndex(parentMenu()->findItem(*this));
+
         // Position the save deletion button.
         GuiWidget &widget = d->saves->itemWidget<GuiWidget>(d->savedItems.at(savePos));
         d->deleteSaveButton->rule()
