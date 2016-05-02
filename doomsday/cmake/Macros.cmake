@@ -76,7 +76,7 @@ macro (strict_warnings target)
         )
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set_property (TARGET ${target} 
-            APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra
+            APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra -Wno-deprecated-declarations
         )
     endif ()
 endmacro (strict_warnings)
