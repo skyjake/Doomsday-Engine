@@ -110,6 +110,9 @@ if (TARGET assimp)
     add_dependencies (libgui assimp)
     if (MSVC)
         target_link_libraries (libgui PRIVATE zlibstatic)   # from assimp project
+    elseif (NOT APPLE)
+        find_package (ZLIB)
+        target_link_libraries (libgui PRIVATE ${ZLIB_LIBRARIES})
     endif ()
 endif ()
 
