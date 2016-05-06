@@ -28,6 +28,10 @@ if (NOT TARGET libassimp)
 			# version symlinks (CMake bug?). 
 			# (see: deng_install_bundle_deps() in Macros.cmake)
 			target_link_libraries (libassimp INTERFACE $<TARGET_FILE:assimp>;$<TARGET_LINKER_FILE:assimp>)
+                elseif (UNIX)
+			get_property (depLibs TARGET assimp PROPERTY LINK_LIBRARIES)
+			target_link_libraries (libassimp INTERFACE ${depLibs})
+			set (depLibs)
 		endif ()
 	else ()	
         # Try to find assimp using pkg-config.

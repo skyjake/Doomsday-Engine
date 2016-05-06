@@ -77,6 +77,14 @@ target_link_libraries (libgui
 )
 deng_target_link_qt (libgui PUBLIC Gui OpenGL)
 
+if (UNIX AND NOT APPLE)
+    # The assimp target may be linked to some system libraries that
+    # must be linked publicly (rather than privately like is the
+    # done for libassimp).
+    get_property (assimpLibs TARGET libassimp PROPERTY INTERFACE_LINK_LIBRARIES)
+    target_link_libraries (libgui PUBLIC ${assimpLibs})
+endif ()
+
 if (APPLE)
     link_framework (libgui PRIVATE Cocoa)
 endif ()
