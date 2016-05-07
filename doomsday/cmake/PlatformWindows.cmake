@@ -42,7 +42,14 @@ if (MSVC)
 
     # Disable warnings about unreferenced formal parameters (C4100).
     append_unique (CMAKE_C_FLAGS   "-w14505 -wd4100 -wd4748")
-    append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748 -Zm300")
+    append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748")
+
+    if (ARCH_BITS EQUAL 64)
+        # There are many warnings about possible loss of data due to implicit
+        # type conversions.
+        append_unique (CMAKE_C_FLAGS   "-wd4267")
+        append_unique (CMAKE_CXX_FLAGS "-wd4267")
+    endif ()
 
     # Locate Visual Studio.
     if (MSVC14)

@@ -181,7 +181,11 @@ if (MSVC)
         "set PATH=\"${qtBins}\";%PATH%
         \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
     )
-    add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${CMAKE_CFG_INTDIR})
+    set (_intDir ${CMAKE_CFG_INTDIR})
+    if (_intDir STREQUAL ".")
+        set (_intDir ${CMAKE_BUILD_TYPE})
+    endif ()
+    add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
 endif ()
 
 deng_codesign (client)

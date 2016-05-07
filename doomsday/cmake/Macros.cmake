@@ -328,7 +328,7 @@ function (deng_add_package packName)
     if (MSVC)
         # In addition to installing, copy the packages to the build products
         # directories so that executables can be run in them.
-        foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+        foreach (cfg ${DENG_CONFIGURATION_TYPES})
             file (MAKE_DIRECTORY ${DENG_VS_STAGING_DIR}/${cfg}/data)
             file (COPY ${outDir}/${outName} DESTINATION ${DENG_VS_STAGING_DIR}/${cfg}/data)
         endforeach (cfg)
@@ -734,7 +734,7 @@ macro (deng_install_library library)
 
         # In addition to installing, copy the libraries straight to the
         # build products directories so we can run executables in them.
-        foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+        foreach (cfg ${DENG_CONFIGURATION_TYPES})
             file (MAKE_DIRECTORY ${DENG_VS_STAGING_DIR}/${cfg}/bin)
             file (COPY ${library} DESTINATION ${DENG_VS_STAGING_DIR}/${cfg}/bin)
         endforeach (cfg)

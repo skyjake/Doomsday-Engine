@@ -28,7 +28,7 @@ macro (deng_add_pk3 target)
     if (MSVC)
         # In addition to installing, copy the packages to the build products
         # directories so that executables can be run in them.
-        foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+        foreach (cfg ${DENG_CONFIGURATION_TYPES})
             file (MAKE_DIRECTORY ${DENG_VS_STAGING_DIR}/${cfg}/data)
             file (COPY ${outDir}/${outName} DESTINATION ${DENG_VS_STAGING_DIR}/${cfg}/data)
         endforeach (cfg)

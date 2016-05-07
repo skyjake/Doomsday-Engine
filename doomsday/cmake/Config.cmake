@@ -28,6 +28,12 @@ set (DENG_API_DIR "${DENG_SOURCE_DIR}/apps/api")
 set (CMAKE_MODULE_PATH "${DENG_CMAKE_DIR}")
 set (DENG_SDK_DIR "" CACHE PATH "Location of the Doomsday SDK to use for compiling")
 
+if (CMAKE_CONFIGURATION_TYPES)
+    set (DENG_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES})
+else ()
+    set (DENG_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+endif ()
+
 include (Macros)
 include (Arch)
 include (BuildTypes)
