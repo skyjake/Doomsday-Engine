@@ -163,10 +163,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
             for(auto *button : buttons) button->show();
         }
 
-        TimeDelta const SPAN = .5;
+        TimeDelta const SPAN = .4;
         if(show)
         {
-            labelRightMargin->set(*buttonsWidth, SPAN);
+            labelRightMargin->set(*buttonsWidth, SPAN/2);
         }
         else
         {
