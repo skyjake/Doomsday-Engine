@@ -120,7 +120,7 @@ DENG2_PIMPL(MenuWidget)
         SubmenuAction(MenuWidget::Instance *inst, ui::SubmenuItem const &parentItem)
             : SubAction(inst, parentItem)
         {
-            _sub = new PopupMenuWidget;
+            _sub.reset(new PopupMenuWidget);
             setWidget(_sub, parentItem.openingDirection());
 
             // Use the items from the submenu.
@@ -133,7 +133,7 @@ DENG2_PIMPL(MenuWidget)
         }
 
     private:
-        PopupMenuWidget *_sub; // owned
+        SafeWidgetPtr<PopupMenuWidget> _sub; // owned
     };
 
     /**
