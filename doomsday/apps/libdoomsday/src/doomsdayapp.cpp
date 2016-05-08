@@ -62,14 +62,14 @@
 
 using namespace de;
 
-static String const PATH_LOCAL_WADS("/local/wads");
+static String const PATH_LOCAL_WADS ("/local/wads");
+static String const PATH_LOCAL_PACKS("/local/packs");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
-    //std::string ddRuntimePath;
 
     bool initialized = false;
     bool shuttingDown = false;
@@ -80,16 +80,6 @@ DENG2_PIMPL(DoomsdayApp)
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
-
-    // @c true = We are using a custom user dir specified on the command line.
-    //bool usingUserDir = false;
-
-/*#ifdef UNIX
-# ifndef MACOSX
-    /// @c true = We are using the user dir defined in the HOME environment.
-    bool usingHomeDir = false;
-# endif
-#endif*/
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -148,6 +138,24 @@ DENG2_PIMPL(DoomsdayApp)
             else
             {
                 LOG_RES_NOTE("Ignoring non-existent %s WAD folder: %s")
+                        << description << path.pretty();
+            }
+        }
+    }
+
+    void attachPacksFeed(String const &description, NativePath const &path)
+    {
+        if(!path.isEmpty())
+        {
+            if(path.exists())
+            {
+                LOG_RES_NOTE("Using %s package folder (including subfolders): %s")
+                        << description << path.pretty();
+                App::rootFolder().locate<Folder>(PATH_LOCAL_PACKS).attach(new DirectoryFeed(path));
+            }
+            else
+            {
+                LOG_RES_NOTE("Ignoring non-existent %s package folder: %s")
                         << description << path.pretty();
             }
         }
@@ -250,66 +258,44 @@ DENG2_PIMPL(DoomsdayApp)
         wads.populate();
     }
 
+    void initPackageFolders()
+    {
+        Folder &packs = App::fileSystem().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
+        packs.clear();
+        packs.clearFeeds();
+
+        auto &cmdLine = App::commandLine();
+
+#ifdef UNIX
+        // There may be an iwaddir specified in a system-level config file.
+        filename_t fn;
+        if(UnixInfo_GetConfigValue("paths", "packsdir", fn, FILENAME_T_MAXLEN))
+        {
+            attachPacksFeed("UnixInfo " _E(i) "paths.packsdir" _E(.),
+                            cmdLine.startupPath() / fn);
+        }
+#endif
+
+        // Command line paths.
+        if(auto arg = cmdLine.check("-packs", 1))
+        {
+            for(dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            {
+                if(cmdLine.isOption(p)) break;
+
+                cmdLine.makeAbsolutePath(p);
+                attachPacksFeed("command-line", cmdLine.at(p));
+            }
+        }
+
+        packs.populate();
+    }
+
 #ifdef UNIX
     void determineGlobalPaths()
     {
         // By default, make sure the working path is the home folder.
         App::setCurrentWorkPath(App::app().nativeHomePath());
-
-        /*
-# ifndef MACOSX
-        if(getenv("HOME"))
-        {
-            filename_t homePath;
-            directory_t* temp;
-            dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/%s/runtime/", getenv("HOME"),
-                        DENG2_APP->unixHomeFolderName().toLatin1().constData());
-            temp = Dir_New(homePath);
-            Dir_mkpath(Dir_Path(temp));
-            usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
-            if(usingHomeDir)
-            {
-                DD_SetRuntimePath(Dir_Path(temp));
-            }
-            Dir_Delete(temp);
-        }
-# endif
-        */
-/*
-        // The -userdir option sets the working directory.
-        if(CommandLine_CheckWith("-userdir", 1))
-        {
-            filename_t runtimePath;
-            directory_t* temp;
-
-            strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
-            Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
-            // Ensure the path is closed with a directory separator.
-            F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
-
-            temp = Dir_New(runtimePath);
-            usingUserDir = Dir_SetCurrent(Dir_Path(temp));
-            if(usingUserDir)
-            {
-                DD_SetRuntimePath(Dir_Path(temp));
-# ifndef MACOSX
-                usingHomeDir = false;
-# endif
-            }
-            Dir_Delete(temp);
-        }
-
-# ifndef MACOSX
-        if(!usingHomeDir && !usingUserDir)
-# else
-        if(!usingUserDir)
-# endif
-        {
-            // The current working directory is the runtime dir.
-            directory_t* temp = Dir_NewFromCWD();
-            DD_SetRuntimePath(Dir_Path(temp));
-            Dir_Delete(temp);
-        }*/
 
         // libcore has determined the native base path, so let FS1 know about it.
         DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
@@ -319,21 +305,6 @@ DENG2_PIMPL(DoomsdayApp)
 #ifdef WIN32
     void determineGlobalPaths()
     {
-        /*
-        // Change to a custom working directory?
-        if(CommandLine_CheckWith("-userdir", 1))
-        {
-            if(NativePath::setWorkPath(CommandLine_NextAsPath()))
-            {
-                LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
-                usingUserDir = true;
-            }
-        }
-
-        // The runtime directory is the current working directory.
-        DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
-        */
-
         // Use a custom base directory?
         if(CommandLine_CheckWith("-basedir", 1))
         {
@@ -376,6 +347,7 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
 void DoomsdayApp::initialize()
 {
     d->initWadFolders();
+    d->initPackageFolders();
 
     auto &fs = App::fileSystem();
 
