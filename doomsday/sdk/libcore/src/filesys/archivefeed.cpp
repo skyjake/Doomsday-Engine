@@ -112,7 +112,10 @@ DENG2_PIMPL(ArchiveFeed)
 
     void writeIfModified()
     {
-        if(!file || !arch) return;
+        if(!file || !arch || !file->mode().testFlag(File::Write))
+        {
+            return;
+        }
 
         // If modified, the archive is written back to the file.
         if(arch->modified())
