@@ -69,8 +69,7 @@ public:
      * @param nativePath  Path of the native directory.
      * @param mode        Feed mode.
      */
-    DirectoryFeed(NativePath const &nativePath,
-                  Flags const &mode = DefaultFlags);
+    DirectoryFeed(NativePath const &nativePath, Flags const &mode = DefaultFlags);
 
     virtual ~DirectoryFeed();
 

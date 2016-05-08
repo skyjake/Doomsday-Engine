@@ -612,13 +612,17 @@ void ZipArchive::operator >> (Writer &to) const
 static bool recognizeZipExtension(String const &ext)
 {
     return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
-            ext == ".box" || ext == ".pk3" || ext == ".zip");
+            ext == ".box"  || ext == ".pk3"  || ext == ".zip");
 }
 
 bool ZipArchive::recognize(File const &file)
 {
-    // For now, just check the name.
-    return recognizeZipExtension(file.name().fileNameExtension().lower());
+    if(file.status().type() == File::Status::FILE)
+    {
+        // For now, just check the name.
+        return recognizeZipExtension(file.name().fileNameExtension().lower());
+    }
+    return false;
 }
 
 bool ZipArchive::recognize(NativePath const &path)

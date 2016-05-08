@@ -97,7 +97,10 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     {
         // This folder does not exist yet. Let's create it.
         Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
-        subFolder = new Folder(path.fileName());
+
+        // Folders may be interpreted just like any other file; however, they must
+        // remain instances derived from Folder.
+        subFolder = &interpret(new Folder(path.fileName()))->as<Folder>();
 
         // If parent folder is writable, this will be too.
         if(parentFolder.mode() & File::Write)
