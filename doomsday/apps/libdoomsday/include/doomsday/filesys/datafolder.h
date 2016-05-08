@@ -23,12 +23,12 @@
 #include <de/Folder>
 
 /**
- * FS2 file for classic container-like data files: PK3.
+ * FS2 file for classic container-like data files: PK3, Snowberry Box.
  *
  * Containers are represented as folders so that their contents can be
  * accessed via the file tree.
  *
- * @todo WAD files should use DataFolder.
+ * @todo WAD files should use DataFolder, too.
  */
 class LIBDOOMSDAY_PUBLIC DataFolder : public de::Folder, public DataBundle
 {

@@ -19,6 +19,7 @@
 #include "doomsday/filesys/datafolder.h"
 
 #include <de/ArchiveFeed>
+#include <de/ZipArchive>
 
 using namespace de;
 
@@ -27,7 +28,21 @@ DataFolder::DataFolder(Format format, File &sourceFile)
     , DataBundle(format, sourceFile)
 {
     setSource(&sourceFile);
-    attach(new ArchiveFeed(sourceFile));
+
+    // Contents of ZIP archives appear inside the folder automatically.
+    if(ZipArchive::recognize(sourceFile))
+    {
+        attach(new ArchiveFeed(sourceFile));
+    }
+
+    /*else if(sourceFile.originFeed())
+    {
+        attach(sourceFile.originFeed()->newSubFeed(sourceFile.name()));
+    }
+    else
+    {
+        DENG2_ASSERT(!"DataFolder doesn't know how to access the source file");
+    }*/
 }
 
 DataFolder::~DataFolder()

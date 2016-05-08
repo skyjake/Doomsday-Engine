@@ -46,7 +46,7 @@ class LIBDOOMSDAY_PUBLIC DataBundle : public de::IByteArray
                                     , public de::IObject
 {
 public:
-    enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked };
+    enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked, Collection };
 
     DENG2_ERROR(FormatError);
 

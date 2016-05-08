@@ -44,7 +44,8 @@ namespace internal
         "PWAD file",
         "data lump",
         "Doomsday Engine definitions",
-        "DeHackEd patch"
+        "DeHackEd patch",
+        "collection"
     };
 }
 
@@ -96,8 +97,8 @@ DENG2_PIMPL(DataBundle)
         }
         else if(self.isNested())
         {
-            /*qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
-                     << "is nested, no package will be generated";*/
+            //qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
+            //         << "is nested, no package will be generated";
             return;
         }
 
@@ -110,6 +111,11 @@ DENG2_PIMPL(DataBundle)
         }
         else
         {
+            // Perhaps there is metadata provided:
+            // - Info entry inside root folder
+            // - .manifest companion
+
+
             // Generate an identifier based on the information we have.
             static String const formatDomains[] = {
                 "file.local",
@@ -119,10 +125,11 @@ DENG2_PIMPL(DataBundle)
                 "file.pwad",
                 "file.lump",
                 "file.defs",
-                "file.dehacked"
+                "file.dehacked",
+                "file.collection"
             };
             String cleanName = source->name().fileNameWithoutExtension().toLower();
-            cleanName.replace('.', "-"); // periods have meaning for packages
+            cleanName.replace('.', "-"); // periods have special meaning in packages IDs
             packageId = formatDomains[format] + "." + cleanName;
         }
 
@@ -353,10 +360,11 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     // Naive check using the file extension.
     static struct { String str; Format format; } formats[] = {
         { ".pk3", Pk3 },
-        { ".wad", Wad /* I/P checked later */ },
+        { ".wad", Wad /* type (I or P) checked later */ },
         { ".lmp", Lump },
         { ".ded", Ded },
-        { ".deh", Dehacked }
+        { ".deh", Dehacked },
+        { ".box", Collection },
     };
     String const ext = sourceData->name().fileNameExtension();
     for(auto const &fmt : formats)
@@ -370,6 +378,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
             switch(fmt.format)
             {
             case Pk3:
+            case Collection:
                 return new DataFolder(fmt.format, *sourceData);
 
             default:
