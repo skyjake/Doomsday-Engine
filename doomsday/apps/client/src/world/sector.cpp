@@ -40,74 +40,115 @@ using namespace world;
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
-    AABoxd aaBox;                     ///< Bounding box for the whole sector (all clusters).
-    bool needAABoxUpdate = true;
+    /**
+     * All planes of the sector (owned).
+     */
+    struct Planes : public QList<Plane *>
+    {
+        ~Planes() { qDeleteAll(*this); }
+    } planes;     
 
     ThinkerT<SoundEmitter> emitter;   ///< Head of the sound emitter chain.
 
-    typedef QList<Plane *> Planes;
-    Planes planes;                    ///< All owned planes.
-
-    typedef QList<LineSide *> Sides;
-    Sides sides;                      ///< All referencing line sides (not owned).
-
     mobj_t *mobjList = nullptr;       ///< All mobjs "in" the sector (not owned).
+    QList<LineSide *> sides;          ///< All referencing line sides (not owned).
 
     dfloat lightLevel = 0;            ///< Ambient light level.
     Vector3f lightColor;              ///< Ambient light color.
 
-    dint validCount = 0;
-
+    std::unique_ptr<AABoxd> bounds;   ///< Bounding box for the whole sector (all clusters).
 #ifdef __CLIENT__
-    coord_t roughArea = 0;            ///< Approximated. @c <0 means an update is needed.
-    bool needRoughAreaUpdate = true;
+    ddouble area = -1;                ///< Rough approximation. @c < 0= Invalid/need update.
 #endif
 
+    dint validCount = 0;
+
     Instance(Public *i) : Base(i) {}
-    ~Instance() { qDeleteAll(planes); }
-
-    void notifyLightLevelChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i) i->sectorLightLevelChanged(self);
-    }
-
-    void notifyLightColorChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i) i->sectorLightColorChanged(self);
-    }
 
     /**
-     * Update the axis-aligned bounding box in the map coordinate space to encompass the
-     * geometry of all BSP leaf clusters of the sector.
+     * Calculate the minimum bounding rectangle which encompass the BSP leaf geometry of
+     * all the clusters attributed to the given @a sector.
      */
-    void updateAABoxIfNeeded()
+    static AABoxd findBounds(Sector const &sector)
     {
-        if(!needAABoxUpdate) return;
-        needAABoxUpdate = false;
-
-        aaBox.clear();
-        bool haveGeometry = false;
-
-        self.map().forAllClustersOfSector(self, [this, &haveGeometry] (SectorCluster &cluster)
+        bool inited = false;
+        AABoxd bounds;
+        sector.map().forAllClustersOfSector(const_cast<Sector &>(sector), [&bounds, &inited] (SectorCluster &cluster)
         {
-            if(haveGeometry)
+            if(inited)
             {
-                V2d_UniteBox(aaBox.arvec2, cluster.aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, cluster.aaBox().arvec2);
             }
             else
             {
-                aaBox = cluster.aaBox();
-                haveGeometry = true;
+                bounds = cluster.aaBox();
+                inited = true;
             }
             return LoopContinue;
         });
+        return bounds;
+    }
 
-        // The XY origin of our sound emitter can now be updated as the center
-        // point of the sector geometry is now known.
-        if(haveGeometry)
+    bool hasAABox()
+    {
+        return bool(bounds);
+    }
+
+    AABoxd &aaBox()
+    {
+        // Time for an update?
+        if(!bounds)
         {
-            emitter->origin[0] = (aaBox.minX + aaBox.maxX) / 2;
-            emitter->origin[1] = (aaBox.minY + aaBox.maxY) / 2;
+            bounds.reset(new AABoxd(findBounds(self)));
+            updateEmitterOriginXY();
+        }
+        return *bounds;
+    }
+
+#ifdef __CLIENT__
+
+    /**
+     * Calculate a rough approximation of the total combined area of the geometry for all
+     * the clusters attributed to the given @a sector (map units squared).
+     */
+    static ddouble findArea(Sector const &sector)
+    {
+        ddouble area = 0;
+        sector.map().forAllClustersOfSector(const_cast<Sector &>(sector), [&area] (SectorCluster &cluster)
+        {
+            area += cluster.roughArea();
+            return LoopContinue;
+        });
+        return area;
+    }
+
+    ddouble roughArea()
+    {
+        // Time for an update?
+        if(area < 0)
+        {
+            area = findArea(self);
+        }
+        return area;
+    }
+
+    void fixMissingMaterials()
+    {
+        for(LineSide *side : sides)
+        {
+            side->fixMissingMaterials();
+            side->back().fixMissingMaterials();
+        }
+    }
+
+#endif  // __CLIENT__
+
+    void updateEmitterOriginXY()
+    {
+        if(hasAABox())
+        {
+            emitter->origin[0] = (aaBox().minX + aaBox().maxX) / 2;
+            emitter->origin[1] = (aaBox().minY + aaBox().maxY) / 2;
         }
         else
         {
@@ -115,27 +156,12 @@ DENG2_PIMPL(Sector)
         }
     }
 
-#ifdef __CLIENT__
-
-    void updateRoughAreaIfNeeded()
+    void updateEmitterOriginZ()
     {
-        if(!needRoughAreaUpdate) return;
-        needRoughAreaUpdate = false;
-
-        roughArea = 0;
-        self.map().forAllClustersOfSector(self, [&] (SectorCluster &cluster)
-        {
-            roughArea += cluster.roughArea();
-            return LoopContinue;
-        });
+        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
     }
 
-#endif  // __CLIENT__
-
-    /**
-     * To be called to update sound emitter origins for all dependent surfaces.
-     */
-    void updateDependentSurfaceSoundEmitterOrigins()
+    void updateSideEmitterOrigins()
     {
         for(LineSide *side : sides)
         {
@@ -144,70 +170,33 @@ DENG2_PIMPL(Sector)
         }
     }
 
-    // Observes Plane HeightChange.
-    void planeHeightChanged(Plane & /*plane*/)
+    void updateAllEmitterOrigins()
     {
-        // Update the z-height origin of our sound emitter right away.
-        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
-
-#ifdef __CLIENT__
-        // A plane move means we must re-apply missing material fixes.
-        for(LineSide *side : sides)
-        {
-            side->fixMissingMaterials();
-            side->back().fixMissingMaterials();
-        }
-#endif
-
-        updateDependentSurfaceSoundEmitterOrigins();
+        updateEmitterOriginZ();
+        updateSideEmitterOrigins();
     }
+
+    void planeHeightChanged(Plane &)
+    {
+        updateAllEmitterOrigins();
+#ifdef __CLIENT__
+        fixMissingMaterials();
+#endif
+    }
+
+    DENG2_PIMPL_AUDIENCE(LightLevelChange)
+    DENG2_PIMPL_AUDIENCE(LightColorChange)
 };
 
-Sector::Sector(float lightLevel, Vector3f const &lightColor)
+DENG2_AUDIENCE_METHOD(Sector, LightLevelChange)
+DENG2_AUDIENCE_METHOD(Sector, LightColorChange)
+
+Sector::Sector(dfloat lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR)
     , d(new Instance(this))
 {
     d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
-}
-
-dfloat Sector::lightLevel() const
-{
-    return d->lightLevel;
-}
-
-void Sector::setLightLevel(dfloat newLightLevel)
-{
-    newLightLevel = de::clamp(0.f, newLightLevel, 1.f);
-
-    if(!de::fequal(d->lightLevel, newLightLevel))
-    {
-        d->lightLevel = newLightLevel;
-        d->notifyLightLevelChanged();
-    }
-}
-
-Vector3f const &Sector::lightColor() const
-{
-    return d->lightColor;
-}
-
-void Sector::setLightColor(Vector3f const &newLightColor)
-{
-    Vector3f newColorClamped(de::clamp(0.f, newLightColor.x, 1.f),
-                             de::clamp(0.f, newLightColor.y, 1.f),
-                             de::clamp(0.f, newLightColor.z, 1.f));
-
-    if(d->lightColor != newColorClamped)
-    {
-        d->lightColor = newColorClamped;
-        d->notifyLightColorChanged();
-    }
-}
-
-struct mobj_s *Sector::firstMobj() const
-{
-    return d->mobjList;
 }
 
 /**
@@ -259,29 +248,12 @@ void Sector::link(mobj_t *mobj)
     *(mobj->sPrev = &d->mobjList) = mobj;
 }
 
-SoundEmitter &Sector::soundEmitter()
+struct mobj_s *Sector::firstMobj() const
 {
-    // Emitter origin depends on the axis-aligned bounding box.
-    d->updateAABoxIfNeeded();
-    return d->emitter;
+    return d->mobjList;
 }
 
-SoundEmitter const &Sector::soundEmitter() const
-{
-    return const_cast<SoundEmitter const &>(const_cast<Sector &>(*this).soundEmitter());
-}
-
-dint Sector::validCount() const
-{
-    return d->validCount;
-}
-
-void Sector::setValidCount(dint newValidCount)
-{
-    d->validCount = newValidCount;
-}
-
-bool Sector::hasSkyMaskedPlane() const
+bool Sector::hasSkyMaskPlane() const
 {
     for(Plane *plane : d->planes)
     {
@@ -311,7 +283,16 @@ Plane const &Sector::plane(dint planeIndex) const
     return const_cast<Sector *>(this)->plane(planeIndex);
 }
 
-Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
+LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
+{
+    for(Plane *plane : d->planes)
+    {
+        if(auto result = func(*plane)) return result;
+    }
+    return LoopContinue;
+}
+
+Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
 {
     auto *plane = new Plane(*this, normal, height);
 
@@ -320,8 +301,8 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 
     if(plane->isSectorFloor() || plane->isSectorCeiling())
     {
-        // We want notification of height changes so that we can update sound
-        // emitter origins of dependent surfaces.
+        // We want notification of height changes so that we can update sound emitter
+        // origins of all the dependent surfaces.
         plane->audienceForHeightChange() += d;
     }
 
@@ -330,19 +311,10 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->emitter->origin[2] = (floor().height() + ceiling().height()) / 2;
+        d->updateEmitterOriginZ();
     }
 
     return plane;
-}
-
-LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
-{
-    for(Plane *plane : d->planes)
-    {
-        if(auto result = func(*plane)) return result;
-    }
-    return LoopContinue;
 }
 
 dint Sector::sideCount() const
@@ -395,6 +367,18 @@ void Sector::buildSides()
     });
 }
 
+SoundEmitter &Sector::soundEmitter()
+{
+    // Emitter origin depends on the axis-aligned bounding box.
+    d->aaBox();
+    return d->emitter;
+}
+
+SoundEmitter const &Sector::soundEmitter() const
+{
+    return const_cast<SoundEmitter const &>(const_cast<Sector &>(*this).soundEmitter());
+}
+
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
 {
     // The sector's base is always root of the chain, so link the other after it.
@@ -437,21 +421,59 @@ void Sector::chainSoundEmitters()
     }
 }
 
+dfloat Sector::lightLevel() const
+{
+    return d->lightLevel;
+}
+
+void Sector::setLightLevel(dfloat newLightLevel)
+{
+    newLightLevel = de::clamp(0.f, newLightLevel, 1.f);
+    if(!de::fequal(d->lightLevel, newLightLevel))
+    {
+        d->lightLevel = newLightLevel;
+        DENG2_FOR_AUDIENCE2(LightLevelChange, i) i->sectorLightLevelChanged(*this);
+    }
+}
+
+Vector3f const &Sector::lightColor() const
+{
+    return d->lightColor;
+}
+
+void Sector::setLightColor(Vector3f const &newLightColor)
+{
+    auto newColorClamped = newLightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+    if(d->lightColor != newColorClamped)
+    {
+        d->lightColor = newColorClamped;
+        DENG2_FOR_AUDIENCE2(LightColorChange, i) i->sectorLightColorChanged(*this);
+    }
+}
+
+dint Sector::validCount() const
+{
+    return d->validCount;
+}
+
+void Sector::setValidCount(dint newValidCount)
+{
+    d->validCount = newValidCount;
+}
+
 #ifdef __CLIENT__
 
 AABoxd const &Sector::aaBox() const
 {
-    d->updateAABoxIfNeeded();
-    return d->aaBox;
+    return d->aaBox();
 }
 
-coord_t Sector::roughArea() const
+ddouble Sector::roughArea() const
 {
-    d->updateRoughAreaIfNeeded();
-    return d->roughArea;
+    return d->roughArea();
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 dint Sector::property(DmuArgs &args) const
 {

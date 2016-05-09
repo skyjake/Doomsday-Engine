@@ -547,7 +547,7 @@ void Line::Side::setFlags(dint flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topColor,
+void Line::Side::chooseSurfaceColors(dint sectionId, Vector3f const **topColor,
     Vector3f const **bottomColor) const
 {
     if(hasSections())
@@ -557,17 +557,17 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
         case Middle:
             if(isFlagged(SDF_BLENDMIDTOTOP))
             {
-                *topColor    = &top   ().tintColor();
-                *bottomColor = &middle().tintColor();
+                *topColor    = &top   ().color();
+                *bottomColor = &middle().color();
             }
             else if(isFlagged(SDF_BLENDMIDTOBOTTOM))
             {
-                *topColor    = &middle().tintColor();
-                *bottomColor = &bottom().tintColor();
+                *topColor    = &middle().color();
+                *bottomColor = &bottom().color();
             }
             else
             {
-                *topColor    = &middle().tintColor();
+                *topColor    = &middle().color();
                 *bottomColor = 0;
             }
             return;
@@ -575,12 +575,12 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
         case Top:
             if(isFlagged(SDF_BLENDTOPTOMID))
             {
-                *topColor    = &top   ().tintColor();
-                *bottomColor = &middle().tintColor();
+                *topColor    = &top   ().color();
+                *bottomColor = &middle().color();
             }
             else
             {
-                *topColor    = &top   ().tintColor();
+                *topColor    = &top   ().color();
                 *bottomColor = 0;
             }
             return;
@@ -588,19 +588,19 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
         case Bottom:
             if(isFlagged(SDF_BLENDBOTTOMTOMID))
             {
-                *topColor    = &middle().tintColor();
-                *bottomColor = &bottom().tintColor();
+                *topColor    = &middle().color();
+                *bottomColor = &bottom().color();
             }
             else
             {
-                *topColor    = &bottom().tintColor();
+                *topColor    = &bottom().color();
                 *bottomColor = 0;
             }
             return;
         }
     }
     /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", "Invalid section id " + String::number(sectionId));
+    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceColors", "Invalid section id " + String::number(sectionId));
 }
 
 dint Line::Side::shadowVisCount() const
@@ -649,14 +649,14 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
         {
             if(frontSec->floor().height() < backSec->floor().height())
             {
-                choice1 = backSec->floorSurface().materialPtr();
+                choice1 = backSec->floor().surface().materialPtr();
             }
         }
         else if(section == LineSide::Top)
         {
             if(frontSec->ceiling().height() > backSec->ceiling().height())
             {
-                choice1 = backSec->ceilingSurface().materialPtr();
+                choice1 = backSec->ceiling().surface().materialPtr();
             }
         }
 
@@ -707,7 +707,7 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     }
 
     // Our second choice is a material from this sector.
-    choice2 = frontSec->planeSurface(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
+    choice2 = frontSec->plane(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).surface().materialPtr();
 
     // Prefer a non-animated, non-masked material.
     if(choice1 && !materialHasAnimatedTextureLayers(*choice1) && !choice1->isSkyMasked())
@@ -783,8 +783,8 @@ void Line::Side::fixMissingMaterials()
         Sector const &backSec  = back().sector();
 
         // A potential bottom section fix?
-        if(!(frontSec.floorSurface().hasSkyMaskedMaterial() &&
-              backSec.floorSurface().hasSkyMaskedMaterial()))
+        if(!(frontSec.floor().surface().hasSkyMaskedMaterial() &&
+              backSec.floor().surface().hasSkyMaskedMaterial()))
         {
             if(frontSec.floor().height() < backSec.floor().height())
             {
@@ -797,8 +797,8 @@ void Line::Side::fixMissingMaterials()
         }
 
         // A potential top section fix?
-        if(!(frontSec.ceilingSurface().hasSkyMaskedMaterial() &&
-              backSec.ceilingSurface().hasSkyMaskedMaterial()))
+        if(!(frontSec.ceiling().surface().hasSkyMaskedMaterial() &&
+              backSec.ceiling().surface().hasSkyMaskedMaterial()))
         {
             if(backSec.ceiling().height() < frontSec.ceiling().height())
             {

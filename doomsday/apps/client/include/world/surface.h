@@ -46,8 +46,8 @@ class Surface : public world::MapElement
     DENG2_NO_ASSIGN(Surface)
 
 public:
-    /// Required material is missing. @ingroup errors
-    DENG2_ERROR(MissingMaterialError);
+    /// Notified whenever the tint color changes.
+    DENG2_DEFINE_AUDIENCE2(ColorChange,          void surfaceColorChanged(Surface &sector))
 
     /// Notified when the @em sharp material origin changes.
     DENG2_DEFINE_AUDIENCE2(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
@@ -58,9 +58,6 @@ public:
     /// Notified whenever the opacity changes.
     DENG2_DEFINE_AUDIENCE2(OpacityChange,        void surfaceOpacityChanged(Surface &surface))
 
-    /// Notified whenever the tint color changes.
-    DENG2_DEFINE_AUDIENCE2(TintColorChange,      void surfaceTintColorChanged(Surface &sector))
-
     /// Maximum speed for a smoothed material offset.
     static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
 
@@ -68,13 +65,13 @@ public:
     /**
      * Construct a new surface.
      *
-     * @param owner      Map element which will own the surface.
-     * @param opacity    Default opacity strength (@c 1= fully opaque).
-     * @param tintColor  Default tint color.
+     * @param owner    Map element which will own the surface.
+     * @param opacity  Opacity strength (@c 1= fully opaque).
+     * @param color    Tint color.
      */
     Surface(world::MapElement &owner,
-            de::dfloat opacity            = 1,
-            de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
+            de::dfloat opacity        = 1,
+            de::Vector3f const &color = de::Vector3f(1, 1, 1));
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.
@@ -110,13 +107,13 @@ public:
     Surface &setOpacity(de::dfloat newOpacity);
 
     /**
-     * Returns the tint color of the surface. The TintColorChange audience is
+     * Returns the tint color of the surface. The ColorChange audience is
      * notified whenever the tint color changes.
      *
-     * @see setTintColor()
+     * @see setColor()
      */
-    de::Vector3f const &tintColor() const;
-    Surface &setTintColor(de::Vector3f const &newTintColor);
+    de::Vector3f const &color() const;
+    Surface &setColor(de::Vector3f const &newColor);
 
     /**
      * Returns the blendmode for the surface.
@@ -298,6 +295,10 @@ public:  //- Material positioning ----------------------------------------------
 protected:
     de::dint property(de::DmuArgs &args) const;
     de::dint setProperty(de::DmuArgs const &args);
+
+public:
+    /// Required material is missing. @ingroup errors
+    DENG2_ERROR(MissingMaterialError);
 
 private:
     DENG2_PRIVATE(d)

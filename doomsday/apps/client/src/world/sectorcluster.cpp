@@ -90,8 +90,8 @@ DENG2_PIMPL(SectorCluster)
     bool needClassify = true;  ///< @c true= (Re)classification is necessary.
 
     ClusterFlags flags = 0;
-    Subspaces subspaces;
-    QScopedPointer<AABoxd> aaBox;
+    QList<ConvexSubspace *> subspaces;
+    std::unique_ptr<AABoxd> aaBox;
 
     SectorCluster *mappedVisFloor   = nullptr;
     SectorCluster *mappedVisCeiling = nullptr;
@@ -103,14 +103,14 @@ DENG2_PIMPL(SectorCluster)
         QList<HEdge *> uniqueInnerEdges; /// not owned.
         QList<HEdge *> uniqueOuterEdges; /// not owned.
     };
-    QScopedPointer<BoundaryData> boundaryData;
+    std::unique_ptr<BoundaryData> boundaryData;
 
 #ifdef __CLIENT__
     struct GeometryData
     {
         MapElement *mapElement;
         dint geomId;
-        QScopedPointer<Shard> shard;
+        std::unique_ptr<Shard> shard;
 
         GeometryData(MapElement *mapElement, dint geomId)
             : mapElement(mapElement), geomId(geomId)
@@ -143,13 +143,12 @@ DENG2_PIMPL(SectorCluster)
         observePlane(&sector().ceiling(), false);
 
 #ifdef __CLIENT__
-        sector().audienceForLightLevelChange -= this;
-        sector().audienceForLightColorChange -= this;
+        sector().audienceForLightLevelChange() -= this;
+        sector().audienceForLightColorChange() -= this;
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
-            Shards &shards = *geomGroup;
-            qDeleteAll(shards);
+            qDeleteAll(*geomGroup);
         }
 #endif
 
@@ -289,8 +288,8 @@ DENG2_PIMPL(SectorCluster)
         {
             needClassify = false;
 
-            flags &= ~(NeverMapped|PartSelfRef);
-            flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
+            flags &= ~(NeverMapped | PartSelfRef);
+            flags |= AllSelfRef | AllMissingBottom | AllMissingTop;
             for(ConvexSubspace const *subspace : subspaces)
             {
                 HEdge const *base  = subspace->poly().hedge();
@@ -306,7 +305,7 @@ DENG2_PIMPL(SectorCluster)
                     if(!hedge->twin().hasFace())
                     {
                         flags |= NeverMapped;
-                        flags &= ~(PartSelfRef|AllSelfRef|AllMissingBottom|AllMissingTop);
+                        flags &= ~(PartSelfRef | AllSelfRef | AllMissingBottom | AllMissingTop);
                         return flags;
                     }
 
@@ -328,7 +327,7 @@ DENG2_PIMPL(SectorCluster)
                     if(!frontSide.hasSections() || !backSide.hasSections())
                     {
                         flags |= NeverMapped;
-                        flags &= ~(PartSelfRef|AllSelfRef|AllMissingBottom|AllMissingTop);
+                        flags &= ~(PartSelfRef | AllSelfRef | AllMissingBottom | AllMissingTop);
                         return flags;
                     }
 
@@ -371,7 +370,7 @@ DENG2_PIMPL(SectorCluster)
 
     void initBoundaryDataIfNeeded()
     {
-        if(!boundaryData.isNull()) return;
+        if(boundaryData) return;
 
         QMap<SectorCluster *, HEdge *> extClusterMap;
         for(ConvexSubspace *subspace : subspaces)
@@ -467,7 +466,7 @@ DENG2_PIMPL(SectorCluster)
         if(classification() & NeverMapped)
             return;
 
-        if(classification() & (AllSelfRef|PartSelfRef))
+        if(classification() & (AllSelfRef | PartSelfRef))
         {
             // Should we permanently map planes to another cluster?
 
@@ -914,7 +913,7 @@ DENG2_PIMPL(SectorCluster)
         if(reverb.space > .99)
             reverb.space = .99f;
 
-        if(self.hasSkyMaskedPlane())
+        if(self.hasSkyMaskPlane())
         {
             // An "exterior" space.
             // It can still be small, in which case; reverb is diminished a bit.
@@ -966,10 +965,11 @@ DENG2_PIMPL(SectorCluster)
             sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
+
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(Subspaces const &subspaces)
+SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
     : d(new Instance(this))
 {
     d->subspaces.append(subspaces);
@@ -985,13 +985,10 @@ SectorCluster::SectorCluster(Subspaces const &subspaces)
 
 #ifdef __CLIENT__
     // Observe changes to sector lighting properties.
-    sector().audienceForLightLevelChange += d;
-    sector().audienceForLightColorChange += d;
+    sector().audienceForLightLevelChange() += d;
+    sector().audienceForLightColorChange() += d;
 #endif
 }
-
-SectorCluster::~SectorCluster()
-{}
 
 bool SectorCluster::isInternalEdge(HEdge *hedge) // static
 {
@@ -1063,13 +1060,13 @@ AABoxd const &SectorCluster::aaBox() const
     }
 
     // Time to determine bounds?
-    if(d->aaBox.isNull())
+    if(!d->aaBox)
     {
         // Unite the geometry bounding boxes of all subspaces in the cluster.
         for(ConvexSubspace const *subspace : d->subspaces)
         {
             AABoxd const &leafAABox = subspace->poly().aaBox();
-            if(!d->aaBox.isNull())
+            if(d->aaBox)
             {
                 V2d_UniteBox((*d->aaBox).arvec2, leafAABox.arvec2);
             }
@@ -1081,11 +1078,6 @@ AABoxd const &SectorCluster::aaBox() const
     }
 
     return *d->aaBox;
-}
-
-SectorCluster::Subspaces const &SectorCluster::subspaces() const
-{
-    return d->subspaces;
 }
 
 bool SectorCluster::isHeightInVoid(ddouble height) const
@@ -1165,7 +1157,7 @@ void SectorCluster::markVisPlanesDirty()
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
-bool SectorCluster::hasSkyMaskedPlane() const
+bool SectorCluster::hasSkyMaskPlane() const
 {
     for(dint i = 0; i < sector().planeCount(); ++i)
     {
@@ -1173,6 +1165,20 @@ bool SectorCluster::hasSkyMaskedPlane() const
             return true;
     }
     return false;
+}
+
+dint SectorCluster::subspaceCount() const
+{
+    return d->subspaces.count();
+}
+
+LoopResult SectorCluster::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
+{
+    for(ConvexSubspace *sub : d->subspaces)
+    {
+        if(auto result = func(*sub)) return result;
+    }
+    return LoopContinue;
 }
 
 SectorCluster::LightId SectorCluster::lightSourceId() const
@@ -1183,7 +1189,7 @@ SectorCluster::LightId SectorCluster::lightSourceId() const
 
 Vector3f SectorCluster::lightSourceColorf() const
 {
-    if(Rend_SkyLightIsEnabled() && hasSkyMaskedPlane())
+    if(Rend_SkyLightIsEnabled() && hasSkyMaskPlane())
     {
         return Rend_SkyLightColor();
     }
@@ -1253,8 +1259,8 @@ static dint countIlluminationPoints(MapElement &mapElement, dint group)
 
 Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
 {
-    Instance::GeometryData *gdata = d->geomData(mapElement, geomId, true /*create*/);
-    if(gdata->shard.isNull())
+    auto *gdata = d->geomData(mapElement, geomId, true /*create*/);
+    if(!gdata->shard)
     {
         gdata->shard.reset(new Shard(countIlluminationPoints(mapElement, geomId), this));
     }
@@ -1263,9 +1269,9 @@ Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
 
 Shard *SectorCluster::findShard(MapElement &mapElement, dint geomId)
 {
-    if(Instance::GeometryData *gdata = d->geomData(mapElement, geomId))
+    if(auto *gdata = d->geomData(mapElement, geomId))
     {
-        return gdata->shard.data();
+        return gdata->shard.get();
     }
     return nullptr;
 }
