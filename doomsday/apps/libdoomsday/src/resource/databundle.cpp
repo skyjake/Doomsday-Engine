@@ -65,7 +65,7 @@ DENG2_PIMPL(DataBundle)
         delete pkgLink.get();
     }
 
-    Folder &bundleFolder()
+    static Folder &bundleFolder()
     {
         return App::rootFolder().locate<Folder>("/sys/bundles");
     }
@@ -145,10 +145,65 @@ DENG2_PIMPL(DataBundle)
         File &dataFile = self.asFile();
 
         // Finally, make a link that represents the package.
+        if(auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
+                                                        matched.packageVersion))
+        {
+            LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
+
+            pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, chosen.path)));
+
+            // Set up package metadata in the link.
+            Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
+            metadata.set("path", dataFile.path());
+            metadata.set("version", !chosen.version.isEmpty()? chosen.version : "0.0");
+            if(lumpDir)
+            {
+                metadata.set("lumpDirCRC32", lumpDir->crc32())
+                        .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
+            }
+            metadata.set("bundleScore", matched.bestScore);
+
+            // Get the rest of the metadata.
+            if(matched)
+            {
+                metadata.set("title",  matched.bestMatch->keyValue("info:title"));
+                metadata.set("tags",   matched.bestMatch->keyValue("info:tags"));
+                metadata.set("author", matched.bestMatch->keyValue("info:author"));
+
+                String license = matched.bestMatch->keyValue("info:license");
+                if(license.isEmpty()) license = "Unknown";
+                metadata.set("license", license);
+            }
+            else
+            {
+                metadata.set("title", dataFile.name());
+                metadata.set("author", "Unknown");
+                metadata.set("license", "Unknown");
+                metadata.set("tags", "generated");
+            }
+
+            LOG_RES_VERBOSE("Generated package:\n%s") << metadata.asText();
+
+            App::fileSystem().index(*pkgLink);
+        }
+    }
+
+    struct PathAndVersion {
+        String path;
+        String version;
+        PathAndVersion(String const &path = String(), String const &version = String())
+            : path(path), version(version) {}
+        operator bool() { return !path.isEmpty(); }
+    };
+
+    PathAndVersion chooseUniqueLinkPathAndVersion(File const &dataFile,
+                                                  String const &packageId,
+                                                  Version const &packageVersion)
+    {
         for(int attempt = 0; attempt < 3; ++attempt)
         {
             String linkPath = packageId;
-            String version = (matched.packageVersion.isValid()? matched.packageVersion.asText() : "");
+            String version = (packageVersion.isValid()? packageVersion.asText() : "");
 
             // Try a few different ways to generate a locally unique version number.
             switch(attempt)
@@ -183,52 +238,16 @@ DENG2_PIMPL(DataBundle)
                 linkPath += QStringLiteral(".pack");
             }
 
-            //qDebug() << "[DataBundle] Trying" << linkPath;
-
             // Each link must have a unique name.
             if(!bundleFolder().has(linkPath))
             {
-                LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << linkPath;
-
-                pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, linkPath)));
-
-                // Set up package metadata in the link.
-                Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
-                metadata.set("path", dataFile.path());
-                metadata.set("version", !version.isEmpty()? version : "0.0");
-                if(lumpDir)
-                {
-                    metadata.set("lumpDirCRC32", lumpDir->crc32())
-                            .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
-                }
-                metadata.set("bundleScore", matched.bestScore);
-
-                // Get the rest of the metadata.
-                if(matched)
-                {
-                    metadata.set("title",  matched.bestMatch->keyValue("info:title"));
-                    metadata.set("tags",   matched.bestMatch->keyValue("info:tags"));
-                    metadata.set("author", matched.bestMatch->keyValue("info:author"));
-
-                    String license = matched.bestMatch->keyValue("info:license");
-                    if(license.isEmpty()) license = "Unknown";
-                    metadata.set("license", license);
-                }
-                else
-                {
-                    metadata.set("title", dataFile.name());
-                    metadata.set("author", "Unknown");
-                    metadata.set("license", "Unknown");
-                    metadata.set("tags", "generated");
-                }
-
-                LOG_RES_VERBOSE("Generated package:\n%s") << metadata.asText();
-
-                App::fileSystem().index(*pkgLink);
-
-                break; // No further attempts needed.
+                return PathAndVersion(linkPath, version);
             }
         }
+
+        // Unique path & version not available. This version of the package is probably
+        // already available.
+        return PathAndVersion();
     }
 };
 
