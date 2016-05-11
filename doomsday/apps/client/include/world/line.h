@@ -329,8 +329,8 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        SoundEmitter       &soundEmitter(int sectionId);
-        SoundEmitter const &soundEmitter(int sectionId) const;
+        SoundEmitter       &soundEmitter(de::dint sectionId);
+        SoundEmitter const &soundEmitter(de::dint sectionId) const;
 
         /**
          * Returns the middle sound emitter of the side.
@@ -355,37 +355,6 @@ public:
          */
         inline SoundEmitter       &topSoundEmitter()       { return soundEmitter(Top); }
         inline SoundEmitter const &topSoundEmitter() const { return soundEmitter(Top); }
-
-        /**
-         * Update the sound emitter origin of the specified surface section. This
-         * point is determined according to the center point of the owning line and
-         * the current @em sharp heights of the sector on "this" side of the line.
-         */
-        void updateSoundEmitterOrigin(de::dint sectionId);
-
-        /**
-         * Update the @em middle sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
-        inline void updateMiddleSoundEmitterOrigin() { updateSoundEmitterOrigin(Middle); }
-
-        /**
-         * Update the @em bottom sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
-        inline void updateBottomSoundEmitterOrigin() { updateSoundEmitterOrigin(Bottom); }
-
-        /**
-         * Update the @em top sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
-        inline void updateTopSoundEmitterOrigin()    { updateSoundEmitterOrigin(Top); }
-
-        /**
-         * Update ALL sound emitter origins for the side.
-         * @see updateSoundEmitterOrigin()
-         */
-        void updateAllSoundEmitterOrigins();
 
         /**
          * Returns @c true iff a Sector is attributed to the side.

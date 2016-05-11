@@ -233,6 +233,8 @@ public:
      */
     void chainSoundEmitters();
 
+    void updateSoundEmitterOrigins();
+
     /**
      * Returns the @em validCount of the sector. Used by some legacy iteration algorithms
      * for marking sectors as processed/visited.

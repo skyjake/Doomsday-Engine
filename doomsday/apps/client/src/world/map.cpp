@@ -3967,7 +3967,6 @@ bool Map::endEditing()
     for(dint i = 0; i < 2; ++i)
     {
         line->side(i).updateSurfaceNormals();
-        line->side(i).updateAllSoundEmitterOrigins();
     }
 
     // Finish sectors.
@@ -3976,6 +3975,7 @@ bool Map::endEditing()
         d->buildClusters(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
+        sector->updateSoundEmitterOrigins();
     }
 
     // Finish planes.
