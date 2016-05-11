@@ -72,6 +72,13 @@ public:
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
     /**
+     * Returns the axis-aligned bounding box which encompases the geometry of all BSP leafs
+     * attributed to the sector (map units squared). Note that if no BSP leafs reference
+     * the sector the bounding box will be invalid (has negative dimensions).
+     */
+    AABoxd const &aaBox() const;
+
+    /**
      * Returns the ambient light level in the sector. The LightLevelChange audience is
      * notified whenever the light level changes.
      *
@@ -225,19 +232,6 @@ public:
      * @see addPlane(), buildSides()
      */
     void chainSoundEmitters();
-
-#ifdef __CLIENT__
-
-    /**
-     * Returns the axis-aligned bounding box which encompases the geometry of all BSP leafs
-     * attributed to the sector (map units squared). Note that if no BSP leafs reference
-     * the sector the bounding box will be invalid (has negative dimensions).
-     *
-     * @todo Refactor away (still used by light decoration and particle systems).
-     */
-    AABoxd const &aaBox() const;
-
-#endif  // __CLIENT__
 
     /**
      * Returns the @em validCount of the sector. Used by some legacy iteration algorithms

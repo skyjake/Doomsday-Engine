@@ -86,49 +86,19 @@ DENG2_PIMPL(Sector)
         return bounds;
     }
 
-    bool hasAABox()
-    {
-        return bool(bounds);
-    }
-
     AABoxd &aaBox()
     {
         // Time for an update?
         if(!bounds)
         {
             bounds.reset(new AABoxd(findBounds(self)));
-            updateEmitterOriginXY();
+            emitter->origin[0] = (aaBox().minX + aaBox().maxX) / 2;
+            emitter->origin[1] = (aaBox().minY + aaBox().maxY) / 2;
         }
         return *bounds;
     }
 
-#ifdef __CLIENT__
-
-    void fixMissingMaterials()
-    {
-        for(LineSide *side : sides)
-        {
-            side->fixMissingMaterials();
-            side->back().fixMissingMaterials();
-        }
-    }
-
-#endif  // __CLIENT__
-
-    void updateEmitterOriginXY()
-    {
-        if(hasAABox())
-        {
-            emitter->origin[0] = (aaBox().minX + aaBox().maxX) / 2;
-            emitter->origin[1] = (aaBox().minY + aaBox().maxY) / 2;
-        }
-        else
-        {
-            emitter->origin[0] = emitter->origin[1] = 0;
-        }
-    }
-
-    void updateEmitterOriginZ()
+    void updateEmitterOrigin()
     {
         emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
     }
@@ -144,9 +114,22 @@ DENG2_PIMPL(Sector)
 
     void updateAllEmitterOrigins()
     {
-        updateEmitterOriginZ();
+        updateEmitterOrigin();
         updateSideEmitterOrigins();
     }
+
+#ifdef __CLIENT__
+
+    void fixMissingMaterials()
+    {
+        for(LineSide *side : sides)
+        {
+            side->fixMissingMaterials();
+            side->back().fixMissingMaterials();
+        }
+    }
+
+#endif  // __CLIENT__
 
     void planeHeightChanged(Plane &)
     {
@@ -283,7 +266,7 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->updateEmitterOriginZ();
+        d->updateEmitterOrigin();
     }
 
     return plane;
