@@ -92,8 +92,8 @@ DENG2_PIMPL(Sector)
         if(!bounds)
         {
             bounds.reset(new AABoxd(findBounds(self)));
-            emitter->origin[0] = (aaBox().minX + aaBox().maxX) / 2;
-            emitter->origin[1] = (aaBox().minY + aaBox().maxY) / 2;
+            emitter->origin[0] = (bounds->minX + bounds->maxX) / 2;
+            emitter->origin[1] = (bounds->minY + bounds->maxY) / 2;
         }
         return *bounds;
     }
