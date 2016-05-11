@@ -57,9 +57,6 @@ DENG2_PIMPL(Sector)
     Vector3f lightColor;              ///< Ambient light color.
 
     std::unique_ptr<AABoxd> bounds;   ///< Bounding box for the whole sector (all clusters).
-#ifdef __CLIENT__
-    ddouble area = -1;                ///< Rough approximation. @c < 0= Invalid/need update.
-#endif
 
     dint validCount = 0;
 
@@ -106,31 +103,6 @@ DENG2_PIMPL(Sector)
     }
 
 #ifdef __CLIENT__
-
-    /**
-     * Calculate a rough approximation of the total combined area of the geometry for all
-     * the clusters attributed to the given @a sector (map units squared).
-     */
-    static ddouble findArea(Sector const &sector)
-    {
-        ddouble area = 0;
-        sector.map().forAllClustersOfSector(const_cast<Sector &>(sector), [&area] (SectorCluster &cluster)
-        {
-            area += cluster.roughArea();
-            return LoopContinue;
-        });
-        return area;
-    }
-
-    ddouble roughArea()
-    {
-        // Time for an update?
-        if(area < 0)
-        {
-            area = findArea(self);
-        }
-        return area;
-    }
 
     void fixMissingMaterials()
     {
@@ -466,11 +438,6 @@ void Sector::setValidCount(dint newValidCount)
 AABoxd const &Sector::aaBox() const
 {
     return d->aaBox();
-}
-
-ddouble Sector::roughArea() const
-{
-    return d->roughArea();
 }
 
 #endif  // __CLIENT__

@@ -237,14 +237,6 @@ public:
      */
     AABoxd const &aaBox() const;
 
-    /**
-     * Returns a rough approximation of the total combined area of the geometry for all
-     * BSP leafs attributed to the sector (map units squared).
-     *
-     * @todo Refactor away (still used by the particle system).
-     */
-    de::ddouble roughArea() const;
-
 #endif  // __CLIENT__
 
     /**

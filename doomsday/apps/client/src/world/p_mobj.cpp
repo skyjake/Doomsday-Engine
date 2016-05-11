@@ -317,6 +317,19 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
     return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
+#ifdef __CLIENT__
+static dfloat densitySpawnRateMultiplierAt(Map const &map, Vector2d const &point)
+{
+    BspLeaf const &bspLeafAtPoint = map.bspLeafAt(point);
+    if(!bspLeafAtPoint.hasSubspace()) return 1;
+
+    ConvexSubspace const &subspaceAtPoint = bspLeafAtPoint.subspace();
+    if(!subspaceAtPoint.hasCluster()) return 1;
+
+    return subspaceAtPoint.cluster().roughArea() / (128 * 128);
+}
+#endif
+
 void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
 {
 #ifdef __CLIENT__
@@ -336,7 +349,7 @@ void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
     // Size of source sector might determine count.
     if(def->flags & Generator::ScaledRate)
     {
-        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sectorPtr()->roughArea() / (128 * 128);
+        gen->spawnRateMultiplier = densitySpawnRateMultiplierAt(Mobj_Map(*source), Mobj_Origin(*source));
     }
     else
     {

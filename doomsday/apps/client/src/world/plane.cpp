@@ -28,6 +28,7 @@
 #include "world/clientserverworld.h"  // ddMapSetup
 #include "Surface"
 #include "Sector"
+#include "SectorCluster"
 
 #ifdef __CLIENT__
 #  include "MaterialAnimator"
@@ -358,15 +359,20 @@ void Plane::spawnParticleGen(ded_ptcgen_t const *def)
     Generator *gen = map().newGenerator();
     if(!gen) return;
 
-    gen->count = def->particles;
-    // Size of source sector might determine count.
+    gen->count               = def->particles;
+    gen->spawnRateMultiplier = 1;
+
     if(def->flags & Generator::Density)
     {
-        gen->spawnRateMultiplier = sector().roughArea() / (128 * 128);
-    }
-    else
-    {
-        gen->spawnRateMultiplier = 1;
+        // In this case to get at a rough density approximation for the entire sector
+        // including every cluster.
+        dfloat roughArea = 0;
+        map().forAllClustersOfSector(sector(), [&roughArea] (SectorCluster &cluster)
+        {
+            roughArea += cluster.roughArea();
+            return LoopContinue;
+        });
+        gen->spawnRateMultiplier = roughArea / (128 * 128);
     }
 
     // Initialize the particle generator.
