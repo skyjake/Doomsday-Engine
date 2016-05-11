@@ -1,7 +1,7 @@
 /** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -101,12 +101,6 @@ DENG2_PIMPL(Sector)
     void updateSoundEmitterOrigin()
     {
         emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
-    }
-
-    void updateAllEmitterOrigins()
-    {
-        updateSoundEmitterOrigin();
-        self.updateSoundEmitterOrigins();
     }
 
 #ifdef __CLIENT__
@@ -247,13 +241,11 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
 
     if(plane->isSectorFloor() || plane->isSectorCeiling())
     {
-        // We want notification of height changes so that we can update sound emitter
-        // origins of all the dependent surfaces.
+        // We want notification of height changes in order to update sound emitters.
         plane->audienceForHeightChange() += d;
     }
 
-    // Once both floor and ceiling are known we can determine the z-height origin
-    // of our sound emitter.
+    // Once both floor and ceiling are known we can determine the height our sound emitter.
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
@@ -281,13 +273,12 @@ void Sector::buildSides()
 {
     d->sides.clear();
 
-#ifdef DENG2_QT_4_7_OR_NEWER
     dint count = 0;
     map().forAllLines([this, &count] (Line &line)
     {
         if(line.frontSectorPtr() == this || line.backSectorPtr()  == this)
         {
-            ++count;
+            count += 1;
         }
         return LoopContinue;
     });
@@ -295,8 +286,6 @@ void Sector::buildSides()
     if(!count) return;
 
     d->sides.reserve(count);
-#endif
-
     map().forAllLines([this] (Line &line)
     {
         if(line.frontSectorPtr() == this)
@@ -374,8 +363,6 @@ void Sector::chainSoundEmitters()
  */
 static void updateSoundEmitterOrigin(LineSide &side, dint sectionId)
 {
-    LOG_AS("Line::Side::updateSoundEmitterOrigin");
-
     if(!side.hasSections()) return;
 
     SoundEmitter &emitter = side.soundEmitter(sectionId);
@@ -440,6 +427,8 @@ static void updateAllSoundEmitterOrigins(Line::Side &side)
 
 void Sector::updateSoundEmitterOrigins()
 {
+    d->updateSoundEmitterOrigin();
+
     for(LineSide *side : d->sides)
     {
         updateAllSoundEmitterOrigins(*side);
