@@ -1388,9 +1388,9 @@ DENG2_PIMPL(Map)
 
                     Material *mat = gen->plane->surface().materialPtr();
                     if(def->flags & Generator::SpawnFloor)
-                        mat = gen->plane->sector().floorSurface().materialPtr();
+                        mat = gen->plane->sector().floor().surface().materialPtr();
                     if(def->flags & Generator::SpawnCeiling)
-                        mat = gen->plane->sector().ceilingSurface().materialPtr();
+                        mat = gen->plane->sector().ceiling().surface().materialPtr();
 
                     // Is this suitable?
                     if(mat == defMat)
@@ -2842,8 +2842,8 @@ void Map::initSkyFix()
     {
         if(!sector->sideCount()) continue;
 
-        bool const skyFloor = sector->floorSurface().hasSkyMaskedMaterial();
-        bool const skyCeil  = sector->ceilingSurface().hasSkyMaskedMaterial();
+        bool const skyFloor = sector->floor  ().surface().hasSkyMaskedMaterial();
+        bool const skyCeil  = sector->ceiling().surface().hasSkyMaskedMaterial();
 
         if(!skyFloor && !skyCeil) continue;
 
@@ -2859,8 +2859,7 @@ void Map::initSkyFix()
             // Check that all the mobjs in the sector fit in.
             for(mobj_t *mob = sector->firstMobj(); mob; mob = mob->sNext)
             {
-                coord_t extent = mob->origin[2] + mob->height;
-
+                ddouble extent = mob->origin[2] + mob->height;
                 if(extent > d->skyCeilingHeight)
                 {
                     // Must raise the skyfix ceiling.
@@ -2879,8 +2878,8 @@ void Map::initSkyFix()
             }
         }
 
-        // Update for middle materials on lines which intersect the
-        // floor and/or ceiling on the front (i.e., sector) side.
+        // Update for middle materials on lines which intersect the floor and/or ceiling
+        // on the front (i.e., sector) side.
         sector->forAllSides([this, &skyCeil, &skyFloor] (LineSide &side)
         {
             if(!side.hasSections()) return LoopContinue;
@@ -3968,7 +3967,6 @@ bool Map::endEditing()
     for(dint i = 0; i < 2; ++i)
     {
         line->side(i).updateSurfaceNormals();
-        line->side(i).updateAllSoundEmitterOrigins();
     }
 
     // Finish sectors.
@@ -3977,6 +3975,7 @@ bool Map::endEditing()
         d->buildClusters(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
+        sector->updateSoundEmitterOrigins();
     }
 
     // Finish planes.

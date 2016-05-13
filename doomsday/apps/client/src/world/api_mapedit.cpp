@@ -284,18 +284,18 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     side.top()
         .setMaterial(findMaterialInDict(topMaterialUri))
         .setMaterialOrigin(Vector2f(topOffsetX, topOffsetY))
-        .setTintColor(Vector3f(topRed, topGreen, topBlue));
+        .setColor(Vector3f(topRed, topGreen, topBlue));
 
     side.middle()
         .setMaterial(findMaterialInDict(middleMaterialUri))
         .setMaterialOrigin(Vector2f(middleOffsetX, middleOffsetY))
-        .setTintColor(Vector3f(middleRed, middleGreen, middleBlue))
+        .setColor(Vector3f(middleRed, middleGreen, middleBlue))
         .setOpacity(middleOpacity);
 
     side.bottom()
         .setMaterial(findMaterialInDict(bottomMaterialUri))
         .setMaterialOrigin(Vector2f(bottomOffsetX, bottomOffsetY))
-        .setTintColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
+        .setColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
 }
 
 #undef MPE_PlaneCreate
@@ -314,7 +314,7 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 
     plane->surface()
         .setMaterial(findMaterialInDict(materialUri))
-        .setTintColor(Vector3f(tintRed, tintGreen, tintBlue))
+        .setColor(Vector3f(tintRed, tintGreen, tintBlue))
         .setMaterialOrigin(Vector2f(matOffsetX, matOffsetY));
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())

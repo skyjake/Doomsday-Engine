@@ -609,7 +609,7 @@ Vector3f Rend_SkyLightColor()
  */
 static Vector3f Rend_AmbientLightColor(Sector const &sector)
 {
-    if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskedPlane())
+    if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskPlane())
     {
         return Rend_SkyLightColor();
     }
@@ -2644,7 +2644,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
                 parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
-        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+        side.chooseSurfaceColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
     //
@@ -2784,7 +2784,7 @@ static void writeSubspacePlane(Plane &plane)
     parm.bottomRight          = &bottomRight;
     parm.materialOrigin       = &materialOrigin;
     parm.materialScale        = &materialScale;
-    parm.surfaceColor         = &surface.tintColor();
+    parm.surfaceColor         = &surface.color();
     parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     if(material->isSkyMasked())
@@ -5435,16 +5435,16 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
  */
 static void drawSurfaceTangentVectors(SectorCluster &cluster)
 {
-    for(ConvexSubspace *subspace : cluster.subspaces())
+    cluster.forAllSubspaces([] (ConvexSubspace &subspace)
     {
-        HEdge const *base  = subspace->poly().hedge();
+        HEdge const *base  = subspace.poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWalls(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        subspace->forAllExtraMeshes([] (Mesh &mesh)
+        subspace.forAllExtraMeshes([] (Mesh &mesh)
         {
             for(HEdge *hedge : mesh.hedges())
             {
@@ -5453,7 +5453,7 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
             return LoopContinue;
         });
 
-        subspace->forAllPolyobjs([] (Polyobj &pob)
+        subspace.forAllPolyobjs([] (Polyobj &pob)
         {
             for(HEdge *hedge : pob.mesh().hedges())
             {
@@ -5461,13 +5461,15 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
             }
             return LoopContinue;
         });
-    }
+
+        return LoopContinue;
+    });
 
     dint const planeCount = cluster.sector().planeCount();
     for(dint i = 0; i < planeCount; ++i)
     {
         Plane const &plane = cluster.visPlane(i);
-        coord_t height     = 0;
+        ddouble height     = 0;
 
         if(plane.surface().hasSkyMaskedMaterial() &&
            (plane.isSectorFloor() || plane.isSectorCeiling()))

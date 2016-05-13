@@ -218,11 +218,11 @@ static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
         AABoxd const &sectorAABox = plane.sector().aaBox();
 
         topLeft = Vector3d(sectorAABox.minX,
-                           plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
+                           plane.isSectorFloor() ? sectorAABox.maxY : sectorAABox.minY,
                            plane.heightSmoothed());
 
         bottomRight = Vector3d(sectorAABox.maxX,
-                               plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
+                               plane.isSectorFloor() ? sectorAABox.minY : sectorAABox.maxY,
                                plane.heightSmoothed());
 
         materialOrigin = Vector2f(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
