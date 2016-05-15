@@ -37,6 +37,88 @@
 using namespace de;
 using namespace world;
 
+/**
+ * Update the sound emitter origin of the plane. This point is determined according to the
+ * center point of the parent Sector on the XY plane and Z the height of the plane itself.
+ */
+static void updateSoundEmitterOrigin(Plane &plane)
+{
+    SoundEmitter &emitter = plane.soundEmitter();
+
+    emitter.origin[0] = plane.sector().soundEmitter().origin[0];
+    emitter.origin[1] = plane.sector().soundEmitter().origin[1];
+    emitter.origin[2] = plane.height();
+}
+
+/**
+ * Update the sound emitter origin of the specified surface section. This point is determined
+ * according to the center point of the owning line and the current @em sharp heights of
+ * the sector on "this" side of the line.
+ */
+static void updateSoundEmitterOrigin(LineSide &side, dint sectionId)
+{
+    if(!side.hasSections()) return;
+
+    SoundEmitter &emitter = side.soundEmitter(sectionId);
+
+    Vector2d lineCenter = side.line().center();
+    emitter.origin[0] = lineCenter.x;
+    emitter.origin[1] = lineCenter.y;
+
+    DENG2_ASSERT(side.hasSector());
+    ddouble const ffloor = side.sector().floor().height();
+    ddouble const fceil  = side.sector().ceiling().height();
+
+    /// @todo fixme what if considered one-sided?
+    switch(sectionId)
+    {
+    case LineSide::Middle:
+        if(!side.back().hasSections() || side.line().isSelfReferencing())
+        {
+            emitter.origin[2] = (ffloor + fceil) / 2;
+        }
+        else
+        {
+            emitter.origin[2] = (  de::max(ffloor, side.back().sector().floor  ().height())
+                + de::min(fceil,  side.back().sector().ceiling().height())) / 2;
+        }
+        break;
+
+    case LineSide::Bottom:
+        if(!side.back().hasSections() || side.line().isSelfReferencing() ||
+            side.back().sector().floor().height() <= ffloor)
+        {
+            emitter.origin[2] = ffloor;
+        }
+        else
+        {
+            emitter.origin[2] = (de::min(side.back().sector().floor().height(), fceil) + ffloor) / 2;
+        }
+        break;
+
+    case LineSide::Top:
+        if(!side.back().hasSections() || side.line().isSelfReferencing() ||
+            side.back().sector().ceiling().height() >= fceil)
+        {
+            emitter.origin[2] = fceil;
+        }
+        else
+        {
+            emitter.origin[2] = (de::max(side.back().sector().ceiling().height(), ffloor) + fceil) / 2;
+        }
+        break;
+    }
+}
+
+static void updateAllSoundEmitterOrigins(Line::Side &side)
+{
+    if(!side.hasSections()) return;
+
+    updateSoundEmitterOrigin(side, LineSide::Middle);
+    updateSoundEmitterOrigin(side, LineSide::Bottom);
+    updateSoundEmitterOrigin(side, LineSide::Top);
+}
+
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
@@ -92,15 +174,26 @@ DENG2_PIMPL(Sector)
         if(!bounds)
         {
             bounds.reset(new AABoxd(findBounds(self)));
-            emitter->origin[0] = (bounds->minX + bounds->maxX) / 2;
-            emitter->origin[1] = (bounds->minY + bounds->maxY) / 2;
+            updateSoundEmitterOriginXY();
         }
         return *bounds;
     }
 
-    void updateSoundEmitterOrigin()
+    void updateSoundEmitterOriginXY()
+    {
+        emitter->origin[0] = (aaBox().minX + aaBox().maxX) / 2;
+        emitter->origin[1] = (aaBox().minY + aaBox().maxY) / 2;
+    }
+
+    void updateSoundEmitterOriginZ()
     {
         emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
+    }
+
+    void updateSoundEmitterOrigin()
+    {
+        updateSoundEmitterOriginXY();
+        updateSoundEmitterOriginZ();
     }
 
 #ifdef __CLIENT__
@@ -239,6 +332,8 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
     plane->setIndexInSector(d->planes.count());
     d->planes.append(plane);
 
+    updateSoundEmitterOrigin(*plane);
+
     if(plane->isSectorFloor() || plane->isSectorCeiling())
     {
         // We want notification of height changes in order to update sound emitters.
@@ -249,7 +344,7 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->updateSoundEmitterOrigin();
+        d->updateSoundEmitterOriginZ();
     }
 
     return plane;
@@ -356,78 +451,14 @@ void Sector::chainSoundEmitters()
     }
 }
 
-/**
- * Update the sound emitter origin of the specified surface section. This
- * point is determined according to the center point of the owning line and
- * the current @em sharp heights of the sector on "this" side of the line.
- */
-static void updateSoundEmitterOrigin(LineSide &side, dint sectionId)
-{
-    if(!side.hasSections()) return;
-
-    SoundEmitter &emitter = side.soundEmitter(sectionId);
-
-    Vector2d lineCenter = side.line().center();
-    emitter.origin[0] = lineCenter.x;
-    emitter.origin[1] = lineCenter.y;
-
-    DENG2_ASSERT(side.hasSector());
-    ddouble const ffloor = side.sector().floor().height();
-    ddouble const fceil  = side.sector().ceiling().height();
-
-    /// @todo fixme what if considered one-sided?
-    switch(sectionId)
-    {
-    case LineSide::Middle:
-        if(!side.back().hasSections() || side.line().isSelfReferencing())
-        {
-            emitter.origin[2] = (ffloor + fceil) / 2;
-        }
-        else
-        {
-            emitter.origin[2] = (  de::max(ffloor, side.back().sector().floor  ().height())
-                                 + de::min(fceil,  side.back().sector().ceiling().height())) / 2;
-        }
-        break;
-
-    case LineSide::Bottom:
-        if(!side.back().hasSections() || side.line().isSelfReferencing() ||
-            side.back().sector().floor().height() <= ffloor)
-        {
-            emitter.origin[2] = ffloor;
-        }
-        else
-        {
-            emitter.origin[2] = (de::min(side.back().sector().floor().height(), fceil) + ffloor) / 2;
-        }
-        break;
-
-    case LineSide::Top:
-        if(!side.back().hasSections() || side.line().isSelfReferencing() ||
-            side.back().sector().ceiling().height() >= fceil)
-        {
-            emitter.origin[2] = fceil;
-        }
-        else
-        {
-            emitter.origin[2] = (de::max(side.back().sector().ceiling().height(), ffloor) + fceil) / 2;
-        }
-        break;
-    }
-}
-
-static void updateAllSoundEmitterOrigins(Line::Side &side)
-{
-    if(!side.hasSections()) return;
-
-    updateSoundEmitterOrigin(side, LineSide::Middle);
-    updateSoundEmitterOrigin(side, LineSide::Bottom);
-    updateSoundEmitterOrigin(side, LineSide::Top);
-}
-
 void Sector::updateSoundEmitterOrigins()
 {
     d->updateSoundEmitterOrigin();
+
+    for(Plane *plane : d->planes)
+    {
+        updateSoundEmitterOrigin(*plane);
+    }
 
     for(LineSide *side : d->sides)
     {

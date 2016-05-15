@@ -1,7 +1,7 @@
 /** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -94,19 +94,16 @@ DENG2_PIMPL(Plane)
 
         height = newHeight;
 
+#ifdef __CLIENT__
         if(!ddMapSetup)
         {
-            // Update the sound emitter origin for the plane.
-            self.updateSoundEmitterOrigin();
-
-#ifdef __CLIENT__
             // We need the decorations updated.
             /// @todo optimize: Translation on the world up axis would be a
             /// trivial operation to perform, which, would not require plotting
             /// decorations again. This frequent case should be designed for.
             surface.markForDecorationUpdate();
-#endif
         }
+#endif
 
         notifyHeightChanged();
 
@@ -235,15 +232,6 @@ SoundEmitter &Plane::soundEmitter()
 SoundEmitter const &Plane::soundEmitter() const
 {
     return d->soundEmitter;
-}
-
-void Plane::updateSoundEmitterOrigin()
-{
-    LOG_AS("Plane::updateSoundEmitterOrigin");
-
-    d->soundEmitter->origin[0] = sector().soundEmitter().origin[0];
-    d->soundEmitter->origin[1] = sector().soundEmitter().origin[1];
-    d->soundEmitter->origin[2] = d->height;
 }
 
 ddouble Plane::height() const

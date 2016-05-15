@@ -3978,16 +3978,6 @@ bool Map::endEditing()
         sector->updateSoundEmitterOrigins();
     }
 
-    // Finish planes.
-    for(Sector *sector : d->sectors)
-    {
-        sector->forAllPlanes([] (Plane &plane)
-        {
-            plane.updateSoundEmitterOrigin();
-            return LoopContinue;
-        });
-    }
-
     // We can now initialize the convex subspace blockmap.
     d->initSubspaceBlockmap();
 
