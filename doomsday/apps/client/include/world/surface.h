@@ -29,7 +29,7 @@
 #include <de/String>
 #include <de/Vector>
 #include <doomsday/uri.h>
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Material"
 
 #ifdef __CLIENT__
@@ -69,9 +69,11 @@ public:
      * @param opacity  Opacity strength (@c 1= fully opaque).
      * @param color    Tint color.
      */
-    Surface(world::MapElement &owner,
+    Surface(de::DmuObject &owner,
             de::dfloat opacity        = 1,
             de::Vector3f const &color = de::Vector3f(1, 1, 1));
+
+    de::String describe() const override;
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.

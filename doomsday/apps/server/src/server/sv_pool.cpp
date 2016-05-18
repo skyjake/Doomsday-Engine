@@ -2334,8 +2334,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        LineSide &side = sourceSurface->parent().as<LineSide>();
-
+        auto &side = sourceSurface->parent().as<LineSide>();
         if(&side.middle() == sourceSurface)
         {
             df |= SNDDF_SIDE_MIDDLE;

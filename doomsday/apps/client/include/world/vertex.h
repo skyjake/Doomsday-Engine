@@ -25,7 +25,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Mesh"
 
 class Line;
@@ -51,14 +51,16 @@ public: /// @todo Move to the map loader:
     /// owner ring is a doubly, circularly linked list. The head is the owner
     /// with the lowest angle and the next-most being that with greater angle.
     LineOwner *_lineOwners = nullptr;
-    uint _numLineOwners = 0;  ///< Total number of line owners.
+    de::duint _numLineOwners = 0;  ///< Total number of line owners.
 
     // Total numbers of line owners.
-    uint _onesOwnerCount = 0;
-    uint _twosOwnerCount = 0;
+    de::duint _onesOwnerCount = 0;
+    de::duint _twosOwnerCount = 0;
 
 public:
     Vertex(de::Mesh &mesh, de::Vector2d const &origin = de::Vector2d());
+
+    de::String describe() const override;
 
     /**
      * Returns the origin (i.e., position) of the vertex in the map coordinate space.
@@ -68,12 +70,12 @@ public:
     /**
      * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
      */
-    inline coord_t x() const { return origin().x; }
+    inline de::ddouble x() const { return origin().x; }
 
     /**
      * Returns the Y axis origin (i.e., position) of the vertex in the map coordinate space.
      */
-    inline coord_t y() const { return origin().y; }
+    inline de::ddouble y() const { return origin().y; }
 
     /**
      * Change the origin (i.e., position) of the vertex in the map coordinate
@@ -89,7 +91,9 @@ public:
      * @param x  New X origin in map coordinate space units.
      * @param y  New Y origin in map coordinate space units.
      */
-    inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
+    inline void setOrigin(de::dfloat x, de::dfloat y) {
+        return setOrigin(de::Vector2d(x, y));
+    }
 
 #ifdef __CLIENT__
     /**

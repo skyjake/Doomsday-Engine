@@ -31,7 +31,7 @@
 #ifdef __CLIENT__
 #  include "def_main.h"  // ded_ptcgen_t
 #endif
-#include "MapElement"
+#include "world/mapelement.h"
 
 class Sector;
 class Surface;
@@ -82,10 +82,7 @@ public:
           de::Vector3f const &normal = de::Vector3f(0, 0, 1),
           de::ddouble height         = 0);
 
-    /**
-     * Composes a human-friendly, styled, textual description of the plane.
-     */
-    de::String description() const;
+    de::String describe() const override;
 
     /**
      * Returns the owning Sector of the plane.

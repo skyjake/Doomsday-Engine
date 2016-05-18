@@ -90,7 +90,7 @@ DENG2_PIMPL(Surface)
     }
 
     inline Map &map() const { return self.map(); }
-    inline MapElement &parent() const { return self.parent(); }
+    inline DmuObject &parent() const { return self.parent(); }
 
 #ifdef DENG_DEBUG
     inline bool isSideMiddle() const
@@ -158,12 +158,18 @@ DENG2_AUDIENCE_METHOD(Surface, MaterialOriginChange)
 DENG2_AUDIENCE_METHOD(Surface, NormalChange)
 DENG2_AUDIENCE_METHOD(Surface, OpacityChange)
 
-Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &color)
-    : MapElement(DMU_SURFACE, &owner)
+Surface::Surface(DmuObject &owner, dfloat opacity, Vector3f const &color)
+    : MapElement(DMU_SURFACE)
     , d(new Instance(this))
 {
+    setParent(&owner);
     d->color     = color;
     d->opacity   = opacity;
+}
+
+String Surface::describe() const
+{
+    return "Surface";
 }
 
 String Surface::description() const
@@ -605,7 +611,7 @@ dint Surface::property(DmuArgs &args) const
         break;
 
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
 
     return false;  // Continue iteration.
@@ -683,7 +689,7 @@ dint Surface::setProperty(DmuArgs const &args)
         break; }
 
     default:
-        return MapElement::setProperty(args);
+        return DmuObject::setProperty(args);
     }
 
     return false;  // Continue iteration.

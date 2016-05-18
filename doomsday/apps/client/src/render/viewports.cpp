@@ -1174,13 +1174,11 @@ DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 
 bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     return subspacesVisible.testBit(subspace.indexInMap());
 }
 
 void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 

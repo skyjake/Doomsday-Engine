@@ -232,6 +232,11 @@ Sector::Sector(dfloat lightLevel, Vector3f const &lightColor)
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
 }
 
+String Sector::describe() const
+{
+    return "Sector";
+}
+
 /**
  * Two links to update:
  * 1) The link to the mobj from the previous node (sprev, always set) will
@@ -552,7 +557,7 @@ dint Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_CEILINGPLANE, &pln, 0);
         break; }
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
 
     return false;  // Continue iteration.
@@ -593,7 +598,7 @@ dint Sector::setProperty(DmuArgs const &args)
         args.value(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     default:
-        return MapElement::setProperty(args);
+        return DmuObject::setProperty(args);
     }
 
     return false;  // Continue iteration.

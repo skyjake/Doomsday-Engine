@@ -38,6 +38,11 @@ Vertex::Vertex(Mesh &mesh, Vector2d const &origin)
     _origin = origin;
 }
 
+String Vertex::describe() const
+{
+    return "Vertex";
+}
+
 Vector2d const &Vertex::origin() const
 {
     return _origin;
@@ -70,7 +75,7 @@ int Vertex::property(DmuArgs &args) const
         args.setValue(DMT_VERTEX_ORIGIN, &_origin.y, 1);
         break;
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
     return false;  // Continue iteration.
 }

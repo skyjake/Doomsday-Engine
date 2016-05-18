@@ -29,8 +29,8 @@
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
+#include "world/mapelement.h"
 #include "HEdge"
-#include "MapElement"
 #include "Polyobj"
 #include "Vertex"
 
@@ -82,8 +82,10 @@ public:
     // Logical edge identifiers:
     enum { From, To };
 
-    // Logical side identifiers:
+    // Logical face identifiers:
     enum { Front, Back };
+
+    static de::String faceIdAsText(de::dint faceId);
 
     /**
      * Logical side of which there are always two (a front and a back).
@@ -100,6 +102,8 @@ public:
             Bottom,
             Top
         };
+
+        static de::String sectionIdAsText(de::dint sectionId);
 
         /**
          * Flags used as Section identifiers:
@@ -131,11 +135,13 @@ public:
              */
             Segment(Side &lineSide, de::HEdge &hedge);
 
+            de::String describe() const override;
+
             /**
              * Returns the line side owner of the segment.
              */
-            inline Side       &lineSide()       { return parent().as<Side>(); }
-            inline Side const &lineSide() const { return parent().as<Side>(); }
+            Side       &lineSide();
+            Side const &lineSide() const;
 
             /**
              * Convenient accessor method for returning the line of the owning
@@ -200,16 +206,13 @@ public:
          */
         Side(Line &line, Sector *sector = nullptr);
 
-        /**
-         * Composes a human-friendly, styled, textual description of the side.
-         */
-        de::String description() const;
+        de::String describe() const override;
 
         /**
          * Returns the Line owner of the side.
          */
-        inline Line       &line()       { return parent().as<Line>(); }
-        inline Line const &line() const { return parent().as<Line>(); }
+        Line       &line();
+        Line const &line() const;
 
         /**
          * Returns the logical identifier for the side (Front or Back).
@@ -502,6 +505,8 @@ public:
          de::dint flags      = 0,
          Sector *frontSector = nullptr,
          Sector *backSector  = nullptr);
+
+    de::String describe() const override;
 
     /**
      * Returns the specified logical side of the line.

@@ -26,7 +26,7 @@
 #include <de/Error>
 #include <de/Vector>
 #include "Mesh"
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Line"
 #include "SectorCluster"
 
@@ -67,6 +67,8 @@ public:
      * @param poly  Polygon to construct from. Ownership is unaffected.
      */
     static ConvexSubspace *newFromConvexPoly(de::Face &poly, BspLeaf *bspLeaf = nullptr);
+
+    de::String describe() const override;
 
     /**
      * Determines whether the specified @a point in the map coordinate space lies inside

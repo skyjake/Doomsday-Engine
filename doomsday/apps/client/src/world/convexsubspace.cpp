@@ -205,6 +205,11 @@ Face &ConvexSubspace::poly() const
     return *d->poly;
 }
 
+String ConvexSubspace::describe() const
+{
+    return "ConvexSubspace";
+}
+
 bool ConvexSubspace::contains(Vector2d const &point) const
 {
     HEdge const *hedge = poly().hedge();

@@ -259,8 +259,8 @@ typedef int (*traverser_t) (Intercept const *intercept, void *context);
 #define LIF_ALL             LIF_SECTOR | LIF_POLYOBJ
 ///@}
 
-typedef void *MapElementPtr;
-typedef void const *MapElementPtrConst;
+typedef void *DmuObjectPtr;
+typedef void const *DmuObjectPtrConst;
 
 #ifdef __cplusplus
 extern "C" {
@@ -545,12 +545,12 @@ DENG_API_TYPEDEF(Map)
      *
      * @param ptr  Pointer to a map data object.
      */
-    int             (*GetType)(MapElementPtrConst ptr);
+    int             (*GetType)(DmuObjectPtrConst ptr);
 
     /**
      * Convert a pointer to DMU object to an element index.
      */
-    int             (*ToIndex)(MapElementPtrConst ptr);
+    int             (*ToIndex)(DmuObjectPtrConst ptr);
 
     /**
      * Convert an element index to a DMU object pointer.
@@ -576,7 +576,7 @@ DENG_API_TYPEDEF(Map)
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Callback)(int type, int index, int (*callback)(MapElementPtr p, void *context), void *context);
+    int             (*Callback)(int type, int index, int (*callback)(DmuObjectPtr p, void *context), void *context);
 
     /**
      * @ref Callback() alternative where the set of selected objects is instead
@@ -592,7 +592,7 @@ DENG_API_TYPEDEF(Map)
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Callbackp)(int type, MapElementPtr pointer, int (*callback)(MapElementPtr p, void *context), void *context);
+    int             (*Callbackp)(int type, DmuObjectPtr pointer, int (*callback)(DmuObjectPtr p, void *context), void *context);
 
     /**
      * An efficient alternative mechanism for iterating a selection of sub-objects
@@ -607,7 +607,7 @@ DENG_API_TYPEDEF(Map)
      * is returned by the callback function, iteration is aborted immediately
      * and the value returned by the callback is returned.
      */
-    int             (*Iteratep)(MapElementPtr pointer, uint prop, int (*callback) (MapElementPtr p, void *context), void *context);
+    int             (*Iteratep)(DmuObjectPtr pointer, uint prop, int (*callback) (DmuObjectPtr p, void *context), void *context);
 
     /**
      * Allocates a new dummy object.
@@ -617,23 +617,23 @@ DENG_API_TYPEDEF(Map)
      *                      caller-allocated memory area of extra data for the
      *                      dummy.
      */
-    MapElementPtr   (*AllocDummy)(int type, void *extraData);
+    DmuObjectPtr   (*AllocDummy)(int type, void *extraData);
 
     /**
      * Frees a dummy object.
      */
-    void            (*FreeDummy)(MapElementPtr dummy);
+    void            (*FreeDummy)(DmuObjectPtr dummy);
 
     /**
      * Determines if a map data object is a dummy.
      */
-    dd_bool         (*IsDummy)(MapElementPtrConst dummy);
+    dd_bool         (*IsDummy)(DmuObjectPtrConst dummy);
 
     /**
      * Returns the extra data pointer of the dummy, or NULL if the object is not
      * a dummy object.
      */
-    void           *(*DummyExtraData)(MapElementPtr dummy);
+    void           *(*DummyExtraData)(DmuObjectPtr dummy);
 
     // Map Entities
     uint            (*CountMapObjs)(int entityId);
@@ -658,23 +658,23 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based write functions */
-    void            (*SetBoolp)(MapElementPtr ptr, uint prop, dd_bool param);
-    void            (*SetBytep)(MapElementPtr ptr, uint prop, byte param);
-    void            (*SetIntp)(MapElementPtr ptr, uint prop, int param);
-    void            (*SetFixedp)(MapElementPtr ptr, uint prop, fixed_t param);
-    void            (*SetAnglep)(MapElementPtr ptr, uint prop, angle_t param);
-    void            (*SetFloatp)(MapElementPtr ptr, uint prop, float param);
-    void            (*SetDoublep)(MapElementPtr ptr, uint prop, double param);
-    void            (*SetPtrp)(MapElementPtr ptr, uint prop, void* param);
+    void            (*SetBoolp)(DmuObjectPtr ptr, uint prop, dd_bool param);
+    void            (*SetBytep)(DmuObjectPtr ptr, uint prop, byte param);
+    void            (*SetIntp)(DmuObjectPtr ptr, uint prop, int param);
+    void            (*SetFixedp)(DmuObjectPtr ptr, uint prop, fixed_t param);
+    void            (*SetAnglep)(DmuObjectPtr ptr, uint prop, angle_t param);
+    void            (*SetFloatp)(DmuObjectPtr ptr, uint prop, float param);
+    void            (*SetDoublep)(DmuObjectPtr ptr, uint prop, double param);
+    void            (*SetPtrp)(DmuObjectPtr ptr, uint prop, void* param);
 
-    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, dd_bool *params);
-    void            (*SetBytepv)(MapElementPtr ptr, uint prop, byte *params);
-    void            (*SetIntpv)(MapElementPtr ptr, uint prop, int *params);
-    void            (*SetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);
-    void            (*SetAnglepv)(MapElementPtr ptr, uint prop, angle_t *params);
-    void            (*SetFloatpv)(MapElementPtr ptr, uint prop, float *params);
-    void            (*SetDoublepv)(MapElementPtr ptr, uint prop, double *params);
-    void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void *params);
+    void            (*SetBoolpv)(DmuObjectPtr ptr, uint prop, dd_bool *params);
+    void            (*SetBytepv)(DmuObjectPtr ptr, uint prop, byte *params);
+    void            (*SetIntpv)(DmuObjectPtr ptr, uint prop, int *params);
+    void            (*SetFixedpv)(DmuObjectPtr ptr, uint prop, fixed_t *params);
+    void            (*SetAnglepv)(DmuObjectPtr ptr, uint prop, angle_t *params);
+    void            (*SetFloatpv)(DmuObjectPtr ptr, uint prop, float *params);
+    void            (*SetDoublepv)(DmuObjectPtr ptr, uint prop, double *params);
+    void            (*SetPtrpv)(DmuObjectPtr ptr, uint prop, void *params);
 
     /* index-based read functions */
     dd_bool         (*GetBool)(int type, int index, uint prop);
@@ -696,23 +696,23 @@ DENG_API_TYPEDEF(Map)
     void            (*GetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based read functions */
-    dd_bool         (*GetBoolp)(MapElementPtr ptr, uint prop);
-    byte            (*GetBytep)(MapElementPtr ptr, uint prop);
-    int             (*GetIntp)(MapElementPtr ptr, uint prop);
-    fixed_t         (*GetFixedp)(MapElementPtr ptr, uint prop);
-    angle_t         (*GetAnglep)(MapElementPtr ptr, uint prop);
-    float           (*GetFloatp)(MapElementPtr ptr, uint prop);
-    double          (*GetDoublep)(MapElementPtr ptr, uint prop);
-    void*           (*GetPtrp)(MapElementPtr ptr, uint prop);
+    dd_bool         (*GetBoolp)(DmuObjectPtr ptr, uint prop);
+    byte            (*GetBytep)(DmuObjectPtr ptr, uint prop);
+    int             (*GetIntp)(DmuObjectPtr ptr, uint prop);
+    fixed_t         (*GetFixedp)(DmuObjectPtr ptr, uint prop);
+    angle_t         (*GetAnglep)(DmuObjectPtr ptr, uint prop);
+    float           (*GetFloatp)(DmuObjectPtr ptr, uint prop);
+    double          (*GetDoublep)(DmuObjectPtr ptr, uint prop);
+    void*           (*GetPtrp)(DmuObjectPtr ptr, uint prop);
 
-    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, dd_bool *params);
-    void            (*GetBytepv)(MapElementPtr ptr, uint prop, byte *params);
-    void            (*GetIntpv)(MapElementPtr ptr, uint prop, int *params);
-    void            (*GetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);
-    void            (*GetAnglepv)(MapElementPtr ptr, uint prop, angle_t *params);
-    void            (*GetFloatpv)(MapElementPtr ptr, uint prop, float *params);
-    void            (*GetDoublepv)(MapElementPtr ptr, uint prop, double *params);
-    void            (*GetPtrpv)(MapElementPtr ptr, uint prop, void *params);
+    void            (*GetBoolpv)(DmuObjectPtr ptr, uint prop, dd_bool *params);
+    void            (*GetBytepv)(DmuObjectPtr ptr, uint prop, byte *params);
+    void            (*GetIntpv)(DmuObjectPtr ptr, uint prop, int *params);
+    void            (*GetFixedpv)(DmuObjectPtr ptr, uint prop, fixed_t *params);
+    void            (*GetAnglepv)(DmuObjectPtr ptr, uint prop, angle_t *params);
+    void            (*GetFloatpv)(DmuObjectPtr ptr, uint prop, float *params);
+    void            (*GetDoublepv)(DmuObjectPtr ptr, uint prop, double *params);
+    void            (*GetPtrpv)(DmuObjectPtr ptr, uint prop, void *params);
 }
 DENG_API_T(Map);
 

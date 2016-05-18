@@ -29,7 +29,7 @@
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Material"
 #include "ModelDef"
 
@@ -40,7 +40,7 @@ namespace world {
 /**
  * Behavior logic for a sky in the world system.
  */
-class Sky : public MapElement
+class Sky : public de::DmuObject
 {
 public:
     /// Notified when the sky is about to be deleted.
@@ -154,6 +154,8 @@ public:
 
 public:
     explicit Sky(defn::Sky const *definition = nullptr);
+
+    de::String describe() const override;
 
     /**
      * Reconfigure according to the specified @a definition if not @c nullptr, otherwise,

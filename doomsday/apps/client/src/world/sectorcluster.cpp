@@ -113,7 +113,8 @@ DENG2_PIMPL(SectorCluster)
         std::unique_ptr<Shard> shard;
 
         GeometryData(MapElement *mapElement, dint geomId)
-            : mapElement(mapElement), geomId(geomId)
+            : mapElement(mapElement)
+            , geomId(geomId)
         {}
     };
     /// @todo Avoid two-stage lookup.
@@ -257,8 +258,8 @@ DENG2_PIMPL(SectorCluster)
     }
 
     /**
-     * To be called when a plane moves to possibly invalidate mapped planes so
-     * that they will be re-evaluated later.
+     * To be called when a plane moves to possibly invalidate mapped planes so that they
+     * will be re-evaluated later.
      */
     void maybeInvalidateMapping(dint planeIdx)
     {
@@ -678,16 +679,16 @@ DENG2_PIMPL(SectorCluster)
         if(!hedge) return;
         if(!hedge->hasMapElement()) return;
 
-        MapElement *mapElement = &hedge->mapElement();
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Middle))
+        MapElement &mapElement = hedge->mapElement();
+        if(Shard *shard = self.findShard(mapElement, LineSide::Middle))
         {
             shard->updateBiasAfterMove();
         }
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Bottom))
+        if(Shard *shard = self.findShard(mapElement, LineSide::Bottom))
         {
             shard->updateBiasAfterMove();
         }
-        if(Shard *shard = self.findShard(*mapElement, LineSide::Top))
+        if(Shard *shard = self.findShard(mapElement, LineSide::Top))
         {
             shard->updateBiasAfterMove();
         }
@@ -1243,7 +1244,7 @@ static dint countIlluminationPoints(MapElement &mapElement, dint group)
     switch(mapElement.type())
     {
     case DMU_SUBSPACE: {
-        ConvexSubspace &subspace = mapElement.as<ConvexSubspace>();
+        auto &subspace = mapElement.as<ConvexSubspace>();
         DENG2_ASSERT(group >= 0 && group < subspace.sector().planeCount()); // sanity check
         return subspace.fanVertexCount(); }
 
@@ -1252,7 +1253,7 @@ static dint countIlluminationPoints(MapElement &mapElement, dint group)
         return 4;
 
     default:
-        throw Error("SectorCluster::countIlluminationPoints", "Invalid MapElement type");
+        throw Error("SectorCluster::countIlluminationPoints", "Invalid DmuObject typeid");
     }
     return 0;
 }
@@ -1292,9 +1293,9 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
         switch(gdata->mapElement->type())
         {
         case DMU_SUBSPACE: {
-            ConvexSubspace &subspace = gdata->mapElement->as<ConvexSubspace>();
-            Plane const &plane       = visPlane(gdata->geomId);
-            Surface const &surface   = plane.surface();
+            auto &subspace         = gdata->mapElement->as<ConvexSubspace>();
+            Plane const &plane     = visPlane(gdata->geomId);
+            Surface const &surface = plane.surface();
 
             Vector3d const surfacePoint(subspace.poly().center(), plane.heightSmoothed());
 
@@ -1327,7 +1328,7 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
             break; }
 
         case DMU_SEGMENT: {
-            LineSideSegment &seg   = gdata->mapElement->as<LineSideSegment>();
+            auto &seg              = gdata->mapElement->as<LineSideSegment>();
             Surface const &surface = seg.lineSide().middle();
             Vector2d const &from   = seg.hedge().origin();
             Vector2d const &to     = seg.hedge().twin().origin();
@@ -1359,7 +1360,7 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
             break; }
 
         default:
-            throw Error("SectorCluster::updateBiasContributors", "Invalid MapElement type");
+            throw Error("SectorCluster::updateBiasContributors", "Invalid DmuObject typeid");
         }
 
         return true;

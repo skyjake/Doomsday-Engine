@@ -185,9 +185,10 @@ static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
 {
     if(surface.parent().type() == DMU_SIDE)
     {
-        LineSide &side = surface.parent().as<LineSide>();
-        int section = &side.middle() == &surface? LineSide::Middle
-                    : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
+        auto &side = surface.parent().as<LineSide>();
+        dint section = &side.middle() == &surface ? LineSide::Middle
+                     : &side.bottom() == &surface ? LineSide::Bottom
+                     : LineSide::Top;
 
         if(!side.hasSections()) return false;
 
@@ -214,7 +215,7 @@ static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
 
     if(surface.parent().type() == DMU_PLANE)
     {
-        Plane &plane = surface.parent().as<Plane>();
+        auto &plane = surface.parent().as<Plane>();
         AABoxd const &sectorAABox = plane.sector().aaBox();
 
         topLeft = Vector3d(sectorAABox.minX,

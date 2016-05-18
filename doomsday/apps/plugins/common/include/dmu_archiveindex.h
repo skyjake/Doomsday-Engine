@@ -32,22 +32,16 @@ namespace dmu_lib {
  *
  * @note Population of the index is deferred until it is first accessed.
  */
-template <int ElementType>
+template <de::dint ObjectTypeId>
 class ArchiveIndex
 {
 public:
-    /**
-     * Create a new archive index for the specified DMU @a elementType.
-     *
-     * @param elementType  DMU element type of the objects to be indexed.
-     */
-    ArchiveIndex() : _indexBase(-1)
-    {}
+    ArchiveIndex() : _indexBase(-1) {}
 
     /**
-     * Returns the DMU element type which "this" indexes.
+     * Returns the object type id for DMU objects in this index.
      */
-    int type() const { return ElementType; }
+    static de::dint typeId() { return ObjectTypeId; }
 
     /**
      * Returns a pointer to the DMU object associated with the specified @a index.
@@ -55,7 +49,9 @@ public:
      *
      * @see at()
      */
-    inline MapElementPtr operator [] (int index) const { return at(index); }
+    inline DmuObjectPtr operator [] (de::dint index) const {
+        return at(index);
+    }
 
     /**
      * Returns a pointer to the DMU object associated with the specified @a index.
@@ -63,39 +59,36 @@ public:
      *
      * @see operator []
      */
-    MapElementPtr at(int index) const
-    {
+    DmuObjectPtr at(de::dint index) const {
         // Time to build the LUT?
-        if(!_lut.get())
-        {
+        if(!_lut.get()) {
             const_cast<ArchiveIndex *>(this)->buildLut();
         }
 
         // Not indexed?
-        if(!indexInLutRange(index))
-            return 0;
+        if(!indexInLutRange(index)) return nullptr;
 
         return (*_lut)[index];
     }
 
 private:
-    bool inline indexInLutRange(int index) const
+    bool inline indexInLutRange(de::dint index) const
     {
         if(!_lut.get()) return false;
-        return (index - _indexBase >= 0 && (index - _indexBase) < int( _lut->size() ));
+        return (index - _indexBase >= 0 && (index - _indexBase) < de::dint( _lut->size() ));
     }
 
-    void findIndexRange(int &minIdx, int &maxIdx)
+    void findIndexRange(de::dint &minIdx, de::dint &maxIdx)
     {
         minIdx = DDMAXINT;
         maxIdx = DDMININT;
 
-        int numElements = P_Count(ElementType);
-        for(int i = 0; i < numElements; ++i)
+        de::dint numElements = P_Count(ObjectTypeId);
+        for(de::dint i = 0; i < numElements; ++i)
         {
-            MapElementPtr element = P_ToPtr(ElementType, i);
-            DENG_ASSERT(DMU_GetType(element) == ElementType);
-            int index = P_GetIntp(element, DMU_ARCHIVE_INDEX);
+            DmuObjectPtr ob = P_ToPtr(ObjectTypeId, i);
+            DENG_ASSERT(DMU_GetType(ob) == ObjectTypeId);
+            de::dint index = P_GetIntp(ob, DMU_ARCHIVE_INDEX);
 
             // Not indexed?
             if(index < 0) continue;
@@ -106,24 +99,24 @@ private:
     }
 
     /// @pre lut has been initialized and is large enough!
-    void linkInLut(MapElementPtr element)
+    void linkInLut(DmuObjectPtr ob)
     {
-        int index = P_GetIntp(element, DMU_ARCHIVE_INDEX);
+        de::dint index = P_GetIntp(ob, DMU_ARCHIVE_INDEX);
 
         // Not indexed?
         if(index < 0) return;
 
         DENG_ASSERT(indexInLutRange(index));
-        (*_lut)[index - _indexBase] = element;
+        (*_lut)[index - _indexBase] = ob;
     }
 
     void buildLut()
     {
         // Determine the size of the LUT.
-        int minIdx, maxIdx;
+        de::dint minIdx, maxIdx;
         findIndexRange(minIdx, maxIdx);
 
-        int lutSize = 0;
+        de::dint lutSize = 0;
         if(minIdx > maxIdx) // None found?
         {
             _indexBase = 0;
@@ -134,25 +127,24 @@ private:
             lutSize = maxIdx - minIdx + 1;
         }
 
-        if(lutSize == 0)
-            return;
+        if(lutSize == 0) return;
 
         // Fill the LUT with initial values.
-        _lut.reset(new ElementLut(lutSize, MapElementPtr(NULL)));
+        _lut.reset(new DmuObjectLut(lutSize, DmuObjectPtr(nullptr)));
 
         // Populate the LUT.
-        int numElements = P_Count(ElementType);
-        for(int i = 0; i < numElements; ++i)
+        de::dint numElements  = P_Count(ObjectTypeId);
+        for(de::dint i = 0; i < numElements; ++i)
         {
-            linkInLut(P_ToPtr(ElementType, i));
+            linkInLut(P_ToPtr(ObjectTypeId, i));
         }
     }
 
 private:
-    typedef std::vector<MapElementPtr> ElementLut;
+    typedef std::vector<DmuObjectPtr> DmuObjectLut;
 
-    int _indexBase;
-    std::unique_ptr<ElementLut> _lut;
+    de::dint _indexBase;
+    std::unique_ptr<DmuObjectLut> _lut;
 };
 
 ///@{

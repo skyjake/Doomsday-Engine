@@ -27,7 +27,7 @@
 #include <de/Observers>
 #include <de/Vector>
 #include "audio/s_environ.h"
-#include "MapElement"
+#include "world/mapelement.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
@@ -48,7 +48,7 @@ class MaterialAnimator;
  *
  * @ingroup resource
  */
-class Material : public world::MapElement
+class Material : public de::DmuObject
 {
 public:
     /// Notified when the material is about to be deleted.

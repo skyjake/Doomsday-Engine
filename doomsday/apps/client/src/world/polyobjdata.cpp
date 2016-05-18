@@ -32,7 +32,7 @@ using namespace world;
 PolyobjData::PolyobjData()
 {
     mesh       = new Mesh;
-    indexInMap = MapElement::NoIndex;
+    indexInMap = DmuObject::NoIndex;
 }
 
 PolyobjData::~PolyobjData()

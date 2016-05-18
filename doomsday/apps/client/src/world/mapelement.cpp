@@ -27,116 +27,131 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(MapElement)
+MapLink::MapLink(Map *map)
+{
+    setMap(map);
+}
+
+bool MapLink::hasMap() const
+{
+    return _map != nullptr;
+}
+
+Map &MapLink::map() const
+{
+    if(hasMap()) return *_map;
+    /// @throw MissingMapError  Attempted with no map attributed.
+    throw MissingMapError("MapLink::map", "No map is attributed");
+}
+
+Map *MapLink::mapPtr() const
+{
+    return hasMap() ? &map() : nullptr;
+}
+
+void MapLink::setMap(Map *newMap)
+{
+    _map = newMap;
+}
+
+//---------------------------------------------------------------------------------------
+
+MapElement::MapElement(dint dmuType, Map *map)
+    : DmuObject(dmuType)
+    , MapLink(map)
+{}
+
+}  // namespace world
+
+//---------------------------------------------------------------------------------------
+
+namespace de {
+
+DENG2_PIMPL_NOREF(DmuObject)
 {
     dint type;
-    MapElement *parent  = nullptr;
-    Map *map            = nullptr;
-    dint indexInMap     = NoIndex;
+    DmuObject *parent = nullptr;
+
+    dint indexInMap = NoIndex;
     dint indexInArchive = NoIndex;
 
     Instance(dint type) : type(type) {}
 };
 
-MapElement::MapElement(dint type, MapElement *parent)
+DmuObject::DmuObject(dint type, dint indexInMap)
     : d(new Instance(type))
 {
-    setParent(parent);
+    setIndexInMap(indexInMap);
 }
 
-MapElement::~MapElement()
-{}
-
-dint MapElement::type() const
+dint DmuObject::type() const
 {
     return d->type;
 }
 
-bool MapElement::hasParent() const
+String DmuObject::describe() const
+{
+    return "abstract DmuObject";
+}
+
+String DmuObject::description(dint /*verbosity*/) const
+{
+    String desc = describe();
+    if(indexInMap() != NoIndex)
+    {
+        desc += String(" #%1").arg(indexInMap());
+    }
+    return desc;
+}
+
+bool DmuObject::hasParent() const
 {
     return d->parent != nullptr;
 }
 
-MapElement &MapElement::parent()
+DmuObject &DmuObject::parent()
 {
-    return const_cast<MapElement &>(const_cast<MapElement const *>(this)->parent());
+    return const_cast<DmuObject &>(const_cast<DmuObject const *>(this)->parent());
 }
 
-MapElement const &MapElement::parent() const
+DmuObject const &DmuObject::parent() const
 {
     if(d->parent) return *d->parent;
     /// @throw MissingParentError  Attempted with no parent element is attributed.
-    throw MissingParentError("MapElement::parent", "No parent map element is attributed");
+    throw MissingParentError("DmuObject::parent", "No parent map element is attributed");
 }
 
-void MapElement::setParent(MapElement *newParent)
+void DmuObject::setParent(DmuObject *newParent)
 {
     if(newParent == this)
     {
         /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
-        throw InvalidParentError("MapElement::setParent", "Cannot attribute 'this' map element as a parent of itself");
+        throw InvalidParentError("DmuObject::setParent", "Cannot attribute 'this' map element as a parent of itself");
     }
     d->parent = newParent;
 }
 
-bool MapElement::hasMap() const
-{
-    // If a parent is configured this property is delegated to the parent.
-    if(d->parent)
-    {
-        return d->parent->hasMap();
-    }
-    return d->map != nullptr;
-}
-
-Map &MapElement::map() const
-{
-    // If a parent is configured this property is delegated to the parent.
-    if(d->parent)
-    {
-        return d->parent->map();
-    }
-    if(d->map)
-    {
-        return *d->map;
-    }
-    /// @throw MissingMapError  Attempted with no map attributed.
-    throw MissingMapError("MapElement::map", "No map is attributed");
-}
-
-void MapElement::setMap(Map *newMap)
-{
-    // If a parent is configured this property is delegated to the parent.
-    if(!d->parent)
-    {
-        d->map = newMap;
-        return;
-    }
-    /// @throw WritePropertyError  Attempted to change a delegated property.
-    throw WritePropertyError("MapElement::setMap", "The 'map' property has been delegated");
-}
-
-dint MapElement::indexInMap() const
+dint DmuObject::indexInMap() const
 {
     return d->indexInMap;
 }
 
-void MapElement::setIndexInMap(dint newIndex)
+void DmuObject::setIndexInMap(dint newIndex)
 {
     d->indexInMap = newIndex;
 }
 
-dint MapElement::indexInArchive() const
+dint DmuObject::indexInArchive() const
 {
     return d->indexInArchive;
 }
 
-void MapElement::setIndexInArchive(dint newIndex)
+void DmuObject::setIndexInArchive(dint newIndex)
 {
     d->indexInArchive = newIndex;
 }
 
-dint MapElement::property(DmuArgs &args) const
+dint DmuObject::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -153,11 +168,11 @@ dint MapElement::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint MapElement::setProperty(DmuArgs const &args)
+dint DmuObject::setProperty(DmuArgs const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(d->type)),
                              QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
 }
 
-}  // namespace world
+}  // namespace de

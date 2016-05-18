@@ -233,14 +233,14 @@ public:
     void setSequenceType(de::dint newType);
 
     /**
-     * Returns the original index of the polyobj.
+     * Returns the index of the polyobj.
      */
     de::dint indexInMap() const;
 
     /**
-     * Change the original index of the polyobj.
+     * Change the index of the polyobj.
      *
-     * @param newIndex  New original index.
+     * @param newIndex  New index.
      */
     void setIndexInMap(de::dint newIndex);
 

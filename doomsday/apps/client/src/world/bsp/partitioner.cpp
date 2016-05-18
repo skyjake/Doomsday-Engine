@@ -655,10 +655,10 @@ DENG2_PIMPL(Partitioner)
                 if(!cur.lineSegmentIsSelfReferencing() &&
                    !next.lineSegmentIsSelfReferencing())
                 {
-                    LOG_DEBUG("Sector mismatch #%d %s != #%d %s")
-                            << cur.after()->indexInMap()
+                    LOG_DEBUG("Mismatched cur(%s at %s) != next(%s at %s)")
+                            << cur.after()->describe()
                             << cur.vertex().origin().asText()
-                            << next.before()->indexInMap()
+                            << next.before()->describe()
                             << next.vertex().origin().asText();
                 }
 
@@ -1089,11 +1089,12 @@ DENG2_PIMPL(Partitioner)
     {
         for(LineSegmentSide const *seg : allSegs)
         {
-            LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
-                    << (seg->hasMapSide()? "map" : "part")
+            LOG_DEBUG("Built: %s line segment %p (%s) %s -> %s")
+                    << (seg->hasMapSide() ? "map" : "part")
                     << seg
-                    << (seg->hasSector()? seg->sector().indexInMap() : -1)
-                    << seg->from().origin().asText() << seg->to().origin().asText();
+                    << (seg->hasSector() ? seg->sector().describe() : "None")
+                    << seg->from().origin().asText()
+                    << seg->to().origin().asText();
         }
     }
 #endif

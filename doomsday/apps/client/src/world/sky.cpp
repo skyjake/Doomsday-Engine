@@ -317,10 +317,15 @@ DENG2_AUDIENCE_METHOD(Sky, HeightChange)
 DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
 Sky::Sky(defn::Sky const *definition)
-    : MapElement(DMU_SKY)
+    : DmuObject(DMU_SKY)
     , d(new Instance(this))
 {
     configure(definition);
+}
+
+String Sky::describe() const
+{
+    return "Sky";
 }
 
 void Sky::configure(defn::Sky const *def)
@@ -439,7 +444,7 @@ dint Sky::property(DmuArgs &args) const
         args.setValue(DDVT_FLOAT, &d->horizonOffset, 0);
         break;*/
 
-    default: return MapElement::property(args);
+    default: return DmuObject::property(args);
     }
 
     return false; // Continue iteration.
@@ -476,7 +481,7 @@ dint Sky::setProperty(DmuArgs const &args)
         setHorizonOffset(newOffset);
         break; }*/
 
-    default: return MapElement::setProperty(args);
+    default: return DmuObject::setProperty(args);
     }
 
     return false; // Continue iteration.

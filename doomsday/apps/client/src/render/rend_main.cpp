@@ -2028,7 +2028,7 @@ static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
     if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
     // Must be a plane then.
     auto const &plane = surface.parent().as<Plane>();
-    return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
+    return plane.isSectorFloor() ? Lumobj::Down : Lumobj::Up;
 }
 
 static DGLuint prepareLightmap(Texture *tex = nullptr)
@@ -5561,26 +5561,27 @@ static void drawLumobjs(Map &map)
     GLState::current().setDepthTest(true).apply();
 }
 
-static String labelForLineSideSection(LineSide &side, dint sectionId)
+static String labelForLineSideSection(LineSide const &side, dint sectionId)
 {
-    return String("Line #%1 (%2, %3)")
-               .arg(side.line().indexInMap())
-               .arg(side.isFront() ? "front" : "back")
-               .arg(  sectionId == LineSide::Middle ? "middle"
-                    : sectionId == LineSide::Bottom ? "bottom"
-                                                    : "top");
+    //return String("Line #%1 (%2, %3)")
+    //           .arg(side.line().index())
+    //           .arg(side.isFront() ? "front" : "back")
+    //           .arg(side.sectionAsText(sectionId));
+    return side.describe();
 }
 
-static String labelForSector(Sector &sector)
+static String labelForSector(Sector const &sector)
 {
-    return String("Sector #%1").arg(sector.indexInMap());
+    //return String("Sector #%1").arg(sector.index());
+    return sector.description();
 }
 
-static String labelForSectorPlane(Plane &plane)
+static String labelForPlane(Plane const &plane)
 {
-    return String("Sector #%1 (pln:%2)")
-               .arg(plane.sector().indexInMap())
-               .arg(plane.indexInSector());
+    //return String("Sector #%1 (pln:%2)")
+    //           .arg(plane.sector().index())
+    //           .arg(plane.indexInSector());
+    return plane.description();
 }
 
 /**
@@ -5630,7 +5631,7 @@ static void drawSoundEmitters(Map &map)
             {
                 sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawLabel(labelForSectorPlane(plane)
+                    drawLabel(labelForPlane(plane)
                               , Vector3d(plane.soundEmitter().origin), MAX_DISTANCE);
                     return LoopContinue;
                 });
@@ -5726,10 +5727,10 @@ static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
     glEnd();
 }
 
-static String labelForVertex(Vertex const *vtx)
+static String labelForVertex(Vertex const &vtx)
 {
-    DENG2_ASSERT(vtx);
-    return String("%1").arg(vtx->indexInMap());
+    //return String("%1").arg(vtx.index());
+    return vtx.description();
 }
 
 struct drawvertexvisual_parameters_t
@@ -5748,7 +5749,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
         return;
 
     // Skip vertexes produced by the space partitioner.
-    if(vertex.indexInArchive() == MapElement::NoIndex)
+    if(vertex.indexInArchive() == DmuObject::NoIndex)
         return;
 
     // Skip already processed verts?
@@ -5780,7 +5781,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
         GLState::current().setDepthTest(false).apply();
         glEnable(GL_TEXTURE_2D);
 
-        drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
+        drawLabel(labelForVertex(vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
 
         GLState::current().setDepthTest(true).apply();
         glDisable(GL_TEXTURE_2D);
@@ -5989,7 +5990,8 @@ static void drawVertexes(Map &map)
 
 static String labelForCluster(SectorCluster const &cluster)
 {
-    return String::number(cluster.sector().indexInMap());
+    //return String::number(cluster.sector().index());
+    return cluster.sector().description();
 }
 
 /**
@@ -6026,10 +6028,9 @@ static void drawSectors(Map &map)
     glDisable(GL_TEXTURE_2D);
 }
 
-static String labelForThinker(thinker_t *thinker)
+static String labelForThinker(thinker_t const &thinker)
 {
-    DENG2_ASSERT(thinker);
-    return String("%1").arg(thinker->id);
+    return String("%1").arg(thinker.id);
 }
 
 /**
@@ -6058,7 +6059,7 @@ static void drawThinkers(Map &map)
             ddouble const distToEye = (eyeOrigin - origin).length();
             if(distToEye < MAX_THINKER_DIST)
             {
-                drawLabel(labelForThinker(th), origin,  distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                drawLabel(labelForThinker(*th), origin,  distToEye / (DENG_GAMEVIEW_WIDTH / 2)
                           , 1 - distToEye / MAX_THINKER_DIST);
             }
         }

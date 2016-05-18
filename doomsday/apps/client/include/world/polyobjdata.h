@@ -57,8 +57,8 @@ public:
 #endif
 
 public:
-    de::dint indexInMap = world::MapElement::NoIndex;
-    de::duint origIndex = world::MapElement::NoIndex;
+    de::dint indexInMap = de::DmuObject::NoIndex;
+    de::duint indexInArchive = de::DmuObject::NoIndex;
 
     de::Mesh *mesh = nullptr;
     QList<Line *> lines;

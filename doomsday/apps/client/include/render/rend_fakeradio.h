@@ -45,10 +45,10 @@ class Plane;
  */
 struct shadowcorner_t
 {
-    de::dfloat corner;
-    Plane *proximity;
-    de::dfloat pOffset;
-    de::dfloat pHeight;
+    de::dfloat corner  = 0;
+    Plane *proximity   = nullptr;
+    de::dfloat pOffset = 0;
+    de::dfloat pHeight = 0;
 };
 
 /**
@@ -57,8 +57,8 @@ struct shadowcorner_t
  */
 struct edgespan_t
 {
-    de::dfloat length;
-    de::dfloat shift;
+    de::dfloat length = 0;
+    de::dfloat shift  = 0;
 };
 
 DENG2_EXTERN_C de::dint rendFakeRadio;

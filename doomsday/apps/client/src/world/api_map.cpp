@@ -52,9 +52,9 @@
 using namespace de;
 using namespace world;
 
-// Converting a public void* pointer to an internal world::MapElement.
-#define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
-#define IN_ELEM_CONST(p)    reinterpret_cast<MapElement const *>(p)
+// Converting a public void* pointer to an internal de::DmuObject.
+#define IN_ELEM(p)          reinterpret_cast<DmuObject *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<DmuObject const *>(p)
 
 /**
  * Additional data for all dummy elements.
@@ -75,7 +75,7 @@ public:
     DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
 };
 
-typedef QSet<MapElement *> Dummies;
+typedef QSet<DmuObject *> Dummies;
 
 static Dummies dummies;
 static Mesh dummyMesh;
@@ -171,7 +171,7 @@ int DMU_GetType(void const *ptr)
 {
     if(!ptr) return DMU_NONE;
 
-    MapElement const *elem = IN_ELEM_CONST(ptr);
+    DmuObject const *elem = IN_ELEM_CONST(ptr);
 
     // Make sure it's valid.
     switch(elem->type())
@@ -208,7 +208,7 @@ void Map::initDummies() // static
  */
 static int dummyType(void const *dummy)
 {
-    MapElement const *elem = IN_ELEM_CONST(dummy);
+    DmuObject const *elem = IN_ELEM_CONST(dummy);
 
     if(!dynamic_cast<DummyData const *>(elem))
     {
@@ -216,7 +216,7 @@ static int dummyType(void const *dummy)
         return DMU_NONE;
     }
 
-    DENG2_ASSERT(dummies.contains(const_cast<MapElement *>(elem)));
+    DENG2_ASSERT(dummies.contains(const_cast<DmuObject *>(elem)));
 
     return elem->type();
 }
@@ -232,13 +232,13 @@ void *P_AllocDummy(int type, void *extraData)
             dummyMesh.newVertex();
         Vertex &dummyVertex = *dummyMesh.vertexs().first();
 
-        DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
+        auto *dl = new DummyLine(dummyVertex, dummyVertex);
         dummies.insert(dl);
         dl->extraData = extraData;
         return dl; }
 
     case DMU_SECTOR: {
-        DummySector *ds = new DummySector;
+        auto *ds = new DummySector;
         dummies.insert(ds);
         ds->extraData = extraData;
         return ds; }
@@ -262,7 +262,7 @@ dd_bool P_IsDummy(void const *dummy)
 #undef P_FreeDummy
 void P_FreeDummy(void *dummy)
 {
-    MapElement *elem = IN_ELEM(dummy);
+    DmuObject *elem = IN_ELEM(dummy);
 
     int type = dummyType(dummy);
     if(type == DMU_NONE)
@@ -282,7 +282,7 @@ void *P_DummyExtraData(void *dummy)
 {
     if(P_IsDummy(dummy))
     {
-        MapElement *elem = IN_ELEM(dummy);
+        DmuObject *elem = IN_ELEM(dummy);
         return elem->maybeAs<DummyData>()->extraData;
     }
     return 0;
@@ -294,7 +294,7 @@ int P_ToIndex(void const *ptr)
     if(!ptr) return -1;
     if(P_IsDummy(ptr)) return -1;
 
-    MapElement const *elem = IN_ELEM_CONST(ptr);
+    DmuObject const *elem = IN_ELEM_CONST(ptr);
 
     switch(elem->type())
     {
@@ -386,12 +386,12 @@ int P_Count(int type)
 #undef P_Iteratep
 int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), void *context)
 {
-    MapElement *elem = IN_ELEM(elPtr);
+    DmuObject *elem = IN_ELEM(elPtr);
 
     switch(elem->type())
     {
     case DMU_SECTOR: {
-        Sector &sector = elem->as<Sector>();
+        auto &sector = elem->as<Sector>();
         switch(prop)
         {
         case DMU_LINE:
@@ -415,14 +415,14 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         switch(prop)
         {
         case DMU_LINE: {
-            ConvexSubspace &subspace = elem->as<ConvexSubspace>();
-            HEdge *base  = subspace.poly().hedge();
-            HEdge *hedge = base;
+            auto &subspace = elem->as<ConvexSubspace>();
+            HEdge *base    = subspace.poly().hedge();
+            HEdge *hedge   = base;
             do
             {
                 if(hedge->hasMapElement())
                 {
-                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                    if(dint result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
                         return result;
                 }
             } while((hedge = &hedge->next()) != base);
@@ -435,7 +435,7 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                     if(!hedge->hasMapElement())
                         continue;
 
-                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                    if(dint result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
                         return LoopResult( result );
                 }
                 return LoopResult(); // continue
@@ -533,7 +533,7 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
 #undef P_Callbackp
 int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void *context)
 {
-    MapElement *elem = IN_ELEM(elPtr);
+    DmuObject *elem = IN_ELEM(elPtr);
 
     LOG_AS("P_Callbackp");
 
@@ -578,7 +578,7 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static void setProperty(MapElement *elem, DmuArgs &args)
+static void setProperty(DmuObject *elem, DmuArgs &args)
 {
     DENG_ASSERT(elem != 0);
 
@@ -680,11 +680,11 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     }
 
     // Write the property value(s).
-    /// @throws MapElement::WritePropertyError  If the requested property is not writable.
+    /// @throws DmuObject::WritePropertyError  If the requested property is not writable.
     elem->setProperty(args);
 }
 
-static void getProperty(MapElement const *elem, DmuArgs &args)
+static void getProperty(DmuObject const *elem, DmuArgs &args)
 {
     DENG_ASSERT(elem != 0);
 
@@ -772,7 +772,7 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
     }
 
     // Read the property value(s).
-    /// @throws MapElement::UnknownPropertyError  If the requested property is not readable.
+    /// @throws DmuObject::UnknownPropertyError  If the requested property is not readable.
     elem->property(args);
 
     // Currently no aggregate values are collected.

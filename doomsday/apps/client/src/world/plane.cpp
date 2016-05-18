@@ -61,7 +61,7 @@ DENG2_PIMPL(Plane)
 
     Instance(Public *i)
         : Base(i)
-        , surface(dynamic_cast<MapElement &>(*i))
+        , surface(dynamic_cast<DmuObject &>(*i))
     {}
 
     ~Instance()
@@ -160,14 +160,15 @@ DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 #endif
 
 Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
-    : MapElement(DMU_PLANE, &sector)
+    : MapElement(DMU_PLANE)
     , d(new Instance(this))
 {
+    setParent(&sector);
     d->setHeight(height);
     setNormal(normal);
 }
 
-String Plane::description() const
+String Plane::describe() const
 {
     String const name =   isSectorFloor()   ? "Floor"
                         : isSectorCeiling() ? "Ceiling"
@@ -443,7 +444,7 @@ dint Plane::property(DmuArgs &args) const
         args.setValue(DMT_PLANE_SPEED, &d->speed, 0);
         break;
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
 
     return false;  // Continue iteration.
@@ -465,7 +466,7 @@ dint Plane::setProperty(DmuArgs const &args)
         args.value(DMT_PLANE_SPEED, &d->speed, 0);
         break;
     default:
-        return MapElement::setProperty(args);
+        return DmuObject::setProperty(args);
     }
 
     return false;  // Continue iteration.

@@ -304,17 +304,14 @@ DENG2_PIMPL(Map)
 
     std::unique_ptr<SurfaceDecorator> decorator;
 
-    coord_t skyFloorHeight   = DDMAXFLOAT;
-    coord_t skyCeilingHeight = DDMINFLOAT;
+    ddouble skyFloorHeight   = DDMAXFLOAT;
+    ddouble skyCeilingHeight = DDMINFLOAT;
 
     ClMobjHash clMobjHash;
 #endif
 
     Instance(Public *i) : Base(i)
-    {
-        sky.setMap(thisPublic);
-        sky.setIndexInMap(0);
-    }
+    {}
 
     ~Instance()
     {

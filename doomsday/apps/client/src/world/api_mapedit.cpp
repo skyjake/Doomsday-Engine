@@ -221,7 +221,7 @@ dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, i
         return false;
 
     // Create many vertexes.
-    for(int n = 0; n < num; ++n)
+    for(dint n = 0; n < num; ++n)
     {
         Vertex *vertex = editMap->createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
                                                archiveIndices[n]);

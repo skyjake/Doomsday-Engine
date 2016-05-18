@@ -314,7 +314,7 @@ DENG2_AUDIENCE_METHOD(Material, Deletion)
 DENG2_AUDIENCE_METHOD(Material, DimensionsChange)
 
 Material::Material(MaterialManifest &manifest)
-    : MapElement(DMU_MATERIAL)
+    : DmuObject(DMU_MATERIAL)
     , d(new Instance(this))
 {
     d->manifest = &manifest;
@@ -565,7 +565,7 @@ int Material::property(DmuArgs &args) const
         break; }
 
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
     return false; // Continue iteration.
 }

@@ -20,6 +20,7 @@
 
 #include "world/line.h"
 
+#include <array>
 #include <QList>
 #include <QMap>
 #include <QtAlgorithms>
@@ -68,10 +69,26 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
 };
 
 Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
-    : MapElement(DMU_SEGMENT, &lineSide)
+    : MapElement(DMU_SEGMENT)
     , d(new Instance)
 {
+    setParent(&lineSide);
     d->hedge = &hedge;
+}
+
+String Line::Side::Segment::describe() const
+{
+    return "Segment";
+}
+
+Line::Side &Line::Side::Segment::lineSide()
+{
+    return parent().as<Side>();
+}
+
+Line::Side const &Line::Side::Segment::lineSide() const
+{
+    return parent().as<Side>();
 }
 
 HEdge &Line::Side::Segment::hedge() const
@@ -119,14 +136,17 @@ DENG2_PIMPL_NOREF(Line::Side)
 , DENG2_OBSERVES(Line, FlagsChange)
 #endif
 {
-    dint flags = 0;                 ///< @ref sdefFlags
-    Sector *sector = nullptr;       ///< Attributed sector (not owned).
+    dint flags = 0;             ///< @ref sdefFlags
+    Sector *sector = nullptr;   ///< Attributed sector (not owned).
 
-    typedef QList<Segment *> Segments;
-    Segments segments;              ///< On "this" side, sorted.
+    /**
+     * Segments of the line on "this" side, owned.
+     */
+    struct Segments : public QList<Segment *>
+    {
+        ~Segments() { qDeleteAll(*this); }
+    } segments;
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
-
-    dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
 
     /**
      * Line side section of which there are three (middle, bottom and top).
@@ -138,7 +158,6 @@ DENG2_PIMPL_NOREF(Line::Side)
 
         Section(Line::Side &side) : surface(side) {}
     };
-
     struct Sections
     {
         Section middle;
@@ -156,22 +175,14 @@ DENG2_PIMPL_NOREF(Line::Side)
     struct RadioData
     {
         de::dint updateFrame = 0;
-        edgespan_t spans[2];              ///< { bottom, top }
-        shadowcorner_t topCorners[2];     ///< { left, right }
-        shadowcorner_t bottomCorners[2];  ///< { left, right }
-        shadowcorner_t sideCorners[2];    ///< { left, right }
-
-        RadioData()
-        {
-            de::zap(spans);
-            de::zap(topCorners);
-            de::zap(bottomCorners);
-            de::zap(sideCorners);
-        }
+        std::array<edgespan_t,     2> spans;          ///< { bottom, top }
+        std::array<shadowcorner_t, 2> topCorners;     ///< { left, right }
+        std::array<shadowcorner_t, 2> bottomCorners;  ///< { left, right }
+        std::array<shadowcorner_t, 2> sideCorners;    ///< { left, right }
     } radioData;
-#endif
 
-    ~Instance() { qDeleteAll(segments); }
+    dint shadowVisCount = 0;    ///< Framecount of last time shadows were drawn.
+#endif
 
     /**
      * Retrieve the Section associated with @a sectionId.
@@ -204,7 +215,7 @@ DENG2_PIMPL_NOREF(Line::Side)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
         }
-        segments = sortedSegs.values();
+        segments.swap(sortedSegs.values());
     }
 
 #ifdef __CLIENT__
@@ -275,16 +286,24 @@ DENG2_PIMPL_NOREF(Line::Side)
 };
 
 Line::Side::Side(Line &line, Sector *sector)
-    : MapElement(DMU_SIDE, &line)
+    : MapElement(DMU_SIDE)
     , d(new Instance)
 {
+    setParent(&line);
     d->sector = sector;
 #ifdef __CLIENT__
     line.audienceForFlagsChange += d;
 #endif
 }
 
-String Line::Side::description() const
+String Line::Side::sectionIdAsText(dint sectionId)  //static
+{
+    return   sectionId == Middle ? "middle"
+           : sectionId == Bottom ? "bottom"
+           : "top";
+}
+
+String Line::Side::describe() const
 {
     String const name = (isFront() ? "Front" : "Back");
 
@@ -302,7 +321,7 @@ String Line::Side::description() const
         flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
     }
 
-    auto text = String(_E(D)_E(b) "%1:\n"  _E(.)_E(.)
+    auto desc = String(_E(D)_E(b) "%1:\n"  _E(.)_E(.)
                        _E(l)  "Sector: "    _E(.)_E(i) "%2" _E(.)
                        _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
                        "%4")
@@ -310,17 +329,27 @@ String Line::Side::description() const
                     .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
                     .arg(DENG2_BOOL_YESNO(considerOneSided()))
                     .arg(flagsString);
-    forAllSurfaces([this, &text] (Surface &suf)
+    forAllSurfaces([this, &desc] (Surface &suf)
     {
         String const name =   &suf == &top   () ? "Top"
                             : &suf == &middle() ? "Middle"
                                                 : "Bottom";
-        text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
+        desc += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
                 + suf.description();
         return LoopContinue;
     });
 
-    return text;
+    return desc;
+}
+
+Line &Line::Side::line()
+{
+    return parent().as<Line>();
+}
+
+Line const &Line::Side::line() const
+{
+    return parent().as<Line>();
 }
 
 dint Line::Side::sideId() const
@@ -427,7 +456,7 @@ Line::Side::Segment *Line::Side::addSegment(HEdge &hedge)
     }
 
     // No, insert a new one.
-    Segment *newSeg = new Segment(*this, hedge);
+    auto *newSeg = new Segment(*this, hedge);
     d->segments.append(newSeg);
     d->needSortSegments = true;  // We'll need to (re)sort.
 
@@ -537,6 +566,8 @@ void Line::Side::chooseSurfaceColors(dint sectionId, Vector3f const **topColor,
     throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceColors", "Invalid section id " + String::number(sectionId));
 }
 
+#ifdef __CLIENT__
+
 dint Line::Side::shadowVisCount() const
 {
     return d->shadowVisCount;
@@ -546,8 +577,6 @@ void Line::Side::setShadowVisCount(dint newCount)
 {
     d->shadowVisCount = newCount;
 }
-
-#ifdef __CLIENT__
 
 static bool materialHasAnimatedTextureLayers(Material const &mat)
 {
@@ -1055,7 +1084,7 @@ dint Line::Side::property(DmuArgs &args) const
         args.setValue(DMT_SIDE_FLAGS, &d->flags, 0);
         break;
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
     return false; // Continue iteration.
 }
@@ -1083,7 +1112,7 @@ dint Line::Side::setProperty(DmuArgs const &args)
         break; }
 
     default:
-        return MapElement::setProperty(args);
+        return DmuObject::setProperty(args);
     }
     return false; // Continue iteration.
 }
@@ -1138,6 +1167,16 @@ Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *ba
     , d(new Instance(this, from, to, flags, frontSector, backSector))
 {
     updateAABox();
+}
+
+String Line::faceIdAsText(dint faceId)  //static
+{
+    return (faceId == Front ? "front" : "back");
+}
+
+String Line::describe() const
+{
+    return "Line";
 }
 
 dint Line::flags() const
@@ -1424,7 +1463,7 @@ dint Line::property(DmuArgs &args) const
         args.setValue(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     default:
-        return MapElement::property(args);
+        return DmuObject::property(args);
     }
 
     return false; // Continue iteration.
@@ -1444,7 +1483,7 @@ dint Line::setProperty(DmuArgs const &args)
         break; }
 
     default:
-        return MapElement::setProperty(args);
+        return DmuObject::setProperty(args);
     }
 
     return false; // Continue iteration.

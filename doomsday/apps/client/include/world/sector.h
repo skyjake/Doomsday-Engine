@@ -30,7 +30,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Line"
 #include "Plane"
 
@@ -70,6 +70,8 @@ public:
      */
     Sector(de::dfloat lightLevel          = 1,
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
+
+    de::String describe() const override;
 
     /**
      * Returns the axis-aligned bounding box which encompases the geometry of all BSP leafs

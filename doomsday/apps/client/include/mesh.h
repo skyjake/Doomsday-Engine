@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "MapElement"
+#include "world/mapelement.h"
 
 class Vertex;
 
@@ -97,8 +97,8 @@ public:
         /**
          * Change the map element to which the mesh element is attributed.
          *
-         * @param newMapElement  MapElement to attribute to the mesh element. Ownership is
-         *                       unaffected. Use @c nullptr (to clear the attribution).
+         * @param newMapElement  MapElement to attribute to the mesh element. Ownership
+         * is unaffected. Use @c nullptr (to clear the attribution).
          *
          * @see mapElement()
          */

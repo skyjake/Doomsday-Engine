@@ -46,7 +46,7 @@ thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating)
     thinker_s *ptr = th.take();
     polyobj.map().thinkers().add(*ptr, false /*not public*/);
 
-    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
+    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i")
             << ptr
             << polyobj.indexInMap();
 

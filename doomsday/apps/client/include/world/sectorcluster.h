@@ -34,7 +34,7 @@
 #ifdef __CLIENT__
 #  include "world/audioenvironment.h"
 #endif
-#include "MapElement"
+#include "world/mapelement.h"
 #include "Line"
 #include "Plane"
 #include "Sector"
