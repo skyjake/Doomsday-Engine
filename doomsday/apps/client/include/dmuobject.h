@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_DMU_H
-#define DOOMSDAY_API_DMU_H
+#ifndef DOOMSDAY_API_DMUOBJECT_H
+#define DOOMSDAY_API_DMUOBJECT_H
 
 #include "dd_share.h"
 #include <de/Error>
@@ -203,4 +203,4 @@ private:
 
 }  // namespace de
 
-#endif  // DOOMSDAY_API_DMU_H
+#endif  // DOOMSDAY_API_DMUOBJECT_H
