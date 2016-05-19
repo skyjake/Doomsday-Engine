@@ -32,50 +32,6 @@
 #include <de/str.h>
 #include <doomsday/world/thinker.h>
 
-#if defined __cplusplus
-
-namespace de {
-
-/**
- * Encapsulates the arguments used when routing DMU API calls to map elements.
- */
-class DmuArgs
-{
-public: /// @todo make private
-    int type;
-    uint prop;
-    int modifiers; /// Property modifiers (e.g., line of sector)
-    valuetype_t valueType;
-    dd_bool *booleanValues;
-    byte *byteValues;
-    int *intValues;
-    fixed_t *fixedValues;
-    float *floatValues;
-    double *doubleValues;
-    angle_t *angleValues;
-    void **ptrValues;
-
-    DmuArgs(int type, uint prop);
-
-    /**
-     * Read the value of an argument. Does some basic type checking so that
-     * incompatible types are not assigned. Simple conversions are also done,
-     * e.g., float to fixed.
-     */
-    void value(valuetype_t valueType, void *dst, uint index) const;
-
-    /**
-     * Change the value of an argument. Does some basic type checking so that
-     * incompatible types are not assigned. Simple conversions are also done,
-     * e.g., float to fixed.
-     */
-    void setValue(valuetype_t valueType, void const *src, uint index);
-};
-
-}  // namespace de
-
-#endif  // __cplusplus
-
 #define DMT_ARCHIVE_INDEX DDVT_INT
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE

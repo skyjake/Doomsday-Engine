@@ -578,7 +578,7 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static void setProperty(DmuObject *elem, DmuArgs &args)
+static void setProperty(DmuObject *elem, DmuObject::Args &args)
 {
     DENG_ASSERT(elem != 0);
 
@@ -684,7 +684,7 @@ static void setProperty(DmuObject *elem, DmuArgs &args)
     elem->setProperty(args);
 }
 
-static void getProperty(DmuObject const *elem, DmuArgs &args)
+static void getProperty(DmuObject const *elem, DmuObject::Args &args)
 {
     DENG_ASSERT(elem != 0);
 
@@ -780,14 +780,14 @@ static void getProperty(DmuObject const *elem, DmuArgs &args)
 
 static int setPropertyWorker(void *elPtr, void *context)
 {
-    setProperty(IN_ELEM(elPtr), *reinterpret_cast<DmuArgs *>(context));
+    setProperty(IN_ELEM(elPtr), *reinterpret_cast<DmuObject::Args *>(context));
     return false; // Continue iteration.
 }
 
 #undef P_SetBool
 void P_SetBool(int type, int index, uint prop, dd_bool param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BOOL;
     // Make sure invalid values are not allowed.
     param = (param? true : false);
@@ -798,7 +798,7 @@ void P_SetBool(int type, int index, uint prop, dd_bool param)
 #undef P_SetByte
 void P_SetByte(int type, int index, uint prop, byte param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -807,7 +807,7 @@ void P_SetByte(int type, int index, uint prop, byte param)
 #undef P_SetInt
 void P_SetInt(int type, int index, uint prop, int param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -816,7 +816,7 @@ void P_SetInt(int type, int index, uint prop, int param)
 #undef P_SetFixed
 void P_SetFixed(int type, int index, uint prop, fixed_t param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -825,7 +825,7 @@ void P_SetFixed(int type, int index, uint prop, fixed_t param)
 #undef P_SetAngle
 void P_SetAngle(int type, int index, uint prop, angle_t param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -834,7 +834,7 @@ void P_SetAngle(int type, int index, uint prop, angle_t param)
 #undef P_SetFloat
 void P_SetFloat(int type, int index, uint prop, float param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -843,7 +843,7 @@ void P_SetFloat(int type, int index, uint prop, float param)
 #undef P_SetDouble
 void P_SetDouble(int type, int index, uint prop, double param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -852,7 +852,7 @@ void P_SetDouble(int type, int index, uint prop, double param)
 #undef P_SetPtr
 void P_SetPtr(int type, int index, uint prop, void *param)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -861,7 +861,7 @@ void P_SetPtr(int type, int index, uint prop, void *param)
 #undef P_SetBoolv
 void P_SetBoolv(int type, int index, uint prop, dd_bool *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -870,7 +870,7 @@ void P_SetBoolv(int type, int index, uint prop, dd_bool *params)
 #undef P_SetBytev
 void P_SetBytev(int type, int index, uint prop, byte *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -879,7 +879,7 @@ void P_SetBytev(int type, int index, uint prop, byte *params)
 #undef P_SetIntv
 void P_SetIntv(int type, int index, uint prop, int *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -888,7 +888,7 @@ void P_SetIntv(int type, int index, uint prop, int *params)
 #undef P_SetFixedv
 void P_SetFixedv(int type, int index, uint prop, fixed_t *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -897,7 +897,7 @@ void P_SetFixedv(int type, int index, uint prop, fixed_t *params)
 #undef P_SetAnglev
 void P_SetAnglev(int type, int index, uint prop, angle_t *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -906,7 +906,7 @@ void P_SetAnglev(int type, int index, uint prop, angle_t *params)
 #undef P_SetFloatv
 void P_SetFloatv(int type, int index, uint prop, float *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -915,7 +915,7 @@ void P_SetFloatv(int type, int index, uint prop, float *params)
 #undef P_SetDoublev
 void P_SetDoublev(int type, int index, uint prop, double *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -924,7 +924,7 @@ void P_SetDoublev(int type, int index, uint prop, double *params)
 #undef P_SetPtrv
 void P_SetPtrv(int type, int index, uint prop, void *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
     P_Callback(type, index, setPropertyWorker, &args);
@@ -935,7 +935,7 @@ void P_SetPtrv(int type, int index, uint prop, void *params)
 #undef P_SetBoolp
 void P_SetBoolp(void *ptr, uint prop, dd_bool param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     // Make sure invalid values are not allowed.
     param = (param? true : false);
@@ -946,7 +946,7 @@ void P_SetBoolp(void *ptr, uint prop, dd_bool param)
 #undef P_SetBytep
 void P_SetBytep(void *ptr, uint prop, byte param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -955,7 +955,7 @@ void P_SetBytep(void *ptr, uint prop, byte param)
 #undef P_SetIntp
 void P_SetIntp(void *ptr, uint prop, int param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -964,7 +964,7 @@ void P_SetIntp(void *ptr, uint prop, int param)
 #undef P_SetFixedp
 void P_SetFixedp(void *ptr, uint prop, fixed_t param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -973,7 +973,7 @@ void P_SetFixedp(void *ptr, uint prop, fixed_t param)
 #undef P_SetAnglep
 void P_SetAnglep(void *ptr, uint prop, angle_t param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -982,7 +982,7 @@ void P_SetAnglep(void *ptr, uint prop, angle_t param)
 #undef P_SetFloatp
 void P_SetFloatp(void *ptr, uint prop, float param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -991,7 +991,7 @@ void P_SetFloatp(void *ptr, uint prop, float param)
 #undef P_SetDoublep
 void P_SetDoublep(void *ptr, uint prop, double param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1000,7 +1000,7 @@ void P_SetDoublep(void *ptr, uint prop, double param)
 #undef P_SetPtrp
 void P_SetPtrp(void *ptr, uint prop, void *param)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &param;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1009,7 +1009,7 @@ void P_SetPtrp(void *ptr, uint prop, void *param)
 #undef P_SetBoolpv
 void P_SetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1018,7 +1018,7 @@ void P_SetBoolpv(void *ptr, uint prop, dd_bool *params)
 #undef P_SetBytepv
 void P_SetBytepv(void *ptr, uint prop, byte *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1027,7 +1027,7 @@ void P_SetBytepv(void *ptr, uint prop, byte *params)
 #undef P_SetIntpv
 void P_SetIntpv(void *ptr, uint prop, int *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1036,7 +1036,7 @@ void P_SetIntpv(void *ptr, uint prop, int *params)
 #undef P_SetFixedpv
 void P_SetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1045,7 +1045,7 @@ void P_SetFixedpv(void *ptr, uint prop, fixed_t *params)
 #undef P_SetAnglepv
 void P_SetAnglepv(void *ptr, uint prop, angle_t *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1054,7 +1054,7 @@ void P_SetAnglepv(void *ptr, uint prop, angle_t *params)
 #undef P_SetFloatpv
 void P_SetFloatpv(void *ptr, uint prop, float *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1063,7 +1063,7 @@ void P_SetFloatpv(void *ptr, uint prop, float *params)
 #undef P_SetDoublepv
 void P_SetDoublepv(void *ptr, uint prop, double *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1072,7 +1072,7 @@ void P_SetDoublepv(void *ptr, uint prop, double *params)
 #undef P_SetPtrpv
 void P_SetPtrpv(void *ptr, uint prop, void *params)
 {
-    DmuArgs args(DMU_GetType(ptr), prop);
+    DmuObject::Args args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
     P_Callbackp(args.type, ptr, setPropertyWorker, &args);
@@ -1080,7 +1080,7 @@ void P_SetPtrpv(void *ptr, uint prop, void *params)
 
 static int getPropertyWorker(void *elPtr, void *context)
 {
-    getProperty(IN_ELEM_CONST(elPtr), *reinterpret_cast<DmuArgs *>(context));
+    getProperty(IN_ELEM_CONST(elPtr), *reinterpret_cast<DmuObject::Args *>(context));
     return false; // Continue iteration.
 }
 
@@ -1090,7 +1090,7 @@ static int getPropertyWorker(void *elPtr, void *context)
 dd_bool P_GetBool(int type, int index, uint prop)
 {
     dd_bool returnValue = false;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1101,7 +1101,7 @@ dd_bool P_GetBool(int type, int index, uint prop)
 byte P_GetByte(int type, int index, uint prop)
 {
     byte returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1112,7 +1112,7 @@ byte P_GetByte(int type, int index, uint prop)
 int P_GetInt(int type, int index, uint prop)
 {
     int returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_INT;
     args.intValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1123,7 +1123,7 @@ int P_GetInt(int type, int index, uint prop)
 fixed_t P_GetFixed(int type, int index, uint prop)
 {
     fixed_t returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1134,7 +1134,7 @@ fixed_t P_GetFixed(int type, int index, uint prop)
 angle_t P_GetAngle(int type, int index, uint prop)
 {
     angle_t returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1145,7 +1145,7 @@ angle_t P_GetAngle(int type, int index, uint prop)
 float P_GetFloat(int type, int index, uint prop)
 {
     float returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1156,7 +1156,7 @@ float P_GetFloat(int type, int index, uint prop)
 double P_GetDouble(int type, int index, uint prop)
 {
     double returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1167,7 +1167,7 @@ double P_GetDouble(int type, int index, uint prop)
 void *P_GetPtr(int type, int index, uint prop)
 {
     void *returnValue = 0;
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = &returnValue;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1177,7 +1177,7 @@ void *P_GetPtr(int type, int index, uint prop)
 #undef P_GetBoolv
 void P_GetBoolv(int type, int index, uint prop, dd_bool *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1186,7 +1186,7 @@ void P_GetBoolv(int type, int index, uint prop, dd_bool *params)
 #undef P_GetBytev
 void P_GetBytev(int type, int index, uint prop, byte *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_BYTE;
     args.byteValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1195,7 +1195,7 @@ void P_GetBytev(int type, int index, uint prop, byte *params)
 #undef P_GetIntv
 void P_GetIntv(int type, int index, uint prop, int *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_INT;
     args.intValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1204,7 +1204,7 @@ void P_GetIntv(int type, int index, uint prop, int *params)
 #undef P_GetFixedv
 void P_GetFixedv(int type, int index, uint prop, fixed_t *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FIXED;
     args.fixedValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1213,7 +1213,7 @@ void P_GetFixedv(int type, int index, uint prop, fixed_t *params)
 #undef P_GetAnglev
 void P_GetAnglev(int type, int index, uint prop, angle_t *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_ANGLE;
     args.angleValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1222,7 +1222,7 @@ void P_GetAnglev(int type, int index, uint prop, angle_t *params)
 #undef P_GetFloatv
 void P_GetFloatv(int type, int index, uint prop, float *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1231,7 +1231,7 @@ void P_GetFloatv(int type, int index, uint prop, float *params)
 #undef P_GetDoublev
 void P_GetDoublev(int type, int index, uint prop, double *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_DOUBLE;
     args.doubleValues = params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1240,7 +1240,7 @@ void P_GetDoublev(int type, int index, uint prop, double *params)
 #undef P_GetPtrv
 void P_GetPtrv(int type, int index, uint prop, void *params)
 {
-    DmuArgs args(type, prop);
+    DmuObject::Args args(type, prop);
     args.valueType = DDVT_PTR;
     args.ptrValues = (void **)params;
     P_Callback(type, index, getPropertyWorker, &args);
@@ -1255,7 +1255,7 @@ dd_bool P_GetBoolp(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_BOOL;
         args.booleanValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1271,7 +1271,7 @@ byte P_GetBytep(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_BYTE;
         args.byteValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1287,7 +1287,7 @@ int P_GetIntp(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_INT;
         args.intValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1303,7 +1303,7 @@ fixed_t P_GetFixedp(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_FIXED;
         args.fixedValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1319,7 +1319,7 @@ angle_t P_GetAnglep(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_ANGLE;
         args.angleValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1335,7 +1335,7 @@ float P_GetFloatp(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1351,7 +1351,7 @@ double P_GetDoublep(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_DOUBLE;
         args.doubleValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1367,7 +1367,7 @@ void *P_GetPtrp(void *ptr, uint prop)
 
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_PTR;
         args.ptrValues = &returnValue;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1381,7 +1381,7 @@ void P_GetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_BOOL;
         args.booleanValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1393,7 +1393,7 @@ void P_GetBytepv(void *ptr, uint prop, byte *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_BYTE;
         args.byteValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1405,7 +1405,7 @@ void P_GetIntpv(void *ptr, uint prop, int *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_INT;
         args.intValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1417,7 +1417,7 @@ void P_GetFixedpv(void *ptr, uint prop, fixed_t *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_FIXED;
         args.fixedValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1429,7 +1429,7 @@ void P_GetAnglepv(void *ptr, uint prop, angle_t *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_ANGLE;
         args.angleValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1441,7 +1441,7 @@ void P_GetFloatpv(void *ptr, uint prop, float *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1453,7 +1453,7 @@ void P_GetDoublepv(void *ptr, uint prop, double *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_DOUBLE;
         args.doubleValues = params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);
@@ -1465,7 +1465,7 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 {
     if(ptr)
     {
-        DmuArgs args(DMU_GetType(ptr), prop);
+        DmuObject::Args args(DMU_GetType(ptr), prop);
         args.valueType = DDVT_PTR;
         args.ptrValues = (void **)params;
         P_Callbackp(args.type, ptr, getPropertyWorker, &args);

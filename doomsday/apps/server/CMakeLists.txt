@@ -37,6 +37,7 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_base.h
     ${src}/include/de_platform.h
     ${src}/include/def_main.h
+    ${src}/include/dmuobject.h
     ${src}/include/edit_map.h
     ${src}/include/face.h
     ${src}/include/hedge.h
@@ -120,6 +121,7 @@ set (SHARED_WITH_CLIENT
     ${src}/src/dd_loop.cpp
     ${src}/src/dd_main.cpp
     ${src}/src/dd_pinit.cpp
+    ${src}/src/dmuobject.cpp
     ${src}/src/def_main.cpp
     ${src}/src/face.cpp
     ${src}/src/hedge.cpp
@@ -176,7 +178,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/bsp/superblockmap.cpp
     ${src}/src/world/bspleaf.cpp
     ${src}/src/world/convexsubspace.cpp
-    ${src}/src/world/dmuargs.cpp
     ${src}/src/world/impulseaccumulator.cpp
     ${src}/src/world/interceptor.cpp
     ${src}/src/world/line.cpp

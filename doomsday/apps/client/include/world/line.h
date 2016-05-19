@@ -484,8 +484,8 @@ public:
 #endif  // __CLIENT__
 
     protected:
-        de::dint property(de::DmuArgs &args) const;
-        de::dint setProperty(de::DmuArgs const &args);
+        de::dint property(Args &args) const;
+        de::dint setProperty(Args const &args);
 
     private:
         DENG2_PRIVATE(d)
@@ -861,8 +861,8 @@ public:
 #endif
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(Args &args) const;
+    de::dint setProperty(Args const &args);
 
 public:
     /**

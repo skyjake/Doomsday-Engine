@@ -1069,7 +1069,7 @@ void Line::Side::updateRadioForFrame(dint frameNumber)
 }
 #endif  // __CLIENT__
 
-dint Line::Side::property(DmuArgs &args) const
+dint Line::Side::property(Args &args) const
 {
     switch(args.prop)
     {
@@ -1089,7 +1089,7 @@ dint Line::Side::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Line::Side::setProperty(DmuArgs const &args)
+dint Line::Side::setProperty(DmuObject::Args const &args)
 {
     switch(args.prop)
     {
@@ -1402,7 +1402,7 @@ LineOwner *Line::vertexOwner(dint to) const
     return (to? _vo2 : _vo1);
 }
 
-dint Line::property(DmuArgs &args) const
+dint Line::property(Args &args) const
 {
     switch(args.prop)
     {
@@ -1469,7 +1469,7 @@ dint Line::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Line::setProperty(DmuArgs const &args)
+dint Line::setProperty(Args const &args)
 {
     switch(args.prop)
     {

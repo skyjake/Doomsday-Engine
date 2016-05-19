@@ -422,7 +422,7 @@ void Sky::setHorizonOffset(dfloat newOffset)
     }
 }
 
-dint Sky::property(DmuArgs &args) const
+dint Sky::property(Args &args) const
 {
     LOG_AS("Sky");
 
@@ -450,7 +450,7 @@ dint Sky::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Sky::setProperty(DmuArgs const &args)
+dint Sky::setProperty(Args const &args)
 {
     LOG_AS("Sky");
 

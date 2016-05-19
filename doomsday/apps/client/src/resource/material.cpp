@@ -545,7 +545,7 @@ String Material::description() const
     return str;
 }
 
-int Material::property(DmuArgs &args) const
+int Material::property(Args &args) const
 {
     switch(args.prop)
     {

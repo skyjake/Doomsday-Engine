@@ -517,7 +517,7 @@ AABoxd const &Sector::aaBox() const
     return d->aaBox();
 }
 
-dint Sector::property(DmuArgs &args) const
+dint Sector::property(Args &args) const
 {
     switch(args.prop)
     {
@@ -563,7 +563,7 @@ dint Sector::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Sector::setProperty(DmuArgs const &args)
+dint Sector::setProperty(Args const &args)
 {
     switch(args.prop)
     {

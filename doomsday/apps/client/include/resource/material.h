@@ -443,7 +443,7 @@ public:  //- Animators ---------------------------------------------------------
 #endif  // __CLIENT__
 
 protected:
-    int property(de::DmuArgs &args) const;
+    de::dint property(Args &args) const;
 
 public:
     /// Register the console commands and variables of this module.

@@ -503,7 +503,7 @@ bool Surface::needsDecorationUpdate() const
 
 #endif  // __CLIENT__
 
-dint Surface::property(DmuArgs &args) const
+dint Surface::property(Args &args) const
 {
     switch(args.prop)
     {
@@ -617,7 +617,7 @@ dint Surface::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Surface::setProperty(DmuArgs const &args)
+dint Surface::setProperty(Args const &args)
 {
     switch(args.prop)
     {

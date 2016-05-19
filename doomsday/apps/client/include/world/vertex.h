@@ -139,7 +139,7 @@ public:  //- Deprecated --------------------------------------------------------
     LineOwner *firstLineOwner() const;
 
 protected:
-    int property(de::DmuArgs &args) const;
+    de::dint property(Args &args) const;
 
 private:
     de::Vector2d _origin;  ///< Map-space coordinates.

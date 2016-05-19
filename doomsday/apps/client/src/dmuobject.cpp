@@ -1,7 +1,7 @@
-/** @file dmuargs.cpp Doomsday Map Update (DMU) API arguments.
+/** @file dmuobject.cpp  Base class for all DMU objects.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,16 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/mapelement.h"
+#include "dmuobject.h"
+
 #include "dd_share.h"
 #include <de/Log>
 #include <de/c_wrapper.h>
 
-using namespace de;
+namespace de {
 
 /**
- * Convert propertyType enum constant into a string for error/debug messages.
- */
+* Convert propertyType enum constant into a string for error/debug messages.
+*/
 static char const *value_Str(dint val)
 {
     static char valStr[40];
@@ -61,28 +62,20 @@ static char const *value_Str(dint val)
     return valStr;
 }
 
-DmuArgs::DmuArgs(int type, uint prop)
-    : type     (type),
-      prop     (prop & ~DMU_FLAG_MASK),
-      modifiers(prop & DMU_FLAG_MASK),
-      valueType(DDVT_NONE),
-      booleanValues(0),
-      byteValues(0),
-      intValues(0),
-      fixedValues(0),
-      floatValues(0),
-      doubleValues(0),
-      angleValues(0),
-      ptrValues(0)
+DmuObject::Args::Args(dint type, duint prop)
+    : type(type)
+    , prop(prop & ~DMU_FLAG_MASK)
+    , modifiers(prop & DMU_FLAG_MASK)
+    , valueType(DDVT_NONE)
 {
     DENG_ASSERT(VALID_DMU_ELEMENT_TYPE_ID(type));
 }
 
-void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
+void DmuObject::Args::value(valuetype_t dstValueType, void *dst, duint index) const
 {
     if(dstValueType == DDVT_FIXED)
     {
-        fixed_t *d = (fixed_t *)dst;
+        auto *d = (fixed_t *)dst;
 
         switch(valueType)
         {
@@ -101,16 +94,17 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
         case DDVT_DOUBLE:
             *d = FLT2FIX(doubleValues[index]);
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_FIXED incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_FIXED incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_FLOAT)
     {
-        float *d = (float *)dst;
+        auto *d = (dfloat *)dst;
 
         switch(valueType)
         {
@@ -127,18 +121,19 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             *d = floatValues[index];
             break;
         case DDVT_DOUBLE:
-            *d = (float)doubleValues[index];
+            *d = dfloat(doubleValues[index]);
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_DOUBLE)
     {
-        double *d = (double *)dst;
+        auto *d = (ddouble *)dst;
 
         switch(valueType)
         {
@@ -157,32 +152,34 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
         case DDVT_DOUBLE:
             *d = doubleValues[index];
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_BOOL)
     {
-        dd_bool *d = (dd_bool *)dst;
+        auto *d = (dd_bool *)dst;
 
         switch(valueType)
         {
         case DDVT_BOOL:
             *d = booleanValues[index];
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_BOOL incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_BOOL incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_BYTE)
     {
-        byte *d = (byte *)dst;
+        auto *d = (byte *)dst;
 
         switch(valueType)
         {
@@ -196,21 +193,22 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             *d = intValues[index];
             break;
         case DDVT_FLOAT:
-            *d = (byte) floatValues[index];
+            *d = (byte)floatValues[index];
             break;
         case DDVT_DOUBLE:
-            *d = (byte) doubleValues[index];
+            *d = (byte)doubleValues[index];
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_BYTE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_BYTE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_INT)
     {
-        int *d = (int *)dst;
+        auto *d = (dint *)dst;
 
         switch(valueType)
         {
@@ -232,16 +230,17 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
         case DDVT_FIXED:
             *d = (fixedValues[index] >> FRACBITS);
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_INT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_INT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_SHORT)
     {
-        short *d = (short *)dst;
+        auto *d = (dshort *)dst;
 
         switch(valueType)
         {
@@ -263,80 +262,84 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
         case DDVT_FIXED:
             *d = (fixedValues[index] >> FRACBITS);
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_SHORT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_SHORT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_ANGLE)
     {
-        angle_t *d = (angle_t *)dst;
+        auto *d = (angle_t *)dst;
 
         switch(valueType)
         {
         case DDVT_ANGLE:
             *d = angleValues[index];
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_BLENDMODE)
     {
-        blendmode_t *d = (blendmode_t *)dst;
+        auto *d = (blendmode_t *)dst;
 
         switch(valueType)
         {
         case DDVT_INT:
             if(intValues[index] > DDNUM_BLENDMODES || intValues[index] < 0)
             {
-                QByteArray msg = String("DmuArgs::value: %1 is not a valid value for DDVT_BLENDMODE.").arg(intValues[index]).toUtf8();
+                QByteArray msg = String("DmuObject::Args::value: %1 is not a valid value for DDVT_BLENDMODE.").arg(intValues[index]).toUtf8();
                 App_FatalError(msg.constData());
             }
 
             *d = blendmode_t(intValues[index]);
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(dstValueType == DDVT_PTR)
     {
-        void **d = (void **)dst;
+        auto **d = (void **)dst;
 
         switch(valueType)
         {
         case DDVT_PTR:
             *d = ptrValues[index];
             break;
-        default: {
+        default:
+        {
             /// @todo Throw exception.
-            QByteArray msg = String("DmuArgs::value: DDVT_PTR incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+            QByteArray msg = String("DmuObject::Args::value: DDVT_PTR incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else
     {
         /// @todo Throw exception.
-        QByteArray msg = String("DmuArgs::value: unknown value type %1.").arg(dstValueType).toUtf8();
+        QByteArray msg = String("DmuObject::Args::value: unknown value type %1.").arg(dstValueType).toUtf8();
         App_FatalError(msg.constData());
     }
 }
 
-void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
+void DmuObject::Args::setValue(valuetype_t srcValueType, void const *src, duint index)
 {
     if(srcValueType == DDVT_FIXED)
     {
-        fixed_t const *s = (fixed_t const *)src;
+        auto const *s = (fixed_t const *)src;
 
         switch(valueType)
         {
@@ -355,15 +358,16 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_DOUBLE:
             doubleValues[index] = FIX2FLT(*s);
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_FIXED incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_FLOAT)
     {
-        float const *s = (float const *)src;
+        auto const *s = (dfloat const *)src;
 
         switch(valueType)
         {
@@ -371,7 +375,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             byteValues[index] = *s;
             break;
         case DDVT_INT:
-            intValues[index] = (int) *s;
+            intValues[index] = (int)*s;
             break;
         case DDVT_FIXED:
             fixedValues[index] = FLT2FIX(*s);
@@ -382,15 +386,16 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_DOUBLE:
             doubleValues[index] = (double)*s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_FLOAT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_DOUBLE)
     {
-        double const *s = (double const *)src;
+        auto const *s = (ddouble const *)src;
 
         switch(valueType)
         {
@@ -398,7 +403,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             byteValues[index] = (byte)*s;
             break;
         case DDVT_INT:
-            intValues[index] = (int) *s;
+            intValues[index] = (int)*s;
             break;
         case DDVT_FIXED:
             fixedValues[index] = FLT2FIX(*s);
@@ -409,30 +414,32 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_DOUBLE:
             doubleValues[index] = *s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_DOUBLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_BOOL)
     {
-        dd_bool const *s = (dd_bool const *)src;
+        auto const *s = (dd_bool const *)src;
 
         switch(valueType)
         {
         case DDVT_BOOL:
             booleanValues[index] = *s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_BOOL incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_BYTE)
     {
-        byte const *s = (byte const *)src;
+        auto const *s = (byte const *)src;
 
         switch(valueType)
         {
@@ -451,15 +458,16 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_DOUBLE:
             doubleValues[index] = *s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_BYTE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_INT)
     {
-        int const *s = (int const *)src;
+        auto const *s = (dint const *)src;
 
         switch(valueType)
         {
@@ -481,15 +489,16 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_FIXED:
             fixedValues[index] = (*s << FRACBITS);
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_INT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_INT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_SHORT)
     {
-        short const *s = (short const *)src;
+        auto const *s = (dshort const *)src;
 
         switch(valueType)
         {
@@ -511,45 +520,48 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_FIXED:
             fixedValues[index] = (*s << FRACBITS);
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_SHORT incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_ANGLE)
     {
-        angle_t const *s = (angle_t const *)src;
+        auto const *s = (angle_t const *)src;
 
         switch(valueType)
         {
         case DDVT_ANGLE:
             angleValues[index] = *s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_ANGLE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_BLENDMODE)
     {
-        blendmode_t const *s = (blendmode_t const *)src;
+        auto const *s = (blendmode_t const *)src;
 
         switch(valueType)
         {
         case DDVT_INT:
             intValues[index] = *s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_BLENDMODE incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else if(srcValueType == DDVT_PTR)
     {
-        void const *const *s = (void const *const *)src;
+        auto const *const *s = (void const *const *)src;
 
         switch(valueType)
         {
@@ -559,17 +571,130 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             intValues[index] = P_ToIndex(*s);
             break;
         case DDVT_PTR:
-            ptrValues[index] = (void *) *s;
+            ptrValues[index] = (void *)*s;
             break;
-        default: {
-            QByteArray msg = String("DmuArgs::setValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
+        default:
+        {
+            QByteArray msg = String("DmuObject::Args::setValue: DDVT_PTR incompatible with value type %1.").arg(value_Str(valueType)).toUtf8();
             App_FatalError(msg.constData());
-            }
+        }
         }
     }
     else
     {
-        QByteArray msg = String("DmuArgs::setValue: unknown value type %1.").arg(srcValueType).toUtf8();
+        QByteArray msg = String("DmuObject::Args::setValue: unknown value type %1.").arg(srcValueType).toUtf8();
         App_FatalError(msg.constData());
     }
 }
+
+//- DmuObject ---------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(DmuObject)
+{
+    dint type;
+    DmuObject *parent = nullptr;
+
+    dint indexInMap = NoIndex;
+    dint indexInArchive = NoIndex;
+
+    Instance(dint type) : type(type) {}
+};
+
+DmuObject::DmuObject(dint type, dint indexInMap)
+    : d(new Instance(type))
+{
+    setIndexInMap(indexInMap);
+}
+
+dint DmuObject::type() const
+{
+    return d->type;
+}
+
+String DmuObject::describe() const
+{
+    return "abstract DmuObject";
+}
+
+String DmuObject::description(dint /*verbosity*/) const
+{
+    String desc = describe();
+    if(indexInMap() != NoIndex)
+    {
+        desc += String(" #%1").arg(indexInMap());
+    }
+    return desc;
+}
+
+dint DmuObject::indexInMap() const
+{
+    return d->indexInMap;
+}
+
+void DmuObject::setIndexInMap(dint newIndex)
+{
+    d->indexInMap = newIndex;
+}
+
+dint DmuObject::indexInArchive() const
+{
+    return d->indexInArchive;
+}
+
+void DmuObject::setIndexInArchive(dint newIndex)
+{
+    d->indexInArchive = newIndex;
+}
+
+dint DmuObject::property(Args &args) const
+{
+    switch(args.prop)
+    {
+    case DMU_ARCHIVE_INDEX:
+        args.setValue(DMT_ARCHIVE_INDEX, &d->indexInArchive, 0);
+        break;
+
+    default:
+        /// @throw UnknownPropertyError  The requested property is not readable.
+        throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(d->type)),
+                                   QString("'%1' is unknown/not readable").arg(DMU_Str(args.prop)));
+    }
+
+    return false; // Continue iteration.
+}
+
+dint DmuObject::setProperty(Args const &args)
+{
+    /// @throw WritePropertyError  The requested property is not writable.
+    throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(d->type)),
+                             QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
+}
+
+bool DmuObject::hasParent() const
+{
+    return d->parent != nullptr;
+}
+
+DmuObject &DmuObject::parent()
+{
+    return const_cast<DmuObject &>(const_cast<DmuObject const *>(this)->parent());
+}
+
+DmuObject const &DmuObject::parent() const
+{
+    if(d->parent) return *d->parent;
+    /// @throw MissingParentError  Attempted with no parent element is attributed.
+    throw MissingParentError("DmuObject::parent", "No parent map element is attributed");
+}
+
+void DmuObject::setParent(DmuObject *newParent)
+{
+    if(newParent == this)
+    {
+        /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
+        throw InvalidParentError("DmuObject::setParent", "Cannot attribute 'this' map element as a parent of itself");
+    }
+    d->parent = newParent;
+}
+
+}  // namespace de

@@ -422,7 +422,7 @@ bool Plane::receivesShadow() const
 
 #endif // __CLIENT__
 
-dint Plane::property(DmuArgs &args) const
+dint Plane::property(Args &args) const
 {
     switch(args.prop)
     {
@@ -450,7 +450,7 @@ dint Plane::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Plane::setProperty(DmuArgs const &args)
+dint Plane::setProperty(Args const &args)
 {
     switch(args.prop)
     {
