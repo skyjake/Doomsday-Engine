@@ -19,51 +19,46 @@
  */
 
 #include "world/mapelement.h"
-
 #include "world/map.h"
 
 using namespace de;
 
 namespace world {
 
-MapLink::MapLink(Map *map)
+MapElement::MapElement(dint dmuType, Map *map)
+    : DmuObject(dmuType)
 {
     setMap(map);
 }
 
-MapLink::~MapLink()
+MapElement::~MapElement()
 {}
 
-bool MapLink::hasMap() const
+bool MapElement::hasMap() const
 {
     return _map != nullptr;
 }
 
-Map &MapLink::map() const
+Map &MapElement::map() const
 {
+    // If a parent is configured this property is delegated to the parent.
+    if(hasParent()) return parent().as<MapElement>().map();
+
     if(hasMap()) return *_map;
     /// @throw MissingMapError  Attempted with no map attributed.
-    throw MissingMapError("MapLink::map", "No map is attributed");
+    throw MissingMapError("MapElement::map", "No map is attributed");
 }
 
-Map *MapLink::mapPtr() const
+Map *MapElement::mapPtr() const
 {
     return hasMap() ? &map() : nullptr;
 }
 
-void MapLink::setMap(Map *newMap)
+void MapElement::setMap(Map *newMap)
 {
+    if(_map == newMap) return;
     _map = newMap;
+    DENG2_FOR_AUDIENCE(MapChange, i) i->mapElementMapChanged(*this);
 }
-
-//---------------------------------------------------------------------------------------
-
-MapElement::MapElement(dint dmuType, Map *map)
-    : DmuObject(dmuType)
-    , MapLink(map)
-{}
-
-MapElement::~MapElement()
-{}
 
 }  // namespace world

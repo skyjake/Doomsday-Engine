@@ -24,21 +24,26 @@
 #include "dmuobject.h"
 #include <de/Error>
 #include <de/Observers>
-#include <de/String>
 
 namespace world {
 
 class Map;
 
-class MapLink
+/**
+ * Base class for map elements.
+ */
+class MapElement : public de::DmuObject
 {
 public:
     /// Notified whenever the attributed Map changes.
-    DENG2_DEFINE_AUDIENCE2(MapChanged, void mapLinkMapChanged(MapLink &));
+    DENG2_DEFINE_AUDIENCE(MapChange, void mapElementMapChanged(MapElement &));
+
+    /// No map is attributed. @ingroup errors
+    DENG2_ERROR(MissingMapError);
 
 public:
-    explicit MapLink(Map *map = nullptr);
-    virtual ~MapLink();
+    explicit MapElement(de::dint dmuType = DMU_NONE, Map *map = nullptr);
+    virtual ~MapElement();
 
     /**
      * Returns @c true iff a Map is attributed to the map-element.
@@ -64,8 +69,8 @@ public:
 
     /**
      * Change the map attributed to the map element. Note that if the map element has a
-     * @em parent that attempting to change the map property of "this" map element is an
-     * error (delegation).
+     * @em parent that attempting to change the map property of "this" map element is
+     * considered an error (delegation). The MapChange audience is notified if changed.
      *
      * @param newMap
      *
@@ -73,26 +78,8 @@ public:
      */
     void setMap(Map *newMap);
 
-public:
-    /// No map is attributed. @ingroup errors
-    DENG2_ERROR(MissingMapError);
-
 private:
     Map *_map = nullptr;
-};
-
-}  // namespace world
-
-namespace world {
-
-/**
- * Base class for map elements.
- */
-class MapElement : public de::DmuObject, public MapLink
-{
-public:
-    explicit MapElement(de::dint dmuType = DMU_NONE, Map *map = nullptr);
-    virtual ~MapElement();
 };
 
 }  // namespace world
