@@ -106,13 +106,14 @@ class Version
     public function asText($sep = '.', $omitTrailingZeros = false)
     {
         $sep = (string)$sep;
-        $omitTrailingZeros = (bool)$omitTrailingZeros;
+        /*$omitTrailingZeros = (bool)$omitTrailingZeros;
 
         if($omitTrailingZeros === false)
         {
             return "{$this->major}$sep{$this->minor}$sep{$this->patch}$sep{$this->revision}";
-        }
+        }*/
 
+        /*
         $text = '';
         if($this->revision > 0)
         {
@@ -132,8 +133,20 @@ class Version
         }
 
         if(!empty($text)) $text = $sep . $text;
-        $text = $this->major . $text;
+        $text = $this->major . $text;*/
 
+        // Mandatory parts.
+        $text = "{$this->major}" . $sep . "{$this->minor}";
+        
+        // Optional parts.
+        if($this->patch > 0 || $this->revision > 0)
+        {
+            $text .= $sep . "{$this->patch}";
+        }
+        if($this->revision > 0)
+        {
+            $text .= $sep . "{$this->revision}";
+        }
         return $text;
     }
 
