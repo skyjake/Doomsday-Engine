@@ -209,13 +209,13 @@ DENG2_PIMPL_NOREF(Line::Side)
         if(segments.count() < 2)
             return;
 
-        // We'll use a QMap for sorting the segments.
-        QMap<ddouble, Segment *> sortedSegs;
-        for(Segment *seg : segments)
+        // Sort the segments in ascending order by distance to lineSideOrigin.
+        qSort(segments.begin(), segments.end(),
+              [&lineSideOrigin] (Segment const *a, Segment const *b)
         {
-            sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
-        }
-        segments.swap(sortedSegs.values());
+            return (a->hedge().origin() - lineSideOrigin).length() <
+                   (b->hedge().origin() - lineSideOrigin).length();
+        });
     }
 
 #ifdef __CLIENT__

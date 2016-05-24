@@ -5563,6 +5563,8 @@ static void drawLumobjs(Map &map)
 
 static String labelForLineSideSection(LineSide const &side, dint sectionId)
 {
+    DENG_UNUSED(sectionId);
+
     //return String("Line #%1 (%2, %3)")
     //           .arg(side.line().index())
     //           .arg(side.isFront() ? "front" : "back")

@@ -36,7 +36,7 @@ class MapElement : public de::DmuObject
 {
 public:
     /// Notified whenever the attributed Map changes.
-    DENG2_DEFINE_AUDIENCE(MapChange, void mapElementMapChanged(MapElement &));
+    DENG2_DEFINE_AUDIENCE(MapChange, void mapElementMapChanged(MapElement &))
 
     /// No map is attributed. @ingroup errors
     DENG2_ERROR(MissingMapError);
