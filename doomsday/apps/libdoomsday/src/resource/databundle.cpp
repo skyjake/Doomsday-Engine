@@ -146,7 +146,8 @@ DENG2_PIMPL(DataBundle)
 
         // Finally, make a link that represents the package.
         if(auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
-                                                        matched.packageVersion))
+                                                        matched.packageVersion,
+                                                        matched.bestScore))
         {
             LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
 
@@ -198,7 +199,8 @@ DENG2_PIMPL(DataBundle)
 
     PathAndVersion chooseUniqueLinkPathAndVersion(File const &dataFile,
                                                   String const &packageId,
-                                                  Version const &packageVersion)
+                                                  Version const &packageVersion,
+                                                  dint bundleScore)
     {
         for(int attempt = 0; attempt < 3; ++attempt)
         {
@@ -242,6 +244,17 @@ DENG2_PIMPL(DataBundle)
             if(!bundleFolder().has(linkPath))
             {
                 return PathAndVersion(linkPath, version);
+            }
+            else
+            {
+                // This could still be a better scored match.
+                Record const &pkgInfo = bundleFolder().locate<File const>(linkPath).objectNamespace();
+                if(bundleScore > pkgInfo.geti("bundleScore"))
+                {
+                    // Forget about the previous link.
+                    bundleFolder().removeFile(linkPath);
+                    return PathAndVersion(linkPath, version);
+                }
             }
         }
 
