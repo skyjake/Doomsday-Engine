@@ -173,6 +173,15 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             }
         }
 
+        // Match the file type.
+        String fileType = def->keyValue(QStringLiteral("fileType"));
+        if(fileType.isEmpty()) fileType = "file"; // prefer files by default
+        if((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
+           (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
+        {
+            ++score;
+        }
+
         // Match the file size.
         String fileSize = def->keyValue(QStringLiteral("fileSize"));
         if(!fileSize.isEmpty() && fileSize.toUInt() == source.size())
