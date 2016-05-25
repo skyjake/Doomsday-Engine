@@ -174,14 +174,14 @@ package "banjo.hacx" {
 }
 
 package "digitalcafe.chexquest" {
-    format: IWAD
+    format: PWAD
     fileName: chex.wad
     lumps <E1M1, E4M1, _DEUTEX_, POSSH0M0>
     info {
         title: Chex(R) Quest
         author: Digital Cafe
         license: All rights reserved
-        tags: gamedata doom2 mod
+        tags: gamedata doom mod
     }
 }
 
