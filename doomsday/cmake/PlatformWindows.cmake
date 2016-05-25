@@ -44,6 +44,10 @@ if (MSVC)
     append_unique (CMAKE_C_FLAGS   "-w14505 -wd4100 -wd4748")
     append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748")
 
+    # Enable multi-processor compiling.
+    append_unique (CMAKE_C_FLAGS   "-MP")
+    append_unique (CMAKE_CXX_FLAGS "-MP")
+
     if (ARCH_BITS EQUAL 64)
         # There are many warnings about possible loss of data due to implicit
         # type conversions.
