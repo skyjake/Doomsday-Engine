@@ -1302,8 +1302,8 @@ static dint DD_StartupWorker(void * /*context*/)
         // The returned file is a symlink to the actual data file.
         // Since we're loading with FS1, we need to look up the native path.
         // The data file is an interpreter in /local/wads, whose source is the native file.
-        File1::tryLoad(de::Uri::fromNativePath(basePack->as<LinkFile>().target()
-                                               .source()->as<NativeFile>().nativePath()));
+        File1::tryLoad(de::Uri::fromNativePath(basePack->target().source()->
+                                               as<NativeFile>().nativePath()));
     }
 
     // No more files or packages will be loaded in "startup mode" after this point.
