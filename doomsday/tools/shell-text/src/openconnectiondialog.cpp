@@ -45,7 +45,7 @@ void OpenConnectionDialog::finish(int result)
 {
     InputDialog::finish(result);
 
-    if(result)
+    if (result)
     {
         PersistentData::set("OpenConnection/address", text());
     }

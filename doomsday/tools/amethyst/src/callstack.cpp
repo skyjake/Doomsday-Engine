@@ -24,7 +24,7 @@ CallStack::CallStack()
 
 Shard* CallStack::get()
 {
-    if(_stack.isListEmpty()) return 0;
+    if (_stack.isListEmpty()) return 0;
     return _stack.prev()->get();
 }
 
@@ -35,7 +35,7 @@ void CallStack::push(Shard *caller)
 
 Shard* CallStack::pop()
 {
-    if(_stack.isListEmpty()) return 0;
+    if (_stack.isListEmpty()) return 0;
     // Get the pointer and destroy the node.
     Shard *ptr = _stack.prev()->get();
     delete _stack.prev()->remove();

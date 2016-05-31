@@ -32,21 +32,21 @@ int main(int argc, char **argv)
         TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
-        for(int j = 0; j < 2; ++j)
+        for (int j = 0; j < 2; ++j)
         {
             bool devMode = j > 0;
             app.logFilter().setAllowDev(devMode);
 
-            for(int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
+            for (int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
             {
                 LogEntry::Level level = LogEntry::Level(i);
                 app.logFilter().setMinLevel(level);
                 LOG_AT_LEVEL(level, "Enabled level %s with dev:%b")
                         << LogEntry::levelToText(level) << devMode;
 
-                for(int k = LogEntry::LowestLogLevel; k <= LogEntry::HighestLogLevel; ++k)
+                for (int k = LogEntry::LowestLogLevel; k <= LogEntry::HighestLogLevel; ++k)
                 {
-                    for(int d = 0; d < 2; ++d)
+                    for (int d = 0; d < 2; ++d)
                     {
                         duint32 other = k | (d? LogEntry::Dev : 0);
                         LOG_AT_LEVEL(other,
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

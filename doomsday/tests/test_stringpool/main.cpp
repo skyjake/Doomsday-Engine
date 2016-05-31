@@ -104,7 +104,7 @@ int main(int, char **)
         p.clear();
         DENG2_ASSERT(p.empty());
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }

@@ -20,7 +20,7 @@
 #define STOPCHAR(x)	(isspace(x) || x == ';' || x == '#' || x == '@' \
 					|| x == '%' || x == ',')
 #define ISTOKEN(x)		(!stricmp(token, x))
-#define RET_FAIL(fn)	if(!(fn)) return false;
+#define RET_FAIL(fn)	if (!(fn)) return false;
 #define PLURAL_S(c)		((c) != 1? "s" : "")
 
 // TYPES -------------------------------------------------------------------
@@ -50,7 +50,7 @@ patch_t			plist;
 #ifdef UNIX
 void strupr(char* str)
 {
-    for(char* c = str; *c; c++) *c = toupper(*c);
+    for (char* c = str; *c; c++) *c = toupper(*c);
 }
 #endif
 
@@ -61,8 +61,8 @@ void strupr(char* str)
 //===========================================================================
 int CheckOption(const char *opt)
 {
-	for(int i = 1; i < myargc; i++)
-		if(!stricmp(myargv[i], opt))
+	for (int i = 1; i < myargc; i++)
+		if (!stricmp(myargv[i], opt))
 			return /* argpos = */ i;
 	return 0;
 }
@@ -76,9 +76,9 @@ int FGetC()
 {
 	int ch = *sourcePos; 
 
-	if(ch) sourcePos++; else endOfSource = true;	
-	if(ch == '\n') lineNumber++;
-	if(ch == '\r') return FGetC();
+	if (ch) sourcePos++; else endOfSource = true;	
+	if (ch == '\n') lineNumber++;
+	if (ch == '\r') return FGetC();
 	return ch;
 }
 
@@ -88,9 +88,9 @@ int FGetC()
 //==========================================================================
 int FUngetC(int ch)
 {
-	if(endOfSource) return 0;
-	if(ch == '\n') lineNumber--;
-	if(sourcePos > source) sourcePos--;
+	if (endOfSource) return 0;
+	if (ch == '\n') lineNumber--;
+	if (sourcePos > source) sourcePos--;
 	return ch;
 }
 
@@ -103,22 +103,22 @@ void SkipComment()
 	int ch = FGetC();
 	bool seq = false;
 	
-	if(ch == '\n') return; // Comment ends right away.
-	if(ch != '>') // Single-line comment?
+	if (ch == '\n') return; // Comment ends right away.
+	if (ch != '>') // Single-line comment?
 	{
-		while(FGetC() != '\n' && !endOfSource) {}
+		while (FGetC() != '\n' && !endOfSource) {}
 	}
 	else // Multiline comment?
 	{
-		while(!endOfSource)
+		while (!endOfSource)
 		{
 			ch = FGetC();
-			if(seq) 
+			if (seq) 
 			{
-				if(ch == '#') break;
+				if (ch == '#') break;
 				seq = false;
 			}
-			if(ch == '<') seq = true;
+			if (ch == '<') seq = true;
 		}
 	}
 }
@@ -132,24 +132,24 @@ int ReadToken()
 	char *out = token;
 
 	memset(token, 0, sizeof(token));
-	if(endOfSource) return false;
+	if (endOfSource) return false;
 
 	// Skip whitespace and comments in the beginning.
-	while((ch == '#' || isspace(ch))) 
+	while ((ch == '#' || isspace(ch))) 
 	{
-		if(ch == '#') SkipComment();
+		if (ch == '#') SkipComment();
 		ch = FGetC();
-		if(endOfSource) return false;
+		if (endOfSource) return false;
 	}
 	// Always store the first character.
 	*out++ = ch;
-	if(STOPCHAR(ch))
+	if (STOPCHAR(ch))
 	{
 		// Stop here.
 		*out = 0;
 		return true;
 	}
-	while(!STOPCHAR(ch) && !endOfSource)
+	while (!STOPCHAR(ch) && !endOfSource)
 	{
 		// Store the character in the buffer.
 		ch = FGetC();
@@ -255,7 +255,7 @@ void CloseCompiler(void)
 void InitData(void)
 {
 	// Init defs and patch list.
-	for(int i = 0; i < NUM_GROUPS; i++)
+	for (int i = 0; i < NUM_GROUPS; i++)
 		root[i].next = root[i].prev = &root[i];
 	plist.next = plist.prev = &plist;
 }
@@ -266,11 +266,11 @@ void InitData(void)
 void CloseData(void)
 {
 	// Free the def groups.
-	for(int i = 0; i < NUM_GROUPS; i++)
-		while(root[i].next != &root[i]) DeleteTexture(root[i].next);
+	for (int i = 0; i < NUM_GROUPS; i++)
+		while (root[i].next != &root[i]) DeleteTexture(root[i].next);
 	
 	// Free the patch names.
-	while(plist.next != &plist) DeletePatch(plist.next);			
+	while (plist.next != &plist) DeletePatch(plist.next);			
 }
 
 //===========================================================================
@@ -294,10 +294,10 @@ void Message(const char *format, ...)
 int DoKeyword(void)
 {
 	ReadToken();
-	if(ISTOKEN("syntax"))
+	if (ISTOKEN("syntax"))
 	{
 		ReadToken();
-		if(ISTOKEN("simple"))
+		if (ISTOKEN("simple"))
 		{
 			syntax = STX_SIMPLE;
 			Message("Using simple syntax.");
@@ -308,11 +308,11 @@ int DoKeyword(void)
 			return false;
 		}
 	}
-	else if(ISTOKEN("group"))
+	else if (ISTOKEN("group"))
 	{
 		ReadToken();
 		group = strtol(token, 0, 0);
-		if(group < 1 || group > NUM_GROUPS)
+		if (group < 1 || group > NUM_GROUPS)
 		{
 			Message("Illegal group number %i (1..%i allowed).", group,
 				NUM_GROUPS);
@@ -333,9 +333,9 @@ def_t *GetTexture(char *name)
 {
 	def_t *it;
 
-	for(it = root[group].next; it != &root[group]; it = it->next)
+	for (it = root[group].next; it != &root[group]; it = it->next)
 	{
-		if(!stricmp(name, it->tex.name))
+		if (!stricmp(name, it->tex.name))
 		{
 			// This'll do.
 			return it;
@@ -356,8 +356,8 @@ int PatchNumber(char *name)
 	int i;
 	patch_t *it;
 
-	for(i = 0, it = plist.next; it != &plist; it = it->next, i++)
-		if(!stricmp(name, it->name)) return i;
+	for (i = 0, it = plist.next; it != &plist; it = it->next, i++)
+		if (!stricmp(name, it->name)) return i;
 	it = NewPatch();
 	strcpy(it->name, name);
 	return i;
@@ -375,60 +375,60 @@ int DoTexture(void)
 
 	// Check that it's a valid texture name (and convert to upper case).
 	strupr(token);
-	if(strlen(token) > 8)
+	if (strlen(token) > 8)
 	{
 		Message("Too long texture name '%s'.", token);
 		return false;
 	}
-	else if(strlen(token) <= 2)
+	else if (strlen(token) <= 2)
 	{
 		Message("Warning: Short texture name '%s'.", token);
 	}
 	// Get the definition and let's start filling up those infos!
 	def = GetTexture(token);
-	while(!endOfSource)
+	while (!endOfSource)
 	{
 		ReadToken();
-		if(ISTOKEN(";")) break; // End of definition.
+		if (ISTOKEN(";")) break; // End of definition.
 		// Flags.
-		if(ISTOKEN("masked")) 
+		if (ISTOKEN("masked")) 
 		{
 			// Masked flag (ever needed?).
 			def->tex.flags |= 1;
 		}
-		else if(ISTOKEN("flags"))
+		else if (ISTOKEN("flags"))
 		{
 			// Custom flags.
 			ReadToken();
 			def->tex.flags = strtol(token, 0, 0);
 		}
-		else if(ISTOKEN("misc"))
+		else if (ISTOKEN("misc"))
 		{
 			// Custom integer.
 			ReadToken();
 			def->tex.reserved = strtol(token, 0, 0);
 		}
-		else if(pat && ISTOKEN("arg1"))
+		else if (pat && ISTOKEN("arg1"))
 		{
 			// Custom data for stepdir.
 			ReadToken();
 			pat->reserved1 = (short) strtol(token, 0, 0);
 		}
-		else if(pat && ISTOKEN("arg2"))
+		else if (pat && ISTOKEN("arg2"))
 		{
 			// Custom data for 'colormap'.
 			ReadToken();
 			pat->reserved2 = (short) strtol(token, 0, 0);
 		}
-		else if(isdigit(token[0]) || (pat && token[0] == '-'))
+		else if (isdigit(token[0]) || (pat && token[0] == '-'))
 		{
 			i = strtol(token, 0, 0);
-			if(pat) 
+			if (pat) 
 				pat->originX = i; 
 			else 
 				def->tex.width = i;
 			ReadToken(); 
-			if(!ISTOKEN(","))
+			if (!ISTOKEN(","))
 			{
 				Message("Expected a comma after %s.",
 					pat? "patch origin X" : "texture width");
@@ -436,17 +436,17 @@ int DoTexture(void)
 			}
 			ReadToken();
 			i = strtol(token, 0, 0);
-			if(pat)
+			if (pat)
 				pat->originY = i;
 			else
 				def->tex.height = i;
 		}
-		else if(ISTOKEN("@"))
+		else if (ISTOKEN("@"))
 		{
 			// A patch definition follows. 
 			// Allocate a new patch entry from the def.
 			i = def->tex.patchCount++;
-			if(i == MAX_PATCHES)
+			if (i == MAX_PATCHES)
 			{
 				Message("Too many patches (maximum is %i).", MAX_PATCHES);
 				return false;
@@ -458,7 +458,7 @@ int DoTexture(void)
 			// The name of the patch comes first.
 			ReadToken(); 
 			strupr(token);
-			if(strlen(token) > 8)
+			if (strlen(token) > 8)
 			{
 				Message("Too long patch name '%s'.", token);
 				return false;
@@ -480,12 +480,12 @@ int DoTexture(void)
 //===========================================================================
 int DoCompile(void)
 {
-	while(!endOfSource)
+	while (!endOfSource)
 	{
 		ReadToken();
-		if(ISTOKEN("")) break;
+		if (ISTOKEN("")) break;
 		// Keywords.
-		if(ISTOKEN("%")) 
+		if (ISTOKEN("%")) 
 		{
 			RET_FAIL( DoKeyword() );
 		}
@@ -508,11 +508,11 @@ void Compile(char *fileName)
 
 	// Try to first open the file "as is".
 	strcpy(sourceFileName, fileName);
-	if((file = fopen(sourceFileName, "rb")) == NULL)
+	if ((file = fopen(sourceFileName, "rb")) == NULL)
 	{
 		// OK, what about adding an extension?
 		strcat(sourceFileName, ".tx");
-		if((file = fopen(sourceFileName, "rb")) == NULL)
+		if ((file = fopen(sourceFileName, "rb")) == NULL)
 		{
 			perror(fileName);
 			return;
@@ -525,7 +525,7 @@ void Compile(char *fileName)
 	length = ftell(file);
 	rewind(file);
 	sourcePos = source = new unsigned char[length + 1];
-    if(!fread(source, length, 1, file))
+    if (!fread(source, length, 1, file))
     {
         perror(fileName);
         return;
@@ -535,7 +535,7 @@ void Compile(char *fileName)
 
 	// Let's compile it!
 	InitCompiler();
-	if(!DoCompile())
+	if (!DoCompile())
 	{
 		printf("Compilation of %s was aborted!\n", sourceFileName);
 	}
@@ -580,16 +580,16 @@ void WritePatchNames(void)
 	int count;
 	patch_t *it;
 
-	if(plist.next == &plist) return;
+	if (plist.next == &plist) return;
 
 	strcpy(fn, "PNAMES.LMP");
-	if((file = fopen(fn, "wb")) == NULL)
+	if ((file = fopen(fn, "wb")) == NULL)
 	{
 		perror(fn);
 		return;
 	}
 	OutLong(file, 0); // Number of patches, update later.
-	for(count = 0, it = plist.next; it != &plist; it = it->next, count++)
+	for (count = 0, it = plist.next; it != &plist; it = it->next, count++)
 		Out(file, it->name, 8);
 	rewind(file);
 	OutLong(file, count);
@@ -611,10 +611,10 @@ void WriteTextureGroup(int idx)
 
 	sprintf(fn, "TEXTURE%i.LMP", idx + 1);
 	// Count the number of texture definitions in the group.
-	for(count = 0, it = root[idx].next; it != &root[idx]; 
+	for (count = 0, it = root[idx].next; it != &root[idx]; 
 		it = it->next, count++) {}
-	if(!count) return; // Nothing to write!
-	if((file = fopen(fn, "wb")) == NULL)
+	if (!count) return; // Nothing to write!
+	if ((file = fopen(fn, "wb")) == NULL)
 	{
 		perror(fn);
 		return;
@@ -622,9 +622,9 @@ void WriteTextureGroup(int idx)
 	OutLong(file, count); // Number of textures.
 	// The directory (uninitialized).
 	dirStart = ftell(file);
-	for(i = 0; i < count; i++) OutLong(file, 0);
+	for (i = 0; i < count; i++) OutLong(file, 0);
 	// Write each texture def and update the directory entry.
-	for(i = 0, it = root[idx].next; it != &root[idx]; it = it->next, i++)
+	for (i = 0, it = root[idx].next; it != &root[idx]; it = it->next, i++)
 	{
 		pos = ftell(file);
 		// Go back to the directory.
@@ -639,7 +639,7 @@ void WriteTextureGroup(int idx)
 		OutLong(file, it->tex.reserved);
 		OutShort(file, it->tex.patchCount);
 		// Write the patches.
-		for(k = 0; k < it->tex.patchCount; k++)
+		for (k = 0; k < it->tex.patchCount; k++)
 		{
 			OutShort(file, it->tex.patches[k].originX);
 			OutShort(file, it->tex.patches[k].originY);
@@ -659,7 +659,7 @@ void WriteTextureGroup(int idx)
 void WriteLumps(void)
 {
 	WritePatchNames();
-	for(int i = 0; i < NUM_GROUPS; i++) 
+	for (int i = 0; i < NUM_GROUPS; i++) 
 		WriteTextureGroup(i);
 }
 
@@ -674,22 +674,22 @@ int main(int argc, char **argv)
 	
 	myargc = argc;
 	myargv = argv;
-	if(CheckOption("-f")) fullImport = true;
+	if (CheckOption("-f")) fullImport = true;
 	
-	if(argc == 1)
+	if (argc == 1)
 	{
 		PrintUsage();
 		return 0;
 	}
 	InitData();
 	// Go through each command line option and process them.
-	for(i = 1; i < argc; i++)
+	for (i = 1; i < argc; i++)
 	{
-		if(argv[i][0] == '-') // This is an option.
+		if (argv[i][0] == '-') // This is an option.
 		{
-			if(!stricmp(argv[i], "-i")) // Import (decompile).
+			if (!stricmp(argv[i], "-i")) // Import (decompile).
 			{
-				if(i + 2 >= argc) 
+				if (i + 2 >= argc) 
 				{
 					printf("Too few parameters for import.\n");
 					return 1;

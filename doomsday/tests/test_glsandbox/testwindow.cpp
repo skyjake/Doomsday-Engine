@@ -127,7 +127,7 @@ DENG2_OBSERVES(Bank, Load)
             LOG_DEBUG("GLInit");
             glInit(cv);
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             qWarning() << er.asText();
 
@@ -210,7 +210,7 @@ DENG2_OBSERVES(Bank, Load)
 
                         "void main(void) {\n"
                         "  highp vec4 color = texture2D(uTex, vUV);\n"
-                        "  if(color.a < 0.05) discard;\n"
+                        "  if (color.a < 0.05) discard;\n"
                         "  gl_FragColor = color * vColor;\n"
                         "}"))
                 << uMvpMatrix
@@ -298,7 +298,7 @@ DENG2_OBSERVES(Bank, Load)
     void bankLoaded(DotPath const &path)
     {
         LOG_RES_NOTE("Bank item \"%s\" loaded") << path;
-        if(path == "rtt.cube")
+        if (path == "rtt.cube")
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
 
@@ -323,7 +323,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void updateProjection(Canvas &cv)
     {
-        switch(mode)
+        switch (mode)
         {
         case TestRenderToTexture:
             // 3D projection.
@@ -355,7 +355,7 @@ DENG2_OBSERVES(Bank, Load)
 
         modelChoice->hide();
 
-        switch(mode)
+        switch (mode)
         {
         case TestDynamicAtlas:
             lastAtlasAdditionAt = Time();
@@ -373,7 +373,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void draw(Canvas &)
     {
-        switch(mode)
+        switch (mode)
         {
         case TestRenderToTexture:
             // First render the frame to the texture.
@@ -437,7 +437,7 @@ DENG2_OBSERVES(Bank, Load)
 
         uMvpMatrix = projMatrix * modelMatrix;
 
-        if(!modelAnim.isEmpty())
+        if (!modelAnim.isEmpty())
         {
             modelAnim.at(0).time = startedAt.since();
         }
@@ -447,13 +447,13 @@ DENG2_OBSERVES(Bank, Load)
 
     void timeChanged(Clock const &clock)
     {
-        if(!startedAt.isValid())
+        if (!startedAt.isValid())
         {
             startedAt = clock.time();
         }
         uTime = startedAt.since();
 
-        switch(mode)
+        switch (mode)
         {
         case TestRenderToTexture:
             modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
@@ -469,7 +469,7 @@ DENG2_OBSERVES(Bank, Load)
             break;
 
         case TestDynamicAtlas:
-            if(lastAtlasAdditionAt.since() > 0.2)
+            if (lastAtlasAdditionAt.since() > 0.2)
             {
                 lastAtlasAdditionAt = Time();
                 nextAtlasAlloc();
@@ -482,7 +482,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void nextAtlasAlloc()
     {
-        if(eraseAtlas)
+        if (eraseAtlas)
         {
             atlas->clear();
             eraseAtlas = false;
@@ -490,11 +490,11 @@ DENG2_OBSERVES(Bank, Load)
         }
 
 #if 1
-        if((qrand() % 10) <= 5 && !atlas->isEmpty())
+        if ((qrand() % 10) <= 5 && !atlas->isEmpty())
         {
             // Randomly remove one of the allocations.
             QList<Id> ids;
-            foreach(Id const &id, atlas->allImages()) ids << id;
+            foreach (Id const &id, atlas->allImages()) ids << id;
             Id chosen = ids[qrand() % ids.size()];
             atlas->release(chosen);
 
@@ -512,7 +512,7 @@ DENG2_OBSERVES(Bank, Load)
 
         Id id = atlas->alloc(img);
         LOG_DEBUG("Allocated ") << id;
-        if(id.isNone())
+        if (id.isNone())
         {
             lastAtlasAdditionAt = Time() + 5.0;
 

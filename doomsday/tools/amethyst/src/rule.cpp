@@ -27,9 +27,9 @@ Rule::Rule() : Linkable()
  */
 bool Rule::matches(Gem *gem)
 {
-    if(_terms.isListEmpty()) return true; // Matches everything.
+    if (_terms.isListEmpty()) return true; // Matches everything.
     // Try all the terms, accept the first match.
-    for(GemTest *t = _terms.next(); !t->isRoot(); t = t->next())
-        if(t->test(gem)) return true;
+    for (GemTest *t = _terms.next(); !t->isRoot(); t = t->next())
+        if (t->test(gem)) return true;
     return false;
 }

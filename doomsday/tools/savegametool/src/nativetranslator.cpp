@@ -159,7 +159,7 @@ DENG2_PIMPL(NativeTranslator)
      */
     dint32 magic() const
     {
-        switch(id)
+        switch (id)
         {
         case Doom:    return 0x1DEAD666;
         case Heretic: return 0x7D9A12C5;
@@ -207,7 +207,7 @@ DENG2_PIMPL(NativeTranslator)
         };
 
         // The gamemode may first need to be translated if "really old".
-        if(id == Doom && saveVersion < 9)
+        if (id == Doom && saveVersion < 9)
         {
             static int const oldGamemodes[] = {
                 /*doom_shareware*/      0,
@@ -220,9 +220,9 @@ DENG2_PIMPL(NativeTranslator)
 
             // Older versions did not differentiate between versions of Doom2, meaning we cannot
             // determine the game ID unambigously, without some assistance.
-            if(gamemode == 4 /*doom2*/)
+            if (gamemode == 4 /*doom2*/)
             {
-                if(!fallbackGameId.isEmpty())
+                if (!fallbackGameId.isEmpty())
                 {
                     return fallbackGameId;
                 }
@@ -230,7 +230,7 @@ DENG2_PIMPL(NativeTranslator)
                 throw AmbigousGameIdError("translateGamemode", "Game ID is ambiguous");
             }
         }
-        if(id == Heretic && saveVersion < 8)
+        if (id == Heretic && saveVersion < 8)
         {
             static int const oldGamemodes[] = {
                 /*heretic_shareware*/   0,
@@ -241,7 +241,7 @@ DENG2_PIMPL(NativeTranslator)
             gamemode = oldGamemodes[gamemode];
         }
 
-        switch(id)
+        switch (id)
         {
         case Doom:
             DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(doomGameIdentityKeys)    / sizeof(doomGameIdentityKeys[0]));
@@ -270,7 +270,7 @@ DENG2_PIMPL(NativeTranslator)
             saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
             return;
         }
-        catch(FileSystem::NotFoundError const &)
+        catch (FileSystem::NotFoundError const &)
         {} // We'll thow our own.
 
         throw FileOpenError("NativeTranslator", "Failed opening \"" + path + "\"");
@@ -278,7 +278,7 @@ DENG2_PIMPL(NativeTranslator)
 
     void closeFile()
     {
-        if(saveFilePtr)
+        if (saveFilePtr)
         {
             lzClose(saveFilePtr);
             saveFilePtr = 0;
@@ -292,10 +292,10 @@ DENG2_PIMPL(NativeTranslator)
         Block *buffer = 0;
         dint8 readBuf[BLOCKSIZE];
 
-        while(!lzEOF(saveFile()))
+        while (!lzEOF(saveFile()))
         {
             dsize bytesRead = lzRead(readBuf, BLOCKSIZE, const_cast<Instance *>(this)->saveFile());
-            if(!buffer)
+            if (!buffer)
             {
                 buffer = new Block;
             }
@@ -319,14 +319,14 @@ DENG2_PIMPL(NativeTranslator)
         dint32 oldMagic;
         from >> oldMagic >> saveVersion;
 
-        if(saveVersion < 0 || saveVersion > 13)
+        if (saveVersion < 0 || saveVersion > 13)
         {
             /// @throw UnknownFormatError Format is from the future.
             throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::number(saveVersion));
         }
         // We are incompatible with v3 saves due to an invalid test used to determine present
         // sides (ver3 format's sides contain chunks of junk data).
-        if(id == Hexen && saveVersion == 3)
+        if (id == Hexen && saveVersion == 3)
         {
             /// @throw UnknownFormatError Map state is in an unsupported format.
             throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::number(saveVersion));
@@ -339,7 +339,7 @@ DENG2_PIMPL(NativeTranslator)
 
         // User description. A fixed 24 characters in length in "really old" versions.
         dint32 len = 24;
-        if(saveVersion >= 10)
+        if (saveVersion >= 10)
         {
             from >> len;
         }
@@ -350,7 +350,7 @@ DENG2_PIMPL(NativeTranslator)
         free(descBuf); descBuf = 0;
 
         QScopedPointer<Record> rules(new Record);
-        if(id != Hexen && saveVersion < 13)
+        if (id != Hexen && saveVersion < 13)
         {
             // In DOOM the high bit of the skill mode byte is also used for the
             // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
@@ -362,7 +362,7 @@ DENG2_PIMPL(NativeTranslator)
             dbyte skillModePlusFastBit;
             from >> skillModePlusFastBit;
             int skill = (skillModePlusFastBit & 0x7f);
-            if(skill >= NUM_SKILL_MODES)
+            if (skill >= NUM_SKILL_MODES)
             {
                 skill = SM_NOTHINGS;
                 rules->addBoolean("fast", false);
@@ -379,7 +379,7 @@ DENG2_PIMPL(NativeTranslator)
             from >> skill;
             skill &= 0x7f;
             // Interpret skill levels outside the normal range as "spawn no things".
-            if(skill >= NUM_SKILL_MODES)
+            if (skill >= NUM_SKILL_MODES)
             {
                 skill = SM_NOTHINGS;
             }
@@ -388,7 +388,7 @@ DENG2_PIMPL(NativeTranslator)
 
         dbyte episode, map;
         from >> episode >> map;
-        if(fallbackGameId.beginsWith("hexen") || fallbackGameId.beginsWith("doom2") ||
+        if (fallbackGameId.beginsWith("hexen") || fallbackGameId.beginsWith("doom2") ||
            /*fallbackGameId.beginsWith("chex") ||*/ fallbackGameId.beginsWith("hacx"))
         {
             episode = 0; // Why is this > 0??
@@ -399,7 +399,7 @@ DENG2_PIMPL(NativeTranslator)
         from >> deathmatch;
         rules->set("deathmatch", deathmatch);
 
-        if(id != Hexen && saveVersion == 13)
+        if (id != Hexen && saveVersion == 13)
         {
             dbyte fast;
             from >> fast;
@@ -410,7 +410,7 @@ DENG2_PIMPL(NativeTranslator)
         from >> noMonsters;
         rules->addBoolean("noMonsters", noMonsters);
 
-        if(id == Hexen)
+        if (id == Hexen)
         {
             dbyte randomClasses;
             from >> randomClasses;
@@ -425,16 +425,16 @@ DENG2_PIMPL(NativeTranslator)
 
         metadata.add("gameRules",           rules.take());
 
-        if(id != Hexen)
+        if (id != Hexen)
         {
-            /*skip junk*/ if(saveVersion < 10) from.seek(2);
+            /*skip junk*/ if (saveVersion < 10) from.seek(2);
 
             dint32 mapTime;
             from >> mapTime;
             metadata.set("mapTime", mapTime);
 
             ArrayValue *array = new de::ArrayValue;
-            for(int i = 0; i < 16/*MAXPLAYERS*/; ++i)
+            for (int i = 0; i < 16/*MAXPLAYERS*/; ++i)
             {
                 dbyte playerPresent;
                 from >> playerPresent;
@@ -482,7 +482,7 @@ DENG2_PIMPL(NativeTranslator)
                << scriptNumber;
 
             // Script arguments:
-            for(int i = 0; i < 4; ++i)
+            for (int i = 0; i < 4; ++i)
             {
                 to << args[i];
             }
@@ -495,11 +495,11 @@ DENG2_PIMPL(NativeTranslator)
 #define MAX_ACS_WORLD_VARS 64
 
         LOG_AS("NativeTranslator");
-        if(saveVersion >= 7)
+        if (saveVersion >= 7)
         {
             dint32 segId;
             from >> segId;
-            if(segId != ASEG_WORLDSCRIPTDATA)
+            if (segId != ASEG_WORLDSCRIPTDATA)
             {
                 /// @throw ReadError Failed alignment check.
                 throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
@@ -507,18 +507,18 @@ DENG2_PIMPL(NativeTranslator)
         }
 
         dbyte ver = 1;
-        if(saveVersion >= 7)
+        if (saveVersion >= 7)
         {
             from >> ver;
         }
-        if(ver < 1 || ver > 3)
+        if (ver < 1 || ver > 3)
         {
             /// @throw UnknownFormatError Format is from the future.
             throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::number(ver));
         }
 
         dint32 worldVars[MAX_ACS_WORLD_VARS];
-        for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+        for (int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
         {
             from >> worldVars[i];
         }
@@ -528,20 +528,20 @@ DENG2_PIMPL(NativeTranslator)
         from >> oldStoreSize;
         ACScriptTasks tasks;
 
-        if(oldStoreSize > 0)
+        if (oldStoreSize > 0)
         {
             tasks.reserve(oldStoreSize);
-            for(int i = 0; i < oldStoreSize; ++i)
+            for (int i = 0; i < oldStoreSize; ++i)
             {
                 tasks.append(ACScriptTask::fromReader(from));
             }
 
             // Prune tasks with no map number set (unused).
             QMutableListIterator<ACScriptTask *> it(tasks);
-            while(it.hasNext())
+            while (it.hasNext())
             {
                 ACScriptTask *task = it.next();
-                if(!task->mapNumber)
+                if (!task->mapNumber)
                 {
                     it.remove();
                     delete task;
@@ -550,11 +550,11 @@ DENG2_PIMPL(NativeTranslator)
             LOG_XVERBOSE("Translated %i deferred ACScript tasks") << tasks.count();
         }
 
-        /* skip junk */ if(saveVersion < 7) from.seek(12);
+        /* skip junk */ if (saveVersion < 7) from.seek(12);
 
         // Write out the translated data:
         Writer writer = Writer(arch.entryBlock("ACScriptState")).withHeader();
-        for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+        for (int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
         {
             writer << worldVars[i];
         }
@@ -579,7 +579,7 @@ NativeTranslator::~NativeTranslator()
 
 String NativeTranslator::formatName() const
 {
-    switch(d->id)
+    switch (d->id)
     {
     case Doom:      return "Doom";
     case Heretic:   return "Heretic";
@@ -602,23 +602,23 @@ bool NativeTranslator::recognize(Path path)
         dint32 oldMagic;
         from >> oldMagic;
 
-        if(oldMagic == d->magic())
+        if (oldMagic == d->magic())
         {
             // Ensure this is a compatible save version.
             dint32 saveVersion;
             from >> saveVersion;
-            if(saveVersion >= 0 && saveVersion <= 13)
+            if (saveVersion >= 0 && saveVersion <= 13)
             {
                 // We are incompatible with v3 saves due to an invalid test used to determine present
                 // sides (ver3 format's sides contain chunks of junk data).
-                if(!(d->id == Hexen && saveVersion == 3))
+                if (!(d->id == Hexen && saveVersion == 3))
                 {
                     recognized = true;
                 }
             }
         }
     }
-    catch(...)
+    catch (...)
     {}
     d->closeFile();
     return recognized;
@@ -641,13 +641,13 @@ void NativeTranslator::convert(Path path)
     SessionMetadata metadata;
     d->translateMetadata(metadata, from);
 
-    if(d->id == Hexen)
+    if (d->id == Hexen)
     {
         // Translate and separate the serialized world ACS data into a new file.
         d->translateACScriptState(arch, from);
     }
 
-    if(d->id == Hexen)
+    if (d->id == Hexen)
     {
         QScopedPointer<Block> xlatedPlayerData(d->bufferFile());
         DENG2_ASSERT(!xlatedPlayerData.isNull());
@@ -657,7 +657,7 @@ void NativeTranslator::convert(Path path)
         // but we'll include it for the sake of uniformity).
         ArrayValue *array = new de::ArrayValue;
         int const presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
-        for(int i = 0; i < 8/*MAXPLAYERS*/; ++i)
+        for (int i = 0; i < 8/*MAXPLAYERS*/; ++i)
         {
             dbyte playerPresent = xlatedPlayerData->at(presentPlayersOffset + i);
             *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
@@ -666,7 +666,7 @@ void NativeTranslator::convert(Path path)
 
         // Serialized map states are in similarly named "side car" files.
         int const maxHubMaps = 99;
-        for(int i = 0; i < maxHubMaps; ++i)
+        for (int i = 0; i < maxHubMaps; ++i)
         {
             try
             {
@@ -674,12 +674,12 @@ void NativeTranslator::convert(Path path)
                             + String("%1").arg(i + 1, 2, 10, QChar('0'))
                             + saveName.fileNameExtension());
 
-                if(Block *xlatedData = d->bufferFile())
+                if (Block *xlatedData = d->bufferFile())
                 {
                     String const mapUriPath = composeMapUriPath(0, i + 1);
 
                     // If this is the "current" map extract the map time for the metadata.
-                    if(!mapUriPath.compareWithoutCase(metadata.gets("mapUri")))
+                    if (!mapUriPath.compareWithoutCase(metadata.gets("mapUri")))
                     {
                         dint32 mapTime;
                         Reader(*xlatedData, littleEndianByteOrder, 4 + 1) >> mapTime;
@@ -697,7 +697,7 @@ void NativeTranslator::convert(Path path)
                     delete xlatedData;
                 }
             }
-            catch(FileOpenError const &)
+            catch (FileOpenError const &)
             {} // Ignore this error.
             d->closeFile();
         }
@@ -706,7 +706,7 @@ void NativeTranslator::convert(Path path)
     {
         // The only serialized map state follows the session metadata in the game state file.
         // Buffer the rest of the file and write it out to a new map state file.
-        if(Block *xlatedData = d->bufferFile())
+        if (Block *xlatedData = d->bufferFile())
         {
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.

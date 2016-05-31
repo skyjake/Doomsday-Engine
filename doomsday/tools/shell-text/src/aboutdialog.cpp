@@ -43,7 +43,7 @@ AboutDialog::AboutDialog()
 
 bool AboutDialog::handleEvent(Event const &event)
 {
-    if(event.type() == Event::KeyPress)
+    if (event.type() == Event::KeyPress)
     {
         accept();
         return true;

@@ -41,8 +41,8 @@ template<class T>
 T *UniqueList<T>::add(T *ptr)
 {
     // Check if this pointer already exists.
-    for(UniqueList *u = next(); !u->isRoot(); u = u->next())
-        if(u->get() == ptr) return ptr; // Already there.
+    for (UniqueList *u = next(); !u->isRoot(); u = u->next())
+        if (u->get() == ptr) return ptr; // Already there.
     return List<T>::add(ptr);
 }
 

@@ -95,10 +95,10 @@ DENG2_PIMPL(OpenDialog)
     void tidyUpHistory()
     {
         QStringList tidied;
-        foreach(QString host, history)
+        foreach (QString host, history)
         {
             int pos = host.indexOf('(');
-            if(pos > 0)
+            if (pos > 0)
             {
                 host = host.left(pos - 1);
             }
@@ -112,11 +112,11 @@ DENG2_PIMPL(OpenDialog)
      */
     bool isListed(Address const &host) const
     {
-        for(int i = firstFoundIdx; i < address->count(); ++i)
+        for (int i = firstFoundIdx; i < address->count(); ++i)
         {
-            if(address->itemData(i).canConvert<Address>())
+            if (address->itemData(i).canConvert<Address>())
             {
-                if(host == address->itemData(i).value<Address>())
+                if (host == address->itemData(i).value<Address>())
                     return true;
             }
         }
@@ -136,7 +136,7 @@ OpenDialog::OpenDialog(QWidget *parent)
 QString OpenDialog::address() const
 {
     int sel = d->address->currentIndex();
-    if(d->address->itemData(sel).canConvert<Address>())
+    if (d->address->itemData(sel).canConvert<Address>())
     {
         return d->address->itemData(sel).value<Address>().asText();
     }
@@ -146,7 +146,7 @@ QString OpenDialog::address() const
 
     // Omit parentheses at the end.
     int pos = text.indexOf('(');
-    if(pos > 0)
+    if (pos > 0)
     {
         text = text.left(pos - 1);
     }
@@ -160,7 +160,7 @@ void OpenDialog::updateLocalList(bool autoselect)
     ServerFinder &finder = GuiShellApp::app().serverFinder();
     bool selected = false;
 
-    if(finder.foundServers().isEmpty())
+    if (finder.foundServers().isEmpty())
     {
         // Nothing found.
         d->localCount->setText(tr("<small>No local servers found.</small>"));
@@ -172,19 +172,19 @@ void OpenDialog::updateLocalList(bool autoselect)
                                .arg(finder.foundServers().size() != 1? "s" : ""));
 
         // Update the list of servers.
-        foreach(Address const &sv, finder.foundServers())
+        foreach (Address const &sv, finder.foundServers())
         {
             String label = sv.asText() + String(" (%1; %2/%3)")
                     .arg(finder.name(sv).left(20))
                     .arg(finder.playerCount(sv))
                     .arg(finder.maxPlayers(sv));
 
-            if(!d->isListed(sv))
+            if (!d->isListed(sv))
             {
                 d->address->addItem(label, QVariant::fromValue(sv));
 
                 // Autoselect the first one?
-                if(autoselect && !selected)
+                if (autoselect && !selected)
                 {
                     d->address->setCurrentIndex(d->address->count() - 1);
                     selected = true;
@@ -194,9 +194,9 @@ void OpenDialog::updateLocalList(bool autoselect)
     }
 
     // Remove servers no longer present.
-    for(int i = d->firstFoundIdx; i < d->address->count(); )
+    for (int i = d->firstFoundIdx; i < d->address->count(); )
     {
-        if(!d->address->itemData(i).canConvert<Address>() ||
+        if (!d->address->itemData(i).canConvert<Address>() ||
                 !finder.foundServers().contains(d->address->itemData(i).value<Address>()))
         {
             d->address->removeItem(i);
@@ -209,14 +209,14 @@ void OpenDialog::updateLocalList(bool autoselect)
 
 void OpenDialog::saveState()
 {
-    if(d->edited)
+    if (d->edited)
     {
         String text = d->address->itemText(0);
         d->history.removeAll(text);
         d->history.prepend(text);
 
         // Make sure there aren't too many entries.
-        while(d->history.size() > MAX_HISTORY_SIZE)
+        while (d->history.size() > MAX_HISTORY_SIZE)
         {
             d->history.removeLast();
         }
@@ -228,7 +228,7 @@ void OpenDialog::saveState()
 
 void OpenDialog::textEdited(QString text)
 {
-    if(!d->edited)
+    if (!d->edited)
     {
         d->edited = true;
         d->address->insertItem(0, text);

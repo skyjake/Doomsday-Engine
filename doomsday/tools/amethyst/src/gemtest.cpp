@@ -32,8 +32,8 @@ GemTest::GemTest(Token *initWith) : Linkable()
  */
 int CompareCount(const String& str, const String& pat)
 {
-    if(!str.startsWith(pat)) return 0;
-    if(str == pat) return 1;
+    if (!str.startsWith(pat)) return 0;
+    if (str == pat) return 1;
     return str.mid(pat.size()).toInt();
 }
 
@@ -97,17 +97,17 @@ void GemTest::init(Token *first)
     _commands.destroy();
 
     // Next we'll convert all the shards to test commands.
-    for(Shard *it = first; it; it = it->next())
+    for (Shard *it = first; it; it = it->next())
     {
         String con = ((Token*)it)->unEscape();
-        if(con.isEmpty()) continue;
+        if (con.isEmpty()) continue;
 
         // This'll report unknown commands.
         _addedBit = false;
 
         // Normally 'false' is the failing condition.
         _failBit = false;
-        while(con[0] == '!')
+        while (con[0] == '!')
         {
             // Use a negative test.
             con.remove(0, 1);
@@ -116,38 +116,38 @@ void GemTest::init(Token *first)
 
         // Check for escalation.
         _escalateBit = false;
-        if(con[0] == '^')
+        if (con[0] == '^')
         {
             con.remove(0, 1);
             _escalateBit = true;
         }
 
         // Navigation of the test pointer.
-        if((i = CompareCount(con, "parent"))) newTest(GoParent, i);
-        else if((i = CompareCount(con, "next"))) newTest(GoNext, i);
-        else if((i = CompareCount(con, "prev"))) newTest(GoPrev, i);
-        else if((i = CompareCount(con, "first"))) newTest(GoFirst, i);
-        else if((i = CompareCount(con, "last"))) newTest(GoLast, i);
-        else if((i = CompareCount(con, "following"))) newTest(GoFollowing, i);
-        else if((i = CompareCount(con, "preceding"))) newTest(GoPreceding, i);
+        if ((i = CompareCount(con, "parent"))) newTest(GoParent, i);
+        else if ((i = CompareCount(con, "next"))) newTest(GoNext, i);
+        else if ((i = CompareCount(con, "prev"))) newTest(GoPrev, i);
+        else if ((i = CompareCount(con, "first"))) newTest(GoFirst, i);
+        else if ((i = CompareCount(con, "last"))) newTest(GoLast, i);
+        else if ((i = CompareCount(con, "following"))) newTest(GoFollowing, i);
+        else if ((i = CompareCount(con, "preceding"))) newTest(GoPreceding, i);
         
-        for(i = 0; tests[i].name; i++)
-            if(con == tests[i].name)
+        for (i = 0; tests[i].name; i++)
+            if (con == tests[i].name)
             {
-                if(tests[i].argType == TA_NUMBER)
+                if (tests[i].argType == TA_NUMBER)
                 {
                     int arg = 0;
-                    if(it->next())
+                    if (it->next())
                     {
                         it = it->next();
                         arg = ((Token*)it)->token().toInt();
                     }
                     newTest(tests[i].cmdId, arg);
                 }
-                else if(tests[i].argType == TA_TEXT)
+                else if (tests[i].argType == TA_TEXT)
                 {
                     String txt;
-                    if(it->next())
+                    if (it->next())
                     {
                         it = it->next();
                         txt = ((Token*)it)->unEscape();
@@ -162,16 +162,16 @@ void GemTest::init(Token *first)
             }
 
         // Types.
-        for(i = 0; gemTypes[i].condition; i++)
-            if(con == gemTypes[i].condition)
+        for (i = 0; gemTypes[i].condition; i++)
+            if (con == gemTypes[i].condition)
             {
                 newTest(GemType, gemTypes[i].type);
                 break;
             }
 
         // Flush modes.
-        for(i = 0; gemFlushModes[i].condition; ++i)
-            if(con == gemFlushModes[i].condition)
+        for (i = 0; gemFlushModes[i].condition; ++i)
+            if (con == gemFlushModes[i].condition)
             {
                 newTest(GemFlushMode, gemFlushModes[i].mode);
                 break;
@@ -180,12 +180,12 @@ void GemTest::init(Token *first)
         // Flags that must be present.
         String lowCon = stringCase(con, LOWERCASE_ALL);
         bool checkForJust = con[0].isUpper();
-        if((i = styleForName(lowCon)))
+        if ((i = styleForName(lowCon)))
         {
             newTest(checkForJust? ExclusiveFlag : HasFlag, i);
         }
         
-        if(!_addedBit)
+        if (!_addedBit)
         {
             // Print a warning message.         
             qWarning() << con << ": Unknown test command.";
@@ -200,46 +200,46 @@ bool GemTest::test(Gem *gem)
     bool result, trying = false, passed;
     int i;
     
-    for(GemTestCommand *cmd = _commands.next(); !cmd->isRoot(); cmd = cmd->next())
+    for (GemTestCommand *cmd = _commands.next(); !cmd->isRoot(); cmd = cmd->next())
     {
         // We can skip commands if trying is passed.
-        if(trying && ((passed && cmd->id() != CheckIfPassed) ||
+        if (trying && ((passed && cmd->id() != CheckIfPassed) ||
                       (!test && cmd->id() != CheckIfPassed && cmd->id() != GoSelf)))
             continue;
 
         result = true;
-        switch(cmd->id())
+        switch (cmd->id())
         {
         case GoSelf:
             test = gem;
             break;
 
         case GoParent:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->parentGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->parentGem();
             break;
 
         case GoNext:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->nextGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->nextGem();
             break;
 
         case GoPrev:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->prevGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->prevGem();
             break;
 
         case GoFirst:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->firstGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->firstGem();
             break;
 
         case GoLast:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->lastGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->lastGem();
             break;
 
         case GoFollowing:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->followingGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->followingGem();
             break;
             
         case GoPreceding:
-            for(i = 0; test && i < cmd->intArg(); i++) test = test->precedingGem();
+            for (i = 0; test && i < cmd->intArg(); i++) test = test->precedingGem();
             break;
 
         case GoFinal:
@@ -260,12 +260,12 @@ bool GemTest::test(Gem *gem)
 
         default:
             // Are we escalating this check?
-            if(cmd->escalating())
+            if (cmd->escalating())
             {
                 result = false;
-                for(Gem* it = test->parentGem(); it; it = it->parentGem())
+                for (Gem* it = test->parentGem(); it; it = it->parentGem())
                 {
-                    if(cmd->execute(gem, it))
+                    if (cmd->execute(gem, it))
                     {
                         result = true;
                         break;
@@ -280,27 +280,27 @@ bool GemTest::test(Gem *gem)
         }
 
         // You can't fail the BeginTry command.
-        if(cmd->id() == BeginTry) continue;
+        if (cmd->id() == BeginTry) continue;
 
         // A null test pointer is an automatic failure.
-        if(!test)
+        if (!test)
         {
-            if(!trying) return false;
+            if (!trying) return false;
             result = false;
         }
 
         // Did it fail?
-        if(trying)
+        if (trying)
         {
-            if(result != cmd->negated()) passed = true; // Passed!
+            if (result != cmd->negated()) passed = true; // Passed!
         }
         else
         {
-            if(result == cmd->negated()) return false; // Failed!
+            if (result == cmd->negated()) return false; // Failed!
         }
     }
 
-    if(trying)
+    if (trying)
     {
         qCritical("A 'try..pass' is missing 'pass'.");
         exit(1);
@@ -312,11 +312,11 @@ bool GemTest::test(Gem *gem)
 
 bool GemTest::operator == (GemTest &other)
 {
-    if(count() != other.count()) return false;
-    for(GemTest *mine = next(), *yours = other.next();
+    if (count() != other.count()) return false;
+    for (GemTest *mine = next(), *yours = other.next();
         !mine->isRoot(); mine = mine->next(), yours = yours->next())
     {
-        if(!(mine->_commands == yours->_commands)) return false;
+        if (!(mine->_commands == yours->_commands)) return false;
     }
     return true;
 }

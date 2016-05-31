@@ -27,12 +27,12 @@ Linkable::Linkable(bool makeRoot)
 Linkable::~Linkable()
 {
     // The root is responsible for destroying the ring.
-    if(_isRootNode) destroy();
+    if (_isRootNode) destroy();
 }
 
 void Linkable::destroy()
 {
-    while(_next != this) delete _next->remove();
+    while (_next != this) delete _next->remove();
 }
 
 Linkable *Linkable::addAfter(Linkable *nodeToAdd)
@@ -59,6 +59,6 @@ Linkable *Linkable::remove()
 int Linkable::count()
 {
     int count = 0;
-    for(Linkable *it = _next; !it->_isRootNode; it = it->_next, count++) {}
+    for (Linkable *it = _next; !it->_isRootNode; it = it->_next, count++) {}
     return count;
 }

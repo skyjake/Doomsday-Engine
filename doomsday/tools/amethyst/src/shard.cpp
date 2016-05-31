@@ -24,7 +24,7 @@ Shard::Shard(ShardType t, Source *src)
     _type = t;
     _parent = _first = _last = _next = _prev = 0;
     _source = src;
-    if(src) _lineNumber = src->lineNumber();
+    if (src) _lineNumber = src->lineNumber();
 }
 
 Shard::~Shard()
@@ -37,7 +37,7 @@ Shard::~Shard()
  */
 void Shard::clear()
 {
-    while(_first) delete remove(_first);
+    while (_first) delete remove(_first);
 }
 
 /**
@@ -48,7 +48,7 @@ Shard *Shard::add(Shard *s)
     s->_parent = this;
     
     // Are there any previous children?
-    if(!_first && !_last)
+    if (!_first && !_last)
     {
         _first = _last = s;
         s->_next = s->_prev = 0;
@@ -68,8 +68,8 @@ Shard *Shard::add(Shard *s)
  */
 Shard *Shard::remove(Shard *s)
 {
-    if(s->_prev) s->_prev->_next = s->_next; else _first = s->_next;
-    if(s->_next) s->_next->_prev = s->_prev; else _last = s->_prev;
+    if (s->_prev) s->_prev->_next = s->_next; else _first = s->_next;
+    if (s->_next) s->_next->_prev = s->_prev; else _last = s->_prev;
     s->_parent = s->_next = s->_prev = 0;
     return s;
 }
@@ -77,7 +77,7 @@ Shard *Shard::remove(Shard *s)
 int Shard::count()
 {
     int count = 0;
-    for(Shard *it = _first; it; it = it->_next) count++;
+    for (Shard *it = _first; it; it = it->_next) count++;
     return count;
 }
 
@@ -87,18 +87,18 @@ int Shard::count()
 int Shard::order()
 {
     int count = 0;
-    if(!_parent) return 0;
-    for(Shard *it = _parent->_first; it != this; it = it->_next, count++) {}
+    if (!_parent) return 0;
+    for (Shard *it = _parent->_first; it != this; it = it->_next, count++) {}
     return count;
 }
 
 bool Shard::isIdentical(Shard *other)
 {
-    if(_type != other->_type) return false;
-    if(count() != other->count()) return false;
-    for(Shard *mine = _first, *yours = other->_first; mine;
+    if (_type != other->_type) return false;
+    if (count() != other->count()) return false;
+    for (Shard *mine = _first, *yours = other->_first; mine;
         mine = mine->_next, yours = yours->_next)
-        if(!mine->isIdentical(yours)) return false;
+        if (!mine->isIdentical(yours)) return false;
     return true;
 }
 
@@ -115,17 +115,17 @@ Shard *Shard::child(int oneBasedIndex)
     bool fwd = oneBasedIndex > 0;
     int count = 1;
 
-    if(!oneBasedIndex) return NULL; // Zero is not defined.
+    if (!oneBasedIndex) return NULL; // Zero is not defined.
     oneBasedIndex = qAbs(oneBasedIndex);
     Shard *it = fwd? _first : _last;
-    for(; it && count != oneBasedIndex; it = fwd? it->_next : it->_prev, count++) {}
+    for (; it && count != oneBasedIndex; it = fwd? it->_next : it->_prev, count++) {}
     return it;
 }
 
 void Shard::steal(Shard *whoseChildren)
 {
     Shard *fol;
-    for(Shard *it = whoseChildren->_first; it; it = fol)
+    for (Shard *it = whoseChildren->_first; it; it = fol)
     {
         fol = it->_next;
         add(whoseChildren->remove(it));
@@ -135,26 +135,26 @@ void Shard::steal(Shard *whoseChildren)
 Shard *Shard::top()
 {
     Shard *top = this;
-    while(top->parent()) top = top->parent();
+    while (top->parent()) top = top->parent();
     return top;
 }
 
 Shard *Shard::following()
 {
-    if(_first) return _first;
-    if(_next) return _next;
+    if (_first) return _first;
+    if (_next) return _next;
     Shard *it = this;
-    while(it->_parent)
+    while (it->_parent)
     {
         it = it->_parent;
-        if(it->_next) return it->_next;
+        if (it->_next) return it->_next;
     }
     return NULL;
 }
 
 Shard *Shard::preceding()
 {
-    if(!_prev) return _parent;
+    if (!_prev) return _parent;
     // Go to the last possible child.
     return _prev->final();
 }
@@ -162,6 +162,6 @@ Shard *Shard::preceding()
 Shard *Shard::final()
 {
     Shard *it = this;
-    while(it->_last) it = it->_last;
+    while (it->_last) it = it->_last;
     return it;
 }

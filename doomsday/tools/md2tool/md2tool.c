@@ -76,12 +76,12 @@ unsigned short PackVector(float vec[3])
     int iyaw, ipitch;
 
     // First check for special cases (up/down).
-    if(vec[VX] == 0 && vec[VY] == 0)
+    if (vec[VX] == 0 && vec[VY] == 0)
     {
-        if(vec[VZ] == 0) return 0; // This is not a good vector.
+        if (vec[VZ] == 0) return 0; // This is not a good vector.
         // Up or down...
         pitch = PI/2;
-        if(vec[VZ] < 0) pitch = -pitch;
+        if (vec[VZ] < 0) pitch = -pitch;
     }
     else
     {
@@ -93,12 +93,12 @@ unsigned short PackVector(float vec[3])
     // Now we have yaw and pitch angles, encode them into a word.
     // (packed: pppppppy yyyyyyyy)
     iyaw = (int) (yaw/PI*256); // Convert 2*PI => 512
-    while(iyaw > 511) iyaw -= 512;
-    while(iyaw < 0) iyaw += 512;
+    while (iyaw > 511) iyaw -= 512;
+    while (iyaw < 0) iyaw += 512;
 
     ipitch = (int) ((pitch/(PI/2) + 1)*64);
-    if(ipitch > 127) ipitch = 127;
-    if(ipitch < 0) ipitch = 0;
+    if (ipitch > 127) ipitch = 127;
+    if (ipitch < 0) ipitch = 0;
 
 /*  //----DEBUG----
     printf("PackVector: (%f,%f,%f) => (%i,%i)\n",
@@ -136,12 +136,12 @@ int GetNormalIndex(float vec[3])
     int j, n, idx;
 
     // Find closest match in the normals list.
-    for(j = 0; j < NUMVERTEXNORMALS; j++)
+    for (j = 0; j < NUMVERTEXNORMALS; j++)
     {
         // Dot product.
-        for(dot = 0, n = 0; n < 3; n++)
+        for (dot = 0, n = 0; n < 3; n++)
             dot += avertexnormals[j][n] * vec[n];
-        if(!j || dot > maxprod)
+        if (!j || dot > maxprod)
         {
             maxprod = dot;
             idx = j;
@@ -159,8 +159,8 @@ int CheckOption(char *opt)
 {
     int i;
 
-    for(i = 1; i < myargc; i++)
-        if(!stricmp(myargv[i], opt))
+    for (i = 1; i < myargc; i++)
+        if (!stricmp(myargv[i], opt))
             return argpos = i;
     return 0;
 }
@@ -172,7 +172,7 @@ int CheckOption(char *opt)
 //===========================================================================
 const char *NextOption(void)
 {
-    if(++argpos >= myargc) return NULL;
+    if (++argpos >= myargc) return NULL;
     return myargv[argpos];
 }
 
@@ -181,7 +181,7 @@ const char *NextOption(void)
 //===========================================================================
 const char *SkipWhite(const char *str)
 {
-    while(isspace(*str) && *str) str++;
+    while (isspace(*str) && *str) str++;
     return str;
 }
 
@@ -238,7 +238,7 @@ void PrintUsage(void)
 void DoError(int code)
 {
     printf("\nERROR: ");
-    switch(code)
+    switch (code)
     {
     case MTERR_INVALID_OPTION:
         printf("Invalid usage of a command line option.\n");
@@ -279,7 +279,7 @@ void *Load(FILE *file, int offset, int len)
 {
     void *ptr = malloc(len);
     fseek(file, offset, SEEK_SET);
-    if(!fread(ptr, len, 1, file))
+    if (!fread(ptr, len, 1, file))
     {
         DoError(MTERR_READ_FAILED);
     }
@@ -325,14 +325,14 @@ int ModelOpen(model_t *mo, const char *filename)
     void *ptr;
 
     strcpy(fn, filename);
-    if((file = fopen(fn, "rb")) == NULL)
+    if ((file = fopen(fn, "rb")) == NULL)
     {
         strcat(fn, ".md2");
-        if((file = fopen(fn, "rb")) == NULL)
+        if ((file = fopen(fn, "rb")) == NULL)
         {
             strcpy(fn, filename);
             strcat(fn, ".dmd");
-            if((file = fopen(fn, "rb")) == NULL)
+            if ((file = fopen(fn, "rb")) == NULL)
             {
                 printf("Couldn't open the model \"%s\".\n", filename);
                 return false;
@@ -343,25 +343,25 @@ int ModelOpen(model_t *mo, const char *filename)
 
     memset(mo, 0, sizeof(*mo));
     strcpy(mo->fileName, fn);
-    if(!fread(&mo->header, sizeof(mo->header), 1, file))
+    if (!fread(&mo->header, sizeof(mo->header), 1, file))
     {
         DoError(MTERR_READ_FAILED);
     }
     hd = &mo->header;
     inf = &mo->info;
-    if(hd->magic == DMD_MAGIC)
+    if (hd->magic == DMD_MAGIC)
     {
         // Read the chunks.
-        if(!fread(&chunk, sizeof(chunk), 1, file))
+        if (!fread(&chunk, sizeof(chunk), 1, file))
         {
             DoError(MTERR_READ_FAILED);
         }
-        while(chunk.type != DMC_END)
+        while (chunk.type != DMC_END)
         {
-            switch(chunk.type)
+            switch (chunk.type)
             {
             case DMC_INFO:
-                if(!fread(inf, sizeof(*inf), 1, file))
+                if (!fread(inf, sizeof(*inf), 1, file))
                 {
                     DoError(MTERR_READ_FAILED);
                 }
@@ -374,7 +374,7 @@ int ModelOpen(model_t *mo, const char *filename)
                     chunk.type, chunk.length);
             }
             // Read the next chunk.
-            if(!fread(&chunk, sizeof(chunk), 1, file))
+            if (!fread(&chunk, sizeof(chunk), 1, file))
             {
                 DoError(MTERR_READ_FAILED);
             }
@@ -391,7 +391,7 @@ int ModelOpen(model_t *mo, const char *filename)
             * inf->numLODs);
         memcpy(mo->lodinfo, ptr, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
         free(ptr);
-        for(i = 0; i < inf->numLODs; i++)
+        for (i = 0; i < inf->numLODs; i++)
         {
             mo->lods[i].triangles = Load(file, mo->lodinfo[i].offsetTriangles,
                 sizeof(dmd_triangle_t) * mo->lodinfo[i].numTriangles);
@@ -399,10 +399,10 @@ int ModelOpen(model_t *mo, const char *filename)
                 sizeof(int) * mo->lodinfo[i].numGlCommands);
         }
     }
-    else if(hd->magic == MD2_MAGIC)
+    else if (hd->magic == MD2_MAGIC)
     {
         rewind(file);
-        if(!fread(&oldhd, sizeof(oldhd), 1, file))
+        if (!fread(&oldhd, sizeof(oldhd), 1, file))
         {
             DoError(MTERR_READ_FAILED);
         }
@@ -443,14 +443,14 @@ int ModelOpen(model_t *mo, const char *filename)
             * inf->numFrames);
         mo->frames = malloc(inf->frameSize * inf->numFrames);
         // Convert to DMD frames.
-        for(i = 0; i < inf->numFrames; i++)
+        for (i = 0; i < inf->numFrames; i++)
         {
             md2_frame_t *md2f = (md2_frame_t*) ((byte*)oldframes + i*oldhd.frameSize);
             dmd_frame_t *dmdf = (dmd_frame_t*) ((byte*)mo->frames + i*inf->frameSize);
             memcpy(dmdf->name, md2f->name, sizeof(md2f->name));
             memcpy(dmdf->scale, md2f->scale, sizeof(md2f->scale));
             memcpy(dmdf->translate, md2f->translate, sizeof(md2f->translate));
-            for(k = 0; k < inf->numVertices; k++)
+            for (k = 0; k < inf->numVertices; k++)
             {
                 memcpy(dmdf->vertices[k].vertex,
                     md2f->vertices[k].vertex, sizeof(byte)*3);
@@ -473,7 +473,7 @@ int ModelOpen(model_t *mo, const char *filename)
         mo->lodinfo[0].numTriangles, inf->numVertices, inf->numFrames,
         inf->numSkins, inf->numSkins != 1? "s" : "",
         inf->skinWidth, inf->skinHeight);
-    /*for(i = 1; i < inf->numLODs; i++)
+    /*for (i = 1; i < inf->numLODs; i++)
     {
         printf("  Level %i: %i triangles, %i GL commands.\n", i,
             mo->lodinfo[i].numTriangles, mo->lodinfo[i].numGlCommands);
@@ -493,7 +493,7 @@ void ModelSaveMD2(model_t *mo, FILE *file)
     byte n;
 
     // Check that the level-to-save is valid.
-    if(savelod < 0 || savelod >= inf->numLODs)
+    if (savelod < 0 || savelod >= inf->numLODs)
     {
         printf("Invalid savelod (%i), saving level 0 instead.\n", savelod);
         savelod = 0;
@@ -527,14 +527,14 @@ void ModelSaveMD2(model_t *mo, FILE *file)
         hd.numTriangles, file);
     // Frames must be written separately (because of the normals).
     hd.offsetFrames = ftell(file);
-    for(i = 0; i < hd.numFrames; i++)
+    for (i = 0; i < hd.numFrames; i++)
     {
         dmd_frame_t *dmdf = (dmd_frame_t*) ((byte*)mo->frames
             + i*inf->frameSize);
         fwrite(dmdf->scale, sizeof(float) * 3, 1, file);
         fwrite(dmdf->translate, sizeof(float) * 3, 1, file);
         fwrite(dmdf->name, 16, 1, file);
-        for(k = 0; k < inf->numVertices; k++)
+        for (k = 0; k < inf->numVertices; k++)
         {
             fwrite(dmdf->vertices[k].vertex, 3, 1, file);
             UnpackVector(dmdf->vertices[k].normal, vec);
@@ -588,7 +588,7 @@ void ModelSaveDMD(model_t *mo, FILE *file)
     fwrite(mo->frames, DMD_FRAMESIZE(inf->numVertices), inf->numFrames,
         file);
     // Write the LODs.
-    for(i = 0; i < inf->numLODs; i++)
+    for (i = 0; i < inf->numLODs; i++)
     {
         mo->lodinfo[i].offsetTriangles = ftell(file);
         fwrite(mo->lods[i].triangles, sizeof(dmd_triangle_t),
@@ -620,17 +620,17 @@ void ModelClose(model_t *mo)
 
     printf("Closing model \"%s\"...\n", mo->fileName);
 
-    if(mo->modified)
+    if (mo->modified)
     {
         // Open the file for writing.
-        if((file = fopen(mo->fileName, "wb")) == NULL)
+        if ((file = fopen(mo->fileName, "wb")) == NULL)
         {
             printf("Can't open \"%s\" for writing.\n", mo->fileName);
             return;
         }
-        if(mo->header.magic == DMD_MAGIC)
+        if (mo->header.magic == DMD_MAGIC)
             ModelSaveDMD(mo, file);
-        else if(mo->header.magic == MD2_MAGIC)
+        else if (mo->header.magic == MD2_MAGIC)
             ModelSaveMD2(mo, file);
 
         fclose(file);
@@ -641,7 +641,7 @@ void ModelClose(model_t *mo)
     free(mo->skins);
     free(mo->texCoords);
     free(mo->frames);
-    for(i = 0; i < mo->info.numLODs; i++)
+    for (i = 0; i < mo->info.numLODs; i++)
     {
         free(mo->lods[i].triangles);
         free(mo->lods[i].glCommands);
@@ -658,7 +658,7 @@ void CrossProd(float *v1, float *v2, float *v3, float *out)
     float a[3], b[3];
     int i;
 
-    for(i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++)
     {
         a[i] = v2[i] - v1[i];
         b[i] = v3[i] - v1[i];
@@ -678,7 +678,7 @@ void Norm(float *vector)
         + vector[VY]*vector[VY]
         + vector[VZ]*vector[VZ]);
 
-    if(length)
+    if (length)
     {
         vector[VX] /= length;
         vector[VY] /= length;
@@ -864,15 +864,15 @@ void OptimizeTexCoords(model_t *mo, dtriangle_t *tris, int count)
     int i, j, k;
     short u, v;
 
-    for(i = 0; i < count; i++)
-        for(k = 0; k < 3; k++)
+    for (i = 0; i < count; i++)
+        for (k = 0; k < 3; k++)
         {
             u = mo->texCoords[tris[i].index_st[k]].s;
             v = mo->texCoords[tris[i].index_st[k]].t;
 
-            for(j = 0; j < mo->info.numTexCoords; j++)
+            for (j = 0; j < mo->info.numTexCoords; j++)
             {
-                if(mo->texCoords[j].s == u
+                if (mo->texCoords[j].s == u
                     && mo->texCoords[j].t == v)
                 {
                     tris[i].index_st[k] = j;
@@ -903,7 +903,7 @@ void BuildGlCmds(model_t *mo)
     printf("Building GL commands.\n");
     mo->modified = true;
 
-    for(lod = 0; lod < mo->info.numLODs; lod++)
+    for (lod = 0; lod < mo->info.numLODs; lod++)
     {
         numfans = numstrips = avgfan = avgstrip = 0;
         numtris = mo->lodinfo[lod].numTriangles;
@@ -919,13 +919,13 @@ void BuildGlCmds(model_t *mo)
         numcommands = 0;
         numglverts = 0;
         memset(used, 0, sizeof(used));
-        for(i = 0; i < numtris; i++)
+        for (i = 0; i < numtris; i++)
         {
             // pick an unused triangle and start the trifan
-            if(used[i]) continue;
+            if (used[i]) continue;
 
             bestlen = 0;
-            for(type = 0; type < 2 ; type++)
+            for (type = 0; type < 2 ; type++)
             {
                 for (startv =0 ; startv < 3 ; startv++)
                 {
@@ -1019,17 +1019,17 @@ int IsTexCoordConnected(model_t *mo, dtriangle_t *src, dtriangle_t *dest,
     memset(tcmap, 0, sizeof(*tcmap) * num);
 
     // Initial step: spread to the source triangle's texcoords.
-    for(i = 0; i < 3; i++) tcmap[src->index_st[i]] = 1;
+    for (i = 0; i < 3; i++) tcmap[src->index_st[i]] = 1;
     didspread = true;
-    while(didspread)
+    while (didspread)
     {
         // Check if the newly spread-to vertices include one of the
         // target texcoords.
-        for(i = 0; i < num; i++)
+        for (i = 0; i < num; i++)
         {
-            if(tcmap[i] != 1) continue;
-            for(k = 0; k < 3; k++)
-                if(dest->index_st[k] == i)
+            if (tcmap[i] != 1) continue;
+            for (k = 0; k < 3; k++)
+                if (dest->index_st[k] == i)
                 {
                     // Hey, we reached the destination.
                     result = true;
@@ -1042,23 +1042,23 @@ int IsTexCoordConnected(model_t *mo, dtriangle_t *src, dtriangle_t *dest,
         didspread = false;
         // Spread to the coords of all triangles connected to this one.
         // Level zero triangles are used in the test.
-        for(j = 0; j < orignumtris; j++)
+        for (j = 0; j < orignumtris; j++)
         {
             // We'll only spread from checked texcoords.
-            for(found = false, k = 0; k < 3; k++)
-                if(tcmap[origtris[j].index_st[k]] > 0 /*== 2*/)
+            for (found = false, k = 0; k < 3; k++)
+                if (tcmap[origtris[j].index_st[k]] > 0 /*== 2*/)
                 {
                     found = true;
                     break;
                 }
-            if(!found) continue;
+            if (!found) continue;
             // Spread to coords not yet spread to.
-            for(k = 0; k < 3; k++)
-                if(tcmap[origtris[j].index_st[k]] < 2)
+            for (k = 0; k < 3; k++)
+                if (tcmap[origtris[j].index_st[k]] < 2)
                 {
                     // Spread to this triangle.
-                    for(k = 0; k < 3; k++)
-                        if(!tcmap[origtris[j].index_st[k]])
+                    for (k = 0; k < 3; k++)
+                        if (!tcmap[origtris[j].index_st[k]])
                             tcmap[origtris[j].index_st[k]] = 1;
                     didspread = true;
                     break;
@@ -1083,46 +1083,46 @@ void FindGroupEdges(model_t *mo, dtriangle_t *tris, int numtris, int *ved)
     memset(ved, -1, sizeof(ved));
 
     done = false;
-    while(!done)
+    while (!done)
     {
         done = true;
         // Find a good starting place.
-        for(found = false, i = 0; i < mo->info.numTexCoords; i++)
+        for (found = false, i = 0; i < mo->info.numTexCoords; i++)
         {
-            if(ved[i] >= 0) continue; // Already checked.
+            if (ved[i] >= 0) continue; // Already checked.
             found = true;
             break; // This is good.
         }
-        if(!found) break;
+        if (!found) break;
 
         // Start spreading from the starting vertex.
         ved[i] = 2;
         spread = true;
-        while(spread)
+        while (spread)
         {
-/*          for(spread = false, j = 0; j < numtris; j++)
+/*          for (spread = false, j = 0; j < numtris; j++)
             {
                 // Does this triangle have an edge to spread along?
-                for(k = 0; k < 3; k++)
-                    if(ved[tris[j].index_st[k]] == 2
+                for (k = 0; k < 3; k++)
+                    if (ved[tris[j].index_st[k]] == 2
                         || ved[tris[j].index_st[(k+1)%3]] == 2)
                     {
                         // Spread along this edge.
-                        if(ved[tris[j].index_st[k]] == 2)
+                        if (ved[tris[j].index_st[k]] == 2)
                             ved[tris[j].index_st[(k+1)%3]] = 3;
                         else
                             ved[tris[j].index_st[k]] = 3;
 
                         // The ones we spread from certainly aren't edges.
-                        if(ved[tris[j].index_st[k] == 2) ved[tris[j].index_st[k] = 0;
-                        if(ved[tris[j].index_st[(k+1)%3] == 2) ved[tris[j].index_st[(k+1)%3] = 0;
+                        if (ved[tris[j].index_st[k] == 2) ved[tris[j].index_st[k] = 0;
+                        if (ved[tris[j].index_st[(k+1)%3] == 2) ved[tris[j].index_st[(k+1)%3] = 0;
                         spread = true;
                     }
             }
-            if(spread)
+            if (spread)
             {
-                for(k = 0; k < mo->info.numTexCoords; k++)
-                    if(ved[k] == 3) ved[k] = 2;
+                for (k = 0; k < mo->info.numTexCoords; k++)
+                    if (ved[k] == 3) ved[k] = 2;
             }*/
 
         }
@@ -1138,9 +1138,9 @@ int HaveSharedTexCoord(dtriangle_t *a, dtriangle_t *b)
 {
     int i, k;
 
-    for(i = 0; i < 3; i++)
-        for(k = 0; k < 3; k++)
-            if(a->index_st[i] == b->index_st[k])
+    for (i = 0; i < 3; i++)
+        for (k = 0; k < 3; k++)
+            if (a->index_st[i] == b->index_st[k])
                 return true;
     return false;
 }
@@ -1156,8 +1156,8 @@ void TriangleNormal(model_t *mo, dtriangle_t *tri, float vec[3])
     float pos[3][3];
     int i, j;
 
-    for(i = 0; i < 3; i++)
-        for(j = 0; j < 3; j++)
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 3; j++)
         {
             pos[i][j] = vtx[tri->index_xyz[i]].vertex[j] * fr->scale[j] +
                 fr->translate[j];
@@ -1182,9 +1182,9 @@ int IsValidTexTriangle(dtriangle_t *tri)
 {
     int i, j;
 
-    for(i = 0; i < 3; i++)
-        for(j = 0; j < 3; j++)
-            if(i != j && tri->index_st[i] == tri->index_st[j])
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 3; j++)
+            if (i != j && tri->index_st[i] == tri->index_st[j])
             {
                 // Hmm!! This is a bad texture triangle, with no area!
                 return false;
@@ -1212,18 +1212,18 @@ int InsideTexTriangle(model_t *mo, float x, float y, dtriangle_t *tri)
     dmd_textureCoordinate_t *tc = mo->texCoords;
     int test = false;
 
-    if(!IsValidTexTriangle(tri)) return false;
+    if (!IsValidTexTriangle(tri)) return false;
 
     // First determine is this a clockwise or a counterclockwise triangle.
-    if(!IsClockwiseTexTriangle(mo, tri))
+    if (!IsClockwiseTexTriangle(mo, tri))
     {
         // Counterclockwise.
         test = true;
     }
 
-    for(i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++)
     {
-        if(PointOnLineSide(
+        if (PointOnLineSide(
             tc[tri->index_st[i]].s,
             tc[tri->index_st[i]].t,
             tc[tri->index_st[(i+1)%3]].s,
@@ -1252,26 +1252,26 @@ int GroupTriangles(model_t *mo, optriangle_t *tris, int numtris)
     // 3. Spread as much as possible.
     // 4. Continue from step 1.
 
-    for(;;)
+    for (;;)
     {
         // Find an ungrouped triangle.
-        for(start = 0; start < numtris; start++)
-            if(!tris[start].group) break;
-        if(start == numtris) break; // Nothing further to do.
+        for (start = 0; start < numtris; start++)
+            if (!tris[start].group) break;
+        if (start == numtris) break; // Nothing further to do.
         // Spread to this triangle.
         spreadto[start] = 2;
         tris[start].group = ++high;
         didspread = true;
-        while(didspread)
+        while (didspread)
         {
-            for(didspread = false, i = 0; i < numtris; i++)
+            for (didspread = false, i = 0; i < numtris; i++)
             {
-                if(spreadto[i] != 2) continue;
+                if (spreadto[i] != 2) continue;
                 spreadto[i] = 1;
-                for(j = 0; j < numtris; j++)
+                for (j = 0; j < numtris; j++)
                 {
-                    if(spreadto[j]) continue;
-                    if(HaveSharedTexCoord(&tris[i].tri, &tris[j].tri))
+                    if (spreadto[j]) continue;
+                    if (HaveSharedTexCoord(&tris[i].tri, &tris[j].tri))
                     {
                         didspread = true;
                         spreadto[j] = 2;
@@ -1298,27 +1298,27 @@ void DrawTexCoordMap(model_t *mo, optriangle_t *tris, int numtris,
     int hitgroup;
     int withgroups = CheckOption("-mg");
 
-    for(i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
-        for(k = 0; k < cols; k++)
+        for (k = 0; k < cols; k++)
         {
-            for(found = 0, t = 0; t < numtris; t++)
+            for (found = 0, t = 0; t < numtris; t++)
             {
-                for(m = 0; m < 3; m++)
+                for (m = 0; m < 3; m++)
                 {
                     c = tris[t].tri.index_st[m];
-                    if((int)(mo->texCoords[c].s/(float)mo->info.skinWidth*(cols-1)) == k
+                    if ((int)(mo->texCoords[c].s/(float)mo->info.skinWidth*(cols-1)) == k
                         && (int)(mo->texCoords[c].t/(float)mo->info.skinHeight*(rows-1)) == i)
                     {
-                        if(!found) found = 1;
-                        if(vertex_on_edge[c]) found = 2;
+                        if (!found) found = 1;
+                        if (vertex_on_edge[c]) found = 2;
                     }
                 }
             }
-            if(!found)
+            if (!found)
             {
-                for(t = 0; t < numtris; t++)
-                    if(InsideTexTriangle(mo, k/(float)(cols-1)*mo->info.skinWidth,
+                for (t = 0; t < numtris; t++)
+                    if (InsideTexTriangle(mo, k/(float)(cols-1)*mo->info.skinWidth,
                         i/(float)(rows-1)*mo->info.skinHeight, &tris[t].tri))
                     {
                         found = 3;
@@ -1360,13 +1360,13 @@ int OptimizeMesh(model_t *mo, dtriangle_t *origtris, int orignumtris,
     int vertex_on_edge[4096];
     int numpasses = num_optimization_passes;
 
-    if(!orignumtris) return 0;
+    if (!orignumtris) return 0;
 
     // Allocate the buffers we will be working with.
     tris = malloc(sizeof(*tris) * orignumtris);
 beginpass:
     numtris = orignumtris;
-    for(i = 0; i < numtris; i++)
+    for (i = 0; i < numtris; i++)
     {
         memcpy(&tris[i].tri, origtris + i, sizeof(*origtris));
         tris[i].group = 0;
@@ -1380,15 +1380,15 @@ beginpass:
 
     // Determine which vertices are on group edges.
     memset(vertex_on_edge, 0, sizeof(vertex_on_edge));
-    for(i = 0; i < numtris; i++)
+    for (i = 0; i < numtris; i++)
     {
-        if(!IsValidTexTriangle(&tris[i].tri)) continue;
+        if (!IsValidTexTriangle(&tris[i].tri)) continue;
         // Test each edge.
-        for(k = 0; k < 3; k++)
+        for (k = 0; k < 3; k++)
         {
             tc1 = tris[i].tri.index_st[k];
             tc2 = tris[i].tri.index_st[(k+1) % 3];
-            if(!IsClockwiseTexTriangle(mo, &tris[i].tri))
+            if (!IsClockwiseTexTriangle(mo, &tris[i].tri))
             {
                 // Make it a clockwise edge.
                 m = tc1;
@@ -1400,19 +1400,19 @@ beginpass:
             // - shares the edge's texcoords
             // - has its third vertex on the other side of the edge
             // If there isn't, this is a group edge.
-            for(bestfound = false, j = 0; j < numtris && !bestfound; j++)
+            for (bestfound = false, j = 0; j < numtris && !bestfound; j++)
             {
-                if(i == j || tris[i].group != tris[j].group) continue;
-                if(!IsValidTexTriangle(&tris[j].tri)) continue;
+                if (i == j || tris[i].group != tris[j].group) continue;
+                if (!IsValidTexTriangle(&tris[j].tri)) continue;
                 //clockwise = IsClockwiseTexTriangle(mo, &tris[j].tri);
-                for(found = 0, m = 0; m < 3; m++)
+                for (found = 0, m = 0; m < 3; m++)
                 {
                     // Is this the edge we're looking for?
-                    if((tris[j].tri.index_st[m] == tc1 && tris[j].tri.index_st[(m+1)%3] == tc2)
+                    if ((tris[j].tri.index_st[m] == tc1 && tris[j].tri.index_st[(m+1)%3] == tc2)
                         || (tris[j].tri.index_st[m] == tc2 && tris[j].tri.index_st[(m+1)%3] == tc1))
                     {
                         // Try the third vertex.
-                        if(!PointOnLineSide(mo->texCoords[tc1].s,
+                        if (!PointOnLineSide(mo->texCoords[tc1].s,
                             mo->texCoords[tc1].t,
                             mo->texCoords[tc2].s,
                             mo->texCoords[tc2].t,
@@ -1425,7 +1425,7 @@ beginpass:
                     }
                 }
             }
-            if(!bestfound)
+            if (!bestfound)
             {
                 vertex_on_edge[tc1] = true;
                 vertex_on_edge[tc2] = true;
@@ -1433,7 +1433,7 @@ beginpass:
         }
     }
 
-    if(level == 1 && CheckOption("-tcmap"))
+    if (level == 1 && CheckOption("-tcmap"))
     {
         DrawTexCoordMap(mo, tris, numtris, vertex_on_edge);
     }
@@ -1441,19 +1441,19 @@ beginpass:
     // The actual optimization tries to remove individual vertices
     // by merging triangles together.
     memset(vused, 0, sizeof(vused));
-    for(i = 0; i < numtris; i++)
+    for (i = 0; i < numtris; i++)
     {
-        if(!tris[i].group) continue; // This triangle has been removed.
-        for(k = 0; k < 3; k++)
+        if (!tris[i].group) continue; // This triangle has been removed.
+        for (k = 0; k < 3; k++)
         {
             thisvtx = tris[i].tri.index_xyz[k];
 
             // We can't remove vertices that are at the edge of a group!
             // (edge preservation)
-            if(vertex_on_edge[tris[i].tri.index_st[k]]) continue;
+            if (vertex_on_edge[tris[i].tri.index_st[k]]) continue;
 
             // Check if this vertex has already been processed.
-            if(vused[thisvtx]) continue;
+            if (vused[thisvtx]) continue;
             vused[thisvtx] = true; // Now it's used.
 
             // The Big Question: can this vertex be removed?
@@ -1463,27 +1463,27 @@ beginpass:
 
             // The difficult test is to find the suitable neighbors.
             // First find all the triangles connected to this vertex.
-            for(numconnected = 0, j = 0; j < numtris; j++)
+            for (numconnected = 0, j = 0; j < numtris; j++)
             {
-                if(tris[j].group != tris[i].group) continue;
-                if(!HaveSharedTexCoord(&tris[i].tri, &tris[j].tri)) continue;
-                for(m = 0; m < 3; m++)
-                    if(tris[j].tri.index_xyz[m] == thisvtx)
+                if (tris[j].group != tris[i].group) continue;
+                if (!HaveSharedTexCoord(&tris[i].tri, &tris[j].tri)) continue;
+                for (m = 0; m < 3; m++)
+                    if (tris[j].tri.index_xyz[m] == thisvtx)
                     {
                         connected[numconnected++] = j;
                         // Stop if there are too many triangles.
-                        if(numconnected == MAX_MERGED) j = numtris;
+                        if (numconnected == MAX_MERGED) j = numtris;
                         break;
                     }
             }
             // If nothing is connected to this triangle, we can't process
             // it during this stage.
-            if(!numconnected) continue;
+            if (!numconnected) continue;
 
             // Calculate the average normal vector for the connected
             // triangles.
             memset(connected_normal, 0, sizeof(connected_normal));
-            for(j = 0; j < numconnected; j++)
+            for (j = 0; j < numconnected; j++)
             {
                 TriangleNormal(mo, &tris[connected[j]].tri, vec);
                 connected_normal[VX] += vec[VX];
@@ -1494,56 +1494,56 @@ beginpass:
             bestdot = -1;
 
             // Figure out the connected vertices.
-            for(numconvtx = j = 0; j < numconnected; j++)
+            for (numconvtx = j = 0; j < numconnected; j++)
             {
-                for(t = 0; t < 3; t++)
+                for (t = 0; t < 3; t++)
                 {
                     testvtx = tris[connected[j]].tri.index_xyz[t];
-                    if(testvtx == thisvtx) continue;
+                    if (testvtx == thisvtx) continue;
                     // Check if this is already listed.
-                    for(found = false, m = 0; m < j; m++)
-                        if(convtx[m] == testvtx)
+                    for (found = false, m = 0; m < j; m++)
+                        if (convtx[m] == testvtx)
                         {
                             // Already listed, move on.
                             found = true;
                             break;
                         }
-                    if(found) continue;
+                    if (found) continue;
                     contc[numconvtx] = tris[connected[j]].tri.index_st[t];
                     convtx[numconvtx++] = testvtx;
                 }
             }
 
-            for(bestfound = false, j = 0; j < numconvtx; j++)
+            for (bestfound = false, j = 0; j < numconvtx; j++)
             {
                 // Make a copy of the triangles.
-                for(m = 0; m < numconnected; m++)
+                for (m = 0; m < numconnected; m++)
                 {
                     memcpy(merged + m, &tris[connected[m]].tri,
                         sizeof(dtriangle_t));
                 }
                 // Try thisvtx => j.
                 nummerged = numconnected;
-                for(m = 0; m < nummerged; m++)
+                for (m = 0; m < nummerged; m++)
                 {
-                    for(t = 0; t < 3; t++)
-                        if(merged[m].index_xyz[t] == thisvtx)
+                    for (t = 0; t < 3; t++)
+                        if (merged[m].index_xyz[t] == thisvtx)
                         {
                             merged[m].index_xyz[t] = convtx[j];
                             merged[m].index_st[t] = contc[j];
                         }
                 }
                 // Remove triangles that don't have 3 different vertices.
-                for(m = 0; m < nummerged; m++)
+                for (m = 0; m < nummerged; m++)
                 {
-                    for(found = false, t = 0; t < 3; t++)
-                        for(c = 0; c < 3; c++)
-                            if(c != t && merged[m].index_xyz[t]
+                    for (found = false, t = 0; t < 3; t++)
+                        for (c = 0; c < 3; c++)
+                            if (c != t && merged[m].index_xyz[t]
                                 == merged[m].index_xyz[c])
                             {
                                 found = true;
                             }
-                    if(found)
+                    if (found)
                     {
                         // This triangle doesn't exist any longer.
                         memmove(merged + m, merged + m+1,
@@ -1552,14 +1552,14 @@ beginpass:
                         m--;
                     }
                 }
-                if(!nummerged) continue; // Hmm?
+                if (!nummerged) continue; // Hmm?
 
-                //if(nummerged < numconvtx-4) continue;
+                //if (nummerged < numconvtx-4) continue;
 
                 // Now we must check the validity of the 'new' triangles.
                 // Calculate the average normal for the merged triangles.
                 memset(merged_normal, 0, sizeof(merged_normal));
-                for(m = 0; m < nummerged; m++)
+                for (m = 0; m < nummerged; m++)
                 {
                     TriangleNormal(mo, merged + m, vec);
                     merged_normal[VX] += vec[VX];
@@ -1569,9 +1569,9 @@ beginpass:
                 Norm(merged_normal);
 
                 // Calculate the dot product of the average normals.
-                for(dot = 0, m = 0; m < 3; m++)
+                for (dot = 0, m = 0; m < 3; m++)
                     dot += merged_normal[m] * connected_normal[m];
-                if(dot > bestdot && dot > min_correlation)
+                if (dot > bestdot && dot > min_correlation)
                 {
                     bestfound = true;
                     bestdot = dot;
@@ -1579,14 +1579,14 @@ beginpass:
                     memcpy(best, merged, sizeof(dtriangle_t) * nummerged);
                 }
             }
-            if(!bestfound || numbest >= numconnected)
+            if (!bestfound || numbest >= numconnected)
                 continue; // Not much point in continuing...
 
             // Our best choice is now in the 'best' array.
             // Replace the actual connected triangles with it.
-            for(j = 0; j < numconnected; j++)
+            for (j = 0; j < numconnected; j++)
             {
-                if(j < numbest)
+                if (j < numbest)
                 {
                     memcpy(&tris[connected[j]].tri, &best[j],
                         sizeof(dtriangle_t));
@@ -1602,14 +1602,14 @@ beginpass:
 
     // We've done as much as we can...
     // Remove all triangles that are in group zero.
-    for(m = i = 0; i < numtris; i++)
+    for (m = i = 0; i < numtris; i++)
     {
-        if(!tris[i].group) continue;
+        if (!tris[i].group) continue;
         memcpy(&origtris[m++], &tris[i].tri, sizeof(tris[i].tri));
     }
 
     // Should we start another pass?
-    if(--numpasses > 0 && m > 0)
+    if (--numpasses > 0 && m > 0)
     {
         orignumtris = m;
         goto beginpass;
@@ -1628,10 +1628,10 @@ void BuildLODs(model_t *mo)
     printf("Building detail levels.\n");
     mo->modified = true;
 
-    if(!mo->lodinfo[0].numTriangles) return; // No triangles at all?!
+    if (!mo->lodinfo[0].numTriangles) return; // No triangles at all?!
 
     // We'll try to build as many LOD levels as we can.
-    for(lod = 1; lod < MAX_LODS; lod++)
+    for (lod = 1; lod < MAX_LODS; lod++)
     {
         printf("(Level %i)\n", lod);
 
@@ -1668,7 +1668,7 @@ void BuildLODs(model_t *mo)
     BuildGlCmds(mo);
 
     // Now that we have detail information, save as DMD.
-    if(mo->header.magic != DMD_MAGIC)
+    if (mo->header.magic != DMD_MAGIC)
     {
         printf("Detail levels require DMD, changing...\n");
         ModelSetSaveFormat(mo, DMD_MAGIC);
@@ -1699,7 +1699,7 @@ void ModelRenormalize(model_t *mo)
     normals = malloc(sizeof(*normals) * tris);
 
     // Calculate the normal for each vertex.
-    for(i = 0; i < mo->info.numFrames; i++)
+    for (i = 0; i < mo->info.numFrames; i++)
     {
         fr = GetFrame(mo, i);
 
@@ -1707,40 +1707,40 @@ void ModelRenormalize(model_t *mo)
             / (mo->info.numFrames - 1) : 100);
 
         // Unpack vertices.
-        for(k = 0; k < verts; k++)
-            for(j = 0; j < 3; j++)
+        for (k = 0; k < verts; k++)
+            for (j = 0; j < 3; j++)
             {
                 list[k].pos[j] = fr->vertices[k].vertex[j] * fr->scale[j] +
                     fr->translate[j];
             }
 
         // First calculate the normal for each triangle.
-        for(k = 0, tri = mo->lods[0].triangles; k < tris; k++, tri++)
+        for (k = 0, tri = mo->lods[0].triangles; k < tris; k++, tri++)
         {
             CrossProd(list[tri->vertexIndices[0]].pos,
                 list[tri->vertexIndices[2]].pos,
                 list[tri->vertexIndices[1]].pos, normals[k].pos);
         }
 
-        for(k = 0; k < verts; k++)
+        for (k = 0; k < verts; k++)
         {
             memset(&norm, 0, sizeof(norm));
-            for(j = 0, cnt = 0, tri = mo->lods[0].triangles; j < tris;
+            for (j = 0, cnt = 0, tri = mo->lods[0].triangles; j < tris;
                 j++, tri++)
             {
                 tri = mo->lods[0].triangles + j;
-                for(n = 0; n < 3; n++)
-                    if(tri->vertexIndices[n] == k)
+                for (n = 0; n < 3; n++)
+                    if (tri->vertexIndices[n] == k)
                     {
                         cnt++;
-                        for(n = 0; n < 3; n++)
+                        for (n = 0; n < 3; n++)
                             norm.pos[n] += normals[j].pos[n];
                         break;
                     }
             }
-            if(!cnt) continue;
+            if (!cnt) continue;
             // Calculate the average.
-            for(n = 0; n < 3; n++) norm.pos[n] /= cnt;
+            for (n = 0; n < 3; n++) norm.pos[n] /= cnt;
             Norm(norm.pos);
             //fr->vertices[k].lightNormalIndex = GetNormalIndex(norm.pos);
             fr->vertices[k].normal = PackVector(norm.pos);
@@ -1763,9 +1763,9 @@ void ModelFlipNormals(model_t *mo)
 
     printf("Flipping all triangles.\n");
     mo->modified = true;
-    for(lod = 0; lod < mo->info.numLODs; lod++)
+    for (lod = 0; lod < mo->info.numLODs; lod++)
     {
-        for(i = 0, tri = mo->lods[lod].triangles;
+        for (i = 0, tri = mo->lods[lod].triangles;
             i < mo->lodinfo[lod].numTriangles; i++, tri++)
         {
             v = tri->vertexIndices[1];
@@ -1792,10 +1792,10 @@ void ReplaceVertex(model_t *mo, int to, int from)
     mo->modified = true;
 
     // Change all references.
-    for(lod = 0; lod < mo->info.numLODs; lod++)
-        for(j = 0; j < mo->lodinfo[lod].numTriangles; j++)
-            for(c = 0; c < 3; c++)
-                if(mo->lods[lod].triangles[j].vertexIndices[c] == from)
+    for (lod = 0; lod < mo->info.numLODs; lod++)
+        for (j = 0; j < mo->lodinfo[lod].numTriangles; j++)
+            for (c = 0; c < 3; c++)
+                if (mo->lods[lod].triangles[j].vertexIndices[c] == from)
                     mo->lods[lod].triangles[j].vertexIndices[c] = to;
 }
 
@@ -1809,7 +1809,7 @@ void ModelWeldVertices(model_t *mo)
 
     printf("Welding vertices...\n");
 
-    if(mo->info.numFrames > 1)
+    if (mo->info.numFrames > 1)
     {
         // Welding is a bit more problematic in the case of multiple
         // frames, because a vertex can't be removed unless it's a
@@ -1819,18 +1819,18 @@ void ModelWeldVertices(model_t *mo)
         return;
     }
 
-    for(k = 0; k < mo->info.numFrames; ++k)
+    for (k = 0; k < mo->info.numFrames; ++k)
     {
         dmd_frame_t *frame = &mo->frames[k];
 
-        for(i = 0; i < mo->info.numVertices; ++i)
+        for (i = 0; i < mo->info.numVertices; ++i)
         {
-            for(j = i + 1; j < mo->info.numVertices; ++j)
+            for (j = i + 1; j < mo->info.numVertices; ++j)
             {
                 dmd_vertex_t *a = &frame->vertices[i];
                 dmd_vertex_t *b = &frame->vertices[j];
 
-                if(a->vertex[0] == b->vertex[0] &&
+                if (a->vertex[0] == b->vertex[0] &&
                    a->vertex[1] == b->vertex[1] &&
                    a->vertex[2] == b->vertex[2])
                 {
@@ -1839,7 +1839,7 @@ void ModelWeldVertices(model_t *mo)
                     // Remove the latter one.
                     ReplaceVertex(mo, j, i);
 
-/*                    if(j < mo->info.numVertices - 1)
+/*                    if (j < mo->info.numVertices - 1)
                     {
                         memmove(&frame->vertices[j], &frame->vertices[j + 1],
                                 sizeof(dmd_vertex_t) *
@@ -1868,10 +1868,10 @@ void MoveTexCoord(model_t *mo, int to, int from)
         sizeof(dmd_textureCoordinate_t));
 
     // Change all references.
-    for(lod = 0; lod < mo->info.numLODs; lod++)
-        for(j = 0; j < mo->lodinfo[lod].numTriangles; j++)
-            for(c = 0; c < 3; c++)
-                if(mo->lods[lod].triangles[j].textureIndices[c] == from)
+    for (lod = 0; lod < mo->info.numLODs; lod++)
+        for (j = 0; j < mo->lodinfo[lod].numTriangles; j++)
+            for (c = 0; c < 3; c++)
+                if (mo->lods[lod].triangles[j].textureIndices[c] == from)
                     mo->lods[lod].triangles[j].textureIndices[c] = to;
 }
 
@@ -1893,25 +1893,25 @@ void ModelWeldTexCoords(model_t *mo)
 
     // First remove all unused texcoords.
     memset(refd, 0, sizeof(refd));
-    for(i = 0; i < numtris; i++)
-        for(k = 0; k < 3; k++)
+    for (i = 0; i < numtris; i++)
+        for (k = 0; k < 3; k++)
             refd[tris[i].index_st[k]] = true;
 
     // Count how many unreferenced texcoords there are.
-    for(num_unrefd = 0, i = 0; i < numcoords; i++)
-        if(!refd[i]) num_unrefd++;
+    for (num_unrefd = 0, i = 0; i < numcoords; i++)
+        if (!refd[i]) num_unrefd++;
 
-    if(num_unrefd)
+    if (num_unrefd)
     {
         printf("%i unused, ", num_unrefd);
         // Let's get rid of them.
-        for(i = 0; i < numcoords; i++)
+        for (i = 0; i < numcoords; i++)
         {
-            if(refd[i]) continue;
+            if (refd[i]) continue;
             // This is a free spot, move a texcoord down here.
             // Find the last used coord.
-            for(k = numcoords - 1; k > i; k--) if(refd[k]) break;
-            if(k == i) break; // Nothing more can be done.
+            for (k = numcoords - 1; k > i; k--) if (refd[k]) break;
+            if (k == i) break; // Nothing more can be done.
             refd[i] = true;
             refd[k] = false;
             MoveTexCoord(mo, i, k);
@@ -1919,12 +1919,12 @@ void ModelWeldTexCoords(model_t *mo)
     }
 
     // Now let's find the highest index in use.
-    for(i = 0; i < numcoords; i++)
-        if(refd[i]) high = i;
+    for (i = 0; i < numcoords; i++)
+        if (refd[i]) high = i;
     // Now we know what is the number of the last used index.
     mo->info.numTexCoords = high + 1;
     i = oldnum - mo->info.numTexCoords;
-    if(!i)
+    if (!i)
         printf("no duplicates.\n");
     else
     {
@@ -1941,10 +1941,10 @@ void ReadText(FILE *file, char *buf, int size)
     int i;
 
     memset(buf, 0, size);
-    if(fgets(buf, size - 1, file))
+    if (fgets(buf, size - 1, file))
     {
         i = strlen(buf) - 1;
-        if(buf[i] == '\n') buf[i] = 0;
+        if (buf[i] == '\n') buf[i] = 0;
     }
 }
 
@@ -1977,22 +1977,22 @@ void ModelCreateFrames(model_t *mo, const char *listfile)
 
     printf("Creating new frames according to \"%s\"...\n", listfile);
     mo->modified = true;
-    if((file = fopen(listfile, "rt")) == NULL)
+    if ((file = fopen(listfile, "rt")) == NULL)
     {
         DoError(MTERR_LISTFILE_NA);
         return;
     }
-    for(;;)
+    for (;;)
     {
         ReadText(file, line, 100);
         ptr = SkipWhite(line);
-        if(*ptr && *ptr != ';') // Not an empty line?
+        if (*ptr && *ptr != ';') // Not an empty line?
         {
             // Create a new frame.
             ModelNewFrame(mo, ptr);
             cnt++;
         }
-        if(feof(file)) break;
+        if (feof(file)) break;
     }
     fclose(file);
 
@@ -2007,13 +2007,13 @@ void ModelDelFrames(model_t *mo, int from, int to)
     int num = mo->info.numFrames;
 
     mo->modified = true;
-    if(from < 0 || from >= num || from > to
+    if (from < 0 || from >= num || from > to
         || to < 0 || to >= num)
     {
         DoError(MTERR_INVALID_FRAME_NUMBER);
         return;
     }
-    if(from != to)
+    if (from != to)
         printf("Deleting frames from %i to %i.\n", from, to);
     else
         printf("Deleting frame %i.\n", from);
@@ -2030,12 +2030,12 @@ void ModelDelFrames(model_t *mo, int from, int to)
 //===========================================================================
 void ModelSetSkin(model_t *mo, int idx, const char *skinfile)
 {
-    if(idx < 0) DoError(MTERR_INVALID_SKIN_NUMBER);
+    if (idx < 0) DoError(MTERR_INVALID_SKIN_NUMBER);
     printf("Setting skin %i to \"%s\".\n", idx, skinfile);
     mo->modified = true;
 
     // Are there enough skins allocated?
-    if(idx >= mo->info.numSkins)
+    if (idx >= mo->info.numSkins)
     {
         // Allocate more skins.
         mo->skins = realloc(mo->skins, sizeof(*mo->skins) * (idx + 1));
@@ -2054,14 +2054,14 @@ void ModelSetDefaultSkin(model_t *mo, int idx)
 {
     char buf[256], *ptr;
 
-    if(idx < 0) DoError(MTERR_INVALID_SKIN_NUMBER);
+    if (idx < 0) DoError(MTERR_INVALID_SKIN_NUMBER);
 
     strcpy(buf, mo->fileName);
     ptr = strrchr(buf, '\\');
-    if(!ptr) ptr = strrchr(buf, '/');
-    if(ptr) memmove(ptr + 1, buf, strlen(ptr));
+    if (!ptr) ptr = strrchr(buf, '/');
+    if (ptr) memmove(ptr + 1, buf, strlen(ptr));
     ptr = strrchr(buf, '.');
-    if(ptr) strcpy(ptr, ".pcx"); else strcat(buf, ".pcx");
+    if (ptr) strcpy(ptr, ".pcx"); else strcat(buf, ".pcx");
     buf[63] = 0; // Can't be longer.
     ModelSetSkin(mo, 0, buf);
 }
@@ -2082,14 +2082,14 @@ void ModelSetSkinSize(model_t *mo, int width, int height)
 //===========================================================================
 void ModelDelSkin(model_t *mo, int idx)
 {
-    if(idx < 0 || idx >= mo->info.numSkins)
+    if (idx < 0 || idx >= mo->info.numSkins)
     {
         DoError(MTERR_INVALID_SKIN_NUMBER);
         return;
     }
     printf("Deleting skin %i (\"%s\").\n", idx, mo->skins[idx].name);
 
-    if(idx < mo->info.numSkins - 1)
+    if (idx < mo->info.numSkins - 1)
     {
         memmove(&mo->skins[idx], &mo->skins[idx + 1],
             sizeof(*mo->skins) * (mo->info.numSkins - idx - 1));
@@ -2119,7 +2119,7 @@ void ModelSetSaveFormat(model_t *mo, int magic)
 
     mo->modified = true;
     mo->header.magic = magic;
-    if(magic == MD2_MAGIC && mo->info.numLODs > 1)
+    if (magic == MD2_MAGIC && mo->info.numLODs > 1)
     {
         printf("Saving as MD2, all levels except level %i will be discarded.\n",
             savelod);
@@ -2127,7 +2127,7 @@ void ModelSetSaveFormat(model_t *mo, int magic)
     // Change the extension of the file name.
     newext = (magic == MD2_MAGIC? ".md2" : ".dmd");
     ptr = strrchr(mo->fileName, '.');
-    if(!ptr) // What?
+    if (!ptr) // What?
         strcat(mo->fileName, newext);
     else
         strcpy(ptr, newext);
@@ -2151,11 +2151,11 @@ void ModelPrintInfo(model_t *mo)
     printf("%i vertices, %i texcoords, %i frames, %i level%s.\n",
         inf->numVertices, inf->numTexCoords, inf->numFrames,
         inf->numLODs, inf->numLODs != 1? "s" : "");
-    for(i = 0; i < inf->numLODs; i++)
+    for (i = 0; i < inf->numLODs; i++)
     {
         printf("Level %i: %i triangles, %i GL commands", i,
             mo->lodinfo[i].numTriangles, mo->lodinfo[i].numGlCommands);
-        if(i && mo->lodinfo[0].numTriangles)
+        if (i && mo->lodinfo[0].numTriangles)
         {
             printf(" (%.2f%% reduction).\n",
                 100 - mo->lodinfo[i].numTriangles
@@ -2170,12 +2170,12 @@ void ModelPrintInfo(model_t *mo)
         : MD2_FRAMESIZE(inf->numVertices));
     printf("Offsets in file: skin=%i txc=%i fr=%i",
         inf->offsetSkins, inf->offsetTexCoords, inf->offsetFrames);
-    if(dmd)
+    if (dmd)
     {
         printf(" lodinfo=%i", inf->offsetLODs);
     }
     printf(" end=%i\n", inf->offsetEnd);
-    for(i = 0; i < inf->numLODs; i++)
+    for (i = 0; i < inf->numLODs; i++)
     {
         printf("Level %i offsets: tri=%i gl=%i\n", i,
             mo->lodinfo[i].offsetTriangles,
@@ -2185,12 +2185,12 @@ void ModelPrintInfo(model_t *mo)
     printf("Frame list:\n");
     num_cols = 3;
     per_col = (inf->numFrames+2)/num_cols;
-    for(i = 0; i < per_col; i++)
+    for (i = 0; i < per_col; i++)
     {
-        for(k = 0; k < num_cols; k++)
+        for (k = 0; k < num_cols; k++)
         {
             frame_index = i + k*per_col;
-            if(frame_index >= inf->numFrames) break;
+            if (frame_index >= inf->numFrames) break;
             printf(" %3i: %-16s", frame_index,
                 GetFrame(mo, frame_index)->name);
         }
@@ -2198,7 +2198,7 @@ void ModelPrintInfo(model_t *mo)
     }
     printf("%i skin%s of size %ix%i:\n", inf->numSkins,
         inf->numSkins != 1? "s" : "", inf->skinWidth, inf->skinHeight);
-    for(i = 0; i < inf->numSkins; i++)
+    for (i = 0; i < inf->numSkins; i++)
         printf("  %i: %s\n", i, mo->skins[i].name);
 }
 
@@ -2220,23 +2220,23 @@ int main(int argc, char **argv)
     argpos = 0;
 
     // What are we supposed to do?
-    if(argc == 1)
+    if (argc == 1)
     {
         PrintUsage();
         return 0;
     }
 
     // Scan for all file names.
-    for(i = 1; i < argc; i++)
+    for (i = 1; i < argc; i++)
     {
-        if(!stricmp(argv[i], "-skin")
+        if (!stricmp(argv[i], "-skin")
             || !stricmp(argv[i], "-skinsize")
             || !stricmp(argv[i], "-delframes"))
         {
             i += 2;
             continue;
         }
-        if(!stricmp(argv[i], "-delskin")
+        if (!stricmp(argv[i], "-delskin")
             || !stricmp(argv[i], "-del")
             || !stricmp(argv[i], "-create")
             || !stricmp(argv[i], "-s")
@@ -2249,33 +2249,33 @@ int main(int argc, char **argv)
             i++;
             continue;
         }
-        if(argv[i][0] != '-') // Not an option?
+        if (argv[i][0] != '-') // Not an option?
         {
             // Process this.
-            if(CheckOption("-create"))
+            if (CheckOption("-create"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 ModelNew(&model, argv[i]);
                 ModelCreateFrames(&model, ptr);
             }
-            else if(!ModelOpen(&model, argv[i])) continue; // No success.
+            else if (!ModelOpen(&model, argv[i])) continue; // No success.
             nofiles = false;
-            if(CheckOption("-del"))
+            if (CheckOption("-del"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 from = to = strtoul(ptr, 0, 0);
                 ModelDelFrames(&model, from, to);
             }
-            if(CheckOption("-delframes"))
+            if (CheckOption("-delframes"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
-                if(!(opt = NextOption())) DoError(MTERR_INVALID_OPTION);
-                if(!stricmp(ptr, "from"))
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(opt = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!stricmp(ptr, "from"))
                 {
                     from = strtoul(opt, 0, 0);
                     to = model.info.numFrames - 1;
                 }
-                else if(!stricmp(ptr, "to"))
+                else if (!stricmp(ptr, "to"))
                 {
                     from = 0;
                     to = strtoul(opt, 0, 0);
@@ -2287,71 +2287,71 @@ int main(int argc, char **argv)
                 }
                 ModelDelFrames(&model, from, to);
             }
-            if(CheckOption("-weld")) ModelWeldVertices(&model);
-            if(CheckOption("-weldtc")) ModelWeldTexCoords(&model);
-            if(CheckOption("-flip")) ModelFlipNormals(&model);
-            if(CheckOption("-renorm")) ModelRenormalize(&model);
-            if(CheckOption("-skin"))
+            if (CheckOption("-weld")) ModelWeldVertices(&model);
+            if (CheckOption("-weldtc")) ModelWeldTexCoords(&model);
+            if (CheckOption("-flip")) ModelFlipNormals(&model);
+            if (CheckOption("-renorm")) ModelRenormalize(&model);
+            if (CheckOption("-skin"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 skin_num = strtoul(ptr, 0, 0);
-                if(!(skin_file = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(skin_file = NextOption())) DoError(MTERR_INVALID_OPTION);
                 ModelSetSkin(&model, skin_num, skin_file);
             }
-            if(CheckOption("-s"))
+            if (CheckOption("-s"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 ModelSetSkin(&model, 0, ptr);
             }
-            if(CheckOption("-dsk"))
+            if (CheckOption("-dsk"))
             {
                 ModelSetDefaultSkin(&model, 0);
             }
-            if(CheckOption("-skinsize"))
+            if (CheckOption("-skinsize"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
-                if(!(opt = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(opt = NextOption())) DoError(MTERR_INVALID_OPTION);
                 ModelSetSkinSize(&model, strtoul(ptr, 0, 0),
                     strtoul(opt, 0, 0));
             }
-            if(CheckOption("-delskin"))
+            if (CheckOption("-delskin"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 skin_num = strtoul(ptr, 0, 0);
                 ModelDelSkin(&model, skin_num);
             }
-            if(CheckOption("-ef"))
+            if (CheckOption("-ef"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 error_factor = (float) strtod(ptr, 0);
                 printf("Using optimization error factor %.3f.\n", error_factor);
             }
-            if(CheckOption("-op"))
+            if (CheckOption("-op"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 num_optimization_passes = strtoul(ptr, 0, 0);
                 printf("Using %i mesh optimization passes.\n",
                     num_optimization_passes);
             }
-            if(CheckOption("-fn"))
+            if (CheckOption("-fn"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 ModelSetFileName(&model, ptr);
             }
-            if(CheckOption("-lod")) BuildLODs(&model);
-            if(CheckOption("-gl")) BuildGlCmds(&model);
-            if(CheckOption("-info")) ModelPrintInfo(&model);
-            if(CheckOption("-savelod"))
+            if (CheckOption("-lod")) BuildLODs(&model);
+            if (CheckOption("-gl")) BuildGlCmds(&model);
+            if (CheckOption("-info")) ModelPrintInfo(&model);
+            if (CheckOption("-savelod"))
             {
-                if(!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
+                if (!(ptr = NextOption())) DoError(MTERR_INVALID_OPTION);
                 savelod = strtoul(ptr, 0, 0);
             }
-            if(CheckOption("-dmd")) ModelSetSaveFormat(&model, DMD_MAGIC);
-            if(CheckOption("-md2")) ModelSetSaveFormat(&model, MD2_MAGIC);
+            if (CheckOption("-dmd")) ModelSetSaveFormat(&model, DMD_MAGIC);
+            if (CheckOption("-md2")) ModelSetSaveFormat(&model, MD2_MAGIC);
             // We're done, close the model.
             ModelClose(&model);
         }
     }
-    if(nofiles) DoError(MTERR_NO_FILES);
+    if (nofiles) DoError(MTERR_NO_FILES);
     return 0;
 }

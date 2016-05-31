@@ -77,7 +77,7 @@ String versionText()
 
 Path composeMapUriPath(duint32 episode, duint32 map)
 {
-    if(episode > 0)
+    if (episode > 0)
     {
         return String("E%1M%2").arg(episode).arg(map > 0? map : 1);
     }
@@ -91,10 +91,10 @@ Folder &outputFolder()
 
 static PackageFormatter *saveFormatForGameId(String const &idKey)
 {
-    foreach(PackageFormatter *fmt, translators)
-    foreach(QString const &baseId, fmt->baseGameIds)
+    foreach (PackageFormatter *fmt, translators)
+    foreach (QString const &baseId, fmt->baseGameIds)
     {
-        if(idKey.beginsWith(baseId)) return fmt;
+        if (idKey.beginsWith(baseId)) return fmt;
     }
     return 0; // Not found.
 }
@@ -102,10 +102,10 @@ static PackageFormatter *saveFormatForGameId(String const &idKey)
 static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
 {
     String ext = path.lastSegment().toString().fileNameExtension().toLower();
-    foreach(PackageFormatter *fmt, translators)
-    foreach(QString const &knownExtension, fmt->knownExtensions)
+    foreach (PackageFormatter *fmt, translators)
+    foreach (QString const &knownExtension, fmt->knownExtensions)
     {
-        if(!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
+        if (!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
     }
     return 0; // Not found.
 }
@@ -113,7 +113,7 @@ static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
 /// Returns the current, known format translator.
 static PackageFormatter &translator()
 {
-    if(knownTranslator)
+    if (knownTranslator)
     {
         return *knownTranslator;
     }
@@ -123,9 +123,9 @@ static PackageFormatter &translator()
 /// @param inputPath  Path to the game state file [.dsg | .hsg | .hxs] in the vfs.
 static void convertSavegame(Path inputPath)
 {
-    foreach(PackageFormatter *xlator, translators)
+    foreach (PackageFormatter *xlator, translators)
     {
-        if(xlator->recognize(inputPath))
+        if (xlator->recognize(inputPath))
         {
             LOG_VERBOSE("Recognized \"%s\" as a %s format savegame")
                     << NativePath(inputPath).pretty() << xlator->formatName();
@@ -135,22 +135,22 @@ static void convertSavegame(Path inputPath)
     }
 
     // Still unknown? Try again with "fuzzy" logic.
-    if(!knownTranslator)
+    if (!knownTranslator)
     {
         // Unknown magic
-        if(!fallbackGameId.isEmpty())
+        if (!fallbackGameId.isEmpty())
         {
             // Use whichever format is applicable for the specified game ID.
             knownTranslator = saveFormatForGameId(fallbackGameId);
         }
-        else if(!inputPath.toString().fileNameExtension().isEmpty())
+        else if (!inputPath.toString().fileNameExtension().isEmpty())
         {
             // We'll try to guess the save format...
             knownTranslator = guessSaveFormatFromFileName(inputPath);
         }
     }
 
-    if(knownTranslator)
+    if (knownTranslator)
     {
         translator().convert(inputPath);
         return;
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
         LOG_MSG("") << versionText();
 
         CommandLine &args = app.commandLine();
-        if(args.count() < 2 ||
+        if (args.count() < 2 ||
            args.has("-h") || args.has("-?") || args.has("--help"))
         {
             printUsage();
@@ -191,18 +191,18 @@ int main(int argc, char **argv)
         }
         else
         {
-            for(int i = 1; i < args.count(); ++i)
+            for (int i = 1; i < args.count(); ++i)
             {
-                if(args.isOption(i))
+                if (args.isOption(i))
                 {
                     // Was a fallback game ID specified?
-                    if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
+                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
                     {
                         fallbackGameId = args.at(i + 1).strip().toLower();
                         i += 1;
                     }
                     // The -output option can be used to redirect .save output.
-                    if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
+                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
                     {
                         args.makeAbsolutePath(i + 1);
                         app.fileSystem().makeFolderWithFeed("/output",
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
                 Path const inputPath = NativePath(args.at(i)).withSeparators('/');
 
                 // A file name is required.
-                if(inputPath.fileName().isEmpty())
+                if (inputPath.fileName().isEmpty())
                 {
                     LOG_ERROR("\"%s\" is missing a file name, cannot convert")
                             << NativePath(inputPath).pretty();
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 
                 // Ensure we have read access to the input folder on the local fs.
                 NativePath nativeInputFolderPath = inputPath.toString().fileNamePath();
-                if(!nativeInputFolderPath.exists() || !nativeInputFolderPath.isReadable())
+                if (!nativeInputFolderPath.exists() || !nativeInputFolderPath.isReadable())
                 {
                     LOG_ERROR("\"%s\" is not accessible (insufficient permissions?) and will not be converted")
                             << NativePath(inputPath).pretty();
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
                 {
                     convertSavegame(Path("/input") / inputPath.fileName());
                 }
-                catch(Error const &er)
+                catch (Error const &er)
                 {
                     LOG_ERROR("\"%s\" failed conversion:\n")
                             << NativePath(inputPath).pretty() << er.asText();
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

@@ -30,27 +30,27 @@ Length::Length(const Length &other)
 
 bool Length::isClear() const
 {
-    for(int i = 0; i < NumValues; i++) 
-        if(_values[i] != NotSet) return false;
+    for (int i = 0; i < NumValues; i++) 
+        if (_values[i] != NotSet) return false;
     return true;
 }
 
 bool Length::allSet() const
 {
-    for(int i = 0; i < NumValues; i++)
-        if(_values[i] == NotSet) return false;
+    for (int i = 0; i < NumValues; i++)
+        if (_values[i] == NotSet) return false;
     return true;
 }
 
 void Length::clear()
 {
-    for(int i = 0; i < NumValues; i++) _values[i] = NotSet;
+    for (int i = 0; i < NumValues; i++) _values[i] = NotSet;
 }
 
 void Length::defaults()
 {
-    for(int i = 0; i < NumValues; i++)
-        if(_values[i] == NotSet) _values[i] = 0;
+    for (int i = 0; i < NumValues; i++)
+        if (_values[i] == NotSet) _values[i] = 0;
 }
 
 Length::ID Length::IDForName(const String& name)
@@ -58,21 +58,21 @@ Length::ID Length::IDForName(const String& name)
     const char *lengthNames[NumValues] = {
         "leftmargin", "rightmargin", "spacing", "indent"
     };
-    for(int i = 0; i < NumValues; i++)
-        if(name == lengthNames[i]) return (Length::ID) i;
+    for (int i = 0; i < NumValues; i++)
+        if (name == lengthNames[i]) return (Length::ID) i;
     return Invalid;
 }
 
 void Length::init(Token *token)
 {
     clear();
-    for(; token; token = (Token*) token->next())
+    for (; token; token = (Token*) token->next())
     {
         String str = token->unEscape();
         ID id = IDForName(str);
         // If it was a length ID, and there is a parameter following,
         // set the corresponding length value.
-        if(id != Invalid && token->next())
+        if (id != Invalid && token->next())
         {
             token = (Token*) token->next();
             set(id, token->unEscape().toInt());
@@ -85,8 +85,8 @@ void Length::init(Token *token)
  */
 bool Length::canLearnFrom(const Length &other)
 {
-    for(int i = 0; i < NumValues; i++)
-        if(_values[i] == NotSet && other._values[i] != NotSet)
+    for (int i = 0; i < NumValues; i++)
+        if (_values[i] == NotSet && other._values[i] != NotSet)
             return true;
     // The other can't make a contribution.
     return false;
@@ -94,8 +94,8 @@ bool Length::canLearnFrom(const Length &other)
 
 Length &Length::operator += (const Length &other)
 {
-    for(int i = 0; i < NumValues; i++)
-        if(_values[i] == NotSet && other._values[i] != NotSet)
+    for (int i = 0; i < NumValues; i++)
+        if (_values[i] == NotSet && other._values[i] != NotSet)
             _values[i] = other._values[i];
     return *this;
 }

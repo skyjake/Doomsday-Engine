@@ -70,7 +70,7 @@ CommandLineWidget &ConsolePage::cli()
 
 void ConsolePage::wheelEvent(QWheelEvent *ev)
 {
-    if(ev->orientation() == Qt::Vertical)
+    if (ev->orientation() == Qt::Vertical)
     {
         ev->accept();
 
@@ -82,17 +82,17 @@ void ConsolePage::wheelEvent(QWheelEvent *ev)
 #else
         int const lineStep = 60;
 #endif
-        while(_wheelAccum < -lineStep)
+        while (_wheelAccum < -lineStep)
         {
             _wheelAccum += lineStep;
             linesToScroll--;
         }
-        while(_wheelAccum > lineStep)
+        while (_wheelAccum > lineStep)
         {
             _wheelAccum -= lineStep;
             linesToScroll++;
         }
-        if(linesToScroll)
+        if (linesToScroll)
         {
             int newPos = _log->scrollPosition() + linesToScroll;
             _log->scroll(newPos);

@@ -27,7 +27,7 @@ OutputState::OutputState(OutputContext *ctx) : Linkable()
     _marked = false;
     _alignment = OutputContext::AlignLeft;
     _cleanBreaks = true;
-    if(!ctx) setRoot();
+    if (!ctx) setRoot();
 }
 
 bool OutputState::isDone()
@@ -37,15 +37,15 @@ bool OutputState::isDone()
 
 bool OutputState::allDone()
 {
-    for(OutputState *s = next(); !s->isRoot(); s = s->next())
-        if(!s->isDone()) return false;
+    for (OutputState *s = next(); !s->isRoot(); s = s->next())
+        if (!s->isDone()) return false;
     return true;
 }
 
 OutputState *OutputState::findContext(OutputContext *ctx)
 {
-    for(OutputState *s = next(); !s->isRoot(); s = s->next())
-        if(s->context() == ctx) return s;
+    for (OutputState *s = next(); !s->isRoot(); s = s->next())
+        if (s->context() == ctx) return s;
     return NULL;
 }
 
@@ -59,10 +59,10 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
     
     // We'll keep trying to print until we run out of characters
     // or the line is filled.
-    while(_pos < contextLen && line.size() <= width)
+    while (_pos < contextLen && line.size() <= width)
     {
         QChar c = (*source)[_pos++];
-        switch(c.toLatin1())
+        switch (c.toLatin1())
         {
         case OutputContext::CtrlAlign:
             c = (*source)[_pos++];
@@ -73,24 +73,24 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
 
         case OutputContext::CtrlFill:
             c = (*source)[_pos++];
-            while(line.size() < width) line += c;
+            while (line.size() < width) line += c;
             lastBreak = width;
             break;
 
         case OutputContext::CtrlUnderfill:
-            if(!line.isEmpty())
+            if (!line.isEmpty())
                 _pos--;
             else
             {
                 int fillCount = trim(_previousFilledLine).size();
                 c = (*source)[_pos++];
-                while(fillCount-- > 0) line += c;
+                while (fillCount-- > 0) line += c;
             }
             lastBreak = width;
             goto abortLine;
 
         case OutputContext::CtrlLinePrefixBegin:
-            while((*source)[_pos++] != OutputContext::CtrlLinePrefixEnd) {}
+            while ((*source)[_pos++] != OutputContext::CtrlLinePrefixEnd) {}
             break;
 
         case OutputContext::CtrlCleanBreaks:
@@ -107,14 +107,14 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
             forever
             {
                 c = (*source)[_pos++];
-                if(c == OutputContext::CtrlAnchorAppend || c == OutputContext::CtrlAnchorPrepend)
+                if (c == OutputContext::CtrlAnchorAppend || c == OutputContext::CtrlAnchorPrepend)
                     break;
             }
             break;
 
         case '\t': // Space where the line may break.
-            if(line.size() == width) goto abortLine;
-            if(!line.isEmpty())
+            if (line.size() == width) goto abortLine;
+            if (!line.isEmpty())
             {
                 lastBreak = line.size();
                 lastBreakPos = _pos;
@@ -127,12 +127,12 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
             goto abortLine;
 
         case '\n': // Break with one empty line in between.
-            if(!line.isEmpty()) _pos--;
+            if (!line.isEmpty()) _pos--;
             lastBreak = width;
             goto abortLine;
 
         default:
-            if(line.size() == width)
+            if (line.size() == width)
             {
                 // We'll come back to this character.
                 _pos--;
@@ -146,7 +146,7 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
 abortLine:
 
     // Breat at the last suitable place, wind back pos.
-    if(!isDone()
+    if (!isDone()
         && line.size() == width
         && lastBreak < width)
     {
@@ -155,21 +155,21 @@ abortLine:
     }
 
     // Remove extra breakable spaces in the end of the line.
-    while(!line.isEmpty() && line[line.size() - 1] == '\t')
+    while (!line.isEmpty() && line[line.size() - 1] == '\t')
         line.remove(line.size() - 1, 1);
 
     // Convert breakable spaces to normal ones.
     line = replace(line, '\t', ' ');
 
     // Alignment, according to the current alignment mode.
-    switch(_alignment)
+    switch (_alignment)
     {
     default:
-        while(line.size() < _context->width()) line += " ";
+        while (line.size() < _context->width()) line += " ";
         break;
 
     case OutputContext::AlignRight:
-        while(line.size() < _context->width()) line = " " + line;
+        while (line.size() < _context->width()) line = " " + line;
         break;
 
     case OutputContext::AlignCenter:
@@ -187,7 +187,7 @@ abortLine:
 static bool insertAnchorText(QString& line, QString text, bool prepend)
 {
     int pos = line.lastIndexOf(QChar(OutputContext::CtrlAnchor));
-    if(pos >= 0)
+    if (pos >= 0)
     {
         line.insert(prepend? pos : pos + 1, text);
         return true;
@@ -201,10 +201,10 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
     int contextLen = source->size();
 
     // We'll keep going until we run out of characters.
-    while(_pos < contextLen)
+    while (_pos < contextLen)
     {
         QChar c = (*source)[_pos++];
-        switch(c.toLatin1())
+        switch (c.toLatin1())
         {
         case OutputContext::CtrlAlign:
         case OutputContext::CtrlFill:
@@ -226,11 +226,11 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
             forever
             {
                 c = (*source)[_pos++];
-                if(c == OutputContext::CtrlLinePrefixEnd) break;
+                if (c == OutputContext::CtrlLinePrefixEnd) break;
                 linePrefix += c;
             }
             // Apply right away?
-            if(currentLine.isEmpty()) currentLine = linePrefix;
+            if (currentLine.isEmpty()) currentLine = linePrefix;
             break;
 
         case OutputContext::CtrlAnchorPrepend:
@@ -242,17 +242,17 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
             forever
             {
                 c = (*source)[_pos++];
-                if(c.toLatin1() == OutputContext::CtrlAnchorAppend || c.toLatin1() == OutputContext::CtrlAnchorPrepend)
+                if (c.toLatin1() == OutputContext::CtrlAnchorAppend || c.toLatin1() == OutputContext::CtrlAnchorPrepend)
                     break;
                 str += c;
             }
             // Locate the latest anchor and insert the string there.
-            if(!insertAnchorText(currentLine, str, prepend))
+            if (!insertAnchorText(currentLine, str, prepend))
             {
                 // No anchor on the current line, maybe on previous lines?
-                for(int i = completedLines.size() - 1; i >= 0; i--)
+                for (int i = completedLines.size() - 1; i >= 0; i--)
                 {
-                    if(insertAnchorText(completedLines[i], str, prepend))
+                    if (insertAnchorText(completedLines[i], str, prepend))
                         break;
                 }
             }
@@ -260,7 +260,7 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
         }
 
         case OutputContext::CtrlBreakingSpace: // Space where the line may break.
-            if((linePrefix.isEmpty() && !currentLine.isEmpty() && !currentLine[currentLine.size() - 1].isSpace())
+            if ((linePrefix.isEmpty() && !currentLine.isEmpty() && !currentLine[currentLine.size() - 1].isSpace())
                     || !currentLine.endsWith(linePrefix))
             {
                 currentLine += ' ';
@@ -272,7 +272,7 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
             break;
 
         case OutputContext::CtrlLineBreak: // Break to new line.
-            if(!_cleanBreaks || currentLine != linePrefix)
+            if (!_cleanBreaks || currentLine != linePrefix)
             {
                 completedLines << currentLine;
             }
@@ -280,10 +280,10 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
             break;
 
         case OutputContext::CtrlParagraphBreak: // Break with one empty line in between.
-            if(_cleanBreaks && currentLine == linePrefix)
+            if (_cleanBreaks && currentLine == linePrefix)
             {
                 // Check history.
-                if(!completedLines.isEmpty() && completedLines.last() != linePrefix)
+                if (!completedLines.isEmpty() && completedLines.last() != linePrefix)
                     completedLines << linePrefix;
             }
             else

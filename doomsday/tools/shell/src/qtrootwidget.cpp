@@ -89,7 +89,7 @@ DENG2_PIMPL(QtRootWidget)
 
     void updateSize(int widthPx, int heightPx)
     {
-        if(!charSize.x || !charSize.y) return;
+        if (!charSize.x || !charSize.y) return;
 
         // Determine number of characters that fits in the new size.
         Vector2ui size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
@@ -157,7 +157,7 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
              << "mods:" << ev->modifiers();
     */
 
-    if(!ev->text().isEmpty() && ev->text()[0].isPrint() &&
+    if (!ev->text().isEmpty() && ev->text()[0].isPrint() &&
             !ev->modifiers().testFlag(CONTROL_MOD))
     {
         eaten = d->root.processEvent(KeyEvent(ev->text()));
@@ -168,12 +168,12 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
         KeyEvent::Modifiers mods = ev->modifiers().testFlag(CONTROL_MOD)?
                     KeyEvent::Control : KeyEvent::None;
 
-        if(key == Qt::Key_Return) key = Qt::Key_Enter;
+        if (key == Qt::Key_Return) key = Qt::Key_Enter;
 
         // Special control key mappings.
-        if(mods & KeyEvent::Control)
+        if (mods & KeyEvent::Control)
         {
-            switch(key)
+            switch (key)
             {
             case Qt::Key_A:
                 key = Qt::Key_Home;
@@ -198,7 +198,7 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
         eaten = d->root.processEvent(KeyEvent(key, mods));
     }
 
-    if(eaten)
+    if (eaten)
     {
         ev->accept();
 
@@ -245,7 +245,7 @@ void QtRootWidget::paintEvent(QPaintEvent *)
     painter.drawImage(QRect(origin, buf.size()/d->dpiFactor), buf);
 
     // Blinking cursor.
-    if(d->cursorVisible)
+    if (d->cursorVisible)
     {
         QPoint pos = origin + QPoint(d->charSize.x * d->canvas->cursorPosition().x,
                                      d->charSize.y * d->canvas->cursorPosition().y);
@@ -259,7 +259,7 @@ void QtRootWidget::paintEvent(QPaintEvent *)
     }
 
     // Overlaid message?
-    if(!d->overlay.isEmpty())
+    if (!d->overlay.isEmpty())
     {
         painter.setFont(d->overlayFont);
         painter.setBrush(Qt::NoBrush);
@@ -273,7 +273,7 @@ void QtRootWidget::paintEvent(QPaintEvent *)
 
 void QtRootWidget::updateIfRequested()
 {
-    if(d->root.drawWasRequested())
+    if (d->root.drawWasRequested())
     {
         update();
     }

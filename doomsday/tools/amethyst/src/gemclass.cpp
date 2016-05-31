@@ -50,16 +50,16 @@ GemClass GemClass::operator + (const GemClass &other) const
 {
     String combinedFilter = _filter;
     // Combine the two filters with the chaining operator.
-    if(!other._filter.isEmpty())
+    if (!other._filter.isEmpty())
     {
-        if(combinedFilter.isEmpty())
+        if (combinedFilter.isEmpty())
             combinedFilter = other._filter;
         else
             combinedFilter += "@\\" + other._filter;
     }
     // Override inherited flush modes.
     FlushMode combinedFlush = other._flush;
-    if(combinedFlush == FlushInherit)
+    if (combinedFlush == FlushInherit)
     {
         combinedFlush = _flush;
     }
@@ -68,7 +68,7 @@ GemClass GemClass::operator + (const GemClass &other) const
 
 String GemClass::typeAsString() const
 {
-    switch(_type)
+    switch (_type)
     {
     case None: return "None";
     case Gem: return "Gem";
@@ -91,15 +91,15 @@ String GemClass::typeAsString() const
 String GemClass::styleAsString() const
 {
     String out;
-    for(int i = 0; i < 32; ++i)
+    for (int i = 0; i < 32; ++i)
     {
         int flag = (1 << i);
-        if(_style & flag)
+        if (_style & flag)
         {
-            if(!out.isEmpty()) out += "|";
+            if (!out.isEmpty()) out += "|";
             out += nameForStyle(flag);
         }
     }
-    if(out.isEmpty()) return out;
+    if (out.isEmpty()) return out;
     return "(" + out + ")";
 }

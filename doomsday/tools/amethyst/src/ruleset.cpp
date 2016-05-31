@@ -73,11 +73,11 @@ String RuleSet::applyAs(FilterApplyMode mode, String input, Gem *gem)
     bool firstMatch = true;
     FormatRule *rule;
 
-    for(Rule *it = _root.next(); !it->isRoot(); it = it->next())
-        if(it->type() == Rule::FORMAT)
+    for (Rule *it = _root.next(); !it->isRoot(); it = it->next())
+        if (it->type() == Rule::FORMAT)
         {
             rule = (FormatRule*) it;
-            if((mode == ApplyNormal
+            if ((mode == ApplyNormal
                 || (mode == ApplyPre && rule->hasPre())
                 || (mode == ApplyPost && rule->hasPost())
                 || (mode == ApplyAnchorPrepend && rule->hasAnchorPrepend())
@@ -90,7 +90,7 @@ String RuleSet::applyAs(FilterApplyMode mode, String input, Gem *gem)
         }
 
     // Finally, apply a class specific filter.
-    if(mode == ApplyNormal && gem->gemClass().hasFilter())
+    if (mode == ApplyNormal && gem->gemClass().hasFilter())
     {
         output = applyFilter(output, gem->gemClass().filter(), mode, gem);
     }
@@ -107,20 +107,20 @@ Length RuleSet::measure(Gem *gem)
     Length len(gem->gemClass().length());
 
     // Did the gem specify all of the lengths?
-    if(len.allSet()) return len;
+    if (len.allSet()) return len;
     
-    for(Rule *it = _root.prev(); !it->isRoot(); it = it->prev())
-        if(it->type() == Rule::LENGTH)
+    for (Rule *it = _root.prev(); !it->isRoot(); it = it->prev())
+        if (it->type() == Rule::LENGTH)
         {
             Length &other = ((LengthRule*)it)->length();
-            if(len.canLearnFrom(other)
+            if (len.canLearnFrom(other)
                 && it->matches(gem))
             {
                 // This'll copy all the set lengths not already set.
                 len += other;
 
                 // Are we done?
-                if(len.allSet()) return len;
+                if (len.allSet()) return len;
             }
         }
 
@@ -139,7 +139,7 @@ void RuleSet::generateRule(Command *command)
     GemTest *terms;
 
     // Create the rule object.
-    if(command->isName("format"))
+    if (command->isName("format"))
     {
         rule = new FormatRule(((Block*)command->last()->first())->collect());
     }
@@ -150,14 +150,14 @@ void RuleSet::generateRule(Command *command)
     terms = &rule->terms();
 
     // Compile the terms (command -> shards -> blocks -> tokens).
-    for(it = command->first();
+    for (it = command->first();
         it && it != command->last(); it = it->next())
     {
-        if(!it->first()) continue;
+        if (!it->first()) continue;
         terms->addBefore(new GemTest((Token*)it->first()->first()));
     }
 
-    if(command->isName("format"))
+    if (command->isName("format"))
     {               
         // There must not be format rules with matching terms.
         removeMatching(*terms, Rule::FORMAT);
@@ -171,7 +171,7 @@ void RuleSet::generateRule(Command *command)
         // Get last argument -> block -> first token.
         len->init((Token*)command->last()->first()->first());
         // Was this all for naught?
-        if(len->isClear()) delete remove(rule);
+        if (len->isClear()) delete remove(rule);
     }
 }
 
@@ -181,10 +181,10 @@ void RuleSet::generateRule(Command *command)
 void RuleSet::removeMatching(GemTest &terms, Rule::RuleType type)
 {
     Rule *next;
-    for(Rule *it = _root.next(); !it->isRoot(); it = next)
+    for (Rule *it = _root.next(); !it->isRoot(); it = next)
     {
         next = it->next();
-        if(it->type() == type && it->_terms == terms)
+        if (it->type() == type && it->_terms == terms)
             delete remove(it);
     }
 }

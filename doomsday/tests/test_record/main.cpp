@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
         String str;
         QTextStream os(&str);
-        for(duint i = 0; i < b.size(); ++i)
+        for (duint i = 0; i < b.size(); ++i)
         {
             os << dint(b.data()[i]) << " ";
         }
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
         DENG2_ASSERT(copied.hasSubrecord("subrecord"));
         LOG_MSG("Copied:\n") << copied;
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

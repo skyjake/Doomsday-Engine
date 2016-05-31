@@ -34,18 +34,18 @@ String stringCase(const String& src, StringCasing casing)
     
     // Move past spaces in the beginning.
     int i = 0;
-    while(i < len && src[i].isSpace()) ++i;
+    while (i < len && src[i].isSpace()) ++i;
 
-    for(; i < len; i++)
+    for (; i < len; i++)
     {
         // Choose the appropriate case.
-        if((casing == CAPITALIZE_WORDS && firstInWord) ||
+        if ((casing == CAPITALIZE_WORDS && firstInWord) ||
            (casing == CAPITALIZE_SENTENCE && firstAlnum) ||
            casing == UPPERCASE_ALL)
         {
             dest += src[i].toUpper();
         }
-        else if(casing == LOWERCASE_ALL || firstInWord)
+        else if (casing == LOWERCASE_ALL || firstInWord)
         {
             dest += src[i].toLower();
         }
@@ -54,12 +54,12 @@ String stringCase(const String& src, StringCasing casing)
             dest += src[i];
         }
 
-        if(src[i].isLetterOrNumber())
+        if (src[i].isLetterOrNumber())
         {
             firstInWord = false;
             firstAlnum = false;
         }
-        else if(src[i].isSpace())
+        else if (src[i].isSpace())
         {
             firstInWord = true;
         }
@@ -72,10 +72,10 @@ String stringInterlace(const String& src, QChar c)
     String dest;
     int len = src.size();
     
-    for(int i = 0; i < len; i++)
+    for (int i = 0; i < len; i++)
     {
         dest += src[i];
-        if(i < len - 1) dest += c;
+        if (i < len - 1) dest += c;
     }
     return dest;
 }
@@ -83,7 +83,7 @@ String stringInterlace(const String& src, QChar c)
 bool cutBefore(String &str, const String& pat)
 {
     int pos = str.indexOf(pat);
-    if(pos < 0) return false;
+    if (pos < 0) return false;
     str.remove(0, pos);
     return true;
 }
@@ -91,7 +91,7 @@ bool cutBefore(String &str, const String& pat)
 bool cutAfter(String &str, const String& pat)
 {
     int pos = str.indexOf(pat);
-    if(pos < 0) return false;
+    if (pos < 0) return false;
     pos += pat.size();
     str.remove(pos, str.size() - pos);
     return true;
@@ -105,10 +105,10 @@ String alphaCounter(int num)
     String out;
     const int numLetters = 'z' - 'a' + 1;
 
-    for(;;)
+    for (;;)
     {
         out = char('a' + num%numLetters) + out;
-        if(num < numLetters) break;
+        if (num < numLetters) break;
         num /= numLetters;
         num--;
     }
@@ -133,21 +133,21 @@ String romanCounter(int num)
     };
     int i, numSymbols = sizeof(symbols)/sizeof(symbols[0]);
 
-    while(num > 0)
+    while (num > 0)
     {
-        for(i = 0; i < numSymbols; i++)
+        for (i = 0; i < numSymbols; i++)
         {
-            if(num >= symbols[i].value)
+            if (num >= symbols[i].value)
             {
                 out += symbols[i].symb;
                 num -= symbols[i].value;
                 break;
             }
-            if(symbols[i].unit > 0 
+            if (symbols[i].unit > 0 
                 && num >= symbols[i].value - symbols[i].unit)
             {
-                for(int k = 0; k < numSymbols; k++)
-                    if(symbols[i].unit == symbols[k].value)
+                for (int k = 0; k < numSymbols; k++)
+                    if (symbols[i].unit == symbols[k].value)
                     {
                         out += symbols[k].symb;
                         break;
@@ -168,9 +168,9 @@ String romanFilter(const String& src, bool upperCase)
 {
     String dest;
 
-    for(int i = 0; i < src.size(); )
+    for (int i = 0; i < src.size(); )
     {
-        if(!src[i].isDigit())
+        if (!src[i].isDigit())
         {
             dest += src[i++];
             continue;
@@ -178,7 +178,7 @@ String romanFilter(const String& src, bool upperCase)
 
         // Found a number. Read all the digits.
         int start = i;
-        while(i < src.size() && src.at(i).isDigit()) ++i;
+        while (i < src.size() && src.at(i).isDigit()) ++i;
         int number = src.mid(start, i).toInt();
         dest += stringCase(romanCounter(number), upperCase? UPPERCASE_ALL : LOWERCASE_ALL);
     }
@@ -212,13 +212,13 @@ int findAnyMarker(String str, int start = 0, const char* except = 0)
     const char* markers[] = { "@<", "@>", "@|", "@[", "@]", 0 };
     int found = -1;
 
-    for(const char** marker = markers; *marker; marker++)
+    for (const char** marker = markers; *marker; marker++)
     {
-        if(except && QLatin1String(except) == QLatin1String(*marker)) continue;
+        if (except && QLatin1String(except) == QLatin1String(*marker)) continue;
         int pos = str.indexOf(*marker, start);
-        if(pos >= 0)
+        if (pos >= 0)
         {
-            if(found < 0 || pos < found)
+            if (found < 0 || pos < found)
             {
                 // Closer to the beginning.
                 found = pos;
@@ -230,11 +230,11 @@ int findAnyMarker(String str, int start = 0, const char* except = 0)
 
 String findMarkedSegment(String segmented, const String& marker)
 {
-    if(!segmented.contains(marker)) return ""; // Not present.
+    if (!segmented.contains(marker)) return ""; // Not present.
 
     int pos = segmented.indexOf(marker);
     int end = findAnyMarker(segmented, pos + marker.size());
-    if(end < 0) end = segmented.size();
+    if (end < 0) end = segmented.size();
     return segmented.mid(pos + marker.size(), end - pos - marker.size());
 }
 
@@ -243,10 +243,10 @@ String cutMarkedSegments(String segmented)
     forever
     {
         int pos = findAnyMarker(segmented, 0, "@|");
-        if(pos < 0) break;
+        if (pos < 0) break;
 
         int end = findAnyMarker(segmented, pos + 2);
-        if(end < 0) end = segmented.size();
+        if (end < 0) end = segmented.size();
         segmented.remove(pos, end - pos);
     }
     return segmented;
@@ -273,7 +273,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
 
     // Filter out the parts of the format string that do not belong
     // in this mode.
-    switch(mode)
+    switch (mode)
     {
     case ApplyPre:
         fmt = findMarkedSegment(fmt, "@<");
@@ -296,23 +296,23 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
         break;
     }
 
-    while(!fmt.isEmpty())
+    while (!fmt.isEmpty())
     {
         QChar c = fmt[0];
         fmt.remove(0, 1);
-        if(!escape)
+        if (!escape)
         {
-            if(c == '@') 
+            if (c == '@') 
                 escape = true;
             else
                 output += c;
             continue;
         }
         // Escape characters do most of the work.
-        if(superEscape)
+        if (superEscape)
         {
             // Super sequences have three chars.
-            switch(superEscape)
+            switch (superEscape)
             {
             case REPEAT_CHAR:
                 output += char(OutputContext::CtrlFill);
@@ -332,35 +332,35 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             {
                 // The prefix is enclosed in parentheses.
                 output += char(OutputContext::CtrlLinePrefixBegin);
-                if(c != '(')
+                if (c != '(')
                 {
                     throw Exception("Line prefix must be enclosed in parentheses.", "applyFilter");
                 }
                 bool esc = false;
-                while(!fmt.isEmpty())
+                while (!fmt.isEmpty())
                 {
                     c = fmt[0];
                     fmt.remove(0, 1);
-                    if(!esc)
+                    if (!esc)
                     {
-                        if(c == ')') // End?
+                        if (c == ')') // End?
                             break;
-                        if(c == '@') // Escape?
+                        if (c == '@') // Escape?
                             esc = true;
                         else
                             output += c;
                     }
                     else
                     {
-                        if(c == '_') c = ' '; // Space.
-                        if(c == 't') c = '\t'; // Breaking space.
-                        if(c == 'n') c = OutputContext::CtrlLineBreak;
-                        if(c == 'N') c = OutputContext::CtrlParagraphBreak;
+                        if (c == '_') c = ' '; // Space.
+                        if (c == 't') c = '\t'; // Breaking space.
+                        if (c == 'n') c = OutputContext::CtrlLineBreak;
+                        if (c == 'N') c = OutputContext::CtrlParagraphBreak;
                         output += c;
                         esc = false;
                     }
                 }
-                if(c != ')')
+                if (c != ')')
                 {
                     throw Exception("Line prefix must be enclosed in parentheses.", "applyFilter");
                 }
@@ -370,7 +370,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
 
             case REPLACE_STRING:
             {
-                if(c != '(')
+                if (c != '(')
                 {
                     throw Exception("String replacement must be enclosed in parentheses.", "applyFilter");
                 }
@@ -378,39 +378,39 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                 QString value;
                 QString* current = &key;
                 bool esc = false;
-                while(!fmt.isEmpty())
+                while (!fmt.isEmpty())
                 {
                     c = fmt[0];
                     fmt.remove(0, 1);
-                    if(!esc)
+                    if (!esc)
                     {
-                        if(c == '|') // Switch to value?
+                        if (c == '|') // Switch to value?
                         {
-                            if(current == &value)
+                            if (current == &value)
                             {
                                 throw Exception("String replacement cannot have more than one output value.",
                                                 "applyFilter");
                             }
                             current = &value;
                         }
-                        else if(c == ')') // End?
+                        else if (c == ')') // End?
                             break;
-                        else if(c == '@') // Escape?
+                        else if (c == '@') // Escape?
                             esc = true;
                         else
                             *current += c;
                     }
                     else
                     {
-                        if(c == '_') c = ' '; // Space.
-                        if(c == 't') c = '\t'; // Breaking space.
-                        if(c == 'n') c = OutputContext::CtrlLineBreak;
-                        if(c == 'N') c = OutputContext::CtrlParagraphBreak;
+                        if (c == '_') c = ' '; // Space.
+                        if (c == 't') c = '\t'; // Breaking space.
+                        if (c == 'n') c = OutputContext::CtrlLineBreak;
+                        if (c == 'N') c = OutputContext::CtrlParagraphBreak;
                         *current += c;
                         esc = false;
                     }
                 }
-                if(c != ')')
+                if (c != ')')
                 {
                     throw Exception("String replacement must be enclosed in parentheses.", "applyFilter");
                 }
@@ -424,7 +424,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                 // @v( 10+20 ) => 30
                 // @v( @w * @c ) => <width>*<counter>
                 // @v( 1+3*5 ) => 20 (simple left-to-right; no precedence rules)
-                if(c != '(')
+                if (c != '(')
                 {
                     throw Exception("Expression must be enclosed in parentheses.", "applyFilter");
                 }
@@ -442,57 +442,57 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                 Operator curOp = NONE;
                 int result = 0;
                 bool quiet = false; // Quiet will not output anything.
-                while(!fmt.isEmpty())
+                while (!fmt.isEmpty())
                 {
                     c = fmt[0];
                     fmt.remove(0, 1);
-                    if(!esc)
+                    if (!esc)
                     {
-                        if(c == '@') // Escape?
+                        if (c == '@') // Escape?
                             esc = true;
                         else
                         {
                             Operator nextOp = NONE;
-                            if(c.isDigit())
+                            if (c.isDigit())
                             {
                                 curNumber += c;
                             }
-                            else if(c == 'x' && curNumber.isEmpty())
+                            else if (c == 'x' && curNumber.isEmpty())
                             {
                                 curNumber = QString::number(xVar);
                             }
-                            else if(c == '+')
+                            else if (c == '+')
                             {
                                 nextOp = PLUS;
                             }
-                            else if(c == '-')
+                            else if (c == '-')
                             {
                                 nextOp = MINUS;
                             }
-                            else if(c == '*')
+                            else if (c == '*')
                             {
                                 nextOp = MULTIPLY;
                             }
-                            else if(c == '/')
+                            else if (c == '/')
                             {
                                 nextOp = DIVIDE;
                             }
-                            else if(c == '%')
+                            else if (c == '%')
                             {
                                 nextOp = DIVIDE;
                             }
-                            else if(c == '=')
+                            else if (c == '=')
                             {
                                 nextOp = ASSIGNMENT;
                             }
-                            else if(c != ')' && !c.isSpace())
+                            else if (c != ')' && !c.isSpace())
                             {
                                 throw Exception("Unrecognized character in expression.", "applyFilter");
                             }
 
-                            if(c == ')' || nextOp != NONE)
+                            if (c == ')' || nextOp != NONE)
                             {
-                                if(curOp == NONE)
+                                if (curOp == NONE)
                                 {
                                     // The first operand.
                                     result = curNumber.toInt();
@@ -503,7 +503,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                                     int num = curNumber.toInt();
                                     curNumber.clear();
                                     // Apply operator.
-                                    switch(curOp)
+                                    switch (curOp)
                                     {
                                     case PLUS:          result += num; break;
                                     case MINUS:         result -= num; break;
@@ -516,22 +516,22 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                                 }
                                 curOp = nextOp;
                             }
-                            if(c == ')') break; // The end.
+                            if (c == ')') break; // The end.
                         }
                     }
                     else
                     {
-                        if(c == 'w') curNumber = QString::number(gem->width());
-                        if(c == 'c') curNumber = QString::number(gem->order() + 1);
-                        if(c == '.') quiet = true;
+                        if (c == 'w') curNumber = QString::number(gem->width());
+                        if (c == 'c') curNumber = QString::number(gem->order() + 1);
+                        if (c == '.') quiet = true;
                         esc = false;
                     }
                 }
-                if(c != ')')
+                if (c != ')')
                 {
                     throw Exception("Expression must be enclosed in parentheses.", "applyFilter");
                 }
-                if(!quiet)
+                if (!quiet)
                 {
                     output += QString::number(result);
                 }
@@ -546,7 +546,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             continue;
         }
         // Normal 2-char escape.
-        switch(c.toLatin1())
+        switch (c.toLatin1())
         {
         case '@':
         case '{':
@@ -698,11 +698,11 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             // Strange escape sequences are just skipped.
             break;
         }
-        if(!superEscape) escape = false;
+        if (!superEscape) escape = false;
     }
 
     // Finally apply the defined replacements.
-    foreach(const Replacement& r, replacements)
+    foreach (const Replacement& r, replacements)
     {
         output.replace(r.first, r.second);
     }
@@ -712,13 +712,13 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
 
 ArgType interpretArgType(const String& types, int index)
 {
-    if(types.isEmpty()) return ArgShard;
-    if(index < 0) index = 0;
-    if(index >= int(types.size())) index = types.size() - 1;
+    if (types.isEmpty()) return ArgShard;
+    if (index < 0) index = 0;
+    if (index >= int(types.size())) index = types.size() - 1;
         
     QChar t = types[index];
-    if(t == 't') return ArgToken;
-    if(t == 'b') return ArgBlock;
+    if (t == 't') return ArgToken;
+    if (t == 'b') return ArgBlock;
     return ArgShard;
 }
 
@@ -761,16 +761,16 @@ static struct { const char *condition; int flag; } gemFlags[] =
 
 int styleForName(const String& name)
 {
-    for(int i = 0; gemFlags[i].condition; i++)
-        if(name == gemFlags[i].condition) 
+    for (int i = 0; gemFlags[i].condition; i++)
+        if (name == gemFlags[i].condition) 
             return gemFlags[i].flag;
     return 0;
 }
 
 String nameForStyle(int flag)
 {
-    for(int i = 0; gemFlags[i].flag; i++)
-        if(flag == gemFlags[i].flag)
+    for (int i = 0; gemFlags[i].flag; i++)
+        if (flag == gemFlags[i].flag)
             return gemFlags[i].condition;
     return String();
 }
@@ -778,21 +778,21 @@ String nameForStyle(int flag)
 String trimLeft(const String& str)
 {
     int pos = 0;
-    while(pos < str.size() && str[pos].isSpace()) pos++;
+    while (pos < str.size() && str[pos].isSpace()) pos++;
     return str.mid(pos);
 }
 
 String trimRight(const String& str)
 {
     int pos = str.size() - 1;
-    while(pos >= 0 && str[pos].isSpace()) pos--;
+    while (pos >= 0 && str[pos].isSpace()) pos--;
     return str.left(pos + 1);
 }
 
 String trimRightSpaceOnly(const String& str)
 {
     int pos = str.size() - 1;
-    while(pos >= 0 && str[pos] == ' ') pos--;
+    while (pos >= 0 && str[pos] == ' ') pos--;
     return str.left(pos + 1);
 }
 
@@ -816,9 +816,9 @@ String dateString(String format)
 int visualSize(const String& str)
 {
     int len = 0;
-    for(int i = 0; i < str.size(); i++)
+    for (int i = 0; i < str.size(); i++)
     {
-        switch(str[i].toLatin1())
+        switch (str[i].toLatin1())
         {
         case OutputContext::CtrlAlign:
         case OutputContext::CtrlFill:
@@ -839,7 +839,7 @@ int visualSize(const String& str)
 
 bool fileFound(const String& fileName)
 {
-    if(!QFile::exists(fileName) && !QFile::exists(fileName + ".ame"))
+    if (!QFile::exists(fileName) && !QFile::exists(fileName + ".ame"))
         return false;
 
     return true;

@@ -26,10 +26,10 @@ String Block::collect(bool separateWithSpace)
 {
     String str;
 
-    for(Shard *it = first(); it; it = it->next())
+    for (Shard *it = first(); it; it = it->next())
     {
         str += ((Token*)it)->unEscape();
-        if(it->next() && separateWithSpace) str += ' ';
+        if (it->next() && separateWithSpace) str += ' ';
     }
     return str;
 }

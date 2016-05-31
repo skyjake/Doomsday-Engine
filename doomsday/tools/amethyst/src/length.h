@@ -38,7 +38,7 @@ public:
     bool isClear() const;
     bool allSet() const;
     bool has(ID id) { return inRange(id)? _values[id] != NotSet : false; }
-    void set(ID id, int len) { if(inRange(id)) _values[id] = len; }
+    void set(ID id, int len) { if (inRange(id)) _values[id] = len; }
     int get(ID id) { return inRange(id)? _values[id] : 0; }
     void defaults();
     bool canLearnFrom(const Length &other);

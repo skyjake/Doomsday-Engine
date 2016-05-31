@@ -41,8 +41,8 @@ CommandRule *CommandRuleSet::remove(CommandRule *r)
 
 CommandRule *CommandRuleSet::find(const String& byName)
 {
-    for(CommandRule *r = _root.next(); !r->isRoot(); r = r->next())
-        if(r->name() == byName) return r;
+    for (CommandRule *r = _root.next(); !r->isRoot(); r = r->next())
+        if (r->name() == byName) return r;
     return &_defaultRule;
 }
 

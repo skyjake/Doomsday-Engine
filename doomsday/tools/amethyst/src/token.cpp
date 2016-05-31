@@ -19,7 +19,7 @@
 
 bool Token::isIdentical(Shard *other)
 {
-    if(!Shard::isIdentical(other)) return false;
+    if (!Shard::isIdentical(other)) return false;
     return _token == ((Token*)other)->_token;
 }
 

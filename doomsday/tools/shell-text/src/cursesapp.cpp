@@ -49,7 +49,7 @@ static QByteArray runSystemCommand(char const *cmd)
     forever
     {
         int c = fgetc(p);
-        if(c == EOF) break;
+        if (c == EOF) break;
         result.append(c);
     }
     pclose(p);
@@ -114,7 +114,7 @@ DENG2_PIMPL(CursesApp)
     void initCurses()
     {
         // Initialize curses.
-        if(!(rootWin = initscr()))
+        if (!(rootWin = initscr()))
         {
             qFatal("Failed initializing curses.");
             return;
@@ -177,7 +177,7 @@ DENG2_PIMPL(CursesApp)
 
     void refresh()
     {
-        if(!rootWin) return;
+        if (!rootWin) return;
 
         // Schedule the next refresh.
         requestRefresh();
@@ -187,19 +187,19 @@ DENG2_PIMPL(CursesApp)
 
         // Poll for input.
         int key;
-        while((key = wgetch(rootWin)) != ERR)
+        while ((key = wgetch(rootWin)) != ERR)
         {
-            if(key == KEY_RESIZE)
+            if (key == KEY_RESIZE)
             {
                 handleResize();
             }
-            else if((key & KEY_CODE_YES) || key < 0x20 || key == 0x7f)
+            else if ((key & KEY_CODE_YES) || key < 0x20 || key == 0x7f)
             {
                 int code = 0;
                 KeyEvent::Modifiers mods;
 
                 // Control keys.
-                switch(key)
+                switch (key)
                 {
                 case KEY_ENTER:
                 case 0xd: // Enter
@@ -337,7 +337,7 @@ DENG2_PIMPL(CursesApp)
 
                 default:
 #ifdef _DEBUG
-                    if(key & KEY_CODE_YES)
+                    if (key & KEY_CODE_YES)
                         qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toLatin1().constData();
                     else
                         // This key code is ignored.
@@ -346,7 +346,7 @@ DENG2_PIMPL(CursesApp)
                     break;
                 }
 
-                if(code)
+                if (code)
                 {
                     rootWidget->processEvent(KeyEvent(code, mods));
                 }
@@ -356,7 +356,7 @@ DENG2_PIMPL(CursesApp)
                 // Convert the key code(s) into a string.
                 de::String keyStr;
 
-                if(unicodeContinuation)
+                if (unicodeContinuation)
                 {
                     char utf8[3] = { char(unicodeContinuation), char(key), 0 };
                     keyStr = de::String(utf8);
@@ -366,7 +366,7 @@ DENG2_PIMPL(CursesApp)
                 }
                 else
                 {
-                    if((key >= 0x80 && key <= 0xbf) || (key >= 0xc2 && key <= 0xf4))
+                    if ((key >= 0x80 && key <= 0xbf) || (key >= 0xc2 && key <= 0xf4))
                     {
                         unicodeContinuation = key;
                         continue;
@@ -384,12 +384,12 @@ DENG2_PIMPL(CursesApp)
         rootWidget->update();
 
         // Automatically redraw the UI if the values of layout rules have changed.
-        if(de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
+        if (de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
             rootWidget->draw();
         }
 
-        if(rootWidget->focus())
+        if (rootWidget->focus())
         {
             de::Vector2i p = rootWidget->focus()->cursorPosition();
             wmove(rootWin, p.y, p.x);
@@ -408,7 +408,7 @@ bool CursesApp::notify(QObject *receiver, QEvent *event)
     {
         return QCoreApplication::notify(receiver, event);
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         qDebug() << "Caught exception:" << er.asText().toLatin1().constData();
     }

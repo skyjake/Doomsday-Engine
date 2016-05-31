@@ -20,7 +20,7 @@
 
 CommandLine::CommandLine(int argc, char **argv)
 {
-    for(int i = 0; i < argc; i++) _args << argv[i];
+    for (int i = 0; i < argc; i++) _args << argv[i];
 }
 
 bool CommandLine::exists(const String& opt) const
@@ -30,7 +30,7 @@ bool CommandLine::exists(const String& opt) const
 
 String CommandLine::at(int index) const
 {
-    if(index < 0 || index >= count()) return "";
+    if (index < 0 || index >= count()) return "";
     return _args[index];
 }
 

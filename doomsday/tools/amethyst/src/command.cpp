@@ -100,9 +100,9 @@ bool Command::isReverseArgCommand()
 
 int Command::argCommandIndex()
 {
-    if(!isArgCommand() && !isReverseArgCommand()) return 0;
+    if (!isArgCommand() && !isReverseArgCommand()) return 0;
     Token *tok = arg();
-    if(!tok) return 1; // The first argument, by default.
+    if (!tok) return 1; // The first argument, by default.
     return tok->token().toInt();
 }
 
@@ -113,20 +113,20 @@ int Command::styleFlag()
 
 Shard *Command::macroShard()
 {
-    if(!_macro) return NULL;
+    if (!_macro) return NULL;
     return _macro->shard();
 }
 
 bool Command::hasArg(const String& str)
 {
-    for(Shard *it = first(); it; it = it->next())
+    for (Shard *it = first(); it; it = it->next())
     {
         Block *block = (Block*) it->first();
-        if(!block || block->type() != BLOCK) continue;
-        for(Shard *arg = block->first(); arg; arg = arg->next())
+        if (!block || block->type() != BLOCK) continue;
+        for (Shard *arg = block->first(); arg; arg = arg->next())
         {
             // Blocks have only Tokens as children!
-            if(((Token*)arg)->token() == str) return true;
+            if (((Token*)arg)->token() == str) return true;
         }
     }
     return false;
@@ -134,11 +134,11 @@ bool Command::hasArg(const String& str)
 
 Token *Command::arg(int idx)
 {
-    for(Shard *it = first(); it; it = it->next())
+    for (Shard *it = first(); it; it = it->next())
     {
-        if(idx--) continue;
+        if (idx--) continue;
         it = it->first();
-        if(!it || it->type() != BLOCK) break;
+        if (!it || it->type() != BLOCK) break;
         return (Token*) it->first();
     }
     return 0;

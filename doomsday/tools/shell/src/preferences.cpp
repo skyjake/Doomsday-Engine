@@ -32,7 +32,7 @@ DENG2_PIMPL(Preferences)
 #endif
 
         QSettings st;
-        if(st.contains("Preferences/consoleFont"))
+        if (st.contains("Preferences/consoleFont"))
         {
             consoleFont.fromString(st.value("Preferences/consoleFont").toString());
         }
@@ -139,7 +139,7 @@ Preferences::Preferences(QWidget *parent) :
 de::NativePath Preferences::iwadFolder()
 {
     QSettings st;
-    if(st.value("Preferences/customIwad", false).toBool())
+    if (st.value("Preferences/customIwad", false).toBool())
     {
         return st.value("Preferences/iwadFolder").toString();
     }
@@ -173,7 +173,7 @@ void Preferences::selectFont()
 {
     bool ok;
     QFont font = QFontDialog::getFont(&ok, d->consoleFont, this);
-    if(ok)
+    if (ok)
     {
         d->consoleFont = font;
         d->updateFontDesc();

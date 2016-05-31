@@ -47,7 +47,7 @@ void StatusWidget::setShellLink(Link *link)
 {
     d->link = link;
 
-    if(link)
+    if (link)
     {
         // Observe changes in link status.
         connect(link, SIGNAL(addressResolved()), this, SLOT(refresh()));
@@ -72,15 +72,15 @@ void StatusWidget::draw()
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
-    if(!d->link || d->link->status() == Link::Disconnected)
+    if (!d->link || d->link->status() == Link::Disconnected)
     {
         String msg = tr("Not connected to a server");
         buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
     }
-    else if(d->link->status() == Link::Connecting)
+    else if (d->link->status() == Link::Connecting)
     {
         String msg;
-        if(!d->link->address().isNull())
+        if (!d->link->address().isNull())
         {
             msg = tr("Connecting to ") + d->link->address().asText();
         }
@@ -90,11 +90,11 @@ void StatusWidget::draw()
         }
         buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg);
     }
-    else if(d->link->status() == Link::Connected)
+    else if (d->link->status() == Link::Connected)
     {
         String msg = d->gameMode;
-        if(!d->mapId.isEmpty()) msg += " " + d->mapId;
-        if(!d->rules.isEmpty()) msg += " (" + d->rules + ")";
+        if (!d->mapId.isEmpty()) msg += " " + d->mapId;
+        if (!d->rules.isEmpty()) msg += " (" + d->rules + ")";
         buf.drawText(Vector2i(1, 0), msg);
 
         TimeDelta elapsed = d->link->connectedAt().since();

@@ -43,7 +43,7 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
 
     // Define the contents for the choice list.
     ChoiceWidget::Items modes;
-    foreach(DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
+    foreach (DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
     {
         modes << mode.title;
     }
@@ -109,7 +109,7 @@ void LocalServerDialog::finish(int result)
 {
     InputDialog::finish(result);
 
-    if(result)
+    if (result)
     {
         PersistentData::set("LocalServer/gameMode", d->choice->selection());
         PersistentData::set("LocalServer/port",     d->port->text());

@@ -44,14 +44,14 @@ GemTestCommand::~GemTestCommand()
  */
 bool GemTestCommand::operator == (GemTestCommand &other)
 {
-    if(count() != other.count()) return false;
-    for(GemTestCommand *mine = next(), *yours = other.next();
+    if (count() != other.count()) return false;
+    for (GemTestCommand *mine = next(), *yours = other.next();
         !mine->isRoot(); mine = mine->next(), yours = yours->next())
     {
-        if(mine->_id != yours->_id) return false;
-        if(mine->_arg != yours->_arg) return false;
-        if(mine->_negate != yours->_negate) return false;
-        if(mine->_text != yours->_text) return false;
+        if (mine->_id != yours->_id) return false;
+        if (mine->_arg != yours->_arg) return false;
+        if (mine->_negate != yours->_negate) return false;
+        if (mine->_text != yours->_text) return false;
     }
     return true;
 }
@@ -60,7 +60,7 @@ bool GemTestCommand::execute(Gem* self, Gem* test)
 {
     bool result = false;
 
-    switch(_id)
+    switch (_id)
     {
     case HasFlag:
         return (test->style() & _arg) != 0;
@@ -81,21 +81,21 @@ bool GemTestCommand::execute(Gem* self, Gem* test)
     {
         result = false;
         Gem* origin = test->parentGem();
-        if(!origin) break;
+        if (!origin) break;
         int target = qAbs(_arg);
         int i = 1; // Counts the order.
         Gem* it;
-        for(it = _arg > 0? origin->firstGem()
+        for (it = _arg > 0? origin->firstGem()
             : origin->lastGem(); it && it != test;
             it = _arg > 0? it->nextGem() : it->prevGem(), i++)
         {
-            if(i == target)
+            if (i == target)
             {
                 // Didn't match it == test...
                 return false;
             }
         }
-        if(!it) break;
+        if (!it) break;
         result = i == target;
         break;
     }
@@ -104,22 +104,22 @@ bool GemTestCommand::execute(Gem* self, Gem* test)
     {
         result = false;
         Gem* origin = test->parentGem();
-        if(!origin) break;
+        if (!origin) break;
         int target = qAbs(_arg);
         int i = 0; // Counts the order.
-        for(Gem* it = _arg > 0? origin->firstGem() : origin->finalGem();
+        for (Gem* it = _arg > 0? origin->firstGem() : origin->finalGem();
             it && it != origin->nextGem() && it != origin;
             it = _arg > 0? it->followingGem() : it->precedingGem())
         {
-            if(!it->isControl()) i++;
-            if(it == test)
+            if (!it->isControl()) i++;
+            if (it == test)
             {
                 result = true;
                 break;
             }
-            if(i >= target) return false;
+            if (i >= target) return false;
         }
-        if(!result) break; // Not even found...
+        if (!result) break; // Not even found...
         result = i == target;
         break;
     }
@@ -135,8 +135,8 @@ bool GemTestCommand::execute(Gem* self, Gem* test)
 
     case IsMyAncestor:
         result = false;
-        for(Gem* it = self->parentGem(); it; it = it->parentGem())
-            if(it == test)
+        for (Gem* it = self->parentGem(); it; it = it->parentGem())
+            if (it == test)
             {
                 result = true;
                 break;

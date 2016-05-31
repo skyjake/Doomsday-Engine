@@ -146,7 +146,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     buf.addSink(d->log->logSink());
 
     QStringList args = arguments();
-    if(args.size() > 1)
+    if (args.size() > 1)
     {
         // Open a connection.
         openConnection(args[1]);
@@ -182,7 +182,7 @@ void ShellApp::showAbout()
 
 void ShellApp::closeConnection()
 {
-    if(d->link)
+    if (d->link)
     {
         LOG_NET_NOTE("Closing existing connection to %s") << d->link->address();
 
@@ -203,9 +203,9 @@ void ShellApp::askForPassword()
     dlg.lineEdit().setEchoMode(LineEditWidget::PasswordEchoMode);
     dlg.lineEdit().setSignalOnEnter(false);
 
-    if(dlg.exec(rootWidget()))
+    if (dlg.exec(rootWidget()))
     {
-        if(d->link) *d->link << d->link->protocol().passwordResponse(dlg.text());
+        if (d->link) *d->link << d->link->protocol().passwordResponse(dlg.text());
     }
     else
     {
@@ -219,7 +219,7 @@ void ShellApp::askToOpenConnection()
 {
     OpenConnectionDialog dlg;
     dlg.exec(rootWidget());
-    if(!dlg.address().isEmpty())
+    if (!dlg.address().isEmpty())
     {
         openConnection(dlg.address());
     }
@@ -230,7 +230,7 @@ void ShellApp::askToStartLocalServer()
     closeConnection();
 
     LocalServerDialog dlg;
-    if(dlg.exec(rootWidget()))
+    if (dlg.exec(rootWidget()))
     {
         QStringList opts = dlg.text().split(' ', QString::SkipEmptyParts);
 
@@ -246,9 +246,9 @@ void ShellApp::updateMenuWithFoundServers()
     String oldSel = d->menu->itemAction(d->menu->cursor()).label();
 
     // Remove old servers.
-    for(int i = 2; i < d->menu->itemCount() - 3; ++i)
+    for (int i = 2; i < d->menu->itemCount() - 3; ++i)
     {
-        if(d->menu->itemAction(i).label()[0].isDigit() ||
+        if (d->menu->itemAction(i).label()[0].isDigit() ||
            d->menu->itemAction(i).label().startsWith("localhost"))
         {
             d->menu->removeItem(i);
@@ -257,7 +257,7 @@ void ShellApp::updateMenuWithFoundServers()
     }
 
     int pos = 2;
-    foreach(Address const &sv, d->finder.foundServers())
+    foreach (Address const &sv, d->finder.foundServers())
     {
         String label = sv.asText() + String(" (%1; %2/%3)")
                 .arg(d->finder.name(sv).left(20))
@@ -282,7 +282,7 @@ void ShellApp::connectToFoundServer()
 
 void ShellApp::sendCommandToServer(String command)
 {
-    if(d->link)
+    if (d->link)
     {
         LOG_NOTE(">") << command;
 
@@ -298,13 +298,13 @@ void ShellApp::handleIncomingPackets()
         DENG2_ASSERT(d->link != 0);
 
         QScopedPointer<Packet> packet(d->link->nextPacket());
-        if(packet.isNull()) break;
+        if (packet.isNull()) break;
 
         packet->execute();
 
         // Process packet contents.
         shell::Protocol &protocol = d->link->protocol();
-        switch(protocol.recognize(packet.data()))
+        switch (protocol.recognize(packet.data()))
         {
         case shell::Protocol::PasswordChallenge:
             askForPassword();
@@ -333,7 +333,7 @@ void ShellApp::handleIncomingPackets()
 
 void ShellApp::disconnected()
 {
-    if(!d->link) return;
+    if (!d->link) return;
 
     // The link was disconnected.
     disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));

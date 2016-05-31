@@ -28,7 +28,7 @@ void messagePrinter(QtMsgType type, const QMessageLogContext &, const QString &m
 void messagePrinter(QtMsgType type, const char* msg)
 # endif
 {
-    switch(type)
+    switch (type)
     {
     case QtDebugMsg:
     case QtWarningMsg:
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
     printBanner();
 
-    if(args.exists("-h") || args.exists("-?") || args.exists("--help"))
+    if (args.exists("-h") || args.exists("-?") || args.exists("--help"))
     {
         printUsage();
         return 0;
@@ -109,18 +109,18 @@ int main(int argc, char **argv)
     // By default, use stdout.
     QTextStream* output = &stdOutput;
 
-    if(args.exists("-s")) amethyst.setMode(PMF_DUMP_SHARDS);
-    if(args.exists("-g")) amethyst.setMode(PMF_DUMP_GEMS);
-    if(args.exists("-c")) amethyst.setMode(PMF_DUMP_SCHEDULE);
+    if (args.exists("-s")) amethyst.setMode(PMF_DUMP_SHARDS);
+    if (args.exists("-g")) amethyst.setMode(PMF_DUMP_GEMS);
+    if (args.exists("-c")) amethyst.setMode(PMF_DUMP_SCHEDULE);
 
     // Process command line arguments.
-    for(int i = 1; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
-        if(args.beginsWith(i, "-o"))
+        if (args.beginsWith(i, "-o"))
         {
             // Open the given file for output.
             String name = args.at(i).mid(2);
-            if(!outExt.isEmpty() && name.contains("."))
+            if (!outExt.isEmpty() && name.contains("."))
             {
                 // Replace the current extension with outExt.
                 name = name.left(name.indexOf(".")) + "." + outExt;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
             // Open the new output file.
             outFile.close();
             outFile.setFileName(name);
-            if(!outFile.open(QFile::WriteOnly | QFile::Truncate))
+            if (!outFile.open(QFile::WriteOnly | QFile::Truncate))
             {
                 qWarning() << (name + ": " + outFile.errorString()).toLatin1().data();
                 exit(1);
@@ -136,24 +136,24 @@ int main(int argc, char **argv)
             fileOutput.reset(new QTextStream(&outFile));
             output = fileOutput.data();
         }
-        else if(args.beginsWith(i, "-e"))
+        else if (args.beginsWith(i, "-e"))
         {
             outExt = args.at(i).mid(2);
         }
-        else if(args.beginsWith(i, "-d"))
+        else if (args.beginsWith(i, "-d"))
         {
             amethyst.define(args.at(i).mid(2));
         }
-        else if(args.beginsWith(i, "-i"))
+        else if (args.beginsWith(i, "-i"))
         {
             amethyst.addIncludePath(args.at(i).mid(2));
         }
-        else if(args.at(i)[0] != '-')
+        else if (args.at(i)[0] != '-')
         {
             // This must be a source file.
             filesFound = true;
             QFile inFile(args.at(i));
-            if(!inFile.open(QFile::ReadOnly | QFile::Text))
+            if (!inFile.open(QFile::ReadOnly | QFile::Text))
             {
                 qWarning() << (inFile.fileName() + ": " + inFile.errorString()).toLatin1().data();
                 exit(1);
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     }
 
     // If no source files were specified, read from stdin.
-    if(!filesFound) amethyst.compile(stdInput, *output);
+    if (!filesFound) amethyst.compile(stdInput, *output);
 
     return 0;
 }

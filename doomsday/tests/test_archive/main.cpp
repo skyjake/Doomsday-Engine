@@ -65,7 +65,7 @@ int main(int argc, char **argv)
             File &worldTxt = zip.newFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch(File::OutputError const &er)
+        catch (File::OutputError const &er)
         {
             LOG_WARNING("Cannot change files in read-only mode:\n") << er.asText();
         }
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
             denied.setMode(File::ReadOnly);
             Writer(denied) << content.toUtf8();
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_MSG("Correctly denied access to read-only file within archive: %s")
                     << er.asText();
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
         App::fileSystem().copySerialized(updated.path(), "home/copied.zip");
         LOG_MSG("Normal copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

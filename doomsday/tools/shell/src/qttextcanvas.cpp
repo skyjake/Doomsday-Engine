@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
         ch.attribs &= ~(Char::Blink | Char::Underline);
 
         Cache::const_iterator found = cache.constFind(ch);
-        if(found != cache.constEnd())
+        if (found != cache.constEnd())
         {
             return found.value();
         }
@@ -81,7 +81,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
         painter.setPen(Qt::NoPen);
         QColor fg;
         QColor bg;
-        if(!ch.attribs.testFlag(Char::Reverse))
+        if (!ch.attribs.testFlag(Char::Reverse))
         {
             fg = foreground;
             bg = background;
@@ -126,7 +126,7 @@ QImage const &QtTextCanvas::image() const
 
 void QtTextCanvas::resize(TextCanvas::Size const &newSize)
 {
-    if(size() == newSize) return;
+    if (size() == newSize) return;
 
     TextCanvas::resize(newSize);
 
@@ -202,21 +202,21 @@ void QtTextCanvas::show()
     QPainter painter(&d->backBuffer);
     QFontMetrics metrics(d->font);   
 
-    for(int y = 0; y < height(); ++y)
+    for (int y = 0; y < height(); ++y)
     {
-        for(int x = 0; x < width(); ++x)
+        for (int x = 0; x < width(); ++x)
         {
             Coord const pos(x, y);
             Char const &ch = at(pos);
 
-            if(!ch.isDirty() && !ch.attribs.testFlag(Char::Blink))
+            if (!ch.isDirty() && !ch.attribs.testFlag(Char::Blink))
                 continue;
 
             QRect const rect(QPoint(x * d->charSizePx.x,
                                     y * d->charSizePx.y) * d->dpiFactor,
                              QSize(d->charSizePx.x, d->charSizePx.y) * d->dpiFactor);
 
-            if(ch.attribs.testFlag(Char::Blink) && !d->blinkVisible)
+            if (ch.attribs.testFlag(Char::Blink) && !d->blinkVisible)
             {
                 // Blinked out.
                 painter.drawImage(rect.topLeft(), d->glyph(Char(' ', ch.attribs)));
@@ -227,7 +227,7 @@ void QtTextCanvas::show()
             }
 
             // Select attributes.
-            if(ch.attribs.testFlag(Char::Underline))
+            if (ch.attribs.testFlag(Char::Underline))
             {
                 int baseline = rect.top() + metrics.ascent();
                 QColor col = ch.attribs.testFlag(Char::Reverse)? d->background : d->foreground;

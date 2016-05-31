@@ -52,7 +52,7 @@ List<T>::List(const List &otherRoot)
 {
     _pointer = otherRoot._pointer;
     // We must make a copy of all the nodes in the other's list.
-    for(List *n = otherRoot.next(); !n->IsRoot(); n = n->next())
+    for (List *n = otherRoot.next(); !n->IsRoot(); n = n->next())
         add(n->get());
 }
 

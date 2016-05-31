@@ -43,22 +43,22 @@ void CursesTextCanvas::show()
     Size const dims = size();
 
     // All dirty characters are drawn.
-    for(de::duint row = 0; row < dims.y; ++row)
+    for (de::duint row = 0; row < dims.y; ++row)
     {
         bool needMove = true;
 
-        for(de::duint col = 0; col < dims.x; ++col)
+        for (de::duint col = 0; col < dims.x; ++col)
         {
             Coord const pos(col, row);
             Char const &ch = at(pos);
 
-            if(!ch.isDirty())
+            if (!ch.isDirty())
             {
                 needMove = true;
                 continue;
             }
 
-            if(needMove)
+            if (needMove)
             {
                 // Advance cursor.
                 wmove(d->window, d->origin.y + row, d->origin.x + col);

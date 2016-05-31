@@ -49,16 +49,16 @@ void OutputContext::initWith(const OutputContext &other)
  */
 Gem *OutputContext::nextPos(bool canDescend)
 {
-    if(!_gem) return 0;
-    if(canDescend && _gem->firstGem())
+    if (!_gem) return 0;
+    if (canDescend && _gem->firstGem())
         return _gem = _gem->firstGem(); // Step into.
-    if(_gem->nextGem()) return _gem = _gem->nextGem();      // Step forward.
-    while(_gem->parentGem())
+    if (_gem->nextGem()) return _gem = _gem->nextGem();      // Step forward.
+    while (_gem->parentGem())
     {
         // Step upwards...
         _gem = _gem->parentGem();
-        if(_gem == _top) break;
-        if(_gem->nextGem()) return _gem = _gem->nextGem(); // And onward.
+        if (_gem == _top) break;
+        if (_gem->nextGem()) return _gem = _gem->nextGem(); // And onward.
     }
     // Out of gems.
     return _gem = 0;
@@ -66,16 +66,16 @@ Gem *OutputContext::nextPos(bool canDescend)
 
 bool OutputContext::roomFor(const String& str)
 {
-    if(str.isEmpty()) return true;
+    if (str.isEmpty()) return true;
     // Account for one character for the space.
     bool fits = (_cursor == _leftEdge) || (_cursor + int(str.size()) - 1 <= _rightEdge);
-    if(!fits) _full = true;
+    if (!fits) _full = true;
     return fits;
 }
 
 void OutputContext::print(const String& str)
 {
-    if(!str.isEmpty())
+    if (!str.isEmpty())
     {
         _output += str;
         _cursor += str.size();
@@ -84,7 +84,7 @@ void OutputContext::print(const String& str)
 
 void OutputContext::setAlignMode(AlignMode mode)
 {
-    if(mode == _align) return; // No change.
+    if (mode == _align) return; // No change.
     _align = mode;
     // Print a control sequence that will guide the renderer.
     String ctlSeq;

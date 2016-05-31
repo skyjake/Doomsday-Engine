@@ -32,10 +32,10 @@ public:
     void set(const String& s) { _token = s; }
     String unEscape()
     {
-        if(_token == "@@") return "@";
-        if(_token == "@{") return "{";
-        if(_token == "@}") return "}";
-        if(_token == "@$") return "$";
+        if (_token == "@@") return "@";
+        if (_token == "@{") return "{";
+        if (_token == "@}") return "}";
+        if (_token == "@$") return "$";
         return _token;
     }
     bool isIdentical(Shard *other);

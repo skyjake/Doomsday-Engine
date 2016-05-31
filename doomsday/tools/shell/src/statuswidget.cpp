@@ -68,10 +68,10 @@ StatusWidget::StatusWidget(QWidget *parent)
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
 {
     d->gameMode = shell::DoomsdayInfo::titleForGameMode(mode);
-    if(!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
+    if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
-    if(!mapId.isEmpty() && !mapTitle.contains(mapId))
+    if (!mapId.isEmpty() && !mapTitle.contains(mapId))
     {
         d->map += " (" + mapId + ")";
     }
@@ -85,7 +85,7 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
     d->mapOutline = QPicture();
 
     QPainter painter(&d->mapOutline);
-    for(int i = 0; i < outline.lineCount(); ++i)
+    for (int i = 0; i < outline.lineCount(); ++i)
     {
         shell::MapOutlinePacket::Line const &ln = outline.line(i);
         QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
@@ -99,7 +99,7 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 
         painter.drawLine(a, b);
 
-        if(!i)
+        if (!i)
             d->mapBounds = QRect(a, QSize(1, 1));
         else
             d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
@@ -112,7 +112,7 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 
 void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
 {
-    foreach(Instance::Player const &plr, d->players)
+    foreach (Instance::Player const &plr, d->players)
     {
         d->oldPlayerPositions[plr.number] = QPoint(plr.position.x, -plr.position.y);
     }
@@ -123,7 +123,7 @@ void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
 
 void StatusWidget::paintEvent(QPaintEvent *)
 {
-    if(!d->link)
+    if (!d->link)
     {
         return;
     }
@@ -146,7 +146,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
     QRect outlineRect(QPoint(20, 15 + lineHeight + largeMetrics.lineSpacing() + 15),
                       QPoint(width() - 20, height() - 20));
 
-    if(!d->mapBounds.isNull())
+    if (!d->mapBounds.isNull())
     {
         painter.setWindow(d->mapBounds);
 
@@ -155,7 +155,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         QSize viewSize;
         viewSize.setWidth(outlineRect.width());
         viewSize.setHeight(outlineRect.width() / mapRatio);
-        if(viewSize.height() > outlineRect.height())
+        if (viewSize.height() > outlineRect.height())
         {
             // Doesn't fit this way, fit vertically instead.
             viewSize.setHeight(outlineRect.height());
@@ -171,7 +171,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         // Draw player markers.
         float const factor = float(d->mapBounds.width()) / float(viewSize.width());
         QFontMetrics const metrics(d->playerFont);
-        foreach(Instance::Player const &plr, d->players.values())
+        foreach (Instance::Player const &plr, d->players.values())
         {
             painter.save();
 
@@ -182,7 +182,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
 
             QPoint plrPos(plr.position.x, -plr.position.y);
 
-            if(d->oldPlayerPositions.contains(plr.number))
+            if (d->oldPlayerPositions.contains(plr.number))
             {
                 QPointF const start = d->oldPlayerPositions[plr.number];
                 QPointF const end   = plrPos;
@@ -191,7 +191,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
                 /// @todo Qt has no gradient support for drawing lines?
 
                 int const STOPS = 64;
-                for(int i = 0; i < STOPS; ++i)
+                for (int i = 0; i < STOPS; ++i)
                 {
                     QColor grad = color;
                     grad.setAlpha(i * 100 / STOPS);
@@ -215,7 +215,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
             painter.setBrush(markColor);
 
             QString label = QString("%1: %2").arg(plr.number).arg(plr.name);
-            if(label.size() > 20) label = label.left(20);
+            if (label.size() > 20) label = label.left(20);
 
             QRect textBounds = metrics.boundingRect(label);
             int const gap = 3;
@@ -241,7 +241,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
 /*
 void StatusWidget::updateWhenConnected()
 {
-    if(d->link)
+    if (d->link)
     {
         update();
         QTimer::singleShot(1000, this, SLOT(updateWhenConnected()));

@@ -52,7 +52,7 @@ DENG2_PIMPL_NOREF(GuiShellApp)
 
     ~Instance()
     {
-        foreach(LinkWindow *win, windows)
+        foreach (LinkWindow *win, windows)
         {
             delete win;
         }
@@ -113,9 +113,9 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
     QWidget *other = activeWindow(); // for positioning a new window
 
     // Look for a window with a closed connection.
-    foreach(LinkWindow *win, d->windows)
+    foreach (LinkWindow *win, d->windows)
     {
-        if(!win->isConnected())
+        if (!win->isConnected())
         {
             found = win;
             found->raise();
@@ -123,10 +123,10 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
             d->windows.removeOne(win);
             break;
         }
-        if(!other) other = win;
+        if (!other) other = win;
     }
 
-    if(!found)
+    if (!found)
     {
         found = new LinkWindow;
         connect(found, SIGNAL(linkOpened(LinkWindow*)),this, SLOT(updateMenu()));
@@ -134,7 +134,7 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
         connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
 
         // Initial position and size.
-        if(other)
+        if (other)
         {
             found->move(other->pos() + QPoint(30, 30));
         }
@@ -174,7 +174,7 @@ void GuiShellApp::connectToServer()
     QScopedPointer<OpenDialog> dlg(new OpenDialog(win));
     dlg->setWindowModality(Qt::WindowModal);
 
-    if(dlg->exec() == OpenDialog::Accepted)
+    if (dlg->exec() == OpenDialog::Accepted)
     {
         win->openConnection(dlg->address());
     }
@@ -192,7 +192,7 @@ void GuiShellApp::connectToLocalServer()
 void GuiShellApp::disconnectFromServer()
 {
     LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
-    if(win)
+    if (win)
     {
         win->closeConnection();
     }
@@ -201,7 +201,7 @@ void GuiShellApp::disconnectFromServer()
 void GuiShellApp::closeActiveWindow()
 {
     QWidget *win = activeWindow();
-    if(win) win->close();
+    if (win) win->close();
 }
 
 void GuiShellApp::startLocalServer()
@@ -209,16 +209,16 @@ void GuiShellApp::startLocalServer()
     try
     {
         LocalServerDialog dlg;
-        if(dlg.exec() == QDialog::Accepted)
+        if (dlg.exec() == QDialog::Accepted)
         {
             QStringList opts = dlg.additionalOptions();
-            if(!Preferences::iwadFolder().isEmpty())
+            if (!Preferences::iwadFolder().isEmpty())
             {
                 opts << "-iwad" << Preferences::iwadFolder().toString();
             }
 
             LocalServer sv;
-            if(!dlg.name().isEmpty())
+            if (!dlg.name().isEmpty())
             {
                 sv.setName(dlg.name());
             }
@@ -227,7 +227,7 @@ void GuiShellApp::startLocalServer()
             newOrReusedConnectionWindow()->openConnection(sv.openLink(), sv.errorLogPath());
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         QMessageBox::critical(0, tr("Failed to Start Server"), er.asText());
     }
@@ -236,9 +236,9 @@ void GuiShellApp::startLocalServer()
 void GuiShellApp::stopServer()
 {
     LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
-    if(win && win->isConnected())
+    if (win && win->isConnected())
     {
-        if(QMessageBox::question(win, tr("Stop Server?"),
+        if (QMessageBox::question(win, tr("Stop Server?"),
                                  tr("Are you sure you want to stop this server?"),
                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
         {
@@ -252,7 +252,7 @@ void GuiShellApp::updateLocalServerMenu()
     d->localMenu->setDisabled(d->finder.foundServers().isEmpty());
     d->localMenu->clear();
 
-    foreach(Address const &host, d->finder.foundServers())
+    foreach (Address const &host, d->finder.foundServers())
     {
         QString label = QString("%1 - %2 (%3/%4)")
                 .arg(host.asText())
@@ -282,11 +282,11 @@ void GuiShellApp::openWebAddress(QString url)
 
 void GuiShellApp::showPreferences()
 {
-    if(!d->prefs)
+    if (!d->prefs)
     {
         d->prefs = new Preferences;
         connect(d->prefs, SIGNAL(finished(int)), this, SLOT(preferencesDone()));
-        foreach(LinkWindow *win, d->windows)
+        foreach (LinkWindow *win, d->windows)
         {
             connect(d->prefs, SIGNAL(consoleFontChanged()), win, SLOT(updateConsoleFontFromPreferences()));
         }

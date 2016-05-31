@@ -57,7 +57,7 @@ int main(int argc, char **argv)
         LOG_MSG("Decimal places .4: %.4f") << PI;
         LOG_MSG("Decimal places .10: %.10f") << PI;
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }

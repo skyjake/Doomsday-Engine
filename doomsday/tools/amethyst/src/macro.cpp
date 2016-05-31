@@ -22,11 +22,11 @@ Macro::Macro(const String& n, Shard *macroShard, const String& args)
 {
     _name = n;
     _argTypes = args;
-    if(macroShard) 
+    if (macroShard) 
     {
         // Steal macroShard's children.
         Shard *next;
-        for(Shard *it = macroShard->first(); it; it = next)
+        for (Shard *it = macroShard->first(); it; it = next)
         {
             next = it->next();
             _shard.add(macroShard->remove(it));
@@ -41,7 +41,7 @@ ArgType Macro::argType(int index)
 
 Macro *Macro::find(const String& n)
 {
-    for(Macro *it = next(); !it->isRoot(); it = it->next())
-        if(it->_name == n) return it;
+    for (Macro *it = next(); !it->isRoot(); it = it->next())
+        if (it->_name == n) return it;
     return NULL;
 }

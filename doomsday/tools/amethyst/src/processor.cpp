@@ -91,13 +91,13 @@ void Processor::init(QTextStream &input, QTextStream &output)
     _macros.destroy();
 
     // Create macros for the defines.
-    for(StringList *s = _defines.next(); !s->isRoot(); s = s->next())
+    for (StringList *s = _defines.next(); !s->isRoot(); s = s->next())
         _macros.addAfter(new Macro(s->get()));
 }
 
 bool Processor::getToken(String &token, bool require)
 {
-    if(require) 
+    if (require) 
     {
         _in->mustGetToken(token);
         return true;
@@ -125,25 +125,25 @@ bool Processor::parseVerbatim(Shard *parent)
     bool escaped = false;
     QChar c;
 
-    while((c = _in->peek()) != EOF)
+    while ((c = _in->peek()) != EOF)
     {
-        if(!escaped)
+        if (!escaped)
         {
-            if(c == '@') 
+            if (c == '@') 
             {
                 escaped = true;
                 _in->ignore();
                 continue;
             }
-            if(c != '}') str += c;
+            if (c != '}') str += c;
             _in->ignore();
-            if(c == '}') break; // Time to stop.
+            if (c == '}') break; // Time to stop.
         }
         else
         {
             _in->ignore();
             escaped = false;
-            if(c == '@' || c == '{' || c == '}') str += c;
+            if (c == '@' || c == '{' || c == '}') str += c;
             // Anything else is ignored.
         }
     }
@@ -164,13 +164,13 @@ bool Processor::parseSimpleBlock(Shard *parent)
     Block *block;
 
     // The first token determines the type of the statement.
-    if(!getToken(token)) return false; // No more tokens.
+    if (!getToken(token)) return false; // No more tokens.
     pushToken(token); // We do want to include it in the block.
     parent->add(block = new Block);
     // Whitespace and breaks are totally ignored.
-    while(getToken(token))
+    while (getToken(token))
     {
-        if(token == "}") break;
+        if (token == "}") break;
         block->add(new Token(token));
     }
     return true;
@@ -187,10 +187,10 @@ bool Processor::parseBlock(Shard *parent)
     Block *block = new Block;
 
     parent->add(block);
-    while(getTokenOrBlank(token))
+    while (getTokenOrBlank(token))
     {
         // Does the token block end?
-        if(token == "@"
+        if (token == "@"
             || token == "{"
             || token == "}"
             || token.isEmpty())
@@ -219,7 +219,7 @@ bool Processor::parseAt(Shard *parent)
 
     // First the command name.
     getToken(token, true);
-    if(token != "{") 
+    if (token != "{") 
     {
         commandName = token;
     }
@@ -230,13 +230,13 @@ bool Processor::parseAt(Shard *parent)
     }
     
     // Any style modifiers?
-    if((pos = commandName.indexOf('/')) >= 0)
+    if ((pos = commandName.indexOf('/')) >= 0)
     {
-        foreach(String mod, commandName.mid(pos + 1).split('/'))
+        foreach (String mod, commandName.mid(pos + 1).split('/'))
         {
             String flag;
             bool set = true;
-            if(mod.startsWith('-'))
+            if (mod.startsWith('-'))
             {
                 // Clear style flag.
                 flag = mod.mid(1);
@@ -247,7 +247,7 @@ bool Processor::parseAt(Shard *parent)
                 flag = mod;
             }
             int f = styleForName(flag);
-            if(set) setModifiers |= f; else clearModifiers |= f;
+            if (set) setModifiers |= f; else clearModifiers |= f;
         }
 
         // Delete the modifiers from the command name.
@@ -255,7 +255,7 @@ bool Processor::parseAt(Shard *parent)
     }
 
     // Is this a macro?
-    if((macro = _macros.find(commandName)))
+    if ((macro = _macros.find(commandName)))
     {
         command = new Command(macro);
     }
@@ -272,46 +272,46 @@ bool Processor::parseAt(Shard *parent)
     // Conditionals require special handling.
     bool isCond = command->isConditionalCommand(), isDefined;
     bool condFail = true;
-    if(isCond) isDefined = command->isName("ifdef");
+    if (isCond) isDefined = command->isName("ifdef");
 
     // Parse all following arguments. An argument is a single statement.
-    while(getTokenOrBlank(token))
+    while (getTokenOrBlank(token))
     {
-        if(token != "{")
+        if (token != "{")
         {
             // Not a block; no more arguments.
             pushToken(token);
             break;
         }
         int childCount = command->count();
-        if(isCond && childCount)
+        if (isCond && childCount)
         {
             // Let's test if the condition passes.
             Token *tok = command->arg();
             condFail = (tok && (_macros.find(tok->token()) != 0) != isDefined);
-            if(condFail)
+            if (condFail)
             {
                 _in->skipToMatching();
                 break;
             }
         }
         // There is an argument. 
-        switch(command->rule()->argType(childCount))
+        switch (command->rule()->argType(childCount))
         {
         case ArgShard:
-            if(!parseStatement(command)) error("Expected an argument.");
+            if (!parseStatement(command)) error("Expected an argument.");
             break;
 
         case ArgBlock:
             // Encase the argument in a shard.
             command->add(arg = new Shard);
-            if(!parseSimpleBlock(arg))
+            if (!parseSimpleBlock(arg))
                 error("Expected an argument of type 'block'.");
             break;
 
         case ArgToken:
             command->add(arg = new Shard);  // Encase in a shard.
-            if(!parseVerbatim(arg))
+            if (!parseVerbatim(arg))
                 error("Expected an argument of type 'verbatim'.");
             break;
 
@@ -320,9 +320,9 @@ bool Processor::parseAt(Shard *parent)
         }
     }
 
-    if(isCond)
+    if (isCond)
     {
-        if(!condFail)
+        if (!condFail)
         {
             // The condition passes: contents of the last argument will be used.
             // Make the condition transparent; move children to the parent.
@@ -331,15 +331,15 @@ bool Processor::parseAt(Shard *parent)
 
         // The conditional may be followed by @else, let's check.
         getToken(token);
-        if(token == "@")
+        if (token == "@")
         {
             // Ok, let's see what it is.
             getToken(token);
-            if(token == "else")
+            if (token == "else")
             {
                 getToken(token);
-                if(token != "{") error("Expected an argument after else.");
-                if(!condFail)
+                if (token != "{") error("Expected an argument after else.");
+                if (!condFail)
                 {
                     // The actual condition succeeded, so just skip the else part.
                     _in->skipToMatching();
@@ -366,42 +366,42 @@ bool Processor::parseAt(Shard *parent)
     }
 
     // Mode commands modify the operation of the processor.
-    if(command->isModeCommand())
+    if (command->isModeCommand())
     {
-        for(arg = command->first(); arg; arg = arg->next())
+        for (arg = command->first(); arg; arg = arg->next())
         {
             Block *block = (Block*) arg->first();
-            if(!block) continue;
-            for(Token *it = (Token*) block->first(); it; it = (Token*) it->next())
+            if (!block) continue;
+            for (Token *it = (Token*) block->first(); it; it = (Token*) it->next())
             {
                 String str = it->token();
-                if(str == "fill") // Fill between contexts (structured output).
+                if (str == "fill") // Fill between contexts (structured output).
                     _modeFlags |= PMF_STRUCTURED;
-                if(str == "!fill")
+                if (str == "!fill")
                     _modeFlags &= ~PMF_STRUCTURED;
             }
         }
     }
 
     // Source commands operate the source stack.
-    if(command->isSourceCommand())
+    if (command->isSourceCommand())
     {
-        for(arg = command->first(); arg; arg = arg->next())
+        for (arg = command->first(); arg; arg = arg->next())
         {
             String fileName = locateInclude(((Block*)arg->first())->collect());
             Source *src = new Source(fileName);
-            if(!src->isOpen())
+            if (!src->isOpen())
             {
-                if(command->isName("require"))
+                if (command->isName("require"))
                     error("@require: Can't open %s.", fileName.toUtf8().data());
                 else
                     warning("@include: Can't open %s.", fileName.toUtf8().data());
             }
-            if(src->isOpen())
+            if (src->isOpen())
             {
                 useSource(_in = src);
                 // Parse the contents of the file.
-                while(parseStatement(parent, false)) {}
+                while (parseStatement(parent, false)) {}
                 _in->remove();
                 _in = _sources.next();
             }
@@ -411,12 +411,12 @@ bool Processor::parseAt(Shard *parent)
 
     // Macros add an entry to the macros list.
     // @macro{name argtypes}{contents}
-    if(command->isMacroCommand()
+    if (command->isMacroCommand()
         && command->count() >= 2)
     {
         Block *ident = (Block*) command->first()->first();
         Token *name = (Token*) ident->first();
-        if(!name) error("@macro must have a name.");
+        if (!name) error("@macro must have a name.");
         _macros.addAfter(new Macro(name->token(),
             command->last(),
             name->next()? ((Token*)name->next())->token() : ""));
@@ -424,9 +424,9 @@ bool Processor::parseAt(Shard *parent)
 
     // Rule commands are processed right after parsing (they don't
     // produce output, anyway; just guide the way other stuff looks).
-    if(command->isRuleCommand())
+    if (command->isRuleCommand())
     {
-        if(!command->first())
+        if (!command->first())
             error("Rules must have at least one argument.");
 
         // GenerateRule will steal the requirement blocks.      
@@ -434,14 +434,14 @@ bool Processor::parseAt(Shard *parent)
     }
 
     // Preformatting requires that \n => \r. 
-    if(command->isName("pre"))
+    if (command->isName("pre"))
     {
         Token *tok = command->arg();
-        if(tok) tok->set(replace(tok->token(), '\n', '\r'));
+        if (tok) tok->set(replace(tok->token(), '\n', '\r'));
     }
 
     // Tidy commands do not generate even shards.
-    if(command->isTidy()) delete parent->remove(command);
+    if (command->isTidy()) delete parent->remove(command);
     return true;
 }
 
@@ -456,27 +456,27 @@ bool Processor::parseStatement(Shard *parent, bool expectClose)
     bool gotToken;
         
     // The first token determines the type of the statement.
-    if(!getToken(token)) return false; // No more tokens.
+    if (!getToken(token)) return false; // No more tokens.
     pushToken(token);
 
     // Each statement is represented by a shard.
     Shard *statement = parent->add(new Shard);
     
-    while((gotToken = getTokenOrBlank(token)))
+    while ((gotToken = getTokenOrBlank(token)))
     {
-        if(token == "}") 
+        if (token == "}") 
         {
-            if(parent == &_root) error("Mismatched end of block.");
+            if (parent == &_root) error("Mismatched end of block.");
             break;
         }
-        if(token.isEmpty())
+        if (token.isEmpty())
         {
             // Blanks create paragraph break commands.
             statement->add(new Command(_commands.find("break")));
         }
-        else if(token == "{")   // Sub-statement.
+        else if (token == "{")   // Sub-statement.
             parseStatement(statement);
-        else if(token == "@") 
+        else if (token == "@") 
             parseAt(statement);
         else 
         {
@@ -484,7 +484,7 @@ bool Processor::parseStatement(Shard *parent, bool expectClose)
             parseBlock(statement);
         }
     }
-    if(expectClose && token != "}")
+    if (expectClose && token != "}")
         error("A block has been left open.");
     // Something was done.
     return true;
@@ -492,7 +492,7 @@ bool Processor::parseStatement(Shard *parent, bool expectClose)
 
 void Processor::parseInput()
 {
-    while(parseStatement(&_root, false)) {}
+    while (parseStatement(&_root, false)) {}
 }
 
 void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemClass, bool inheritLength)
@@ -504,13 +504,13 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
     GemClass newClass = gemClass + command->gemClass();
 
     // There must be a Break before breaking commands.
-    if(command->isBreaking())
+    if (command->isBreaking())
         parent->makeBreak();
-    else if(command->isLineBreaking())
+    else if (command->isLineBreaking())
         parent->makeBreak(GSF_BREAK_LINE);
 
     // Independent commands get their own gem to put stuff under.
-    if(command->isIndependent())
+    if (command->isIndependent())
     {
         // Include the inherited features of the class, but the command's
         // own class is stronger.
@@ -519,11 +519,11 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
 
         // Explicit lengths are inherited only by commands immediately
         // following.
-        if(inheritLength)
+        if (inheritLength)
             parent->gemClass().length() = gemClass.length();
     }
 
-    if(command->isCall())
+    if (command->isCall())
     {
         // The command is a macro call.
         _callStack.push(command);
@@ -531,20 +531,20 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
         // Must restore the stack to its original state.
         _callStack.pop();
     }
-    else if(!_callStack.isEmpty() && (command->isArgCommand()
+    else if (!_callStack.isEmpty() && (command->isArgCommand()
         || command->isReverseArgCommand()))
     {
         // There must be a caller that provides the arguments.
         Shard *caller = _callStack.pop();
         // The index is one-based.
         int index = command->argCommandIndex();
-        if(inheritLength) newClass.length() = gemClass.length();
+        if (inheritLength) newClass.length() = gemClass.length();
         grindShard(caller->child(command->isReverseArgCommand()?
             -index : index), parent, newClass, inheritLength);
         // Must restore the stack to its original state.
         _callStack.push(caller);
     }
-    else if((idx = _counter.indexForName(command->name())) != CNT_NONE)
+    else if ((idx = _counter.indexForName(command->name())) != CNT_NONE)
     {
         _counter.increment(idx);
         // A gem for the counter.
@@ -555,18 +555,18 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
         parent->add(sub = new Gem);
         grindShard(command->first(), sub, newClass);
     }
-    else if(command->isListCommand() && command->first()) // Must have an argument.
+    else if (command->isListCommand() && command->first()) // Must have an argument.
     {
         Gem *item = 0;
         // Generate gems for each @item command.
         // If there is something before the first @item, it is discarded.
-        for(Shard *it = command->first()->first();
+        for (Shard *it = command->first()->first();
             it; it = it->next())
         {
-            if(it->type() == Shard::COMMAND)
+            if (it->type() == Shard::COMMAND)
             {
                 Command *cmd = (Command*) it;
-                if(cmd->isItemCommand())
+                if (cmd->isItemCommand())
                 {
                     // Begin a new gem.
                     parent->add(item = new
@@ -576,24 +576,24 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
                 }
             }
             // Do not use the list's style for the children.
-            if(item) grindShard(it, item, gemClass);
+            if (item) grindShard(it, item, gemClass);
         }
         // Make sure the list is valid (it has at least one item).
-        if(!parent->first()) parent->add(new Gem);
+        if (!parent->first()) parent->add(new Gem);
     }
-    else if(command->isDefinitionListCommand() && command->first()) // Must have an argument.
+    else if (command->isDefinitionListCommand() && command->first()) // Must have an argument.
     {
         // Each item gets its own gem, and under each one for the 'term'
         // and another for the 'definition'. Again, anything before the
         // first @item is discarded.
         Gem *item = 0, *term = 0, *def = 0;
-        for(Shard *it = command->first()->first();
+        for (Shard *it = command->first()->first();
             it; it = it->next())
         {
-            if(it->type() == Shard::COMMAND)
+            if (it->type() == Shard::COMMAND)
             {
                 Command *cmd = (Command*) it;
-                if(cmd->isItemCommand())
+                if (cmd->isItemCommand())
                 {
                     // Begin a new definition.
                     parent->add(item = new
@@ -610,20 +610,20 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
             }
             // Everything else is interpreted as the definition of the
             // current term.
-            if(def) grindShard(it, def, gemClass);
+            if (def) grindShard(it, def, gemClass);
         }
     }
-    else if(command->isTableCommand() && command->count() >= 2) // Needs cols and the contents.
+    else if (command->isTableCommand() && command->count() >= 2) // Needs cols and the contents.
     {
         Token *cols = command->arg();
         // The cols are a bunch of tokens, each representing
         // a column width.
         int numCols = 0, colWidth[MAX_COLUMNS], colIdx;
         memset(colWidth, 0, sizeof(colWidth));
-        for(; cols; cols = (Token*) cols->next())
+        for (; cols; cols = (Token*) cols->next())
         {
             // Ignore everything but tokens.
-            if(cols->type() != Shard::TOKEN) continue;
+            if (cols->type() != Shard::TOKEN) continue;
             colWidth[numCols++] = cols->token().toInt();
         }
 
@@ -637,36 +637,36 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
         Gem *row = (Gem*) parent->add(new Gem(newClass));
         Gem *cell = (Gem*) row->add(new Gem(newClass));
         cell->setWidth(colWidth[0]);
-        for(it = command->last()->first(); it; it = it->next())
+        for (it = command->last()->first(); it; it = it->next())
         {
-            if(it->type() == Shard::COMMAND)
+            if (it->type() == Shard::COMMAND)
             {
                 Command *cmd = (Command*) it;
-                if(cmd->isName("span"))
+                if (cmd->isName("span"))
                 {
                     // Modify the width of the current cell.
                     int num = 2;
                     Token *tok;
                      // A specific number?
-                    if((tok = cmd->arg()))
+                    if ((tok = cmd->arg()))
                         num = tok->token().toInt();
                     // Increment the column index and cell width.
-                    for(num--; num > 0; num--)
+                    for (num--; num > 0; num--)
                     {
-                        if(++colIdx >= numCols) colIdx = numCols - 1;
+                        if (++colIdx >= numCols) colIdx = numCols - 1;
                         cell->setWidth(cell->width() + colWidth[colIdx]);
                     }
                     continue;
                 }
-                if(cmd->isName("tab"))
+                if (cmd->isName("tab"))
                 {
                     // Begin a new cell.
                     cell = (Gem*) row->add(new Gem(newClass));
-                    if(++colIdx >= numCols) colIdx = numCols - 1;
+                    if (++colIdx >= numCols) colIdx = numCols - 1;
                     cell->setWidth(colWidth[colIdx]);
                     continue;
                 }
-                if(cmd->isName("row"))
+                if (cmd->isName("row"))
                 {
                     // Begin a new row.
                     row = (Gem*) parent->add(new Gem(newClass));
@@ -674,11 +674,11 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
                     cell = (Gem*) row->add(new Gem(newClass));
                     cell->setWidth(colWidth[colIdx = 0]);
                     // Check for parameters.
-                    if(cmd->hasArg("single"))
+                    if (cmd->hasArg("single"))
                         row->modifyStyle(GSF_SINGLE);
-                    else if(cmd->hasArg("double"))
+                    else if (cmd->hasArg("double"))
                         row->modifyStyle(GSF_DOUBLE);
-                    else if(cmd->hasArg("thick"))
+                    else if (cmd->hasArg("thick"))
                         row->modifyStyle(GSF_THICK);
                     continue;
                 }
@@ -688,13 +688,13 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
             grindShard(it, cell, gemClass);
         }
     }
-    else if(command->isApplyCommand() && command->count() >= 2)
+    else if (command->isApplyCommand() && command->count() >= 2)
     {
         GemClass modClass = gemClass;
         modClass.setFilter(((Block*)command->first()->first())->collect());
         grindShard(command->last(), parent, gemClass + modClass);
     }
-    else if(command->isSetCommand()
+    else if (command->isSetCommand()
         && command->count() >= 2)
     {
         GemClass modClass = gemClass;
@@ -702,11 +702,11 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
             first()->first());
         grindShard(command->last(), parent, modClass, true);
     }
-    else if(command->isName("contents"))
+    else if (command->isName("contents"))
     {
         // Create two gems as children: the high and low limit.
         Token *high = command->arg(), *low = NULL;
-        if(high) low = (Token*) high->next();
+        if (high) low = (Token*) high->next();
         parent->add(new Gem(GemClass(GemClass::GemType(GS_HIGHEST_TITLE
             + (high? high->token().toInt() : 0)))));
         parent->add(new Gem(GemClass(GemClass::GemType(GS_HIGHEST_TITLE
@@ -714,24 +714,24 @@ void Processor::grindCommand(Command *command, Gem *parent, const GemClass &gemC
     }
     else
     {
-        for(Shard *it = command->first(); it; it = it->next())
+        for (Shard *it = command->first(); it; it = it->next())
             grindShard(it, parent, newClass);
     }
 
     // Post breaking inserts a Break gem after the command.
-    if(command->isPostBreaking()) realParent->makeBreak();
-    if(command->isPostLineBreaking()) realParent->makeBreak(GSF_BREAK_LINE);
+    if (command->isPostBreaking()) realParent->makeBreak();
+    if (command->isPostLineBreaking()) realParent->makeBreak(GSF_BREAK_LINE);
 }
 
 void Processor::grindShard(Shard *shard, Gem *parent, const GemClass &gemClass, bool inheritLength)
 {
-    if(!shard) return;
+    if (!shard) return;
 
-    switch(shard->type())
+    switch (shard->type())
     {
     case Shard::SHARD:
         // A shard is ground by grinding all of its children.
-        for(Shard* it = shard->first(); it; it = it->next())
+        for (Shard* it = shard->first(); it; it = it->next())
         {
             // The same parent, mind you.
             grindShard(it, parent, gemClass, inheritLength);
@@ -741,7 +741,7 @@ void Processor::grindShard(Shard *shard, Gem *parent, const GemClass &gemClass, 
     case Shard::BLOCK:
         // Blocks are easy: they can only contain Tokens, so they produce
         // a number of text gems.
-        for(Shard *it = shard->first(); it; it = it->next())
+        for (Shard *it = shard->first(); it; it = it->next())
         {
             Token *tok = (Token*) it;
             Gem* gem = new Gem(gemClass, tok->unEscape());
@@ -764,24 +764,24 @@ void Processor::grindShard(Shard *shard, Gem *parent, const GemClass &gemClass, 
 void Processor::print(Gem *gem, OutputContext *ctx)
 {
     // We can't print control gems.
-    if(gem->isControl()
+    if (gem->isControl()
         && !gem->isBreak()
         && !gem->isLineBreak()) return;
 
     // Normal output.
     String out = _rules.apply(gem);
-    if(!out.isEmpty())
+    if (!out.isEmpty())
     {
         // Print a spacing.
         int spacing = _rules.measure(gem).get(Length::Spacing);
         // Add spacing to the output.
-        while(spacing-- > 0) ctx->print("\t"); // A breaking space.
+        while (spacing-- > 0) ctx->print("\t"); // A breaking space.
         ctx->print(out);
     }
 
     // Set the align mode of the context.
     OutputContext::AlignMode mode;
-    switch(gem->gemClass().flushMode())
+    switch (gem->gemClass().flushMode())
     {
     default:
         mode = OutputContext::AlignLeft;
@@ -800,16 +800,16 @@ void Processor::print(Gem *gem, OutputContext *ctx)
 
 void Processor::partialPrint(PartialPrintMode mode, Gem *gem, OutputContext *ctx)
 {
-    if(mode == Before)
+    if (mode == Before)
     {
         // Also do the anchor output now.
         String out = _rules.anchorPrependApply(gem);
-        if(!out.isEmpty())
+        if (!out.isEmpty())
         {
             ctx->print(QChar(OutputContext::CtrlAnchorPrepend) + out + QChar(OutputContext::CtrlAnchorPrepend));
         }
         out = _rules.anchorAppendApply(gem);
-        if(!out.isEmpty())
+        if (!out.isEmpty())
         {
             ctx->print(QChar(OutputContext::CtrlAnchorAppend) + out + QChar(OutputContext::CtrlAnchorAppend));
         }
@@ -847,7 +847,7 @@ OutputContext* Processor::processTitle(Gem *title, OutputContext *host)
     int numberIndent = _rules.measure(title->firstGem()).get(Length::Indent);
     int titleIndent = _rules.measure(title->lastGem()).get(Length::Indent);
     // Make sure there's enough space for the number.
-    if(titleIndent - numberIndent < reqWidth)
+    if (titleIndent - numberIndent < reqWidth)
         titleIndent = numberIndent + reqWidth;
     numberCtx->moveLeftEdge(leftMargin + numberIndent);
     numberCtx->setWidth(titleIndent - numberIndent);
@@ -894,7 +894,7 @@ OutputContext *Processor::processList(Gem *list, OutputContext *host)
     Gem *item;
 
     // Cancel if the list contains no items.
-    if(!list->firstGem()) return host;
+    if (!list->firstGem()) return host;
 
     // Create the first two contexts.
     bulletCtx = _schedule.newContext(host);
@@ -903,7 +903,7 @@ OutputContext *Processor::processList(Gem *list, OutputContext *host)
     _schedule.link(host, textCtx);
 
     // Each item needs a pair of contexts.
-    for(item = list->firstGem(); item; item = item->nextGem())
+    for (item = list->firstGem(); item; item = item->nextGem())
     {
         // The bullet context has no position since it's gem has no children.
         bulletCtx->setPos(NULL);
@@ -914,7 +914,7 @@ OutputContext *Processor::processList(Gem *list, OutputContext *host)
         int reqWidth = visualSize(bullet)
             + _rules.measure(item).get(Length::Spacing);
         int width = listLen.get(Length::Indent);
-        if(width < reqWidth) width = reqWidth;
+        if (width < reqWidth) width = reqWidth;
         bulletCtx->moveLeftEdge(listLen.get(Length::LeftMargin));
         bulletCtx->setWidth(width);
         textCtx->setLeftEdge(bulletCtx->rightEdge() + 1);
@@ -925,7 +925,7 @@ OutputContext *Processor::processList(Gem *list, OutputContext *host)
 
         // If there is an item following, create the next pair of
         // contexts, along with a mid context.
-        if(item->nextGem())
+        if (item->nextGem())
         {
             // The mid context.
             midCtx = _schedule.newContext(host);
@@ -933,7 +933,7 @@ OutputContext *Processor::processList(Gem *list, OutputContext *host)
             _schedule.link(textCtx, midCtx);
 
             // Print something...
-            for(int i = 0; i < itemSpace; i++) midCtx->print("\n");
+            for (int i = 0; i < itemSpace; i++) midCtx->print("\n");
 
             // The next item.
             bulletCtx = _schedule.newContext(host);
@@ -956,7 +956,7 @@ OutputContext *Processor::processDefinitionList
     OutputContext *termCtx, *defCtx, *midCtx;
 
     // Cancel if the list has no contents.
-    if(!defList->firstGem()) return host;
+    if (!defList->firstGem()) return host;
 
     Length listLen(_rules.measure(defList));
     int leftMargin = listLen.get(Length::LeftMargin);
@@ -964,7 +964,7 @@ OutputContext *Processor::processDefinitionList
     int indent = listLen.get(Length::Indent);
     int spacing = listLen.get(Length::Spacing);
 
-    for(Gem *item = defList->firstGem(); item; item = item->nextGem())
+    for (Gem *item = defList->firstGem(); item; item = item->nextGem())
     {
         // Create the term context.
         termCtx = _schedule.newContext(host);
@@ -990,10 +990,10 @@ OutputContext *Processor::processDefinitionList
         midCtx = _schedule.newContext(host);
         _schedule.link(defCtx, midCtx);
 
-        if(item->nextGem())
+        if (item->nextGem())
         {
             // Print something...
-            for(int i = 0; i < spacing; i++) midCtx->print("\n");
+            for (int i = 0; i < spacing; i++) midCtx->print("\n");
         }
     }
     // The last middle context is the following context.
@@ -1003,7 +1003,7 @@ OutputContext *Processor::processDefinitionList
 OutputContext *Processor::processTable(Gem *table, OutputContext *host)
 {
     // If there are no rows, abort.
-    if(!table->firstGem()) return host;
+    if (!table->firstGem()) return host;
 
     OutputContext *midCtx;  // Between rows.
     OutputContext *cells[MAX_COLUMNS], *cell;
@@ -1024,7 +1024,7 @@ OutputContext *Processor::processTable(Gem *table, OutputContext *host)
     rowWidth = midCtx->width();
 
     // Process each row.
-    for(Gem *row = table->firstGem(); row; row = row->nextGem())
+    for (Gem *row = table->firstGem(); row; row = row->nextGem())
     {
         int cellSpace = _rules.measure(row).get(Length::Spacing);
         int leftPad = cellSpace/2;
@@ -1035,10 +1035,10 @@ OutputContext *Processor::processTable(Gem *table, OutputContext *host)
 
         // How many cells on this row?
         numCells = row->count();
-        if(numCells > MAX_COLUMNS) numCells = MAX_COLUMNS;
+        if (numCells > MAX_COLUMNS) numCells = MAX_COLUMNS;
 
         // Create the contexts of the row.
-        for(item = row->firstGem(), i = 0, cumulWidth = 0;
+        for (item = row->firstGem(), i = 0, cumulWidth = 0;
             item && i < MAX_COLUMNS;
             item = item->nextGem(), i++)
         {
@@ -1064,15 +1064,15 @@ OutputContext *Processor::processTable(Gem *table, OutputContext *host)
         midCtx = _schedule.newContext(midCtx);
 
         // Link it to the row's contexts.
-        for(i = 0; i < numCells; i++)
+        for (i = 0; i < numCells; i++)
             _schedule.link(cells[i], midCtx);
 
         // Second part of the row's PartialPrint goes to the middle context.
         partialPrint(After, row, midCtx);
 
         // Print some row space.
-        if(row->nextGem())
-            for(i = 0; i < rowSpace; i++) midCtx->print("\r");
+        if (row->nextGem())
+            for (i = 0; i < rowSpace; i++) midCtx->print("\r");
     }
 
     // Create the following context.
@@ -1102,11 +1102,11 @@ OutputContext *Processor::processContents(Gem *contents, OutputContext *host)
     lowest = contents->lastGem()->gemType();
 
     // Each title gets a pair of contexts.
-    for(; browser; browser = browser->nextGem())
+    for (; browser; browser = browser->nextGem())
     {
         // First child of contents (storage) is the high limit, the last
         // child is the low limit.
-        if(browser->gemType() < highest
+        if (browser->gemType() < highest
             || browser->gemType() > lowest) continue;
 
         mid->moveLeftEdge(leftMargin);
@@ -1118,13 +1118,13 @@ OutputContext *Processor::processContents(Gem *contents, OutputContext *host)
         contents->add(tempParent = new Gem(browser->gemClass()));
         tempParent->steal(browser);
 
-        if(theFirst || !(_modeFlags & PMF_STRUCTURED))
+        if (theFirst || !(_modeFlags & PMF_STRUCTURED))
         {
             theFirst = false;
             minSpace = visualSize(_rules.apply(tempParent->firstGem()->
                 firstGem())) + 1;
         }
-        if(minSpace > spacing)
+        if (minSpace > spacing)
             space = minSpace;
         else
             space = spacing;
@@ -1172,7 +1172,7 @@ OutputContext *Processor::process(Gem *gem, OutputContext *ctx)
     //bool closePartialForGem = false;
 
     // If a context hasn't been provided, let's create one.
-    if(!ctx)
+    if (!ctx)
     {
         // This happens only for the top gem.
         ctx = _schedule.newContext();
@@ -1182,24 +1182,24 @@ OutputContext *Processor::process(Gem *gem, OutputContext *ctx)
         Length len = _rules.measure(gem);
         ctx->setLeftEdge(len.get(Length::LeftMargin));
         int rightEdge = len.get(Length::RightMargin);
-        if(!rightEdge) rightEdge = DEFAULT_RIGHT_MARGIN;
+        if (!rightEdge) rightEdge = DEFAULT_RIGHT_MARGIN;
         ctx->setRightEdge(rightEdge);
     }
 
     // If no gem has been provided, use the context's current position.
-    if(!gem)
+    if (!gem)
     {
         top = ctx->top();
         gem = ctx->pos();
     }
 
     // Anything that should precede the gem?
-    if(top) partialPrint(Before, top, ctx);
+    if (top) partialPrint(Before, top, ctx);
 
     // No gem! Must abort...
-    if(!gem) goto abortProcess;
+    if (!gem) goto abortProcess;
 
-    switch(gem->gemType())
+    switch (gem->gemType())
     {
     case GemClass::PartTitle:
     case GemClass::ChapterTitle:
@@ -1233,17 +1233,17 @@ OutputContext *Processor::process(Gem *gem, OutputContext *ctx)
 
     default:
         // We'll keep processing until we run out of gems.
-        for(it = ctx->pos(); it;)
+        for (it = ctx->pos(); it;)
         {
-            if(it->gemType() == GemClass::Gem)
+            if (it->gemType() == GemClass::Gem)
             {
                 // Apply any pre/post rules on this gem.
-                if(top != it) partialPrint(Before, it, ctx);
+                if (top != it) partialPrint(Before, it, ctx);
 
                 // This is a normal Gem. Just print it.
                 print(it, ctx);
 
-                if(top != it) partialPrint(After, it, ctx);
+                if (top != it) partialPrint(After, it, ctx);
 
                 it = ctx->nextPos();
             }
@@ -1260,8 +1260,8 @@ OutputContext *Processor::process(Gem *gem, OutputContext *ctx)
 abortProcess:
 
     // Anything that should follow the gem?
-    //if(closePartialForGem) partialPrint(After, gem, ctx);
-    if(top) partialPrint(After, top, ctx);
+    //if (closePartialForGem) partialPrint(After, gem, ctx);
+    if (top) partialPrint(After, top, ctx);
 
     // Return a pointer to the current context.
     return ctx;
@@ -1275,12 +1275,12 @@ void Processor::generateOutput()
     grindShard(&_root, &gems, GemClass());
     gems.polish();
 
-    if(_modeFlags & PMF_DUMP_GEMS) dumpGems(&gems);
+    if (_modeFlags & PMF_DUMP_GEMS) dumpGems(&gems);
 
     // Create the schedule: a collection of output-ready linked contexts.
     process(&gems);
 
-    if(_modeFlags & PMF_DUMP_SCHEDULE) _schedule.dumpContexts();
+    if (_modeFlags & PMF_DUMP_SCHEDULE) _schedule.dumpContexts();
 
     // Render the schedule.
     _schedule.render(*_out, (_modeFlags & PMF_STRUCTURED) != 0);
@@ -1292,17 +1292,17 @@ bool Processor::compile(QTextStream &input, QTextStream &output)
 
     // Parse the input.
     try { parseInput(); }
-    catch(Exception ex) // Catch parse errors.
+    catch (Exception ex) // Catch parse errors.
     {
         qWarning() << ex;
         return false;
     }
 
-    if(_modeFlags & PMF_DUMP_SHARDS) dumpRoot(&_root);
+    if (_modeFlags & PMF_DUMP_SHARDS) dumpRoot(&_root);
 
     // Generate output.
     try { generateOutput(); }
-    catch(Exception ex) // Catch output errors.
+    catch (Exception ex) // Catch output errors.
     {
         qWarning() << ex;
         return false;
@@ -1312,7 +1312,7 @@ bool Processor::compile(QTextStream &input, QTextStream &output)
 
 void Processor::define(const String& name)
 {
-    if(name.isEmpty()) return;
+    if (name.isEmpty()) return;
     _defines.addAfter(new StringList(name));
 }
 
@@ -1321,27 +1321,27 @@ void Processor::addIncludePath(const String& path)
     String str = path;
     QChar c;
 
-    if(str.isEmpty()) return;
+    if (str.isEmpty()) return;
     c = str[str.size() - 1];
-    if(c != '/') str += '/';
+    if (c != '/') str += '/';
     _includeDirs << str;
 }
 
 String Processor::locateInclude(const String& fileName)
 {
-    if(fileFound(fileName)) return fileName;
+    if (fileFound(fileName)) return fileName;
 
     // Directories to look in.
     QStringList dirs = _includeDirs;
 
     QString implicitDir = QFileInfo(_sourceFileName).path();
-    if(!implicitDir.isEmpty())
+    if (!implicitDir.isEmpty())
         dirs.prepend(implicitDir + "/");
 
-    foreach(QString it, dirs)
+    foreach (QString it, dirs)
     {
         String tryName = it + fileName;
-        if(fileFound(tryName)) return tryName;
+        if (fileFound(tryName)) return tryName;
     }
     // Not found...
     return fileName;
@@ -1349,13 +1349,13 @@ String Processor::locateInclude(const String& fileName)
 
 void Processor::dumpRoot(Shard *at, int level)
 {
-    if(!level) qDebug() << "SHARD DUMP:";
+    if (!level) qDebug() << "SHARD DUMP:";
 
     QString dump;
     QTextStream out(&dump);
 
-    for(int i = 0; i < level; i++) out << "  ";
-    switch(at->type())
+    for (int i = 0; i < level; i++) out << "  ";
+    switch (at->type())
     {
     case Shard::SHARD:
         out << "Shard";
@@ -1380,22 +1380,22 @@ void Processor::dumpRoot(Shard *at, int level)
     qDebug() << dump.toLatin1().data();
 
     // Dump all children, too.
-    for(Shard *it = at->first(); it; it = it->next())
+    for (Shard *it = at->first(); it; it = it->next())
         dumpRoot(it, level + 1);
 }
 
 void Processor::dumpGems(Gem *at, int level)
 {
-    if(!level) qDebug() << "GEM DUMP:";
+    if (!level) qDebug() << "GEM DUMP:";
 
     QString dump;
     QTextStream out(&dump);
 
-    for(int i = 0; i < level; i++) out << "  ";
+    for (int i = 0; i < level; i++) out << "  ";
     out << at->dump();
     qDebug() << dump.toLatin1().data();
 
     // Dump all children, too.
-    for(Gem *it = at->firstGem(); it; it = it->nextGem())
+    for (Gem *it = at->firstGem(); it; it = it->nextGem())
         dumpGems(it, level + 1);
 }

@@ -50,8 +50,8 @@ int Gem::modifyStyle(int setFlags, int clearFlags)
 
 Gem *Gem::makeBreak(int breakStyle)
 {
-    if(!firstGem()) return NULL;
-    if(lastGem() &&
+    if (!firstGem()) return NULL;
+    if (lastGem() &&
             (lastGem()->isBreak()
              || (breakStyle == GSF_BREAK_LINE && lastGem()->isLineBreak())))
         return lastGem();
@@ -65,20 +65,20 @@ void Gem::polish()
 {
     // Recursively polish the whole gem tree.
     Gem* next = 0;
-    for(Gem *it = firstGem(); it; it = next)
+    for (Gem *it = firstGem(); it; it = next)
     {
         next = it->nextGem();
         it->polish();
 
         // Remove a line break if it's followed by a paragraph break.
-        if(it->isLineBreak() && next && next->isBreak())
+        if (it->isLineBreak() && next && next->isBreak())
             delete remove(it);
     }
 
-    if(firstGem() == lastGem()) return; // Nothing much to do.
+    if (firstGem() == lastGem()) return; // Nothing much to do.
 
     // Remove the last gem if it's a break.
-    if(lastGem() && (lastGem()->isBreak() || lastGem()->isLineBreak()))
+    if (lastGem() && (lastGem()->isBreak() || lastGem()->isLineBreak()))
         delete remove(lastGem());
 }
 
@@ -87,9 +87,9 @@ String Gem::dump()
     String dump;
     QTextStream out(&dump);
 
-    if(isBreak())
+    if (isBreak())
         out << "Break";
-    else if(isLineBreak())
+    else if (isLineBreak())
         out << "LineBreak";
     else
         out << _class.typeAsString();
@@ -98,16 +98,16 @@ String Gem::dump()
     out << (_class.flushMode() == GemClass::FlushInherit? "I"
           : _class.flushMode() == GemClass::FlushLeft?    "L"
           : _class.flushMode() == GemClass::FlushRight?   "R" : "C");
-    if(!_text.isEmpty()) out << ": `" << _text << "'";
+    if (!_text.isEmpty()) out << ": `" << _text << "'";
 
     QStringList spec;
-    if(_class.style()) spec << _class.styleAsString();
-    if(width()) spec << QString("width=%1").arg(width());
-    if(_class.hasFilter()) spec << QString("[%1]").arg(_class.filter());
+    if (_class.style()) spec << _class.styleAsString();
+    if (width()) spec << QString("width=%1").arg(width());
+    if (_class.hasFilter()) spec << QString("[%1]").arg(_class.filter());
 
-    if(!spec.isEmpty())
+    if (!spec.isEmpty())
     {
-        foreach(QString s, spec)
+        foreach (QString s, spec)
             out << " " << s;
     }
 

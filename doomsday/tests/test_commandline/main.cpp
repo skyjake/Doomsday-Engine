@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 #endif
 
         String output;
-        if(cmd.executeAndWait(&output))
+        if (cmd.executeAndWait(&output))
         {
             LOG_MSG("Output from %s:\n") << cmd.at(0) << output;
         }
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
             LOG_WARNING("Failed to execute!");
         }
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

@@ -50,7 +50,7 @@ void InitList(void)
 void DestroyList(void)
 {
 	fname_t *it = root.next, *next;
-	for(; it != &root; it = next)
+	for (; it != &root; it = next)
 	{
 		next = it->next;
 		free(it);
@@ -64,16 +64,16 @@ void CollectFiles(const char *basepath)
 	char findspec[256], path[256];
     
 	sprintf(findspec, "%s*", basepath);
-	if(!FindFile_FindFirst(&fd, findspec))
+	if (!FindFile_FindFirst(&fd, findspec))
 	{
 		// The first file found!
 		do 
 		{
-			if(!Str_Compare(&fd.name, ".") || !Str_Compare(&fd.name, ".."))
+			if (!Str_Compare(&fd.name, ".") || !Str_Compare(&fd.name, ".."))
 				continue;
             
 			sprintf(path, "%s%s", basepath, Str_Text(&fd.name));
-			if(fd.attrib & A_SUBDIR)
+			if (fd.attrib & A_SUBDIR)
 			{
 				CollectFiles(path);
 			}
@@ -82,7 +82,7 @@ void CollectFiles(const char *basepath)
 				NewFile(path, fd.size);
 			}
 		} 
-		while(!FindFile_FindNext(&fd));
+		while (!FindFile_FindNext(&fd));
 	}
     FindFile_Finish(&fd);
 }
@@ -92,7 +92,7 @@ int CountList(void)
 	int count = 0;
 	fname_t *it;
 
-	for(it = root.next; it != &root; it = it->next) count++;
+	for (it = root.next; it != &root; it = it->next) count++;
 	return count;
 }
 
@@ -101,7 +101,7 @@ int CopyToStream(FILE *file, fname_t *fn)
 	FILE *in = fopen(fn->path, "rb");
 	char *buf;
 
-	if(!in) return 0;
+	if (!in) return 0;
 	buf = malloc(fn->size);
 	fread(buf, fn->size, 1, in);
 	fwrite(buf, fn->size, 1, file);
@@ -135,13 +135,13 @@ int main(int argc, char **argv)
 	int direc_size, direc_offset;
 
 	PrintBanner();
-	if(argc < 2 || argc > 3)
+	if (argc < 2 || argc > 3)
 	{
 		PrintUsage();
 		return 0;
 	}
 	wadfile = argv[1];
-	if(argc > 2) prefix = argv[2];
+	if (argc > 2) prefix = argv[2];
 
     srand((unsigned int)time(0));
 	rand();
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 	printf("Collecting files...\n");
 	CollectFiles("");	
 	printf("Creating WAD file %s...\n", wadfile);
-	if((file = fopen(wadfile, "wb")) == NULL)
+	if ((file = fopen(wadfile, "wb")) == NULL)
 	{
 		printf("Couldn't open %s.\n", wadfile);
 		perror("Error");
@@ -170,10 +170,10 @@ int main(int argc, char **argv)
 
 	// Write all the files.
 	sprintf(lumpbase, "%c%c", 'A' + rand() % 26, 'A' + rand() % 26);
-	for(it = root.next, c = 0; it != &root; it = it->next, c++)
+	for (it = root.next, c = 0; it != &root; it = it->next, c++)
 	{
 		it->offset = ftell(file);
-		if(!CopyToStream(file, it)) 
+		if (!CopyToStream(file, it)) 
 		{
 			perror(it->path);
 			goto stop_now;
@@ -184,13 +184,13 @@ int main(int argc, char **argv)
 
 	// Write DD_DIREC. 
 	direc_offset = ftell(file);
-	for(it = root.next; it != &root; it = it->next)
+	for (it = root.next; it != &root; it = it->next)
 		fprintf(file, "%s %s%s\n", it->lump, prefix, it->path);
 	direc_size = ftell(file) - direc_offset;
 	
 	// Time to write the info table.
 	hdr.infotableofs = ftell(file);
-	for(it = root.next, c = 0; it != &root; it = it->next, c++)
+	for (it = root.next, c = 0; it != &root; it = it->next, c++)
 	{
 		memset(&info, 0, sizeof(info));
 		info.filepos = it->offset;

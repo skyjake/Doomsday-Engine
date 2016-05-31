@@ -44,10 +44,10 @@ Source::Source(String fileName) : Linkable()
     _lineNumber = 1;
     _is = 0;
 
-    if(!QFile::exists(fileName))
+    if (!QFile::exists(fileName))
     {
         // Default extension?
-        if(QFile::exists(fileName + ".ame"))
+        if (QFile::exists(fileName + ".ame"))
         {
             _fileName = fileName + ".ame";
         }
@@ -55,7 +55,7 @@ Source::Source(String fileName) : Linkable()
 
     // Open the file.
     _file.setFileName(_fileName);
-    if(!_file.open(QFile::ReadOnly | QFile::Text))
+    if (!_file.open(QFile::ReadOnly | QFile::Text))
     {
         // Couldn't open it.
         qWarning() << (fileName + ": " + _file.errorString()).toLatin1().data();
@@ -71,13 +71,13 @@ Source::Source(String fileName) : Linkable()
 
 Source::~Source()
 {
-    if(_mustDeleteStream) delete _is;
+    if (_mustDeleteStream) delete _is;
 }
 
 void Source::nextChar()
 {
     QString chars = _is->read(1);
-    if(chars.isEmpty())
+    if (chars.isEmpty())
     {
         // We're at the end.
         _peekedChar = EOF;
@@ -100,7 +100,7 @@ QChar Source::peek()
 
 void Source::ignore()
 {
-    if(!_is) return;
+    if (!_is) return;
     nextChar();
 }
 
@@ -116,15 +116,15 @@ void Source::skipToMatching()
     int level = 0;
     QChar c;
 
-    while((c = get()) != EOF)
+    while ((c = get()) != EOF)
     {
-        if(c == '@')    // Escape sequence.
+        if (c == '@')    // Escape sequence.
         {
             ignore();   // Skip whatever follows.
             continue;
         }
-        if(c == '{') level++;
-        if(c == '}') if(!level--) break;
+        if (c == '{') level++;
+        if (c == '}') if (!level--) break;
     }
 }
 
@@ -137,7 +137,7 @@ bool Source::getTokenOrBlank(String &token)
     bool gotNewline = false, gotBlank = false;
 
     // Is there a pushed-back token?
-    if(!_pushedTokens.isEmpty())
+    if (!_pushedTokens.isEmpty())
     {
         token = _pushedTokens.takeLast();
         return true;        
@@ -147,21 +147,21 @@ bool Source::getTokenOrBlank(String &token)
     // Extract the next token, or blank.
     // First eat whitespace & comments, and keep an eye out for a blank.
     QChar c;
-    while((c = peek()) != EOF)
+    while ((c = peek()) != EOF)
     {
-        if(c == '$') // Begin a comment?
+        if (c == '$') // Begin a comment?
         {
             ignore();
-            if((c = peek()) == '*') // Delimited comment?
+            if ((c = peek()) == '*') // Delimited comment?
             {
                 ignore();
                 // Eat all characters, but keep a look-out for *$.
-                while((c = peek()) != EOF)
+                while ((c = peek()) != EOF)
                 {
                     // Don't loose track of line numbers.
-                    if(c == '\n') _lineNumber++;
+                    if (c == '\n') _lineNumber++;
                     ignore();
-                    if(c == '*' && peek() == '$')
+                    if (c == '*' && peek() == '$')
                     {
                         // The comment ends...
                         ignore();
@@ -171,26 +171,26 @@ bool Source::getTokenOrBlank(String &token)
             }
             else // One-liner.
             {
-                while((c = peek()) != EOF && c != '\n') ignore();
-                if(c == EOF) break;
+                while ((c = peek()) != EOF && c != '\n') ignore();
+                if (c == EOF) break;
                 // Eat the newline as well.
                 _lineNumber++;
                 ignore();
             }
             continue;
         }
-        if(!c.isSpace()) break; // No more whitespace.
-        if(c == '\n')
+        if (!c.isSpace()) break; // No more whitespace.
+        if (c == '\n')
         {
             _lineNumber++;
-            if(!gotNewline)
+            if (!gotNewline)
                 gotNewline = true;
             else // There already was one newline!
                 gotBlank = true;
         }
         ignore();
     }
-    if(gotBlank)
+    if (gotBlank)
     {
         // We have ourselves a blank here. The source read cursor is left
         // at the first non-white character.
@@ -198,24 +198,24 @@ bool Source::getTokenOrBlank(String &token)
     }
 
     // Now extract until whitespace encountered. This becomes the token.
-    while((c = peek()) != EOF)
+    while ((c = peek()) != EOF)
     {
-        if(c.isSpace()) break; // The token ends.
-        if(!token.isEmpty() && IS_BREAK(c)) break;
+        if (c.isSpace()) break; // The token ends.
+        if (!token.isEmpty() && IS_BREAK(c)) break;
         // All non-white characters end up in the token.
         token += c;
         ignore();
-        if(c == '@')
+        if (c == '@')
         {
             // Must check the next character.
             QChar n = peek();
-            if(!IS_BREAK(n)) break; // Stop here.
+            if (!IS_BREAK(n)) break; // Stop here.
             // This is an escape sequence.
             token += n;
             ignore();
             break;
         }
-        else if(IS_BREAK(c)) break;
+        else if (IS_BREAK(c)) break;
     }
 
     return !token.isEmpty();
@@ -227,9 +227,9 @@ bool Source::getTokenOrBlank(String &token)
  */
 bool Source::getToken(String &token)
 {
-    while(getTokenOrBlank(token))
+    while (getTokenOrBlank(token))
     {
-        if(!token.isEmpty())
+        if (!token.isEmpty())
             return true;
     }
     // No tokens left, or just blank!
@@ -241,7 +241,7 @@ bool Source::getToken(String &token)
  */
 void Source::mustGetToken(String &token)
 {
-    if(!getToken(token))
+    if (!getToken(token))
         throw Exception("Unexpected end of file.", _fileName, _lineNumber);
 }
 

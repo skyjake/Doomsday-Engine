@@ -32,10 +32,10 @@ GlobalShortcuts::GlobalShortcuts()
 
 bool GlobalShortcuts::handleEvent(Event const &event)
 {
-    if(event.isKeyDown())
+    if (event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
-        if(key.modifiers().testFlag(KeyEvent::Control) && key.qtKey() == Qt::Key_Q)
+        if (key.modifiers().testFlag(KeyEvent::Control) && key.qtKey() == Qt::Key_Q)
         {
             TestApp::app().quit();
             return true;

@@ -43,7 +43,7 @@ int main(int argc, char **argv)
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

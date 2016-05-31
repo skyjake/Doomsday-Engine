@@ -38,7 +38,7 @@ OutputContext *Schedule::newContext(OutputContext *initializer)
 {
     OutputContext *ctx;
 
-    if(initializer) 
+    if (initializer) 
         ctx = new OutputContext(*initializer);
     else
         ctx = new OutputContext;
@@ -57,10 +57,10 @@ ContextRelation *Schedule::list(ListType type, OutputContext *ctx)
 
     // Make it a root.
     list->setRoot();
-    for(ContextRelation *it = _relationRoot.next(); !it->isRoot();
+    for (ContextRelation *it = _relationRoot.next(); !it->isRoot();
         it = it->next())
     {
-        if((type == Preceding && it->target() == ctx) || (type == Following && it->source() == ctx))
+        if ((type == Preceding && it->target() == ctx) || (type == Following && it->source() == ctx))
             // Make a copy of this relation.
             list->addBefore(new ContextRelation(*it));
     }
@@ -76,17 +76,17 @@ void Schedule::dumpContexts()
     QString dump;
     QTextStream out(&dump);
 
-    for(OutputContext *ctx = _contextRoot.next(); !ctx->isRoot(); ctx = ctx->next())
+    for (OutputContext *ctx = _contextRoot.next(); !ctx->isRoot(); ctx = ctx->next())
     {
         out << ctx << " (left:" << ctx->leftEdge()
             << ", right: " << ctx->rightEdge() << ")";
         QScopedPointer<ContextRelation> prec(list(Preceding, ctx));
         QScopedPointer<ContextRelation> fol(list(Following, ctx));
         out << "\n  Preceded by: ";
-        for(it = prec->next(); !it->isRoot(); it = it->next())
+        for (it = prec->next(); !it->isRoot(); it = it->next())
             out << it->source() << " ";
         out << "\n  Followed by: ";
-        for(it = fol->next(); !it->isRoot(); it = it->next())
+        for (it = fol->next(); !it->isRoot(); it = it->next())
             out << it->target() << " ";
         out << "\n  Text: `" << ctx->output() << "'";
 
@@ -107,43 +107,43 @@ bool Schedule::advance(OutputState &state)
     
     // Collect the list of candidates.
     candidates.setRoot();
-    for(s = state.next(); !s->isRoot(); s = s->next())
+    for (s = state.next(); !s->isRoot(); s = s->next())
     {
         // If this state is done, compile a list of possible candidates
         // that will take over if all their predecessors are done.
-        if(s->isDone())
+        if (s->isDone())
         {
             ContextRelation *fol = list(Following, s->context());
             // If no followers, remove the state.
-            if(fol->isListEmpty())
+            if (fol->isListEmpty())
                 s->mark();
-            else for(r = fol->next(); !r->isRoot(); r = r->next())
+            else for (r = fol->next(); !r->isRoot(); r = r->next())
                 candidates.add(r->target());
             delete fol;
         }
     }
 
     // Check if we can advance any of the states.
-    for(it = candidates.next(); !it->isRoot(); it = it->next())
+    for (it = candidates.next(); !it->isRoot(); it = it->next())
     {
         OutputContext *ctx = (OutputContext*) it->get();
         ContextRelation *prec = list(Preceding, ctx);
         bool takeOver = true;
         // Check if all preceding states are done.
-        for(r = prec->next(); takeOver && !r->isRoot(); r = r->next())
+        for (r = prec->next(); takeOver && !r->isRoot(); r = r->next())
         {
             // If it isn't found, the context hasn't yet entered the state.
             s = state.findContext(r->source());
-            if(!s || !s->isDone()) takeOver = false;
+            if (!s || !s->isDone()) takeOver = false;
         }
         // Can we take over?
         // All states taken over are marked for deletion and deleted
         // after the new states have been created.
-        if(takeOver)
+        if (takeOver)
         {
             wasAdvanced = true;
             // Mark the preceding states for deletion.
-            for(r = prec->next(); !r->isRoot(); r = r->next())
+            for (r = prec->next(); !r->isRoot(); r = r->next())
                 state.findContext(r->source())->mark();
             // Add the candidate context in front of the first
             // preceding one.
@@ -154,10 +154,10 @@ bool Schedule::advance(OutputState &state)
     }
 
     // Candidates have been added, delete the marked states.
-    for(s = state.next(); !s->isRoot(); s = next)
+    for (s = state.next(); !s->isRoot(); s = next)
     {
         next = s->next();
-        if(s->isMarked()) delete s->remove();
+        if (s->isMarked()) delete s->remove();
     }
     return wasAdvanced;
 }
@@ -173,7 +173,7 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
 {
     OutputState state;
     
-    if(_contextRoot.isListEmpty()) return; // Nothing to print.
+    if (_contextRoot.isListEmpty()) return; // Nothing to print.
 
     // Initialize the state.
     state.addBefore(new OutputState(_contextRoot.next()));
@@ -184,25 +184,25 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
 
     // Rendering of lines will continue until all contexts have been
     // completed.
-    while(!state.allDone())
+    while (!state.allDone())
     {
         OutputState *s, *next;
-        if(structuredOutput) line = "";
+        if (structuredOutput) line = "";
 
         // A part of the line is taken from all of the current contexts.
-        for(s = state.next(); !s->isRoot(); s = next)
+        for (s = state.next(); !s->isRoot(); s = next)
         {
             next = s->next();
-            if(structuredOutput)
+            if (structuredOutput)
             {
                 // ctxLine will be exactly as long as the context is wide.
                 String ctxLine = s->filledLine(completedLines);
 
                 // Is there a need to print padding?
                 int prevEdge = 0;
-                if(!s->prev()->isRoot())
+                if (!s->prev()->isRoot())
                     prevEdge = s->prev()->context()->rightEdge() + 1;
-                for(; prevEdge < s->context()->leftEdge(); prevEdge++)
+                for (; prevEdge < s->context()->leftEdge(); prevEdge++)
                     line += " ";
 
                 // This context's contribution to the line.
@@ -213,21 +213,21 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
                 // The lines are printed directly to the completedLines list.
                 s->rawOutput(line, linePrefix, completedLines);
 
-                if(advance(state))
+                if (advance(state))
                     break;
             }
         }
-        if(structuredOutput)
+        if (structuredOutput)
         {
             // Now the line can be printed.
             completedLines << trimRight(line);
         }
 
         // Advance as long as possible.
-        while(advance(state)) {}
+        while (advance(state)) {}
     }
 
-    if(!structuredOutput)
+    if (!structuredOutput)
     {
         // Finish up with the current line.
         completedLines << line;
@@ -236,16 +236,16 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
     bool useCarriageReturns = (_proc.macros().find("CR_NL") != 0);
 
     // Print out the completed lines to the output stream.
-    foreach(QString s, completedLines)
+    foreach (QString s, completedLines)
     {
-        if(!structuredOutput)
+        if (!structuredOutput)
         {
             // Filter out any remaining control characters.
             s.replace(QChar(OutputContext::CtrlAnchor), "");
         }
 
         line = s + "\n";
-        if(useCarriageReturns)
+        if (useCarriageReturns)
         {
             line.replace("\n", "\r\n");
         }

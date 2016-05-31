@@ -122,7 +122,7 @@ DENG2_PIMPL(MainWindow)
         compositor->add(cursor);
 
         // The mouse cursor is only needed with OVR.
-        if(!VRConfig::modeAppliesDisplacement(TestApp::vr().mode()))
+        if (!VRConfig::modeAppliesDisplacement(TestApp::vr().mode()))
         {
             cursor->hide();
         }
@@ -144,7 +144,7 @@ DENG2_PIMPL(MainWindow)
     void updateMouseCursor()
     {
         Vector2i cp = TestApp::windowSystem().latestMousePosition();
-        if(cp.x < 0 || cp.y < 0) return;
+        if (cp.x < 0 || cp.y < 0) return;
         cursorX->set(cp.x);
         cursorY->set(cp.y);
     }
@@ -164,11 +164,11 @@ DENG2_PIMPL(MainWindow)
     void updateCompositor()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        if(!compositor) return;
+        if (!compositor) return;
 
         VRConfig &vr = TestApp::vr();
 
-        if(vr.mode() == VRConfig::OculusRift)
+        if (vr.mode() == VRConfig::OculusRift)
         {
             compositor->setCompositeProjection(
                         vr.projectionMatrix(OVR_FOV, root.viewRule().size(),
@@ -200,7 +200,7 @@ DENG2_PIMPL(MainWindow)
 MainWindow::MainWindow(String const &id)
     : BaseWindow(id), d(new Instance(this))
 {
-    if(App::commandLine().has("--ovr"))
+    if (App::commandLine().has("--ovr"))
     {
         // Go straight into Oculus Rift mode.
         VRConfig &vr = TestApp::vr();
@@ -258,7 +258,7 @@ void MainWindow::preDraw()
     DENG2_ASSERT_IN_MAIN_THREAD();
 
     d->updateMouseCursor();
-    if(d->needRootSizeUpdate)
+    if (d->needRootSizeUpdate)
     {
         d->updateRootSize();
     }
@@ -266,7 +266,7 @@ void MainWindow::preDraw()
 
 void MainWindow::postDraw()
 {
-    if(TestApp::vr().mode() != VRConfig::OculusRift)
+    if (TestApp::vr().mode() != VRConfig::OculusRift)
     {
         swapBuffers();
     }

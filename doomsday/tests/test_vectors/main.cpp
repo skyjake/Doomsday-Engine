@@ -145,7 +145,7 @@ int main(int, char **)
 
         qDebug() << "Cross product" << Vector3f(1, 0, 0).cross(Vector3f(0, 1, 0)).asText();
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }

@@ -45,7 +45,7 @@ DENG2_PIMPL(FolderSelection)
         layout->setContentsMargins(0, 0, 0, 0);
         self.setLayout(layout);
 
-        if(!extraLabel.isEmpty())
+        if (!extraLabel.isEmpty())
         {
             QLabel *lab = new QLabel(extraLabel);
             layout->addWidget(lab, 0);
@@ -89,7 +89,7 @@ void FolderSelection::setEnabled(bool yes)
     d->edit->setEnabled(yes);
     d->button->setEnabled(yes);
 
-    if(yes)
+    if (yes)
     {
         d->edit->setStyleSheet("");
     }
@@ -107,9 +107,9 @@ de::NativePath FolderSelection::path() const
 void FolderSelection::selectFolder()
 {
     QString initial = d->edit->text();
-    if(initial.isEmpty()) initial = QDir::homePath();
+    if (initial.isEmpty()) initial = QDir::homePath();
     QString dir = QFileDialog::getExistingDirectory(0, d->prompt, initial);
-    if(!dir.isEmpty())
+    if (!dir.isEmpty())
     {
         d->edit->setText(dir);
         emit selected();

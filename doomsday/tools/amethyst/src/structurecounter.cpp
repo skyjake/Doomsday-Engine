@@ -26,44 +26,44 @@ int StructureCounter::indexForName(const String& strucName) const
 {
     const char *names[] = { "part", "chapter", "section", "subsec",
         "sub2sec", "sub3sec", "sub4sec", 0 };
-    for(int i = 0; names[i]; i++)
-        if(strucName == names[i])
+    for (int i = 0; names[i]; i++)
+        if (strucName == names[i])
             return i;
     return CNT_NONE;
 }
 
 int StructureCounter::counter(int index) const
 {
-    if(index < 0 || index >= NUM_COUNTS) return 0;
+    if (index < 0 || index >= NUM_COUNTS) return 0;
     return _counts[index];
 }
 
 void StructureCounter::increment(int index)
 {
-    if(index < 0 || index >= NUM_COUNTS) return;
+    if (index < 0 || index >= NUM_COUNTS) return;
     _counts[index]++;
     reset(index + 1);
 }
 
 void StructureCounter::reset(int index)
 {
-    if(index < 0 || index >= NUM_COUNTS) return;
-    for(int i = index; i < NUM_COUNTS; i++)
+    if (index < 0 || index >= NUM_COUNTS) return;
+    for (int i = index; i < NUM_COUNTS; i++)
         _counts[i] = 0;
 }
 
 String StructureCounter::text(int index) const
 {
-    if(index == CNT_PART)
+    if (index == CNT_PART)
     {
         return QString::number(_counts[index]);
     }
 
     String out;
-    for(int i = CNT_CHAPTER; i <= index && i < NUM_COUNTS; i++)
+    for (int i = CNT_CHAPTER; i <= index && i < NUM_COUNTS; i++)
     {
         out += QString::number(_counts[i]);
-        if(i < index) out += ".";
+        if (i < index) out += ".";
     }
     return out;
 }

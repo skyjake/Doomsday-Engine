@@ -104,7 +104,7 @@ DENG2_PIMPL(LinkWindow)
 
     void updateStyle()
     {
-        if(self.isConnected())
+        if (self.isConnected())
         {
             console->root().canvas().setBackgroundColor(Qt::white);
             console->root().canvas().setForegroundColor(Qt::black);
@@ -119,15 +119,15 @@ DENG2_PIMPL(LinkWindow)
     void updateCurrentHost()
     {
         QString txt;
-        if(link)
+        if (link)
         {
-            if(self.isConnected() && !link->address().isNull())
+            if (self.isConnected() && !link->address().isNull())
             {
                 txt = tr("<b>%1</b>:%2")
                         .arg(link->address().host().toString())
                         .arg(link->address().port());
             }
-            else if(self.isConnected() && link->address().isNull())
+            else if (self.isConnected() && link->address().isNull())
             {
                 txt = tr("Looking up host...");
             }
@@ -151,7 +151,7 @@ DENG2_PIMPL(LinkWindow)
         updateStyle();
 
         // Perhaps show the error log?
-        if(!errorLog.isEmpty())
+        if (!errorLog.isEmpty())
         {
             showErrorLog();
         }
@@ -160,7 +160,7 @@ DENG2_PIMPL(LinkWindow)
     void showErrorLog()
     {
         QFile logFile(errorLog);
-        if(!logFile.open(QFile::ReadOnly))
+        if (!logFile.open(QFile::ReadOnly))
         {
             return;
         }
@@ -197,8 +197,8 @@ DENG2_PIMPL(LinkWindow)
         String rules    = rec["rules"].value().asText();
 
         String msg = gameMode;
-        if(!mapId.isEmpty()) msg += " " + mapId;
-        if(!rules.isEmpty()) msg += " (" + rules + ")";
+        if (!mapId.isEmpty()) msg += " " + mapId;
+        if (!rules.isEmpty()) msg += " (" + rules + ")";
 
         gameStatus->setText(statusText(msg));
     }
@@ -325,9 +325,9 @@ bool LinkWindow::isConnected() const
 
 void LinkWindow::changeEvent(QEvent *ev)
 {
-    if(ev->type() == QEvent::ActivationChange)
+    if (ev->type() == QEvent::ActivationChange)
     {
-        if(isActiveWindow())
+        if (isActiveWindow())
         {
             // Log local messages here.
             LogBuffer::get().addSink(d->console->log().logSink());
@@ -342,9 +342,9 @@ void LinkWindow::changeEvent(QEvent *ev)
 void LinkWindow::closeEvent(QCloseEvent *event)
 {
     /*
-    if(isConnected())
+    if (isConnected())
     {
-        if(QMessageBox::question(
+        if (QMessageBox::question(
                     this,
                     tr("Close Connection?"),
                     tr("Connection is still open. Do you want to close the window regardless?"),
@@ -379,7 +379,7 @@ void LinkWindow::openConnection(Link *link, NativePath const &errorLogPath, Stri
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-    if(name.isEmpty()) name = link->address().asText();
+    if (name.isEmpty()) name = link->address().asText();
     setTitle(name);
     d->console->root().setOverlaidMessage(tr("Looking up host..."));
     statusBar()->showMessage(tr("Looking up host..."));
@@ -398,7 +398,7 @@ void LinkWindow::openConnection(QString address)
 
 void LinkWindow::closeConnection()
 {
-    if(d->link)
+    if (d->link)
     {
         qDebug() << "Closing existing connection to" << d->link->address().asText();
 
@@ -430,7 +430,7 @@ void LinkWindow::switchToConsole()
 
 void LinkWindow::updateWhenConnected()
 {
-    if(d->link)
+    if (d->link)
     {
         TimeDelta elapsed = d->link->connectedAt().since();
         String time = String("%1:%2:%3")
@@ -450,13 +450,13 @@ void LinkWindow::handleIncomingPackets()
         DENG2_ASSERT(d->link != 0);
 
         QScopedPointer<Packet> packet(d->link->nextPacket());
-        if(packet.isNull()) break;
+        if (packet.isNull()) break;
 
         //qDebug() << "Packet:" << packet->type();
 
         // Process packet contents.
         shell::Protocol &protocol = d->link->protocol();
-        switch(protocol.recognize(packet.data()))
+        switch (protocol.recognize(packet.data()))
         {
         case shell::Protocol::PasswordChallenge:
             askForPassword();
@@ -465,7 +465,7 @@ void LinkWindow::handleIncomingPackets()
         case shell::Protocol::LogEntries: {
             // Add the entries into the local log buffer.
             LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.data());
-            foreach(LogEntry *e, pkt->entries())
+            foreach (LogEntry *e, pkt->entries())
             {
                 d->logBuffer.add(new LogEntry(*e, LogEntry::Remote));
             }
@@ -506,7 +506,7 @@ void LinkWindow::handleIncomingPackets()
 
 void LinkWindow::sendCommandToServer(de::String command)
 {
-    if(d->link)
+    if (d->link)
     {
         // Echo the command locally.
         LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
@@ -544,7 +544,7 @@ void LinkWindow::connected()
 
 void LinkWindow::disconnected()
 {
-    if(!d->link) return;
+    if (!d->link) return;
 
     // The link was disconnected.
     disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
@@ -569,9 +569,9 @@ void LinkWindow::askForPassword()
     dlg.setTextEchoMode(QLineEdit::Password);
     dlg.setLabelText(tr("Server password:"));
 
-    if(dlg.exec() == QDialog::Accepted)
+    if (dlg.exec() == QDialog::Accepted)
     {
-        if(d->link)
+        if (d->link)
         {
             *d->link << d->link->protocol().passwordResponse(dlg.textValue());
         }

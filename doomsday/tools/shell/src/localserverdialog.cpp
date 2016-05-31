@@ -82,7 +82,7 @@ DENG2_PIMPL(LocalServerDialog)
 
         games = new QComboBox;
         games->setEditable(false);
-        foreach(DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
+        foreach (DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
         {
             games->addItem(mode.title, mode.option);
         }
@@ -103,12 +103,12 @@ DENG2_PIMPL(LocalServerDialog)
         port->setText(QString::number(st.value("LocalServer/port", DEFAULT_PORT).toInt()));
         /*
         // Find an unused port.
-        if(isPortInUse())
+        if (isPortInUse())
         {
-            for(int tries = 20; tries > 0; --tries)
+            for (int tries = 20; tries > 0; --tries)
             {
                 port->setText(QString::number(portNumber() + 1));
-                if(!isPortInUse())
+                if (!isPortInUse())
                 {
                     break;
                 }
@@ -149,7 +149,7 @@ DENG2_PIMPL(LocalServerDialog)
 
         runtime = new FolderSelection(tr("Select Runtime Folder"));
         runtime->setPath(st.value("LocalServer/runtime").toString());
-        if(runtime->path().isEmpty())
+        if (runtime->path().isEmpty())
         {
             runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder().toString());
         }
@@ -183,9 +183,9 @@ DENG2_PIMPL(LocalServerDialog)
     bool isPortInUse() const
     {
         int const portNum = portNumber();
-        foreach(Address const &sv, GuiShellApp::app().serverFinder().foundServers())
+        foreach (Address const &sv, GuiShellApp::app().serverFinder().foundServers())
         {
-            if(sv.isLocal() && sv.port() == portNum)
+            if (sv.isLocal() && sv.port() == portNum)
             {
                 return true;
             }
@@ -232,7 +232,7 @@ QStringList LocalServerDialog::additionalOptions() const
     // behavior matches Doomsday.
     CommandLine cmdLine;
     cmdLine.parse(d->options->toPlainText());
-    for(int i = 0; i < cmdLine.count(); ++i)
+    for (int i = 0; i < cmdLine.count(); ++i)
     {
         opts << cmdLine.at(i);
     }
@@ -258,7 +258,7 @@ void LocalServerDialog::saveState()
     QSettings st;
     st.setValue("LocalServer/name", d->name->text());
     st.setValue("LocalServer/gameMode", d->games->itemData(d->games->currentIndex()).toString());
-    if(d->portChanged)
+    if (d->portChanged)
     {
         st.setValue("LocalServer/port", d->port->text().toInt());
     }
@@ -274,7 +274,7 @@ void LocalServerDialog::validate()
 
     // Check port.
     int port = d->portNumber();
-    if(d->port->text().isEmpty() || port < 0 || port >= 0x10000)
+    if (d->port->text().isEmpty() || port < 0 || port >= 0x10000)
     {
         isValid = false;
         d->portMsg->setText(tr("Must be between 0 and 65535."));
@@ -284,7 +284,7 @@ void LocalServerDialog::validate()
     {
         // Check known running servers.
         bool inUse = d->isPortInUse();
-        if(inUse)
+        if (inUse)
         {
             isValid = false;
             d->portMsg->setText(tr("Port already in use."));
@@ -292,7 +292,7 @@ void LocalServerDialog::validate()
         d->portMsg->setVisible(inUse);
     }
 
-    if(d->announce->isChecked() && d->password->text().isEmpty())
+    if (d->announce->isChecked() && d->password->text().isEmpty())
     {
         isValid = false;
         d->passwordMsg->show();
@@ -303,8 +303,8 @@ void LocalServerDialog::validate()
         d->passwordMsg->hide();
     }
 
-    if(d->runtime->path().isEmpty()) isValid = false;
+    if (d->runtime->path().isEmpty()) isValid = false;
 
     d->yes->setEnabled(isValid);
-    if(isValid) d->yes->setDefault(true);
+    if (isValid) d->yes->setDefault(true);
 }

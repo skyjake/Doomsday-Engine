@@ -58,7 +58,7 @@ DENG2_PIMPL(Id1Translator)
      */
     dint32 magic() const
     {
-        switch(id)
+        switch (id)
         {
         case DoomV9:     return 0x1DEAD600;
         case HereticV13: return 0x7D9A1200;
@@ -69,7 +69,7 @@ DENG2_PIMPL(Id1Translator)
 
     bool knownFormatVersion(int verId) const
     {
-        switch(id)
+        switch (id)
         {
         case DoomV9:     return verId == 90;
         case HereticV13: return verId == 130;
@@ -93,7 +93,7 @@ DENG2_PIMPL(Id1Translator)
             saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<File const>(path);
             return;
         }
-        catch(...)
+        catch (...)
         {}
         closeFile();
         throw FileOpenError("Id1Translator", "Failed opening \"" + path + "\"");
@@ -101,7 +101,7 @@ DENG2_PIMPL(Id1Translator)
 
     void closeFile()
     {
-        if(saveFilePtr)
+        if (saveFilePtr)
         {
             saveFilePtr = 0;
         }
@@ -134,7 +134,7 @@ DENG2_PIMPL(Id1Translator)
         dbyte skill;
         from >> skill;
         // Interpret skill levels outside the normal range as "spawn no things".
-        if(skill >= NUM_SKILL_MODES)
+        if (skill >= NUM_SKILL_MODES)
         {
             skill = SM_NOTHINGS;
         }
@@ -149,13 +149,13 @@ DENG2_PIMPL(Id1Translator)
 
         ArrayValue *array = new ArrayValue;
         int idx = 0;
-        while(idx++ < 4)
+        while (idx++ < 4)
         {
             dbyte playerPresent;
             from >> playerPresent;
             *array << NumberValue(playerPresent != 0, NumberValue::Boolean);
         }
-        while(idx++ <= MAXPLAYERS)
+        while (idx++ <= MAXPLAYERS)
         {
             *array << NumberValue(false, de::NumberValue::Boolean);
         }
@@ -168,7 +168,7 @@ DENG2_PIMPL(Id1Translator)
         from.readAs<dchar>(c);
         metadata.set("mapTime", ((a << 16) + (b << 8) + c));
 
-        if(fallbackGameId.isEmpty())
+        if (fallbackGameId.isEmpty())
         {
             /// @throw Error Game identity key could not be determined unambiguously.
             throw AmbigousGameIdError("translateMetadata", "Game identity key is ambiguous");
@@ -196,7 +196,7 @@ Id1Translator::~Id1Translator()
 
 String Id1Translator::formatName() const
 {
-    switch(d->id)
+    switch (d->id)
     {
     case DoomV9:      return "Doom (id Tech 1)";
     case HereticV13:  return "Heretic (id Tech 1)";
@@ -219,17 +219,17 @@ bool Id1Translator::recognize(Path path)
         from.seek(24);
         Block vcheck;
         from.readBytes(16, vcheck);
-        if(vcheck.startsWith("version "))
+        if (vcheck.startsWith("version "))
         {
             // The version id can be used to determine which game format the save is in.
             int verId = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
-            if(d->knownFormatVersion(verId))
+            if (d->knownFormatVersion(verId))
             {
                 recognized = true;
             }
         }
     }
-    catch(...)
+    catch (...)
     {}
     d->closeFile();
     return recognized;
@@ -255,7 +255,7 @@ void Id1Translator::convert(Path path)
 
     // The only serialized map state follows the session metadata in the game state file.
     // Buffer the rest of the file and write it out to a new map state file.
-    if(Block *xlatedData = d->bufferFile(*from))
+    if (Block *xlatedData = d->bufferFile(*from))
     {
         // Append the remaining translated data to header, forming the new serialized
         // map state data file.

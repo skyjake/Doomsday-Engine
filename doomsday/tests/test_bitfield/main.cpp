@@ -85,7 +85,7 @@ int main(int, char **)
         qDebug() << "Delta:" << pack.delta(pack2);
         qDebug() << "Delta (reverse):" << pack2.delta(pack);
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText() << "\n";
     }

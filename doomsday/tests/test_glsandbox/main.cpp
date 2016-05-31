@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
         return app.execLoop();
     }
-    catch(Error const &err)
+    catch (Error const &err)
     {
         qWarning() << err.asText();
     }

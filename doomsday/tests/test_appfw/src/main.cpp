@@ -31,7 +31,7 @@ int main(int argc, char **argv)
         app.initialize();
         return app.execLoop();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         qWarning() << "App init failed:\n" << er.asText();
         QMessageBox::critical(0, "test_appfw", "App init failed:\n" + er.asText());
