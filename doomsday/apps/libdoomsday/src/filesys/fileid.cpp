@@ -73,7 +73,7 @@ String FileId::asText() const
 {
     String txt;
     txt.reserve(32);
-    for(int i = 0; i < 16; ++i)
+    for (int i = 0; i < 16; ++i)
     {
         txt += String("%1").arg(String::number((byte)md5_.at(i), 16), 2, '0');
     }
@@ -92,7 +92,7 @@ FileId FileId::fromPath(String path)
 FileId::Md5Hash FileId::hash(String path)
 {
     // Ensure we've a normalized path.
-    if(QDir::isRelativePath(path))
+    if (QDir::isRelativePath(path))
     {
         path = App_BasePath() / path;
     }

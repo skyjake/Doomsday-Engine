@@ -36,7 +36,7 @@ Session::Profile &Session::profile() //static
 
 void Session::removeSaved(String const &path) //static
 {
-    if(App::rootFolder().has(path))
+    if (App::rootFolder().has(path))
     {
         App::rootFolder().removeFile(path);
     }
@@ -44,7 +44,7 @@ void Session::removeSaved(String const &path) //static
 
 void Session::copySaved(String const &destPath, String const &sourcePath) //static
 {
-    if(!destPath.compareWithoutCase(sourcePath)) return;
+    if (!destPath.compareWithoutCase(sourcePath)) return;
 
     LOG_AS("GameSession");
 
@@ -64,7 +64,7 @@ DENG2_PIMPL(Session::SavedIndex)
 
     void notifyAvailabilityUpdate()
     {
-        if(availabilityUpdateDisabled) return;
+        if (availabilityUpdateDisabled) return;
         DENG2_FOR_PUBLIC_AUDIENCE2(AvailabilityUpdate, i) i->savedIndexAvailabilityUpdate(self);
     }
 
@@ -93,7 +93,7 @@ void Session::SavedIndex::clear()
 void Session::SavedIndex::add(SavedSession &saved)
 {
     String const path = saved.path().toLower();
-    if(!d->entries.contains(path) || d->entries[path] != &saved)
+    if (!d->entries.contains(path) || d->entries[path] != &saved)
     {
         d->entries[path] = &saved;
         d->notifyAvailabilityUpdate();
@@ -102,7 +102,7 @@ void Session::SavedIndex::add(SavedSession &saved)
 
 void Session::SavedIndex::remove(String path)
 {
-    if(d->entries.remove(path.toLower()))
+    if (d->entries.remove(path.toLower()))
     {
         d->notifyAvailabilityUpdate();
     }
@@ -111,7 +111,7 @@ void Session::SavedIndex::remove(String path)
 SavedSession *Session::SavedIndex::find(String path) const
 {
     All::iterator found = d->entries.find(path.toLower());
-    if(found != d->entries.end())
+    if (found != d->entries.end())
     {
         return found.value();
     }

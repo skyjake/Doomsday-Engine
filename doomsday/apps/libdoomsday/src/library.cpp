@@ -58,9 +58,9 @@ void Library_ReleaseGames()
 {
 #ifdef UNIX
     LOG_AS("Library_ReleaseGames");
-    for(Library *lib : loadedLibs)
+    for (Library *lib : loadedLibs)
     {
-        if(lib->isGamePlugin)
+        if (lib->isGamePlugin)
         {
             LOGDEV_RES_VERBOSE("Closing '%s'") << Str_Text(lib->path);
 
@@ -77,7 +77,7 @@ static void reopenLibraryIfNeeded(Library *lib)
 {
     DENG2_ASSERT(lib);
 
-    if(!lib->file->loaded())
+    if (!lib->file->loaded())
     {
         LOGDEV_RES_XVERBOSE("Re-opening '%s'") << Str_Text(lib->path);
 
@@ -98,7 +98,7 @@ Library *Library_New(char const *filePath)
         Str_Clear(lastError);
 
         auto &libFile = de::App::rootFolder().locate<de::LibraryFile>(filePath);
-        if(libFile.library().type() == de::Library::DEFAULT_TYPE)
+        if (libFile.library().type() == de::Library::DEFAULT_TYPE)
         {
             // This is just a shared library, not a plugin.
             // We don't have to keep it loaded.
@@ -116,7 +116,7 @@ Library *Library_New(char const *filePath)
 
         // Symbols from game plugins conflict with each other, so we have to
         // keep track of games.
-        if(libFile.library().type() == "deng-plugin/game")
+        if (libFile.library().type() == "deng-plugin/game")
         {
             lib->isGamePlugin = true;
         }
@@ -124,7 +124,7 @@ Library *Library_New(char const *filePath)
         DoomsdayApp::plugins().publishAPIs(lib);
         return lib;
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
         LOG_RES_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
@@ -134,7 +134,7 @@ Library *Library_New(char const *filePath)
 
 void Library_Delete(Library *lib)
 {
-    if(!lib) return;
+    if (!lib) return;
 
     // Unload the library from memory.
     lib->file->clear();
@@ -167,7 +167,7 @@ void *Library_Symbol(Library *lib, char const *symbolName)
 #endif
         return lib->file->library().address(symbolName);
     }
-    catch(de::Library::SymbolMissingError const &er)
+    catch (de::Library::SymbolMissingError const &er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
         return nullptr;
@@ -185,9 +185,9 @@ de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> 
     DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
         auto &libraryFile = i->second->as<de::LibraryFile>();
-        if(libraryFile.path().beginsWith("/bin/"))
+        if (libraryFile.path().beginsWith("/bin/"))
         {
-            if(auto result = func(libraryFile))
+            if (auto result = func(libraryFile))
                 return result;
         }
     }

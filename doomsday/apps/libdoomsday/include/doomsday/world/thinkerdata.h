@@ -82,12 +82,12 @@ public:
 };
 
 DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData *,
-    if(!arg) return ScriptLex::NONE;
+    if (!arg) return ScriptLex::NONE;
     return scriptArgumentAsText(arg->objectNamespace());
 )
 
 DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData const *,
-    if(!arg) return ScriptLex::NONE;
+    if (!arg) return ScriptLex::NONE;
     return scriptArgumentAsText(arg->objectNamespace());
 )
 

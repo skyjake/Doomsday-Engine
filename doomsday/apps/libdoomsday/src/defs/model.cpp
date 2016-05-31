@@ -69,7 +69,7 @@ Record &Model::addSub()
     sub->addNumber("selSkinShift", 0);
 
     ArrayValue *skins = new ArrayValue;
-    for(int i = 0; i < 8; ++i) *skins << NumberValue(0);
+    for (int i = 0; i < 8; ++i) *skins << NumberValue(0);
     sub->addArray ("selSkins", skins);
 
     sub->addText  ("shinySkin", "");
@@ -105,23 +105,23 @@ Record const &Model::sub(int index) const
 
 void Model::cleanupAfterParsing(Record const &prev)
 {
-    if(gets("state") == "-")
+    if (gets("state") == "-")
     {
         def().set("state", prev.gets("state"));
     }
-    if(gets("sprite") == "-")
+    if (gets("sprite") == "-")
     {
         def().set("sprite", prev.gets("sprite"));
     }
 
-    for(int i = 0; i < subCount(); ++i)
+    for (int i = 0; i < subCount(); ++i)
     {
         Record &subDef = sub(i);
 
-        if(subDef.gets("filename") == "-")     subDef.set("filename", "");
-        if(subDef.gets("skinFilename") == "-") subDef.set("skinFilename", "");
-        if(subDef.gets("shinySkin") == "-")    subDef.set("shinySkin", "");
-        if(subDef.gets("frame") == "-")        subDef.set("frame", "");
+        if (subDef.gets("filename") == "-")     subDef.set("filename", "");
+        if (subDef.gets("skinFilename") == "-") subDef.set("skinFilename", "");
+        if (subDef.gets("shinySkin") == "-")    subDef.set("shinySkin", "");
+        if (subDef.gets("frame") == "-")        subDef.set("frame", "");
     }
 }
 

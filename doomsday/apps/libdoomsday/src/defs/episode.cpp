@@ -78,15 +78,15 @@ Record const &Episode::hub(int index) const
 Record *Episode::tryFindHubByMapId(String const &mapId)
 {
     de::Uri const mapUri(mapId, RC_NULL);
-    if(!mapUri.path().isEmpty())
+    if (!mapUri.path().isEmpty())
     {
-        for(int i = 0; i < hubCount(); ++i)
+        for (int i = 0; i < hubCount(); ++i)
         {
             Record &hubRec = hub(i);
-            foreach(Value *mapIt, hubRec.geta("map").elements())
+            foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+                if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
                 {
                     return &hubRec;
                 }
@@ -99,26 +99,26 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
 Record *Episode::tryFindMapGraphNode(String const &mapId)
 {
     de::Uri const mapUri(mapId, RC_NULL);
-    if(!mapUri.path().isEmpty())
+    if (!mapUri.path().isEmpty())
     {
         // First, try the hub maps.
-        for(int i = 0; i < hubCount(); ++i)
+        for (int i = 0; i < hubCount(); ++i)
         {
             Record const &hubRec = hub(i);
-            foreach(Value *mapIt, hubRec.geta("map").elements())
+            foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+                if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
                 {
                     return &mgNodeDef;
                 }
             }
         }
         // Try the non-hub maps.
-        foreach(Value *mapIt, geta("map").elements())
+        foreach (Value *mapIt, geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-            if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+            if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
             {
                 return &mgNodeDef;
             }
@@ -129,26 +129,26 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
 
 de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
 {
-    if(warpNumber > 0)
+    if (warpNumber > 0)
     {
         // First, try the hub maps.
-        for(int i = 0; i < hubCount(); ++i)
+        for (int i = 0; i < hubCount(); ++i)
         {
             Record const &hubRec = hub(i);
-            foreach(Value *mapIt, hubRec.geta("map").elements())
+            foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if(mgNodeDef.geti("warpNumber") == warpNumber)
+                if (mgNodeDef.geti("warpNumber") == warpNumber)
                 {
                     return &mgNodeDef;
                 }
             }
         }
         // Try the non-hub maps.
-        foreach(Value *mapIt, geta("map").elements())
+        foreach (Value *mapIt, geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-            if(mgNodeDef.geti("warpNumber") == warpNumber)
+            if (mgNodeDef.geti("warpNumber") == warpNumber)
             {
                 return &mgNodeDef;
             }

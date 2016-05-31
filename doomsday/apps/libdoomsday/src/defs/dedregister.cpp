@@ -55,7 +55,7 @@ DENG2_PIMPL(DEDRegister)
 
     ~Instance()
     {
-        if(names) names->audienceForDeletion() -= this;
+        if (names) names->audienceForDeletion() -= this;
     }
 
     void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
@@ -73,7 +73,7 @@ DENG2_PIMPL(DEDRegister)
 
 #ifdef DENG2_DEBUG
         DENG2_ASSERT(parents.isEmpty());
-        foreach(String const &key, keys.keys())
+        foreach (String const &key, keys.keys())
         {
             DENG2_ASSERT(lookup(key).size() == 0);
         }
@@ -113,9 +113,9 @@ DENG2_PIMPL(DEDRegister)
                          std::function<Type (DictionaryValue const &, String)> operation) const
     {
         auto foundKey = keys.constFind(key);
-        if(foundKey == keys.constEnd()) return 0;
+        if (foundKey == keys.constEnd()) return 0;
 
-        if(!foundKey.value().flags.testFlag(CaseSensitive))
+        if (!foundKey.value().flags.testFlag(CaseSensitive))
         {
             // Case insensitive lookup is done in lower case.
             value = value.lower();
@@ -130,7 +130,7 @@ DENG2_PIMPL(DEDRegister)
             [] (DictionaryValue const &lut, String v) -> Record const * {
                 TextValue const val(v);
                 auto i = lut.elements().find(DictionaryValue::ValueRef(&val));
-                if(i == lut.elements().end()) return 0; // Value not in dictionary.
+                if (i == lut.elements().end()) return 0; // Value not in dictionary.
                 return i->second->as<RecordValue>().record();
             });
     }
@@ -166,31 +166,31 @@ DENG2_PIMPL(DEDRegister)
     bool isValidKeyValue(Value const &value) const
     {
         // Empty strings are not indexable.
-        if(isEmptyKeyValue(value)) return false;
+        if (isEmptyKeyValue(value)) return false;
         return true;
     }
 
     /// Returns @c true if the value was added.
     bool addToLookup(String const &key, Value const &value, Record &def)
     {
-        if(!isValidKeyValue(value))
+        if (!isValidKeyValue(value))
             return false;
 
         String valText = value.asText();
         DENG2_ASSERT(!valText.isEmpty());
         DENG2_ASSERT(keys.contains(key));
 
-        if(!keys[key].flags.testFlag(CaseSensitive))
+        if (!keys[key].flags.testFlag(CaseSensitive))
         {
             valText = valText.lower();
         }
 
         DictionaryValue &dict = lookup(key);
 
-        if(keys[key].flags.testFlag(OnlyFirst))
+        if (keys[key].flags.testFlag(OnlyFirst))
         {
             // Only index the first one that is found.
-            if(dict.contains(TextValue(valText))) return false;
+            if (dict.contains(TextValue(valText))) return false;
         }
 
         // Index definition using its current value.
@@ -202,14 +202,14 @@ DENG2_PIMPL(DEDRegister)
     {
         //qDebug() << "removeFromLookup" << key << value.asText() << &def;
 
-        if(!isValidKeyValue(value))
+        if (!isValidKeyValue(value))
             return false;
 
         String valText = value.asText();
         DENG2_ASSERT(!valText.isEmpty());
         DENG2_ASSERT(keys.contains(key));
 
-        if(!keys[key].flags.testFlag(CaseSensitive))
+        if (!keys[key].flags.testFlag(CaseSensitive))
         {
             valText = valText.lower();
         }
@@ -217,12 +217,12 @@ DENG2_PIMPL(DEDRegister)
         DictionaryValue &dict = lookup(key);
 
         // Remove from the index.
-        if(dict.contains(TextValue(valText)))
+        if (dict.contains(TextValue(valText)))
         {
             Value const &indexed = dict.element(TextValue(valText));
             //qDebug() << " -" << indexed.as<RecordValue>().record() << &def;
             Record const *indexedDef = indexed.as<RecordValue>().record();
-            if(!indexedDef || indexedDef == &def)
+            if (!indexedDef || indexedDef == &def)
             {
                 // This is the definition that was indexed using the key value.
                 // Let's remove it.
@@ -241,11 +241,11 @@ DENG2_PIMPL(DEDRegister)
     void recordMemberAdded(Record &def, Variable &key)
     {
         // Keys must be observed so that they are indexed in the lookup table.
-        if(keys.contains(key.name()))
+        if (keys.contains(key.name()))
         {
             // Index definition using its current value.
             // Observe empty keys so we'll get the key's value when it's set.
-            if(addToLookup(key.name(), key.value(), def) ||
+            if (addToLookup(key.name(), key.value(), def) ||
                isEmptyKeyValue(key.value()))
             {
                 parents.insert(&key, &def);
@@ -256,7 +256,7 @@ DENG2_PIMPL(DEDRegister)
 
     void recordMemberRemoved(Record &def, Variable &key)
     {
-        if(keys.contains(key.name()))
+        if (keys.contains(key.name()))
         {
             key.audienceForChangeFrom() -= this;
             parents.remove(&key);
@@ -309,7 +309,7 @@ Record &DEDRegister::copy(int fromIndex, Record &to)
     // therefore duplicates should not occur.
     DENG2_FOR_EACH_CONST(Instance::Keys, i, d->keys)
     {
-        if(i.value().flags.testFlag(AllowCopy)) continue;
+        if (i.value().flags.testFlag(AllowCopy)) continue;
         omitted << i.key();
     }
 
@@ -353,12 +353,12 @@ Record &DEDRegister::find(String const &key, String const &value)
 
 Record const &DEDRegister::find(String const &key, String const &value) const
 {
-    if(!d->keys.contains(key))
+    if (!d->keys.contains(key))
     {
         throw UndefinedKeyError("DEDRegister::find", "Key '" + key + "' not defined");
     }
     Record const *rec = tryFind(key, value);
-    if(!rec)
+    if (!rec)
     {
         throw NotFoundError("DEDRegister::find", key + " '" + value + "' not found");
     }
@@ -367,7 +367,7 @@ Record const &DEDRegister::find(String const &key, String const &value) const
 
 DictionaryValue const &DEDRegister::lookup(String const &key) const
 {
-    if(!d->keys.contains(key))
+    if (!d->keys.contains(key))
     {
         throw UndefinedKeyError("DEDRegister::lookup", "Key '" + key + "' not defined");
     }

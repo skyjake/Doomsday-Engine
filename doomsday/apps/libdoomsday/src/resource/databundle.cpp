@@ -75,13 +75,13 @@ DENG2_PIMPL(DataBundle)
         LOG_AS("DataBundle");
 
         DENG2_ASSERT(packageId.isEmpty()); // should be only called once
-        if(!packageId.isEmpty()) return;
+        if (!packageId.isEmpty()) return;
 
         // Load the lump directory of WAD files.
-        if(format == Wad || format == Pwad || format == Iwad)
+        if (format == Wad || format == Pwad || format == Iwad)
         {
             lumpDir.reset(new res::LumpDirectory(source->as<ByteArrayFile>()));
-            if(!lumpDir->isValid())
+            if (!lumpDir->isValid())
             {
                 throw FormatError("DataBundle::identify",
                                   dynamic_cast<File *>(thisPublic)->description() +
@@ -95,7 +95,7 @@ DENG2_PIMPL(DataBundle)
                      << "\nfileSize:" << source->size()
                      << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();*/
         }
-        else if(self.isNested())
+        else if (self.isNested())
         {
             //qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
             //         << "is nested, no package will be generated";
@@ -105,7 +105,7 @@ DENG2_PIMPL(DataBundle)
         // Search for known data files in the bundle registry.
         res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self);
 
-        if(matched)
+        if (matched)
         {
             packageId = matched.packageId;
         }
@@ -145,7 +145,7 @@ DENG2_PIMPL(DataBundle)
         File &dataFile = self.asFile();
 
         // Finally, make a link that represents the package.
-        if(auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
+        if (auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
                                                         matched.packageVersion,
                                                         matched.bestScore))
         {
@@ -157,7 +157,7 @@ DENG2_PIMPL(DataBundle)
             Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
             metadata.set("path", dataFile.path());
             metadata.set("version", !chosen.version.isEmpty()? chosen.version : "0.0");
-            if(lumpDir)
+            if (lumpDir)
             {
                 metadata.set("lumpDirCRC32", lumpDir->crc32())
                         .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
@@ -165,14 +165,14 @@ DENG2_PIMPL(DataBundle)
             metadata.set("bundleScore", matched.bestScore);
 
             // Get the rest of the metadata.
-            if(matched)
+            if (matched)
             {
                 metadata.set("title",  matched.bestMatch->keyValue("info:title"));
                 metadata.set("tags",   matched.bestMatch->keyValue("info:tags"));
                 metadata.set("author", matched.bestMatch->keyValue("info:author"));
 
                 String license = matched.bestMatch->keyValue("info:license");
-                if(license.isEmpty()) license = "Unknown";
+                if (license.isEmpty()) license = "Unknown";
                 metadata.set("license", license);
             }
             else
@@ -202,23 +202,23 @@ DENG2_PIMPL(DataBundle)
                                                   Version const &packageVersion,
                                                   dint bundleScore)
     {
-        for(int attempt = 0; attempt < 3; ++attempt)
+        for (int attempt = 0; attempt < 3; ++attempt)
         {
             String linkPath = packageId;
             String version = (packageVersion.isValid()? packageVersion.asText() : "");
 
             // Try a few different ways to generate a locally unique version number.
-            switch(attempt)
+            switch (attempt)
             {
             case 0: // unmodified
                 break;
 
             case 1: // parent folder as version label
-                if(dataFile.path().fileNamePath() != "/local/wads")
+                if (dataFile.path().fileNamePath() != "/local/wads")
                 {
-                    if(version.isEmpty()) version = "0";
+                    if (version.isEmpty()) version = "0";
                     Path const filePath(dataFile.path());
-                    if(filePath.segmentCount() >= 2)
+                    if (filePath.segmentCount() >= 2)
                     {
                         version += "-" + filePath.segment(filePath.segmentCount() - 2).toString().toLower();
                     }
@@ -231,7 +231,7 @@ DENG2_PIMPL(DataBundle)
                 break;
             }
 
-            if(!version.isEmpty())
+            if (!version.isEmpty())
             {
                 linkPath += QString("_%1.pack").arg(version);
             }
@@ -241,7 +241,7 @@ DENG2_PIMPL(DataBundle)
             }
 
             // Each link must have a unique name.
-            if(!bundleFolder().has(linkPath))
+            if (!bundleFolder().has(linkPath))
             {
                 return PathAndVersion(linkPath, version);
             }
@@ -249,7 +249,7 @@ DENG2_PIMPL(DataBundle)
             {
                 // This could still be a better scored match.
                 Record const &pkgInfo = bundleFolder().locate<File const>(linkPath).objectNamespace();
-                if(bundleScore > pkgInfo.geti("bundleScore"))
+                if (bundleScore > pkgInfo.geti("bundleScore"))
                 {
                     // Forget about the previous link.
                     bundleFolder().removeFile(linkPath);
@@ -280,7 +280,7 @@ DataBundle::Format DataBundle::format() const
 
 String DataBundle::description() const
 {
-    if(!d->source)
+    if (!d->source)
     {
         return "invalid data bundle";
     }
@@ -306,7 +306,7 @@ File const &DataBundle::sourceFile() const
 
 IByteArray::Size DataBundle::size() const
 {
-    if(d->source)
+    if (d->source)
     {
         return d->source->size();
     }
@@ -315,7 +315,7 @@ IByteArray::Size DataBundle::size() const
 
 void DataBundle::get(Offset at, Byte *values, Size count) const
 {
-    if(!d->source)
+    if (!d->source)
     {
         throw File::InputError("DataBundle::get", "Source file has been destroyed");
     }
@@ -350,7 +350,7 @@ void DataBundle::identifyPackages() const
     {
         d->identify();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_WARNING("Failed to identify %s") << description();
     }
@@ -366,9 +366,9 @@ DataBundle const *DataBundle::containerBundle() const
     auto const *file = dynamic_cast<File const *>(this);
     DENG2_ASSERT(file != nullptr);
 
-    for(Folder const *folder = file->parent(); folder; folder = folder->parent())
+    for (Folder const *folder = file->parent(); folder; folder = folder->parent())
     {
-        if(auto const *data = folder->maybeAs<DataFolder>())
+        if (auto const *data = folder->maybeAs<DataFolder>())
             return data;
     }
     return nullptr;
@@ -399,15 +399,15 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
         { ".box", Collection },
     };
     String const ext = sourceData->name().fileNameExtension();
-    for(auto const &fmt : formats)
+    for (auto const &fmt : formats)
     {
-        if(!ext.compareWithoutCase(fmt.str))
+        if (!ext.compareWithoutCase(fmt.str))
         {
             LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
                                             << " as "
                                             << ::internal::formatDescriptions[fmt.format];
 
-            switch(fmt.format)
+            switch (fmt.format)
             {
             case Pk3:
             case Collection:

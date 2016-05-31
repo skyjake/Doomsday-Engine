@@ -33,7 +33,7 @@ DENG2_PIMPL_NOREF(Players)
 
 Players::Players(Constructor playerConstructor) : d(new Instance)
 {
-    for(auto &plr : d->players)
+    for (auto &plr : d->players)
     {
         plr = playerConstructor();
         DENG2_ASSERT(plr->is<Player>());
@@ -54,9 +54,9 @@ int Players::count() const
 
 LoopResult Players::forAll(std::function<LoopResult (Player &)> func) const
 {
-    for(auto &plr : d->players)
+    for (auto &plr : d->players)
     {
-        if(auto result = func(*plr))
+        if (auto result = func(*plr))
         {
             return result;
         }
@@ -66,9 +66,9 @@ LoopResult Players::forAll(std::function<LoopResult (Player &)> func) const
 
 int Players::indexOf(Player const *player) const
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(d->players[i] == player)
+        if (d->players[i] == player)
         {
             return i;
         }
@@ -78,9 +78,9 @@ int Players::indexOf(Player const *player) const
 
 int Players::indexOf(ddplayer_s const *publicData) const
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(&d->players[i]->publicData() == publicData)
+        if (&d->players[i]->publicData() == publicData)
         {
             return i;
         }

@@ -51,16 +51,16 @@ void Help_ReadStrings(File const &file)
     de::Reader reader(file);
     StringsByType *node = 0;
 
-    while(!reader.atEnd())
+    while (!reader.atEnd())
     {
         String line = reader.readLine().trimmed();
 
         // Comments and empty lines are ignored.
-        if(line.isEmpty() || line.startsWith("#"))
+        if (line.isEmpty() || line.startsWith("#"))
             continue;
 
         // A new node?
-        if(line.startsWith("["))
+        if (line.startsWith("["))
         {
             int end = line.indexOf(']');
             String id = line.mid(1, end > 0? end - 1 : -1).trimmed().toLower();
@@ -68,18 +68,18 @@ void Help_ReadStrings(File const &file)
 
             LOG_TRACE_DEBUGONLY("Help node '%s'", id);
         }
-        else if(node && line.contains('=')) // It must be a key?
+        else if (node && line.contains('=')) // It must be a key?
         {
             int type = HST_DESCRIPTION;
-            if(line.startsWith("cv", Qt::CaseInsensitive))
+            if (line.startsWith("cv", Qt::CaseInsensitive))
             {
                 type = HST_CONSOLE_VARIABLE;
             }
-            else if(line.startsWith("def", Qt::CaseInsensitive))
+            else if (line.startsWith("def", Qt::CaseInsensitive))
             {
                 type = HST_DEFAULT_VALUE;
             }
-            else if(line.startsWith("inf", Qt::CaseInsensitive))
+            else if (line.startsWith("inf", Qt::CaseInsensitive))
             {
                 type = HST_INFO;
             }
@@ -91,21 +91,21 @@ void Help_ReadStrings(File const &file)
             QString text;
 
             // The value may be split over multiple lines.
-            while(!line.isEmpty())
+            while (!line.isEmpty())
             {
                 // Process the current line.
                 bool escape = false;
-                foreach(QChar ch, line)
+                foreach (QChar ch, line)
                 {
-                    if(ch == QChar('\\'))
+                    if (ch == QChar('\\'))
                     {
                         escape = true;
                     }
-                    else if(escape)
+                    else if (escape)
                     {
                         if     (ch == QChar('n') ) text = text % "\n";
-                        else if(ch == QChar('b') ) text = text % "\b";
-                        else if(ch == QChar('\\')) text = text % "\\";
+                        else if (ch == QChar('b') ) text = text % "\b";
+                        else if (ch == QChar('\\')) text = text % "\\";
                         escape = false;
                     }
                     else
@@ -117,7 +117,7 @@ void Help_ReadStrings(File const &file)
                 // This part has been processed.
                 line.clear();
 
-                if(escape)
+                if (escape)
                 {
                     // Line ended with a backslash; read the next line.
                     line = reader.readLine().trimmed();
@@ -135,7 +135,7 @@ HelpId DH_Find(char const *id)
 {
     // The identifiers are case insensitive.
     HelpStrings::const_iterator found = helps.constFind(String(id).lower());
-    if(found != helps.constEnd())
+    if (found != helps.constEnd())
     {
         return &found.value();
     }
@@ -144,13 +144,13 @@ HelpId DH_Find(char const *id)
 
 char const *DH_GetString(HelpId found, int type)
 {
-    if(!found) return 0;
-    if(type < 0 || type > NUM_HELPSTRING_TYPES) return 0;
+    if (!found) return 0;
+    if (type < 0 || type > NUM_HELPSTRING_TYPES) return 0;
 
     StringsByType const *hs = reinterpret_cast<StringsByType const *>(found);
 
     StringsByType::const_iterator i = hs->constFind(type);
-    if(i != hs->constEnd())
+    if (i != hs->constEnd())
     {
         return Str_Text(AutoStr_FromTextStd(i.value().toUtf8().constData()));
     }
@@ -165,7 +165,7 @@ void DD_InitHelp()
         Help_ReadStrings(App::packageLoader().package("net.dengine.base")
                          .root().locate<File>("helpstrings.txt"));
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_WARNING("") << er.asText();
     }

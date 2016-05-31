@@ -102,7 +102,7 @@ namespace de
         {
             // We require an extension for this.
             String ext = path.fileNameExtension();
-            if(!ext.isEmpty())
+            if (!ext.isEmpty())
             {
                 return knownFileNameExtensions_.contains(ext, Qt::CaseInsensitive);
             }

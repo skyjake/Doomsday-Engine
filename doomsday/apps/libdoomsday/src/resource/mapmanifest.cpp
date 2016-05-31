@@ -31,7 +31,7 @@ String MapManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags)
 {
     String info = String("%1").arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
                                    ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) );
-    if(_sourceFile)
+    if (_sourceFile)
     {
         info += String(" " _E(C) "\"%1\"" _E(.)).arg(NativePath(sourceFile()->composePath()).pretty());
     }

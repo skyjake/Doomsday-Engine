@@ -46,7 +46,7 @@ Record &Sprite::addView(String material, dint angle, bool mirrorX)
     view->addText   ("material", material);
     view->addBoolean("mirrorX",  mirrorX);
 
-    if(angle <= 0)
+    if (angle <= 0)
     {
         def()["views"] = new ArrayValue;
     }
@@ -64,12 +64,12 @@ dint Sprite::viewCount() const
 
 bool Sprite::hasView(dint angle) const
 {
-    if(getb("frontOnly")) angle = 0;
+    if (getb("frontOnly")) angle = 0;
 
-    for(Value const *val : geta("views").elements())
+    for (Value const *val : geta("views").elements())
     {
         Record const &view = val->as<RecordValue>().dereference();
-        if(view.geti("angle") == angle)
+        if (view.geti("angle") == angle)
             return true;
     }
     return false;
@@ -77,12 +77,12 @@ bool Sprite::hasView(dint angle) const
 
 Record &Sprite::view(dint angle)
 {
-    if(getb("frontOnly")) angle = 0;
+    if (getb("frontOnly")) angle = 0;
 
-    for(Value *val : def().geta("views").elements())
+    for (Value *val : def().geta("views").elements())
     {
         Record &view = val->as<RecordValue>().dereference();
-        if(view.geti("angle") == angle)
+        if (view.geti("angle") == angle)
             return view;
     }
     /// @throw MissingViewError  Invalid angle specified.
@@ -93,7 +93,7 @@ Record &Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotati
 {
     dint angle = 0;  // Use the front view (default).
 
-    if(!noRotation && !def().getb("frontOnly"))
+    if (!noRotation && !def().getb("frontOnly"))
     {
         // Choose a view according to the relative angle with viewer (the eye).
         angle = ((angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) - (unsigned) (ANGLE_180 / 16)) >> 28;

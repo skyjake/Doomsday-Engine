@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(Thinker)
         , base(0)
         , data(data_)
     {
-        if(alloc == AllocateStandard)
+        if (alloc == AllocateStandard)
         {
             base = reinterpret_cast<thinker_s *>(M_Calloc(size));
             base->_flags = THINKF_STD_MALLOC;
@@ -46,7 +46,7 @@ DENG2_PIMPL_NOREF(Thinker)
             base = reinterpret_cast<thinker_s *>(Z_Calloc(size, PU_MAP, NULL));
         }
 
-        if(data) data->setThinker(base);
+        if (data) data->setThinker(base);
     }
 
     Instance(Instance const &other)
@@ -57,7 +57,7 @@ DENG2_PIMPL_NOREF(Thinker)
         , data(other.data? other.data->duplicate() : 0)
     {
         base->d = data;
-        if(data) data->setThinker(base);
+        if (data) data->setThinker(base);
     }
 
     Instance(thinker_s *podThinkerToTake, dsize sizeInBytes)
@@ -73,9 +73,9 @@ DENG2_PIMPL_NOREF(Thinker)
 
     void release()
     {
-        if(base)
+        if (base)
         {
-            if(isStandardAllocated())
+            if (isStandardAllocated())
             {
                 M_Free(base);
             }
@@ -105,7 +105,7 @@ DENG2_PIMPL_NOREF(Thinker)
     {
         bool const stdAlloc = CPP_BOOL(base->_flags & THINKF_STD_MALLOC);
         memset(base, 0, size);
-        if(stdAlloc) base->_flags |= THINKF_STD_MALLOC;
+        if (stdAlloc) base->_flags |= THINKF_STD_MALLOC;
     }
 };
 
@@ -145,9 +145,9 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
 
     // Retain the original allocation flag, though.
     d->base->_flags &= ~THINKF_STD_MALLOC;
-    if(alloc == AllocateStandard) d->base->_flags |= THINKF_STD_MALLOC;
+    if (alloc == AllocateStandard) d->base->_flags |= THINKF_STD_MALLOC;
 
-    if(podThinker.d)
+    if (podThinker.d)
     {
         setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());
     }
@@ -229,7 +229,7 @@ void Thinker::destroy(thinker_s *thinkerBase)
 
     release(*thinkerBase);
 
-    if(thinkerBase->_flags & THINKF_STD_MALLOC)
+    if (thinkerBase->_flags & THINKF_STD_MALLOC)
     {
         M_Free(thinkerBase);
     }
@@ -253,12 +253,12 @@ void Thinker::zap(thinker_s &thinkerBase, dsize sizeInBytes)
 
 void Thinker::setData(Thinker::IData *data)
 {
-    if(d->data) delete d->data;
+    if (d->data) delete d->data;
 
     d->data    = data;
     d->base->d = data;
 
-    if(data)
+    if (data)
     {
         data->setThinker(*this);
     }
@@ -266,13 +266,13 @@ void Thinker::setData(Thinker::IData *data)
 
 dd_bool Thinker_InStasis(thinker_s const *thinker)
 {
-    if(!thinker) return false;
+    if (!thinker) return false;
     return (thinker->_flags & THINKF_DISABLED) != 0;
 }
 
 void Thinker_SetStasis(thinker_t *thinker, dd_bool on)
 {
-    if(thinker)
+    if (thinker)
     {
         applyFlagOperation(thinker->_flags, duint32(THINKF_DISABLED),
                            on? SetFlags : UnsetFlags);

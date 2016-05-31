@@ -50,7 +50,7 @@ static String extractScheme(String &stringWithScheme)
 {
     String scheme;
     int pos = stringWithScheme.indexOf(':');
-    if(pos > URI_MINSCHEMELENGTH) // could be Windows-style driver letter "c:"
+    if (pos > URI_MINSCHEMELENGTH) // could be Windows-style driver letter "c:"
     {
         scheme = stringWithScheme.left(pos);
         stringWithScheme.remove(0, pos + 1);
@@ -102,13 +102,13 @@ DENG2_PIMPL_NOREF(Uri)
         clearCachedResolved();
 
         scheme = extractScheme(rawUri); // scheme removed
-        if(sep != '/') rawUri.replace(sep, '/'); // force slashes as separator
+        if (sep != '/') rawUri.replace(sep, '/'); // force slashes as separator
         path = rawUri;
         strPath = path.toString(); // for legacy code
 
-        if(!scheme.isEmpty())
+        if (!scheme.isEmpty())
         {
-            if(defaultResourceClass == RC_NULL || App_FileSystem().knownScheme(scheme))
+            if (defaultResourceClass == RC_NULL || App_FileSystem().knownScheme(scheme))
             {
                 // Scheme is accepted as is.
                 return;
@@ -117,12 +117,12 @@ DENG2_PIMPL_NOREF(Uri)
         }
 
         // Attempt to guess the scheme by interpreting the path?
-        if(defaultResourceClass == RC_UNKNOWN)
+        if (defaultResourceClass == RC_UNKNOWN)
         {
             defaultResourceClass = DD_GuessFileTypeFromFileName(strPath).defaultClass();
         }
 
-        if(VALID_RESOURCECLASSID(defaultResourceClass))
+        if (VALID_RESOURCECLASSID(defaultResourceClass))
         {
             FS1::Scheme &fsScheme = App_FileSystem().scheme(ResourceClass::classForId(defaultResourceClass).defaultScheme());
             scheme = fsScheme.name();
@@ -131,7 +131,7 @@ DENG2_PIMPL_NOREF(Uri)
 
     String resolveSymbol(QStringRef const &symbol) const
     {
-        if(!resolverFunc)
+        if (!resolverFunc)
         {
             return symbol.toString();
         }
@@ -153,10 +153,10 @@ DENG2_PIMPL_NOREF(Uri)
         // Keep scanning the path for embedded expressions.
         QStringRef expression;
         int expEnd = 0, expBegin;
-        while((expBegin = strPath.indexOf('$', expEnd)) >= 0)
+        while ((expBegin = strPath.indexOf('$', expEnd)) >= 0)
         {
             // Is the next char the start-of-expression character?
-            if(strPath.at(expBegin + 1) == '(')
+            if (strPath.at(expBegin + 1) == '(')
             {
                 // Copy everything up to the '$'.
                 result += strPath.mid(expEnd, expBegin - expEnd);
@@ -166,7 +166,7 @@ DENG2_PIMPL_NOREF(Uri)
 
                 // Find the end-of-expression character.
                 expEnd = strPath.indexOf(')', expBegin);
-                if(expEnd < 0)
+                if (expEnd < 0)
                 {
                     LOG_RES_WARNING("Ignoring expression \"" + strPath + "\": "
                                     "missing a closing ')'");
@@ -206,7 +206,7 @@ Uri::Uri() : d(new Instance)
 Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, QChar sep)
     : d(new Instance)
 {
-    if(!percentEncoded.isEmpty())
+    if (!percentEncoded.isEmpty())
     {
         setUri(percentEncoded, defaultResourceClass, sep);
     }
@@ -236,23 +236,23 @@ Uri::Uri(char const *nullTerminatedCStr) : d(new Instance)
 Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
 {
     Uri output;
-    if(argv)
+    if (argv)
     {
         // [0: <scheme>:<path>] or [0: <scheme>] or [0: <path>].
-        switch(argc)
+        switch (argc)
         {
         case 1: {
             // Try to extract the scheme and encode the rest of the path.
             String rawUri(argv[0]);
             int pos = rawUri.indexOf(':');
-            if(pos >= 0)
+            if (pos >= 0)
             {
                 output.setScheme(rawUri.left(pos));
                 rawUri.remove(0, pos + 1);
                 output.setPath(Path::normalize(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
             }
             // Just a scheme name?
-            else if(knownScheme && knownScheme(rawUri))
+            else if (knownScheme && knownScheme(rawUri))
             {
                 output.setScheme(rawUri);
             }
@@ -297,23 +297,23 @@ bool Uri::isEmpty() const
 
 bool Uri::operator == (Uri const &other) const
 {
-    if(this == &other) return true;
+    if (this == &other) return true;
 
     // First, lets check if the scheme differs.
-    if(d->scheme.compareWithoutCase(other.d->scheme)) return false;
+    if (d->scheme.compareWithoutCase(other.d->scheme)) return false;
 
     // We can skip resolving if the paths are identical.
-    if(d->path == other.d->path) return true;
+    if (d->path == other.d->path) return true;
 
     // We must be able to resolve both paths to compare.
     try
     {
         // Do not match partial paths.
-        if(resolvedRef().length() != other.resolvedRef().length()) return false;
+        if (resolvedRef().length() != other.resolvedRef().length()) return false;
 
         return resolvedRef().compareWithoutCase(other.resolvedRef()) == 0;
     }
-    catch(ResolveError const &)
+    catch (ResolveError const &)
     {
         // Ignore the error.
     }
@@ -369,7 +369,7 @@ String const &Uri::resolvedRef() const
     void *currentGame = (void *) (!App::appExists() || DoomsdayApp::game().isNull()? 0 : &DoomsdayApp::game());
 
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
-    if(d->resolvedForGame && d->resolvedForGame == currentGame)
+    if (d->resolvedForGame && d->resolvedForGame == currentGame)
     {
         // We can just return the previously prepared resolved URI.
         return d->resolvedPath.toStringRef();
@@ -425,17 +425,17 @@ Uri &Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar se
 String Uri::compose(ComposeAsTextFlags compositionFlags, QChar sep) const
 {
     String text;
-    if(!(compositionFlags & OmitScheme))
+    if (!(compositionFlags & OmitScheme))
     {
-        if(!d->scheme.isEmpty())
+        if (!d->scheme.isEmpty())
         {
             text += d->scheme + ":";
         }
     }
-    if(!(compositionFlags & OmitPath))
+    if (!(compositionFlags & OmitPath))
     {
         QString path = d->path.withSeparators(sep);
-        if(compositionFlags & DecodePath)
+        if (compositionFlags & DecodePath)
         {
             path = QByteArray::fromPercentEncoding(path.toUtf8());
         }
@@ -560,7 +560,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
             DENG_ASSERT(u.path().reverseSegment(2).toString() == "some");
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         qWarning() << er.asText();
         return false;

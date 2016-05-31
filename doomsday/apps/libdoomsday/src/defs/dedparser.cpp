@@ -85,68 +85,68 @@ using namespace de;
 
 #define ISTOKEN(X)  (!stricmp(token, X))
 
-#define READSTR(X)  if(!ReadString(X, sizeof(X))) { \
+#define READSTR(X)  if (!ReadString(X, sizeof(X))) { \
                     setError("Syntax error in string value."); \
                     retVal = false; goto ded_end_read; }
 
 
-#define READURI(X, SHM) if(!ReadUri(X, SHM)) { \
+#define READURI(X, SHM) if (!ReadUri(X, SHM)) { \
     setError("Syntax error parsing resource path."); \
     retVal = false; goto ded_end_read; }
 
 #define MISSING_SC_ERROR    setError("Missing semicolon."); \
                             retVal = false; goto ded_end_read;
 
-#define CHECKSC     if(source->version <= 5) { ReadToken(); if(!ISTOKEN(";")) { MISSING_SC_ERROR; } }
+#define CHECKSC     if (source->version <= 5) { ReadToken(); if (!ISTOKEN(";")) { MISSING_SC_ERROR; } }
 
-#define FINDBEGIN   while(!ISTOKEN("{") && !source->atEnd) ReadToken();
-#define FINDEND     while(!ISTOKEN("}") && !source->atEnd) ReadToken();
+#define FINDBEGIN   while (!ISTOKEN("{") && !source->atEnd) ReadToken();
+#define FINDEND     while (!ISTOKEN("}") && !source->atEnd) ReadToken();
 
 #define ISLABEL(X)  (!stricmp(label, X))
 
-#define READLABEL   if(!ReadLabel(label)) { retVal = false; goto ded_end_read; } \
-                    if(ISLABEL("}")) break;
+#define READLABEL   if (!ReadLabel(label)) { retVal = false; goto ded_end_read; } \
+                    if (ISLABEL("}")) break;
 
-#define READLABEL_NOBREAK   if(!ReadLabel(label)) { retVal = false; goto ded_end_read; }
+#define READLABEL_NOBREAK   if (!ReadLabel(label)) { retVal = false; goto ded_end_read; }
 
 #define FAILURE     retVal = false; goto ded_end_read;
-#define READBYTE(X) if(!ReadByte(&X)) { FAILURE }
-#define READINT(X)  if(!ReadInt(&X, false)) { FAILURE }
-#define READUINT(X) if(!ReadInt(&X, true)) { FAILURE }
-#define READFLT(X)  if(!ReadFloat(&X)) { FAILURE }
-#define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { FAILURE }
-#define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
-#define READBLENDMODE(X) if(!ReadBlendmode(&X)) { FAILURE }
-#define READSTRING(S,I) if(!ReadString(S, sizeof(S))) { I = strtol(token,0,0); }
-#define READVECTOR(X,N) if(!ReadVector(X, N)) { FAILURE }
+#define READBYTE(X) if (!ReadByte(&X)) { FAILURE }
+#define READINT(X)  if (!ReadInt(&X, false)) { FAILURE }
+#define READUINT(X) if (!ReadInt(&X, true)) { FAILURE }
+#define READFLT(X)  if (!ReadFloat(&X)) { FAILURE }
+#define READNBYTEVEC(X,N) if (!ReadNByteVector(X, N)) { FAILURE }
+#define READFLAGS(X,P) if (!ReadFlags(&X, P)) { FAILURE }
+#define READBLENDMODE(X) if (!ReadBlendmode(&X)) { FAILURE }
+#define READSTRING(S,I) if (!ReadString(S, sizeof(S))) { I = strtol(token,0,0); }
+#define READVECTOR(X,N) if (!ReadVector(X, N)) { FAILURE }
 
-#define RV_BYTE(lab, X) if(ISLABEL(lab)) { READBYTE(X); } else
-#define RV_INT(lab, X)  if(ISLABEL(lab)) { READINT(X); } else
-#define RV_UINT(lab, X) if(ISLABEL(lab)) { READUINT(X); } else
-#define RV_FLT(lab, X)  if(ISLABEL(lab)) { READFLT(X); } else
-#define RV_VEC(lab, X, N)   if(ISLABEL(lab)) { int b; FINDBEGIN; \
-                        for(b=0; b<N; ++b) {READFLT(X[b])} ReadToken(); } else
-#define RV_VEC_VAR(lab, X, N) if(ISLABEL(lab)) { READVECTOR(X, N); } else
-#define RV_IVEC(lab, X, N)  if(ISLABEL(lab)) { int b; FINDBEGIN; \
-                        for(b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
-#define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
-#define RV_INT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+#define RV_BYTE(lab, X) if (ISLABEL(lab)) { READBYTE(X); } else
+#define RV_INT(lab, X)  if (ISLABEL(lab)) { READINT(X); } else
+#define RV_UINT(lab, X) if (ISLABEL(lab)) { READUINT(X); } else
+#define RV_FLT(lab, X)  if (ISLABEL(lab)) { READFLT(X); } else
+#define RV_VEC(lab, X, N)   if (ISLABEL(lab)) { int b; FINDBEGIN; \
+                        for (b=0; b<N; ++b) {READFLT(X[b])} ReadToken(); } else
+#define RV_VEC_VAR(lab, X, N) if (ISLABEL(lab)) { READVECTOR(X, N); } else
+#define RV_IVEC(lab, X, N)  if (ISLABEL(lab)) { int b; FINDBEGIN; \
+                        for (b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
+#define RV_NBVEC(lab, X, N) if (ISLABEL(lab)) { READNBYTEVEC(X,N); } else
+#define RV_INT_ELEM(lab, ARRAY, ELEM) if (ISLABEL(lab)) { \
     int _value; READINT(_value); \
     (ARRAY).array().setElement(ELEM, _value); } else
-#define RV_FLT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+#define RV_FLT_ELEM(lab, ARRAY, ELEM) if (ISLABEL(lab)) { \
     float _value; READFLT(_value); \
     (ARRAY).array().setElement(ELEM, _value); } else
-#define RV_STR_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
-    String _value; if(!ReadString(_value)) { FAILURE } \
+#define RV_STR_ELEM(lab, ARRAY, ELEM) if (ISLABEL(lab)) { \
+    String _value; if (!ReadString(_value)) { FAILURE } \
     (ARRAY).array().setElement(ELEM, _value); } else
-#define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
-#define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
+#define RV_STR(lab, X)  if (ISLABEL(lab)) { READSTR(X); } else
+#define RV_STR_INT(lab, S, I)   if (ISLABEL(lab)) { if (!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
-#define RV_URI(lab, X, RN)  if(ISLABEL(lab)) { READURI(X, RN); } else
-#define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
-#define RV_FLAGS_ELEM(lab, X, ELEM, P) if(ISLABEL(lab)) { if(!ReadFlags(&X, P, ELEM)) { FAILURE } } else
-#define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
-#define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
+#define RV_URI(lab, X, RN)  if (ISLABEL(lab)) { READURI(X, RN); } else
+#define RV_FLAGS(lab, X, P) if (ISLABEL(lab)) { READFLAGS(X, P); } else
+#define RV_FLAGS_ELEM(lab, X, ELEM, P) if (ISLABEL(lab)) { if (!ReadFlags(&X, P, ELEM)) { FAILURE } } else
+#define RV_BLENDMODE(lab, X) if (ISLABEL(lab)) { READBLENDMODE(X); } else
+#define RV_ANYSTR(lab, X)   if (ISLABEL(lab)) { if (!ReadAnyString(&X)) { FAILURE } } else
 #define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
 
 static struct xgclass_s *xgClassLinks;
@@ -195,12 +195,12 @@ DENG2_PIMPL(DEDParser)
 
     void DED_InitReader(char const *buffer, String fileName, bool sourceIsCustom)
     {
-        if(source && source - sourceStack >= MAX_RECUR_DEPTH)
+        if (source && source - sourceStack >= MAX_RECUR_DEPTH)
         {
             App_FatalError("DED_InitReader: Include recursion is too deep.\n");
         }
 
-        if(!source)
+        if (!source)
         {
             // This'll be the first source.
             source = sourceStack;
@@ -222,7 +222,7 @@ DENG2_PIMPL(DEDParser)
 
     void DED_CloseReader()
     {
-        if(source == sourceStack)
+        if (source == sourceStack)
         {
             source = 0;
         }
@@ -251,13 +251,13 @@ DENG2_PIMPL(DEDParser)
     {
         int ch = (unsigned char) *source->pos;
 
-        if(ch)
+        if (ch)
             source->pos++;
         else
             source->atEnd = true;
-        if(ch == '\n')
+        if (ch == '\n')
             source->lineNumber++;
-        if(ch == '\r')
+        if (ch == '\r')
             return FGetC();
 
         return ch;
@@ -268,11 +268,11 @@ DENG2_PIMPL(DEDParser)
      */
     int FUngetC(int ch)
     {
-        if(source->atEnd)
+        if (source->atEnd)
             return 0;
-        if(ch == '\n')
+        if (ch == '\n')
             source->lineNumber--;
-        if(source->pos > source->buffer)
+        if (source->pos > source->buffer)
             source->pos--;
 
         return ch;
@@ -286,26 +286,26 @@ DENG2_PIMPL(DEDParser)
         int                 ch = FGetC();
         dd_bool             seq = false;
 
-        if(ch == '\n')
+        if (ch == '\n')
             return; // Comment ends right away.
 
-        if(ch != '>') // Single-line comment?
+        if (ch != '>') // Single-line comment?
         {
-            while(FGetC() != '\n' && !source->atEnd) {}
+            while (FGetC() != '\n' && !source->atEnd) {}
         }
         else // Multiline comment?
         {
-            while(!source->atEnd)
+            while (!source->atEnd)
             {
                 ch = FGetC();
-                if(seq)
+                if (seq)
                 {
-                    if(ch == '#')
+                    if (ch == '#')
                         break;
                     seq = false;
                 }
 
-                if(ch == '<')
+                if (ch == '<')
                     seq = true;
             }
         }
@@ -317,7 +317,7 @@ DENG2_PIMPL(DEDParser)
         char*               out = token;
 
         // Has a token been unread?
-        if(unreadToken[0])
+        if (unreadToken[0])
         {
             strcpy(token, unreadToken);
             strcpy(unreadToken, "");
@@ -325,29 +325,29 @@ DENG2_PIMPL(DEDParser)
         }
 
         ch = FGetC();
-        if(source->atEnd)
+        if (source->atEnd)
             return false;
 
         // Skip whitespace and comments in the beginning.
-        while((ch == '#' || isspace(ch)))
+        while ((ch == '#' || isspace(ch)))
         {
-            if(ch == '#')
+            if (ch == '#')
                 SkipComment();
             ch = FGetC();
-            if(source->atEnd)
+            if (source->atEnd)
                 return false;
         }
 
         // Always store the first character.
         *out++ = ch;
-        if(STOPCHAR(ch))
+        if (STOPCHAR(ch))
         {
             // Stop here.
             *out = 0;
             return true;
         }
 
-        while(!STOPCHAR(ch) && !source->atEnd)
+        while (!STOPCHAR(ch) && !source->atEnd)
         {
             // Store the character in the buffer.
             ch = FGetC();
@@ -374,10 +374,10 @@ DENG2_PIMPL(DEDParser)
      */
     int ReadString(String &dest, bool inside = false, bool doubleq = false)
     {
-        if(!inside)
+        if (!inside)
         {
             ReadToken();
-            if(!ISTOKEN("\""))
+            if (!ISTOKEN("\""))
                 return false;
         }
 
@@ -385,15 +385,15 @@ DENG2_PIMPL(DEDParser)
 
         // Start reading the characters.
         int ch = FGetC();
-        while(esc || ch != '"') // The string-end-character.
+        while (esc || ch != '"') // The string-end-character.
         {
-            if(source->atEnd)
+            if (source->atEnd)
                 return false;
 
             // If a newline is found, skip all whitespace that follows.
-            if(newl)
+            if (newl)
             {
-                if(isspace(ch))
+                if (isspace(ch))
                 {
                     ch = FGetC();
                     continue;
@@ -406,7 +406,7 @@ DENG2_PIMPL(DEDParser)
             }
 
             // An escape character?
-            if(!esc && ch == '\\')
+            if (!esc && ch == '\\')
             {
                 esc = true;
             }
@@ -414,18 +414,18 @@ DENG2_PIMPL(DEDParser)
             {
                 // In case it's something other than \" or \\, just insert
                 // the whole sequence as-is.
-                if(esc && ch != '"' && ch != '\\')
+                if (esc && ch != '"' && ch != '\\')
                     dest += '\\';
                 esc = false;
             }
-            if(ch == '\n')
+            if (ch == '\n')
                 newl = true;
 
             // Store the character in the buffer.
-            if(!esc && !newl)
+            if (!esc && !newl)
             {
                 dest += char(ch);
-                if(doubleq && ch == '"')
+                if (doubleq && ch == '"')
                     dest += '"';
             }
 
@@ -440,7 +440,7 @@ DENG2_PIMPL(DEDParser)
     {
         DENG_ASSERT(dest != 0);
         String buffer;
-        if(!ReadString(buffer)) return false;
+        if (!ReadString(buffer)) return false;
         qstrncpy(dest, buffer.toUtf8().constData(), maxLen);
         return true;
     }
@@ -448,7 +448,7 @@ DENG2_PIMPL(DEDParser)
     int ReadString(Variable &var, int)
     {
         String buffer;
-        if(!ReadString(buffer)) return false;
+        if (!ReadString(buffer)) return false;
         var.set(TextValue(buffer));
         return true;
     }
@@ -460,11 +460,11 @@ DENG2_PIMPL(DEDParser)
     {
         String buffer;
 
-        if(!ReadString(buffer))
+        if (!ReadString(buffer))
             return false;
 
         // Get rid of the old string.
-        if(*dest)
+        if (*dest)
             M_Free(*dest);
 
         // Make a copy.
@@ -479,18 +479,18 @@ DENG2_PIMPL(DEDParser)
     {
         String buffer;
 
-        if(!ReadString(buffer))
+        if (!ReadString(buffer))
             return false;
 
         // URIs are expected to use forward slashes.
         buffer = Path::normalizeString(buffer);
 
-        if(!*dest)
+        if (!*dest)
             *dest = new de::Uri(buffer, RC_NULL);
         else
             (*dest)->setUri(buffer, RC_NULL);
 
-        if(defaultScheme && defaultScheme[0] && (*dest)->scheme().isEmpty())
+        if (defaultScheme && defaultScheme[0] && (*dest)->scheme().isEmpty())
             (*dest)->setScheme(defaultScheme);
 
         return true;
@@ -499,7 +499,7 @@ DENG2_PIMPL(DEDParser)
     int ReadUri(Variable &var, char const *defaultScheme)
     {
         de::Uri *uri = 0;
-        if(!ReadUri(&uri, defaultScheme)) return false;
+        if (!ReadUri(&uri, defaultScheme)) return false;
         var.set(TextValue(uri->compose()));
         delete uri;
         return true;
@@ -508,10 +508,10 @@ DENG2_PIMPL(DEDParser)
     int ReadNByteVector(Variable &var, int count)
     {
         FINDBEGIN;
-        for(int i = 0; i < count; ++i)
+        for (int i = 0; i < count; ++i)
         {
             ReadToken();
-            if(ISTOKEN("}"))
+            if (ISTOKEN("}"))
                 return true;
             var.array().setElement(i, strtoul(token, 0, 0));
         }
@@ -525,7 +525,7 @@ DENG2_PIMPL(DEDParser)
     int ReadByte(unsigned char* dest)
     {
         ReadToken();
-        if(ISTOKEN(";"))
+        if (ISTOKEN(";"))
         {
             setError("Missing integer value");
             return false;
@@ -541,7 +541,7 @@ DENG2_PIMPL(DEDParser)
     int ReadInt(int* dest, int unsign)
     {
         ReadToken();
-        if(ISTOKEN(";"))
+        if (ISTOKEN(";"))
         {
             setError("Missing integer value");
             return false;
@@ -554,7 +554,7 @@ DENG2_PIMPL(DEDParser)
     int ReadInt(Variable *var, int unsign)
     {
         int value = 0;
-        if(ReadInt(&value, unsign))
+        if (ReadInt(&value, unsign))
         {
             var->set(NumberValue(value));
             return true;
@@ -568,7 +568,7 @@ DENG2_PIMPL(DEDParser)
     int ReadFloat(float* dest)
     {
         ReadToken();
-        if(ISTOKEN(";"))
+        if (ISTOKEN(";"))
         {
             setError("Missing float value");
             return false;
@@ -581,7 +581,7 @@ DENG2_PIMPL(DEDParser)
     int ReadFloat(Variable *var)
     {
         float value = 0;
-        if(ReadFloat(&value))
+        if (ReadFloat(&value))
         {
             var->set(NumberValue(value));
             return true;
@@ -592,10 +592,10 @@ DENG2_PIMPL(DEDParser)
     int ReadVector(Variable &var, int componentCount)
     {
         FINDBEGIN;
-        for(int b = 0; b < componentCount; ++b)
+        for (int b = 0; b < componentCount; ++b)
         {
             float value = 0;
-            if(!ReadFloat(&value)) return false;
+            if (!ReadFloat(&value)) return false;
             var.array().setElement(b, value);
         }
         ReadToken();
@@ -610,12 +610,12 @@ DENG2_PIMPL(DEDParser)
         *dest = 0;
 
         ReadToken();
-        if(ISTOKEN(";"))
+        if (ISTOKEN(";"))
         {
             setError("Missing flags value");
             return false;
         }
-        if(ISTOKEN("0"))
+        if (ISTOKEN("0"))
         {
             // No flags defined.
             return true;
@@ -623,15 +623,15 @@ DENG2_PIMPL(DEDParser)
 
         UnreadToken(token);
         String flag;
-        if(ISTOKEN("\""))
+        if (ISTOKEN("\""))
         {
             // The old format.
-            if(!ReadString(flag))
+            if (!ReadString(flag))
                 return false;
 
             flag.strip();
 
-            if(!flag.isEmpty())
+            if (!flag.isEmpty())
             {
                 *dest = ded->evalFlags(flag.toUtf8().constData());
             }
@@ -642,7 +642,7 @@ DENG2_PIMPL(DEDParser)
         {
             // Read the flag.
             ReadToken();
-            if(prefix)
+            if (prefix)
             {
                 flag = String(prefix) + String(token);
             }
@@ -653,15 +653,15 @@ DENG2_PIMPL(DEDParser)
 
             flag.strip();
 
-            if(!flag.isEmpty())
+            if (!flag.isEmpty())
             {
                 *dest |= ded->evalFlags(flag.toUtf8().constData());
             }
 
-            if(!ReadToken())
+            if (!ReadToken())
                 break;
 
-            if(!ISTOKEN("|")) // | is required for multiple flags.
+            if (!ISTOKEN("|")) // | is required for multiple flags.
             {
                 UnreadToken(token);
                 break;
@@ -674,10 +674,10 @@ DENG2_PIMPL(DEDParser)
     int ReadFlags(Variable *dest, char const *prefix, int elementIndex = -1)
     {
         int value = 0;
-        if(ReadFlags(&value, prefix))
+        if (ReadFlags(&value, prefix))
         {
             std::unique_ptr<NumberValue> flagsValue(new NumberValue(value, NumberValue::Hex));
-            if(elementIndex < 0)
+            if (elementIndex < 0)
             {
                 dest->set(flagsValue.release());
             }
@@ -699,10 +699,10 @@ DENG2_PIMPL(DEDParser)
 
         ReadToken();
         UnreadToken(token);
-        if(ISTOKEN("\""))
+        if (ISTOKEN("\""))
         {
             // The old format.
-            if(!ReadString(flag)) return false;
+            if (!ReadString(flag)) return false;
 
             bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
@@ -716,7 +716,7 @@ DENG2_PIMPL(DEDParser)
             bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
 
-        if(bm != BM_NORMAL)
+        if (bm != BM_NORMAL)
         {
             *dest = bm;
         }
@@ -732,7 +732,7 @@ DENG2_PIMPL(DEDParser)
     int ReadBlendmode(Variable *var)
     {
         blendmode_t mode = BM_NORMAL;
-        if(!ReadBlendmode(&mode)) return false;
+        if (!ReadBlendmode(&mode)) return false;
         var->set(NumberValue(int(mode)));
         return true;
     }
@@ -743,32 +743,32 @@ DENG2_PIMPL(DEDParser)
     int ReadLabel(char* label)
     {
         strcpy(label, "");
-        for(;;)
+        for (;;)
         {
             ReadToken();
-            if(source->atEnd)
+            if (source->atEnd)
             {
                 setError("Unexpected end of file");
                 return false;
             }
-            if(ISTOKEN("}")) // End block.
+            if (ISTOKEN("}")) // End block.
             {
                 strcpy(label, token);
                 return true;
             }
-            if(ISTOKEN(";"))
+            if (ISTOKEN(";"))
             {
-                if(source->version <= 5)
+                if (source->version <= 5)
                 {
                     setError("Label without value");
                     return false;
                 }
                 continue; // Semicolons are optional in v6.
             }
-            if(ISTOKEN("=") || ISTOKEN("{"))
+            if (ISTOKEN("=") || ISTOKEN("{"))
                 break;
 
-            if(label[0])
+            if (label[0])
                 strcat(label, " ");
             strcat(label, token);
         }
@@ -785,12 +785,12 @@ DENG2_PIMPL(DEDParser)
     {
         dd_bool value = false;
 
-        if(cond[0] == '-')
+        if (cond[0] == '-')
         {
             // A command line option.
             value = (CommandLine_Check(token) != 0);
         }
-        else if(isalnum(cond[0]) && !DoomsdayApp::game().isNull())
+        else if (isalnum(cond[0]) && !DoomsdayApp::game().isNull())
         {
             // A game mode.
             value = !String(cond).compareWithoutCase(DoomsdayApp::game().id());
@@ -827,37 +827,37 @@ DENG2_PIMPL(DEDParser)
 
         // For including other files -- we must know where we are.
         String sourceFileDir = sourceFile.fileNamePath();
-        if(sourceFileDir.isEmpty())
+        if (sourceFileDir.isEmpty())
         {
             sourceFileDir = NativePath::workPath();
         }
 
-        while(ReadToken())
+        while (ReadToken())
         {
-            if(ISTOKEN("Copy") || ISTOKEN("*"))
+            if (ISTOKEN("Copy") || ISTOKEN("*"))
             {
                 bCopyNext = true;
                 continue; // Read the next token.
             }
 
-            if(ISTOKEN(";"))
+            if (ISTOKEN(";"))
             {
                 // Unnecessary semicolon? Just skip it.
                 continue;
             }
 
-            if(ISTOKEN("SkipIf"))
+            if (ISTOKEN("SkipIf"))
             {
                 dd_bool expected = true;
 
                 ReadToken();
-                if(ISTOKEN("Not"))
+                if (ISTOKEN("Not"))
                 {
                     expected = false;
                     ReadToken();
                 }
 
-                if(DED_CheckCondition(token, expected))
+                if (DED_CheckCondition(token, expected))
                 {
                     // Ah, we're done. Get out of here.
                     goto ded_end_read;
@@ -865,7 +865,7 @@ DENG2_PIMPL(DEDParser)
                 CHECKSC;
             }
 
-            if(ISTOKEN("Include"))
+            if (ISTOKEN("Include"))
             {
                 // A new include.
                 READSTR(tmp);
@@ -875,18 +875,18 @@ DENG2_PIMPL(DEDParser)
                 strcpy(label, "");
             }
 
-            if(ISTOKEN("IncludeIf")) // An optional include.
+            if (ISTOKEN("IncludeIf")) // An optional include.
             {
                 dd_bool expected = true;
 
                 ReadToken();
-                if(ISTOKEN("Not"))
+                if (ISTOKEN("Not"))
                 {
                     expected = false;
                     ReadToken();
                 }
 
-                if(DED_CheckCondition(token, expected))
+                if (DED_CheckCondition(token, expected))
                 {
                     READSTR(tmp);
                     CHECKSC;
@@ -902,7 +902,7 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("ModelPath"))
+            if (ISTOKEN("ModelPath"))
             {
                 READSTR(label);
                 CHECKSC;
@@ -912,13 +912,13 @@ DENG2_PIMPL(DEDParser)
                 scheme.addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
             }
 
-            if(ISTOKEN("Header"))
+            if (ISTOKEN("Header"))
             {
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
-                    if(ISLABEL("Version"))
+                    if (ISLABEL("Version"))
                     {
                         READINT(ded->version);
                         source->version = ded->version;
@@ -938,7 +938,7 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Flag"))
+            if (ISTOKEN("Flag"))
             {
                 ded_stringid_t id;
                 int value = 0;
@@ -957,29 +957,29 @@ DENG2_PIMPL(DEDParser)
                     CHECKSC;
                 }
 
-                if(qstrlen(id))
+                if (qstrlen(id))
                 {
                     ded->addFlag(id, value);
                     Record &flag = ded->flags.find("id", id);
                     DENG2_ASSERT(flag.geti("value") == value); // Sanity check.
-                    if(source->custom) flag.set("custom", true);
+                    if (source->custom) flag.set("custom", true);
                 }
             }
 
-            if(ISTOKEN("Episode"))
+            if (ISTOKEN("Episode"))
             {
                 bool bModify = false;
                 Record dummyEpsd;
                 Record *epsd = 0;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // New episodes are appended to the end of the list.
                     idx = ded->addEpisode();
                     epsd = &ded->episodes[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     ded_stringid_t otherEpisodeId;
 
@@ -987,7 +987,7 @@ DENG2_PIMPL(DEDParser)
                     ReadToken();
 
                     idx = ded->getEpisodeNum(otherEpisodeId);
-                    if(idx >= 0)
+                    if (idx >= 0)
                     {
                         epsd = &ded->episodes[idx];
                         bModify = true;
@@ -1011,11 +1011,11 @@ DENG2_PIMPL(DEDParser)
                 }
                 DENG2_ASSERT(epsd != 0);
 
-                if(prevEpisodeDefIdx >= 0 && bCopyNext)
+                if (prevEpisodeDefIdx >= 0 && bCopyNext)
                 {
                     ded->episodes.copy(prevEpisodeDefIdx, *epsd);
                 }
-                if(source->custom) epsd->set("custom", true);
+                if (source->custom) epsd->set("custom", true);
 
                 defn::Episode mainDef(*epsd);
                 int hub = 0;
@@ -1025,7 +1025,7 @@ DENG2_PIMPL(DEDParser)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READSTR((*epsd)["id"]);
                     }
@@ -1034,17 +1034,17 @@ DENG2_PIMPL(DEDParser)
                     RV_STR("Menu Help Info", (*epsd)["menuHelpInfo"])
                     RV_URI("Menu Image", (*epsd)["menuImage"], "Patches")
                     RV_STR("Menu Shortcut", (*epsd)["menuShortcut"])
-                    if(ISLABEL("Hub"))
+                    if (ISLABEL("Hub"))
                     {
                         Record *hubRec;
                         // Add another hub.
-                        if(hub >= mainDef.hubCount())
+                        if (hub >= mainDef.hubCount())
                         {
                             mainDef.addHub();
                         }
                         DENG_ASSERT(hub < mainDef.hubCount());
                         hubRec = &mainDef.hub(hub);
-                        if(source->custom) hubRec->set("custom", true);
+                        if (source->custom) hubRec->set("custom", true);
 
                         int map = 0;
                         FINDBEGIN;
@@ -1052,10 +1052,10 @@ DENG2_PIMPL(DEDParser)
                         {
                             READLABEL;
                             RV_STR("ID", (*hubRec)["id"])
-                            if(ISLABEL("Map"))
+                            if (ISLABEL("Map"))
                             {
                                 // Add another map.
-                                if(map >= int(hubRec->geta("map").size()))
+                                if (map >= int(hubRec->geta("map").size()))
                                 {
                                     QScopedPointer<Record> map(new Record);
                                     defn::MapGraphNode(*map).resetToDefaults();
@@ -1064,7 +1064,7 @@ DENG2_PIMPL(DEDParser)
                                 }
                                 DENG_ASSERT(map < int(hubRec->geta("map").size()));
                                 Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
-                                if(source->custom) mapRec.set("custom", true);
+                                if (source->custom) mapRec.set("custom", true);
 
                                 int exit = 0;
                                 FINDBEGIN;
@@ -1073,18 +1073,18 @@ DENG2_PIMPL(DEDParser)
                                     READLABEL;
                                     RV_URI("ID", mapRec["id"], "Maps")
                                     RV_INT("Warp Number", mapRec["warpNumber"])
-                                    if(ISLABEL("Exit"))
+                                    if (ISLABEL("Exit"))
                                     {
                                         defn::MapGraphNode mgNodeDef(mapRec);
 
                                         // Add another exit.
-                                        if(exit >= mgNodeDef.exitCount())
+                                        if (exit >= mgNodeDef.exitCount())
                                         {
                                             mgNodeDef.addExit();
                                         }
                                         DENG_ASSERT(exit < mgNodeDef.exitCount());
                                         Record &exitRec = mgNodeDef.exit(exit);
-                                        if(source->custom) exitRec.set("custom", true);
+                                        if (source->custom) exitRec.set("custom", true);
 
                                         FINDBEGIN;
                                         forever
@@ -1107,10 +1107,10 @@ DENG2_PIMPL(DEDParser)
                         }
                         hub++;
                     }
-                    else if(ISLABEL("Map"))
+                    else if (ISLABEL("Map"))
                     {
                         // Add another none-hub map.
-                        if(notHubMap >= int(epsd->geta("map").size()))
+                        if (notHubMap >= int(epsd->geta("map").size()))
                         {
                             QScopedPointer<Record> map(new Record);
                             defn::MapGraphNode(*map).resetToDefaults();
@@ -1119,7 +1119,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
                         Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
-                        if(source->custom) mapRec.set("custom", true);
+                        if (source->custom) mapRec.set("custom", true);
 
                         int exit = 0;
                         FINDBEGIN;
@@ -1128,18 +1128,18 @@ DENG2_PIMPL(DEDParser)
                             READLABEL;
                             RV_URI("ID", mapRec["id"], "Maps")
                             RV_INT("Warp Number", mapRec["warpNumber"])
-                            if(ISLABEL("Exit"))
+                            if (ISLABEL("Exit"))
                             {
                                 defn::MapGraphNode mgNodeDef(mapRec);
 
                                 // Add another exit.
-                                if(exit >= mgNodeDef.exitCount())
+                                if (exit >= mgNodeDef.exitCount())
                                 {
                                     mgNodeDef.addExit();
                                 }
                                 DENG_ASSERT(exit < mgNodeDef.exitCount());
                                 Record &exitRec = mgNodeDef.exit(exit);
-                                if(source->custom) exitRec.set("custom", true);
+                                if (source->custom) exitRec.set("custom", true);
 
                                 FINDBEGIN;
                                 forever
@@ -1162,33 +1162,33 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevEpisodeDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
+            if (ISTOKEN("Mobj") || ISTOKEN("Thing"))
             {
                 dd_bool bModify = false;
                 Record* mo;
                 Record dummyMo;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // A new mobj type.
                     idx = ded->addThing("");
                     mo = &ded->things[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     String otherMobjId;
-                    if(!ReadString(otherMobjId)) { FAILURE }
+                    if (!ReadString(otherMobjId)) { FAILURE }
                     ReadToken();
 
                     idx = ded->getMobjNum(otherMobjId);
-                    if(idx < 0)
+                    if (idx < 0)
                     {
                         LOG_RES_WARNING("Ignoring unknown Mobj \"%s\" in %s on line #%i")
                                 << otherMobjId << (source? source->fileName : "?")
@@ -1211,18 +1211,18 @@ DENG2_PIMPL(DEDParser)
                     goto ded_end_read;
                 }
 
-                if(prevMobjDefIdx >= 0 && bCopyNext)
+                if (prevMobjDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
                     ded->things.copy(prevMobjDefIdx, *mo);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READSTR((*mo)["id"]);
                     }
@@ -1265,26 +1265,26 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevMobjDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("State"))
+            if (ISTOKEN("State"))
             {
                 dd_bool bModify = false;
                 Record *st;
                 Record dummyState;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // A new state.
                     idx = ded->addState("");
                     st = &ded->states[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     ded_stateid_t otherStateId;
 
@@ -1292,7 +1292,7 @@ DENG2_PIMPL(DEDParser)
                     ReadToken();
 
                     idx = ded->getStateNum(otherStateId);
-                    if(idx < 0)
+                    if (idx < 0)
                     {
                         LOG_RES_WARNING("Ignoring unknown State \"%s\" in %s on line #%i")
                                 << otherStateId << (source? source->fileName : "?")
@@ -1315,22 +1315,22 @@ DENG2_PIMPL(DEDParser)
                     goto ded_end_read;
                 }
 
-                if(prevStateDefIdx >= 0 && bCopyNext)
+                if (prevStateDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
                     ded->states.copy(prevStateDefIdx, *st);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READSTR((*st)["id"]);
                     }
-                    else if(ISLABEL("Frame"))
+                    else if (ISLABEL("Frame"))
                     {
     // Legacy state frame flags:
     #define FF_FULLBRIGHT               0x8000
@@ -1338,7 +1338,7 @@ DENG2_PIMPL(DEDParser)
 
                         int frame = 0;
                         READINT(frame);
-                        if(frame & FF_FULLBRIGHT)
+                        if (frame & FF_FULLBRIGHT)
                         {
                             frame &= FF_FRAMEMASK;
                             st->set("flags", st->geti("flags") | STF_FULLBRIGHT);
@@ -1362,18 +1362,18 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevStateDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("Sprite"))
+            if (ISTOKEN("Sprite"))
             {
                 // A new sprite.
                 idx = DED_AddSprite(ded, "");
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", ded->sprites[idx].id)
@@ -1382,7 +1382,7 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Light"))
+            if (ISTOKEN("Light"))
             {
                 ded_light_t* lig;
 
@@ -1391,13 +1391,13 @@ DENG2_PIMPL(DEDParser)
                 lig = &ded->lights[idx];
 
                 // Should we copy the previous definition?
-                if(prevLightDefIdx >= 0 && bCopyNext)
+                if (prevLightDefIdx >= 0 && bCopyNext)
                 {
                     ded->lights.copyTo(lig, prevLightDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("State", lig->state)
@@ -1411,17 +1411,17 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Green", lig->color[1])
                     RV_FLT("Blue", lig->color[2])
                     RV_VEC("Color", lig->color, 3)
-                    if(ISLABEL("Sector levels"))
+                    if (ISLABEL("Sector levels"))
                     {
                         int     b;
                         FINDBEGIN;
-                        for(b = 0; b < 2; ++b)
+                        for (b = 0; b < 2; ++b)
                         {
                             READFLT(lig->lightLevel[b])
                             lig->lightLevel[b] /= 255.0f;
-                            if(lig->lightLevel[b] < 0)
+                            if (lig->lightLevel[b] < 0)
                                 lig->lightLevel[b] = 0;
-                            else if(lig->lightLevel[b] > 1)
+                            else if (lig->lightLevel[b] > 1)
                                 lig->lightLevel[b] = 1;
                         }
                         ReadToken();
@@ -1439,27 +1439,27 @@ DENG2_PIMPL(DEDParser)
                 prevLightDefIdx = idx;
             }
 
-            if(ISTOKEN("Material"))
+            if (ISTOKEN("Material"))
             {
                 Record dummyMat;
                 Record *mat  = nullptr;
                 bool bModify = false;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // New materials are appended to the end of the list.
                     idx = ded->addMaterial();
                     mat = &ded->materials[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     de::Uri *otherMat = nullptr;
                     READURI(&otherMat, nullptr);
                     ReadToken();
 
                     idx = ded->getMaterialNum(*otherMat);
-                    if(idx >= 0)
+                    if (idx >= 0)
                     {
                         mat     = &ded->materials[idx];
                         bModify = true;
@@ -1487,7 +1487,7 @@ DENG2_PIMPL(DEDParser)
                 DENG2_ASSERT(mat);
 
                 // Should we copy the previous definition?
-                if(prevMaterialDefIdx >= 0 && bCopyNext)
+                if (prevMaterialDefIdx >= 0 && bCopyNext)
                 {
                     ded->materials.copy(prevMaterialDefIdx, *mat);
                 }
@@ -1500,7 +1500,7 @@ DENG2_PIMPL(DEDParser)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READURI((*mat)["id"], nullptr);
                     }
@@ -1508,9 +1508,9 @@ DENG2_PIMPL(DEDParser)
                     RV_FLAGS("Flags", (*mat)["flags"], "matf_")
                     RV_INT_ELEM("Width", (*mat)["dimensions"], 0)
                     RV_INT_ELEM("Height", (*mat)["dimensions"], 1)
-                    if(ISLABEL("Layer"))
+                    if (ISLABEL("Layer"))
                     {
-                        if(layer >= DED_MAX_MATERIAL_LAYERS)
+                        if (layer >= DED_MAX_MATERIAL_LAYERS)
                         {
                             setError("Too many Material.Layers");
                             retVal = false;
@@ -1518,7 +1518,7 @@ DENG2_PIMPL(DEDParser)
                         }
 
                         // Add another layer.
-                        if(layer >= mainDef.layerCount()) mainDef.addLayer();
+                        if (layer >= mainDef.layerCount()) mainDef.addLayer();
                         defn::MaterialLayer layerDef(mainDef.layer(layer));
 
                         int stage = 0;
@@ -1526,14 +1526,14 @@ DENG2_PIMPL(DEDParser)
                         forever
                         {
                             READLABEL;
-                            if(ISLABEL("Stage"))
+                            if (ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(stage >= layerDef.stageCount())
+                                if (stage >= layerDef.stageCount())
                                 {
                                     layerDef.addStage();
 
-                                    if(mainDef.getb("autoGenerated") && stage > 0)
+                                    if (mainDef.getb("autoGenerated") && stage > 0)
                                     {
                                         // When adding a new stage to an autogenerated material
                                         // initialize by copying values from the previous stage.
@@ -1562,9 +1562,9 @@ DENG2_PIMPL(DEDParser)
                         }
                         layer++;
                     }
-                    else if(ISLABEL("Light"))
+                    else if (ISLABEL("Light"))
                     {
-                        if(decor >= DED_MAX_MATERIAL_DECORATIONS)
+                        if (decor >= DED_MAX_MATERIAL_DECORATIONS)
                         {
                             setError("Too many Material.Lights");
                             retVal = false;
@@ -1572,7 +1572,7 @@ DENG2_PIMPL(DEDParser)
                         }
 
                         // Add another decoration.
-                        if(decor >= mainDef.decorationCount()) mainDef.addDecoration();
+                        if (decor >= mainDef.decorationCount()) mainDef.addDecoration();
                         defn::MaterialDecoration decorDef(mainDef.decoration(decor));
 
                         int stage = 0;
@@ -1582,10 +1582,10 @@ DENG2_PIMPL(DEDParser)
                             READLABEL;
                             RV_VEC_VAR("Pattern offset", decorDef.def()["patternOffset"], 2)
                             RV_VEC_VAR("Pattern skip", decorDef.def()["patternSkip"], 2)
-                            if(ISLABEL("Stage"))
+                            if (ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(stage >= decorDef.stageCount())
+                                if (stage >= decorDef.stageCount())
                                 {
                                     decorDef.addStage();
                                 }
@@ -1602,11 +1602,11 @@ DENG2_PIMPL(DEDParser)
                                     RV_VEC_VAR("Color", st["color"], 3)
                                     RV_FLT("Radius", st["radius"])
                                     RV_FLT("Halo radius", st["haloRadius"])
-                                    if(ISLABEL("Levels"))
+                                    if (ISLABEL("Levels"))
                                     {
                                         FINDBEGIN;
                                         Vector2f levels;
-                                        for(int b = 0; b < 2; ++b)
+                                        for (int b = 0; b < 2; ++b)
                                         {
                                             float val;
                                             READFLT(val)
@@ -1636,13 +1636,13 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevMaterialDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("Model"))
+            if (ISTOKEN("Model"))
             {
                 Record *prevModel = 0;
                 int sub = 0;
@@ -1651,13 +1651,13 @@ DENG2_PIMPL(DEDParser)
                 idx = ded->addModel();
                 Record &mdl = ded->models[idx];
 
-                if(prevModelDefIdx >= 0)
+                if (prevModelDefIdx >= 0)
                 {
                     prevModel = &ded->models[prevModelDefIdx];
 
-                    if(bCopyNext) ded->models.copy(prevModelDefIdx, mdl);
+                    if (bCopyNext) ded->models.copy(prevModelDefIdx, mdl);
                 }
-                if(source->custom) mdl.set("custom", true);
+                if (source->custom) mdl.set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -1674,7 +1674,7 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Inter", mdl["interMark"])
                     RV_INT("Skin tics", mdl["skinTics"])
                     RV_FLT("Resize", mdl["resize"])
-                    if(ISLABEL("Scale"))
+                    if (ISLABEL("Scale"))
                     {
                         float scale; READFLT(scale);
                         mdl["scale"] = new ArrayValue(Vector3f(scale, scale, scale));
@@ -1685,12 +1685,12 @@ DENG2_PIMPL(DEDParser)
                     RV_VEC_VAR("Offset XYZ", mdl["offset"], 3)
                     RV_VEC_VAR("Interpolate", mdl["interRange"], 2)
                     RV_FLT("Shadow radius", mdl["shadowRadius"])
-                    if(ISLABEL("Md2") || ISLABEL("Sub"))
+                    if (ISLABEL("Md2") || ISLABEL("Sub"))
                     {
                         defn::Model mainDef(mdl);
 
                         // Add another submodel.
-                        if(sub >= mainDef.subCount())
+                        if (sub >= mainDef.subCount())
                         {
                             mainDef.addSub();
                         }
@@ -1699,7 +1699,7 @@ DENG2_PIMPL(DEDParser)
                         Record &subDef = mainDef.sub(sub);
 
                         FINDBEGIN;
-                        for(;;)
+                        for (;;)
                         {
                             READLABEL;
                             RV_URI("File", subDef["filename"], "Models")
@@ -1729,7 +1729,7 @@ DENG2_PIMPL(DEDParser)
                     CHECKSC;
                 }
 
-                if(prevModel)
+                if (prevModel)
                 {
                     defn::Model(mdl).cleanupAfterParsing(*prevModel);
                 }
@@ -1737,7 +1737,7 @@ DENG2_PIMPL(DEDParser)
                 prevModelDefIdx = idx;
             }
 
-            if(ISTOKEN("Sound"))
+            if (ISTOKEN("Sound"))
             {   // A new sound.
                 ded_sound_t*        snd;
 
@@ -1745,7 +1745,7 @@ DENG2_PIMPL(DEDParser)
                 snd = &ded->sounds[idx];
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", snd->id)
@@ -1766,20 +1766,20 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Music"))
+            if (ISTOKEN("Music"))
             {
                 bool bModify = false;
                 Record dummyMusic;
                 Record *music = 0;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // New musics are appended to the end of the list.
                     idx = ded->addMusic();
                     music = &ded->musics[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     ded_stringid_t otherMusicId;
 
@@ -1787,7 +1787,7 @@ DENG2_PIMPL(DEDParser)
                     ReadToken();
 
                     idx = ded->getMusicNum(otherMusicId);
-                    if(idx >= 0)
+                    if (idx >= 0)
                     {
                         music = &ded->musics[idx];
                         bModify = true;
@@ -1796,7 +1796,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         // Don't print a warning about the translated MAPINFO definitions
                         // (see issue #2083).
-                        if(!source || source->fileName != "[TranslatedMapInfos]")
+                        if (!source || source->fileName != "[TranslatedMapInfos]")
                         {
                             LOG_RES_WARNING("Ignoring unknown Music \"%s\" in %s on line #%i")
                             << otherMusicId << (source? source->fileName : "?")
@@ -1816,18 +1816,18 @@ DENG2_PIMPL(DEDParser)
                 }
                 DENG2_ASSERT(music != 0);
 
-                if(prevMusicDefIdx >= 0 && bCopyNext)
+                if (prevMusicDefIdx >= 0 && bCopyNext)
                 {
                     ded->musics.copy(prevMusicDefIdx, *music);
                 }
-                if(source->custom) music->set("custom", true);
+                if (source->custom) music->set("custom", true);
 
                 FINDBEGIN;
                 forever
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READSTR((*music)["id"]);
                     }
@@ -1842,13 +1842,13 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevMusicDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("Sky"))
+            if (ISTOKEN("Sky"))
             {
                 int model = 0;
 
@@ -1856,12 +1856,12 @@ DENG2_PIMPL(DEDParser)
                 idx = ded->addSky();
                 Record &sky = ded->skies[idx];
 
-                if(prevSkyDefIdx >= 0 && bCopyNext)
+                if (prevSkyDefIdx >= 0 && bCopyNext)
                 {
                     //Record *prevSky = &ded->skies[prevSkyDefIdx];
                     ded->skies.copy(prevSkyDefIdx, sky);
                 }
-                if(source->custom) sky.set("custom", true);
+                if (source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -1872,11 +1872,11 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Height", sky["height"])
                     RV_FLT("Horizon offset", sky["horizonOffset"])
                     RV_VEC_VAR("Light color", sky["color"], 3)
-                    if(ISLABEL("Layer 1") || ISLABEL("Layer 2"))
+                    if (ISLABEL("Layer 1") || ISLABEL("Layer 2"))
                     {
                         defn::Sky mainDef(sky);
                         Record &layerDef = mainDef.layer(atoi(label+6) - 1);
-                        if(source->custom) layerDef.set("custom", true);
+                        if (source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -1892,11 +1892,11 @@ DENG2_PIMPL(DEDParser)
                             CHECKSC;
                         }
                     }
-                    else if(ISLABEL("Model"))
+                    else if (ISLABEL("Model"))
                     {
                         defn::Sky mainDef(sky);
 
-                        if(model == 32/*MAX_SKY_MODELS*/)
+                        if (model == 32/*MAX_SKY_MODELS*/)
                         {
                             // Too many!
                             setError("Too many Sky models");
@@ -1905,14 +1905,14 @@ DENG2_PIMPL(DEDParser)
                         }
 
                         // Add another model.
-                        if(model >= mainDef.modelCount())
+                        if (model >= mainDef.modelCount())
                         {
                             mainDef.addModel();
                         }
                         DENG_ASSERT(model < mainDef.modelCount());
 
                         Record &mdlDef = mainDef.model(model);
-                        if(source->custom) mdlDef.set("custom", true);
+                        if (source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -1939,10 +1939,10 @@ DENG2_PIMPL(DEDParser)
                 prevSkyDefIdx = idx;
             }
 
-            if(ISTOKEN("Map")) // Info
+            if (ISTOKEN("Map")) // Info
             {
                 ReadToken();
-                if(!ISTOKEN("Info"))
+                if (!ISTOKEN("Info"))
                 {
                     setError("Unknown token 'Map" + String(token) + "'");
                     retVal = false;
@@ -1955,20 +1955,20 @@ DENG2_PIMPL(DEDParser)
                 int model = 0;
 
                 ReadToken();
-                if(!ISTOKEN("Mods"))
+                if (!ISTOKEN("Mods"))
                 {
                     // New mapinfos are appended to the end of the list.
                     idx = ded->addMapInfo();
                     mi = &ded->mapInfos[idx];
                 }
-                else if(!bCopyNext)
+                else if (!bCopyNext)
                 {
                     de::Uri *otherMap = nullptr;
                     READURI(&otherMap, "Maps");
                     ReadToken();
 
                     idx = ded->getMapInfoNum(*otherMap);
-                    if(idx >= 0)
+                    if (idx >= 0)
                     {
                         mi = &ded->mapInfos[idx];
                         bModify = true;
@@ -1982,25 +1982,25 @@ DENG2_PIMPL(DEDParser)
                     }
                     delete otherMap;
 
-                    if(mi && ISTOKEN("if"))
+                    if (mi && ISTOKEN("if"))
                     {
                         bool negate = false;
                         bool testCustom = false;
                         forever
                         {
                             ReadToken();
-                            if(ISTOKEN("{"))
+                            if (ISTOKEN("{"))
                             {
                                 break;
                             }
 
-                            if(!testCustom)
+                            if (!testCustom)
                             {
-                                if(ISTOKEN("not"))
+                                if (ISTOKEN("not"))
                                 {
                                     negate = !negate;
                                 }
-                                else if(ISTOKEN("custom"))
+                                else if (ISTOKEN("custom"))
                                 {
                                     testCustom = true;
                                 }
@@ -2009,9 +2009,9 @@ DENG2_PIMPL(DEDParser)
                             else RV_END
                         }
 
-                        if(testCustom)
+                        if (testCustom)
                         {
-                            if(mi->getb("custom") != !negate)
+                            if (mi->getb("custom") != !negate)
                             {
                                 mi = nullptr; // skip
                             }
@@ -2024,7 +2024,7 @@ DENG2_PIMPL(DEDParser)
                         }
                     }
 
-                    if(!mi)
+                    if (!mi)
                     {
                         // We'll read into a dummy definition.
                         defn::MapInfo(dummyMi).resetToDefaults();
@@ -2039,22 +2039,22 @@ DENG2_PIMPL(DEDParser)
                 }
                 DENG2_ASSERT(mi != 0);
 
-                if(prevMapInfoDefIdx >= 0 && bCopyNext)
+                if (prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
                     // Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
                     ded->mapInfos.copy(prevMapInfoDefIdx, *mi);
                 }
-                if(source->custom) mi->set("custom", true);
+                if (source->custom) mi->set("custom", true);
 
                 Record &sky = mi->subrecord("sky");
-                if(source->custom) sky.set("custom", true);
+                if (source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
                 forever
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
-                    if(!bModify && ISLABEL("ID"))
+                    if (!bModify && ISLABEL("ID"))
                     {
                         READURI((*mi)["id"], "Maps");
                     }
@@ -2079,11 +2079,11 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Sky height", sky["height"])
                     RV_FLT("Horizon offset", sky["horizonOffset"])
                     RV_VEC_VAR("Sky light color", sky["color"], 3)
-                    if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
+                    if (ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                     {
                         defn::Sky skyDef(sky);
                         Record &layerDef = skyDef.layer(atoi(label+10) - 1);
-                        if(source->custom) layerDef.set("custom", true);
+                        if (source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -2099,11 +2099,11 @@ DENG2_PIMPL(DEDParser)
                             CHECKSC;
                         }
                     }
-                    else if(ISLABEL("Sky Model"))
+                    else if (ISLABEL("Sky Model"))
                     {
                         defn::Sky skyDef(sky);
 
-                        if(model == 32/*MAX_SKY_MODELS*/)
+                        if (model == 32/*MAX_SKY_MODELS*/)
                         {
                             // Too many!
                             setError("Too many Sky models");
@@ -2112,14 +2112,14 @@ DENG2_PIMPL(DEDParser)
                         }
 
                         // Add another model.
-                        if(model >= skyDef.modelCount())
+                        if (model >= skyDef.modelCount())
                         {
                             skyDef.addModel();
                         }
                         DENG_ASSERT(model < skyDef.modelCount());
 
                         Record &mdlDef = skyDef.model(model);
-                        if(source->custom) mdlDef.set("custom", true);
+                        if (source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -2144,27 +2144,27 @@ DENG2_PIMPL(DEDParser)
                 }
 
                 // If we did not read into a dummy update the previous index.
-                if(idx > 0)
+                if (idx > 0)
                 {
                     prevMapInfoDefIdx = idx;
                 }
             }
 
-            if(ISTOKEN("Text"))
+            if (ISTOKEN("Text"))
             {
                 // A new text.
                 idx = DED_AddText(ded, "");
                 ded_text_t *txt = &ded->text[idx];
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", txt->id)
-                    if(ISLABEL("Text"))
+                    if (ISLABEL("Text"))
                     {
                         String buffer;
-                        if(ReadString(buffer))
+                        if (ReadString(buffer))
                         {
                             QByteArray bufferUtf8 = buffer.toUtf8();
                             txt->text = (char *) M_Realloc(txt->text, bufferUtf8.length() + 1);
@@ -2182,10 +2182,10 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Texture"))
+            if (ISTOKEN("Texture"))
             {
                 ReadToken();
-                if(ISTOKEN("Environment"))
+                if (ISTOKEN("Environment"))
                 {   // A new environment.
                     ded_tenviron_t*     tenv;
 
@@ -2193,20 +2193,20 @@ DENG2_PIMPL(DEDParser)
                     tenv = &ded->textureEnv[idx];
 
                     FINDBEGIN;
-                    for(;;)
+                    for (;;)
                     {
                         ded_uri_t *mn;
 
                         READLABEL;
                         RV_STR("ID", tenv->id)
-                        if(ISLABEL("Material") || ISLABEL("Texture") || ISLABEL("Flat"))
+                        if (ISLABEL("Material") || ISLABEL("Texture") || ISLABEL("Flat"))
                         {
                             // A new material path.
                             ddstring_t schemeName; Str_Init(&schemeName);
                             Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? "Textures" : "Flats");
                             mn = tenv->materials.append();
                             FINDBEGIN;
-                            for(;;)
+                            for (;;)
                             {
                                 READLABEL;
                                 RV_URI("ID", &mn->uri, Str_Text(&schemeName))
@@ -2221,10 +2221,10 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Composite"))
+            if (ISTOKEN("Composite"))
             {
                 ReadToken();
-                if(ISTOKEN("BitmapFont"))
+                if (ISTOKEN("BitmapFont"))
                 {
                     ded_compositefont_t* cfont;
 
@@ -2232,39 +2232,39 @@ DENG2_PIMPL(DEDParser)
                     cfont = &ded->compositeFonts[idx];
 
                     FINDBEGIN;
-                    for(;;)
+                    for (;;)
                     {
                         READLABEL;
-                        if(ISLABEL("ID"))
+                        if (ISLABEL("ID"))
                         {
                             READURI(&cfont->uri, "Game")
                             CHECKSC;
                         }
-                        else if(M_IsStringValidInt(label))
+                        else if (M_IsStringValidInt(label))
                         {
                             ded_compositefont_mappedcharacter_t* mc = 0;
                             int ascii = atoi(label);
-                            if(ascii < 0 || ascii > 255)
+                            if (ascii < 0 || ascii > 255)
                             {
                                 setError("Invalid ascii code");
                                 retVal = false;
                                 goto ded_end_read;
                             }
 
-                            for(int i = 0; i < cfont->charMap.size(); ++i)
+                            for (int i = 0; i < cfont->charMap.size(); ++i)
                             {
-                                if(cfont->charMap[i].ch == (unsigned char) ascii)
+                                if (cfont->charMap[i].ch == (unsigned char) ascii)
                                     mc = &cfont->charMap[i];
                             }
 
-                            if(mc == 0)
+                            if (mc == 0)
                             {
                                 mc = cfont->charMap.append();
                                 mc->ch = ascii;
                             }
 
                             FINDBEGIN;
-                            for(;;)
+                            for (;;)
                             {
                                 READLABEL;
                                 RV_URI("Texture", &mc->path, "Patches")
@@ -2278,29 +2278,29 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            if(ISTOKEN("Values")) // String Values
+            if (ISTOKEN("Values")) // String Values
             {
                 depth = 0;
                 rootStr = (char*) M_Calloc(1); // A null string.
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     // Get the next label but don't stop on }.
                     READLABEL_NOBREAK;
-                    if(strchr(label, '|'))
+                    if (strchr(label, '|'))
                     {
                         setError("Value labels can not include '|' characters (ASCII 124)");
                         retVal = false;
                         goto ded_end_read;
                     }
 
-                    if(ISTOKEN("="))
+                    if (ISTOKEN("="))
                     {
                         // Define a new string.
                         String buffer;
 
-                        if(ReadString(buffer))
+                        if (ReadString(buffer))
                         {
                             // Get a new value entry.
                             idx = DED_AddValue(ded, 0);
@@ -2322,7 +2322,7 @@ DENG2_PIMPL(DEDParser)
                             goto ded_end_read;
                         }
                     }
-                    else if(ISTOKEN("{"))
+                    else if (ISTOKEN("{"))
                     {
                         // Begin a new group.
                         rootStr = (char*) M_Realloc(rootStr, strlen(rootStr) + strlen(label) + 2);
@@ -2332,12 +2332,12 @@ DENG2_PIMPL(DEDParser)
                         depth++;
                         continue;
                     }
-                    else if(ISTOKEN("}"))
+                    else if (ISTOKEN("}"))
                     {
                         size_t len;
 
                         // End group.
-                        if(!depth)
+                        if (!depth)
                             break;   // End root depth.
 
                         // Decrease level and modify rootStr.
@@ -2345,7 +2345,7 @@ DENG2_PIMPL(DEDParser)
                         len = strlen(rootStr);
                         rootStr[len-1] = 0; // Remove last |.
                         ptr = strrchr(rootStr, '|');
-                        if(ptr)
+                        if (ptr)
                         {
                             ptr[1] = 0;
                             rootStr = (char*) M_Realloc(rootStr, strlen(rootStr) + 1);
@@ -2370,39 +2370,39 @@ DENG2_PIMPL(DEDParser)
                 rootStr = 0;
             }
 
-            if(ISTOKEN("Detail")) // Detail Texture
+            if (ISTOKEN("Detail")) // Detail Texture
             {
                 idx = DED_AddDetail(ded, "");
                 ded_detailtexture_t *dtl = &ded->details[idx];
 
                  // Should we copy the previous definition?
-                if(prevDetailDefIdx >= 0 && bCopyNext)
+                if (prevDetailDefIdx >= 0 && bCopyNext)
                 {
                     ded->details.copyTo(dtl, prevDetailDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_FLAGS("Flags", dtl->flags, "dtf_")
-                    if(ISLABEL("Texture"))
+                    if (ISLABEL("Texture"))
                     {
                         READURI(&dtl->material1, "Textures")
                     }
-                    else if(ISLABEL("Wall")) // Alias
+                    else if (ISLABEL("Wall")) // Alias
                     {
                         READURI(&dtl->material1, "Textures")
                     }
-                    else if(ISLABEL("Flat"))
+                    else if (ISLABEL("Flat"))
                     {
                         READURI(&dtl->material2, "Flats")
                     }
-                    else if(ISLABEL("Lump"))
+                    else if (ISLABEL("Lump"))
                     {
                         READURI(&dtl->stage.texture, "Lumps")
                     }
-                    else if(ISLABEL("File"))
+                    else if (ISLABEL("File"))
                     {
                         READURI(&dtl->stage.texture, 0)
                     }
@@ -2416,7 +2416,7 @@ DENG2_PIMPL(DEDParser)
                 prevDetailDefIdx = idx;
             }
 
-            if(ISTOKEN("Reflection")) // Surface reflection
+            if (ISTOKEN("Reflection")) // Surface reflection
             {
                 ded_reflection_t* ref = 0;
 
@@ -2424,13 +2424,13 @@ DENG2_PIMPL(DEDParser)
                 ref = &ded->reflections[idx];
 
                 // Should we copy the previous definition?
-                if(prevRefDefIdx >= 0 && bCopyNext)
+                if (prevRefDefIdx >= 0 && bCopyNext)
                 {
                     ded->reflections.copyTo(ref, prevRefDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_FLAGS("Flags", ref->flags, "rff_")
@@ -2441,15 +2441,15 @@ DENG2_PIMPL(DEDParser)
                     RV_URI("Mask map", &ref->stage.maskTexture, "LightMaps")
                     RV_FLT("Mask width", ref->stage.maskWidth)
                     RV_FLT("Mask height", ref->stage.maskHeight)
-                    if(ISLABEL("Material"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(&ref->material, 0)
                     }
-                    else if(ISLABEL("Texture"))
+                    else if (ISLABEL("Texture"))
                     {
                         READURI(&ref->material, "Textures")
                     }
-                    else if(ISLABEL("Flat"))
+                    else if (ISLABEL("Flat"))
                     {
                         READURI(&ref->material, "Flats")
                     }
@@ -2459,7 +2459,7 @@ DENG2_PIMPL(DEDParser)
                 prevRefDefIdx = idx;
             }
 
-            if(ISTOKEN("Generator")) // Particle Generator
+            if (ISTOKEN("Generator")) // Particle Generator
             {
                 ded_ptcgen_t* gen;
                 int sub = 0;
@@ -2468,25 +2468,25 @@ DENG2_PIMPL(DEDParser)
                 gen = &ded->ptcGens[idx];
 
                 // Should we copy the previous definition?
-                if(prevGenDefIdx >= 0 && bCopyNext)
+                if (prevGenDefIdx >= 0 && bCopyNext)
                 {
                     ded->ptcGens.copyTo(gen, prevGenDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("State", gen->state)
-                    if(ISLABEL("Material"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(&gen->material, 0)
                     }
-                    else if(ISLABEL("Flat"))
+                    else if (ISLABEL("Flat"))
                     {
                         READURI(&gen->material, "Flats")
                     }
-                    else if(ISLABEL("Texture"))
+                    else if (ISLABEL("Texture"))
                     {
                         READURI(&gen->material, "Textures")
                     }
@@ -2518,11 +2518,11 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Force radius", gen->forceRadius)
                     RV_FLT("Force", gen->force)
                     RV_VEC("Force origin", gen->forceOrigin, 3)
-                    if(ISLABEL("Stage"))
+                    if (ISLABEL("Stage"))
                     {
                         ded_ptcstage_t *st = NULL;
 
-                        if(sub >= gen->stages.size())
+                        if (sub >= gen->stages.size())
                         {
                             // Allocate new stage.
                             sub = DED_AddPtcGenStage(gen);
@@ -2531,7 +2531,7 @@ DENG2_PIMPL(DEDParser)
                         st = &gen->stages[sub];
 
                         FINDBEGIN;
-                        for(;;)
+                        for (;;)
                         {
                             READLABEL;
                             RV_FLAGS("Type", st->type, "pt_")
@@ -2564,12 +2564,12 @@ DENG2_PIMPL(DEDParser)
                 prevGenDefIdx = idx;
             }
 
-            if(ISTOKEN("Finale") || ISTOKEN("InFine"))
+            if (ISTOKEN("Finale") || ISTOKEN("InFine"))
             {
                 // New finales are appended to the end of the list.
                 idx = ded->addFinale();
                 Record &fin = ded->finales[idx];
-                if(source->custom) fin.set("custom", true);
+                if (source->custom) fin.set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -2579,19 +2579,19 @@ DENG2_PIMPL(DEDParser)
                     RV_URI("Before", fin["before"], "Maps")
                     RV_URI("After", fin["after"], "Maps")
                     RV_INT("Game", dummyInt)
-                    if(ISLABEL("Script"))
+                    if (ISLABEL("Script"))
                     {
                         String buffer; buffer.reserve(1600);
 
                         FINDBEGIN;
                         ReadToken();
-                        while(!ISTOKEN("}") && !source->atEnd)
+                        while (!ISTOKEN("}") && !source->atEnd)
                         {
-                            if(!buffer.isEmpty())
+                            if (!buffer.isEmpty())
                                 buffer += ' ';
 
                             buffer += String(token);
-                            if(ISTOKEN("\""))
+                            if (ISTOKEN("\""))
                             {
                                 ReadString(buffer, true, true);
                                 buffer += '"';
@@ -2607,13 +2607,13 @@ DENG2_PIMPL(DEDParser)
             }
 
             // An oldschool (light) decoration definition?
-            if(ISTOKEN("Decoration"))
+            if (ISTOKEN("Decoration"))
             {
                 idx = ded->addDecoration();
                 Record &decor = ded->decorations[idx];
 
                 // Should we copy the previous definition?
-                if(prevDecorDefIdx >= 0 && bCopyNext)
+                if (prevDecorDefIdx >= 0 && bCopyNext)
                 {
                     ded->decorations.copy(prevDecorDefIdx, decor);
                 }
@@ -2625,21 +2625,21 @@ DENG2_PIMPL(DEDParser)
                 {
                     READLABEL;
                     RV_FLAGS("Flags", decor["flags"], "dcf_")
-                    if(ISLABEL("Material"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(decor["texture"], 0)
                     }
-                    else if(ISLABEL("Texture"))
+                    else if (ISLABEL("Texture"))
                     {
                         READURI(decor["texture"], "Textures")
                     }
-                    else if(ISLABEL("Flat"))
+                    else if (ISLABEL("Flat"))
                     {
                         READURI(decor["texture"], "Flats")
                     }
-                    else if(ISLABEL("Light"))
+                    else if (ISLABEL("Light"))
                     {
-                        if(light == DED_MAX_MATERIAL_DECORATIONS)
+                        if (light == DED_MAX_MATERIAL_DECORATIONS)
                         {
                             setError("Too many Decoration.Lights");
                             retVal = false;
@@ -2647,7 +2647,7 @@ DENG2_PIMPL(DEDParser)
                         }
 
                         // Add another light.
-                        if(light >= mainDef.lightCount()) mainDef.addLight();
+                        if (light >= mainDef.lightCount()) mainDef.addLight();
                         defn::MaterialDecoration lightDef(mainDef.light(light));
 
                         // One implicit stage.
@@ -2663,11 +2663,11 @@ DENG2_PIMPL(DEDParser)
                             RV_FLT("Halo radius", st["haloRadius"])
                             RV_VEC_VAR("Pattern offset", lightDef.def()["patternOffset"], 2)
                             RV_VEC_VAR("Pattern skip", lightDef.def()["patternSkip"], 2)
-                            if(ISLABEL("Levels"))
+                            if (ISLABEL("Levels"))
                             {
                                 FINDBEGIN;
                                 Vector2f levels;
-                                for(int b = 0; b < 2; ++b)
+                                for (int b = 0; b < 2; ++b)
                                 {
                                     float val;
                                     READFLT(val)
@@ -2693,7 +2693,7 @@ DENG2_PIMPL(DEDParser)
                 prevDecorDefIdx = idx;
             }
 
-            if(ISTOKEN("Group"))
+            if (ISTOKEN("Group"))
             {
                 idx = DED_AddGroup(ded);
                 ded_group_t *grp = &ded->groups[idx];
@@ -2703,12 +2703,12 @@ DENG2_PIMPL(DEDParser)
                 forever
                 {
                     READLABEL;
-                    if(ISLABEL("Texture") || ISLABEL("Flat"))
+                    if (ISLABEL("Texture") || ISLABEL("Flat"))
                     {
                         bool const haveTexture = ISLABEL("Texture");
 
                         // Need to allocate new stage?
-                        if(sub >= grp->members.size())
+                        if (sub >= grp->members.size())
                         {
                             sub = DED_AddGroupMember(grp);
                         }
@@ -2719,10 +2719,10 @@ DENG2_PIMPL(DEDParser)
                         {
                             READLABEL;
                             RV_URI("ID", &memb->material, (haveTexture? "Textures" : "Flats"))
-                            if(ISLABEL("Tics"))
+                            if (ISLABEL("Tics"))
                             {
                                 READINT(memb->tics);
-                                if(memb->tics < 0)
+                                if (memb->tics < 0)
                                 {
                                     LOG_RES_WARNING("Invalid Group.%s.Tics: %i (< min: 0) in \"%s\" on line #%i"
                                                     "\nWill ignore this Group if used for Material animation")
@@ -2744,7 +2744,7 @@ DENG2_PIMPL(DEDParser)
                 }
             }
 
-            /*if(ISTOKEN("XGClass"))     // XG Class
+            /*if (ISTOKEN("XGClass"))     // XG Class
             {
                 // A new XG Class definition
                 idx = DED_AddXGClass(ded);
@@ -2752,16 +2752,16 @@ DENG2_PIMPL(DEDParser)
                 sub = 0;
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", xgc->id)
                     RV_STR("Name", xgc->name)
-                    if(ISLABEL("Property"))
+                    if (ISLABEL("Property"))
                     {
                         ded_xgclass_property_t *xgcp = NULL;
 
-                        if(sub >= xgc->properties_count.num)
+                        if (sub >= xgc->properties_count.num)
                         {
                             // Allocate new property
                             sub = DED_AddXGClassProperty(xgc);
@@ -2770,7 +2770,7 @@ DENG2_PIMPL(DEDParser)
                         xgcp = &xgc->properties[sub];
 
                         FINDBEGIN;
-                        for(;;)
+                        for (;;)
                         {
                             READLABEL;
                             RV_FLAGS("ID", xgcp->id, "xgcp_")
@@ -2787,7 +2787,7 @@ DENG2_PIMPL(DEDParser)
                 }
             }*/
 
-            if(ISTOKEN("Line")) // Line Type
+            if (ISTOKEN("Line")) // Line Type
             {
                 ded_linetype_t* l;
 
@@ -2796,13 +2796,13 @@ DENG2_PIMPL(DEDParser)
                 l = &ded->lineTypes[idx];
 
                 // Should we copy the previous definition?
-                if(prevLineTypeDefIdx >= 0 && bCopyNext)
+                if (prevLineTypeDefIdx >= 0 && bCopyNext)
                 {
                     ded->lineTypes.copyTo(l, prevLineTypeDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_INT("ID", l->id)
@@ -2844,19 +2844,19 @@ DENG2_PIMPL(DEDParser)
                     RV_INT("Act chain", l->actChain)
                     RV_INT("Deact chain", l->deactChain)
                     RV_FLAGS("Wall section", l->wallSection, "lws_")
-                    if(ISLABEL("Act material"))
+                    if (ISLABEL("Act material"))
                     {
                         READURI(&l->actMaterial, 0)
                     }
-                    else if(ISLABEL("Act texture")) // Alias
+                    else if (ISLABEL("Act texture")) // Alias
                     {
                         READURI(&l->actMaterial, "Textures")
                     }
-                    else if(ISLABEL("Deact material"))
+                    else if (ISLABEL("Deact material"))
                     {
                         READURI(&l->deactMaterial, 0)
                     }
-                    else if(ISLABEL("Deact texture")) // Alias
+                    else if (ISLABEL("Deact texture")) // Alias
                     {
                         READURI(&l->deactMaterial, "Textures")
                     }
@@ -2914,19 +2914,19 @@ DENG2_PIMPL(DEDParser)
                     RV_STR("Sp2", l->sparm[2])
                     RV_STR("Sp3", l->sparm[3])
                     RV_STR("Sp4", l->sparm[4])
-                    if(l->lineClass)
+                    if (l->lineClass)
                     {
                         // IpX Alt names can only be used if the class is defined first!
                         // they also support the DED v6 flags format.
                         int i;
-                        for(i = 0; i < 20; ++i)
+                        for (i = 0; i < 20; ++i)
                         {
                             xgclassparm_t const& iParm = xgClassLinks[l->lineClass].iparm[i];
 
-                            if(!iParm.name[0]) continue;
-                            if(!ISLABEL(iParm.name)) continue;
+                            if (!iParm.name[0]) continue;
+                            if (!ISLABEL(iParm.name)) continue;
 
-                            if(iParm.flagPrefix[0])
+                            if (iParm.flagPrefix[0])
                             {
                                 READFLAGS(l->iparm[i], iParm.flagPrefix)
                             }
@@ -2937,7 +2937,7 @@ DENG2_PIMPL(DEDParser)
                             break;
                         }
                         // Not a known label?
-                        if(i == 20) RV_END
+                        if (i == 20) RV_END
 
                     } else
                     RV_END
@@ -2946,7 +2946,7 @@ DENG2_PIMPL(DEDParser)
                 prevLineTypeDefIdx = idx;
             }
 
-            if(ISTOKEN("Sector")) // Sector Type
+            if (ISTOKEN("Sector")) // Sector Type
             {
                 ded_sectortype_t*   sec;
 
@@ -2954,14 +2954,14 @@ DENG2_PIMPL(DEDParser)
                 idx = DED_AddSectorType(ded, 0);
                 sec = &ded->sectorTypes[idx];
 
-                if(prevSectorTypeDefIdx >= 0 && bCopyNext)
+                if (prevSectorTypeDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
                     ded->sectorTypes.copyTo(sec, prevSectorTypeDefIdx);
                 }
 
                 FINDBEGIN;
-                for(;;)
+                for (;;)
                 {
                     READLABEL;
                     RV_INT("ID", sec->id)
@@ -3058,7 +3058,7 @@ DENG2_PIMPL(DEDParser)
         Str_InitStd(&tmp); Str_Set(&tmp, fileName);
         F_FixSlashes(&tmp, &tmp);
         F_ExpandBasePath(&tmp, &tmp);
-        if(!F_IsAbsolute(&tmp))
+        if (!F_IsAbsolute(&tmp))
         {
             Str_PrependChar(&tmp, '/');
             Str_Prepend(&tmp, parentDirectory.toUtf8().constData());

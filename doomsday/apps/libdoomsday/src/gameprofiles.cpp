@@ -42,7 +42,7 @@ DENG2_PIMPL(GameProfiles)
          * configuration for each game is persistently stored using these profiles.
          * (User-created profiles must use different names.)
          */
-        if(!self.tryFind(game.title()))
+        if (!self.tryFind(game.title()))
         {
             auto *prof = new Profile(game.title());
             prof->setGame(game.id());
@@ -66,7 +66,7 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile &)> func)
 {
     return Profiles::forAll([&func] (AbstractProfile &prof) -> LoopResult
     {
-        if(auto result = func(prof.as<Profile>()))
+        if (auto result = func(prof.as<Profile>()))
         {
             return result;
         }
@@ -80,10 +80,10 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
 
     prof->setGame(block.keyValue(VAR_GAME).text);
 
-    if(Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES))
+    if (Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES))
     {
         StringList ids;
-        for(auto const &val : pkgs->values()) ids << val.text;
+        for (auto const &val : pkgs->values()) ids << val.text;
         prof->setPackages(ids);
     }
 
@@ -158,7 +158,7 @@ StringList GameProfiles::Profile::allRequiredPackages() const
 
 bool GameProfiles::Profile::resetToDefaults()
 {
-    if(isReadOnly()) return false;
+    if (isReadOnly()) return false;
 
     d->packages.clear();
     return true;

@@ -71,9 +71,9 @@ DENG2_PIMPL(EntityDatabase)
     {
         // Do we already have a record for this entity?
         Entities::iterator found = set.find(elementIndex);
-        if(found != set.end()) return &found->second;
+        if (found != set.end()) return &found->second;
 
-        if(!canCreate) return 0;
+        if (!canCreate) return 0;
 
         // A new entity.
         std::pair<Entities::iterator, bool> result;
@@ -105,13 +105,13 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
     DENG2_ASSERT(def);
     Entities *set = d->entities(def->entity->id);
     Entity *entity = d->entityByElementIndex(*set, elementIndex, false /*do not create*/);
-    if(!entity)
+    if (!entity)
         throw Error("EntityDatabase::property", QString("There is no element %1 of type %2")
                                                     .arg(elementIndex)
                                                     .arg(Str_Text(P_NameForMapEntityDef(def->entity))));
 
     Entity::const_iterator found = entity->find(def->id);
-    if(found == entity->end())
+    if (found == entity->end())
         throw Error("EntityDatabase::property", QString("Element %1 of type %2 has no value for property %3")
                                                     .arg(elementIndex)
                                                     .arg(Str_Text(P_NameForMapEntityDef(def->entity)))
@@ -125,12 +125,12 @@ void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementInd
     DENG2_ASSERT(def);
     Entities *set = d->entities(def->entity->id);
     Entity *entity = d->entityByElementIndex(*set, elementIndex, true);
-    if(!entity)
+    if (!entity)
         throw Error("EntityDatabase::setProperty", "Failed adding new entity element record");
 
     // Do we already have a record for this?
     Entity::iterator found = entity->find(def->id);
-    if(found != entity->end())
+    if (found != entity->end())
     {
         PropertyValue **adr = &found->second;
         delete *adr;

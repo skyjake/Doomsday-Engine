@@ -27,7 +27,7 @@ using namespace de;
 PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr)
 {
     DENG2_ASSERT(valueAdr != 0);
-    switch(type)
+    switch (type)
     {
     case DDVT_BYTE:     return new PropertyByteValue (*(   (byte *) valueAdr));
     case DDVT_SHORT:    return new PropertyInt16Value(*(  (short *) valueAdr));

@@ -67,7 +67,7 @@ struct FileHandle::Instance
 static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
 {
     DENG2_ASSERT(file.isValid());
-    if(!file.isValid()) exit(1);
+    if (!file.isValid()) exit(1);
 }
 
 FileHandle::FileHandle()
@@ -80,7 +80,7 @@ FileHandle::~FileHandle()
     close();
 
     // Free any cached data.
-    if(d->data)
+    if (d->data)
     {
         M_Free(d->data); d->data = 0;
     }
@@ -90,13 +90,13 @@ FileHandle::~FileHandle()
 
 FileHandle &FileHandle::close()
 {
-    if(!d->flags.open) return *this;
-    if(d->hndl)
+    if (!d->flags.open) return *this;
+    if (d->hndl)
     {
         fclose(d->hndl); d->hndl = 0;
     }
     // Free any cached data.
-    if(d->data)
+    if (d->data)
     {
         M_Free(d->data); d->data = 0;
     }
@@ -142,7 +142,7 @@ File1 &FileHandle::file() const
 
 size_t FileHandle::baseOffset() const
 {
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().baseOffset();
     }
@@ -152,7 +152,7 @@ size_t FileHandle::baseOffset() const
 size_t FileHandle::length()
 {
     errorIfNotValid(*this, "FileHandle::Length");
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().length();
     }
@@ -168,17 +168,17 @@ size_t FileHandle::length()
 size_t FileHandle::read(uint8_t *buffer, size_t count)
 {
     errorIfNotValid(*this, "FileHandle::read");
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().read(buffer, count);
     }
     else
     {
-        if(d->hndl)
+        if (d->hndl)
         {
             // Normal file.
             count = fread(buffer, 1, count, d->hndl);
-            if(feof(d->hndl))
+            if (feof(d->hndl))
             {
                 d->flags.eof = true;
             }
@@ -187,12 +187,12 @@ size_t FileHandle::read(uint8_t *buffer, size_t count)
 
         // Is there enough room in the file?
         size_t bytesleft = d->size - (d->pos - d->data);
-        if(count > bytesleft)
+        if (count > bytesleft)
         {
             count = bytesleft;
             d->flags.eof = true;
         }
-        if(count)
+        if (count)
         {
             memcpy(buffer, d->pos, count);
             d->pos += count;
@@ -204,7 +204,7 @@ size_t FileHandle::read(uint8_t *buffer, size_t count)
 bool FileHandle::atEnd()
 {
     errorIfNotValid(*this, "FileHandle::atEnd");
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().atEnd();
     }
@@ -223,13 +223,13 @@ unsigned char FileHandle::getC()
 size_t FileHandle::tell()
 {
     errorIfNotValid(*this, "FileHandle::tell");
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().tell();
     }
     else
     {
-        if(d->hndl)
+        if (d->hndl)
         {
             return (size_t) ftell(d->hndl);
         }
@@ -239,7 +239,7 @@ size_t FileHandle::tell()
 
 size_t FileHandle::seek(size_t offset, SeekMethod whence)
 {
-    if(d->flags.reference)
+    if (d->flags.reference)
     {
         return d->file->handle().seek(offset, whence);
     }
@@ -248,7 +248,7 @@ size_t FileHandle::seek(size_t offset, SeekMethod whence)
         size_t oldpos = tell();
 
         d->flags.eof = false;
-        if(d->hndl)
+        if (d->hndl)
         {
             int fwhence = whence == SeekSet? SEEK_SET :
                           whence == SeekCur? SEEK_CUR : SEEK_END;
@@ -257,11 +257,11 @@ size_t FileHandle::seek(size_t offset, SeekMethod whence)
         }
         else
         {
-            if(whence == SeekSet)
+            if (whence == SeekSet)
                 d->pos = d->data + offset;
-            else if(whence == SeekEnd)
+            else if (whence == SeekEnd)
                 d->pos = d->data + (d->size + offset);
-            else if(whence == SeekCur)
+            else if (whence == SeekCur)
                 d->pos += offset;
         }
 
@@ -301,7 +301,7 @@ FileHandle *FileHandle::fromLump(File1 &lump, bool dontBuffer) // static
     // Init and load in the lump data.
     hndl->d->file       = &lump;
     hndl->d->flags.open = true;
-    if(!dontBuffer)
+    if (!dontBuffer)
     {
         hndl->d->size = lump.size();
         hndl->d->pos  = hndl->d->data = (uint8_t *) M_Malloc(hndl->d->size);

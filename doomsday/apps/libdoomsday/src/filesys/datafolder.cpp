@@ -30,12 +30,12 @@ DataFolder::DataFolder(Format format, File &sourceFile)
     setSource(&sourceFile);
 
     // Contents of ZIP archives appear inside the folder automatically.
-    if(ZipArchive::recognize(sourceFile))
+    if (ZipArchive::recognize(sourceFile))
     {
         attach(new ArchiveFeed(sourceFile));
     }
 
-    /*else if(sourceFile.originFeed())
+    /*else if (sourceFile.originFeed())
     {
         attach(sourceFile.originFeed()->newSubFeed(sourceFile.name()));
     }
@@ -58,7 +58,7 @@ String DataFolder::describe() const
 
     // The folder contents (if any) are produced by feeds.
     String const feedDesc = describeFeeds();
-    if(!feedDesc.isEmpty())
+    if (!feedDesc.isEmpty())
     {
         desc += String(" (%1)").arg(feedDesc);
     }

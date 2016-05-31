@@ -496,10 +496,10 @@ public:
         findAll(predicate, parameters, found);
         // Filter out the wrong types.
         QMutableListIterator<FileHandle *> i(found);
-        while(i.hasNext())
+        while (i.hasNext())
         {
             i.next();
-            if(!i.value()->file().is<Type>())
+            if (!i.value()->file().is<Type>())
             {
                 i.remove();
             }

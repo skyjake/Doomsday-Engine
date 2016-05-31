@@ -90,7 +90,7 @@ static bool readNextPost(Post &post, Reader &reader)
     reader.mark();
     dbyte nextByte; reader >> nextByte;
     reader.rewind();
-    if(nextByte == END_OF_POSTS) return false;
+    if (nextByte == END_OF_POSTS) return false;
 
     // Another post begins.
     reader >> post;
@@ -117,7 +117,7 @@ static Columns readPosts(ColumnOffsets const &offsets, Reader &reader)
         Column &column = columns.back();
 
         // Read all posts.
-        while(readNextPost(post, reader))
+        while (readNextPost(post, reader))
         {
             column.push_back(post);
 
@@ -139,7 +139,7 @@ static ColumnOffsets readColumnOffsets(int width, Reader &reader)
     offsets.reserve(width);
 #endif
 
-    for(int col = 0; col < width; ++col)
+    for (int col = 0; col < width; ++col)
     {
         dint32 offset; reader >> offset;
         offsets.push_back(offset);
@@ -168,13 +168,13 @@ static int calcRealHeight(Columns const &columns)
             Post const &post = *postIt;
 
             // Does this post extend the previous one? (a so-called "tall-patch").
-            if(post.topOffset <= tallTop)
+            if (post.topOffset <= tallTop)
                 tallTop += post.topOffset;
             else
                 tallTop = post.topOffset;
 
             // Skip invalid posts.
-            if(post.length <= 0) continue;
+            if (post.length <= 0) continue;
 
             // Unite the geometry of the post.
             geom |= QRect(QPoint(0, tallTop), QSize(1, post.length));
@@ -194,7 +194,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
 #ifdef DENG2_DEBUG
     // Is the "logical" height of the image equal to the actual height of the
     // composited pixel posts?
-    if(meta.logicalDimensions.y != meta.dimensions.y)
+    if (meta.logicalDimensions.y != meta.dimensions.y)
     {
         int postCount = 0;
         DENG2_FOR_EACH_CONST(Columns, i, columns)
@@ -231,24 +231,24 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
             Post const &post = *postIt;
 
             // Does this post extend the previous one? (a so-called "tall-patch").
-            if(post.topOffset <= tallTop)
+            if (post.topOffset <= tallTop)
                 tallTop += post.topOffset;
             else
                 tallTop = post.topOffset;
 
             // Skip invalid posts.
-            if(post.length <= 0) continue;
+            if (post.length <= 0) continue;
 
             // Determine the destination height range.
             int y = tallTop;
             int length = post.length;
 
             // Clamp height range within bounds.
-            if(y + length > h)
+            if (y + length > h)
                 length = h - y;
 
             int offset = 0;
-            if(y < 0)
+            if (y < 0)
             {
                 offset = de::min(-y, length);
                 y = 0;
@@ -257,7 +257,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
             length = de::max(0, length - offset);
 
             // Skip empty ranges.
-            if(!length) continue;
+            if (!length) continue;
 
             // Find the start of the pixel data for the post.
             reader.setOffset(post.firstPixel + offset);
@@ -266,24 +266,24 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
             dbyte *outAlpha = topAlpha + tallTop * w;
 
             // Composite pixels from the post to the output buffer.
-            while(length--)
+            while (length--)
             {
                 // Read the next palette index.
                 dbyte palIdx;
                 reader >> palIdx;
 
                 // Is palette index translation in effect?
-                if(xlatTable)
+                if (xlatTable)
                 {
                     palIdx = dbyte(xlatTable->at(palIdx));
                 }
 
-                if(!maskZero || palIdx)
+                if (!maskZero || palIdx)
                 {
                     *out = palIdx;
                 }
 
-                if(maskZero)
+                if (maskZero)
                     *outAlpha = (palIdx? 0xff : 0);
                 else
                     *outAlpha = 0xff;
@@ -355,19 +355,19 @@ bool Patch::recognize(IByteArray const &data)
         Reader from = Reader(data);
         Header hdr; from >> hdr;
 
-        if(!hdr.dimensions[0] || !hdr.dimensions[1]) return false;
+        if (!hdr.dimensions[0] || !hdr.dimensions[1]) return false;
 
-        for(int col = 0; col < hdr.dimensions[0]; ++col)
+        for (int col = 0; col < hdr.dimensions[0]; ++col)
         {
             dint32 offset;
             from >> offset;
-            if(offset < 0 || (unsigned) offset >= from.source()->size()) return false;
+            if (offset < 0 || (unsigned) offset >= from.source()->size()) return false;
         }
 
         // Validated.
         return true;
     }
-    catch(IByteArray::OffsetError const &)
+    catch (IByteArray::OffsetError const &)
     {
         // Invalid!
         return false;

@@ -50,7 +50,7 @@ DENG2_PIMPL(Resources)
                    << new ResourceClass("RC_FONT",       "Fonts");
 
         // Determine the root directory of the saved session repository.
-        if(auto arg = App::commandLine().check("-savedir", 1))
+        if (auto arg = App::commandLine().check("-savedir", 1))
         {
             // Using a custom root save directory.
             App::commandLine().makeAbsolutePath(arg.pos + 1);
@@ -86,11 +86,11 @@ Resources &Resources::get()
 
 ResourceClass &Resources::resClass(String name)
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        foreach(ResourceClass *resClass, d->resClasses)
+        foreach (ResourceClass *resClass, d->resClasses)
         {
-            if(!resClass->name().compareWithoutCase(name))
+            if (!resClass->name().compareWithoutCase(name))
                 return *resClass;
         }
     }
@@ -99,8 +99,8 @@ ResourceClass &Resources::resClass(String name)
 
 ResourceClass &Resources::resClass(resourceclassid_t id)
 {
-    if(id == RC_NULL) return d->nullResourceClass;
-    if(VALID_RESOURCECLASSID(id))
+    if (id == RC_NULL) return d->nullResourceClass;
+    if (VALID_RESOURCECLASSID(id))
     {
         return *d->resClasses.at(uint(id));
     }
@@ -111,7 +111,7 @@ ResourceClass &Resources::resClass(resourceclassid_t id)
 void Resources::updateOverrideIWADPathFromConfig()
 {
     String path = App::config().gets("resource.iwadFolder", "");
-    if(!path.isEmpty())
+    if (!path.isEmpty())
     {
         LOG_RES_NOTE("Using user-selected primary IWAD folder: \"%s\"") << path;
 
@@ -130,9 +130,9 @@ NativePath Resources::nativeSavePath() const
 res::MapManifest &Resources::findMapManifest(de::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
-    if(!mapUri.scheme().compareWithoutCase("Maps"))
+    if (!mapUri.scheme().compareWithoutCase("Maps"))
     {
-       if(res::MapManifest *found = d->mapManifests.tryFind(
+       if (res::MapManifest *found = d->mapManifests.tryFind(
                    mapUri.path(), PathTree::MatchFull | PathTree::NoBranch))
            return *found;
     }
@@ -143,7 +143,7 @@ res::MapManifest &Resources::findMapManifest(de::Uri const &mapUri) const
 res::MapManifest *Resources::tryFindMapManifest(de::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
-    if(mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
+    if (mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
     return d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch);
 }
 
@@ -161,11 +161,11 @@ void Resources::initMapManifests()
     /// the central lump index.
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     lumpnum_t lastLump = -1;
-    while(lastLump < lumpIndex.size())
+    while (lastLump < lumpIndex.size())
     {
         std::unique_ptr<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
         lastLump = recognizer->lastLump();
-        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
+        if (recognizer->format() != Id1MapRecognizer::UnknownFormat)
         {
             File1 *sourceFile  = recognizer->sourceFile();
             String const mapId = recognizer->id();

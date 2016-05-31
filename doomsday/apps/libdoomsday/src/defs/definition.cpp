@@ -36,7 +36,7 @@ Record const &Definition::def() const
 
 int Definition::order() const
 {
-    if(!accessedRecordPtr()) return -1;
+    if (!accessedRecordPtr()) return -1;
     return geti("__order__");
 }
 

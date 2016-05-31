@@ -64,15 +64,15 @@ DENG2_PIMPL(ResourceManifest)
 ResourceManifest::ResourceManifest(resourceclassid_t resClass, int fFlags, String *name)
     : d(new Instance(this, resClass, fFlags))
 {
-    if(name) addName(*name);
+    if (name) addName(*name);
 }
 
 void ResourceManifest::addName(String newName)
 {
-    if(newName.isEmpty()) return;
+    if (newName.isEmpty()) return;
 
     // Is this name unique? We don't want duplicates.
-    if(!d->names.contains(newName, Qt::CaseInsensitive))
+    if (!d->names.contains(newName, Qt::CaseInsensitive))
     {
         d->names.prepend(newName);
     }
@@ -80,10 +80,10 @@ void ResourceManifest::addName(String newName)
 
 void ResourceManifest::addIdentityKey(String newIdKey)
 {
-    if(newIdKey.isEmpty()) return;
+    if (newIdKey.isEmpty()) return;
 
     // Is this key unique? We don't want duplicates.
-    if(!d->identityKeys.contains(newIdKey, Qt::CaseInsensitive))
+    if (!d->identityKeys.contains(newIdKey, Qt::CaseInsensitive))
     {
         d->identityKeys.append(newIdKey);
     }
@@ -110,23 +110,23 @@ static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *
 
     int condPos = -1;
     int argPos  = -1;
-    if((condPos = idKey.indexOf("==")) >= 0)
+    if ((condPos = idKey.indexOf("==")) >= 0)
     {
         *pCond = LSCOND_EQUAL;
         argPos = condPos + 2;
     }
-    else if((condPos = idKey.indexOf(">=")) >= 0)
+    else if ((condPos = idKey.indexOf(">=")) >= 0)
     {
         *pCond = LSCOND_GREATER_OR_EQUAL;
         argPos = condPos + 2;
     }
-    else if((condPos = idKey.indexOf("<=")) >= 0)
+    else if ((condPos = idKey.indexOf("<=")) >= 0)
     {
         *pCond = LSCOND_LESS_OR_EQUAL;
         argPos = condPos + 2;
     }
 
-    if(condPos < 0) return;
+    if (condPos < 0) return;
 
     // Get the argument.
     *pSize = idKey.mid(argPos).toULong();
@@ -137,7 +137,7 @@ static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *
 
 static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
 {
-    if(idKey.isEmpty()) return -1;
+    if (idKey.isEmpty()) return -1;
 
     // The key may contain a size condition (==, >=, <=).
     lumpsizecondition_t sizeCond;
@@ -148,28 +148,28 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
     String name = idKey;
 
     // Append a .lmp extension if none is specified.
-    if(idKey.fileNameExtension().isEmpty())
+    if (idKey.fileNameExtension().isEmpty())
     {
         name += ".lmp";
     }
 
     lumpnum_t lumpNum = lumpIndex.findLast(Path(name));
-    if(lumpNum < 0) return -1;
+    if (lumpNum < 0) return -1;
 
     // Check the condition.
     size_t lumpSize = lumpIndex[lumpNum].info().size;
-    switch(sizeCond)
+    switch (sizeCond)
     {
     case LSCOND_EQUAL:
-        if(lumpSize != refSize) return -1;
+        if (lumpSize != refSize) return -1;
         break;
 
     case LSCOND_GREATER_OR_EQUAL:
-        if(lumpSize < refSize) return -1;
+        if (lumpSize < refSize) return -1;
         break;
 
     case LSCOND_LESS_OR_EQUAL:
-        if(lumpSize > refSize) return -1;
+        if (lumpSize > refSize) return -1;
         break;
 
     default: break;
@@ -186,12 +186,12 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     {
         FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
-        if(Wad *wad = hndl.file().maybeAs<Wad>())
+        if (Wad *wad = hndl.file().maybeAs<Wad>())
         {
             // Ensure all identity lumps are present.
-            if(identityKeys.count())
+            if (identityKeys.count())
             {
-                if(wad->isEmpty())
+                if (wad->isEmpty())
                 {
                     // Clear not what we are looking for.
                     validated = false;
@@ -200,7 +200,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
                 {
                     // Publish lumps to a temporary index.
                     LumpIndex lumpIndex;
-                    for(int i = 0; i < wad->lumpCount(); ++i)
+                    for (int i = 0; i < wad->lumpCount(); ++i)
                     {
                         lumpIndex.catalogLump(wad->lump(i));
                     }
@@ -208,7 +208,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
                     // Check each lump.
                     DENG2_FOR_EACH_CONST(QStringList, i, identityKeys)
                     {
-                        if(lumpNumForIdentityKey(lumpIndex, *i) < 0)
+                        if (lumpNumForIdentityKey(lumpIndex, *i) < 0)
                         {
                             validated = false;
                             break;
@@ -226,7 +226,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
         App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
     }
-    catch(FS1::NotFoundError const &)
+    catch (FS1::NotFoundError const &)
     {} // Ignore this error.
 
     return validated;
@@ -244,7 +244,7 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
         delete &hndl;
         return result;
     }
-    catch(FS1::NotFoundError const &)
+    catch (FS1::NotFoundError const &)
     {} // Ignore error.
     return false;
 }
@@ -252,11 +252,11 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
 void ResourceManifest::locateFile()
 {
     // Already found?
-    if(d->flags & FF_FOUND) return;
+    if (d->flags & FF_FOUND) return;
 
     // Perform the search.
     int nameIndex = 0;
-    for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
+    for (QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
         StringList candidates;
 
@@ -268,7 +268,7 @@ void ResourceManifest::locateFile()
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
             candidates << foundPath;
         }
-        catch(FS1::NotFoundError const &)
+        catch (FS1::NotFoundError const &)
         {} // Ignore this error.
 
         // Also check what FS2 has to offer. FS1 can't access FS2's files, so we'll
@@ -276,22 +276,22 @@ void ResourceManifest::locateFile()
         App::fileSystem().forAll(*i, [&candidates] (File &f)
         {
             // We ignore interpretations and go straight to the source.
-            if(NativeFile const *native = f.source()->maybeAs<NativeFile>())
+            if (NativeFile const *native = f.source()->maybeAs<NativeFile>())
             {
                 candidates << native->nativePath();
             }
             return LoopContinue;
         });
 
-        for(String foundPath : candidates)
+        for (String foundPath : candidates)
         {
             // Perform identity validation.
             bool validated = false;
-            if(d->classId == RC_PACKAGE)
+            if (d->classId == RC_PACKAGE)
             {
                 /// @todo The identity configuration should declare the type of resource...
                 validated = validateWad(foundPath, d->identityKeys);
-                if(!validated)
+                if (!validated)
                     validated = validateZip(foundPath, d->identityKeys);
             }
             else
@@ -300,7 +300,7 @@ void ResourceManifest::locateFile()
                 validated = true;
             }
 
-            if(validated)
+            if (validated)
             {
                 // This is the resource we've been looking for.
                 d->flags |= FF_FOUND;
@@ -314,7 +314,7 @@ void ResourceManifest::locateFile()
 
 void ResourceManifest::forgetFile()
 {
-    if(d->flags & FF_FOUND)
+    if (d->flags & FF_FOUND)
     {
         d->foundPath.clear();
         d->foundNameIndex = -1;
@@ -324,7 +324,7 @@ void ResourceManifest::forgetFile()
 
 String const &ResourceManifest::resolvedPath(bool tryLocate)
 {
-    if(tryLocate)
+    if (tryLocate)
     {
         locateFile();
     }

@@ -46,7 +46,7 @@ File1::File1(FileHandle &hndl, String _path, FileInfo const &_info, File1 *_cont
 File1::~File1()
 {
     App_FileSystem().releaseFile(*this);
-    if(handle_) delete handle_;
+    if (handle_) delete handle_;
 }
 
 FileInfo const &File1::info() const
@@ -61,7 +61,7 @@ bool File1::isContained() const
 
 File1 &File1::container() const
 {
-    if(!container_) throw NotContainedError("File1::container", "File \"" + NativePath(composePath()).pretty() + " is not contained");
+    if (!container_) throw NotContainedError("File1::container", "File \"" + NativePath(composePath()).pretty() + " is not contained");
     return *container_;
 }
 
@@ -87,7 +87,7 @@ bool File1::hasStartup() const
 
 File1 &File1::setStartup(bool yes)
 {
-    if(yes) flags |= Startup;
+    if (yes) flags |= Startup;
     else    flags &= ~Startup;
     return *this;
 }
@@ -99,7 +99,7 @@ bool File1::hasCustom() const
 
 File1 &File1::setCustom(bool yes)
 {
-    if(yes) flags |= Custom;
+    if (yes) flags |= Custom;
     else    flags &= ~Custom;
     return *this;
 }

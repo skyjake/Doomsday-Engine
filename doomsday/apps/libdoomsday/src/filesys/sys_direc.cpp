@@ -107,7 +107,7 @@ directory_t* Dir_NewFromCWD(void)
 directory_t* Dir_FromText(const char* path)
 {
     directory_t* dir;
-    if(!path || !path[0])
+    if (!path || !path[0])
         return Dir_NewFromCWD();
 
     dir = (directory_t*) M_Calloc(sizeof *dir);
@@ -165,7 +165,7 @@ static void prependBasePath(char* newPath, const char* path, size_t maxLen)
 {
     DENG_ASSERT(newPath && path);
     // Cannot prepend to absolute paths.
-    if(!Dir_IsAbsolutePath(path))
+    if (!Dir_IsAbsolutePath(path))
     {
         filename_t buf;
         dd_snprintf(buf, maxLen, "%s%s", DD_BasePath(), path);
@@ -180,16 +180,16 @@ static void resolveAppRelativeDirectives(char* translated, const char* path, siz
     filename_t buf;
     DENG_ASSERT(translated && path);
 
-    if(path[0] == '>' || path[0] == '}')
+    if (path[0] == '>' || path[0] == '}')
     {
         path++;
-        if(!Dir_IsAbsolutePath(path))
+        if (!Dir_IsAbsolutePath(path))
             prependBasePath(buf, path, maxLen);
         else
             strncpy(buf, path, maxLen);
         strncpy(translated, buf, maxLen);
     }
-    else if(translated != path)
+    else if (translated != path)
     {
         strncpy(translated, path, maxLen);
     }
@@ -201,15 +201,15 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
     filename_t buf;
     DENG_ASSERT(path);
 
-    if(!path[0] || 0 == maxLen || path[0] != '~') return;
+    if (!path[0] || 0 == maxLen || path[0] != '~') return;
 
     memset(buf, 0, sizeof(buf));
 
-    if(path[1] == '/')
+    if (path[1] == '/')
     {
         // Replace it with the HOME environment variable.
         strncpy(buf, getenv("HOME"), FILENAME_T_MAXLEN);
-        if(DENG_LAST_CHAR(buf) != '/')
+        if (DENG_LAST_CHAR(buf) != '/')
             M_StrCat(buf, "/", FILENAME_T_MAXLEN);
 
         // Append the rest of the original path.
@@ -225,10 +225,10 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
         userName[end - path - 1] = 0;
 
         pw = getpwnam(userName);
-        if(pw)
+        if (pw)
         {
             strncpy(buf, pw->pw_dir, FILENAME_T_MAXLEN);
-            if(DENG_LAST_CHAR(buf) != '/')
+            if (DENG_LAST_CHAR(buf) != '/')
                 M_StrCat(buf, "/", FILENAME_T_MAXLEN);
         }
 
@@ -248,16 +248,16 @@ static void resolvePathRelativeDirectives(char* path)
     char* end = path + strlen(path);
     char* prev = path; // Assume an absolute path.
 
-    for(; *ch; ch++)
+    for (; *ch; ch++)
     {
-        if(ch[0] == '/' && ch[1] == '.')
+        if (ch[0] == '/' && ch[1] == '.')
         {
-            if(ch[2] == '/')
+            if (ch[2] == '/')
             {
                 memmove(ch, ch + 2, end - ch - 1);
                 ch--;
             }
-            else if(ch[2] == '.' && ch[3] == '/')
+            else if (ch[2] == '.' && ch[3] == '/')
             {
                 memmove(prev, ch + 3, end - ch - 2);
                 // Must restart from the beginning.
@@ -266,14 +266,14 @@ static void resolvePathRelativeDirectives(char* path)
                 continue;
             }
         }
-        if(*ch == '/')
+        if (*ch == '/')
             prev = ch;
     }
 }
 
 void Dir_CleanPath(char* path, size_t len)
 {
-    if(!path || 0 == len) return;
+    if (!path || 0 == len) return;
 
     M_Strip(path, len);
 #if defined(UNIX)
@@ -296,7 +296,7 @@ char* Dir_CurrentPath(void)
 {
     de::String path = de::App::currentWorkPath();
     // FS1 generally assumes that paths end with a separator.
-    if(!path.endsWith(de::NativePath::separator()))
+    if (!path.endsWith(de::NativePath::separator()))
     {
         path += de::NativePath::separator();
     }
@@ -306,18 +306,18 @@ char* Dir_CurrentPath(void)
 static void Dir_FileName(char* name, const char* path, size_t len)
 {
     char ext[100]; /// @todo  Use dynamic string.
-    if(!path || !name || 0 == len) return;
+    if (!path || !name || 0 == len) return;
     _splitpath(path, 0, 0, name, ext);
     M_StrCat(name, ext, len);
 }
 
 static int Dir_IsAbsolutePath(const char* path)
 {
-    if(!path || !path[0]) return 0;
-    if(path[0] == '/' || path[1] == ':')
+    if (!path || !path[0]) return 0;
+    if (path[0] == '/' || path[1] == ':')
         return true;
 #if defined(UNIX)
-    if(path[0] == '~')
+    if (path[0] == '~')
         return true;
 #endif
     return false;
@@ -333,14 +333,14 @@ dd_bool Dir_mkpath(const char* path)
     filename_t full, buf;
     char* ptr, *endptr;
 
-    if(!path || !path[0]) return false;
+    if (!path || !path[0]) return false;
 
     // Convert all backslashes to normal slashes.
     strncpy(full, path, FILENAME_T_MAXLEN);
     Dir_ToNativeSeparators(full, FILENAME_T_MAXLEN);
 
     // Does this path already exist?
-    if(0 == access(full, 0))
+    if (0 == access(full, 0))
         return true;
 
     // Check and create the path in segments.
@@ -349,12 +349,12 @@ dd_bool Dir_mkpath(const char* path)
     do
     {
         endptr = strchr(ptr, DENG_DIR_SEP_CHAR);
-        if(!endptr)
+        if (!endptr)
             M_StrCat(buf, ptr, FILENAME_T_MAXLEN);
         else
             M_StrnCat(buf, ptr, endptr - ptr, FILENAME_T_MAXLEN);
 
-        if(buf[0] && access(buf, 0))
+        if (buf[0] && access(buf, 0))
         {
             // Path doesn't exist, create it.
 #if defined(WIN32)
@@ -366,7 +366,7 @@ dd_bool Dir_mkpath(const char* path)
         M_StrCat(buf, DENG_DIR_SEP_STR, FILENAME_T_MAXLEN);
         ptr = endptr + 1;
 
-    } while(endptr);
+    } while (endptr);
 
     return (0 == access(full, 0));
 }
@@ -375,7 +375,7 @@ dd_bool Dir_mkpath(const char* path)
 void Dir_MakeAbsolutePath(char* path, size_t len)
 {
     filename_t buf;
-    if(!path || !path[0] || 0 == len) return;
+    if (!path || !path[0] || 0 == len) return;
 
 #if defined(UNIX)
     resolveHomeRelativeDirectives(path, len);
@@ -388,11 +388,11 @@ void Dir_MakeAbsolutePath(char* path, size_t len)
 static void Dir_ToNativeSeparators(char* path, size_t len)
 {
     size_t i;
-    if(!path || !path[0] || 0 == len) return;
+    if (!path || !path[0] || 0 == len) return;
 
-    for(i = 0; i < len && path[i]; ++i)
+    for (i = 0; i < len && path[i]; ++i)
     {
-        if(path[i] == DENG_DIR_WRONG_SEP_CHAR)
+        if (path[i] == DENG_DIR_WRONG_SEP_CHAR)
             path[i] = DENG_DIR_SEP_CHAR;
     }
 }
@@ -400,11 +400,11 @@ static void Dir_ToNativeSeparators(char* path, size_t len)
 static void Dir_FixSeparators(char* path, size_t len)
 {
     size_t i;
-    if(!path || !path[0] || 0 == len) return;
+    if (!path || !path[0] || 0 == len) return;
 
-    for(i = 0; i < len && path[i]; ++i)
+    for (i = 0; i < len && path[i]; ++i)
     {
-        if(path[i] == '\\')
+        if (path[i] == '\\')
             path[i] = '/';
     }
 }
@@ -414,7 +414,7 @@ static void Dir_FixSeparators(char* path, size_t len)
     LOG_AS("Dir");
 
     bool success = false;
-    if(path && path[0])
+    if (path && path[0])
     {
         success = de::NativePath::setWorkPath(path);
     }

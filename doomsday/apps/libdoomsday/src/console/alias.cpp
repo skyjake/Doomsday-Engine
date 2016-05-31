@@ -34,11 +34,11 @@ void Con_InitAliases()
 
 void Con_ClearAliases()
 {
-    if(caliases)
+    if (caliases)
     {
         // Free the alias data.
         calias_t** cal = caliases;
-        for(uint i = 0; i < numCAliases; ++i, ++cal)
+        for (uint i = 0; i < numCAliases; ++i, ++cal)
         {
             M_Free((*cal)->name);
             M_Free((*cal)->command);
@@ -57,19 +57,19 @@ calias_t *Con_FindAlias(char const *name)
     dd_bool isDone;
     int result;
 
-    if(numCAliases == 0) return 0;
-    if(!name || !name[0]) return 0;
+    if (numCAliases == 0) return 0;
+    if (!name || !name[0]) return 0;
 
     bottomIdx = 0;
     topIdx = numCAliases-1;
     cal = NULL;
     isDone = false;
-    while(bottomIdx <= topIdx && !isDone)
+    while (bottomIdx <= topIdx && !isDone)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
 
         result = qstricmp(caliases[pivot]->name, name);
-        if(result == 0)
+        if (result == 0)
         {
             // Found.
             cal = caliases[pivot];
@@ -77,9 +77,9 @@ calias_t *Con_FindAlias(char const *name)
         }
         else
         {
-            if(result > 0)
+            if (result > 0)
             {
-                if(pivot == 0)
+                if (pivot == 0)
                 {
                     // Not present.
                     isDone = true;
@@ -97,20 +97,20 @@ calias_t *Con_FindAlias(char const *name)
 
 calias_t* Con_AddAlias(char const* name, char const* command)
 {
-    if(!name || !name[0] || !command || !command[0]) return 0;
+    if (!name || !name[0] || !command || !command[0]) return 0;
 
     caliases = (calias_t**) M_Realloc(caliases, sizeof(*caliases) * ++numCAliases);
 
     // Find the insertion point.
     uint idx;
-    for(idx = 0; idx < numCAliases-1; ++idx)
+    for (idx = 0; idx < numCAliases-1; ++idx)
     {
-        if(qstricmp(caliases[idx]->name, name) > 0)
+        if (qstricmp(caliases[idx]->name, name) > 0)
             break;
     }
 
     // Make room for the new alias.
-    if(idx != numCAliases-1)
+    if (idx != numCAliases-1)
         memmove(caliases + idx + 1, caliases + idx, sizeof(*caliases) * (numCAliases - 1 - idx));
 
     // Add the new variable, making a static copy of the name in the zone (this allows
@@ -130,12 +130,12 @@ void Con_DeleteAlias(calias_t* cal)
     DENG_ASSERT(cal);
 
     uint idx;
-    for(idx = 0; idx < numCAliases; ++idx)
+    for (idx = 0; idx < numCAliases; ++idx)
     {
-        if(caliases[idx] == cal)
+        if (caliases[idx] == cal)
             break;
     }
-    if(idx == numCAliases) return;
+    if (idx == numCAliases) return;
 
     Con_UpdateKnownWords();
 
@@ -143,7 +143,7 @@ void Con_DeleteAlias(calias_t* cal)
     M_Free(cal->command);
     M_Free(cal);
 
-    if(idx < numCAliases - 1)
+    if (idx < numCAliases - 1)
     {
         memmove(caliases + idx, caliases + idx + 1, sizeof(*caliases) * (numCAliases - idx - 1));
     }
@@ -163,7 +163,7 @@ String Con_AliasAsStyledText(calias_t *alias)
 void Con_AddKnownWordsForAliases()
 {
     calias_t** cal = caliases;
-    for(uint i = 0; i < numCAliases; ++i, ++cal)
+    for (uint i = 0; i < numCAliases; ++i, ++cal)
     {
         Con_AddKnownWord(WT_CALIAS, *cal);
     }

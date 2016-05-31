@@ -48,7 +48,7 @@ DENG2_PIMPL(BusyMode)
     int performTask(BusyTask *task)
     {
         DENG2_ASSERT(task);
-        if(!task) return 0;
+        if (!task) return 0;
 
         DENG2_ASSERT(!busyInited);
 
@@ -58,11 +58,11 @@ DENG2_PIMPL(BusyMode)
         busyInited = true;
 
         ITaskRunner::Result result;
-        if(runner)
+        if (runner)
         {
             result = runner->runTask(task);
         }
-        if(!result.wasRun)
+        if (!result.wasRun)
         {
             // As a fallback, just run the callback.
             result.returnValue = task->worker(task->workerData);
@@ -71,13 +71,13 @@ DENG2_PIMPL(BusyMode)
 
         // Clean up.
         busyInited = false;
-        if(task->name)
+        if (task->name)
         {
             LOG_VERBOSE("Busy task \"%s\" performed in %.2f seconds")
                     << task->name
                     << taskStartedAt.since();
         }
-        if(busyTaskEndedWithError)
+        if (busyTaskEndedWithError)
         {
             throw Error("BusyMode::performTask", "Task failed: " + busyError);
         }
@@ -126,7 +126,7 @@ BusyTask *BusyMode::currentTask() const
 {
     DENG2_GUARD(d)
 
-    if(!isActive()) return nullptr;
+    if (!isActive()) return nullptr;
     return d->busyTask;
 }
 
@@ -161,7 +161,7 @@ static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* wor
     task->workerData = workerData;
 
     // Take a copy of the task name.
-    if(!taskName.isEmpty())
+    if (!taskName.isEmpty())
     {
         task->name = M_StrDup(taskName.toLatin1());
     }
@@ -172,7 +172,7 @@ static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* wor
 static void deleteTask(BusyTask *task)
 {
     DENG_ASSERT(task);
-    if(task->name) M_Free((void *)task->name);
+    if (task->name) M_Free((void *)task->name);
     delete task;
 }
 
@@ -213,7 +213,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
 
     DENG2_ASSERT(!isActive());
 
-    if(!tasks || numTasks <= 0) return result; // Hmm, no work?
+    if (!tasks || numTasks <= 0) return result; // Hmm, no work?
 
     // Pick the first task.
     task = tasks;
@@ -224,10 +224,10 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
     }
 
     // Process tasks.
-    for(i = 0; i < numTasks; ++i, ++task)
+    for (i = 0; i < numTasks; ++i, ++task)
     {
         // If no new task name is specified, continue using the name of the previous task.
-        if(task->name)
+        if (task->name)
         {
             currentTaskName = task->name;
         }
@@ -237,7 +237,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         /*
         /// @todo Kludge: Force BUSYF_STARTUP here so that the animation of one task
         ///       is not drawn on top of the last frame of the previous.
-        if(numTasks > 1)
+        if (numTasks > 1)
         {
             mode |= BUSYF_STARTUP;
         }
@@ -245,7 +245,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         */
 
         // Null tasks are not processed (implicit success).
-        if(!task->worker) continue;
+        if (!task->worker) continue;
 
         /**
          * Process the work.
@@ -268,7 +268,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
             i->busyTaskCompleted(*task);
         }
 
-        if(result) break;
+        if (result) break;
     }
 
     DENG2_FOR_AUDIENCE2(End, i)

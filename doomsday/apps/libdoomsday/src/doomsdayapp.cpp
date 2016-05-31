@@ -127,9 +127,9 @@ DENG2_PIMPL(DoomsdayApp)
 
     void attachWadFeed(String const &description, NativePath const &path)
     {
-        if(!path.isEmpty())
+        if (!path.isEmpty())
         {
-            if(path.exists())
+            if (path.exists())
             {
                 LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
                 App::rootFolder().locate<Folder>(PATH_LOCAL_WADS).attach(
@@ -145,9 +145,9 @@ DENG2_PIMPL(DoomsdayApp)
 
     void attachPacksFeed(String const &description, NativePath const &path)
     {
-        if(!path.isEmpty())
+        if (!path.isEmpty())
         {
-            if(path.exists())
+            if (path.exists())
             {
                 LOG_RES_NOTE("Using %s package folder (including subfolders): %s")
                         << description << path.pretty();
@@ -180,7 +180,7 @@ DENG2_PIMPL(DoomsdayApp)
 
         // Check for games installed using Steam.
         NativePath const steamBase = steamBasePath();
-        if(steamBase.exists())
+        if (steamBase.exists())
         {
             NativePath steamPath = steamBase / "SteamApps/common/";
             LOG_RES_NOTE("Detected SteamApps path: %s") << steamPath.pretty();
@@ -195,10 +195,10 @@ DENG2_PIMPL(DoomsdayApp)
                 "DOOM 3 BFG Edition/base/wads"
             };
 
-            for(auto const &appDir : appDirs)
+            for (auto const &appDir : appDirs)
             {
                 NativePath const p = steamPath / appDir;
-                if(p.exists())
+                if (p.exists())
                 {
                     attachWadFeed("Steam", p);
                 }
@@ -207,26 +207,26 @@ DENG2_PIMPL(DoomsdayApp)
 
 #ifdef UNIX
         NativePath const systemWads("/usr/share/games/doom");
-        if(systemWads.exists())
+        if (systemWads.exists())
         {
             attachWadFeed("system", systemWads);
         }
 #endif
 
         // Add all paths from the DOOMWADPATH environment variable.
-        if(getenv("DOOMWADPATH"))
+        if (getenv("DOOMWADPATH"))
         {
             // Interpreted similarly to the PATH variable.
             QStringList paths = String(getenv("DOOMWADPATH"))
                     .split(ENV_PATH_SEP_CHAR, String::SkipEmptyParts);
-            while(!paths.isEmpty())
+            while (!paths.isEmpty())
             {
                 attachWadFeed(_E(m) "DOOMWADPATH" _E(.), startupPath / paths.takeLast());
             }
         }
 
         // Add the path from the DOOMWADDIR environment variable.
-        if(getenv("DOOMWADDIR"))
+        if (getenv("DOOMWADDIR"))
         {
             attachWadFeed(_E(m) "DOOMWADDIR" _E(.), startupPath / getenv("DOOMWADDIR"));
         }
@@ -234,18 +234,18 @@ DENG2_PIMPL(DoomsdayApp)
 #ifdef UNIX
         // There may be an iwaddir specified in a system-level config file.
         filename_t fn;
-        if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        if (UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
         {
             attachWadFeed("UnixInfo " _E(i) "paths.iwaddir" _E(.), startupPath / fn);
         }
 #endif
 
         // Command line paths.
-        if(auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
+        if (auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
         {
-            for(dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            for (dint p = arg.pos + 1; p < cmdLine.count(); ++p)
             {
-                if(cmdLine.isOption(p)) break;
+                if (cmdLine.isOption(p)) break;
 
                 cmdLine.makeAbsolutePath(p);
                 attachWadFeed("command-line", cmdLine.at(p));
@@ -269,7 +269,7 @@ DENG2_PIMPL(DoomsdayApp)
 #ifdef UNIX
         // There may be an iwaddir specified in a system-level config file.
         filename_t fn;
-        if(UnixInfo_GetConfigValue("paths", "packsdir", fn, FILENAME_T_MAXLEN))
+        if (UnixInfo_GetConfigValue("paths", "packsdir", fn, FILENAME_T_MAXLEN))
         {
             attachPacksFeed("UnixInfo " _E(i) "paths.packsdir" _E(.),
                             cmdLine.startupPath() / fn);
@@ -277,11 +277,11 @@ DENG2_PIMPL(DoomsdayApp)
 #endif
 
         // Command line paths.
-        if(auto arg = cmdLine.check("-packs", 1))
+        if (auto arg = cmdLine.check("-packs", 1))
         {
-            for(dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            for (dint p = arg.pos + 1; p < cmdLine.count(); ++p)
             {
-                if(cmdLine.isOption(p)) break;
+                if (cmdLine.isOption(p)) break;
 
                 cmdLine.makeAbsolutePath(p);
                 attachPacksFeed("command-line", cmdLine.at(p));
@@ -306,7 +306,7 @@ DENG2_PIMPL(DoomsdayApp)
     void determineGlobalPaths()
     {
         // Use a custom base directory?
-        if(CommandLine_CheckWith("-basedir", 1))
+        if (CommandLine_CheckWith("-basedir", 1))
         {
             DD_SetBasePath(CommandLine_Next());
         }
@@ -376,7 +376,7 @@ void DoomsdayApp::initWadFolders()
     d->initWadFolders();
     d->dataBundles.identify();
 
-    if(d->initialized)
+    if (d->initialized)
     {
         games().checkReadiness();
     }
@@ -435,12 +435,12 @@ NativePath DoomsdayApp::steamBasePath()
     {
         QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
         String path = st.value("SteamPath").toString();
-        if(!path.isEmpty()) return path;
+        if (!path.isEmpty()) return path;
     }
     {
         QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
         String path = st.value("InstallPath").toString();
-        if(!path.isEmpty()) return path;
+        if (!path.isEmpty()) return path;
     }
 #elif MACOSX
     return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
@@ -517,11 +517,11 @@ void DoomsdayApp::unloadGame(Game const &/*upcomingGame*/)
 {
     auto &gx = plugins().gameExports();
 
-    if(App_GameLoaded())
+    if (App_GameLoaded())
     {
         LOG_MSG("Unloading game...");
 
-        if(gx.Shutdown)
+        if (gx.Shutdown)
         {
             gx.Shutdown();
         }
@@ -531,7 +531,7 @@ void DoomsdayApp::unloadGame(Game const &/*upcomingGame*/)
             void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
             LOGDEV_MSG("Calling DP_Unload %p") << unloader;
             plugins().setActivePluginId(game().pluginId());
-            if(unloader) ((pluginfunc_t)unloader)();
+            if (unloader) ((pluginfunc_t)unloader)();
             plugins().setActivePluginId(0);
         }
 
@@ -591,17 +591,17 @@ void DoomsdayApp::setGame(Game const &game)
 
 void DoomsdayApp::makeGameCurrent(Game const &newGame)
 {
-    if(!newGame.isNull())
+    if (!newGame.isNull())
     {
         LOG_MSG("Loading game '%s'...") << newGame.id();
     }
 
     Library_ReleaseGames();
 
-    if(!isShuttingDown())
+    if (!isShuttingDown())
     {
         // Re-initialize subsystems needed even when in Home.
-        if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
+        if (!plugins().exchangeGameEntryPoints(newGame.pluginId()))
         {
             throw Plugins::EntryPointError("DoomsdayApp::makeGameCurrent",
                                            "Failed to exchange entrypoints with plugin " +
@@ -627,12 +627,12 @@ bool DoomsdayApp::changeGame(Game const &newGame,
                              Behaviors behaviors)
 {
     // Ignore attempts to reload the current game?
-    if(game().id() == newGame.id())
+    if (game().id() == newGame.id())
     {
         // We are reloading.
-        if(!behaviors.testFlag(AllowReload))
+        if (!behaviors.testFlag(AllowReload))
         {
-            if(isGameLoaded())
+            if (isGameLoaded())
             {
                 LOG_NOTE("%s (%s) is already loaded") << newGame.title() << newGame.id();
             }
@@ -655,7 +655,7 @@ bool DoomsdayApp::changeGame(Game const &newGame,
      * If we aren't shutting down then we are either loading a game or switching
      * to Home (the current game will have already been unloaded).
      */
-    if(!isShuttingDown())
+    if (!isShuttingDown())
     {
         /*
          * The bulk of this we can do in busy mode unless we are already busy
@@ -682,19 +682,19 @@ bool DoomsdayApp::changeGame(Game const &newGame,
 
         p.initiatedBusyMode = !BusyMode_Active();
 
-        if(isGameLoaded())
+        if (isGameLoaded())
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void *loader = plugins().findEntryPoint(game().pluginId(), "DP_Load");
             LOGDEV_MSG("Calling DP_Load %p") << loader;
             plugins().setActivePluginId(game().pluginId());
-            if(loader) ((pluginfunc_t)loader)();
+            if (loader) ((pluginfunc_t)loader)();
             plugins().setActivePluginId(0);
         }
 
         /// @todo Kludge: Use more appropriate task names when unloading a game.
-        if(newGame.isNull())
+        if (newGame.isNull())
         {
             gameChangeTasks[0].name = "Unloading game...";
             gameChangeTasks[3].name = "Switching to Home...";
@@ -703,7 +703,7 @@ bool DoomsdayApp::changeGame(Game const &newGame,
 
         BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
-        if(isGameLoaded())
+        if (isGameLoaded())
         {
             Game::printBanner(game());
         }

@@ -35,14 +35,14 @@ DENG2_PIMPL(BaseMap)
 
     ~Instance()
     {
-        if(manifest) manifest->audienceForDeletion() -= this;
+        if (manifest) manifest->audienceForDeletion() -= this;
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
     }
 
     void recordBeingDeleted(Record &record)
     {
         // The manifest is not owned by us, it may be deleted by others.
-        if(manifest == &record)
+        if (manifest == &record)
         {
             manifest = nullptr;
         }
@@ -63,7 +63,7 @@ BaseMap::~BaseMap()
 
 String BaseMap::id() const
 {
-    if(!hasManifest()) return "";
+    if (!hasManifest()) return "";
     return manifest().gets("id");
 }
 
@@ -74,7 +74,7 @@ bool BaseMap::hasManifest() const
 
 res::MapManifest &BaseMap::manifest() const
 {
-    if(hasManifest())
+    if (hasManifest())
     {
         DENG2_ASSERT(d->manifest != nullptr);
         return *d->manifest;
@@ -85,11 +85,11 @@ res::MapManifest &BaseMap::manifest() const
 
 void BaseMap::setManifest(res::MapManifest *newManifest)
 {
-    if(d->manifest) d->manifest->audienceForDeletion() -= d;
+    if (d->manifest) d->manifest->audienceForDeletion() -= d;
 
     d->manifest = newManifest;
 
-    if(d->manifest) d->manifest->audienceForDeletion() += d;
+    if (d->manifest) d->manifest->audienceForDeletion() += d;
 }
 
 EntityDatabase &BaseMap::entityDatabase() const

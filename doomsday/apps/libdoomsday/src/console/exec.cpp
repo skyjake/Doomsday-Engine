@@ -155,13 +155,13 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     strcpy(cargs->cmdLine, lpCmdLine);
 
     // Prepare.
-    for(i = 0; i < len; ++i)
+    for (i = 0; i < len; ++i)
     {
         // Whitespaces are separators.
-        if(DENG_ISSPACE(cargs->cmdLine[i]))
+        if (DENG_ISSPACE(cargs->cmdLine[i]))
             cargs->cmdLine[i] = 0;
 
-        if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
+        if (cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
         {   // Escape sequence.
             memmove(cargs->cmdLine + i, cargs->cmdLine + i + 1,
                     sizeof(cargs->cmdLine) - i - 1);
@@ -169,14 +169,14 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
             continue;
         }
 
-        if(cargs->cmdLine[i] == '"')
+        if (cargs->cmdLine[i] == '"')
         {   // Find the end.
             size_t              start = i;
 
             cargs->cmdLine[i] = 0;
-            for(++i; i < len && cargs->cmdLine[i] != '"'; ++i)
+            for (++i; i < len && cargs->cmdLine[i] != '"'; ++i)
             {
-                if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1])) // Escape sequence?
+                if (cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1])) // Escape sequence?
                 {
                     memmove(cargs->cmdLine + i, cargs->cmdLine + i + 1,
                             sizeof(cargs->cmdLine) - i - 1);
@@ -186,25 +186,25 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
             }
 
             // Quote not terminated?
-            if(i == len)
+            if (i == len)
                 break;
 
             // An empty set of quotes?
-            if(i == start + 1)
+            if (i == start + 1)
                 cargs->cmdLine[i] = SC_EMPTY_QUOTE;
             else
                 cargs->cmdLine[i] = 0;
         }
 
-        if(cargs->cmdLine[i] == '{')
+        if (cargs->cmdLine[i] == '{')
         {   // Find matching end, braces are another notation for quotes.
             int             level = 0;
             size_t          start = i;
 
             cargs->cmdLine[i] = 0;
-            for(++i; i < len; ++i)
+            for (++i; i < len; ++i)
             {
-                if(cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1])) // Escape sequence?
+                if (cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1])) // Escape sequence?
                 {
                     memmove(cargs->cmdLine + i, cargs->cmdLine + i + 1,
                             sizeof(cargs->cmdLine) - i - 1);
@@ -213,24 +213,24 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
                     continue;
                 }
 
-                if(cargs->cmdLine[i] == '}')
+                if (cargs->cmdLine[i] == '}')
                 {
-                    if(!level)
+                    if (!level)
                         break;
 
                     level--;
                 }
 
-                if(cargs->cmdLine[i] == '{')
+                if (cargs->cmdLine[i] == '{')
                     level++;
             }
 
             // Quote not terminated?
-            if(i == len)
+            if (i == len)
                 break;
 
             // An empty set of braces?
-            if(i == start + 1)
+            if (i == start + 1)
                 cargs->cmdLine[i] = SC_EMPTY_QUOTE;
             else
                 cargs->cmdLine[i] = 0;
@@ -239,13 +239,13 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 
     // Scan through the cmdLine and get the beginning of each token.
     cargs->argc = 0;
-    for(i = 0; i < len; ++i)
+    for (i = 0; i < len; ++i)
     {
-        if(!cargs->cmdLine[i])
+        if (!cargs->cmdLine[i])
             continue;
 
         // Is this an empty quote?
-        if(cargs->cmdLine[i] == char(SC_EMPTY_QUOTE))
+        if (cargs->cmdLine[i] == char(SC_EMPTY_QUOTE))
             cargs->cmdLine[i] = 0;  // Just an empty string.
 
         cargs->argv[cargs->argc++] = cargs->cmdLine + i;
@@ -261,7 +261,7 @@ static Value *Function_Console_ListVars(Context &, Function::ArgumentValues cons
     Con_TermsRegex(vars, args.at(0)->asText(), WT_CVAR);
 
     std::unique_ptr<ArrayValue> result(new ArrayValue);
-    for(String v : vars)
+    for (String v : vars)
     {
         *result << new TextValue(v);
     }
@@ -270,7 +270,7 @@ static Value *Function_Console_ListVars(Context &, Function::ArgumentValues cons
 
 dd_bool Con_Init(void)
 {
-    if(ConsoleInited) return true;
+    if (ConsoleInited) return true;
 
     LOG_SCR_VERBOSE("Initializing the console...");
 
@@ -292,7 +292,7 @@ dd_bool Con_Init(void)
 
 void Con_Shutdown(void)
 {
-    if(!ConsoleInited) return;
+    if (!ConsoleInited) return;
 
     LOG_SCR_VERBOSE("Shutting down the console...");
 
@@ -314,7 +314,7 @@ static void Con_Send(const char *command, byte src, int silent)
     ushort len = (ushort) strlen(command);
 
     LOG_AS("Con_Send");
-    if(len >= 0x8000)
+    if (len >= 0x8000)
     {
         LOGDEV_NET_ERROR("Command is too long, length=%i") << len;
         return;
@@ -339,14 +339,14 @@ static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
     int     i;
 
     // Look for an empty spot.
-    for(i = 0; i < exBuffSize; ++i)
-        if(!exBuff[i].used)
+    for (i = 0; i < exBuffSize; ++i)
+        if (!exBuff[i].used)
         {
             ptr = exBuff + i;
             break;
         }
 
-    if(ptr == NULL)
+    if (ptr == NULL)
     {
         // No empty places, allocate a new one.
         exBuff = (execbuff_t *) M_Realloc(exBuff, sizeof(execbuff_t) * ++exBuffSize);
@@ -384,11 +384,11 @@ static dd_bool Con_CheckExecBuffer(void)
     TimeDelta const now = TimeDelta::sinceStartOfProcess();
 
     // Execute the commands whose time has come.
-    for(i = 0; i < exBuffSize; ++i)
+    for (i = 0; i < exBuffSize; ++i)
     {
         execbuff_t *ptr = exBuff + i;
 
-        if(!ptr->used || ptr->when > now)
+        if (!ptr->used || ptr->when > now)
             continue;
 
         // We'll now execute this command.
@@ -399,17 +399,17 @@ static dd_bool Con_CheckExecBuffer(void)
         bool const isInteractive =
                 (ptr->source == CMDS_CONSOLE ||
                  ptr->source == CMDS_CMDLINE);
-        if(isInteractive)
+        if (isInteractive)
         {
             Log::threadLog().beginInteractive();
         }
 
-        if(!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
+        if (!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
         {
             ret = false;
         }
 
-        if(isInteractive)
+        if (isInteractive)
         {
             Log::threadLog().endInteractive();
         }
@@ -434,15 +434,15 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
     char           *text = *expCommand;
     size_t          i, off, size = strlen(text) + 1;
 
-    for(i = 0; text[i]; ++i)
+    for (i = 0; text[i]; ++i)
     {
-        if(text[i] == '%' && (text[i + 1] >= '1' && text[i + 1] <= '9'))
+        if (text[i] == '%' && (text[i + 1] >= '1' && text[i + 1] <= '9'))
         {
             char           *substr;
             int             aidx = text[i + 1] - '1' + 1;
 
             // Expand! (or delete)
-            if(aidx > args->argc - 1)
+            if (aidx > args->argc - 1)
                 substr = (char *) "";
             else
                 substr = args->argv[aidx];
@@ -452,7 +452,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
             // Reallocate.
             off = strlen(substr);
             text = *expCommand = (char *) M_Realloc(*expCommand, size += off - 2);
-            if(off)
+            if (off)
             {
                 // Make room for the insert.
                 memmove(text + i + off, text + i, size - i - off);
@@ -460,12 +460,12 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
             }
             i += off - 1;
         }
-        else if(text[i] == '%' && text[i + 1] == '0')
+        else if (text[i] == '%' && text[i + 1] == '0')
         {
             // First get rid of the %0.
             memmove(text + i, text + i + 2, size - i - 2);
             text = *expCommand = (char *) M_Realloc(*expCommand, size -= 2);
-            for(p = args->argc - 1; p > 0; p--)
+            for (p = args->argc - 1; p > 0; p--)
             {
                 off = strlen(args->argv[p]) + 1;
                 text = *expCommand = (char *) M_Realloc(*expCommand, size += off);
@@ -488,19 +488,19 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
     calias_t *cal;
 
     PrepareCmdArgs(&args, subCmd);
-    if(!args.argc)
+    if (!args.argc)
         return true;
 
     // Try to find a matching console command.
     ccmd = Con_FindCommandMatchArgs(&args);
-    if(ccmd != NULL)
+    if (ccmd != NULL)
     {
         // Found a match. Are we allowed to execute?
         dd_bool canExecute = true;
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
-        if((ccmd->flags & CMDF_NO_NULLGAME) && DoomsdayApp::game().isNull())
+        if ((ccmd->flags & CMDF_NO_NULLGAME) && DoomsdayApp::game().isNull())
         {
             LOG_SCR_ERROR("Execution of command '%s' is only allowed when a game is loaded") << ccmd->name;
             return true;
@@ -509,17 +509,17 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
         /// @todo Access control needs revising. -jk
 #if 0
         // A dedicated server, trying to execute a ccmd not available to us?
-        if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
+        if (isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
         {
             LOG_SCR_ERROR("Execution of command '%s' not possible in dedicated mode") << ccmd->name;
             return true;
         }
 
         // Net commands sent to servers have extra protection.
-        if(isServer && isNetCmd)
+        if (isServer && isNetCmd)
         {
             // Is the command permitted for use by clients?
-            if(ccmd->flags & CMDF_CLIENT)
+            if (ccmd->flags & CMDF_CLIENT)
             {
                 LOG_NET_ERROR("Execution of command '%s' blocked (client attempted invocation);"
                               "this command is not permitted for use by clients") << ccmd->name;
@@ -538,7 +538,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
             //
             // The next step will then be allowing select console commands
             // to be executed by non-logged in clients.
-            switch(src)
+            switch (src)
             {
             case CMDS_UNKNOWN:
             case CMDS_CONFIG:
@@ -556,49 +556,49 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 #endif
 
         // Is the src permitted for this command?
-        switch(src)
+        switch (src)
         {
         case CMDS_UNKNOWN:
             canExecute = false;
             break;
 
         case CMDS_DDAY:
-            if(ccmd->flags & CMDF_DDAY)
+            if (ccmd->flags & CMDF_DDAY)
                 canExecute = false;
             break;
 
         case CMDS_GAME:
-            if(ccmd->flags & CMDF_GAME)
+            if (ccmd->flags & CMDF_GAME)
                 canExecute = false;
             break;
 
         case CMDS_CONSOLE:
-            if(ccmd->flags & CMDF_CONSOLE)
+            if (ccmd->flags & CMDF_CONSOLE)
                 canExecute = false;
             break;
 
         case CMDS_BIND:
-            if(ccmd->flags & CMDF_BIND)
+            if (ccmd->flags & CMDF_BIND)
                 canExecute = false;
             break;
 
         case CMDS_CONFIG:
-            if(ccmd->flags & CMDF_CONFIG)
+            if (ccmd->flags & CMDF_CONFIG)
                 canExecute = false;
             break;
 
         case CMDS_PROFILE:
-            if(ccmd->flags & CMDF_PROFILE)
+            if (ccmd->flags & CMDF_PROFILE)
                 canExecute = false;
             break;
 
         case CMDS_CMDLINE:
-            if(ccmd->flags & CMDF_CMDLINE)
+            if (ccmd->flags & CMDF_CMDLINE)
                 canExecute = false;
             break;
 
         case CMDS_SCRIPT:
-            if(ccmd->flags & CMDF_DED)
+            if (ccmd->flags & CMDF_DED)
                 canExecute = false;
             break;
 
@@ -606,13 +606,13 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
             return true;
         }
 
-        if(!canExecute)
+        if (!canExecute)
         {
             LOG_SCR_ERROR("'%s' cannot be executed via %s") << ccmd->name << CMDTYPESTR(src);
             return true;
         }
 
-        if(canExecute)
+        if (canExecute)
         {
             /**
              * Execute the command!
@@ -621,7 +621,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
              * this call.
              */
             int result;
-            if((result = ccmd->execFunc(src, args.argc, args.argv)) == false)
+            if ((result = ccmd->execFunc(src, args.argc, args.argv)) == false)
             {
                 LOG_SCR_ERROR("'%s' failed") << args.argv[0];
             }
@@ -632,7 +632,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 
     // Then try the cvars?
     cvar = Con_FindVariable(args.argv[0]);
-    if(cvar != NULL)
+    if (cvar != NULL)
     {
         dd_bool outOfRange = false, setting = false, hasCallback;
 
@@ -643,18 +643,18 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
          */
         hasCallback = (cvar->notifyChanged != 0);
 
-        if(args.argc == 2 ||
+        if (args.argc == 2 ||
            (args.argc == 3 && !qstricmp(args.argv[1], "force")))
         {
             char* argptr = args.argv[args.argc - 1];
             dd_bool forced = args.argc == 3;
 
             setting = true;
-            if(cvar->flags & CVF_READ_ONLY)
+            if (cvar->flags & CVF_READ_ONLY)
             {
                 CVar_PrintReadOnlyWarning(cvar);
             }
-            else if((cvar->flags & CVF_PROTECTED) && !forced)
+            else if ((cvar->flags & CVF_PROTECTED) && !forced)
             {
                 AutoStr* name = CVar_ComposePath(cvar);
                 LOG_SCR_NOTE("%s is protected; you shouldn't change its value -- "
@@ -663,11 +663,11 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
             }
             else
             {
-                switch(cvar->type)
+                switch (cvar->type)
                 {
                 case CVT_BYTE: {
                     byte val = (byte) strtol(argptr, NULL, 0);
-                    if(!forced &&
+                    if (!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                         outOfRange = true;
@@ -677,7 +677,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
                   }
                 case CVT_INT: {
                     int val = strtol(argptr, NULL, 0);
-                    if(!forced &&
+                    if (!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                         outOfRange = true;
@@ -687,7 +687,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
                   }
                 case CVT_FLOAT: {
                     float val = strtod(argptr, NULL);
-                    if(!forced &&
+                    if (!forced &&
                        ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
                         (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                         outOfRange = true;
@@ -707,16 +707,16 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
             }
         }
 
-        if(outOfRange)
+        if (outOfRange)
         {
             AutoStr* name = CVar_ComposePath(cvar);
-            if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+            if (!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char temp[20];
                 strcpy(temp, M_TrimmedFloat(cvar->min));
                 LOG_SCR_ERROR("%s <= %s <= %s") << temp << Str_Text(name) << M_TrimmedFloat(cvar->max);
             }
-            else if(cvar->flags & CVF_NO_MAX)
+            else if (cvar->flags & CVF_NO_MAX)
             {
                 LOG_SCR_ERROR("%s >= %s") << Str_Text(name) << M_TrimmedFloat(cvar->min);
             }
@@ -725,15 +725,15 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
                 LOG_SCR_ERROR("%s <= %s") << Str_Text(name) << M_TrimmedFloat(cvar->max);
             }
         }
-        else if(!setting) // Show the value.
+        else if (!setting) // Show the value.
         {
-            if(setting && hasCallback)
+            if (setting && hasCallback)
             {
                 // Lookup the cvar again - our pointer may have been invalidated.
                 cvar = Con_FindVariable(args.argv[0]);
             }
 
-            if(cvar)
+            if (cvar)
             {
                 // It still exists.
                 Con_PrintCVar(cvar, "");
@@ -744,7 +744,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 
     // How about an alias then?
     cal = Con_FindAlias(args.argv[0]);
-    if(cal != NULL)
+    if (cal != NULL)
     {
         char* expCommand;
 
@@ -759,7 +759,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
     }
 
     // What *is* that?
-    if(Con_FindCommand(args.argv[0]))
+    if (Con_FindCommand(args.argv[0]))
     {
         LOG_SCR_WARNING("%s: command arguments invalid") << args.argv[0];
         Con_Executef(CMDS_DDAY, false, "help %s", args.argv[0]);
@@ -786,37 +786,37 @@ static void Con_SplitIntoSubCommands(const char *command,
     size_t          gPos = 0, scPos = 0, len;
 
     // Is there a command to execute?
-    if(!command || command[0] == 0)
+    if (!command || command[0] == 0)
         return;
 
     // Jump over initial semicolons.
     len = strlen(command);
-    while(gPos < len && command[gPos] == ';' && command[gPos] != 0)
+    while (gPos < len && command[gPos] == ';' && command[gPos] != 0)
         gPos++;
 
     subCmd[0] = subCmd[BUFFSIZE-1] = 0;
 
     // The command may actually contain many commands, separated
     // with semicolons. This isn't a very clear algorithm...
-    for(; command[gPos];)
+    for (; command[gPos];)
     {
         escape = false;
-        if(inQuotes && command[gPos] == '\\')   // Escape sequence?
+        if (inQuotes && command[gPos] == '\\')   // Escape sequence?
         {
             subCmd[scPos++] = command[gPos++];
             escape = true;
         }
-        if(command[gPos] == '"' && !escape)
+        if (command[gPos] == '"' && !escape)
             inQuotes = !inQuotes;
 
         // Collect characters.
         subCmd[scPos++] = command[gPos++];
-        if(subCmd[0] == ' ')
+        if (subCmd[0] == ' ')
             scPos = 0;          // No spaces in the beginning.
 
-        if((command[gPos] == ';' && !inQuotes) || command[gPos] == 0)
+        if ((command[gPos] == ';' && !inQuotes) || command[gPos] == 0)
         {
-            while(gPos < len && command[gPos] == ';' && command[gPos] != 0)
+            while (gPos < len && command[gPos] == ';' && command[gPos] != 0)
                 gPos++;
             // The subcommand ends.
             subCmd[scPos] = 0;
@@ -837,7 +837,7 @@ static void Con_SplitIntoSubCommands(const char *command,
 
 int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd)
 {
-    if(silent)
+    if (silent)
     {
         ConsoleSilent = true;
     }
@@ -845,7 +845,7 @@ int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd)
     Con_SplitIntoSubCommands(command, 0, src, netCmd);
     int ret = Con_CheckExecBuffer();
 
-    if(silent)
+    if (silent)
     {
         ConsoleSilent = false;
     }
@@ -873,16 +873,16 @@ bool Con_Parse(File const &file, bool silently)
     // This file is filled with console commands.
     QTextStream in(&contents);
     int currentLine = 1;
-    while(!in.atEnd())
+    while (!in.atEnd())
     {
         // Each line is a command.
         String const line = String(in.readLine()).leftStrip();
-        if(!line.isEmpty() && line.first() != '#')
+        if (!line.isEmpty() && line.first() != '#')
         {
             // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, line.toUtf8(), silently, false))
+            if (!Con_Execute(CMDS_CONFIG, line.toUtf8(), silently, false))
             {
-                if(!silently)
+                if (!silently)
                 {
                     LOG_SCR_WARNING("%s (line %i): error executing command \"%s\"")
                             << file.description()
@@ -906,19 +906,19 @@ static void makeAlias(char *aName, char *command)
     dd_bool remove = false;
 
     // Will we remove this alias?
-    if(command == NULL)
+    if (command == NULL)
         remove = true;
-    else if(command[0] == 0)
+    else if (command[0] == 0)
         remove = true;
 
-    if(cal && remove) // This alias will be removed.
+    if (cal && remove) // This alias will be removed.
     {
         Con_DeleteAlias(cal);
         return; // We're done.
     }
 
     // Does the alias already exist?
-    if(cal)
+    if (cal)
     {
         cal->command = (char *) M_Realloc(cal->command, strlen(command) + 1);
         strcpy(cal->command, command);
@@ -933,7 +933,7 @@ D_CMD(Alias)
 {
     DENG2_UNUSED(src);
 
-    if(argc != 3 && argc != 2)
+    if (argc != 3 && argc != 2)
     {
         LOG_SCR_NOTE("Usage: %s (alias) (cmd)") << argv[0];
         LOG_SCR_MSG("Example: alias bigfont \"font size 3\"");
@@ -942,7 +942,7 @@ D_CMD(Alias)
     }
 
     makeAlias(argv[1], argc == 3 ? argv[2] : NULL);
-    if(argc != 3)
+    if (argc != 3)
     {
         LOG_SCR_MSG("Alias '%s' deleted") << argv[1];
     }
@@ -955,7 +955,7 @@ D_CMD(Parse)
 
     int     i;
 
-    for(i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
         try
         {
@@ -964,7 +964,7 @@ D_CMD(Parse)
                         NativeFile::newStandalone(App::app().nativeHomePath() / NativePath(argv[i])));
             Con_Parse(*file, false /*not silent*/);
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_SCR_ERROR("Failed to parse \"%s\": %s")
                     << argv[i] << er.asText();
@@ -980,7 +980,7 @@ D_CMD(Wait)
     timespan_t offset;
 
     offset = strtod(argv[1], NULL) / 35;    // Offset in seconds.
-    if(offset < 0)
+    if (offset < 0)
         offset = 0;
     Con_SplitIntoSubCommands(argv[2], offset, CMDS_CONSOLE, false);
     return true;
@@ -996,7 +996,7 @@ D_CMD(Repeat)
     count = atoi(argv[1]);
     interval = strtod(argv[2], NULL) / 35;  // In seconds.
     offset = 0;
-    while(count-- > 0)
+    while (count-- > 0)
     {
         offset += interval;
         Con_SplitIntoSubCommands(argv[3], offset, CMDS_CONSOLE, false);
@@ -1010,7 +1010,7 @@ D_CMD(Echo)
 
     int     i;
 
-    for(i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
         LOG_MSG("%s") << argv[i];
     }
@@ -1022,25 +1022,25 @@ static dd_bool cvarAddSub(const char* name, float delta, dd_bool force)
     cvar_t* cvar = Con_FindVariable(name);
     float val;
 
-    if(!cvar)
+    if (!cvar)
     {
-        if(name && name[0])
+        if (name && name[0])
             LOG_SCR_ERROR("%s is not a known cvar") << name;
         return false;
     }
 
-    if(cvar->flags & CVF_READ_ONLY)
+    if (cvar->flags & CVF_READ_ONLY)
     {
         CVar_PrintReadOnlyWarning(cvar);
         return false;
     }
 
     val = CVar_Float(cvar) + delta;
-    if(!force)
+    if (!force)
     {
-        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
+        if (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
             val = cvar->max;
-        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
+        if (!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
             val = cvar->min;
     }
     CVar_SetFloat(cvar, val);
@@ -1057,19 +1057,19 @@ D_CMD(AddSub)
     dd_bool             force = false;
     float               delta = 0;
 
-    if(argc <= 2)
+    if (argc <= 2)
     {
         LOG_SCR_NOTE("Usage: %s (cvar) (val) (force)") << argv[0];
         LOG_SCR_MSG("Use force to make cvars go off limits.");
         return true;
     }
-    if(argc >= 4)
+    if (argc >= 4)
     {
         force = !qstricmp(argv[3], "force");
     }
 
     delta = strtod(argv[2], NULL);
-    if(!qstricmp(argv[0], "sub"))
+    if (!qstricmp(argv[0], "sub"))
         delta = -delta;
 
     return cvarAddSub(argv[1], delta, force);
@@ -1086,21 +1086,21 @@ D_CMD(IncDec)
     cvar_t* cvar;
     float val;
 
-    if(argc == 1)
+    if (argc == 1)
     {
         LOG_SCR_NOTE("Usage: %s (cvar) (force)") << argv[0];
         LOG_SCR_MSG("Use force to make cvars go off limits.");
         return true;
     }
-    if(argc >= 3)
+    if (argc >= 3)
     {
         force = !qstricmp(argv[2], "force");
     }
     cvar = Con_FindVariable(argv[1]);
-    if(!cvar)
+    if (!cvar)
         return false;
 
-    if(cvar->flags & CVF_READ_ONLY)
+    if (cvar->flags & CVF_READ_ONLY)
     {
         LOG_SCR_ERROR("%s (cvar) is read-only, it cannot be changed (even with force)") << argv[1];
         return false;
@@ -1109,11 +1109,11 @@ D_CMD(IncDec)
     val = CVar_Float(cvar);
     val += !qstricmp(argv[0], "inc")? 1 : -1;
 
-    if(!force)
+    if (!force)
     {
-        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
+        if (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
             val = cvar->max;
-        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
+        if (!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
             val = cvar->min;
     }
 
@@ -1129,7 +1129,7 @@ D_CMD(Toggle)
     DENG2_UNUSED2(src, argc);
 
     cvar_t *cvar = Con_FindVariable(argv[1]);
-    if(!cvar) return false;
+    if (!cvar) return false;
 
     CVar_SetInteger(cvar, CVar_Integer(cvar)? 0 : 1);
     return true;
@@ -1157,7 +1157,7 @@ D_CMD(If)
     cvar_t     *var;
     dd_bool     isTrue = false;
 
-    if(argc != 5 && argc != 6)
+    if (argc != 5 && argc != 6)
     {
         LOG_SCR_NOTE("Usage: %s (cvar) (operator) (value) (cmd) (else-cmd)") << argv[0];
         LOG_SCR_MSG("Operator must be one of: not, =, >, <, >=, <=");
@@ -1166,21 +1166,21 @@ D_CMD(If)
     }
 
     var = Con_FindVariable(argv[1]);
-    if(!var)
+    if (!var)
         return false;
 
     // Which operator?
-    for(i = 0; operators[i].opstr; ++i)
-        if(!qstricmp(operators[i].opstr, argv[2]))
+    for (i = 0; operators[i].opstr; ++i)
+        if (!qstricmp(operators[i].opstr, argv[2]))
         {
             oper = operators[i].op;
             break;
         }
-    if(!operators[i].opstr)
+    if (!operators[i].opstr)
         return false;           // Bad operator.
 
     // Value comparison depends on the type of the variable.
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:
     case CVT_INT:
@@ -1227,11 +1227,11 @@ D_CMD(If)
     }
 
     // Should the command be executed?
-    if(isTrue)
+    if (isTrue)
     {
         Con_Execute(src, argv[4], ConsoleSilent, false);
     }
-    else if(argc == 6)
+    else if (argc == 6)
     {
         Con_Execute(src, argv[5], ConsoleSilent, false);
     }
@@ -1276,7 +1276,7 @@ void Con_DataRegister()
 
 void Con_InitDatabases(void)
 {
-    if(inited) return;
+    if (inited) return;
 
     Con_InitVariableDirectory();
     Con_InitCommands();
@@ -1288,7 +1288,7 @@ void Con_InitDatabases(void)
 
 void Con_ClearDatabases(void)
 {
-    if(!inited) return;
+    if (!inited) return;
     Con_ClearKnownWords();
     Con_ClearAliases();
     Con_ClearCommands();
@@ -1297,7 +1297,7 @@ void Con_ClearDatabases(void)
 
 void Con_ShutdownDatabases(void)
 {
-    if(!inited) return;
+    if (!inited) return;
 
     Con_ClearDatabases();
     Con_DeinitVariableDirectory();
@@ -1316,11 +1316,11 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
     DENG_ASSERT(word);
     uint *numPrinted = (uint *) parameters;
 
-    switch(word->type)
+    switch (word->type)
     {
     case WT_CCMD: {
         ccmd_t *ccmd = (ccmd_t *) word->data;
-        if(ccmd->prevOverload)
+        if (ccmd->prevOverload)
         {
             return 0; // Skip overloaded variants.
         }
@@ -1329,7 +1329,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
 
     case WT_CVAR: {
         cvar_t *cvar = (cvar_t *) word->data;
-        if(cvar->flags & CVF_HIDE)
+        if (cvar->flags & CVF_HIDE)
         {
             return 0; // Skip hidden variables.
         }
@@ -1349,7 +1349,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break;
     }
 
-    if(numPrinted) ++(*numPrinted);
+    if (numPrinted) ++(*numPrinted);
     return 0; // Continue iteration.
 }
 

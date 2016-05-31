@@ -82,7 +82,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 
     LOG_AS("WAV_MemoryLoad");
 
-    if(!WAV_CheckFormat((const char*)data))
+    if (!WAV_CheckFormat((const char*)data))
     {
         LOG_RES_WARNING("Not WAV format data");
         return NULL;
@@ -98,7 +98,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 #endif
 
     // Start readin' the chunks, baby!
-    while(data < end)
+    while (data < end)
     {
         // Read next chunk header.
         WReadAndAdvance(data, &riff_chunk, sizeof(riff_chunk));
@@ -107,7 +107,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         riff_chunk.len = DD_ULONG(riff_chunk.len);
 
         // What have we got here?
-        if(!strncmp(riff_chunk.id, "fmt ", 4))
+        if (!strncmp(riff_chunk.id, "fmt ", 4))
         {
             // Read format chunk.
             WReadAndAdvance(data, &wave_format, sizeof(wave_format));
@@ -123,19 +123,19 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             assert(wave_format.wFormatTag == WAVE_FORMAT_PCM); // linear PCM
 
             // Check that it's a format we know how to read.
-            if(wave_format.wFormatTag != WAVE_FORMAT_PCM)
+            if (wave_format.wFormatTag != WAVE_FORMAT_PCM)
             {
                 LOG_RES_WARNING("Unsupported format (%i)") << wave_format.wFormatTag;
                 return NULL;
             }
-            if(wave_format.wChannels != 1)
+            if (wave_format.wChannels != 1)
             {
                 LOG_RES_WARNING("Too many channels (only mono supported)");
                 return NULL;
             }
             // Read the extra format information.
             //WReadAndAdvance(&data, &wave_format2, sizeof(*wave_format2));
-            /*if(wave_format->wBitsPerSample == 0)
+            /*if (wave_format->wBitsPerSample == 0)
                {
                // We'll have to guess...
                *bits = 8*wave_format->dwAvgBytesPerSec/
@@ -143,7 +143,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
                }
                else
                { */
-            if(wave_format.wBitsPerSample != 8 &&
+            if (wave_format.wBitsPerSample != 8 &&
                wave_format.wBitsPerSample != 16)
             {
                 LOG_RES_WARNING("Must have 8 or 16 bits per sample");
@@ -153,9 +153,9 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             *bits = wave_format.wBitsPerSample;
             *rate = wave_format.dwSamplesPerSec;
         }
-        else if(!strncmp(riff_chunk.id, "data", 4))
+        else if (!strncmp(riff_chunk.id, "data", 4))
         {
-            if(!wave_format.wFormatTag)
+            if (!wave_format.wFormatTag)
             {
                 LOG_RES_WARNING("Malformed WAV data");
                 return NULL;
@@ -167,10 +167,10 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             memcpy(sampledata, data, riff_chunk.len);
 #ifdef __BIG_ENDIAN__
             // Correct endianness.
-            /*if(wave_format->wBitsPerSample == 16)
+            /*if (wave_format->wBitsPerSample == 16)
             {
                 ushort* sample = sampledata;
-                for(; sample < ((short*)sampledata) + *samples; ++sample)
+                for (; sample < ((short*)sampledata) + *samples; ++sample)
                     *sample = DD_USHORT(*sample);
             }*/
 #endif
@@ -211,7 +211,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
 
         // Parse the RIFF data.
         void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
-        if(!sampledata)
+        if (!sampledata)
         {
             LOG_RES_WARNING("Failed to load \"%s\"") << filename;
         }
@@ -219,7 +219,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
         M_Free(data);
         return sampledata;
     }
-    catch(de::FS1::NotFoundError const &)
+    catch (de::FS1::NotFoundError const &)
     {} // Ignore.
     return 0;
 }

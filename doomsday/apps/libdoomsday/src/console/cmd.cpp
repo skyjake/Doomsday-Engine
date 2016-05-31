@@ -49,7 +49,7 @@ void Con_InitCommands()
 
 void Con_ClearCommands(void)
 {
-    if(ccmdBlockSet)
+    if (ccmdBlockSet)
     {
         BlockSet_Delete(ccmdBlockSet);
     }
@@ -62,10 +62,10 @@ void Con_ClearCommands(void)
 void Con_AddKnownWordsForCommands()
 {
     /// @note ccmd list is NOT yet sorted.
-    for(ccmd_t* ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
+    for (ccmd_t* ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
     {
         // Skip overloaded variants.
-        if(ccmd->prevOverload) continue;
+        if (ccmd->prevOverload) continue;
 
         Con_AddKnownWord(WT_CCMD, ccmd);
     }
@@ -77,12 +77,12 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     cvartype_t args[DENG_MAX_ARGS];
     ccmd_t* newCCmd, *overloaded = 0;
 
-    if(!ccmd) return;
+    if (!ccmd) return;
 
     DENG_ASSERT(ccmd->name != 0);
 
     // Decode the usage string if present.
-    if(ccmd->argTemplate != 0)
+    if (ccmd->argTemplate != 0)
     {
         size_t l, len;
         cvartype_t type = CVT_NULL;
@@ -92,10 +92,10 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
         len = strlen(ccmd->argTemplate);
         minArgs = 0;
         unlimitedArgs = false;
-        for(l = 0; l < len; ++l)
+        for (l = 0; l < len; ++l)
         {
             c = ccmd->argTemplate[l];
-            switch(c)
+            switch (c)
             {
             // Supported type symbols:
             case 'b': type = CVT_BYTE;     break;
@@ -106,7 +106,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
             // Special symbols:
             case '*':
                 // Variable arg list.
-                if(l != len-1)
+                if (l != len-1)
                     App_FatalError("Con_AddCommand: CCmd '%s': '*' character "
                                    "not last in argument template: \"%s\".",
                                    ccmd->name, ccmd->argTemplate);
@@ -122,9 +122,9 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
                                ccmd->argTemplate);
             }
 
-            if(type != CVT_NULL)
+            if (type != CVT_NULL)
             {
-                if(minArgs >= DENG_MAX_ARGS)
+                if (minArgs >= DENG_MAX_ARGS)
                     App_FatalError("Con_AddCommand: CCmd '%s': Too many arguments. "
                                    "Limit is %i.", ccmd->name, DENG_MAX_ARGS);
 
@@ -133,10 +133,10 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
         }
 
         // Set the min/max parameter counts for this ccmd.
-        if(unlimitedArgs)
+        if (unlimitedArgs)
         {
             maxArgs = -1;
-            if(minArgs == 0)
+            if (minArgs == 0)
                 minArgs = -1;
         }
         else
@@ -153,51 +153,51 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     // We allow multiple ccmds with the same name if we can determine by
     // their paramater lists that they are unique (overloading).
     { ccmd_t* other;
-    if((other = Con_FindCommand(ccmd->name)) != 0)
+    if ((other = Con_FindCommand(ccmd->name)) != 0)
     {
         dd_bool unique = true;
 
         // The ccmd being registered is NOT a deng validated ccmd
         // and there is already an existing ccmd by this name?
-        if(minArgs == -1 && maxArgs == -1)
+        if (minArgs == -1 && maxArgs == -1)
             unique = false;
 
-        if(unique)
+        if (unique)
         {
             // Check each variant.
             ccmd_t* variant = other;
             do
             {
                 // An existing ccmd with no validation?
-                if(variant->minArgs == -1 && variant->maxArgs == -1)
+                if (variant->minArgs == -1 && variant->maxArgs == -1)
                     unique = false;
                 // An existing ccmd with a lower minimum and no maximum?
-                else if(variant->minArgs < minArgs && variant->maxArgs == -1)
+                else if (variant->minArgs < minArgs && variant->maxArgs == -1)
                     unique = false;
                 // An existing ccmd with a larger min and this ccmd has no max?
-                else if(variant->minArgs > minArgs && maxArgs == -1)
+                else if (variant->minArgs > minArgs && maxArgs == -1)
                     unique = false;
                 // An existing ccmd with the same minimum number of args?
-                else if(variant->minArgs == minArgs)
+                else if (variant->minArgs == minArgs)
                 {
                     // \todo Implement support for paramater type checking.
                     unique = false;
                 }
 
                 // Sanity check.
-                if(!unique && variant->execFunc == ccmd->execFunc)
+                if (!unique && variant->execFunc == ccmd->execFunc)
                     App_FatalError("Con_AddCommand: A CCmd by the name '%s' is already registered and the callback funcs are "
                                    "the same, is this really what you wanted?", ccmd->name);
-            } while((variant = variant->nextOverload) != 0);
+            } while ((variant = variant->nextOverload) != 0);
         }
 
-        if(!unique)
+        if (!unique)
             App_FatalError("Con_AddCommand: A CCmd by the name '%s' is already registered. Their parameter lists would be ambiguant.", ccmd->name);
 
         overloaded = other;
     }}
 
-    if(!ccmdBlockSet)
+    if (!ccmdBlockSet)
         ccmdBlockSet = BlockSet_New(sizeof(ccmd_t), 32);
 
     newCCmd = (ccmd_t*) BlockSet_Allocate(ccmdBlockSet);
@@ -205,7 +205,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     // Make a static copy of the name in the zone (this allows the source
     // data to change in case of dynamic registrations).
     char* nameCopy = (char*) Z_Malloc(strlen(ccmd->name) + 1, PU_APPSTATIC, NULL);
-    if(!nameCopy) App_FatalError("Con_AddCommand: Failed on allocation of %lu bytes for command name.", (unsigned long) (strlen(ccmd->name) + 1));
+    if (!nameCopy) App_FatalError("Con_AddCommand: Failed on allocation of %lu bytes for command name.", (unsigned long) (strlen(ccmd->name) + 1));
 
     strcpy(nameCopy, ccmd->name);
     newCCmd->name = nameCopy;
@@ -220,7 +220,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     newCCmd->next = ccmdListHead;
     ccmdListHead = newCCmd;
 
-    if(!overloaded)
+    if (!overloaded)
     {
         ++numUniqueNamedCCmds;
         Con_UpdateKnownWords();
@@ -234,8 +234,8 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
 
 void Con_AddCommandList(ccmdtemplate_t const* cmdList)
 {
-    if(!cmdList) return;
-    for(; cmdList->name; ++cmdList)
+    if (!cmdList) return;
+    for (; cmdList->name; ++cmdList)
     {
         Con_AddCommand(cmdList);
     }
@@ -244,14 +244,14 @@ void Con_AddCommandList(ccmdtemplate_t const* cmdList)
 ccmd_t *Con_FindCommand(char const *name)
 {
     /// @todo Use a faster than O(n) linear search.
-    if(name && name[0])
+    if (name && name[0])
     {
-        for(ccmd_t *ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
+        for (ccmd_t *ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
         {
-            if(qstricmp(name, ccmd->name)) continue;
+            if (qstricmp(name, ccmd->name)) continue;
 
             // Locate the head of the overload list.
-            while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
+            while (ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
             return ccmd;
         }
     }
@@ -267,19 +267,19 @@ ccmd_t *Con_FindCommand(char const *name)
  */
 void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverloads)
 {
-    if(!ccmd) return;
+    if (!ccmd) return;
 
-    if(allOverloads)
+    if (allOverloads)
     {
         // Locate the head of the overload list.
-        while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
+        while (ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
     }
 
     LOG_SCR_NOTE(_E(b) "Usage:" _E(.) "\n  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
 
-    if(allOverloads)
+    if (allOverloads)
     {
-        while((ccmd = ccmd->nextOverload))
+        while ((ccmd = ccmd->nextOverload))
         {
             LOG_SCR_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
         }
@@ -288,9 +288,9 @@ void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverloads)
 
 ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
 {
-    if(!args) return 0;
+    if (!args) return 0;
 
-    if(ccmd_t *ccmd = Con_FindCommand(args->argv[0]))
+    if (ccmd_t *ccmd = Con_FindCommand(args->argv[0]))
     {
         // Check each variant.
         ccmd_t *variant = ccmd;
@@ -300,14 +300,14 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
 
             // Are we validating the arguments?
             // Note that strings are considered always valid.
-            if(!(variant->minArgs == -1 && variant->maxArgs == -1))
+            if (!(variant->minArgs == -1 && variant->maxArgs == -1))
             {
                 // Do we have the right number of arguments?
-                if(args->argc-1 < variant->minArgs)
+                if (args->argc-1 < variant->minArgs)
                 {
                     invalidArgs = true;
                 }
-                else if(variant->maxArgs != -1 && args->argc-1 > variant->maxArgs)
+                else if (variant->maxArgs != -1 && args->argc-1 > variant->maxArgs)
                 {
                     invalidArgs = true;
                 }
@@ -315,9 +315,9 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
                 {
                     // Presently we only validate upto the minimum number of args.
                     /// @todo Validate non-required args.
-                    for(int i = 0; i < variant->minArgs && !invalidArgs; ++i)
+                    for (int i = 0; i < variant->minArgs && !invalidArgs; ++i)
                     {
-                        switch(variant->args[i])
+                        switch (variant->args[i])
                         {
                         case CVT_BYTE:
                             invalidArgs = !M_IsStringValidByte(args->argv[i+1]);
@@ -335,11 +335,11 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
                 }
             }
 
-            if(!invalidArgs)
+            if (!invalidArgs)
             {
                 return variant; // This is the one!
             }
-        } while((variant = variant->nextOverload) != 0);
+        } while ((variant = variant->nextOverload) != 0);
 
         // Perhaps the user needs some help.
         Con_PrintCommandUsage(ccmd);
@@ -351,11 +351,11 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
 
 dd_bool Con_IsValidCommand(char const* name)
 {
-    if(!name || !name[0])
+    if (!name || !name[0])
         return false;
 
     // Try the console commands first.
-    if(Con_FindCommand(name) != 0)
+    if (Con_FindCommand(name) != 0)
         return true;
 
     // Try the aliases (aliai?) then.
@@ -366,14 +366,14 @@ String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
 {
     DENG2_ASSERT(ccmd != 0);
 
-    if(ccmd->minArgs == -1 && ccmd->maxArgs == -1)
+    if (ccmd->minArgs == -1 && ccmd->maxArgs == -1)
         return String();
 
     // Print the expected form for this ccmd.
     String argText;
-    for(int i = 0; i < ccmd->minArgs; ++i)
+    for (int i = 0; i < ccmd->minArgs; ++i)
     {
-        switch(ccmd->args[i])
+        switch (ccmd->args[i])
         {
         case CVT_BYTE:    argText += " (byte)";   break;
         case CVT_INT:     argText += " (int)";    break;
@@ -383,7 +383,7 @@ String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
         default: break;
         }
     }
-    if(ccmd->maxArgs == -1)
+    if (ccmd->maxArgs == -1)
     {
         argText += " ...";
     }
@@ -394,7 +394,7 @@ String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
 String Con_CmdAsStyledText(ccmd_t *cmd)
 {
     char const *str;
-    if((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
+    if ((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
         return String(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
     }
@@ -414,7 +414,7 @@ D_CMD(MappedConfigVariable)
 
     Variable &var = App::config()[found.value()];
 
-    if(argc == 1)
+    if (argc == 1)
     {
         // No argumnets, just print the current value.
         LOG_SCR_MSG(_E(b) "%s" _E(.) " = " _E(>) "%s " _E(l)_E(C) "[Config.%s]")
@@ -422,10 +422,10 @@ D_CMD(MappedConfigVariable)
                 << var.value().asText()
                 << found.value();
     }
-    else if(argc > 1)
+    else if (argc > 1)
     {
         // Retain the current type of the Config variable (numeric or text).
-        if(var.value().maybeAs<TextValue>())
+        if (var.value().maybeAs<TextValue>())
         {
             var.set(new TextValue(argv[1]));
         }

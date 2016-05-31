@@ -43,11 +43,11 @@ namespace internal
         LumpSortInfo const *infoA = (LumpSortInfo const *)a;
         LumpSortInfo const *infoB = (LumpSortInfo const *)b;
 
-        if(int delta = infoA->path.compare(infoB->path, Qt::CaseInsensitive))
+        if (int delta = infoA->path.compare(infoB->path, Qt::CaseInsensitive))
             return delta;
 
         // Still matched; try the file load order indexes.
-        if(int delta = (infoA->lump->container().loadOrderIndex() -
+        if (int delta = (infoA->lump->container().loadOrderIndex() -
                         infoB->lump->container().loadOrderIndex()))
             return delta;
 
@@ -78,19 +78,19 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
     // Keep checking lumps to see if its a map data lump.
     dint const numLumps = lumpIndex.size();
     String sourceFile;
-    for(d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
+    for (d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
     {
         // Lump name determines whether this lump is a candidate.
         File1 &lump       = lumpIndex[d->lastLump];
         DataType dataType = typeForLumpName(lump.name());
 
-        if(d->lumps.isEmpty())
+        if (d->lumps.isEmpty())
         {
             // No sequence has yet begun. Continue the scan?
-            if(dataType == UnknownData) continue;
+            if (dataType == UnknownData) continue;
 
             // Missing a header?
-            if(d->lastLump == 0) return;
+            if (d->lastLump == 0) return;
 
             // The id of the map is the name of the lump which precedes the first
             // recognized data lump (which should be the header). Note that some
@@ -101,10 +101,10 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         else
         {
             // The first unrecognized lump ends the sequence.
-            if(dataType == UnknownData) break;
+            if (dataType == UnknownData) break;
 
             // A lump from another source file also ends the sequence.
-            if(sourceFile.compareWithoutCase(lump.container().composePath()))
+            if (sourceFile.compareWithoutCase(lump.container().composePath()))
                 break;
         }
 
@@ -113,17 +113,17 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         d->lumps.insert(dataType, &lump);
     }
 
-    if(d->lumps.isEmpty()) return;
+    if (d->lumps.isEmpty()) return;
 
     // At this point we know we've found something that could be map data.
 
     // Some data lumps are specific to a particular map format and thus their
     // presence unambiguously identifies the format.
-    if(d->lumps.contains(BehaviorData))
+    if (d->lumps.contains(BehaviorData))
     {
         d->format = HexenFormat;
     }
-    else if(d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
+    else if (d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
             d->lumps.contains(LeafData))
     {
         d->format = Doom64Format;
@@ -144,7 +144,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         duint *elemCountAddr = 0;
         dsize const elemSize = elementSizeForDataType(d->format, dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
         default: break;
 
@@ -156,9 +156,9 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         case TintColorData: elemCountAddr = &numLights;   break;
         }
 
-        if(elemCountAddr)
+        if (elemCountAddr)
         {
-            if(lump.size() % elemSize != 0)
+            if (lump.size() % elemSize != 0)
             {
                 // What *is* this??
                 d->format = UnknownFormat;
@@ -172,7 +172,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
 
     // A valid map contains at least one of each of these element types.
     /// @todo Support loading "empty" maps.
-    if(!numVertexes || !numLines || !numSides || !numSectors)
+    if (!numVertexes || !numLines || !numSides || !numSectors)
     {
         d->format = UnknownFormat;
         d->id.clear();
@@ -199,7 +199,7 @@ LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() c
 
 File1 *LumpIndex::Id1MapRecognizer::sourceFile() const
 {
-    if(d->lumps.isEmpty()) return 0;
+    if (d->lumps.isEmpty()) return 0;
     return &lumps().find(VertexData).value()->container();
 }
 
@@ -216,7 +216,7 @@ String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
         /* MF_HEXEN   */ "id Tech 1 (Hexen)",
         /* MF_DOOM64  */ "id Tech 1 (Doom64)"
     };
-    if(id >= DoomFormat && id < KnownFormatCount)
+    if (id >= DoomFormat && id < KnownFormatCount)
     {
         return names[1 + id];
     }
@@ -257,12 +257,12 @@ LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpNa
     // Ignore the file extension if present.
     name = name.fileNameWithoutExtension();
 
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        for(dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
+        for (dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
         {
             LumpTypeInfo const &info = lumpTypeInfo[i];
-            if(!info.name.compareWithoutCase(name) &&
+            if (!info.name.compareWithoutCase(name) &&
                info.name.length() == name.length())
             {
                 return info.type;
@@ -289,7 +289,7 @@ dsize LumpIndex::Id1MapRecognizer::elementSizeForDataType(Format mapFormat, Data
     dsize const SIZEOF_XTHING    = (2 * 7 + 1 * 6);
     dsize const SIZEOF_LIGHT     = (1 * 6);
 
-    switch(dataType)
+    switch (dataType)
     {
     default: return 0;
 
@@ -340,7 +340,7 @@ DENG2_PIMPL(LumpIndex)
 
     void buildLumpsByPathIfNeeded()
     {
-        if(!lumpsByPath.isNull()) return;
+        if (!lumpsByPath.isNull()) return;
 
         int const numElements = lumps.size();
         lumpsByPath.reset(new PathHash(numElements));
@@ -353,7 +353,7 @@ DENG2_PIMPL(LumpIndex)
 
         // Prepend nodes to each chain, in first-to-last load order, so that
         // the last lump with a given name appears first in the chain.
-        for(int i = 0; i < numElements; ++i)
+        for (int i = 0; i < numElements; ++i)
         {
             File1 const &lump          = *(lumps[i]);
             PathTree::Node const &node = lump.directoryNode();
@@ -378,11 +378,11 @@ DENG2_PIMPL(LumpIndex)
 
         int const numRecords = lumps.size();
         int numFlagged = 0;
-        for(int i = 0; i < numRecords; ++i)
+        for (int i = 0; i < numRecords; ++i)
         {
             File1 *lump = lumps[i];
-            if(pruneFlags.testBit(i)) continue;
-            if(!lump->isContained() || &lump->container() != &file) continue;
+            if (pruneFlags.testBit(i)) continue;
+            if (!lump->isContained() || &lump->container() != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
@@ -398,15 +398,15 @@ DENG2_PIMPL(LumpIndex)
         DENG2_ASSERT(pruneFlags.size() == lumps.size());
 
         // Any work to do?
-        if(!pathsAreUnique) return 0;
-        if(!needPruneDuplicateLumps) return 0;
+        if (!pathsAreUnique) return 0;
+        if (!needPruneDuplicateLumps) return 0;
 
         int const numRecords = lumps.size();
-        if(numRecords <= 1) return 0;
+        if (numRecords <= 1) return 0;
 
         // Sort in descending load order for pruning.
         LumpSortInfo *sortInfos = new LumpSortInfo[numRecords];
-        for(int i = 0; i < numRecords; ++i)
+        for (int i = 0; i < numRecords; ++i)
         {
             LumpSortInfo &sortInfo = sortInfos[i];
             File1 const *lump      = lumps[i];
@@ -419,10 +419,10 @@ DENG2_PIMPL(LumpIndex)
 
         // Flag the lumps we'll be pruning.
         int numFlagged = 0;
-        for(int i = 1; i < numRecords; ++i)
+        for (int i = 1; i < numRecords; ++i)
         {
-            if(pruneFlags.testBit(i)) continue;
-            if(sortInfos[i - 1].path.compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
+            if (pruneFlags.testBit(i)) continue;
+            if (sortInfos[i - 1].path.compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
             pruneFlags.setBit(sortInfos[i].origIndex, true);
             numFlagged += 1;
         }
@@ -440,22 +440,22 @@ DENG2_PIMPL(LumpIndex)
 
         // Have we lumps to prune?
         int const numFlaggedForPrune = flaggedLumps.count(true);
-        if(numFlaggedForPrune)
+        if (numFlaggedForPrune)
         {
             // We'll need to rebuild the hash after this.
             lumpsByPath.reset();
 
             int numRecords = lumps.size();
-            if(numRecords == numFlaggedForPrune)
+            if (numRecords == numFlaggedForPrune)
             {
                 lumps.clear();
             }
             else
             {
                 // Do this one lump at a time, respecting the possibly-sorted order.
-                for(int i = 0, newIdx = 0; i < numRecords; ++i)
+                for (int i = 0, newIdx = 0; i < numRecords; ++i)
                 {
-                    if(!flaggedLumps.testBit(i))
+                    if (!flaggedLumps.testBit(i))
                     {
                         ++newIdx;
                         continue;
@@ -475,11 +475,11 @@ DENG2_PIMPL(LumpIndex)
 
     void pruneDuplicatesIfNeeded()
     {
-        if(!needPruneDuplicateLumps) return;
+        if (!needPruneDuplicateLumps) return;
         needPruneDuplicateLumps = false;
 
         int const numRecords = lumps.size();
-        if(numRecords <= 1) return;
+        if (numRecords <= 1) return;
 
         QBitArray pruneFlags(numRecords);
         flagDuplicateLumps(pruneFlags);
@@ -504,14 +504,14 @@ bool LumpIndex::hasLump(lumpnum_t lumpNum) const
 static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     String msg = String("Invalid lump index %1").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += " (file is empty)";
+    if (lastValidIdx < 0) msg += " (file is empty)";
     else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
     return msg;
 }
 
 File1 &LumpIndex::lump(lumpnum_t lumpNum) const
 {
-    if(!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
+    if (!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumps[lumpNum];
 }
 
@@ -534,7 +534,7 @@ int LumpIndex::lastIndex() const
 
 int LumpIndex::pruneByFile(File1 &file)
 {
-    if(d->lumps.empty()) return 0;
+    if (d->lumps.empty()) return 0;
 
     int const numRecords = d->lumps.size();
     QBitArray pruneFlags(numRecords);
@@ -556,12 +556,12 @@ int LumpIndex::pruneByFile(File1 &file)
 
 bool LumpIndex::pruneLump(File1 &lump)
 {
-    if(d->lumps.empty()) return 0;
+    if (d->lumps.empty()) return 0;
 
     d->pruneDuplicatesIfNeeded();
 
     // Prune this lump.
-    if(!d->lumps.removeOne(&lump)) return false;
+    if (!d->lumps.removeOne(&lump)) return false;
 
     // We'll need to rebuild the path hash chains.
     d->lumpsByPath.reset();
@@ -574,7 +574,7 @@ void LumpIndex::catalogLump(File1 &lump)
     d->lumps.push_back(&lump);
     d->lumpsByPath.reset();    // We'll need to rebuild the path hash chains.
 
-    if(d->pathsAreUnique)
+    if (d->pathsAreUnique)
     {
         // We may need to prune duplicate paths.
         d->needPruneDuplicateLumps = true;
@@ -595,7 +595,7 @@ bool LumpIndex::catalogues(File1 &file)
     DENG2_FOR_EACH(Lumps, i, d->lumps)
     {
         File1 const &lump = **i;
-        if(&lump.container() == &file)
+        if (&lump.container() == &file)
             return true;
     }
 
@@ -613,7 +613,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 
     found.clear();
 
-    if(path.isEmpty() || d->lumps.empty()) return 0;
+    if (path.isEmpty() || d->lumps.empty()) return 0;
 
     d->pruneDuplicatesIfNeeded();
     d->buildLumpsByPathIfNeeded();
@@ -621,13 +621,13 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
     // Perform the search.
     DENG2_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
-    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+    for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
         File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();
 
-        if(!node.comparePath(path, 0))
+        if (!node.comparePath(path, 0))
         {
             found.push_front(idx);
         }
@@ -638,7 +638,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 
 lumpnum_t LumpIndex::findLast(Path const &path) const
 {
-    if(path.isEmpty() || d->lumps.empty()) return -1;
+    if (path.isEmpty() || d->lumps.empty()) return -1;
 
     d->pruneDuplicatesIfNeeded();
     d->buildLumpsByPathIfNeeded();
@@ -646,13 +646,13 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
     // Perform the search.
     DENG2_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
-    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+    for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
         File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();
 
-        if(!node.comparePath(path, 0))
+        if (!node.comparePath(path, 0))
         {
             return idx; // This is the lump we are looking for.
         }
@@ -663,7 +663,7 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
 
 lumpnum_t LumpIndex::findFirst(Path const &path) const
 {
-    if(path.isEmpty() || d->lumps.empty()) return -1;
+    if (path.isEmpty() || d->lumps.empty()) return -1;
 
     d->pruneDuplicatesIfNeeded();
     d->buildLumpsByPathIfNeeded();
@@ -673,13 +673,13 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     // Perform the search.
     DENG2_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
-    for(int idx = (*d->lumpsByPath)[hash].head; idx != -1;
+    for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
         File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();
 
-        if(!node.comparePath(path, 0))
+        if (!node.comparePath(path, 0))
         {
             earliest = idx; // This is now the first lump loaded.
         }

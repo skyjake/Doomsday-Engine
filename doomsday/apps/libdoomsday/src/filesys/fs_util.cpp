@@ -62,7 +62,7 @@ int F_Access(char const *nativePath)
 int F_FileExists(char const *path)
 {
     int result = -1;
-    if(path && path[0])
+    if (path && path[0])
     {
         ddstring_t buf;
         // Normalize the path into one we can process.
@@ -100,7 +100,7 @@ dd_bool F_MakePath(char const *path)
         App::fileSystem().makeFolder(path);
         return true;
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to create path \"%s\": %s") << path << er.asText();
         return false;
@@ -121,7 +121,7 @@ dd_bool F_MakePath(char const *path)
     F_ToNativeSlashes(&full, &full);
 
     // Does this path already exist?
-    if(0 == access(Str_Text(&full), 0))
+    if (0 == access(Str_Text(&full), 0))
     {
         Str_Free(&full);
         return true;
@@ -133,11 +133,11 @@ dd_bool F_MakePath(char const *path)
     do
     {
         endptr = strchr(ptr, DENG_DIR_SEP_CHAR);
-        if(!endptr)
+        if (!endptr)
             Str_Append(&buf, ptr);
         else
             Str_PartAppend(&buf, ptr, 0, endptr - ptr);
-        if(0 != access(Str_Text(&buf), 0))
+        if (0 != access(Str_Text(&buf), 0))
         {
             // Path doesn't exist, create it.
 #ifdef WIN32
@@ -148,7 +148,7 @@ dd_bool F_MakePath(char const *path)
         }
         Str_AppendChar(&buf, DENG_DIR_SEP_CHAR);
         ptr = endptr + 1;
-    } while(NULL != endptr);
+    } while (NULL != endptr);
 
     result = (0 == access(Str_Text(&full), 0));
     Str_Free(&buf);
@@ -161,28 +161,28 @@ dd_bool F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
     dd_bool result = false;
     assert(dstStr && srcStr);
 
-    if(!Str_IsEmpty(srcStr))
+    if (!Str_IsEmpty(srcStr))
     {
         char* dst = Str_Text(dstStr);
         const char* src = Str_Text(srcStr);
         size_t i;
 
-        if(dstStr != srcStr)
+        if (dstStr != srcStr)
         {
             Str_Clear(dstStr);
             Str_Reserve(dstStr, Str_Length(srcStr));
         }
 
-        for(i = 0; src[i]; ++i)
+        for (i = 0; src[i]; ++i)
         {
-            if(src[i] != '\\')
+            if (src[i] != '\\')
             {
-                if(dstStr != srcStr)
+                if (dstStr != srcStr)
                     Str_AppendChar(dstStr, src[i]);
                 continue;
             }
 
-            if(dstStr != srcStr)
+            if (dstStr != srcStr)
                 Str_AppendChar(dstStr, '/');
             else
                 dst[i] = '/';
@@ -199,7 +199,7 @@ dd_bool F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 #ifdef UNIX
 static bool F_AppendMissingSlash(ddstring_t *pathStr)
 {
-    if(Str_RAt(pathStr, 0) != '/')
+    if (Str_RAt(pathStr, 0) != '/')
     {
         Str_AppendChar(pathStr, '/');
         return true;
@@ -210,7 +210,7 @@ static bool F_AppendMissingSlash(ddstring_t *pathStr)
 
 dd_bool F_AppendMissingSlashCString(char* path, size_t maxLen)
 {
-    if(path[strlen(path) - 1] != '/')
+    if (path[strlen(path) - 1] != '/')
     {
         M_StrCat(path, "/", maxLen);
         return true;
@@ -223,28 +223,28 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
     dd_bool result = false;
     assert(dstStr && srcStr);
 
-    if(!Str_IsEmpty(srcStr))
+    if (!Str_IsEmpty(srcStr))
     {
         char* dst = Str_Text(dstStr);
         const char* src = Str_Text(srcStr);
         size_t i;
 
-        if(dstStr != srcStr)
+        if (dstStr != srcStr)
         {
             Str_Clear(dstStr);
             Str_Reserve(dstStr, Str_Length(srcStr));
         }
 
-        for(i = 0; src[i]; ++i)
+        for (i = 0; src[i]; ++i)
         {
-            if(src[i] != DENG_DIR_WRONG_SEP_CHAR)
+            if (src[i] != DENG_DIR_WRONG_SEP_CHAR)
             {
-                if(dstStr != srcStr)
+                if (dstStr != srcStr)
                     Str_AppendChar(dstStr, src[i]);
                 continue;
             }
 
-            if(dstStr != srcStr)
+            if (dstStr != srcStr)
                 Str_AppendChar(dstStr, DENG_DIR_SEP_CHAR);
             else
                 dst[i] = DENG_DIR_SEP_CHAR;
@@ -278,10 +278,10 @@ static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
     ddstring_t basePath;
     Str_InitStatic(&basePath, DD_BasePath());
 
-    if(F_IsRelativeToBase(Str_Text(absPath), Str_Text(&basePath)))
+    if (F_IsRelativeToBase(Str_Text(absPath), Str_Text(&basePath)))
     {
         dd_bool mustCopy = (dst == absPath);
-        if(mustCopy)
+        if (mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf);
@@ -297,7 +297,7 @@ static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
     }
 
     // Do we need to copy anyway?
-    if(dst != absPath)
+    if (dst != absPath)
     {
         Str_Set(dst, Str_Text(absPath));
     }
@@ -308,13 +308,13 @@ static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
 
 dd_bool F_IsAbsolute(const ddstring_t* str)
 {
-    if(!str)
+    if (!str)
         return false;
     /// @todo Should not handle both separators - refactor callers.
-    if(Str_At(str, 0) == DENG_DIR_SEP_CHAR || Str_At(str, 0) == DENG_DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
+    if (Str_At(str, 0) == DENG_DIR_SEP_CHAR || Str_At(str, 0) == DENG_DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
         return true;
 #ifdef UNIX
-    if(Str_At(str, 0) == '~')
+    if (Str_At(str, 0) == '~')
         return true;
 #endif
     return false;
@@ -323,10 +323,10 @@ dd_bool F_IsAbsolute(const ddstring_t* str)
 dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 {
     assert(dst && src);
-    if(Str_At(src, 0) == '>' || Str_At(src, 0) == '}')
+    if (Str_At(src, 0) == '>' || Str_At(src, 0) == '}')
     {
         dd_bool mustCopy = (dst == src);
-        if(mustCopy)
+        if (mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf); Str_Set(&buf, DD_BasePath());
@@ -341,9 +341,9 @@ dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
         return true;
     }
 #ifdef UNIX
-    else if(Str_At(src, 0) == '~')
+    else if (Str_At(src, 0) == '~')
     {
-        if(Str_At(src, 1) == '/' && getenv("HOME"))
+        if (Str_At(src, 1) == '/' && getenv("HOME"))
         {   // Replace it with the HOME environment variable.
             ddstring_t buf;
             ddstring_t homeStr;
@@ -369,13 +369,13 @@ dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
         const char* p = Str_Text(src)+2;
 
         Str_Init(&userName);
-        if((p = Str_CopyDelim2(&userName, p, '/', CDF_OMIT_DELIMITER)))
+        if ((p = Str_CopyDelim2(&userName, p, '/', CDF_OMIT_DELIMITER)))
         {
             ddstring_t buf;
             struct passwd* pw;
 
             Str_Init(&buf);
-            if((pw = getpwnam(Str_Text(&userName))) != NULL)
+            if ((pw = getpwnam(Str_Text(&userName))) != NULL)
             {
                 ddstring_t pwStr;
                 Str_Init(&pwStr);
@@ -391,14 +391,14 @@ dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
             Str_Free(&buf);
         }
         Str_Free(&userName);
-        if(result)
+        if (result)
             return result;
         }
     }
 #endif
 
     // Do we need to copy anyway?
-    if(dst != src)
+    if (dst != src)
         Str_Set(dst, Str_Text(src));
 
     // No expansion done.
@@ -408,12 +408,12 @@ dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 /// @return  @c true if @a path begins with a known directive.
 static dd_bool pathHasDirective(const char* path)
 {
-    if(NULL != path && path[0])
+    if (NULL != path && path[0])
     {
 #ifdef UNIX
-        if('~' == path[0]) return true;
+        if ('~' == path[0]) return true;
 #endif
-        if('}' == path[0] || '>' == path[0]) return true;
+        if ('}' == path[0] || '>' == path[0]) return true;
     }
     return false;
 }
@@ -427,11 +427,11 @@ const char* F_PrettyPath(const char* path)
     ddstring_t* buf = NULL;
     int len;
 
-    if(!path || 0 == (len = (int)strlen(path)))
+    if (!path || 0 == (len = (int)strlen(path)))
         return path;
 
     // Hide relative directives like '}'
-    if(len > 1 && pathHasDirective(path))
+    if (len > 1 && pathHasDirective(path))
     {
         buf = &buffers[index++ % NUM_BUFS];
         Str_Clear(buf);
@@ -440,9 +440,9 @@ const char* F_PrettyPath(const char* path)
     }
 
     // If within our the base directory cut out the base path.
-    if(F_IsRelativeToBase(path, DD_BasePath()))
+    if (F_IsRelativeToBase(path, DD_BasePath()))
     {
-        if(!buf)
+        if (!buf)
         {
             buf = &buffers[index++ % NUM_BUFS];
             Str_Set(buf, path);
@@ -452,17 +452,17 @@ const char* F_PrettyPath(const char* path)
     }
 
     // Swap directory separators with their system-specific version.
-    if(strchr(path, DENG_DIR_WRONG_SEP_CHAR))
+    if (strchr(path, DENG_DIR_WRONG_SEP_CHAR))
     {
         int i;
-        if(!buf)
+        if (!buf)
         {
             buf = &buffers[index++ % NUM_BUFS];
             Str_Set(buf, path);
         }
-        for(i = 0; i < len; ++i)
+        for (i = 0; i < len; ++i)
         {
-            if(buf->str[i] == DENG_DIR_WRONG_SEP_CHAR)
+            if (buf->str[i] == DENG_DIR_WRONG_SEP_CHAR)
                buf->str[i] = DENG_DIR_SEP_CHAR;
         }
         path = Str_Text(buf);
@@ -478,14 +478,14 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
 {
     DENG2_ASSERT(data != 0 && path != 0);
 
-    if(!size) return false;
+    if (!size) return false;
 
     AutoStr *nativePath = AutoStr_NewStd();
     Str_Set(nativePath, path);
     F_ToNativeSlashes(nativePath, nativePath);
 
     FILE *outFile = fopen(Str_Text(nativePath), "wb");
-    if(!outFile)
+    if (!outFile)
     {
         LOG_RES_WARNING("Failed to open \"%s\" for writing: %s")
                 << F_PrettyPath(Str_Text(nativePath)) << strerror(errno);
@@ -509,7 +509,7 @@ dd_bool F_DumpFile(File1 &file, char const *outputPath)
         LOG_RES_VERBOSE("%s dumped to %s") << file.name() << out.description();
         return true;
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_ERROR("Failed to write to \"%s\": %s") << dumpPath << er.asText();
         return false;
@@ -525,7 +525,7 @@ bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
         *file << data;
         return true;
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         return false;
     }

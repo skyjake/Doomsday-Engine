@@ -65,11 +65,11 @@ DENG2_PIMPL(Game)
         , params(parms)
     {
         // Define the optional parameters if needed.
-        if(!params.has(DEF_CONFIG_MAIN_PATH))
+        if (!params.has(DEF_CONFIG_MAIN_PATH))
         {
             params.set(DEF_CONFIG_MAIN_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
         }
-        if(!params.has(DEF_CONFIG_BINDINGS_PATH))
+        if (!params.has(DEF_CONFIG_BINDINGS_PATH))
         {
             params.set(DEF_CONFIG_BINDINGS_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
         }
@@ -85,7 +85,7 @@ DENG2_PIMPL(Game)
     StringList packagesFromProfile() const
     {
         auto const *profile = DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfiles::Profile>();
-        if(profile)
+        if (profile)
         {
             return profile->packages();
         }
@@ -120,14 +120,14 @@ String Game::variantOf() const
 
 String Game::family() const
 {
-    if(d->params.has(DEF_FAMILY))
+    if (d->params.has(DEF_FAMILY))
     {
         return d->params.gets(DEF_FAMILY);
     }
     // We can make a guess...
-    if(id().contains("doom"))    return "doom";
-    if(id().contains("heretic")) return "heretic";
-    if(id().contains("hexen"))   return "hexen";
+    if (id().contains("doom"))    return "doom";
+    if (id().contains("heretic")) return "heretic";
+    if (id().contains("hexen"))   return "hexen";
     return "";
 }
 
@@ -150,7 +150,7 @@ void Game::addManifest(ResourceManifest &manifest)
 {
     // Ensure we don't add duplicates.
     Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
-    if(found == d->manifests.end())
+    if (found == d->manifests.end())
     {
         d->manifests.insert(manifest.resourceClass(), &manifest);
     }
@@ -158,17 +158,17 @@ void Game::addManifest(ResourceManifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
-    for(String const &pkg : d->requiredPackages + d->packagesFromProfile())
+    for (String const &pkg : d->requiredPackages + d->packagesFromProfile())
     {
-        if(!App::packageLoader().isAvailable(pkg))
+        if (!App::packageLoader().isAvailable(pkg))
             return false;
     }
 
-    foreach(ResourceManifest *manifest, d->manifests)
+    foreach (ResourceManifest *manifest, d->manifests)
     {
         int const flags = manifest->fileFlags();
 
-        if((flags & FF_STARTUP) && !(flags & FF_FOUND))
+        if ((flags & FF_STARTUP) && !(flags & FF_FOUND))
             return false;
     }
     return true;
@@ -181,11 +181,11 @@ bool Game::isPlayable() const
 
 Game::Status Game::status() const
 {
-    if(App_GameLoaded() && &DoomsdayApp::currentGame() == this)
+    if (App_GameLoaded() && &DoomsdayApp::currentGame() == this)
     {
         return Loaded;
     }
-    if(allStartupFilesFound())
+    if (allStartupFilesFound())
     {
         return Complete;
     }
@@ -240,11 +240,11 @@ String Game::logoImageForId(String const &id)
 {
     /// @todo The name of the plugin should be accessible via the plugin loader.
     String plugName;
-    if(id.contains("heretic"))
+    if (id.contains("heretic"))
     {
         plugName = "libheretic";
     }
-    else if(id.contains("hexen"))
+    else if (id.contains("hexen"))
     {
         plugName = "libhexen";
     }
@@ -264,17 +264,17 @@ String Game::legacySavegameNameExp() const
 String Game::legacySavegamePath() const
 {
     NativePath nativeSavePath = Resources::get().nativeSavePath();
-    if(nativeSavePath.isEmpty()) return "";
-    if(isNull()) return "";
+    if (nativeSavePath.isEmpty()) return "";
+    if (isNull()) return "";
 
-    if(App::commandLine().has("-savedir"))
+    if (App::commandLine().has("-savedir"))
     {
         // A custom path. The savegames are in the root of this folder.
         return nativeSavePath;
     }
 
     // The default save path. The savegames are in a game-specific folder.
-    if(!d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, "").isEmpty())
+    if (!d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, "").isEmpty())
     {
         return App::app().nativeHomePath() / d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER) / id();
     }
@@ -322,19 +322,19 @@ bool Game::isRequiredFile(File1 &file) const
     // If this resource is from a container we must use the path of the
     // root file container instead.
     File1 &rootFile = file;
-    while(rootFile.isContained())
+    while (rootFile.isContained())
     { rootFile = rootFile.container(); }
 
     String absolutePath = rootFile.composePath();
     bool isRequired = false;
 
-    for(Manifests::const_iterator i = d->manifests.find(RC_PACKAGE);
+    for (Manifests::const_iterator i = d->manifests.find(RC_PACKAGE);
         i != d->manifests.end() && i.key() == RC_PACKAGE; ++i)
     {
         ResourceManifest &manifest = **i;
-        if(!(manifest.fileFlags() & FF_STARTUP)) continue;
+        if (!(manifest.fileFlags() & FF_STARTUP)) continue;
 
-        if(!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
+        if (!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
         {
             isRequired = true;
             break;
@@ -347,13 +347,13 @@ bool Game::isRequiredFile(File1 &file) const
 void Game::addResource(resourceclassid_t classId, dint rflags,
                        char const *names, void const *params)
 {
-    if(!VALID_RESOURCECLASSID(classId))
+    if (!VALID_RESOURCECLASSID(classId))
     {
         throw Error("Game::addResource",
                     "Unknown resource class " + QString::number(classId));
     }
 
-    if(!names || !names[0])
+    if (!names || !names[0])
     {
         throw Error("Game::addResource", "Invalid name argument");
     }
@@ -364,16 +364,16 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
-    foreach(QString const &nameRef, nameList)
+    foreach (QString const &nameRef, nameList)
     {
         manifest->addName(nameRef);
     }
 
-    if(params && classId == RC_PACKAGE)
+    if (params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
         QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
-        foreach(QString const &idKeyRef, idKeys)
+        foreach (QString const &idKeyRef, idKeys)
         {
             manifest->addIdentityKey(idKeyRef);
         }
@@ -382,7 +382,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 
 void Game::loadPackages() const
 {
-    for(String const &id : d->requiredPackages + d->packagesFromProfile())
+    for (String const &id : d->requiredPackages + d->packagesFromProfile())
     {
         App::packageLoader().load(id);
     }
@@ -391,7 +391,7 @@ void Game::loadPackages() const
 void Game::unloadPackages() const
 {
     StringList const allPackages = d->requiredPackages + d->packagesFromProfile();
-    for(int i = allPackages.size() - 1; i >= 0; --i)
+    for (int i = allPackages.size() - 1; i >= 0; --i)
     {
         App::packageLoader().unload(allPackages.at(i));
     }
@@ -420,20 +420,20 @@ String Game::filesAsText(int rflags, bool withStatus) const
 
     // Group output by resource class.
     Manifests const &manifs = manifests();
-    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
+    for (uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
-        for(Manifests::const_iterator i = manifs.find(classId);
+        for (Manifests::const_iterator i = manifs.find(classId);
             i != manifs.end() && i.key() == classId; ++i)
         {
             ResourceManifest &manifest = **i;
-            if(rflags >= 0 && (rflags & manifest.fileFlags()))
+            if (rflags >= 0 && (rflags & manifest.fileFlags()))
             {
                 bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
 
-                if(!text.isEmpty()) text += "\n" _E(0);
+                if (!text.isEmpty()) text += "\n" _E(0);
 
-                if(withStatus)
+                if (withStatus)
                 {
                     text += (resourceFound? " - " : _E(1) " ! " _E(.));
                 }
@@ -443,10 +443,10 @@ String Game::filesAsText(int rflags, bool withStatus) const
                         .arg(!resourceFound? _E(D) : "")
                         .arg(manifest.names().join(_E(l) " or " _E(.)));
 
-                if(withStatus)
+                if (withStatus)
                 {
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
-                    if(resourceFound)
+                    if (resourceFound)
                     {
                         text += String(_E(C) "\"%1\"" _E(.)).arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
                     }
@@ -458,7 +458,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
         }
     }
 
-    if(text.isEmpty()) return " none";
+    if (text.isEmpty()) return " none";
 
     return text;
 }
@@ -473,10 +473,10 @@ D_CMD(InspectGame)
     DENG2_UNUSED(src);
 
     Game const *game = 0;
-    if(argc < 2)
+    if (argc < 2)
     {
         // No game identity key was specified - assume the current game.
-        if(!App_GameLoaded())
+        if (!App_GameLoaded())
         {
             LOG_WARNING("No game is currently loaded.\nPlease specify the identifier of the game to inspect.");
             return false;
@@ -490,7 +490,7 @@ D_CMD(InspectGame)
         {
             game = &DoomsdayApp::games()[idKey];
         }
-        catch(Games::NotFoundError const &)
+        catch (Games::NotFoundError const &)
         {
             LOG_WARNING("Unknown game '%s'") << idKey;
             return false;

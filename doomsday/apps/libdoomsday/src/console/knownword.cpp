@@ -56,7 +56,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     knownword_t const *wB = &b;
     AutoStr *textA = 0, *textB = 0;
 
-    switch(wA->type)
+    switch (wA->type)
     {
     case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
     case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
@@ -68,7 +68,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
         exit(1); // Unreachable
     }
 
-    switch(wB->type)
+    switch (wB->type)
     {
     case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
     case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
@@ -90,7 +90,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
 {
     AutoStr *text = 0;
 
-    switch(word->type)
+    switch (word->type)
     {
     case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
     case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
@@ -110,11 +110,11 @@ static dd_bool removeFromKnownWords(knownwordtype_t type, void* data)
 {
     DENG_ASSERT(VALID_KNOWNWORDTYPE(type) && data != 0);
 
-    for(int i = 0; i < knownWords.size(); ++i)
+    for (int i = 0; i < knownWords.size(); ++i)
     {
         knownword_t const &word = knownWords.at(i);
 
-        if(word.type != type || word.data != data)
+        if (word.type != type || word.data != data)
             continue;
 
         knownWords.removeAt(i);
@@ -143,7 +143,7 @@ void Con_UpdateKnownWords()
  */
 static void updateKnownWords(void)
 {
-    if(!knownWordsNeedUpdate) return;
+    if (!knownWordsNeedUpdate) return;
 
     /*
     // Count the number of visible console variables.
@@ -152,7 +152,7 @@ static void updateKnownWords(void)
     countCVarParams.type = cvartype_t(-1);
     countCVarParams.hidden = false;
     countCVarParams.ignoreHidden = true;
-    if(cvarDirectory)
+    if (cvarDirectory)
     {
         cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &countCVarParams);
     }*/
@@ -179,7 +179,7 @@ static void updateKnownWords(void)
     // Add aliases?
     Con_AddKnownWordsForAliases();
 
-    if(appWordsCallback)
+    if (appWordsCallback)
     {
         appWordsCallback();
     }
@@ -216,33 +216,33 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
 
     updateKnownWords();
 
-    for(int i = 0; i < knownWords.size(); ++i)
+    for (int i = 0; i < knownWords.size(); ++i)
     {
         knownword_t const *word = &knownWords.at(i);
-        if(matchType != WT_ANY && word->type != type) continue;
+        if (matchType != WT_ANY && word->type != type) continue;
 
-        if(patternLength)
+        if (patternLength)
         {
             AutoStr* textString = textForKnownWord(word);
-            if(matchMode == KnownWordStartsWith)
+            if (matchMode == KnownWordStartsWith)
             {
-                if(qstrnicmp(Str_Text(textString), pattern, patternLength))
+                if (qstrnicmp(Str_Text(textString), pattern, patternLength))
                     continue; // Didn't match.
             }
-            else if(matchMode == KnownWordExactMatch)
+            else if (matchMode == KnownWordExactMatch)
             {
-                if(strcasecmp(Str_Text(textString), pattern))
+                if (strcasecmp(Str_Text(textString), pattern))
                     continue; // Didn't match.
             }
-            else if(matchMode == KnownWordRegex)
+            else if (matchMode == KnownWordRegex)
             {
-                if(!regex.exactMatch(Str_Text(textString)))
+                if (!regex.exactMatch(Str_Text(textString)))
                     continue; // Didn't match.
             }
         }
 
         result = callback(word, parameters);
-        if(result) break;
+        if (result) break;
     }
 
     return result;
@@ -275,9 +275,9 @@ knownword_t const** Con_CollectKnownWordsMatchingWord(char const* word,
     uint localCount = 0;
     Con_IterateKnownWords(word, type, countMatchedWordWorker, &localCount);
 
-    if(count) *count = localCount;
+    if (count) *count = localCount;
 
-    if(localCount != 0)
+    if (localCount != 0)
     {
         // Collect the pointers.
         collectmatchedwordworker_paramaters_t p;
@@ -298,7 +298,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
     AutoStr *text = textForKnownWord(word);
 
     // See if 'matching' is anywhere in the known word.
-    if(strcasestr(Str_Text(text), (const char*)matching))
+    if (strcasestr(Str_Text(text), (const char*)matching))
     {
         char const* wType[KNOWNWORDTYPE_COUNT] = {
             "cmd ", "var ", "alias ", "game "
@@ -312,15 +312,15 @@ static int aproposPrinter(knownword_t const *word, void *matching)
 
         // Look for a short description.
         String tmp;
-        if(word->type == WT_CCMD || word->type == WT_CVAR)
+        if (word->type == WT_CCMD || word->type == WT_CVAR)
         {
             char const *desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
-            if(desc)
+            if (desc)
             {
                 tmp = desc;
             }
         }
-        else if(word->type == WT_GAME)
+        else if (word->type == WT_GAME)
         {
             tmp = reinterpret_cast<Game const *>(word->data)->title();
         }
@@ -359,20 +359,20 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
     AutoStr *name = Con_KnownWordToString(word);
     de::String found;
 
-    if(!work->terms.contains(Str_Text(name)))
+    if (!work->terms.contains(Str_Text(name)))
         return false; // keep going
 
-    switch(word->type)
+    switch (word->type)
     {
     case WT_CVAR:
-        if(!(((cvar_t *)word->data)->flags & CVF_HIDE))
+        if (!(((cvar_t *)word->data)->flags & CVF_HIDE))
         {
             found = Con_VarAsStyledText((cvar_t *) word->data, "");
         }
         break;
 
     case WT_CCMD:
-        if(!((ccmd_t *)word->data)->prevOverload)
+        if (!((ccmd_t *)word->data)->prevOverload)
         {
             found = Con_CmdAsStyledText((ccmd_t *) word->data);
         }
@@ -390,9 +390,9 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
         break;
     }
 
-    if(!found.isEmpty())
+    if (!found.isEmpty())
     {
-        if(!work->result.isEmpty()) work->result.append("\n");
+        if (!work->result.isEmpty()) work->result.append("\n");
         work->result.append(found);
     }
 
@@ -402,7 +402,7 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
 de::String Con_AnnotatedConsoleTerms(QStringList terms)
 {
     AnnotationWork work;
-    foreach(QString term, terms)
+    foreach (QString term, terms)
     {
         work.terms.insert(term);
     }

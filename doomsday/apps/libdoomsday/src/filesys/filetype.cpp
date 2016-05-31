@@ -32,22 +32,22 @@ void DD_AddFileType(FileType const &ftype)
 
 FileType const &DD_FileTypeByName(String name)
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
         FileTypes::const_iterator found = fileTypeMap.constFind(name.toLower());
-        if(found != fileTypeMap.constEnd()) return **found;
+        if (found != fileTypeMap.constEnd()) return **found;
     }
     return nullFileType; // Not found.
 }
 
 FileType const &DD_GuessFileTypeFromFileName(String path)
 {
-    if(!path.isEmpty())
+    if (!path.isEmpty())
     {
         DENG2_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
         {
             FileType const &ftype = **i;
-            if(ftype.fileNameIsKnown(path))
+            if (ftype.fileNameIsKnown(path))
                 return ftype;
         }
     }

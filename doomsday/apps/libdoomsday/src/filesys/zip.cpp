@@ -134,7 +134,7 @@ static bool readArchiveHeader(FileHandle &file, localfileheader_t &hdr)
     readBytes = file.read((uint8_t *)&hdr, sizeof(localfileheader_t));
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
-    if(!(readBytes < sizeof(localfileheader_t)))
+    if (!(readBytes < sizeof(localfileheader_t)))
     {
         hdr.signature       = littleEndianByteOrder.toNative(hdr.signature);
         hdr.requiredVersion = littleEndianByteOrder.toNative(hdr.requiredVersion);
@@ -166,7 +166,7 @@ typedef struct centralend_s {
 static bool readCentralEnd(FileHandle &file, centralend_t &end)
 {
     size_t readBytes = file.read((uint8_t *)&end, sizeof(centralend_t));
-    if(!(readBytes < sizeof(centralend_t)))
+    if (!(readBytes < sizeof(centralend_t)))
     {
         end.disk            = littleEndianByteOrder.toNative(end.disk);
         end.centralStartDisk= littleEndianByteOrder.toNative(end.centralStartDisk);
@@ -183,7 +183,7 @@ static bool readCentralEnd(FileHandle &file, centralend_t &end)
 static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     String msg = String("Invalid lump index %1").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += " (file is empty)";
+    if (lastValidIdx < 0) msg += " (file is empty)";
     else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
     return msg;
 }
@@ -199,29 +199,29 @@ static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
 static bool applyGamePathMappings(String &path)
 {
     // Manually mapped to Defs?
-    if(path.beginsWith('@'))
+    if (path.beginsWith('@'))
     {
         path.remove(0, 1);
-        if(path.at(0) == '/') path.remove(0, 1);
+        if (path.at(0) == '/') path.remove(0, 1);
 
         path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto") / path;
         return true;
     }
 
     // Manually mapped to Data?
-    if(path.beginsWith('#'))
+    if (path.beginsWith('#'))
     {
         path.remove(0, 1);
-        if(path.at(0) == '/') path.remove(0, 1);
+        if (path.at(0) == '/') path.remove(0, 1);
 
         // Is there a prefix to be omitted in the name?
-        if(int slash = path.lastIndexOf('/'))
+        if (int slash = path.lastIndexOf('/'))
         {
             // The slash must not be too early in the string.
-            if(slash >= 2)
+            if (slash >= 2)
             {
                 // Good old negative indices.
-                if(path.at(slash - 2) == '.' && path.at(slash - 1) >= '1' && path.at(slash - 1) <= '9')
+                if (path.at(slash - 2) == '.' && path.at(slash - 1) >= '1' && path.at(slash - 1) <= '9')
                     path.remove(slash - 2, 2);
             }
         }
@@ -231,12 +231,12 @@ static bool applyGamePathMappings(String &path)
     }
 
     // Implicitly mapped to another location?
-    if(!path.contains('/'))
+    if (!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
         FileType const &ftype = DD_GuessFileTypeFromFileName(path.fileName());
 
-        switch(ftype.defaultClass())
+        switch (ftype.defaultClass())
         {
         case RC_PACKAGE:
             // Mapped to the Data directory.
@@ -257,7 +257,7 @@ static bool applyGamePathMappings(String &path)
     FS1::Schemes const &schemes = App_FileSystem().allSchemes();
     DENG2_FOR_EACH_CONST(FS1::Schemes, i, schemes)
     {
-        if((*i)->mapPath(path))
+        if ((*i)->mapPath(path))
         {
             return true;
         }
@@ -336,11 +336,11 @@ DENG2_PIMPL(Zip)
         FileInfo const &lumpInfo = lump.info();
         self.handle_->seek(lumpInfo.baseOffset, SeekSet);
 
-        if(lumpInfo.isCompressed())
+        if (lumpInfo.isCompressed())
         {
             bool result;
             uint8_t *compressedData = (uint8_t *) M_Malloc(lumpInfo.compressedSize);
-            if(!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpInfo.compressedSize));
+            if (!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpInfo.compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
             self.handle_->read(compressedData, lumpInfo.compressedSize);
@@ -349,7 +349,7 @@ DENG2_PIMPL(Zip)
             result = uncompressRaw(compressedData, lumpInfo.compressedSize, buffer, lumpInfo.size);
 
             M_Free(compressedData);
-            if(!result) return 0; // Inflate failed.
+            if (!result) return 0; // Inflate failed.
         }
         else
         {
@@ -372,13 +372,13 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     {
         int pos = CENTRAL_END_SIZE; // Offset from the end.
         uint32_t signature;
-        while(!foundCentralDirectory && pos < MAXIMUM_COMMENT_SIZE)
+        while (!foundCentralDirectory && pos < MAXIMUM_COMMENT_SIZE)
         {
             handle_->seek(-pos, SeekEnd);
 
             // Is this the signature?
             handle_->read((uint8_t *)&signature, sizeof(signature));
-            if(littleEndianByteOrder.toNative(signature) == SIG_END_OF_CENTRAL_DIR)
+            if (littleEndianByteOrder.toNative(signature) == SIG_END_OF_CENTRAL_DIR)
             {
                 foundCentralDirectory = true; // Yes, this is it.
             }
@@ -390,7 +390,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
         }
     }
 
-    if(!foundCentralDirectory)
+    if (!foundCentralDirectory)
         throw FormatError("Zip", "Central directory in \"" + NativePath(composePath()).pretty() + "\" not found");
 
     // Read the central directory end record.
@@ -398,14 +398,14 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     readCentralEnd(*handle_, summary);
 
     // Does the summary say something we don't like?
-    if(summary.diskEntryCount != summary.totalEntryCount)
+    if (summary.diskEntryCount != summary.totalEntryCount)
         throw FormatError("Zip", "Multipart zip file \"" + NativePath(composePath()).pretty() + "\" not supported");
 
     // We'll load the file directory using one continous read into a temporary
     // local buffer before we process it into our runtime representation.
     // Read the entire central directory into memory.
     void *centralDirectory = M_Malloc(summary.size);
-    if(!centralDirectory) throw FormatError("Zip", String("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
+    if (!centralDirectory) throw FormatError("Zip", String("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
 
     handle_->seek(summary.offset, SeekSet);
     handle_->read((uint8_t *)centralDirectory, summary.size);
@@ -416,11 +416,11 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
      */
     char *pos;
     int entryCount = 0;
-    for(int pass = 0; pass < 2; ++pass)
+    for (int pass = 0; pass < 2; ++pass)
     {
-        if(pass == 1)
+        if (pass == 1)
         {
-            if(entryCount == 0) break;
+            if (entryCount == 0) break;
         }
 
         // Position the read cursor at the start of the buffered central centralDirectory.
@@ -428,7 +428,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
 
         // Read all the entries.
         uint lumpIdx = 0;
-        for(int index = 0; index < summary.totalEntryCount; ++index, pos += sizeof(centralfileheader_t))
+        for (int index = 0; index < summary.totalEntryCount; ++index, pos += sizeof(centralfileheader_t))
         {
             centralfileheader_t const *header = (centralfileheader_t *) pos;
             char const *nameStart = pos + sizeof(centralfileheader_t);
@@ -440,25 +440,25 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
             String filePath = NativePath(nameStart, DD_USHORT(header->fileNameSize)).withSeparators('/');
 
             // Skip directories (we don't presently model these).
-            if(DD_ULONG(header->size) == 0 && filePath.last() == '/') continue;
+            if (DD_ULONG(header->size) == 0 && filePath.last() == '/') continue;
 
             // Do we support the format of this lump?
-            if(DD_USHORT(header->compression) != ZFC_NO_COMPRESSION &&
+            if (DD_USHORT(header->compression) != ZFC_NO_COMPRESSION &&
                DD_USHORT(header->compression) != ZFC_DEFLATED)
             {
-                if(pass != 0) continue;
+                if (pass != 0) continue;
                 LOG_RES_WARNING("Zip %s:'%s' uses an unsupported compression algorithm")
                         << NativePath(composePath()).pretty() << NativePath(filePath).pretty();
             }
 
-            if(DD_USHORT(header->flags) & ZFH_ENCRYPTED)
+            if (DD_USHORT(header->flags) & ZFH_ENCRYPTED)
             {
-                if(pass != 0) continue;
+                if (pass != 0) continue;
                 LOG_RES_WARNING("Zip %s:'%s' is encrypted; encryption is not supported")
                         << NativePath(composePath()).pretty() << NativePath(filePath).pretty();
             }
 
-            if(pass == 0)
+            if (pass == 0)
             {
                 // Another record will be needed.
                 ++entryCount;
@@ -473,7 +473,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
                               + DD_USHORT(header->fileNameSize) + DD_USHORT(localHeader.extraFieldSize);
 
             size_t compressedSize;
-            if(DD_USHORT(header->compression) == ZFC_DEFLATED)
+            if (DD_USHORT(header->compression) == ZFC_DEFLATED)
             {
                 // Compressed using the deflate algorithm.
                 compressedSize = DD_ULONG(header->compressedSize);
@@ -483,19 +483,19 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
                 compressedSize = DD_ULONG(header->size);
             }
 
-            if(!DoomsdayApp::game().isNull())
+            if (!DoomsdayApp::game().isNull())
             {
                 // In some cases the path to the file is mapped to some
                 // other location in the virtual file system.
                 String filePathCopy = filePath;
-                if(applyGamePathMappings(filePathCopy))
+                if (applyGamePathMappings(filePathCopy))
                 {
                     try
                     {
                         // Resolve all symbolic references in the path.
                         filePath = Uri(filePathCopy, RC_NULL).resolved();
                     }
-                    catch(de::Uri::ResolveError const& er)
+                    catch (de::Uri::ResolveError const& er)
                     {
                         LOG_RES_WARNING(er.asText());
                     }
@@ -533,11 +533,11 @@ void Zip::clearCachedLump(int lumpIndex, bool *retCleared)
 {
     LOG_AS("Zip::clearCachedLump");
 
-    if(retCleared) *retCleared = false;
+    if (retCleared) *retCleared = false;
 
-    if(hasLump(lumpIndex))
+    if (hasLump(lumpIndex))
     {
-        if(!d->dataCache.isNull())
+        if (!d->dataCache.isNull())
         {
             d->dataCache->remove(lumpIndex, retCleared);
         }
@@ -551,7 +551,7 @@ void Zip::clearCachedLump(int lumpIndex, bool *retCleared)
 void Zip::clearLumpCache()
 {
     LOG_AS("Zip::clearLumpCache");
-    if(!d->dataCache.isNull())
+    if (!d->dataCache.isNull())
     {
         d->dataCache->clear();
     }
@@ -569,16 +569,16 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
             << (lumpFile.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
-    if(d->dataCache.isNull())
+    if (d->dataCache.isNull())
     {
         d->dataCache.reset(new LumpCache(lumpCount()));
     }
 
     uint8_t const *data = d->dataCache->data(lumpIndex);
-    if(data) return data;
+    if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
-    if(!region) throw Error("Zip::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
+    if (!region) throw Error("Zip::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
 
     readLump(lumpIndex, region, false);
     d->dataCache->insert(lumpIndex, region);
@@ -593,9 +593,9 @@ void Zip::unlockLump(int lumpIndex)
             << NativePath(composePath()).pretty()
             << NativePath(lump(lumpIndex).composePath()).pretty();
 
-    if(hasLump(lumpIndex))
+    if (hasLump(lumpIndex))
     {
-        if(!d->dataCache.isNull())
+        if (!d->dataCache.isNull())
         {
             d->dataCache->unlock(lumpIndex);
         }
@@ -627,11 +627,11 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
             << length;
 
     // Try to avoid a file system read by checking for a cached copy.
-    if(tryCache)
+    if (tryCache)
     {
         uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIndex;
-        if(data)
+        if (data)
         {
             size_t readBytes = de::min(size_t(lumpFile.size()), length);
             std::memcpy(buffer, data + startOffset, readBytes);
@@ -640,7 +640,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     }
 
     size_t readBytes = 0;
-    if(!startOffset && length == lumpFile.size())
+    if (!startOffset && length == lumpFile.size())
     {
         // Read it straight to the caller's data buffer.
         readBytes = d->bufferLump(lumpFile, buffer);
@@ -649,9 +649,9 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     {
         // Allocate a temporary buffer and read the whole lump into it(!).
         uint8_t *readBuf = (uint8_t *) M_Malloc(lumpFile.size());
-        if(!readBuf) throw Error("Zip::readLump", QString("Failed on allocation of %1 bytes for work buffer").arg(lumpFile.size()));
+        if (!readBuf) throw Error("Zip::readLump", QString("Failed on allocation of %1 bytes for work buffer").arg(lumpFile.size()));
 
-        if(d->bufferLump(lumpFile, readBuf))
+        if (d->bufferLump(lumpFile, readBuf))
         {
             readBytes = de::min(size_t(lumpFile.size()), length);
             std::memcpy(buffer, readBuf + startOffset, readBytes);
@@ -661,7 +661,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     }
 
     /// @todo Do not check the read length here.
-    if(readBytes < de::min(size_t(lumpFile.size()), length))
+    if (readBytes < de::min(size_t(lumpFile.size()), length))
         throw Error("Zip::readLump", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIndex));
 
     return readBytes;
@@ -670,7 +670,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 bool Zip::recognise(FileHandle &file)
 {
     localfileheader_t hdr;
-    if(!readArchiveHeader(file, hdr)) return false;
+    if (!readArchiveHeader(file, hdr)) return false;
     return hdr.signature == SIG_LOCAL_FILE_HEADER;
 }
 
@@ -702,16 +702,16 @@ uint8_t *Zip::compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int l
     stream.zfree    = Z_NULL;
     stream.opaque   = Z_NULL;
 
-    if(level < Z_NO_COMPRESSION)
+    if (level < Z_NO_COMPRESSION)
     {
         level = Z_NO_COMPRESSION;
     }
-    if(level > Z_BEST_COMPRESSION)
+    if (level > Z_BEST_COMPRESSION)
     {
         level = Z_BEST_COMPRESSION;
     }
     result = deflateInit(&stream, level);
-    if(result != Z_OK)
+    if (result != Z_OK)
     {
         M_Free(output);
         return 0;
@@ -723,17 +723,17 @@ uint8_t *Zip::compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int l
         stream.next_out  = chunk;
         stream.avail_out = CHUNK_SIZE;
         result = deflate(&stream, Z_FINISH);
-        if(result == Z_STREAM_ERROR)
+        if (result == Z_STREAM_ERROR)
         {
             M_Free(output);
             *outSize = 0;
             return 0;
         }
         have = CHUNK_SIZE - stream.avail_out;
-        if(have)
+        if (have)
         {
             // Need more memory?
-            if(*outSize + have > allocSize)
+            if (*outSize + have > allocSize)
             {
                 // Need more memory.
                 allocSize *= 2;
@@ -743,7 +743,7 @@ uint8_t *Zip::compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int l
             std::memcpy(output + *outSize, chunk, have);
             *outSize += have;
         }
-    } while(!stream.avail_out); // output chunk full, more data may follow
+    } while (!stream.avail_out); // output chunk full, more data may follow
 
     DENG2_ASSERT(result == Z_STREAM_END);
     DENG2_ASSERT(stream.total_out == *outSize);
@@ -775,7 +775,7 @@ uint8_t *Zip::uncompress(uint8_t *in, size_t inSize, size_t *outSize)
     stream.avail_in = (uInt) inSize;
 
     result = inflateInit(&stream);
-    if(result != Z_OK)
+    if (result != Z_OK)
     {
         M_Free(output);
         return 0;
@@ -787,17 +787,17 @@ uint8_t *Zip::uncompress(uint8_t *in, size_t inSize, size_t *outSize)
         stream.next_out  = chunk;
         stream.avail_out = INF_CHUNK_SIZE;
         result = inflate(&stream, Z_FINISH);
-        if(result == Z_STREAM_ERROR)
+        if (result == Z_STREAM_ERROR)
         {
             M_Free(output);
             *outSize = 0;
             return 0;
         }
         have = INF_CHUNK_SIZE - stream.avail_out;
-        if(have)
+        if (have)
         {
             // Need more memory?
-            if(*outSize + have > allocSize)
+            if (*outSize + have > allocSize)
             {
                 // Need more memory.
                 allocSize *= 2;
@@ -807,7 +807,7 @@ uint8_t *Zip::uncompress(uint8_t *in, size_t inSize, size_t *outSize)
             std::memcpy(output + *outSize, chunk, have);
             *outSize += have;
         }
-    } while(!stream.avail_out); // output chunk full, more data may follow
+    } while (!stream.avail_out); // output chunk full, more data may follow
 
     // We should now be at the end.
     DENG2_ASSERT(result == Z_STREAM_END);
@@ -832,13 +832,13 @@ bool Zip::uncompressRaw(uint8_t *in, size_t inSize, uint8_t *out, size_t outSize
     stream.next_out  = (Bytef *) out;
     stream.avail_out = (uInt) outSize;
 
-    if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+    if (inflateInit2(&stream, -MAX_WBITS) != Z_OK)
         return false;
 
     // Do the inflation in one call.
     result = inflate(&stream, Z_FINISH);
 
-    if(stream.total_out != outSize)
+    if (stream.total_out != outSize)
     {
         inflateEnd(&stream);
         LOG_RES_WARNING("Failure due to %s (result code: %i)")

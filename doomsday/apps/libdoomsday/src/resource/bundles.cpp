@@ -50,7 +50,7 @@ DENG2_PIMPL(Bundles)
     {
         DENG2_ASSERT(dataFile.is<DataBundle>());
         bundlesToIdentify << dataFile.maybeAs<DataBundle>();
-        if(mainCall.isEmpty())
+        if (mainCall.isEmpty())
         {
             mainCall.enqueue([this] () { identifyAddedDataBundles(); });
         }
@@ -61,7 +61,7 @@ DENG2_PIMPL(Bundles)
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
-        for(DataBundle const *bundle : bundlesToIdentify)
+        for (DataBundle const *bundle : bundlesToIdentify)
         {
             DENG2_ASSERT(bundle);
             bundle->identifyPackages();
@@ -73,19 +73,19 @@ DENG2_PIMPL(Bundles)
     {
         using Info = de::Info;
 
-        if(!identityRegistry.isEmpty()) return;
+        if (!identityRegistry.isEmpty()) return;
 
         String const defPath = "/packs/net.dengine.base/databundles.dei";
 
         formatEntries.clear();
         identityRegistry.parse(App::rootFolder().locate<File const>(defPath));
 
-        for(auto const *elem : identityRegistry.root().contentsInOrder())
+        for (auto const *elem : identityRegistry.root().contentsInOrder())
         {
-            if(!elem->isBlock()) continue;
+            if (!elem->isBlock()) continue;
 
             Info::BlockElement const &block = elem->as<Info::BlockElement>();
-            if(block.blockType() != QStringLiteral("package"))
+            if (block.blockType() != QStringLiteral("package"))
             {
                 // Not sure what this is...
                 continue;
@@ -102,7 +102,7 @@ DENG2_PIMPL(Bundles)
                      format == "ded"?  DataBundle::Ded :
                                        DataBundle::Unknown);
 
-            if(bundleFormat == DataBundle::Unknown)
+            if (bundleFormat == DataBundle::Unknown)
             {
                 throw InvalidError("Bundles::parseRegistry",
                                    defPath + ": invalid format for \"" + block.name() + "\"");
@@ -146,25 +146,25 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
     File const &source = bundle.asFile();
 
     // Find the best match from the registry.
-    for(auto const *def : formatEntries(bundle.format()))
+    for (auto const *def : formatEntries(bundle.format()))
     {
         int score = 0;
 
         // Match the file name.
-        if(auto const *fileName = def->find(QStringLiteral("fileName")))
+        if (auto const *fileName = def->find(QStringLiteral("fileName")))
         {
-            if(fileName->isKey() &&
+            if (fileName->isKey() &&
                fileName->as<Info::KeyElement>().value()
                     .text.compareWithoutCase(source.name()) == 0)
             {
                 ++score;
             }
-            else if(fileName->isList())
+            else if (fileName->isList())
             {
                 // Any of the provided alternatives will be accepted.
-                for(auto const &cand : fileName->as<Info::ListElement>().values())
+                for (auto const &cand : fileName->as<Info::ListElement>().values())
                 {
-                    if(!cand.text.compareWithoutCase(source.name()))
+                    if (!cand.text.compareWithoutCase(source.name()))
                     {
                         ++score;
                         break;
@@ -175,8 +175,8 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 
         // Match the file type.
         String fileType = def->keyValue(QStringLiteral("fileType"));
-        if(fileType.isEmpty()) fileType = "file"; // prefer files by default
-        if((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
+        if (fileType.isEmpty()) fileType = "file"; // prefer files by default
+        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
         {
             ++score;
@@ -184,7 +184,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 
         // Match the file size.
         String fileSize = def->keyValue(QStringLiteral("fileSize"));
-        if(!fileSize.isEmpty() && fileSize.toUInt() == source.size())
+        if (!fileSize.isEmpty() && fileSize.toUInt() == source.size())
         {
             ++score;
         }
@@ -192,13 +192,13 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         bool crcMismatch = false;
 
         // Additional criteria for recognizing WADs.
-        if(bundle.format() == DataBundle::Iwad ||
+        if (bundle.format() == DataBundle::Iwad ||
            bundle.format() == DataBundle::Pwad)
         {
             String lumpDirCRC32 = def->keyValue(QStringLiteral("lumpDirCRC32"));
-            if(!lumpDirCRC32.isEmpty())
+            if (!lumpDirCRC32.isEmpty())
             {
-                if(lumpDirCRC32.toUInt(nullptr, 16) == bundle.lumpDirectory()->crc32())
+                if (lumpDirCRC32.toUInt(nullptr, 16) == bundle.lumpDirectory()->crc32())
                 {
                     // Low probability of a false negative => more significant.
                     score += 2;
@@ -209,17 +209,17 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                 }
             }
 
-            if(auto const *lumps = def->find(QStringLiteral("lumps"))->maybeAs<Info::ListElement>())
+            if (auto const *lumps = def->find(QStringLiteral("lumps"))->maybeAs<Info::ListElement>())
             {
                 ++score; // will be subtracted if not matched
 
-                for(auto const &val : lumps->values())
+                for (auto const &val : lumps->values())
                 {
                     QRegExp const sizeCondition("(.*)==([0-9]+)");
                     Block lumpName;
                     int requiredSize = 0;
 
-                    if(sizeCondition.exactMatch(val))
+                    if (sizeCondition.exactMatch(val))
                     {
                         lumpName     = sizeCondition.cap(1).toUtf8();
                         requiredSize = sizeCondition.cap(2).toInt();
@@ -230,13 +230,13 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                         requiredSize = -1;
                     }
 
-                    if(!bundle.lumpDirectory()->has(lumpName))
+                    if (!bundle.lumpDirectory()->has(lumpName))
                     {
                         --score;
                         break;
                     }
 
-                    if(requiredSize >= 0 &&
+                    if (requiredSize >= 0 &&
                        bundle.lumpDirectory()->lumpSize(lumpName) != duint32(requiredSize))
                     {
                         --score;
@@ -246,7 +246,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             }
         }
 
-        if(score > 0 && score >= match.bestScore)
+        if (score > 0 && score >= match.bestScore)
         {
             match.bestMatch = def;
             match.bestScore = score;
@@ -274,9 +274,9 @@ QList<DataBundle const *> Bundles::loaded() const
     QList<DataBundle const *> loadedBundles;
 
     // Check all the loaded packages to see which ones are data bundles.
-    for(auto *f : App::packageLoader().loadedPackagesAsFilesInPackageOrder())
+    for (auto *f : App::packageLoader().loadedPackagesAsFilesInPackageOrder())
     {
-        if(DataBundle const *bundle = f->maybeAs<DataBundle>())
+        if (DataBundle const *bundle = f->maybeAs<DataBundle>())
         {
             loadedBundles << bundle;
         }

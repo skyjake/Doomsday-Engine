@@ -33,10 +33,10 @@ void P_GetGameActions()
     ::actions.clear();
 
     // Action links are provided by the game (which owns the actual action functions).
-    if(auto getVar = DoomsdayApp::plugins().gameExports().GetVariable)
+    if (auto getVar = DoomsdayApp::plugins().gameExports().GetVariable)
     {
         auto const *links = (actionlink_t const *) getVar(DD_ACTION_LINK);
-        for(actionlink_t const *link = links; link && link->name; link++)
+        for (actionlink_t const *link = links; link && link->name; link++)
         {
             ::actions.insert(String(link->name).toLower(), link->func);
         }
@@ -45,10 +45,10 @@ void P_GetGameActions()
 
 acfnptr_t P_GetAction(String const &name)
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
         auto found = actions.find(name.toLower());
-        if(found != actions.end()) return found.value();
+        if (found != actions.end()) return found.value();
     }
     return nullptr;  // Not found.
 }

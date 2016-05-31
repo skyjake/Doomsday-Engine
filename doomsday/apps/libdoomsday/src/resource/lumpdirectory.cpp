@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(LumpDirectory)
         Block typeId;
         reader.readBytes(4, typeId);
         type = (typeId == "PWAD"? Pwad : typeId == "IWAD"? Iwad : Invalid);
-        if(type == Invalid) return;
+        if (type == Invalid) return;
 
         duint32 count = 0;
         duint32 dirOffset = 0;
@@ -58,7 +58,7 @@ DENG2_PIMPL_NOREF(LumpDirectory)
 
         // Read all the entries.
         Reader lumpReader(data);
-        for(duint32 i = 0; i < count; ++i)
+        for (duint32 i = 0; i < count; ++i)
         {
             Entry entry;
             lumpReader >> entry.offset >> entry.size;
@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(LumpDirectory)
 
         // Make an index of all the lumps.
         index.clear();
-        for(int i = 0; i < entries.size(); ++i)
+        for (int i = 0; i < entries.size(); ++i)
         {
             index.insert(entries.at(i).name, i);
         }
@@ -99,7 +99,7 @@ LumpDirectory::Pos LumpDirectory::count() const
 
 LumpDirectory::Entry const &LumpDirectory::entry(Pos pos) const
 {
-    if(pos >= count())
+    if (pos >= count())
     {
         throw OffsetError("LumpDirectory::entry",
                           QString("Invalid position %1 (lump count: %2)")
@@ -116,7 +116,7 @@ duint32 LumpDirectory::crc32() const
 duint32 LumpDirectory::lumpSize(Block const &lumpName) const
 {
     auto found = d->index.constFind(lumpName);
-    if(found != d->index.constEnd())
+    if (found != d->index.constEnd())
     {
         return d->entries.at(found.value()).size;
     }
@@ -131,7 +131,7 @@ bool LumpDirectory::has(Block const &lumpName) const
 LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
 {
     auto found = d->index.constFind(lumpName);
-    if(found != d->index.constEnd())
+    if (found != d->index.constEnd())
     {
         return found.value();
     }

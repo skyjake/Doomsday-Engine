@@ -428,14 +428,14 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
     }
 
     ded_group_member_t *tryFindFirstMemberWithMaterial(de::Uri const &materialUri) {
-        if(!materialUri.isEmpty()) {
-            for(int i = 0; i < members.size(); ++i) {
-                if(members[i].material && *members[i].material == materialUri) {
+        if (!materialUri.isEmpty()) {
+            for (int i = 0; i < members.size(); ++i) {
+                if (members[i].material && *members[i].material == materialUri) {
                     return &members[i];
                 }
 
                 // Only animate if the first frame in the group?
-                if(flags & AGF_FIRST_ONLY) break;
+                if (flags & AGF_FIRST_ONLY) break;
             }
         }
         return nullptr;  // Not found.

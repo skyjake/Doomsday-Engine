@@ -60,14 +60,14 @@ static int markVariableUserDataFreed(CVarDirectory::Node &node, void *context)
 
     cvar_t *var = reinterpret_cast<cvar_t *>(node.userPointer());
     void **ptr = (void **) context;
-    if(var)
-    switch(CVar_Type(var))
+    if (var)
+    switch (CVar_Type(var))
     {
     case CVT_CHARPTR:
-        if(*ptr == CV_CHARPTR(var)) var->flags &= ~CVF_CAN_FREE;
+        if (*ptr == CV_CHARPTR(var)) var->flags &= ~CVF_CAN_FREE;
         break;
     case CVT_URIPTR:
-        if(*ptr == CV_URIPTR(var)) var->flags &= ~CVF_CAN_FREE;
+        if (*ptr == CV_URIPTR(var)) var->flags &= ~CVF_CAN_FREE;
         break;
     default: break;
     }
@@ -77,18 +77,18 @@ static int markVariableUserDataFreed(CVarDirectory::Node &node, void *context)
 static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
 {
     cvar_t *var = reinterpret_cast<cvar_t*>(node.userPointer());
-    if(var)
+    if (var)
     {
         // Detach our user data from this node.
         node.setUserPointer(0);
 
-        if(CVar_Flags(var) & CVF_CAN_FREE)
+        if (CVar_Flags(var) & CVF_CAN_FREE)
         {
             void** ptr = NULL;
-            switch(CVar_Type(var))
+            switch (CVar_Type(var))
             {
             case CVT_CHARPTR:
-                if(!CV_CHARPTR(var)) break;
+                if (!CV_CHARPTR(var)) break;
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
@@ -97,7 +97,7 @@ static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
                 break;
 
             case CVT_URIPTR:
-                if(!CV_URIPTR(var)) break;
+                if (!CV_URIPTR(var)) break;
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
@@ -124,7 +124,7 @@ void Con_ClearVariables()
 #else
     PathTree::ComparisonFlags flags = PathTree::NoBranch;
 #endif
-    if(!cvarDirectory) return;
+    if (!cvarDirectory) return;
 
     cvarDirectory->traverse(flags, NULL, CVarDirectory::no_hash, clearVariable);
     cvarDirectory->clear();
@@ -138,7 +138,7 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
     cvar_t* newVar;
 
     DENG_ASSERT(!node->userPointer());
-    if(node->userPointer())
+    if (node->userPointer())
     {
         throw Error("Con_AddVariable", "A variable with path '" + String(tpl.path) + "' is already known!");
     }
@@ -162,7 +162,7 @@ String CVar_TypeAsText(cvar_t const *var)
 {
     // Human-readable type name.
     DENG_ASSERT(var);
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:
         return "byte";
@@ -240,20 +240,20 @@ void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
     de::Uri *newUri;
     bool changed = false;
 
-    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
+    if ((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
         CVar_PrintReadOnlyWarning(var);
         return;
     }
 
-    if(var->type != CVT_URIPTR)
+    if (var->type != CVT_URIPTR)
     {
         App_FatalError("CVar::SetUri: Not of type %s.", Str_Text(CVar_TypeName(CVT_URIPTR)));
         return; // Unreachable.
     }
 
     /*
-    if(!CV_URIPTR(var) && !uri)
+    if (!CV_URIPTR(var) && !uri)
     {
         return;
     }
@@ -262,13 +262,13 @@ void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
     // Compose the new uri.
     newUri = new de::Uri(uri);
 
-    if(!CV_URIPTR(var) || *CV_URIPTR(var) != *newUri)
+    if (!CV_URIPTR(var) || *CV_URIPTR(var) != *newUri)
     {
         changed = true;
     }
 
     // Free the old uri, if one exists.
-    if((var->flags & CVF_CAN_FREE) && CV_URIPTR(var))
+    if ((var->flags & CVF_CAN_FREE) && CV_URIPTR(var))
     {
         delete CV_URIPTR(var);
     }
@@ -277,7 +277,7 @@ void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
     CV_URIPTR(var) = newUri;
 
     // Make the change notification callback
-    if(var->notifyChanged && changed)
+    if (var->notifyChanged && changed)
     {
         var->notifyChanged();
     }
@@ -295,13 +295,13 @@ void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
     bool changed = false;
     size_t oldLen, newLen;
 
-    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
+    if ((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
         CVar_PrintReadOnlyWarning(var);
         return;
     }
 
-    if(var->type != CVT_CHARPTR)
+    if (var->type != CVT_CHARPTR)
     {
         printTypeWarning(var, "text", text);
         return;
@@ -310,14 +310,14 @@ void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
     oldLen = (!CV_CHARPTR(var)? 0 : strlen(CV_CHARPTR(var)));
     newLen = (!text           ? 0 : strlen(text));
 
-    if(oldLen == 0 && newLen == 0)
+    if (oldLen == 0 && newLen == 0)
         return;
 
-    if(oldLen != newLen || qstricmp(text, CV_CHARPTR(var)))
+    if (oldLen != newLen || qstricmp(text, CV_CHARPTR(var)))
         changed = true;
 
     // Free the old string, if one exists.
-    if((var->flags & CVF_CAN_FREE) && CV_CHARPTR(var))
+    if ((var->flags & CVF_CAN_FREE) && CV_CHARPTR(var))
         free(CV_CHARPTR(var));
 
     // Allocate a new string.
@@ -326,7 +326,7 @@ void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
     qstrcpy(CV_CHARPTR(var), text);
 
     // Make the change notification callback
-    if(var->notifyChanged != NULL && changed)
+    if (var->notifyChanged != NULL && changed)
         var->notifyChanged();
 }
 
@@ -341,26 +341,26 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
 
     bool changed = false;
 
-    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
+    if ((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
         CVar_PrintReadOnlyWarning(var);
         return;
     }
 
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_INT:
-        if(CV_INT(var) != value)
+        if (CV_INT(var) != value)
             changed = true;
         CV_INT(var) = value;
         break;
     case CVT_BYTE:
-        if(CV_BYTE(var) != (byte) value)
+        if (CV_BYTE(var) != (byte) value)
             changed = true;
         CV_BYTE(var) = (byte) value;
         break;
     case CVT_FLOAT:
-        if(CV_FLOAT(var) != (float) value)
+        if (CV_FLOAT(var) != (float) value)
             changed = true;
         CV_FLOAT(var) = (float) value;
         break;
@@ -371,7 +371,7 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
     }
 
     // Make a change notification callback?
-    if(var->notifyChanged != 0 && changed)
+    if (var->notifyChanged != 0 && changed)
         var->notifyChanged();
 }
 
@@ -388,26 +388,26 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
 
     LOG_AS("CVar_SetFloat2");
 
-    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
+    if ((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
         CVar_PrintReadOnlyWarning(var);
         return;
     }
 
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_INT:
-        if(CV_INT(var) != (int) value)
+        if (CV_INT(var) != (int) value)
             changed = true;
         CV_INT(var) = (int) value;
         break;
     case CVT_BYTE:
-        if(CV_BYTE(var) != (byte) value)
+        if (CV_BYTE(var) != (byte) value)
             changed = true;
         CV_BYTE(var) = (byte) value;
         break;
     case CVT_FLOAT:
-        if(CV_FLOAT(var) != value)
+        if (CV_FLOAT(var) != value)
             changed = true;
         CV_FLOAT(var) = value;
         break;
@@ -418,7 +418,7 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
     }
 
     // Make a change notification callback?
-    if(var->notifyChanged != 0 && changed)
+    if (var->notifyChanged != 0 && changed)
         var->notifyChanged();
 }
 
@@ -437,7 +437,7 @@ static void printConversionWarning(cvar_t const *var)
 int CVar_Integer(cvar_t const* var)
 {
     DENG_ASSERT(var);
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
@@ -453,7 +453,7 @@ int CVar_Integer(cvar_t const* var)
 float CVar_Float(cvar_t const* var)
 {
     DENG_ASSERT(var);
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
@@ -469,7 +469,7 @@ float CVar_Float(cvar_t const* var)
 byte CVar_Byte(cvar_t const* var)
 {
     DENG_ASSERT(var);
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
@@ -486,7 +486,7 @@ char const* CVar_String(cvar_t const* var)
 {
     DENG_ASSERT(var);
     /// @todo Why not implement in-place value to string conversion?
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_CHARPTR:   return CV_CHARPTR(var);
     default: {
@@ -498,10 +498,10 @@ char const* CVar_String(cvar_t const* var)
 
 de::Uri const &CVar_Uri(cvar_t const *var)
 {
-    if(!var) return *emptyUri;
+    if (!var) return *emptyUri;
 
     /// @todo Why not implement in-place string to uri conversion?
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_URIPTR:   return *CV_URIPTR(var);
     default: {
@@ -515,9 +515,9 @@ void Con_AddVariable(cvartemplate_t const *tpl)
 {
     LOG_AS("Con_AddVariable");
 
-    if(!tpl) return;
+    if (!tpl) return;
 
-    if(CVT_NULL == tpl->type)
+    if (CVT_NULL == tpl->type)
     {
         LOGDEV_SCR_WARNING("Ignored attempt to register variable '%s' as type %s")
             << tpl->path << Str_Text(CVar_TypeName(CVT_NULL));
@@ -529,11 +529,11 @@ void Con_AddVariable(cvartemplate_t const *tpl)
 
 void Con_AddVariableList(cvartemplate_t const *tplList)
 {
-    if(!tplList) return;
+    if (!tplList) return;
 
-    for(; tplList->path; ++tplList)
+    for (; tplList->path; ++tplList)
     {
-        if(Con_FindVariable(tplList->path))
+        if (Con_FindVariable(tplList->path))
         {
             App_FatalError("Console variable with the name '%s' is already registered", tplList->path);
         }
@@ -543,7 +543,7 @@ void Con_AddVariableList(cvartemplate_t const *tplList)
 
 cvar_t *Con_FindVariable(char const *path)
 {
-    if(!path || !path[0]) return 0;
+    if (!path || !path[0]) return 0;
 
     try
     {
@@ -551,29 +551,29 @@ cvar_t *Con_FindVariable(char const *path)
                                                               PathTree::NoBranch | PathTree::MatchFull);
         return (cvar_t*) node.userPointer();
     }
-    catch(CVarDirectory::NotFoundError const&)
+    catch (CVarDirectory::NotFoundError const&)
     {} // Ignore this error.
     return 0;
 }
 
 String Con_VarAsStyledText(cvar_t *var, char const *prefix)
 {
-    if(!var) return "";
+    if (!var) return "";
 
     char equals = '=';
-    if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
+    if ((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
 
     String str;
     QTextStream os(&str);
 
-    if(prefix) os << prefix;
+    if (prefix) os << prefix;
 
     AutoStr* path = CVar_ComposePath(var);
 
     os << _E(b) << Str_Text(path) << _E(.) << " " << equals << " " << _E(>);
 
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:      os << CV_BYTE(var); break;
     case CVT_INT:       os << CV_INT(var); break;
@@ -601,7 +601,7 @@ static int addVariableToKnownWords(CVarDirectory::Node& node, void* /*parameters
 
     cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
     //uint* index = (uint*) parameters;
-    if(var && !(var->flags & CVF_HIDE))
+    if (var && !(var->flags & CVF_HIDE))
     {
         Con_AddKnownWord(WT_CVAR, var);
     }
@@ -610,7 +610,7 @@ static int addVariableToKnownWords(CVarDirectory::Node& node, void* /*parameters
 
 void Con_AddKnownWordsForVariables()
 {
-    if(!cvarDirectory) return;
+    if (!cvarDirectory) return;
 
     cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash,
                             addVariableToKnownWords);
@@ -620,12 +620,12 @@ static Value *Function_Console_Get(Context &, Function::ArgumentValues const &ar
 {
     String const name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.toUtf8());
-    if(!var)
+    if (!var)
     {
         throw Error("Function_Console_Get",
                     QString("Unknown console variable: %1").arg(name));
     }
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:
         return new NumberValue(CVar_Byte(var));
@@ -652,14 +652,14 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
 {
     String const name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.toUtf8());
-    if(!var)
+    if (!var)
     {
         throw Error("Function_Console_Set",
                     QString("Unknown console variable: %1").arg(name));
     }
 
     Value const &value = *args.at(1);
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:
     case CVT_INT:
@@ -707,14 +707,14 @@ static int countVariable(CVarDirectory::Node& node, void* parameters)
     countvariableparams_t* p = (countvariableparams_t*) parameters;
     cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
 
-    if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
+    if (!(p->ignoreHidden && (var->flags & CVF_HIDE)))
     {
-        if(!VALID_CVARTYPE(p->type) && !p->hidden)
+        if (!VALID_CVARTYPE(p->type) && !p->hidden)
         {
-            if(!p->ignoreHidden || !(var->flags & CVF_HIDE))
+            if (!p->ignoreHidden || !(var->flags & CVF_HIDE))
                 ++(p->count);
         }
-        else if((p->hidden && (var->flags & CVF_HIDE)) ||
+        else if ((p->hidden && (var->flags & CVF_HIDE)) ||
                 (VALID_CVARTYPE(p->type) && p->type == CVar_Type(var)))
         {
             ++(p->count);
@@ -730,12 +730,12 @@ D_CMD(PrintVarStats)
     uint numCVars = 0, numCVarsHidden = 0;
 
     LOG_SCR_MSG(_E(b) "Console Variable Statistics:");
-    if(cvarDirectory)
+    if (cvarDirectory)
     {
         countvariableparams_t p;
         p.hidden = false;
         p.ignoreHidden = false;
-        for(uint i = uint(CVT_BYTE); i < uint(CVARTYPE_COUNT); ++i)
+        for (uint i = uint(CVT_BYTE); i < uint(CVARTYPE_COUNT); ++i)
         {
             p.count = 0;
             p.type = cvartype_t(i);
@@ -752,7 +752,7 @@ D_CMD(PrintVarStats)
     }
     LOG_SCR_MSG("       Total: %i\n      Hidden: %i") << numCVars << numCVarsHidden;
 
-    if(cvarDirectory)
+    if (cvarDirectory)
     {
         cvarDirectory->debugPrintHashDistribution();
         cvarDirectory->debugPrint(CVARDIRECTORY_DELIMITER);

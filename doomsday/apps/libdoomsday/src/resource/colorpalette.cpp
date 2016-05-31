@@ -42,34 +42,34 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
 
     int readComponents = 0;
     int pos = 0;
-    while(pos < end)
+    while (pos < end)
     {
         QChar ch = fmt[pos]; pos++;
 
         int comp = -1;
         if     (ch == 'R' || ch == 'r') comp = 0;
-        else if(ch == 'G' || ch == 'g') comp = 1;
-        else if(ch == 'B' || ch == 'b') comp = 2;
+        else if (ch == 'G' || ch == 'g') comp = 1;
+        else if (ch == 'B' || ch == 'b') comp = 2;
 
-        if(comp != -1 && compBits[comp] == 0)
+        if (comp != -1 && compBits[comp] == 0)
         {
             compOrder[comp] = readComponents++;
 
             // Read the number of bits.
             int start = pos;
             ch = fmt[pos];
-            while(ch.isDigit() && ++pos < end)
+            while (ch.isDigit() && ++pos < end)
             {
                 ch = fmt[pos];
             }
 
             int numDigits = pos - start;
-            if(numDigits)
+            if (numDigits)
             {
                 compBits[comp] = fmt.mid(start, numDigits).toInt();
 
                 // Are we done?
-                if(readComponents == 3)
+                if (readComponents == 3)
                     break;
 
                 continue;
@@ -80,7 +80,7 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
         throw ColorTableReader::FormatError("parseColorFormat", QString("Unexpected character '%1' at position %2").arg(ch).arg(pos));
     }
 
-    if(readComponents != 3)
+    if (readComponents != 3)
     {
         /// @throw ColorTableReader::FormatError
         throw ColorTableReader::FormatError("parseColorFormat", "Incomplete format specification");
@@ -99,11 +99,11 @@ ColorTable ColorTableReader::read(String format, int colorCount,
     ColorTable colors(colorCount);
 
     // Already in the format we want?
-    if(8 == bits.x && 8 == bits.y && 8 == bits.z)
+    if (8 == bits.x && 8 == bits.y && 8 == bits.z)
     {
         // Great! Just copy it as-is.
         dbyte const *src = colorData;
-        for(int i = 0; i < colorCount; ++i, src += 3)
+        for (int i = 0; i < colorCount; ++i, src += 3)
         {
             colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
         }
@@ -113,7 +113,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
         // Conversion is necessary.
         dbyte const *src = colorData;
         dbyte cb = 0;
-        for(int i = 0; i < colorCount; ++i)
+        for (int i = 0; i < colorCount; ++i)
         {
             Vector3ub &dst = colors[i];
 
@@ -123,25 +123,25 @@ ColorTable ColorTableReader::read(String format, int colorCount,
             M_ReadBits(bits[order.z], &src, &cb, (dbyte *) &(tmp[order.z]));
 
             // Need to do any scaling?
-            if(8 != bits.x)
+            if (8 != bits.x)
             {
-                if(bits.x < 8)
+                if (bits.x < 8)
                     tmp.x <<= 8 - bits.x;
                 else
                     tmp.x >>= bits.x - 8;
             }
 
-            if(8 != bits.y)
+            if (8 != bits.y)
             {
-                if(bits.y < 8)
+                if (bits.y < 8)
                     tmp.y <<= 8 - bits.y;
                 else
                     tmp.y >>= bits.y - 8;
             }
 
-            if(8 != bits.z)
+            if (8 != bits.z)
             {
-                if(bits.z < 8)
+                if (bits.z < 8)
                     tmp.z <<= 8 - bits.z;
                 else
                     tmp.z >>= bits.z - 8;
@@ -181,7 +181,7 @@ DENG2_PIMPL(ColorPalette)
     Translation *translation(String id)
     {
         Translations::iterator found = translations.find(id);
-        if(found != translations.end())
+        if (found != translations.end())
         {
             return &found.value();
         }
@@ -203,25 +203,25 @@ DENG2_PIMPL(ColorPalette)
 
         need18To8Update = false;
 
-        if(xlat18To8.isNull())
+        if (xlat18To8.isNull())
         {
             xlat18To8.reset(new XLat18To8(COLORS18BIT));
         }
 
-        for(int r = 0; r < 64; ++r)
-        for(int g = 0; g < 64; ++g)
-        for(int b = 0; b < 64; ++b)
+        for (int r = 0; r < 64; ++r)
+        for (int g = 0; g < 64; ++g)
+        for (int b = 0; b < 64; ++b)
         {
             int nearest = 0;
             int smallestDiff = DDMAXINT;
-            for(int i = 0; i < colors.count(); ++i)
+            for (int i = 0; i < colors.count(); ++i)
             {
                 Color const &color = colors[i];
                 int diff = (color.x - (r << 2)) * (color.x - (r << 2)) +
                            (color.y - (g << 2)) * (color.y - (g << 2)) +
                            (color.z - (b << 2)) * (color.z - (b << 2));
 
-                if(diff < smallestDiff)
+                if (diff < smallestDiff)
                 {
                     smallestDiff = diff;
                     nearest = i;
@@ -271,7 +271,7 @@ ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
 
     // When the color count changes all existing translations are destroyed as
     // they will no longer be valid.
-    if(colorCountBefore != colorCount())
+    if (colorCountBefore != colorCount())
     {
         clearTranslations();
     }
@@ -283,13 +283,13 @@ Vector3ub ColorPalette::color(int colorIndex) const
 {
     LOG_AS("ColorPalette");
 
-    if(colorIndex < 0 || colorIndex >= d->colors.count())
+    if (colorIndex < 0 || colorIndex >= d->colors.count())
     {
         LOG_DEBUG("Index %i out of range %s in palette %s, will clamp.")
             << colorIndex << Rangeui(0, d->colors.count()).asText() << d->id;
     }
 
-    if(!d->colors.isEmpty())
+    if (!d->colors.isEmpty())
     {
         return d->colors[de::clamp(0, colorIndex, d->colors.count() - 1)];
     }
@@ -306,10 +306,10 @@ int ColorPalette::nearestIndex(Vector3ub const &rgb) const
 {
     LOG_AS("ColorPalette");
 
-    if(d->colors.isEmpty()) return -1;
+    if (d->colors.isEmpty()) return -1;
 
     // Ensure we've prepared the 18 to 8 table.
-    if(d->need18To8Update || d->xlat18To8.isNull())
+    if (d->need18To8Update || d->xlat18To8.isNull())
     {
         d->prepareNearestLUT();
     }
@@ -333,7 +333,7 @@ void ColorPalette::newTranslation(String id, Translation const &mappings)
 {
     LOG_AS("ColorPalette");
 
-    if(!colorCount())
+    if (!colorCount())
     {
         //qDebug() << "Cannot define a translation for an empty palette!";
         return;
@@ -341,10 +341,10 @@ void ColorPalette::newTranslation(String id, Translation const &mappings)
 
     DENG2_ASSERT(mappings.count() == colorCount()); // sanity check
 
-    if(!id.isEmpty())
+    if (!id.isEmpty())
     {
         Translation *xlat = d->translation(id);
-        if(!xlat)
+        if (!xlat)
         {
             // An entirely new translation.
             xlat = &d->translations.insert(id, Translation()).value();
@@ -354,10 +354,10 @@ void ColorPalette::newTranslation(String id, Translation const &mappings)
         *xlat = mappings;
 
         // Ensure the mappings are within valid range.
-        for(int i = 0; i < colorCount(); ++i)
+        for (int i = 0; i < colorCount(); ++i)
         {
             int palIdx = (*xlat)[i];
-            if(palIdx < 0 || palIdx >= colorCount())
+            if (palIdx < 0 || palIdx >= colorCount())
             {
                 (*xlat)[i] = i;
             }

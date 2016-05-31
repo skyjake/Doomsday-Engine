@@ -49,7 +49,7 @@ int beginGameChangeBusyWorker(void *context)
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
     P_InitMapEntityDefs();
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(200);
     }
@@ -70,9 +70,9 @@ static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset = 0)
 
         return &hndl.file();
     }
-    catch(FS1::NotFoundError const&)
+    catch (FS1::NotFoundError const&)
     {
-        if(fs1.accessFile(search))
+        if (fs1.accessFile(search))
         {
             // Must already be loaded.
             LOG_RES_XVERBOSE("\"%s\" already loaded") << NativePath(search.asText()).pretty();
@@ -91,15 +91,15 @@ static void loadResource(ResourceManifest &manifest)
     DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
 
     de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
-    if(path.isEmpty()) return;
+    if (path.isEmpty()) return;
 
-    if(File1 *file = tryLoadFile(path))
+    if (File1 *file = tryLoadFile(path))
     {
         // Mark this as an original game resource.
         file->setCustom(false);
 
         // Print the 'CRC' number of IWADs, so they can be identified.
-        if(Wad *wad = file->maybeAs<Wad>())
+        if (Wad *wad = file->maybeAs<Wad>())
         {
             LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
         }
@@ -110,14 +110,14 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
 {
     static char const *ATWSEPS = ",; \t";
 
-    if(!pathString || !pathString[0]) return;
+    if (!pathString || !pathString[0]) return;
 
     size_t len = strlen(pathString);
     char *buffer = (char *) M_Malloc(len + 1);
 
     strcpy(buffer, pathString);
     char *token = strtok(buffer, ATWSEPS);
-    while(token)
+    while (token)
     {
         tryLoadFile(de::Uri(token, RC_NULL));
         token = strtok(nullptr, ATWSEPS);
@@ -128,14 +128,14 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
 static dint addListFiles(QStringList const &list, FileType const &ftype)
 {
     dint numAdded = 0;
-    foreach(QString const &path, list)
+    foreach (QString const &path, list)
     {
-        if(&ftype != &DD_GuessFileTypeFromFileName(path))
+        if (&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
 
-        if(tryLoadFile(de::Uri(path, RC_NULL)))
+        if (tryLoadFile(de::Uri(path, RC_NULL)))
         {
             numAdded += 1;
         }
@@ -152,12 +152,12 @@ int loadGameStartupResourcesBusyWorker(void *context)
     FS_InitVirtualPathMappings();
     App_FileSystem().resetAllSchemes();
 
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(50);
     }
 
-    if(App_GameLoaded())
+    if (App_GameLoaded())
     {
         // Create default Auto mappings in the runtime directory.
 
@@ -169,14 +169,14 @@ int loadGameStartupResourcesBusyWorker(void *context)
     }
 
     // Load data files.
-    for(DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    for (DataBundle const *bundle : DoomsdayApp::bundles().loaded())
     {
         LOG_RES_NOTE("Loading %s from %s") << bundle->description()
                                            << bundle->sourceFile().description();
 
-        if(NativeFile const *nativeFile = bundle->sourceFile().maybeAs<NativeFile>())
+        if (NativeFile const *nativeFile = bundle->sourceFile().maybeAs<NativeFile>())
         {
-            if(File1 *file = File1::tryLoad(de::Uri::fromNativePath(nativeFile->nativePath())))
+            if (File1 *file = File1::tryLoad(de::Uri::fromNativePath(nativeFile->nativePath())))
             {
                 file->setCustom(false);
                 LOG_RES_VERBOSE("%s: ok") << nativeFile->nativePath();
@@ -195,25 +195,25 @@ int loadGameStartupResourcesBusyWorker(void *context)
      */
     GameManifests const &gameManifests = DoomsdayApp::game().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
-    if(numPackages)
+    if (numPackages)
     {
         LOG_RES_MSG("Loading game resources...");
 
         int packageIdx = 0;
-        for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+        for (GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
             i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
         {
             loadResource(**i);
 
             // Update our progress.
-            if(parms.initiatedBusyMode)
+            if (parms.initiatedBusyMode)
             {
                 updateProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
             }
         }
     }
 
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(200);
     }
@@ -238,7 +238,7 @@ static dint findAllGameDataPaths(FS1::PathList &found)
 #endif
     };
     dint const numFoundSoFar = found.count();
-    for(String const &ext : extensions)
+    for (String const &ext : extensions)
     {
         DENG2_ASSERT(!ext.isEmpty());
         String const searchPath = de::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
@@ -261,9 +261,9 @@ static dint loadFilesFromDataGameAuto()
     DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
     {
         // Ignore directories.
-        if(i->attrib & A_SUBDIR) continue;
+        if (i->attrib & A_SUBDIR) continue;
 
-        if(tryLoadFile(de::Uri(i->path, RC_NULL)))
+        if (tryLoadFile(de::Uri(i->path, RC_NULL)))
         {
             numLoaded += 1;
         }
@@ -281,7 +281,7 @@ static void autoLoadFiles()
      * exist in the auto-load directory.
      */
     dint numNewFiles;
-    while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
+    while ((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
         LOG_RES_VERBOSE("Autoload round completed with %i new files") << numNewFiles;
     }
@@ -293,7 +293,7 @@ int loadAddonResourcesBusyWorker(void *context)
 
     /*
     // User-selected files specified in the game itself.
-    for(String const &path : DoomsdayApp::game().userFiles())
+    for (String const &path : DoomsdayApp::game().userFiles())
     {
         NativePath const nativePath(path);
         Session::profile().resourceFiles << nativePath.withSeparators('/');
@@ -305,17 +305,17 @@ int loadAddonResourcesBusyWorker(void *context)
      * Add additional game-startup files.
      * @note These must take precedence over Auto but not game-resource files.
      */
-    if(startupFiles && startupFiles[0])
+    if (startupFiles && startupFiles[0])
     {
         parseStartupFilePathsAndAddFiles(startupFiles);
     }
 
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(50);
     }
 
-    if(App_GameLoaded())
+    if (App_GameLoaded())
     {
         /**
          * Phase 3: Add real files from the Auto directory.
@@ -327,13 +327,13 @@ int loadAddonResourcesBusyWorker(void *context)
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
             // Ignore directories.
-            if(i->attrib & A_SUBDIR) continue;
+            if (i->attrib & A_SUBDIR) continue;
 
             /// @todo Is expansion of symbolics still necessary here?
             prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
         }
 
-        if(!prof.resourceFiles.isEmpty())
+        if (!prof.resourceFiles.isEmpty())
         {
             // First ZIPs then WADs (they may contain WAD files).
             addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
@@ -344,7 +344,7 @@ int loadAddonResourcesBusyWorker(void *context)
         autoLoadFiles();
     }
 
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(180);
     }
@@ -355,7 +355,7 @@ int loadAddonResourcesBusyWorker(void *context)
     // on existing search paths (probably that is).
     App_FileSystem().resetAllSchemes();
 
-    if(parms.initiatedBusyMode)
+    if (parms.initiatedBusyMode)
     {
         updateProgress(200);
     }

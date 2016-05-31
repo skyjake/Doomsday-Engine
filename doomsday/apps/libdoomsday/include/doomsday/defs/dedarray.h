@@ -82,7 +82,7 @@ public:
 
     void releaseAll()
     {
-        for(int i = 0; i < count.num; ++i)
+        for (int i = 0; i < count.num; ++i)
         {
             elements[i].release();
         }
@@ -98,7 +98,7 @@ public:
         PODType *copied = (PODType *) M_Malloc(sizeof(PODType) * count.max);
         memcpy(copied, elements, sizeof(PODType) * count.num);
         elements = copied;
-        for(int i = 0; i < count.num; ++i)
+        for (int i = 0; i < count.num; ++i)
         {
             elements[i].reallocate();
         }
@@ -152,10 +152,10 @@ public:
         int const first = count.num;
 
         count.num += addedCount;
-        if(count.num > count.max)
+        if (count.num > count.max)
         {
             count.max *= 2; // Double the size of the array.
-            if(count.num > count.max) count.max = count.num;
+            if (count.num > count.max) count.max = count.num;
             elements = reinterpret_cast<PODType *>(M_Realloc(elements, sizeof(PODType) * count.max));
         }
 
@@ -169,7 +169,7 @@ public:
         DENG2_ASSERT(index >= 0);
         DENG2_ASSERT(index < size());
 
-        if(index < 0 || index >= size()) return;
+        if (index < 0 || index >= size()) return;
 
         elements[index].release();
 
@@ -177,7 +177,7 @@ public:
                 elements + (index + 1),
                 sizeof(PODType) * (count.num - index - 1));
 
-        if(--count.num < count.max / 2)
+        if (--count.num < count.max / 2)
         {
             count.max /= 2;
             elements = (PODType *) M_Realloc(elements, sizeof(PODType) * count.max);
@@ -209,7 +209,7 @@ public:
 
     int indexOf(PODType const *element) const
     {
-        if(size() > 0 && element >= &first() && element <= &last())
+        if (size() > 0 && element >= &first() && element <= &last())
             return element - elements;
         return -1;
     }
@@ -218,7 +218,7 @@ public:
     {
         releaseAll();
 
-        if(elements) M_Free(elements);
+        if (elements) M_Free(elements);
         elements = 0;
 
         count.num = count.max = 0;

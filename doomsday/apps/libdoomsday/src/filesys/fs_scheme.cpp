@@ -117,9 +117,9 @@ public:
 
     void clear()
     {
-        for(hash_type hashKey = 0; hashKey < hash_range; ++hashKey)
+        for (hash_type hashKey = 0; hashKey < hash_range; ++hashKey)
         {
-            while(buckets[hashKey].first)
+            while (buckets[hashKey].first)
             {
                 NameHash::Node *nextNode = buckets[hashKey].first->next;
                 delete buckets[hashKey].first;
@@ -132,7 +132,7 @@ public:
     Node *findDirectoryNode(hash_type hashKey, PathTree::Node const &directoryNode)
     {
         Node *node = buckets[hashKey].first;
-        while(node && &node->fileRef.directoryNode() != &directoryNode)
+        while (node && &node->fileRef.directoryNode() != &directoryNode)
         {
             node = node->next;
         }
@@ -143,10 +143,10 @@ public:
     {
         hash_type hashKey = 0;
         int op = 0;
-        for(int i = 0; i < str.length(); ++i)
+        for (int i = 0; i < str.length(); ++i)
         {
             ushort unicode = str.at(i).toLower().unicode();
-            switch(op)
+            switch (op)
             {
             case 0: hashKey ^= unicode; ++op;   break;
             case 1: hashKey *= unicode; ++op;   break;
@@ -204,7 +204,7 @@ struct FS1::Scheme::Instance
             addDirectoryPathAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
                                                   true/*is-directory*/, searchPath.flags());
         }
-        catch(de::Uri::ResolveError const &er)
+        catch (de::Uri::ResolveError const &er)
         {
             LOGDEV_RES_VERBOSE(er.asText());
         }
@@ -217,7 +217,7 @@ struct FS1::Scheme::Instance
      */
     void addFromSearchPaths(FS1::PathGroup group)
     {
-        for(FS1::Scheme::SearchPaths::const_iterator i = searchPaths.find(group);
+        for (FS1::Scheme::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
@@ -226,23 +226,23 @@ struct FS1::Scheme::Instance
 
     UserDataNode *addDirectoryPath(String path)
     {
-        if(path.isEmpty()) return 0;
+        if (path.isEmpty()) return 0;
 
         // Try to make it a relative path.
-        if(QDir::isAbsolutePath(path))
+        if (QDir::isAbsolutePath(path))
         {
             String const basePath = App_BasePath();
-            if(path.beginsWith(basePath))
+            if (path.beginsWith(basePath))
             {
                 path = path.mid(basePath.length() + 1);
             }
         }
 
         // If this is equal to the base path, return that node.
-        if(path.isEmpty())
+        if (path.isEmpty())
         {
             // Time to construct the relative base node?
-            if(!rootNode)
+            if (!rootNode)
             {
                 rootNode = &directory.insert(Path("./"));
             }
@@ -254,7 +254,7 @@ struct FS1::Scheme::Instance
 
     void addDirectoryChildren(PathTree::Node &node, int flags)
     {
-        if(node.isLeaf()) return;
+        if (node.isLeaf()) return;
 
         // Compose the search pattern. We're interested in *everything*.
         Path searchPattern = node.path() / "*";
@@ -281,21 +281,21 @@ struct FS1::Scheme::Instance
     {
         // Add this path to the directory.
         UserDataNode *node = addDirectoryPath(filePath);
-        if(!node) return;
+        if (!node) return;
 
-        if(!node->isLeaf())
+        if (!node->isLeaf())
         {
             // Descend into this subdirectory?
-            if(descendBranch)
+            if (descendBranch)
             {
                 // Already processed?
-                if(node->userValue())
+                if (node->userValue())
                 {
                     // Process it again?
                     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                     {
                         PathTree::Node &sibling = **i;
-                        if(&sibling.parent() == node)
+                        if (&sibling.parent() == node)
                         {
                             self.add(sibling);
                         }
@@ -347,7 +347,7 @@ void FS1::Scheme::clear()
 void FS1::Scheme::rebuild()
 {
     // Is a rebuild not necessary?
-    if(!d->nameHashIsDirty) return;
+    if (!d->nameHashIsDirty) return;
 
     LOG_AS("Scheme::rebuild");
     LOGDEV_RES_MSG("Rebuilding '%s'...") << d->name;
@@ -379,7 +379,7 @@ static inline String composeSchemeName(String const &filePath)
 bool FS1::Scheme::add(PathTree::Node &resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
-    if(!resourceNode.isLeaf()) return false;
+    if (!resourceNode.isLeaf()) return false;
 
     String name = composeSchemeName(resourceNode.name());
     NameHash::hash_type hashKey = NameHash::hashName(name);
@@ -387,7 +387,7 @@ bool FS1::Scheme::add(PathTree::Node &resourceNode)
     // Is this a new file?
     bool isNewNode = false;
     NameHash::Node *hashNode = d->nameHash.findDirectoryNode(hashKey, resourceNode);
-    if(!hashNode)
+    if (!hashNode)
     {
         isNewNode = true;
 
@@ -400,9 +400,9 @@ bool FS1::Scheme::add(PathTree::Node &resourceNode)
 
         // Link it to the list for this bucket.
         NameHash::Bucket &bucket = d->nameHash.buckets[hashKey];
-        if(bucket.last) bucket.last->next = hashNode;
+        if (bucket.last) bucket.last->next = hashNode;
         bucket.last = hashNode;
-        if(!bucket.first) bucket.first = hashNode;
+        if (!bucket.first) bucket.first = hashNode;
 
         // We will need to rebuild this scheme (if we aren't already doing so,
         // in the case of auto-populated schemes built from FileDirectorys).
@@ -433,7 +433,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
     LOG_AS("Scheme::addSearchPath");
 
     // Ensure this is a well formed path.
-    if(search.isEmpty() ||
+    if (search.isEmpty() ||
        !search.path().toString().compareWithoutCase("/") ||
        !search.path().toString().endsWith("/"))
         return false;
@@ -445,7 +445,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
         // Compare using the unresolved textual representations.
-        if(!i->asText().compareWithoutCase(search.asText()))
+        if (!i->asText().compareWithoutCase(search.asText()))
         {
             i->setFlags(search.flags());
             return true;
@@ -481,7 +481,7 @@ int FS1::Scheme::findAll(String name, FoundNodes &found)
     int numFoundSoFar = found.count();
 
     NameHash::hash_type fromKey, toKey;
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
         fromKey = NameHash::hashName(name);
         toKey   = fromKey;
@@ -492,15 +492,15 @@ int FS1::Scheme::findAll(String name, FoundNodes &found)
         toKey   = NameHash::hash_range - 1;
     }
 
-    for(NameHash::hash_type key = fromKey; key < toKey + 1; ++key)
+    for (NameHash::hash_type key = fromKey; key < toKey + 1; ++key)
     {
         NameHash::Bucket &bucket = d->nameHash.buckets[key];
-        for(NameHash::Node *hashNode = bucket.first; hashNode; hashNode = hashNode->next)
+        for (NameHash::Node *hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
             FileRef &fileRef = hashNode->fileRef;
             PathTree::Node &node = fileRef.directoryNode();
 
-            if(!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
+            if (!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
 
             found.push_back(&node);
         }
@@ -511,15 +511,15 @@ int FS1::Scheme::findAll(String name, FoundNodes &found)
 
 bool FS1::Scheme::mapPath(String &path) const
 {
-    if(path.isEmpty()) return false;
+    if (path.isEmpty()) return false;
 
     // Are virtual path mappings in effect for this scheme?
-    if(!(d->flags & MappedInPackages)) return false;
+    if (!(d->flags & MappedInPackages)) return false;
 
     // Does this path qualify for mapping?
-    if(path.length() <= name().length()) return false;
-    if(path.at(name().length()) != '/')  return false;
-    if(!path.beginsWith(name(), Qt::CaseInsensitive)) return false;
+    if (path.length() <= name().length()) return false;
+    if (path.at(name().length()) != '/')  return false;
+    if (!path.beginsWith(name(), Qt::CaseInsensitive)) return false;
 
     // Yes.
     path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;
@@ -533,10 +533,10 @@ void FS1::Scheme::debugPrint() const
     LOGDEV_RES_MSG("%p:") << this;
 
     uint schemeIdx = 0;
-    for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
+    for (NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
         NameHash::Bucket &bucket = d->nameHash.buckets[key];
-        for(NameHash::Node *node = bucket.first; node; node = node->next)
+        for (NameHash::Node *node = bucket.first; node; node = node->next)
         {
             FileRef const &fileRef = node->fileRef;
 

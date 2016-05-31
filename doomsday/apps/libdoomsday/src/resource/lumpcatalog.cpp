@@ -48,13 +48,13 @@ DENG2_PIMPL(LumpCatalog)
     {
         bundles.clear();
 
-        for(auto const &pkg : packageIds)
+        for (auto const &pkg : packageIds)
         {
             // The package must be available as a file.
-            if(File const *file = App::packageLoader().select(pkg))
+            if (File const *file = App::packageLoader().select(pkg))
             {
                 auto const *bundle = file->target().maybeAs<DataBundle>();
-                if(bundle && bundle->lumpDirectory())
+                if (bundle && bundle->lumpDirectory())
                 {
                     bundles << bundle;
                 }
@@ -68,10 +68,10 @@ DENG2_PIMPL(LumpCatalog)
         Found found { nullptr, LumpDirectory::InvalidPos };
 
         // The last bundle is checked first.
-        for(int i = bundles.size() - 1; i >= 0; --i)
+        for (int i = bundles.size() - 1; i >= 0; --i)
         {
             auto const pos = bundles.at(i)->lumpDirectory()->find(lumpName);
-            if(pos != LumpDirectory::InvalidPos)
+            if (pos != LumpDirectory::InvalidPos)
             {
                 found = Found(bundles.at(i), pos);
                 break;
@@ -92,7 +92,7 @@ void LumpCatalog::clear()
 
 bool LumpCatalog::setPackages(StringList const &packageIds)
 {
-    if(packageIds != d->packageIds)
+    if (packageIds != d->packageIds)
     {
         d->packageIds = packageIds;
         d->updateBundles();
@@ -105,7 +105,7 @@ Block LumpCatalog::read(String const &lumpName) const
 {
     Block data;
     Instance::Found found = d->findLump(lumpName);
-    if(found.first)
+    if (found.first)
     {
         auto const &entry = found.first->lumpDirectory()->entry(found.second);
         data.copyFrom(*found.first, entry.offset, entry.size);

@@ -42,40 +42,40 @@ void Def_ReadProcessDED(ded_t *defs, String sourcePath)
 {
      LOG_AS("Def_ReadProcessDED");
 
-     if(sourcePath.isEmpty()) return;
+     if (sourcePath.isEmpty()) return;
 
      // Try FS2 first.
      try
      {
          Block text;
          App::rootFolder().locate<File const>(sourcePath) >> text;
-         if(!DED_ReadData(defs, text, sourcePath, true/*consider it custom; there is no way to check...*/))
+         if (!DED_ReadData(defs, text, sourcePath, true/*consider it custom; there is no way to check...*/))
          {
              App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
          }
         return; // Done!
     }
-    catch(...)
+    catch (...)
     {
         // Try FS1 as fallback.
     }
 
     de::Uri const uri(sourcePath, RC_NULL);
-    if(!App_FileSystem().accessFile(uri))
+    if (!App_FileSystem().accessFile(uri))
     {
         LOG_RES_WARNING("\"%s\" not found!") << NativePath(uri.asText()).pretty();
         return;
     }
 
     // We use the File Ids to prevent loading the same files multiple times.
-    if(!App_FileSystem().checkFileId(uri))
+    if (!App_FileSystem().checkFileId(uri))
     {
         // Already handled.
         LOG_RES_XVERBOSE("\"%s\" has already been read") << NativePath(uri.asText()).pretty();
         return;
     }
 
-    if(!DED_Read(defs, sourcePath))
+    if (!DED_Read(defs, sourcePath))
     {
         App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
     }
@@ -86,7 +86,7 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
     try
     {
         File1 &lump = App_FileSystem().lump(lumpNum);
-        if(lump.size() > 0)
+        if (lump.size() > 0)
         {
             uint8_t const *data = lump.cache();
             String sourcePath = lump.container().composePath();
@@ -96,7 +96,7 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
         }
         return true;
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch (LumpIndex::NotFoundError const&)
     {} // Ignore error.
     DED_SetError("Bad lump number");
     return false;
@@ -130,7 +130,7 @@ int DED_Read(ded_t *ded, String path)
         M_Free(bufferedDef);
         return result;
     }
-    catch(FS1::NotFoundError const &)
+    catch (FS1::NotFoundError const &)
     {} // Ignore.
 
     DED_SetError("File could not be opened for reading");

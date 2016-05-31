@@ -64,7 +64,7 @@ void World::reset()
         ddpl.flags         &= ~DDPF_CAMERA;
 
         // States have changed, the state pointers are unknown.
-        for(ddpsprite_t &pspr : ddpl.pSprites)
+        for (ddpsprite_t &pspr : ddpl.pSprites)
         {
             pspr.statePtr = nullptr;
         }

@@ -39,15 +39,15 @@ void Music::resetToDefaults()
 
 dint Music::cdTrack() const
 {
-    if(dint track = geti("cdTrack"))
+    if (dint track = geti("cdTrack"))
         return track;
 
     String const path = gets("path");
-    if(!path.compareWithoutCase("cd"))
+    if (!path.compareWithoutCase("cd"))
     {
         bool ok;
         dint track = path.toInt(&ok);
-        if(ok) return track;
+        if (ok) return track;
     }
 
     return 0;

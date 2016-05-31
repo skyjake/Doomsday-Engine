@@ -34,18 +34,18 @@ void FS_InitVirtualPathMappings()
 {
     App_FileSystem().clearPathMappings();
 
-    if(DoomsdayApp::app().isShuttingDown()) return;
+    if (DoomsdayApp::app().isShuttingDown()) return;
 
     // Create virtual directory mappings by processing all -vdmap options.
     dint argC = CommandLine_Count();
-    for(dint i = 0; i < argC; ++i)
+    for (dint i = 0; i < argC; ++i)
     {
-        if(strnicmp("-vdmap", CommandLine_At(i), 6))
+        if (strnicmp("-vdmap", CommandLine_At(i), 6))
         {
             continue;
         }
 
-        if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
+        if (i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
             String source      = NativePath(CommandLine_PathAt(i + 1)).expand().withSeparators('/');
             String destination = NativePath(CommandLine_PathAt(i + 2)).expand().withSeparators('/');
@@ -59,7 +59,7 @@ void FS_InitVirtualPathMappings()
 static inline char const *skipSpace(char const *ptr)
 {
     DENG2_ASSERT(ptr != 0);
-    while(*ptr && *ptr != '\n' && isspace(*ptr))
+    while (*ptr && *ptr != '\n' && isspace(*ptr))
     { ptr++; }
     return ptr;
 }
@@ -72,15 +72,15 @@ static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring
     char const *ptr = skipSpace(buffer);
 
     // Just whitespace?
-    if(!*ptr || *ptr == '\n') return false;
+    if (!*ptr || *ptr == '\n') return false;
 
     // Find the end of the lump name.
     char const *end = (char const *)M_FindWhite((char *)ptr);
-    if(!*end || *end == '\n') return false;
+    if (!*end || *end == '\n') return false;
 
     size_t len = end - ptr;
     // Invalid lump name?
-    if(len > 8) return false;
+    if (len > 8) return false;
 
     memset(lumpName, 0, 9/*LUMPNAME_T_MAXLEN*/);
     strncpy(lumpName, ptr, len);
@@ -88,7 +88,7 @@ static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring
 
     // Find the start of the file path.
     ptr = skipSpace(end);
-    if(!*ptr || *ptr == '\n') return false; // Missing file path.
+    if (!*ptr || *ptr == '\n') return false; // Missing file path.
 
     // We're at the file path.
     Str_Set(path, ptr);
@@ -116,7 +116,7 @@ static bool parsePathLumpMappings(char const *buffer)
     do
     {
         ch = Str_GetLine(&line, ch);
-        if(!parsePathLumpMapping(lumpName, &path, Str_Text(&line)))
+        if (!parsePathLumpMapping(lumpName, &path, Str_Text(&line)))
         {
             // Failure parsing the mapping.
             // Ignore errors in individual mappings and continue parsing.
@@ -127,7 +127,7 @@ static bool parsePathLumpMappings(char const *buffer)
             String destination = NativePath(Str_Text(&path)).expand().withSeparators('/');
             App_FileSystem().addPathLumpMapping(lumpName, destination);
         }
-    } while(*ch);
+    } while (*ch);
 
     // Success.
     successful = true;
@@ -143,7 +143,7 @@ void FS_InitPathLumpMappings()
     // Free old paths, if any.
     App_FileSystem().clearPathLumpMappings();
 
-    if(DoomsdayApp::app().isShuttingDown()) return;
+    if (DoomsdayApp::app().isShuttingDown()) return;
 
     size_t bufSize = 0;
     uint8_t *buf = 0;
@@ -159,7 +159,7 @@ void FS_InitPathLumpMappings()
         FileInfo const &lumpInfo = lump.info();
 
         // Make a copy of it so we can ensure it ends in a null.
-        if(bufSize < lumpInfo.size + 1)
+        if (bufSize < lumpInfo.size + 1)
         {
             bufSize = lumpInfo.size + 1;
             buf = (uint8_t *) M_Realloc(buf, bufSize);

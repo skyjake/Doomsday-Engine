@@ -45,7 +45,7 @@ struct FileHeader
     {
         uint8_t buf[12];
         dsize readBytes = from.read(buf, 12);
-        if(readBytes != 12) throw ReadError("FileHeader::operator << (FileHandle &)", "Source file is truncated");
+        if (readBytes != 12) throw ReadError("FileHeader::operator << (FileHandle &)", "Source file is truncated");
 
         identification    = Block(buf, 4);
         lumpRecordsCount  = littleEndianByteOrder.toNative(*(dint32 *)(buf + 4));
@@ -65,7 +65,7 @@ struct IndexEntry
     {
         uint8_t buf[16];
         dsize readBytes = from.read(buf, 16);
-        if(readBytes != 16) throw ReadError("IndexEntry::operator << (FileHandle &)", "Source file is truncated");
+        if (readBytes != 16) throw ReadError("IndexEntry::operator << (FileHandle &)", "Source file is truncated");
 
         name   = Block(buf + 8, 8);
         offset = littleEndianByteOrder.toNative(*(dint32 *)(buf));
@@ -79,9 +79,9 @@ struct IndexEntry
 
         // Determine the actual length of the name.
         int nameLen = 0;
-        while(nameLen < 8 && name[nameLen]) { nameLen++; }
+        while (nameLen < 8 && name[nameLen]) { nameLen++; }
 
-        for(int i = 0; i < nameLen; ++i)
+        for (int i = 0; i < nameLen; ++i)
         {
             /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
             /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
@@ -92,7 +92,7 @@ struct IndexEntry
 
         // WAD format allows characters not normally permitted in native paths.
         // To achieve uniformity we apply a percent encoding to the "raw" names.
-        if(!normName.isEmpty())
+        if (!normName.isEmpty())
         {
             normName = QString(normName.toLatin1().toPercentEncoding());
         }
@@ -104,7 +104,7 @@ struct IndexEntry
         }
 
         // All lumps are ordained with an extension if they don't have one.
-        if(normName.fileNameExtension().isEmpty())
+        if (normName.fileNameExtension().isEmpty())
         {
             normName += !normName.compareWithoutCase("DEHACKED")? ".deh" : ".lmp";
         }
@@ -116,7 +116,7 @@ struct IndexEntry
 static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += "(file is empty)";
+    if (lastValidIdx < 0) msg += "(file is empty)";
     else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
     return msg;
 }
@@ -193,11 +193,11 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     hdr << *handle_;
 
     // Read the lump entries:
-    if(hdr.lumpRecordsCount <= 0) return;
+    if (hdr.lumpRecordsCount <= 0) return;
 
     // Seek to the start of the lump index.
     handle_->seek(hdr.lumpRecordsOffset, SeekSet);
-    for(int i = 0; i < hdr.lumpRecordsCount; ++i)
+    for (int i = 0; i < hdr.lumpRecordsCount; ++i)
     {
         IndexEntry lump;
         lump << *handle_;
@@ -229,11 +229,11 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 {
     LOG_AS("Wad::clearCachedLump");
 
-    if(retCleared) *retCleared = false;
+    if (retCleared) *retCleared = false;
 
-    if(hasLump(lumpIndex))
+    if (hasLump(lumpIndex))
     {
-        if(!d->dataCache.isNull())
+        if (!d->dataCache.isNull())
         {
             d->dataCache->remove(lumpIndex, retCleared);
         }
@@ -247,7 +247,7 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 void Wad::clearLumpCache()
 {
     LOG_AS("Wad::clearLumpCache");
-    if(!d->dataCache.isNull())
+    if (!d->dataCache.isNull())
     {
         d->dataCache->clear();
     }
@@ -265,16 +265,16 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
             << (lumpFile.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
-    if(d->dataCache.isNull())
+    if (d->dataCache.isNull())
     {
         d->dataCache.reset(new LumpCache(LumpIndex::size()));
     }
 
     uint8_t const *data = d->dataCache->data(lumpIndex);
-    if(data) return data;
+    if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
-    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
+    if (!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
 
     readLump(lumpIndex, region, false);
     d->dataCache->insert(lumpIndex, region);
@@ -289,9 +289,9 @@ void Wad::unlockLump(int lumpIndex)
             << NativePath(composePath()).pretty()
             << NativePath(lump(lumpIndex).composePath()).pretty();
 
-    if(hasLump(lumpIndex))
+    if (hasLump(lumpIndex))
     {
-        if(!d->dataCache.isNull())
+        if (!d->dataCache.isNull())
         {
             d->dataCache->unlock(lumpIndex);
         }
@@ -323,11 +323,11 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
             << length;
 
     // Try to avoid a file system read by checking for a cached copy.
-    if(tryCache)
+    if (tryCache)
     {
         uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIndex;
-        if(data)
+        if (data)
         {
             size_t readBytes = de::min(size_t(lumpFile.size()), length);
             std::memcpy(buffer, data + startOffset, readBytes);
@@ -339,7 +339,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     size_t readBytes = handle_->read(buffer, length);
 
     /// @todo Do not check the read length here.
-    if(readBytes < length)
+    if (readBytes < length)
         throw Error("Wad::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIndex));
 
     return readBytes;
@@ -348,7 +348,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 uint Wad::calculateCRC()
 {
     uint crc = 0;
-    foreach(File1 *file, allLumps())
+    foreach (File1 *file, allLumps())
     {
         Entry &entry = static_cast<Entry &>(file->as<LumpFile>().directoryNode());
         entry.update();
@@ -371,13 +371,13 @@ bool Wad::recognise(FileHandle &file)
         hdr << file;
         readOk = true;
     }
-    catch(FileHeader::ReadError const &)
+    catch (FileHeader::ReadError const &)
     {} // Ignore
 
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
 
-    if(!readOk) return false;
+    if (!readOk) return false;
 
     return (hdr.identification == "IWAD" || hdr.identification == "PWAD");
 }
@@ -398,7 +398,7 @@ void Wad::Entry::update()
     crc = uint(file().size());
     String const lumpName = Node::name();
     int const nameLen = lumpName.length();
-    for(int i = 0; i < nameLen; ++i)
+    for (int i = 0; i < nameLen; ++i)
     {
         crc += lumpName.at(i).unicode();
     }

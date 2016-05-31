@@ -40,7 +40,7 @@ struct ThreadState
 # define DENG_LOCAL_DATA_POINTER
 QThreadStorage<ThreadState *> pluginState; ///< Thread-local plugin state.
 void initLocalData() {
-    if(!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
+    if (!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
 }
 #else
 QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
@@ -48,9 +48,9 @@ QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
 
 bool Plugins::Hook::operator == (Hook const &other) const
 {
-    if(!(_pluginId == 0 || other._pluginId == 0))
+    if (!(_pluginId == 0 || other._pluginId == 0))
     {
-        if(_pluginId != other._pluginId) return false;
+        if (_pluginId != other._pluginId) return false;
     }
     return _type == other._type && _function == other._function;
 }
@@ -92,9 +92,9 @@ DENG2_PIMPL_NOREF(Plugins)
 
     PluginHandle *findFirstUnusedPluginHandle()
     {
-        for(int i = 0; i < MAX_PLUGS; ++i)
+        for (int i = 0; i < MAX_PLUGS; ++i)
         {
-            if(!hInstPlug[i])
+            if (!hInstPlug[i])
             {
                 return &hInstPlug[i];
             }
@@ -107,22 +107,22 @@ DENG2_PIMPL_NOREF(Plugins)
         typedef void (*PluginInitializer)(void);
 
         // We are only interested in native files.
-        if(!lib.source()->is<NativeFile>())
+        if (!lib.source()->is<NativeFile>())
             return 0;  // Continue iteration.
 
         DENG2_ASSERT(!lib.path().isEmpty());
-        if(strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
+        if (strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
         {
             // Do not touch audio plugins at this point.
             return true;
         }
 
         ::Library *plugin = Library_New(lib.path().toUtf8().constData());
-        if(!plugin)
+        if (!plugin)
         {
 #ifdef UNIX
             String const fn = Path(lib.path()).fileName();
-            if(fn.contains("libfmodex") || fn.contains("libassimp"))
+            if (fn.contains("libfmodex") || fn.contains("libassimp"))
             {
                 // No need to warn about these shared libs.
                 return 0;
@@ -132,7 +132,7 @@ DENG2_PIMPL_NOREF(Plugins)
             return 0;  // Continue iteration.
         }
 
-        if(!strcmp(Library_Type(plugin), "deng-plugin/audio"))
+        if (!strcmp(Library_Type(plugin), "deng-plugin/audio"))
         {
             // Audio plugins will be loaded later, on demand.
             Library_Delete(plugin);
@@ -140,7 +140,7 @@ DENG2_PIMPL_NOREF(Plugins)
         }
 
         PluginInitializer initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
-        if(!initializer)
+        if (!initializer)
         {
             LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
                     << lib.path();
@@ -153,7 +153,7 @@ DENG2_PIMPL_NOREF(Plugins)
         // Assign a handle and ID to the plugin.
         PluginHandle *handle    = findFirstUnusedPluginHandle();
         pluginid_t const plugId = handle - hInstPlug + 1;
-        if(!handle)
+        if (!handle)
         {
             LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded")
                     << lib.path();
@@ -178,7 +178,7 @@ DENG2_PIMPL_NOREF(Plugins)
     bool unloadPlugin(PluginHandle *handle)
     {
         DENG2_ASSERT(handle != nullptr);
-        if(!*handle) return false;
+        if (!*handle) return false;
 
         Library_Delete(*handle);
         *handle = nullptr;
@@ -243,7 +243,7 @@ void Plugins::loadAll()
 
 void Plugins::unloadAll()
 {
-    for(int i = 0; i < MAX_PLUGS && d->hInstPlug[i]; ++i)
+    for (int i = 0; i < MAX_PLUGS && d->hInstPlug[i]; ++i)
     {
         d->unloadPlugin(&d->hInstPlug[i]);
     }
@@ -271,7 +271,7 @@ void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
     DENG2_ASSERT(plugIndex >= 0 && plugIndex < MAX_PLUGS);
 
     void *addr = Library_Symbol(d->hInstPlug[plugIndex], fn);
-    if(!addr)
+    if (!addr)
     {
         LOGDEV_RES_WARNING("Error getting address of \"%s\": %s")
                 << fn << Library_LastError();
@@ -283,10 +283,10 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
 {
     zap(d->gameExports);
 
-    if(pluginId != 0)
+    if (pluginId != 0)
     {
         // Do the API transfer.
-        if(!(d->getGameAPI = (GETGAMEAPI) findEntryPoint(pluginId, "GetGameAPI")))
+        if (!(d->getGameAPI = (GETGAMEAPI) findEntryPoint(pluginId, "GetGameAPI")))
         {
             return false;
         }
@@ -323,14 +323,14 @@ void Plugins::addHook(HookType type, hookfunc_t function)
     // to a plugin, and then set it back to zero after it gets control back.
     DENG2_ASSERT(d->activePluginId() != 0);
 
-    if(function)
+    if (function)
     {
         // Add the hook. If the plugin is unidentified the ID will be zero.
         Hook temp;
         temp._type     = type;
         temp._function = function;
         temp._pluginId = d->activePluginId();
-        if(!d->hooks[type].contains(temp))
+        if (!d->hooks[type].contains(temp))
         {
             d->hooks[type].append(temp);  // a copy is made.
         }
@@ -340,7 +340,7 @@ void Plugins::addHook(HookType type, hookfunc_t function)
 bool Plugins::removeHook(HookType type, hookfunc_t function)
 {
     DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
-    if(function)
+    if (function)
     {
         Hook temp;
         temp._type     = type;
@@ -353,9 +353,9 @@ bool Plugins::removeHook(HookType type, hookfunc_t function)
 
 LoopResult Plugins::forAllHooks(HookType type, std::function<de::LoopResult (Hook const &)> func) const
 {
-    for(Hook const &hook : d->hooks[type])
+    for (Hook const &hook : d->hooks[type])
     {
-        if(auto result = func(hook))
+        if (auto result = func(hook))
             return result;
     }
     return LoopContinue;
@@ -367,7 +367,7 @@ int Plugins::callAllHooks(HookType type, int parm, void *data)
     int results = 2;  // Assume all good.
     forAllHooks(type, [&parm, &data, &results] (Hook const &hook)
     {
-        if(hook.execute(parm, data))
+        if (hook.execute(parm, data))
         {
             results |= 1;   // One success.
         }

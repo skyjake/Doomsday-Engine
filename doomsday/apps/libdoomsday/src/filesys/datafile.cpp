@@ -28,7 +28,7 @@ DataFile::DataFile(Format format, File &sourceFile)
 {
     setSource(&sourceFile);
 
-    if(format == Iwad || format == Pwad)
+    if (format == Iwad || format == Pwad)
     {
         // Automatically set the correct format.
         Block fileType;

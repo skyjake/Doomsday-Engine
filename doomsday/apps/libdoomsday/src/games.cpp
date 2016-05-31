@@ -107,7 +107,7 @@ DENG2_PIMPL(Games)
     Game *findById(String id) const
     {
         auto found = idLookup.constFind(id.toLower());
-        if(found != idLookup.constEnd())
+        if (found != idLookup.constEnd())
         {
             return found.value();
         }
@@ -134,9 +134,9 @@ Game &Games::nullGame() const
 int Games::numPlayable() const
 {
     int count = 0;
-    foreach(Game *game, d->games)
+    foreach (Game *game, d->games)
     {
-        if(game->allStartupFilesFound())
+        if (game->allStartupFilesFound())
         {
             count += 1;
         }
@@ -146,16 +146,16 @@ int Games::numPlayable() const
 
 Game *Games::firstPlayable() const
 {
-    foreach(Game *game, d->games)
+    foreach (Game *game, d->games)
     {
-        if(game->allStartupFilesFound()) return game;
+        if (game->allStartupFilesFound()) return game;
     }
     return NULL;
 }
 
 Game &Games::operator [] (String const &id) const
 {
-    if(auto *game = d->findById(id))
+    if (auto *game = d->findById(id))
     {
         return *game;
     }
@@ -171,7 +171,7 @@ bool Games::contains(String const &id) const
 
 Game &Games::byIndex(int idx) const
 {
-    if(idx < 0 || idx > d->games.count())
+    if (idx < 0 || idx > d->games.count())
     {
         /// @throw NotFoundError  No game is associated with index @a idx.
         throw NotFoundError("Games::byIndex", QString("There is no Game at index %i").arg(idx));
@@ -192,7 +192,7 @@ Games::All const &Games::all() const
 int Games::collectAll(GameList &collected)
 {
     int numFoundSoFar = collected.count();
-    foreach(Game *game, d->games)
+    foreach (Game *game, d->games)
     {
         collected.push_back(GameListItem(game));
     }
@@ -212,7 +212,7 @@ Game &Games::defineGame(String const &id, Record const &parameters)
                 << parameters.gets(Game::DEF_TITLE) << id;
         throw Error("Games::defineGame", String("Duplicate game ID: ") + id);
     }
-    catch(Games::NotFoundError const &)
+    catch (Games::NotFoundError const &)
     {} // Ignore the error.
 
     // Add this game to our records.
@@ -227,7 +227,7 @@ void Games::locateStartupResources(Game &game)
 {
     Game *oldCurrentGame = &DoomsdayApp::currentGame();
 
-    if(oldCurrentGame != &game)
+    if (oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
         DoomsdayApp::setGame(game);
@@ -237,16 +237,16 @@ void Games::locateStartupResources(Game &game)
         App_FileSystem().resetAllSchemes();
     }
 
-    foreach(ResourceManifest *manifest, game.manifests())
+    foreach (ResourceManifest *manifest, game.manifests())
     {
         // We are only interested in startup resources at this time.
-        if(manifest->fileFlags() & FF_STARTUP)
+        if (manifest->fileFlags() & FF_STARTUP)
         {
             manifest->locateFile();
         }
     }
 
-    if(oldCurrentGame != &game)
+    if (oldCurrentGame != &game)
     {
         // Kludge end - Restore the old Game.
         DoomsdayApp::setGame(*oldCurrentGame);
@@ -260,9 +260,9 @@ void Games::locateStartupResources(Game &game)
 
 LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
 {
-    foreach(Game *game, all())
+    foreach (Game *game, all())
     {
-        if(auto result = callback(*game))
+        if (auto result = callback(*game))
         {
             return result;
         }
@@ -311,11 +311,11 @@ void Games::checkReadiness()
 
 /*void Games::forgetAllResources()
 {
-    foreach(Game *game, d->games)
+    foreach (Game *game, d->games)
     {
-        foreach(ResourceManifest *manifest, game->manifests())
+        foreach (ResourceManifest *manifest, game->manifests())
         {
-            if(manifest->fileFlags() & FF_STARTUP)
+            if (manifest->fileFlags() & FF_STARTUP)
             {
                 manifest->forgetFile();
             }
@@ -328,7 +328,7 @@ D_CMD(ListGames)
     DENG2_UNUSED3(src, argc, argv);
 
     Games &games = DoomsdayApp::games();
-    if(!games.count())
+    if (!games.count())
     {
         LOG_MSG("No games are currently registered.");
         return true;
@@ -353,7 +353,7 @@ D_CMD(ListGames)
         Game *game = i->game;
         bool isCurrent = (&DoomsdayApp::currentGame() == game);
 
-        if(!list.isEmpty()) list += "\n";
+        if (!list.isEmpty()) list += "\n";
 
         list += String(_E(0)
                        _E(Ta) "%1%2 "
@@ -366,7 +366,7 @@ D_CMD(ListGames)
                 .arg(game->title())
                 .arg(game->author());
 
-        if(game->allStartupFilesFound())
+        if (game->allStartupFilesFound())
         {
             numCompleteGames++;
         }

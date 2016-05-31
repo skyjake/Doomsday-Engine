@@ -39,11 +39,11 @@ static String const BLOCK_GAMERULE = "gamerule";
 static Value *makeValueFromInfoValue(de::Info::Element::Value const &v)
 {
     String const text = v;
-    if(!text.compareWithoutCase("True"))
+    if (!text.compareWithoutCase("True"))
     {
         return new NumberValue(true, NumberValue::Boolean);
     }
-    else if(!text.compareWithoutCase("False"))
+    else if (!text.compareWithoutCase("False"))
     {
         return new NumberValue(false, NumberValue::Boolean);
     }
@@ -65,36 +65,36 @@ void SavedSession::Metadata::parse(String const &source)
 
         // Rebuild the game rules subrecord.
         Record &rules = addSubrecord("gameRules");
-        foreach(Info::Element const *elem, info.root().contentsInOrder())
+        foreach (Info::Element const *elem, info.root().contentsInOrder())
         {
-            if(Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
+            if (Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
             {
                 QScopedPointer<Value> v(makeValueFromInfoValue(key->value()));
                 add(key->name()) = v.take();
                 continue;
             }
-            if(Info::ListElement const *list = elem->maybeAs<Info::ListElement>())
+            if (Info::ListElement const *list = elem->maybeAs<Info::ListElement>())
             {
                 QScopedPointer<ArrayValue> arr(new ArrayValue);
-                foreach(Info::Element::Value const &v, list->values())
+                foreach (Info::Element::Value const &v, list->values())
                 {
                     *arr << makeValueFromInfoValue(v);
                 }
                 addArray(list->name(), arr.take());
                 continue;
             }
-            if(Info::BlockElement const *block = elem->maybeAs<Info::BlockElement>())
+            if (Info::BlockElement const *block = elem->maybeAs<Info::BlockElement>())
             {
                 // Perhaps a ruleset group?
-                if(block->blockType() == BLOCK_GROUP)
+                if (block->blockType() == BLOCK_GROUP)
                 {
-                    foreach(Info::Element const *grpElem, block->contentsInOrder())
+                    foreach (Info::Element const *grpElem, block->contentsInOrder())
                     {
-                        if(!grpElem->isBlock()) continue;
+                        if (!grpElem->isBlock()) continue;
 
                         // Perhaps a gamerule?
                         Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
-                        if(ruleBlock.blockType() == BLOCK_GAMERULE)
+                        if (ruleBlock.blockType() == BLOCK_GAMERULE)
                         {
                             QScopedPointer<Value> v(makeValueFromInfoValue(ruleBlock.keyValue("value")));
                             rules.add(ruleBlock.name()) = v.take();
@@ -106,7 +106,7 @@ void SavedSession::Metadata::parse(String const &source)
         }
 
         // Ensure the map URI has the "Maps" scheme set.
-        if(!gets("mapUri").beginsWith("Maps:", Qt::CaseInsensitive))
+        if (!gets("mapUri").beginsWith("Maps:", Qt::CaseInsensitive))
         {
             set("mapUri", String("Maps:") + gets("mapUri"));
         }
@@ -115,14 +115,14 @@ void SavedSession::Metadata::parse(String const &source)
         // this info explicitly. The assumption was that the episode was inferred by / encoded
         // in the map URI. If the episode is not present in the metadata then we'll assume it
         // is encoded in the map URI and extract it.
-        if(!has("episode"))
+        if (!has("episode"))
         {
             String const mapUriPath = gets("mapUri").substr(5);
-            if(mapUriPath.beginsWith("MAP", Qt::CaseInsensitive))
+            if (mapUriPath.beginsWith("MAP", Qt::CaseInsensitive))
             {
                 set("episode", "1");
             }
-            else if(mapUriPath.at(0).toLower() == 'e' && mapUriPath.at(2).toLower() == 'm')
+            else if (mapUriPath.at(0).toLower() == 'e' && mapUriPath.at(2).toLower() == 'm')
             {
                 set("episode", mapUriPath.substr(1, 1));
             }
@@ -134,12 +134,12 @@ void SavedSession::Metadata::parse(String const &source)
         }
 
         // Ensure we have a valid description.
-        if(gets("userDescription").isEmpty())
+        if (gets("userDescription").isEmpty())
         {
             set("userDescription", "UNNAMED");
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING(er.asText());
     }
@@ -149,7 +149,7 @@ String SavedSession::Metadata::asStyledText() const
 {
     String currentMapText = String(_E(l)" - Uri: " _E(.) "%1" _E(.)).arg(gets("mapUri"));
     // Is the time in the current map known?
-    if(has("mapTime"))
+    if (has("mapTime"))
     {
         int time = geti("mapTime") / 35 /*TICRATE*/;
         int const hours   = time / 3600; time -= hours * 3600;
@@ -165,9 +165,9 @@ String SavedSession::Metadata::asStyledText() const
     String gameRulesText;
     QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
     rules.replaceInStrings(QRegExp("(.*)\\s*:\\s*([^ ].*)"), _E(l) "\\1: " _E(.) "\\2");
-    for(int i = 0; i < rules.size(); ++i)
+    for (int i = 0; i < rules.size(); ++i)
     {
-        if(i) gameRulesText += "\n";
+        if (i) gameRulesText += "\n";
         gameRulesText += " - " + rules.at(i).trimmed();
     }
 
@@ -197,38 +197,38 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     QTextStream os(&text);
     os.setCodec("UTF-8");
 
-    if(has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
-    if(has("episode"))         os << "\nepisode: "         << gets("episode");
-    if(has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
-    if(has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
-    if(has("players"))
+    if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
+    if (has("episode"))         os << "\nepisode: "         << gets("episode");
+    if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
+    if (has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
+    if (has("players"))
     {
         os << "\nplayers <";
         ArrayValue const &playersArray = geta("players");
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
         {
             Value const *value = *i;
-            if(i != playersArray.elements().begin()) os << ", ";
+            if (i != playersArray.elements().begin()) os << ", ";
             os << (value->as<NumberValue>().isTrue()? "True" : "False");
         }
         os << ">";
     }
-    if(has("visitedMaps"))
+    if (has("visitedMaps"))
     {
         os << "\nvisitedMaps <";
         ArrayValue const &visitedMapsArray = geta("visitedMaps");
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, visitedMapsArray.elements())
         {
             Value const *value = *i;
-            if(i != visitedMapsArray.elements().begin()) os << ", ";
+            if (i != visitedMapsArray.elements().begin()) os << ", ";
             os << "\"" << String(value->as<TextValue>()) << "\"";
         }
         os << ">";
     }
-    if(has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
-    if(has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
+    if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
+    if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
 
-    if(hasSubrecord("gameRules"))
+    if (hasSubrecord("gameRules"))
     {
         os << "\n" << BLOCK_GROUP << " ruleset {";
 
@@ -237,7 +237,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
         {
             Value const &value = i.value()->value();
             String valueAsText = value.asText();
-            if(value.is<Value::Text>())
+            if (value.is<Value::Text>())
             {
                 valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
             }
@@ -296,19 +296,19 @@ DENG2_PIMPL(SavedSession)
             // So far so good.
             return true;
         }
-        catch(IByteArray::OffsetError const &)
+        catch (IByteArray::OffsetError const &)
         {
             LOG_RES_WARNING("Archive in %s is truncated") << self.description();
         }
-        catch(IIStream::InputError const &)
+        catch (IIStream::InputError const &)
         {
             LOG_RES_WARNING("%s cannot be read") << self.description();
         }
-        catch(Archive::FormatError const &)
+        catch (Archive::FormatError const &)
         {
             LOG_RES_WARNING("Archive in %s is invalid") << self.description();
         }
-        catch(Folder::NotFoundError const &)
+        catch (Folder::NotFoundError const &)
         {
             LOG_RES_WARNING("%s does not appear to be a .save package") << self.description();
         }
@@ -346,7 +346,7 @@ void SavedSession::readMetadata()
 
     // Determine if a .save package exists in the repository and if so, read the metadata.
     Metadata newMetadata;
-    if(!d->readMetadata(newMetadata))
+    if (!d->readMetadata(newMetadata))
     {
         // Unrecognized or the file could not be accessed (perhaps its a network path?).
         // Return the session to the "null/invalid" state.
@@ -359,7 +359,7 @@ void SavedSession::readMetadata()
 
 SavedSession::Metadata const &SavedSession::metadata() const
 {
-    if(d->needCacheMetadata)
+    if (d->needCacheMetadata)
     {
         const_cast<SavedSession *>(this)->readMetadata();
     }
@@ -378,7 +378,7 @@ void SavedSession::cacheMetadata(Metadata const &copied)
 
 String SavedSession::stateFilePath(String const &path) //static
 {
-    if(!path.fileName().isEmpty())
+    if (!path.fileName().isEmpty())
     {
         return path + "State";
     }
@@ -389,10 +389,10 @@ File *SavedSession::Interpreter::interpretFile(File *sourceData) const
 {
     try
     {
-        if(ZipArchive::recognize(*sourceData))
+        if (ZipArchive::recognize(*sourceData))
         {
             // It is a ZIP archive: we will represent it as a folder.
-            if(sourceData->name().fileNameExtension() == ".save")
+            if (sourceData->name().fileNameExtension() == ".save")
             {
                 /// @todo fixme: Don't assume this is a save package.
                 LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
@@ -405,7 +405,7 @@ File *SavedSession::Interpreter::interpretFile(File *sourceData) const
             }
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         // Even though it was recognized as an archive, the file
         // contents may still prove to be corrupted.
