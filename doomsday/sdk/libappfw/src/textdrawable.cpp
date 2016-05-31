@@ -141,8 +141,8 @@ DENG2_PIMPL(TextDrawable)
             // Check that it's okay if we start the operation now.
             {
                 DENG2_GUARD(d);
-                if(!d) return; // Owner has been deleted.
-                if(!d->sync.isValid(_valid))
+                if (!d) return; // Owner has been deleted.
+                if (!d->sync.isValid(_valid))
                 {
                     // No longer the latest task, so ignore this one.
                     d->audienceForDeletion -= this;
@@ -153,7 +153,7 @@ DENG2_PIMPL(TextDrawable)
             // Ok, we have a go. Set up the wrapper first.
             auto *wrapper = new Wrapper;
             wrapper->setFont(_font);
-            if(_style)
+            if (_style)
             {
                 wrapper->format.setStyle(*_style);
             }
@@ -165,8 +165,8 @@ DENG2_PIMPL(TextDrawable)
             // Pass the finished wrapping to the owner.
             {
                 DENG2_GUARD(d);
-                if(d) d->audienceForDeletion -= this;
-                if(d && d->sync.isValid(_valid))
+                if (d) d->audienceForDeletion -= this;
+                if (d && d->sync.isValid(_valid))
                 {
                     d->incoming.reset(wrapper);
                 }
@@ -222,14 +222,14 @@ DENG2_PIMPL(TextDrawable)
 
     void beginWrapTask()
     {
-        if(inited && wrapWidth > 0 && font)
+        if (inited && wrapWidth > 0 && font)
         {
             sync.invalidate();
 
             // Check if the wrapping can be done immediately. Background tasks unavoidably
             // bring some extra latency before the job is finished, especially if a large
             // number of tasks is queued.
-            if(styledText.size() <= 20)
+            if (styledText.size() <= 20)
             {
                 // Looks quick enough, just do it now.
                 WrapTask(this, styledText, wrapWidth, *font, style).runTask();
@@ -250,7 +250,7 @@ DENG2_PIMPL(TextDrawable)
      */
     bool swap()
     {
-        if(!incoming) return false;
+        if (!incoming) return false;
 
         delete visibleWrap;
         visibleWrap = incoming.take();
@@ -277,7 +277,7 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
     d->style = style;
     d->font = &font;
 
-    if(!d->styledText.isEmpty())
+    if (!d->styledText.isEmpty())
     {
         // Update the wrapping, if possible.
         d->beginWrapTask();
@@ -303,7 +303,7 @@ void TextDrawable::clear()
 
 void TextDrawable::setLineWrapWidth(int maxLineWidth)
 {
-    if(d->wrapWidth != maxLineWidth)
+    if (d->wrapWidth != maxLineWidth)
     {
         d->wrapWidth = maxLineWidth;
         d->beginWrapTask();
@@ -312,7 +312,7 @@ void TextDrawable::setLineWrapWidth(int maxLineWidth)
 
 void TextDrawable::setText(String const &styledText)
 {
-    if(d->styledText != styledText)
+    if (d->styledText != styledText)
     {
         d->styledText = styledText;
 
@@ -322,7 +322,7 @@ void TextDrawable::setText(String const &styledText)
 
 void TextDrawable::setFont(Font const &font)
 {
-    if(d->font != &font)
+    if (d->font != &font)
     {
         d->font = &font;
         d->beginWrapTask(); // Redo the contents.
@@ -337,7 +337,7 @@ void TextDrawable::setRange(Rangei const &lineRange)
 
 bool TextDrawable::update()
 {
-    if(!d->inited || !d->font) return false;
+    if (!d->inited || !d->font) return false;
 
     // Check for a completed background task.
     bool swapped = d->swap();

@@ -55,13 +55,13 @@ bool Version::isValid() const
 String Version::base() const
 {
     String v = String("%1.%2.%3").arg(major).arg(minor).arg(patch);
-    if(!label.isEmpty()) v += String("-%1").arg(label);
+    if (!label.isEmpty()) v += String("-%1").arg(label);
     return v;
 }
 
 String Version::asText() const
 {
-    if(!build) return base();
+    if (!build) return base();
     return base() + String(" Build %1").arg(build);
 }
 
@@ -74,11 +74,11 @@ void Version::parseVersionString(String const &version)
     int dashPos = version.indexOf('-');
 
     QStringList parts = version.left(dashPos).split('.');
-    if(parts.size() >= 1) major = String(parts[0]).toInt();
-    if(parts.size() >= 2) minor = String(parts[1]).toInt();
-    if(parts.size() >= 3) patch = String(parts[2]).toInt();
+    if (parts.size() >= 1) major = String(parts[0]).toInt();
+    if (parts.size() >= 2) minor = String(parts[1]).toInt();
+    if (parts.size() >= 3) patch = String(parts[2]).toInt();
 
-    if(dashPos >= 0 && dashPos < version.size() - 1)
+    if (dashPos >= 0 && dashPos < version.size() - 1)
     {
         label = version.substr(dashPos + 1);
     }
@@ -86,11 +86,11 @@ void Version::parseVersionString(String const &version)
 
 bool Version::operator < (Version const &other) const
 {
-    if(major == other.major)
+    if (major == other.major)
     {
-        if(minor == other.minor)
+        if (minor == other.minor)
         {
-            if(patch == other.patch)
+            if (patch == other.patch)
             {
                 return build < other.build;
             }

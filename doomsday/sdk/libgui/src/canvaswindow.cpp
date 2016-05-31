@@ -61,7 +61,7 @@ DENG2_PIMPL(CanvasWindow)
 
     ~Instance()
     {
-        if(thisPublic == mainWindow)
+        if (thisPublic == mainWindow)
         {
             mainWindow = 0;
         }
@@ -78,7 +78,7 @@ DENG2_PIMPL(CanvasWindow)
 
         // Count the frames every other second.
         TimeDelta elapsed = nowTime - lastFpsTime;
-        if(elapsed > 2.5)
+        if (elapsed > 2.5)
         {
             fps = frameCount / elapsed;
             lastFpsTime = nowTime;
@@ -121,7 +121,7 @@ DENG2_PIMPL(CanvasWindow)
 
         // Reacquire the focus.
         canvas->setFocus();
-        if(mouseWasTrapped)
+        if (mouseWasTrapped)
         {
             canvas->trapMouse();
         }
@@ -206,14 +206,14 @@ Canvas &CanvasWindow::canvas() const
 
 bool CanvasWindow::ownsCanvas(Canvas *c) const
 {
-    if(!c) return false;
+    if (!c) return false;
     return (d->canvas == c || d->recreated == c);
 }
 
 #ifdef WIN32
 bool CanvasWindow::event(QEvent *ev)
 {
-    if(ev->type() == QEvent::ActivationChange)
+    if (ev->type() == QEvent::ActivationChange)
     {
         //LOG_DEBUG("CanvasWindow: Forwarding QEvent::KeyRelease, Qt::Key_Alt");
         QKeyEvent keyEvent = QKeyEvent(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
@@ -236,7 +236,7 @@ void CanvasWindow::canvasGLReady(Canvas &canvas)
 {
     d->ready = true;
 
-    if(d->recreated == &canvas)
+    if (d->recreated == &canvas)
     {
 #ifndef DENG_X11
         d->finishCanvasRecreation();
@@ -262,7 +262,7 @@ duint CanvasWindow::grabAsTexture(GrabMode mode) const
 duint CanvasWindow::grabAsTexture(Rectanglei const &area, GrabMode mode) const
 {
     QSize size;
-    if(mode == GrabHalfSized)
+    if (mode == GrabHalfSized)
     {
         size = QSize(area.width()/2, area.height()/2);
     }

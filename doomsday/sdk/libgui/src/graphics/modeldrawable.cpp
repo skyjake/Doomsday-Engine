@@ -66,7 +66,7 @@ public:
 
     aiReturn Seek(size_t pOffset, aiOrigin pOrigin)
     {
-        switch(pOrigin)
+        switch (pOrigin)
         {
         case aiOrigin_SET:
             _pos = pOffset;
@@ -121,7 +121,7 @@ struct ImpIOSystem : public Assimp::IOSystem
     Path resolvePath(char const *fn) const
     {
         Path path(fn);
-        if(path.isAbsolute()) return path;
+        if (path.isAbsolute()) return path;
         return referencePath / path;
     }
 
@@ -151,7 +151,7 @@ struct ImpLogger : public Assimp::LogStream
 
     static void registerLogger()
     {
-        if(registered) return;
+        if (registered) return;
 
         registered = true;
         Assimp::DefaultLogger::get()->attachStream(
@@ -171,7 +171,7 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
     Image loadImage(String const &path)
     {
         Image img = App::rootFolder().locate<ImageFile>(path).image();
-        if(img.depth() == 24)
+        if (img.depth() == 24)
         {
             // Model texture atlases need to have an alpha channel.
             DENG2_ASSERT(img.canConvertToQImage());
@@ -247,7 +247,7 @@ DENG2_PIMPL(ModelDrawable)
 
     static TextureMap textureMapType(aiTextureType type)
     {
-        switch(type)
+        switch (type)
         {
         case aiTextureType_DIFFUSE:  return Diffuse;
         case aiTextureType_NORMALS:  return Normals;
@@ -262,7 +262,7 @@ DENG2_PIMPL(ModelDrawable)
 
     static aiTextureType impTextureType(TextureMap map)
     {
-        switch(map)
+        switch (map)
         {
         case Diffuse:  return aiTextureType_DIFFUSE;
         case Normals:  return aiTextureType_NORMALS;
@@ -396,7 +396,7 @@ DENG2_PIMPL(ModelDrawable)
             needMakeBuffer = true;
 
             Material *material = new Material;
-            for(duint i = 0; i < scene->mNumMeshes; ++i)
+            for (duint i = 0; i < scene->mNumMeshes; ++i)
             {
                 material->meshTextures << Material::MeshTextures();
             }
@@ -421,7 +421,7 @@ DENG2_PIMPL(ModelDrawable)
 
         void releaseTexture(Id const &id)
         {
-            if(!id) return; // We don't own this, don't release.
+            if (!id) return; // We don't own this, don't release.
 
             Path texPath = textureBank.sourcePathForAtlasId(id);
             DENG2_ASSERT(!texPath.isEmpty());
@@ -434,9 +434,9 @@ DENG2_PIMPL(ModelDrawable)
         void releaseTexturesFromAtlas()
         {
             textureBank.unloadAll(Bank::ImmediatelyInCurrentThread);
-            for(Material *mat : materials)
+            for (Material *mat : materials)
             {
-                for(auto &mesh : mat->meshTextures)
+                for (auto &mesh : mat->meshTextures)
                 {
                     zap(mesh.texIds);
                 }
@@ -447,7 +447,7 @@ DENG2_PIMPL(ModelDrawable)
         void fallBackToDefaultTexture(Material::MeshTextures &mesh,
                                       TextureMap map) const
         {
-            if(!mesh.texIds[map])
+            if (!mesh.texIds[map])
             {
                 mesh.texIds[map] = defaultTexIds[map];
             }
@@ -462,9 +462,9 @@ DENG2_PIMPL(ModelDrawable)
          */
         void initTextures()
         {
-            for(duint matIdx = 0; matIdx < duint(materials.size()); ++matIdx)
+            for (duint matIdx = 0; matIdx < duint(materials.size()); ++matIdx)
             {
-                for(duint i = 0; i < scene->mNumMeshes; ++i)
+                for (duint i = 0; i < scene->mNumMeshes; ++i)
                 {
                     MeshId const mesh(i, matIdx);
                     auto &textures = materials[matIdx]->meshTextures[i];
@@ -474,7 +474,7 @@ DENG2_PIMPL(ModelDrawable)
                     fallBackToDefaultTexture(textures, Diffuse);
 
                     loadTextureImage(mesh, aiTextureType_NORMALS);
-                    if(!textures.texIds[Normals])
+                    if (!textures.texIds[Normals])
                     {
                         // Try a height field instead. This will be converted to a normal map.
                         loadTextureImage(mesh, aiTextureType_HEIGHT);
@@ -512,13 +512,13 @@ DENG2_PIMPL(ModelDrawable)
             try
             {
                 // Custom override path?
-                if(meshTextures.customPaths.contains(map))
+                if (meshTextures.customPaths.contains(map))
                 {
                     LOG_GL_VERBOSE("Loading custom path \"%s\"") << meshTextures.customPaths[map];
                     return setTexture(mesh, map, meshTextures.customPaths[map]);
                 }
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_GL_WARNING("Failed to load user-defined %s texture for "
                                "mesh %i (material %i): %s")
@@ -529,17 +529,17 @@ DENG2_PIMPL(ModelDrawable)
 
             // Load the texture based on the information specified in the model's materials.
             aiString texPath;
-            for(duint s = 0; s < sceneMaterial.GetTextureCount(type); ++s)
+            for (duint s = 0; s < sceneMaterial.GetTextureCount(type); ++s)
             {
                 try
                 {
-                    if(sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
+                    if (sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
                     {
                         setTexture(mesh, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
                         break;
                     }
                 }
-                catch(Error const &er)
+                catch (Error const &er)
                 {
                     LOG_GL_WARNING("Failed to load %s texture for mesh %i "
                                    "(material %i) based on info from model file: %s")
@@ -551,10 +551,10 @@ DENG2_PIMPL(ModelDrawable)
 
         void setTexture(MeshId const &mesh, TextureMap map, String contentPath)
         {
-            if(!scene) return;
-            if(map == Unknown) return; // Ignore unmapped textures.
-            if(mesh.material >= duint(materials.size())) return;
-            if(mesh.index >= scene->mNumMeshes) return;
+            if (!scene) return;
+            if (map == Unknown) return; // Ignore unmapped textures.
+            if (mesh.material >= duint(materials.size())) return;
+            if (mesh.index >= scene->mNumMeshes) return;
 
             DENG2_ASSERT(textureBank.atlas());
 
@@ -567,7 +567,7 @@ DENG2_PIMPL(ModelDrawable)
             /// @todo Release a previously loaded texture, if it isn't used
             /// in any material. -jk
 
-            if(map == Height)
+            if (map == Height)
             {
                 // Convert the height map into a normal map.
                 contentPath = contentPath.concatenatePath("HeightMap.toNormals");
@@ -576,7 +576,7 @@ DENG2_PIMPL(ModelDrawable)
             Path const path(contentPath);
 
             // If this image is unknown, add it now to the bank.
-            if(!textureBank.has(path))
+            if (!textureBank.has(path))
             {
                 textureBank.add(path, new TextureSource(contentPath, this));
             }
@@ -595,12 +595,12 @@ DENG2_PIMPL(ModelDrawable)
 
         void setTextureMapping(Mapping mapsToUse)
         {
-            for(int i = 0; i < MAX_TEXTURES; ++i)
+            for (int i = 0; i < MAX_TEXTURES; ++i)
             {
                 textureOrder[i] = (i < mapsToUse.size()? mapsToUse.at(i) : Unknown);
 
                 // Height is an alias for normals.
-                if(textureOrder[i] == Height) textureOrder[i] = Normals;
+                if (textureOrder[i] == Height) textureOrder[i] = Normals;
             }
             needMakeBuffer = true;
         }
@@ -651,15 +651,15 @@ DENG2_PIMPL(ModelDrawable)
          * Autodetect if these exist and make a list of their names.
          */
         String anims;
-        if(file.name().fileNameExtension() == ".md5mesh")
+        if (file.name().fileNameExtension() == ".md5mesh")
         {
             String const baseName = file.name().fileNameWithoutExtension() + "_";
-            for(auto const i : file.parent()->contents())
+            for (auto const i : file.parent()->contents())
             {
-                if(i.first.startsWith(baseName) &&
+                if (i.first.startsWith(baseName) &&
                    i.first.fileNameExtension() == ".md5anim")
                 {
-                    if(!anims.isEmpty()) anims += ";";
+                    if (!anims.isEmpty()) anims += ";";
                     anims += i.first.substr(baseName.size()).fileNameWithoutExtension();
                 }
             }
@@ -671,7 +671,7 @@ DENG2_PIMPL(ModelDrawable)
         importerIoSystem->referencePath = sourcePath.fileNamePath();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
-        if(!importer.ReadFile(sourcePath.toUtf8(),
+        if (!importer.ReadFile(sourcePath.toUtf8(),
                               aiProcess_CalcTangentSpace |
                               aiProcess_GenSmoothNormals |
                               aiProcess_JoinIdenticalVertices |
@@ -693,10 +693,10 @@ DENG2_PIMPL(ModelDrawable)
         minPoint      = Vector3f(1.0e9f,  1.0e9f,  1.0e9f);
 
         // Determine the total bounding box.
-        for(duint i = 0; i < scene->mNumMeshes; ++i)
+        for (duint i = 0; i < scene->mNumMeshes; ++i)
         {
             aiMesh const &mesh = *scene->mMeshes[i];
-            for(duint i = 0; i < mesh.mNumVertices; ++i)
+            for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
                 addToBounds(Vector3f(&mesh.mVertices[i].x));
             }
@@ -710,12 +710,12 @@ DENG2_PIMPL(ModelDrawable)
 
         // Animations.
         animNameToIndex.clear();
-        for(duint i = 0; i < scene->mNumAnimations; ++i)
+        for (duint i = 0; i < scene->mNumAnimations; ++i)
         {
             LOG_GL_VERBOSE("Animation #%i name:%s") << i << scene->mAnimations[i]->mName.C_Str();
 
             String const name = scene->mAnimations[i]->mName.C_Str();
-            if(!name.isEmpty())
+            if (!name.isEmpty())
             {
                 animNameToIndex.insert(name, i);
             }
@@ -741,12 +741,12 @@ DENG2_PIMPL(ModelDrawable)
 #ifdef DENG2_DEBUG
         qDebug() << "Node:" << name;
 #endif
-        if(!name.isEmpty())
+        if (!name.isEmpty())
         {
             nodeNameToPtr.insert(name, &node);
         }
 
-        for(duint i = 0; i < node.mNumChildren; ++i)
+        for (duint i = 0; i < node.mNumChildren; ++i)
         {
             buildNodeLookup(*node.mChildren[i]);
         }
@@ -768,9 +768,9 @@ DENG2_PIMPL(ModelDrawable)
         DENG2_ASSERT_IN_MAIN_THREAD();
 
         // Has a scene been imported successfully?
-        if(!scene) return;
+        if (!scene) return;
 
-        if(modelAsset.isReady())
+        if (modelAsset.isReady())
         {
             // Already good to go.
             return;
@@ -807,14 +807,14 @@ DENG2_PIMPL(ModelDrawable)
 
     int findMaterial(String const &name) const
     {
-        if(!scene) return -1;
-        for(duint i = 0; i < scene->mNumMaterials; ++i)
+        if (!scene) return -1;
+        for (duint i = 0; i < scene->mNumMaterials; ++i)
         {
             aiMaterial const &material = *scene->mMaterials[i];
             aiString matName;
-            if(material.Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
+            if (material.Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
             {
-                if(name == matName.C_Str()) return i;
+                if (name == matName.C_Str()) return i;
             }
         }
         return -1;
@@ -844,7 +844,7 @@ DENG2_PIMPL(ModelDrawable)
 
     int findBone(String const &name) const
     {
-        if(boneNameToIndex.contains(name))
+        if (boneNameToIndex.contains(name))
         {
             return boneNameToIndex[name];
         }
@@ -854,7 +854,7 @@ DENG2_PIMPL(ModelDrawable)
     int addOrFindBone(String const &name)
     {
         int i = findBone(name);
-        if(i >= 0)
+        if (i >= 0)
         {
             return i;
         }
@@ -864,9 +864,9 @@ DENG2_PIMPL(ModelDrawable)
     void addVertexWeight(duint vertexIndex, duint16 boneIndex, dfloat weight)
     {
         VertexBone &vb = vertexBones[vertexIndex];
-        for(int i = 0; i < MAX_BONES_PER_VERTEX; ++i)
+        for (int i = 0; i < MAX_BONES_PER_VERTEX; ++i)
         {
-            if(vb.weights[i] == 0.f)
+            if (vb.weights[i] == 0.f)
             {
                 // Here's a free one.
                 vb.ids[i] = boneIndex;
@@ -890,17 +890,17 @@ DENG2_PIMPL(ModelDrawable)
     {
         vertexBones.resize(vertexBase + mesh.mNumVertices);
 
-        if(mesh.HasBones())
+        if (mesh.HasBones())
         {
             // Mark the per-vertex bone weights.
-            for(duint i = 0; i < mesh.mNumBones; ++i)
+            for (duint i = 0; i < mesh.mNumBones; ++i)
             {
                 aiBone const &bone = *mesh.mBones[i];
 
                 duint const boneIndex = addOrFindBone(bone.mName.C_Str());
                 bones[boneIndex].offset = convertMatrix(bone.mOffsetMatrix);
 
-                for(duint w = 0; w < bone.mNumWeights; ++w)
+                for (duint w = 0; w < bone.mNumWeights; ++w)
                 {
                     addVertexWeight(vertexBase + bone.mWeights[w].mVertexId,
                                     boneIndex, bone.mWeights[w].mWeight);
@@ -914,7 +914,7 @@ DENG2_PIMPL(ModelDrawable)
             bones[boneIndex].offset = Matrix4f();
 
             // All vertices fully affected by this bone.
-            for(duint i = 0; i < mesh.mNumVertices; ++i)
+            for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
                 addVertexWeight(vertexBase + i, boneIndex, 1.f);
             }
@@ -929,7 +929,7 @@ DENG2_PIMPL(ModelDrawable)
         clearBones();
 
         int base = 0;
-        for(duint i = 0; i < scene->mNumMeshes; ++i)
+        for (duint i = 0; i < scene->mNumMeshes; ++i)
         {
             aiMesh const &mesh = *scene->mMeshes[i];
 
@@ -944,7 +944,7 @@ DENG2_PIMPL(ModelDrawable)
     void makeBuffer()
     {
         glData.needMakeBuffer = false;
-        for(GLData::Material *material : glData.materials)
+        for (GLData::Material *material : glData.materials)
         {
             makeBuffer(*material);
         }
@@ -968,12 +968,12 @@ DENG2_PIMPL(ModelDrawable)
         meshIndexRanges.resize(scene->mNumMeshes);
 
         // All of the scene's meshes are combined into one GL buffer.
-        for(duint m = 0; m < scene->mNumMeshes; ++m)
+        for (duint m = 0; m < scene->mNumMeshes; ++m)
         {
             aiMesh const &mesh = *scene->mMeshes[m];
 
             // Load vertices into the buffer.
-            for(duint i = 0; i < mesh.mNumVertices; ++i)
+            for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
                 aiVector3D const *pos      = &mesh.mVertices[i];
                 aiColor4D  const *color    = (mesh.HasVertexColors(0)? &mesh.mColors[0][i] : &white);
@@ -999,17 +999,17 @@ DENG2_PIMPL(ModelDrawable)
 
                 auto const &meshTextures = material.meshTextures[m];
 
-                for(int t = 0; t < MAX_TEXTURES; ++t)
+                for (int t = 0; t < MAX_TEXTURES; ++t)
                 {
                     // Apply the specified order for the textures.
                     TextureMap map = glData.textureOrder[t];
-                    if(map < 0 || map >= MAX_TEXTURES) continue;
+                    if (map < 0 || map >= MAX_TEXTURES) continue;
 
-                    if(meshTextures.texIds[map])
+                    if (meshTextures.texIds[map])
                     {
                         v.texBounds[t] = glData.textureBank.atlas()->imageRectf(meshTextures.texIds[map]).xywh();
                     }
-                    else if(glData.defaultTexIds[map])
+                    else if (glData.defaultTexIds[map])
                     {
                         v.texBounds[t] = glData.textureBank.atlas()->imageRectf(glData.defaultTexIds[map]).xywh();
                     }
@@ -1020,7 +1020,7 @@ DENG2_PIMPL(ModelDrawable)
                     }
                 }
 
-                for(int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
+                for (int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
                 {
                     v.boneIds[b]     = vertexBones[base + i].ids[b];
                     v.boneWeights[b] = vertexBones[base + i].weights[b];
@@ -1032,7 +1032,7 @@ DENG2_PIMPL(ModelDrawable)
             duint firstFace = indx.size();
 
             // Get face indices.
-            for(duint i = 0; i < mesh.mNumFaces; ++i)
+            for (duint i = 0; i < mesh.mNumFaces; ++i)
             {
                 aiFace const &face = mesh.mFaces[i];
                 DENG2_ASSERT(face.mNumIndices == 3); // expecting triangles
@@ -1068,11 +1068,11 @@ DENG2_PIMPL(ModelDrawable)
 
         aiNodeAnim const *findNodeAnim(aiNode const &node) const
         {
-            if(!anim) return nullptr;
-            for(duint i = 0; i < anim->mNumChannels; ++i)
+            if (!anim) return nullptr;
+            for (duint i = 0; i < anim->mNumChannels; ++i)
             {
                 aiNodeAnim const *na = anim->mChannels[i];
-                if(na->mNodeName == node.mName)
+                if (na->mNodeName == node.mName)
                 {
                     return na;
                 }
@@ -1094,7 +1094,7 @@ DENG2_PIMPL(ModelDrawable)
         accumulateTransforms(rootNode, data);
 
         // Update the resulting matrices in the uniform.
-        for(int i = 0; i < boneCount(); ++i)
+        for (int i = 0; i < boneCount(); ++i)
         {
             uBoneMatrices.set(i, data.finalTransforms.at(i));
         }
@@ -1109,14 +1109,14 @@ DENG2_PIMPL(ModelDrawable)
         Vector4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
 
         // Transform according to the animation sequence.
-        if(aiNodeAnim const *anim = data.findNodeAnim(node))
+        if (aiNodeAnim const *anim = data.findNodeAnim(node))
         {
             // Interpolate for this point in time.
             Matrix4f const translation = Matrix4f::translate(interpolatePosition(data.time, *anim));
             Matrix4f const scaling     = Matrix4f::scale(interpolateScaling(data.time, *anim));
             Matrix4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
 
-            if(!fequal(axisAngle.w, 0))
+            if (!fequal(axisAngle.w, 0))
             {
                 // Include the custom extra rotation.
                 rotation = Matrix4f::rotate(axisAngle.w, axisAngle) * rotation;
@@ -1128,7 +1128,7 @@ DENG2_PIMPL(ModelDrawable)
         {
             // Model does not specify animation information for this node.
             // Only apply the possible additional rotation.
-            if(!fequal(axisAngle.w, 0))
+            if (!fequal(axisAngle.w, 0))
             {
                 nodeTransform = Matrix4f::rotate(axisAngle.w, axisAngle) * nodeTransform;
             }
@@ -1137,14 +1137,14 @@ DENG2_PIMPL(ModelDrawable)
         Matrix4f globalTransform = parentTransform * nodeTransform;
 
         int boneIndex = findBone(String(node.mName.C_Str()));
-        if(boneIndex >= 0)
+        if (boneIndex >= 0)
         {
             data.finalTransforms[boneIndex] =
                     globalInverse * globalTransform * bones.at(boneIndex).offset;
         }
 
         // Descend to child nodes.
-        for(duint i = 0; i < node.mNumChildren; ++i)
+        for (duint i = 0; i < node.mNumChildren; ++i)
         {
             accumulateTransforms(*node.mChildren[i], data, globalTransform);
         }
@@ -1154,9 +1154,9 @@ DENG2_PIMPL(ModelDrawable)
     static duint findAnimKey(ddouble time, Type const *keys, duint count)
     {
         DENG2_ASSERT(count > 0);
-        for(duint i = 0; i < count - 1; ++i)
+        for (duint i = 0; i < count - 1; ++i)
         {
-            if(time < keys[i + 1].mTime)
+            if (time < keys[i + 1].mTime)
             {
                 return i;
             }
@@ -1176,7 +1176,7 @@ DENG2_PIMPL(ModelDrawable)
 
     static aiQuaternion interpolateRotation(ddouble time, aiNodeAnim const &anim)
     {
-        if(anim.mNumRotationKeys == 1)
+        if (anim.mNumRotationKeys == 1)
         {
             return anim.mRotationKeys[0].mValue;
         }
@@ -1192,7 +1192,7 @@ DENG2_PIMPL(ModelDrawable)
 
     static Vector3f interpolateScaling(ddouble time, aiNodeAnim const &anim)
     {
-        if(anim.mNumScalingKeys == 1)
+        if (anim.mNumScalingKeys == 1)
         {
             return Vector3f(&anim.mScalingKeys[0].mValue.x);
         }
@@ -1203,7 +1203,7 @@ DENG2_PIMPL(ModelDrawable)
 
     static Vector3f interpolatePosition(ddouble time, aiNodeAnim const &anim)
     {
-        if(anim.mNumPositionKeys == 1)
+        if (anim.mNumPositionKeys == 1)
         {
             return Vector3f(&anim.mPositionKeys[0].mValue.x);
         }
@@ -1215,13 +1215,13 @@ DENG2_PIMPL(ModelDrawable)
     void updateMatricesFromAnimation(Animator const *animator) const
     {
         // Cannot do anything without an Animator.
-        if(!animator) return;
+        if (!animator) return;
 
-        if(!scene->HasAnimations() || !animator->count())
+        if (!scene->HasAnimations() || !animator->count())
         {
             // If requested, run through the bone transformations even when
             // no animations are active.
-            if(animator->flags().testFlag(Animator::AlwaysTransformNodes))
+            if (animator->flags().testFlag(Animator::AlwaysTransformNodes))
             {
                 accumulateAnimationTransforms(*animator, 0, nullptr, *scene->mRootNode);
                 return;
@@ -1229,7 +1229,7 @@ DENG2_PIMPL(ModelDrawable)
         }
 
         // Apply all current animations.
-        for(int i = 0; i < animator->count(); ++i)
+        for (int i = 0; i < animator->count(); ++i)
         {
             auto const &animSeq = animator->at(i);
 
@@ -1251,7 +1251,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void preDraw(Animator const *animation)
     {
-        if(glData.needMakeBuffer) makeBuffer();
+        if (glData.needMakeBuffer) makeBuffer();
 
         DENG2_ASSERT(drawProgram == nullptr);
 
@@ -1263,10 +1263,10 @@ DENG2_PIMPL(ModelDrawable)
 
     void setDrawProgram(GLProgram *prog, Appearance const *appearance = nullptr)
     {
-        if(drawProgram)
+        if (drawProgram)
         {
             drawProgram->unbind(uBoneMatrices);
-            if(appearance && appearance->programCallback)
+            if (appearance && appearance->programCallback)
             {
                 appearance->programCallback(*drawProgram, Unbound);
             }
@@ -1274,9 +1274,9 @@ DENG2_PIMPL(ModelDrawable)
 
         drawProgram = prog;
 
-        if(drawProgram)
+        if (drawProgram)
         {
-            if(appearance && appearance->programCallback)
+            if (appearance && appearance->programCallback)
             {
                 appearance->programCallback(*drawProgram, AboutToBind);
             }
@@ -1287,15 +1287,15 @@ DENG2_PIMPL(ModelDrawable)
     void initRanges(GLBuffer::DrawRanges &ranges, QBitArray const &meshes)
     {
         Rangeui current;
-        for(int i = 0; i < meshIndexRanges.size(); ++i)
+        for (int i = 0; i < meshIndexRanges.size(); ++i)
         {
-            if(!meshes.at(i)) continue;
+            if (!meshes.at(i)) continue;
             auto const &mesh = meshIndexRanges.at(i);
-            if(current.isEmpty())
+            if (current.isEmpty())
             {
                 current = mesh;
             }
-            else if(current.end == mesh.start)
+            else if (current.end == mesh.start)
             {
                 // Combine.
                 current.end = mesh.end;
@@ -1308,7 +1308,7 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
         // The final range.
-        if(!current.isEmpty())
+        if (!current.isEmpty())
         {
             ranges.append(current);
         }
@@ -1323,12 +1323,12 @@ DENG2_PIMPL(ModelDrawable)
         try
         {
             GLBuffer::DrawRanges ranges;
-            for(int i = 0; i < passes->size(); ++i)
+            for (int i = 0; i < passes->size(); ++i)
             {
                 Pass const &pass = passes->at(i);
 
                 // Is this pass disabled?
-                if(appearance && !appearance->passMask.isEmpty() &&
+                if (appearance && !appearance->passMask.isEmpty() &&
                                  !appearance->passMask.testBit(i))
                 {
                     continue;
@@ -1336,20 +1336,20 @@ DENG2_PIMPL(ModelDrawable)
 
                 drawPass = &pass;
                 setDrawProgram(pass.program? pass.program : program, appearance);
-                if(!drawProgram)
+                if (!drawProgram)
                 {
                     throw ProgramError("ModelDrawable::draw",
                                        QString("Rendering pass %1 (\"%2\") has no shader program")
                                         .arg(i).arg(pass.name));
                 }
 
-                if(appearance && appearance->passCallback)
+                if (appearance && appearance->passCallback)
                 {
                     appearance->passCallback(pass, PassBegun);
                 }
 
                 duint material = 0;
-                if(appearance && appearance->passMaterial.size() >= passes->size())
+                if (appearance && appearance->passMaterial.size() >= passes->size())
                 {
                     material = appearance->passMaterial.at(i);
                 }
@@ -1371,13 +1371,13 @@ DENG2_PIMPL(ModelDrawable)
                 }
                 GLState::pop();
 
-                if(appearance && appearance->passCallback)
+                if (appearance && appearance->passCallback)
                 {
                     appearance->passCallback(pass, PassEnded);
                 }
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_GL_ERROR("Failed to draw model \"%s\": %s")
                     << sourcePath
@@ -1426,9 +1426,9 @@ static struct {
 
 ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text) // static
 {
-    for(auto const &mapping : internal::mappings)
+    for (auto const &mapping : internal::mappings)
     {
-        if(!text.compareWithoutCase(mapping.text))
+        if (!text.compareWithoutCase(mapping.text))
             return mapping.map;
     }
     return Unknown;
@@ -1436,9 +1436,9 @@ ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text) //
 
 String ModelDrawable::textureMapToText(TextureMap map) // static
 {
-    for(auto const &mapping : internal::mappings)
+    for (auto const &mapping : internal::mappings)
     {
-        if(mapping.map == map)
+        if (mapping.map == map)
             return mapping.text;
     }
     return "unknown";
@@ -1478,7 +1478,7 @@ void ModelDrawable::clear()
 int ModelDrawable::animationIdForName(String const &name) const
 {
     Instance::AnimLookup::const_iterator found = d->animNameToIndex.constFind(name);
-    if(found != d->animNameToIndex.constEnd())
+    if (found != d->animNameToIndex.constEnd())
     {
         return found.value();
     }
@@ -1487,12 +1487,12 @@ int ModelDrawable::animationIdForName(String const &name) const
 
 String ModelDrawable::animationName(int id) const
 {
-    if(!d->scene || id < 0 || id >= int(d->scene->mNumAnimations))
+    if (!d->scene || id < 0 || id >= int(d->scene->mNumAnimations))
     {
         return "";
     }
     String const name = d->scene->mAnimations[id]->mName.C_Str();
-    if(name.isEmpty())
+    if (name.isEmpty())
     {
         return QString("@%1").arg(id);
     }
@@ -1501,22 +1501,22 @@ String ModelDrawable::animationName(int id) const
 
 int ModelDrawable::animationCount() const
 {
-    if(!d->scene) return 0;
+    if (!d->scene) return 0;
     return d->scene->mNumAnimations;
 }
 
 int ModelDrawable::meshCount() const
 {
-    if(!d->scene) return 0;
+    if (!d->scene) return 0;
     return d->scene->mNumMeshes;
 }
 
 int ModelDrawable::meshId(String const &name) const
 {
-    if(!d->scene) return -1;
-    for(duint i = 0; i < d->scene->mNumMeshes; ++i)
+    if (!d->scene) return -1;
+    for (duint i = 0; i < d->scene->mNumMeshes; ++i)
     {
-        if(name == d->scene->mMeshes[i]->mName.C_Str())
+        if (name == d->scene->mMeshes[i]->mName.C_Str())
         {
             return i;
         }
@@ -1526,12 +1526,12 @@ int ModelDrawable::meshId(String const &name) const
 
 String ModelDrawable::meshName(int id) const
 {
-    if(!d->scene || id < 0 || id >= int(d->scene->mNumMeshes))
+    if (!d->scene || id < 0 || id >= int(d->scene->mNumMeshes))
     {
         return "";
     }
     String const name = d->scene->mMeshes[id]->mName.C_Str();
-    if(name.isEmpty())
+    if (name.isEmpty())
     {
         return QString("@%1").arg(id);
     }
@@ -1589,7 +1589,7 @@ void ModelDrawable::setTextureMapping(Mapping mapsToUse)
 void ModelDrawable::setDefaultTexture(TextureMap textureType, Id const &atlasId)
 {
     DENG2_ASSERT(textureType >= 0 && textureType < MAX_TEXTURES);
-    if(textureType < 0 || textureType >= MAX_TEXTURES) return;
+    if (textureType < 0 || textureType >= MAX_TEXTURES) return;
 
     d->glData.defaultTexIds[textureType] = atlasId;
 }
@@ -1611,7 +1611,7 @@ int ModelDrawable::materialId(String const &name) const
 
 void ModelDrawable::setTexturePath(MeshId const &mesh, TextureMap tex, String const &path)
 {
-    if(d->glData.textureBank.atlas())
+    if (d->glData.textureBank.atlas())
     {
         // Load immediately.
         d->glData.setTexture(mesh, tex, path);
@@ -1638,7 +1638,7 @@ void ModelDrawable::draw(Appearance const *appearance,
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->glData.textureBank.atlas())
+    if (isReady() && d->glData.textureBank.atlas())
     {
         d->draw(appearance, animation);
     }
@@ -1649,7 +1649,7 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->program && d->glData.textureBank.atlas())
+    if (isReady() && d->program && d->glData.textureBank.atlas())
     {
         d->drawInstanced(instanceAttribs, animation);
     }
@@ -1677,9 +1677,9 @@ Vector3f ModelDrawable::midPoint() const
 
 int ModelDrawable::Passes::findName(String const &name) const
 {
-    for(int i = 0; i < size(); ++i)
+    for (int i = 0; i < size(); ++i)
     {
-        if(at(i).name == name) // case sensitive
+        if (at(i).name == name) // case sensitive
             return i;
     }
     return -1;
@@ -1713,14 +1713,14 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
     void setModel(ModelDrawable const *mdl)
     {
-        if(model) model->audienceForDeletion() -= this;
+        if (model) model->audienceForDeletion() -= this;
         model = mdl;
-        if(model) model->audienceForDeletion() += this;
+        if (model) model->audienceForDeletion() += this;
     }
 
     void assetBeingDeleted(Asset &a)
     {
-        if(model == &a) model = nullptr;
+        if (model == &a) model = nullptr;
     }
 
     OngoingSequence &add(OngoingSequence *seq)
@@ -1729,12 +1729,12 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         DENG2_ASSERT(model != nullptr);
 
         // Verify first.
-        if(seq->animId < 0 || seq->animId >= model->animationCount())
+        if (seq->animId < 0 || seq->animId >= model->animationCount())
         {
             throw InvalidError("ModelDrawable::Animator::add",
                                "Specified animation does not exist");
         }
-        if(!model->nodeExists(seq->node))
+        if (!model->nodeExists(seq->node))
         {
             throw InvalidError("ModelDrawable::Animator::add",
                                "Node '" + seq->node + "' does not exist");
@@ -1747,10 +1747,10 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
     void stopByNode(String const &node)
     {
         QMutableListIterator<OngoingSequence *> iter(anims);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.value()->node == node)
+            if (iter.value()->node == node)
             {
                 delete iter.value();
                 iter.remove();
@@ -1760,9 +1760,9 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
     OngoingSequence const *findAny(String const &rootNode) const
     {
-        foreach(OngoingSequence const *anim, anims)
+        foreach (OngoingSequence const *anim, anims)
         {
-            if(anim->node == rootNode)
+            if (anim->node == rootNode)
                 return anim;
         }
         return nullptr;
@@ -1770,9 +1770,9 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
     OngoingSequence const *find(int animId, String const &rootNode) const
     {
-        foreach(OngoingSequence const *anim, anims)
+        foreach (OngoingSequence const *anim, anims)
         {
-            if(anim->animId == animId && anim->node == rootNode)
+            if (anim->animId == animId && anim->node == rootNode)
                 return anim;
         }
         return nullptr;
@@ -1863,7 +1863,7 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
 
     aiScene const &scene = *model().d->scene;
 
-    if(animId < 0 || animId >= int(scene.mNumAnimations))
+    if (animId < 0 || animId >= int(scene.mNumAnimations))
     {
         throw InvalidError("ModelDrawable::Animator::start",
                            QString("Invalid animation ID %1").arg(animId));
@@ -1899,7 +1899,7 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
 {
     auto const &anim = at(index);
     ddouble t = anim.time;
-    if(anim.flags.testFlag(OngoingSequence::ClampToDuration))
+    if (anim.flags.testFlag(OngoingSequence::ClampToDuration))
     {
         t = min(t, anim.duration - de::FLOAT_EPSILON);
     }

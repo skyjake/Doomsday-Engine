@@ -44,7 +44,7 @@ bool NoneValue::isTrue() const
 dint NoneValue::compare(Value const &value) const
 {
     NoneValue const *other = dynamic_cast<NoneValue const *>(&value);
-    if(other)
+    if (other)
     {
         // All nones are equal.
         return 0;
@@ -62,7 +62,7 @@ void NoneValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != NONE)
+    if (id != NONE)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.

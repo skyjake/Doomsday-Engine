@@ -76,7 +76,7 @@ Library::Library(NativePath const &nativePath) : d(new Instance(this))
     d->library = dlopen(nativePath.toUtf8().constData(), RTLD_NOW);
 #endif
 
-    if(!d->isLoaded())
+    if (!d->isLoaded())
     {
 #ifndef DENG2_USE_DLOPEN
         QString msg = d->library->errorString();
@@ -90,14 +90,14 @@ Library::Library(NativePath const &nativePath) : d(new Instance(this))
         throw LoadError("Library::Library", msg);
     }
 
-    if(hasSymbol("deng_LibraryType"))
+    if (hasSymbol("deng_LibraryType"))
     {
         // Query the type identifier.
         d->type = DENG2_SYMBOL(deng_LibraryType)();
     }
     
     // Automatically call the initialization function, if one exists.
-    if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
+    if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
     {
         DENG2_SYMBOL(deng_InitializePlugin)();
     }
@@ -105,13 +105,13 @@ Library::Library(NativePath const &nativePath) : d(new Instance(this))
 
 Library::~Library()
 {
-    if(d->library)
+    if (d->library)
     {
         LOG_AS("~Library");
         LOG_TRACE("Unloading \"%s\"") << d->nativePath().pretty();
 
         // Automatically call the shutdown function, if one exists.
-        if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
+        if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
@@ -136,7 +136,7 @@ String const &Library::type() const
 
 void *Library::address(String const &name, SymbolLookupMode lookup)
 {
-    if(!d->library)
+    if (!d->library)
     {
         /// @throw SymbolMissingError There is no library loaded at the moment.
         throw SymbolMissingError("Library::symbol", "Library not loaded");
@@ -144,7 +144,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
     
     // Already looked up?
     Instance::Symbols::iterator found = d->symbols.find(name);
-    if(found != d->symbols.end())
+    if (found != d->symbols.end())
     {
         return found.value();
     }
@@ -155,9 +155,9 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
     void *ptr = dlsym(d->library, name.toLatin1().constData());
 #endif
 
-    if(!ptr)
+    if (!ptr)
     {
-        if(lookup == RequiredSymbol)
+        if (lookup == RequiredSymbol)
         {
             /// @throw SymbolMissingError There is no symbol @a name in the library.
             throw SymbolMissingError("Library::symbol", "Symbol '" + name + "' was not found");
@@ -172,7 +172,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
 bool Library::hasSymbol(String const &name) const
 {
     // First check the symbols cache.
-    if(d->symbols.find(name) != d->symbols.end()) return true;
+    if (d->symbols.find(name) != d->symbols.end()) return true;
 
 #ifndef DENG2_USE_DLOPEN
     return d->library->resolve(name.toLatin1().constData()) != 0;

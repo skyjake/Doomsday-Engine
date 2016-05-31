@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(ServerFinder)
 
     void clearServers()
     {
-        foreach(Found const &found, servers.values())
+        foreach (Found const &found, servers.values())
         {
             delete found.message;
         }
@@ -65,10 +65,10 @@ DENG2_PIMPL_NOREF(ServerFinder)
         bool changed = false;
 
         QMutableMapIterator<Address, Found> iter(servers);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             Found &found = iter.next().value();
-            if(found.at.since() > MSG_EXPIRATION_SECS)
+            if (found.at.since() > MSG_EXPIRATION_SECS)
             {
                 delete found.message;
                 iter.remove();
@@ -87,12 +87,12 @@ ServerFinder::ServerFinder() : d(new Instance)
         connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
         QTimer::singleShot(1000, this, SLOT(expire()));
 
-        if(!App::appExists() || !App::commandLine().has("-nodiscovery"))
+        if (!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {
             d->beacon.discover(0 /* no timeout */, 2);
         }
     }
-    catch(Beacon::PortError const &er)
+    catch (Beacon::PortError const &er)
     {
         LOG_WARNING("Automatic server discovery is not available:\n") << er.asText();
     }
@@ -130,7 +130,7 @@ int ServerFinder::maxPlayers(Address const &server) const
 
 Record const &ServerFinder::messageFromServer(Address const &address) const
 {
-    if(!d->servers.contains(address))
+    if (!d->servers.contains(address))
     {
         /// @throws NotFoundError @a address not found in the registry of server responses.
         throw NotFoundError("ServerFinder::messageFromServer",
@@ -142,7 +142,7 @@ Record const &ServerFinder::messageFromServer(Address const &address) const
 void ServerFinder::found(Address host, Block block)
 {
     // Normalize the local host address.
-    if(host.isLocal()) host.setHost(QHostAddress::LocalHost);
+    if (host.isLocal()) host.setHost(QHostAddress::LocalHost);
 
     try
     {
@@ -151,7 +151,7 @@ void ServerFinder::found(Address host, Block block)
 
         // Replace or insert the information for this host.
         Instance::Found found;
-        if(d->servers.contains(host))
+        if (d->servers.contains(host))
         {
             found.message = d->servers[host].message;
             d->servers[host].at = Time();
@@ -165,10 +165,10 @@ void ServerFinder::found(Address host, Block block)
 
         emit updated();
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         // Remove the message that failed to deserialize.
-        if(d->servers.contains(host))
+        if (d->servers.contains(host))
         {
             delete d->servers[host].message;
             d->servers.remove(host);
@@ -178,7 +178,7 @@ void ServerFinder::found(Address host, Block block)
 
 void ServerFinder::expire()
 {
-    if(d->removeExpired())
+    if (d->removeExpired())
     {
         emit updated();
     }

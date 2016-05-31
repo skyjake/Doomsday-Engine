@@ -54,7 +54,7 @@ DENG2_PIMPL(Style)
 
     void load(Package const &pack)
     {
-        if(CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
+        if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
         {
             fonts.setFontSizeFactor(arg.params.at(0).toFloat());
         }
@@ -130,7 +130,7 @@ void Style::richStyleFormat(int contentStyle,
                             Font::RichFormat::Style &fontStyle,
                             int &colorIndex) const
 {
-    switch(contentStyle)
+    switch (contentStyle)
     {
     default:
     case Font::RichFormat::NormalStyle:
@@ -186,7 +186,7 @@ void Style::richStyleFormat(int contentStyle,
 
 Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
 {
-    switch(fontStyle)
+    switch (fontStyle)
     {
     case Font::RichFormat::Monospace:
         return &fonts().font("monospace");

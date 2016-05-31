@@ -86,13 +86,13 @@ DENG2_PIMPL(Record)
     template <typename Predicate>
     void clear(Predicate excluded)
     {
-        if(!members.empty())
+        if (!members.empty())
         {
             Record::Members remaining; // Contains all members that are not removed.
 
             DENG2_FOR_EACH(Members, i, members)
             {
-                if(excluded(*i.value()))
+                if (excluded(*i.value()))
                 {
                     remaining.insert(i.key(), i.value());
                     continue;
@@ -113,7 +113,7 @@ DENG2_PIMPL(Record)
     {
         DENG2_FOR_EACH_CONST(Members, i, other.d->members)
         {
-            if(excluded(*i.value())) continue;
+            if (excluded(*i.value())) continue;
 
             bool const alreadyExists = members.contains(i.key());
 
@@ -121,7 +121,7 @@ DENG2_PIMPL(Record)
             var->audienceForDeletion() += self;
             members[i.key()] = var;
 
-            if(!alreadyExists)
+            if (!alreadyExists)
             {
                 // Notify about newly added members.
                 DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
@@ -150,12 +150,12 @@ DENG2_PIMPL(Record)
         DENG2_FOR_EACH_CONST(Members, i, unmodifiedMembers)
         {
             Variable const &member = *i.value();
-            if(isSubrecord(member))
+            if (isSubrecord(member))
             {
                 Record *rec = member.value().as<RecordValue>().record();
                 DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
 
-                if(auto result = func(i.key(), *rec))
+                if (auto result = func(i.key(), *rec))
                 {
                     return result;
                 }
@@ -170,7 +170,7 @@ DENG2_PIMPL(Record)
         forSubrecords([&subs, filter] (String const &name, Record &rec)
         {
             // Must pass the filter.
-            if(filter(rec))
+            if (filter(rec))
             {
                 subs.insert(name, &rec);
             }
@@ -183,17 +183,17 @@ DENG2_PIMPL(Record)
     {
         // Path notation allows looking into subrecords.
         int pos = name.indexOf('.');
-        if(pos >= 0)
+        if (pos >= 0)
         {
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
-            if(!self.hasRecord(subName)) return 0;
+            if (!self.hasRecord(subName)) return 0;
             return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
         Members::const_iterator found = members.constFind(name);
-        if(found != members.constEnd())
+        if (found != members.constEnd())
         {
             return found.value();
         }
@@ -212,13 +212,13 @@ DENG2_PIMPL(Record)
     Record &parentRecordByPath(String const &pathOrName)
     {
         int pos = pathOrName.indexOf('.');
-        if(pos >= 0)
+        if (pos >= 0)
         {
             String subName = pathOrName.substr(0, pos);
             String remaining = pathOrName.substr(pos + 1);
             Record *rec = 0;
 
-            if(!self.hasSubrecord(subName))
+            if (!self.hasSubrecord(subName))
             {
                 // Create it now.
                 rec = &self.addSubrecord(subName);
@@ -253,20 +253,20 @@ DENG2_PIMPL(Record)
         DENG2_FOR_EACH(Members, i, members)
         {
             RecordValue *value = dynamic_cast<RecordValue *>(&i.value()->value());
-            if(!value || !value->record()) continue;
+            if (!value || !value->record()) continue;
 
             // Recurse into subrecords first.
-            if(value->usedToHaveOwnership())
+            if (value->usedToHaveOwnership())
             {
                 value->record()->d->reconnectReferencesAfterDeserialization(refMap);
             }
 
             // After deserialization all record values own their records.
-            if(value->hasOwnership() && !value->usedToHaveOwnership())
+            if (value->hasOwnership() && !value->usedToHaveOwnership())
             {
                 // Do we happen to know the record from earlier?
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
-                if(refMap.contains(oldTargetId))
+                if (refMap.contains(oldTargetId))
                 {
                     LOG_TRACE_DEBUGONLY("RecordValue %p restored to reference record %i (%p)",
                                         value << oldTargetId << refMap[oldTargetId]);
@@ -360,12 +360,12 @@ bool Record::hasRecord(String const &recordName) const
 Variable &Record::add(Variable *variable)
 {
     std::unique_ptr<Variable> var(variable);
-    if(variable->name().empty())
+    if (variable->name().empty())
     {
         /// @throw UnnamedError All variables in a record must have a name.
         throw UnnamedError("Record::add", "All members of a record must have a name");
     }
-    if(hasMember(variable->name()))
+    if (hasMember(variable->name()))
     {
         // Delete the previous variable with this name.
         delete d->members[variable->name()];
@@ -431,7 +431,7 @@ Variable &Record::addTime(String const &name, Time const &time)
 Variable &Record::addArray(String const &name, ArrayValue *array)
 {
     // Automatically create an empty array if one is not provided.
-    if(!array) array = new ArrayValue;
+    if (!array) array = new ArrayValue;
     return d->parentRecordByPath(name)
             .add(new Variable(Instance::memberNameFromPath(name),
                               array, Variable::AllowArray));
@@ -475,7 +475,7 @@ Record &Record::addSubrecord(String const &name)
 Record *Record::removeSubrecord(String const &name)
 {
     Members::const_iterator found = d->members.find(name);
-    if(found != d->members.end() && d->isSubrecord(*found.value()))
+    if (found != d->members.end() && d->isSubrecord(*found.value()))
     {
         Record *returnedToCaller = found.value()->value().as<RecordValue>().takeRecord();
         remove(*found.value());
@@ -486,7 +486,7 @@ Record *Record::removeSubrecord(String const &name)
 
 Variable &Record::set(String const &name, bool value)
 {
-    if(hasMember(name))
+    if (hasMember(name))
     {
         return (*this)[name].set(NumberValue(value));
     }
@@ -495,7 +495,7 @@ Variable &Record::set(String const &name, bool value)
 
 Variable &Record::set(String const &name, char const *value)
 {
-    if(hasMember(name))
+    if (hasMember(name))
     {
         return (*this)[name].set(TextValue(value));
     }
@@ -504,7 +504,7 @@ Variable &Record::set(String const &name, char const *value)
 
 Variable &Record::set(String const &name, Value::Text const &value)
 {
-    if(hasMember(name))
+    if (hasMember(name))
     {
         return (*this)[name].set(TextValue(value));
     }
@@ -513,7 +513,7 @@ Variable &Record::set(String const &name, Value::Text const &value)
 
 Variable &Record::set(String const &name, Value::Number const &value)
 {
-    if(hasMember(name))
+    if (hasMember(name))
     {
         return (*this)[name].set(NumberValue(value));
     }
@@ -537,7 +537,7 @@ Variable &Record::set(String const &name, dsize value)
 
 Variable &Record::set(String const &name, ArrayValue *value)
 {
-    if(hasMember(name))
+    if (hasMember(name))
     {
         return (*this)[name].set(value);
     }
@@ -553,7 +553,7 @@ Variable const &Record::operator [] (String const &name) const
 {
     // Path notation allows looking into subrecords.
     Variable const *found = d->findMemberByPath(name);
-    if(found)
+    if (found)
     {
         return *found;
     }
@@ -569,13 +569,13 @@ Record const &Record::subrecord(String const &name) const
 {
     // Path notation allows looking into subrecords.
     int pos = name.indexOf('.');
-    if(pos >= 0)
+    if (pos >= 0)
     {
         return subrecord(name.substr(0, pos)).subrecord(name.substr(pos + 1));
     }
 
     Members::const_iterator found = d->members.find(name);
-    if(found != d->members.end() && d->isSubrecord(*found.value()))
+    if (found != d->members.end() && d->isSubrecord(*found.value()))
     {
         return *found.value()->value().as<RecordValue>().record();
     }
@@ -618,23 +618,23 @@ String Record::asText(String const &prefix, List *lines) const
     /*
     // If this is a module, don't print out the entire contents.
     /// @todo Should only apply to actual modules. -jk
-    if(!gets(VAR_FILE, "").isEmpty())
+    if (!gets(VAR_FILE, "").isEmpty())
     {
         return QString("(Record imported from \"%1\")").arg(gets(VAR_FILE));
     }*/
 
     // Recursive calls to collect all variables in the record.
-    if(lines)
+    if (lines)
     {
         // Collect lines from this record.
-        for(Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
+        for (Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
         {
             String separator = (d->isSubrecord(*i.value())? "." : ":");
             String subContent = i.value()->value().asText();
 
             // If the content is very long, shorten it.
             int numberOfLines = subContent.count(QChar('\n'));
-            if(numberOfLines > SUBRECORD_CONTENT_EXCERPT_THRESHOLD)
+            if (numberOfLines > SUBRECORD_CONTENT_EXCERPT_THRESHOLD)
             {
                 subContent = QString("(%1 lines)").arg(numberOfLines);
             }
@@ -656,7 +656,7 @@ String Record::asText(String const &prefix, List *lines) const
 
     // Sort and find maximum length.
     qSort(allLines);
-    for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         maxLength = maxLength.max(Vector2ui(i->first.size(), i->second.size()));
     }
@@ -664,23 +664,23 @@ String Record::asText(String const &prefix, List *lines) const
     os.setFieldAlignment(QTextStream::AlignLeft);
 
     // Print aligned.
-    for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         int extra = 0;
-        if(i != allLines.begin()) os << "\n";
+        if (i != allLines.begin()) os << "\n";
         os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0);
         // Print the value line by line.
         int pos = 0;
-        while(pos >= 0)
+        while (pos >= 0)
         {
             int next = i->second.indexOf('\n', pos);
-            if(pos > 0)
+            if (pos > 0)
             {
                 os << qSetFieldWidth(maxLength.x + extra) << "" << qSetFieldWidth(0);
             }
             os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
             pos = next;
-            if(pos != String::npos) pos++;
+            if (pos != String::npos) pos++;
         }
     }
 
@@ -694,7 +694,7 @@ Function const &Record::function(String const &name) const
 
 void Record::addSuperRecord(Value *superValue)
 {
-    if(!has(VAR_SUPER))
+    if (!has(VAR_SUPER))
     {
         addArray(VAR_SUPER);
     }
@@ -726,13 +726,13 @@ void Record::operator << (Reader &from)
     Instance::RefMap refMap;
     refMap.insert(d->oldUniqueId, this);
 
-    while(count-- > 0)
+    while (count-- > 0)
     {
         QScopedPointer<Variable> var(new Variable());
         from >> *var;
 
         RecordValue *recVal = dynamic_cast<RecordValue *>(&var->value());
-        if(recVal && recVal->usedToHaveOwnership())
+        if (recVal && recVal->usedToHaveOwnership())
         {
             DENG2_ASSERT(recVal->record());
 
@@ -774,7 +774,7 @@ Record &Record::operator << (NativeFunctionSpec const &spec)
 Record const &Record::parentRecordForMember(String const &name) const
 {
     String const lastOmitted = name.fileNamePath('.');
-    if(lastOmitted.isEmpty()) return *this;
+    if (lastOmitted.isEmpty()) return *this;
 
     // Omit the final segment of the dotted path to find out the parent record.
     return (*this)[lastOmitted];

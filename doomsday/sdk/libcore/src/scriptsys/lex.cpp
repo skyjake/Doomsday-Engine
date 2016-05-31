@@ -43,7 +43,7 @@ duint Lex::pos() const
 
 QChar Lex::peek() const
 {
-    if(atEnd())
+    if (atEnd())
     {
         // There is no more; trying to get() will throw an exception.
         return 0;
@@ -51,13 +51,13 @@ QChar Lex::peek() const
 
     QChar c = _input->at(_state.pos);
 
-    if(!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
+    if (!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
     {
         // This isn't considered part of the input stream. Skip it.
         duint p = _state.pos;
-        while(p < duint(_input->size()) && _input->at(++p) != '\n') {}
+        while (p < duint(_input->size()) && _input->at(++p) != '\n') {}
         _nextPos = p + 1;
-        if(p == duint(_input->size()))
+        if (p == duint(_input->size()))
         {
             return 0;
         }
@@ -70,7 +70,7 @@ QChar Lex::peek() const
 
 QChar Lex::get()
 {
-    if(atEnd())
+    if (atEnd())
     {
         /// @throw OutOfInputError  No more characters left in input.
         throw OutOfInputError("Lex::get", "No more characters in input");
@@ -82,7 +82,7 @@ QChar Lex::get()
     _state.pos = _nextPos;
 
     // Did we move to a new line?
-    if(c == '\n')
+    if (c == '\n')
     {
         _state.lineNumber++;
         _state.lineStartPos = _state.pos;
@@ -92,7 +92,7 @@ QChar Lex::get()
 
 void Lex::skipWhite()
 {
-    while(isWhite(peek()))
+    while (isWhite(peek()))
     {
         get();
     }
@@ -101,7 +101,7 @@ void Lex::skipWhite()
 void Lex::skipWhiteExceptNewline()
 {
     QChar c = 0;
-    while(isWhite(c = peek()) && c != '\n')
+    while (isWhite(c = peek()) && c != '\n')
     {
         get();
     }
@@ -109,7 +109,7 @@ void Lex::skipWhiteExceptNewline()
 
 void Lex::skipToNextLine()
 {
-    while(get() != '\n') {}
+    while (get() != '\n') {}
 }
 
 bool Lex::onlyWhiteOnLine()
@@ -117,22 +117,22 @@ bool Lex::onlyWhiteOnLine()
     State saved = _state;
     try
     {
-        for(;;)
+        for (;;)
         {
             QChar c = get();
-            if(c == '\n')
+            if (c == '\n')
             {
                 _state = saved;
                 return true;
             }
-            if(!isWhite(c))
+            if (!isWhite(c))
             {
                 _state = saved;
                 return false;
             }
         }
     }
-    catch(OutOfInputError const &)
+    catch (OutOfInputError const &)
     {
         _state = saved;
         return true;
@@ -144,7 +144,7 @@ duint Lex::countLineStartSpace() const
     duint pos = _state.lineStartPos;
     duint count = 0;
 
-    while(pos < duint(_input->size()) && isWhite(_input->at(pos++))) count++;
+    while (pos < duint(_input->size()) && isWhite(_input->at(pos++))) count++;
     return count;
 }
 

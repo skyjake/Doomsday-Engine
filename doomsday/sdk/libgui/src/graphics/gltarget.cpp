@@ -42,7 +42,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     static AttachmentId attachmentToId(GLenum atc)
     {
-        switch(atc)
+        switch (atc)
         {
         case GL_COLOR_ATTACHMENT0:
             return ColorBuffer;
@@ -139,15 +139,15 @@ DENG2_OBSERVES(Asset, Deletion)
 
     GLTexture *bufferTexture(Flags const &flags) const
     {
-        if(flags == Color)
+        if (flags == Color)
         {
             return bufTextures[ColorBuffer];
         }
-        if(flags == DepthStencil || flags == Depth)
+        if (flags == DepthStencil || flags == Depth)
         {
             return bufTextures[DepthBuffer];
         }
-        if(flags == Stencil)
+        if (flags == Stencil)
         {
             return bufTextures[StencilBuffer];
         }
@@ -156,7 +156,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void allocFBO()
     {
-        if(isDefault() || fbo) return;
+        if (isDefault() || fbo) return;
 
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -184,10 +184,10 @@ DENG2_OBSERVES(Asset, Deletion)
         glGenRenderbuffers(1, &renderBufs[id]);
         glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
 
-        if(sampleCount > 1)
+        if (sampleCount > 1)
         {
 #ifdef GL_NV_framebuffer_multisample_coverage
-            if(GLInfo::extensions().NV_framebuffer_multisample_coverage)
+            if (GLInfo::extensions().NV_framebuffer_multisample_coverage)
             {
                 LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i CSAA samples => attachment %i")
                         << fbo << size.x << size.y << sampleCount
@@ -220,7 +220,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         allocFBO();
 
-        if(texture)
+        if (texture)
         {
             // The texture's attachment point must be unambiguously defined.
             DENG2_ASSERT(textureAttachment == Color   ||
@@ -235,7 +235,7 @@ DENG2_OBSERVES(Asset, Deletion)
                                                         GL_DEPTH_STENCIL_ATTACHMENT);
         }
 
-        if(size != nullSize) // A non-default target: size must be specified.
+        if (size != nullSize) // A non-default target: size must be specified.
         {
             allocRenderBuffers();
         }
@@ -248,14 +248,14 @@ DENG2_OBSERVES(Asset, Deletion)
         DENG2_ASSERT(size != nullSize);
 
         // Fill in all the other requested attachments.
-        if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
+        if (flags.testFlag(Color) && !textureAttachment.testFlag(Color))
         {
             /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
             LOG_GL_VERBOSE("FBO %i: color renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
-        if( flags.testFlag(DepthStencil) &&
+        if ( flags.testFlag(DepthStencil) &&
            !flags.testFlag(SeparateDepthAndStencil) &&
            (!texture || textureAttachment == Color))
         {
@@ -266,12 +266,12 @@ DENG2_OBSERVES(Asset, Deletion)
         else
         {
             // Separate depth and stencil, then.
-            if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
+            if (flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
                 LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
             }
-            if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
+            if (flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
                 LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
@@ -291,7 +291,7 @@ DENG2_OBSERVES(Asset, Deletion)
     void release()
     {
         self.setState(NotReady);
-        if(fbo)
+        if (fbo)
         {
             releaseRenderBuffers();
             glDeleteFramebuffers(1, &fbo);
@@ -334,7 +334,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void validate()
     {
-        if(isDefault())
+        if (isDefault())
         {
             self.setState(Ready);
             return;
@@ -348,7 +348,7 @@ DENG2_OBSERVES(Asset, Deletion)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         GLState::considerNativeStateUndefined(); // state was manually changed
 
-        if(status != GL_FRAMEBUFFER_COMPLETE)
+        if (status != GL_FRAMEBUFFER_COMPLETE)
         {
             releaseAndReset();
 
@@ -363,7 +363,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void assetBeingDeleted(Asset &asset)
     {
-        if(texture == &asset)
+        if (texture == &asset)
         {
             release();
         }
@@ -371,18 +371,18 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void updateFromProxy()
     {
-        if(!proxy) return;
+        if (!proxy) return;
 
         /// @todo Ensure this only occurs iff the target contents have changed. -jk
 
 #ifdef _DEBUG
-        if(!flags.testFlag(Changed))
+        if (!flags.testFlag(Changed))
         {
             //qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
         }
 #endif
 
-        //if(flags.testFlag(Changed))
+        //if (flags.testFlag(Changed))
         {
             proxy->blit(self, ColorDepth);
             flags &= ~Changed;
@@ -463,7 +463,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     d->allocFBO();
 
     // The color attachment.
-    if(colorTex)
+    if (colorTex)
     {
         DENG2_ASSERT(colorTex->isReady());
         DENG2_ASSERT(d->size == colorTex->size());
@@ -475,7 +475,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     }
 
     // The depth attachment.
-    if(depthStencilTex)
+    if (depthStencilTex)
     {
         DENG2_ASSERT(depthStencilTex->isReady());
         DENG2_ASSERT(d->size == depthStencilTex->size());
@@ -508,12 +508,12 @@ void GLTarget::glBind() const
 {
     LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT(isReady());
-    if(!isReady()) return;
+    if (!isReady()) return;
 #ifdef LIBGUI_USE_GLENTRYPOINTS
-    if(!glBindFramebuffer) return;
+    if (!glBindFramebuffer) return;
 #endif
 
-    if(d->proxy)
+    if (d->proxy)
     {
         //qDebug() << "GLTarget: binding proxy of" << d->fbo << "=>";
         d->proxy->glBind();
@@ -521,7 +521,7 @@ void GLTarget::glBind() const
     else
     {
         //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
-        if(d->fbo && !glIsFramebuffer(d->fbo))
+        if (d->fbo && !glIsFramebuffer(d->fbo))
         {
             qDebug() << "GLTarget: WARNING! Attempting to bind FBO" << d->fbo
                      << "that is not a valid OpenGL FBO";
@@ -546,11 +546,11 @@ void GLTarget::glRelease() const
 
 QImage GLTarget::toImage() const
 {
-    if(!d->fbo)
+    if (!d->fbo)
     {
         return CanvasWindow::main().canvas().grabImage();
     }
-    else if(d->flags & Color)
+    else if (d->flags & Color)
     {
         // Read the contents of the color attachment.
         Size imgSize = size();
@@ -594,10 +594,10 @@ void GLTarget::clear(Flags const &attachments)
 void GLTarget::resize(Size const &size)
 {
     // The default target resizes itself automatically with the canvas.
-    if(d->size == size || d->isDefault()) return;
+    if (d->size == size || d->isDefault()) return;
 
     glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
-    if(d->texture)
+    if (d->texture)
     {
         d->texture->setUndefinedImage(size, d->texture->imageFormat());
     }
@@ -632,7 +632,7 @@ void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filteri
     LIBGUI_ASSERT_GL_OK();
 
     DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
-    if(!GLInfo::extensions().EXT_framebuffer_blit) return;
+    if (!GLInfo::extensions().EXT_framebuffer_blit) return;
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
     LIBGUI_ASSERT_GL_OK();
@@ -665,11 +665,11 @@ GLuint GLTarget::glName() const
 
 GLTarget::Size GLTarget::size() const
 {
-    if(d->texture)
+    if (d->texture)
     {
         return d->texture->size();
     }
-    else if(d->size != nullSize)
+    else if (d->size != nullSize)
     {
         return d->size;
     }
@@ -679,7 +679,7 @@ GLTarget::Size GLTarget::size() const
 void GLTarget::setActiveRect(Rectangleui const &rect, bool applyGLState)
 {
     d->activeRect = rect;
-    if(applyGLState)
+    if (applyGLState)
     {
         // Forcibly update viewport and scissor (and other GL state).
         GLState::considerNativeStateUndefined();
@@ -694,7 +694,7 @@ void GLTarget::unsetActiveRect(bool applyGLState)
 
 Vector2f GLTarget::activeRectScale() const
 {
-    if(!hasActiveRect())
+    if (!hasActiveRect())
     {
         return Vector2f(1, 1);
     }
@@ -703,7 +703,7 @@ Vector2f GLTarget::activeRectScale() const
 
 Vector2f GLTarget::activeRectNormalizedOffset() const
 {
-    if(!hasActiveRect())
+    if (!hasActiveRect())
     {
         return Vector2f(0, 0);
     }
@@ -713,7 +713,7 @@ Vector2f GLTarget::activeRectNormalizedOffset() const
 Rectangleui GLTarget::scaleToActiveRect(Rectangleui const &rectInTarget) const
 {
     // If no sub rectangle is defined, do nothing.
-    if(!hasActiveRect())
+    if (!hasActiveRect())
     {
         return rectInTarget;
     }
@@ -738,7 +738,7 @@ bool GLTarget::hasActiveRect() const
 
 Rectangleui GLTarget::rectInUse() const
 {
-    if(hasActiveRect())
+    if (hasActiveRect())
     {
         return activeRect();
     }

@@ -58,7 +58,7 @@ DialogContentStylist::~DialogContentStylist()
 
 void DialogContentStylist::clear()
 {
-    foreach(GuiWidget *w, d->containers)
+    foreach (GuiWidget *w, d->containers)
     {
         w->audienceForChildAddition() -= this;
     }
@@ -94,36 +94,36 @@ void DialogContentStylist::widgetChildAdded(Widget &child)
 
 void DialogContentStylist::applyStyle(GuiWidget &w)
 {
-    if(d->adjustMargins)
+    if (d->adjustMargins)
     {
-        if(!w.is<AuxButtonWidget>())
+        if (!w.is<AuxButtonWidget>())
         {
             w.margins().set("dialog.gap");
         }
     }
 
     // All label-based widgets should expand on their own.
-    if(LabelWidget *lab = w.maybeAs<LabelWidget>())
+    if (LabelWidget *lab = w.maybeAs<LabelWidget>())
     {
         lab->setSizePolicy(ui::Expand, ui::Expand);
     }
 
     // Button background override?
-    if(ButtonWidget *but = w.maybeAs<ButtonWidget>())
+    if (ButtonWidget *but = w.maybeAs<ButtonWidget>())
     {
-        if(d->useInfoStyle)
+        if (d->useInfoStyle)
         {
             but->useInfoStyle();
         }
     }
 
     // Toggles should have no background.
-    if(ToggleWidget *tog = w.maybeAs<ToggleWidget>())
+    if (ToggleWidget *tog = w.maybeAs<ToggleWidget>())
     {
         tog->set(GuiWidget::Background());
     }
 
-    if(LineEditWidget *ed = w.maybeAs<LineEditWidget>())
+    if (LineEditWidget *ed = w.maybeAs<LineEditWidget>())
     {
         ed->rule().setInput(Rule::Width, d->containers.first()->rule("editor.width"));
     }

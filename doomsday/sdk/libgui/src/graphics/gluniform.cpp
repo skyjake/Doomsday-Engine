@@ -57,7 +57,7 @@ DENG2_PIMPL(GLUniform)
 
         // Allocate the value type.
         zap(value);
-        switch(type)
+        switch (type)
         {
         case Vec2:
         case Vec3:
@@ -94,7 +94,7 @@ DENG2_PIMPL(GLUniform)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self);
 
-        switch(type)
+        switch (type)
         {
         case Vec2:
         case Vec3:
@@ -124,7 +124,7 @@ DENG2_PIMPL(GLUniform)
 
         case Sampler2D:
         case SamplerCube:
-            if(value.tex) value.tex->audienceForDeletion() -= this;
+            if (value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
         default:
@@ -140,10 +140,10 @@ DENG2_PIMPL(GLUniform)
     {
         DENG2_ASSERT(type == Int || type == UInt || type == Float);
 
-        switch(type)
+        switch (type)
         {
         case Int:
-            if(value.int32 != dint(numValue))
+            if (value.int32 != dint(numValue))
             {
                 value.int32 = dint(numValue);
                 return true;
@@ -151,7 +151,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case UInt:
-            if(value.uint32 != duint(numValue))
+            if (value.uint32 != duint(numValue))
             {
                 value.uint32 = duint(numValue);
                 return true;
@@ -159,7 +159,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Float:
-            if(!fequal(value.float32, dfloat(numValue)))
+            if (!fequal(value.float32, dfloat(numValue)))
             {
                 value.float32 = dfloat(numValue);
                 return true;
@@ -183,9 +183,9 @@ DENG2_PIMPL(GLUniform)
 
     void assetBeingDeleted(Asset &asset)
     {
-        if(self.isSampler())
+        if (self.isSampler())
         {
-            if(value.tex == &asset)
+            if (value.tex == &asset)
             {
                 // No more texture to refer to.
                 value.tex = 0;
@@ -227,7 +227,7 @@ bool GLUniform::isSampler() const
 
 GLUniform &GLUniform::operator = (dint value)
 {
-    if(d->set(value))
+    if (d->set(value))
     {
         d->markAsChanged();
     }
@@ -236,7 +236,7 @@ GLUniform &GLUniform::operator = (dint value)
 
 GLUniform &GLUniform::operator = (duint value)
 {
-    if(d->set(value))
+    if (d->set(value))
     {
         d->markAsChanged();
     }
@@ -245,7 +245,7 @@ GLUniform &GLUniform::operator = (duint value)
 
 GLUniform &GLUniform::operator = (dfloat value)
 {
-    if(d->set(value))
+    if (d->set(value))
     {
         d->markAsChanged();
     }
@@ -261,7 +261,7 @@ GLUniform &GLUniform::operator = (Vector2f const &vec)
 {
     DENG2_ASSERT(d->type == Vec2);
 
-    if(Vector2f(*d->value.vector) != vec)
+    if (Vector2f(*d->value.vector) != vec)
     {
         *d->value.vector = Vector4f(vec);
         d->markAsChanged();
@@ -273,7 +273,7 @@ GLUniform &GLUniform::operator = (Vector3f const &vec)
 {
     DENG2_ASSERT(d->type == Vec3);
 
-    if(Vector3f(*d->value.vector) != vec)
+    if (Vector3f(*d->value.vector) != vec)
     {
         *d->value.vector = vec;
         d->markAsChanged();
@@ -285,7 +285,7 @@ GLUniform &GLUniform::operator = (Vector4f const &vec)
 {
     DENG2_ASSERT(d->type == Vec4);
 
-    if(*d->value.vector != vec)
+    if (*d->value.vector != vec)
     {
         *d->value.vector = vec;
         d->markAsChanged();
@@ -320,21 +320,21 @@ GLUniform &GLUniform::operator = (GLTexture const &texture)
 
 GLUniform &GLUniform::operator = (GLTexture const *texture)
 {
-    if(texture && texture->isReady())
+    if (texture && texture->isReady())
     {
         DENG2_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
         DENG2_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
     }
 
-    if(d->value.tex != texture)
+    if (d->value.tex != texture)
     {
         // We will observe the texture this uniform refers to.
-        if(d->value.tex) d->value.tex->audienceForDeletion() -= d;
+        if (d->value.tex) d->value.tex->audienceForDeletion() -= d;
 
         d->value.tex = texture;
         d->markAsChanged();
 
-        if(d->value.tex) d->value.tex->audienceForDeletion() += d;
+        if (d->value.tex) d->value.tex->audienceForDeletion() += d;
     }
     return *this;
 }
@@ -344,7 +344,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
     DENG2_ASSERT(d->type == Vec3Array);
     DENG2_ASSERT(elementIndex < d->elemCount);
 
-    if(d->value.vec3array[elementIndex] != vec)
+    if (d->value.vec3array[elementIndex] != vec)
     {
         d->value.vec3array[elementIndex] = vec;
         d->markAsChanged();
@@ -357,7 +357,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
     DENG2_ASSERT(d->type == Vec4Array);
     DENG2_ASSERT(elementIndex < d->elemCount);
 
-    if(d->value.vector[elementIndex] != vec)
+    if (d->value.vector[elementIndex] != vec)
     {
         d->value.vector[elementIndex] = vec;
         d->markAsChanged();
@@ -380,7 +380,7 @@ dint GLUniform::toInt() const
 {
     DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
 
-    switch(d->type)
+    switch (d->type)
     {
     case Int:
         return d->value.int32;
@@ -400,7 +400,7 @@ duint de::GLUniform::toUInt() const
 {
     DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
 
-    switch(d->type)
+    switch (d->type)
     {
     case Int:
         return duint(d->value.int32);
@@ -420,7 +420,7 @@ dfloat GLUniform::toFloat() const
 {
     DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
 
-    switch(d->type)
+    switch (d->type)
     {
     case Int:
         return dfloat(d->value.int32);
@@ -475,7 +475,7 @@ GLTexture const *GLUniform::texture() const
 void GLUniform::applyInProgram(GLProgram &program) const
 {
     int loc = program.glUniformLocation(d->name.constData());
-    if(loc < 0)
+    if (loc < 0)
     {
         // Uniform not in the program.
         LOG_AS("applyInProgram");
@@ -483,7 +483,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
         return;
     }
 
-    switch(d->type)
+    switch (d->type)
     {
     case Int:
         glUniform1i(loc, d->value.int32);

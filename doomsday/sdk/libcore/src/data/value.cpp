@@ -51,7 +51,7 @@ Value::Number Value::asSafeNumber(Number const &defaultValue) const
     {
         return asNumber();
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         return defaultValue;
     }
@@ -188,7 +188,7 @@ Value *Value::constructFrom(Reader &reader)
     reader.rewind();
 
     std::unique_ptr<Value> result;
-    switch(id)
+    switch (id)
     {
     case NONE:
         result.reset(new NoneValue);

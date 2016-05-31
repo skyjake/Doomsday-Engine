@@ -58,7 +58,7 @@ Folder::~Folder()
     clear();
 
     // Destroy all feeds that remain.
-    for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
+    for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
         delete *i;
     }
@@ -69,7 +69,7 @@ String Folder::describe() const
     DENG2_GUARD(this);
 
     String desc;
-    if(name().isEmpty())
+    if (name().isEmpty())
     {
         desc = "root folder";
     }
@@ -79,7 +79,7 @@ String Folder::describe() const
     }
 
     String const feedDesc = describeFeeds();
-    if(!feedDesc.isEmpty())
+    if (!feedDesc.isEmpty())
     {
         desc += String(" (%1)").arg(feedDesc);
     }
@@ -93,14 +93,14 @@ String Folder::describeFeeds() const
 
     String desc;
 
-    if(d->feeds.size() == 1)
+    if (d->feeds.size() == 1)
     {
         desc += String("contains %1 file%2 from %3")
                 .arg(d->contents.size())
                 .arg(DENG2_PLURAL_S(d->contents.size()))
                 .arg(d->feeds.front()->description());
     }
-    else if(d->feeds.size() > 1)
+    else if (d->feeds.size() > 1)
     {
         desc += String("contains %1 file%2 from %3 feed%4")
                 .arg(d->contents.size())
@@ -125,10 +125,10 @@ void Folder::clear()
 {
     DENG2_GUARD(this);
 
-    if(d->contents.empty()) return;
+    if (d->contents.empty()) return;
 
     // Destroy all the file objects.
-    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
+    for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
         i->second->setParent(0);
         delete i->second;
@@ -143,7 +143,7 @@ void Folder::populate(PopulationBehavior behavior)
     LOG_AS("Folder");
 
     // Prune the existing files first.
-    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); )
+    for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); )
     {
         // By default we will NOT prune if there are no feeds attached to the folder.
         // In this case the files were probably created manually, so we shouldn't
@@ -153,19 +153,19 @@ void Folder::populate(PopulationBehavior behavior)
         File *file = i->second;
 
         // If the file has a designated feed, ask it about pruning.
-        if(file->originFeed() && file->originFeed()->prune(*file))
+        if (file->originFeed() && file->originFeed()->prune(*file))
         {
             LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s") << file->path() << file->originFeed()->description();
             mustPrune = true;
         }
-        else if(!file->originFeed())
+        else if (!file->originFeed())
         {
             // There is no designated feed, ask all feeds of this folder.
             // If even one of the feeds thinks that the file is out of date,
             // it will be pruned.
-            for(Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
+            for (Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
             {
-                if((*f)->prune(*file))
+                if ((*f)->prune(*file))
                 {
                     LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s")
                             << file->path() << (*f)->description();
@@ -175,7 +175,7 @@ void Folder::populate(PopulationBehavior behavior)
             }
         }
 
-        if(mustPrune)
+        if (mustPrune)
         {
             // It needs to go.
             d->contents.erase(i++);
@@ -188,17 +188,17 @@ void Folder::populate(PopulationBehavior behavior)
     }
 
     // Populate with new/updated ones.
-    for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
+    for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
         (*i)->populate(*this);
     }
 
-    if(behavior == PopulateFullTree)
+    if (behavior == PopulateFullTree)
     {
         // Call populate on subfolders.
-        for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
+        for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
         {
-            if(Folder *folder = i->second->maybeAs<Folder>())
+            if (Folder *folder = i->second->maybeAs<Folder>())
             {
                 folder->populate();
             }
@@ -218,7 +218,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     DENG2_GUARD(this);
 
     String path = newPath.fileNamePath();
-    if(!path.empty())
+    if (!path.empty())
     {
         // Locate the folder where the file will be created in.
         return locate<Folder>(path).newFile(newPath.fileName(), behavior);
@@ -226,13 +226,13 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 
     verifyWriteAccess();
 
-    if(behavior == ReplaceExisting && has(newPath))
+    if (behavior == ReplaceExisting && has(newPath))
     {
         try
         {
             removeFile(newPath);
         }
-        catch(Feed::RemoveError const &er)
+        catch (Feed::RemoveError const &er)
         {
             LOG_RES_WARNING("Failed to replace %s: existing file could not be removed.\n")
                     << newPath << er.asText();
@@ -240,10 +240,10 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     }
 
     // The first feed able to create a file will get the honors.
-    for(Feeds::iterator i = d->feeds.begin(); i != d->feeds.end(); ++i)
+    for (Feeds::iterator i = d->feeds.begin(); i != d->feeds.end(); ++i)
     {
         File *file = (*i)->newFile(newPath);
-        if(file)
+        if (file)
         {
             // Allow writing to the new file.
             file->setMode(Write);
@@ -269,7 +269,7 @@ void Folder::removeFile(String const &removePath)
     DENG2_GUARD(this);
 
     String path = removePath.fileNamePath();
-    if(!path.empty())
+    if (!path.empty())
     {
         // Locate the folder where the file will be removed.
         return locate<Folder>(path).removeFile(removePath.fileName());
@@ -285,7 +285,7 @@ void Folder::removeFile(String const &removePath)
     delete file;
 
     // The origin feed will remove the original data of the file (e.g., the native file).
-    if(originFeed)
+    if (originFeed)
     {
         originFeed->removeFile(removePath);
     }
@@ -295,14 +295,14 @@ bool Folder::has(String const &name) const
 {
     DENG2_GUARD(this);
 
-    if(name.isEmpty()) return false;
+    if (name.isEmpty()) return false;
 
     // Check if we were given a path rather than just a name.
     String path = name.fileNamePath();
-    if(!path.empty())
+    if (!path.empty())
     {
         Folder *folder = tryLocate<Folder>(path);
-        if(folder)
+        if (folder)
         {
             return folder->has(name.fileName());
         }
@@ -318,7 +318,7 @@ File &Folder::add(File *file)
 
     DENG2_ASSERT(file != 0);
 
-    if(has(file->name()))
+    if (has(file->name()))
     {
         /// @throw DuplicateNameError All file names in a folder must be unique.
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
@@ -343,9 +343,9 @@ File *Folder::remove(File &file)
 {
     DENG2_GUARD(this);
 
-    for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
+    for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
-        if(i->second == &file)
+        if (i->second == &file)
         {
             d->contents.erase(i);
             break;
@@ -358,7 +358,7 @@ File *Folder::remove(File &file)
 filesys::Node const *Folder::tryGetChild(String const &name) const
 {
     Contents::const_iterator found = d->contents.find(name.lower());
-    if(found != d->contents.end())
+    if (found != d->contents.end())
     {
         return found->second;
     }
@@ -368,7 +368,7 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
 filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
 {
     // Absolute paths refer to the file system root.
-    if(path.isAbsolute())
+    if (path.isAbsolute())
     {
         return fileSystem().root().tryFollowPath(path.subPath(Rangei(1, path.segmentCount())));
     }
@@ -378,7 +378,7 @@ filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
 
 File *Folder::tryLocateFile(String const &path) const
 {
-    if(filesys::Node const *node = tryFollowPath(Path(path)))
+    if (filesys::Node const *node = tryFollowPath(Path(path)))
     {
         return const_cast<File *>(node->maybeAs<File>());
     }
@@ -387,7 +387,7 @@ File *Folder::tryLocateFile(String const &path) const
 
 void Folder::attach(Feed *feed)
 {
-    if(feed)
+    if (feed)
     {
         DENG2_GUARD(this);
         d->feeds.push_back(feed);
@@ -412,7 +412,7 @@ void Folder::setPrimaryFeed(Feed &feed)
 
 void Folder::clearFeeds()
 {
-    while(!d->feeds.empty())
+    while (!d->feeds.empty())
     {
         delete detach(*d->feeds.front());
     }
@@ -443,7 +443,7 @@ void Folder::Accessor::update() const
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
 
-    switch(_prop)
+    switch (_prop)
     {
     case CONTENT_SIZE:
         nonConst->setValue(QString::number(_owner.d->contents.size()));

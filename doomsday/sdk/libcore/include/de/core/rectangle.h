@@ -151,7 +151,7 @@ public:
                  other.bottomRight.y <= topLeft.y);
     }
     RectangleType operator & (RectangleType const &other) const {
-        if(!overlaps(other)) return RectangleType(); // disconnected
+        if (!overlaps(other)) return RectangleType(); // disconnected
         return RectangleType(topLeft.max(other.topLeft),
                              bottomRight.min(other.bottomRight));
     }

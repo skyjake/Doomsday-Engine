@@ -69,7 +69,7 @@ DENG2_PIMPL(SequentialLayout)
 
     void advancePos(Rule const &amount)
     {
-        switch(dir)
+        switch (dir)
         {
         case ui::Right:
             changeRef(posX, *posX + amount);
@@ -98,27 +98,27 @@ DENG2_PIMPL(SequentialLayout)
 
     void append(GuiWidget *widget, Rule const *spaceBefore, AppendMode mode)
     {
-        if(spaceBefore)
+        if (spaceBefore)
         {
             advancePos(*spaceBefore);
         }
 
-        if(!widget) return;
+        if (!widget) return;
 
         widgets << widget;
 
         // Override the widget's size as requested.
-        if(fixedWidth)  widget->rule().setInput(Rule::Width,  *fixedWidth);
-        if(fixedHeight) widget->rule().setInput(Rule::Height, *fixedHeight);
+        if (fixedWidth)  widget->rule().setInput(Rule::Width,  *fixedWidth);
+        if (fixedHeight) widget->rule().setInput(Rule::Height, *fixedHeight);
 
         RuleRectangle &rule = widget->rule();
 
         // Set position on the minor axis.
-        if(isVertical(dir) || dir == ui::NoDirection)
+        if (isVertical(dir) || dir == ui::NoDirection)
         {
             rule.setInput(Rule::Left, *posX);
         }
-        if(isHorizontal(dir) || dir == ui::NoDirection)
+        if (isHorizontal(dir) || dir == ui::NoDirection)
         {
             rule.setInput(Rule::Top, *posY);
         }
@@ -127,20 +127,20 @@ DENG2_PIMPL(SequentialLayout)
         Rule const &h = (fixedHeight? *fixedHeight : rule.height());
 
         // Update the minor axis maximum size.
-        if(mode == UpdateMinorAxis)
+        if (mode == UpdateMinorAxis)
         {
-            if(isHorizontal(dir) && !fixedHeight)
+            if (isHorizontal(dir) && !fixedHeight)
             {
                 changeRef(totalHeight, OperatorRule::maximum(*totalHeight, h));
             }
-            else if(isVertical(dir) && !fixedWidth)
+            else if (isVertical(dir) && !fixedWidth)
             {
                 changeRef(totalWidth, OperatorRule::maximum(*totalWidth, w));
             }
         }
 
         // Move along the movement direction for the major axis.
-        switch(dir)
+        switch (dir)
         {
         case ui::Right:
             rule.setInput(Rule::Left, *posX);

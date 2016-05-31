@@ -34,7 +34,7 @@ Compound::~Compound()
 
 void Compound::clear()
 {
-    for(Statements::iterator i = _statements.begin(); i != _statements.end(); ++i)
+    for (Statements::iterator i = _statements.begin(); i != _statements.end(); ++i)
     {
         delete *i;
     }
@@ -43,7 +43,7 @@ void Compound::clear()
 
 Statement const *Compound::firstStatement() const
 {
-    if(_statements.empty())
+    if (_statements.empty())
     {
         return NULL;
     }
@@ -52,7 +52,7 @@ Statement const *Compound::firstStatement() const
 
 void Compound::add(Statement *statement)
 {
-    if(_statements.size() > 0)
+    if (_statements.size() > 0)
     {
         _statements.back()->setNext(statement);
     }
@@ -62,7 +62,7 @@ void Compound::add(Statement *statement)
 void Compound::operator >> (Writer &to) const
 {
     to << duint32(_statements.size());
-    for(Statements::const_iterator i = _statements.begin(); i != _statements.end(); ++i)
+    for (Statements::const_iterator i = _statements.begin(); i != _statements.end(); ++i)
     {
         to << **i;
     }
@@ -73,7 +73,7 @@ void Compound::operator << (Reader &from)
     duint32 count;
     from >> count;
     clear();
-    while(count--)
+    while (count--)
     {
         add(Statement::constructFrom(from));
     }

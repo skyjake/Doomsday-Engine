@@ -46,7 +46,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     DialogButtonItem const &left  = a.as<DialogButtonItem>();
     DialogButtonItem const &right = b.as<DialogButtonItem>();
 
-    if(!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
+    if (!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
     {
 #ifdef MACOSX
         // Default buttons go to the right on OS X.
@@ -56,7 +56,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
         return false;
 #endif
     }
-    if(left.role().testFlag(DialogWidget::Default) && !right.role().testFlag(DialogWidget::Default))
+    if (left.role().testFlag(DialogWidget::Default) && !right.role().testFlag(DialogWidget::Default))
     {
 #ifdef MACOSX
         // Default buttons go to the right on OS X.
@@ -66,7 +66,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
         return true;
 #endif
     }
-    if(a.label().isEmpty() && !b.label().isEmpty())
+    if (a.label().isEmpty() && !b.label().isEmpty())
     {
         // Label-less buttons go first.
         return true;
@@ -151,7 +151,7 @@ public ChildWidgetOrganizer::IFilter
                 .setInput(Rule::Width, area->contentRule().width() + area->margins().width());
 
         // Will a title be included?
-        if(flags & WithHeading)
+        if (flags & WithHeading)
         {
             heading = new LabelWidget;
             heading->setFont("heading");
@@ -193,7 +193,7 @@ public ChildWidgetOrganizer::IFilter
                                        buttons->rule().width() + extraButtons->rule().width(),
                                        *minWidth));
 
-        if(flags.testFlag(WithHeading))
+        if (flags.testFlag(WithHeading))
         {
             area->rule().setInput(Rule::Height,
                                   container->rule().height()
@@ -216,7 +216,7 @@ public ChildWidgetOrganizer::IFilter
     void setupForTwoColumns()
     {
         // Create an additional content area.
-        if(!rightArea)
+        if (!rightArea)
         {
             rightArea = new ScrollAreaWidget("rightArea");
             self.content().add(rightArea);
@@ -227,7 +227,7 @@ public ChildWidgetOrganizer::IFilter
                     .setInput(Rule::Height, area->rule().height())
                     .setInput(Rule::Width,  rightArea->contentRule().width() + rightArea->margins().width());
 
-            if(heading)
+            if (heading)
             {
                 heading->rule().setInput(Rule::Right, rightArea->rule().right());
             }
@@ -238,7 +238,7 @@ public ChildWidgetOrganizer::IFilter
                                            buttons->rule().width() + extraButtons->rule().width(),
                                            *minWidth));
 
-            if(self.isOpen()) updateContentHeight();
+            if (self.isOpen()) updateContentHeight();
         }
     }
 
@@ -246,14 +246,14 @@ public ChildWidgetOrganizer::IFilter
     {
         // Determine suitable maximum height.
         Rule const *maxHeight = holdRef(root().viewHeight());
-        if(self.openingDirection() == ui::Down)
+        if (self.openingDirection() == ui::Down)
         {
             changeRef(maxHeight, *maxHeight - self.anchor().top() - rule("gap"));
         }
 
         // Scrollable area content height.
         AutoRef<Rule> areaContentHeight = area->contentRule().height() + area->margins().height();
-        if(rightArea)
+        if (rightArea)
         {
             areaContentHeight.reset(OperatorRule::maximum(areaContentHeight,
                     rightArea->contentRule().height() + rightArea->margins().height()));
@@ -261,7 +261,7 @@ public ChildWidgetOrganizer::IFilter
 
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
-        if(!flags.testFlag(WithHeading))
+        if (!flags.testFlag(WithHeading))
         {
             self.content().rule().setInput(Rule::Height,
                     OperatorRule::minimum(*maxHeight, areaContentHeight + buttons->rule().height()));
@@ -279,14 +279,14 @@ public ChildWidgetOrganizer::IFilter
     bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &data, ui::Data::Pos pos) const
     {
         // Only dialog buttons allowed in the dialog button menus.
-        if(!data.at(pos).is<DialogButtonItem>()) return false;
+        if (!data.at(pos).is<DialogButtonItem>()) return false;
 
-        if(&organizer == &buttons->organizer())
+        if (&organizer == &buttons->organizer())
         {
             // Non-Action buttons only.
             return !data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
         }
-        else if(&organizer == &extraButtons->organizer())
+        else if (&organizer == &extraButtons->organizer())
         {
             // Only Action buttons allowed.
             return data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
@@ -318,22 +318,22 @@ public ChildWidgetOrganizer::IFilter
     {
         // Make sure all label-based widgets in the button area
         // manage their own size.
-        if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
+        if (LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
             lab->setSizePolicy(ui::Expand, ui::Expand);
         }
 
         // Apply dialog button specific roles.
-        if(ButtonItem const *i = item.maybeAs<ButtonItem>())
+        if (ButtonItem const *i = item.maybeAs<ButtonItem>())
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
-            if(!i->action())
+            if (!i->action())
             {
-                if(i->role() & (Accept | Yes))
+                if (i->role() & (Accept | Yes))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(accept())));
                 }
-                else if(i->role() & (Reject | No))
+                else if (i->role() & (Reject | No))
                 {
                     but.setAction(new SignalAction(thisPublic, SLOT(reject())));
                 }
@@ -343,7 +343,7 @@ public ChildWidgetOrganizer::IFilter
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(ButtonItem const *i = item.maybeAs<ButtonItem>())
+        if (ButtonItem const *i = item.maybeAs<ButtonItem>())
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
 
@@ -351,28 +351,28 @@ public ChildWidgetOrganizer::IFilter
             but.setOverrideImageSize(style().fonts().font("default").height().valuei());
 
             // Set default label?
-            if(item.label().isEmpty())
+            if (item.label().isEmpty())
             {
-                if(i->role().testFlag(Accept))
+                if (i->role().testFlag(Accept))
                 {
                     but.setText(tr("OK"));
                 }
-                else if(i->role().testFlag(Reject))
+                else if (i->role().testFlag(Reject))
                 {
                     but.setText(tr("Cancel"));
                 }
-                else if(i->role().testFlag(Yes))
+                else if (i->role().testFlag(Yes))
                 {
                     but.setText(tr("Yes"));
                 }
-                else if(i->role().testFlag(No))
+                else if (i->role().testFlag(No))
                 {
                     but.setText(tr("No"));
                 }
             }
 
             // Highlight the default button(s).
-            if(i->role().testFlag(Default))
+            if (i->role().testFlag(Default))
             {
                 but.setTextColor("dialog.default");
                 but.setText(_E(b) + but.text());
@@ -388,10 +388,10 @@ public ChildWidgetOrganizer::IFilter
     {
         // Note: extra buttons not searched because they shouldn't contain default actions.
 
-        for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
+        for (ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             ButtonItem const *act = buttons->items().at(i).maybeAs<ButtonItem>();
-            if(act->role().testFlag(Default) &&
+            if (act->role().testFlag(Default) &&
                buttons->organizer().itemWidget(i)->isEnabled())
             {
                 return act;
@@ -403,7 +403,7 @@ public ChildWidgetOrganizer::IFilter
     ButtonWidget const &buttonWidget(ui::Item const &item) const
     {
         GuiWidget *w = extraButtons->organizer().itemWidget(item);
-        if(w) return w->as<ButtonWidget>();
+        if (w) return w->as<ButtonWidget>();
         // Try the normal buttons.
         return buttons->organizer().itemWidget(item)->as<ButtonWidget>();
     }
@@ -423,17 +423,17 @@ public ChildWidgetOrganizer::IFilter
         bg.color.w = glow;
         self.set(bg);
 
-        if(glow.done()) animatingGlow = false;
+        if (glow.done()) animatingGlow = false;
     }
 
     void updateBackground()
     {
         Background bg = self.background();
-        if(self.isUsingInfoStyle())
+        if (self.isUsingInfoStyle())
         {
             bg = self.infoStyleBackground();
         }
-        else if(Style::get().isBlurringAllowed())
+        else if (Style::get().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::SharedBlurWithBorderGlow;
@@ -508,10 +508,10 @@ ui::Data &DialogWidget::buttons()
 ButtonWidget &DialogWidget::buttonWidget(String const &label) const
 {
     GuiWidget *w = d->buttons->organizer().itemWidget(label);
-    if(w) return w->as<ButtonWidget>();
+    if (w) return w->as<ButtonWidget>();
 
     w = d->extraButtons->organizer().itemWidget(label);
-    if(w) return w->as<ButtonWidget>();
+    if (w) return w->as<ButtonWidget>();
 
     throw UndefinedLabel("DialogWidget::buttonWidget", "Undefined label \"" + label + "\"");
 }
@@ -523,14 +523,14 @@ PopupButtonWidget &DialogWidget::popupButtonWidget(String const &label) const
 
 ButtonWidget *DialogWidget::buttonWidget(int roleId) const
 {
-    for(uint i = 0; i < d->buttonItems.size(); ++i)
+    for (uint i = 0; i < d->buttonItems.size(); ++i)
     {
         DialogButtonItem const &item = d->buttonItems.at(i).as<DialogButtonItem>();
 
-        if((item.role() & IdMask) == roleId)
+        if ((item.role() & IdMask) == roleId)
         {
             GuiWidget *w = d->buttons->organizer().itemWidget(i);
-            if(w) return &w->as<ButtonWidget>();
+            if (w) return &w->as<ButtonWidget>();
 
             return &d->extraButtons->organizer().itemWidget(i)->as<ButtonWidget>();
         }
@@ -540,7 +540,7 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
 
 PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
 {
-    if(auto *btn = buttonWidget(roleId))
+    if (auto *btn = buttonWidget(roleId))
     {
         return &btn->as<PopupButtonWidget>();
     }
@@ -586,12 +586,12 @@ void DialogWidget::update()
 {
     PopupWidget::update();
 
-    if(d->needButtonUpdate)
+    if (d->needButtonUpdate)
     {
         d->updateButtonLayout();
     }
 
-    if(d->animatingGlow)
+    if (d->animatingGlow)
     {
         d->updateBorderFlash();
     }
@@ -599,18 +599,18 @@ void DialogWidget::update()
 
 bool DialogWidget::handleEvent(Event const &event)
 {
-    if(event.isKeyDown())
+    if (event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(key.ddKey() == DDKEY_ENTER ||
+        if (key.ddKey() == DDKEY_ENTER ||
            key.ddKey() == DDKEY_RETURN ||
            key.ddKey() == ' ')
         {
-            if(ui::ActionItem const *defaultAction = d->findDefaultAction())
+            if (ui::ActionItem const *defaultAction = d->findDefaultAction())
             {
                 ButtonWidget const &but = d->buttonWidget(*defaultAction);
-                if(but.action())
+                if (but.action())
                 {
                     const_cast<de::Action *>(but.action())->trigger();
                 }
@@ -618,7 +618,7 @@ bool DialogWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if(key.ddKey() == DDKEY_ESCAPE)
+        if (key.ddKey() == DDKEY_ESCAPE)
         {
             // Esc always cancels a dialog.
             reject();
@@ -626,10 +626,10 @@ bool DialogWidget::handleEvent(Event const &event)
         }
     }
 
-    if(d->modality == Modal)
+    if (d->modality == Modal)
     {
         // The event should already have been handled by the children.
-        if((event.isKeyDown() && !event.as<KeyEvent>().isModifier()) ||
+        if ((event.isKeyDown() && !event.as<KeyEvent>().isModifier()) ||
            (event.type() == Event::MouseButton &&
             event.as<MouseEvent>().state() == MouseEvent::Pressed &&
             !hitTest(event)))
@@ -640,7 +640,7 @@ bool DialogWidget::handleEvent(Event const &event)
     }
     else
     {
-        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition ||
+        if ((event.type() == Event::MouseButton || event.type() == Event::MousePosition ||
             event.type() == Event::MouseWheel) &&
            hitTest(event))
         {
@@ -654,13 +654,13 @@ bool DialogWidget::handleEvent(Event const &event)
 
 void DialogWidget::accept(int result)
 {
-    if(d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
         DENG2_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit accepted(result);
     }
-    else if(d->modality == NonModal)
+    else if (d->modality == NonModal)
     {
         emit accepted(result);
         finish(result);
@@ -669,13 +669,13 @@ void DialogWidget::accept(int result)
 
 void DialogWidget::reject(int result)
 {
-    if(d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
         DENG2_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit rejected(result);
     }
-    else if(d->modality == NonModal)
+    else if (d->modality == NonModal)
     {
         emit rejected(result);
         finish(result);
@@ -689,7 +689,7 @@ void DialogWidget::prepare()
 
     root().setFocus(0);
 
-    if(openingDirection() == ui::NoDirection)
+    if (openingDirection() == ui::NoDirection)
     {
         // Center the dialog.
         setAnchor(root().viewWidth() / 2, root().viewHeight() / 2);
@@ -718,10 +718,10 @@ void DialogWidget::finish(int result)
 
     d->untrapper.reset();
 
-    if(result > 0)
+    if (result > 0)
     {
         // Success!
-        if(d->acceptAction)
+        if (d->acceptAction)
         {
             AutoRef<de::Action> held = *d->acceptAction;
             held->trigger();
@@ -757,7 +757,7 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String
 ui::Item::Semantics DialogWidget::ButtonItem::itemSemantics(RoleFlags flags)
 {
     Semantics smt = ActivationClosesPopup | ShownAsButton;
-    if(flags & Popup) smt |= ShownAsPopupButton;
+    if (flags & Popup) smt |= ShownAsPopupButton;
     return smt;
 }
 

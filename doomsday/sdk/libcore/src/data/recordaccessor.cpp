@@ -56,7 +56,7 @@ dint RecordAccessor::geti(String const &name) const
 
 dint RecordAccessor::geti(String const &name, dint defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return geti(name);
 }
 
@@ -67,7 +67,7 @@ bool RecordAccessor::getb(String const &name) const
 
 bool RecordAccessor::getb(String const &name, bool defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return getb(name);
 }
 
@@ -78,7 +78,7 @@ duint RecordAccessor::getui(String const &name) const
 
 duint RecordAccessor::getui(String const &name, duint defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return getui(name);
 }
 
@@ -89,7 +89,7 @@ dfloat RecordAccessor::getf(String const &name) const
 
 dfloat RecordAccessor::getf(String const &name, dfloat defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return getf(name);
 }
 
@@ -100,7 +100,7 @@ ddouble RecordAccessor::getd(String const &name) const
 
 ddouble RecordAccessor::getd(String const &name, ddouble defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return getd(name);
 }
 
@@ -111,7 +111,7 @@ String RecordAccessor::gets(String const &name) const
 
 String RecordAccessor::gets(String const &name, String const &defaultValue) const
 {
-    if(!accessedRecord().hasMember(name)) return defaultValue;
+    if (!accessedRecord().hasMember(name)) return defaultValue;
     return gets(name);
 }
 

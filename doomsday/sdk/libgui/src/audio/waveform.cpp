@@ -94,9 +94,9 @@ DENG2_PIMPL(Waveform)
 
     void setSource(File const *src)
     {
-        if(source) source->audienceForDeletion() -= this;
+        if (source) source->audienceForDeletion() -= this;
         source = src;
-        if(source) source->audienceForDeletion() += this;
+        if (source) source->audienceForDeletion() += this;
     }
 
     void clear()
@@ -112,7 +112,7 @@ DENG2_PIMPL(Waveform)
 
     void load(File const &src)
     {
-        if(!src.name().fileNameExtension().compareWithoutCase(".wav"))
+        if (!src.name().fileNameExtension().compareWithoutCase(".wav"))
         {
             // We know how to read WAV files.
             loadWAV(Block(src));
@@ -130,7 +130,7 @@ DENG2_PIMPL(Waveform)
     {
         Block magic(4);
         data.get(0, magic.data(), 4);
-        if(magic != "RIFF") return false;
+        if (magic != "RIFF") return false;
         data.get(8, magic.data(), 4);
         return (magic == "WAVE");
     }
@@ -142,7 +142,7 @@ DENG2_PIMPL(Waveform)
      */
     void loadWAV(Block const &data)
     {
-        if(!recognizeWAV(data))
+        if (!recognizeWAV(data))
         {
             throw LoadError("Waveform::loadWAV", "WAV identifier not found");
         }
@@ -151,17 +151,17 @@ DENG2_PIMPL(Waveform)
         reader.seek(12); // skip past header
 
         WAVFormat wav;
-        while(reader.remainingSize() >= 8)
+        while (reader.remainingSize() >= 8)
         {
             WAVChunk chunk;
             reader >> chunk;
 
-            if(chunk.id == "fmt ") // Format chunk.
+            if (chunk.id == "fmt ") // Format chunk.
             {
                 reader >> wav;
 
                 // Check limitations.
-                if(wav.formatTag != 1 /* PCM samples */)
+                if (wav.formatTag != 1 /* PCM samples */)
                 {
                     throw UnsupportedFormatError("Waveform::loadWAV",
                                                  "Only PCM samples supported");
@@ -171,7 +171,7 @@ DENG2_PIMPL(Waveform)
                 sampleRate    = wav.sampleRate;
                 bitsPerSample = wav.bitsPerSample;
             }
-            else if(chunk.id == "data") // Sample data chunk.
+            else if (chunk.id == "data") // Sample data chunk.
             {
                 sampleCount = chunk.size / wav.blockAlign;
                 sampleData.resize(chunk.size);
@@ -189,7 +189,7 @@ DENG2_PIMPL(Waveform)
 
     void fileBeingDeleted(File const &delFile)
     {
-        if(source == &delFile)
+        if (source == &delFile)
         {
             // Could read file contents to memory if the waveform data
             // is still needed?

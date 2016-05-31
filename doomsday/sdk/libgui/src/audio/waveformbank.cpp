@@ -52,7 +52,7 @@ DENG2_PIMPL_NOREF(WaveformBank)
 
         duint sizeInMemory() const
         {
-            if(!waveform) return 0;
+            if (!waveform) return 0;
             return waveform->sampleData().size();
         }
     };

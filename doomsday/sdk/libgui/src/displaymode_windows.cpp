@@ -47,12 +47,12 @@ static DisplayMode devToDisplayMode(const DEVMODE& d)
 void DisplayMode_Native_Init(void)
 {
     // Let's see which modes are available.
-    for(int i = 0; ; i++)
+    for (int i = 0; ; i++)
     {
         DEVMODE mode;
         de::zap(mode);
         mode.dmSize = sizeof(mode);
-        if(!EnumDisplaySettings(NULL, i, &mode))
+        if (!EnumDisplaySettings(NULL, i, &mode))
             break; // That's all.
 
         devModes.push_back(mode);
@@ -87,10 +87,10 @@ void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 
 static int findMode(const DisplayMode* mode)
 {
-    for(int i = 0; i < DisplayMode_Native_Count(); ++i)
+    for (int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
         DisplayMode d = devToDisplayMode(devModes[i]);
-        if(DisplayMode_IsEqual(&d, mode))
+        if (DisplayMode_IsEqual(&d, mode))
         {
             return i;
         }
@@ -106,7 +106,7 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
     DEVMODE m = devModes[findMode(mode)];
     m.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
 
-    if(ChangeDisplaySettings(&m, shouldCapture? CDS_FULLSCREEN : 0) != DISP_CHANGE_SUCCESSFUL)
+    if (ChangeDisplaySettings(&m, shouldCapture? CDS_FULLSCREEN : 0) != DISP_CHANGE_SUCCESSFUL)
         return false;
 
     currentDevMode = m;
@@ -115,13 +115,13 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    if(!de::CanvasWindow::mainExists()) return;
+    if (!de::CanvasWindow::mainExists()) return;
 
     HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
-    if(hDC)
+    if (hDC)
     {
         SetDeviceGammaRamp(hDC, (void*) colors->table);
         ReleaseDC(hWnd, hDC);
@@ -134,7 +134,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
-    if(hDC)
+    if (hDC)
     {
         GetDeviceGammaRamp(hDC, (void *) colors->table);
         ReleaseDC(hWnd, hDC);

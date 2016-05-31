@@ -49,7 +49,7 @@ Expression *Expression::constructFrom(Reader &reader)
     reader.rewind();
 
     std::unique_ptr<Expression> result;
-    switch(id)
+    switch (id)
     {
     case ARRAY:
         result.reset(new ArrayExpression());

@@ -53,14 +53,14 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             bool changed = animating;
 
             float target = (fold.isOpen()? 0 : 90);
-            if(target != angle.target())
+            if (target != angle.target())
             {
                 angle.setValue(target, INDICATOR_ANIM_SPAN);
                 animating = true;
                 changed = true;
             }
 
-            if(needSize)
+            if (needSize)
             {
                 needSize = false;
                 changed = true;
@@ -70,7 +70,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             }
 
             // Stop animating?
-            if(animating && angle.done())
+            if (animating && angle.done())
             {
                 animating = false;
             }
@@ -141,10 +141,10 @@ void FoldPanelWidget::setContent(GuiWidget *content)
 {
     d->stylist.setContainer(*content);
 
-    if(!isOpen())
+    if (!isOpen())
     {
         // We'll just take it and do nothing else yet.
-        if(d->container)
+        if (d->container)
         {
             d->container->guiDeleteLater();
         }
@@ -157,7 +157,7 @@ void FoldPanelWidget::setContent(GuiWidget *content)
 
 GuiWidget &FoldPanelWidget::content() const
 {
-    if(d->container)
+    if (d->container)
     {
         return *d->container;
     }
@@ -166,7 +166,7 @@ GuiWidget &FoldPanelWidget::content() const
 
 void FoldPanelWidget::toggleFold()
 {
-    if(!isOpen())
+    if (!isOpen())
     {
         open();
     }
@@ -178,14 +178,14 @@ void FoldPanelWidget::toggleFold()
 
 void FoldPanelWidget::preparePanelForOpening()
 {
-    if(d->container)
+    if (d->container)
     {
         // Insert the content back into the panel.
         PanelWidget::setContent(d->container);
         d->container = 0;
     }
 
-    if(d->title)
+    if (d->title)
     {
         d->title->setOpacity(1);
     }
@@ -197,7 +197,7 @@ void FoldPanelWidget::panelDismissed()
 {
     PanelWidget::panelDismissed();
 
-    if(d->title)
+    if (d->title)
     {
         d->title->setOpacity(.8f, .5f);
     }

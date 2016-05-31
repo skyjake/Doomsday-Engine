@@ -85,7 +85,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     Instance()
     {
-        for(int i = 0; i < NUM_FILTERS; ++i)
+        for (int i = 0; i < NUM_FILTERS; ++i)
         {
             filterByContext[i].domainBit = LogEntry::FirstDomainBit + i;
         }
@@ -95,18 +95,18 @@ DENG2_PIMPL_NOREF(LogFilter)
     {
         // Multiple contexts allowed, in which case if any one passes,
         // the entry is allowed.
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
-            if(ftr.checkContextBit(md))
+            if (ftr.checkContextBit(md))
             {
-                if((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
-                if(ftr.minLevel <= int(md & LogEntry::LevelMask))
+                if ((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
+                if (ftr.minLevel <= int(md & LogEntry::LevelMask))
                 {
                     // Pass due to entry level being enabled.
                     return true;
                 }
-                if((md & LogEntry::Interactive) && i == ScriptFilter)
+                if ((md & LogEntry::Interactive) && i == ScriptFilter)
                 {
                     // Interactive script entries pass.
                     return true;
@@ -119,10 +119,10 @@ DENG2_PIMPL_NOREF(LogFilter)
     LogEntry::Level minLevel(duint32 md) const
     {
         int lev = LogEntry::HighestLogLevel + 1;
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
-            if(ftr.checkContextBit(md))
+            if (ftr.checkContextBit(md))
             {
                 lev = de::min(lev, int(ftr.minLevel));
             }
@@ -132,12 +132,12 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     bool allowDev(duint32 md) const
     {
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
-            if(ftr.checkContextBit(md))
+            if (ftr.checkContextBit(md))
             {
-                if(ftr.allowDev) return true;
+                if (ftr.allowDev) return true;
             }
         }
         return false;
@@ -145,10 +145,10 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void setAllowDev(duint32 md, bool allow)
     {
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter &ftr = filterByContext[i];
-            if(ftr.checkContextBit(md))
+            if (ftr.checkContextBit(md))
             {
                 ftr.allowDev = allow;
             }
@@ -157,10 +157,10 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void setMinLevel(duint32 md, LogEntry::Level level)
     {
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter &ftr = filterByContext[i];
-            if(ftr.checkContextBit(md))
+            if (ftr.checkContextBit(md))
             {
                 ftr.minLevel = level;
             }
@@ -171,12 +171,12 @@ DENG2_PIMPL_NOREF(LogFilter)
     {
         try
         {
-            for(uint i = 0; i < NUM_FILTERS; ++i)
+            for (uint i = 0; i < NUM_FILTERS; ++i)
             {
                 filterByContext[i].read(rec.subrecord(subRecName[i]));
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOGDEV_WARNING("Failed to read filter from record: %s\nThe record is:\n%s")
                     << er.asText() << rec.asText();
@@ -188,10 +188,10 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void write(Record &rec) const
     {
-        for(uint i = 0; i < NUM_FILTERS; ++i)
+        for (uint i = 0; i < NUM_FILTERS; ++i)
         {
             // Reuse existing subrecords.
-            if(!rec.hasSubrecord(subRecName[i]))
+            if (!rec.hasSubrecord(subRecName[i]))
             {
                 rec.add(subRecName[i], new Record);
             }
@@ -241,9 +241,9 @@ void LogFilter::write(Record &rec) const
 
 String LogFilter::domainRecordName(LogEntry::Context domain)
 {
-    for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+    for (int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
     {
-        if(domain & (1 << i)) return subRecName[i - LogEntry::FirstDomainBit];
+        if (domain & (1 << i)) return subRecName[i - LogEntry::FirstDomainBit];
     }
     return "";
 }

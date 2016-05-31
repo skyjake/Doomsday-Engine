@@ -273,19 +273,19 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
     // Locate the central directory. Start from the earliest location where
     // the signature might be.
     duint centralEndPos = 0;
-    for(duint pos = CENTRAL_END_SIZE; pos < MAXIMUM_COMMENT_SIZE; pos++)
+    for (duint pos = CENTRAL_END_SIZE; pos < MAXIMUM_COMMENT_SIZE; pos++)
     {
         reader.setOffset(archive.size() - pos);
         duint32 signature;
         reader >> signature;
-        if(signature == SIG_END_OF_CENTRAL_DIR)
+        if (signature == SIG_END_OF_CENTRAL_DIR)
         {
             // This is it!
             centralEndPos = archive.size() - pos;
             break;
         }
     }
-    if(!centralEndPos)
+    if (!centralEndPos)
     {
         /// @throw MissingCentralDirectoryError The ZIP central directory was not found
         /// in the end of the source data.
@@ -300,7 +300,7 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
     duint const entryCount = summary.totalEntryCount;
 
     // The ZIP must have only one part, all entries in the same archive.
-    if(entryCount != summary.diskEntryCount)
+    if (entryCount != summary.diskEntryCount)
     {
         /// @throw MultiPartError  ZIP archives in more than one part are not supported
         /// by the implementation.
@@ -309,13 +309,13 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
 
     // Read all the entries of the central directory.
     reader.setOffset(summary.offset);
-    for(duint index = 0; index < entryCount; ++index)
+    for (duint index = 0; index < entryCount; ++index)
     {
         CentralFileHeader header;
         reader >> header;
 
         // Check the signature.
-        if(header.signature != SIG_CENTRAL_FILE_HEADER)
+        if (header.signature != SIG_CENTRAL_FILE_HEADER)
         {
             /// @throw FormatError  Invalid signature in a central directory entry.
             throw FormatError("ZipArchive::Archive", "Corrupt central directory");
@@ -327,20 +327,20 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
         reader.seek(header.fileNameSize + header.extraFieldSize + header.commentSize);
 
         // Skip folders.
-        if(fileName.endsWith("/") && !header.size)
+        if (fileName.endsWith("/") && !header.size)
         {
             continue;
         }
 
         // Check for unsupported features.
-        if(header.compression != NO_COMPRESSION && header.compression != DEFLATED)
+        if (header.compression != NO_COMPRESSION && header.compression != DEFLATED)
         {
             /// @throw UnknownCompressionError  Deflation is the only compression
             /// algorithm supported by the implementation.
             throw UnknownCompressionError("ZipArchive::Archive",
                 "Entry '" + fileName + "' uses an unsupported compression algorithm");
         }
-        if(header.flags & ZFH_ENCRYPTED)
+        if (header.flags & ZFH_ENCRYPTED)
         {
             /// @throw EncryptionError  Archive is encrypted, which is not supported
             /// by the implementation.
@@ -384,10 +384,10 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
 {
     ZipEntry const &entry = static_cast<ZipEntry const &>(e);
 
-    if(entry.compression == NO_COMPRESSION)
+    if (entry.compression == NO_COMPRESSION)
     {
         // Data is not compressed so we can just read it.
-        if(entry.dataInArchive)
+        if (entry.dataInArchive)
         {
             uncompressedData.copyFrom(*entry.dataInArchive, 0, entry.size);
         }
@@ -403,7 +403,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         uncompressedData.resize(entry.size);
 
         // Take a copy of the compressed data for zlib.
-        if(!entry.dataInArchive)
+        if (!entry.dataInArchive)
         {
             DENG2_ASSERT(source() != NULL);
             entry.dataInArchive = new Block(*source(), entry.offset, entry.sizeInArchive);
@@ -430,7 +430,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
          * comparison at the end of the stream. This is for use with other
          * formats that use the deflate compressed data format such as 'zip'."
          */
-        if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+        if (inflateInit2(&stream, -MAX_WBITS) != Z_OK)
         {
             /// @throw InflateError Problem with zlib: inflateInit2 failed.
             throw InflateError("ZipArchive::readEntry",
@@ -440,7 +440,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         // Do the inflation in one call.
         dint result = inflate(&stream, Z_FINISH);
 
-        if(stream.total_out != entry.size)
+        if (stream.total_out != entry.size)
         {
             /// @throw InflateError The actual decompressed size is not equal to the
             /// size listed in the central directory.
@@ -469,7 +469,7 @@ void ZipArchive::operator >> (Writer &to) const
     Writer writer(to, littleEndianByteOrder);
 
     // First write the local headers.
-    for(PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
+    for (PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
         // We will be updating relevant members of the entry.
         ZipEntry &entry = iter.next();
@@ -493,12 +493,12 @@ void ZipArchive::operator >> (Writer &to) const
         header.fileNameSize = fullPath.size();
 
         // Can we use the data already in the source archive?
-        if((entry.dataInArchive || source()) && !entry.maybeChanged)
+        if ((entry.dataInArchive || source()) && !entry.maybeChanged)
         {
             // Yes, we can.
             writer << header << FixedByteArray(fullPath.toLatin1());
             IByteArray::Offset newOffset = writer.offset();
-            if(entry.dataInArchive)
+            if (entry.dataInArchive)
             {
                 writer << FixedByteArray(*entry.dataInArchive);
             }
@@ -534,7 +534,7 @@ void ZipArchive::operator >> (Writer &to) const
              * generate raw deflate data with no zlib header or trailer, and
              * will not compute an adler32 check value."
              */
-            if(deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+            if (deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
                             -MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK)
             {
                 /// @throw DeflateError  zlib error: could not initialize deflate operation.
@@ -542,7 +542,7 @@ void ZipArchive::operator >> (Writer &to) const
             }
 
             int result = deflate(&stream, Z_FINISH);
-            if(result == Z_STREAM_END)
+            if (result == Z_STREAM_END)
             {
                 // Compression was ok.
                 header.compression = entry.compression = DEFLATED;
@@ -573,7 +573,7 @@ void ZipArchive::operator >> (Writer &to) const
     summary.offset = writer.offset();
 
     // Write the central directory.
-    for(PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
+    for (PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
         ZipEntry const &entry = iter.next();
         String const fullPath = entry.path();
@@ -617,7 +617,7 @@ static bool recognizeZipExtension(String const &ext)
 
 bool ZipArchive::recognize(File const &file)
 {
-    if(file.status().type() == File::Status::FILE)
+    if (file.status().type() == File::Status::FILE)
     {
         // For now, just check the name.
         return recognizeZipExtension(file.name().fileNameExtension().lower());
@@ -632,7 +632,7 @@ bool ZipArchive::recognize(NativePath const &path)
 
 void ZipArchive::ZipEntry::update()
 {
-    if(data)
+    if (data)
     {
         size  = data->size();
         crc32 = ::crc32(0L, data->data(), data->size());
@@ -641,7 +641,7 @@ void ZipArchive::ZipEntry::update()
 
 File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
 {
-    if(recognize(*sourceData))
+    if (recognize(*sourceData))
     {
         try
         {
@@ -654,17 +654,17 @@ File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
             package->setSource(sourceData);
             return package.release();
         }
-        catch(Archive::FormatError const &)
+        catch (Archive::FormatError const &)
         {
             // Even though it was recognized as an archive, the file
             // contents may still prove to be corrupted.
             LOG_RES_WARNING("Archive in %s is invalid") << sourceData->description();
         }
-        catch(IByteArray::OffsetError const &)
+        catch (IByteArray::OffsetError const &)
         {
             LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
         }
-        catch(IIStream::InputError const &er)
+        catch (IIStream::InputError const &er)
         {
             LOG_RES_WARNING("Failed to read %s") << sourceData->description();
             LOGDEV_RES_WARNING("%s") << er.asText();

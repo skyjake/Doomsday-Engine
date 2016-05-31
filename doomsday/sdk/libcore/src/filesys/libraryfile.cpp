@@ -44,20 +44,20 @@ LibraryFile::~LibraryFile()
 String LibraryFile::describe() const
 {
     String desc = "shared library";
-    if(loaded()) desc += " [" + library().type() + "]";
+    if (loaded()) desc += " [" + library().type() + "]";
     return desc;
 }
 
 Library &LibraryFile::library()
 {
-    if(_library)
+    if (_library)
     {
         return *_library;
     }
 
     /// @todo A method for File for making a NativeFile out of any File.
     NativeFile *native = source()->maybeAs<NativeFile>();
-    if(!native)
+    if (!native)
     {
         /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
         /// from native files. Other kinds of files would require a temporary native file.
@@ -71,7 +71,7 @@ Library &LibraryFile::library()
 
 Library const &LibraryFile::library() const
 {
-    if(_library) return *_library;
+    if (_library) return *_library;
 
     /// @throw NotLoadedError Library is presently not loaded.
     throw NotLoadedError("LibraryFile::library", "Library is not loaded: " + description());
@@ -79,7 +79,7 @@ Library const &LibraryFile::library() const
 
 void LibraryFile::clear()
 {
-    if(_library)
+    if (_library)
     {
         delete _library;
         _library = 0;
@@ -98,10 +98,10 @@ bool LibraryFile::recognize(File const &file)
     // On Mac OS X, plugins are in the .bundle format. The LibraryFile will point
     // to the actual binary inside the bundle. Libraries must be loaded from
     // native files.
-    if(NativeFile const *native = file.maybeAs<NativeFile>())
+    if (NativeFile const *native = file.maybeAs<NativeFile>())
     {
         // Check if this in the executable folder with a matching bundle name.
-        if(native->nativePath().fileNamePath().toString().endsWith(
+        if (native->nativePath().fileNamePath().toString().endsWith(
                     file.name() + ".bundle/Contents/MacOS"))
         {
             // (name).bundle/Contents/MacOS/(name)
@@ -110,11 +110,11 @@ bool LibraryFile::recognize(File const &file)
     }
 #else
     // Check the extension first.
-    if(QLibrary::isLibrary(file.name()))
+    if (QLibrary::isLibrary(file.name()))
     {
 #if defined(UNIX)
         // Only actual .so files should be considered.
-        if(!file.name().endsWith(".so")) // just checks the file name
+        if (!file.name().endsWith(".so")) // just checks the file name
         {
             return false;
         }
@@ -128,7 +128,7 @@ bool LibraryFile::recognize(File const &file)
 
 File *LibraryFile::Interpreter::interpretFile(File *sourceData) const
 {
-    if(recognize(*sourceData))
+    if (recognize(*sourceData))
     {
         LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
                                         << " as a shared library";

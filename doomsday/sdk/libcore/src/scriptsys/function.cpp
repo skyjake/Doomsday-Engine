@@ -79,7 +79,7 @@ Function::Function(String const &nativeName, Arguments const &args, Defaults con
         d->nativeName       = nativeName;
         d->nativeEntryPoint = nativeEntryPoint(nativeName);
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         addRef(-1); // Cancelled construction of the instance; no one has a reference.
         throw;
@@ -93,7 +93,7 @@ Function::~Function()
     {
         delete i.value();
     }
-    if(d->globals)
+    if (d->globals)
     {
         // Stop observing the namespace.
         d->globals->audienceForDeletion() -= this;
@@ -107,13 +107,13 @@ String Function::asText() const
     os << "(Function " << this << " (";
     DENG2_FOR_EACH_CONST(Arguments, i, d->arguments)
     {
-        if(i != d->arguments.begin())
+        if (i != d->arguments.begin())
         {
             os << ", ";
         }
         os << *i;
         Defaults::const_iterator def = d->defaults.find(*i);
-        if(def != d->defaults.end())
+        if (def != d->defaults.end())
         {
             os << "=" << def.value()->asText();
         }
@@ -163,14 +163,14 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
 
     // First use all the unlabeled arguments.
     Arguments::const_iterator k = d->arguments.begin();
-    for(ArrayValue::Elements::const_iterator i = args.elements().begin() + 1;
+    for (ArrayValue::Elements::const_iterator i = args.elements().begin() + 1;
         i != args.elements().end(); ++i)
     {
         values.push_back(*i);
 
-        if(k != d->arguments.end())
+        if (k != d->arguments.end())
         {
-            if(labeledArgs->contains(TextValue(*k)))
+            if (labeledArgs->contains(TextValue(*k)))
             {
                 /// @throw WrongArgumentsError An argument has been given more than one value.
                 throw WrongArgumentsError("Function::mapArgumentValues",
@@ -181,23 +181,23 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
         }
     }
 
-    if(values.size() < d->arguments.size())
+    if (values.size() < d->arguments.size())
     {
         // Then apply the labeled arguments, falling back to default values.
         Arguments::const_iterator i = d->arguments.begin();
         // Skip past arguments we already have a value for.
-        for(duint count = values.size(); count > 0; --count, ++i) {}
-        for(; i != d->arguments.end(); ++i)
+        for (duint count = values.size(); count > 0; --count, ++i) {}
+        for (; i != d->arguments.end(); ++i)
         {
             try
             {
                 values.push_back(&labeledArgs->element(TextValue(*i)));
             }
-            catch(DictionaryValue::KeyError const &)
+            catch (DictionaryValue::KeyError const &)
             {
                 // Check the defaults.
                 Defaults::const_iterator k = d->defaults.find(*i);
-                if(k != d->defaults.end())
+                if (k != d->defaults.end())
                 {
                     values.append(k.value());
                 }
@@ -212,7 +212,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
     }
 
     // Check that the number of arguments matches what we expect.
-    if(values.size() != d->arguments.size())
+    if (values.size() != d->arguments.size())
     {
         /// @throw WrongArgumentsError  Wrong number of argument specified.
         throw WrongArgumentsError("Function::mapArgumentValues",
@@ -227,13 +227,13 @@ void Function::setGlobals(Record *globals)
     LOG_AS("Function::setGlobals");
     DENG2_ASSERT(globals != 0);
 
-    if(!d->globals)
+    if (!d->globals)
     {
         d->globals = globals;
         d->globals->audienceForDeletion() += this;
     }
     /*
-    else if(d->globals != globals)
+    else if (d->globals != globals)
     {
         LOGDEV_SCR_WARNING("Function was offered a different namespace");
         LOGDEV_SCR_VERBOSE("Function %p's namespace is:\n%s\nOffered namespace is:\n%s")
@@ -258,7 +258,7 @@ Value *Function::callNative(Context &context, ArgumentValues const &args) const
 
     Value *result = (d->nativeEntryPoint)(context, args);
 
-    if(!result)
+    if (!result)
     {
         // Must always return something.
         result = new NoneValue;
@@ -300,7 +300,7 @@ void Function::operator << (Reader &from)
     // Argument names.
     from >> count;
     d->arguments.clear();
-    while(count--)
+    while (count--)
     {
         String argName;
         from >> argName;
@@ -310,7 +310,7 @@ void Function::operator << (Reader &from)
     // Default values.
     from >> count;
     d->defaults.clear();
-    while(count--)
+    while (count--)
     {
         String name;
         from >> name;
@@ -323,7 +323,7 @@ void Function::operator << (Reader &from)
     from >> d->nativeName;
 
     // Restore the entry point.
-    if(!d->nativeName.isEmpty())
+    if (!d->nativeName.isEmpty())
     {
         d->nativeEntryPoint = nativeEntryPoint(d->nativeName);
     }
@@ -350,7 +350,7 @@ void Function::unregisterNativeEntryPoint(String const &name)
 Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
 {
     RegisteredEntryPoints::const_iterator found = entryPoints.constFind(name);
-    if(found == entryPoints.constEnd())
+    if (found == entryPoints.constEnd())
     {
         throw UnknownEntryPointError("Function::nativeEntryPoint",
                                      QString("Native entry point '%1' is not available").arg(name));
@@ -390,13 +390,13 @@ Binder &Binder::initNew()
 
 void Binder::deinit()
 {
-    if(_isOwned)
+    if (_isOwned)
     {
         delete _module;
         _module = 0;
         _isOwned = false;
     }
-    foreach(String const &name, _boundEntryPoints)
+    foreach (String const &name, _boundEntryPoints)
     {
         Function::unregisterNativeEntryPoint(name);
     }
@@ -411,7 +411,7 @@ Record &Binder::module() const
 
 Binder &Binder::operator << (NativeFunctionSpec const &spec)
 {
-    if(_module)
+    if (_module)
     {
         _boundEntryPoints.insert(spec.nativeName());
         *_module << spec;

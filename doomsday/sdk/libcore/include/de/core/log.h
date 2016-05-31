@@ -307,7 +307,7 @@ public:
     static String contextToText(duint32 context)
     {
         String const suffix = (context & Dev? "Dev" : "");
-        switch(context & DomainMask)
+        switch (context & DomainMask)
         {
         case Resource: return "Resource" + suffix;
         case Map:      return "Map" + suffix;
@@ -323,14 +323,14 @@ public:
     static Context textToContext(String text)
     {
         duint32 val = 0;
-        if(text.endsWith("Dev"))
+        if (text.endsWith("Dev"))
         {
             val |= Dev;
             text = text.remove(text.size() - 3);
         }
-        for(int i = FirstDomainBit; i <= LastDomainBit; ++i)
+        for (int i = FirstDomainBit; i <= LastDomainBit; ++i)
         {
-            if(!contextToText(LogEntry::Context(1 << i)).compareWithoutCase(text))
+            if (!contextToText(LogEntry::Context(1 << i)).compareWithoutCase(text))
                 return LogEntry::Context((1 << i) | val);
         }
         throw de::Error("Log::textToContext", "'" + text + "' is not a valid log entry context");
@@ -387,7 +387,7 @@ public:
 
     static String levelToText(duint32 level)
     {
-        switch(level & LevelMask)
+        switch (level & LevelMask)
         {
         case XVerbose: return "XVerbose";
         case Verbose:  return "Verbose";
@@ -402,9 +402,9 @@ public:
 
     static Level textToLevel(String text)
     {
-        for(int i = XVerbose; i <= HighestLogLevel; ++i)
+        for (int i = XVerbose; i <= HighestLogLevel; ++i)
         {
-            if(!levelToText(Level(i)).compareWithoutCase(text))
+            if (!levelToText(Level(i)).compareWithoutCase(text))
                 return Level(i);
         }
         throw de::Error("Log::textToLevel", "'" + text + "' is not a valid log level");
@@ -760,7 +760,7 @@ public:
     template <typename ValueType>
     inline LogEntryStager &operator << (ValueType const &v) {
         // Args are created only if the level is enabled.
-        if(!_disabled) {
+        if (!_disabled) {
             _args << LogEntry::Arg::newFromPool(v);
         }
         return *this;

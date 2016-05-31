@@ -90,11 +90,11 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
     // Update the lookup table.
     int pos = elem.firstBit / 8;
     int endPos = (elem.firstBit + (numBits - 1)) / 8;
-    while(d->lookup.size() <= endPos)
+    while (d->lookup.size() <= endPos)
     {
         d->lookup.append(Ids());
     }
-    for(int i = pos; i <= endPos; ++i)
+    for (int i = pos; i <= endPos; ++i)
     {
         d->lookup[i].insert(id);
     }
@@ -104,7 +104,7 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
 
 void BitField::Elements::add(Spec const *elements, dsize count)
 {
-    while(count-- > 0)
+    while (count-- > 0)
     {
         add(elements->id, elements->numBits);
         elements++;
@@ -113,7 +113,7 @@ void BitField::Elements::add(Spec const *elements, dsize count)
 
 void BitField::Elements::add(QList<Spec> const &elements)
 {
-    foreach(Spec spec, elements)
+    foreach (Spec spec, elements)
     {
         add(spec.id, spec.numBits);
     }
@@ -151,7 +151,7 @@ int BitField::Elements::bitCount() const
 BitField::Ids BitField::Elements::ids() const
 {
     Ids ids;
-    foreach(Id id, d->elements.keys())
+    foreach (Id id, d->elements.keys())
     {
         ids.insert(id);
     }

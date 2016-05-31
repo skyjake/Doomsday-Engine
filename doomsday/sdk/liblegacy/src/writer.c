@@ -54,38 +54,38 @@ static dd_bool Writer_Check(Writer const *writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.
-    if(len) len++;
+    if (len) len++;
 #endif
 
     DENG_ASSERT(writer);
     DENG_ASSERT(writer->data || writer->useCustomFuncs);
 
-    if(!writer || (!writer->data && !writer->useCustomFuncs))
+    if (!writer || (!writer->data && !writer->useCustomFuncs))
         return false;
 
-    if(writer->useCustomFuncs)
+    if (writer->useCustomFuncs)
     {
         // Not our responsibility.
         return true;
     }
-    if((int)writer->pos > (int)writer->size - (int)len)
+    if ((int)writer->pos > (int)writer->size - (int)len)
     {
         // Dynamic buffers will expand.
-        if(writer->isDynamic && len)
+        if (writer->isDynamic && len)
         {
             Writer *modWriter = (Writer *) writer;
-            while((int)modWriter->size < (int)writer->pos + (int)len)
+            while ((int)modWriter->size < (int)writer->pos + (int)len)
             {
                 modWriter->size *= 2;
             }
-            if(writer->maxDynamicSize)
+            if (writer->maxDynamicSize)
             {
                 modWriter->size = MIN_OF(writer->maxDynamicSize, writer->size);
             }
             modWriter->data = M_Realloc(writer->data, writer->size);
 
             // OK now?
-            if((int)writer->pos <= (int)writer->size - (int)len)
+            if ((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
         App_Log(DE2_LOG_ERROR,
@@ -141,8 +141,8 @@ Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
 
 void Writer_Delete(Writer *writer)
 {
-    if(!writer) return;
-    if(writer->isDynamic)
+    if (!writer) return;
+    if (writer->isDynamic)
     {
         // The buffer was allocated by us.
         M_Free(writer->data);
@@ -152,13 +152,13 @@ void Writer_Delete(Writer *writer)
 
 size_t Writer_Size(Writer const *writer)
 {
-    if(!writer) return 0;
+    if (!writer) return 0;
     return writer->pos;
 }
 
 size_t Writer_TotalBufferSize(Writer const *writer)
 {
-    if(!writer) return 0;
+    if (!writer) return 0;
     return writer->size;
 }
 
@@ -169,7 +169,7 @@ size_t Writer_BytesLeft(Writer const *writer)
 
 byte const *Writer_Data(Writer const *writer)
 {
-    if(Writer_Check(writer, 0))
+    if (Writer_Check(writer, 0))
     {
         return writer->data;
     }
@@ -178,15 +178,15 @@ byte const *Writer_Data(Writer const *writer)
 
 void Writer_SetPos(Writer *writer, size_t newPos)
 {
-    if(!writer || writer->useCustomFuncs) return;
+    if (!writer || writer->useCustomFuncs) return;
     writer->pos = newPos;
     Writer_Check(writer, 0);
 }
 
 void Writer_WriteChar(Writer *writer, char v)
 {
-    if(!Writer_Check(writer, 1)) return;
-    if(!writer->useCustomFuncs)
+    if (!Writer_Check(writer, 1)) return;
+    if (!writer->useCustomFuncs)
     {
         Writer_TypeCheck(writer, WTCC_CHAR);
         ((int8_t *)writer->data)[writer->pos++] = v;
@@ -200,8 +200,8 @@ void Writer_WriteChar(Writer *writer, char v)
 
 void Writer_WriteByte(Writer *writer, byte v)
 {
-    if(!Writer_Check(writer, 1)) return;
-    if(!writer->useCustomFuncs)
+    if (!Writer_Check(writer, 1)) return;
+    if (!writer->useCustomFuncs)
     {
         Writer_TypeCheck(writer, WTCC_BYTE);
         writer->data[writer->pos++] = v;
@@ -215,9 +215,9 @@ void Writer_WriteByte(Writer *writer, byte v)
 
 void Writer_WriteInt16(Writer *writer, int16_t v)
 {
-    if(Writer_Check(writer, 2))
+    if (Writer_Check(writer, 2))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             int16_t foreign = LittleEndianByteOrder_ToForeignInt16(v);
             Writer_TypeCheck(writer, WTCC_INT16);
@@ -233,9 +233,9 @@ void Writer_WriteInt16(Writer *writer, int16_t v)
 
 void Writer_WriteUInt16(Writer *writer, uint16_t v)
 {
-    if(Writer_Check(writer, 2))
+    if (Writer_Check(writer, 2))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             uint16_t foreign = LittleEndianByteOrder_ToForeignUInt16(v);
             Writer_TypeCheck(writer, WTCC_UINT16);
@@ -251,9 +251,9 @@ void Writer_WriteUInt16(Writer *writer, uint16_t v)
 
 void Writer_WriteInt32(Writer *writer, int32_t v)
 {
-    if(Writer_Check(writer, 4))
+    if (Writer_Check(writer, 4))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             int32_t foreign = LittleEndianByteOrder_ToForeignInt32(v);
             Writer_TypeCheck(writer, WTCC_INT32);
@@ -269,9 +269,9 @@ void Writer_WriteInt32(Writer *writer, int32_t v)
 
 void Writer_WriteUInt32(Writer *writer, uint32_t v)
 {
-    if(Writer_Check(writer, 4))
+    if (Writer_Check(writer, 4))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             uint32_t foreign = LittleEndianByteOrder_ToForeignUInt32(v);
             Writer_TypeCheck(writer, WTCC_UINT32);
@@ -287,9 +287,9 @@ void Writer_WriteUInt32(Writer *writer, uint32_t v)
 
 void Writer_WriteFloat(Writer *writer, float v)
 {
-    if(Writer_Check(writer, 4))
+    if (Writer_Check(writer, 4))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             float foreign = LittleEndianByteOrder_ToForeignFloat(v);
             Writer_TypeCheck(writer, WTCC_FLOAT);
@@ -305,11 +305,11 @@ void Writer_WriteFloat(Writer *writer, float v)
 
 void Writer_Write(Writer *writer, void const *buffer, size_t len)
 {
-    if(!len) return;
+    if (!len) return;
 
-    if(Writer_Check(writer, len))
+    if (Writer_Check(writer, len))
     {
-        if(!writer->useCustomFuncs)
+        if (!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_BLOCK);
             Writer_WriteRaw(writer, buffer, len);
@@ -325,7 +325,7 @@ void Writer_Write(Writer *writer, void const *buffer, size_t len)
 void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
     DENG_ASSERT(!(v & 0x8000));
-    if(v & 0x8000)
+    if (v & 0x8000)
     {
         App_Log(DE2_LOG_ERROR,
             "Writer_WritePackedUInt16: Cannot write %i (%x).", v, v);
@@ -333,7 +333,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
     }
 
     // Can the number be represented with 7 bits?
-    if(v < 0x80)
+    if (v < 0x80)
     {
         Writer_WriteByte(writer, (dbyte) v);
     }
@@ -346,7 +346,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 
 void Writer_WritePackedUInt32(Writer *writer, uint32_t l)
 {
-    while(l >= 0x80)
+    while (l >= 0x80)
     {
         // Write the lowest 7 bits, and set the high bit to indicate that
         // at least one more byte will follow.

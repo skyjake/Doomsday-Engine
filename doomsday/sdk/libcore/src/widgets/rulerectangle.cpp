@@ -56,7 +56,7 @@ DENG2_PIMPL(RuleRectangle)
         zap(inputRules);
 
         // Create the output rules.
-        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        for (int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
             outputRules[i] = new IndirectRule;
         }
@@ -71,11 +71,11 @@ DENG2_PIMPL(RuleRectangle)
         releaseRef(_normalizedAnchorX);
         releaseRef(_normalizedAnchorY);
 
-        for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
+        for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
         {
             releaseRef(inputRules[i]);
         }
-        for(int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
+        for (int i = 0; i < int(MAX_OUTPUT_RULES); ++i)
         {
             outputRules[i]->unsetSource();
             releaseRef(outputRules[i]);
@@ -92,31 +92,31 @@ DENG2_PIMPL(RuleRectangle)
 
     AnimationRule *normalizedAnchorX()
     {
-        if(!_normalizedAnchorX) _normalizedAnchorX = new AnimationRule(0);
+        if (!_normalizedAnchorX) _normalizedAnchorX = new AnimationRule(0);
         return _normalizedAnchorX;
     }
 
     AnimationRule *normalizedAnchorY()
     {
-        if(!_normalizedAnchorY) _normalizedAnchorY = new AnimationRule(0);
+        if (!_normalizedAnchorY) _normalizedAnchorY = new AnimationRule(0);
         return _normalizedAnchorY;
     }
 
     Rule *midX()
     {
-        if(!_midX) _midX = holdRef(*outputRules[OutLeft] + *outputRules[OutWidth] / 2);
+        if (!_midX) _midX = holdRef(*outputRules[OutLeft] + *outputRules[OutWidth] / 2);
         return _midX;
     }
 
     Rule *midY()
     {
-        if(!_midY) _midY = holdRef(*outputRules[OutTop] + *outputRules[OutHeight] / 2);
+        if (!_midY) _midY = holdRef(*outputRules[OutTop] + *outputRules[OutHeight] / 2);
         return _midY;
     }
 
     inline Rule const &anchorPos(Rule::Semantic anchorInput)
     {
-        if(anchorInput == Rule::AnchorX)
+        if (anchorInput == Rule::AnchorX)
         {
             return *normalizedAnchorX();
         }
@@ -157,7 +157,7 @@ DENG2_PIMPL(RuleRectangle)
 
     void updateForChangedInput(Rule::Semantic input)
     {
-        if(isHorizontalInput(input))
+        if (isHorizontalInput(input))
         {
             updateHorizontalOutputs();
         }
@@ -193,28 +193,28 @@ DENG2_PIMPL(RuleRectangle)
         outputRules[maxOutput]  ->unsetSource();
         outputRules[deltaOutput]->unsetSource();
 
-        if(inputRules[deltaInput])
+        if (inputRules[deltaInput])
         {
             outputRules[deltaOutput]->setSource(*inputRules[deltaInput]);
 
             deltaDefined = true;
         }
 
-        if(inputRules[minInput])
+        if (inputRules[minInput])
         {
             outputRules[minOutput]->setSource(*inputRules[minInput]);
 
             minDefined = true;
         }
 
-        if(inputRules[maxInput])
+        if (inputRules[maxInput])
         {
             outputRules[maxOutput]->setSource(*inputRules[maxInput]);
 
             maxDefined = true;
         }
 
-        if(inputRules[anchorInput] && inputRules[deltaInput])
+        if (inputRules[anchorInput] && inputRules[deltaInput])
         {
             outputRules[minOutput]->setSource(*inputRules[anchorInput] -
                     anchorPos(anchorInput) * *inputRules[deltaInput]);
@@ -223,19 +223,19 @@ DENG2_PIMPL(RuleRectangle)
         }
 
         // Calculate missing information from the defined outputs.
-        if(deltaDefined && minDefined && !maxDefined)
+        if (deltaDefined && minDefined && !maxDefined)
         {
             outputRules[maxOutput]->setSource(*outputRules[minOutput] + *outputRules[deltaOutput]);
 
             maxDefined = true;
         }
-        if(deltaDefined && !minDefined && maxDefined)
+        if (deltaDefined && !minDefined && maxDefined)
         {
             outputRules[minOutput]->setSource(*outputRules[maxOutput] - *outputRules[deltaOutput]);
 
             minDefined = true;
         }
-        if(!deltaDefined && minDefined && maxDefined)
+        if (!deltaDefined && minDefined && maxDefined)
         {
             outputRules[deltaOutput]->setSource(*outputRules[maxOutput] - *outputRules[minOutput]);
 
@@ -318,9 +318,9 @@ RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
 
 RuleRectangle &RuleRectangle::setInputsFromRect(RuleRectangle const &rect)
 {
-    for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
+    for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {
-        if(rect.d->inputRules[i])
+        if (rect.d->inputRules[i])
         {
             setInput(Rule::Semantic(i), *rect.d->inputRules[i]);
         }
@@ -408,7 +408,7 @@ String RuleRectangle::description() const
 {
     String desc = QString("RuleRectangle '%1'").arg(d->debugName);
 
-    for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
+    for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {
         desc += String("\n - ") +
                 (i == Rule::Left? "Left" :
@@ -419,7 +419,7 @@ String RuleRectangle::description() const
                  i == Rule::Height? "Height" :
                  i == Rule::AnchorX? "AnchorX" : "AnchorY") + ": ";
 
-        if(d->inputRules[i])
+        if (d->inputRules[i])
         {
             desc += d->inputRules[i]->description();
         }

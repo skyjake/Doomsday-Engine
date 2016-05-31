@@ -99,7 +99,7 @@ Rectanglei QtNativeFont::nativeFontMeasure(String const &text) const
                              d->metrics->descent()));
 #endif
 
-    if(rect.height() == 0)
+    if (rect.height() == 0)
     {
         // It seems measuring the bounds of a Tab character produces
         // strange results (position 100000?).

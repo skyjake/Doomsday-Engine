@@ -77,10 +77,10 @@ DENG2_PIMPL(GLProgram)
 
     void alloc()
     {
-        if(!name)
+        if (!name)
         {
             name = glCreateProgram();
-            if(!name)
+            if (!name)
             {
                 throw AllocError("GLProgram::alloc", "Failed to create program");
             }
@@ -91,7 +91,7 @@ DENG2_PIMPL(GLProgram)
     {
         self.setState(NotReady);
         detachAllShaders();
-        if(name)
+        if (name)
         {
             glDeleteProgram(name);
             name = 0;
@@ -115,7 +115,7 @@ DENG2_PIMPL(GLProgram)
 
     void detach(GLShader const *shader)
     {
-        if(shader->isReady())
+        if (shader->isReady())
         {
             glDetachShader(name, shader->glName());
         }
@@ -125,7 +125,7 @@ DENG2_PIMPL(GLProgram)
 
     void detachAllShaders()
     {
-        foreach(GLShader const *shader, shaders)
+        foreach (GLShader const *shader, shaders)
         {
             detach(shader);
         }
@@ -134,7 +134,7 @@ DENG2_PIMPL(GLProgram)
 
     void unbindAll()
     {
-        for(GLUniform const *u : allBound)
+        for (GLUniform const *u : allBound)
         {
             u->audienceForValueChange() -= this;
             u->audienceForDeletion() -= this;
@@ -156,7 +156,7 @@ DENG2_PIMPL(GLProgram)
     {
         alloc();
 
-        if(!shaders.isEmpty())
+        if (!shaders.isEmpty())
         {
             link();
         }
@@ -187,13 +187,13 @@ DENG2_PIMPL(GLProgram)
         };
 
         // Clear the locations first.
-        for(uint i = 0; i < AttribSpec::NUM_SEMANTICS; ++i)
+        for (uint i = 0; i < AttribSpec::NUM_SEMANTICS; ++i)
         {
             attribLocation[i] = -1; // not in use
         }
 
         // Look up where the attributes ended up being linked.
-        for(uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
+        for (uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
             attribLocation[names[i].semantic] = glGetAttribLocation(name, names[i].varName);
         }
@@ -208,7 +208,7 @@ DENG2_PIMPL(GLProgram)
         // Was linking successful?
         GLint ok;
         glGetProgramiv(name, GL_LINK_STATUS, &ok);
-        if(!ok)
+        if (!ok)
         {
             dint32 logSize;
             dint32 count;
@@ -223,7 +223,7 @@ DENG2_PIMPL(GLProgram)
 
     void markAllBoundUniformsChanged()
     {
-        foreach(GLUniform const *u, active)
+        foreach (GLUniform const *u, active)
         {
             changed.insert(u);
         }
@@ -231,25 +231,25 @@ DENG2_PIMPL(GLProgram)
 
     void updateUniforms()
     {
-        if(changed.isEmpty()) return;
+        if (changed.isEmpty()) return;
 
         // Apply the uniform values in this program.
-        foreach(GLUniform const *u, changed)
+        foreach (GLUniform const *u, changed)
         {
             DENG2_ASSERT(active.contains(changed));
-            if(!u->isSampler())
+            if (!u->isSampler())
             {
                 u->applyInProgram(self);
             }
         }
 
-        if(texturesChanged)
+        if (texturesChanged)
         {
             // Update the sampler uniforms.
-            for(int unit = 0; unit < textures.size(); ++unit)
+            for (int unit = 0; unit < textures.size(); ++unit)
             {
                 int loc = self.glUniformLocation(textures[unit]->name());
-                if(loc >= 0)
+                if (loc >= 0)
                 {
                     glUniform1i(loc, unit);
                     LIBGUI_ASSERT_GL_OK();
@@ -264,10 +264,10 @@ DENG2_PIMPL(GLProgram)
     void bindTextures()
     {
         // Update the sampler uniforms.
-        for(int unit = textures.size() - 1; unit >= 0; --unit)
+        for (int unit = textures.size() - 1; unit >= 0; --unit)
         {
             GLTexture const *tex = *textures[unit];
-            if(tex)
+            if (tex)
             {
                 tex->glBindToUnit(unit);
             }
@@ -276,7 +276,7 @@ DENG2_PIMPL(GLProgram)
 
     void rebuild()
     {
-        if(name)
+        if (name)
         {
             glDeleteProgram(name);
             name = 0;
@@ -284,7 +284,7 @@ DENG2_PIMPL(GLProgram)
 
         alloc();
 
-        foreach(GLShader const *shader, shaders)
+        foreach (GLShader const *shader, shaders)
         {
             glAttachShader(name, shader->glName());
             LIBGUI_ASSERT_GL_OK();
@@ -296,7 +296,7 @@ DENG2_PIMPL(GLProgram)
 
     void uniformValueChanged(GLUniform &uniform)
     {
-        if(active.contains(&uniform))
+        if (active.contains(&uniform))
         {
             changed.insert(&uniform);
         }
@@ -314,7 +314,7 @@ DENG2_PIMPL(GLProgram)
         uniform->audienceForDeletion() += this;
 
         auto &stack = stacks[uniform->name()];
-        if(!stack.isEmpty())
+        if (!stack.isEmpty())
         {
             // The old binding is no longer active.
             active.remove(stack.top());
@@ -325,7 +325,7 @@ DENG2_PIMPL(GLProgram)
         active.insert(uniform);
         changed.insert(uniform);
 
-        if(uniform->isSampler())
+        if (uniform->isSampler())
         {
             textures << uniform;
             texturesChanged = true;
@@ -342,10 +342,10 @@ DENG2_PIMPL(GLProgram)
         changed.remove(uniform);
 
         auto &stack = stacks[uniform->name()];
-        if(stack.top() == uniform)
+        if (stack.top() == uniform)
         {
             stack.pop();
-            if(!stack.isEmpty())
+            if (!stack.isEmpty())
             {
                 // The new topmost binding becomes active.
                 active.insert(stack.top());
@@ -357,17 +357,17 @@ DENG2_PIMPL(GLProgram)
             // It might be deeper in the stack.
             //stack.removeAll(uniform); // added in Qt 5.4
             int found = stack.indexOf(uniform);
-            if(found >= 0)
+            if (found >= 0)
             {
                 stack.remove(found);
             }
         }
-        if(stack.isEmpty())
+        if (stack.isEmpty())
         {
             stacks.remove(uniform->name());
         }
 
-        if(uniform->isSampler())
+        if (uniform->isSampler())
         {
             textures.removeAll(uniform);
             texturesChanged = true;
@@ -427,11 +427,11 @@ GLProgram &GLProgram::operator << (GLUniform const &uniform)
 
 GLProgram &GLProgram::bind(GLUniform const &uniform)
 {
-    if(!d->allBound.contains(&uniform))
+    if (!d->allBound.contains(&uniform))
     {
         // If the program is already linked, we can check which uniforms it
         // actually has.
-        if(!isReady() || glHasUniform(uniform.name()))
+        if (!isReady() || glHasUniform(uniform.name()))
         {
             d->addBinding(&uniform);
         }
@@ -441,7 +441,7 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
 
 GLProgram &GLProgram::unbind(GLUniform const &uniform)
 {
-    if(d->allBound.contains(&uniform))
+    if (d->allBound.contains(&uniform))
     {
         d->removeBinding(&uniform);
     }
@@ -456,7 +456,7 @@ void GLProgram::beginUse() const
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
 
-    if(d->needRebuild)
+    if (d->needRebuild)
     {
         d->needRebuild = false;
         const_cast<GLProgram *>(this)->rebuild();

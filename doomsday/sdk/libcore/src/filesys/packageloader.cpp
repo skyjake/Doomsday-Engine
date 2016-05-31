@@ -54,7 +54,7 @@ DENG2_PIMPL(PackageLoader)
     bool isLoaded(File const &file) const
     {
         LoadedPackages::const_iterator found = loaded.constFind(Package::identifierForFile(file));
-        if(found != loaded.constEnd())
+        if (found != loaded.constEnd())
         {
             return &found.value()->file() == &file;
         }
@@ -63,10 +63,10 @@ DENG2_PIMPL(PackageLoader)
 
     static bool shouldIgnoreFile(File const &packageFile)
     {
-        if(Feed const *feed = packageFile.originFeed())
+        if (Feed const *feed = packageFile.originFeed())
         {
             // PackageFeed generates links to loaded packages.
-            if(feed->is<PackageFeed>()) return true;
+            if (feed->is<PackageFeed>()) return true;
         }
         return false;
     }
@@ -83,7 +83,7 @@ DENG2_PIMPL(PackageLoader)
 
         // The package may actually be inside other packages, so we need to check
         // each component of the package identifier.
-        for(int i = components.size() - 1; i >= 0; --i)
+        for (int i = components.size() - 1; i >= 0; --i)
         {
             id = components.at(i) + (!id.isEmpty()? "." + id : "");
 
@@ -95,7 +95,7 @@ DENG2_PIMPL(PackageLoader)
                                              id + ".pack", files);
 
             files.remove_if([&packageId] (File *file) {
-                if(shouldIgnoreFile(*file)) return true;
+                if (shouldIgnoreFile(*file)) return true;
                 return Package::identifierForFile(*file) != packageId;
             });
 
@@ -116,7 +116,7 @@ DENG2_PIMPL(PackageLoader)
     {
         Package::parseMetadata(packFile);
 
-        if(!packFile.objectNamespace().has(Package::VAR_PACKAGE))
+        if (!packFile.objectNamespace().has(Package::VAR_PACKAGE))
         {
             throw Package::ValidationError("PackageLoader::checkPackage",
                                            packFile.description() + " is not a package");
@@ -127,9 +127,9 @@ DENG2_PIMPL(PackageLoader)
 
     File const *selectPackage(IdentifierList const &idList) const
     {
-        for(auto const &id : idList.ids)
+        for (auto const &id : idList.ids)
         {
-            if(File const *f = selectPackage(id))
+            if (File const *f = selectPackage(id))
                 return f;
         }
         return nullptr;
@@ -149,7 +149,7 @@ DENG2_PIMPL(PackageLoader)
         LOG_AS("selectPackage");
 
         FS::FoundFiles found;
-        if(!findAllVariants(packageId, found))
+        if (!findAllVariants(packageId, found))
         {
             // None found.
             return nullptr;
@@ -163,14 +163,14 @@ DENG2_PIMPL(PackageLoader)
 
         // If the identifier includes a version, only accept that specific version.
         auto idVer = Package::split(packageId);
-        if(idVer.second.isValid())
+        if (idVer.second.isValid())
         {
             found.remove_if([&idVer] (File *f) {
                 Version const pkgVer = f->objectNamespace().gets("package.version");
                 return (pkgVer != idVer.second); // Ignore other versions.
             });
             // Did we run out of candidates?
-            if(found.empty()) return nullptr;
+            if (found.empty()) return nullptr;
         }
 
         // Sorted descending by version.
@@ -180,7 +180,7 @@ DENG2_PIMPL(PackageLoader)
             Version const aVer(a->objectNamespace().gets("package.version"));
             Version const bVer(b->objectNamespace().gets("package.version"));
 
-            if(aVer == bVer)
+            if (aVer == bVer)
             {
                 // Identifical versions are prioritized by modification time.
                 return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
@@ -195,7 +195,7 @@ DENG2_PIMPL(PackageLoader)
 
     Package &load(String const &packageId, File const &source)
     {
-        if(loaded.contains(packageId))
+        if (loaded.contains(packageId))
         {
             throw AlreadyLoadedError("PackageLoader::load",
                                      "Package '" + packageId + "' is already loaded from \"" +
@@ -216,7 +216,7 @@ DENG2_PIMPL(PackageLoader)
     bool unload(String identifier)
     {
         LoadedPackages::iterator found = loaded.find(identifier);
-        if(found == loaded.end()) return false;
+        if (found == loaded.end()) return false;
 
         Package *pkg = found.value();
         pkg->aboutToUnload();
@@ -228,11 +228,11 @@ DENG2_PIMPL(PackageLoader)
 
     void listPackagesInIndex(FileIndex const &index, StringList &list)
     {
-        for(auto i = index.begin(); i != index.end(); ++i)
+        for (auto i = index.begin(); i != index.end(); ++i)
         {
-            if(shouldIgnoreFile(*i->second)) continue;
+            if (shouldIgnoreFile(*i->second)) continue;
 
-            if(i->first.fileNameExtension() == ".pack")
+            if (i->first.fileNameExtension() == ".pack")
             {
                 try
                 {
@@ -240,24 +240,24 @@ DENG2_PIMPL(PackageLoader)
                     String path = file.path();
 
                     // The special persistent data package should be ignored.
-                    if(path == "/home/persist.pack") continue;
+                    if (path == "/home/persist.pack") continue;
 
                     // Check the metadata.
                     checkPackage(file);
 
                     list.append(path);
                 }
-                catch(Package::ValidationError const &er)
+                catch (Package::ValidationError const &er)
                 {
                     // Not a loadable package.
                     qDebug() << i->first << ": Package is invalid:" << er.asText();
                 }
-                catch(Parser::SyntaxError const &er)
+                catch (Parser::SyntaxError const &er)
                 {
                     LOG_RES_NOTE("\"%s\": Package has a Doomsday Script syntax error: %s")
                             << i->first << er.asText();
                 }
-                catch(Info::SyntaxError const &er)
+                catch (Info::SyntaxError const &er)
                 {
                     // Not a loadable package.
                     LOG_RES_NOTE("\"%s\": Package has a syntax error: %s")
@@ -272,9 +272,9 @@ DENG2_PIMPL(PackageLoader)
 
     void loadRequirements(File const &packageFile)
     {
-        for(String const &reqId : Package::requires(packageFile))
+        for (String const &reqId : Package::requires(packageFile))
         {
-            if(!self.isLoaded(reqId))
+            if (!self.isLoaded(reqId))
             {
                 self.load(reqId);
             }
@@ -308,7 +308,7 @@ Package const &PackageLoader::load(String const &packageId)
     LOG_AS("PackageLoader");
 
     File const *packFile = d->selectPackage(IdentifierList(packageId));
-    if(!packFile)
+    if (!packFile)
     {
         throw NotFoundError("PackageLoader::load",
                             "Package \"" + packageId + "\" is not available");
@@ -330,7 +330,7 @@ Package const &PackageLoader::load(String const &packageId)
             i->setOfLoadedPackagesChanged();
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         // Someone took issue with the loaded package; cancel the load.
         unload(id);
@@ -346,7 +346,7 @@ void PackageLoader::unload(String const &packageId)
 {
     String id = Package::split(packageId).first;
 
-    if(isLoaded(id))
+    if (isLoaded(id))
     {
         DENG2_FOR_AUDIENCE2(Unload, i)
         {
@@ -367,7 +367,7 @@ void PackageLoader::unloadAll()
     LOG_AS("PackageLoader");
     LOG_RES_MSG("Unloading %i packages") << d->loaded.size();
 
-    while(!d->loaded.isEmpty())
+    while (!d->loaded.isEmpty())
     {
         unload(d->loaded.begin().key());
     }
@@ -391,18 +391,18 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
     QMap<int, File const *> files; // sorted in package order
-    for(Package const *pkg : loadedPackages().values())
+    for (Package const *pkg : loadedPackages().values())
     {
         files.insert(pkg->order(), &pkg->sourceFile());
     }
     FS::FoundFiles sorted;
-    for(auto i : files) sorted.push_back(const_cast<File *>(i));
+    for (auto i : files) sorted.push_back(const_cast<File *>(i));
     return sorted;
 }
 
 Package const &PackageLoader::package(String const &packageId) const
 {
-    if(!isLoaded(packageId))
+    if (!isLoaded(packageId))
     {
         throw NotFoundError("PackageLoader::package", "Package '" + packageId + "' is not loaded");
     }
@@ -419,7 +419,7 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     {
         Package const *pkg = 0;
         String identifier = Package::identifierForContainerOfFile(**i);
-        if(isLoaded(identifier))
+        if (isLoaded(identifier))
         {
             pkg = &package(identifier);
         }
@@ -433,7 +433,7 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
 
     // Put the results back in the given array.
     filesToSort.clear();
-    foreach(FileAndOrder const &f, all)
+    foreach (FileAndOrder const &f, all)
     {
         filesToSort.push_back(f.first);
     }
@@ -443,17 +443,17 @@ void PackageLoader::loadFromCommandLine()
 {
     CommandLine &args = App::commandLine();
 
-    for(int p = 0; p < args.count(); )
+    for (int p = 0; p < args.count(); )
     {
         // Find all the -pkg options.
-        if(!args.matches("-pkg", args.at(p)))
+        if (!args.matches("-pkg", args.at(p)))
         {
             ++p;
             continue;
         }
 
         // Load all the specified packages (by identifier, not by path).
-        while(++p != args.count() && !args.isOption(p))
+        while (++p != args.count() && !args.isOption(p))
         {
             load(args.at(p));
         }
@@ -463,7 +463,7 @@ void PackageLoader::loadFromCommandLine()
 StringList PackageLoader::findAllPackages() const
 {
     StringList all;
-    for(QString typeName : QStringList({ DENG2_TYPE_NAME(Folder),
+    for (QString typeName : QStringList({ DENG2_TYPE_NAME(Folder),
                                          DENG2_TYPE_NAME(ArchiveFolder),
                                          DENG2_TYPE_NAME(LinkFile) }))
     {
@@ -475,7 +475,7 @@ StringList PackageLoader::findAllPackages() const
 PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
 {
     static QRegExp anySpace("\\s");
-    for(auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
+    for (auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
     {
         ids.append(qs);
     }

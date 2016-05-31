@@ -57,7 +57,7 @@ Rule const &IndirectRule::source() const
 
 String IndirectRule::description() const
 {
-    if(_source)
+    if (_source)
     {
         return source().description();
     }

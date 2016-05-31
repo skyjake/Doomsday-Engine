@@ -45,7 +45,7 @@ void Clock::setTime(Time const &currentTime)
 
     d->time = currentTime;
 
-    if(changed)
+    if (changed)
     {
         d->tickCount++;
 

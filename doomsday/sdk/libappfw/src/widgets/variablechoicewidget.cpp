@@ -39,7 +39,7 @@ DENG2_OBSERVES(Variable, Change  )
 
     ~Instance()
     {
-        if(var)
+        if (var)
         {
             var->audienceForDeletion() -= this;
             var->audienceForChange() -= this;
@@ -48,14 +48,14 @@ DENG2_OBSERVES(Variable, Change  )
 
     void updateFromVariable()
     {
-        if(!var) return;
+        if (!var) return;
 
         self.setSelected(self.items().findData(var->value().asNumber()));
     }
 
     void setVariableFromWidget()
     {
-        if(!var) return;
+        if (!var) return;
 
         var->audienceForChange() -= this;
         var->set(NumberValue(self.selectedItem().data().toDouble()));
@@ -83,7 +83,7 @@ VariableChoiceWidget::VariableChoiceWidget(Variable &variable, String const &nam
 
 Variable &VariableChoiceWidget::variable() const
 {
-    if(!d->var)
+    if (!d->var)
     {
         throw VariableMissingError("VariableChoiceWidget::variable",
                                    "Widget is not associated with a variable");

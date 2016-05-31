@@ -96,7 +96,7 @@ void VRConfig::setCurrentEye(Eye eye)
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
     d->eyeShift = d->mapUnitsPerMeter() * (eyePos - d->dominantEye) * 0.5 * d->ipd;
-    if(d->swapEyes)
+    if (d->swapEyes)
     {
         d->eyeShift *= -1;
     }
@@ -189,7 +189,7 @@ int VRConfig::riftFramebufferSampleCount() const
 
 float VRConfig::viewAspect(Vector2f const &viewPortSize) const
 {
-    /*if(mode() == OculusRift)
+    /*if (mode() == OculusRift)
     {
         // Override with the Oculus Rift's aspect ratio.
         return oculusRift().aspect();
@@ -204,7 +204,7 @@ float VRConfig::verticalFieldOfView(float horizFovDegrees, Vector2f const &viewP
     // We're assuming pixels are squares.
     float const aspect = viewAspect(viewPortSize);
 
-    if(mode() == OculusRift)
+    if (mode() == OculusRift)
     {
         // A little trigonometry to apply aspect ratio to angles
         float x = std::tan(.5f * degreeToRadian(horizFovDegrees));
@@ -218,7 +218,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
                                     Vector2f const &viewPortSize,
                                     float nearClip, float farClip) const
 {
-    if(mode() == OculusRift && oculusRift().isReady())
+    if (mode() == OculusRift && oculusRift().isReady())
     {
         // OVR will calculate our projection matrix.
         float const mapUnits = d->mapUnitsPerMeter();
@@ -240,7 +240,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
      * applies the viewpoint shift.
      */
     float shift = 0;
-    if(frustumShift())
+    if (frustumShift())
     {
         shift = eyeShift() * nearClip / screenDistance();
     }
@@ -263,7 +263,7 @@ OculusRift const &VRConfig::oculusRift() const
 
 bool VRConfig::modeAppliesDisplacement(StereoMode mode)
 {
-    switch(mode)
+    switch (mode)
     {
     case Mono:
     case GreenMagenta:

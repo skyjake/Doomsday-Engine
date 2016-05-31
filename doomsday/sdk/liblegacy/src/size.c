@@ -66,7 +66,7 @@ dd_bool Size2_IsNull(Size2 const *s)
 Size2Raw *Size2_Raw(Size2 const *s, Size2Raw *rawSize)
 {
     DENG_ASSERT(s);
-    if(!rawSize) return NULL;
+    if (!rawSize) return NULL;
     memcpy(rawSize, &s->raw, sizeof(*rawSize));
     return rawSize;
 }
@@ -156,7 +156,7 @@ dd_bool Size2f_IsNull(Size2f const *s)
 Size2Rawf *Size2f_Raw(Size2f const *s, Size2Rawf *rawSize)
 {
     DENG_ASSERT(s);
-    if(!rawSize) return NULL;
+    if (!rawSize) return NULL;
     memcpy(rawSize, &s->raw, sizeof(*rawSize));
     return rawSize;
 }

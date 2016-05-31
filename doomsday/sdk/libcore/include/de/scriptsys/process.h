@@ -54,7 +54,7 @@ struct DENG2_PUBLIC ScriptArgumentComposer
     ~ScriptArgumentComposer()
     {
         // Delete the argument variables that were created.
-        for(int i = 0; i < counter; ++i)
+        for (int i = 0; i < counter; ++i)
         {
             delete ns.remove(QStringLiteral("__arg%1__").arg(i));
         }
@@ -84,7 +84,7 @@ struct DENG2_PUBLIC ScriptArgumentComposer
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(QString const &arg)
 {
-    if(arg.startsWith("$")) // Verbatim?
+    if (arg.startsWith("$")) // Verbatim?
     {
         return arg.mid(1);
     }
@@ -108,7 +108,7 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
 {
-    if(!utf8) return ScriptLex::NONE;
+    if (!utf8) return ScriptLex::NONE;
     return scriptArgumentAsText(QString::fromUtf8(utf8));
 }
 
@@ -123,14 +123,14 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const &record
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
 {
-    if(!record) return ScriptLex::NONE;
+    if (!record) return ScriptLex::NONE;
     return scriptArgumentAsText(*record);
 }
 
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const * const &object)
 {
-    if(!object) return ScriptLex::NONE;
+    if (!object) return ScriptLex::NONE;
     return scriptArgumentAsText(object->objectNamespace());
 }
 
@@ -356,7 +356,7 @@ public:
         Process proc(&globals);
         proc.run(script);
         proc.execute();
-        if(result == IgnoreResult) return nullptr;
+        if (result == IgnoreResult) return nullptr;
         // Return the result using the request value type.
         return proc.context().evaluator().popResult();
     }

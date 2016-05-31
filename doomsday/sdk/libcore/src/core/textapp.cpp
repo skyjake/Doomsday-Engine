@@ -61,11 +61,11 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
     {
         return QCoreApplication::notify(receiver, event);
     }
-    catch(std::exception const &error)
+    catch (std::exception const &error)
     {
         handleUncaughtException(error.what());
     }
-    catch(...)
+    catch (...)
     {
         handleUncaughtException("de::TextApp caught exception of unknown type.");
     }

@@ -61,7 +61,7 @@ gameModes[] =
 QList<DoomsdayInfo::GameMode> DoomsdayInfo::allGameModes()
 {
     QList<GameMode> modes;
-    for(int i = 0; gameModes[i].name; ++i)
+    for (int i = 0; gameModes[i].name; ++i)
     {
         GameMode mod;
         mod.title  = gameModes[i].name;
@@ -73,9 +73,9 @@ QList<DoomsdayInfo::GameMode> DoomsdayInfo::allGameModes()
 
 String DoomsdayInfo::titleForGameMode(String const &mode)
 {
-    for(int i = 0; gameModes[i].name; ++i)
+    for (int i = 0; gameModes[i].name; ++i)
     {
-        if(gameModes[i].mode == mode)
+        if (gameModes[i].mode == mode)
             return gameModes[i].name;
     }
     return mode;

@@ -44,11 +44,11 @@ DENG2_PIMPL(ImageFile)
     {
         // Already got it?
         auto found = filtered.constFind(filter);
-        if(found != filtered.constEnd())
+        if (found != filtered.constEnd())
         {
             return found.value();
         }
-        if(filter == HeightMapToNormals || filter == Multiply)
+        if (filter == HeightMapToNormals || filter == Multiply)
         {
             ImageFile *sub = new ImageFile(filter, self);
             filtered.insert(filter, sub);
@@ -64,7 +64,7 @@ DENG2_PIMPL(ImageFile)
 
     static String filterTypeToText(BuiltInFilter filter)
     {
-        switch(filter)
+        switch (filter)
         {
         case HeightMapToNormals:
             return HEIGHTMAP_TO_NORMALS;
@@ -107,7 +107,7 @@ String ImageFile::describe() const
 {
     String desc = String("image \"%1\"").arg(d->filter == NoFilter?
                                              name() : d->filterSource().name());
-    switch(d->filter)
+    switch (d->filter)
     {
     case HeightMapToNormals:
         desc += " (filter: heightfield to normals)";
@@ -125,23 +125,23 @@ String ImageFile::describe() const
 
 Image ImageFile::image() const
 {
-    if(d->filter != NoFilter)
+    if (d->filter != NoFilter)
     {
         // Node parent is the source for the filter.
         Image img = d->filterSource().image();
-        if(d->filter == HeightMapToNormals)
+        if (d->filter == HeightMapToNormals)
         {
             HeightMap heightMap;
             heightMap.loadGrayscale(img);
             img = heightMap.makeNormalMap();
         }
-        else if(d->filter == Multiply)
+        else if (d->filter == Multiply)
         {
             String const refPath = d->filterSource().path().fileNamePath();
             Image factorImg = App::rootFolder().locate<ImageFile const>
                     (refPath / d->filterParameter).image();
 
-            if(img.size() != factorImg.size())
+            if (img.size() != factorImg.size())
             {
                 throw FilterError("ImageFile::image",
                                   String("Cannot multiply %1 and %2 due to different sizes")
@@ -168,11 +168,11 @@ IIStream const &ImageFile::operator >> (IByteArray &bytes) const
 
 filesys::Node const *ImageFile::tryGetChild(String const &name) const
 {
-    if(!name.compareWithoutCase(HEIGHTMAP_TO_NORMALS))
+    if (!name.compareWithoutCase(HEIGHTMAP_TO_NORMALS))
     {
         return d->makeOrGetFiltered(HeightMapToNormals);
     }
-    else if(name.startsWith(MULTIPLY, Qt::CaseInsensitive))
+    else if (name.startsWith(MULTIPLY, Qt::CaseInsensitive))
     {
         /// @bug Different filter parameters should be saved as unique ImageFiles,
         /// or otherwise the latest accessed parameter is in effect for all multiplied
@@ -181,7 +181,7 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
         filtered->d->filterParameter = name.substr(MULTIPLY.size());
         return filtered;
     }
-    else if(d->filter == Multiply)
+    else if (d->filter == Multiply)
     {
         // Append to filter parameter path.
         d->filterParameter = d->filterParameter / name;
@@ -192,7 +192,7 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
 
 File *ImageFile::Interpreter::interpretFile(File *sourceData) const
 {
-    if(Image::recognize(*sourceData))
+    if (Image::recognize(*sourceData))
     {
         LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
                                         << " as an image";

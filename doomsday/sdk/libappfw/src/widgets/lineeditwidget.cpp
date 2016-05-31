@@ -116,10 +116,10 @@ DENG_GUI_PIMPL(LineEditWidget)
     void updateBackground()
     {
         // If using a gradient frame, update parameters automatically.
-        if(self.background().type == Background::GradientFrame)
+        if (self.background().type == Background::GradientFrame)
         {
             Background bg;
-            if(!self.hasFocus())
+            if (!self.hasFocus())
             {
                 bg = Background(Background::GradientFrame, Vector4f(1, 1, 1, .15f + hovering * .2f), 6);
                 //style().colors().colorf("background"));
@@ -128,7 +128,7 @@ DENG_GUI_PIMPL(LineEditWidget)
             {
                 bg = Background(style().colors().colorf("background"), Background::GradientFrame,
                                 Vector4f(1, 1, 1, .25f + hovering * .3f), 6);
-                /*if(hovering > 0)
+                /*if (hovering > 0)
                 {
                     bg.type = Background::GradientFrame;
                     bg.thickness = 6;
@@ -174,11 +174,11 @@ DENG_GUI_PIMPL(LineEditWidget)
     {
         updateBackground();
 
-        if(composer.update()) self.requestGeometry();
+        if (composer.update()) self.requestGeometry();
 
         // Do we actually need to update geometry?
         Rectanglei pos;
-        if(!self.hasChangedPlace(pos) && !self.geometryRequested())
+        if (!self.hasChangedPlace(pos) && !self.geometryRequested())
         {
             return;
         }
@@ -204,14 +204,14 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     void updateHover(Vector2i const &pos)
     {
-        if(/*!self.hasFocus() && */ self.hitTest(pos))
+        if (/*!self.hasFocus() && */ self.hitTest(pos))
         {
-            if(hovering.target() < 1)
+            if (hovering.target() < 1)
             {
                 hovering.setValue(1, .15f);
             }
         }
-        else if(hovering.target() > 0)
+        else if (hovering.target() > 0)
         {
             hovering.setValue(0, .6f);
         }
@@ -246,9 +246,9 @@ void LineEditWidget::setText(String const &lineText)
 {
     shell::AbstractLineEditor::setText(lineText);
 
-    if(d->hint)
+    if (d->hint)
     {
-        if(d->showingHint())
+        if (d->showingHint())
         {
             d->hint->setOpacity(1, .5);
         }
@@ -261,7 +261,7 @@ void LineEditWidget::setText(String const &lineText)
 
 void LineEditWidget::setEmptyContentHint(String const &hintText)
 {
-    if(!d->hint)
+    if (!d->hint)
     {
         // A child widget will show the hint text.
         d->hint = new LabelWidget;
@@ -313,7 +313,7 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft, textColorf());
 
     // Underline the possible suggested completion.
-    if(isSuggestingCompletion())
+    if (isSuggestingCompletion())
     {
         Rangei const   comp     = completionRange();
         Vector2i const startPos = linePos(comp.start);
@@ -322,7 +322,7 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + toDevicePixels(2));
 
         // It may span multiple lines.
-        for(int i = startPos.y; i <= endPos.y; ++i)
+        for (int i = startPos.y; i <= endPos.y; ++i)
         {
             Rangei const span = d->wraps.line(i).range;
             Vector2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
@@ -351,7 +351,7 @@ void LineEditWidget::focusGained()
 {
     d->contentChanged();
 
-    if(d->hint)
+    if (d->hint)
     {
         d->hint->setOpacity(0);
     }
@@ -361,7 +361,7 @@ void LineEditWidget::focusLost()
 {
     d->contentChanged();
 
-    if(d->hint && d->showingHint())
+    if (d->hint && d->showingHint())
     {
         d->hint->setOpacity(1, 1, .5f);
     }
@@ -376,7 +376,7 @@ void LineEditWidget::update()
     // Rewrap content if necessary.
     updateLineWraps(WrapUnlessWrappedAlready);
 
-    if(d->firstUpdateAfterCreation)
+    if (d->firstUpdateAfterCreation)
     {
         // Don't animate height immediately after creation.
         d->firstUpdateAfterCreation = false;
@@ -391,7 +391,7 @@ void LineEditWidget::drawContent()
     // Blink the cursor.
     Vector4f col = style().colors().colorf("editor.cursor");
     col.w *= (int(d->blinkTime.since() * 2) & 1? .25f : 1.f) * opac;
-    if(!hasFocus())
+    if (!hasFocus())
     {
         col.w = 0;
     }
@@ -406,17 +406,17 @@ void LineEditWidget::drawContent()
 
 bool LineEditWidget::handleEvent(Event const &event)
 {
-    if(isDisabled()) return false;
+    if (isDisabled()) return false;
 
-    if(event.type() == Event::MousePosition)
+    if (event.type() == Event::MousePosition)
     {
         d->updateHover(event.as<MouseEvent>().pos());
     }
 
     // Only handle clicks when not already focused.
-    if(!hasFocus())
+    if (!hasFocus())
     {
-        switch(handleMouseClick(event))
+        switch (handleMouseClick(event))
         {
         case MouseClickStarted:
             return true;
@@ -431,44 +431,44 @@ bool LineEditWidget::handleEvent(Event const &event)
     }
 
     // Only handle keys when focused.
-    if(hasFocus() && event.isKeyDown())
+    if (hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(key.isModifier())
+        if (key.isModifier())
         {
             // Don't eat modifier keys; the bindings system needs them.
             return false;
         }
         /*
-        if(key.qtKey() == Qt::Key_Shift)
+        if (key.qtKey() == Qt::Key_Shift)
         {
             // Shift is not eaten so that Shift-Tilde can produce ~.
             // If we ate Shift, the bindings system would not realize it is down.
             return false;
         }
 
-        if(key.qtKey() == Qt::Key_Control || key.qtKey() == Qt::Key_Alt ||
+        if (key.qtKey() == Qt::Key_Control || key.qtKey() == Qt::Key_Alt ||
            key.qtKey() == Qt::Key_Meta)
         {
             // Modifier keys alone will be eaten when focused.
             return false;
         }*/
 
-        if(d->signalOnEnter && (key.qtKey() == Qt::Key_Enter || key.qtKey() == Qt::Key_Return))
+        if (d->signalOnEnter && (key.qtKey() == Qt::Key_Enter || key.qtKey() == Qt::Key_Return))
         {
             emit enterPressed(text());
             return true;
         }
 
         // Control character.
-        if(handleControlKey(key.qtKey(), modifiersFromKeyEvent(key.modifiers())))
+        if (handleControlKey(key.qtKey(), modifiersFromKeyEvent(key.modifiers())))
         {
             return true;
         }
 
         // Insert text?
-        if(!key.text().isEmpty() && key.text()[0].isPrint())
+        if (!key.text().isEmpty() && key.text()[0].isPrint())
         {
             // Insert some text into the editor.
             insert(key.text());
@@ -483,10 +483,10 @@ shell::AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(Ke
 {
     KeyModifiers mods;
 
-    if(keyMods.testFlag(KeyEvent::Shift))   mods |= Shift;
-    if(keyMods.testFlag(KeyEvent::Control)) mods |= Control;
-    if(keyMods.testFlag(KeyEvent::Alt))     mods |= Alt;
-    if(keyMods.testFlag(KeyEvent::Meta))    mods |= Meta;
+    if (keyMods.testFlag(KeyEvent::Shift))   mods |= Shift;
+    if (keyMods.testFlag(KeyEvent::Control)) mods |= Control;
+    if (keyMods.testFlag(KeyEvent::Alt))     mods |= Alt;
+    if (keyMods.testFlag(KeyEvent::Meta))    mods |= Meta;
 
     return mods;
 }
@@ -512,7 +512,7 @@ void LineEditWidget::contentChanged()
 {
     d->contentChanged();
 
-    if(hasRoot())
+    if (hasRoot())
     {
         updateLineWraps(WrapUnlessWrappedAlready);
     }

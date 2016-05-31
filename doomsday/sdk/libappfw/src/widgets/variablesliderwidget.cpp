@@ -39,7 +39,7 @@ DENG2_PIMPL(VariableSliderWidget)
 
     ~Instance()
     {
-        if(var)
+        if (var)
         {
             var->audienceForDeletion() -= this;
             var->audienceForChange() -= this;
@@ -55,9 +55,9 @@ DENG2_PIMPL(VariableSliderWidget)
 
     void updateFromVariable()
     {
-        if(!var) return;
+        if (!var) return;
 
-        switch(valueType)
+        switch (valueType)
         {
         case VariableSliderWidget::Number:
             self.setValue(var->value<NumberValue>().asNumber());
@@ -71,10 +71,10 @@ DENG2_PIMPL(VariableSliderWidget)
 
     void setVariableFromWidget()
     {
-        if(!var) return;
+        if (!var) return;
 
         var->audienceForChange() -= this;
-        switch(valueType)
+        switch (valueType)
         {
         case VariableSliderWidget::Number:
             var->set(NumberValue(self.value()));
@@ -104,7 +104,7 @@ VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &ran
     : SliderWidget(name)
     , d(new Instance(this, variable))
 {
-    if(!variable.value().is<NumberValue>())
+    if (!variable.value().is<NumberValue>())
     {
         d->valueType = VariableSliderWidget::Animation;
     }
@@ -125,7 +125,7 @@ VariableSliderWidget::VariableSliderWidget(ValueType valueType,
 
 Variable &VariableSliderWidget::variable() const
 {
-    if(!d->var)
+    if (!d->var)
     {
         throw VariableMissingError("VariableSliderWidget::variable",
                                    "Widget is not associated with a variable");

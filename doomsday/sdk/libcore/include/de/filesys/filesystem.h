@@ -244,11 +244,11 @@ public:
         FoundFiles found;
         // Filter out the wrong types.
         findAll(internal::cannotCastFileTo<Type>, path, found);
-        if(found.size() > 1) {
+        if (found.size() > 1) {
             /// @throw AmbiguousError  More than one file matches the conditions.
             throw AmbiguousError("FS::find", "More than one file found matching '" + path + "'");
         }
-        if(found.empty()) {
+        if (found.empty()) {
             /// @throw NotFoundError  No files found matching the condition.
             throw NotFoundError("FS::find", "No files found matching '" + path + "'");
         }

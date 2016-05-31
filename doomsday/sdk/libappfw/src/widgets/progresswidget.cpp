@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     void updateStyle()
     {
-        if(mini)
+        if (mini)
         {
             self.setImageColor(Vector4f());
         }
@@ -97,7 +97,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
         self.LabelWidget::glMakeGeometry(verts);
 
-        if(pos.done())
+        if (pos.done())
         {
             // Has the animation finished now?
             ++framesWhileAnimDone;
@@ -106,7 +106,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         // Draw the rotating indicator on the label's image.
         Rectanglef const tc = atlas().imageRectf(gearTex);
         float pos = 1;
-        if(mode != Indefinite)
+        if (mode != Indefinite)
         {
             pos = de::clamp(0.f, this->pos.value(), 1.f);
         }
@@ -123,7 +123,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         DefaultVertexBuf::Type v;
         v.rgba = style().colors().colorf(colorId) * Vector4f(1, 1, 1, mini? 1.f : 1.9f);
 
-        for(int i = 0; i <= edgeCount; ++i)
+        for (int i = 0; i <= edgeCount; ++i)
         {
             // Center vertex.
             v.pos = layout.image.middle();
@@ -152,7 +152,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         int const gap   = rule("unit").valuei();
         int totalWidth  = count * dotSize.x + (count - 1) * gap;
 
-        for(int i = 0; i < count; ++i)
+        for (int i = 0; i < count; ++i)
         {
             // Current progress determines the color of the dot.
             Vector4f dotColor = (float(i)/float(count) <= pos.value()? color : Vector4f(color, .166f));
@@ -242,7 +242,7 @@ void ProgressWidget::setMode(Mode progressMode)
 {
     DENG2_GUARD(d);
     d->mode = progressMode;
-    if(d->mode == Dots)
+    if (d->mode == Dots)
     {
         d->useDotStyle();
     }
@@ -272,31 +272,31 @@ void ProgressWidget::update()
 
     LabelWidget::update();
 
-    if(d->mode != Dots)
+    if (d->mode != Dots)
     {
         // Keep rotating the wheel.
         Time const now = Time();
-        if(!d->updateAt.isValid()) d->updateAt = now;
+        if (!d->updateAt.isValid()) d->updateAt = now;
         TimeDelta const elapsed = d->updateAt.since();
         d->updateAt = now;
 
         d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);
 
-        if(isVisible())
+        if (isVisible())
         {
             requestGeometry();
         }
     }
     else // Dots
     {
-        if(isVisible() && d->posChanging)
+        if (isVisible() && d->posChanging)
         {
             requestGeometry();
         }
     }
 
     // Has the position stopped changing?
-    if(d->posChanging && d->pos.done())
+    if (d->posChanging && d->pos.done())
     {
         d->posChanging = false;
     }
@@ -320,7 +320,7 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     DENG2_GUARD(d);
 
-    switch(d->mode)
+    switch (d->mode)
     {
     case Ranged:
     case Indefinite:

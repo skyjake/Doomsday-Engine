@@ -36,7 +36,7 @@ Guard::Guard(Lockable const *target) : _target(target), _rwTarget(0)
 
 Guard::Guard(ReadWriteLockable const &target, LockMode mode) : _target(0), _rwTarget(&target)
 {
-    if(mode == Reading)
+    if (mode == Reading)
     {
         _rwTarget->lockForRead();
     }
@@ -50,7 +50,7 @@ Guard::Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTa
 {
     DENG2_ASSERT(_rwTarget != 0);
 
-    if(mode == Reading)
+    if (mode == Reading)
     {
         _rwTarget->lockForRead();
     }
@@ -62,11 +62,11 @@ Guard::Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTa
 
 Guard::~Guard()
 {
-    if(_target)
+    if (_target)
     {
         _target->unlock();
     }
-    if(_rwTarget)
+    if (_rwTarget)
     {
         _rwTarget->unlock();
     }

@@ -140,14 +140,14 @@ DENG2_PIMPL(App)
     {
         packageLoader.audienceForActivity() -= this;
 
-        if(!errorSink.isNull())
+        if (!errorSink.isNull())
         {
             logBuffer.removeSink(*errorSink);
         }
 
         clock.audienceForTimeChange() -= self;
 
-        if(config)
+        if (config)
         {
             // Update the log filter in the persistent configuration.
             Record *filter = new Record;
@@ -179,7 +179,7 @@ DENG2_PIMPL(App)
         // directories into the appropriate places in the file system.
         // All of these are in read-only mode.
 
-        if(ZipArchive::recognize(self.nativeBasePath()))
+        if (ZipArchive::recognize(self.nativeBasePath()))
         {
             // As a special case, if the base path points to a resource pack,
             // use the contents of the pack as the root of the file system.
@@ -198,7 +198,7 @@ DENG2_PIMPL(App)
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
 
 #else // UNIX
-            if((self.nativeBasePath() / "data").exists())
+            if ((self.nativeBasePath() / "data").exists())
             {
                 fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
             }
@@ -207,13 +207,13 @@ DENG2_PIMPL(App)
                 fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
             }
 #endif
-            if(defaultNativeModulePath().exists())
+            if (defaultNativeModulePath().exists())
             {
                 fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
             }
         }
 
-        if(allowPlugins)
+        if (allowPlugins)
         {
             binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
         }
@@ -233,19 +233,19 @@ DENG2_PIMPL(App)
     void setLogLevelAccordingToOptions()
     {
         // Override the log message level.
-        if(cmdLine.has("-loglevel") || cmdLine.has("-verbose") || cmdLine.has("-v") ||
+        if (cmdLine.has("-loglevel") || cmdLine.has("-verbose") || cmdLine.has("-v") ||
            cmdLine.has("-vv") || cmdLine.has("-vvv"))
         {
             LogEntry::Level level = LogEntry::Message;
             try
             {
                 int pos;
-                if((pos = cmdLine.check("-loglevel", 1)) > 0)
+                if ((pos = cmdLine.check("-loglevel", 1)) > 0)
                 {
                     level = LogEntry::textToLevel(cmdLine.at(pos + 1));
                 }
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 qWarning("%s", er.asText().toLatin1().constData());
             }
@@ -257,7 +257,7 @@ DENG2_PIMPL(App)
                                     - cmdLine.has("-vv") * 2
                                     - cmdLine.has("-vvv") * 3);
 
-            if(level < LogEntry::XVerbose)
+            if (level < LogEntry::XVerbose)
             {
                 // Even more verbosity requested, so enable dev messages, too.
                 logFilter.setAllowDev(LogEntry::AllDomains, true);
@@ -268,11 +268,11 @@ DENG2_PIMPL(App)
         }
 
         // Enable developer messages across the board?
-        if(cmdLine.has("-devlog"))
+        if (cmdLine.has("-devlog"))
         {
             logFilter.setAllowDev(LogEntry::AllDomains, true);
         }
-        if(cmdLine.has("-nodevlog"))
+        if (cmdLine.has("-nodevlog"))
         {
             logFilter.setAllowDev(LogEntry::AllDomains, false);
         }
@@ -280,7 +280,7 @@ DENG2_PIMPL(App)
 
     void checkForErrorDumpFile()
     {
-        if(CommandLine::ArgWithParams arg = cmdLine.check("-errors", 1))
+        if (CommandLine::ArgWithParams arg = cmdLine.check("-errors", 1))
         {
             File &errors = self.rootFolder().replaceFile(Path("/home") / arg.params.at(0));
             errorSink.reset(new FileLogSink(errors));
@@ -299,11 +299,11 @@ DENG2_PIMPL(App)
     {
         // Access the package that has this asset via a link.
         Folder const *pkg = fs.root().tryLocate<Folder>("/packs/asset." + identifier + "/.");
-        if(!pkg) return 0;
+        if (!pkg) return 0;
 
         // Find the record that has this asset's metadata.
         String const ns = "package." + identifier;
-        if(pkg->objectNamespace().has(ns))
+        if (pkg->objectNamespace().has(ns))
         {
             return &(*pkg)[ns].valueAsRecord();
         }
@@ -330,7 +330,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     // be flushed (Config.log.file).
     d->logBuffer.enableFlushing(false);
 
-    if(d->cmdLine.has("-stdout"))
+    if (d->cmdLine.has("-stdout"))
     {
         // Standard output can be flushed straight away.
         d->logBuffer.enableStandardOutput(true);
@@ -348,7 +348,7 @@ App::App(NativePath const &appFilePath, QStringList args)
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
     // line argument. The working directory needs to be changed.
-    if(d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
+    if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
     {
         DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
     }
@@ -394,7 +394,7 @@ String App::unixHomeFolderName() const
 
 String App::unixEtcFolderName() const
 {
-    if(d->unixHomeFolder.startsWith("."))
+    if (d->unixHomeFolder.startsWith("."))
     {
         return d->unixHomeFolder.mid(1);
     }
@@ -410,16 +410,16 @@ void App::handleUncaughtException(String message)
 {
     LOG_CRITICAL(message);
 
-    if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
+    if (d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
 
 bool App::processEvent(Event const &ev)
 {
-    foreach(System *sys, d->systems)
+    foreach (System *sys, d->systems)
     {
-        if(sys->behavior() & System::ReceivesInputEvents)
+        if (sys->behavior() & System::ReceivesInputEvents)
         {
-            if(sys->processEvent(ev))
+            if (sys->processEvent(ev))
                 return true;
         }
     }
@@ -428,9 +428,9 @@ bool App::processEvent(Event const &ev)
 
 void App::timeChanged(Clock const &clock)
 {
-    foreach(System *sys, d->systems)
+    foreach (System *sys, d->systems)
     {
-        if(sys->behavior() & System::ObservesTime)
+        if (sys->behavior() & System::ObservesTime)
         {
             sys->timeChanged(clock);
         }
@@ -439,7 +439,7 @@ void App::timeChanged(Clock const &clock)
 
 bool App::inMainThread()
 {
-    if(!App::appExists())
+    if (!App::appExists())
     {
         // No app even created yet, must be main thread.
         return true;
@@ -449,9 +449,9 @@ bool App::inMainThread()
 
 NativePath App::nativePluginBinaryPath()
 {
-    if(!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
+    if (!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
 
-    if(auto const opt = d->cmdLine.check("-libdir", 1))
+    if (auto const opt = d->cmdLine.check("-libdir", 1))
     {
         d->cmdLine.makeAbsolutePath(opt.pos + 1);
         return (d->cachedPluginBinaryPath = d->cmdLine.at(opt.pos + 1));
@@ -465,7 +465,7 @@ NativePath App::nativePluginBinaryPath()
     path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
 # else
     path = DENG_LIBRARY_DIR;
-    if(!path.exists())
+    if (!path.exists())
     {
         // Try a fallback relative to the executable.
         path = d->appPath.fileNamePath() / "../lib/doomsday";
@@ -479,9 +479,9 @@ NativePath App::nativePluginBinaryPath()
 
 NativePath App::nativeHomePath()
 {
-    if(!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
+    if (!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
 
-    if(auto const opt = d->cmdLine.check("-userdir", 1))
+    if (auto const opt = d->cmdLine.check("-userdir", 1))
     {
         d->cmdLine.makeAbsolutePath(opt.pos + 1);
         return (d->cachedHomePath = d->cmdLine.at(opt.pos + 1));
@@ -503,7 +503,7 @@ NativePath App::nativeHomePath()
 Archive const &App::persistentData()
 {
     Archive const *persist = DENG2_APP->d->persistentData;
-    if(!persist)
+    if (!persist)
     {
         throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
     }
@@ -513,7 +513,7 @@ Archive const &App::persistentData()
 Archive &App::mutablePersistentData()
 {
     Archive *persist = DENG2_APP->d->persistentData;
-    if(!persist)
+    if (!persist)
     {
         throw PersistentDataNotAvailable("App::mutablePersistentData", "Persistent data is disabled");
     }
@@ -537,10 +537,10 @@ bool App::setCurrentWorkPath(NativePath const &cwd)
 
 NativePath App::nativeBasePath()
 {
-    if(!d->cachedBasePath.isEmpty()) return d->cachedBasePath;
+    if (!d->cachedBasePath.isEmpty()) return d->cachedBasePath;
 
     int i;
-    if((i = d->cmdLine.check("-basedir", 1)))
+    if ((i = d->cmdLine.check("-basedir", 1)))
     {
         d->cmdLine.makeAbsolutePath(i + 1);
         return (d->cachedBasePath = d->cmdLine.at(i + 1));
@@ -552,7 +552,7 @@ NativePath App::nativeBasePath()
 #else
 # ifdef MACOSX
     path = d->appPath.fileNamePath() / "../Resources";
-    if(!path.exists())
+    if (!path.exists())
     {
         // Try the built-in base directory (unbundled apps).
         path = DENG_BASE_DIR;
@@ -560,7 +560,7 @@ NativePath App::nativeBasePath()
 # else
     path = DENG_BASE_DIR;
 # endif
-    if(!path.exists())
+    if (!path.exists())
     {
         // Fall back to using the application binary path, which always exists.
         // We use this instead of the working directory because the basedir is
@@ -581,15 +581,15 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->initFileSystem(allowPlugins);
 
     // Load the init packages.
-    foreach(String pkg, d->packagesToLoadAtInit)
+    foreach (String pkg, d->packagesToLoadAtInit)
     {
         d->packageLoader.load(pkg);
     }
 
-    if(!flags.testFlag(DisablePersistentData))
+    if (!flags.testFlag(DisablePersistentData))
     {
         // Recreate the persistent state data package, if necessary.
-        if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
+        if (!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
             ZipArchive arch;
             arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
@@ -610,7 +610,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // Immediately after upgrading, OLD_VERSION is also present in the Version module.
     Version oldVer = d->config->upgradedFromVersion();
-    if(oldVer != Version())
+    if (oldVer != Version())
     {
         ArrayValue *old = new ArrayValue;
         *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
@@ -627,7 +627,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     try
     {
         // The -out option can be used to override the configured output file.
-        if(CommandLine::ArgWithParams outArg = commandLine().check("-out", 1))
+        if (CommandLine::ArgWithParams outArg = commandLine().check("-out", 1))
         {
             logBuf.setOutputFile(String("/home") / outArg.params.at(0));
         }
@@ -637,7 +637,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             logBuf.setOutputFile(d->config->gets("log.file"));
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
@@ -650,7 +650,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         // The level of enabled messages.
         d->logFilter.read(d->config->objectNamespace().subrecord("log.filter"));
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to apply log filter:\n" + er.asText());
     }
@@ -669,7 +669,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // Now we can start observing progress of time.
     d->clock.audienceForTimeChange() += this;
 
-    if(allowPlugins)
+    if (allowPlugins)
     {
 #if 0 // not yet handled by libcore
         // Load the basic plugins.
@@ -755,7 +755,7 @@ bool App::assetExists(String const &identifier)
 Package::Asset App::asset(String const &identifier)
 {
     Record const *info = DENG2_APP->d->findAsset(identifier);
-    if(!info)
+    if (!info)
     {
         throw AssetNotFoundError("App::asset", "Asset \"" + identifier +
                                  "\" does not exist");

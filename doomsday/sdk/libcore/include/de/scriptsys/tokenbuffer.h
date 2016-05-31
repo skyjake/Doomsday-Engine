@@ -88,7 +88,7 @@ public:
     /// Determines the length of the token.
     /// @return Length of the token as number of characters.
     int size() const {
-        if(!_begin || !_end) return 0;
+        if (!_begin || !_end) return 0;
         return int(_end - _begin);
     }
 
@@ -120,7 +120,7 @@ public:
     String str() const;
 
     static char const *typeToText(Type type) {
-        switch(type)
+        switch (type)
         {
         case UNKNOWN:
             return "UNKNOWN";

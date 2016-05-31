@@ -44,7 +44,7 @@ DENG2_PIMPL(Archive)
     {
         Entry const &entry = static_cast<Entry const &>(
                     index->find(path, PathTree::MatchFull | PathTree::NoBranch));
-        if(!entry.size)
+        if (!entry.size)
         {
             // Empty entry; nothing to do.
             deserializedData.clear();
@@ -52,7 +52,7 @@ DENG2_PIMPL(Archive)
         }
 
         // Do we already have a deserialized copy of this entry?
-        if(entry.data)
+        if (entry.data)
         {
             deserializedData.copyFrom(*entry.data, 0, entry.data->size());
             return;
@@ -80,21 +80,21 @@ IByteArray const *Archive::source() const
 
 void Archive::cache(CacheAttachment attach)
 {
-    if(!d->source)
+    if (!d->source)
     {
         // Nothing to read from.
         return;
     }
     PathTreeIterator<PathTree> iter(d->index->leafNodes());
-    while(iter.hasNext())
+    while (iter.hasNext())
     {
         Entry &entry = static_cast<Entry &>(iter.next());
-        if(!entry.data && !entry.dataInArchive)
+        if (!entry.data && !entry.dataInArchive)
         {
             entry.dataInArchive = new Block(*d->source, entry.offset, entry.sizeInArchive);
         }
     }
-    if(attach == DetachFromSource)
+    if (attach == DetachFromSource)
     {
         d->source = 0;
     }
@@ -114,10 +114,10 @@ dint Archive::listFiles(Archive::Names &names, Path const &folder) const
     names.clear();
 
     // Find the folder in the index.
-    if(PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
+    if (PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
         // Traverse the parent's nodes.
-        for(PathTreeIterator<PathTree> iter(parent->children().leaves); iter.hasNext(); )
+        for (PathTreeIterator<PathTree> iter(parent->children().leaves); iter.hasNext(); )
         {
             names.insert(iter.next().name());
         }
@@ -132,10 +132,10 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     names.clear();
 
     // Find the folder in the index.
-    if(PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
+    if (PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
         // Traverse the parent's nodes.
-        for(PathTreeIterator<PathTree> iter(parent->children().branches); iter.hasNext(); )
+        for (PathTreeIterator<PathTree> iter(parent->children().branches); iter.hasNext(); )
         {
             names.insert(iter.next().name());
         }
@@ -163,7 +163,7 @@ Block const &Archive::entryBlock(Path const &path) const
     {
         // We'll need to modify the entry.
         Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
-        if(entry.data)
+        if (entry.data)
         {
             // Got it.
             return *entry.data;
@@ -173,7 +173,7 @@ Block const &Archive::entryBlock(Path const &path) const
         entry.data = cached.release();
         return *entry.data;
     }
-    catch(PathTree::NotFoundError const &)
+    catch (PathTree::NotFoundError const &)
     {
         /// @throw NotFoundError Entry with @a path was not found.
         throw NotFoundError("Archive::entryBlock", String("'%1' not found").arg(path));
@@ -182,7 +182,7 @@ Block const &Archive::entryBlock(Path const &path) const
 
 Block &Archive::entryBlock(Path const &path)
 {
-    if(!hasEntry(path))
+    if (!hasEntry(path))
     {
         add(path, Block());
     }
@@ -201,7 +201,7 @@ Block &Archive::entryBlock(Path const &path)
 
 void Archive::add(Path const &path, IByteArray const &data)
 {
-    if(path.isEmpty())
+    if (path.isEmpty())
     {
         /// @throws InvalidPathError  Provided path was not a valid path.
         throw InvalidPathError("Archive::add",
@@ -227,7 +227,7 @@ void Archive::remove(Path const &path)
 {
     DENG2_ASSERT(d->index != 0);
 
-    if(d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch))
+    if (d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch))
     {
         d->modified = true;
     }

@@ -46,7 +46,7 @@ DENG2_PIMPL_NOREF(Writer)
         : convert(order), destination(0), stream(str), offset(0), fixedOffset(0)
     {
         destination = dynamic_cast<IByteArray *>(str);
-        if(destination)
+        if (destination)
         {
             // The object that implements the stream may also implement a byte
             // array interface -- that provides us more freedom to write, so
@@ -65,12 +65,12 @@ DENG2_PIMPL_NOREF(Writer)
 
     void write(IByteArray::Byte const *ptr, dsize size)
     {
-        if(destination)
+        if (destination)
         {
             destination->set(fixedOffset + offset, ptr, size);
             offset += size;
         }
-        else if(stream)
+        else if (stream)
         {
             *stream << ByteRefArray(ptr, size);
         }
@@ -261,7 +261,7 @@ IByteArray::Offset Writer::offset() const
 
 void Writer::setOffset(IByteArray::Offset offset)
 {
-    if(d->stream)
+    if (d->stream)
     {
         throw SeekError("Writer::setOffset", "Cannot change offset when writing to a stream");
     }
@@ -276,12 +276,12 @@ ByteOrder const &Writer::byteOrder() const
 
 void Writer::seek(dint count)
 {
-    if(d->stream)
+    if (d->stream)
     {
         throw SeekError("Writer::seek", "Cannot seek when writing to a stream");
     }
 
-    if(dint(d->fixedOffset + d->offset) + count < 0)
+    if (dint(d->fixedOffset + d->offset) + count < 0)
     {
         throw IByteArray::OffsetError("Writer::seek", "Seek past beginning of destination");
     }

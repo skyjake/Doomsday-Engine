@@ -62,7 +62,7 @@ public:
         at(0, 0) = at(1, 1) = at(2, 2) = Type(1);
     }
     Matrix3(SpecialMatrix specialType) {
-        switch(specialType) {
+        switch (specialType) {
         case Zero:
             data().clear();
             break;
@@ -119,16 +119,16 @@ public:
     // Math operations.
     Matrix3 operator * (Matrix3 const &right) const {
         Matrix3 result(Zero);
-        for(int i = 0; i < 3; ++i)
-            for(int j = 0; j < 3; ++j)
-                for(int k = 0; k < 3; ++k)
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                for (int k = 0; k < 3; ++k)
                     result.at(i, j) += at(i, k) * right.at(k, j);
         return result;
     }
     Vec3 operator * (Vec3 const &vector) const {
         Vec3 result;
-        for(int i = 0; i < 3; ++i)
-            for(int j = 0; j < 3; ++j)
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
                 result[i] += at(i, j) * vector[j];
         return result;
     }
@@ -142,8 +142,8 @@ public:
     }
     Matrix3 transpose() const {
         Matrix3 m(Uninitialized);
-        for(int i = 0; i < 3; ++i)
-            for(int j = 0; j < 3; ++j)
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
                 m.at(i, j) = at(j, i);
         return m;
     }
@@ -168,26 +168,26 @@ private:
 // Serialization of Matrix3.
 template <typename Type>
 inline Writer &operator << (Writer &to, Matrix3<Type> const &mat3) {
-    for(int i = 0; i < 9; ++i) to << mat3[i];
+    for (int i = 0; i < 9; ++i) to << mat3[i];
     return to;
 }
 
 template <typename Type>
 inline void operator << (Writer const &to, Matrix3<Type> const &mat3) {
     Writer w(to);
-    for(int i = 0; i < 9; ++i) w << mat3[i];
+    for (int i = 0; i < 9; ++i) w << mat3[i];
 }
 
 template <typename Type>
 inline Reader &operator >> (Reader &from, Matrix3<Type> &mat3) {
-    for(int i = 0; i < 9; ++i) from >> mat3[i];
+    for (int i = 0; i < 9; ++i) from >> mat3[i];
     return from;
 }
 
 template <typename Type>
 inline void operator >> (Reader const &from, Matrix3<Type> &mat3) {
     Reader r(from);
-    for(int i = 0; i < 9; ++i) r >> mat3[i];
+    for (int i = 0; i < 9; ++i) r >> mat3[i];
 }
 
 template <typename Type>
@@ -219,7 +219,7 @@ public:
         at(0, 0) = at(1, 1) = at(2, 2) = at(3, 3) = Type(1);
     }
     Matrix4(SpecialMatrix specialType) {
-        switch(specialType) {
+        switch (specialType) {
         case Zero:
             data().clear();
             break;
@@ -276,9 +276,9 @@ public:
     // Math operations.
     Matrix4 operator * (Matrix4 const &right) const {
         Matrix4 result(Zero);
-        for(int i = 0; i < 4; ++i)
-            for(int j = 0; j < 4; ++j)
-                for(int k = 0; k < 4; ++k)
+        for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 4; ++j)
+                for (int k = 0; k < 4; ++k)
                     result.at(i, j) += at(i, k) * right.at(k, j);
         return result;
     }
@@ -287,8 +287,8 @@ public:
     }
     Vec4 operator * (Vec4 const &vector) const {
         Vec4 result;
-        for(int i = 0; i < 4; ++i)
-            for(int j = 0; j < 4; ++j)
+        for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 4; ++j)
                 result[i] += at(i, j) * vector[j];
         return result;
     }
@@ -299,8 +299,8 @@ public:
     }
     Matrix4 transpose() const {
         Matrix4 m(Uninitialized);
-        for(int i = 0; i < 4; ++i)
-            for(int j = 0; j < 4; ++j)
+        for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 4; ++j)
                 m.at(i, j) = at(j, i);
         return m;
     }
@@ -438,7 +438,7 @@ public:
         Vec3 f = front;
         Vec3 s = f.cross(up);
         Vec3 u = s.cross(f);
-        if(mirrored) s = -s;
+        if (mirrored) s = -s;
         m[0]  =  s.x;
         m[1]  =  u.x;
         m[2]  = -f.x;
@@ -459,26 +459,26 @@ private:
 // Serialization of Matrix4.
 template <typename Type>
 inline Writer &operator << (Writer &to, Matrix4<Type> const &mat4) {
-    for(int i = 0; i < 16; ++i) to << mat4[i];
+    for (int i = 0; i < 16; ++i) to << mat4[i];
     return to;
 }
 
 template <typename Type>
 inline void operator << (Writer const &to, Matrix4<Type> const &mat4) {
     Writer w(to);
-    for(int i = 0; i < 16; ++i) w << mat4[i];
+    for (int i = 0; i < 16; ++i) w << mat4[i];
 }
 
 template <typename Type>
 inline Reader &operator >> (Reader &from, Matrix4<Type> &mat4) {
-    for(int i = 0; i < 16; ++i) from >> mat4[i];
+    for (int i = 0; i < 16; ++i) from >> mat4[i];
     return from;
 }
 
 template <typename Type>
 inline void operator >> (Reader const &from, Matrix4<Type> &mat4) {
     Reader r(from);
-    for(int i = 0; i < 16; ++i) r >> mat4[i];
+    for (int i = 0; i < 16; ++i) r >> mat4[i];
 }
 
 template <typename Type>

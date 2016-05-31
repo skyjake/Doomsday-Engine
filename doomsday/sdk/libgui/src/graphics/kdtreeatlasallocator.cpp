@@ -48,12 +48,12 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
 
     Node *treeInsert(Node *parent, Atlas::Size const &allocSize)
     {
-        if(!parent->isLeaf())
+        if (!parent->isLeaf())
         {
             Node *subTree;
 
             // Try to insert into the right subtree.
-            if((subTree = treeInsert(parent->rightPtr(), allocSize)) != 0)
+            if ((subTree = treeInsert(parent->rightPtr(), allocSize)) != 0)
                 return subTree;
 
             // Try to insert into the left subtree.
@@ -67,15 +67,15 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
         Partition pnode = parent->userData();
 
         // Is this leaf already in use?
-        if(!pnode.alloc.isNone())
+        if (!pnode.alloc.isNone())
             return 0;
 
         // Is this leaf big enough to hold the texture?
-        if(pnode.area.width() < allocSize.x || pnode.area.height() < allocSize.y)
+        if (pnode.area.width() < allocSize.x || pnode.area.height() < allocSize.y)
             return 0; // No, too small.
 
         // Is this leaf the exact size required?
-        if(pnode.area.size() == allocSize)
+        if (pnode.area.size() == allocSize)
             return parent;
 
         /*
@@ -86,7 +86,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
         Partition rnode, lnode;
 
         // Are we splitting horizontally or vertically?
-        if(pnode.area.width() - allocSize.x > pnode.area.height() - allocSize.y)
+        if (pnode.area.width() - allocSize.x > pnode.area.height() - allocSize.y)
         {
             // Horizontal split.
             rnode.area = Rectanglei(pnode.area.left(), pnode.area.top(),
@@ -128,7 +128,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
         // Margin is included only in the bottom/right edges.
         Atlas::Size const allocSize(size.x + margin, size.y + margin);
 
-        if(Node *inserted = treeInsert(&rootNode, allocSize))
+        if (Node *inserted = treeInsert(&rootNode, allocSize))
         {
             // Got it, give it a new Id.
             Partition part = inserted->userData();
@@ -150,7 +150,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
         EraseArgs *args = reinterpret_cast<EraseArgs *>(argsPtr);
 
         Partition part = node.userData();
-        if(part.alloc == args->id)
+        if (part.alloc == args->id)
         {
             part.alloc = Id::None;
             node.setUserData(part);
@@ -199,10 +199,10 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
          * Attempt to optimize space usage by placing the largest allocations
          * first.
          */
-        foreach(ContentSize const &iter, descending)
+        foreach (ContentSize const &iter, descending)
         {
             Rectanglei newRect;
-            if(allocate(optimalRoot, allocs[iter.id].size(), newRect, iter.id).isNone())
+            if (allocate(optimalRoot, allocs[iter.id].size(), newRect, iter.id).isNone())
             {
                 // Could not find a place for this any more.
                 return false;
@@ -242,7 +242,7 @@ Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
                                   Id const &knownId)
 {
     Id newId = d->allocate(d->root, size, rect, knownId);
-    if(newId.isNone())
+    if (newId.isNone())
     {
         // No large enough free space available.
         return 0;
@@ -268,7 +268,7 @@ int KdTreeAtlasAllocator::count() const
 Atlas::Ids KdTreeAtlasAllocator::ids() const
 {
     Atlas::Ids ids;
-    foreach(Id const &id, d->allocs.keys())
+    foreach (Id const &id, d->allocs.keys())
     {
         ids.insert(id);
     }

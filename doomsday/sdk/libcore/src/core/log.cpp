@@ -54,7 +54,7 @@ public:
     ~Logs() {
         DENG2_GUARD(this);
         // The logs are owned by the logs table.
-        for(auto log : *this) delete log.second;
+        for (auto log : *this) delete log.second;
     }
 };
 
@@ -78,7 +78,7 @@ LogEntry::Arg::~Arg()
 
 void LogEntry::Arg::clear()
 {
-    if(_type == StringArgument)
+    if (_type == StringArgument)
     {
         delete _data.stringValue;
         _data.stringValue = 0;
@@ -159,7 +159,7 @@ void LogEntry::Arg::setValue(String const &s)
 
 void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
 {
-    switch(arg.logEntryArgType())
+    switch (arg.logEntryArgType())
     {
     case IntegerArgument:
         setValue(arg.asInt64());
@@ -178,7 +178,7 @@ void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
 LogEntry::Arg &LogEntry::Arg::operator = (Arg const &other)
 {
     clear();
-    if(other._type == StringArgument)
+    if (other._type == StringArgument)
     {
         setValue(*other._data.stringValue); // deep copy
     }
@@ -192,11 +192,11 @@ LogEntry::Arg &LogEntry::Arg::operator = (Arg const &other)
 
 ddouble LogEntry::Arg::asNumber() const
 {
-    if(_type == IntegerArgument)
+    if (_type == IntegerArgument)
     {
         return ddouble(_data.intValue);
     }
-    else if(_type == FloatingPointArgument)
+    else if (_type == FloatingPointArgument)
     {
         return _data.floatValue;
     }
@@ -205,15 +205,15 @@ ddouble LogEntry::Arg::asNumber() const
 
 String LogEntry::Arg::asText() const
 {
-    if(_type == StringArgument)
+    if (_type == StringArgument)
     {
         return *_data.stringValue;
     }
-    else if(_type == IntegerArgument)
+    else if (_type == IntegerArgument)
     {
         return String::number(_data.intValue);
     }
-    else if(_type == FloatingPointArgument)
+    else if (_type == FloatingPointArgument)
     {
         return String::number(_data.floatValue);
     }
@@ -224,7 +224,7 @@ void LogEntry::Arg::operator >> (Writer &to) const
 {
     to << dbyte(_type);
 
-    switch(_type)
+    switch (_type)
     {
     case IntegerArgument:
         to << _data.intValue;
@@ -242,11 +242,11 @@ void LogEntry::Arg::operator >> (Writer &to) const
 
 void LogEntry::Arg::operator << (Reader &from)
 {
-    if(_type == StringArgument) delete _data.stringValue;
+    if (_type == StringArgument) delete _data.stringValue;
 
     from.readAs<dbyte>(_type);
 
-    switch(_type)
+    switch (_type)
     {
     case IntegerArgument:
         from >> _data.intValue;
@@ -266,7 +266,7 @@ void LogEntry::Arg::operator << (Reader &from)
 LogEntry::Arg *LogEntry::Arg::newFromPool()
 {
     Arg *arg = argPool.take();
-    if(arg) return arg;
+    if (arg) return arg;
     // Need a new one.
     return new LogEntry::Arg;
 }
@@ -288,7 +288,7 @@ LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, St
     , _disabled(false)
     , _args(args)
 {
-    if(!LogBuffer::get().isEnabled(metadata))
+    if (!LogBuffer::get().isEnabled(metadata))
     {
         _disabled = true;
     }
@@ -318,7 +318,7 @@ LogEntry::~LogEntry()
     DENG2_GUARD(this);
 
     // Put the arguments back to the shared pool.
-    for(Args::iterator i = _args.begin(); i != _args.end(); ++i)
+    for (Args::iterator i = _args.begin(); i != _args.end(); ++i)
     {
         Arg::returnToPool(*i);
     }
@@ -339,20 +339,20 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     QString result;
     QTextStream output(&result);
 
-    if(_defaultFlags & Simple)
+    if (_defaultFlags & Simple)
     {
         flags |= Simple;
     }
 
     // In simple mode, skip the metadata.
-    if(!flags.testFlag(Simple))
+    if (!flags.testFlag(Simple))
     {
         // Begin with the timestamp.
-        if(flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
+        if (flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
 
         output << _when.asText(Date::BuildNumberAndSecondsSinceStart) << " ";
 
-        if(!flags.testFlag(OmitDomain))
+        if (!flags.testFlag(OmitDomain))
         {
             QChar dc = (_metadata & Resource? 'R' :
                         _metadata & Map?      'M' :
@@ -361,15 +361,15 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                         _metadata & Audio?    'A' :
                         _metadata & Input?    'I' :
                         _metadata & Network?  'N' : ' ');
-            if(_metadata & Dev)
+            if (_metadata & Dev)
             {
-                if(dc != ' ')
+                if (dc != ' ')
                     dc = dc.toLower();
                 else
                     dc = '-'; // Generic developer message
             }
 
-            if(!flags.testFlag(Styled))
+            if (!flags.testFlag(Styled))
             {
                 output << dc;
             }
@@ -379,9 +379,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
             }
         }
 
-        if(!flags.testFlag(OmitLevel))
+        if (!flags.testFlag(OmitLevel))
         {
-            if(!flags.testFlag(Styled))
+            if (!flags.testFlag(Styled))
             {
                 char const *levelNames[] = {
                     "", // not used
@@ -418,9 +418,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
 
     // Section name.
-    if(!flags.testFlag(OmitSection) && !_section.empty())
+    if (!flags.testFlag(OmitSection) && !_section.empty())
     {
-        if(flags.testFlag(Styled))
+        if (flags.testFlag(Styled))
         {
             output << TEXT_MARK_INDENT
                    << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
@@ -430,7 +430,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 
         // Process the section: shortening and possible abbreviation.
         QString sect;
-        if(flags.testFlag(AbbreviateSection))
+        if (flags.testFlag(AbbreviateSection))
         {
             /*
              * We'll split the section into parts, and then abbreviate some of
@@ -440,18 +440,18 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
              */
             QStringList parts = _section.split(" > ");
             int len = 0;
-            while(!parts.isEmpty())
+            while (!parts.isEmpty())
             {
-                if(!sect.isEmpty())
+                if (!sect.isEmpty())
                 {
                     len += 3;
                     sect += " > ";
                 }
 
-                if(len + parts.first().size() >= shortenSection) break;
+                if (len + parts.first().size() >= shortenSection) break;
 
                 len += parts.first().size();
-                if(sect.isEmpty())
+                if (sect.isEmpty())
                 {
                     // Never abbreviate the first part.
                     sect += parts.first();
@@ -467,19 +467,19 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         }
         else
         {
-            if(shortenSection < _section.size())
+            if (shortenSection < _section.size())
             {
                 sect = _section.right(_section.size() - shortenSection);
             }
         }
 
-        if(flags.testFlag(SectionSameAsBefore))
+        if (flags.testFlag(SectionSameAsBefore))
         {
             int visibleSectLen = (!sect.isEmpty() && shortenSection? sect.size() : 0);
             int fillLen = de::max(shortenSection, _section.size()) - visibleSectLen;
-            if(fillLen > LINE_BREAKING_SECTION_LENGTH) fillLen = 2;
+            if (fillLen > LINE_BREAKING_SECTION_LENGTH) fillLen = 2;
             output << String(fillLen, QChar(' '));
-            if(visibleSectLen)
+            if (visibleSectLen)
             {
                 output << "[" << sect << "] ";
             }
@@ -496,7 +496,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         }
     }
 
-    if(flags.testFlag(Styled))
+    if (flags.testFlag(Styled))
     {
         output << TEXT_MARK_INDENT
                << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_MESSAGE :
@@ -505,7 +505,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
 
     // Message text with the arguments formatted.
-    if(_args.empty())
+    if (_args.empty())
     {
         output << _format; // Verbatim.
     }
@@ -533,14 +533,14 @@ void LogEntry::operator >> (Writer &to) const
 
 void LogEntry::operator << (Reader &from)
 {
-    foreach(Arg *a, _args) delete a;
+    foreach (Arg *a, _args) delete a;
     _args.clear();
 
     from >> _when
          >> _section
          >> _format;
 
-    if(from.version() >= DENG2_PROTOCOL_1_14_0_LogEntry_metadata)
+    if (from.version() >= DENG2_PROTOCOL_1_14_0_LogEntry_metadata)
     {
         // This version adds context information to the entry.
         from.readAs<duint32>(_metadata);
@@ -559,7 +559,7 @@ void LogEntry::operator << (Reader &from)
 
 QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)
 {
-    switch(arg.type())
+    switch (arg.type())
     {
     case LogEntry::Arg::IntegerArgument:
         stream << arg.intValue();
@@ -665,13 +665,13 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     // Staging done.
     d->currentEntryMedata = 0;
 
-    if(isInteractive())
+    if (isInteractive())
     {
         // Ensure the Interactive flag is set.
         metadata |= LogEntry::Interactive;
     }
 
-    if(!LogBuffer::get().isEnabled(metadata))
+    if (!LogBuffer::get().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
 
@@ -683,14 +683,14 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     String context;
     String latest;
     int depth = 0;
-    foreach(char const *i, d->sectionStack)
+    foreach (char const *i, d->sectionStack)
     {
-        if(i == latest)
+        if (i == latest)
         {
             // Don't repeat if it has the exact same name (due to recursive calls).
             continue;
         }
-        if(context.size())
+        if (context.size())
         {
             context += " > ";
         }
@@ -710,10 +710,10 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 
 static internal::Logs &theLogs()
 {
-    if(logsPtr.get()) return *logsPtr;
+    if (logsPtr.get()) return *logsPtr;
     static Lockable lock;
     DENG2_GUARD(lock);
-    if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
+    if (!logsPtr.get()) logsPtr.reset(new internal::Logs);
     return *logsPtr;
 }
 
@@ -726,7 +726,7 @@ Log &Log::threadLog()
     // Each thread has its own log.
     QThread *thread = QThread::currentThread();
     auto found = logs.find(thread);
-    if(found == logs.end())
+    if (found == logs.end())
     {
         // Create a new log.
         Log* theLog = new Log;
@@ -747,7 +747,7 @@ void Log::disposeThreadLog()
 
     QThread *thread = QThread::currentThread();
     auto found = logs.find(thread);
-    if(found != logs.end())
+    if (found != logs.end())
     {
         delete found->second;
         logs.erase(found);
@@ -757,7 +757,7 @@ void Log::disposeThreadLog()
 LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     : _metadata(metadata)
 {
-    if(!LogBuffer::appBufferExists())
+    if (!LogBuffer::appBufferExists())
     {
         _disabled = true;
     }
@@ -766,20 +766,20 @@ LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
         auto &log = LOG();
 
         // Automatically set the Generic domain.
-        if(!(_metadata & LogEntry::DomainMask))
+        if (!(_metadata & LogEntry::DomainMask))
         {
             _metadata |= LogEntry::Generic;
         }
 
         // Flag interactive messages.
-        if(log.isInteractive())
+        if (log.isInteractive())
         {
             _metadata |= LogEntry::Interactive;
         }
 
         _disabled = !LogBuffer::get().isEnabled(_metadata);
 
-        if(!_disabled)
+        if (!_disabled)
         {
             _format = format;
 
@@ -790,7 +790,7 @@ LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
 
 LogEntryStager::~LogEntryStager()
 {
-    if(!_disabled)
+    if (!_disabled)
     {
         // Ownership of the args is transferred to the LogEntry.
         LOG().enter(_metadata, _format, _args);

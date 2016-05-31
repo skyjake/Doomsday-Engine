@@ -40,14 +40,14 @@ void Waitable::wait() const
 
 void Waitable::wait(TimeDelta const &timeOut) const
 {
-    if(timeOut <= 0.0)
+    if (timeOut <= 0.0)
     {
         _semaphore.acquire();
     }
     else
     {
         // Wait until the resource becomes available.
-        if(!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
+        if (!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
         {
             /// @throw WaitError Failed to secure the resource due to an error.
             throw WaitError("Waitable::wait", "Timed out");

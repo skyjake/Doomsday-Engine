@@ -112,8 +112,8 @@ public:
 
     template <typename WidgetType>
     WidgetType *itemWidget(ui::DataPos itemPos) const {
-        if(itemPos < items().size()) {
-            if(auto *widget = organizer().itemWidget(items().at(itemPos))) {
+        if (itemPos < items().size()) {
+            if (auto *widget = organizer().itemWidget(items().at(itemPos))) {
                 return widget->maybeAs<WidgetType>();
             }
         }

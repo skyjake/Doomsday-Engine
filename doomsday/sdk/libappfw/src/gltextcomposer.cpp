@@ -63,9 +63,9 @@ DENG2_PIMPL(GLTextComposer)
 
     void releaseLines()
     {
-        if(atlas)
+        if (atlas)
         {
-            for(int i = 0; i < lines.size(); ++i)
+            for (int i = 0; i < lines.size(); ++i)
             {
                 releaseLine(i);
             }
@@ -75,11 +75,11 @@ DENG2_PIMPL(GLTextComposer)
 
     void releaseOutsideRange()
     {
-        if(!atlas) return;
+        if (!atlas) return;
 
-        for(int i = 0; i < lines.size(); ++i)
+        for (int i = 0; i < lines.size(); ++i)
         {
-            if(!isLineVisible(i))
+            if (!isLineVisible(i))
             {
                 releaseLine(i, ReleaseButKeepSegs);
             }
@@ -91,15 +91,15 @@ DENG2_PIMPL(GLTextComposer)
     void releaseLine(int index, ReleaseBehavior behavior = ReleaseFully)
     {
         Line &ln = lines[index];
-        for(int i = 0; i < ln.segs.size(); ++i)
+        for (int i = 0; i < ln.segs.size(); ++i)
         {
-            if(!ln.segs[i].id.isNone())
+            if (!ln.segs[i].id.isNone())
             {
                 atlas->release(ln.segs[i].id);
                 ln.segs[i].id = Id::None;
             }
         }
-        if(behavior == ReleaseFully)
+        if (behavior == ReleaseFully)
         {
             ln.segs.clear();
         }
@@ -117,26 +117,26 @@ DENG2_PIMPL(GLTextComposer)
 
     bool matchingSegments(int lineIndex, FontLineWrapping::LineInfo const &info) const
     {
-        if(info.segs.size() != lines[lineIndex].segs.size())
+        if (info.segs.size() != lines[lineIndex].segs.size())
         {
             //qDebug() << "line" << lineIndex << "number of segs changed";
             return false;
         }
-        for(int i = 0; i < info.segs.size(); ++i)
+        for (int i = 0; i < info.segs.size(); ++i)
         {
-            if(info.segs[i].range != lines[lineIndex].segs[i].range)
+            if (info.segs[i].range != lines[lineIndex].segs[i].range)
             {
                 // Range has changed.
                 //qDebug() << "line" << lineIndex << "seg" << i << "range change";
                 return false;
             }
-            if(segmentText(i, info) != lines[lineIndex].segs[i].text)
+            if (segmentText(i, info) != lines[lineIndex].segs[i].text)
             {
                 // Text has changed.
                 //qDebug() << "line" << lineIndex << "seg" << i << "text change";
                 return false;
             }
-            if(lines[lineIndex].segs[i].id.isNone() && info.segs[i].range.size() > 0)
+            if (lines[lineIndex].segs[i].id.isNone() && info.segs[i].range.size() > 0)
             {
                 // This segment has previously failed allocation.
                 //qDebug() << "line" << lineIndex << "seg" << i << "not alloced before, len" <<
@@ -151,14 +151,14 @@ DENG2_PIMPL(GLTextComposer)
     {
         bool changed = false;
 
-        for(int i = 0; i < wraps->height(); ++i)
+        for (int i = 0; i < wraps->height(); ++i)
         {
             FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
 
-            if(i < lines.size())
+            if (i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(/*!isLineVisible(i) ||*/ matchingSegments(i, info))
+                if (/*!isLineVisible(i) ||*/ matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -170,7 +170,7 @@ DENG2_PIMPL(GLTextComposer)
 
             changed = true;
 
-            if(i >= lines.size())
+            if (i >= lines.size())
             {
                 // Need another line.
                 lines << Line();
@@ -180,17 +180,17 @@ DENG2_PIMPL(GLTextComposer)
             DENG2_ASSERT(lines[i].segs.isEmpty());
 
             Line &line = lines[i];
-            for(int k = 0; k < info.segs.size(); ++k)
+            for (int k = 0; k < info.segs.size(); ++k)
             {
                 Line::Segment seg;
                 seg.range = info.segs[k].range;
                 seg.text = segmentText(k, info);
-                if(isLineVisible(i) && seg.range.size() > 0)
+                if (isLineVisible(i) && seg.range.size() > 0)
                 {
                     // The color is white unless a style is defined.
                     Vector4ub fgColor(255, 255, 255, 255);
 
-                    if(format.hasStyle())
+                    if (format.hasStyle())
                     {
                         fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
                     }
@@ -210,7 +210,7 @@ DENG2_PIMPL(GLTextComposer)
         }
 
         // Remove the excess lines.
-        while(lines.size() > wraps->height())
+        while (lines.size() > wraps->height())
         {
             releaseLine(lines.size() - 1);
             lines.removeLast();
@@ -224,13 +224,13 @@ DENG2_PIMPL(GLTextComposer)
 
     void updateLineLayout(Rangei const &lineRange)
     {
-        if(lineRange.isEmpty()) return;
+        if (lineRange.isEmpty()) return;
 
         Rangei current = lineRange;
         forever
         {
             int end = updateLineLayoutUntilUntabbed(current);
-            if(end == lineRange.end)
+            if (end == lineRange.end)
             {
                 break; // Whole range done.
             }
@@ -254,18 +254,18 @@ DENG2_PIMPL(GLTextComposer)
 
         // Find the highest tab in use and initialize seg widths.
         int highestTab = 0;
-        for(int i = lineRange.start; i < lineRange.end; ++i)
+        for (int i = lineRange.start; i < lineRange.end; ++i)
         {
             int lineStop = wraps->lineInfo(i).highestTabStop();
-            if(lineStop >= 0)
+            if (lineStop >= 0)
             {
                 // The range now includes at least one tabbed line.
                 includesTabbedLines = true;
             }
-            if(lineStop < 0)
+            if (lineStop < 0)
             {
                 // This is an untabbed line.
-                if(!includesTabbedLines)
+                if (!includesTabbedLines)
                 {
                     // We can do many untabbed lines in the range as long as
                     // there are no tabbed ones.
@@ -281,7 +281,7 @@ DENG2_PIMPL(GLTextComposer)
             highestTab = de::max(highestTab, lineStop);
 
             // Initialize the segments with indentation.
-            for(int k = 0; k < lines[i].segs.size(); ++k)
+            for (int k = 0; k < lines[i].segs.size(); ++k)
             {
                 lines[i].segs[k].width = wraps->lineInfo(i).segs[k].width;
             }
@@ -290,14 +290,14 @@ DENG2_PIMPL(GLTextComposer)
         DENG2_ASSERT(rangeEnd > lineRange.start);
 
         // Set segment X coordinates by stacking them left-to-right on each line.
-        for(int i = lineRange.start; i < rangeEnd; ++i)
+        for (int i = lineRange.start; i < rangeEnd; ++i)
         {
-            if(lines[i].segs.isEmpty() || i >= visibleLineRange.end)
+            if (lines[i].segs.isEmpty() || i >= visibleLineRange.end)
                 continue;
 
             lines[i].segs[0].x = wraps->lineInfo(i).indent;
 
-            for(int k = 1; k < lines[i].segs.size(); ++k)
+            for (int k = 1; k < lines[i].segs.size(); ++k)
             {
                 Instance::Line::Segment &seg = lines[i].segs[k];
                 seg.x = lines[i].segs[k - 1].right();
@@ -305,22 +305,22 @@ DENG2_PIMPL(GLTextComposer)
         }
 
         // Align each tab stop with other matching stops on the other lines.
-        for(int tab = 1; tab <= highestTab; ++tab)
+        for (int tab = 1; tab <= highestTab; ++tab)
         {
             int maxRight = 0;
 
             // Find the maximum right edge for this spot.
-            for(int i = lineRange.start; i < rangeEnd; ++i)
+            for (int i = lineRange.start; i < rangeEnd; ++i)
             {
-                if(i >= visibleLineRange.end) break;
+                if (i >= visibleLineRange.end) break;
 
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);                                               
 
                 DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
-                for(int k = 0; k < info.segs.size(); ++k)
+                for (int k = 0; k < info.segs.size(); ++k)
                 {
                     Instance::Line::Segment &seg = lines[i].segs[k];
-                    if(info.segs[k].tabStop >= 0 && info.segs[k].tabStop < tab)
+                    if (info.segs[k].tabStop >= 0 && info.segs[k].tabStop < tab)
                     {
                         maxRight = de::max(maxRight, seg.right());
                     }
@@ -328,16 +328,16 @@ DENG2_PIMPL(GLTextComposer)
             }
 
             // Move the segments to this position.
-            for(int i = lineRange.start; i < rangeEnd; ++i)
+            for (int i = lineRange.start; i < rangeEnd; ++i)
             {
-                if(i >= visibleLineRange.end) break;
+                if (i >= visibleLineRange.end) break;
 
                 int localRight = maxRight;
 
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
-                for(int k = 0; k < info.segs.size(); ++k)
+                for (int k = 0; k < info.segs.size(); ++k)
                 {
-                    if(info.segs[k].tabStop == tab)
+                    if (info.segs[k].tabStop == tab)
                     {
                         lines[i].segs[k].x = localRight;
                         localRight += info.segs[k].width;
@@ -372,7 +372,7 @@ void GLTextComposer::setAtlas(Atlas &atlas)
 
 void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 {
-    if(d->wraps != &wrappedLines)
+    if (d->wraps != &wrappedLines)
     {
         d->wraps = &wrappedLines;
         forceUpdate();
@@ -413,15 +413,15 @@ bool GLTextComposer::update()
     DENG2_ASSERT(d->wraps != 0);
 
     // If a font hasn't been defined, there isn't much to do.
-    if(!d->wraps->hasFont()) return false;
+    if (!d->wraps->hasFont()) return false;
 
-    if(d->font != &d->wraps->font())
+    if (d->font != &d->wraps->font())
     {
         d->font = &d->wraps->font();
         forceUpdate();
     }
 
-    if(d->needRedo)
+    if (d->needRedo)
     {
         d->releaseLines();
         d->needRedo = false;
@@ -451,7 +451,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
 {
-    if(!isReady()) return;
+    if (!isReady()) return;
 
     DENG2_ASSERT(d->wraps != 0);
     DENG2_ASSERT(d->font != 0);
@@ -467,19 +467,19 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     d->updateLineLayout(Rangei(0, d->lines.size()));
 
     // Compress lines to fit into the maximum allowed width.
-    for(int i = 0; i < d->lines.size(); ++i)
+    for (int i = 0; i < d->lines.size(); ++i)
     {
         Instance::Line &line = d->lines[i];
-        if(!d->isLineVisible(i) || line.segs.isEmpty()) continue;
+        if (!d->isLineVisible(i) || line.segs.isEmpty()) continue;
 
         /*
-        if(!d->wraps->lineInfo(i).segs.last().tabStop)
+        if (!d->wraps->lineInfo(i).segs.last().tabStop)
             continue;
             */
 
         Instance::Line::Segment &seg = line.segs.last();
         int const leeway = 3;
-        if(seg.right() > d->wraps->maximumWidth() + leeway)
+        if (seg.right() > d->wraps->maximumWidth() + leeway)
         {
             // Needs compressing (up to 10%).
             seg.compressed = true;
@@ -490,37 +490,37 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     d->maxGeneratedWidth = 0;
 
     // Generate vertices for each line.
-    for(int i = 0; i < d->wraps->height(); ++i)
+    for (int i = 0; i < d->wraps->height(); ++i)
     {
         Instance::Line const &line = d->lines[i];
 
-        if(d->isLineVisible(i))
+        if (d->isLineVisible(i))
         {
             FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
             Vector2f linePos = p;
 
-            for(int k = 0; k < info.segs.size(); ++k)
+            for (int k = 0; k < info.segs.size(); ++k)
             {
                 Instance::Line::Segment const &seg = line.segs[k];
 
                 // Empty lines are skipped.
-                if(seg.id.isNone()) continue;
+                if (seg.id.isNone()) continue;
 
                 Vector2ui size = d->atlas->imageRect(seg.id).size();
-                if(seg.compressed)
+                if (seg.compressed)
                 {
                     size.x = seg.width;
                 }
 
                 // Line alignment.
                 /// @todo How to center/right-align text that uses tab stops?
-                if(line.segs.size() == 1 && d->wraps->lineInfo(0).segs[0].tabStop < 0)
+                if (line.segs.size() == 1 && d->wraps->lineInfo(0).segs[0].tabStop < 0)
                 {
-                    if(lineAlign.testFlag(AlignRight))
+                    if (lineAlign.testFlag(AlignRight))
                     {
                         linePos.x += int(contentSize.x) - int(size.x);
                     }
-                    else if(!lineAlign.testFlag(AlignLeft))
+                    else if (!lineAlign.testFlag(AlignLeft))
                     {
                         linePos.x += (int(contentSize.x) - int(size.x)) / 2;
                     }

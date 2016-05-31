@@ -71,10 +71,10 @@
 
 #ifndef NDEBUG
 #  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
-    _er = glGetError(); if(_er != GL_NO_ERROR) { \
+    _er = glGetError(); if (_er != GL_NO_ERROR) { \
     LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x (%s)", __LINE__, _er, \
     LIBGUI_GL_ERROR_STR(_er)); LIBGUI_ASSERT_GL(!"OpenGL operation failed"); \
-    }} while(_er != GL_NO_ERROR);}
+    }} while (_er != GL_NO_ERROR);}
 #else
 #  define LIBGUI_ASSERT_GL_OK()
 #endif

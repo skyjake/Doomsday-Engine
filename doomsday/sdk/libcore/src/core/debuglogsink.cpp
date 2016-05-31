@@ -29,7 +29,7 @@ DebugLogSink::~DebugLogSink()
 LogSink &DebugLogSink::operator << (String const &plainText)
 {
     QByteArray utf8 = plainText.toUtf8();
-    if(_msgType == QtWarningMsg)
+    if (_msgType == QtWarningMsg)
         qWarning() << utf8.constData();
     else
         qDebug() << utf8.constData();

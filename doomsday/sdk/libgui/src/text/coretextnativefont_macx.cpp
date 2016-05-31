@@ -34,7 +34,7 @@ struct CoreTextFontCache : public Lockable
 
         Key(String const &n = "", dfloat s = 12.f) : name(n), size(s) {}
         bool operator < (Key const &other) const {
-            if(name == other.name) {
+            if (name == other.name) {
                 return size < other.size && !fequal(size, other.size);
             }
             return name < other.name;
@@ -52,7 +52,7 @@ struct CoreTextFontCache : public Lockable
     ~CoreTextFontCache()
     {
         clear();
-        if(_colorspace)
+        if (_colorspace)
         {
             CGColorSpaceRelease(_colorspace);
         }
@@ -60,7 +60,7 @@ struct CoreTextFontCache : public Lockable
 
     CGColorSpaceRef colorspace()
     {
-        if(!_colorspace)
+        if (!_colorspace)
         {
             _colorspace = CGColorSpaceCreateDeviceRGB();
         }
@@ -71,7 +71,7 @@ struct CoreTextFontCache : public Lockable
     {
         DENG2_GUARD(this);
 
-        foreach(CTFontRef ref, fonts.values())
+        foreach (CTFontRef ref, fonts.values())
         {
             CFRelease(ref);
         }
@@ -88,7 +88,7 @@ struct CoreTextFontCache : public Lockable
             DENG2_GUARD(this);
 
             Key const key(postScriptName, pointSize);
-            if(fonts.contains(key))
+            if (fonts.contains(key))
             {
                 // Already got it.
                 return fonts[key];
@@ -113,7 +113,7 @@ struct CoreTextFontCache : public Lockable
     {
         DENG2_FOR_EACH_CONST(Fonts, i, fonts)
         {
-            if(i.value() == font) return i.key().size;
+            if (i.value() == font) return i.key().size;
         }
         DENG2_ASSERT(!"Font not in cache");
         return 0;
@@ -123,10 +123,10 @@ struct CoreTextFontCache : public Lockable
     {
         DENG2_FOR_EACH_CONST(Fonts, i, fonts)
         {
-            if(i.value() == font)
+            if (i.value() == font)
             {
-                if(i.key().name.contains("Light")) return 25;
-                if(i.key().name.contains("Bold")) return 75;
+                if (i.key().name.contains("Light")) return 25;
+                if (i.key().name.contains("Bold")) return 75;
                 return 50;
             }
         }
@@ -185,7 +185,7 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     String applyTransformation(String const &str) const
     {
-        switch(xform)
+        switch (xform)
         {
         case Uppercase:
             return str.toUpper();
@@ -207,7 +207,7 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     void releaseLine()
     {
-        if(line)
+        if (line)
         {
             CFRelease(line);
             line = 0;
@@ -231,7 +231,7 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     void makeLine(String const &text, CGColorRef color = 0)
     {
-        if(lineText == text) return; // Already got it.
+        if (lineText == text) return; // Already got it.
 
         releaseLine();
         lineText = text;

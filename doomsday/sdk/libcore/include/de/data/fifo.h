@@ -48,7 +48,7 @@ public:
 
     virtual ~FIFO() {
         DENG2_GUARD(this);
-        for(typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i) {
+        for (typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i) {
             delete *i;
         }
     }
@@ -64,7 +64,7 @@ public:
      */
     void put(Type *object, PutMode mode = PutHead) {
         DENG2_GUARD(this);
-        if(mode == PutHead) {
+        if (mode == PutHead) {
             _objects.push_front(object);
         }
         else {
@@ -80,7 +80,7 @@ public:
      */
     Type *take() {
         DENG2_GUARD(this);
-        if(_objects.empty()) return NULL;
+        if (_objects.empty()) return NULL;
         Type *last = _objects.back();
         _objects.pop_back();
         return last;
@@ -94,7 +94,7 @@ public:
      */
     Type* tail() const {
         DENG2_GUARD(this);
-        if(_objects.empty()) return NULL;
+        if (_objects.empty()) return NULL;
         return _objects.back();
     }
 
@@ -108,7 +108,7 @@ public:
 
     void clear() {
         DENG2_GUARD(this);
-        while(!isEmpty()) delete take();
+        while (!isEmpty()) delete take();
     }
 
 private:

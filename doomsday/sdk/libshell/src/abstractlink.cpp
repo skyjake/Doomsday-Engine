@@ -45,7 +45,7 @@ DENG2_PIMPL(AbstractLink)
     ~Instance()
     {
         // Disconnection is implied since the link is being destroyed.
-        if(socket.get())
+        if (socket.get())
         {
             QObject::disconnect(socket.get(), SIGNAL(disconnected()), thisPublic, SLOT(socketDisconnected()));
         }
@@ -88,7 +88,7 @@ void AbstractLink::connectHost(Address const &address)
     connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     // Fallback to default port.
-    if(!d->peerAddress.port()) d->peerAddress.setPort(DEFAULT_PORT);
+    if (!d->peerAddress.port()) d->peerAddress.setPort(DEFAULT_PORT);
 
     d->socket->connect(d->peerAddress);
 
@@ -114,7 +114,7 @@ void AbstractLink::takeOver(Socket *openSocket)
 
 void AbstractLink::disconnect()
 {
-    if(d->status != Disconnected)
+    if (d->status != Disconnected)
     {
         DENG2_ASSERT(d->socket.get() != 0);
 
@@ -132,7 +132,7 @@ void AbstractLink::disconnect()
 
 Address AbstractLink::address() const
 {
-    if(d->socket->isOpen()) return d->socket->peerAddress();
+    if (d->socket->isOpen()) return d->socket->peerAddress();
     return d->peerAddress;
 }
 
@@ -148,11 +148,11 @@ Time AbstractLink::connectedAt() const
 
 Packet *AbstractLink::nextPacket()
 {
-    if(!d->socket->hasIncoming()) return 0;
+    if (!d->socket->hasIncoming()) return 0;
 
     std::unique_ptr<Message> data(d->socket->receive());
     Packet *packet = interpret(*data.get());
-    if(packet) packet->setFrom(data->address());
+    if (packet) packet->setFrom(data->address());
     return packet;
 }
 
@@ -179,9 +179,9 @@ void AbstractLink::socketDisconnected()
 {
     LOG_AS("AbstractLink");
 
-    if(d->status == Connecting)
+    if (d->status == Connecting)
     {
-        if(d->startedTryingAt.since() < d->timeout)
+        if (d->startedTryingAt.since() < d->timeout)
         {
             // Let's try again a bit later.
             QTimer::singleShot(500, d->socket.get(), SLOT(reconnect()));
@@ -191,7 +191,7 @@ void AbstractLink::socketDisconnected()
     }
     else
     {
-        if(!d->peerAddress.isNull())
+        if (!d->peerAddress.isNull())
         {
             LOG_NET_NOTE("Disconnected from %s") << d->peerAddress;
         }

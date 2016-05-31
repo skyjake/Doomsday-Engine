@@ -69,9 +69,9 @@ dsize TextValue::size() const
 bool TextValue::isTrue() const
 {
     // If there is at least one nonwhite character, this is considered a truth.
-    for(Text::const_iterator i = _value.begin(); i != _value.end(); ++i)
+    for (Text::const_iterator i = _value.begin(); i != _value.end(); ++i)
     {
-        if(!(*i).isSpace())
+        if (!(*i).isSpace())
             return true;
     }
     return false;
@@ -80,7 +80,7 @@ bool TextValue::isTrue() const
 dint TextValue::compare(Value const &value) const
 {
     TextValue const *other = dynamic_cast<TextValue const *>(&value);
-    if(other)
+    if (other)
     {
         return _value.compare(other->_value);
     }
@@ -90,7 +90,7 @@ dint TextValue::compare(Value const &value) const
 void TextValue::sum(Value const &value)
 {
     TextValue const *other = dynamic_cast<TextValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("TextValue::sum", "Value cannot be summed");
     }
@@ -101,14 +101,14 @@ void TextValue::sum(Value const &value)
 void TextValue::multiply(Value const &value)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
     }
 
     ddouble factor = other->asNumber();
 
-    if(factor <= 0)
+    if (factor <= 0)
     {
         _value.clear();
     }
@@ -116,7 +116,7 @@ void TextValue::multiply(Value const &value)
     {
         QString str;
         QTextStream os(&str);
-        while(factor-- > 1)
+        while (factor-- > 1)
         {
             os << _value;
         }
@@ -130,7 +130,7 @@ void TextValue::multiply(Value const &value)
 void TextValue::divide(Value const &value)
 {
     TextValue const *other = dynamic_cast<TextValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("TextValue::divide", "Text cannot be divided");
     }
@@ -142,9 +142,9 @@ void TextValue::modulo(Value const &value)
     list<Value const *> args;
 
     ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
-    if(array)
+    if (array)
     {
-        for(ArrayValue::Elements::const_iterator i = array->elements().begin();
+        for (ArrayValue::Elements::const_iterator i = array->elements().begin();
             i != array->elements().end(); ++i)
         {
             args.push_back(*i);
@@ -165,13 +165,13 @@ String TextValue::substitutePlaceholders(String const &pattern, const std::list<
     QTextStream out(&result);
     list<Value const *>::const_iterator arg = args.begin();
 
-    for(String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
+    for (String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
     {
         QChar ch = *i;
 
-        if(ch == '%')
+        if (ch == '%')
         {
-            if(arg == args.end())
+            if (arg == args.end())
             {
                 throw IllegalPatternError("TextValue::replacePlaceholders",
                     "Too few substitution values");
@@ -198,7 +198,7 @@ void TextValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != TEXT)
+    if (id != TEXT)
     {
         throw DeserializationError("TextValue::operator <<", "Invalid ID");
     }

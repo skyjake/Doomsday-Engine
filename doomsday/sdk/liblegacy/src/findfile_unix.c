@@ -46,7 +46,7 @@ static int nextfinddata(FindData *fd)
     char* fn, *last;
     struct stat st;
 
-    if((int)data->buf.gl_pathc <= data->pos)
+    if ((int)data->buf.gl_pathc <= data->pos)
     {
         // Nothing was found.
         return FIND_ERROR;
@@ -58,18 +58,18 @@ static int nextfinddata(FindData *fd)
 
     // Get the size of the file.
     fn = data->buf.gl_pathv[data->pos];
-    if(!stat(fn, &st))
+    if (!stat(fn, &st))
         fd->size = st.st_size;
     else
         fd->size = 0;
 
     // Is it a directory?
     last = fn + strlen(fn) - 1;
-    if(*last == '/')
+    if (*last == '/')
     {
         // Return the name of the last directory in the path.
         char* slash = last - 1;
-        while(*slash != '/' && slash > fn) --slash;
+        while (*slash != '/' && slash > fn) --slash;
         Str_Set(&fd->name, *slash == '/'? slash + 1 : slash);
         fd->attrib = A_SUBDIR;
     }
@@ -109,7 +109,7 @@ int FindFile_FindFirst(FindData *fd, char const *filename)
 
 int FindFile_FindNext(FindData *fd)
 {
-    if(!fd->finddata)
+    if (!fd->finddata)
         return FIND_ERROR;
     return nextfinddata(fd);
 }
@@ -135,16 +135,16 @@ static void resolvePath(char* path)
     char* end = path + strlen(path);
     char* prev = path; // Assume an absolute path.
 
-    for(; *ch; ch++)
+    for (; *ch; ch++)
     {
-        if(ch[0] == '/' && ch[1] == '.')
+        if (ch[0] == '/' && ch[1] == '.')
         {
-            if(ch[2] == '/')
+            if (ch[2] == '/')
             {
                 memmove(ch, ch + 2, end - ch - 1);
                 ch--;
             }
-            else if(ch[2] == '.' && ch[3] == '/')
+            else if (ch[2] == '.' && ch[3] == '/')
             {
                 memmove(prev, ch + 3, end - ch - 2);
                 // Must restart from the beginning.
@@ -153,7 +153,7 @@ static void resolvePath(char* path)
                 continue;
             }
         }
-        if(*ch == '/')
+        if (*ch == '/')
             prev = ch;
     }
     }
@@ -165,11 +165,11 @@ char* _fullpath(char* full, const char* original, int maxLen)
 
     // @todo Check for '~'.
 
-    if(original[0] != DIR_SEP_CHAR) // A relative path?
+    if (original[0] != DIR_SEP_CHAR) // A relative path?
     {
         /// @todo Check for ERANGE.
         cwd = getcwd(NULL, 0);
-        if(!cwd) Libdeng_BadAlloc();
+        if (!cwd) Libdeng_BadAlloc();
         buf = (char*) M_Malloc(strlen(cwd) + 1/*DIR_SEP_CHAR*/ + strlen(original) + 1);
         strcpy(buf, cwd);
         strcat(buf, DIR_SEP_STR);
@@ -199,10 +199,10 @@ static void strzncpy(char* dest, const char* src, int count)
     char* out = dest;
     const char* in = src;
 
-    while(count-- > 0)
+    while (count-- > 0)
     {
         *out++ = *in++;
-        if(!*in)
+        if (!*in)
             break;
     }
     *out = 0;
@@ -212,39 +212,39 @@ void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext)
 {
     char* lastPeriod, *lastSlash;
 
-    if(drive)
+    if (drive)
         strcpy(drive, ""); // There is never a drive letter.
 
     lastPeriod = strrchr(path, '.');
     lastSlash = strrchr(path, '/');
-    if(lastPeriod < lastSlash)
+    if (lastPeriod < lastSlash)
         lastPeriod = NULL;
 
-    if(dir)
+    if (dir)
     {
-        if(lastSlash)
+        if (lastSlash)
             strzncpy(dir, path, lastSlash - path + 1);
         else
             strcpy(dir, "");
     }
 
     // The name should not include the extension.
-    if(name)
+    if (name)
     {
-        if(lastSlash && lastPeriod)
+        if (lastSlash && lastPeriod)
             strzncpy(name, lastSlash + 1, lastPeriod - lastSlash - 1);
-        else if(lastSlash)
+        else if (lastSlash)
             strcpy(name, lastSlash + 1);
-        else if(lastPeriod)
+        else if (lastPeriod)
             strzncpy(name, path, lastPeriod - path);
         else
             strcpy(name, path);
     }
 
     // Last period gives us the extension.
-    if(ext)
+    if (ext)
     {
-        if(lastPeriod)
+        if (lastPeriod)
             strcpy(ext, lastPeriod);
         else
             strcpy(ext, "");

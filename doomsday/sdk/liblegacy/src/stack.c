@@ -38,27 +38,27 @@ ddstack_t *Stack_New(void)
 
 void Stack_Delete(ddstack_t *s)
 {
-    if(!s) return;
+    if (!s) return;
 
     // Clear the stack first.
-    while(Stack_Height(s) > 0)
+    while (Stack_Height(s) > 0)
     {
         Stack_Pop(s);
     }
 
-    if(s->data) M_Free(s->data);
+    if (s->data) M_Free(s->data);
     M_Free(s);
 }
 
 size_t Stack_Height(ddstack_t *s)
 {
-    if(!s) return 0;
+    if (!s) return 0;
     return s->height;
 }
 
 void Stack_Push(ddstack_t *s, void *data)
 {
-    if(!s) return;
+    if (!s) return;
 
     s->data = M_Realloc(s->data, sizeof(void *) * ++s->height);
     s->data[s->height-1] = data;
@@ -68,11 +68,11 @@ void *Stack_Pop(ddstack_t *s)
 {
     void *retVal;
 
-    if(!s) return NULL;
+    if (!s) return NULL;
 
     DENG_ASSERT(s->height > 0);
 
-    if(!s->height)
+    if (!s->height)
     {
         App_Log(DE2_LOG_DEBUG, "Stack::Pop: Underflow.");
         return NULL;

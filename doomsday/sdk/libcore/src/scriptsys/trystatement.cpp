@@ -38,7 +38,7 @@ void TryStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != TRY)
+    if (id != TRY)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

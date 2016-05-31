@@ -34,7 +34,7 @@ class Str {
 public:
     Str(char const *text = 0) {
         Str_InitStd(&str);
-        if(text) {
+        if (text) {
             Str_Set(&str, text);
         }
     }

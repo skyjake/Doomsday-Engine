@@ -106,7 +106,7 @@ public:
     static PacketType *constructFromBlock(Block const &block, char const *packetTypeIdentifier)
     {
         Reader from(block);
-        if(checkType(from, packetTypeIdentifier))
+        if (checkType(from, packetTypeIdentifier))
         {
             std::unique_ptr<PacketType> p(new PacketType);
             from >> *static_cast<IReadable *>(p.get());

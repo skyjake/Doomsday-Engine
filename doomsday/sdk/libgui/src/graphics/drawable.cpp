@@ -79,7 +79,7 @@ DENG2_PIMPL(Drawable)
     {
         Id next = 1;
         // Keys of a QMap are sorted in ascending order.
-        if(!buffers.isEmpty()) next = buffers.keys().back() + 1;
+        if (!buffers.isEmpty()) next = buffers.keys().back() + 1;
         return next;
     }
 
@@ -87,7 +87,7 @@ DENG2_PIMPL(Drawable)
     {
         Id next = 1;
         // Keys of a QMap are sorted in ascending order.
-        if(!programs.isEmpty()) next = programs.keys().back() + 1;
+        if (!programs.isEmpty()) next = programs.keys().back() + 1;
         return next;
     }
 
@@ -95,7 +95,7 @@ DENG2_PIMPL(Drawable)
     {
         Id next = 1;
         // Keys of a QMap are sorted in ascending order.
-        if(!states.isEmpty()) next = states.keys().back() + 1;
+        if (!states.isEmpty()) next = states.keys().back() + 1;
         return next;
     }
 
@@ -103,7 +103,7 @@ DENG2_PIMPL(Drawable)
     {
         DENG2_FOR_EACH(BufferConfigs, i, configs)
         {
-            if(i.value().program == src)
+            if (i.value().program == src)
             {
                 i.value().program = dest;
             }
@@ -114,7 +114,7 @@ DENG2_PIMPL(Drawable)
     {
         DENG2_FOR_EACH(BufferConfigs, i, configs)
         {
-            if(i.value().state == src)
+            if (i.value().state == src)
             {
                 i.value().state = dest;
             }
@@ -124,10 +124,10 @@ DENG2_PIMPL(Drawable)
     void removeName(Names &names, Id id)
     {
         QMutableMapIterator<String, Id> iter(names);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.value() == id)
+            if (iter.value() == id)
             {
                 iter.remove();
             }
@@ -185,7 +185,7 @@ Drawable::Id Drawable::bufferId(Name const &bufferName) const
 
 GLProgram &Drawable::program(Id id) const
 {
-    if(!id) return d->defaultProgram;
+    if (!id) return d->defaultProgram;
     DENG2_ASSERT(d->programs.contains(id));
     return *d->programs[id];
 }
@@ -308,7 +308,7 @@ Drawable::Id Drawable::addProgram(Name const &programName)
 {
     Id const id = d->nextProgramId();
     addProgram(id);
-    if(!programName.isEmpty())
+    if (!programName.isEmpty())
     {
         d->programNames.insert(programName, id);
     }
@@ -333,7 +333,7 @@ Drawable::Id Drawable::addState(Name const &stateName, GLState const &state)
 
 void Drawable::removeBuffer(Id id)
 {
-    if(d->buffers.contains(id))
+    if (d->buffers.contains(id))
     {
         remove(*d->buffers[id]);
         delete d->buffers.take(id);
@@ -343,7 +343,7 @@ void Drawable::removeBuffer(Id id)
 
 void Drawable::removeProgram(Id id)
 {
-    if(d->programs.contains(id))
+    if (d->programs.contains(id))
     {
         GLProgram *prog = d->programs[id];
         d->replaceProgram(prog, &d->defaultProgram);
@@ -354,7 +354,7 @@ void Drawable::removeProgram(Id id)
 
 void Drawable::removeState(Id id)
 {
-    if(d->programs.contains(id))
+    if (d->programs.contains(id))
     {
         GLState *st = d->states[id];
         d->replaceState(st, 0);
@@ -405,7 +405,7 @@ void Drawable::setProgram(Name const &bufferName, Name const &programName)
 
 void Drawable::setProgram(GLProgram &program)
 {
-    foreach(Id id, allBuffers())
+    foreach (Id id, allBuffers())
     {
         setProgram(id, program);
     }
@@ -438,7 +438,7 @@ void Drawable::setState(Name const &bufferName, Name const &stateName)
 
 void Drawable::setState(GLState &state)
 {
-    foreach(Id id, allBuffers())
+    foreach (Id id, allBuffers())
     {
         setState(id, state);
     }
@@ -461,7 +461,7 @@ void Drawable::unsetState(Name const &bufferName)
 
 void Drawable::unsetState()
 {
-    foreach(Id id, allBuffers())
+    foreach (Id id, allBuffers())
     {
         unsetState(id);
     }
@@ -470,7 +470,7 @@ void Drawable::unsetState()
 void Drawable::draw() const
 {
     // Ignore the draw request until everything is ready.
-    if(!isReady()) return;
+    if (!isReady()) return;
 
     GLProgram const *currentProgram = 0;
     GLState   const *currentState   = 0;
@@ -484,9 +484,9 @@ void Drawable::draw() const
 
         // Switch the program if necessary.
         GLProgram const &bufProg = programForBuffer(id);
-        if(currentProgram != &bufProg)
+        if (currentProgram != &bufProg)
         {
-            if(currentProgram) currentProgram->endUse();
+            if (currentProgram) currentProgram->endUse();
 
             currentProgram = &bufProg;
             currentProgram->beginUse();
@@ -494,12 +494,12 @@ void Drawable::draw() const
 
         // If a state has been defined, use it.
         GLState const *bufState = stateForBuffer(id);
-        if(bufState && currentState != bufState)
+        if (bufState && currentState != bufState)
         {
             currentState = bufState;
             currentState->apply();
         }
-        else if(!bufState && currentState != 0)
+        else if (!bufState && currentState != 0)
         {
             // Use the current state from the stack.
             currentState = 0;
@@ -511,11 +511,11 @@ void Drawable::draw() const
     }
 
     // Cleanup.
-    if(currentProgram)
+    if (currentProgram)
     {
         currentProgram->endUse();
     }
-    if(currentState)
+    if (currentState)
     {
         // We messed with the state; restore to what the stack says is current.
         GLState::current().apply();

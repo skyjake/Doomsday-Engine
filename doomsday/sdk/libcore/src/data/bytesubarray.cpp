@@ -41,7 +41,7 @@ void ByteSubArray::get(Offset at, Byte *values, Size count) const
 
 void ByteSubArray::set(Offset at, Byte const *values, Size count)
 {
-    if(!_mainArray)
+    if (!_mainArray)
     {
         /// @throw NonModifiableError @a mainArray is non-modifiable.
         throw NonModifiableError("ByteSubArray::set", "Array is non-modifiable.");

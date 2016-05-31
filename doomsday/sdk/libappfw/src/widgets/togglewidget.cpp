@@ -53,9 +53,9 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         bool update()
         {
-            if(_animating)
+            if (_animating)
             {
-                if(_pos.done()) _animating = false;
+                if (_pos.done()) _animating = false;
                 return true;
             }
             return false;
@@ -143,12 +143,12 @@ ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Insta
 
 void ToggleWidget::setToggleState(ToggleState state, bool notify)
 {
-    if(d->state != state)
+    if (d->state != state)
     {
         d->state = state;
         d->procImage->setState(state);
 
-        if(notify)
+        if (notify)
         {
             DENG2_FOR_AUDIENCE2(Toggle, i) i->toggleStateChanged(*this);
         }

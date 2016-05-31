@@ -40,7 +40,7 @@ void bamsInit(void)
     uint        i;
     float       fbta = (float) BAMS_TABLE_ACCURACY;
 
-    for(i = 0; i < BAMS_TABLE_ACCURACY; ++i)
+    for (i = 0; i < BAMS_TABLE_ACCURACY; ++i)
     {
         atantable[i] = RAD2BANG(atan(i / fbta));
     }
@@ -51,28 +51,28 @@ binangle_t bamsAtan2(int y, int x)
     binangle_t bang;
     INTEGER64 absy = y, absx = x;   // << TABLE_ACCURACY needs space.
 
-    if(!x && !y)
+    if (!x && !y)
         return BANG_0;          // Indeterminate.
 
     // Make sure the absolute values are absolute.
-    if(absy < 0)
+    if (absy < 0)
         absy = -absy;
-    if(absx < 0)
+    if (absx < 0)
         absx = -absx;
 
     // We'll first determine what the angle is in the first quadrant.
     // That's what the tables are for.
-    if(!absy)
+    if (!absy)
         bang = BANG_0;
-    else if(absy == absx)
+    else if (absy == absx)
         bang = BANG_45;
-    else if(!absx)
+    else if (!absx)
         bang = BANG_90;
     else
     {
         // The special cases didn't help. Use the tables.
         // absx and absy can't be zero here.
-        if(absy > absx)
+        if (absy > absx)
             bang =
                 BANG_90 -
                 atantable[(absx << BAMS_TABLE_ACCURACY_SHIFT) / absy];
@@ -82,11 +82,11 @@ binangle_t bamsAtan2(int y, int x)
 
     // Now we know the angle in the first quadrant. Let's look at the signs
     // and choose the right quadrant.
-    if(x < 0)                   // Flip horizontally?
+    if (x < 0)                   // Flip horizontally?
     {
         bang = BANG_180 - bang;
     }
-    if(y < 0)                   // Flip vertically?
+    if (y < 0)                   // Flip vertically?
     {
         // At the moment bang must be smaller than 180.
         bang = BANG_180 + BANG_180 - bang;

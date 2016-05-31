@@ -86,7 +86,7 @@ public:
 
         bool operator < (Char const &other) const
         {
-            if(ch.unicode() == other.ch.unicode())
+            if (ch.unicode() == other.ch.unicode())
             {
                 return (attribs & VisualAttributes) < (other.attribs & VisualAttributes);
             }
@@ -103,19 +103,19 @@ public:
         {
             bool changed = false;
 
-            if(ch != other.ch)
+            if (ch != other.ch)
             {
                 ch = other.ch;
                 changed = true;
             }
-            if((attribs & VisualAttributes) != (other.attribs & VisualAttributes))
+            if ((attribs & VisualAttributes) != (other.attribs & VisualAttributes))
             {
                 attribs &= ~VisualAttributes;
                 attribs |= (other.attribs & VisualAttributes);
                 changed = true;
             }
 
-            if(changed)
+            if (changed)
             {
                 attribs |= Dirty;
             }

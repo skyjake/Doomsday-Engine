@@ -52,7 +52,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
 
     DENG2_ASSERT(d->record != NULL);
 
-    if(!d->ownership.testFlag(OwnsRecord))
+    if (!d->ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
         d->record->audienceForDeletion() += this;
@@ -101,15 +101,15 @@ Record *RecordValue::record() const
 
 void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 {
-    if(record == d->record) return; // Got it already.
+    if (record == d->record) return; // Got it already.
 
-    if(hasOwnership())
+    if (hasOwnership())
     {
         DENG2_ASSERT(!d->record->audienceForDeletion().contains(this));
 
         delete d->record;
     }
-    else if(d->record)
+    else if (d->record)
     {
         DENG2_ASSERT(d->record->audienceForDeletion().contains(this));
 
@@ -120,7 +120,7 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
     d->ownership = ownership;
     setAccessedRecord(d->record);
 
-    if(d->record && !d->ownership.testFlag(OwnsRecord))
+    if (d->record && !d->ownership.testFlag(OwnsRecord))
     {
         // Since we don't own it, someone may delete the record.
         d->record->audienceForDeletion() += this;
@@ -130,7 +130,7 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 Record *RecordValue::takeRecord()
 {
     verify();
-    if(!hasOwnership())
+    if (!hasOwnership())
     {
         /// @throw OwnershipError Cannot give away ownership of a record that is not owned.
         throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
@@ -144,7 +144,7 @@ Record *RecordValue::takeRecord()
 
 void RecordValue::verify() const
 {
-    if(!d->record)
+    if (!d->record)
     {
         /// @throw NullError The value no longer points to a record.
         throw NullError("RecordValue::verify", "Value no longer references a record");
@@ -171,7 +171,7 @@ Value::Text RecordValue::typeId() const
 Value *RecordValue::duplicate() const
 {
     verify();
-    if(hasOwnership())
+    if (hasOwnership())
     {
         // Make a complete duplicate using a new record.
         return new RecordValue(new Record(*d->record), OwnsRecord);
@@ -205,7 +205,7 @@ void RecordValue::setElement(Value const &index, Value *elementValue)
 {
     // We're expecting text.
     TextValue const *text = dynamic_cast<TextValue const *>(&index);
-    if(!text)
+    if (!text)
     {
         throw IllegalIndexError("RecordValue::setElement",
                                 "Records must be indexed with text values");
@@ -217,12 +217,12 @@ Value *RecordValue::duplicateElement(Value const &value) const
 {
     // We're expecting text.
     TextValue const *text = dynamic_cast<TextValue const *>(&value);
-    if(!text)
+    if (!text)
     {
         throw IllegalIndexError("RecordValue::duplicateElement",
                                 "Records must be indexed with text values");
     }
-    if(dereference().hasMember(*text))
+    if (dereference().hasMember(*text))
     {
         return dereference()[*text].value().duplicateAsReference();
     }
@@ -234,7 +234,7 @@ bool RecordValue::contains(Value const &value) const
 {
     // We're expecting text.
     TextValue const *text = dynamic_cast<TextValue const *>(&value);
-    if(!text)
+    if (!text)
     {
         throw IllegalIndexError("RecordValue::contains",
                                 "Records must be indexed with text values");
@@ -250,7 +250,7 @@ bool RecordValue::isTrue() const
 dint RecordValue::compare(Value const &value) const
 {
     RecordValue const *recValue = dynamic_cast<RecordValue const *>(&value);
-    if(!recValue)
+    if (!recValue)
     {
         // Can't be the same.
         return cmp(reinterpret_cast<void const *>(this),
@@ -270,7 +270,7 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
     instance->record()->addSuperRecord(*d->record);
 
     // If there is an initializer method, call it now.
-    if(dereference().hasMember("__init__"))
+    if (dereference().hasMember("__init__"))
     {
         process.call(dereference().function("__init__"), arguments.as<ArrayValue>(),
                      instance->duplicateAsReference());
@@ -288,7 +288,7 @@ static duint8 const OWNS_RECORD = 0x1;
 void RecordValue::operator >> (Writer &to) const
 {
     duint8 flags = 0;
-    if(hasOwnership()) flags |= OWNS_RECORD;
+    if (hasOwnership()) flags |= OWNS_RECORD;
     to << SerialId(RECORD) << flags << dereference();
 }
 
@@ -296,7 +296,7 @@ void RecordValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != RECORD)
+    if (id != RECORD)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
@@ -313,7 +313,7 @@ void RecordValue::operator << (Reader &from)
 
 void RecordValue::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 {
-    if(!d->record) return; // Not associated with a record any more.
+    if (!d->record) return; // Not associated with a record any more.
 
     DENG2_ASSERT(d->record == &record);
     DENG2_ASSERT(!d->ownership.testFlag(OwnsRecord));

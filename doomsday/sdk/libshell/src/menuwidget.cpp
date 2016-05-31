@@ -86,7 +86,7 @@ DENG2_PIMPL(MenuWidget)
 
     void clear()
     {
-        foreach(Item i, items)
+        foreach (Item i, items)
         {
             self.removeAction(*i.action);
         }
@@ -98,13 +98,13 @@ DENG2_PIMPL(MenuWidget)
     {
         int cols = 0;
         int lines = (borderStyle == NoBorder? 0 : 2);
-        foreach(Item const &item, items)
+        foreach (Item const &item, items)
         {
             lines++;
-            if(item.separatorAfter) lines++;
+            if (item.separatorAfter) lines++;
 
             int w = item.action->label().size();
-            if(!item.shortcutLabel.isEmpty())
+            if (!item.shortcutLabel.isEmpty())
             {
                 w += 1 + item.shortcutLabel.size();
             }
@@ -125,7 +125,7 @@ DENG2_PIMPL(MenuWidget)
 MenuWidget::MenuWidget(Preset preset, String const &name)
     : TextWidget(name), d(new Instance(*this))
 {
-    switch(preset)
+    switch (preset)
     {
     case Popup:
         setBehavior(HandleEventsOnlyWhenFocused);
@@ -162,7 +162,7 @@ void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 
 void MenuWidget::appendSeparator()
 {
-    if(d->items.isEmpty()) return;
+    if (d->items.isEmpty()) return;
 
     d->items.last().separatorAfter = true;
     d->updateSize();
@@ -183,7 +183,7 @@ void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortc
 
 void MenuWidget::insertSeparator(int pos)
 {
-    if(pos < 0 || pos >= d->items.size()) return;
+    if (pos < 0 || pos >= d->items.size()) return;
 
     d->items[pos].separatorAfter = true;
     d->updateSize();
@@ -209,9 +209,9 @@ Action &MenuWidget::itemAction(int pos) const
 
 int MenuWidget::findLabel(String const &label) const
 {
-    for(int i = 0; i < d->items.size(); ++i)
+    for (int i = 0; i < d->items.size(); ++i)
     {
-        if(!d->items[i].action->label().compareWithoutCase(label))
+        if (!d->items[i].action->label().compareWithoutCase(label))
             return i;
     }
     return -1;
@@ -231,7 +231,7 @@ void MenuWidget::setCursor(int pos)
 void MenuWidget::setCursorByLabel(String const &label)
 {
     int idx = findLabel(label);
-    if(idx >= 0)
+    if (idx >= 0)
     {
         setCursor(idx);
     }
@@ -292,7 +292,7 @@ void MenuWidget::open()
 
 void MenuWidget::close()
 {
-    if(d->closable)
+    if (d->closable)
     {
         DENG2_ASSERT(hasRoot());
 
@@ -311,7 +311,7 @@ void MenuWidget::draw()
 
     int const border = (d->borderStyle == NoBorder? 0 : 1);
     int y = border;
-    for(int i = 0; i < d->items.size(); ++i)
+    for (int i = 0; i < d->items.size(); ++i)
     {
         Instance::Item const &item = d->items[i];
 
@@ -320,7 +320,7 @@ void MenuWidget::draw()
                                               d->selectionAttr : d->backgroundAttr);
 
         // Cursor.
-        if(d->cursor == i)
+        if (d->cursor == i)
         {
             buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
                      TextCanvas::Char(' ', itemAttr));
@@ -333,7 +333,7 @@ void MenuWidget::draw()
         buf.drawText(Vector2i(border + 3, y), item.action->label(),
                      itemAttr | (d->cursor == i? TextCanvas::Char::Bold : TextCanvas::Char::DefaultAttributes));
 
-        if(item.shortcutLabel)
+        if (item.shortcutLabel)
         {
             buf.drawText(Vector2i(buf.width() - 1 - border - item.shortcutLabel.size(), y),
                          item.shortcutLabel, itemAttr);
@@ -342,7 +342,7 @@ void MenuWidget::draw()
         y++;
 
         // Draw a separator.
-        if(item.separatorAfter)
+        if (item.separatorAfter)
         {
             buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
                      TextCanvas::Char('-', d->borderAttr));
@@ -350,7 +350,7 @@ void MenuWidget::draw()
         }
     }
 
-    if(d->borderStyle == LineBorder)
+    if (d->borderStyle == LineBorder)
     {
         // Draw a frame.
         buf.drawLineRect(buf.rect(), d->borderAttr);
@@ -361,21 +361,21 @@ void MenuWidget::draw()
 
 bool MenuWidget::handleEvent(Event const &event)
 {
-    if(!itemCount()) return false;
+    if (!itemCount()) return false;
 
-    if(event.type() != Event::KeyPress) return false;
+    if (event.type() != Event::KeyPress) return false;
 
     KeyEvent const &ev = event.as<KeyEvent>();
 
     // Check menu-related control keys.
-    if(ev.text().isEmpty())
+    if (ev.text().isEmpty())
     {
-        switch(ev.key())
+        switch (ev.key())
         {
         case Qt::Key_Up:
-            if(d->cursor == 0)
+            if (d->cursor == 0)
             {
-                if(!d->cycleCursor) break;
+                if (!d->cycleCursor) break;
                 d->cursor = itemCount() - 1;
             }
             else
@@ -386,9 +386,9 @@ bool MenuWidget::handleEvent(Event const &event)
             return true;
 
         case Qt::Key_Down:
-            if(d->cursor == itemCount() - 1)
+            if (d->cursor == itemCount() - 1)
             {
-                if(!d->cycleCursor) break;
+                if (!d->cycleCursor) break;
                 d->cursor = 0;
             }
             else
@@ -420,7 +420,7 @@ bool MenuWidget::handleEvent(Event const &event)
         }
     }
 
-    if(ev.text() == " ")
+    if (ev.text() == " ")
     {
         itemAction(d->cursor).trigger();
         close();
@@ -428,15 +428,15 @@ bool MenuWidget::handleEvent(Event const &event)
     }
 
     // Check registered actions (shortcuts), focus navigation.
-    if(TextWidget::handleEvent(event))
+    if (TextWidget::handleEvent(event))
     {
         close();
         return true;
     }
 
-    if(ev.text().isEmpty())
+    if (ev.text().isEmpty())
     {
-        if(d->closable)
+        if (d->closable)
         {
             // Any other control key closes the menu.
             close();
@@ -446,10 +446,10 @@ bool MenuWidget::handleEvent(Event const &event)
     else
     {
         // Look for an item that begins with the letter.
-        for(int i = 0; i < d->items.size(); ++i)
+        for (int i = 0; i < d->items.size(); ++i)
         {
             int idx = (d->cursor + i + 1) % d->items.size();
-            if(d->items[idx].action->label().startsWith(ev.text(), Qt::CaseInsensitive))
+            if (d->items[idx].action->label().startsWith(ev.text(), Qt::CaseInsensitive))
             {
                 setCursor(idx);
                 return true;

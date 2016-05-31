@@ -91,7 +91,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         wraps->wrapTextToWidth(text, de::max(1, self.maximumWidth()));
 
-        if(wraps->height() > 0)
+        if (wraps->height() > 0)
         {
             self.numberOfLinesChanged(wraps->height());
         }
@@ -109,11 +109,11 @@ DENG2_PIMPL(AbstractLineEditor)
     de::Vector2i linePos(int mark) const
     {
         de::Vector2i pos(mark);
-        for(pos.y = 0; pos.y < wraps->height(); ++pos.y)
+        for (pos.y = 0; pos.y < wraps->height(); ++pos.y)
         {
             WrappedLine span = lineSpan(pos.y);
-            if(!span.isFinal) span.range.end--;
-            if(mark >= span.range.start && mark <= span.range.end)
+            if (!span.isFinal) span.range.end--;
+            if (mark >= span.range.start && mark <= span.range.end)
             {
                 // Stop here. Mark is on this line.
                 break;
@@ -139,14 +139,14 @@ DENG2_PIMPL(AbstractLineEditor)
         int const destWidth = wraps->rangeWidth(Rangei(lineSpan(linePos.y).range.start, cursor));
 
         // Check for no room.
-        if(!linePos.y && lineOff < 0) return false;
-        if(linePos.y == wraps->height() - 1 && lineOff > 0) return false;
+        if (!linePos.y && lineOff < 0) return false;
+        if (linePos.y == wraps->height() - 1 && lineOff > 0) return false;
 
         // Move cursor onto the adjacent line.
         WrappedLine span = lineSpan(linePos.y + lineOff);
         cursor = wraps->indexAtWidth(span.range, destWidth);
-        if(!span.isFinal) span.range.end--;
-        if(cursor > span.range.end) cursor = span.range.end;
+        if (!span.isFinal) span.range.end--;
+        if (cursor > span.range.end) cursor = span.range.end;
 
         self.cursorMoved();
         return true;
@@ -162,10 +162,10 @@ DENG2_PIMPL(AbstractLineEditor)
 
     void doBackspace()
     {
-        if(rejectCompletion())
+        if (rejectCompletion())
             return;
 
-        if(!text.isEmpty() && cursor > 0)
+        if (!text.isEmpty() && cursor > 0)
         {
             text.remove(--cursor, 1);
             rewrapNow();
@@ -176,7 +176,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         rejectCompletion();
 
-        if(!text.isEmpty() && cursor > 0)
+        if (!text.isEmpty() && cursor > 0)
         {
             int to = wordJumpLeft(cursor);
             text.remove(to, cursor - to);
@@ -187,7 +187,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
     void doDelete()
     {
-        if(text.size() > cursor)
+        if (text.size() > cursor)
         {
             text.remove(cursor, 1);
             rewrapNow();
@@ -198,7 +198,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        if(cursor > 0)
+        if (cursor > 0)
         {
             --cursor;
             self.cursorMoved();
@@ -209,7 +209,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        if(cursor < text.size())
+        if (cursor < text.size())
         {
             ++cursor;
             self.cursorMoved();
@@ -221,13 +221,13 @@ DENG2_PIMPL(AbstractLineEditor)
         pos = de::min(pos, text.size() - 1);
 
         // First jump over any non-word chars.
-        while(pos > 0 && !text[pos].isLetterOrNumber()) pos--;
+        while (pos > 0 && !text[pos].isLetterOrNumber()) pos--;
 
         // At least move one character.
-        if(pos > 0) pos--;
+        if (pos > 0) pos--;
 
         // We're inside a word, jump to its beginning.
-        while(pos > 0 && text[pos - 1].isLetterOrNumber()) pos--;
+        while (pos > 0 && text[pos - 1].isLetterOrNumber()) pos--;
 
         return pos;
     }
@@ -246,13 +246,13 @@ DENG2_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         // If inside a word, jump to its end.
-        while(cursor <= last && text[de::min(last, cursor)].isLetterOrNumber())
+        while (cursor <= last && text[de::min(last, cursor)].isLetterOrNumber())
         {
             cursor++;
         }
 
         // Jump over any non-word chars.
-        while(cursor <= last && !text[de::min(last, cursor)].isLetterOrNumber())
+        while (cursor <= last && !text[de::min(last, cursor)].isLetterOrNumber())
         {
             cursor++;
         }
@@ -293,7 +293,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         String word;
         int i = pos - 1;
-        while(i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
+        while (i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
         return word;
     }
 
@@ -310,19 +310,19 @@ DENG2_PIMPL(AbstractLineEditor)
         bool first = true;
         QStringList sugs;
 
-        foreach(String term, lexicon.terms())
+        foreach (String term, lexicon.terms())
         {
-            if(term.startsWith(base, sensitivity) && term.size() > base.size())
+            if (term.startsWith(base, sensitivity) && term.size() > base.size())
             {
                 sugs << term;
 
                 // Determine if all the suggestions have a common prefix.
-                if(first)
+                if (first)
                 {
                     commonPrefix = term;
                     first = false;
                 }
-                else if(!commonPrefix.isEmpty())
+                else if (!commonPrefix.isEmpty())
                 {
                     int len = commonPrefix.commonPrefixLength(term, sensitivity);
                     commonPrefix = commonPrefix.left(len);
@@ -335,16 +335,16 @@ DENG2_PIMPL(AbstractLineEditor)
 
     bool doCompletion(bool forwardCycle)
     {
-        if(!suggestingCompletion())
+        if (!suggestingCompletion())
         {
             completionNotified = false;
             String const base = wordBehindCursor();
-            if(!base.isEmpty())
+            if (!base.isEmpty())
             {
                 // Find all the possible completions and apply the first one.
                 String commonPrefix;
                 suggestions = completionsForBase(base, commonPrefix);
-                if(!commonPrefix.isEmpty() && commonPrefix != base)
+                if (!commonPrefix.isEmpty() && commonPrefix != base)
                 {
                     // Insert the common prefix.
                     completion.ordinal = -1;
@@ -357,7 +357,7 @@ DENG2_PIMPL(AbstractLineEditor)
                     suggesting = true;
                     return true;
                 }
-                if(!suggestions.isEmpty())
+                if (!suggestions.isEmpty())
                 {
                     completion.ordinal = -1; //(forwardCycle? 0 : suggestions.size() - 1);
                     /*String comp = suggestions[completion.ordinal];
@@ -377,7 +377,7 @@ DENG2_PIMPL(AbstractLineEditor)
         }
         else
         {
-            if(!completionNotified)
+            if (!completionNotified)
             {
                 // Time to notify now.
                 self.autoCompletionBegan(wordBehindPos(completion.pos));
@@ -389,13 +389,13 @@ DENG2_PIMPL(AbstractLineEditor)
             cursor = completion.pos;
             String const base = wordBehindCursor();
 
-            if(completion.ordinal < 0)
+            if (completion.ordinal < 0)
             {
                 // This occurs after a common prefix is inserted rather than
                 // a full suggestion.
                 completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
 
-                if(base + text.mid(completion.pos, completion.size) == suggestions[completion.ordinal])
+                if (base + text.mid(completion.pos, completion.size) == suggestions[completion.ordinal])
                 {
                     // We already had this one, skip it.
                     cycleCompletion(forwardCycle);
@@ -436,7 +436,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
     void acceptCompletion()
     {
-        if(!suggestingCompletion()) return;
+        if (!suggestingCompletion()) return;
 
         resetCompletion();
 
@@ -445,7 +445,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
     bool rejectCompletion()
     {
-        if(!suggestingCompletion()) return false;
+        if (!suggestingCompletion()) return false;
 
         int oldCursor = cursor;
 
@@ -521,7 +521,7 @@ Rangei AbstractLineEditor::completionRange() const
 
 QStringList AbstractLineEditor::suggestedCompletions() const
 {
-    if(!isSuggestingCompletion()) return QStringList();
+    if (!isSuggestingCompletion()) return QStringList();
 
     return d->suggestions;
 }
@@ -559,10 +559,10 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 #  define WORD_JUMP_MODIFIER    Control
 #endif
 
-    switch(qtKey)
+    switch (qtKey)
     {
     case Qt::Key_Backspace:
-        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        if (mods.testFlag(WORD_JUMP_MODIFIER))
         {
             d->doWordBackspace();
         }
@@ -578,13 +578,13 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 
     case Qt::Key_Left:
 #ifdef MACOSX
-        if(mods.testFlag(Control))
+        if (mods.testFlag(Control))
         {
             d->doHome();
             return true;
         }
 #endif
-        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        if (mods.testFlag(WORD_JUMP_MODIFIER))
         {
             d->doWordLeft();
         }
@@ -596,13 +596,13 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 
     case Qt::Key_Right:
 #ifdef MACOSX
-        if(mods.testFlag(Control))
+        if (mods.testFlag(Control))
         {
             d->doEnd();
             return true;
         }
 #endif
-        if(mods.testFlag(WORD_JUMP_MODIFIER))
+        if (mods.testFlag(WORD_JUMP_MODIFIER))
         {
             d->doWordRight();
         }
@@ -622,14 +622,14 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 
     case Qt::Key_Tab:
     case Qt::Key_Backtab:
-        if(d->doCompletion(qtKey == Qt::Key_Tab))
+        if (d->doCompletion(qtKey == Qt::Key_Tab))
         {
             return true;
         }
         break;
 
     case Qt::Key_K:
-        if(mods.testFlag(Control))
+        if (mods.testFlag(Control))
         {
             d->killEndOfLine();
             return true;
@@ -638,12 +638,12 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 
     case Qt::Key_Up:
         // First try moving within the current command.
-        if(!d->moveCursorByLine(-1)) return false; // not eaten
+        if (!d->moveCursorByLine(-1)) return false; // not eaten
         return true;
 
     case Qt::Key_Down:
         // First try moving within the current command.
-        if(!d->moveCursorByLine(+1)) return false; // not eaten
+        if (!d->moveCursorByLine(+1)) return false; // not eaten
         return true;
 
     case Qt::Key_Enter:
@@ -676,7 +676,7 @@ void AbstractLineEditor::autoCompletionEnded(bool /*accepted*/)
 
 void AbstractLineEditor::updateLineWraps(LineWrapUpdateBehavior behavior)
 {
-    if(behavior == WrapUnlessWrappedAlready && !d->wraps->isEmpty())
+    if (behavior == WrapUnlessWrappedAlready && !d->wraps->isEmpty())
         return; // Already wrapped.
 
     d->updateWraps();

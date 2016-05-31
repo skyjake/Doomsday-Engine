@@ -65,7 +65,7 @@ Rect *Rect_NewFromRaw(RectRaw const *rawRect)
 
 void Rect_Delete(Rect *r)
 {
-    if(!r) return;
+    if (!r) return;
     Point2_Delete(r->origin);
     Size2_Delete(r->size);
     M_Free(r);
@@ -74,7 +74,7 @@ void Rect_Delete(Rect *r)
 void Rect_Copy(Rect *r, Rect const *other)
 {
     DENG_ASSERT(r);
-    if(!other) return;
+    if (!other) return;
     Point2_SetXY(r->origin, Rect_X(other), Rect_Y(other));
     Size2_SetWidthHeight(r->size, Rect_Width(other), Rect_Height(other));
 }
@@ -82,7 +82,7 @@ void Rect_Copy(Rect *r, Rect const *other)
 Rect *Rect_CopyRaw(Rect *r, RectRaw const *rawRect)
 {
     DENG_ASSERT(r);
-    if(rawRect)
+    if (rawRect)
     {
         Point2_SetXY(r->origin, rawRect->origin.x, rawRect->origin.y);
         Size2_SetWidthHeight(r->size, rawRect->size.width, rawRect->size.height);
@@ -93,7 +93,7 @@ Rect *Rect_CopyRaw(Rect *r, RectRaw const *rawRect)
 RectRaw *Rect_Raw(Rect const *r, RectRaw *rawRect)
 {
     DENG_ASSERT(r);
-    if(!rawRect) return NULL;
+    if (!rawRect) return NULL;
     Point2_Raw(r->origin, &rawRect->origin);
     Size2_Raw(r->size, &rawRect->size);
     return rawRect;
@@ -216,7 +216,7 @@ void Rect_SetWidthHeight(Rect *r, int width, int height)
 Point2Raw *Rect_TopLeft(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2_X(r->origin);
     point->y = Point2_Y(r->origin);
     return point;
@@ -225,7 +225,7 @@ Point2Raw *Rect_TopLeft(Rect const *r, Point2Raw *point)
 Point2Raw *Rect_TopRight(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2_X(r->origin) + Size2_Width(r->size);
     point->y = Point2_Y(r->origin);
     return point;
@@ -234,7 +234,7 @@ Point2Raw *Rect_TopRight(Rect const *r, Point2Raw *point)
 Point2Raw *Rect_BottomLeft(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2_X(r->origin);
     point->y = Point2_Y(r->origin) + Size2_Height(r->size);
     return point;
@@ -243,7 +243,7 @@ Point2Raw *Rect_BottomLeft(Rect const *r, Point2Raw *point)
 Point2Raw *Rect_BottomRight(Rect const *r, Point2Raw *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2_X(r->origin) + Size2_Width(r->size);
     point->y = Point2_Y(r->origin) + Size2_Height(r->size);
     return point;
@@ -252,27 +252,27 @@ Point2Raw *Rect_BottomRight(Rect const *r, Point2Raw *point)
 Rect *Rect_Normalize(Rect *r)
 {
     DENG_ASSERT(r);
-    if(Size2_Width(r->size) < 0)
+    if (Size2_Width(r->size) < 0)
         Point2_TranslateX(r->origin, -Size2_Width(r->size));
-    if(Size2_Height(r->size) < 0)
+    if (Size2_Height(r->size) < 0)
         Point2_TranslateY(r->origin, -Size2_Height(r->size));
     return r;
 }
 
 RectRaw *Rect_Normalized(Rect const *rect, RectRaw *normalized)
 {
-    if(!normalized) return NULL;
+    if (!normalized) return NULL;
 
-    if(!rect)
+    if (!rect)
     {
         memset(normalized, 0, sizeof(*normalized));
         return normalized;
     }
 
     Rect_Raw(rect, normalized);
-    if(normalized->size.width < 0)
+    if (normalized->size.width < 0)
         normalized->origin.x -= normalized->size.width;
-    if(normalized->size.height < 0)
+    if (normalized->size.height < 0)
         normalized->origin.y -= normalized->size.height;
 
     return normalized;
@@ -301,12 +301,12 @@ Rect *Rect_UniteRaw(Rect *r, RectRaw const *other)
 {
     RectRaw otherNormalized;
 
-    if(!other) return r;
+    if (!other) return r;
 
     memcpy(&otherNormalized, other, sizeof(otherNormalized));
-    if(otherNormalized.size.width < 0)
+    if (otherNormalized.size.width < 0)
         otherNormalized.origin.x -= otherNormalized.size.width;
-    if(otherNormalized.size.height < 0)
+    if (otherNormalized.size.height < 0)
         otherNormalized.origin.y -= otherNormalized.size.height;
 
     return Rect_UniteRaw2(Rect_Normalize(r), &otherNormalized);
@@ -322,9 +322,9 @@ RectRaw *Rect_United(Rect const *rect, Rect const *other, RectRaw *united)
 {
     RectRaw normA, normB;
 
-    if(!united) return NULL;
+    if (!united) return NULL;
 
-    if(!other)
+    if (!other)
     {
         united->origin.x = Point2_X(rect->origin);
         united->origin.y = Point2_Y(rect->origin);
@@ -350,7 +350,7 @@ RectRaw *Rect_United(Rect const *rect, Rect const *other, RectRaw *united)
 dd_bool Rect_Equality(Rect const *r, Rect const *other)
 {
     DENG_ASSERT(r);
-    if(!other) return false;
+    if (!other) return false;
     return r == other || (Point2_Equality(r->origin, Rect_Origin(other)) &&
                           Size2_Equality(r->size, Rect_Size(other)));
 }
@@ -397,7 +397,7 @@ void Rectf_Delete(Rectf *r)
 void Rectf_Copy(Rectf *r, Rectf const *other)
 {
     DENG_ASSERT(r);
-    if(!other) return;
+    if (!other) return;
     Point2f_SetXY(r->origin, Rectf_X(other), Rectf_Y(other));
     Size2f_SetWidthHeight(r->size, Rectf_Width(other), Rectf_Height(other));
 }
@@ -405,7 +405,7 @@ void Rectf_Copy(Rectf *r, Rectf const *other)
 Rectf *Rectf_CopyRaw(Rectf *r, RectRawf const *rawRect)
 {
     DENG_ASSERT(r);
-    if(rawRect)
+    if (rawRect)
     {
         Point2f_SetXY(r->origin, rawRect->origin.x, rawRect->origin.y);
         Size2f_SetWidthHeight(r->size, rawRect->size.width, rawRect->size.height);
@@ -416,7 +416,7 @@ Rectf *Rectf_CopyRaw(Rectf *r, RectRawf const *rawRect)
 RectRawf *Rectf_Raw(Rectf const *r, RectRawf *rawRect)
 {
     DENG_ASSERT(r);
-    if(!rawRect) return NULL;
+    if (!rawRect) return NULL;
     Point2f_Raw(r->origin, &rawRect->origin);
     Size2f_Raw(r->size, &rawRect->size);
     return rawRect;
@@ -539,7 +539,7 @@ void Rectf_SetWidthHeight(Rectf *r, double width, double height)
 Point2Rawf *Rectf_TopLeft(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2f_X(r->origin);
     point->y = Point2f_Y(r->origin);
     return point;
@@ -548,7 +548,7 @@ Point2Rawf *Rectf_TopLeft(Rectf const *r, Point2Rawf *point)
 Point2Rawf *Rectf_TopRight(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2f_X(r->origin) + Size2f_Width(r->size);
     point->y = Point2f_Y(r->origin);
     return point;
@@ -557,7 +557,7 @@ Point2Rawf *Rectf_TopRight(Rectf const *r, Point2Rawf *point)
 Point2Rawf *Rectf_BottomLeft(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2f_X(r->origin);
     point->y = Point2f_Y(r->origin) + Size2f_Height(r->size);
     return point;
@@ -566,7 +566,7 @@ Point2Rawf *Rectf_BottomLeft(Rectf const *r, Point2Rawf *point)
 Point2Rawf *Rectf_BottomRight(Rectf const *r, Point2Rawf *point)
 {
     DENG_ASSERT(r);
-    if(!point) return NULL;
+    if (!point) return NULL;
     point->x = Point2f_X(r->origin) + Size2f_Width(r->size);
     point->y = Point2f_Y(r->origin) + Size2f_Height(r->size);
     return point;
@@ -575,27 +575,27 @@ Point2Rawf *Rectf_BottomRight(Rectf const *r, Point2Rawf *point)
 Rectf *Rectf_Normalize(Rectf *r)
 {
     DENG_ASSERT(r);
-    if(Size2f_Width(r->size) < 0)
+    if (Size2f_Width(r->size) < 0)
         Point2f_TranslateX(r->origin, -Size2f_Width(r->size));
-    if(Size2f_Height(r->size) < 0)
+    if (Size2f_Height(r->size) < 0)
         Point2f_TranslateY(r->origin, -Size2f_Height(r->size));
     return r;
 }
 
 RectRawf *Rectf_Normalized(Rectf const *rect, RectRawf *normalized)
 {
-    if(!normalized) return NULL;
+    if (!normalized) return NULL;
 
-    if(!rect)
+    if (!rect)
     {
         memset(normalized, 0, sizeof(*normalized));
         return normalized;
     }
 
     Rectf_Raw(rect, normalized);
-    if(normalized->size.width < 0)
+    if (normalized->size.width < 0)
         normalized->origin.x -= normalized->size.width;
-    if(normalized->size.height < 0)
+    if (normalized->size.height < 0)
         normalized->origin.y -= normalized->size.height;
 
     return normalized;
@@ -624,12 +624,12 @@ Rectf *Rectf_UniteRaw(Rectf *r, RectRawf const *other)
 {
     RectRawf otherNormalized;
 
-    if(!other) return r;
+    if (!other) return r;
 
     memcpy(&otherNormalized, other, sizeof(otherNormalized));
-    if(otherNormalized.size.width < 0)
+    if (otherNormalized.size.width < 0)
         otherNormalized.origin.x -= otherNormalized.size.width;
-    if(otherNormalized.size.height < 0)
+    if (otherNormalized.size.height < 0)
         otherNormalized.origin.y -= otherNormalized.size.height;
 
     return Rectf_UniteRaw2(Rectf_Normalize(r), &otherNormalized);
@@ -645,9 +645,9 @@ RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united)
 {
     RectRawf normA, normB;
 
-    if(!united) return NULL;
+    if (!united) return NULL;
 
-    if(!other)
+    if (!other)
     {
         united->origin.x = Point2f_X(rect->origin);
         united->origin.y = Point2f_Y(rect->origin);
@@ -673,7 +673,7 @@ RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united)
 dd_bool Rectf_Equality(Rectf const *r, Rectf const *other)
 {
     DENG_ASSERT(r);
-    if(!other) return false;
+    if (!other) return false;
     return r == other || (Point2f_Equality(r->origin, Rectf_Origin(other)) &&
                           Size2f_Equality(r->size, Rectf_Size(other)));
 }

@@ -42,7 +42,7 @@ template <typename Type>
 bool Matrix3_InverseT(Type *result, Type const *mat)
 {
     Type det = Matrix3_DeterminantT(mat);
-    if(de::abs(det) < .0005f)
+    if (de::abs(det) < .0005f)
     {
         Matrix3<Type> identity;
         identity.data().get(0, reinterpret_cast<IByteArray::Byte *>(result),
@@ -77,9 +77,9 @@ template <typename Type>
 void Matrix4_SubmatrixT(Type const *mat4, Type *mat3, int i, int j)
 {
     // Loop through 3x3 submatrix.
-    for(int di = 0; di < 3; di++)
+    for (int di = 0; di < 3; di++)
     {
-        for(int dj = 0; dj < 3; dj++)
+        for (int dj = 0; dj < 3; dj++)
         {
             // Map 3x3 element (destination) to 4x4 element (source).
             int si = di + (di >= i? 1 : 0);
@@ -96,7 +96,7 @@ Type Matrix4_DeterminantT(Type const *mat)
 {
     Type result = 0;
     Type i = 1;
-    for(int n = 0; n < 4; n++, i *= -1)
+    for (int n = 0; n < 4; n++, i *= -1)
     {
         Type sub[3*3];
         Matrix4_SubmatrixT(mat, sub, 0, n);
@@ -110,7 +110,7 @@ bool Matrix4_InverseT(Type *out16, Type const *in16)
 {
     Type det = Matrix4_DeterminantT(in16);
 
-    if(de::abs(det) < .0005f)
+    if (de::abs(det) < .0005f)
     {
         Matrix4<Type> identity;
         identity.data().get(0, reinterpret_cast<IByteArray::Byte *>(out16),
@@ -118,9 +118,9 @@ bool Matrix4_InverseT(Type *out16, Type const *in16)
         return false;
     }
 
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        for(int j = 0; j < 4; j++)
+        for (int j = 0; j < 4; j++)
         {
             Type sub[3*3];
             int sign = 1 - ((i + j) % 2) * 2;

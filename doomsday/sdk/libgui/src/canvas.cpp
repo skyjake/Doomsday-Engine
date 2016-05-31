@@ -92,9 +92,9 @@ DENG2_PIMPL(Canvas)
 
     void grabMouse()
     {
-        if(!self.isVisible()/* || mouseDisabled*/) return;
+        if (!self.isVisible()/* || mouseDisabled*/) return;
 
-        if(!mouseGrabbed)
+        if (!mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
 
@@ -109,9 +109,9 @@ DENG2_PIMPL(Canvas)
 
     void ungrabMouse()
     {
-        if(!self.isVisible()/* || mouseDisabled*/) return;
+        if (!self.isVisible()/* || mouseDisabled*/) return;
 
-        if(mouseGrabbed)
+        if (mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Ungrabbing mouse");
 
@@ -139,7 +139,7 @@ DENG2_PIMPL(Canvas)
         //LOG_AS("Canvas");
 
         ev->accept();
-        //if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
+        //if (ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
         /*
         qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
@@ -150,16 +150,16 @@ DENG2_PIMPL(Canvas)
 
 #ifdef WIN32
         // We must track the state of the alt key ourselves as the OS grabs the up event...
-        if(ev->key() == Qt::Key_Alt)
+        if (ev->key() == Qt::Key_Alt)
         {
-            if(ev->type() == QEvent::KeyPress)
+            if (ev->type() == QEvent::KeyPress)
             {
-                if(altIsDown) return; // Ignore repeat down events(!)?
+                if (altIsDown) return; // Ignore repeat down events(!)?
                 altIsDown = true;
             }
-            else if(ev->type() == QEvent::KeyRelease)
+            else if (ev->type() == QEvent::KeyRelease)
             {
-                if(!altIsDown)
+                if (!altIsDown)
                 {
                     LOG_DEBUG("Ignoring repeat alt up.");
                     return; // Ignore repeat up events.
@@ -205,7 +205,7 @@ DENG2_PIMPL(Canvas)
 
     void swapBuffers(gl::SwapBufferMode mode)
     {
-        if(mode == gl::SwapStereoBuffers && !self.format().stereo())
+        if (mode == gl::SwapStereoBuffers && !self.format().stereo())
         {
             // The canvas is not using a stereo format, must do a normal swap.
             mode = gl::SwapMonoBuffer;
@@ -267,13 +267,13 @@ QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
     // We will be grabbing the visible, latest complete frame.
     glReadBuffer(GL_FRONT);
     QImage grabbed = grabFrameBuffer(); // no alpha
-    if(area.size() != grabbed.size())
+    if (area.size() != grabbed.size())
     {
         // Just take a portion of the full image.
         grabbed = grabbed.copy(area);
     }
     glReadBuffer(GL_BACK);
-    if(outputSize.isValid())
+    if (outputSize.isValid())
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
@@ -298,7 +298,7 @@ Canvas::Size Canvas::size() const
 
 void Canvas::trapMouse(bool trap)
 {
-    if(trap)
+    if (trap)
     {
         d->grabMouse();
     }
@@ -365,7 +365,7 @@ void Canvas::resizeGL(int w, int h)
     d->pendingSize = Size(max(0, w), max(0, h));
 
     // Only react if this is actually a resize.
-    if(d->currentSize != d->pendingSize)
+    if (d->currentSize != d->pendingSize)
     {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
         LOGDEV_GL_MSG("Canvas %p triggered size to %ix%i from %s")
@@ -399,7 +399,7 @@ void Canvas::showEvent(QShowEvent* ev)
     // The first time the window is shown, run the initialization callback. On
     // some platforms, OpenGL is not fully ready to be used before the window
     // actually appears on screen.
-    if(isVisible() && !d->readyNotified)
+    if (isVisible() && !d->readyNotified)
     {
         LOGDEV_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
 
@@ -414,7 +414,7 @@ void Canvas::showEvent(QShowEvent* ev)
 
 void Canvas::notifyReady()
 {
-    if(d->readyNotified) return;
+    if (d->readyNotified) return;
 
     d->readyNotified = true;
 
@@ -423,17 +423,17 @@ void Canvas::notifyReady()
 
     // Print some information.
     QGLFormat const fmt = format();
-    if(fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
+    if (fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
         LOG_GL_NOTE("OpenGL 3.3 supported");
-    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
+    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
         LOG_GL_NOTE("OpenGL 3.2 supported");
-    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
+    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
         LOG_GL_NOTE("OpenGL 3.1 supported");
-    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
+    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
         LOG_GL_NOTE("OpenGL 3.0 supported");
-    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
+    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
         LOG_GL_NOTE("OpenGL 2.1 supported");
-    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
+    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
         LOG_GL_NOTE("OpenGL 2.0 supported");
     else
         LOG_GL_WARNING("OpenGL 2.0 is not supported!");
@@ -446,9 +446,9 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
-    if(!d->parent || d->parent->isRecreationInProgress()) return;
+    if (!d->parent || d->parent->isRecreationInProgress()) return;
 #ifdef LIBGUI_USE_GLENTRYPOINTS
-    if(!glBindFramebuffer) return;
+    if (!glBindFramebuffer) return;
 #endif
 
     DENG2_ASSERT(QGLContext::currentContext() != 0);
@@ -494,15 +494,15 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
 
 static MouseEvent::Button translateButton(Qt::MouseButton btn)
 {
-    if(btn == Qt::LeftButton)   return MouseEvent::Left;
+    if (btn == Qt::LeftButton)   return MouseEvent::Left;
 #ifdef DENG2_QT_4_7_OR_NEWER
-    if(btn == Qt::MiddleButton) return MouseEvent::Middle;
+    if (btn == Qt::MiddleButton) return MouseEvent::Middle;
 #else
-    if(btn == Qt::MidButton)    return MouseEvent::Middle;
+    if (btn == Qt::MidButton)    return MouseEvent::Middle;
 #endif
-    if(btn == Qt::RightButton)  return MouseEvent::Right;
-    if(btn == Qt::XButton1)     return MouseEvent::XButton1;
-    if(btn == Qt::XButton2)     return MouseEvent::XButton2;
+    if (btn == Qt::RightButton)  return MouseEvent::Right;
+    if (btn == Qt::XButton1)     return MouseEvent::XButton1;
+    if (btn == Qt::XButton2)     return MouseEvent::XButton2;
 
     return MouseEvent::Unknown;
 }
@@ -545,7 +545,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *ev)
     ev->accept();
 
     // Absolute events are only emitted when the mouse is untrapped.
-    if(!d->mouseGrabbed)
+    if (!d->mouseGrabbed)
     {
         DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
@@ -566,16 +566,16 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     QPoint numDegrees = ev->angleDelta() / 8;
     d->wheelAngleAccum += numDegrees;
 
-    if(!numPixels.isNull())
+    if (!numPixels.isNull())
     {
         DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
-            if(numPixels.x())
+            if (numPixels.x())
             {
                 i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(devicePixels * numPixels.x(), 0),
                                          d->translatePosition(ev)));
             }
-            if(numPixels.y())
+            if (numPixels.y())
             {
                 i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(0, devicePixels * numPixels.y()),
                                          d->translatePosition(ev)));
@@ -584,16 +584,16 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     }
 
     QPoint const steps = d->wheelAngleAccum / 15;
-    if(!steps.isNull())
+    if (!steps.isNull())
     {
         DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
-            if(steps.x())
+            if (steps.x())
             {
                 i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(steps.x(), 0),
                                          !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
             }
-            if(steps.y())
+            if (steps.y())
             {
                 i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(0, steps.y()),
                                          !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
@@ -617,7 +617,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
                                  d->translatePosition(ev)));
     }
 
-    if(!continuousMovement || d->wheelDir[axis] != dir)
+    if (!continuousMovement || d->wheelDir[axis] != dir)
     {
         d->wheelDir[axis] = dir;
 

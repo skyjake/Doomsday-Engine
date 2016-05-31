@@ -73,7 +73,7 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
     d->mode = m;
 
     std::unique_ptr<Value> v(initial);
-    if(!initial)
+    if (!initial)
     {
         v.reset(new NoneValue);
     }
@@ -117,7 +117,7 @@ Variable &Variable::set(Value *v)
     d->value = val.take();
 
     // We'll only determine if actual change occurred if someone is interested.
-    if(!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
+    if (!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
     {
         bool notify = true;
         try
@@ -125,12 +125,12 @@ Variable &Variable::set(Value *v)
             // Did it actually change? Let's compare...
             notify = oldValue.isNull() || oldValue->compare(*v);
         }
-        catch(Error const &)
+        catch (Error const &)
         {
             // Perhaps the values weren't comparable?
         }
 
-        if(notify)
+        if (notify)
         {
             DENG2_FOR_AUDIENCE2(Change, i) i->variableValueChanged(*this, *d->value);
             DENG2_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
@@ -231,7 +231,7 @@ Variable &Variable::setReadOnly()
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<NoneValue const *>(&v)       && !d->mode.testFlag(AllowNone)) ||
+    if ((dynamic_cast<NoneValue const *>(&v)       && !d->mode.testFlag(AllowNone)) ||
        (dynamic_cast<NumberValue const *>(&v)     && !d->mode.testFlag(AllowNumber)) ||
        (dynamic_cast<TextValue const *>(&v)       && !d->mode.testFlag(AllowText)) ||
        (dynamic_cast<ArrayValue const *>(&v)      && !d->mode.testFlag(AllowArray)) ||
@@ -247,7 +247,7 @@ bool Variable::isValid(Value const &v) const
 
 void Variable::verifyValid(Value const &v) const
 {
-    if(!isValid(v))
+    if (!isValid(v))
     {
         /// @throw InvalidError  Value @a v is not allowed by the variable.
         throw InvalidError("Variable::verifyValid",
@@ -257,10 +257,10 @@ void Variable::verifyValid(Value const &v) const
 
 void Variable::verifyWritable(Value const &attemptedNewValue)
 {
-    if(d->mode & ReadOnly)
+    if (d->mode & ReadOnly)
     {
         Value const &currentValue = *d->value;
-        if(d->value && typeid(currentValue) == typeid(attemptedNewValue) &&
+        if (d->value && typeid(currentValue) == typeid(attemptedNewValue) &&
            !d->value->compare(attemptedNewValue))
         {
             // This is ok: the value doesn't change.
@@ -275,7 +275,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 
 void Variable::verifyName(String const &s)
 {
-    if(s.indexOf('.') != String::npos)
+    if (s.indexOf('.') != String::npos)
     {
         /// @throw NameError The name cannot contain periods '.'.
         throw NameError("Variable::verifyName", "Name contains '.': " + s);
@@ -284,7 +284,7 @@ void Variable::verifyName(String const &s)
 
 void Variable::operator >> (Writer &to) const
 {
-    if(!d->mode.testFlag(NoSerialize))
+    if (!d->mode.testFlag(NoSerialize))
     {
         to << d->name << duint32(d->mode) << *d->value;
     }
@@ -300,7 +300,7 @@ void Variable::operator << (Reader &from)
     {
         d->value = Value::constructFrom(from);
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         // Always need to have a value.
         d->value = new NoneValue();

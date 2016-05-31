@@ -153,7 +153,7 @@ void InputDialog::finish(int result)
 {
     d->result = result;
     d->userText.clear();
-    if(result) d->userText = d->edit->text();
+    if (result) d->userText = d->edit->text();
 
     DialogWidget::finish(result);
 }

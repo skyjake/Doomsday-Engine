@@ -25,7 +25,7 @@ using namespace de;
 
 RefValue::RefValue(Variable *variable) : _variable(variable)
 {
-    if(_variable)
+    if (_variable)
     {
         _variable->audienceForDeletion() += this;
     }
@@ -33,7 +33,7 @@ RefValue::RefValue(Variable *variable) : _variable(variable)
 
 RefValue::~RefValue()
 {
-    if(_variable)
+    if (_variable)
     {
         _variable->audienceForDeletion() -= this;
     }
@@ -41,7 +41,7 @@ RefValue::~RefValue()
 
 void RefValue::verify() const
 {
-    if(!_variable)
+    if (!_variable)
     {
         /// @throw NullError The value no longer points to a variable.
         throw NullError("RefValue::verify", "Value does not reference a variable");

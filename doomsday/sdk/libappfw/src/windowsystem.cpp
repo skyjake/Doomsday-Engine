@@ -59,7 +59,7 @@ DENG2_PIMPL(WindowSystem)
 
     void processLatestMousePositionIfMoved()
     {
-        if(mouseMoved)
+        if (mouseMoved)
         {
             mouseMoved = false;
             processLatestMousePosition();
@@ -96,7 +96,7 @@ BaseWindow &WindowSystem::main() // static
 BaseWindow *WindowSystem::find(String const &id) const
 {
     Instance::Windows::const_iterator found = d->windows.constFind(id);
-    if(found != d->windows.constEnd())
+    if (found != d->windows.constEnd())
     {
         return found.value();
     }
@@ -135,11 +135,11 @@ bool WindowSystem::processEvent(Event const &event)
      * already filtered anyway).
      */
 
-    if(event.type() == Event::MousePosition)
+    if (event.type() == Event::MousePosition)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
 
-        if(mouse.pos() != d->latestMousePos)
+        if (mouse.pos() != d->latestMousePos)
         {
             // This event will be emitted later, before widget tree update.
             d->latestMousePos = mouse.pos();

@@ -38,7 +38,7 @@ DENG2_OBSERVES(Variable, Change  )
 
     ~Instance()
     {
-        if(var)
+        if (var)
         {
             var->audienceForDeletion() -= this;
             var->audienceForChange() -= this;
@@ -47,14 +47,14 @@ DENG2_OBSERVES(Variable, Change  )
 
     void updateFromVariable()
     {
-        if(!var) return;
+        if (!var) return;
 
         self.setText(var->value<TextValue>());
     }
 
     void setVariableFromWidget()
     {
-        if(!var) return;
+        if (!var) return;
 
         var->audienceForChange() -= this;
         var->set(TextValue(self.text()));
@@ -82,7 +82,7 @@ VariableLineEditWidget::VariableLineEditWidget(Variable &variable, String const 
 
 Variable &VariableLineEditWidget::variable() const
 {
-    if(!d->var)
+    if (!d->var)
     {
         throw VariableMissingError("VariableLineEditWidget::variable",
                                    "Widget is not associated with a variable");

@@ -43,7 +43,7 @@ Data::Data() : d(new Instance)
 
 void Data::sort(SortMethod method)
 {
-    switch(method)
+    switch (method)
     {
     case Ascending:
         sort([] (Item const &a, Item const &b) {
@@ -61,9 +61,9 @@ void Data::sort(SortMethod method)
 
 LoopResult Data::forAll(std::function<LoopResult (Item &)> func)
 {
-    for(DataPos pos = 0; pos < size(); ++pos)
+    for (DataPos pos = 0; pos < size(); ++pos)
     {
-        if(auto result = func(at(pos)))
+        if (auto result = func(at(pos)))
             return result;
     }
     return LoopContinue;
@@ -71,9 +71,9 @@ LoopResult Data::forAll(std::function<LoopResult (Item &)> func)
 
 LoopResult Data::forAll(std::function<LoopResult (Item const &)> func) const
 {
-    for(DataPos pos = 0; pos < size(); ++pos)
+    for (DataPos pos = 0; pos < size(); ++pos)
     {
-        if(auto result = func(at(pos)))
+        if (auto result = func(at(pos)))
             return result;
     }
     return LoopContinue;

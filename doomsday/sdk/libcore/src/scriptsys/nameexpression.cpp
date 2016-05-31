@@ -51,21 +51,21 @@ DENG2_PIMPL_NOREF(NameExpression)
                            Record *&      foundIn,
                            bool           lookInClass = true) const
     {
-        if(where.hasMember(name))
+        if (where.hasMember(name))
         {
             // The name exists in this namespace. Even though the lookup was done as
             // const, the caller expects non-const return values.
             foundIn = const_cast<Record *>(&where);
             return const_cast<Variable *>(&where[name]);
         }
-        if(lookInClass && where.hasMember(Record::VAR_SUPER))
+        if (lookInClass && where.hasMember(Record::VAR_SUPER))
         {
             // The namespace is derived from another record. Let's look into each
             // super-record in turn.
             ArrayValue const &supers = where.geta(Record::VAR_SUPER);
-            for(int i = 0; i < int(supers.size()); ++i)
+            for (int i = 0; i < int(supers.size()); ++i)
             {
-                if(Variable *found = findInRecord(
+                if (Variable *found = findInRecord(
                         name, supers.at(i).as<RecordValue>().dereference(), foundIn))
                 {
                     return found;
@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(NameExpression)
         DENG2_FOR_EACH_CONST(Evaluator::Namespaces, i, spaces)
         {
             Record &ns = **i;
-            if(Variable *variable =
+            if (Variable *variable =
                     findInRecord(name, ns, foundInNamespace,
                                    // allow looking in class if local not required:
                                    !localOnly))
@@ -92,13 +92,13 @@ DENG2_PIMPL_NOREF(NameExpression)
                 // The name exists in this namespace.
                 // Also note the higher namespace (for export).
                 Evaluator::Namespaces::const_iterator next = i;
-                if(++next != spaces.end())
+                if (++next != spaces.end())
                 {
-                    if(higherNamespace) *higherNamespace = *next;
+                    if (higherNamespace) *higherNamespace = *next;
                 }
                 return variable;
             }
-            if(localOnly)
+            if (localOnly)
             {
                 // Not allowed to look in outer scopes.
                 break;
@@ -139,9 +139,9 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     Record *higherNamespace = 0;
     Variable *variable = 0;
 
-    if(d->scopeIdentifier.isEmpty() || d->scopeIdentifier == LOCAL_SCOPE)
+    if (d->scopeIdentifier.isEmpty() || d->scopeIdentifier == LOCAL_SCOPE)
     {
-        if(d->scopeIdentifier != LOCAL_SCOPE)
+        if (d->scopeIdentifier != LOCAL_SCOPE)
         {
             // This is the usual case: scope defined by the left side of the member
             // operator, or if that is not specified, the context's namespace stack.
@@ -161,7 +161,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         // context of the process, ignoring any narrower scopes that may apply here.
         evaluator.process().namespaces(spaces);
         Variable *scope = d->findInNamespaces(d->scopeIdentifier, spaces, false, foundInNamespace);
-        if(!scope)
+        if (!scope)
         {
             throw NotFoundError("NameExpression::evaluate",
                                 "Scope '" + d->scopeIdentifier + "' not found");
@@ -172,21 +172,21 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
                                    foundInNamespace);
     }
 
-    if(flags().testFlag(ThrowawayIfInScope) && variable)
+    if (flags().testFlag(ThrowawayIfInScope) && variable)
     {
         foundInNamespace = 0;
         variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
-    if(flags().testFlag(NotInScope) && variable)
+    if (flags().testFlag(NotInScope) && variable)
     {
         throw AlreadyExistsError("NameExpression::evaluate",
             "Identifier '" + d->identifier + "' already exists");
     }
 
     // Create a new subrecord in the namespace? ("record xyz")
-    if(flags().testFlag(NewSubrecord) ||
+    if (flags().testFlag(NewSubrecord) ||
        (flags().testFlag(NewSubrecordIfNotInScope) && !variable))
     {
         // Replaces existing member with this identifier.
@@ -196,7 +196,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && flags().testFlag(NewVariable))
+    if (!variable && flags().testFlag(NewVariable))
     {
         variable = new Variable(d->identifier);
 
@@ -205,7 +205,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
 
         // Take note of the namespaces.
         foundInNamespace = spaces.front();
-        if(!higherNamespace && spaces.size() > 1)
+        if (!higherNamespace && spaces.size() > 1)
         {
             Evaluator::Namespaces::iterator i = spaces.begin();
             higherNamespace = *(++i);
@@ -213,21 +213,21 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     }
 
     // Export variable into a higher namespace?
-    if(flags().testFlag(Export))
+    if (flags().testFlag(Export))
     {
         DENG2_ASSERT(!flags().testFlag(ThrowawayIfInScope));
 
-        if(!variable)
+        if (!variable)
         {
             throw NotFoundError("NameExpression::evaluate",
                                 "Cannot export nonexistent identifier '" + d->identifier + "'");
         }
-        if(!higherNamespace)
+        if (!higherNamespace)
         {
             throw NotFoundError("NameExpression::evaluate",
                                 "No higher namespace for exporting '" + d->identifier + "' into");
         }
-        if(higherNamespace != foundInNamespace && foundInNamespace)
+        if (higherNamespace != foundInNamespace && foundInNamespace)
         {
             foundInNamespace->remove(*variable);
             higherNamespace->add(variable);
@@ -235,7 +235,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     }
 
     // Should we import a namespace?
-    if(flags() & Import)
+    if (flags() & Import)
     {
         Record *record = &App::scriptSystem().importModule(d->identifier,
             evaluator.process().globals()[Record::VAR_FILE].value().asText());
@@ -243,7 +243,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         // Overwrite any existing member with this identifier.
         spaces.front()->add(variable = new Variable(d->identifier));
 
-        if(flags().testFlag(ByValue))
+        if (flags().testFlag(ByValue))
         {
             // Take a copy of the record ("import record").
             *variable = new RecordValue(new Record(*record), RecordValue::OwnsRecord);
@@ -257,10 +257,10 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         return new RecordValue(record);
     }
 
-    if(variable)
+    if (variable)
     {
         // Variables can be referred to by reference or value.
-        if(flags() & ByReference)
+        if (flags() & ByReference)
         {
             // Reference to the variable.
             return new RefValue(variable);
@@ -291,7 +291,7 @@ void NameExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != NAME)
+    if (id != NAME)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
@@ -302,7 +302,7 @@ void NameExpression::operator << (Reader &from)
 
     from >> d->identifier;
 
-    if(from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
+    if (from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
     {
         from >> d->scopeIdentifier;
     }

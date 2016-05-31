@@ -91,7 +91,7 @@ Id const &TextureBank::texture(DotPath const &id)
 Path TextureBank::sourcePathForAtlasId(Id const &id) const
 {
     auto found = d->pathForAtlasId.constFind(id);
-    if(found != d->pathForAtlasId.constEnd())
+    if (found != d->pathForAtlasId.constEnd())
     {
         return found.value();
     }

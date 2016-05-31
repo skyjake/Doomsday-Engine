@@ -27,7 +27,7 @@ Action::Action(String const &label) : _event(KeyEvent("")), _label(label), _targ
 Action::Action(String const &label, QObject *target, char const *slot)
     : _event(KeyEvent("")), _label(label), _target(target), _slot(slot)
 {
-    if(target && slot)
+    if (target && slot)
     {
         connect(this, SIGNAL(triggered()), target, slot);
     }
@@ -36,7 +36,7 @@ Action::Action(String const &label, QObject *target, char const *slot)
 Action::Action(String const &label, KeyEvent const &event, QObject *target, char const *slot)
     : _event(event), _label(label), _target(target), _slot(slot)
 {
-    if(target && slot)
+    if (target && slot)
     {
         connect(this, SIGNAL(triggered()), target, slot);
     }
@@ -45,7 +45,7 @@ Action::Action(String const &label, KeyEvent const &event, QObject *target, char
 Action::Action(KeyEvent const &event, QObject *target, char const *slot)
     : _event(event), _target(target), _slot(slot)
 {
-    if(target && slot)
+    if (target && slot)
     {
         connect(this, SIGNAL(triggered()), target, slot);
     }
@@ -66,7 +66,7 @@ String Action::label() const
 
 bool Action::tryTrigger(KeyEvent const &ev)
 {
-    if(ev == _event)
+    if (ev == _event)
     {
         trigger();
         return true;

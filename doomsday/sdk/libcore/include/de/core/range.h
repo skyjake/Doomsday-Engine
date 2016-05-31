@@ -46,8 +46,8 @@ struct Range
     inline Type size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
     inline Type clamp(Type const &i) const {
-        if(i < start) return start;
-        if(i > end) return end;
+        if (i < start) return start;
+        if (i > end) return end;
         return i;
     }
     inline Type wrap(Type const &i) const {
@@ -64,7 +64,7 @@ struct Range
     inline Range &operator &= (Range const &other) {
         start = de::max(start, other.start);
         end   = de::min(end,   other.end);
-        if(start > end) end = start;
+        if (start > end) end = start;
         return *this;
     }
     inline bool operator == (Range const &other) const {
@@ -117,11 +117,11 @@ struct Range
      */
     static ContiguousRanges findContiguousRanges(QList<Type> const &values) {
         ContiguousRanges cont;
-        if(values.isEmpty()) return cont;
+        if (values.isEmpty()) return cont;
         cont.append(Range<Type>(values.first(), values.first() + 1));
-        for(int i = 1; i < values.size(); ++i) {
+        for (int i = 1; i < values.size(); ++i) {
             Range<Type> &last = cont.last();
-            if(values.at(i) == last.end) {
+            if (values.at(i) == last.end) {
                 last.end = values.at(i) + 1;
             }
             else {
@@ -133,8 +133,8 @@ struct Range
     static QString contiguousRangesAsText(QList<Type> const &values,
                                           QString const &separator = ", ") {
         QStringList msg;
-        foreach(Range<Type> const &range, findContiguousRanges(values)) {
-            if(range.size() == 1)
+        foreach (Range<Type> const &range, findContiguousRanges(values)) {
+            if (range.size() == 1)
                 msg << QString::number(range.start);
             else
                 msg << QString("%1-%2").arg(range.start).arg(range.end - 1);

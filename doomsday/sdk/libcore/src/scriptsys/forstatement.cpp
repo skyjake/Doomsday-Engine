@@ -42,7 +42,7 @@ ForStatement::~ForStatement()
 void ForStatement::execute(Context &context) const
 {
     Evaluator &eval = context.evaluator();
-    if(!context.iterationValue())
+    if (!context.iterationValue())
     {
         eval.evaluate(_iteration);
         // We now have the iterated value.
@@ -51,7 +51,7 @@ void ForStatement::execute(Context &context) const
 
     // The variable gets ownership of this value.
     Value *nextValue = context.iterationValue()->next();
-    if(nextValue)
+    if (nextValue)
     {
         // Assign the variable specified.
         RefValue &ref = eval.evaluateTo<RefValue>(_iterator);
@@ -76,7 +76,7 @@ void ForStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != FOR)
+    if (id != FOR)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

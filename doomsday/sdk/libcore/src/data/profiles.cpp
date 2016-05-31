@@ -48,7 +48,7 @@ DENG2_PIMPL(Profiles)
     void add(AbstractProfile *profile)
     {
         String const key = nameToKey(profile->name());
-        if(profiles.contains(nameToKey(key)))
+        if (profiles.contains(nameToKey(key)))
         {
             delete profiles[key];
         }
@@ -84,10 +84,10 @@ DENG2_PIMPL(Profiles)
     {
         // At this point the AbstractProfile itself is already deleted.
         QMutableMapIterator<String, AbstractProfile *> iter(profiles);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.value() == obj)
+            if (iter.value() == obj)
             {
                 iter.remove();
                 break;
@@ -97,7 +97,7 @@ DENG2_PIMPL(Profiles)
 
     void clear()
     {
-        for(auto *prof : profiles)
+        for (auto *prof : profiles)
         {
             prof->audienceForDeletion -= this;
             prof->setOwner(nullptr);
@@ -112,7 +112,7 @@ DENG2_PIMPL(Profiles)
      */
     String fileName() const
     {
-        if(persistentName.isEmpty()) return "";
+        if (persistentName.isEmpty()) return "";
         return String("/home/configs/%1.dei").arg(persistentName);
     }
 
@@ -128,17 +128,17 @@ DENG2_PIMPL(Profiles)
             de::Info info;
             info.parse(String::fromUtf8(raw));
 
-            foreach(de::Info::Element const *elem, info.root().contentsInOrder())
+            foreach (de::Info::Element const *elem, info.root().contentsInOrder())
             {
-                if(!elem->isBlock()) continue;
+                if (!elem->isBlock()) continue;
 
                 // There may be multiple profiles in the file.
                 de::Info::BlockElement const &profBlock = elem->as<de::Info::BlockElement>();
-                if(profBlock.blockType() == "group" &&
+                if (profBlock.blockType() == "group" &&
                    profBlock.name()      == "profile")
                 {
                     String profileName = profBlock.keyValue("name").text;
-                    if(profileName.isEmpty()) continue; // Name is required.
+                    if (profileName.isEmpty()) continue; // Name is required.
 
                     LOG_VERBOSE("Reading profile '%s'") << profileName;
 
@@ -149,7 +149,7 @@ DENG2_PIMPL(Profiles)
                 }
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_RES_WARNING("Failed to load profiles from %s:\n%s")
                     << file.description() << er.asText();
@@ -169,7 +169,7 @@ Profiles::Profiles()
 StringList Profiles::profiles() const
 {
     StringList names;
-    for(auto const *p : d->profiles.values()) names << p->name();
+    for (auto const *p : d->profiles.values()) names << p->name();
     return names;
 }
 
@@ -181,7 +181,7 @@ int Profiles::count() const
 Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
 {
     auto found = d->profiles.constFind(nameToKey(name));
-    if(found != d->profiles.constEnd())
+    if (found != d->profiles.constEnd())
     {
         return found.value();
     }
@@ -190,7 +190,7 @@ Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
 
 Profiles::AbstractProfile &Profiles::find(String const &name) const
 {
-    if(auto *p = tryFind(name))
+    if (auto *p = tryFind(name))
     {
         return *p;
     }
@@ -214,9 +214,9 @@ bool Profiles::isPersistent() const
 
 LoopResult Profiles::forAll(std::function<LoopResult (AbstractProfile &)> func)
 {
-    foreach(AbstractProfile *prof, d->profiles.values())
+    foreach (AbstractProfile *prof, d->profiles.values())
     {
-        if(auto result = func(*prof))
+        if (auto result = func(*prof))
         {
             return result;
         }
@@ -243,14 +243,14 @@ void Profiles::remove(AbstractProfile &profile)
 
 bool Profiles::rename(AbstractProfile const &profile, String const &newName)
 {
-    if(newName.isEmpty() || tryFind(newName)) return false;
+    if (newName.isEmpty() || tryFind(newName)) return false;
     d->changeLookupKey(profile, newName);
     return true;
 }
 
 void Profiles::serialize() const
 {
-    if(!isPersistent()) return;
+    if (!isPersistent()) return;
 
     LOG_AS("Profiles");
     LOGDEV_VERBOSE("Serializing %s profiles") << d->persistentName;
@@ -265,13 +265,13 @@ void Profiles::serialize() const
 
     // Write /home/configs/(persistentName).dei with all non-readonly profiles.
     int count = 0;
-    for(auto *prof : d->profiles)
+    for (auto *prof : d->profiles)
     {
-        if(prof->isReadOnly()) continue;
+        if (prof->isReadOnly()) continue;
 
         os << "\nprofile {\n"
               "    name: " << prof->name() << "\n";
-        for(auto line : prof->toInfoSource().split('\n'))
+        for (auto line : prof->toInfoSource().split('\n'))
         {
             os << "    " << line << "\n";
         }
@@ -290,7 +290,7 @@ void Profiles::serialize() const
 
 void Profiles::deserialize()
 {
-    if(!isPersistent()) return;
+    if (!isPersistent()) return;
 
     LOG_AS("Profiles");
     LOGDEV_VERBOSE("Deserializing %s profiles") << d->persistentName;
@@ -302,12 +302,12 @@ void Profiles::deserialize()
     App::fileSystem().findAll("profiles" / d->persistentName, folders);
     DENG2_FOR_EACH(FS::FoundFiles, i, folders)
     {
-        if(Folder const *folder = (*i)->maybeAs<Folder>())
+        if (Folder const *folder = (*i)->maybeAs<Folder>())
         {
             // Let's see if it contains any .dei files.
             DENG2_FOR_EACH_CONST(Folder::Contents, k, folder->contents())
             {
-                if(k->first.fileNameExtension() == ".dei")
+                if (k->first.fileNameExtension() == ".dei")
                 {
                     // Load this profile.
                     d->loadProfilesFromInfo(*k->second, true /* read-only */);
@@ -317,7 +317,7 @@ void Profiles::deserialize()
     }
 
     // Read /home/configs/(persistentName).dei
-    if(File const *file = App::rootFolder().tryLocate<File const>(d->fileName()))
+    if (File const *file = App::rootFolder().tryLocate<File const>(d->fileName()))
     {
         d->loadProfilesFromInfo(*file, false /* modifiable */);
     }
@@ -335,7 +335,7 @@ DENG2_PIMPL(Profiles::AbstractProfile)
 
     ~Instance()
     {
-        if(owner)
+        if (owner)
         {
             owner->remove(self);
         }
@@ -381,10 +381,10 @@ String Profiles::AbstractProfile::name() const
 
 bool Profiles::AbstractProfile::setName(String const &newName)
 {
-    if(newName.isEmpty()) return false;
+    if (newName.isEmpty()) return false;
 
     Profiles *owner = d->owner;
-    if(!owner || owner->rename(*this, newName))
+    if (!owner || owner->rename(*this, newName))
     {
         d->name = newName;
     }

@@ -34,7 +34,7 @@ fixed_t V2x_Intersection(fixed_t const v1[], fixed_t const v1Delta[],
 {
     fixed_t r, div = FixedMul(v1Delta[VY] >> 8, v2Delta[VX]) -
                      FixedMul(v1Delta[VX] >> 8, v2Delta[VY]);
-    if(div == 0)
+    if (div == 0)
     {
         // Parallel.
         r = 0;
@@ -50,11 +50,11 @@ fixed_t V2x_Intersection(fixed_t const v1[], fixed_t const v1Delta[],
 
 int V2x_PointOnLineSide(fixed_t const point[], fixed_t const lineOrigin[], fixed_t const lineDirection[])
 {
-    if(!lineDirection[VX])
+    if (!lineDirection[VX])
     {
         return (point[VX] <= lineOrigin[VX])? lineDirection[VY] > 0 : lineDirection[VY] < 0;
     }
-    else if(!lineDirection[VY])
+    else if (!lineDirection[VY])
     {
         return (point[VY] <= lineOrigin[VY])? lineDirection[VX] < 0 : lineDirection[VX] > 0;
     }
@@ -64,7 +64,7 @@ int V2x_PointOnLineSide(fixed_t const point[], fixed_t const lineOrigin[], fixed
         fixed_t dY = point[VY] - lineOrigin[VY];
 
         // Try to quickly decide by comparing signs.
-        if((lineDirection[VY] ^ lineDirection[VX] ^ dX ^ dY) & 0x80000000)
+        if ((lineDirection[VY] ^ lineDirection[VX] ^ dX ^ dY) & 0x80000000)
         {
             // Left is negative.
             return ((lineDirection[VY] ^ dX) & 0x80000000)? 1 : 0;
@@ -92,7 +92,7 @@ void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y)
 
 float V2f_Length(const_pvec2f_t vec)
 {
-    if(vec[VX] == 0 && vec[VY] == 0) return 0;
+    if (vec[VX] == 0 && vec[VY] == 0) return 0;
     return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
@@ -106,7 +106,7 @@ float V2f_Distance(const_pvec2f_t a, const_pvec2f_t b)
 float V2f_Normalize(pvec2f_t vec)
 {
     float len = V2f_Length(vec);
-    if(len != 0)
+    if (len != 0)
     {
         vec[VX] /= len;
         vec[VY] /= len;
@@ -164,7 +164,7 @@ float V2f_DotProduct(const_pvec2f_t a, const_pvec2f_t b)
 float V2f_ScalarProject(const_pvec2f_t a, const_pvec2f_t b)
 {
     float dot, len = V2f_Length(b);
-    if(len == 0) return 0;
+    if (len == 0) return 0;
 
     dot = V2f_DotProduct(a, b);
     return dot / len;
@@ -173,7 +173,7 @@ float V2f_ScalarProject(const_pvec2f_t a, const_pvec2f_t b)
 float V2f_Project(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b)
 {
     float div = V2f_DotProduct(b, b);
-    if(div == 0)
+    if (div == 0)
     {
         dest[VX] = dest[VY] = 0;
         return 0;
@@ -193,7 +193,7 @@ dd_bool V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b)
     float dot;
 
     // Both must be non-zero vectors.
-    if(aLen == 0 || bLen == 0) return true;
+    if (aLen == 0 || bLen == 0) return true;
 
     dot = V2f_DotProduct(a, b) / aLen / bLen;
 
@@ -228,7 +228,7 @@ float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t 
 
     div = delta1[VX] * delta2[VY] - delta1[VY] * delta2[VX];
 
-    if(div == 0)
+    if (div == 0)
     {
         // Special case: lines are parallel.
         r = 0;
@@ -244,10 +244,10 @@ float V2f_Intersection(const_pvec2f_t p1, const_pvec2f_t delta1, const_pvec2f_t 
      * YI=YA+r(YB-YA)
      */
 
-    if(point)
+    if (point)
     {
         // Calculate the intersection point.
-        for(i = 0; i < 2; ++i)
+        for (i = 0; i < 2; ++i)
             point[i] = p1[i] + r * delta1[i];
     }
 
@@ -276,8 +276,8 @@ dd_bool V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
     ab = V2f_Intercept(a, b, c, d, point);
     cd = V2f_Intercept(c, d, a, b, NULL);
 
-    if(abFrac) *abFrac = ab;
-    if(cdFrac) *cdFrac = cd;
+    if (abFrac) *abFrac = ab;
+    if (cdFrac) *cdFrac = cd;
 
     return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
@@ -285,7 +285,7 @@ dd_bool V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
 void V2f_Lerp(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b, float c)
 {
     uint i;
-    for(i = 0; i < 2; ++i)
+    for (i = 0; i < 2; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
@@ -299,29 +299,29 @@ void V2f_InitBox(arvec2f_t box, const_pvec2f_t point)
 
 void V2f_AddToBox(arvec2f_t box, const_pvec2f_t point)
 {
-    if(point[VX] < box[0][VX])
+    if (point[VX] < box[0][VX])
         box[0][VX] = point[VX];
-    if(point[VX] > box[1][VX])
+    if (point[VX] > box[1][VX])
         box[1][VX] = point[VX];
 
-    if(point[VY] < box[0][VY])
+    if (point[VY] < box[0][VY])
         box[0][VY] = point[VY];
-    if(point[VY] > box[1][VY])
+    if (point[VY] > box[1][VY])
         box[1][VY] = point[VY];
 }
 
 void V2f_UniteBox(arvec2f_t box, arvec2f_t const other)
 {
-    if(other[0][VX] < box[0][VX])
+    if (other[0][VX] < box[0][VX])
         box[0][VX] = other[0][VX];
 
-    if(other[1][VX] > box[1][VX])
+    if (other[1][VX] > box[1][VX])
         box[1][VX] = other[1][VX];
 
-    if(other[0][VY] < box[0][VY])
+    if (other[0][VY] < box[0][VY])
         box[0][VY] = other[0][VY];
 
-    if(other[1][VY] > box[1][VY])
+    if (other[1][VY] > box[1][VY])
         box[1][VY] = other[1][VY];
 }
 
@@ -353,7 +353,7 @@ void V2d_SetFixed(pvec2d_t vec, fixed_t x, fixed_t y)
 
 double V2d_Length(const_pvec2d_t vec)
 {
-    if(vec[VX] == 0 && vec[VY] == 0) return 0;
+    if (vec[VX] == 0 && vec[VY] == 0) return 0;
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
@@ -367,7 +367,7 @@ double V2d_Distance(const_pvec2d_t a, const_pvec2d_t b)
 double V2d_Normalize(pvec2d_t vec)
 {
     double len = V2d_Length(vec);
-    if(len != 0)
+    if (len != 0)
     {
         vec[VX] /= len;
         vec[VY] /= len;
@@ -423,13 +423,13 @@ double V2d_PointLineDistance(const_pvec2d_t point, const_pvec2d_t linePoint,
 
     V2d_Subtract(delta, lineDirection, linePoint);
     len = V2d_Length(delta);
-    if(len == 0)
+    if (len == 0)
     {
-        if(offset) *offset = 0;
+        if (offset) *offset = 0;
         return 0;
     }
 
-    if(offset)
+    if (offset)
     {
         *offset = ((linePoint[VY] - point[VY]) * (linePoint[VY]     - lineDirection[VY]) -
                    (linePoint[VX] - point[VX]) * (lineDirection[VX] - linePoint[VX])   ) / len;
@@ -460,7 +460,7 @@ double V2d_PointOnLineSide2(const_pvec2d_t point, const_pvec2d_t lineDirection,
     double linePerp, double lineLength, double epsilon)
 {
     double perp = V2d_PointLinePerpDistance(point, lineDirection, linePerp, lineLength);
-    if(fabs(perp) <= epsilon) return 0;
+    if (fabs(perp) <= epsilon) return 0;
     return perp;
 }
 
@@ -472,7 +472,7 @@ double V2d_DotProduct(const_pvec2d_t a, const_pvec2d_t b)
 double V2d_ScalarProject(const_pvec2d_t a, const_pvec2d_t b)
 {
     double dot, len = V2d_Length(b);
-    if(len == 0) return 0;
+    if (len == 0) return 0;
 
     dot = V2d_DotProduct(a, b);
     return dot / len;
@@ -481,16 +481,16 @@ double V2d_ScalarProject(const_pvec2d_t a, const_pvec2d_t b)
 double V2d_Project(pvec2d_t dest, const_pvec2d_t a, const_pvec2d_t b)
 {
     double div = V2d_DotProduct(b, b);
-    if(div == 0)
+    if (div == 0)
     {
-        if(dest)
+        if (dest)
         {
             dest[VX] = dest[VY] = 0;
         }
         return 0;
     }
 
-    if(dest)
+    if (dest)
     {
         V2d_Copy(dest, b);
         V2d_Scale(dest, V2d_DotProduct(a, b) / div);
@@ -505,9 +505,9 @@ double V2d_ProjectOnLine(pvec2d_t dest, const_pvec2d_t point,
     double div = V2d_DotProduct(lineDirection, lineDirection);
     double pointVec[2];
 
-    if(div == 0)
+    if (div == 0)
     {
-        if(dest)
+        if (dest)
         {
             dest[VX] = dest[VY] = 0;
         }
@@ -517,7 +517,7 @@ double V2d_ProjectOnLine(pvec2d_t dest, const_pvec2d_t point,
     V2d_Subtract(pointVec, point, lineOrigin);
     div = V2d_DotProduct(pointVec, lineDirection) / div;
 
-    if(dest)
+    if (dest)
     {
         dest[VX] = lineOrigin[VX] + lineDirection[VX] * div;
         dest[VY] = lineOrigin[VY] + lineDirection[VY] * div;
@@ -535,7 +535,7 @@ dd_bool V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b)
     double dot;
 
     // Both must be non-zero vectors.
-    if(aLen == 0 || bLen == 0) return true;
+    if (aLen == 0 || bLen == 0) return true;
 
     dot = V2d_DotProduct(a, b) / aLen / bLen;
 
@@ -563,7 +563,7 @@ double V2d_Intersection(const_pvec2d_t linePointA, const_pvec2d_t lineDirectionA
 
     div = lineDirectionA[VX] * lineDirectionB[VY] - lineDirectionA[VY] * lineDirectionB[VX];
 
-    if(div == 0)
+    if (div == 0)
     {
         // Special case: lines are parallel.
         r = 0;
@@ -579,7 +579,7 @@ double V2d_Intersection(const_pvec2d_t linePointA, const_pvec2d_t lineDirectionA
      * YI = YA + r(YB-YA)
      */
 
-    if(point)
+    if (point)
     {
         // Calculate the intersection point.
         point[VX] = linePointA[VX] + r * lineDirectionA[VX];
@@ -611,8 +611,8 @@ dd_bool V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
     ab = V2d_Intercept(a, b, c, d, point);
     cd = V2d_Intercept(c, d, a, b, NULL);
 
-    if(abFrac) *abFrac = ab;
-    if(cdFrac) *cdFrac = cd;
+    if (abFrac) *abFrac = ab;
+    if (cdFrac) *cdFrac = cd;
 
     return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
@@ -620,7 +620,7 @@ dd_bool V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
 void V2d_Lerp(pvec2d_t dest, const_pvec2d_t a, const_pvec2d_t b, double c)
 {
     uint i;
-    for(i = 0; i < 2; ++i)
+    for (i = 0; i < 2; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
@@ -640,14 +640,14 @@ void V2d_InitBoxXY(arvec2d_t box, double x, double y)
 
 void V2d_AddToBox(arvec2d_t box, const_pvec2d_t point)
 {
-    if(point[VX] < box[0][VX])
+    if (point[VX] < box[0][VX])
         box[0][VX] = point[VX];
-    if(point[VX] > box[1][VX])
+    if (point[VX] > box[1][VX])
         box[1][VX] = point[VX];
 
-    if(point[VY] < box[0][VY])
+    if (point[VY] < box[0][VY])
         box[0][VY] = point[VY];
-    if(point[VY] > box[1][VY])
+    if (point[VY] > box[1][VY])
         box[1][VY] = point[VY];
 }
 
@@ -659,16 +659,16 @@ void V2d_AddToBoxXY(arvec2d_t box, double x, double y)
 
 void V2d_UniteBox(arvec2d_t box, const_arvec2d_t other)
 {
-    if(other[0][VX] < box[0][VX])
+    if (other[0][VX] < box[0][VX])
         box[0][VX] = other[0][VX];
 
-    if(other[1][VX] > box[1][VX])
+    if (other[1][VX] > box[1][VX])
         box[1][VX] = other[1][VX];
 
-    if(other[0][VY] < box[0][VY])
+    if (other[0][VY] < box[0][VY])
         box[0][VY] = other[0][VY];
 
-    if(other[1][VY] > box[1][VY])
+    if (other[1][VY] > box[1][VY])
         box[1][VY] = other[1][VY];
 }
 
@@ -694,7 +694,7 @@ void V3f_SetFixed(pvec3f_t vec, fixed_t x, fixed_t y, fixed_t z)
 
 float V3f_Length(const_pvec3f_t vec)
 {
-    if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
+    if (vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
     return (float) sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
@@ -708,7 +708,7 @@ float V3f_Distance(const_pvec3f_t a, const_pvec3f_t b)
 float V3f_Normalize(pvec3f_t vec)
 {
     float len = V3f_Length(vec);
-    if(len)
+    if (len)
     {
         vec[VX] /= len;
         vec[VY] /= len;
@@ -803,9 +803,9 @@ int V3f_MajorAxis(const_pvec3f_t vec)
     V3f_Set(fn, fabsf(vec[VX]), fabsf(vec[VY]), fabsf(vec[VZ]));
 
     axis = VX;
-    if(fn[VY] > fn[axis])
+    if (fn[VY] > fn[axis])
         axis = VY;
-    if(fn[VZ] > fn[axis])
+    if (fn[VZ] > fn[axis])
         axis = VZ;
 
     return axis;
@@ -819,7 +819,7 @@ dd_bool V3f_IsZero(const_pvec3f_t vec)
 void V3f_Lerp(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b, float c)
 {
     uint i;
-    for(i = 0; i < 3; ++i)
+    for (i = 0; i < 3; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
@@ -837,35 +837,35 @@ void V3f_BuildTangents(pvec3f_t tangent, pvec3f_t bitangent, const_pvec3f_t norm
 
     V3f_Set(fn, fabsf(normal[VX]), fabsf(normal[VY]), fabsf(normal[VZ]));
 
-    if(fn[VY] > fn[axis])
+    if (fn[VY] > fn[axis])
         axis = VY;
-    if(fn[VZ] > fn[axis])
+    if (fn[VZ] > fn[axis])
         axis = VZ;
 
-    if(fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
+    if (fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
        fabsf(fn[VY] - 1.0f) < FLT_EPSILON ||
        fabsf(fn[VZ] - 1.0f) < FLT_EPSILON)
     {
         // We must build the tangent vector manually.
-        if(axis == VX && normal[VX] > 0.f)
+        if (axis == VX && normal[VX] > 0.f)
         {
             V3f_Set(tangent, 0.f, 1.f, 0.f);
         }
-        else if(axis == VX)
+        else if (axis == VX)
         {
             V3f_Set(tangent, 0.f, -1.f, 0.f);
         }
 
-        if(axis == VY && normal[VY] > 0.f)
+        if (axis == VY && normal[VY] > 0.f)
         {
             V3f_Set(tangent, -1.f, 0.f, 0.f);
         }
-        else if(axis == VY)
+        else if (axis == VY)
         {
             V3f_Set(tangent, 1.f, 0.f, 0.f);
         }
 
-        if(axis == VZ)
+        if (axis == VZ)
         {
             V3f_Set(tangent, 1.f, 0.f, 0.f);
         }
@@ -897,7 +897,7 @@ void V3d_SetFixed(pvec3d_t vec, fixed_t x, fixed_t y, fixed_t z)
 
 double V3d_Length(const_pvec3d_t vec)
 {
-    if(vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
+    if (vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0) return 0;
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
@@ -911,7 +911,7 @@ double V3d_Distance(const_pvec3d_t a, const_pvec3d_t b)
 double V3d_Normalize(pvec3d_t vec)
 {
     double len = V3d_Length(vec);
-    if(len != 0)
+    if (len != 0)
     {
         vec[VX] /= len;
         vec[VY] /= len;
@@ -1013,9 +1013,9 @@ int V3d_MajorAxis(const_pvec3d_t vec)
     V3d_Set(fn, fabs(vec[VX]), fabs(vec[VY]), fabs(vec[VZ]));
 
     axis = VX;
-    if(fn[VY] > fn[axis])
+    if (fn[VY] > fn[axis])
         axis = VY;
-    if(fn[VZ] > fn[axis])
+    if (fn[VZ] > fn[axis])
         axis = VZ;
 
     return axis;
@@ -1029,7 +1029,7 @@ dd_bool V3d_IsZero(const_pvec3d_t vec)
 void V3d_Lerp(pvec3d_t dest, const_pvec3d_t a, const_pvec3d_t b, double c)
 {
     uint i;
-    for(i = 0; i < 3; ++i)
+    for (i = 0; i < 3; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
@@ -1047,35 +1047,35 @@ void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_pvec3d_t norm
 
     V3d_Set(fn, fabs(normal[VX]), fabs(normal[VY]), fabs(normal[VZ]));
 
-    if(fn[VY] > fn[axis])
+    if (fn[VY] > fn[axis])
         axis = VY;
-    if(fn[VZ] > fn[axis])
+    if (fn[VZ] > fn[axis])
         axis = VZ;
 
-    if(fabs(fn[VX] - 1.0) < FLT_EPSILON ||
+    if (fabs(fn[VX] - 1.0) < FLT_EPSILON ||
        fabs(fn[VY] - 1.0) < FLT_EPSILON ||
        fabs(fn[VZ] - 1.0) < FLT_EPSILON)
     {
         // We must build the tangent vector manually.
-        if(axis == VX && normal[VX] > 0.f)
+        if (axis == VX && normal[VX] > 0.f)
         {
             V3d_Set(tangent, 0.f, 1.f, 0.f);
         }
-        else if(axis == VX)
+        else if (axis == VX)
         {
             V3d_Set(tangent, 0.f, -1.f, 0.f);
         }
 
-        if(axis == VY && normal[VY] > 0.f)
+        if (axis == VY && normal[VY] > 0.f)
         {
             V3d_Set(tangent, -1.f, 0.f, 0.f);
         }
-        else if(axis == VY)
+        else if (axis == VY)
         {
             V3d_Set(tangent, 1.f, 0.f, 0.f);
         }
 
-        if(axis == VZ)
+        if (axis == VZ)
         {
             V3d_Set(tangent, 1.f, 0.f, 0.f);
         }
@@ -1109,7 +1109,7 @@ void V4f_SetFixed(pvec4f_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
 
 float V4f_Length(const_pvec4f_t vec)
 {
-    if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
+    if (vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
     return (float) sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
                         vec[2] * vec[2] + vec[3] * vec[3]);
 }
@@ -1124,7 +1124,7 @@ float V4f_Distance(const_pvec4f_t a, const_pvec4f_t b)
 float V4f_Normalize(pvec4f_t vec)
 {
     float len = V4f_Length(vec);
-    if(len != 0)
+    if (len != 0)
     {
         vec[0] /= len;
         vec[1] /= len;
@@ -1174,7 +1174,7 @@ dd_bool V4f_IsZero(const_pvec4f_t vec)
 void V4f_Lerp(pvec4f_t dest, const_pvec4f_t a, const_pvec4f_t b, float c)
 {
     uint i;
-    for(i = 0; i < 4; ++i)
+    for (i = 0; i < 4; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
@@ -1198,7 +1198,7 @@ void V4d_SetFixed(pvec4d_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
 
 double V4d_Length(const_pvec4d_t vec)
 {
-    if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
+    if (vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0) return 0;
     return sqrt(vec[0] * vec[0] + vec[1] * vec[1] +
                 vec[2] * vec[2] + vec[3] * vec[3]);
 }
@@ -1213,7 +1213,7 @@ double V4d_Distance(const_pvec4d_t a, const_pvec4d_t b)
 double V4d_Normalize(pvec4d_t vec)
 {
     double len = V4d_Length(vec);
-    if(len != 0)
+    if (len != 0)
     {
         vec[0] /= len;
         vec[1] /= len;
@@ -1263,7 +1263,7 @@ dd_bool V4d_IsZero(const_pvec4d_t vec)
 void V4d_Lerp(pvec4d_t dest, const_pvec4d_t a, const_pvec4d_t b, double c)
 {
     uint i;
-    for(i = 0; i < 4; ++i)
+    for (i = 0; i < 4; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }

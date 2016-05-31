@@ -53,7 +53,7 @@ Compound &FunctionStatement::compound()
 void FunctionStatement::addArgument(String const &argName, Expression *defaultValue)
 {
     _function->arguments().push_back(argName);
-    if(defaultValue)
+    if (defaultValue)
     {
         _defaults.add(new ConstantExpression(new TextValue(argName)), defaultValue);
     }
@@ -92,7 +92,7 @@ void FunctionStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != FUNCTION)
+    if (id != FUNCTION)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

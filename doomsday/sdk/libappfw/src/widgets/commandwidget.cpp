@@ -78,13 +78,13 @@ void CommandWidget::focusLost()
 
 bool CommandWidget::handleEvent(Event const &event)
 {
-    if(isDisabled()) return false;
+    if (isDisabled()) return false;
 
-    if(hasFocus() && event.isKeyDown())
+    if (hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(d->allowReshow &&
+        if (d->allowReshow &&
            isSuggestingCompletion() &&
            key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
            suggestedCompletions().size() > 1)
@@ -97,9 +97,9 @@ bool CommandWidget::handleEvent(Event const &event)
         }
 
         // Override the handling of the Enter key.
-        if(key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
+        if (key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
         {
-            if(isAcceptedAsCommand(text()))
+            if (isAcceptedAsCommand(text()))
             {
                 // We must make sure that the ongoing autocompletion ends.
                 acceptCompletion();
@@ -112,21 +112,21 @@ bool CommandWidget::handleEvent(Event const &event)
         }
     }
 
-    if(LineEditWidget::handleEvent(event))
+    if (LineEditWidget::handleEvent(event))
     {
         // Editor handled the event normally.
         return true;
     }
 
-    if(hasFocus())
+    if (hasFocus())
     {
         // All Tab keys are eaten by a focused console command widget.
-        if(event.isKey() && event.as<KeyEvent>().ddKey() == DDKEY_TAB)
+        if (event.isKey() && event.as<KeyEvent>().ddKey() == DDKEY_TAB)
         {
             return true;
         }
 
-        if(event.isKeyDown())
+        if (event.isKeyDown())
         {
             // Fall back to history navigation.
             return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
@@ -139,7 +139,7 @@ void CommandWidget::dismissContentToHistory()
 {
     d->history.goToLatest();
 
-    if(!text().isEmpty())
+    if (!text().isEmpty())
     {
         d->history.enter();
     }

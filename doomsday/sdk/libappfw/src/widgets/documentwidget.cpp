@@ -86,7 +86,7 @@ public Font::RichFormat::IStyle
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
     {
-        switch(index)
+        switch (index)
         {
         default:
         case Font::RichFormat::NormalColor:
@@ -157,21 +157,21 @@ public Font::RichFormat::IStyle
     {
         // If scroll position has changed, must update text geometry.
         int scrollY = self.scrollPositionY().valuei();
-        if(oldScrollY != scrollY)
+        if (oldScrollY != scrollY)
         {
             oldScrollY = scrollY;
             self.requestGeometry();
         }
 
         Rectanglei pos;
-        if(self.hasChangedPlace(pos))
+        if (self.hasChangedPlace(pos))
         {
             self.requestGeometry();
         }
 
         // Make sure the text has been wrapped for the current dimensions.
         int wrapWidth;
-        if(widthPolicy == ui::Expand)
+        if (widthPolicy == ui::Expand)
         {
             wrapWidth = maxLineWidth;
         }
@@ -180,10 +180,10 @@ public Font::RichFormat::IStyle
             wrapWidth = self.rule().width().valuei() - self.margins().width().valuei();
         }
         glText.setLineWrapWidth(wrapWidth);
-        if(glText.update())
+        if (glText.update())
         {
             // Text is ready for drawing?
-            if(!glText.isBeingWrapped() && progress->isVisible())
+            if (!glText.isBeingWrapped() && progress->isVisible())
             {
                 self.setContentSize(glText.wrappedSize());
                 progress->hide();
@@ -192,7 +192,7 @@ public Font::RichFormat::IStyle
             self.requestGeometry();
         }
 
-        if(!self.geometryRequested()) return;
+        if (!self.geometryRequested()) return;
 
         // Background and scroll indicator.
         VertexBuf::Builder verts;
@@ -202,7 +202,7 @@ public Font::RichFormat::IStyle
 
         uMvpMatrix = root().projMatrix2D();
 
-        if(!progress->isVisible())
+        if (!progress->isVisible())
         {
             DENG2_ASSERT(glText.isReady());
 
@@ -215,7 +215,7 @@ public Font::RichFormat::IStyle
 
             // Update visible range and release/alloc lines accordingly.
             Rangei visRange(firstVisLine, firstVisLine + numVisLines);
-            if(visRange != glText.range())
+            if (visRange != glText.range())
             {
                 glText.setRange(visRange);
                 glText.update(); // alloc visible lines
@@ -262,10 +262,10 @@ DocumentWidget::DocumentWidget(String const &name)
 
 void DocumentWidget::setText(String const &styledText)
 {
-    if(styledText != d->glText.text())
+    if (styledText != d->glText.text())
     {
         // Show the progress indicator until the text is ready for drawing.
-        if(d->drawable.hasBuffer(ID_TEXT))
+        if (d->drawable.hasBuffer(ID_TEXT))
         {
             d->drawable.buffer(ID_TEXT).clear();
         }
@@ -289,7 +289,7 @@ void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
 {
     d->widthPolicy = policy;
 
-    if(policy == ui::Expand)
+    if (policy == ui::Expand)
     {
         rule().setInput(Rule::Width, contentRule().width() + margins().width());
     }

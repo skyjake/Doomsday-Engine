@@ -119,7 +119,7 @@ public:
     template <typename ValueType>
     ValueType &as() {
         ValueType *t = dynamic_cast<ValueType *>(this);
-        if(!t) {
+        if (!t) {
             throw ConversionError("Value::as<>", QString("Illegal type conversion from ") +
                                   typeid(*this).name() + " to " + typeid(ValueType).name());
         }
@@ -129,7 +129,7 @@ public:
     template <typename ValueType>
     ValueType const &as() const {
         ValueType const *t = dynamic_cast<ValueType const *>(this);
-        if(!t) {
+        if (!t) {
             throw ConversionError("Value::as<>", QString("Illegal const type conversion from ") +
                                   typeid(*this).name() + " to " + typeid(ValueType).name());
         }

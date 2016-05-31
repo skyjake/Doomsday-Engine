@@ -28,7 +28,7 @@ static QHash<void *, QByteArray> countedAllocs;
 void Counted::printAllocs()
 {
     qDebug() << "Counted objects:" << Counted::totalCount;
-    for(auto i = countedAllocs.constBegin(); i != countedAllocs.constEnd(); ++i)
+    for (auto i = countedAllocs.constBegin(); i != countedAllocs.constEnd(); ++i)
     {
         qDebug() << "-=- Object" << i.key();
         qDebug() << i.value();
@@ -66,7 +66,7 @@ void Counted::release() const
     //qDebug() << "Counted" << c << typeid(*c).name() << "ref dec'd to" << c->_refCount - 1;
 
     DENG2_ASSERT(_refCount > 0);
-    if(!--_refCount)
+    if (!--_refCount)
     {
         delete this;
     }

@@ -135,7 +135,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         endLabelSize = rule("slider.label").valuei();
 
-        for(int i = 0; i < int(NUM_LABELS); ++i)
+        for (int i = 0; i < int(NUM_LABELS); ++i)
         {
             labels[i].setFont(i == Value? style().fonts().font("slider.value") : self.font());
             labels[i].setLineWrapWidth(endLabelSize);
@@ -150,7 +150,7 @@ DENG_GUI_PIMPL(SliderWidget)
         shaders().build(drawable.program(), "generic.textured.color_ucolor")
                 << uMvpMatrix << uColor << uAtlas();
 
-        for(int i = 0; i < int(NUM_LABELS); ++i)
+        for (int i = 0; i < int(NUM_LABELS); ++i)
         {
             labels[i].init(atlas(), self.font());
         }
@@ -162,7 +162,7 @@ DENG_GUI_PIMPL(SliderWidget)
     void glDeinit()
     {
         drawable.clear();
-        for(int i = 0; i < int(NUM_LABELS); ++i)
+        for (int i = 0; i < int(NUM_LABELS); ++i)
         {
             labels[i].deinit();
         }
@@ -190,22 +190,22 @@ DENG_GUI_PIMPL(SliderWidget)
     void updateGeometry()
     {
         Rectanglei rect;
-        if(self.hasChangedPlace(rect))
+        if (self.hasChangedPlace(rect))
         {
             self.requestGeometry();
         }
 
         // Update texts.
-        for(int i = 0; i < int(NUM_LABELS); ++i)
+        for (int i = 0; i < int(NUM_LABELS); ++i)
         {
-            if(labels[i].update())
+            if (labels[i].update())
             {
                 //qDebug() << "label" << i << "updated";
                 self.requestGeometry();
             }
         }
 
-        if(!self.geometryRequested()) return;
+        if (!self.geometryRequested()) return;
 
         Vector4i const margin = self.margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
@@ -221,13 +221,13 @@ DENG_GUI_PIMPL(SliderWidget)
         int dotSpace = (sliderArea.width() - endLabelSize) / toDevicePixels(1.f); // in logical space
         int dotX = sliderArea.topLeft.x + endLabelSize / 2;
         float altAlpha = 0;
-        if(dotSpace / numDots > 30)
+        if (dotSpace / numDots > 30)
         {
             altAlpha = .5f;
             numDots = 2 * numDots + 1;
         }
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
-        for(int i = 0; i < numDots; ++i)
+        for (int i = 0; i < numDots; ++i)
         {
             // dotSpace converted back to device pixels.
             Vector2i dotPos(dotX + toDevicePixels(dotSpace * float(i) / float(numDots - 1)),
@@ -235,7 +235,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
             Vector4f dotColor = textColor;
             dotColor.w *= .666f;
-            if(altAlpha > 0 && i % 2)
+            if (altAlpha > 0 && i % 2)
             {
                 // Dim alt dots.
                 dotColor.w *= altAlpha;
@@ -254,7 +254,7 @@ DENG_GUI_PIMPL(SliderWidget)
                                 atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.
-        if(labels[Start].isReady())
+        if (labels[Start].isReady())
         {
             labels[Start].makeVertices(verts,
                                        Rectanglei(rect.topLeft,
@@ -263,7 +263,7 @@ DENG_GUI_PIMPL(SliderWidget)
                                        ui::AlignCenter, ui::AlignCenter,
                                        textColor);
         }
-        if(labels[End].isReady())
+        if (labels[End].isReady())
         {
             labels[End].makeVertices(verts,
                                      Rectanglei(Vector2i(rect.bottomRight.x - endLabelSize,
@@ -272,7 +272,7 @@ DENG_GUI_PIMPL(SliderWidget)
                                      ui::AlignCenter, ui::AlignCenter,
                                      textColor);
         }
-        if(labels[Value].isReady())
+        if (labels[Value].isReady())
         {
             labels[Value].makeVertices(verts, slider,
                                        ui::AlignCenter, ui::AlignCenter,
@@ -295,13 +295,13 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void setState(State st)
     {
-        if(state == st) return;
+        if (state == st) return;
 
         //State const prev = state;
         state = st;
         animating = true;
 
-        switch(st)
+        switch (st)
         {
         case Inert:
             //scale.setValue(1.f, .3f);
@@ -326,13 +326,13 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateHover(Vector2i const &pos)
     {
-        if(state == Grabbed) return;
+        if (state == Grabbed) return;
 
-        if(self.hitTest(pos))
+        if (self.hitTest(pos))
         {
-            if(state == Inert) setState(Hovering);
+            if (state == Inert) setState(Hovering);
         }
-        else if(state == Hovering)
+        else if (state == Hovering)
         {
             setState(Inert);
         }
@@ -340,11 +340,11 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateValueLabel()
     {
-        if(!minLabel.isEmpty() && fequal(value, range.start))
+        if (!minLabel.isEmpty() && fequal(value, range.start))
         {
             labels[Value].setText(minLabel);
         }
-        else if(!maxLabel.isEmpty() && fequal(value, range.end))
+        else if (!maxLabel.isEmpty() && fequal(value, range.end))
         {
             labels[Value].setText(maxLabel);
         }
@@ -357,14 +357,14 @@ DENG_GUI_PIMPL(SliderWidget)
     void setValue(ddouble v)
     {
         // Round to nearest step.
-        if(step > 0)
+        if (step > 0)
         {
             v = de::round<ddouble>((v - range.start) / step) * step + range.start;
         }
 
         v = range.clamp(v);
 
-        if(!fequal(v, value))
+        if (!fequal(v, value))
         {
             value = v;
 
@@ -386,7 +386,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void startGrab(MouseEvent const &ev)
     {
-        if(sliderValueRect().contains(ev.pos()))
+        if (sliderValueRect().contains(ev.pos()))
         {
             setState(Grabbed);
             grabFrom = ev.pos();
@@ -410,7 +410,7 @@ DENG_GUI_PIMPL(SliderWidget)
     /// Amount to step when clicking a label.
     ddouble clickStep() const
     {
-        if(step > 0)
+        if (step > 0)
         {
             return step;
         }
@@ -419,7 +419,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void endGrab(MouseEvent const &ev)
     {
-        if(state == Grabbed)
+        if (state == Grabbed)
         {
             setState(Inert);
             updateHover(ev.pos());
@@ -432,14 +432,14 @@ DENG_GUI_PIMPL(SliderWidget)
             //   << range.asText() << "new value:" << value - clickStep();
 
             // Maybe a click on the start/end label?
-            if(rect.contains(ev.pos()))
+            if (rect.contains(ev.pos()))
             {
-                if(ev.pos().x < rect.left() + endLabelSize)
+                if (ev.pos().x < rect.left() + endLabelSize)
                 {
                     setValue(value - clickStep());
                     emit self.valueChangedByUser(value);
                 }
-                else if(ev.pos().x > rect.right() - endLabelSize)
+                else if (ev.pos().x > rect.right() - endLabelSize)
                 {
                     setValue(value + clickStep());
                     emit self.valueChangedByUser(value);
@@ -550,7 +550,7 @@ void SliderWidget::update()
 {
     GuiWidget::update();
 
-    if(d->animating)
+    if (d->animating)
     {
         requestGeometry();
 
@@ -565,9 +565,9 @@ void SliderWidget::drawContent()
 
 bool SliderWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::MousePosition)
+    if (event.type() == Event::MousePosition)
     {
-        if(d->state == Instance::Grabbed)
+        if (d->state == Instance::Grabbed)
         {
             d->updateGrab(event.as<MouseEvent>());
             return true;
@@ -577,9 +577,9 @@ bool SliderWidget::handleEvent(Event const &event)
     }
 
     // Left mouse button can be used to drag/step the value.
-    if(d->state != Instance::Inert)
+    if (d->state != Instance::Inert)
     {
-        switch(handleMouseClick(event, MouseEvent::Left))
+        switch (handleMouseClick(event, MouseEvent::Left))
         {
         case MouseClickStarted:
             d->startGrab(event.as<MouseEvent>());
@@ -596,12 +596,12 @@ bool SliderWidget::handleEvent(Event const &event)
     }
 
     // Right-click to edit the value as text.
-    if(d->state != Instance::Grabbed)
+    if (d->state != Instance::Grabbed)
     {
-        switch(handleMouseClick(event, MouseEvent::Right))
+        switch (handleMouseClick(event, MouseEvent::Right))
         {
         case MouseClickFinished:
-            if(!d->editPop)
+            if (!d->editPop)
             {
                 ValuePopup *pop = new ValuePopup(*this);
                 d->editPop.reset(pop);

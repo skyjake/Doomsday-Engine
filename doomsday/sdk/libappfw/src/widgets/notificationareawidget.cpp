@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     ~Instance()
     {
-        foreach(GuiWidget *w, shown.keys())
+        foreach (GuiWidget *w, shown.keys())
         {
             DENG2_ASSERT(w->audienceForDeletion().contains(this));
             w->audienceForDeletion() -= this;
@@ -67,11 +67,11 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
 
         bool first = true;
-        foreach(Widget *child, self.childWidgets())
+        foreach (Widget *child, self.childWidgets())
         {
             GuiWidget *w = child->as<RelayWidget>().target();
             DENG2_ASSERT(w != nullptr);
-            if(!first)
+            if (!first)
             {
                 layout << gap;
             }
@@ -109,7 +109,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         self.remove(*relay);
         GuiWidget::destroyLater(relay);
         
-        if(!self.childCount())
+        if (!self.childCount())
         {
             self.hide();
         }
@@ -132,7 +132,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         dismissTimer.stop();
 
         // The pending children were already asked to be dismissed.
-        foreach(GuiWidget *w, pendingDismiss)
+        foreach (GuiWidget *w, pendingDismiss)
         {
             dismissChild(*w);
         }
@@ -171,7 +171,7 @@ Rule const &NotificationAreaWidget::shift()
 
 void NotificationAreaWidget::showChild(GuiWidget &notif)
 {
-    if(isChildShown(notif))
+    if (isChildShown(notif))
     {
         // Already in the notification area.
         return;
@@ -196,13 +196,13 @@ void NotificationAreaWidget::showChild(GuiWidget &notif)
 
 void NotificationAreaWidget::hideChild(GuiWidget &notif)
 {
-    if(!isChildShown(notif))
+    if (!isChildShown(notif))
     {
         // Already in the notification area.
         return;
     }
 
-    if(childCount() > 1)
+    if (childCount() > 1)
     {
         // Dismiss immediately, the area itself remains open.
         d->dismissChild(notif);
@@ -224,7 +224,7 @@ void NotificationAreaWidget::dismiss()
 
 bool NotificationAreaWidget::isChildShown(GuiWidget &notif) const
 {
-    if(d->pendingDismiss.contains(&notif))
+    if (d->pendingDismiss.contains(&notif))
     {
         return false;
     }

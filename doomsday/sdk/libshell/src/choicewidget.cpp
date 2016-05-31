@@ -36,7 +36,7 @@ DENG2_PIMPL(ChoiceWidget)
     void updateMenu()
     {
         menu->clear();
-        foreach(String item, items)
+        foreach (String item, items)
         {
             menu->appendItem(new Action(item, &self, SLOT(updateSelectionFromMenu())));
         }
@@ -139,14 +139,14 @@ void ChoiceWidget::draw()
 
 bool ChoiceWidget::handleEvent(Event const &ev)
 {
-    if(ev.type() == Event::KeyPress)
+    if (ev.type() == Event::KeyPress)
     {
         KeyEvent const &event = ev.as<KeyEvent>();
-        if(!event.text().isEmpty() || event.key() == Qt::Key_Enter)
+        if (!event.text().isEmpty() || event.key() == Qt::Key_Enter)
         {
             DENG2_ASSERT(!isOpen());
 
-            if(event.text().isEmpty() || event.text() == " ")
+            if (event.text().isEmpty() || event.text() == " ")
             {
                 d->menu->setCursor(d->selection);
             }
@@ -154,9 +154,9 @@ bool ChoiceWidget::handleEvent(Event const &ev)
             {
                 // Preselect the first item that begins with the given letter.
                 int curs = d->selection;
-                for(int i = 0; i < d->items.size(); ++i)
+                for (int i = 0; i < d->items.size(); ++i)
                 {
-                    if(d->items[i].startsWith(event.text(), Qt::CaseInsensitive))
+                    if (d->items[i].startsWith(event.text(), Qt::CaseInsensitive))
                     {
                         curs = i;
                         break;

@@ -39,7 +39,7 @@ Address::Address(char const *address, duint16 port) : d(new Instance)
 {
     d->port = port;
 
-    if(QLatin1String(address) == "localhost")
+    if (QLatin1String(address) == "localhost")
     {
         d->host = QHostAddress(QHostAddress::LocalHost);
     }
@@ -72,7 +72,7 @@ bool Address::operator < (Address const &other) const
 {
     quint32 const a = d->host.toIPv4Address();
     quint32 const b = other.d->host.toIPv4Address();
-    if(a == b)
+    if (a == b)
         return d->port < other.d->port;
     else
         return a < b;
@@ -121,7 +121,7 @@ bool Address::matches(Address const &other, duint32 mask)
 String Address::asText() const
 {
     String result = (d->host == QHostAddress::LocalHost? "localhost" : d->host.toString());
-    if(d->port)
+    if (d->port)
     {
         result += ":" + QString::number(d->port);
     }
@@ -132,7 +132,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
 {
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;
-    if(str.contains(':'))
+    if (str.contains(':'))
     {
         int pos = str.indexOf(':');
         port = str.mid(pos + 1).toInt();
@@ -149,12 +149,12 @@ QTextStream &operator << (QTextStream &os, Address const &address)
 
 bool Address::isHostLocal(QHostAddress const &host) // static
 {
-    if(host == QHostAddress::LocalHost) return true;
+    if (host == QHostAddress::LocalHost) return true;
 
     QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach(QHostAddress addr, info.addresses())
+    foreach (QHostAddress addr, info.addresses())
     {
-        if(addr == host) return true;
+        if (addr == host) return true;
     }
     return false;
 }

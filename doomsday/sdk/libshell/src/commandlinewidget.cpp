@@ -47,14 +47,14 @@ bool CommandLineWidget::handleEvent(Event const &event)
     KeyEvent const &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.
-    if(ev.key() == Qt::Key_Enter)
+    if (ev.key() == Qt::Key_Enter)
     {
         String const entered = d->history.enter();
         emit commandEntered(entered);
         return true;
     }
 
-    if(LineEditWidget::handleEvent(event))
+    if (LineEditWidget::handleEvent(event))
     {
         return true;
     }

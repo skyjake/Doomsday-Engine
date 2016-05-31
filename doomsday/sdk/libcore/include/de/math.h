@@ -47,7 +47,7 @@ dfloat const FLOAT_EPSILON = 1.0e-5f;
 /// Absolute value.
 template <typename Type>
 inline Type abs(Type const &a) {
-    if(a < 0.0) {
+    if (a < 0.0) {
         return -a;
     }
     return a;
@@ -60,7 +60,7 @@ inline duint abs(duint const &a) {
 
 template <typename Type>
 inline Type sign(Type const &a) {
-    if(a < 0) return Type(-1); else return Type(1);
+    if (a < 0) return Type(-1); else return Type(1);
 }
 
 /// Minimum of two values.
@@ -104,8 +104,8 @@ template <typename Type>
 Type wrap(Type value, Type const &low, Type const &high) {
     DENG2_ASSERT(high > low);
     Type const range = high - low;
-    while(value < low) value += range;
-    while(value >= high) value -= range;
+    while (value < low) value += range;
+    while (value >= high) value -= range;
     return value;
 }
 
@@ -186,15 +186,15 @@ inline Type radianToDegree(Type const &radian) {
 /// General comparison function.
 template <typename Type>
 inline dint cmp(Type const &a, Type const &b) {
-    if(a < b) return -1;
-    if(a > b) return 1;
+    if (a < b) return -1;
+    if (a > b) return 1;
     return 0;
 }
 
 template <typename IntType>
 IntType ceilPow2(IntType const &num) {
     IntType cumul;
-    for(cumul = 1; num > cumul; cumul <<= 1) {}
+    for (cumul = 1; num > cumul; cumul <<= 1) {}
     return cumul;
 }
 

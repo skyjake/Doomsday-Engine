@@ -52,9 +52,9 @@ void Node::setParent(Node *parent)
 
 bool Node::hasAncestor(Node const &possibleAncestor) const
 {
-    for(Node const *iter = parent(); iter; iter = iter->parent())
+    for (Node const *iter = parent(); iter; iter = iter->parent())
     {
-        if(iter == &possibleAncestor) return true;
+        if (iter == &possibleAncestor) return true;
     }
     return false;
 }
@@ -71,7 +71,7 @@ String const Node::path() const
     DENG2_GUARD(this);
 
     String thePath = name();
-    for(Node *i = d->parent; i; i = i->d->parent)
+    for (Node *i = d->parent; i; i = i->d->parent)
     {
         thePath = i->name() / thePath;
     }
@@ -83,7 +83,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     static QString const DOT_SINGLE(".");
     static QString const DOT_DOUBLE("..");
 
-    if(path.isEmpty())
+    if (path.isEmpty())
     {
         // As a special case, a null path always refers to self.
         return this;
@@ -95,9 +95,9 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     Path::Segment const &component = path.firstSegment();
 
     // Check if this is the end of the path.
-    if(path.segmentCount() == 1 && component != DOT_DOUBLE)
+    if (path.segmentCount() == 1 && component != DOT_DOUBLE)
     {
-        if(component == DOT_SINGLE)
+        if (component == DOT_SINGLE)
         {
             // Special case: not a child, but a reference to this node.
             return this;
@@ -108,13 +108,13 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     PathRef const remainder = path.subPath(Rangei(1, path.segmentCount()));
 
     // Check for some special cases.
-    if(component == DOT_SINGLE)
+    if (component == DOT_SINGLE)
     {
         return tryFollowPath(remainder);
     }
-    if(component == DOT_DOUBLE)
+    if (component == DOT_DOUBLE)
     {
-        if(!parent())
+        if (!parent())
         {
             // Can't go there.
             return 0;
@@ -123,7 +123,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Continue recursively to the next component.
-    if(Node const *child = tryGetChild(component))
+    if (Node const *child = tryGetChild(component))
     {
         return child->tryFollowPath(remainder);
     }

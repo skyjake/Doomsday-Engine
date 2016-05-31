@@ -84,11 +84,11 @@ struct Mode : public DisplayMode
 
     bool operator < (const Mode& b) const
     {
-        if(width == b.width)
+        if (width == b.width)
         {
-            if(height == b.height)
+            if (height == b.height)
             {
-                if(depth == b.depth)
+                if (depth == b.depth)
                 {
                     // The refresh rate that more closely matches the original is preferable.
                     return differenceToOriginalHz(refreshRate) < differenceToOriginalHz(b.refreshRate);
@@ -107,7 +107,7 @@ struct Mode : public DisplayMode
 
         float fx;
         float fy;
-        if(width > height)
+        if (width > height)
         {
             fx = width/float(height);
             fy = 1.f;
@@ -119,11 +119,11 @@ struct Mode : public DisplayMode
         }
 
         // Multiply until we arrive at a close enough integer ratio.
-        for(int mul = 2; mul < qMin(width, height); ++mul)
+        for (int mul = 2; mul < qMin(width, height); ++mul)
         {
             float rx = fx*mul;
             float ry = fy*mul;
-            if(qAbs(rx - qRound(rx)) < .01f && qAbs(ry - qRound(ry)) < .01f)
+            if (qAbs(rx - qRound(rx)) < .01f && qAbs(ry - qRound(ry)) < .01f)
             {
                 // This seems good.
                 ratioX = qRound(rx);
@@ -132,7 +132,7 @@ struct Mode : public DisplayMode
             }
         }
 
-        if(ratioX == 8 && ratioY == 5)
+        if (ratioX == 8 && ratioY == 5)
         {
             // This is commonly referred to as 16:10.
             ratioX *= 2;
@@ -188,7 +188,7 @@ using namespace de;
 
 int DisplayMode_Init(void)
 {
-    if(inited) return true;
+    if (inited) return true;
 
     captured = false;
     DisplayMode_Native_Init();
@@ -199,10 +199,10 @@ int DisplayMode_Init(void)
     // This is used for sorting the mode set (Hz).
     originalMode = Mode::fromCurrent();
 
-    for(int i = 0; i < DisplayMode_Native_Count(); ++i)
+    for (int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
         Mode mode(i);
-        if(mode.depth < 16 || mode.width < 320 || mode.height < 240)
+        if (mode.depth < 16 || mode.width < 320 || mode.height < 240)
             continue; // This mode is not good.
         modes.insert(mode);
     }
@@ -211,7 +211,7 @@ int DisplayMode_Init(void)
     originalMode.debugPrint();
 
     LOG_GL_VERBOSE("All available modes:");
-    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
+    for (Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
         i->debugPrint();
     }
@@ -227,7 +227,7 @@ int DisplayMode_Init(void)
 
 void DisplayMode_Shutdown(void)
 {
-    if(!inited) return;
+    if (!inited) return;
 
     binder.deinit();
 
@@ -275,9 +275,9 @@ DisplayMode const *DisplayMode_ByIndex(int index)
     DENG2_ASSERT(index < (int) modes.size());
 
     int pos = 0;
-    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i, ++pos)
+    for (Modes::iterator i = modes.begin(); i != modes.end(); ++i, ++pos)
     {
-        if(pos == index)
+        if (pos == index)
         {
             return &*i;
         }
@@ -292,12 +292,12 @@ DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, flo
     int bestScore = -1;
     DisplayMode const *best = 0;
 
-    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
+    for (Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
         int score = de::squared(i->width  - width) +
                     de::squared(i->height - height) +
                     de::squared(i->depth  - depth);
-        if(freq >= 1)
+        if (freq >= 1)
         {
             score += de::squared(i->refreshRate - freq);
         }
@@ -306,7 +306,7 @@ DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, flo
         // with the same score, the first one will be chosen. Particularly if the
         // frequency has not been specified, the sort order of the modes defines which
         // one is picked.
-        if(!best || score < bestScore)
+        if (!best || score < bestScore)
         {
             bestScore = score;
             best = &*i;
@@ -317,13 +317,13 @@ DisplayMode const *DisplayMode_FindClosest(int width, int height, int depth, flo
 
 int DisplayMode_IsEqual(DisplayMode const *a, DisplayMode const *b)
 {
-    if(!a || !b) return true; // Cannot compare against nothing.
+    if (!a || !b) return true; // Cannot compare against nothing.
     return Mode(*a) == Mode(*b);
 }
 
 int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
 {
-    if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
+    if (Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
         LOG_AS("DisplayMode");
         LOGDEV_GL_XVERBOSE("Requested mode is the same as current, ignoring request");
@@ -347,7 +347,7 @@ void DisplayMode_GetColorTransfer(DisplayColorTransfer *colors)
 
     // Factor out the original color transfer function, which may be set up
     // specifically by the user.
-    for(int i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
 #define LINEAR_UNMAP(i, c) ( (unsigned short) \
     de::clamp(0.f, float(mapped.table[i]) / float(originalColorTransfer.table[i]) * intensity8To16(c), 65535.f) )
@@ -363,7 +363,7 @@ void DisplayMode_SetColorTransfer(DisplayColorTransfer const *colors)
 
     // Factor in the original color transfer function, which may be set up
     // specifically by the user.
-    for(int i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
 #define LINEAR_MAP(i, c) ( (unsigned short) \
     de::clamp(0.f, float(colors->table[i]) / float(intensity8To16(c)) * originalColorTransfer.table[i], 65535.f) )

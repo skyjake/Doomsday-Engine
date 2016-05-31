@@ -116,7 +116,7 @@ DENG2_PIMPL(GridLayout)
         releaseRef(totalWidth);
         releaseRef(totalHeight);
 
-        foreach(Rule const *rule, fixedColWidths.values())
+        foreach (Rule const *rule, fixedColWidths.values())
         {
             releaseRef(rule);
         }
@@ -157,21 +157,21 @@ DENG2_PIMPL(GridLayout)
         maxCols = numCols;
         maxRows = numRows;
 
-        if(!maxCols)
+        if (!maxCols)
         {
             mode = RowFirst;
         }
-        else if(!maxRows)
+        else if (!maxRows)
         {
             mode = ColumnFirst;
         }
 
         // Allocate the right number of cols and rows.
-        for(int i = 0; i < maxCols; ++i)
+        for (int i = 0; i < maxCols; ++i)
         {
             addMetric(cols);
         }
-        for(int i = 0; i < maxRows; ++i)
+        for (int i = 0; i < maxRows; ++i)
         {
             addMetric(rows);
         }
@@ -190,13 +190,13 @@ DENG2_PIMPL(GridLayout)
         int pos = list.size();
 
         // Check if there is a fixed width defined for this column.
-        if(&list == &cols && fixedColWidths.contains(pos))
+        if (&list == &cols && fixedColWidths.contains(pos))
         {
             DENG2_ASSERT(fixedColWidths[pos] != 0);
             m->fixedLength = holdRef(*fixedColWidths[pos]);
         }
 
-        for(int i = 0; i < list.size(); ++i)
+        for (int i = 0; i < list.size(); ++i)
         {
             sumInto(m->accumulatedLengths, list[i]->fixedLength? *list[i]->fixedLength :
                                                                  *list[i]->final);
@@ -206,8 +206,8 @@ DENG2_PIMPL(GridLayout)
 
     void updateMaximum(Metrics &list, int index, Rule const &rule)
     {
-        if(index < 0) index = 0;
-        if(index >= list.size())
+        if (index < 0) index = 0;
+        if (index >= list.size())
         {
             // The list may expand.
             addMetric(list);
@@ -215,10 +215,10 @@ DENG2_PIMPL(GridLayout)
         DENG2_ASSERT(index < list.size());
 
         DENG2_ASSERT(list[index] != nullptr);
-        if(!list[index]) return;
+        if (!list[index]) return;
 
         Metric &metric = *list[index];
-        if(!metric.fixedLength)
+        if (!metric.fixedLength)
         {
             changeRef(metric.current, OperatorRule::maximum(rule, metric.current));
 
@@ -234,12 +234,12 @@ DENG2_PIMPL(GridLayout)
 
     Rule const &columnLeftX(int col)
     {
-        if(!cols.at(col)->minEdge)
+        if (!cols.at(col)->minEdge)
         {
             Rule const *base = holdRef(initialX);
-            if(col > 0)
+            if (col > 0)
             {
-                if(colPad) changeRef(base, *base + *colPad * col);
+                if (colPad) changeRef(base, *base + *colPad * col);
                 sumInto(base, *cols.at(col)->accumulatedLengths);
             }
             cols[col]->minEdge = base;
@@ -249,12 +249,12 @@ DENG2_PIMPL(GridLayout)
 
     Rule const &columnRightX(int col)
     {
-        if(col < cols.size() - 1)
+        if (col < cols.size() - 1)
         {
             return columnLeftX(col + 1);
         }
 
-        if(!cols.at(col)->maxEdge)
+        if (!cols.at(col)->maxEdge)
         {
             cols[col]->maxEdge = holdRef(columnLeftX(col) + *cols.last()->final);
         }
@@ -263,12 +263,12 @@ DENG2_PIMPL(GridLayout)
 
     Rule const &rowTopY(int row) const
     {
-        if(!rows.at(row)->minEdge)
+        if (!rows.at(row)->minEdge)
         {
             Rule const *base = holdRef(initialY);
-            if(row > 0)
+            if (row > 0)
             {
-                if(rowPad) changeRef(base, *base + *rowPad * row);
+                if (rowPad) changeRef(base, *base + *rowPad * row);
                 sumInto(base, *rows.at(row)->accumulatedLengths);
             }
             rows[row]->minEdge = base;
@@ -279,7 +279,7 @@ DENG2_PIMPL(GridLayout)
     ui::Alignment alignment(Vector2i pos) const
     {
         CellAlignments::const_iterator found = cellAlignment.find(pos);
-        if(found != cellAlignment.end())
+        if (found != cellAlignment.end())
         {
             return found.value();
         }
@@ -291,15 +291,15 @@ DENG2_PIMPL(GridLayout)
      */
     void begin()
     {
-        if(current) return;
+        if (current) return;
 
         current = new SequentialLayout(*baseX, *baseY, mode == ColumnFirst? ui::Right : ui::Down);
 
-        if(fixedCellWidth)
+        if (fixedCellWidth)
         {
             current->setOverrideWidth(*fixedCellWidth);
         }
-        if(fixedCellHeight)
+        if (fixedCellHeight)
         {
             current->setOverrideHeight(*fixedCellHeight);
         }
@@ -313,16 +313,16 @@ DENG2_PIMPL(GridLayout)
         DENG2_ASSERT(current != 0);
 
         // Advance to next cell.
-        if(mode == ColumnFirst)
+        if (mode == ColumnFirst)
         {
             cell.x += cellSpan;
 
-            if(maxCols > 0 && cell.x >= maxCols)
+            if (maxCols > 0 && cell.x >= maxCols)
             {
                 cell.x = 0;
                 cell.y++;
                 sumInto(baseY, current->height());
-                if(rowPad) sumInto(baseY, *rowPad * cellSpan);
+                if (rowPad) sumInto(baseY, *rowPad * cellSpan);
 
                 // This one is finished.
                 delete current; current = 0;
@@ -332,12 +332,12 @@ DENG2_PIMPL(GridLayout)
         {
             cell.y += cellSpan;
 
-            if(maxRows > 0 && cell.y >= maxRows)
+            if (maxRows > 0 && cell.y >= maxRows)
             {
                 cell.y = 0;
                 cell.x++;
                 sumInto(baseX, current->width());
-                if(colPad) sumInto(baseX, *colPad * cellSpan);
+                if (colPad) sumInto(baseX, *colPad * cellSpan);
 
                 // This one is finished.
                 delete current; current = 0;
@@ -365,14 +365,14 @@ DENG2_PIMPL(GridLayout)
 
         widgets << widget; // NULLs included.
 
-        if(cellSpan > 1)
+        if (cellSpan > 1)
         {
             widgetMultiCellCount.insert(widget, cellSpan);
         }
 
-        if(widget)
+        if (widget)
         {
-            if(pad && !current->isEmpty())
+            if (pad && !current->isEmpty())
             {
                 current->append(*widget, *pad);
             }
@@ -383,31 +383,31 @@ DENG2_PIMPL(GridLayout)
         }
         else
         {
-            if(pad && !current->isEmpty()) current->append(*pad);
+            if (pad && !current->isEmpty()) current->append(*pad);
             current->append(*space);
         }
 
         Rule const &cellWidth = (layoutWidth? *layoutWidth : widget? widget->rule().width() : *space);
 
         // Update the column and row maximum width/height.
-        if(mode == ColumnFirst)
+        if (mode == ColumnFirst)
         {
-            if(cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
-            if(widget) updateMaximum(rows, cell.y, widget->rule().height());
+            if (cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
+            if (widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
-            if(cellSpan == 1) updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
-            if(widget) updateMaximum(cols, cell.x, cellWidth);
+            if (cellSpan == 1) updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
+            if (widget) updateMaximum(cols, cell.x, cellWidth);
         }
 
-        if(widget)
+        if (widget)
         {
             // Cells in variable-width columns/rows must be positioned according to
             // the final column/row base widths.
-            if(mode == ColumnFirst && !fixedCellWidth)
+            if (mode == ColumnFirst && !fixedCellWidth)
             {
-                if(alignment(cell) & ui::AlignRight)
+                if (alignment(cell) & ui::AlignRight)
                 {
                     widget->rule()
                             .clearInput(Rule::Left)
@@ -418,7 +418,7 @@ DENG2_PIMPL(GridLayout)
                     widget->rule().setInput(Rule::Left, columnLeftX(cell.x));
                 }
             }
-            else if(mode == RowFirst && !fixedCellHeight)
+            else if (mode == RowFirst && !fixedCellHeight)
             {
                 widget->rule().setInput(Rule::Top, rowTopY(cell.y));
             }
@@ -431,12 +431,12 @@ DENG2_PIMPL(GridLayout)
 
     void updateTotal()
     {
-        if(!needTotalUpdate) return;
+        if (!needTotalUpdate) return;
 
         Vector2i size = gridSize();
 
         // Paddings must be included in the total.
-        if(colPad)
+        if (colPad)
         {
             changeRef(totalWidth, *colPad * size.x);
         }
@@ -444,7 +444,7 @@ DENG2_PIMPL(GridLayout)
         {
             releaseRef(totalWidth);
         }
-        if(rowPad)
+        if (rowPad)
         {
             changeRef(totalHeight, *rowPad * size.y);
         }
@@ -454,21 +454,21 @@ DENG2_PIMPL(GridLayout)
         }
 
         // Sum up the column widths.
-        for(int i = 0; i < size.x; ++i)
+        for (int i = 0; i < size.x; ++i)
         {
             DENG2_ASSERT(cols.at(i));
             sumInto(totalWidth, *cols.at(i)->final);
         }
 
         // Sum up the row heights.
-        for(int i = 0; i < size.y; ++i)
+        for (int i = 0; i < size.y; ++i)
         {
             DENG2_ASSERT(rows.at(i));
             sumInto(totalHeight, *rows.at(i)->final);
         }
 
-        if(!totalWidth)  totalWidth  = new ConstantRule(0);
-        if(!totalHeight) totalHeight = new ConstantRule(0);
+        if (!totalWidth)  totalWidth  = new ConstantRule(0);
+        if (!totalHeight) totalHeight = new ConstantRule(0);
 
         needTotalUpdate = false;
     }
@@ -533,7 +533,7 @@ void GridLayout::setColumnFixedWidth(int column, Rule const &fixedWidth)
 {
     DENG2_ASSERT(isEmpty());
 
-    if(d->fixedColWidths.contains(column))
+    if (d->fixedColWidths.contains(column))
     {
         releaseRef(d->fixedColWidths[column]);
     }
@@ -586,7 +586,7 @@ GridLayout &GridLayout::append(Rule const &empty)
 
 GridLayout &GridLayout::appendEmpty()
 {
-    if(d->mode == ColumnFirst)
+    if (d->mode == ColumnFirst)
     {
         append(overrideWidth());
     }
@@ -625,14 +625,14 @@ Vector2i GridLayout::gridSize() const
 Vector2i GridLayout::widgetPos(GuiWidget &widget) const
 {
     Vector2i pos;
-    foreach(Widget *w, d->widgets)
+    foreach (Widget *w, d->widgets)
     {
-        if(w == &widget) return pos;
+        if (w == &widget) return pos;
 
-        switch(d->mode)
+        switch (d->mode)
         {
         case ColumnFirst:
-            if(++pos.x >= d->maxCols)
+            if (++pos.x >= d->maxCols)
             {
                 pos.x = 0;
                 ++pos.y;
@@ -640,7 +640,7 @@ Vector2i GridLayout::widgetPos(GuiWidget &widget) const
             break;
 
         case RowFirst:
-            if(++pos.y >= d->maxRows)
+            if (++pos.y >= d->maxRows)
             {
                 pos.y = 0;
                 ++pos.x;
@@ -654,18 +654,18 @@ Vector2i GridLayout::widgetPos(GuiWidget &widget) const
 GuiWidget *GridLayout::at(Vector2i const &cell) const
 {
     Vector2i pos;
-    foreach(Widget *w, d->widgets)
+    foreach (Widget *w, d->widgets)
     {
-        if(pos == cell)
+        if (pos == cell)
         {
-            if(w) return &w->as<GuiWidget>();
+            if (w) return &w->as<GuiWidget>();
             return 0;
         }
 
-        switch(d->mode)
+        switch (d->mode)
         {
         case ColumnFirst:
-            if(++pos.x >= d->maxCols)
+            if (++pos.x >= d->maxCols)
             {
                 pos.x = 0;
                 ++pos.y;
@@ -673,7 +673,7 @@ GuiWidget *GridLayout::at(Vector2i const &cell) const
             break;
 
         case RowFirst:
-            if(++pos.y >= d->maxRows)
+            if (++pos.y >= d->maxRows)
             {
                 pos.y = 0;
                 ++pos.x;
@@ -687,7 +687,7 @@ GuiWidget *GridLayout::at(Vector2i const &cell) const
 int GridLayout::widgetCellSpan(GuiWidget const &widget) const
 {
     auto found = d->widgetMultiCellCount.constFind(&widget);
-    if(found != d->widgetMultiCellCount.constEnd())
+    if (found != d->widgetMultiCellCount.constEnd())
     {
         return found.value();
     }
@@ -744,13 +744,13 @@ Rule const &GridLayout::overrideHeight() const
 
 Rule const &GridLayout::columnPadding() const
 {
-    if(d->colPad) return *d->colPad;
+    if (d->colPad) return *d->colPad;
     return *d->zeroRule;
 }
 
 Rule const &GridLayout::rowPadding() const
 {
-    if(d->rowPad) return *d->rowPad;
+    if (d->rowPad) return *d->rowPad;
     return *d->zeroRule;
 }
 

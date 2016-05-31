@@ -36,7 +36,7 @@ ArrayValue::ArrayValue() : Value(), _iteration(0)
 
 ArrayValue::ArrayValue(ArrayValue const &other) : Value()
 {
-    for(Elements::const_iterator i = other._elements.begin();
+    for (Elements::const_iterator i = other._elements.begin();
         i != other._elements.end(); ++i)
     {
         _elements.push_back((*i)->duplicate());
@@ -64,14 +64,14 @@ Value::Text ArrayValue::asText() const
     bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
-    for(Elements::const_iterator i = _elements.begin();
+    for (Elements::const_iterator i = _elements.begin();
         i != _elements.end(); ++i)
     {
         String content = (*i)->asText();
         bool multiline = content.contains('\n');
-        if(!isFirst)
+        if (!isFirst)
         {
-            if(hadNewline || multiline) s << "\n";
+            if (hadNewline || multiline) s << "\n";
             s << ",";
         }
         hadNewline = multiline;
@@ -91,7 +91,7 @@ dsize ArrayValue::size() const
 Value const &ArrayValue::element(Value const &indexValue) const
 {
     NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
-    if(!v)
+    if (!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::element", "Array index must be a number");
@@ -109,7 +109,7 @@ Value &ArrayValue::element(Value const &index)
 void ArrayValue::setElement(Value const &indexValue, Value *value)
 {
     NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
-    if(!v)
+    if (!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
         throw IllegalIndexError("ArrayValue::setElement", "Array index must be a number");
@@ -119,9 +119,9 @@ void ArrayValue::setElement(Value const &indexValue, Value *value)
 
 bool ArrayValue::contains(Value const &value) const
 {
-    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
-        if(!(*i)->compare(value))
+        if (!(*i)->compare(value))
         {
             return true;
         }
@@ -137,7 +137,7 @@ Value *ArrayValue::begin()
 
 Value *ArrayValue::next()
 {
-    if(_iteration < dint(_elements.size()))
+    if (_iteration < dint(_elements.size()))
     {
         return _elements[_iteration++]->duplicate();
     }
@@ -152,23 +152,23 @@ bool ArrayValue::isTrue() const
 dint ArrayValue::compare(Value const &value) const
 {
     ArrayValue const *other = dynamic_cast<ArrayValue const *>(&value);
-    if(other)
+    if (other)
     {
-        if(size() < other->size())
+        if (size() < other->size())
         {
             return -1;
         }
-        if(size() > other->size())
+        if (size() > other->size())
         {
             return 1;
         }
         // If all the keys and values compare equal, these are equal.
         Elements::const_iterator mine = _elements.begin();
         Elements::const_iterator theirs = other->_elements.begin();
-        for(; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
+        for (; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
         {
             dint result = (*mine)->compare(**theirs);
-            if(result) return result;
+            if (result) return result;
         }
         // These appear identical.
         return 0;
@@ -179,14 +179,14 @@ dint ArrayValue::compare(Value const &value) const
 void ArrayValue::sum(Value const &value)
 {
     ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
-    if(!array)
+    if (!array)
     {
         /// @throw ArithmeticError @a value was not an Array. ArrayValue can only be summed
         /// with another ArrayValue.
         throw ArithmeticError("ArrayValue::sum", "Array cannot be summed with value");
     }
 
-    for(Elements::const_iterator i = array->_elements.begin(); i != array->_elements.end(); ++i)
+    for (Elements::const_iterator i = array->_elements.begin(); i != array->_elements.end(); ++i)
     {
         _elements.push_back((*i)->duplicate());
     }
@@ -199,7 +199,7 @@ void ArrayValue::add(Value *value)
 
 void ArrayValue::addMany(duint count, Value::Number value)
 {
-    while(count--)
+    while (count--)
     {
         add(new NumberValue(value));
     }
@@ -207,7 +207,7 @@ void ArrayValue::addMany(duint count, Value::Number value)
 
 void ArrayValue::addMany(duint count, String const &value)
 {
-    while(count--)
+    while (count--)
     {
         add(new TextValue(value));
     }
@@ -225,11 +225,11 @@ Value const &ArrayValue::at(dint index) const
 
 ArrayValue::Elements::iterator ArrayValue::indexToIterator(dint index)
 {
-    if(index >= 0 && index < dint(size()))
+    if (index >= 0 && index < dint(size()))
     {
         return _elements.begin() + index;
     }
-    else if(index < 0 && index > -dint(size()))
+    else if (index < 0 && index > -dint(size()))
     {
         return _elements.begin() + size() + index;
     }
@@ -242,11 +242,11 @@ ArrayValue::Elements::iterator ArrayValue::indexToIterator(dint index)
 
 ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) const
 {
-    if(index >= 0 && index < dint(size()))
+    if (index >= 0 && index < dint(size()))
     {
         return _elements.begin() + index;
     }
-    else if(index < 0 && index >= -dint(size()))
+    else if (index < 0 && index >= -dint(size()))
     {
         return _elements.begin() + size() + index;
     }
@@ -259,7 +259,7 @@ ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) con
 
 void ArrayValue::insert(dint index, Value *value)
 {
-    if(index == dint(size()))
+    if (index == dint(size()))
     {
         add(value);
     }
@@ -315,7 +315,7 @@ void ArrayValue::reverse()
 void ArrayValue::clear()
 {
     // Delete the values.
-    for(Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         delete *i;
     }
@@ -325,7 +325,7 @@ void ArrayValue::clear()
 void ArrayValue::operator >> (Writer &to) const
 {
     to << SerialId(ARRAY) << duint(_elements.size());
-    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         to << **i;
     }
@@ -335,7 +335,7 @@ void ArrayValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != ARRAY)
+    if (id != ARRAY)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
@@ -345,7 +345,7 @@ void ArrayValue::operator << (Reader &from)
     duint count = 0;
     from >> count;
     clear();
-    while(count--)
+    while (count--)
     {
         add(Value::constructFrom(from));
     }
@@ -353,7 +353,7 @@ void ArrayValue::operator << (Reader &from)
 
 void ArrayValue::callElements(ArrayValue const &args)
 {
-    for(duint i = 0; i < size(); ++i)
+    for (duint i = 0; i < size(); ++i)
     {
         Function const &func = at(i).as<FunctionValue>().function();
         Process(func.globals()).call(func, args);

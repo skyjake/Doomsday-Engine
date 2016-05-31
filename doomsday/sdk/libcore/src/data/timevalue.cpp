@@ -34,7 +34,7 @@ Value *TimeValue::duplicate() const
 
 Value::Text TimeValue::asText() const
 {
-    if(!_time.isValid()) return "(undefined Time)";
+    if (!_time.isValid()) return "(undefined Time)";
     return _time.asText();
 }
 
@@ -46,10 +46,10 @@ bool TimeValue::isTrue() const
 dint TimeValue::compare(Value const &value) const
 {
     TimeValue const *other = dynamic_cast<TimeValue const *>(&value);
-    if(other)
+    if (other)
     {
-        if(other->_time > _time) return 1;
-        if(other->_time < _time) return -1;
+        if (other->_time > _time) return 1;
+        if (other->_time < _time) return -1;
         return 0;
     }
     return Value::compare(value);
@@ -74,7 +74,7 @@ void TimeValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != TIME)
+    if (id != TIME)
     {
         throw DeserializationError("TimeValue::operator <<", "Invalid ID");
     }

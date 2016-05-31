@@ -54,9 +54,9 @@ DENG2_PIMPL(MultiAtlas)
     Atlas *getEmptyAtlas()
     {
         // Reuse an empty atlas.
-        foreach(Atlas *atlas, atlases)
+        foreach (Atlas *atlas, atlases)
         {
-            if(atlas->isEmpty()) return atlas;
+            if (atlas->isEmpty()) return atlas;
         }
         // Make a new atlas.
         Atlas *blank = factory.makeAtlas(self);
@@ -69,9 +69,9 @@ DENG2_PIMPL(MultiAtlas)
     {
         DENG2_ASSERT(atlas.flags().testFlag(Atlas::DeferredAllocations));
 
-        for(auto i = pending.begin(); i != pending.end(); ++i)
+        for (auto i = pending.begin(); i != pending.end(); ++i)
         {
-            if(!atlas.alloc(*i.value(), i.key()))
+            if (!atlas.alloc(*i.value(), i.key()))
             {
                 // Cannot fit on this atlas!
                 atlas.cancelDeferred();
@@ -94,16 +94,16 @@ DENG2_PIMPL(MultiAtlas)
     Atlas &allocatePending(PendingImages const &pending)
     {
         // Let's see if the images fit on one of our existing atlases.
-        foreach(Atlas *atlas, atlases)
+        foreach (Atlas *atlas, atlases)
         {
-            if(tryAllocatePending(*atlas, pending))
+            if (tryAllocatePending(*atlas, pending))
             {
                 return *atlas;
             }
         }
         // None of the existing atlases were suitable. Get a new one.
         Atlas *blank = getEmptyAtlas();
-        if(tryAllocatePending(*blank, pending))
+        if (tryAllocatePending(*blank, pending))
         {
             return *blank;
         }
@@ -145,11 +145,11 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
 
     ~Instance()
     {
-        if(atlas)
+        if (atlas)
         {
             atlas->audienceForDeletion -= this;
         }
-        if(owner)
+        if (owner)
         {
             owner->d->audienceForDeletion -= this;
             release();
@@ -159,10 +159,10 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
     void objectWasDeleted(Deletable *deleted)
     {
         // This group is no longer valid for use.
-        if(deleted == owner->d)
+        if (deleted == owner->d)
         {
             owner = nullptr;
-            if(atlas) atlas->audienceForDeletion -= this;
+            if (atlas) atlas->audienceForDeletion -= this;
             atlas = nullptr;
             cancelPending();
         }
@@ -186,9 +186,9 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
     void release()
     {
         cancelPending();
-        if(atlas)
+        if (atlas)
         {
-            for(auto i : allocated)
+            for (auto i : allocated)
             {
                 atlas->release(i);
             }
@@ -203,7 +203,7 @@ MultiAtlas::AllocGroup::AllocGroup(MultiAtlas &multiAtlas)
 
 Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
 {
-    if(!d->atlas)
+    if (!d->atlas)
     {
         // This will be a pending allocation until the group is committed.
         // This Id will be used in the atlas when committing.
@@ -223,14 +223,14 @@ Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
 void MultiAtlas::AllocGroup::release(Id const &id)
 {
     auto foundPending = d->pending.constFind(id);
-    if(foundPending != d->pending.constEnd())
+    if (foundPending != d->pending.constEnd())
     {
         delete foundPending.value();
         d->pending.remove(id);
         return;
     }
 
-    if(d->atlas && d->allocated.contains(id))
+    if (d->atlas && d->allocated.contains(id))
     {
         d->allocated.remove(id);
         d->atlas->release(id);
@@ -244,18 +244,18 @@ bool MultiAtlas::AllocGroup::contains(Id const &id) const
 
 void MultiAtlas::AllocGroup::commit() const
 {
-    if(!d->owner)
+    if (!d->owner)
     {
         throw InvalidError("MultiAtlas::AllocGroup::commit",
                            "Allocation group has been invalidated");
     }
-    if(!d->atlas)
+    if (!d->atlas)
     {
         // Time to decide which atlas to use.
         d->atlas = &d->owner->d->allocatePending(d->pending);
         d->atlas->audienceForDeletion += d;
     }
-    for(auto i = d->pending.begin(); i != d->pending.end(); ++i)
+    for (auto i = d->pending.begin(); i != d->pending.end(); ++i)
     {
         d->allocated.insert(i.key());
         delete i.value(); // free the Image
@@ -267,7 +267,7 @@ void MultiAtlas::AllocGroup::commit() const
 
 Rectanglef MultiAtlas::AllocGroup::imageRectf(Id const &id) const
 {
-    if(d->atlas)
+    if (d->atlas)
     {
         return d->atlas->imageRectf(id);
     }

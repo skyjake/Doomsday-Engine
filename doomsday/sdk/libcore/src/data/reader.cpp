@@ -77,17 +77,17 @@ DENG2_PIMPL_NOREF(Reader)
      */
     void upgradeToByteArray()
     {
-        if(stream)
+        if (stream)
         {
-            if((source = dynamic_cast<IByteArray const *>(stream)) != 0)
+            if ((source = dynamic_cast<IByteArray const *>(stream)) != 0)
             {
                 stream = 0;
             }
         }
 
-        if(constStream)
+        if (constStream)
         {
-            if((source = dynamic_cast<IByteArray const *>(constStream)) != 0)
+            if ((source = dynamic_cast<IByteArray const *>(constStream)) != 0)
             {
                 constStream = 0;
             }
@@ -101,20 +101,20 @@ DENG2_PIMPL_NOREF(Reader)
      */
     void update(dsize expectedSize = 0)
     {
-        if(incoming.size() >= expectedSize)
+        if (incoming.size() >= expectedSize)
         {
             // No need to update yet.
             return;
         }
 
-        if(stream)
+        if (stream)
         {
             // Modifiable stream: read new bytes, append accumulation.
             Block b;
             *stream >> b;
             incoming += b;
         }
-        else if(constStream)
+        else if (constStream)
         {
             Block b;
             *constStream >> b;
@@ -127,18 +127,18 @@ DENG2_PIMPL_NOREF(Reader)
 
     void readBytes(IByteArray::Byte *ptr, dsize size)
     {
-        if(source)
+        if (source)
         {
             source->get(offset, ptr, size);
             offset += size;
         }
-        else if(stream || constStream)
+        else if (stream || constStream)
         {
             update(size);
-            if(incoming.size() >= size)
+            if (incoming.size() >= size)
             {
                 std::memcpy(ptr, incoming.constData(), size);
-                if(marking)
+                if (marking)
                 {
                     // We'll need this for rewinding a bit later.
                     markedData += incoming.left(size);
@@ -156,7 +156,7 @@ DENG2_PIMPL_NOREF(Reader)
 
     void mark()
     {
-        if(source)
+        if (source)
         {
             markOffset = offset;
         }
@@ -169,7 +169,7 @@ DENG2_PIMPL_NOREF(Reader)
 
     void rewind()
     {
-        if(source)
+        if (source)
         {
             offset = markOffset;
         }
@@ -188,11 +188,11 @@ DENG2_PIMPL_NOREF(Reader)
 
     IByteArray::Size remaining()
     {
-        if(source)
+        if (source)
         {
             return source->size() - offset;
         }
-        if(stream || constStream)
+        if (stream || constStream)
         {
             update();
             return incoming.size();
@@ -224,7 +224,7 @@ Reader &Reader::withHeader()
     d->version = header;
 
     // We can't read future (or invalid) versions.
-    if(d->version > DENG2_PROTOCOL_LATEST)
+    if (d->version > DENG2_PROTOCOL_LATEST)
     {
         throw VersionError("Reader::withHeader",
                            QString("Version %1 is unknown").arg(d->version));
@@ -311,7 +311,7 @@ Reader &Reader::operator >> (String &text)
     *this >> size;
 
     Block bytes;
-    for(duint i = 0; i < size; ++i)
+    for (duint i = 0; i < size; ++i)
     {
         IByteArray::Byte ch = 0;
         *this >> ch;
@@ -386,10 +386,10 @@ Reader &Reader::readUntil(IByteArray &byteArray, IByteArray::Byte delimiter)
     int pos = 0;
     IByteArray::Byte b = 0;
     do {
-        if(atEnd()) break;
+        if (atEnd()) break;
         *this >> b;
         byteArray.set(pos++, &b, 1);
-    } while(b != delimiter);
+    } while (b != delimiter);
     return *this;
 }
 
@@ -440,12 +440,12 @@ void Reader::setOffset(IByteArray::Offset offset)
 
 void Reader::seek(dint count)
 {
-    if(!d->source)
+    if (!d->source)
     {
         throw SeekError("Reader::seek", "Cannot seek when reading from a stream");
     }
 
-    if(IByteArray::Offset(d->offset + count) >= d->source->size())
+    if (IByteArray::Offset(d->offset + count) >= d->source->size())
     {
         throw IByteArray::OffsetError("Reader::seek", "Seek past bounds of source data");
     }

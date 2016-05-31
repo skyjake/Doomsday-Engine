@@ -60,7 +60,7 @@ void Parser::parse(String const &input, Script &output)
     _analyzer = ScriptLex(input);
 
     // Get the tokens of the first statement.
-    if(nextStatement() > 0)
+    if (nextStatement() > 0)
     {
         // Parse the bottom-level compound.
         parseCompound(output.compound());
@@ -84,9 +84,9 @@ duint Parser::nextStatement()
 
 void Parser::parseCompound(Compound &compound)
 {
-    while(_statementRange.size() > 0)
+    while (_statementRange.size() > 0)
     {
-        if(_statementRange.firstToken().equals(ScriptLex::ELSIF) ||
+        if (_statementRange.firstToken().equals(ScriptLex::ELSIF) ||
            _statementRange.firstToken().equals(ScriptLex::ELSE) ||
            _statementRange.firstToken().equals(ScriptLex::CATCH) ||
            (_statementRange.size() == 1 && _statementRange.firstToken().equals(ScriptLex::END)))
@@ -109,68 +109,68 @@ void Parser::parseStatement(Compound &compound)
     Token const &firstToken = _statementRange.firstToken();
 
     // Statements with a compound: if, for, while, def.
-    if(firstToken.equals(ScriptLex::IF))
+    if (firstToken.equals(ScriptLex::IF))
     {
         compound.add(parseIfStatement());
         return;
     }
-    else if(firstToken.equals(ScriptLex::WHILE))
+    else if (firstToken.equals(ScriptLex::WHILE))
     {
         compound.add(parseWhileStatement());
         return;
     }
-    else if(firstToken.equals(ScriptLex::FOR))
+    else if (firstToken.equals(ScriptLex::FOR))
     {
         compound.add(parseForStatement());
         return;
     }
-    else if(firstToken.equals(ScriptLex::DEF))
+    else if (firstToken.equals(ScriptLex::DEF))
     {
         compound.add(parseFunctionStatement());
         return;
     }
-    else if(firstToken.equals(ScriptLex::TRY))
+    else if (firstToken.equals(ScriptLex::TRY))
     {
         parseTryCatchSequence(compound);
         return;
     }
 
     // Statements without a compound (must advance to next statement manually).
-    if(firstToken.equals(ScriptLex::IMPORT))
+    if (firstToken.equals(ScriptLex::IMPORT))
     {
         compound.add(parseImportStatement());
     }
-    else if(firstToken.equals(ScriptLex::RECORD))
+    else if (firstToken.equals(ScriptLex::RECORD))
     {
         compound.add(parseDeclarationStatement());
     }
-    else if(firstToken.equals(ScriptLex::DEL))
+    else if (firstToken.equals(ScriptLex::DEL))
     {
         compound.add(parseDeleteStatement());
     }
-    else if(firstToken.equals(ScriptLex::PASS))
+    else if (firstToken.equals(ScriptLex::PASS))
     {
         compound.add(new FlowStatement(FlowStatement::PASS));
     }
-    else if(firstToken.equals(ScriptLex::CONTINUE))
+    else if (firstToken.equals(ScriptLex::CONTINUE))
     {
         compound.add(new FlowStatement(FlowStatement::CONTINUE));
     }
-    else if(firstToken.equals(ScriptLex::BREAK))
+    else if (firstToken.equals(ScriptLex::BREAK))
     {
         // Break may have an expression argument that tells us how many
         // nested compounds to break out of.
         Expression *breakCount = 0;
-        if(_statementRange.size() > 1)
+        if (_statementRange.size() > 1)
         {
             breakCount = parseExpression(_statementRange.startingFrom(1));
         }
         compound.add(new FlowStatement(FlowStatement::BREAK, breakCount));
     }
-    else if(firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
+    else if (firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
     {
         Expression *argValue = 0;
-        if(_statementRange.size() > 1)
+        if (_statementRange.size() > 1)
         {
             argValue = parseExpression(_statementRange.startingFrom(1));
         }
@@ -178,17 +178,17 @@ void Parser::parseStatement(Compound &compound)
             firstToken.equals(ScriptLex::RETURN)? FlowStatement::RETURN : FlowStatement::THROW,
             argValue));
     }
-    else if(firstToken.equals(ScriptLex::PRINT))
+    else if (firstToken.equals(ScriptLex::PRINT))
     {
         compound.add(parsePrintStatement());
     }
-    else if(_statementRange.hasBracketless(ScriptLex::ASSIGN) ||
+    else if (_statementRange.hasBracketless(ScriptLex::ASSIGN) ||
             _statementRange.hasBracketless(ScriptLex::SCOPE_ASSIGN) ||
             _statementRange.hasBracketless(ScriptLex::WEAK_ASSIGN))
     {
         compound.add(parseAssignStatement());
     }
-    else if(firstToken.equals(ScriptLex::EXPORT))
+    else if (firstToken.equals(ScriptLex::EXPORT))
     {
         compound.add(parseExportStatement());
     }
@@ -212,7 +212,7 @@ IfStatement *Parser::parseIfStatement()
         parseConditionalCompound(statement->branchCompound(),
             HasCondition | StayAtClosingStatement));
 
-    while(_statementRange.beginsWith(ScriptLex::ELSIF))
+    while (_statementRange.beginsWith(ScriptLex::ELSIF))
     {
         expectEnd = !_statementRange.hasBracketless(Token::COLON);
         statement->newBranch();
@@ -221,15 +221,15 @@ IfStatement *Parser::parseIfStatement()
                 HasCondition | StayAtClosingStatement));
     }
 
-    if(_statementRange.beginsWith(ScriptLex::ELSE))
+    if (_statementRange.beginsWith(ScriptLex::ELSE))
     {
         expectEnd = !_statementRange.has(Token::COLON);
         parseConditionalCompound(statement->elseCompound(), StayAtClosingStatement);
     }
 
-    if(expectEnd)
+    if (expectEnd)
     {
-        if(_statementRange.size() != 1 || !_statementRange.firstToken().equals(ScriptLex::END))
+        if (_statementRange.size() != 1 || !_statementRange.firstToken().equals(ScriptLex::END))
         {
             throw UnexpectedTokenError("Parser::parseIfStatement", "Expected '" + ScriptLex::END +
                                        "', but got " + _statementRange.firstToken().asText());
@@ -257,7 +257,7 @@ ForStatement *Parser::parseForStatement()
 
     dint colonPos = _statementRange.find(Token::COLON);
     dint inPos = _statementRange.find(ScriptLex::IN);
-    if(inPos < 0 || (colonPos > 0 && inPos > colonPos))
+    if (inPos < 0 || (colonPos > 0 && inPos > colonPos))
     {
         throw MissingTokenError("Parser::parseForStatement",
             "Expected 'in' to follow " + _statementRange.firstToken().asText());
@@ -279,7 +279,7 @@ ExpressionStatement *Parser::parseImportStatement()
 {
     // "import" ["record"] name-expr ["," name-expr]*
 
-    if(_statementRange.size() < 2)
+    if (_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseImportStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
@@ -289,7 +289,7 @@ ExpressionStatement *Parser::parseImportStatement()
             Expression::Import     |
             Expression::NotInScope |
             Expression::LocalOnly;
-    if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
+    if (_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
         flags |= Expression::ByValue;
@@ -302,7 +302,7 @@ ExpressionStatement *Parser::parseExportStatement()
 {
     // "export" name-expr ["," name-expr]*
 
-    if(_statementRange.size() < 2)
+    if (_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseExportStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
@@ -317,7 +317,7 @@ Statement *Parser::parseDeclarationStatement()
     // "record" name-expr ["," name-expr]*
     // "record" name-expr "(" [ name-expr ["," name-expr]* ] ")" members-compound
 
-    if(_statementRange.size() < 2)
+    if (_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
@@ -325,7 +325,7 @@ Statement *Parser::parseDeclarationStatement()
 
     // Is this a class record declaration?
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
-    if(pos >= 0)
+    if (pos >= 0)
     {
         QScopedPointer<Expression> name(parseExpression(_statementRange.between(1, pos),
                                                         Expression::NewSubrecordIfNotInScope));
@@ -348,7 +348,7 @@ DeleteStatement *Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
 
-    if(_statementRange.size() < 2)
+    if (_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
@@ -362,7 +362,7 @@ FunctionStatement *Parser::parseFunctionStatement()
     // "def" name-expr "(" [ name-expr ["," name-expr]* ] ")" cond-compound
 
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
-    if(pos < 0)
+    if (pos < 0)
     {
         throw MissingTokenError("Parser::parseFunctionStatement",
             "Expected arguments for " + _statementRange.firstToken().asText());
@@ -376,18 +376,18 @@ FunctionStatement *Parser::parseFunctionStatement()
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
-    if(!argRange.empty())
+    if (!argRange.empty())
     {
         // The arguments are comma-separated.
         TokenRange delim = argRange.undefinedRange();
-        while(argRange.getNextDelimited(Token::COMMA, delim))
+        while (argRange.getNextDelimited(Token::COMMA, delim))
         {
-            if(delim.size() == 1 && delim.firstToken().type() == Token::IDENTIFIER)
+            if (delim.size() == 1 && delim.firstToken().type() == Token::IDENTIFIER)
             {
                 // Just the name of the argument.
                 statement->addArgument(delim.firstToken().str());
             }
-            else if(delim.size() >= 3 &&
+            else if (delim.size() >= 3 &&
                 delim.token(0).type() == Token::IDENTIFIER &&
                 delim.token(1).equals(ScriptLex::ASSIGN))
             {
@@ -420,24 +420,24 @@ void Parser::parseTryCatchSequence(Compound &compound)
     compound.add(tryStat.release());
 
     // One catch is required.
-    if(!_statementRange.firstToken().equals(ScriptLex::CATCH))
+    if (!_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
     CatchStatement *finalCatch = 0;
     bool expectEnd = false;
-    while(_statementRange.firstToken().equals(ScriptLex::CATCH))
+    while (_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         dint colon = _statementRange.find(Token::COLON);
         expectEnd = (colon < 0);
 
         // Parse the arguments.
         std::unique_ptr<ArrayExpression> args;
-        if(_statementRange.size() > 1)
+        if (_statementRange.size() > 1)
         {
             TokenRange argRange;
-            if(colon < 0)
+            if (colon < 0)
             {
                 argRange = _statementRange.startingFrom(1);
             }
@@ -460,9 +460,9 @@ void Parser::parseTryCatchSequence(Compound &compound)
         compound.add(catchStat.release());
     }
     finalCatch->flags |= CatchStatement::FinalCompound;
-    if(expectEnd)
+    if (expectEnd)
     {
-        if(!_statementRange.firstToken().equals(ScriptLex::END))
+        if (!_statementRange.firstToken().equals(ScriptLex::END))
         {
             throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'end', but got " + _statementRange.firstToken().asText());
@@ -474,7 +474,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
 PrintStatement *Parser::parsePrintStatement()
 {
     ArrayExpression *args = 0;
-    if(_statementRange.size() == 1) // Just the keyword.
+    if (_statementRange.size() == 1) // Just the keyword.
     {
         args = new ArrayExpression();
     }
@@ -491,25 +491,25 @@ AssignStatement *Parser::parseAssignStatement()
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
 
     /// "export" will export the newly assigned variable.
-    if(_statementRange.firstToken().equals(ScriptLex::EXPORT))
+    if (_statementRange.firstToken().equals(ScriptLex::EXPORT))
     {
         flags |= Expression::Export;
         _statementRange = _statementRange.startingFrom(1);
     }
 
     /// "const" makes read-only variables.
-    if(_statementRange.firstToken().equals(ScriptLex::CONST))
+    if (_statementRange.firstToken().equals(ScriptLex::CONST))
     {
         flags |= Expression::ReadOnly;
         _statementRange = _statementRange.startingFrom(1);
     }
 
     dint pos = _statementRange.find(ScriptLex::ASSIGN);
-    if(pos < 0)
+    if (pos < 0)
     {
         flags &= ~Expression::LocalOnly;
         pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
-        if(pos < 0)
+        if (pos < 0)
         {
             // Must be weak assingment, then.
             pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
@@ -523,7 +523,7 @@ AssignStatement *Parser::parseAssignStatement()
     dint bracketPos = pos - 1;
     try
     {
-        while(_statementRange.token(bracketPos).equals(Token::BRACKET_CLOSE))
+        while (_statementRange.token(bracketPos).equals(Token::BRACKET_CLOSE))
         {
             dint startPos = _statementRange.openingBracket(bracketPos);
             nameEndPos = startPos;
@@ -533,7 +533,7 @@ AssignStatement *Parser::parseAssignStatement()
             bracketPos = nameEndPos - 1;
         }
 
-        if(indices.size() > 0 && (flags & Expression::ThrowawayIfInScope))
+        if (indices.size() > 0 && (flags & Expression::ThrowawayIfInScope))
         {
             throw SyntaxError("Parser::parseAssignStatement",
                 "Weak assignment cannot be used with indices");
@@ -549,10 +549,10 @@ AssignStatement *Parser::parseAssignStatement()
 
         return st;
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         // Cleanup.
-        for(AssignStatement::Indices::iterator i = indices.begin(); i != indices.end(); ++i)
+        for (AssignStatement::Indices::iterator i = indices.begin(); i != indices.end(); ++i)
         {
             delete *i;
         }
@@ -576,28 +576,28 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     dint colon = range.findBracketless(Token::COLON);
 
     QScopedPointer<Expression> condition;
-    if(flags.testFlag(HasCondition))
+    if (flags.testFlag(HasCondition))
     {
         LOG_AS("parseConditionalCompound");
         LOGDEV_SCR_XVERBOSE_DEBUGONLY("colon at %i", colon);
 
         TokenRange conditionRange = range.between(1, colon);
-        if(conditionRange.empty())
+        if (conditionRange.empty())
         {
             throw MissingTokenError("Parser::parseConditionalCompound",
                 "A condition expression was expected after " + range.token(0).asText());
         }
         condition.reset(parseExpression(conditionRange));
     }
-    else if(colon > 0 && (colon > 1 && !flags.testFlag(IgnoreExtraBeforeColon)))
+    else if (colon > 0 && (colon > 1 && !flags.testFlag(IgnoreExtraBeforeColon)))
     {
         throw UnexpectedTokenError("Parser::parseConditionalCompound",
             range.token(1).asText() + " was unexpected");
     }
 
-    if(colon > 0)
+    if (colon > 0)
     {
-        if(colon == dint(range.size()) - 1)
+        if (colon == dint(range.size()) - 1)
         {
             // The color is the last token: this is most likely a programmer error.
             throw MissingTokenError("Parser::parseConditionalCompound",
@@ -612,7 +612,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     {
         nextStatement();
         parseCompound(compound);
-        if(!flags.testFlag(StayAtClosingStatement))
+        if (!flags.testFlag(StayAtClosingStatement))
         {
             nextStatement();
         }
@@ -624,11 +624,11 @@ ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separat
                                    Expression::Flags const &flags)
 {
     QScopedPointer<ArrayExpression> exp(new ArrayExpression);
-    if(range.size() > 0)
+    if (range.size() > 0)
     {
         // The arguments are comma-separated.
         TokenRange delim = range.undefinedRange();
-        while(range.getNextDelimited(separator, delim))
+        while (range.getNextDelimited(separator, delim))
         {
             exp->add(parseExpression(delim, flags));
         }
@@ -643,25 +643,25 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     LOG_AS("parseExpression");
     LOGDEV_SCR_XVERBOSE_DEBUGONLY("%s (flags:%x)", range.asText() << flags);
 
-    if(!range.size())
+    if (!range.size())
     {
         // Empty expression yields a None value.
         return ConstantExpression::None();
     }
 
     // We can ignore extra parenthesis around the range.
-    while(range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
+    while (range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
     {
         range = range.shrink(1);
     }
 
     // Do we have a record declaration in the expression?
-    if(range.firstToken().type() == Token::KEYWORD &&
+    if (range.firstToken().type() == Token::KEYWORD &&
        range.firstToken().equals(ScriptLex::RECORD))
     {
         LOGDEV_SCR_XVERBOSE_DEBUGONLY("declaration expression: RECORD %s", range.startingFrom(1).asText());
 
-        if(range.size() == 1)
+        if (range.size() == 1)
         {
             throw MissingTokenError("Parser::parseDeclarationExpression",
                                     "Expected identifier to follow " + range.firstToken().asText());
@@ -676,20 +676,20 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     // Locate the lowest-ranking operator.
     Operator op = findLowestOperator(range, leftSide, rightSide);
 
-    if(op == NONE)
+    if (op == NONE)
     {
         // This is a constant or a variable reference.
         return parseTokenExpression(range, flags);
     }
-    else if(op == ARRAY)
+    else if (op == ARRAY)
     {
         return parseArrayExpression(range);
     }
-    else if(op == DICTIONARY)
+    else if (op == DICTIONARY)
     {
         return parseDictionaryExpression(range);
     }
-    else if(op == CALL)
+    else if (op == CALL)
     {
         return parseCallExpression(leftSide, rightSide);
     }
@@ -703,7 +703,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
 
 ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
 {
-    if(!range.firstToken().equals(Token::BRACKET_OPEN) ||
+    if (!range.firstToken().equals(Token::BRACKET_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseArrayExpression",
@@ -715,7 +715,7 @@ ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
 
 DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
 {
-    if(!range.firstToken().equals(Token::CURLY_OPEN) ||
+    if (!range.firstToken().equals(Token::CURLY_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseDictionaryExpression",
@@ -725,14 +725,14 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
     TokenRange shrunk = range.shrink(1);
 
     std::unique_ptr<DictionaryExpression> exp(new DictionaryExpression);
-    if(shrunk.size() > 0)
+    if (shrunk.size() > 0)
     {
         // The arguments are comma-separated.
         TokenRange delim = shrunk.undefinedRange();
-        while(shrunk.getNextDelimited(Token::COMMA, delim))
+        while (shrunk.getNextDelimited(Token::COMMA, delim))
         {
             dint colonPos = delim.findBracketless(Token::COLON);
-            if(colonPos < 0)
+            if (colonPos < 0)
             {
                 throw MissingTokenError("Parser::parseDictionaryExpression",
                     "Colon is missing from '" + delim.asText() + "' at " +
@@ -752,7 +752,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     //std::cerr << "call name: " << nameRange.asText() << "\n";
     //std::cerr << "call args: " << argumentRange.asText() << "\n";
 
-    if(!argumentRange.firstToken().equals(Token::PARENTHESIS_OPEN) ||
+    if (!argumentRange.firstToken().equals(Token::PARENTHESIS_OPEN) ||
          argumentRange.closingBracket(0) < argumentRange.size() - 1)
     {
         throw SyntaxError("Parser::parseCallExpression",
@@ -768,16 +768,16 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     args->add(namedArgs);
 
     TokenRange argsRange = argumentRange.shrink(1);
-    if(!argsRange.empty())
+    if (!argsRange.empty())
     {
         // The arguments are comma-separated.
         TokenRange delim = argsRange.undefinedRange();
-        while(argsRange.getNextDelimited(Token::COMMA, delim))
+        while (argsRange.getNextDelimited(Token::COMMA, delim))
         {
-            if(delim.has(ScriptLex::ASSIGN))
+            if (delim.has(ScriptLex::ASSIGN))
             {
                 // A label is included.
-                if(delim.size() < 3 ||
+                if (delim.size() < 3 ||
                     delim.firstToken().type() != Token::IDENTIFIER ||
                     !delim.token(1).equals(ScriptLex::ASSIGN))
                 {
@@ -797,10 +797,10 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     }
 
     // Check for some built-in methods, which are usable everywhere.
-    if(nameRange.size() == 1)
+    if (nameRange.size() == 1)
     {
         BuiltInExpression::Type builtIn = BuiltInExpression::findType(nameRange.firstToken().str());
-        if(builtIn != BuiltInExpression::NONE)
+        if (builtIn != BuiltInExpression::NONE)
         {
             return new BuiltInExpression(builtIn, args.take());
         }
@@ -814,7 +814,7 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
 
-    if(leftSide.empty())
+    if (leftSide.empty())
     {
         // Must be unary.
         QScopedPointer<Expression> operand(parseExpression(rightSide));
@@ -828,7 +828,7 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
                                              Expression::ByReference : Expression::ByValue);
 
         Expression::Flags rightOpFlags = rightFlags;
-        if(op == MEMBER)
+        if (op == MEMBER)
         {
             // Don't create new variables for the left side of the member. The only place
             // where a new variable is created is on the right.
@@ -853,7 +853,7 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
 
 Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Flags const &flags)
 {
-    if(!range.size())
+    if (!range.size())
     {
         throw MissingTokenError("Parser::parseTokenExpression",
             "Expected tokens, but got nothing -- near " +
@@ -862,25 +862,25 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
 
     Token const &token = range.token(0);
 
-    if(token.type() == Token::KEYWORD)
+    if (token.type() == Token::KEYWORD)
     {
-        if(token.equals(ScriptLex::T_TRUE))
+        if (token.equals(ScriptLex::T_TRUE))
         {
             return ConstantExpression::True();
         }
-        else if(token.equals(ScriptLex::T_FALSE))
+        else if (token.equals(ScriptLex::T_FALSE))
         {
             return ConstantExpression::False();
         }
-        else if(token.equals(ScriptLex::NONE))
+        else if (token.equals(ScriptLex::NONE))
         {
             return ConstantExpression::None();
         }
-        else if(token.equals(ScriptLex::PI))
+        else if (token.equals(ScriptLex::PI))
         {
             return ConstantExpression::Pi();
         }
-        else if(token.equals(ScriptLex::SCOPE) &&
+        else if (token.equals(ScriptLex::SCOPE) &&
                 range.size() == 2 &&
                 range.token(1).type() == Token::IDENTIFIER)
         {
@@ -890,14 +890,14 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         }
     }
 
-    switch(token.type())
+    switch (token.type())
     {
     case Token::IDENTIFIER:
-        if(range.size() == 1)
+        if (range.size() == 1)
         {
             return new NameExpression(range.token(0).str(), flags);
         }
-        else if(range.size() == 3 &&
+        else if (range.size() == 3 &&
                 range.token(1).equals(ScriptLex::SCOPE) &&
                 range.token(2).type() == Token::IDENTIFIER)
         {
@@ -951,7 +951,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
     Operator lowestOp = NONE;
     int lowestRank = MAX_RANK;
 
-    for(duint i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
+    for (duint i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
     {
         continueFrom = i + 1;
 
@@ -961,10 +961,10 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
 
         Token const &token = range.token(i);
 
-        if(token.equals(Token::PARENTHESIS_OPEN))
+        if (token.equals(Token::PARENTHESIS_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
-            if((previousOp == NONE || previousOp == INDEX || previousOp == SLICE ||
+            if ((previousOp == NONE || previousOp == INDEX || previousOp == SLICE ||
                 previousOp == PARENTHESIS || previousOp == CALL) && i > 0)
             {
                 // The previous token was not an operator, but there
@@ -980,13 +980,13 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 rank = RANK_PARENTHESIS;
             }
         }
-        else if(token.equals(Token::BRACKET_OPEN))
+        else if (token.equals(Token::BRACKET_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
-            if((previousOp == NONE || previousOp == PARENTHESIS ||
+            if ((previousOp == NONE || previousOp == PARENTHESIS ||
                 previousOp == INDEX || previousOp == SLICE || previousOp == CALL) && i > 0)
             {
-                if(range.between(i + 1, continueFrom - 1).has(Token::COLON))
+                if (range.between(i + 1, continueFrom - 1).has(Token::COLON))
                 {
                     op = SLICE;
                     rank = RANK_SLICE;
@@ -1003,7 +1003,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 rank = RANK_ARRAY;
             }
         }
-        else if(token.equals(Token::CURLY_OPEN))
+        else if (token.equals(Token::CURLY_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
             op = DICTIONARY;
@@ -1059,27 +1059,27 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
             // or
 
             // Check the rankings table.
-            for(int k = 0; rankings[k].token; ++k)
+            for (int k = 0; rankings[k].token; ++k)
             {
-                if(token.equals(String(rankings[k].token)))
+                if (token.equals(String(rankings[k].token)))
                 {
                     op = rankings[k].op;
                     rank = rankings[k].rank;
                     direction = rankings[k].direction;
 
-                    if(op == DOT) // && previousOp == NONE)
+                    if (op == DOT) // && previousOp == NONE)
                     {
                         op = MEMBER;
                         rank = RANK_MEMBER;
                         direction = LEFT_TO_RIGHT;
                     }
-                    else if(!i || (previousOp != NONE && previousOp != PARENTHESIS &&
+                    else if (!i || (previousOp != NONE && previousOp != PARENTHESIS &&
                         previousOp != CALL && previousOp != INDEX && previousOp != SLICE &&
                         previousOp != ARRAY && previousOp != DICTIONARY))
                     {
                         // There already was an operator before this one.
                         // Must be unary?
-                        if(op == PLUS || op == MINUS)
+                        if (op == PLUS || op == MINUS)
                         {
                             rank += 100;
                             //std::cerr << "Rank boost for " << rankings[k].token << "\n";
@@ -1090,14 +1090,14 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
             }
         }
 
-        if(op != NONE &&
+        if (op != NONE &&
             ((direction == LEFT_TO_RIGHT && rank <= lowestRank) ||
              (direction == RIGHT_TO_LEFT && rank < lowestRank)))
         {
             lowestOp = op;
             lowestRank = rank;
             leftSide = range.endingTo(i);
-            if(op == INDEX || op == SLICE)
+            if (op == INDEX || op == SLICE)
             {
                 rightSide = range.between(i + 1, continueFrom - 1);
             }

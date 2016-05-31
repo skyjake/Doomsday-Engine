@@ -45,7 +45,7 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer), public Lockable
         int const elapsed = startedAt.elapsed();
         duint64 now = duint64(elapsed) + timerOffset;
 
-        if(duint64(elapsed) > WARP_INTERVAL)
+        if (duint64(elapsed) > WARP_INTERVAL)
         {
             // QTime will wrap around every 24 hours; we'll wrap it manually before that.
             timerOffset += WARP_INTERVAL;

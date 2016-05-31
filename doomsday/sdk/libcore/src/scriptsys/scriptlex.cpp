@@ -85,12 +85,12 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
     // Now we can start forming tokens until we arrive at a non-escaped
     // newline. Also, the statement does not end until all braces and
     // parenthesis have been closed.
-    while(!atEnd())
+    while (!atEnd())
     {
         // Tokens are primarily separated by whitespace.
         skipWhiteExceptNewline();
 
-        if(behavior.testFlag(StopAtMismatchedCloseBrace) &&
+        if (behavior.testFlag(StopAtMismatchedCloseBrace) &&
            !bracketLevel[BRACKET_CURLY] &&
             peek() == '}')
         {
@@ -101,11 +101,11 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         // This will be the first character of the token.
         QChar c = get();
 
-        if(c == '\n' || c == ';')
+        if (c == '\n' || c == ';')
         {
             // A statement ending character? Open brackets prevent the statement
             // from ending here.
-            if(Vector3i(bracketLevel).max() > 0)
+            if (Vector3i(bracketLevel).max() > 0)
                 continue;
             else
                 break;
@@ -113,10 +113,10 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
 
         output.newToken(lineNumber());
 
-        if(c == '\\')
+        if (c == '\\')
         {
             // An escaped newline?
-            if(onlyWhiteOnLine())
+            if (onlyWhiteOnLine())
             {
                 skipToNextLine();
                 continue;
@@ -125,7 +125,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
 
         output.appendChar(c);
 
-        if(c == '"' || c == '\'')
+        if (c == '"' || c == '\'')
         {
             // Read an entire string constant into the token.
             // The type of the token is also determined.
@@ -138,7 +138,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         }
 
         // Is it a number literal?
-        if((c == '.' && isNumeric(peek())) || isNumeric(c))
+        if ((c == '.' && isNumeric(peek())) || isNumeric(c))
         {
             bool gotPoint = (c == '.');
             bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
@@ -147,14 +147,14 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
             output.setType(Token::LITERAL_NUMBER);
 
             // Read until a non-numeric character is found.
-            while(isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
+            while (isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
                   (!isHex && !gotPoint && c == '.') ||
                   (isHex && !gotX && (c == 'x' || c == 'X')))
             {
                 // Just one decimal point.
-                if(c == '.') gotPoint = true;
+                if (c == '.') gotPoint = true;
                 // Just one 'x'.
-                if(c == 'x' || c == 'X') gotX = true;
+                if (c == 'x' || c == 'X') gotX = true;
                 output.appendChar(get());
             }
             output.endToken();
@@ -163,17 +163,17 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         }
 
         // Alphanumeric characters are joined into a token.
-        if(isAlphaNumeric(c))
+        if (isAlphaNumeric(c))
         {
             output.setType(Token::IDENTIFIER);
 
-            while(isAlphaNumeric((c = peek())))
+            while (isAlphaNumeric((c = peek())))
             {
                 output.appendChar(get());
             }
 
             // It might be that this is a keyword.
-            if(isKeyword(output.latest()))
+            if (isKeyword(output.latest()))
             {
                 output.setType(Token::KEYWORD);
             }
@@ -184,7 +184,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         }
 
         // The scope keyword.
-        if(c == '-' && peek() == '>')
+        if (c == '-' && peek() == '>')
         {
             output.setType(Token::KEYWORD);
             output.appendChar(get());
@@ -193,11 +193,11 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
             continue;
         }
 
-        if(isOperator(c))
+        if (isOperator(c))
         {
             output.setType(Token::OPERATOR);
 
-            if(combinesWith(c, peek()))
+            if (combinesWith(c, peek()))
             {
                 output.appendChar(get());
                 /// @todo  Three-character tokens: >>=, <<=
@@ -206,14 +206,14 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
             {
                 // Keep score of bracket levels, since they prevent
                 // newlines from ending the statement.
-                if(c == '(') bracketLevel[BRACKET_PARENTHESIS]++;
-                if(c == ')') bracketLevel[BRACKET_PARENTHESIS]--;
-                if(c == '[') bracketLevel[BRACKET_SQUARE]++;
-                if(c == ']') bracketLevel[BRACKET_SQUARE]--;
-                if(c == '{') bracketLevel[BRACKET_CURLY]++;
-                if(c == '}') bracketLevel[BRACKET_CURLY]--;
+                if (c == '(') bracketLevel[BRACKET_PARENTHESIS]++;
+                if (c == ')') bracketLevel[BRACKET_PARENTHESIS]--;
+                if (c == '[') bracketLevel[BRACKET_SQUARE]++;
+                if (c == ']') bracketLevel[BRACKET_SQUARE]--;
+                if (c == '{') bracketLevel[BRACKET_CURLY]++;
+                if (c == '}') bracketLevel[BRACKET_CURLY]--;
 
-                if(Vector3i(bracketLevel).min() < 0)
+                if (Vector3i(bracketLevel).min() < 0)
                 {
                     // Very unusual!
                     throw MismatchedBracketError("ScriptLex::getStatement",
@@ -235,11 +235,11 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
     }
 
     // Open brackets left?
-    if(atEnd())
+    if (atEnd())
     {
-        for(int i = 0; i < MAX_BRACKETS; ++i)
+        for (int i = 0; i < MAX_BRACKETS; ++i)
         {
-            if(bracketLevel[i] > 0)
+            if (bracketLevel[i] > 0)
             {
                 throw MismatchedBracketError("ScriptLex::getStatement", "Unclosed bracket '" +
                     String(i == BRACKET_PARENTHESIS? ")" :
@@ -265,7 +265,7 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
     // The token already contains the startChar.
     QChar c = get();
 
-    if(c == '\n')
+    if (c == '\n')
     {
         // This can't be good.
         throw UnterminatedStringError("ScriptLex::parseString",
@@ -275,10 +275,10 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
 
     output.appendChar(c);
 
-    if(c == startChar)
+    if (c == startChar)
     {
         // Already over?
-        if(c == '"' && peek() == '"')
+        if (c == '"' && peek() == '"')
         {
             // 3-quoted string (allow newlines).
             longString = true;
@@ -292,19 +292,19 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
     }
 
     // Read chars until something interesting is found.
-    for(;;)
+    for (;;)
     {
         charLineNumber = lineNumber();
 
         output.appendChar(c = get());
-        if(c == '\\') // Escape?
+        if (c == '\\') // Escape?
         {
             output.appendChar(get()); // Don't care what it is.
             continue;
         }
-        if(c == '\n') // Newline?
+        if (c == '\n') // Newline?
         {
-            if(!longString)
+            if (!longString)
             {
                 throw UnterminatedStringError("ScriptLex::parseString",
                                               "String on line " +
@@ -313,22 +313,22 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
             }
             // Skip whitespace according to the indentation.
             duint skipCount = startIndentation;
-            while(skipCount-- && isWhite(c = peek()) && c != '\n')
+            while (skipCount-- && isWhite(c = peek()) && c != '\n')
             {
                 // Skip the white.
                 get();
             }
             continue;
         }
-        if(c == startChar)
+        if (c == startChar)
         {
             // This will end the string?
-            if(longString)
+            if (longString)
             {
-                if(peek() == '"')
+                if (peek() == '"')
                 {
                     output.appendChar(get());
-                    if(peek() == '"')
+                    if (peek() == '"')
                     {
                         output.appendChar(get());
                         break;
@@ -355,13 +355,13 @@ bool ScriptLex::isOperator(QChar c)
 
 bool ScriptLex::combinesWith(QChar a, QChar b)
 {
-    if(b == '=')
+    if (b == '=')
     {
         return (a == '=' || a == '+' || a == '-' || a == '/'
             || a == '*' || a == '%' || a == '!' || a == '|' || a == '&'
             || a == '^' || a == '~' || a == '<' || a == '>' || a == ':' || a == '?');
     }
-    else if((a == '<' && b == '<') || (a == '>' && b == '>'))
+    else if ((a == '<' && b == '<') || (a == '>' && b == '>'))
     {
         return true;
     }
@@ -404,9 +404,9 @@ static QChar const *keywordStr[] =
 
 bool ScriptLex::isKeyword(Token const &token)
 {
-    for(int i = 0; keywordStr[i]; ++i)
+    for (int i = 0; keywordStr[i]; ++i)
     {
-        if(token.equals(keywordStr[i]))
+        if (token.equals(keywordStr[i]))
         {
             return true;
         }
@@ -417,7 +417,7 @@ bool ScriptLex::isKeyword(Token const &token)
 StringList ScriptLex::keywords()
 {
     StringList kw;
-    for(int i = 0; keywordStr[i]; ++i)
+    for (int i = 0; keywordStr[i]; ++i)
     {
         kw << keywordStr[i];
     }
@@ -438,7 +438,7 @@ String ScriptLex::unescapeStringToken(Token const &token)
     QChar const *end = token.end();
 
     // A long string?
-    if(token.type() == Token::LITERAL_STRING_LONG)
+    if (token.type() == Token::LITERAL_STRING_LONG)
     {
         DENG2_ASSERT(token.size() >= 6);
         begin += 3;
@@ -451,53 +451,53 @@ String ScriptLex::unescapeStringToken(Token const &token)
         --end;
     }
 
-    for(QChar const *ptr = begin; ptr != end; ++ptr)
+    for (QChar const *ptr = begin; ptr != end; ++ptr)
     {
-        if(escaped)
+        if (escaped)
         {
             QChar c = '\\';
             escaped = false;
-            if(*ptr == '\\')
+            if (*ptr == '\\')
             {
                 c = '\\';
             }
-            else if(*ptr == '\'')
+            else if (*ptr == '\'')
             {
                 c = '\'';
             }
-            else if(*ptr == '\"')
+            else if (*ptr == '\"')
             {
                 c = '\"';
             }
-            else if(*ptr == 'a')
+            else if (*ptr == 'a')
             {
                 c = '\a';
             }
-            else if(*ptr == 'b')
+            else if (*ptr == 'b')
             {
                 c = '\b';
             }
-            else if(*ptr == 'f')
+            else if (*ptr == 'f')
             {
                 c = '\f';
             }
-            else if(*ptr == 'n')
+            else if (*ptr == 'n')
             {
                 c = '\n';
             }
-            else if(*ptr == 'r')
+            else if (*ptr == 'r')
             {
                 c = '\r';
             }
-            else if(*ptr == 't')
+            else if (*ptr == 't')
             {
                 c = '\t';
             }
-            else if(*ptr == 'v')
+            else if (*ptr == 'v')
             {
                 c = '\v';
             }
-            else if(*ptr == 'x' && (end - ptr > 2))
+            else if (*ptr == 'x' && (end - ptr > 2))
             {
                 QString num(const_cast<QChar const *>(ptr + 1), 2);
                 duint code = num.toInt(0, 16);
@@ -514,7 +514,7 @@ String ScriptLex::unescapeStringToken(Token const &token)
         }
         else
         {
-            if(*ptr == '\\')
+            if (*ptr == '\\')
             {
                 escaped = true;
                 continue;
@@ -531,7 +531,7 @@ ddouble ScriptLex::tokenToNumber(Token const &token)
 {
     String str(token.str());
 
-    if(token.beginsWith(String("0x")) || token.beginsWith(String("0X")))
+    if (token.beginsWith(String("0x")) || token.beginsWith(String("0X")))
     {
         return ddouble(str.toLongLong(0, 16));
     }

@@ -98,12 +98,12 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
         // Check the escape sequence.
         char ch = code[0].toLatin1();
 
-        switch(ch)
+        switch (ch)
         {
         case '(':
             // Sequence of tab stops effective in the entire content.
             tabs.clear();
-            for(int i = 1; i < code.size() - 1; ++i)
+            for (int i = 1; i < code.size() - 1; ++i)
             {
                 tabs << (code[i].toLatin1() - 'a' + 1);
             }
@@ -111,7 +111,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
 
         case '.': // pop a format off the stack
             stack.removeLast(); // ignore the one just added
-            if(stack.size() > 1)
+            if (stack.size() > 1)
             {
                 Format form = stack.takeLast();
                 stack.last().tabStop = form.tabStop; // Retain tab stop.
@@ -191,7 +191,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
         case '4':
         case '5':
         case '6':
-            if(style)
+            if (style)
             {
                 style->richStyleFormat(ch - '0',
                                        stack.last().sizeFactor,
@@ -264,7 +264,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
 #if 0
     qDebug() << "Styled text:" << styledText;
     qDebug() << "plain:" << d->esc.plainText();
-    foreach(Instance::FormatRange const &r, d->ranges)
+    foreach (Instance::FormatRange const &r, d->ranges)
     {
         qDebug() << r.range.asText()
                  << d->esc.plainText().substr(r.range)
@@ -276,7 +276,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
                  << "indent (m/r):" << r.format.markIndent << r.format.resetIndent;
     }
     qDebug() << "Tabs:" << d->tabs.size();
-    foreach(int i, d->tabs)
+    foreach (int i, d->tabs)
     {
         qDebug() << i;
     }
@@ -297,14 +297,14 @@ Font::TabStops const &Font::RichFormat::tabStops() const
 
 int Font::RichFormat::tabStopXWidth(int stop) const
 {
-    if(stop < 0 || d->tabs.isEmpty()) return 0;
+    if (stop < 0 || d->tabs.isEmpty()) return 0;
 
     DENG2_ASSERT(stop < 50);
 
     int x = 0;
-    for(int i = 0; i <= stop; ++i)
+    for (int i = 0; i <= stop; ++i)
     {
-        if(i >= d->tabs.size())
+        if (i >= d->tabs.size())
             x += d->tabs.last();
         else
             x += d->tabs[i];
@@ -325,7 +325,7 @@ Font::RichFormat::Ref::Ref(Ref const &ref, Rangei const &subSpan)
 Font::RichFormat::Ref::Ref(RichFormat const &richFormat)
     : _ref(richFormat), _indices(0, richFormat.d->ranges.size())
 {
-    if(!richFormat.d->ranges.isEmpty())
+    if (!richFormat.d->ranges.isEmpty())
     {
         _span = Rangei(0, richFormat.d->ranges.last().range.end);
     }
@@ -351,12 +351,12 @@ Rangei Font::RichFormat::Ref::range(int index) const
 {
     Rangei r = _ref.d->ranges.at(_indices.start + index).range;
 
-    if(index == 0)
+    if (index == 0)
     {
         // Clip the beginning.
         r.start = de::max(r.start, _span.start);
     }
-    if(index == rangeCount() - 1)
+    if (index == rangeCount() - 1)
     {
         // Clip the end in the last range.
         r.end = de::min(r.end, _span.end);
@@ -382,21 +382,21 @@ void Font::RichFormat::Ref::updateIndices()
     Instance::Ranges const &ranges = format().d->ranges;
 
     int i = 0;
-    for(; i < ranges.size(); ++i)
+    for (; i < ranges.size(); ++i)
     {
         Rangei const &r = ranges.at(i).range;
-        if(r.end > _span.start)
+        if (r.end > _span.start)
         {
             _indices.start = i;
             _indices.end = i + 1;
             break;
         }
     }
-    for(++i; i < ranges.size(); ++i, ++_indices.end)
+    for (++i; i < ranges.size(); ++i, ++_indices.end)
     {
         // Empty ranges are accepted at the end of the span.
         Rangei const &r = ranges.at(i).range;
-        if(( r.isEmpty() && r.start >  _span.end) ||
+        if (( r.isEmpty() && r.start >  _span.end) ||
            (!r.isEmpty() && r.start >= _span.end))
             break;
     }
@@ -459,7 +459,7 @@ int Font::RichFormat::Iterator::colorIndex() const
 
 Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
 {
-    if(format.format().d->style)
+    if (format.format().d->style)
     {
         return format.format().d->style->richStyleColor(colorIndex());
     }

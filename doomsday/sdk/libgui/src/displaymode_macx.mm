@@ -31,9 +31,9 @@
 static int intFromDict(CFDictionaryRef dict, CFStringRef key)
 {
     CFNumberRef ref = (CFNumberRef) CFDictionaryGetValue(dict, key);
-    if(!ref) return -1;
+    if (!ref) return -1;
     int value;
-    if(!CFNumberGetValue(ref, kCFNumberIntType, &value)) return -1;
+    if (!CFNumberGetValue(ref, kCFNumberIntType, &value)) return -1;
     return value;
 }
 
@@ -41,9 +41,9 @@ static int intFromDict(CFDictionaryRef dict, CFStringRef key)
 static float floatFromDict(CFDictionaryRef dict, CFStringRef key)
 {
     CFNumberRef ref = (CFNumberRef) CFDictionaryGetValue(dict, key);
-    if(!ref) return -1;
+    if (!ref) return -1;
     float value;
-    if(!CFNumberGetValue(ref, kCFNumberFloatType, &value)) return -1;
+    if (!CFNumberGetValue(ref, kCFNumberFloatType, &value)) return -1;
     return value;
 }
 
@@ -72,7 +72,7 @@ static void updateDisplayDicts(void)
 
     CFArrayRef modes = CGDisplayAvailableModes(kCGDirectMainDisplay);
     CFIndex count = CFArrayGetCount(modes);
-    for(CFIndex i = 0; i < count; ++i)
+    for (CFIndex i = 0; i < count; ++i)
     {
         displayDicts.push_back((CFDictionaryRef) CFArrayGetValueAtIndex(modes, i));
     }
@@ -85,7 +85,7 @@ void DisplayMode_Native_Init(void)
     // Let's see which modes are available.
     CFArrayRef modes = CGDisplayAvailableModes(kCGDirectMainDisplay);
     CFIndex count = CFArrayGetCount(modes);
-    for(CFIndex i = 0; i < count; ++i)
+    for (CFIndex i = 0; i < count; ++i)
     {
         CFDictionaryRef dict = (CFDictionaryRef) CFArrayGetValueAtIndex(modes, i);
         displayModes.push_back(modeFromDict(dict));
@@ -96,11 +96,11 @@ void DisplayMode_Native_Init(void)
 
 static bool captureDisplays(int capture)
 {
-    if(capture && !CGDisplayIsCaptured(kCGDirectMainDisplay))
+    if (capture && !CGDisplayIsCaptured(kCGDirectMainDisplay))
     {
         return CGCaptureAllDisplays() == kCGErrorSuccess;
     }
-    else if(!capture && CGDisplayIsCaptured(kCGDirectMainDisplay))
+    else if (!capture && CGDisplayIsCaptured(kCGDirectMainDisplay))
     {
         CGReleaseAllDisplays();
         return true;
@@ -137,9 +137,9 @@ void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
 
 static int findIndex(DisplayMode const *mode)
 {
-    for(unsigned int i = 0; i < displayModes.size(); ++i)
+    for (unsigned int i = 0; i < displayModes.size(); ++i)
     {
-        if(displayModes[i].width == mode->width &&
+        if (displayModes[i].width == mode->width &&
            displayModes[i].height == mode->height &&
            displayModes[i].depth == mode->depth &&
            displayModes[i].refreshRate == mode->refreshRate)
@@ -171,20 +171,20 @@ int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
     CFDictionaryRef newModeDict = displayDicts[findIndex(mode)];
 
     // Capture displays if instructed to do so.
-    if(shouldCapture && !captureDisplays(true))
+    if (shouldCapture && !captureDisplays(true))
     {
         result = kCGErrorFailure;
     }
 
-    if(result == kCGErrorSuccess && getCurrentDisplayDict() != newModeDict)
+    if (result == kCGErrorSuccess && getCurrentDisplayDict() != newModeDict)
     {
         // Try to change.
         result = CGDisplaySwitchToMode(kCGDirectMainDisplay, newModeDict);
-        if(result != kCGErrorSuccess)
+        if (result != kCGErrorSuccess)
         {
             // Oh no!
             //CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDisplayDict);
-            if(!wasPreviouslyCaptured) releaseDisplays();
+            if (!wasPreviouslyCaptured) releaseDisplays();
         }
         /*
         else
@@ -199,7 +199,7 @@ int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
     CGReleaseDisplayFadeReservation(token);
 
     // Release display capture if instructed to do so.
-    if(!shouldCapture)
+    if (!shouldCapture)
     {
         captureDisplays(false);
     }
@@ -228,7 +228,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
     CGGetDisplayTransferByTable(kCGDirectMainDisplay, size, red, green, blue, &count);
     assert(count == size);
 
-    for(uint i = 0; i < size; ++i)
+    for (uint i = 0; i < size; ++i)
     {
         colors->table[i]          = (unsigned short) (red[i]   * 0xffff);
         colors->table[i + size]   = (unsigned short) (green[i] * 0xffff);
@@ -243,7 +243,7 @@ void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
     CGGammaValue green[size];
     CGGammaValue blue[size];
 
-    for(uint i = 0; i < size; ++i)
+    for (uint i = 0; i < size; ++i)
     {
         red[i]   = colors->table[i]/float(0xffff);
         green[i] = colors->table[i + size]/float(0xffff);

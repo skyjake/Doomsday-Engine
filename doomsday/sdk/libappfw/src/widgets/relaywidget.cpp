@@ -34,14 +34,14 @@ DENG2_PIMPL(RelayWidget)
 
     void setTarget(GuiWidget *w)
     {
-        if(target) target->audienceForDeletion() -= this;
+        if (target) target->audienceForDeletion() -= this;
         target = w;
-        if(target) target->audienceForDeletion() += this;
+        if (target) target->audienceForDeletion() += this;
     }
 
     void widgetBeingDeleted(Widget &w)
     {
-        if(target == &w)
+        if (target == &w)
         {
             DENG2_FOR_PUBLIC_AUDIENCE2(Target, i)
             {
@@ -75,7 +75,7 @@ GuiWidget *RelayWidget::target() const
 void RelayWidget::initialize()
 {
     GuiWidget::initialize();
-    if(d->target)
+    if (d->target)
     {
         d->target->notifySelfAndTree(&Widget::initialize);
     }
@@ -84,7 +84,7 @@ void RelayWidget::initialize()
 void RelayWidget::deinitialize()
 {
     GuiWidget::deinitialize();
-    if(d->target)
+    if (d->target)
     {
         d->target->notifySelfAndTree(&Widget::deinitialize);
     }
@@ -93,7 +93,7 @@ void RelayWidget::deinitialize()
 void RelayWidget::viewResized()
 {
     GuiWidget::viewResized();
-    if(d->target)
+    if (d->target)
     {
         d->target->notifySelfAndTree(&Widget::viewResized);
     }
@@ -102,7 +102,7 @@ void RelayWidget::viewResized()
 void RelayWidget::update()
 {
     GuiWidget::update();
-    if(d->target)
+    if (d->target)
     {
         d->target->notifySelfAndTree(&Widget::update);
     }
@@ -110,7 +110,7 @@ void RelayWidget::update()
 
 bool RelayWidget::handleEvent(Event const &event)
 {
-    if(d->target)
+    if (d->target)
     {
         return d->target->dispatchEvent(event, &Widget::handleEvent);
     }
@@ -119,7 +119,7 @@ bool RelayWidget::handleEvent(Event const &event)
 
 bool RelayWidget::hitTest(Vector2i const &pos) const
 {
-    if(d->target)
+    if (d->target)
     {
         return d->target->hitTest(pos);
     }
@@ -128,7 +128,7 @@ bool RelayWidget::hitTest(Vector2i const &pos) const
     
 void RelayWidget::drawContent()
 {
-    if(d->target)
+    if (d->target)
     {
         NotifyArgs args(&Widget::draw);
         args.conditionFunc  = &Widget::isVisible;

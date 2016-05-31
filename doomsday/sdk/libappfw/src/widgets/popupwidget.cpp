@@ -54,31 +54,31 @@ DENG_GUI_PIMPL(PopupWidget)
 
         // Opening direction depends on the anchor position: popup will open to
         // direction that has more space available.
-        switch(openDir)
+        switch (openDir)
         {
         case ui::Up:
-            if(anchor.midY().value() < self.root().viewHeight().value()/2)
+            if (anchor.midY().value() < self.root().viewHeight().value()/2)
             {
                 openDir = ui::Down;
             }
             break;
 
         case ui::Down:
-            if(anchor.midY().value() > self.root().viewHeight().value()/2)
+            if (anchor.midY().value() > self.root().viewHeight().value()/2)
             {
                 openDir = ui::Up;
             }
             break;
 
         case ui::Left:
-            if(anchor.midX().value() < self.root().viewWidth().value()/2)
+            if (anchor.midX().value() < self.root().viewWidth().value()/2)
             {
                 openDir = ui::Right;
             }
             break;
 
         case ui::Right:
-            if(anchor.midX().value() > self.root().viewWidth().value()/2)
+            if (anchor.midX().value() > self.root().viewWidth().value()/2)
             {
                 openDir = ui::Left;
             }
@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
     Vector2R anchorRule() const
     {
-        switch(self.openingDirection())
+        switch (self.openingDirection())
         {
         case ui::Up:
             return Vector2R(&anchor.midX(), &anchor.top());
@@ -134,7 +134,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
         auto anchorPos = anchorRule();
 
-        switch(self.openingDirection())
+        switch (self.openingDirection())
         {
         case ui::Up:
             self.rule()
@@ -193,7 +193,7 @@ DENG_GUI_PIMPL(PopupWidget)
         Style const &st = style();
         bool const opaqueBackground = (self.levelOfNesting() > 0);
 
-        if(colorTheme == Inverted)
+        if (colorTheme == Inverted)
         {
             self.set(self.infoStyleBackground());
         }
@@ -208,7 +208,7 @@ DENG_GUI_PIMPL(PopupWidget)
             self.set(bg);
         }
 
-        if(opaqueBackground)
+        if (opaqueBackground)
         {
             // If nested, use an opaque background.
             self.set(self.background().withSolidFillOpacity(1));
@@ -225,9 +225,9 @@ PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance
 int PopupWidget::levelOfNesting() const
 {
     int nesting = 0;
-    for(Widget const *p = d->realParent? d->realParent.get() : parentWidget(); p; p = p->parent())
+    for (Widget const *p = d->realParent? d->realParent.get() : parentWidget(); p; p = p->parent())
     {
-        if(p->is<PopupWidget>())
+        if (p->is<PopupWidget>())
         {
             ++nesting;
         }
@@ -329,25 +329,25 @@ GuiWidget::Background PopupWidget::infoStyleBackground() const
 
 bool PopupWidget::handleEvent(Event const &event)
 {
-    if(!isOpen()) return false;
+    if (!isOpen()) return false;
 
     // Popups eat all mouse button events.
-    if(event.type() == Event::MouseButton)
+    if (event.type() == Event::MouseButton)
     {
         //MouseEvent const &mouse = event.as<MouseEvent>();
         bool const inside = hitTest(event);
 
-        if(!inside && d->clickToClose)
+        if (!inside && d->clickToClose)
         {
             close(0.1);
         }
     }
 
-    if(event.type() == Event::KeyPress  ||
+    if (event.type() == Event::KeyPress  ||
        event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {
-        if(event.isKeyDown() && event.as<KeyEvent>().ddKey() == DDKEY_ESCAPE)
+        if (event.isKeyDown() && event.as<KeyEvent>().ddKey() == DDKEY_ESCAPE)
         {
             close();
             return true;
@@ -365,12 +365,12 @@ bool PopupWidget::handleEvent(Event const &event)
 
 void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    if(rule().recti().isNull()) return; // Still closed.
+    if (rule().recti().isNull()) return; // Still closed.
 
     PanelWidget::glMakeGeometry(verts);
 
     ui::Direction const dir = openingDirection();
-    if(dir == ui::NoDirection) return;
+    if (dir == ui::NoDirection) return;
 
     // Anchor triangle.
     DefaultVertexBuf::Builder tri;
@@ -382,7 +382,7 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     int marker = d->marker->valuei();
     Vector2i anchorPos = d->anchorPos();
 
-    if(dir == ui::Up)
+    if (dir == ui::Up)
     {
         // Can't put the anchor too close to the edges.
         anchorPos.x = clamp(2 * marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
@@ -391,17 +391,17 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
         v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
     }
-    else if(dir == ui::Left)
+    else if (dir == ui::Left)
     {
         // The anchor may still get clamped out of sight.
-        if(anchorPos.x > rule().right().valuei())
+        if (anchorPos.x > rule().right().valuei())
         {
             v.pos = anchorPos; tri << v;
             v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
             v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
         }
     }
-    else if(dir == ui::Right)
+    else if (dir == ui::Right)
     {
         v.pos = anchorPos; tri << v;
         v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
@@ -430,7 +430,7 @@ void PopupWidget::preparePanelForOpening()
 
     PanelWidget::preparePanelForOpening();
 
-    if(d->flexibleDir)
+    if (d->flexibleDir)
     {
         d->flipOpeningDirectionIfNeeded();
     }
@@ -449,7 +449,7 @@ void PopupWidget::panelDismissed()
     PanelWidget::panelDismissed();
 
     // Move back to the original parent widget.
-    if(!d->realParent)
+    if (!d->realParent)
     {
         // The real parent has been deleted.
         d->realParent.reset(&root());
@@ -457,7 +457,7 @@ void PopupWidget::panelDismissed()
     }
     parentWidget()->remove(*this);
 
-    if(d->deleteAfterDismiss)
+    if (d->deleteAfterDismiss)
     {
         // Don't bother putting it back in the original parent.
         guiDeleteLater();

@@ -300,9 +300,9 @@ public:
         reset(nullptr);
     }
     void reset(WidgetType *ptr = nullptr) {
-        if(_ptr) _ptr->Widget::audienceForDeletion() -= this;
+        if (_ptr) _ptr->Widget::audienceForDeletion() -= this;
         _ptr = ptr;
-        if(_ptr) _ptr->Widget::audienceForDeletion() += this;
+        if (_ptr) _ptr->Widget::audienceForDeletion() += this;
     }
     WidgetType *operator -> () const {
         return _ptr;
@@ -320,7 +320,7 @@ public:
         return _ptr != nullptr;
     }
     void widgetBeingDeleted(Widget &widget) {
-        if(&widget == _ptr) {
+        if (&widget == _ptr) {
             _ptr = nullptr;
         }
     }

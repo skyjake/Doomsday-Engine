@@ -49,7 +49,7 @@ SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNu
     Path const source(path);
 
     auto const *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);
-    if(!node)
+    if (!node)
     {
         node = &d->paths.insert(source);
         d->lookup[node->id] = node;
@@ -68,7 +68,7 @@ SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sou
     duint const lineNumber = (NUMBER_MASK & sourceId);
 
     auto found = d->lookup.constFind(sourceId >> SOURCE_SHIFT);
-    if(found != d->lookup.constEnd())
+    if (found != d->lookup.constEnd())
     {
         return PathAndLine(found.value()->path().toStringRef(), lineNumber);
     }

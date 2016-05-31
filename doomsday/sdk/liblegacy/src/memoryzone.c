@@ -111,9 +111,9 @@ long superatol(char *s)
     char           *endptr;
     long            val = strtol(s, &endptr, 0);
 
-    if(*endptr == 'k' || *endptr == 'K')
+    if (*endptr == 'k' || *endptr == 'K')
         val *= 1024;
-    else if(*endptr == 'm' || *endptr == 'M')
+    else if (*endptr == 'm' || *endptr == 'M')
         val *= 1048576;
     return val;
 }
@@ -130,11 +130,11 @@ static memvolume_t *createVolume(size_t volumeSize)
     lockZone();
 
     // Append to the end of the volume list.
-    if(volumeLast)
+    if (volumeLast)
         volumeLast->next = vol;
     volumeLast = vol;
     vol->next = 0;
-    if(!volumeRoot)
+    if (!volumeRoot)
         volumeRoot = vol;
 
     // Allocate memory for the zone volume.
@@ -195,7 +195,7 @@ void Z_Shutdown(void)
     Garbage_RecycleAllWithDestructor(Z_Free);
 
     // Destroy all the memory volumes.
-    while(volumeRoot)
+    while (volumeRoot)
     {
         memvolume_t *vol = volumeRoot;
         volumeRoot = vol->next;
@@ -225,13 +225,13 @@ memblock_t *Z_GetBlock(void *ptr)
     memvolume_t    *volume;
     memblock_t     *block;
 
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blockList.next;
+        for (block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
             block = block->next)
         {
-            if(block->area == ptr)
+            if (block->area == ptr)
             {
                 return block;
             }
@@ -254,12 +254,12 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     memblock_t     *block, *other;
     memvolume_t    *volume;
 
-    if(!ptr) return;
+    if (!ptr) return;
 
     lockZone();
 
     block = Z_GetBlock(ptr);
-    if(block->id != LIBDENG_ZONEID)
+    if (block->id != LIBDENG_ZONEID)
     {
         unlockZone();
         DENG_ASSERT(block->id == LIBDENG_ZONEID);
@@ -271,7 +271,7 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     // The block was allocated from this volume.
     volume = block->volume;
 
-    if(block->user > (void **) 0x100) // Smaller values are not pointers.
+    if (block->user > (void **) 0x100) // Smaller values are not pointers.
         *block->user = 0; // Clear the user's mark.
     block->user = NULL; // Mark as free.
     block->tag = 0;
@@ -290,11 +290,11 @@ static void freeBlock(void *ptr, memblock_t **tracked)
      * parts, but since PU_LEVELSTATICs aren't supposed to be freed one by
      * one, this this sufficient.
      */
-    if(block->seqFirst)
+    if (block->seqFirst)
     {
         memblock_t *first = block->seqFirst;
         memblock_t *iter = first;
-        while(iter->seqFirst == first)
+        while (iter->seqFirst == first)
         {
             iter->seqFirst = iter->seqLast = NULL;
             iter = iter->next;
@@ -305,39 +305,39 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     volume->allocatedBytes -= block->size;
 
     other = block->prev;
-    if(!other->user)
+    if (!other->user)
     {
         // Merge with previous free block.
         other->size += block->size;
         other->next = block->next;
         other->next->prev = other;
-        if(block == volume->zone->rover)
+        if (block == volume->zone->rover)
             volume->zone->rover = other;
-        if(block == volume->zone->staticRover)
+        if (block == volume->zone->staticRover)
             volume->zone->staticRover = other;
         block = other;
 
         // Keep track of what happens to the referenced block.
-        if(tracked && *tracked == block)
+        if (tracked && *tracked == block)
         {
             *tracked = other;
         }
     }
 
     other = block->next;
-    if(!other->user)
+    if (!other->user)
     {
         // Merge the next free block onto the end.
         block->size += other->size;
         block->next = other->next;
         block->next->prev = block;
-        if(other == volume->zone->rover)
+        if (other == volume->zone->rover)
             volume->zone->rover = block;
-        if(other == volume->zone->staticRover)
+        if (other == volume->zone->staticRover)
             volume->zone->staticRover = block;
 
         // Keep track of what happens to the referenced block.
-        if(tracked && *tracked == other)
+        if (tracked && *tracked == other)
         {
             *tracked = block;
         }
@@ -364,7 +364,7 @@ static __inline dd_bool isRootBlock(memvolume_t *vol, memblock_t *block)
 static __inline memblock_t *advanceBlock(memvolume_t *vol, memblock_t *block)
 {
     block = block->next;
-    if(isRootBlock(vol, block))
+    if (isRootBlock(vol, block))
     {
         // Continue from the beginning.
         block = vol->zone->blockList.next;
@@ -379,10 +379,10 @@ static __inline memblock_t *rewindRover(memvolume_t *vol, memblock_t *rover, int
     int i;
 
     rover = rover->prev;
-    for(i = 0; i < maxSteps && !isRootBlock(vol, rover); ++i)
+    for (i = 0; i < maxSteps && !isRootBlock(vol, rover); ++i)
     {
         // Looking for the smallest suitable free block.
-        if(isFreeBlock(rover) && rover->size >= optimal && (!prevBest || rover->size < prevBest))
+        if (isFreeBlock(rover) && rover->size >= optimal && (!prevBest || rover->size < prevBest))
         {
             // Let's use this one.
             prevBest = rover->size;
@@ -406,14 +406,14 @@ static dd_bool isVolumeTooFull(memvolume_t *vol)
 static void rewindStaticRovers(void)
 {
     memvolume_t *volume;
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
         memblock_t *block;
-        for(block = volume->zone->blockList.next;
+        for (block = volume->zone->blockList.next;
             !isRootBlock(volume, block); block = block->next)
         {
             // Let's find the first free block at the beginning of the volume.
-            if(isFreeBlock(block))
+            if (isFreeBlock(block))
             {
                 volume->zone->staticRover = block;
                 break;
@@ -447,12 +447,12 @@ void *Z_Malloc(size_t size, int tag, void *user)
     memblock_t *start, *iter;
     memvolume_t *volume;
 
-    if(tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
+    if (tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
     {
         App_Log(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.", tag);
         return NULL;
     }
-    if(!size)
+    if (!size)
     {
         // You can't allocate "nothing."
         return NULL;
@@ -468,24 +468,24 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
     // Iterate through memory volumes until we can find one with enough free
     // memory. (Note: we *will *find one that's large enough.)
-    for(volume = volumeRoot; ; volume = volume->next)
+    for (volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
         dd_bool gotoNextVolume = false;
 
-        if(volume == NULL)
+        if (volume == NULL)
         {
             // We've run out of volumes.  Let's allocate a new one
             // with enough memory.
             size_t newVolumeSize = MEMORY_VOLUME_SIZE;
 
-            if(newVolumeSize < size + 0x1000)
+            if (newVolumeSize < size + 0x1000)
                 newVolumeSize = size + 0x1000; // with some spare memory
 
             volume = createVolume(newVolumeSize);
         }
 
-        if(isVolumeTooFull(volume))
+        if (isVolumeTooFull(volume))
         {
             // We should skip this one.
             continue;
@@ -497,7 +497,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // sufficient size, throwing out any purgable blocks along the
         // way.
 
-        if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
+        if (tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
         {
             // Appstatic allocations may be around for a long time so make sure
             // they don't litter the volume. Their own rover will keep them as
@@ -518,18 +518,18 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // If the start is in a sequence, move it to the beginning of the
         // entire sequence. Sequences are handled as a single unpurgable entity,
         // so we can stop checking at its start.
-        if(start->seqFirst)
+        if (start->seqFirst)
         {
             start = start->seqFirst;
         }
 
         // We will scan ahead until we find something big enough.
-        for( ; !(isFreeBlock(iter) && iter->size >= size); numChecked++)
+        for ( ; !(isFreeBlock(iter) && iter->size >= size); numChecked++)
         {
             // Check for purgable blocks we can dispose of.
-            if(!isFreeBlock(iter))
+            if (!isFreeBlock(iter))
             {
-                if(iter->tag >= PU_PURGELEVEL)
+                if (iter->tag >= PU_PURGELEVEL)
                 {
                     memblock_t *old = iter;
                     iter = iter->prev; // Step back.
@@ -541,7 +541,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 }
                 else
                 {
-                    if(iter->seqFirst)
+                    if (iter->seqFirst)
                     {
                         // This block is part of a sequence of blocks, none of
                         // which can be purged. Skip the entire sequence.
@@ -558,7 +558,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                    !start->seqFirst->prev->seqFirst ||
                    start->seqFirst->prev->seqFirst == start->seqFirst->prev->seqLast);
 
-            if(iter == start && numChecked > 0)
+            if (iter == start && numChecked > 0)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
@@ -571,10 +571,10 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // At this point we've found/created a big enough block or we are
         // skipping this volume entirely.
 
-        if(gotoNextVolume) continue;
+        if (gotoNextVolume) continue;
 
         // Found a block big enough.
-        if(iter->size - size > MINFRAGMENT)
+        if (iter->size - size > MINFRAGMENT)
         {
             splitFreeBlock(iter, size);
         }
@@ -584,7 +584,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         iter->area = M_Malloc(iter->areaSize);
 #endif
 
-        if(user)
+        if (user)
         {
             iter->user = user;      // mark as an in use block
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
@@ -602,13 +602,13 @@ void *Z_Malloc(size_t size, int tag, void *user)
         }
         iter->tag = tag;
 
-        if(tag == PU_MAPSTATIC)
+        if (tag == PU_MAPSTATIC)
         {
             // Level-statics are linked into unpurgable sequences so they can
             // be skipped en masse.
             iter->seqFirst = iter;
             iter->seqLast = iter;
-            if(iter->prev->seqFirst)
+            if (iter->prev->seqFirst)
             {
                 iter->seqFirst = iter->prev->seqFirst;
                 iter->seqFirst->seqLast = iter;
@@ -621,7 +621,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         }
 
         // Next allocation will start looking here, at the rover.
-        if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
+        if (tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
         {
             volume->zone->staticRover = advanceBlock(volume, iter);
         }
@@ -656,7 +656,7 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
     n = ALIGNED(n);
     p = Z_Malloc(n, tag, 0);    // User always 0;
 
-    if(ptr)
+    if (ptr)
     {
         size_t bsize;
 
@@ -684,17 +684,17 @@ void Z_FreeTags(int lowTag, int highTag)
             "MemoryZone: Freeing all blocks in tag range:[%i, %i)",
             lowTag, highTag+1);
 
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blockList.next;
+        for (block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
             block = next)
         {
             next = block->next;
 
-            if(block->user) // An allocated block?
+            if (block->user) // An allocated block?
             {
-                if(block->tag >= lowTag && block->tag <= highTag)
+                if (block->tag >= lowTag && block->tag <= highTag)
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
                     Z_Free(block->area);
 #else
@@ -719,12 +719,12 @@ void Z_CheckHeap(void)
 
     lockZone();
 
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
         size_t total = 0;
 
         // Validate the counter.
-        if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
+        if (allocatedMemoryInVolume(volume) != volume->allocatedBytes)
         {
             App_Log(DE2_LOG_CRITICAL,
                 "Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)",
@@ -733,12 +733,12 @@ void Z_CheckHeap(void)
         }
 
         // Does the memory in the blocks sum up to the total volume size?
-        for(block = volume->zone->blockList.next;
+        for (block = volume->zone->blockList.next;
             block != &volume->zone->blockList; block = block->next)
         {
             total += block->size;
         }
-        if(total != volume->size - sizeof(memzone_t))
+        if (total != volume->size - sizeof(memzone_t))
         {
             App_Log(DE2_LOG_CRITICAL,
                     "Z_CheckHeap: invalid total size of blocks (%u != %u)",
@@ -748,7 +748,7 @@ void Z_CheckHeap(void)
 
         // Does the last block extend all the way to the end?
         block = volume->zone->blockList.prev;
-        if((byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
+        if ((byte *)block - ((byte *)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
         {
             App_Log(DE2_LOG_CRITICAL,
                     "Z_CheckHeap: last block does not cover the end (%u != %u)",
@@ -760,44 +760,44 @@ void Z_CheckHeap(void)
         block = volume->zone->blockList.next;
         isDone = false;
 
-        while(!isDone)
+        while (!isDone)
         {
-            if(block->next != &volume->zone->blockList)
+            if (block->next != &volume->zone->blockList)
             {
-                if(block->size == 0)
+                if (block->size == 0)
                     App_FatalError("Z_CheckHeap: zero-size block");
-                if((byte *) block + block->size != (byte *) block->next)
+                if ((byte *) block + block->size != (byte *) block->next)
                     App_FatalError("Z_CheckHeap: block size does not touch the "
                               "next block");
-                if(block->next->prev != block)
+                if (block->next->prev != block)
                     App_FatalError("Z_CheckHeap: next block doesn't have proper "
                               "back link");
-                if(!block->user && !block->next->user)
+                if (!block->user && !block->next->user)
                     App_FatalError("Z_CheckHeap: two consecutive free blocks");
-                if(block->user == (void **) -1)
+                if (block->user == (void **) -1)
                 {
                     DENG_ASSERT(block->user != (void **) -1);
                     App_FatalError("Z_CheckHeap: bad user pointer");
                 }
 
                 /*
-                if(block->seqFirst == block)
+                if (block->seqFirst == block)
                 {
                     // This is the first.
                     printf("sequence begins at (%p): start=%p, end=%p\n", block,
                            block->seqFirst, block->seqLast);
                 }
                  */
-                if(block->seqFirst)
+                if (block->seqFirst)
                 {
                     //printf("  seq member (%p): start=%p\n", block, block->seqFirst);
-                    if(block->seqFirst->seqLast == block)
+                    if (block->seqFirst->seqLast == block)
                     {
                         //printf("  -=- last member of seq %p -=-\n", block->seqFirst);
                     }
                     else
                     {
-                        if(block->next->seqFirst != block->seqFirst)
+                        if (block->next->seqFirst != block->seqFirst)
                         {
                             App_FatalError("Z_CheckHeap: disconnected sequence");
                         }
@@ -822,7 +822,7 @@ void Z_ChangeTag2(void *ptr, int tag)
 
         DENG_ASSERT(block->id == LIBDENG_ZONEID);
 
-        if(tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
+        if (tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
         {
             App_Log(DE2_LOG_ERROR,
                 "Z_ChangeTag: An owner is required for purgable blocks.");
@@ -875,15 +875,15 @@ dd_bool Z_Contains(void *ptr)
     memvolume_t *volume;
     memblock_t *block = Z_GetBlock(ptr);
     DENG_ASSERT(Z_IsInited());
-    if(block->id != LIBDENG_ZONEID)
+    if (block->id != LIBDENG_ZONEID)
     {
         // Could be in the zone, but does not look like an allocated block.
         return false;
     }
     // Check which volume is it.
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
-        if((char *)ptr > (char *)volume->zone && (char *)ptr < (char *)volume->zone + volume->size)
+        if ((char *)ptr > (char *)volume->zone && (char *)ptr < (char *)volume->zone + volume->size)
         {
             // There it is.
             return true;
@@ -910,7 +910,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 
     n = ALIGNED(n);
 
-    if(ptr)                     // Has old data.
+    if (ptr)                     // Has old data.
     {
         p = Z_Malloc(n, Z_GetTag(ptr), NULL);
         block = Z_GetBlock(ptr);
@@ -919,7 +919,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 #else
         bsize = block->size - sizeof(memblock_t);
 #endif
-        if(bsize <= n)
+        if (bsize <= n)
         {
             memcpy(p, ptr, bsize);
             memset((char *) p + bsize, 0, n - bsize);
@@ -943,7 +943,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 
 char *Z_StrDup(char const *text)
 {
-    if(!text) return 0;
+    if (!text) return 0;
     {
     size_t len = strlen(text);
     char *buf = Z_Malloc(len + 1, PU_APPSTATIC, 0);
@@ -965,7 +965,7 @@ uint Z_VolumeCount(void)
     size_t          count = 0;
 
     lockZone();
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
         count++;
     }
@@ -979,10 +979,10 @@ static size_t allocatedMemoryInVolume(memvolume_t *volume)
     memblock_t *block;
     size_t total = 0;
 
-    for(block = volume->zone->blockList.next; !isRootBlock(volume, block);
+    for (block = volume->zone->blockList.next; !isRootBlock(volume, block);
         block = block->next)
     {
-        if(!isFreeBlock(block))
+        if (!isFreeBlock(block))
         {
             total += block->size;
         }
@@ -1000,7 +1000,7 @@ static size_t Z_AllocatedMemory(void)
 
     lockZone();
 
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
         total += allocatedMemoryInVolume(volume);
     }
@@ -1021,13 +1021,13 @@ size_t Z_FreeMemory(void)
     lockZone();
 
     Z_CheckHeap();
-    for(volume = volumeRoot; volume; volume = volume->next)
+    for (volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blockList.next;
+        for (block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
             block = block->next)
         {
-            if(!block->user)
+            if (!block->user)
             {
                 free += block->size;
             }
@@ -1102,7 +1102,7 @@ void *ZBlockSet_Allocate(zblockset_t *set)
     block->count++;
 
     // If we run out of space in the topmost block, add a new one.
-    if(block->count == block->max)
+    if (block->count == block->max)
     {
         // Just being cautious: adding a new block invalidates existing
         // pointers to the blocks.
@@ -1141,7 +1141,7 @@ void ZBlockSet_Delete(zblockset_t *set)
 
     // Free the elements from each block.
     { uint i;
-    for(i = 0; i < set->_blockCount; ++i)
+    for (i = 0; i < set->_blockCount; ++i)
         Z_Free(set->_blocks[i].elements);
     }
 

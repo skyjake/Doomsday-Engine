@@ -31,14 +31,14 @@ void Task::run()
     {
         runTask();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_AS("Task");
         LOG_WARNING("Aborted due to exception: ") << er.asText();
     }
 
     // Cleanup.
-    if(_pool) _pool->taskFinishedRunning(*this);
+    if (_pool) _pool->taskFinishedRunning(*this);
     Log::disposeThreadLog();
 }
 

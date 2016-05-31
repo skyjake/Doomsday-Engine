@@ -79,13 +79,13 @@ DENG2_PIMPL(GLFramebuffer)
 
     int sampleCount() const
     {
-        if(_samples <= 0) return pDefaultSampleCount;
+        if (_samples <= 0) return pDefaultSampleCount;
         return _samples;
     }
 
     bool isMultisampled() const
     {
-        if(!GLInfo::extensions().EXT_framebuffer_multisample)
+        if (!GLInfo::extensions().EXT_framebuffer_multisample)
         {
             // Not supported.
             return false;
@@ -141,7 +141,7 @@ DENG2_PIMPL(GLFramebuffer)
 
     void reconfigure()
     {
-        if(!self.isReady() || size == Size()) return;
+        if (!self.isReady() || size == Size()) return;
 
         LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
                 << size.asText() << sampleCount();
@@ -160,12 +160,12 @@ DENG2_PIMPL(GLFramebuffer)
         DENG2_ASSERT(depthStencil.isReady());
 
         // Try a couple of different ways to set up the FBO.
-        for(int attempt = 0; ; ++attempt)
+        for (int attempt = 0; ; ++attempt)
         {
             String failMsg;
             try
             {
-                switch(attempt)
+                switch (attempt)
                 {
                 case 0:
                     // Most preferred: render both color and depth+stencil to textures.
@@ -208,16 +208,16 @@ DENG2_PIMPL(GLFramebuffer)
                 }
                 break; // success!
             }
-            catch(GLTarget::ConfigError const &er)
+            catch (GLTarget::ConfigError const &er)
             {
-                if(failMsg.isEmpty()) throw er; // Can't handle it.
+                if (failMsg.isEmpty()) throw er; // Can't handle it.
                 LOG_GL_NOTE(failMsg) << er.asText();
             }
         }
 
         target.clear(GLTarget::ColorDepthStencil);
 
-        if(isMultisampled())
+        if (isMultisampled())
         {
             try
             {
@@ -229,7 +229,7 @@ DENG2_PIMPL(GLFramebuffer)
                 // blitted to the main target.
                 target.setProxy(&multisampleTarget);
             }
-            catch(GLTarget::ConfigError const &er)
+            catch (GLTarget::ConfigError const &er)
             {
                 LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
                 _samples = 1;
@@ -245,7 +245,7 @@ noMultisampling:
 
     void resize(Size const &newSize)
     {
-        if(size != newSize)
+        if (size != newSize)
         {
             size = newSize;
             reconfigure();
@@ -254,7 +254,7 @@ noMultisampling:
 
     void drawSwap()
     {
-        if(isMultisampled())
+        if (isMultisampled())
         {
             target.updateFromProxy();
         }
@@ -270,7 +270,7 @@ noMultisampling:
                 .setViewport(Rectangleui::fromSize(size))
                 .apply();
 
-        if(!color.isReady())
+        if (!color.isReady())
         {
             // If the frame buffer hasn't been configured yet, just clear the canvas.
             glClear(GL_COLOR_BUFFER_BIT);
@@ -279,12 +279,12 @@ noMultisampling:
             return;
         }
 
-        switch(swapMode)
+        switch (swapMode)
         {
         case gl::SwapMonoBuffer:
-            if(GLInfo::extensions().EXT_framebuffer_blit)
+            if (GLInfo::extensions().EXT_framebuffer_blit)
             {
-                if(isMultisampled())
+                if (isMultisampled())
                 {
                     multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
                 }
@@ -336,19 +336,19 @@ GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initi
 
 void GLFramebuffer::glInit()
 {
-    if(isReady()) return;
+    if (isReady()) return;
 #ifdef LIBGUI_USE_GLENTRYPOINTS
-    if(!glBindFramebuffer) return;
+    if (!glBindFramebuffer) return;
 #endif
 
     LOG_AS("GLFramebuffer");
 
     // Check for some integral OpenGL functionality.
-    if(!GLInfo::extensions().EXT_framebuffer_object)
+    if (!GLInfo::extensions().EXT_framebuffer_object)
     {
         LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
     }
-    if(!GLInfo::extensions().EXT_packed_depth_stencil)
+    if (!GLInfo::extensions().EXT_packed_depth_stencil)
     {
         LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
     }
@@ -367,12 +367,12 @@ void GLFramebuffer::glDeinit()
 
 void GLFramebuffer::setSampleCount(int sampleCount)
 {
-    if(!GLInfo::isFramebufferMultisamplingSupported())
+    if (!GLInfo::isFramebufferMultisamplingSupported())
     {
         sampleCount = 1;
     }
 
-    if(d->_samples != sampleCount)
+    if (d->_samples != sampleCount)
     {
         LOG_AS("GLFramebuffer");
 
@@ -383,7 +383,7 @@ void GLFramebuffer::setSampleCount(int sampleCount)
 
 void GLFramebuffer::setColorFormat(Image::Format const &colorFormat)
 {
-    if(d->colorFormat != colorFormat)
+    if (d->colorFormat != colorFormat)
     {
         d->colorFormat = colorFormat;
         d->reconfigure();
@@ -442,7 +442,7 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
-    if(pDefaultSampleCount != newCount)
+    if (pDefaultSampleCount != newCount)
     {
         pDefaultSampleCount = newCount;
         return true;

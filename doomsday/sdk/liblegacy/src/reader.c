@@ -26,7 +26,7 @@
 
 #ifdef DENG_WRITER_TYPECHECK
 #  include "de/writer.h"
-#  define Reader_TypeCheck(r, code)   if(r->data[r->pos++] != code) DENG_ASSERT(!code);
+#  define Reader_TypeCheck(r, code)   if (r->data[r->pos++] != code) DENG_ASSERT(!code);
 #else
 #  define Reader_TypeCheck(r, code)
 #endif
@@ -62,21 +62,21 @@ static dd_bool Reader_Check(Reader const *reader, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One byte for the code.
-    if(len) len++;
+    if (len) len++;
 #endif
 
     DENG_ASSERT(reader);
     DENG_ASSERT(reader->data || reader->useCustomFuncs);
 
-    if(!reader || (!reader->data && !reader->useCustomFuncs))
+    if (!reader || (!reader->data && !reader->useCustomFuncs))
         return false;
 
-    if(reader->useCustomFuncs)
+    if (reader->useCustomFuncs)
     {
         // Not our responsibility.
         return true;
     }
-    if(reader->pos > reader->size - len)
+    if (reader->pos > reader->size - len)
     {
         App_Log(DE2_LOG_ERROR,
             "Reader_Check: Position %lu[+%lu] out of bounds, size=%lu.",
@@ -119,20 +119,20 @@ void Reader_Delete(Reader *reader)
 
 size_t Reader_Pos(Reader const *reader)
 {
-    if(!reader) return 0;
+    if (!reader) return 0;
     return reader->pos;
 }
 
 size_t Reader_Size(Reader const *reader)
 {
-    if(!reader) return 0;
+    if (!reader) return 0;
     return reader->size;
 }
 
 void Reader_SetPos(Reader *reader, size_t newPos)
 {
-    if(!reader) return;
-    if(reader->useCustomFuncs) return;
+    if (!reader) return;
+    if (reader->useCustomFuncs) return;
     reader->pos = newPos;
     Reader_Check(reader, 0);
 }
@@ -140,16 +140,16 @@ void Reader_SetPos(Reader *reader, size_t newPos)
 dd_bool Reader_AtEnd(Reader const *reader)
 {
     Reader_Check(reader, 0);
-    if(reader->useCustomFuncs) return false;
+    if (reader->useCustomFuncs) return false;
     return reader->pos == reader->size;
 }
 
 int8_t Reader_ReadChar(Reader *reader)
 {
     int8_t result = 0;
-    if(Reader_Check(reader, 1))
+    if (Reader_Check(reader, 1))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_CHAR);
             result = ((int8_t *)reader->data)[reader->pos++];
@@ -166,9 +166,9 @@ int8_t Reader_ReadChar(Reader *reader)
 byte Reader_ReadByte(Reader *reader)
 {
     byte result = 0;
-    if(Reader_Check(reader, 1))
+    if (Reader_Check(reader, 1))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_BYTE);
             result = reader->data[reader->pos++];
@@ -185,9 +185,9 @@ byte Reader_ReadByte(Reader *reader)
 int16_t Reader_ReadInt16(Reader *reader)
 {
     int16_t result = 0;
-    if(Reader_Check(reader, 2))
+    if (Reader_Check(reader, 2))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT16);
             result = LittleEndianByteOrder_ToNativeInt16(Reader_16(reader));
@@ -204,9 +204,9 @@ int16_t Reader_ReadInt16(Reader *reader)
 uint16_t Reader_ReadUInt16(Reader *reader)
 {
     uint16_t result = 0;
-    if(Reader_Check(reader, 2))
+    if (Reader_Check(reader, 2))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT16);
             result = LittleEndianByteOrder_ToNativeUInt16(Reader_16(reader));
@@ -223,9 +223,9 @@ uint16_t Reader_ReadUInt16(Reader *reader)
 int32_t Reader_ReadInt32(Reader *reader)
 {
     int32_t result = 0;
-    if(Reader_Check(reader, 4))
+    if (Reader_Check(reader, 4))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_INT32);
             result = LittleEndianByteOrder_ToNativeInt32(Reader_32(reader));
@@ -242,9 +242,9 @@ int32_t Reader_ReadInt32(Reader *reader)
 uint32_t Reader_ReadUInt32(Reader *reader)
 {
     uint32_t result = 0;
-    if(Reader_Check(reader, 4))
+    if (Reader_Check(reader, 4))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_UINT32);
             result = LittleEndianByteOrder_ToNativeUInt32(Reader_32(reader));
@@ -261,9 +261,9 @@ uint32_t Reader_ReadUInt32(Reader *reader)
 float Reader_ReadFloat(Reader *reader)
 {
     float result = 0;
-    if(Reader_Check(reader, 4))
+    if (Reader_Check(reader, 4))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             float foreign;
             Reader_TypeCheck(reader, WTCC_FLOAT);
@@ -282,11 +282,11 @@ float Reader_ReadFloat(Reader *reader)
 
 void Reader_Read(Reader *reader, void *buffer, size_t len)
 {
-    if(!len || !buffer) return;
+    if (!len || !buffer) return;
 
-    if(Reader_Check(reader, len))
+    if (Reader_Check(reader, len))
     {
-        if(!reader->useCustomFuncs)
+        if (!reader->useCustomFuncs)
         {
             Reader_TypeCheck(reader, WTCC_BLOCK);
             memcpy(buffer, reader->data + reader->pos, len);
@@ -303,7 +303,7 @@ void Reader_Read(Reader *reader, void *buffer, size_t len)
 uint16_t Reader_ReadPackedUInt16(Reader *reader)
 {
     ushort pack = Reader_ReadByte(reader);
-    if(pack & 0x80)
+    if (pack & 0x80)
     {
         pack &= ~0x80;
         pack |= Reader_ReadByte(reader) << 7;
@@ -318,11 +318,11 @@ uint32_t Reader_ReadPackedUInt32(Reader *reader)
     uint value = 0;
 
     do {
-        if(!Reader_Check(reader, 1)) return 0;
+        if (!Reader_Check(reader, 1)) return 0;
         pack = Reader_ReadByte(reader);
         value |= ((pack & 0x7f) << pos);
         pos += 7;
-    } while(pack & 0x80);
+    } while (pack & 0x80);
 
     return value;
 }
@@ -334,20 +334,20 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     DENG_ASSERT(src && cb && out);
 
     // Read full bytes.
-    if(unread >= 8)
+    if (unread >= 8)
     {
         do
         {
             out[offset++] = **src, (*src)++;
         }
-        while((unread -= 8) >= 8);
+        while ((unread -= 8) >= 8);
     }
 
-    if(unread != 0)
+    if (unread != 0)
     {
         // Read remaining bits.
         uint8_t fb = 8 - unread;
-        if((*cb) == 0) (*cb) = 8;
+        if ((*cb) == 0) (*cb) = 8;
 
         do
         {
@@ -355,9 +355,9 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
             out[offset] <<= 1;
             out[offset] |= ((**src >> (*cb)) & 0x01);
         }
-        while(--unread > 0);
+        while (--unread > 0);
 
         out[offset] <<= fb;
-        if((*cb) == 0) (*src)++;
+        if ((*cb) == 0) (*src)++;
     }
 }

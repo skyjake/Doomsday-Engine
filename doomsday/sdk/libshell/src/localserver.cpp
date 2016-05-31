@@ -56,7 +56,7 @@ void LocalServer::start(duint16 port,
 
     d->userDir = runtimePath;
 
-    if(d->userDir.isEmpty())
+    if (d->userDir.isEmpty())
     {
         // Default runtime location.
         d->userDir = DoomsdayInfo::defaultServerRuntimeFolder();
@@ -72,19 +72,19 @@ void LocalServer::start(duint16 port,
 #ifdef MACOSX
     // First locate the server executable.
     NativePath bin = NativePath(qApp->applicationDirPath()) / "../MacOS/doomsday-server";
-    if(!bin.exists())
+    if (!bin.exists())
     {
         // Try another location: Doomsday-Shell.app -> Doomsday Engine.app/Contents/Doomsday.app
         bin = NativePath(qApp->applicationDirPath()) /
                 "../../../Doomsday Engine.app/Contents/Doomsday.app/Contents/Resources/doomsday-server";
     }
-    if(!bin.exists())
+    if (!bin.exists())
     {
         // Yet another possibility: Doomsday-Shell.app -> Doomsday.app
         bin = NativePath(qApp->applicationDirPath()) /
                 "../../../Doomsday.app/Contents/MacOS/doomsday-server";
     }
-    if(!bin.exists())
+    if (!bin.exists())
     {
         throw NotFoundError("LocalServer::start", "Could not find Doomsday.app");
     }
@@ -98,7 +98,7 @@ void LocalServer::start(duint16 port,
 
 #else // UNIX
     NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server";
-    if(!bin.exists()) bin = "doomsday-server"; // Perhaps it's on the path?
+    if (!bin.exists()) bin = "doomsday-server"; // Perhaps it's on the path?
     cmd.append(bin);
 #endif
 
@@ -111,13 +111,13 @@ void LocalServer::start(duint16 port,
     cmd.append("-cmd");
     cmd.append("net-ip-port " + String::number(port));
 
-    if(!d->name.isEmpty())
+    if (!d->name.isEmpty())
     {
         cmd.append("-cmd");
         cmd.append("server-name \"" + d->name + "\"");
     }
 
-    foreach(String opt, additionalOptions) cmd.append(opt);
+    foreach (String opt, additionalOptions) cmd.append(opt);
 
     LOG_NET_NOTE("Starting local server with port %i using game mode '%s'")
             << port << gameMode;

@@ -70,7 +70,7 @@ public:
 
     void forgetRootAtlas()
     {
-        if(_observingAtlas)
+        if (_observingAtlas)
         {
             _observingAtlas->audienceForReposition() -= this;
             _observingAtlas->Asset::audienceForDeletion() -= this;
@@ -80,7 +80,7 @@ public:
 
     void observeRootAtlas() const
     {
-        if(!_observingAtlas)
+        if (!_observingAtlas)
         {
             // Automatically start observing the root atlas.
             _observingAtlas = &root().atlas();
@@ -129,7 +129,7 @@ public:
 
     void atlasContentRepositioned(Atlas &atlas)
     {
-        if(_observingAtlas == &atlas)
+        if (_observingAtlas == &atlas)
         {
             // Make sure the new texture coordinates get used by the widget.
             Base::self.requestGeometry();
@@ -138,7 +138,7 @@ public:
 
     void assetBeingDeleted(Asset &a)
     {
-        if(_observingAtlas == &a)
+        if (_observingAtlas == &a)
         {
             _observingAtlas = nullptr;
         }

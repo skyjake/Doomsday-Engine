@@ -36,14 +36,14 @@ void Animator_Set(animator_t *v, float val, int steps)
     DENG_ASSERT(v);
     v->target = val;
     v->steps = steps;
-    if(!v->steps)
+    if (!v->steps)
         v->value = v->target;
 }
 
 void Animator_Think(animator_t *v)
 {
     DENG_ASSERT(v);
-    if(v->steps <= 0)
+    if (v->steps <= 0)
     {
         v->steps = 0;
         v->value = v->target;

@@ -104,12 +104,12 @@ void Loop::nextLoopIteration()
 {
     try
     {
-        if(d->running)
+        if (d->running)
         {
             DENG2_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_AS("Loop");
 
@@ -154,7 +154,7 @@ void LoopCallback::loopIteration()
         _funcs.clear();
     }
 
-    for(Callback const &cb : funcs)
+    for (Callback const &cb : funcs)
     {
         cb();
     }

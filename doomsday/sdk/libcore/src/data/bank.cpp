@@ -52,7 +52,7 @@ public:
     };
 
     static char const *formatAsText(Format f) {
-        switch(f) {
+        switch (f) {
         case Source:     return "Source";     break;
         case Object:     return "Object";     break;
         case Serialized: return "Serialized"; break;
@@ -141,7 +141,7 @@ DENG2_PIMPL(Bank)
         {
             DENG2_GUARD(this);
 
-            if(data.get())
+            if (data.get())
             {
                 LOG_RES_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
                         << path(bank->d->sepChar) << data->sizeInMemory();
@@ -166,7 +166,7 @@ DENG2_PIMPL(Bank)
             DENG2_GUARD(this);
             DENG2_ASSERT(cache != 0);
 
-            switch(cache->format())
+            switch (cache->format())
             {
             case Cache::Source:
                 loadFromSource();
@@ -195,7 +195,7 @@ DENG2_PIMPL(Bank)
             LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds")
                     << path(bank->d->sepChar) << startedAt.since();
 
-            if(loaded.data())
+            if (loaded.data())
             {
                 // Put the loaded data into the memory cache.
                 setData(loaded.take());
@@ -220,7 +220,7 @@ DENG2_PIMPL(Bank)
                 Reader reader(*serial);
                 reader.withHeader() >> timestamp;
 
-                if(isValidSerialTime(timestamp))
+                if (isValidSerialTime(timestamp))
                 {
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
@@ -231,7 +231,7 @@ DENG2_PIMPL(Bank)
                 }
                 // We cannot use this.
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Failed to deserialize \"%s\":\n")
                         << path(bank->d->sepChar) << er.asText();
@@ -245,7 +245,7 @@ DENG2_PIMPL(Bank)
         {
             DENG2_GUARD(this);
 
-            if(serial)
+            if (serial)
             {
                 // Already serialized.
                 return;
@@ -253,7 +253,7 @@ DENG2_PIMPL(Bank)
 
             DENG2_ASSERT(source.get() != 0);
 
-            if(!data.get())
+            if (!data.get())
             {
                 // We must have the object in memory first.
                 loadFromSource();
@@ -277,7 +277,7 @@ DENG2_PIMPL(Bank)
                         << source->modifiedAt()
                         << *data->asSerializable();
             }
-            catch(...)
+            catch (...)
             {
                 serial = 0;
                 throw;
@@ -296,7 +296,7 @@ DENG2_PIMPL(Bank)
             DENG2_GUARD(this);
             DENG2_ASSERT(cache != 0);
 
-            if(cache != &toCache)
+            if (cache != &toCache)
             {
                 Cache &fromCache = *cache;
                 toCache.add(*this);
@@ -433,7 +433,7 @@ DENG2_PIMPL(Bank)
         {
             LOG_AS("Bank::Job");
 
-            switch(_task)
+            switch (_task)
             {
             case Job::Load:
                 doLoad();
@@ -461,7 +461,7 @@ DENG2_PIMPL(Bank)
                 Data &it = item();
                 it.changeCache(_bank.d->memoryCache);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
@@ -478,7 +478,7 @@ DENG2_PIMPL(Bank)
                 LOG_RES_XVERBOSE("Serializing \"%s\"") << _path;
                 item().changeCache(*_bank.d->serialCache);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Failed to serialize \"%s\" to hot storage:\n")
                         << _path << er.asText();
@@ -492,7 +492,7 @@ DENG2_PIMPL(Bank)
                 LOGDEV_RES_XVERBOSE("Unloading \"%s\"") << _path;
                 item().changeCache(_bank.d->sourceCache);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Error when unloading \"%s\":\n")
                         << _path << er.asText();
@@ -542,7 +542,7 @@ DENG2_PIMPL(Bank)
         , flags(flg)
         , serialCache(0)
     {
-        if(!flags.testFlag(DisableHotStorage))
+        if (!flags.testFlag(DisableHotStorage))
         {
             serialCache = new SerializedCache;
         }
@@ -558,14 +558,14 @@ DENG2_PIMPL(Bank)
         jobs.waitForDone();
 
         // Should we delete the actual files where the data has been kept?
-        if(serialCache && flags.testFlag(ClearHotStorageWhenBankDestroyed))
+        if (serialCache && flags.testFlag(ClearHotStorageWhenBankDestroyed))
         {
             Folder &folder = serialCache->folder();
             PathTree::FoundPaths paths;
             items.findAllPaths(paths, PathTree::NoBranch);
             DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
             {
-                if(folder.has(*i))
+                if (folder.has(*i))
                 {
                     folder.removeFile(*i);
                 }
@@ -583,7 +583,7 @@ DENG2_PIMPL(Bank)
 
     void beginJob(Job *job, Importance importance)
     {
-        if(!isThreaded() || importance == ImmediatelyInCurrentThread)
+        if (!isThreaded() || importance == ImmediatelyInCurrentThread)
         {
             // Execute the job immediately.
             QScopedPointer<Job> j(job);
@@ -604,7 +604,7 @@ DENG2_PIMPL(Bank)
         items.clear();
         sourceCache.clear();
         memoryCache.clear();
-        if(serialCache)
+        if (serialCache)
         {
             serialCache->clear();
         }
@@ -612,13 +612,13 @@ DENG2_PIMPL(Bank)
 
     void setSerialLocation(String const &location)
     {
-        if(location.isEmpty() || flags.testFlag(DisableHotStorage))
+        if (location.isEmpty() || flags.testFlag(DisableHotStorage))
         {
             destroySerialCache();
         }
         else
         {
-            if(!serialCache) serialCache = new SerializedCache;
+            if (!serialCache) serialCache = new SerializedCache;
             serialCache->setLocation(location);
         }
     }
@@ -630,16 +630,16 @@ DENG2_PIMPL(Bank)
         // The source cache is always good.
         DataCache *best = &sourceCache;
 
-        if(serialCache)
+        if (serialCache)
         {
             // Check if this item is already available in hot storage.
             IByteArray *array = serialCache->folder().tryLocate<IByteArray>(item.path());
-            if(array)
+            if (array)
             {
                 Time hotTime;
                 Reader(*array).withHeader() >> hotTime;
 
-                if(item.isValidSerialTime(hotTime))
+                if (item.isValidSerialTime(hotTime))
                 {
                     LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path(sepChar);
 
@@ -660,7 +660,7 @@ DENG2_PIMPL(Bank)
 
     void unload(Path const &path, CacheLevel toLevel, Importance importance)
     {
-        if(toLevel < InMemory)
+        if (toLevel < InMemory)
         {
             Job::Task const task = (toLevel == InHotStorage && serialCache?
                                     Job::Serialize : Job::Unload);
@@ -671,7 +671,7 @@ DENG2_PIMPL(Bank)
     void notify(Notification const &notif)
     {
         notifications.put(new Notification(notif));
-        if(isThreaded())
+        if (isThreaded())
         {
             mainCall.enqueue([this] () { performNotifications(); });
         }
@@ -681,8 +681,8 @@ DENG2_PIMPL(Bank)
     {
         forever
         {
-            QScopedPointer<Notification> notif(notifications.take());
-            if(!notif.data()) break;
+            QScopedPointer<Notification> notif (notifications.take());
+            if (!notif.data()) break;
 
             performNotification(*notif);
         }
@@ -690,7 +690,7 @@ DENG2_PIMPL(Bank)
 
     void performNotification(Notification const &nt)
     {
-        switch(nt.kind)
+        switch (nt.kind)
         {
         case Notification::Loaded:
             DENG2_FOR_PUBLIC_AUDIENCE2(Load, i)
@@ -753,7 +753,7 @@ void Bank::setHotStorageCacheLocation(String const &location)
 
 void Bank::setHotStorageSize(dint64 maxBytes)
 {
-    if(d->serialCache)
+    if (d->serialCache)
     {
         d->serialCache->setMaxBytes(maxBytes);
     }
@@ -766,7 +766,7 @@ void Bank::setMemoryCacheSize(dint64 maxBytes)
 
 String Bank::hotStorageCacheLocation() const
 {
-    if(d->serialCache)
+    if (d->serialCache)
     {
         return d->serialCache->folder().path();
     }
@@ -775,7 +775,7 @@ String Bank::hotStorageCacheLocation() const
 
 dint64 Bank::hotStorageSize() const
 {
-    if(d->serialCache)
+    if (d->serialCache)
     {
         return d->serialCache->maxBytes();
     }
@@ -799,7 +799,7 @@ void Bank::add(DotPath const &path, ISource *source)
     QScopedPointer<ISource> src(source);
 
     // Paths are unique.
-    if(d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
+    if (d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
     {
         throw AlreadyExistsError(QLatin1String(d->nameForLog) + "::add",
                                  "Item '" + path.toString() + "' already exists");
@@ -838,7 +838,7 @@ void Bank::iterate(std::function<void (DotPath const &)> func) const
 {
     PathTree::FoundPaths paths;
     d->items.findAllPaths(paths, PathTree::NoBranch, d->sepChar);
-    foreach(String const &path, paths)
+    foreach (String const &path, paths)
     {
         func(path);
     }
@@ -875,7 +875,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     // Mark it used.
     item.accessedAt = Time();
 
-    if(item.data.get())
+    if (item.data.get())
     {
         // Item is already in memory.
         return *item.data;
@@ -894,12 +894,12 @@ Bank::IData &Bank::data(DotPath const &path) const
     TimeDelta const waitTime = requestedAt.since();
 
     item.lock();
-    if(!item.data.get())
+    if (!item.data.get())
     {
         throw LoadError(QLatin1String(d->nameForLog) + "::data", "Failed to load \"" + path + "\"");
     }
 
-    if(waitTime > 0.0)
+    if (waitTime > 0.0)
     {
         LOG_RES_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
     }
@@ -930,7 +930,7 @@ void Bank::unloadAll(CacheLevel maxLevel)
 
 void Bank::unloadAll(Importance importance, CacheLevel maxLevel)
 {
-    if(maxLevel >= InMemory) return;
+    if (maxLevel >= InMemory) return;
 
     Names names;
     allItems(names);

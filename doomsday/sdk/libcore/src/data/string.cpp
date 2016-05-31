@@ -77,7 +77,7 @@ String::String(QString const &str, size_type index, size_type length)
 
 String::String(const_iterator start, const_iterator end)
 {
-    for(const_iterator i = start; i < end; ++i)
+    for (const_iterator i = start; i < end; ++i)
     {
         append(*i);
     }
@@ -85,7 +85,7 @@ String::String(const_iterator start, const_iterator end)
 
 String::String(iterator start, iterator end)
 {
-    for(iterator i = start; i < end; ++i)
+    for (iterator i = start; i < end; ++i)
     {
         append(*i);
     }
@@ -93,13 +93,13 @@ String::String(iterator start, iterator end)
 
 QChar String::first() const
 {
-    if(empty()) return 0;
+    if (empty()) return 0;
     return at(0);
 }
 
 QChar String::last() const
 {
-    if(empty()) return 0;
+    if (empty()) return 0;
     return at(size() - 1);
 }
 
@@ -117,11 +117,11 @@ String String::operator % (PatternArgs args) const
 
     DENG2_FOR_EACH_CONST(String, i, *this)
     {
-        if(*i == '%')
+        if (*i == '%')
         {
             String::const_iterator next = i;
             advanceFormat(next, end());
-            if(*next == '%')
+            if (*next == '%')
             {
                 // Escaped.
                 output << *next;
@@ -129,7 +129,7 @@ String String::operator % (PatternArgs args) const
                 continue;
             }
 
-            if(arg == args.end())
+            if (arg == args.end())
             {
                 // Out of args.
                 throw IllegalPatternError("String::operator %", "Ran out of arguments");
@@ -145,7 +145,7 @@ String String::operator % (PatternArgs args) const
     }
 
     // Just append the rest of the arguments without special instructions.
-    for(; arg != args.end(); ++arg)
+    for (; arg != args.end(); ++arg)
     {
         output << (*arg)->asText();
     }
@@ -155,7 +155,7 @@ String String::operator % (PatternArgs args) const
 
 String String::concatenatePath(String const &other, QChar dirChar) const
 {
-    if((dirChar == '/' || dirChar == '\\') && QDir::isAbsolutePath(other))
+    if ((dirChar == '/' || dirChar == '\\') && QDir::isAbsolutePath(other))
     {
         // The other path is absolute - use as is.
         return other;
@@ -164,7 +164,7 @@ String String::concatenatePath(String const &other, QChar dirChar) const
     String result = *this;
 
     // Do a path combination. Check for a slash.
-    if(!empty() && last() != dirChar)
+    if (!empty() && last() != dirChar)
     {
         result += dirChar;
     }
@@ -174,7 +174,7 @@ String String::concatenatePath(String const &other, QChar dirChar) const
 
 String String::concatenateMember(String const &member) const
 {
-    if(member.first() == '.')
+    if (member.first() == '.')
     {
         throw InvalidMemberError("String::concatenateMember", "Invalid: '" + member + "'");
     }
@@ -189,7 +189,7 @@ String String::strip() const
 String String::leftStrip() const
 {
     int endOfSpace = 0;
-    while(endOfSpace < size() && at(endOfSpace).isSpace())
+    while (endOfSpace < size() && at(endOfSpace).isSpace())
     {
         ++endOfSpace;
     }
@@ -199,7 +199,7 @@ String String::leftStrip() const
 String String::rightStrip() const
 {
     int beginOfSpace = size() - 1;
-    while(beginOfSpace >= 0 && at(beginOfSpace).isSpace())
+    while (beginOfSpace >= 0 && at(beginOfSpace).isSpace())
     {
         --beginOfSpace;
     }
@@ -218,8 +218,8 @@ String String::upper() const
 
 String String::upperFirstChar() const
 {
-    if(isEmpty()) return "";
-    if(size() == 1) return upper();
+    if (isEmpty()) return "";
+    if (size() == 1) return upper();
     return at(0).toUpper() + substr(1);
 }
 
@@ -234,30 +234,30 @@ std::wstring String::stringToWide(String const &str)
     duint d;
     duint trailing;
 
-    while(input < inputEnd)
+    while (input < inputEnd)
     {
         d = *input++;
 
-        if(d < 0x80)
+        if (d < 0x80)
         {
             c = d;
             trailing = 0;
         }
-        else if(d < 0xc0)
+        else if (d < 0xc0)
         {
             throw ConversionError("String::stringToWide", "Trailing byte in leading position");
         }
-        else if(d < 0xe0)
+        else if (d < 0xe0)
         {
             c = d & 0x1f;
             trailing = 1;
         }
-        else if(d < 0xf0)
+        else if (d < 0xf0)
         {
             c = d & 0x0f;
             trailing = 2;
         }
-        else if(d < 0xf8)
+        else if (d < 0xf8)
         {
             c = d & 0x07;
             trailing = 3;
@@ -267,9 +267,9 @@ std::wstring String::stringToWide(String const &str)
             throw ConversionError("String::stringToWide", "Bad input");
         }
 
-        for(; trailing; trailing--)
+        for (; trailing; trailing--)
         {
-            if((input >= inputEnd) || (((d = *input++) & 0xc0) != 0x80))
+            if ((input >= inputEnd) || (((d = *input++) & 0xc0) != 0x80))
             {
                 throw ConversionError("String::stringToWide", "Bad input");
             }
@@ -277,11 +277,11 @@ std::wstring String::stringToWide(String const &str)
             c |= d & 0x3f;
         }
 
-        if(c < 0x10000)
+        if (c < 0x10000)
         {
             output.push_back(wchar_t(c));
         }
-        else if(c < 0x110000)
+        else if (c < 0x110000)
         {
             c -= 0x10000;
             output.push_back(wchar_t(0xd800 | (c >> 10)));
@@ -306,12 +306,12 @@ String String::wideToString(std::wstring const &str)
     duint d;
     dint bits;
 
-    while(input < inputEnd)
+    while (input < inputEnd)
     {
         c = *input++;
-        if((c & 0xfc00) == 0xd800)
+        if ((c & 0xfc00) == 0xd800)
         {
-            if((input < inputEnd) && (((d = *input++) & 0xfc00) == 0xdc00))
+            if ((input < inputEnd) && (((d = *input++) & 0xfc00) == 0xdc00))
             {
                 c &= 0x3ff;
                 c <<= 10;
@@ -324,17 +324,17 @@ String String::wideToString(std::wstring const &str)
             }
         }
 
-        if(c < 0x80)
+        if (c < 0x80)
         {
             output += dchar(c);
             bits = -6;
         }
-        else if(c < 0x800)
+        else if (c < 0x800)
         {
             output += dchar((c >> 6) | 0xc0);
             bits = 0;
         }
-        else if(c < 0x10000)
+        else if (c < 0x10000)
         {
             output += dchar((c >> 12) | 0xe0);
             bits = 6;
@@ -345,7 +345,7 @@ String String::wideToString(std::wstring const &str)
             bits = 12;
         }
 
-        for(; bits > 0; bits -= 6)
+        for (; bits > 0; bits -= 6)
         {
             output += dchar((c >> bits) & 0x3f);
         }
@@ -357,7 +357,7 @@ String String::wideToString(std::wstring const &str)
 String String::fileName(QChar dirChar) const
 {
     size_type pos = lastIndexOf(dirChar);
-    if(pos >= 0)
+    if (pos >= 0)
     {
         return mid(pos + 1);
     }
@@ -368,7 +368,7 @@ String String::fileNameWithoutExtension() const
 {
     String name = fileName();
     size_type pos = name.lastIndexOf('.');
-    if(pos > 0)
+    if (pos > 0)
     {
         return name.mid(0, pos);
     }
@@ -379,11 +379,11 @@ String String::fileNameExtension() const
 {
     size_type pos = lastIndexOf('.');
     size_type slashPos = lastIndexOf('/');
-    if(pos > 0)
+    if (pos > 0)
     {
         // If there is a directory included, make sure there it at least
         // one character's worth of file name before the period.
-        if(slashPos < 0 || pos > slashPos + 1)
+        if (slashPos < 0 || pos > slashPos + 1)
         {
             return mid(pos);
         }
@@ -394,7 +394,7 @@ String String::fileNameExtension() const
 String String::fileNamePath(QChar dirChar) const
 {
     size_type pos = lastIndexOf(dirChar);
-    if(pos >= 0)
+    if (pos >= 0)
     {
         return mid(0, pos);
     }
@@ -425,15 +425,15 @@ int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivit
 {
     int count = 0;
     int len = qMin(str.size(), size());
-    for(int i = 0; i < len; ++i, ++count)
+    for (int i = 0; i < len; ++i, ++count)
     {
-        if(sensitivity == Qt::CaseSensitive)
+        if (sensitivity == Qt::CaseSensitive)
         {
-            if(at(i) != str.at(i)) break;
+            if (at(i) != str.at(i)) break;
         }
         else
         {
-            if(at(i).toLower() != str.at(i).toLower()) break;
+            if (at(i).toLower() != str.at(i).toLower()) break;
         }
     }
     return count;
@@ -446,12 +446,12 @@ dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // sta
 
 bool String::equals(QChar const *a, QChar const *b, dsize count) // static
 {
-    while(count--)
+    while (count--)
     {
         // Both strings the same length?
-        if(a->isNull() && b->isNull()) break;
+        if (a->isNull() && b->isNull()) break;
         // Mismatch?
-        if(*a != *b) return false;
+        if (*a != *b) return false;
         // Advance.
         a++;
         b++;
@@ -461,7 +461,7 @@ bool String::equals(QChar const *a, QChar const *b, dsize count) // static
 
 void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)
 {
-    while(i != end && (*i).isSpace()) ++i;
+    while (i != end && (*i).isSpace()) ++i;
 }
 
 String String::format(String format, ...)
@@ -478,13 +478,13 @@ String String::format(String format, ...)
         int count = vsnprintf((char *) buffer.data(), buffer.size(), format.toUtf8(), args);
         va_end(args);
 
-        if(count >= 0 && count < neededSize)
+        if (count >= 0 && count < neededSize)
         {
             buffer.resize(count);
             return fromUtf8(buffer);
         }
 
-        if(count >= 0)
+        if (count >= 0)
         {
             neededSize = count + 1;
         }
@@ -506,11 +506,11 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
 {
     String token = leftStrip();
 
-    if(flags & AllowSuffix)
+    if (flags & AllowSuffix)
     {
         // Truncate at the first non-numeric, non-notation or sign character.
         int endOfNumber = 0;
-        while(endOfNumber < token.size() &&
+        while (endOfNumber < token.size() &&
               (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
                ((base == 0 || base == 16) && endOfNumber <= 1 &&
                 (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
@@ -526,9 +526,9 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
 String String::addLinePrefix(String const &prefix) const
 {
     String result;
-    for(auto const &str : QString::split(QChar('\n')))
+    for (auto const &str : QString::split(QChar('\n')))
     {
-        if(!result.isEmpty()) result += "\n";
+        if (!result.isEmpty()) result += "\n";
         result += prefix + str;
     }
     return result;
@@ -544,7 +544,7 @@ String String::escaped() const
 void String::advanceFormat(String::const_iterator &i, String::const_iterator const &end)
 {
     ++i;
-    if(i == end)
+    if (i == end)
     {
         throw IllegalPatternError("String::advanceFormat",
             "Incomplete formatting instructions");
@@ -553,12 +553,12 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
 
 String String::join(QList<String> const &stringList, String const &sep)
 {
-    if(stringList.isEmpty()) return "";
+    if (stringList.isEmpty()) return "";
 
     String joined;
     QTextStream os(&joined);
     os << stringList.at(0);
-    for(int i = 1; i < stringList.size(); ++i)
+    for (int i = 1; i < stringList.size(); ++i)
     {
         os << sep << stringList.at(i);
     }
@@ -581,28 +581,28 @@ String String::patternFormat(String::const_iterator &formatIter,
 
     DENG2_ASSERT(*formatIter != '%');
 
-    if(*formatIter == '-')
+    if (*formatIter == '-')
     {
         // Left aligned.
         rightAlign = false;
         advanceFormat(formatIter, formatEnd);
     }
     String::const_iterator k = formatIter;
-    while((*formatIter).isDigit())
+    while ((*formatIter).isDigit())
     {
         advanceFormat(formatIter, formatEnd);
     }
-    if(k != formatIter)
+    if (k != formatIter)
     {
         // Got the minWidth.
         minWidth = String(k, formatIter).toInt();
     }
-    if(*formatIter == '.')
+    if (*formatIter == '.')
     {
         advanceFormat(formatIter, formatEnd);
         k = formatIter;
         // There's also a maxWidth.
-        while((*formatIter).isDigit())
+        while ((*formatIter).isDigit())
         {
             advanceFormat(formatIter, formatEnd);
         }
@@ -610,7 +610,7 @@ String String::patternFormat(String::const_iterator &formatIter,
     }
 
     // Finally, the type formatting.
-    switch((*formatIter).toLatin1())
+    switch ((*formatIter).toLatin1())
     {
     case 's':
         output << arg.asText();
@@ -657,16 +657,16 @@ String String::patternFormat(String::const_iterator &formatIter,
     output.flush();
 
     // Align and fit.
-    if(maxWidth && result.size() > maxWidth)
+    if (maxWidth && result.size() > maxWidth)
     {
         // Cut it.
         result = result.mid(!rightAlign? 0 : result.size() - maxWidth, maxWidth);
     }
-    if(result.size() < minWidth)
+    if (result.size() < minWidth)
     {
         // Pad it.
         String padding = String(minWidth - result.size(), ' ');
-        if(rightAlign)
+        if (rightAlign)
         {
             result = padding + result;
         }
@@ -700,9 +700,9 @@ String String::fromLatin1(IByteArray const &byteArray)
 
 size_t de::qchar_strlen(QChar const *str)
 {
-    if(!str) return 0;
+    if (!str) return 0;
 
     size_t len = 0;
-    while(str->unicode() != 0) { ++str; ++len; }
+    while (str->unicode() != 0) { ++str; ++len; }
     return len;
 }

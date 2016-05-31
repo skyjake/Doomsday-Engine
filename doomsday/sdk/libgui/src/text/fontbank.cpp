@@ -44,7 +44,7 @@ DENG2_PIMPL(FontBank)
 
             // Size.
             String size = def["size"];
-            if(size.endsWith("px"))
+            if (size.endsWith("px"))
             {
                 font.setPixelSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
             }

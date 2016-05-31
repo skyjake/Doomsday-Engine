@@ -47,7 +47,7 @@ void FlowStatement::execute(Context &context) const
 {
     Evaluator &eval = context.evaluator();
     
-    switch(_type)
+    switch (_type)
     {
     case PASS:
         context.proceed();
@@ -58,7 +58,7 @@ void FlowStatement::execute(Context &context) const
         break;
         
     case BREAK:
-        if(_arg)
+        if (_arg)
         {
             context.jumpBreak(dint(eval.evaluate(_arg).asNumber()));
         }
@@ -69,7 +69,7 @@ void FlowStatement::execute(Context &context) const
         break;
         
     case RETURN:
-        if(_arg)
+        if (_arg)
         {
             eval.evaluate(_arg);
             context.process().finish(eval.popResult());
@@ -81,7 +81,7 @@ void FlowStatement::execute(Context &context) const
         break;
         
     case THROW:
-        if(_arg)
+        if (_arg)
         {
             throw Error("thrown in script", eval.evaluate(_arg).asText());
         }   
@@ -97,12 +97,12 @@ void FlowStatement::operator >> (Writer &to) const
 {
     to << SerialId(FLOW);
     duint8 header = duint8(_type);
-    if(_arg)
+    if (_arg)
     {
         header |= HAS_ARG;
     }
     to << header;
-    if(_arg)
+    if (_arg)
     {
         to << *_arg;
     }
@@ -112,7 +112,7 @@ void FlowStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != FLOW)
+    if (id != FLOW)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.
@@ -121,7 +121,7 @@ void FlowStatement::operator << (Reader &from)
     duint8 header;
     from >> header;
     _type = Type(header & TYPE_MASK);
-    if(header & HAS_ARG)
+    if (header & HAS_ARG)
     {
         delete _arg;
         _arg = 0;

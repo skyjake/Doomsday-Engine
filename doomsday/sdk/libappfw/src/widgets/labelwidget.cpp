@@ -148,7 +148,7 @@ public Font::RichFormat::IStyle
 
     Color richStyleColor(int index) const
     {
-        switch(index)
+        switch (index)
         {
         default:
         case Font::RichFormat::NormalColor:
@@ -174,7 +174,7 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        if(richStyle)
+        if (richStyle)
         {
             richStyle->richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
         }
@@ -186,7 +186,7 @@ public Font::RichFormat::IStyle
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
-        if(richStyle)
+        if (richStyle)
         {
             return richStyle->richStyleFont(fontStyle);
         }
@@ -201,12 +201,12 @@ public Font::RichFormat::IStyle
 
         glText.init(atlas(), self.font(), this);
 
-        if(!image.isNull())
+        if (!image.isNull())
         {
             image->glInit();
         }
 
-        if(!overlayImage.isNull())
+        if (!overlayImage.isNull())
         {
             overlayImage->glInit();
         }
@@ -216,11 +216,11 @@ public Font::RichFormat::IStyle
     {
         drawable.clear();
         glText.deinit();
-        if(!image.isNull())
+        if (!image.isNull())
         {
             image->glDeinit();
         }
-        if(!overlayImage.isNull())
+        if (!overlayImage.isNull())
         {
             overlayImage->glDeinit();
         }
@@ -240,11 +240,11 @@ public Font::RichFormat::IStyle
     {
         Vector2f size = image.isNull()? Vector2f() : image->size();
         // Override components separately.
-        if(overrideImageSize.x > 0)
+        if (overrideImageSize.x > 0)
         {
             size.x = overrideImageSize.x;
         }
-        if(overrideImageSize.y > 0)
+        if (overrideImageSize.y > 0)
         {
             size.y = overrideImageSize.y;
         }
@@ -253,7 +253,7 @@ public Font::RichFormat::IStyle
 
     Vector2ui textSize() const
     {
-        if(!glText.isBeingWrapped())
+        if (!glText.isBeingWrapped())
         {
             latestTextSize = glText.wrappedSize();
         }
@@ -275,11 +275,11 @@ public Font::RichFormat::IStyle
         layout.image = Rectanglef::fromSize(imgSize);
         layout.text  = Rectanglei::fromSize(textSize());
 
-        if(horizPolicy == Filled)
+        if (horizPolicy == Filled)
         {
-            if(hasText() && textAlign & (AlignLeft | AlignRight))
+            if (hasText() && textAlign & (AlignLeft | AlignRight))
             {
-                if(fillMode == FillWithImage)
+                if (fillMode == FillWithImage)
                 {
                     layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
                 }
@@ -294,11 +294,11 @@ public Font::RichFormat::IStyle
                 layout.text.setWidth(contentRect.width());
             }
         }
-        if(vertPolicy == Filled)
+        if (vertPolicy == Filled)
         {
-            if(hasText() && textAlign & (AlignTop | AlignBottom))
+            if (hasText() && textAlign & (AlignTop | AlignBottom))
             {
-                if(fillMode == FillWithImage)
+                if (fillMode == FillWithImage)
                 {
                     layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
                 }
@@ -314,17 +314,17 @@ public Font::RichFormat::IStyle
             }
         }
 
-        if(hasImage())
+        if (hasImage())
         {
             // Figure out how much room is left for the image.
             Rectanglef const rect = layout.image;
 
             // Fit the image.
-            if(!imageFit.testFlag(FitToWidth)  || imageFit.testFlag(OriginalAspectRatio))
+            if (!imageFit.testFlag(FitToWidth)  || imageFit.testFlag(OriginalAspectRatio))
             {
                 layout.image.setWidth(imageSize().x);
             }
-            if(!imageFit.testFlag(FitToHeight) || imageFit.testFlag(OriginalAspectRatio))
+            if (!imageFit.testFlag(FitToHeight) || imageFit.testFlag(OriginalAspectRatio))
             {
                 layout.image.setHeight(imageSize().y);
             }
@@ -335,19 +335,19 @@ public Font::RichFormat::IStyle
             float const vertScale  = rect.height() / layout.image.height();
             float scale = 1;
 
-            if(imageFit.testFlag(CoverArea))
+            if (imageFit.testFlag(CoverArea))
             {
                 scale = de::max(horizScale, vertScale);
             }
-            else if(imageFit.testFlag(FitToWidth) && imageFit.testFlag(FitToHeight))
+            else if (imageFit.testFlag(FitToWidth) && imageFit.testFlag(FitToHeight))
             {
                 scale = de::min(horizScale, vertScale);
             }
-            else if(imageFit.testFlag(FitToWidth))
+            else if (imageFit.testFlag(FitToWidth))
             {
                 scale = horizScale;
             }
-            else if(imageFit.testFlag(FitToHeight))
+            else if (imageFit.testFlag(FitToHeight))
             {
                 scale = vertScale;
             }
@@ -355,11 +355,11 @@ public Font::RichFormat::IStyle
             layout.image.setSize(Vector2f(layout.image.size()) * scale);
 
             // Apply additional user-provided image scaling factor now.
-            if(horizPolicy == Filled)
+            if (horizPolicy == Filled)
             {
                 layout.image.setWidth(imageScale * layout.image.width());
             }
-            if(vertPolicy == Filled)
+            if (vertPolicy == Filled)
             {
                 layout.image.setHeight(imageScale * layout.image.height());
             }
@@ -368,46 +368,46 @@ public Font::RichFormat::IStyle
         // By default the image and the text are centered over each other.
         layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
 
-        if(hasImage() && hasText())
+        if (hasImage() && hasText())
         {
             // Determine the position of the image in relation to the text
             // (keeping the image at its current position).
-            if(textAlign & AlignLeft)
+            if (textAlign & AlignLeft)
             {
                 layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
             }
-            if(textAlign & AlignRight)
+            if (textAlign & AlignRight)
             {
                 layout.text.moveLeft(layout.image.right() + gap);
             }
-            if(textAlign & AlignTop)
+            if (textAlign & AlignTop)
             {
                 layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
             }
-            if(textAlign & AlignBottom)
+            if (textAlign & AlignBottom)
             {
                 layout.text.moveTop(layout.image.bottom() + gap);
             }
 
             // Align the image in relation to the text on the other axis.
-            if(textAlign & (AlignLeft | AlignRight))
+            if (textAlign & (AlignLeft | AlignRight))
             {
-                if(imageAlign & AlignTop)
+                if (imageAlign & AlignTop)
                 {
                     layout.image.moveTop(layout.text.top());
                 }
-                if(imageAlign & AlignBottom)
+                if (imageAlign & AlignBottom)
                 {
                     layout.image.moveTop(layout.text.bottom() - layout.image.height());
                 }
             }
-            if(textAlign & (AlignTop | AlignBottom))
+            if (textAlign & (AlignTop | AlignBottom))
             {
-                if(imageAlign & AlignLeft)
+                if (imageAlign & AlignLeft)
                 {
                     layout.image.moveLeft(layout.text.left());
                 }
-                if(imageAlign & AlignRight)
+                if (imageAlign & AlignRight)
                 {
                     layout.image.moveLeft(layout.text.right() - layout.image.width());
                 }
@@ -438,7 +438,7 @@ public Font::RichFormat::IStyle
 
         // The theorical upper limit is the entire view (when expanding) or
         // the given widget width.
-        if(horizPolicy == Expand)
+        if (horizPolicy == Expand)
         {
             // Expansion can occur to full view width.
             w = root().viewSize().x - (margin().x + margin().z);
@@ -447,25 +447,25 @@ public Font::RichFormat::IStyle
         {
             w = self.rule().width().valuei() - (margin().x + margin().z);
         }
-        if(vertPolicy != Expand)
+        if (vertPolicy != Expand)
         {
             h = self.rule().height().valuei() - (margin().y + margin().w);
         }
 
-        if(hasImage())
+        if (hasImage())
         {
-            if(textAlign & (AlignLeft | AlignRight))
+            if (textAlign & (AlignLeft | AlignRight))
             {
                 // Image will be placed beside the text.
                 Vector2f imgSize = imageSize() * imageScale;
 
-                if(vertPolicy != Expand)
+                if (vertPolicy != Expand)
                 {
-                    if(imageFit & FitToHeight && imgSize.y > h)
+                    if (imageFit & FitToHeight && imgSize.y > h)
                     {
                         float factor = float(h) / imgSize.y;
                         imgSize.y *= factor;
-                        if(imageFit & OriginalAspectRatio) imgSize.x *= factor;
+                        if (imageFit & OriginalAspectRatio) imgSize.x *= factor;
                     }
                 }
 
@@ -473,7 +473,7 @@ public Font::RichFormat::IStyle
             }
         }
         // Apply an optional manual constraint to the text width.
-        if(maxTextWidth)
+        if (maxTextWidth)
         {
             return de::min(maxTextWidth->valuei(), w);
         }
@@ -492,10 +492,10 @@ public Font::RichFormat::IStyle
 
     void updateAppearanceAnimation()
     {
-        if(appearType != AppearInstantly)
+        if (appearType != AppearInstantly)
         {
             float const target = (appearType == AppearGrowHorizontally? width->value() : height->value());
-            if(!fequal(appearSize->animation().target(), target))
+            if (!fequal(appearSize->animation().target(), target))
             {
                 appearSize->set(target, appearSpan);
             }
@@ -505,17 +505,17 @@ public Font::RichFormat::IStyle
     void updateGeometry()
     {
         // Update the image on the atlas.
-        if(!image.isNull() && image->update())
+        if (!image.isNull() && image->update())
         {
             self.requestGeometry();
         }
-        if(!overlayImage.isNull() && overlayImage->update())
+        if (!overlayImage.isNull() && overlayImage->update())
         {
             self.requestGeometry();
         }
 
         glText.setLineWrapWidth(availableTextWidth());
-        if(glText.update())
+        if (glText.update())
         {
             // Need to recompose.
             updateSize();
@@ -523,7 +523,7 @@ public Font::RichFormat::IStyle
         }
 
         Rectanglei pos;
-        if(!self.hasChangedPlace(pos) && !self.geometryRequested())
+        if (!self.hasChangedPlace(pos) && !self.geometryRequested())
         {
             // Nothing changed.
             return;
@@ -546,15 +546,15 @@ public Font::RichFormat::IStyle
 
     Rule const *widthRule() const
     {
-        switch(appearType)
+        switch (appearType)
         {
         case AppearInstantly:
         case AppearGrowVertically:
-            if(horizPolicy == Expand) return width;
+            if (horizPolicy == Expand) return width;
             break;
 
         case AppearGrowHorizontally:
-            if(horizPolicy == Expand) return appearSize;
+            if (horizPolicy == Expand) return appearSize;
             break;
         }
         return 0;
@@ -562,15 +562,15 @@ public Font::RichFormat::IStyle
 
     Rule const *heightRule() const
     {
-        switch(appearType)
+        switch (appearType)
         {
         case AppearInstantly:
         case AppearGrowHorizontally:
-            if(vertPolicy == Expand) return height;
+            if (vertPolicy == Expand) return height;
             break;
 
         case AppearGrowVertically:
-            if(vertPolicy == Expand) return appearSize;
+            if (vertPolicy == Expand) return appearSize;
             break;
         }
         return 0;
@@ -587,7 +587,7 @@ AssetGroup &LabelWidget::assets()
 
 void LabelWidget::setText(String const &text)
 {
-    if(text != d->glText.text())
+    if (text != d->glText.text())
     {
         d->glText.setText(text);
     }
@@ -595,7 +595,7 @@ void LabelWidget::setText(String const &text)
 
 void LabelWidget::setImage(Image const &image)
 {
-    if(!image.isNull())
+    if (!image.isNull())
     {
         AtlasProceduralImage *proc = new AtlasProceduralImage(*this);
         proc->setImage(image);
@@ -615,7 +615,7 @@ void LabelWidget::setImage(ProceduralImage *procImage)
 void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
 {
     setImage(new StyleProceduralImage(id, *this));
-    if(!heightFromFont.isEmpty())
+    if (!heightFromFont.isEmpty())
     {
         setOverrideImageSize(style().fonts().font(heightFromFont).height().value());
     }
@@ -770,17 +770,17 @@ void LabelWidget::update()
 
     // Check for visibility changes that affect asset readiness.
     bool visibleNow = isVisible();
-    if(d->wasVisible && !visibleNow)
+    if (d->wasVisible && !visibleNow)
     {
         d->assets.setPolicy(d->glText, AssetGroup::Ignore);
     }
-    else if(!d->wasVisible && visibleNow)
+    else if (!d->wasVisible && visibleNow)
     {
         d->assets.setPolicy(d->glText, AssetGroup::Required);
     }
     d->wasVisible = visibleNow;
 
-    if(isInitialized())
+    if (isInitialized())
     {
         d->updateGeometry();
     }
@@ -816,15 +816,15 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     ContentLayout layout;
     contentLayout(layout);
 
-    if(d->hasImage())
+    if (d->hasImage())
     {
         d->image->setColor(d->imageColor);
         d->image->glMakeGeometry(verts, layout.image);
     }
-    if(d->hasText())
+    if (d->hasText())
     {
         // Shadow behind the text.
-        if(d->textShadow == RectangleShadow)
+        if (d->textShadow == RectangleShadow)
         {
             Rectanglef textBox = Rectanglef::fromSize(textSize());
             ui::applyAlignment(d->lineAlign, textBox, layout.text);
@@ -842,7 +842,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         d->glText.makeVertices(verts, layout.text, d->lineAlign, d->lineAlign, d->textGLColor);
     }
 
-    if(!d->overlayImage.isNull())
+    if (!d->overlayImage.isNull())
     {
         Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
         applyAlignment(d->overlayAlign, rect, contentRect());
@@ -869,7 +869,7 @@ void LabelWidget::viewResized()
 void LabelWidget::setWidthPolicy(SizePolicy policy)
 {
     d->horizPolicy = policy;
-    if(policy == Expand)
+    if (policy == Expand)
     {
         rule().setInput(Rule::Width, *d->widthRule());
     }
@@ -882,7 +882,7 @@ void LabelWidget::setWidthPolicy(SizePolicy policy)
 void LabelWidget::setHeightPolicy(SizePolicy policy)
 {
     d->vertPolicy = policy;
-    if(policy == Expand)
+    if (policy == Expand)
     {
         rule().setInput(Rule::Height, *d->heightRule());
     }
@@ -897,11 +897,11 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
     d->appearType = method;
     d->appearSpan = span;
 
-    if(Rule const *w = d->widthRule())
+    if (Rule const *w = d->widthRule())
     {
         rule().setInput(Rule::Width, *w);
     }
-    if(Rule const *h = d->heightRule())
+    if (Rule const *h = d->heightRule())
     {
         rule().setInput(Rule::Height, *h);
     }
@@ -911,7 +911,7 @@ LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
 {
     LabelWidget *w = new LabelWidget;
     w->setText(label);
-    if(parent)
+    if (parent)
     {
         parent->add(w);
     }

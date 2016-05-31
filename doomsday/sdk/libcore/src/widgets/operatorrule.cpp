@@ -42,7 +42,7 @@ OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
     , _condition(nullptr)
 {
     dependsOn(_leftOperand);
-    if(_rightOperand != _leftOperand) dependsOn(_rightOperand);
+    if (_rightOperand != _leftOperand) dependsOn(_rightOperand);
 }
 
 OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule const &right, Rule const &condition)
@@ -64,7 +64,7 @@ OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule con
 OperatorRule::~OperatorRule()
 {
     independentOf(_leftOperand);
-    if(_rightOperand != _leftOperand) independentOf(_rightOperand);
+    if (_rightOperand != _leftOperand) independentOf(_rightOperand);
     independentOf(_condition);
 }
 
@@ -73,10 +73,10 @@ void OperatorRule::update()
     float leftValue = 0;
     float rightValue = 0;
 
-    if(_operator == Select)
+    if (_operator == Select)
     {
         // Only evaluate the selected operand.
-        if(_condition->value() < 0)
+        if (_condition->value() < 0)
         {
             leftValue = _leftOperand->value();
         }
@@ -94,7 +94,7 @@ void OperatorRule::update()
 
     float v = leftValue;
 
-    switch(_operator)
+    switch (_operator)
     {
     case Equals:
         v = leftValue;
@@ -165,12 +165,12 @@ String OperatorRule::description() const
     };
 
     String desc = "{";
-    if(_leftOperand)
+    if (_leftOperand)
     {
         desc += " " + _leftOperand->description();
     }
     desc += String(" %1").arg(texts[_operator]);
-    if(_rightOperand)
+    if (_rightOperand)
     {
         desc += " " + _rightOperand->description();
     }

@@ -63,10 +63,10 @@ const char* strcasestr(const char *text, const char *sub)
     int subLen = strlen(sub);
     int i;
 
-    for(i = 0; i <= textLen - subLen; ++i)
+    for (i = 0; i <= textLen - subLen; ++i)
     {
         const char* start = text + i;
-        if(!_strnicmp(start, sub, subLen)) return start;
+        if (!_strnicmp(start, sub, subLen)) return start;
     }
     return 0;
 }
@@ -76,27 +76,27 @@ const char* strcasestr(const char *text, const char *sub)
 char* strupr(char* string)
 {
     char* ch = string;
-    for(; *ch; ch++) *ch = toupper(*ch);
+    for (; *ch; ch++) *ch = toupper(*ch);
     return string;
 }
 char* strlwr(char* string)
 {
     char* ch = string;
-    for(; *ch; ch++) *ch = tolower(*ch);
+    for (; *ch; ch++) *ch = tolower(*ch);
     return string;
 }
 #endif // UNIX
 
 char* M_SkipWhite(char* str)
 {
-    while(*str && DENG_ISSPACE(*str))
+    while (*str && DENG_ISSPACE(*str))
         str++;
     return str;
 }
 
 char* M_FindWhite(char* str)
 {
-    while(*str && !DENG_ISSPACE(*str))
+    while (*str && !DENG_ISSPACE(*str))
         str++;
     return str;
 }
@@ -104,14 +104,14 @@ char* M_FindWhite(char* str)
 void M_StripLeft(char* str)
 {
     size_t len, num;
-    if(NULL == str || !str[0]) return;
+    if (NULL == str || !str[0]) return;
 
     len = strlen(str);
     // Count leading whitespace characters.
     num = 0;
-    while(num < len && isspace(str[num]))
+    while (num < len && isspace(str[num]))
         ++num;
-    if(0 == num) return;
+    if (0 == num) return;
 
     // Remove 'num' characters.
     memmove(str, str + num, len - num);
@@ -122,10 +122,10 @@ void M_StripRight(char* str, size_t len)
 {
     char* end;
     int numZeroed = 0;
-    if(NULL == str || 0 == len) return;
+    if (NULL == str || 0 == len) return;
 
     end = str + strlen(str) - 1;
-    while(end >= str && isspace(*end))
+    while (end >= str && isspace(*end))
     {
         end--;
         numZeroed++;
@@ -141,10 +141,10 @@ void M_Strip(char* str, size_t len)
 
 char* M_SkipLine(char* str)
 {
-    while(*str && *str != '\n')
+    while (*str && *str != '\n')
         str++;
     // If the newline was found, skip it, too.
-    if(*str == '\n')
+    if (*str == '\n')
         str++;
     return str;
 }
@@ -155,18 +155,18 @@ dd_bool M_IsStringValidInt(const char* str)
     const char* c;
     dd_bool isBad;
 
-    if(!str)
+    if (!str)
         return false;
 
     len = strlen(str);
-    if(len == 0)
+    if (len == 0)
         return false;
 
-    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    for (i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
     {
-        if(i != 0 && *c == '-')
+        if (i != 0 && *c == '-')
             isBad = true; // sign is in the wrong place.
-        else if(*c < '0' || *c > '9')
+        else if (*c < '0' || *c > '9')
             isBad = true; // non-numeric character.
     }
 
@@ -175,10 +175,10 @@ dd_bool M_IsStringValidInt(const char* str)
 
 dd_bool M_IsStringValidByte(const char* str)
 {
-    if(M_IsStringValidInt(str))
+    if (M_IsStringValidInt(str))
     {
         int val = atoi(str);
-        if(!(val < 0 || val > 255))
+        if (!(val < 0 || val > 255))
             return true;
     }
     return false;
@@ -190,25 +190,25 @@ dd_bool M_IsStringValidFloat(const char* str)
     const char* c;
     dd_bool isBad, foundDP = false;
 
-    if(!str)
+    if (!str)
         return false;
 
     len = strlen(str);
-    if(len == 0)
+    if (len == 0)
         return false;
 
-    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    for (i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
     {
-        if(i != 0 && *c == '-')
+        if (i != 0 && *c == '-')
             isBad = true; // sign is in the wrong place.
-        else if(*c == '.')
+        else if (*c == '.')
         {
-            if(foundDP)
+            if (foundDP)
                 isBad = true; // multiple decimal places??
             else
                 foundDP = true;
         }
-        else if(*c < '0' || *c > '9')
+        else if (*c < '0' || *c > '9')
             isBad = true; // other non-numeric character.
     }
 
@@ -224,13 +224,13 @@ char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
 {
     int n = nChars;
     int destLen = strlen(buf);
-    if((int)bufSize - destLen - 1 < n)
+    if ((int)bufSize - destLen - 1 < n)
     {
         // Cannot copy more than fits in the buffer.
         // The 1 is for the null character.
         n = bufSize - destLen - 1;
     }
-    if(n <= 0) return buf; // No space left.
+    if (n <= 0) return buf; // No space left.
     return strncat(buf, str, n);
 }
 
@@ -239,9 +239,9 @@ char* M_StrCatQuoted(char* dest, const char* src, size_t len)
     size_t k = strlen(dest) + 1, i;
 
     strncat(dest, "\"", len);
-    for(i = 0; src[i]; i++)
+    for (i = 0; src[i]; i++)
     {
-        if(src[i] == '"')
+        if (src[i] == '"')
         {
             strncat(dest, "\\\"", len);
             k += 2;
@@ -267,13 +267,13 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     length = MIN_OF(maxWidth, strlen(str));
 
     // A separator is included if this is not the first name.
-    if(separator && !isEmpty)
+    if (separator && !isEmpty)
         ++length;
 
     // Does it fit?
-    if(strlen(buf) + length < bufLength)
+    if (strlen(buf) + length < bufLength)
     {
-        if(separator && !isEmpty)
+        if (separator && !isEmpty)
         {
             char            sepBuf[2];
 
@@ -292,9 +292,9 @@ void M_ForceUppercase(char *text)
 {
     char c;
 
-    while((c = *text) != 0)
+    while ((c = *text) != 0)
     {
-        if(c >= 'a' && c <= 'z')
+        if (c >= 'a' && c <= 'z')
         {
             *text++ = c - ('a' - 'A');
         }
@@ -309,10 +309,10 @@ char* M_StrTok(char** cursor, const char* delimiters)
 {
     char* begin = *cursor;
 
-    while(**cursor && !strchr(delimiters, **cursor))
+    while (**cursor && !strchr(delimiters, **cursor))
         (*cursor)++;
 
-    if(**cursor)
+    if (**cursor)
     {
         // Stop here.
         **cursor = 0;
@@ -332,11 +332,11 @@ char* M_TrimmedFloat(float val)
 
     sprintf(ptr, "%f", val);
     // Get rid of the extra zeros.
-    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
+    for (ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
     {
-        if(*ptr == '0')
+        if (*ptr == '0')
             *ptr = 0;
-        else if(*ptr == '.')
+        else if (*ptr == '.')
         {
             *ptr = 0;
             break;

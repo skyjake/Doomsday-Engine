@@ -48,7 +48,7 @@ ListenSocket::ListenSocket(duint16 port) : d(new Instance)
     d->socket = new QTcpServer(this);
     d->port = port;
 
-    if(!d->socket->listen(QHostAddress::Any, d->port))
+    if (!d->socket->listen(QHostAddress::Any, d->port))
     {
         /// @throw OpenError Opening the socket failed.
         throw OpenError("ListenSocket", "Port " + QString::number(d->port) + ": " +
@@ -69,7 +69,7 @@ void ListenSocket::acceptNewConnection()
 
 Socket *ListenSocket::accept()
 {
-    if(d->incoming.empty())
+    if (d->incoming.empty())
     {
         return 0;
     }

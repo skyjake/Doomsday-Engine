@@ -36,7 +36,7 @@ DENG2_PIMPL(ColorBank)
         {
             Record const &def = bank[id];
             ArrayValue const *colorDef = 0;
-            if(def.has("rgb"))
+            if (def.has("rgb"))
             {
                 colorDef = &def.geta("rgb");
             }
@@ -46,7 +46,7 @@ DENG2_PIMPL(ColorBank)
             }
 
             ddouble alpha = 1.0;
-            if(colorDef->size() >= 4)
+            if (colorDef->size() >= 4)
             {
                 alpha = colorDef->at(3).asNumber();
             }
@@ -81,7 +81,7 @@ void ColorBank::addFromInfo(File const &file)
 
 ColorBank::Color ColorBank::color(DotPath const &path) const
 {
-    if(path.isEmpty()) return Color();
+    if (path.isEmpty()) return Color();
     Colorf col = colorf(path);
     return Color(round<dbyte>(col.x * 255),
                  round<dbyte>(col.y * 255),
@@ -91,7 +91,7 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
 
 ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
-    if(path.isEmpty()) return Colorf();
+    if (path.isEmpty()) return Colorf();
     Vector4d clamped = data(path).as<Instance::ColorData>().color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));

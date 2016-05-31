@@ -139,7 +139,7 @@ static int callbackWrapper(de::BinaryTree<void *> &tree, void *parameters)
 
 int BinaryTree_PreOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
 {
-    if(!tree || !callback) return false; // Continue iteration.
+    if (!tree || !callback) return false; // Continue iteration.
 
     de::internal::CallbackWrapper parm;
     parm.callback = callback;
@@ -151,7 +151,7 @@ int BinaryTree_PreOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *),
 
 int BinaryTree_InOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
 {
-    if(!tree || !callback) return false; // Continue iteration.
+    if (!tree || !callback) return false; // Continue iteration.
 
     de::internal::CallbackWrapper parm;
     parm.callback = callback;
@@ -163,7 +163,7 @@ int BinaryTree_InOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), 
 
 int BinaryTree_PostOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
 {
-    if(!tree || !callback) return false; // Continue iteration.
+    if (!tree || !callback) return false; // Continue iteration.
 
     de::internal::CallbackWrapper parm;
     parm.callback = callback;

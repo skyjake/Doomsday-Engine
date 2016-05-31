@@ -93,16 +93,16 @@ DENG2_PIMPL_NOREF(LogBuffer)
 
     ~Instance()
     {
-        if(autoFlushTimer) autoFlushTimer->stop();
+        if (autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
     }
 
     void enableAutoFlush(bool yes)
     {
         DENG2_ASSERT(qApp);
-        if(yes)
+        if (yes)
         {
-            if(!autoFlushTimer->isActive())
+            if (!autoFlushTimer->isActive())
             {
                 // Every now and then the buffer will be flushed.
                 autoFlushTimer->start(int(FLUSH_INTERVAL.asMilliSeconds()));
@@ -116,7 +116,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
 
     void disposeFileLogSink()
     {
-        if(fileLogSink)
+        if (fileLogSink)
         {
             sinks.remove(fileLogSink);
             delete fileLogSink;
@@ -141,7 +141,7 @@ LogBuffer::~LogBuffer()
     setOutputFile("");
     clear();
 
-    if(_appBuffer == this) _appBuffer = 0;
+    if (_appBuffer == this) _appBuffer = 0;
 }
 
 void LogBuffer::clear()
@@ -168,10 +168,10 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
 {
     DENG2_GUARD(this);
     entries.clear();
-    for(int i = d->entries.size() - 1; i >= 0; --i)
+    for (int i = d->entries.size() - 1; i >= 0; --i)
     {
         entries.append(d->entries[i]);
-        if(count && entries.size() >= count)
+        if (count && entries.size() >= count)
         {
             return;
         }
@@ -180,7 +180,7 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
 
 void LogBuffer::setEntryFilter(IFilter const *entryFilter)
 {
-    if(entryFilter)
+    if (entryFilter)
     {
         d->entryFilter = entryFilter;
     }
@@ -194,7 +194,7 @@ bool LogBuffer::isEnabled(duint32 entryMetadata) const
 {
     DENG2_ASSERT(d->entryFilter != 0);
     DENG2_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
-    if(entryMetadata & LogEntry::Privileged)
+    if (entryMetadata & LogEntry::Privileged)
     {
         return true; // always passes
     }
@@ -212,7 +212,7 @@ void LogBuffer::add(LogEntry *entry)
 
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
-    if(d->lastFlushedAt.isValid() && d->lastFlushedAt.since() > FLUSH_INTERVAL)
+    if (d->lastFlushedAt.isValid() && d->lastFlushedAt.since() > FLUSH_INTERVAL)
     {
         flush();
     }
@@ -248,20 +248,20 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 {
     DENG2_GUARD(this);
 
-    if(behavior == FlushFirstToOldOutputs)
+    if (behavior == FlushFirstToOldOutputs)
     {
         flush();
     }
 
     d->disposeFileLogSink();
 
-    if(d->outputFile)
+    if (d->outputFile)
     {
         d->outputFile->audienceForDeletion() -= this;
         d->outputFile = 0;
     }
 
-    if(!path.isEmpty())
+    if (!path.isEmpty())
     {
         d->outputFile = &App::rootFolder().replaceFile(path);
         d->outputFile->audienceForDeletion() += this;
@@ -274,7 +274,7 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 
 String LogBuffer::outputFile() const
 {
-    if(!d->outputFile) return "";
+    if (!d->outputFile) return "";
     return d->outputFile->path();
 }
 
@@ -294,24 +294,24 @@ void LogBuffer::removeSink(LogSink &sink)
 
 void LogBuffer::flush()
 {
-    if(!d->flushingEnabled) return;
+    if (!d->flushingEnabled) return;
 
     DENG2_GUARD(this);
 
-    if(!d->toBeFlushed.isEmpty())
+    if (!d->toBeFlushed.isEmpty())
     {
         DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
         {
             DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
-            foreach(LogSink *sink, d->sinks)
+            foreach (LogSink *sink, d->sinks)
             {
-                if(sink->willAccept(**i))
+                if (sink->willAccept(**i))
                 {
                     try
                     {
                         *sink << **i;
                     }
-                    catch(Error const &error)
+                    catch (Error const &error)
                     {
                         *sink << String("Exception during log flush:\n") +
                                         error.what() + "\n(the entry format is: '" +
@@ -324,13 +324,13 @@ void LogBuffer::flush()
         d->toBeFlushed.clear();
 
         // Make sure everything really gets written now.
-        foreach(LogSink *sink, d->sinks) sink->flush();
+        foreach (LogSink *sink, d->sinks) sink->flush();
     }
 
     d->lastFlushedAt = Time();
 
     // Too many entries? Now they can be destroyed since we have flushed everything.
-    while(d->entries.size() > d->maxEntryCount)
+    while (d->entries.size() > d->maxEntryCount)
     {
         LogEntry *old = d->entries.front();
         d->entries.pop_front();

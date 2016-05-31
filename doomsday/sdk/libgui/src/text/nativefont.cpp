@@ -42,7 +42,7 @@ namespace de
 
         void prepare()
         {
-            if(!self.isReady())
+            if (!self.isReady())
             {
                 self.commit();
                 cachedText.clear();
@@ -132,11 +132,11 @@ dint NativeFont::weight() const
 String NativeFont::nativeFontName() const
 {
     // Check the defined mappings.
-    if(families.contains(d->family))
+    if (families.contains(d->family))
     {
         StyleMapping const &map = families[d->family];
         Spec const spec(d->style, d->weight);
-        if(map.contains(spec))
+        if (map.contains(spec))
         {
             return map[spec];
         }
@@ -172,7 +172,7 @@ Rectanglei NativeFont::measure(String const &text) const
 {
     d->prepare();
 
-    if(d->cachedText == text)
+    if (d->cachedText == text)
     {
         return d->cachedMeasure;
     }

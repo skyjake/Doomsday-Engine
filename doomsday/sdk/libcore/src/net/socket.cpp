@@ -111,16 +111,16 @@ struct MessageHeader : public ISerializable
 
     void operator >> (Writer &writer) const
     {
-        if(size <= MAX_SIZE_SMALL && !isDeflated)
+        if (size <= MAX_SIZE_SMALL && !isDeflated)
         {
             writer << dbyte(size);
         }
-        else if(size <= MAX_SIZE_MEDIUM)
+        else if (size <= MAX_SIZE_MEDIUM)
         {
             writer << dbyte(TRMF_CONTINUE | (size & TRMF_SIZE_MASK));
             writer << dbyte((isDeflated? TRMF_DEFLATED : 0) | (size >> TRMF_SIZE_SHIFT));
         }
-        else if(size <= MAX_SIZE_LARGE)
+        else if (size <= MAX_SIZE_LARGE)
         {
             DENG2_ASSERT(isDeflated);
 
@@ -149,11 +149,11 @@ struct MessageHeader : public ISerializable
         isDeflated = false;
         isHuffmanCoded = true;
 
-        if(b & TRMF_CONTINUE) // More follows...
+        if (b & TRMF_CONTINUE) // More follows...
         {
             reader >> b;
 
-            if(b & TRMF_CONTINUE) // Yet more to come...
+            if (b & TRMF_CONTINUE) // Yet more to come...
             {
                 // Large header.
                 isDeflated = true;
@@ -167,7 +167,7 @@ struct MessageHeader : public ISerializable
             else
             {
                 // Medium header.
-                if(b & TRMF_DEFLATED)
+                if (b & TRMF_DEFLATED)
                 {
                     isDeflated = true;
                     isHuffmanCoded = false;
@@ -222,7 +222,7 @@ DENG2_PIMPL_NOREF(Socket)
     ~Instance()
     {
         // Delete received messages left in the buffer.
-        foreach(Message *msg, receivedMessages) delete msg;
+        foreach (Message *msg, receivedMessages) delete msg;
     }
 
     void serializeAndSendMessage(IByteArray const &packet)
@@ -233,10 +233,10 @@ DENG2_PIMPL_NOREF(Socket)
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
-        if(payload.size() <= MAX_HUFFMAN_INPUT_SIZE) // Potentially short enough.
+        if (payload.size() <= MAX_HUFFMAN_INPUT_SIZE) // Potentially short enough.
         {
             huffData = codec::huffmanEncode(payload);
-            if(int(huffData.size()) <= MAX_SIZE_SMALL)
+            if (int(huffData.size()) <= MAX_SIZE_SMALL)
             {
                 // We'll use this.
                 header.isHuffmanCoded = true;
@@ -251,23 +251,23 @@ DENG2_PIMPL_NOREF(Socket)
         /// compressed for each TCP send -- should do only one compression per
         /// message.
 
-        if(!header.size) // Try deflate.
+        if (!header.size) // Try deflate.
         {
             int const level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
             QByteArray deflated = qCompress(payload, level);
 
-            if(!deflated.size())
+            if (!deflated.size())
             {
                 throw ProtocolError("Socket::send:", "Failed to deflate message payload");
             }
-            if(deflated.size() > MAX_SIZE_LARGE)
+            if (deflated.size() > MAX_SIZE_LARGE)
             {
                 throw ProtocolError("Socket::send",
                                     QString("Compressed payload is too large (%1 bytes)").arg(deflated.size()));
             }
 
             // Choose the smallest compression.
-            if(huffData.size() && int(huffData.size()) <= deflated.size() && int(huffData.size()) <= MAX_SIZE_MEDIUM)
+            if (huffData.size() && int(huffData.size()) <= deflated.size() && int(huffData.size()) <= MAX_SIZE_MEDIUM)
             {
                 // Huffman yielded smaller payload.
                 header.isHuffmanCoded = true;
@@ -303,9 +303,9 @@ DENG2_PIMPL_NOREF(Socket)
     {
         forever
         {
-            if(receptionState == ReceivingHeader)
+            if (receptionState == ReceivingHeader)
             {
-                if(receivedBytes.size() < 2)
+                if (receivedBytes.size() < 2)
                 {
                     // A message must be at least two bytes long (header + payload).
                     return;
@@ -320,34 +320,34 @@ DENG2_PIMPL_NOREF(Socket)
                     // Remove the read bytes from the buffer.
                     receivedBytes.remove(0, reader.offset());
                 }
-                catch(de::Error const &)
+                catch (de::Error const &)
                 {
                     // It seems we don't have a full header yet.
                     return;
                 }
             }
 
-            if(receptionState == ReceivingPayload)
+            if (receptionState == ReceivingPayload)
             {
-                if(int(receivedBytes.size()) >= incomingHeader.size)
+                if (int(receivedBytes.size()) >= incomingHeader.size)
                 {
                     // Extract the payload from the incoming buffer.
                     Block payload = receivedBytes.left(incomingHeader.size);
                     receivedBytes.remove(0, incomingHeader.size);
 
                     // We have the full payload, but it still may need to uncompressed.
-                    if(incomingHeader.isHuffmanCoded)
+                    if (incomingHeader.isHuffmanCoded)
                     {
                         payload = codec::huffmanDecode(payload);
-                        if(!payload.size())
+                        if (!payload.size())
                         {
                             throw ProtocolError("Socket::Instance::deserializeMessages", "Huffman decoding failed");
                         }
                     }
-                    else if(incomingHeader.isDeflated)
+                    else if (incomingHeader.isDeflated)
                     {
                         payload = qUncompress(payload);
-                        if(!payload.size())
+                        if (!payload.size())
                         {
                             throw ProtocolError("Socket::Instance::deserializeMessages", "Deflate failed");
                         }
@@ -387,7 +387,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instanc
 
     // Now that the signals have been set...
     d->socket->connectToHost(address.host(), address.port());
-    if(!d->socket->waitForConnected(timeOut.asMilliSeconds()))
+    if (!d->socket->waitForConnected(timeOut.asMilliSeconds()))
     {
         QString msg = d->socket->errorString();
         delete d->socket;
@@ -412,7 +412,7 @@ void Socket::connect(Address const &address) // non-blocking
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    if(!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
+    if (!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
     d->target = address;
@@ -423,21 +423,21 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
 {
     String str = domainNameWithOptionalPort;
     duint16 port = defaultPort;
-    if(str.contains(':'))
+    if (str.contains(':'))
     {
         int pos = str.indexOf(':');
         port = duint16(str.mid(pos + 1).toInt());
-        if(!port) port = defaultPort;
+        if (!port) port = defaultPort;
         str = str.left(pos);
     }
-    if(str == "localhost")
+    if (str == "localhost")
     {
         connect(Address(str.toLatin1(), port));
         return;
     }
 
     QHostAddress host(str);
-    if(!host.isNull())
+    if (!host.isNull())
     {
         // Looks like a regular IP address.
         connect(Address(str.toLatin1(), port));
@@ -492,9 +492,9 @@ void Socket::initialize()
 
 void Socket::close()
 {
-    if(!d->socket) return;
+    if (!d->socket) return;
 
-    if(d->socket->state() == QAbstractSocket::ConnectedState)
+    if (d->socket->state() == QAbstractSocket::ConnectedState)
     {
         // All pending data will be written to the socket before closing.
         d->socket->disconnectFromHost();
@@ -504,7 +504,7 @@ void Socket::close()
         d->socket->abort();
     }
 
-    if(d->socket->state() != QAbstractSocket::UnconnectedState)
+    if (d->socket->state() != QAbstractSocket::UnconnectedState)
     {
         // Make sure the socket is disconnected before the return.
         d->socket->waitForDisconnected();
@@ -542,7 +542,7 @@ Socket &Socket::operator << (IByteArray const &packet)
 
 void Socket::send(IByteArray const &packet, duint /*channel*/)
 {
-    if(!d->socket)
+    if (!d->socket)
     {
         /// @throw DisconnectedError Sending is not possible because the socket has been closed.
         throw DisconnectedError("Socket::send", "Socket is unavailable");
@@ -553,10 +553,10 @@ void Socket::send(IByteArray const &packet, duint /*channel*/)
 
 void Socket::readIncomingBytes()
 {
-    if(!d->socket) return;
+    if (!d->socket) return;
 
     int available = d->socket->bytesAvailable();
-    if(available > 0)
+    if (available > 0)
     {
         d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
     }
@@ -564,7 +564,7 @@ void Socket::readIncomingBytes()
     d->deserializeMessages();
 
     // Notification about available messages.
-    if(!d->receivedMessages.isEmpty())
+    if (!d->receivedMessages.isEmpty())
     {
         emit messagesReady();
     }
@@ -572,7 +572,7 @@ void Socket::readIncomingBytes()
 
 void Socket::hostResolved(QHostInfo const &info)
 {
-    if(info.error() != QHostInfo::NoError || info.addresses().isEmpty())
+    if (info.error() != QHostInfo::NoError || info.addresses().isEmpty())
     {
         LOG_NET_ERROR("Could not resolve host: ") << info.errorString();
         emit disconnected();
@@ -588,7 +588,7 @@ void Socket::hostResolved(QHostInfo const &info)
 
 Message *Socket::receive()
 {
-    if(d->receivedMessages.isEmpty())
+    if (d->receivedMessages.isEmpty())
     {
         return 0;
     }
@@ -597,7 +597,7 @@ Message *Socket::receive()
 
 Message *Socket::peek()
 {
-    if(d->receivedMessages.isEmpty())
+    if (d->receivedMessages.isEmpty())
     {
         return 0;
     }
@@ -606,7 +606,7 @@ Message *Socket::peek()
 
 void Socket::flush()
 {
-    if(!d->socket) return;
+    if (!d->socket) return;
 
     // Wait until data has been written.
     d->socket->flush();
@@ -615,7 +615,7 @@ void Socket::flush()
 
 Address Socket::peerAddress() const
 {
-    if(isOpen() && d->socket->state() == QTcpSocket::ConnectedState)
+    if (isOpen() && d->socket->state() == QTcpSocket::ConnectedState)
     {
         return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
@@ -639,10 +639,10 @@ void Socket::socketDisconnected()
 
 void Socket::socketError(QAbstractSocket::SocketError socketError)
 {
-    if(socketError != QAbstractSocket::SocketTimeoutError)
+    if (socketError != QAbstractSocket::SocketTimeoutError)
     {
         LOG_AS("Socket");
-        if(!d->quiet) LOG_NET_WARNING(d->socket->errorString());
+        if (!d->quiet) LOG_NET_WARNING(d->socket->errorString());
 
         emit error(d->socket->errorString());
         emit disconnected();

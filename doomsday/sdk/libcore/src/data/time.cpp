@@ -78,7 +78,7 @@ Time::Delta Time::Delta::sinceStartOfProcess()
 
 void TimeDelta::sleep() const
 {
-    if(_seconds < 60)
+    if (_seconds < 60)
     {
         internal::SleeperThread::usleep((unsigned long)(_seconds * 1e6));
     }
@@ -150,7 +150,7 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isValid() const
     {
-        if(flags.testFlag(DateTime))
+        if (flags.testFlag(DateTime))
         {
             return dateTime.isValid();
         }
@@ -159,11 +159,11 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isLessThan(Instance const &other) const
     {
-        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
         {
             return highPerfElapsed < other.highPerfElapsed;
         }
-        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        if (flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
         {
             // Full date and time comparison.
             return dateTime < other.dateTime;
@@ -178,11 +178,11 @@ DENG2_PIMPL_NOREF(Time)
 
     bool isEqualTo(Instance const &other) const
     {
-        if(flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
         {
             return highPerfElapsed == other.highPerfElapsed;
         }
-        if(flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        if (flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
         {
             return dateTime == other.dateTime;
         }
@@ -196,11 +196,11 @@ DENG2_PIMPL_NOREF(Time)
 
     void add(Delta const &delta)
     {
-        if(flags.testFlag(DateTime))
+        if (flags.testFlag(DateTime))
         {
             dateTime = dateTime.addMSecs(delta.asMilliSeconds());
         }
-        if(flags.testFlag(HighPerformance))
+        if (flags.testFlag(HighPerformance))
         {
             highPerfElapsed += delta;
         }
@@ -208,11 +208,11 @@ DENG2_PIMPL_NOREF(Time)
 
     Delta delta(Instance const &earlier) const
     {
-        if(flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
+        if (flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
         {
             return highPerfElapsed - earlier.highPerfElapsed;
         }
-        if(flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
+        if (flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
         {
             return earlier.dateTime.msecsTo(dateTime) / 1000.0;
         }
@@ -284,7 +284,7 @@ TimeDelta Time::operator - (Time const &earlierTime) const
 
 dint Time::asBuildNumber() const
 {
-    if(d->hasDateTime())
+    if (d->hasDateTime())
     {
         return (d->dateTime.date().year() - 2011)*365 + d->dateTime.date().dayOfYear();
     }
@@ -293,38 +293,38 @@ dint Time::asBuildNumber() const
 
 String Time::asText(Format format) const
 {
-    if(!isValid())
+    if (!isValid())
     {
         return "(undefined time)";
     }
-    if(d->hasDateTime())
+    if (d->hasDateTime())
     {
-        if(format == ISOFormat)
+        if (format == ISOFormat)
         {
             return d->dateTime.toString(ISO_FORMAT);
         }
-        else if(format == ISODateOnly)
+        else if (format == ISODateOnly)
         {
             return d->dateTime.toString("yyyy-MM-dd");
         }
-        else if(format == FriendlyFormat)
+        else if (format == FriendlyFormat)
         {
             return d->dateTime.toString(Qt::TextDate);
         }
-        else if(format == BuildNumberAndSecondsSinceStart)
+        else if (format == BuildNumberAndSecondsSinceStart)
         {
             TimeDelta elapsed;
-            if(d->flags.testFlag(Instance::HighPerformance))
+            if (d->flags.testFlag(Instance::HighPerformance))
             {
                 elapsed = d->highPerfElapsed;
             }
-            else if(d->flags.testFlag(Instance::DateTime))
+            else if (d->flags.testFlag(Instance::DateTime))
             {
                 elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
             }
             int hours = elapsed.asHours();
             TimeDelta sec = elapsed - hours * 3600.0;
-            if(hours > 0)
+            if (hours > 0)
             {
                 return QString("#%1 %2h%3")
                         .arg(asBuildNumber(), -4)
@@ -340,7 +340,7 @@ String Time::asText(Format format) const
             return QString("#%1 ").arg(asBuildNumber(), -4) + d->dateTime.toString("hh:mm:ss.zzz");
         }
     }
-    if(d->flags.testFlag(Instance::HighPerformance))
+    if (d->flags.testFlag(Instance::HighPerformance))
     {
         return QString("+%1 sec").arg(d->highPerfElapsed, 0, 'f', 3);
     }
@@ -352,19 +352,19 @@ Time Time::fromText(String const &text, Time::Format format)
     DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
                  format == CompilerDateTime);
 
-    if(format == ISOFormat)
+    if (format == ISOFormat)
     {
         return Time(QDateTime::fromString(text, ISO_FORMAT));
     }
-    else if(format == ISODateOnly)
+    else if (format == ISODateOnly)
     {
         return Time(QDateTime::fromString(text, "yyyy-MM-dd"));
     }
-    else if(format == FriendlyFormat)
+    else if (format == FriendlyFormat)
     {
         return Time(QDateTime::fromString(text, Qt::TextDate));
     }
-    else if(format == CompilerDateTime)
+    else if (format == CompilerDateTime)
     {
         // Parse the text manually as it is locale-independent.
         QStringList const parts = text.split(" ", QString::SkipEmptyParts);
@@ -376,9 +376,9 @@ Time Time::fromText(String const &text, Time::Format format)
         int day = parts[1].toInt();
         int year = parts[2].toInt();
         int month = 0;
-        for(int i = 0; i < 12; ++i)
+        for (int i = 0; i < 12; ++i)
         {
-            if(parts[0] == months[i])
+            if (parts[0] == months[i])
             {
                 month = i + 1;
                 break;
@@ -419,7 +419,7 @@ void Time::operator >> (Writer &to) const
                    (d->flags & Instance::HighPerformance? HAS_HIGH_PERF : 0);
     to << flags;
 
-    if(d->flags.testFlag(Instance::DateTime))
+    if (d->flags.testFlag(Instance::DateTime))
     {
         Block bytes;
         QDataStream s(&bytes, QIODevice::WriteOnly);
@@ -428,7 +428,7 @@ void Time::operator >> (Writer &to) const
         to << bytes;
     }
 
-    if(d->flags.testFlag(Instance::HighPerformance))
+    if (d->flags.testFlag(Instance::HighPerformance))
     {
         to << d->highPerfElapsed;
     }
@@ -436,7 +436,7 @@ void Time::operator >> (Writer &to) const
 
 void Time::operator << (Reader &from)
 {
-    if(from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
+    if (from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
     {
         /*
          * Starting from build 926, Time can optionally contain a
@@ -448,7 +448,7 @@ void Time::operator << (Reader &from)
 
         d->flags = 0;
 
-        if(flags & HAS_DATETIME)
+        if (flags & HAS_DATETIME)
         {
             d->flags |= Instance::DateTime;
 
@@ -459,18 +459,18 @@ void Time::operator << (Reader &from)
             s >> d->dateTime;
         }
 
-        if(flags & HAS_HIGH_PERF)
+        if (flags & HAS_HIGH_PERF)
         {
             d->flags |= Instance::HighPerformance;
 
             from >> d->highPerfElapsed;
         }
 
-        if((flags & HAS_DATETIME) && (flags & HAS_HIGH_PERF))
+        if ((flags & HAS_DATETIME) && (flags & HAS_HIGH_PERF))
         {
             // If both are present, the high-performance time should be synced
             // with current high-perf timer.
-            if(d->dateTime < highPerfTimer.startedAt().asDateTime())
+            if (d->dateTime < highPerfTimer.startedAt().asDateTime())
             {
                 // Current high-performance timer was started after this time;
                 // we can't represent the time as high performance delta.

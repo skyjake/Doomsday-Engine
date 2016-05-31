@@ -170,7 +170,7 @@ public:
     template <typename Type>
     Type &value() {
         Type *v = dynamic_cast<Type *>(valuePtr());
-        if(!v) {
+        if (!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
                             QString("Illegal type conversion to ") + typeid(Type).name());
@@ -184,7 +184,7 @@ public:
     template <typename Type>
     Type const &value() const {
         Type const *v = dynamic_cast<Type const *>(valuePtr());
-        if(!v) {
+        if (!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
                             QString("Illegal type conversion to ") + typeid(Type).name());

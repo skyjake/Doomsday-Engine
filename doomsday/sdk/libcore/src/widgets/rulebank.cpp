@@ -72,7 +72,7 @@ void RuleBank::addFromInfo(File const &file)
 
 Rule const &RuleBank::rule(DotPath const &path) const
 {
-    if(path.isEmpty()) return *d->zero;
+    if (path.isEmpty()) return *d->zero;
     return *static_cast<Instance::RuleData &>(data(path)).rule;
 }
 

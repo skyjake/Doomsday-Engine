@@ -54,11 +54,11 @@ DENG2_PIMPL(NativeFile)
 
     QFile &getInput()
     {
-        if(!in)
+        if (!in)
         {
             // Reading is allowed always.
             in = new QFile(nativePath);
-            if(!in->open(QFile::ReadOnly))
+            if (!in->open(QFile::ReadOnly))
             {
                 delete in;
                 in = 0;
@@ -71,29 +71,29 @@ DENG2_PIMPL(NativeFile)
 
     QFile &getOutput()
     {
-        if(!out)
+        if (!out)
         {
             // Are we allowed to output?
             self.verifyWriteAccess();
 
             QFile::OpenMode fileMode = QFile::ReadWrite;
-            if(self.mode() & Truncate)
+            if (self.mode() & Truncate)
             {
-                if(needTruncation)
+                if (needTruncation)
                 {
                     fileMode |= QFile::Truncate;
                     needTruncation = false;
                 }
             }
             out = new QFile(nativePath);
-            if(!out->open(fileMode))
+            if (!out->open(fileMode))
             {
                 delete out;
                 out = 0;
                 /// @throw OutputError  Opening the output stream failed.
                 throw OutputError("NativeFile::output", "Failed to write " + nativePath);
             }
-            if(self.mode() & Truncate)
+            if (self.mode() & Truncate)
             {
                 Status st = self.status();
                 st.size = 0;
@@ -106,7 +106,7 @@ DENG2_PIMPL(NativeFile)
 
     void closeInput()
     {
-        if(in)
+        if (in)
         {
             delete in;
             in = 0;
@@ -115,7 +115,7 @@ DENG2_PIMPL(NativeFile)
 
     void closeOutput()
     {
-        if(out)
+        if (out)
         {
             delete out;
             out = 0;
@@ -196,7 +196,7 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
     DENG2_GUARD(this);
 
     QFile &in = input();
-    if(at + count > size())
+    if (at + count > size())
     {
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
@@ -212,7 +212,7 @@ void NativeFile::set(Offset at, Byte const *values, Size count)
     DENG2_GUARD(this);
 
     QFile &out = output();
-    if(at > size())
+    if (at > size())
     {
         /// @throw IByteArray::OffsetError  @a at specified a position beyond the
         /// end of the file.
@@ -220,7 +220,7 @@ void NativeFile::set(Offset at, Byte const *values, Size count)
     }
     out.seek(at);
     out.write(reinterpret_cast<char const *>(values), count);
-    if(out.error() != QFile::NoError)
+    if (out.error() != QFile::NoError)
     {
         /// @throw OutputError  Failure to write to the native file.
         throw OutputError("NativeFile::set", "Error writing to file:" +
@@ -236,7 +236,7 @@ void NativeFile::set(Offset at, Byte const *values, Size count)
 NativeFile *NativeFile::newStandalone(NativePath const &nativePath)
 {
     std::unique_ptr<NativeFile> file(new NativeFile(nativePath.fileName(), nativePath));
-    if(nativePath.exists())
+    if (nativePath.exists())
     {
         // Sync status with the real status.
         file->setStatus(DirectoryFeed::fileStatus(nativePath));
@@ -251,7 +251,7 @@ void NativeFile::setMode(Flags const &newMode)
     close();
     File::setMode(newMode);
 
-    if(newMode.testFlag(Truncate))
+    if (newMode.testFlag(Truncate))
     {
         d->needTruncation = true;
     }

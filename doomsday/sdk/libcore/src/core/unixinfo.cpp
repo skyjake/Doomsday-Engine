@@ -36,14 +36,14 @@ public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
     {
         String fn = String("/etc") / App::app().unixEtcFolderName() / fileName;
-        if(QFile::exists(fn))
+        if (QFile::exists(fn))
         {
             etcInfo = new Info;
             etcInfo->parseNativeFile(fn);
         }
 
         fn = String(QDir::homePath()) / App::app().unixHomeFolderName() / fileName;
-        if(QFile::exists(fn))
+        if (QFile::exists(fn))
         {
             userInfo = new Info;
             userInfo->parseNativeFile(fn);
@@ -59,11 +59,11 @@ public:
     bool find(String const &key, String &value) const
     {
         // User-specific info overrides the system-level info.
-        if(userInfo && userInfo->findValueForKey(key, value))
+        if (userInfo && userInfo->findValueForKey(key, value))
         {
             return true;
         }
-        if(etcInfo && etcInfo->findValueForKey(key, value))
+        if (etcInfo && etcInfo->findValueForKey(key, value))
         {
             return true;
         }
@@ -105,10 +105,10 @@ UnixInfo::UnixInfo() : d(new Instance)
 
 bool UnixInfo::path(String const &key, NativePath &value) const
 {
-    if(d->paths)
+    if (d->paths)
     {
         String s;
-        if(d->paths->find(key, s))
+        if (d->paths->find(key, s))
         {
             value = NativePath(s).expand();
             return true;
@@ -119,7 +119,7 @@ bool UnixInfo::path(String const &key, NativePath &value) const
 
 bool UnixInfo::defaults(String const &key, String &value) const
 {
-    if(d->defaults)
+    if (d->defaults)
     {
         return d->defaults->find(key, value);
     }

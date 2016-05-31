@@ -56,7 +56,7 @@ public:
      */
     template <typename VecType>
     ArrayValue(VecType const &vec) {
-        for(int i = 0; i < vec.size(); ++i) {
+        for (int i = 0; i < vec.size(); ++i) {
             add(new NumberValue(vec[i]));
         }
     }

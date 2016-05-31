@@ -87,15 +87,15 @@ DENG2_PIMPL(ScriptedInfo)
 
     void processElement(Info::Element const *element)
     {
-        if(element->isBlock())
+        if (element->isBlock())
         {
             processBlock(element->as<Info::BlockElement>());
         }
-        else if(element->isKey())
+        else if (element->isKey())
         {
             processKey(element->as<Info::KeyElement>());
         }
-        else if(element->isList())
+        else if (element->isList())
         {
             processList(element->as<Info::ListElement>());
         }
@@ -108,12 +108,12 @@ DENG2_PIMPL(ScriptedInfo)
         // The global "self" variable will point to the block where the script
         // is running (analogous to "self" in class member calling).
         bool needRemoveSelf = false;
-        if(context)
+        if (context)
         {
             String varName = variableName(*context);
-            if(!varName.isEmpty())
+            if (!varName.isEmpty())
             {
-                if(!ns.has(varName))
+                if (!ns.has(varName))
                 {
                     // If it doesn't exist yet, make sure it does.
                     ns.addSubrecord(varName);
@@ -126,7 +126,7 @@ DENG2_PIMPL(ScriptedInfo)
         // Execute the current script.
         process.execute();
 
-        if(needRemoveSelf)
+        if (needRemoveSelf)
         {
             delete &ns["self"];
         }
@@ -134,24 +134,24 @@ DENG2_PIMPL(ScriptedInfo)
 
     void inherit(Info::BlockElement const &block, InfoValue const &target)
     {
-        if(block.name().isEmpty())
+        if (block.name().isEmpty())
         {
             // Nameless blocks cannot be inherited into.
             return;
         }
 
         String varName = variableName(block);
-        if(!varName.isEmpty())
+        if (!varName.isEmpty())
         {
             Record &ns = process.globals();
             // Try a case-sensitive match in global namespace.
             String targetName = checkNamespaceForVariable(target);
-            if(!ns.has(targetName))
+            if (!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
                 targetName = checkNamespaceForVariable(target.text.toLower());
             }
-            if(!ns.has(targetName))
+            if (!ns.has(targetName))
             {
                 // Try a regular variable within the same block.
                 targetName = variableName(block.parent()? *block.parent() : block)
@@ -173,9 +173,9 @@ DENG2_PIMPL(ScriptedInfo)
             dest.copyMembersFrom(src, Record::IgnoreDoubleUnderscoreMembers);
 
             // Append the inherited source location.
-            if(src.hasMember(VAR_SOURCE))
+            if (src.hasMember(VAR_SOURCE))
             {
-                if(!dest.hasMember(VAR_INHERITED_SOURCES))
+                if (!dest.hasMember(VAR_INHERITED_SOURCES))
                 {
                     dest.addArray(VAR_INHERITED_SOURCES);
                 }
@@ -187,18 +187,18 @@ DENG2_PIMPL(ScriptedInfo)
 
     void inheritFromAncestors(Info::BlockElement const &block, Info::BlockElement const *from)
     {
-        if(!from) return;
+        if (!from) return;
 
         // The highest ancestor goes first.
-        if(from->parent())
+        if (from->parent())
         {
             inheritFromAncestors(block, from->parent());
         }
 
         // This only applies to groups.
-        if(from->blockType() == BLOCK_GROUP)
+        if (from->blockType() == BLOCK_GROUP)
         {
-            if(Info::KeyElement *key = from->findAs<Info::KeyElement>(KEY_INHERITS))
+            if (Info::KeyElement *key = from->findAs<Info::KeyElement>(KEY_INHERITS))
             {
                 inherit(block, key->value());
             }
@@ -218,12 +218,12 @@ DENG2_PIMPL(ScriptedInfo)
      */
     bool isUnqualifiedScriptBlock(Info::BlockElement const &block)
     {
-        if(block.blockType() != BLOCK_SCRIPT) return false;
-        for(auto const *child : block.contentsInOrder())
+        if (block.blockType() != BLOCK_SCRIPT) return false;
+        for (auto const *child : block.contentsInOrder())
         {
-            if(!child->isKey()) return false;
+            if (!child->isKey()) return false;
             Info::KeyElement const &key = child->as<Info::KeyElement>();
-            if(key.name() != KEY_SCRIPT && key.name() != KEY_CONDITION)
+            if (key.name() != KEY_SCRIPT && key.name() != KEY_CONDITION)
             {
                 return false;
             }
@@ -245,7 +245,7 @@ DENG2_PIMPL(ScriptedInfo)
         forever
         {
             String name = VAR_SCRIPT.arg(counter, 2 /*width*/, 10 /*base*/, QLatin1Char('0'));
-            if(!where.has(name)) return name;
+            if (!where.has(name)) return name;
             counter++;
         }
     }
@@ -254,11 +254,11 @@ DENG2_PIMPL(ScriptedInfo)
     {
         Record &ns = process.globals();
 
-        if(Info::Element *condition = block.find(KEY_CONDITION))
+        if (Info::Element *condition = block.find(KEY_CONDITION))
         {
             // Any block will be ignored if its condition is false.
             QScopedPointer<Value> result(evaluate(condition->values().first(), 0));
-            if(result.isNull() || result->isFalse())
+            if (result.isNull() || result->isFalse())
             {
                 return;
             }
@@ -268,10 +268,10 @@ DENG2_PIMPL(ScriptedInfo)
         inheritFromAncestors(block, block.parent());
 
         // Direct inheritance.
-        if(Info::KeyElement *key = block.findAs<Info::KeyElement>(KEY_INHERITS))
+        if (Info::KeyElement *key = block.findAs<Info::KeyElement>(KEY_INHERITS))
         {
             // Check for special attributes.
-            if(key->flags().testFlag(Info::KeyElement::Attribute))
+            if (key->flags().testFlag(Info::KeyElement::Attribute))
             {
                 // Inherit contents of an existing Record.
                 inherit(block, key->value());
@@ -282,7 +282,7 @@ DENG2_PIMPL(ScriptedInfo)
 
         // Script blocks are executed now. This includes only the unqualified script
         // blocks that have only a single "script" key in them.
-        if(isUnqualifiedScriptBlock(block))
+        if (isUnqualifiedScriptBlock(block))
         {
             DENG2_ASSERT(process.state() == Process::Stopped);
 
@@ -296,9 +296,9 @@ DENG2_PIMPL(ScriptedInfo)
             String oldNamespace = currentNamespace;
 
             // Namespace blocks alter how variables get placed/looked up in the Record.
-            if(block.blockType() == BLOCK_NAMESPACE)
+            if (block.blockType() == BLOCK_NAMESPACE)
             {
-                if(!block.name().isEmpty())
+                if (!block.name().isEmpty())
                 {
                     currentNamespace = currentNamespace.concatenateMember(block.name());
                 }
@@ -311,12 +311,12 @@ DENG2_PIMPL(ScriptedInfo)
                         << block.sourceLocation()
                         << currentNamespace;
             }
-            else if(!block.name().isEmpty() || isScriptBlock)
+            else if (!block.name().isEmpty() || isScriptBlock)
             {
                 String varName;
 
                 // Determine the full variable name of the record of this block.
-                if(isScriptBlock)
+                if (isScriptBlock)
                 {
                     // Qualified scripts get automatically generated names.
                     String const parentVarName = variableName(*block.parent());
@@ -329,7 +329,7 @@ DENG2_PIMPL(ScriptedInfo)
                 }
 
                 // Create the block record if it doesn't exist.
-                if(!ns.has(varName))
+                if (!ns.has(varName))
                 {
                     ns.addSubrecord(varName);
                 }
@@ -342,7 +342,7 @@ DENG2_PIMPL(ScriptedInfo)
                 blockRecord.addNumber(VAR_SOURCE, block.sourceLineId())
                         .value<NumberValue>().setSemanticHints(NumberValue::Hex);
 
-                if(!isScriptBlock)
+                if (!isScriptBlock)
                 {
                     DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
                     {
@@ -355,12 +355,12 @@ DENG2_PIMPL(ScriptedInfo)
                     // These are not processed as regular subelements because the
                     // path of the script record is not directly determined by the parent
                     // blocks (see above; chooseScriptName()).
-                    for(auto const *elem : block.contents().values())
+                    for (auto const *elem : block.contents().values())
                     {
-                        if(elem->isKey())
+                        if (elem->isKey())
                         {
                             auto const &key = elem->as<Info::KeyElement>();
-                            if(key.name() != KEY_CONDITION)
+                            if (key.name() != KEY_CONDITION)
                             {
                                 blockRecord.addText(key.name(), key.value());
                             }
@@ -371,12 +371,12 @@ DENG2_PIMPL(ScriptedInfo)
 
             // Continue processing elements contained in the block (unless this is
             // script block).
-            if(!isScriptBlock)
+            if (!isScriptBlock)
             {
-                foreach(Info::Element const *sub, block.contentsInOrder())
+                foreach (Info::Element const *sub, block.contentsInOrder())
                 {
                     // Handle special elements.
-                    if(sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
+                    if (sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
                     {
                         // Already handled.
                         continue;
@@ -401,13 +401,13 @@ DENG2_PIMPL(ScriptedInfo)
     String variableName(Info::Element const &element)
     {
         String varName = element.name();
-        for(Info::BlockElement *b = element.parent(); b != 0; b = b->parent())
+        for (Info::BlockElement *b = element.parent(); b != 0; b = b->parent())
         {
-            if(b->blockType() == BLOCK_NAMESPACE) continue;
+            if (b->blockType() == BLOCK_NAMESPACE) continue;
 
-            if(!b->name().isEmpty())
+            if (!b->name().isEmpty())
             {
-                if(varName.isEmpty())
+                if (varName.isEmpty())
                     varName = b->name();
                 else
                     varName = b->name().concatenateMember(varName);
@@ -428,26 +428,26 @@ DENG2_PIMPL(ScriptedInfo)
      */
     String checkNamespaceForVariable(String varName)
     {
-        if(varName.isEmpty()) return "";
+        if (varName.isEmpty()) return "";
 
-        if(!currentNamespace.isEmpty())
+        if (!currentNamespace.isEmpty())
         {
             // First check if this exists in the current namespace.
             String nsVarName = currentNamespace.concatenateMember(varName);
-            if(process.globals().has(nsVarName))
+            if (process.globals().has(nsVarName))
             {
                 return nsVarName;
             }
         }
 
         // If it exists as-is, we'll take it.
-        if(process.globals().has(varName))
+        if (process.globals().has(varName))
         {
             return varName;
         }
 
         // We'll assume it will get created.
-        if(!currentNamespace.isEmpty())
+        if (!currentNamespace.isEmpty())
         {
             // If namespace defined, create the new variable in it.
             return currentNamespace.concatenateMember(varName);
@@ -477,7 +477,7 @@ DENG2_PIMPL(ScriptedInfo)
      */
     Value *makeValue(InfoValue const &rawValue, Info::BlockElement const *context)
     {
-        if(rawValue.flags.testFlag(InfoValue::Script))
+        if (rawValue.flags.testFlag(InfoValue::Script))
         {
             return evaluate(rawValue.text, context);
         }
@@ -493,7 +493,7 @@ DENG2_PIMPL(ScriptedInfo)
     void processList(Info::ListElement const &list)
     {
         ArrayValue* av = new ArrayValue;
-        foreach(InfoValue const &v, list.values())
+        foreach (InfoValue const &v, list.values())
         {
             *av << makeValue(v, list.parent());
         }
@@ -502,7 +502,7 @@ DENG2_PIMPL(ScriptedInfo)
 
     static void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
     {
-        if(rec.hasMember(VAR_BLOCK_TYPE) &&
+        if (rec.hasMember(VAR_BLOCK_TYPE) &&
            !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
         {
             // Block type matches.
@@ -566,23 +566,23 @@ ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
 
 String ScriptedInfo::absolutePathInContext(Record const &context, String const &relativePath) // static
 {
-    if(context.has(VAR_SOURCE))
+    if (context.has(VAR_SOURCE))
     {
         auto const sourceLocation = Info::sourceLineTable().sourcePathAndLineNumber(
                     context.getui(VAR_SOURCE));
 
         String absPath = sourceLocation.first.fileNamePath() / relativePath;
-        if(!App::rootFolder().has(absPath))
+        if (!App::rootFolder().has(absPath))
         {
             // As a fallback, look for possible inherited locations.
-            if(context.has(VAR_INHERITED_SOURCES))
+            if (context.has(VAR_INHERITED_SOURCES))
             {
                 // Look in reverse so the latest inherited locations are checked first.
                 auto const &elems = context.geta(VAR_INHERITED_SOURCES);
-                for(int i = elems.size() - 1; i >= 0; --i)
+                for (int i = elems.size() - 1; i >= 0; --i)
                 {
                     String inheritedPath = elems.at(i).asText().fileNamePath() / relativePath;
-                    if(App::rootFolder().has(inheritedPath))
+                    if (App::rootFolder().has(inheritedPath))
                     {
                         return inheritedPath;
                     }
@@ -598,11 +598,11 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
 
 bool ScriptedInfo::isTrue(Value const &value) // static
 {
-    if(TextValue const *textValue = value.maybeAs<TextValue>())
+    if (TextValue const *textValue = value.maybeAs<TextValue>())
     {
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();
-        if(!value.compareWithoutCase("true") ||
+        if (!value.compareWithoutCase("true") ||
            !value.compareWithoutCase("yes") ||
            !value.compareWithoutCase("on"))
         {
@@ -615,7 +615,7 @@ bool ScriptedInfo::isTrue(Value const &value) // static
 
 bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool defaultValue)
 {
-    if(rec.has(name))
+    if (rec.has(name))
     {
         return isTrue(rec.get(name));
     }
@@ -629,7 +629,7 @@ String ScriptedInfo::blockType(Record const &block)
 
 bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool defaultValue)
 {
-    if(rec.has(name))
+    if (rec.has(name))
     {
         return isFalse(rec.get(name));
     }
@@ -638,11 +638,11 @@ bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool d
 
 bool ScriptedInfo::isFalse(Value const &value) // static
 {
-    if(TextValue const *textValue = value.maybeAs<TextValue>())
+    if (TextValue const *textValue = value.maybeAs<TextValue>())
     {
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();
-        if(!value.compareWithoutCase("false") ||
+        if (!value.compareWithoutCase("false") ||
            !value.compareWithoutCase("no") ||
            !value.compareWithoutCase("off"))
         {
@@ -675,7 +675,7 @@ StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
               [&subrecs] (String const &a, String const &b) -> bool {
         auto const src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
         auto const src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
-        if(!String(src1.first).compareWithoutCase(src2.first))
+        if (!String(src1.first).compareWithoutCase(src2.first))
         {
             // Path is the same, compare line numbers.
             return src1.second < src2.second;

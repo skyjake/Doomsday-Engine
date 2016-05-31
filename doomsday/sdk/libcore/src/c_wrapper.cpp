@@ -38,14 +38,14 @@
 static bool checkLogEntryMetadata(unsigned int &metadata)
 {
     // Automatically apply the generic domain if not specified.
-    if(!(metadata & de::LogEntry::DomainMask))
+    if (!(metadata & de::LogEntry::DomainMask))
     {
         metadata |= de::LogEntry::Generic;
     }
 
     // Validate the level.
     de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
-    if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
+    if (logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
     {
         metadata &= ~de::LogEntry::LevelMask;
         metadata |= de::LogEntry::Message;
@@ -62,7 +62,7 @@ static void logFragmentPrinter(duint32 metadata, char const *fragment)
     currentLogLine += fragment;
 
     std::string::size_type pos;
-    while((pos = currentLogLine.find('\n')) != std::string::npos)
+    while ((pos = currentLogLine.find('\n')) != std::string::npos)
     {
         LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
         currentLogLine.erase(0, pos + 1);
@@ -71,7 +71,7 @@ static void logFragmentPrinter(duint32 metadata, char const *fragment)
 
 void App_Log(unsigned int metadata, char const *format, ...)
 {
-    if(!checkLogEntryMetadata(metadata)) return;
+    if (!checkLogEntryMetadata(metadata)) return;
 
     char buffer[0x2000];
     va_list args;
@@ -79,12 +79,12 @@ void App_Log(unsigned int metadata, char const *format, ...)
     size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
     DENG2_ASSERT(nc < sizeof(buffer) - 2);
-    if(!nc) return;
+    if (!nc) return;
 
     LOG().enter(metadata, buffer);
 
     // Make sure there's a newline in the end.
-    /*if(buffer[nc - 1] != '\n')
+    /*if (buffer[nc - 1] != '\n')
     {
         buffer[nc++] = '\n';
         buffer[nc] = 0;
@@ -137,7 +137,7 @@ static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
 
 char const *CommandLine_Next(void)
 {
-    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
+    if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
         // No more arguments following the last match.
         return 0;
@@ -147,7 +147,7 @@ char const *CommandLine_Next(void)
 
 char const *CommandLine_NextAsPath(void)
 {
-    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
+    if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
         // No more arguments following the last match.
         return 0;
@@ -183,7 +183,7 @@ int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlia
 
 void LogBuffer_Flush(void)
 {
-    if(de::LogBuffer::appBufferExists())
+    if (de::LogBuffer::appBufferExists())
     {
         de::LogBuffer::get().flush();
     }
@@ -201,7 +201,7 @@ void LogBuffer_EnableStandardOutput(int enable)
 
 void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
-    if(!checkLogEntryMetadata(metadata)) return;
+    if (!checkLogEntryMetadata(metadata)) return;
 
     char buffer[0x2000];
     va_list args;
@@ -220,7 +220,7 @@ Info *Info_NewFromString(char const *utf8text)
     {
         return reinterpret_cast<Info *>(new de::Info(QString::fromUtf8(utf8text)));
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         LOG_WARNING(er.asText());
         return 0;
@@ -235,7 +235,7 @@ Info *Info_NewFromFile(char const *nativePath)
         info->parseNativeFile(nativePath);
         return reinterpret_cast<Info *>(info.take());
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         LOG_WARNING(er.asText());
         return 0;
@@ -244,7 +244,7 @@ Info *Info_NewFromFile(char const *nativePath)
 
 void Info_Delete(Info *info)
 {
-    if(info)
+    if (info)
     {
         DENG2_SELF(Info, info);
         delete self;
@@ -253,13 +253,13 @@ void Info_Delete(Info *info)
 
 int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
 {
-    if(!info) return false;
+    if (!info) return false;
 
     DENG2_SELF(Info, info);
     de::Info::Element const *element = self->findByPath(path);
-    if(!element || !element->isKey()) return false;
+    if (!element || !element->isKey()) return false;
     QString value = static_cast<de::Info::KeyElement const *>(element)->value();
-    if(buffer)
+    if (buffer)
     {
         qstrncpy(buffer, value.toUtf8().constData(), uint(bufSize));
         return true;
@@ -276,19 +276,19 @@ int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest,
     de::UnixInfo &info = de::App::unixInfo();
 
     // "paths" is the only config file currently being used.
-    if(!qstrcmp(configFile, "paths"))
+    if (!qstrcmp(configFile, "paths"))
     {
         de::NativePath foundValue;
-        if(info.path(key, foundValue))
+        if (info.path(key, foundValue))
         {
             qstrncpy(dest, foundValue.toString().toUtf8().constData(), uint(destLen));
             return true;
         }
     }
-    else if(!qstrcmp(configFile, "defaults"))
+    else if (!qstrcmp(configFile, "defaults"))
     {
         de::String foundValue;
-        if(info.defaults(key, foundValue))
+        if (info.defaults(key, foundValue))
         {
             qstrncpy(dest, foundValue.toUtf8().constData(), uint(destLen));
             return true;

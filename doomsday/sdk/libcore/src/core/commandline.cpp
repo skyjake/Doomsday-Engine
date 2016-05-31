@@ -80,7 +80,7 @@ DENG2_PIMPL(CommandLine)
     {
         arguments.append(arg);
 
-        if(pointers.empty())
+        if (pointers.empty())
         {
             pointers.push_back(duplicateStringAsUtf8(arg));
             pointers.push_back(0); // Keep null-terminated.
@@ -95,7 +95,7 @@ DENG2_PIMPL(CommandLine)
 
     void insert(duint pos, String const &arg)
     {
-        if(pos > (duint) arguments.size())
+        if (pos > (duint) arguments.size())
         {
             /// @throw OutOfRangeError @a pos is out of range.
             throw OutOfRangeError("CommandLine::insert", "Index out of range");
@@ -109,7 +109,7 @@ DENG2_PIMPL(CommandLine)
 
     void remove(duint pos)
     {
-        if(pos >= (duint) arguments.size())
+        if (pos >= (duint) arguments.size())
         {
             /// @throw OutOfRangeError @a pos is out of range.
             throw OutOfRangeError("CommandLine::remove", "Index out of range");
@@ -128,9 +128,9 @@ CommandLine::CommandLine() : d(new Instance(*this))
 
 CommandLine::CommandLine(QStringList const &args) : d(new Instance(*this))
 {
-    for(int i = 0; i < args.size(); ++i)
+    for (int i = 0; i < args.size(); ++i)
     {
-        if(args.at(i)[0] == '@')
+        if (args.at(i)[0] == '@')
         {
             // This is a response file or something else that requires parsing.
             parseResponseFile(args.at(i).mid(1));
@@ -184,9 +184,9 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
 {
     // Do a search for arg.
     Instance::Arguments::const_iterator i = d->arguments.begin();
-    for(; i != d->arguments.end() && !matches(arg, *i); ++i) {}
+    for (; i != d->arguments.end() && !matches(arg, *i); ++i) {}
 
-    if(i == d->arguments.end())
+    if (i == d->arguments.end())
     {
         // Not found.
         return ArgWithParams();
@@ -196,9 +196,9 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     ArgWithParams found;
     found.arg = arg;
     Instance::Arguments::const_iterator k = i;
-    while(numParams-- > 0)
+    while (numParams-- > 0)
     {
-        if(++k == d->arguments.end() || isOption(*k))
+        if (++k == d->arguments.end() || isOption(*k))
         {
             // Ran out of arguments, or encountered an option.
             return ArgWithParams();
@@ -213,7 +213,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
 bool CommandLine::getParameter(String const &arg, String &param) const
 {
     dint pos = check(arg, 1);
-    if(pos > 0)
+    if (pos > 0)
     {
         param = at(pos + 1);
         return true;
@@ -227,7 +227,7 @@ dint CommandLine::has(String const &arg) const
 
     DENG2_FOR_EACH_CONST(Instance::Arguments, i, d->arguments)
     {
-        if(matches(arg, *i))
+        if (matches(arg, *i))
         {
             howMany++;
         }
@@ -237,7 +237,7 @@ dint CommandLine::has(String const &arg) const
 
 bool CommandLine::isOption(duint pos) const
 {
-    if(pos >= (duint) d->arguments.size())
+    if (pos >= (duint) d->arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
@@ -264,7 +264,7 @@ char const *const *CommandLine::argv() const
 
 void CommandLine::makeAbsolutePath(duint pos)
 {
-    if(pos >= (duint) d->arguments.size())
+    if (pos >= (duint) d->arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::makeAbsolutePath", "Index out of range");
@@ -272,12 +272,12 @@ void CommandLine::makeAbsolutePath(duint pos)
 
     QString arg = d->arguments[pos];
 
-    if(!isOption(pos) && !arg.startsWith("}"))
+    if (!isOption(pos) && !arg.startsWith("}"))
     {
         bool converted = false;
         QDir dir(NativePath(arg).expand()); // note: strips trailing slash
 
-        if(!QDir::isAbsolutePath(arg))
+        if (!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
             converted = true;
@@ -287,7 +287,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         d->arguments[pos] = NativePath(dir.path());
 
         QFileInfo info(dir.path());
-        if(info.isDir())
+        if (info.isDir())
         {
             // Append a slash so FS1 will treat it as a directory.
             d->arguments[pos] += '/';
@@ -297,7 +297,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         free(d->pointers[pos]);
         d->pointers[pos] = duplicateStringAsUtf8(d->arguments[pos]);
 
-        if(converted)
+        if (converted)
         {
             LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
         }
@@ -307,7 +307,7 @@ void CommandLine::makeAbsolutePath(duint pos)
 void CommandLine::parseResponseFile(NativePath const &nativePath)
 {
     QFile response(nativePath.expand());
-    if(response.open(QFile::ReadOnly | QFile::Text))
+    if (response.open(QFile::ReadOnly | QFile::Text))
     {
         parse(QString::fromUtf8(response.readAll().constData()));
     }
@@ -327,14 +327,14 @@ void CommandLine::parse(String const &cmdLine)
     // Are we currently inside quotes?
     bool quote = false;
 
-    while(i != cmdLine.end() && !isDone)
+    while (i != cmdLine.end() && !isDone)
     {
         // Skip initial whitespace.
         String::skipSpace(i, cmdLine.end());
 
         // Check for response files.
         bool isResponse = false;
-        if(*i == '@')
+        if (*i == '@')
         {
             isResponse = true;
             String::skipSpace(++i, cmdLine.end());
@@ -342,13 +342,13 @@ void CommandLine::parse(String const &cmdLine)
 
         String word;
 
-        while(i != cmdLine.end() && (quote || !(*i).isSpace()))
+        while (i != cmdLine.end() && (quote || !(*i).isSpace()))
         {
             bool copyChar = true;
-            if(!quote)
+            if (!quote)
             {
                 // We're not inside quotes.
-                if(*i == '\"') // Quote begins.
+                if (*i == '\"') // Quote begins.
                 {
                     quote = true;
                     copyChar = false;
@@ -357,9 +357,9 @@ void CommandLine::parse(String const &cmdLine)
             else
             {
                 // We're inside quotes.
-                if(*i == '\"') // Quote ends.
+                if (*i == '\"') // Quote ends.
                 {
-                    if(i + 1 != cmdLine.end() && *(i + 1) == '\"') // Doubles?
+                    if (i + 1 != cmdLine.end() && *(i + 1) == '\"') // Doubles?
                     {
                         // Normal processing, but output only one quote.
                         i++;
@@ -372,7 +372,7 @@ void CommandLine::parse(String const &cmdLine)
                 }
             }
 
-            if(copyChar)
+            if (copyChar)
             {
                 word.push_back(*i);
             }
@@ -381,15 +381,15 @@ void CommandLine::parse(String const &cmdLine)
         }
 
         // Word has been extracted, examine it.
-        if(isResponse) // Response file?
+        if (isResponse) // Response file?
         {
             parseResponseFile(word);
         }
-        else if(word == "--") // End of arguments.
+        else if (word == "--") // End of arguments.
         {
             isDone = true;
         }
-        else if(!word.empty()) // Make sure there *is *a word.
+        else if (!word.empty()) // Make sure there *is *a word.
         {
             d->appendArg(word);
         }
@@ -403,18 +403,18 @@ void CommandLine::alias(String const &full, String const &alias)
 
 bool CommandLine::matches(String const &full, String const &fullOrAlias) const
 {
-    if(!full.compareWithoutCase(fullOrAlias))
+    if (!full.compareWithoutCase(fullOrAlias))
     {
         // They are, in fact, the same.
         return true;
     }
 
     Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
-    if(found != d->aliases.end())
+    if (found != d->aliases.end())
     {
         DENG2_FOR_EACH_CONST(Instance::ArgumentStrings, i, found->second)
         {
-            if(!i->compareWithoutCase(fullOrAlias))
+            if (!i->compareWithoutCase(fullOrAlias))
             {
                 // Found it among the aliases.
                 return true;
@@ -428,13 +428,13 @@ bool CommandLine::execute() const
 {
     LOG_AS("CommandLine");
 
-    if(count() < 1) return false;
+    if (count() < 1) return false;
 
     QStringList args;
-    for(int i = 1; i < count(); ++i) args << at(i);
+    for (int i = 1; i < count(); ++i) args << at(i);
 
     qint64 pid = 0;
-    if(!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
+    if (!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
     {
         LOG_ERROR("Failed to start \"%s\"") << at(0);
         return false;
@@ -448,21 +448,21 @@ bool CommandLine::executeAndWait(String *output) const
 {
     LOG_AS("CommandLine");
 
-    if(count() < 1) return false;
+    if (count() < 1) return false;
 
     QStringList args;
-    for(int i = 1; i < count(); ++i) args << at(i);
+    for (int i = 1; i < count(); ++i) args << at(i);
 
     LOG_DEBUG("Starting process \"%s\"") << at(0);
 
-    if(output) output->clear();
+    if (output) output->clear();
 
     QProcess proc;
     proc.start(at(0), args);
-    if(!proc.waitForStarted()) return false;
+    if (!proc.waitForStarted()) return false;
     bool result = proc.waitForFinished();
 
-    if(output)
+    if (output)
     {
         *output = String::fromUtf8(Block(proc.readAll()));
     }

@@ -127,7 +127,7 @@ public:
      */
     BinaryTree &parent() const
     {
-        if(_parent)
+        if (_parent)
         {
             return *_parent;
         }
@@ -165,7 +165,7 @@ public:
     inline bool hasChild(ChildId which) const
     {
         assertValidChildId(which);
-        if(which) return _leftChild  != 0;
+        if (which) return _leftChild  != 0;
         else      return _rightChild != 0;
     }
 
@@ -250,7 +250,7 @@ public:
     {
         assertValidChildId(which);
         BinaryTree * const *adr = which? &_leftChild : &_rightChild;
-        if(*adr)
+        if (*adr)
         {
             return **adr;
         }
@@ -316,7 +316,7 @@ public:
     BinaryTree &setChild(ChildId child, BinaryTree *subtree)
     {
         assertValidChildId(child);
-        if(child == Left)
+        if (child == Left)
             _leftChild = subtree;
         else
             _rightChild = subtree;
@@ -333,7 +333,7 @@ public:
      */
     size_t height() const
     {
-        if(!isLeaf())
+        if (!isLeaf())
         {
             size_t right = _rightChild? _rightChild->height() : 0;
             size_t left  = _leftChild ?  _leftChild->height() : 0;
@@ -381,13 +381,13 @@ public:
 
         setUserData(other.userData());
 
-        if(other.hasLeft())
+        if (other.hasLeft())
         {
             setLeft(new BinaryTree);
             left() = other.left();
             left().setParent(this);
         }
-        if(other.hasRight())
+        if (other.hasRight())
         {
             setRight(new BinaryTree);
             right() = other.right();
@@ -411,21 +411,21 @@ public:
      */
     int traversePreOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
     {
-        if(!callback) return false; // Continue iteration.
+        if (!callback) return false; // Continue iteration.
 
         // Visit this node.
-        if(int result = callback(*this, parameters)) return result;
+        if (int result = callback(*this, parameters)) return result;
 
-        if(hasRight())
+        if (hasRight())
         {
             int result = right().traversePreOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
-        if(hasLeft())
+        if (hasLeft())
         {
             int result = left().traversePreOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
         return false; // Continue iteration.
@@ -446,21 +446,21 @@ public:
      */
     int traverseInOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
     {
-        if(!callback) return false; // Continue iteration.
+        if (!callback) return false; // Continue iteration.
 
-        if(hasRight())
+        if (hasRight())
         {
             int result = right().traverseInOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
         // Visit this node.
-        if(int result = callback(*this, parameters)) return result;
+        if (int result = callback(*this, parameters)) return result;
 
-        if(hasLeft())
+        if (hasLeft())
         {
             int result = left().traverseInOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
         return false; // Continue iteration.
@@ -481,18 +481,18 @@ public:
      */
     int traversePostOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
     {
-        if(!callback) return false; // Continue iteration.
+        if (!callback) return false; // Continue iteration.
 
-        if(hasRight())
+        if (hasRight())
         {
             int result = right().traversePostOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
-        if(hasLeft())
+        if (hasLeft())
         {
             int result = left().traversePostOrder(callback, parameters);
-            if(result) return result;
+            if (result) return result;
         }
 
         // Visit this node.
@@ -507,7 +507,7 @@ public:
         String text = String("%1 nodes, %2 leafs")
                         .arg(nodeCount())
                         .arg(leafCount());
-        if(!isLeaf())
+        if (!isLeaf())
         {
             text += String(" (balance is %1:%2)")
                         .arg(hasRight()? right().height() : 0)
@@ -526,11 +526,11 @@ private:
     static int countSubtreeWorker(BinaryTree &subtree, void *context)
     {
         countsubtreeworker_params_t &p = *static_cast<countsubtreeworker_params_t *>(context);
-        if(subtree.isLeaf() && p.countLeafs)
+        if (subtree.isLeaf() && p.countLeafs)
         {
             p.total++;
         }
-        if(!subtree.isLeaf() && p.countNodes)
+        if (!subtree.isLeaf() && p.countNodes)
         {
             p.total++;
         }

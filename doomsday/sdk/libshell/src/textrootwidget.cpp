@@ -64,7 +64,7 @@ bool TextRootWidget::drawWasRequested() const
 void TextRootWidget::draw()
 {
     RootWidget::draw();
-    if(focus())
+    if (focus())
     {
         _canvas->setCursorPosition(focus()->cursorPosition());
     }

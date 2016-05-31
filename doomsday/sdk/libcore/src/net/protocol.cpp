@@ -41,10 +41,10 @@ void Protocol::define(Constructor constructor)
 
 Packet *Protocol::interpret(Block const &block) const
 {
-    foreach(Constructor constructor, _constructors)
+    foreach (Constructor constructor, _constructors)
     {
         Packet *p = constructor(block);
-        if(p)
+        if (p)
         {
             return p;
         }
@@ -62,13 +62,13 @@ void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, Record
     QScopedPointer<RecordPacket> rep(to.receivePacket<RecordPacket>());
 
     // Check the answer.
-    if(rep->label() == "failure")
+    if (rep->label() == "failure")
     {
         /// @throw FailureError The response to @a command was FAILURE.
         throw FailureError("Protocol::decree", "Command '" + command.command() + 
             "' failed: " + rep->valueAsText("message"));
     }
-    else if(rep->label() == "deny")
+    else if (rep->label() == "deny")
     {
         /// @throw DenyError The response to @a command was DENY.
         throw DenyError("Protocol::decree", "Command '" + command.command() +
@@ -78,7 +78,7 @@ void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, Record
     LOG_DEBUG("Reply to the command '%s' was '%s':") << command.command() << rep->label();
     LOG_DEBUG("") << rep->record();
 
-    if(response)
+    if (response)
     {
         *response = rep.take();
     }
@@ -88,7 +88,7 @@ void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, Record
 void Protocol::reply(Transmitter &to, Reply type, Record *record)
 {
     String label;
-    switch(type)
+    switch (type)
     {
     case OK:
         label = "ok";
@@ -103,7 +103,7 @@ void Protocol::reply(Transmitter &to, Reply type, Record *record)
         break;
     }
     RecordPacket packet(label);
-    if(record)
+    if (record)
     {
         packet.take(record);
     }
@@ -113,7 +113,7 @@ void Protocol::reply(Transmitter &to, Reply type, Record *record)
 void Protocol::reply(Transmitter &to, Reply type, String const &message)
 {
     Record* rec = new Record();
-    if(!message.empty())
+    if (!message.empty())
     {
         rec->addText("message", message);
     }

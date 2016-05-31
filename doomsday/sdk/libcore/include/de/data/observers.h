@@ -116,7 +116,7 @@
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define DENG2_FOR_EACH_OBSERVER(SetName, Var, Name) for(SetName::Loop Var(Name); !Var.done(); ++Var)
+#define DENG2_FOR_EACH_OBSERVER(SetName, Var, Name) for (SetName::Loop Var(Name); !Var.done(); ++Var)
 
 /**
  * Macro for looping through the audience members.
@@ -222,7 +222,7 @@ public:
         }
         void next() {
             _current = _next;
-            if(_next != _observers.constEnd()) {
+            if (_next != _observers.constEnd()) {
                 ++_next;
             }
         }
@@ -261,7 +261,7 @@ public:
     }
 
     Observers<Type> &operator = (Observers<Type> const &other) {
-        if(this == &other) return *this;
+        if (this == &other) return *this;
         DENG2_GUARD(other);
         DENG2_GUARD(this);
         _members = other._members;

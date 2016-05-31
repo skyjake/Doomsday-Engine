@@ -44,11 +44,11 @@ DENG2_PIMPL(GLShader)
 
     void alloc()
     {
-        if(!name)
+        if (!name)
         {
             name = glCreateShader(type == Vertex? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
             LIBGUI_ASSERT_GL_OK();
-            if(!name)
+            if (!name)
             {
                 throw AllocError("GLShader::alloc", "Failed to create shader");
             }
@@ -57,7 +57,7 @@ DENG2_PIMPL(GLShader)
 
     void release()
     {
-        if(name)
+        if (name)
         {
             glDeleteShader(name);
             name = 0;
@@ -84,7 +84,7 @@ GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Instance(t
     {
         compile(shaderType, source);
     }
-    catch(...)
+    catch (...)
     {
         // Construction was aborted.
         addRef(-1);
@@ -111,7 +111,7 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 {
     Block src = source;
     int versionPos = src.indexOf("#version ");
-    if(versionPos >= 0)
+    if (versionPos >= 0)
     {
         // Append prefix after version.
         int pos = src.indexOf('\n', versionPos);
@@ -143,7 +143,7 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
 
     // Additional predefined symbols for the shader.
     QByteArray predefs;
-    if(shaderType == Vertex)
+    if (shaderType == Vertex)
     {
         predefs = QByteArray("#define DENG_VERTEX_SHADER\n");
     }
@@ -164,7 +164,7 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     // Check the compilation status.
     GLint status;
     glGetShaderiv(d->name, GL_COMPILE_STATUS, &status);
-    if(!status)
+    if (!status)
     {
         dint32 logSize = 0;
         dint32 count = 0;

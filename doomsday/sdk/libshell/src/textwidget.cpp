@@ -36,14 +36,14 @@ DENG2_PIMPL_NOREF(TextWidget)
     ~Instance()
     {
         delete rule;
-        foreach(Action *act, actions) releaseRef(act);
+        foreach (Action *act, actions) releaseRef(act);
     }
 
     void removeAction(Action &action)
     {
-        for(int i = actions.size() - 1; i >= 0; --i)
+        for (int i = actions.size() - 1; i >= 0; --i)
         {
-            if(actions.at(i) == &action)
+            if (actions.at(i) == &action)
             {
                 releaseRef(actions[i]);
                 actions.removeAt(i);
@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(TextWidget)
     bool navigateFocus(TextRootWidget &root, String const &name)
     {
         Widget *w = root.find(name);
-        if(w)
+        if (w)
         {
             root.setFocus(w);
             root.requestDraw();
@@ -92,7 +92,7 @@ void TextWidget::setTargetCanvas(TextCanvas *canvas)
 
 TextCanvas &TextWidget::targetCanvas() const
 {
-    if(!d->canvas)
+    if (!d->canvas)
     {
         // A specific target not defined, use the root canvas.
         return root().rootCanvas();
@@ -102,12 +102,12 @@ TextCanvas &TextWidget::targetCanvas() const
 
 void TextWidget::redraw()
 {
-    if(hasRoot() && !isHidden()) root().requestDraw();
+    if (hasRoot() && !isHidden()) root().requestDraw();
 }
 
 void TextWidget::drawAndShow()
 {
-    if(!isHidden())
+    if (!isHidden())
     {
         draw();
 
@@ -150,27 +150,27 @@ void TextWidget::removeAction(Action &action)
 bool TextWidget::handleEvent(Event const &event)
 {
     // We only support KeyEvents.
-    if(event.type() == Event::KeyPress)
+    if (event.type() == Event::KeyPress)
     {
         KeyEvent const &keyEvent = event.as<KeyEvent>();
 
-        foreach(Action *act, d->actions)
+        foreach (Action *act, d->actions)
         {
             // Event will be used by actions.
-            if(act->tryTrigger(keyEvent)) return true;
+            if (act->tryTrigger(keyEvent)) return true;
         }
 
         // Focus navigation.
-        if((keyEvent.key() == Qt::Key_Tab || keyEvent.key() == Qt::Key_Down) &&
+        if ((keyEvent.key() == Qt::Key_Tab || keyEvent.key() == Qt::Key_Down) &&
                 hasFocus() && !focusNext().isEmpty())
         {
-            if(d->navigateFocus(root(), focusNext()))
+            if (d->navigateFocus(root(), focusNext()))
                 return true;
         }
-        if((keyEvent.key() == Qt::Key_Backtab || keyEvent.key() == Qt::Key_Up) &&
+        if ((keyEvent.key() == Qt::Key_Backtab || keyEvent.key() == Qt::Key_Up) &&
                 hasFocus() && !focusPrev().isEmpty())
         {
-            if(d->navigateFocus(root(), focusPrev()))
+            if (d->navigateFocus(root(), focusPrev()))
                 return true;
         }
     }

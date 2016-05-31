@@ -60,15 +60,15 @@ public:
         if (!XRRQueryExtension(QX11Info::display(), &dummy, &dummy)) return; // Not available.
 
         _conf = XRRGetScreenInfo(QX11Info::display(), QX11Info::appRootWindow());
-        if(!_conf) return; // Not available.
+        if (!_conf) return; // Not available.
 
         // Let's see which modes are available.
         _sizes = XRRConfigSizes(_conf, &_numSizes);
-        for(int i = 0; i < _numSizes; ++i)
+        for (int i = 0; i < _numSizes; ++i)
         {
             int numRates = 0;
             short* rates = XRRConfigRates(_conf, i, &numRates);
-            for(int k = 0; k < numRates; k++)
+            for (int k = 0; k < numRates; k++)
             {
                 DisplayMode mode;
                 de::zap(mode);
@@ -86,7 +86,7 @@ public:
 
     ~RRInfo()
     {
-        if(_conf) XRRFreeScreenConfigInfo(_conf);
+        if (_conf) XRRFreeScreenConfigInfo(_conf);
     }
 
     /**
@@ -98,7 +98,7 @@ public:
         DisplayMode mode;
         de::zap(mode);
 
-        if(!_conf) return mode;
+        if (!_conf) return mode;
 
         SizeID currentSize = XRRConfigCurrentConfiguration(_conf, &displayRotation);
 
@@ -119,13 +119,13 @@ public:
 
     int find(const DisplayMode* mode) const
     {
-        for(int i = 0; i < _numSizes; ++i)
+        for (int i = 0; i < _numSizes; ++i)
         {
             int numRates = 0;
             short* rates = XRRConfigRates(_conf, i, &numRates);
-            for(int k = 0; k < numRates; k++)
+            for (int k = 0; k < numRates; k++)
             {
-                if(rateFromMode(mode) == rates[k] &&
+                if (rateFromMode(mode) == rates[k] &&
                    mode->width == _sizes[i].width &&
                    mode->height == _sizes[i].height)
                 {
@@ -139,7 +139,7 @@ public:
 
     bool apply(const DisplayMode* mode)
     {
-        if(!_conf) return false;
+        if (!_conf) return false;
 
         int sizeIdx = find(mode);
         assert(sizeIdx >= 0);
@@ -148,7 +148,7 @@ public:
         Status result = XRRSetScreenConfigAndRate(QX11Info::display(), _conf, QX11Info::appRootWindow(),
                                                   sizeIdx, displayRotation, rateFromMode(mode), _confTime);
         //qDebug() << "result" << result;
-        if(result == BadValue)
+        if (result == BadValue)
         {
             qDebug() << "Failed to apply screen config and rate with Xrandr";
             return false;
@@ -211,10 +211,10 @@ void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 #if 0
 static int findMode(const DisplayMode* mode)
 {
-    for(int i = 0; i < DisplayMode_Native_Count(); ++i)
+    for (int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
         DisplayMode d = devToDisplayMode(devModes[i]);
-        if(DisplayMode_IsEqual(&d, mode))
+        if (DisplayMode_IsEqual(&d, mode))
         {
             return i;
         }
@@ -237,7 +237,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 
     LOG_AS("GetColorTransfer");
 
-    if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
+    if (!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
     {
         LOG_GL_WARNING("XFree86-VidModeExtension not available.");
         return;
@@ -248,7 +248,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
     int rampSize = 0;
     XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
     LOGDEV_GL_VERBOSE("Gamma ramp size: %i") << rampSize;
-    if(!rampSize) return;
+    if (!rampSize) return;
 
     ushort* xRamp = new ushort[3 * rampSize];
 
@@ -256,7 +256,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
     XF86VidModeGetGammaRamp(dpy, screen, rampSize, xRamp,
                             xRamp + rampSize, xRamp + 2*rampSize);
 
-    for(uint i = 0; i < 256; ++i)
+    for (uint i = 0; i < 256; ++i)
     {
         const uint tx = qMin(uint(rampSize - 1), i * rampSize / 255);
         colors->table[i]       = xRamp[tx];
@@ -270,16 +270,16 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
     Display* dpy = QX11Info::display();
-    if(!dpy) return;
+    if (!dpy) return;
 
     // Ramp size.
     int rampSize = 0;
     XF86VidModeGetGammaRampSize(dpy, QX11Info::appScreen(), &rampSize);
-    if(!rampSize) return;
+    if (!rampSize) return;
 
     ushort* xRamp = new ushort[3 * rampSize];
 
-    for(int i = 0; i < rampSize; ++i)
+    for (int i = 0; i < rampSize; ++i)
     {
         const uint tx = qMin(255, i * 256 / (rampSize - 1));
         xRamp[i]              = colors->table[tx];

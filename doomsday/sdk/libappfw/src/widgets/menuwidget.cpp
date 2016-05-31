@@ -80,20 +80,20 @@ DENG2_PIMPL(MenuWidget)
             DENG2_ASSERT(bool(_widget));
             DENG2_ASSERT(d->self.hasRoot());
 
-            if(_widget->isOpeningOrClosing()) return;
+            if (_widget->isOpeningOrClosing()) return;
 
-            if(!_widget->parentWidget())
+            if (!_widget->parentWidget())
             {
                 d->self.root().add(_widget);
             }
 
             Action::trigger();
 
-            if(auto *subMenu = _widget->maybeAs<PopupMenuWidget>())
+            if (auto *subMenu = _widget->maybeAs<PopupMenuWidget>())
             {
                 // Parent is the anchor button, owned by a MenuWidget, possibly owned a
                 // the popup menu.
-                if(auto *parentMenu = parent().parentWidget())
+                if (auto *parentMenu = parent().parentWidget())
                 {
                     subMenu->setParentPopup(parentMenu->parent()->maybeAs<PopupWidget>());
                 }
@@ -149,7 +149,7 @@ DENG2_PIMPL(MenuWidget)
 
         void trigger()
         {
-            if(isTriggered()) return; // Already open, cannot retrigger.
+            if (isTriggered()) return; // Already open, cannot retrigger.
 
             // The widget is created only at this point, when the action is triggered.
             setWidget(_item.makeWidget(), _item.openingDirection());
@@ -199,7 +199,7 @@ DENG2_PIMPL(MenuWidget)
 
     void setContext(Data const *ctx)
     {
-        if(items)
+        if (items)
         {
             // Get rid of the old context.
             items->audienceForAddition() -= this;
@@ -241,7 +241,7 @@ DENG2_PIMPL(MenuWidget)
         // when filtered items are accepted again as widgets.
         needLayout = true;
 
-        if(IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        if (IAssetGroup *asset = child.maybeAs<IAssetGroup>())
         {
             assets += *asset; // part of the asset group (observes for deletion)
         }
@@ -253,7 +253,7 @@ DENG2_PIMPL(MenuWidget)
         // when filtered items are removed from the menu.
         needLayout = true;
 
-        if(IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        if (IAssetGroup *asset = child.maybeAs<IAssetGroup>())
         {
             assets -= *asset; // no longer part of the asset group
         }
@@ -261,7 +261,7 @@ DENG2_PIMPL(MenuWidget)
 
     static void setFoldIndicatorForDirection(LabelWidget &label, ui::Direction dir)
     {
-        if(dir == ui::Right || dir == ui::Left)
+        if (dir == ui::Right || dir == ui::Left)
         {
             label.setImage(new StyleProceduralImage("fold", label, dir == ui::Right? -90 : 90));
             label.setTextAlignment(dir == ui::Right? ui::AlignLeft : ui::AlignRight);
@@ -273,31 +273,31 @@ DENG2_PIMPL(MenuWidget)
      */
     GuiWidget *makeItemWidget(Item const &item, GuiWidget const *)
     {
-        if(item.semantics().testFlag(Item::ShownAsButton))
+        if (item.semantics().testFlag(Item::ShownAsButton))
         {
             // Normal clickable button.
             ButtonWidget *b = (item.semantics().testFlag(Item::ShownAsPopupButton)?
                                    new PopupButtonWidget : new ButtonWidget);
             b->setTextAlignment(ui::AlignRight);
-            if(item.is<SubmenuItem>())
+            if (item.is<SubmenuItem>())
             {
                 auto const &subItem = item.as<SubmenuItem>();
                 b->setAction(new SubmenuAction(this, subItem));
                 setFoldIndicatorForDirection(*b, subItem.openingDirection());
             }
-            else if(item.is<SubwidgetItem>())
+            else if (item.is<SubwidgetItem>())
             {
                 auto const &subItem = item.as<SubwidgetItem>();
                 b->setAction(new SubwidgetAction(this, subItem));
                 setFoldIndicatorForDirection(*b, subItem.openingDirection());
-                if(subItem.image().isNull())
+                if (subItem.image().isNull())
                 {
                     setFoldIndicatorForDirection(*b, subItem.openingDirection());
                 }
             }
             return b;
         }
-        else if(item.semantics().testFlag(Item::Separator))
+        else if (item.semantics().testFlag(Item::Separator))
         {
             LabelWidget *lab = new LabelWidget;
             lab->setAlignment(ui::AlignLeft);
@@ -305,7 +305,7 @@ DENG2_PIMPL(MenuWidget)
             lab->setSizePolicy(ui::Expand, ui::Expand);
             return lab;
         }
-        else if(item.semantics().testFlag(Item::ShownAsLabel))
+        else if (item.semantics().testFlag(Item::ShownAsLabel))
         {
             LabelWidget *lab = new LabelWidget;
             lab->setTextAlignment(ui::AlignRight);
@@ -313,10 +313,10 @@ DENG2_PIMPL(MenuWidget)
             lab->setSizePolicy(ui::Expand, ui::Expand);
             return lab;
         }
-        else if(item.semantics().testFlag(Item::ShownAsToggle))
+        else if (item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
-            if(VariableToggleItem const *varTog = item.maybeAs<VariableToggleItem>())
+            if (VariableToggleItem const *varTog = item.maybeAs<VariableToggleItem>())
             {
                 return new VariableToggleWidget(varTog->variable());
             }
@@ -332,37 +332,37 @@ DENG2_PIMPL(MenuWidget)
     void updateItemWidget(GuiWidget &widget, Item const &item)
     {
         // Image items apply their image to all label-based widgets.
-        if(ImageItem const *img = item.maybeAs<ImageItem>())
+        if (ImageItem const *img = item.maybeAs<ImageItem>())
         {
-            if(LabelWidget *label = widget.maybeAs<LabelWidget>())
+            if (LabelWidget *label = widget.maybeAs<LabelWidget>())
             {
-                if(!img->image().isNull())
+                if (!img->image().isNull())
                 {
                     label->setImage(img->image());
                 }
             }
         }
 
-        if(ActionItem const *act = item.maybeAs<ActionItem>())
+        if (ActionItem const *act = item.maybeAs<ActionItem>())
         {
-            if(item.semantics().testFlag(Item::ShownAsButton))
+            if (item.semantics().testFlag(Item::ShownAsButton))
             {
                 ButtonWidget &b = widget.as<ButtonWidget>();
                 b.setText(act->label());
-                if(act->action())
+                if (act->action())
                 {
                     b.setAction(*act->action());
                 }
             }
-            else if(item.semantics().testFlag(Item::ShownAsLabel))
+            else if (item.semantics().testFlag(Item::ShownAsLabel))
             {
                 widget.as<LabelWidget>().setText(item.label());
             }
-            else if(item.semantics().testFlag(Item::ShownAsToggle))
+            else if (item.semantics().testFlag(Item::ShownAsToggle))
             {
                 ToggleWidget &t = widget.as<ToggleWidget>();
                 t.setText(act->label());
-                if(act->action())
+                if (act->action())
                 {
                     t.setAction(*act->action());
                 }
@@ -398,15 +398,15 @@ DENG2_PIMPL(MenuWidget)
         emit self.subWidgetOpened(w);
 
         // Automatically close other subwidgets when one is opened.
-        foreach(auto *panel, openSubs)
+        foreach (auto *panel, openSubs)
         {
-            if(panel != w) panel->close();
+            if (panel != w) panel->close();
         }
     }
 
     bool isVisibleItem(Widget const *child) const
     {
-        if(GuiWidget const *widget = child->maybeAs<GuiWidget>())
+        if (GuiWidget const *widget = child->maybeAs<GuiWidget>())
         {
             return !widget->behavior().testFlag(Widget::Hidden);
         }
@@ -416,9 +416,9 @@ DENG2_PIMPL(MenuWidget)
     int countVisible() const
     {
         int num = 0;
-        foreach(Widget *i, self.childWidgets())
+        foreach (Widget *i, self.childWidgets())
         {
-            if(isVisibleItem(i)) ++num;
+            if (isVisibleItem(i)) ++num;
         }
         return num;
     }
@@ -427,10 +427,10 @@ DENG2_PIMPL(MenuWidget)
     {
         layout.clear();
 
-        foreach(Widget *child, self.childWidgets())
+        foreach (Widget *child, self.childWidgets())
         {
             GuiWidget *w = child->maybeAs<GuiWidget>();
-            if(!isVisibleItem(w)) continue;
+            if (!isVisibleItem(w)) continue;
 
             layout << *w;
         }
@@ -459,14 +459,14 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     d->colPolicy = columnPolicy;
     d->rowPolicy = rowPolicy;
 
-    if(d->colPolicy == ui::Filled)
+    if (d->colPolicy == ui::Filled)
     {
         DENG2_ASSERT(columns > 0);
         d->layout.setOverrideWidth((rule().width() - margins().width() -
                                     (columns - 1) * d->layout.columnPadding()) / float(columns));
     }
 
-    if(d->rowPolicy == ui::Filled)
+    if (d->rowPolicy == ui::Filled)
     {
         DENG2_ASSERT(rows > 0);
         d->layout.setOverrideHeight((rule().height() - margins().height() -
@@ -508,7 +508,7 @@ int MenuWidget::count() const
 
 bool MenuWidget::isWidgetPartOfMenu(Widget const &widget) const
 {
-    if(widget.parent() != this) return false;
+    if (widget.parent() != this) return false;
     return d->isVisibleItem(&widget);
 }
 
@@ -519,11 +519,11 @@ void MenuWidget::updateLayout()
     setContentSize(d->layout.width(), d->layout.height());
 
     // Expanding policy causes the size of the menu widget to change.
-    if(d->colPolicy == Expand)
+    if (d->colPolicy == Expand)
     {
         rule().setInput(Rule::Width, d->layout.width() + margins().width());
     }
-    if(d->rowPolicy == Expand)
+    if (d->rowPolicy == Expand)
     {
         rule().setInput(Rule::Height, d->layout.height() + margins().height());
     }
@@ -553,7 +553,7 @@ ChildWidgetOrganizer const &MenuWidget::organizer() const
 
 ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
 {
-    if(auto const *item = organizer().findItemForWidget(widget))
+    if (auto const *item = organizer().findItemForWidget(widget))
     {
         return items().find(*item);
     }
@@ -562,7 +562,7 @@ ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
 
 void MenuWidget::update()
 {
-    if(d->needLayout)
+    if (d->needLayout)
     {
         updateLayout();
     }
@@ -573,20 +573,20 @@ void MenuWidget::update()
 bool MenuWidget::handleEvent(Event const &event)
 {
     // If a menu item has focus, arrow keys can be used to move the focus.
-    if(event.isKeyDown() && root().focus() && root().focus()->parent() == this)
+    if (event.isKeyDown() && root().focus() && root().focus()->parent() == this)
     {
         KeyEvent const &key = event.as<KeyEvent>();
-        if(key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
+        if (key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
         {
             auto const children = childWidgets();
 
-            for(int ordinal = children.indexOf(root().focus());
+            for (int ordinal = children.indexOf(root().focus());
                 ordinal >= 0 && ordinal < int(childCount());
                 ordinal += (key.ddKey() == DDKEY_UPARROW? -1 : +1))
             {
                 auto *child = children.at(ordinal);
-                if(child->hasFocus() || child->isDisabled()) continue;
-                if(child->isVisible() && child->behavior().testFlag(Focusable))
+                if (child->hasFocus() || child->isDisabled()) continue;
+                if (child->isVisible() && child->behavior().testFlag(Focusable))
                 {
                     root().setFocus(child);
                     findTopmostScrollable().scrollToWidget(child->as<GuiWidget>());
@@ -601,7 +601,7 @@ bool MenuWidget::handleEvent(Event const &event)
 
 void MenuWidget::dismissPopups()
 {
-    foreach(PanelWidget *pop, d->openSubs)
+    foreach (PanelWidget *pop, d->openSubs)
     {
         pop->close();
     }

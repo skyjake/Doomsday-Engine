@@ -34,7 +34,7 @@ DENG2_PIMPL(PopupButtonWidget)
 
     void buttonStateChanged(ButtonWidget &, State state)
     {
-        if(state == Down)
+        if (state == Down)
         {
             popupWasOpenWhenButtonWentDown =
                     (pop && (pop->isOpen() || pop->isOpeningOrClosing()));
@@ -43,20 +43,20 @@ DENG2_PIMPL(PopupButtonWidget)
 
     void buttonPressed(ButtonWidget &)
     {
-        if(!popupWasOpenWhenButtonWentDown)
+        if (!popupWasOpenWhenButtonWentDown)
         {
-            if(constructor)
+            if (constructor)
             {
                 pop.reset(constructor(self));
                 self.add(pop);
                 self.setOpeningDirection(direction);
                 pop->setDeleteAfterDismissed(true);
             }
-            if(opener)
+            if (opener)
             {
                 opener(pop);
             }
-            else if(pop)
+            else if (pop)
             {
                 pop->open();
             }
@@ -95,7 +95,7 @@ void PopupButtonWidget::setPopup(Constructor makePopup, ui::Direction openingDir
 void PopupButtonWidget::setOpeningDirection(ui::Direction direction)
 {
     d->direction = direction;
-    if(d->pop)
+    if (d->pop)
     {
         d->pop->setAnchorAndOpeningDirection(rule(), direction);
     }
@@ -108,7 +108,7 @@ PopupWidget *PopupButtonWidget::popup() const
 
 bool PopupButtonWidget::isOpen() const
 {
-    if(d->pop)
+    if (d->pop)
     {
         return d->pop->isOpen();
     }

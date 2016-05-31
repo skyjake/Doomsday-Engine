@@ -77,7 +77,7 @@ public:
     void hideChild(GuiWidget &notif);
 
     void showOrHide(GuiWidget &notif, bool doShow) {
-        if(doShow) showChild(notif); else hideChild(notif);
+        if (doShow) showChild(notif); else hideChild(notif);
     }
 
     bool isChildShown(GuiWidget &notif) const;

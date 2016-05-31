@@ -57,7 +57,7 @@ DENG2_PIMPL(ArchiveFeed)
     {
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
-        if(IByteArray *bytes = f.maybeAs<IByteArray>())
+        if (IByteArray *bytes = f.maybeAs<IByteArray>())
         {
             LOG_RES_XVERBOSE("Source %s is a byte array") << f.description();
 
@@ -89,12 +89,12 @@ DENG2_PIMPL(ArchiveFeed)
 
     ~Instance()
     {
-        if(file)
+        if (file)
         {
             file->audienceForDeletion() -= this;
         }
 
-        if(arch)
+        if (arch)
         {
             writeIfModified();
             delete arch;
@@ -103,7 +103,7 @@ DENG2_PIMPL(ArchiveFeed)
 
     bool isWriteAllowed() const
     {
-        if(parentFeed)
+        if (parentFeed)
         {
             return parentFeed->d->isWriteAllowed();
         }
@@ -112,13 +112,13 @@ DENG2_PIMPL(ArchiveFeed)
 
     void writeIfModified()
     {
-        if(!file || !arch || !file->mode().testFlag(File::Write))
+        if (!file || !arch || !file->mode().testFlag(File::Write))
         {
             return;
         }
 
         // If modified, the archive is written back to the file.
-        if(arch->modified())
+        if (arch->modified())
         {
             LOG_RES_MSG("Updating archive in ") << file->description();
 
@@ -138,7 +138,7 @@ DENG2_PIMPL(ArchiveFeed)
 
     void fileBeingDeleted(File const &deleted)
     {
-        if(file == &deleted)
+        if (file == &deleted)
         {
             // Ensure that changes are saved and detach from the file.
             writeIfModified();
@@ -148,7 +148,7 @@ DENG2_PIMPL(ArchiveFeed)
 
     Archive &archive()
     {
-        if(parentFeed)
+        if (parentFeed)
         {
             return parentFeed->archive();
         }
@@ -163,7 +163,7 @@ DENG2_PIMPL(ArchiveFeed)
 
         DENG2_FOR_EACH(Archive::Names, i, names)
         {
-            if(folder.has(*i))
+            if (folder.has(*i))
             {
                 // Already has an entry for this, skip it (wasn't pruned so it's OK).
                 continue;
@@ -174,7 +174,7 @@ DENG2_PIMPL(ArchiveFeed)
             std::unique_ptr<ArchiveEntryFile> archFile(new ArchiveEntryFile(*i, archive(), entry));
 
             // Write access is inherited from the main source file.
-            if(allowWrite) archFile->setMode(File::Write);
+            if (allowWrite) archFile->setMode(File::Write);
 
             // Use the status of the entry within the archive.
             archFile->setStatus(archive().entryStatus(entry));
@@ -193,7 +193,7 @@ DENG2_PIMPL(ArchiveFeed)
         // Also populate subfolders.
         archive().listFolders(names, basePath);
 
-        for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
+        for (Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
             folder.fileSystem().makeFolder(folder.path() / *i, FS::InheritPrimaryFeed);
         }
@@ -231,16 +231,16 @@ bool ArchiveFeed::prune(File &file) const
     LOG_AS("ArchiveFeed::prune");
 
     ArchiveEntryFile *entryFile = file.maybeAs<ArchiveEntryFile>();
-    if(entryFile && &entryFile->archive() == &archive())
+    if (entryFile && &entryFile->archive() == &archive())
     {
-        if(!archive().hasEntry(entryFile->entryPath()))
+        if (!archive().hasEntry(entryFile->entryPath()))
         {
             LOG_RES_VERBOSE("%s removed from archive") << file.description();
             return true; // It's gone...
         }
 
         // Prune based on entry status.
-        if(archive().entryStatus(entryFile->entryPath()).modifiedAt !=
+        if (archive().entryStatus(entryFile->entryPath()).modifiedAt !=
            file.status().modifiedAt)
         {
             LOG_RES_XVERBOSE("%s has been modified (arch:%s != file:%s)")
@@ -256,7 +256,7 @@ bool ArchiveFeed::prune(File &file) const
 File *ArchiveFeed::newFile(String const &name)
 {
     String newEntry = d->basePath / name;
-    if(archive().hasEntry(newEntry))
+    if (archive().hasEntry(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
         throw AlreadyExistsError("ArchiveFeed::newFile", name + ": already exists");
@@ -295,7 +295,7 @@ String const &ArchiveFeed::basePath() const
 
 void ArchiveFeed::rewriteFile()
 {
-    if(d->parentFeed)
+    if (d->parentFeed)
     {
         DENG2_ASSERT(!d->arch);
         d->parentFeed->rewriteFile();

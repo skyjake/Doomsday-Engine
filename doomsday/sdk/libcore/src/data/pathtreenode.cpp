@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(PathTree::Node)
              PathTree::Node *_parent)
         : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
     {
-        if(!isLeaf) children = new PathTree::Node::Children;
+        if (!isLeaf) children = new PathTree::Node::Children;
     }
 
     ~Instance()
@@ -57,7 +57,7 @@ PathTree::Node::Node(PathTree::NodeArgs const &args) : d(nullptr)
     d.reset(new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent));
 
     // Let the parent know of the new child node.
-    if(d->parent) d->parent->addChild(*this);
+    if (d->parent) d->parent->addChild(*this);
 }
 
 PathTree::Node::~Node()
@@ -122,7 +122,7 @@ void PathTree::Node::removeChild(PathTree::Node &node)
 
 String const &PathTree::Node::name() const
 {
-    if(!d->segmentText)
+    if (!d->segmentText)
     {
         // Cache the string, because PathTree::segmentName() locks the tree and that has
         // performance implications. The segment text string will not change while the
@@ -145,21 +145,21 @@ static int matchName(QChar const *string,  dsize stringSize,
     QChar const *inEnd = string + stringSize;
     QChar const *st    = pattern;
 
-    while(in < inEnd)
+    while (in < inEnd)
     {
-        if(*st == QChar('*'))
+        if (*st == QChar('*'))
         {
             st++;
             continue;
         }
 
-        if(*st != QChar('?') && (st->toLower() != in->toLower()))
+        if (*st != QChar('?') && (st->toLower() != in->toLower()))
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != QChar('*')) { st--; }
+            while (st >= pattern && *st != QChar('*')) { st--; }
 
             // No match?
-            if(st < pattern) return false;
+            if (st < pattern) return false;
 
             // The asterisk lets us continue.
         }
@@ -170,7 +170,7 @@ static int matchName(QChar const *string,  dsize stringSize,
     }
 
     // Skip remaining asterisks.
-    while(*st == QChar('*')) { st++; }
+    while (*st == QChar('*')) { st++; }
 
     // Match is good if the end of the pattern was reached.
     return st == (pattern + patternSize);
@@ -178,7 +178,7 @@ static int matchName(QChar const *string,  dsize stringSize,
 
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
 {
-    if(((flags & PathTree::NoLeaf)   && isLeaf()) ||
+    if (((flags & PathTree::NoLeaf)   && isLeaf()) ||
        ((flags & PathTree::NoBranch) && isBranch()))
         return 1;
 
@@ -190,19 +190,19 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
         int pathNodeCount = searchPattern.segmentCount();
 
         PathTree::Node const *node = this;
-        for(int i = 0; i < pathNodeCount; ++i)
+        for (int i = 0; i < pathNodeCount; ++i)
         {
             bool const snameIsWild = !snode->toStringRef().compare(QStringLiteral("*"));
-            if(!snameIsWild)
+            if (!snameIsWild)
             {
                 // If the hashes don't match it can't possibly be this.
-                if(snode->hash() != node->hash())
+                if (snode->hash() != node->hash())
                 {
                     return 1;
                 }
 
                 // Compare the names.
-                if(!matchName(node->name().constData(), node->name().size(),
+                if (!matchName(node->name().constData(), node->name().size(),
                               snode->toStringRef().constData(), snode->toStringRef().size()))
                 {
                     return 1;
@@ -210,13 +210,13 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
             }
 
             // Have we arrived at the search target?
-            if(i == pathNodeCount - 1)
+            if (i == pathNodeCount - 1)
             {
                 return !(!(flags & MatchFull) || node->isAtRootLevel());
             }
 
             // Is the hierarchy too shallow?
-            if(node->isAtRootLevel())
+            if (node->isAtRootLevel())
             {
                 return 1;
             }
@@ -226,7 +226,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
             snode = &searchPattern.reverseSegment(i + 1);
         }
     }
-    catch(de::Path::OutOfBoundsError const &)
+    catch (de::Path::OutOfBoundsError const &)
     {} // Ignore this error.
 
     return 1;
@@ -264,9 +264,9 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
 
     args.length += segment.length();
 
-    if(!trav.isAtRootLevel())
+    if (!trav.isAtRootLevel())
     {
-        if(!args.separator.isNull())
+        if (!args.separator.isNull())
         {
             // There also needs to be a separator (a single character).
             args.length += 1;
@@ -276,12 +276,12 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
         pathConstructor(args, trav.parent());
 
         // Append the separator.
-        if(!args.separator.isNull())
+        if (!args.separator.isNull())
             args.composedPath.append(args.separator);
     }
     // We've arrived at the deepest level. The full length is now known.
     // Ensure there's enough memory for the string.
-    else if(args.composedPath)
+    else if (args.composedPath)
     {
         args.composedPath.reserve(args.length);
     }
@@ -317,7 +317,7 @@ Path PathTree::Node::path(QChar sep) const
 #endif
 
     // Include a terminating path separator for branches.
-    if(!sep.isNull() && isBranch())
+    if (!sep.isNull() && isBranch())
     {
         args.length++; // A single character.
     }
@@ -326,7 +326,7 @@ Path PathTree::Node::path(QChar sep) const
     pathConstructor(args, *this);
 
     // Add a closing separator for branches.
-    if(!sep.isNull() && isBranch())
+    if (!sep.isNull() && isBranch())
     {
         args.composedPath += sep;
     }

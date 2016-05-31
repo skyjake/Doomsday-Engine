@@ -67,7 +67,7 @@ protected:
         PropName(ValueType const &value) : Base(value) {} \
         PropName(PropName const &other) : Base(other._value) {} \
         void setValue(ValueType const &v) { \
-            if(_value == v) return; \
+            if (_value == v) return; \
             _value = v; \
             DENG2_FOR_AUDIENCE2(Change, i) i->valueOf ## PropName ## Changed(); \
         } \

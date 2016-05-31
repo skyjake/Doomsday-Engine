@@ -70,7 +70,7 @@ String Lexicon::additionalWordChars() const
 bool Lexicon::isWordChar(QChar ch) const
 {
     // Default word characters.
-    if(ch.isLetterOrNumber()) return true;
+    if (ch.isLetterOrNumber()) return true;
     return d->extraChars.contains(ch);
 }
 

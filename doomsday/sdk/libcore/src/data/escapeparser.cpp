@@ -45,10 +45,10 @@ void EscapeParser::parse(String const &textWithEscapes)
     forever
     {
         range.end = d->original.indexOf(QChar('\x1b'), range.start);
-        if(range.end >= 0)
+        if (range.end >= 0)
         {
             // Empty ranges are ignored.
-            if(range.size() > 0)
+            if (range.size() > 0)
             {
                 DENG2_FOR_AUDIENCE2(PlainText, i)
                 {
@@ -62,14 +62,14 @@ void EscapeParser::parse(String const &textWithEscapes)
             // Check the escape sequences.
             int escLen = 2;
             char ch = d->original[range.end + 1].toLatin1();
-            switch(ch)
+            switch (ch)
             {
             case '(':
             case '[':
             case '{': {
                 // Find the matching end.
                 int end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
-                if(end < 0) end = d->original.size() - 1;
+                if (end < 0) end = d->original.size() - 1;
                 escLen = end - range.end + 1;
                 break; }
 
@@ -93,7 +93,7 @@ void EscapeParser::parse(String const &textWithEscapes)
         {
             // Final plain text range.
             range.end = d->original.size();
-            if(range.size() > 0)
+            if (range.size() > 0)
             {
                 DENG2_FOR_AUDIENCE2(PlainText, i)
                 {

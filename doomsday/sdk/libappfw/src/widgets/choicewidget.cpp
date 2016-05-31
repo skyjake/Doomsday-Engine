@@ -94,7 +94,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(ButtonWidget *but = widget.maybeAs<ButtonWidget>())
+        if (ButtonWidget *but = widget.maybeAs<ButtonWidget>())
         {
             // Make sure the created buttons have an action that updates the
             // selected item.
@@ -104,7 +104,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void widgetUpdatedForItem(GuiWidget &, ui::Item const &item)
     {
-        if(isValidSelection() && &item == &self.selectedItem())
+        if (isValidSelection() && &item == &self.selectedItem())
         {
             // Make sure the button is up to date, too.
             updateButtonWithItem(self.selectedItem());
@@ -117,7 +117,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         // selection and thus we can't just check the current layout.
         Font const &font = self.font();
         int widest = 0;
-        for(uint i = 0; i < items().size(); ++i)
+        for (uint i = 0; i < items().size(); ++i)
         {
             EscapeParser esc;
             esc.parse(items().at(i).label());
@@ -140,7 +140,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     {
         updateMaximumWidth();
 
-        if(selected >= items().size())
+        if (selected >= items().size())
         {
             // If the previous selection was invalid, make a valid one now.
             selected = 0;
@@ -149,7 +149,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             return;
         }
 
-        if(id <= selected)
+        if (id <= selected)
         {
             // New item added before/at the selection.
             selected++;
@@ -158,7 +158,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void dataItemRemoved(Data::Pos id, ui::Item &)
     {
-        if(id <= selected && selected > 0)
+        if (id <= selected && selected > 0)
         {
             selected--;
         }
@@ -175,9 +175,9 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     void updateItemHighlight()
     {
         // Highlight the currently selected item.
-        for(Data::Pos i = 0; i < items().size(); ++i)
+        for (Data::Pos i = 0; i < items().size(); ++i)
         {
-            if(GuiWidget *w = choices->menu().organizer().itemWidget(i))
+            if (GuiWidget *w = choices->menu().organizer().itemWidget(i))
             {
                 w->setFont(i == selected? "choice.selected" : "default");
             }
@@ -189,7 +189,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         self.setText(item.label());
 
         ActionItem const *act = dynamic_cast<ActionItem const *>(&item);
-        if(act)
+        if (act)
         {
             self.setImage(act->image());
         }
@@ -198,7 +198,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     void updateButtonWithSelection()
     {
         // Update the main button.
-        if(isValidSelection())
+        if (isValidSelection())
         {
             updateButtonWithItem(items().at(selected));
         }
@@ -227,7 +227,7 @@ PopupMenuWidget &ChoiceWidget::popup()
 
 void ChoiceWidget::setSelected(Data::Pos pos)
 {
-    if(d->selected != pos)
+    if (d->selected != pos)
     {
         d->selected = pos;
         d->updateButtonWithSelection();

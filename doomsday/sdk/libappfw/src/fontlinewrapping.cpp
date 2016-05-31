@@ -53,9 +53,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         /// Tab stops are disabled if there is a tab stop < 0 anywhere on the line.
         bool tabsDisabled() const
         {
-            for(int i = 0; i < info.segs.size(); ++i)
+            for (int i = 0; i < info.segs.size(); ++i)
             {
-                if(info.segs[i].tabStop < 0) return true;
+                if (info.segs[i].tabStop < 0) return true;
             }
             return false;
         }
@@ -91,7 +91,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     int rangeVisibleWidth(Rangei const &range) const
     {
-        if(font)
+        if (font)
         {
             return font->measure(rangeText(range), format.subRange(range)).width();
         }
@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     int rangeAdvanceWidth(Rangei const &range) const
     {
-        if(font)
+        if (font)
         {
             return font->advanceWidth(rangeText(range), format.subRange(range));
         }
@@ -112,18 +112,18 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
         int const origIndent = indent;
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.markIndent())
+            if (iter.markIndent())
             {
                 prevIndents.append(indent);
                 indent = origIndent + rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
             }
 
-            if(iter.resetIndent())
+            if (iter.resetIndent())
             {
-                if(!prevIndents.isEmpty())
+                if (!prevIndents.isEmpty())
                 {
                     indent = prevIndents.takeLast();
                 }
@@ -147,7 +147,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
      */
     Line *makeLine(Rangei const &range, int width = -1)
     {
-        if(width < 0)
+        if (width < 0)
         {
             // Determine the full width now.
             width = rangeVisibleWidth(range);
@@ -162,14 +162,14 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         Font::RichFormat::Iterator iter(rich);
 
         // Divide the line into segments based on tab stops.
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
 
-            if(iter.tabStop() != tabStop)
+            if (iter.tabStop() != tabStop)
             {
                 int const start = range.start + iter.range().start;
-                if(start > pos)
+                if (start > pos)
                 {
                     line->info.segs << LineInfo::Segment(Rangei(pos, start), tabStop);
                     pos = start;
@@ -183,13 +183,13 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tabStop);
 
         // Determine segment widths.
-        if(line->info.segs.size() == 1)
+        if (line->info.segs.size() == 1)
         {
             line->info.segs[0].width = width;
         }
         else
         {
-            for(int i = 0; i < line->info.segs.size(); ++i)
+            for (int i = 0; i < line->info.segs.size(); ++i)
             {
                 line->info.segs[i].width = rangeAdvanceWidth(line->info.segs[i].range);
             }
@@ -203,9 +203,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     bool isAllSpace(Rangei const &range) const
     {
-        for(int i = range.start; i < range.end; ++i)
+        for (int i = range.start; i < range.end; ++i)
         {
-            if(!text.at(i).isSpace())
+            if (!text.at(i).isSpace())
                 return false;
         }
         return true;
@@ -213,9 +213,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     bool containsNewline(Rangei const &range) const
     {
-        for(int i = range.start; i < range.end; ++i)
+        for (int i = range.start; i < range.end; ++i)
         {
-            if(text.at(i) == NEWLINE)
+            if (text.at(i) == NEWLINE)
                 return true;
         }
         return false;
@@ -225,10 +225,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.tabStop() > 0) return true;
+            if (iter.tabStop() > 0) return true;
         }
         return false;
     }
@@ -237,10 +237,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         int width = 0;
         int end = begin;
-        while(end < text.size() && text.at(end) != NEWLINE)
+        while (end < text.size() && text.at(end) != NEWLINE)
         {
             int const charWidth = rangeAdvanceWidth(Rangei(end, end + 1));
-            if(width + charWidth > availableWidth)
+            if (width + charWidth > availableWidth)
             {
                 // Does not fit any more.
                 break;
@@ -250,7 +250,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         }
         // Fine-tune the result to be accurate (kerning is ignored and rouding errors
         // affect the end result when checking width character by character).
-        while(end > begin && rangeAdvanceWidth(Rangei(begin, end)) > availableWidth)
+        while (end > begin && rangeAdvanceWidth(Rangei(begin, end)) > availableWidth)
         {
             // Came out too long.
             end--;
@@ -260,12 +260,12 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     bool isWrappable(int at)
     {
-        if(at >= text.size()) return true;
-        if(text.at(at).isSpace()) return true;
-        if(at > 0)
+        if (at >= text.size()) return true;
+        if (text.at(at).isSpace()) return true;
+        if (at > 0)
         {
             QChar const prev = text.at(at - 1);
-            if(prev == '/' || prev == '\\') return true;
+            if (prev == '/' || prev == '\\') return true;
         }
         return false;
     }
@@ -273,10 +273,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Rangei untilNextNewline(int start) const
     {
         int pos = start;
-        while(pos < text.size())
+        while (pos < text.size())
         {
             // The newline is omitted from the range.
-            if(text[pos] == '\n') break;
+            if (text[pos] == '\n') break;
 
             ++pos;
         }
@@ -306,19 +306,19 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         int begin = rangeToWrap.start;
 
         Lines wrappedLines;
-        while(begin < rangeToWrap.end)
+        while (begin < rangeToWrap.end)
         {
             int mw = maxWidth;
-            if(!wrappedLines.isEmpty() && subsequentMaxWidth > 0) mw = subsequentMaxWidth;
+            if (!wrappedLines.isEmpty() && subsequentMaxWidth > 0) mw = subsequentMaxWidth;
 
             // How much width is available, taking indentation into account?
-            if(mw - indent < MIN_LINE_WIDTH)
+            if (mw - indent < MIN_LINE_WIDTH)
             {
-                if(!isTabbed)
+                if (!isTabbed)
                 {
                     // Regular non-tabbed line -- there is no room for this indent,
                     // fall back to the previous one.
-                    if(prevIndents.isEmpty())
+                    if (prevIndents.isEmpty())
                     {
                         indent = 0;
                     }
@@ -339,10 +339,10 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             Rangei const range(begin, rangeToWrap.end);
 
             // Quick check: does the complete remainder fit?
-            if(!containsNewline(range))
+            if (!containsNewline(range))
             {
                 int visWidth = rangeAdvanceWidth(range);
-                if(visWidth <= availWidth)
+                if (visWidth <= availWidth)
                 {
                     wrappedLines << makeLine(range, visWidth);
                     break;
@@ -358,7 +358,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             int wrapPosMax = end;
 #endif
 
-            if(end < rangeToWrap.end && text.at(end) == NEWLINE)
+            if (end < rangeToWrap.end && text.at(end) == NEWLINE)
             {
                 // The newline will be omitted from the wrapped lines.
                 wrappedLines << makeLine(Rangei(begin, end));
@@ -366,12 +366,12 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             }
             else
             {
-                if(end <= begin) break;
+                if (end <= begin) break;
 
                 // Rewind to find a good (whitespace) break point.
-                while(!isWrappable(end))
+                while (!isWrappable(end))
                 {
-                    if(--end == begin)
+                    if (--end == begin)
                     {
                         // Ran out of non-space chars, force a break.
                         end = wrapPosMax;
@@ -383,12 +383,12 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
                 // If there is only whitespace remaining on the line,
                 // just use the max wrap -- blank lines are not pretty.
-                if(isAllSpace(Rangei(begin, end)))
+                if (isAllSpace(Rangei(begin, end)))
                 {
                     end = wrapPosMax;
                 }
 
-                while(end < rangeToWrap.end && text.at(end).isSpace()) ++end;
+                while (end < rangeToWrap.end && text.at(end).isSpace()) ++end;
                 wrappedLines << makeLine(Rangei(begin, end));
                 begin = end;
             }
@@ -399,9 +399,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     Rangei findNextTabbedRange(int startLine) const
     {
-        for(int i = startLine + 1; i < lines.size(); ++i)
+        for (int i = startLine + 1; i < lines.size(); ++i)
         {
-            if(lines[i]->tabsDisabled()) return Rangei(startLine, i);
+            if (lines[i]->tabsDisabled()) return Rangei(startLine, i);
         }
         return Rangei(startLine, lines.size());
     }
@@ -422,36 +422,36 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         // Determine the actual positions of each tab stop according to segment widths.
         QMap<int, int> stopMaxWidths; // stop => maxWidth
 
-        for(int i = lineRange.start; i < lineRange.end; ++i)
+        for (int i = lineRange.start; i < lineRange.end; ++i)
         {
             Line *line = lines[i];
-            for(int k = 0; k < line->info.segs.size(); ++k)
+            for (int k = 0; k < line->info.segs.size(); ++k)
             {
                 LineInfo::Segment const &seg = line->info.segs[k];
-                if(seg.tabStop < 0) continue;
+                if (seg.tabStop < 0) continue;
                 int sw = seg.width;
 
                 // Include overall indent into the first segment width.
-                if(!k) sw += line->info.indent;
+                if (!k) sw += line->info.indent;
 
                 stopMaxWidths[seg.tabStop] = de::max(stopMaxWidths[seg.tabStop], sw);
             }
         }
 
         // Now we can wrap the lines that area too long.
-        for(int i = lineRange.start; i < lineRange.end + extraLinesProduced; ++i)
+        for (int i = lineRange.start; i < lineRange.end + extraLinesProduced; ++i)
         {
             Line *line = lines[i];
             int curLeft = 0;
             int prevRight = 0;
 
-            for(int k = 0; k < line->info.segs.size(); ++k)
+            for (int k = 0; k < line->info.segs.size(); ++k)
             {
                 LineInfo::Segment const &seg = line->info.segs[k];
                 int const tab = seg.tabStop;
                 int const stopWidth = (tab >= 0? stopMaxWidths[tab] : seg.width);
 
-                if(curLeft + stopWidth >= maxWidth)
+                if (curLeft + stopWidth >= maxWidth)
                 {
                     // Wrap the line starting from this segment.
 
@@ -472,7 +472,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
                     // Replace the original line with these wrapped lines.
                     delete lines.takeAt(i);
-                    foreach(Line *wl, wrapped)
+                    foreach (Line *wl, wrapped)
                     {
                         lines.insert(i++, wl);
                     }
@@ -482,7 +482,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
                 // Update the coordinate of the previous segment's right edge.
                 prevRight = curLeft + seg.width;
-                if(!k) prevRight += line->info.indent;
+                if (!k) prevRight += line->info.indent;
 
                 // Move on to the next segment's left edge.
                 curLeft += stopWidth;
@@ -554,7 +554,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
     clear();
 
-    if(maxWidth <= 1 || !d->font) return;
+    if (maxWidth <= 1 || !d->font) return;
 
     // This is the text that we will be wrapping.
     d->maxWidth = maxWidth;
@@ -562,14 +562,14 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     d->format   = format;
 
     // When tabs are used, we must first determine the maximum width of each tab stop.
-    if(d->containsTabs(Rangei(0, text.size())))
+    if (d->containsTabs(Rangei(0, text.size())))
     {
         d->indent = 0;
         d->tabStop = 0;
 
         // Divide the content into lines by newlines.
         int pos = 0;
-        while(pos < text.size())
+        while (pos < text.size())
         {
             Rangei const wholeLine = d->untilNextNewline(pos);
             d->lines << d->makeLine(wholeLine);
@@ -581,7 +581,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         forever
         {
             int end = d->wrapLinesWithTabs(tabRange);
-            if(end == d->lines.size())
+            if (end == d->lines.size())
             {
                 // All lines processed.
                 break;
@@ -595,7 +595,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         d->lines = d->wrapRange(Rangei(0, text.size()), maxWidth);
     }
 
-    if(d->lines.isEmpty())
+    if (d->lines.isEmpty())
     {
         // Make sure at least one blank line exists.
        d->lines << new Instance::Line;
@@ -606,11 +606,11 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
 #if 0
     qDebug() << "Wrapped:" << d->text;
-    foreach(Instance::Line const *ln, d->lines)
+    foreach (Instance::Line const *ln, d->lines)
     {
         qDebug() << ln->line.range.asText() << d->text.substr(ln->line.range)
                  << "indent:" << ln->info.indent << "segments:" << ln->info.segs.size();
-        foreach(LineInfo::Segment const &s, ln->info.segs)
+        foreach (LineInfo::Segment const &s, ln->info.segs)
         {
             qDebug() << "- seg" << s.range.asText() << d->text.substr(s.range)
                      << "tab:" << s.tabStop << "w:" << s.width;
@@ -639,7 +639,7 @@ int FontLineWrapping::width() const
     DENG2_GUARD(this);
 
     int w = 0;
-    for(int i = 0; i < d->lines.size(); ++i)
+    for (int i = 0; i < d->lines.size(); ++i)
     {
         w = de::max(w, d->lines[i]->width);
     }
@@ -666,13 +666,13 @@ int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 
     int prevWidth = 0;
 
-    for(int i = range.start; i < range.end; ++i)
+    for (int i = range.start; i < range.end; ++i)
     {
         int const rw = d->rangeAdvanceWidth(Rangei(range.start, i));
-        if(rw >= width)
+        if (rw >= width)
         {
             // Which is closer, this or the previous char?
-            if(de::abs(rw - width) <= de::abs(prevWidth - width))
+            if (de::abs(rw - width) <= de::abs(prevWidth - width))
             {
                 return i;
             }
@@ -687,17 +687,17 @@ int FontLineWrapping::totalHeightInPixels() const
 {
     DENG2_GUARD(this);
 
-    if(!d->font) return 0;
+    if (!d->font) return 0;
 
     int const lines = height();
     int pixels = 0;
 
-    if(lines > 1)
+    if (lines > 1)
     {
         // Full baseline-to-baseline spacing.
         pixels += (lines - 1) * d->font->lineSpacing().value();
     }
-    if(lines > 0)
+    if (lines > 0)
     {
         // The last (or a single) line is just one 'font height' tall.
         pixels += d->font->height().value();
@@ -716,7 +716,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {
     DENG2_GUARD(this);
 
-    if(line >= height()) return Vector2i();
+    if (line >= height()) return Vector2i();
 
     WrappedLine const span = d->lines[line]->line;
     Rangei const range(span.range.start,
@@ -737,7 +737,7 @@ FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 int FontLineWrapping::LineInfo::highestTabStop() const
 {
     int stop = -1;
-    foreach(Segment const &seg, segs)
+    foreach (Segment const &seg, segs)
     {
         stop = de::max(stop, seg.tabStop);
     }

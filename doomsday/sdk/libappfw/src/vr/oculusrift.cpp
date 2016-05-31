@@ -101,12 +101,12 @@ DENG2_PIMPL(OculusRift)
         ovr_Initialize();
         hmd = ovrHmd_Create(0);
 
-        if(!hmd && App::commandLine().has("-ovrdebug"))
+        if (!hmd && App::commandLine().has("-ovrdebug"))
         {
             hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
         }
 
-        if(hmd)
+        if (hmd)
         {
             LOG_INPUT_NOTE("HMD: %s (%s) %i.%i %ix%i pixels")
                     << String(hmd->ProductName) << String(hmd->Manufacturer)
@@ -124,7 +124,7 @@ DENG2_PIMPL(OculusRift)
 
 #ifdef DENG_HAVE_OCULUS_API
         /*
-        if(hmd)
+        if (hmd)
         {
             ovrHmd_Destroy(hmd);
         }*/
@@ -151,7 +151,7 @@ DENG2_PIMPL(OculusRift)
         Sizei size[2];
         ovrFovPort fovMax;
         float density = App::config().getf("vr.oculusRift.pixelDensity", 1.f);
-        for(int eye = 0; eye < 2; ++eye)
+        for (int eye = 0; eye < 2; ++eye)
         {
             // Use the default FOV.
             fov[eye] = hmd->DefaultEyeFov[eye];
@@ -187,7 +187,7 @@ DENG2_PIMPL(OculusRift)
 
         LOG_GL_VERBOSE("Framebuffer size: ") << framebuffer().size().asText();
 
-        for(int eye = 0; eye < 2; ++eye)
+        for (int eye = 0; eye < 2; ++eye)
         {
             ovrGLTexture tex;
             zap(tex);
@@ -204,19 +204,19 @@ DENG2_PIMPL(OculusRift)
 
     void init()
     {
-        if(inited) return;
+        if (inited) return;
         inited = true;
 
 #ifdef DENG_HAVE_OCULUS_API
         //ovr_Initialize();
         hmd = ovrHmd_Create(0);
 
-        if(!hmd && App::commandLine().has("-ovrdebug"))
+        if (!hmd && App::commandLine().has("-ovrdebug"))
         {
             hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
         }
 
-        if(hmd)
+        if (hmd)
         {
             LOG_INPUT_NOTE("HMD: %s (%s) %i.%i %ix%i pixels")
                     << String(hmd->ProductName) << String(hmd->Manufacturer)
@@ -225,7 +225,7 @@ DENG2_PIMPL(OculusRift)
         }
 
         // If there is no Oculus Rift connected, do nothing.
-        if(!hmd) return;
+        if (!hmd) return;
 
         App::config("vr.oculusRift.pixelDensity").audienceForChange() += this;
 
@@ -268,13 +268,13 @@ DENG2_PIMPL(OculusRift)
         cfg.OGL.Window                = (HWND) window->nativeHandle();
         cfg.OGL.DC                    = wglGetCurrentDC();
 #endif
-        if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
+        if (!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {
             LOG_GL_ERROR("Failed to configure Oculus Rift for rendering");
             return;
         }
 
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             eyeOffset[i] = Vector3f(render[i].HmdToEyeViewOffset.x,
                                     render[i].HmdToEyeViewOffset.y,
@@ -282,7 +282,7 @@ DENG2_PIMPL(OculusRift)
         }
 
         /*
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             qDebug() << "Eye:" << render[i].Eye
                      << "Fov:" << render[i].Fov.LeftTan << render[i].Fov.RightTan
@@ -304,7 +304,7 @@ DENG2_PIMPL(OculusRift)
         */
 
         // Move the window to the correct display.
-        //if(ovrHmd_GetEnabledCaps(hmd) & ovrHmdCap_ExtendDesktop)
+        //if (ovrHmd_GetEnabledCaps(hmd) & ovrHmdCap_ExtendDesktop)
         {
             //LOG_GL_MSG("Using extended desktop mode");
 
@@ -324,11 +324,11 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
     QRect screenGeometry(Screen which) const
     {
-        foreach(QScreen *scr, qApp->screens())
+        foreach (QScreen *scr, qApp->screens())
         {
 #ifdef WIN32
             bool isRift = String(hmd->DisplayDeviceName).startsWith(scr->name());
-            if((which == HMDScreen && isRift) || (which == DefaultScreen && !isRift))
+            if ((which == HMDScreen && isRift) || (which == DefaultScreen && !isRift))
             {
                 LOG_GL_MSG("HMD display: \"%s\" Screen: \"%s\" Geometry: %i,%i %ix%i")
                         << String(hmd->DisplayDeviceName)
@@ -349,7 +349,7 @@ DENG2_PIMPL(OculusRift)
 
     void deinit()
     {
-        if(!inited) return;
+        if (!inited) return;
         inited = false;
         frameOngoing = false;
 
@@ -360,7 +360,7 @@ DENG2_PIMPL(OculusRift)
 
         App::config("vr.oculusRift.pixelDensity").audienceForChange() -= this;
 
-        if(hmd)
+        if (hmd)
         {
             ovrHmd_ConfigureRendering(hmd, NULL, 0, NULL, NULL);
             framebuffer().glDeinit();
@@ -377,27 +377,27 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
     bool isWindowOnHMD() const
     {
-        if(!window) return false;
+        if (!window) return false;
         QRect const hmdRect = screenGeometry(HMDScreen);
         return hmdRect.contains(window->geometry());
     }
 
     void moveWindow(Screen screen)
     {
-        if(!window) return;
+        if (!window) return;
 
-        if(screen == HMDScreen)
+        if (screen == HMDScreen)
         {
-            if(isWindowOnHMD()) return; // Nothing further to do.
+            if (isWindowOnHMD()) return; // Nothing further to do.
 #ifdef WIN32
             oldGeometry = window->geometry();
             window->setGeometry(screenGeometry(HMDScreen));
             window->showFullScreen();
 #endif
         }
-        else if(screen == PreviousScreen)
+        else if (screen == PreviousScreen)
         {
-            if(!isWindowOnHMD()) return;
+            if (!isWindowOnHMD()) return;
 #ifdef WIN32
             window->showMaximized();
             window->setGeometry(oldGeometry);
@@ -405,7 +405,7 @@ DENG2_PIMPL(OculusRift)
         }
         else
         {
-            if(!isWindowOnHMD()) return;
+            if (!isWindowOnHMD()) return;
 #ifdef WIN32
             window->showMaximized();
             window->setGeometry(screenGeometry(DefaultScreen));
@@ -419,12 +419,12 @@ DENG2_PIMPL(OculusRift)
      */
     void keyEvent(KeyEvent const &ev)
     {
-        if(!window || ev.type() == Event::KeyRelease) return;
+        if (!window || ev.type() == Event::KeyRelease) return;
 
 #ifdef DENG_HAVE_OCULUS_API
-        if(isHealthAndSafetyWarningDisplayed())
+        if (isHealthAndSafetyWarningDisplayed())
         {
-            if(dismissHealthAndSafetyWarning())
+            if (dismissHealthAndSafetyWarning())
             {
                 window->canvas().audienceForKeyEvent() -= this;
             }
@@ -440,7 +440,7 @@ DENG2_PIMPL(OculusRift)
 
     bool isHealthAndSafetyWarningDisplayed() const
     {
-        if(!isReady()) return false;
+        if (!isReady()) return false;
 
         ovrHSWDisplayState hswDisplayState;
         ovrHmd_GetHSWDisplayState(hmd, &hswDisplayState);
@@ -449,7 +449,7 @@ DENG2_PIMPL(OculusRift)
 
     bool dismissHealthAndSafetyWarning()
     {
-        if(isHealthAndSafetyWarningDisplayed())
+        if (isHealthAndSafetyWarningDisplayed())
         {
             return ovrHmd_DismissHSWDisplay(hmd);
         }
@@ -458,17 +458,17 @@ DENG2_PIMPL(OculusRift)
 
     void dismissHealthAndSafetyWarningOnTap()
     {
-        if(!isHealthAndSafetyWarningDisplayed()) return;
+        if (!isHealthAndSafetyWarningDisplayed()) return;
 
         ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, ovr_GetTimeInSeconds());
-        if(ts.StatusFlags & ovrStatus_OrientationTracked)
+        if (ts.StatusFlags & ovrStatus_OrientationTracked)
         {
             OVR::Vector3f rawAccel(ts.RawSensorData.Accelerometer.x,
                                    ts.RawSensorData.Accelerometer.y,
                                    ts.RawSensorData.Accelerometer.z);
 
             // Arbitrary value and representing moderate tap on the side of the DK2 Rift.
-            if(rawAccel.LengthSq() > 250.f)
+            if (rawAccel.LengthSq() > 250.f)
             {
                 ovrHmd_DismissHSWDisplay(hmd);
             }
@@ -477,7 +477,7 @@ DENG2_PIMPL(OculusRift)
 
     void updateEyePoses()
     {
-        if(!frameOngoing) return;
+        if (!frameOngoing) return;
         needPoseUpdate = false;
 
         ovrVector3f hmdEyeOffsets[2] {
@@ -494,7 +494,7 @@ DENG2_PIMPL(OculusRift)
                                 (headPose[0].Position.y + headPose[1].Position.y)/2,
                                 (headPose[0].Position.z + headPose[1].Position.z)/2);
 
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             // TODO: Rotate using provided quaternion.
             // Note that Doomsday doesn't currently use this matrix!
@@ -515,7 +515,7 @@ DENG2_PIMPL(OculusRift)
         DENG2_ASSERT(isReady());
         DENG2_ASSERT(!frameOngoing);
 
-        if(densityChanged)
+        if (densityChanged)
         {
             densityChanged = false;
             resizeFramebuffer();
@@ -562,7 +562,7 @@ void OculusRift::glPreInit()
 bool OculusRift::isHMDConnected() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(d->isReady()) return true;
+    if (d->isReady()) return true;
     return ovrHmd_Detect() > 0;
 #endif
     return false;
@@ -583,7 +583,7 @@ void OculusRift::deinit()
 void OculusRift::beginFrame()
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(!isReady() || !d->inited || d->frameOngoing) return;
+    if (!isReady() || !d->inited || d->frameOngoing) return;
 
     // Begin the frame and acquire timing information.
     d->beginFrame();
@@ -593,7 +593,7 @@ void OculusRift::beginFrame()
 void OculusRift::endFrame()
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(!isReady() || !d->frameOngoing) return;
+    if (!isReady() || !d->frameOngoing) return;
 
     // End the frame and let the Oculus SDK handle displaying it with the
     // appropriate transformation.
@@ -604,7 +604,7 @@ void OculusRift::endFrame()
 void OculusRift::setCurrentEye(int index)
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(d->hmd)
+    if (d->hmd)
     {
         d->currentEye = d->hmd->EyeRenderOrder[index];
     }
@@ -625,7 +625,7 @@ OculusRift::Eye OculusRift::currentEye() const
 Vector2ui OculusRift::resolution() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(!d->hmd) return Vector2ui();
+    if (!d->hmd) return Vector2ui();
     return Vector2ui(d->hmd->Resolution.w, d->hmd->Resolution.h);
 #else
     return Vector2ui();
@@ -640,7 +640,7 @@ void OculusRift::setYawOffset(float yawRadians)
 void OculusRift::resetTracking()
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(d->isReady())
+    if (d->isReady())
     {
         ovrHmd_RecenterPose(d->hmd);
     }
@@ -654,7 +654,7 @@ void OculusRift::resetYaw()
     /*
 #ifdef DENG_HAVE_OCULUS_API
     DENG2_GUARD(d);
-    if(isReady())
+    if (isReady())
     {
         d->yawOffset = -d->oculusDevice->yaw;
     }
@@ -675,7 +675,7 @@ bool OculusRift::isReady() const
 Vector3f OculusRift::headOrientation() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(d->needPoseUpdate) d->updateEyePoses();
+    if (d->needPoseUpdate) d->updateEyePoses();
 #endif
     Vector3f pry = d->pitchRollYaw;
     pry.z = wrap(pry.z + d->yawOffset, -PIf, PIf);
@@ -685,8 +685,8 @@ Vector3f OculusRift::headOrientation() const
 Matrix4f OculusRift::eyePose() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(!isReady()) return Matrix4f();
-    if(d->needPoseUpdate) d->updateEyePoses();
+    if (!isReady()) return Matrix4f();
+    if (d->needPoseUpdate) d->updateEyePoses();
     return d->eyeMatrix[d->currentEye];
 #else
     return Matrix4f();
@@ -696,7 +696,7 @@ Matrix4f OculusRift::eyePose() const
 Vector3f OculusRift::headPosition() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(d->needPoseUpdate) d->updateEyePoses();
+    if (d->needPoseUpdate) d->updateEyePoses();
 #endif
     return d->headPosition;
 }

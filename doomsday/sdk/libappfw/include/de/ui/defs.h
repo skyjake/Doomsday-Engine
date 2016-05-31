@@ -41,7 +41,7 @@ enum Direction
 };
 
 inline Direction opposite(Direction dir) {
-    switch(dir) {
+    switch (dir) {
     case Left:        return Right;
     case Right:       return Left;
     case Up:          return Down;
@@ -85,20 +85,20 @@ typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, 
 {
     typename RectType::Corner p = bounds.topLeft;
 
-    if(align.testFlag(AlignRight))
+    if (align.testFlag(AlignRight))
     {
         p.x += int(bounds.width()) - int(size.x);
     }
-    else if(!align.testFlag(AlignLeft))
+    else if (!align.testFlag(AlignLeft))
     {
         p.x += (int(bounds.width()) - int(size.x)) / 2;
     }
 
-    if(align.testFlag(AlignBottom))
+    if (align.testFlag(AlignBottom))
     {
         p.y += int(bounds.height()) - int(size.y);
     }
-    else if(!align.testFlag(AlignTop))
+    else if (!align.testFlag(AlignTop))
     {
         p.y += de::floor((double(bounds.height()) - double(size.y)) / 2.0);
     }

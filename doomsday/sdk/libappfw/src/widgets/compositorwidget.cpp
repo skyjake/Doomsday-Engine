@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(CompositorWidget)
      */
     Buffer *beginBufferUse()
     {
-        if(nextBufIndex <= buffers.size())
+        if (nextBufIndex <= buffers.size())
         {
             buffers.append(new Buffer);
         }
@@ -64,7 +64,7 @@ DENG_GUI_PIMPL(CompositorWidget)
         Vector2ui const size = GLState::current().target().rectInUse().size();
         //qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
         //qDebug() << buf->texture.size().asText() << size.asText();
-        if(buf->texture.size() != size)
+        if (buf->texture.size() != size)
         {
             //qDebug() << "buffer texture defined" << size.asText();
             buf->texture.setUndefinedImage(size, Image::RGBA_8888);
@@ -138,7 +138,7 @@ void CompositorWidget::preDrawChildren()
 {
     GuiWidget::preDrawChildren();
 
-    if(!d->shouldBeDrawn()) return;
+    if (!d->shouldBeDrawn()) return;
 
     //qDebug() << "entering compositor" << d->nextBufIndex;
 
@@ -156,7 +156,7 @@ void CompositorWidget::postDrawChildren()
 {
     GuiWidget::postDrawChildren();
 
-    if(!d->shouldBeDrawn()) return;
+    if (!d->shouldBeDrawn()) return;
 
     // Restore original rendering target.
     GLState::pop();
@@ -180,7 +180,7 @@ void CompositorWidget::glDeinit()
 
 void CompositorWidget::drawComposite()
 {
-    if(!d->shouldBeDrawn()) return;
+    if (!d->shouldBeDrawn()) return;
 
     glEnable(GL_TEXTURE_2D);
 

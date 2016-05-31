@@ -42,16 +42,16 @@ DENG2_PIMPL(FocusWidget)
     {
         // Flashing depends on the reference widget's visibility.
         float const maxOpacity = (reference? reference->visibleOpacity() : 1.f);
-        if(reference)
+        if (reference)
         {
             self.show(reference->isVisible());
         }
 
-        if(self.opacity().target() == 0)
+        if (self.opacity().target() == 0)
         {
             self.setOpacity(.8f * maxOpacity, FLASH_SPAN + .1, .1);
         }
-        else if(self.opacity().target() > .5f)
+        else if (self.opacity().target() > .5f)
         {
             self.setOpacity(.2f * maxOpacity, FLASH_SPAN);
         }
@@ -74,7 +74,7 @@ void FocusWidget::startFlashing(GuiWidget const *reference)
 {
     d->reference.reset(reference);
     show();
-    if(!d->flashing.isActive())
+    if (!d->flashing.isActive())
     {
         setOpacity(0);
         d->flashing.start();

@@ -154,20 +154,20 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         void setFlag(Flags const &f, bool set = true)
         {
-            if(set)
+            if (set)
             {
                 flags |= f;
 
-                if(f & Maximized)
+                if (f & Maximized)
                     LOGDEV_GL_VERBOSE("Setting State::Maximized");
             }
             else
             {
                 flags &= ~f;
 
-                if(f & Centered)
+                if (f & Centered)
                     LOGDEV_GL_VERBOSE("Clearing State::Centered");
-                if(f & Maximized)
+                if (f & Maximized)
                     LOGDEV_GL_VERBOSE("Clearing State::Maximized");
             }
         }
@@ -209,7 +209,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
             // The default state of the window is determined by these values.
             ArrayValue const &rect = config.geta(configName("rect"));
-            if(rect.size() >= 4)
+            if (rect.size() >= 4)
             {
                 windowRect = Rectanglei(rect.at(0).asNumber(),
                                         rect.at(1).asNumber(),
@@ -218,7 +218,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             }
 
             ArrayValue const &fs = config.geta(configName("fullSize"));
-            if(fs.size() >= 2)
+            if (fs.size() >= 2)
             {
                 fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
             }
@@ -246,7 +246,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
          */
         DisplayMode const *displayMode() const
         {
-            if(isFullscreen())
+            if (isFullscreen())
             {
                 return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, 0);
             }
@@ -255,9 +255,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         void applyAttributes(int const *attribs)
         {
-            for(int i = 0; attribs[i]; ++i)
+            for (int i = 0; attribs[i]; ++i)
             {
-                switch(attribs[i++])
+                switch (attribs[i++])
                 {
                 case PersistentCanvasWindow::Left:
                     windowRect.moveTopLeft(Vector2i(attribs[i], windowRect.topLeft.y));
@@ -281,12 +281,12 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
                 case PersistentCanvasWindow::Maximized:
                     setFlag(State::Maximized, attribs[i]);
-                    if(attribs[i]) setFlag(State::Fullscreen, false);
+                    if (attribs[i]) setFlag(State::Fullscreen, false);
                     break;
 
                 case PersistentCanvasWindow::Fullscreen:
                     setFlag(State::Fullscreen, attribs[i]);
-                    if(attribs[i]) setFlag(State::Maximized, false);
+                    if (attribs[i]) setFlag(State::Maximized, false);
                     break;
 
                 case PersistentCanvasWindow::FullscreenWidth:
@@ -328,101 +328,101 @@ DENG2_PIMPL(PersistentCanvasWindow)
             // We will compose a set of attributes based on the options.
             QVector<int> attribs;
 
-            if(cmdLine.has("-nofullscreen") || cmdLine.has("-window"))
+            if (cmdLine.has("-nofullscreen") || cmdLine.has("-window"))
             {
                 attribs << PersistentCanvasWindow::Fullscreen << false;
             }
 
-            if(cmdLine.has("-fullscreen") || cmdLine.has("-nowindow"))
+            if (cmdLine.has("-fullscreen") || cmdLine.has("-nowindow"))
             {
                 attribs << PersistentCanvasWindow::Fullscreen << true;
             }
 
-            if(int arg = cmdLine.check("-width", 1))
+            if (int arg = cmdLine.check("-width", 1))
             {
                 attribs << PersistentCanvasWindow::FullscreenWidth << cmdLine.at(arg + 1).toInt();
             }
 
-            if(int arg = cmdLine.check("-height", 1))
+            if (int arg = cmdLine.check("-height", 1))
             {
                 attribs << PersistentCanvasWindow::FullscreenHeight << cmdLine.at(arg + 1).toInt();
             }
 
-            if(int arg = cmdLine.check("-winwidth", 1))
+            if (int arg = cmdLine.check("-winwidth", 1))
             {
                 attribs << PersistentCanvasWindow::Width << cmdLine.at(arg + 1).toInt();
             }
 
-            if(int arg = cmdLine.check("-winheight", 1))
+            if (int arg = cmdLine.check("-winheight", 1))
             {
                 attribs << PersistentCanvasWindow::Height << cmdLine.at(arg + 1).toInt();
             }
 
-            if(int arg = cmdLine.check("-winsize", 2))
+            if (int arg = cmdLine.check("-winsize", 2))
             {
                 attribs << PersistentCanvasWindow::Width  << cmdLine.at(arg + 1).toInt()
                         << PersistentCanvasWindow::Height << cmdLine.at(arg + 2).toInt();
             }
 
-            if(int arg = cmdLine.check("-colordepth", 1))
+            if (int arg = cmdLine.check("-colordepth", 1))
             {
                 attribs << PersistentCanvasWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
             }
-            if(int arg = cmdLine.check("-bpp", 1))
+            if (int arg = cmdLine.check("-bpp", 1))
             {
                 attribs << PersistentCanvasWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
             }
 
-            if(int arg = cmdLine.check("-xpos", 1))
+            if (int arg = cmdLine.check("-xpos", 1))
             {
                 attribs << PersistentCanvasWindow::Left << cmdLine.at(arg+ 1 ).toInt()
                         << PersistentCanvasWindow::Centered << false
                         << PersistentCanvasWindow::Maximized << false;
             }
 
-            if(int arg = cmdLine.check("-ypos", 1))
+            if (int arg = cmdLine.check("-ypos", 1))
             {
                 attribs << PersistentCanvasWindow:: Top << cmdLine.at(arg + 1).toInt()
                         << PersistentCanvasWindow::Centered << false
                         << PersistentCanvasWindow::Maximized << false;
             }
 
-            if(cmdLine.check("-center"))
+            if (cmdLine.check("-center"))
             {
                 attribs << PersistentCanvasWindow::Centered << true;
             }
 
-            if(cmdLine.check("-nocenter"))
+            if (cmdLine.check("-nocenter"))
             {
                 attribs << PersistentCanvasWindow::Centered << false;
             }
 
-            if(cmdLine.check("-maximize"))
+            if (cmdLine.check("-maximize"))
             {
                 attribs << PersistentCanvasWindow::Maximized << true;
             }
 
-            if(cmdLine.check("-nomaximize"))
+            if (cmdLine.check("-nomaximize"))
             {
                 attribs << PersistentCanvasWindow::Maximized << false;
             }
 
-            if(cmdLine.check("-nofsaa"))
+            if (cmdLine.check("-nofsaa"))
             {
                 attribs << PersistentCanvasWindow::FullSceneAntialias << false;
             }
 
-            if(cmdLine.check("-fsaa"))
+            if (cmdLine.check("-fsaa"))
             {
                 attribs << PersistentCanvasWindow::FullSceneAntialias << true;
             }
 
-            if(cmdLine.check("-novsync"))
+            if (cmdLine.check("-novsync"))
             {
                 attribs << PersistentCanvasWindow::VerticalSync << false;
             }
 
-            if(cmdLine.check("-vsync"))
+            if (cmdLine.check("-vsync"))
             {
                 attribs << PersistentCanvasWindow::VerticalSync << true;
             }
@@ -473,7 +473,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         , neverShown(true)
     {
         // Keep a global pointer to the main window.
-        if(id == MAIN_WINDOW_ID)
+        if (id == MAIN_WINDOW_ID)
         {
             DENG2_ASSERT(!mainExists());
             setMain(thisPublic);
@@ -495,30 +495,30 @@ DENG2_PIMPL(PersistentCanvasWindow)
     {
         DENG2_ASSERT(attribs);
 
-        for(int i = 0; attribs[i]; ++i)
+        for (int i = 0; attribs[i]; ++i)
         {
-            switch(attribs[i++])
+            switch (attribs[i++])
             {
             case Width:
             case FullscreenWidth:
-                if(attribs[i] < MIN_WIDTH)
+                if (attribs[i] < MIN_WIDTH)
                     return false;
                 break;
 
             case Height:
             case FullscreenHeight:
-                if(attribs[i] < MIN_HEIGHT)
+                if (attribs[i] < MIN_HEIGHT)
                     return false;
                 break;
 
             case Fullscreen:
                 // Can't go to fullscreen when downloading.
-                //if(attribs[i] && Updater_IsDownloadInProgress())
+                //if (attribs[i] && Updater_IsDownloadInProgress())
                 //    return false;
                 break;
 
             case ColorDepthBits:
-                if(attribs[i] < 8 || attribs[i] > 32)
+                if (attribs[i] < 8 || attribs[i] > 32)
                     return false; // Illegal value.
                 break;
 
@@ -563,7 +563,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                 << mod.flags;
 
         // Apply them.
-        if(mod != state)
+        if (mod != state)
         {
             applyToWidget(mod);
         }
@@ -590,14 +590,14 @@ DENG2_PIMPL(PersistentCanvasWindow)
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 
-        if(!self.isVisible())
+        if (!self.isVisible())
         {
             // Update geometry for windowed mode right away.
             queue << Task(newState.windowRect);
         }
 
         // Change display mode, if necessary.
-        if(!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
+        if (!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
         {
             LOG_GL_NOTE("Changing display mode to %i x %i x %i (%.1f Hz)")
                     << newMode->width << newMode->height << newMode->depth << newMode->refreshRate;
@@ -613,7 +613,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 #endif
         }
 
-        if(self.isVisible())
+        if (self.isVisible())
         {
             // Possible actions:
             //
@@ -630,24 +630,24 @@ DENG2_PIMPL(PersistentCanvasWindow)
             // Full -> Full:        -
             // Full -> Mode+Full:   Mode, SnowNormal, ShowFull
 
-            if(newState.isWindow())
+            if (newState.isWindow())
             {
                 queue << Task(Task::ShowNormal, defer) << Task(newState.windowRect);
             }
             else
             {
-                if(modeChanged)
+                if (modeChanged)
                 {
                     queue << Task(Task::ShowNormal, defer);
                     defer = 0.01;
                 }
 
-                if(newState.isMaximized())
+                if (newState.isMaximized())
                 {
                     queue << Task(Task::ShowMaximized, defer);
                     state.windowRect = newState.windowRect;
                 }
-                else if(newState.isFullscreen())
+                else if (newState.isFullscreen())
                 {
                     queue << Task(Task::ShowFullscreen, defer);
                     state.windowRect = newState.windowRect;
@@ -657,10 +657,10 @@ DENG2_PIMPL(PersistentCanvasWindow)
             defer = 0;
         }
 
-        if(modeChanged)
+        if (modeChanged)
         {
 #ifdef MACOSX
-            if(newState.isFullscreen())
+            if (newState.isFullscreen())
             {
                 queue << Task(Task::MacRaiseOverShield);
             }
@@ -668,7 +668,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        if(trapped)
+        if (trapped)
         {
             queue << Task(Task::TrapMouse);
         }
@@ -676,7 +676,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         state.fullSize = newState.fullSize;
         state.flags    = newState.flags;
 
-        if(self.isVisible())
+        if (self.isVisible())
         {
             // Carry out queued operations after dropping back to the event loop.
             QTimer::singleShot(10, thisPublic, SLOT(performQueuedTasks()));
@@ -690,10 +690,10 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     void checkQueue()
     {
-        while(!queue.isEmpty())
+        while (!queue.isEmpty())
         {
             Task &next = queue[0];
-            if(next.delay > 0.0)
+            if (next.delay > 0.0)
             {
                 QTimer::singleShot(next.delay.asMilliSeconds(), thisPublic, SLOT(performQueuedTasks()));
                 next.delay = 0;
@@ -702,7 +702,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             else
             {
                 // Do it now.
-                switch(next.type)
+                switch (next.type)
                 {
                 case Task::ShowNormal:
                     LOG_GL_VERBOSE("Showing window as normal");
@@ -720,7 +720,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                     break;
 
                 case Task::SetGeometry:
-                    if(state.isCentered())
+                    if (state.isCentered())
                     {
                         LOG_GL_VERBOSE("Centering window with size ") << next.rect.size().asText();
                         next.rect = centeredRect(next.rect.size());
@@ -791,7 +791,7 @@ PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     {
         restoreFromConfig();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to restore window state:\n%s") << er.asText();
     }
@@ -808,7 +808,7 @@ void PersistentCanvasWindow::saveToConfig()
     {
         d->widgetState().saveToConfig();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to save window state:\n%s") << er.asText();
     }
@@ -839,7 +839,7 @@ bool PersistentCanvasWindow::isCentered() const
 
 Rectanglei PersistentCanvasWindow::windowRect() const
 {
-    if(d->neverShown)
+    if (d->neverShown)
     {
         // If the window hasn't been shown yet, it doesn't have a valid
         // normal geometry. Use the one defined in the State.
@@ -862,9 +862,9 @@ int PersistentCanvasWindow::colorDepthBits() const
 
 void PersistentCanvasWindow::show(bool yes)
 {
-    if(yes)
+    if (yes)
     {
-        if(d->state.isFullscreen())
+        if (d->state.isFullscreen())
         {
 #ifdef WIN32
             /*
@@ -880,7 +880,7 @@ void PersistentCanvasWindow::show(bool yes)
             showFullScreen();
 #endif
         }
-        else if(d->state.isMaximized())
+        else if (d->state.isMaximized())
         {
             showMaximized();
         }
@@ -902,7 +902,7 @@ bool PersistentCanvasWindow::changeAttributes(int const *attribs)
 {
     LOG_AS("PersistentCanvasWindow");
 
-    if(d->validateAttributes(attribs))
+    if (d->validateAttributes(attribs))
     {
         d->applyAttributes(attribs);
         return true;
@@ -925,7 +925,7 @@ String PersistentCanvasWindow::configName(String const &key) const
 PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
     DENG2_ASSERT(mainExists());
-    if(!mainExists())
+    if (!mainExists())
     {
         throw InvalidIdError("PersistentCanvasWindow::main",
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
@@ -935,11 +935,11 @@ PersistentCanvasWindow &PersistentCanvasWindow::main()
 
 void PersistentCanvasWindow::moveEvent(QMoveEvent *)
 {
-    if(isCentered() && !isMaximized() && !isFullScreen())
+    if (isCentered() && !isMaximized() && !isFullScreen())
     {
         int len = (geometry().topLeft() - centeredQRect(size()).topLeft()).manhattanLength();
 
-        if(len > BREAK_CENTERING_THRESHOLD)
+        if (len > BREAK_CENTERING_THRESHOLD)
         {
             d->state.setFlag(Instance::State::Centered, false);
 
@@ -964,7 +964,7 @@ void PersistentCanvasWindow::resizeEvent(QResizeEvent *ev)
             << ev->size().width() << ev->size().height();
 
     /*
-    if(!isMaximized() && !isFullScreen())
+    if (!isMaximized() && !isFullScreen())
     {
         d->state.windowRect.setSize(Vector2i(ev->size().width(), ev->size().height()));
     }*/

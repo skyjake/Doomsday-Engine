@@ -84,10 +84,10 @@ DENG_GUI_PIMPL(PanelWidget)
         DENG2_ASSERT(content != 0);
 
         // Widget's size depends on the opening animation.
-        if(isVerticalAnimation())
+        if (isVerticalAnimation())
         {
             self.rule().setInput(Rule::Height, *openingRule);
-            if(secondaryPolicy == ui::Expand)
+            if (secondaryPolicy == ui::Expand)
             {
                 self.rule().setInput(Rule::Width, content->rule().width());
             }
@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(PanelWidget)
         else
         {
             self.rule().setInput(Rule::Width, *openingRule);
-            if(secondaryPolicy == ui::Expand)
+            if (secondaryPolicy == ui::Expand)
             {
                 self.rule().setInput(Rule::Height, content->rule().height());
             }
@@ -105,7 +105,7 @@ DENG_GUI_PIMPL(PanelWidget)
     void updateGeometry()
     {
         Rectanglei pos;
-        if(self.hasChangedPlace(pos) || self.geometryRequested())
+        if (self.hasChangedPlace(pos) || self.geometryRequested())
         {
             self.requestGeometry(false);
 
@@ -117,7 +117,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void startOpeningAnimation(TimeDelta span)
     {
-        if(isVerticalAnimation())
+        if (isVerticalAnimation())
         {
             openingRule->set(content->rule().height(), span);
         }
@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void close(TimeDelta delay)
     {
-        if(!opened) return;
+        if (!opened) return;
 
         opened = false;
 
@@ -155,9 +155,9 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void findAssets(Widget const *widget)
     {
-        if(Asset const *asset = widget->maybeAs<Asset>())
+        if (Asset const *asset = widget->maybeAs<Asset>())
         {
-            if(!asset->isReady())
+            if (!asset->isReady())
             {
                 *pendingShow += *asset;
 
@@ -166,7 +166,7 @@ DENG_GUI_PIMPL(PanelWidget)
             }
         }
 
-        foreach(Widget const *child, widget->children())
+        foreach (Widget const *child, widget->children())
         {
             findAssets(child);
         }
@@ -181,7 +181,7 @@ DENG_GUI_PIMPL(PanelWidget)
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...");
         findAssets(content);
 
-        if(pendingShow->isEmpty())
+        if (pendingShow->isEmpty())
         {
             // Nothing to wait for, actually.
             pendingShow.reset();
@@ -199,7 +199,7 @@ DENG_GUI_PIMPL(PanelWidget)
         LOG_AS("PanelWidget");
 
         // All of the assets in the pending show group are now ready, let's open!
-        if(pendingShow->isReady())
+        if (pendingShow->isReady())
         {
             LOGDEV_XVERBOSE("All assets ready, resuming animation");
 
@@ -224,7 +224,7 @@ PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(t
 
 void PanelWidget::setContent(GuiWidget *content)
 {
-    if(d->content)
+    if (d->content)
     {
         destroy(takeContent());
     }
@@ -247,14 +247,14 @@ GuiWidget &PanelWidget::content() const
 GuiWidget *PanelWidget::takeContent()
 {
     GuiWidget *w = d->content;
-    if(!w) return 0;
+    if (!w) return 0;
 
     d->content = 0;
 
     w->rule().clearInput(Rule::Left);
     w->rule().clearInput(Rule::Top);
 
-    if(d->secondaryPolicy == ui::Expand)
+    if (d->secondaryPolicy == ui::Expand)
     {
         rule().clearInput(Rule::Width);
         rule().clearInput(Rule::Height);
@@ -310,12 +310,12 @@ void PanelWidget::update()
 
 bool PanelWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::MouseButton)
+    if (event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
 
         // Eat buttons that land on the panel.
-        if(hitTest(mouse.pos()))
+        if (hitTest(mouse.pos()))
         {
             //root().setFocus(0);
             return true;
@@ -327,7 +327,7 @@ bool PanelWidget::handleEvent(Event const &event)
 
 void PanelWidget::open()
 {
-    if(d->opened) return;
+    if (d->opened) return;
 
     DENG2_FOR_AUDIENCE2(AboutToOpen, i)
     {
@@ -359,7 +359,7 @@ void PanelWidget::close()
 
 void PanelWidget::dismiss()
 {
-    if(isHidden()) return;
+    if (isHidden()) return;
 
     hide();
     d->opened = false;

@@ -31,7 +31,7 @@ using namespace de;
 
 PrintStatement::PrintStatement(ArrayExpression *arguments) : _arg(arguments)
 {
-    if(!_arg)
+    if (!_arg)
     {
         _arg = new ArrayExpression();
     }
@@ -52,7 +52,7 @@ void PrintStatement::execute(Context &context) const
             
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, value.elements())
     {
-       if(!isFirst)
+       if (!isFirst)
        {
            os << " ";
        }
@@ -77,7 +77,7 @@ void PrintStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != PRINT)
+    if (id != PRINT)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

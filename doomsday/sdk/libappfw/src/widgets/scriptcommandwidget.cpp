@@ -57,7 +57,7 @@ DENG2_PIMPL(ScriptCommandWidget)
     void importNativeModules()
     {
         // Automatically import all native modules into the interactive process.
-        foreach(String const &name, App::scriptSystem().nativeModules())
+        foreach (String const &name, App::scriptSystem().nativeModules())
         {
             process.globals().add(new Variable(name,
                     new RecordValue(App::scriptSystem().nativeModule(name))));
@@ -78,13 +78,13 @@ DENG2_PIMPL(ScriptCommandWidget)
         }
 
         // Add all built-in Doomsday Script functions.
-        foreach(String name, BuiltInExpression::identifiers())
+        foreach (String name, BuiltInExpression::identifiers())
         {
             lexi.addTerm(name);
         }
 
         // Add all Doomsday Script keywords.
-        foreach(String keyword, ScriptLex::keywords())
+        foreach (String keyword, ScriptLex::keywords())
         {
             lexi.addTerm(keyword);
         }
@@ -94,7 +94,7 @@ DENG2_PIMPL(ScriptCommandWidget)
 
     bool shouldShowAsPopup(Error const &)
     {
-        /*if(dynamic_cast<ScriptLex::MismatchedBracketError const *>(&er))
+        /*if (dynamic_cast<ScriptLex::MismatchedBracketError const *>(&er))
         {
             // Brackets may be left open to insert newlines.
             return false;
@@ -109,11 +109,11 @@ ScriptCommandWidget::ScriptCommandWidget(String const &name)
 
 bool ScriptCommandWidget::handleEvent(Event const &event)
 {
-    if(isDisabled()) return false;
+    if (isDisabled()) return false;
 
     bool wasCompl = autocompletionPopup().isOpen();
     bool eaten = CommandWidget::handleEvent(event);
-    if(eaten && wasCompl && event.isKeyDown())
+    if (eaten && wasCompl && event.isKeyDown())
     {
         closeAutocompletionPopup();
     }
@@ -134,9 +134,9 @@ bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)
         d->script.parse(text);
         return true; // Looks good!
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
-        if(d->shouldShowAsPopup(er))
+        if (d->shouldShowAsPopup(er))
         {
             showAutocompletionPopup(er.asText());
         }
@@ -153,7 +153,7 @@ void ScriptCommandWidget::executeCommand(String const &text)
         d->process.run(d->script);
         d->process.execute();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_SCR_WARNING("Error in script:\n") << er.asText();
     }
@@ -162,13 +162,13 @@ void ScriptCommandWidget::executeCommand(String const &text)
     try
     {
         Value const &result = d->process.context().evaluator().result();
-        if(!result.is<NoneValue>())
+        if (!result.is<NoneValue>())
         {
             String msg = DENG2_CHAR_RIGHT_DOUBLEARROW " " _E(>)_E(m) + result.asText();
             LOG_SCR_MSG(msg);
         }
     }
-    catch(Error const &)
+    catch (Error const &)
     {}
 }
 
@@ -176,7 +176,7 @@ void ScriptCommandWidget::autoCompletionBegan(String const &prefix)
 {
     // Prepare a list of annotated completions to show in the popup.
     QStringList const compls = suggestedCompletions();
-    if(compls.size() > 1)
+    if (compls.size() > 1)
     {
         showAutocompletionPopup(tr("Completions for %1:\n")
                                 .arg(_E(b) + prefix + _E(.)) +

@@ -68,7 +68,7 @@ void AtlasTexture::commit(Image const &image, Vector2i const &topLeft) const
 {
     GLTexture *tex = const_cast<AtlasTexture *>(this);
 
-    if(size() == GLTexture::Size(0, 0))
+    if (size() == GLTexture::Size(0, 0))
     {
         // Hasn't been full-committed yet.
         tex->setUndefinedImage(totalSize(), Image::RGBA_8888);

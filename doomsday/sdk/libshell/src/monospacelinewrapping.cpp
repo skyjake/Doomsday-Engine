@@ -43,7 +43,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
     clear();
 
-    if(maxWidth < 1) return; // No room to wrap.
+    if (maxWidth < 1) return; // No room to wrap.
 
     int const lineWidth = maxWidth;
     int begin = 0;
@@ -51,10 +51,10 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
     {
         // Newlines always cause a wrap.
         int end = begin;
-        while(end < begin + lineWidth &&
+        while (end < begin + lineWidth &&
               end < text.size() && text.at(end) != newline) ++end;
 
-        if(end == text.size())
+        if (end == text.size())
         {
             // Time to stop.
             _lines.append(WrappedLine(Rangei(begin, text.size())));
@@ -62,10 +62,10 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         }
 
         // Find a good break point.
-        while(!text.at(end).isSpace())
+        while (!text.at(end).isSpace())
         {
             --end;
-            if(end == begin)
+            if (end == begin)
             {
                 // Ran out of non-space chars, force a break.
                 end = begin + lineWidth;
@@ -73,7 +73,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
             }
         }
 
-        if(text.at(end) == newline)
+        if (text.at(end) == newline)
         {
             // The newline will be omitted from the wrapped lines.
             _lines.append(WrappedLine(Rangei(begin, end)));
@@ -81,7 +81,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
         }
         else
         {
-            if(text.at(end).isSpace()) ++end;
+            if (text.at(end).isSpace()) ++end;
             _lines.append(WrappedLine(Rangei(begin, end)));
             begin = end;
         }
@@ -94,7 +94,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 int MonospaceLineWrapping::width() const
 {
     int w = 0;
-    for(int i = 0; i < _lines.size(); ++i)
+    for (int i = 0; i < _lines.size(); ++i)
     {
         WrappedLine const &span = _lines[i];
         w = de::max(w, span.range.size());
@@ -114,7 +114,7 @@ int MonospaceLineWrapping::rangeWidth(Rangei const &range) const
 
 int MonospaceLineWrapping::indexAtWidth(Rangei const &range, int width) const
 {
-    if(width <= range.size())
+    if (width <= range.size())
     {
         return range.start + width;
     }

@@ -1589,7 +1589,7 @@ static int rngIndex = 0, rngIndex2 = 0;
 
 byte RNG_RandByte(void)
 {
-    if(rngIndex > 255)
+    if (rngIndex > 255)
     {
         rngIndex = 0;
         rngIndex2++;
@@ -1623,28 +1623,28 @@ void M_CopyBox(fixed_t dest[4], const fixed_t src[4])
 
 void M_AddToBox(fixed_t *box, fixed_t x, fixed_t y)
 {
-    if(x < box[BOXLEFT])
+    if (x < box[BOXLEFT])
         box[BOXLEFT] = x;
-    else if(x > box[BOXRIGHT])
+    else if (x > box[BOXRIGHT])
         box[BOXRIGHT] = x;
-    if(y < box[BOXBOTTOM])
+    if (y < box[BOXBOTTOM])
         box[BOXBOTTOM] = y;
-    else if(y > box[BOXTOP])
+    else if (y > box[BOXTOP])
         box[BOXTOP] = y;
 }
 
 void M_JoinBoxes(float bbox[4], const float other[4])
 {
-    if(other[BOXLEFT] < bbox[BOXLEFT])
+    if (other[BOXLEFT] < bbox[BOXLEFT])
         bbox[BOXLEFT] = other[BOXLEFT];
 
-    if(other[BOXRIGHT] > bbox[BOXRIGHT])
+    if (other[BOXRIGHT] > bbox[BOXRIGHT])
         bbox[BOXRIGHT] = other[BOXRIGHT];
 
-    if(other[BOXTOP] > bbox[BOXTOP])
+    if (other[BOXTOP] > bbox[BOXTOP])
         bbox[BOXTOP] = other[BOXTOP];
 
-    if(other[BOXBOTTOM] < bbox[BOXBOTTOM])
+    if (other[BOXBOTTOM] < bbox[BOXBOTTOM])
         bbox[BOXBOTTOM] = other[BOXBOTTOM];
 }
 
@@ -1756,7 +1756,7 @@ uint M_CRC32(byte const *data, uint length)
     unsigned int i;
     unsigned long crc32 = 0;
 
-    for(i = 0; i < length; ++i)
+    for (i = 0; i < length; ++i)
     {
         crc32 = crc32_tab[(crc32 ^ data[i]) & 0xff] ^ (crc32 >> 8);
     }
@@ -1772,7 +1772,7 @@ static int slopeDiv(unsigned num, unsigned den)
 {
     uint ans;
 
-    if(den < 512)
+    if (den < 512)
     {
         return SLOPERANGE;
     }
@@ -1787,16 +1787,16 @@ angle_t M_PointToAngle(double const point[])
     pos[VX] = FLT2FIX(point[VX]);
     pos[VY] = FLT2FIX(point[VY]);
 
-    if(pos[VX] == 0 && pos[VY] == 0)
+    if (pos[VX] == 0 && pos[VY] == 0)
         return 0;
 
-    if(pos[VX] >= 0)
+    if (pos[VX] >= 0)
     {
         // x >=0
-        if(pos[VY] >= 0)
+        if (pos[VY] >= 0)
         {
             // y>= 0
-            if(pos[VX] > pos[VY])
+            if (pos[VX] > pos[VY])
                 return tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 0
 
             return ANG90 - 1 - tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 1
@@ -1804,7 +1804,7 @@ angle_t M_PointToAngle(double const point[])
 
         // y<0
         pos[VY] = -pos[VY];
-        if(pos[VX] > pos[VY])
+        if (pos[VX] > pos[VY])
             return -tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 8
 
         return ANG270 + tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 7
@@ -1812,10 +1812,10 @@ angle_t M_PointToAngle(double const point[])
 
     // x<0
     pos[VX] = -pos[VX];
-    if(pos[VY] >= 0)
+    if (pos[VY] >= 0)
     {
         // y>= 0
-        if(pos[VX] > pos[VY])
+        if (pos[VX] > pos[VY])
             return ANG180 - 1 - tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 3
 
         return ANG90 + tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 2
@@ -1823,7 +1823,7 @@ angle_t M_PointToAngle(double const point[])
 
     // y<0
     pos[VY] = -pos[VY];
-    if(pos[VX] > pos[VY])
+    if (pos[VX] > pos[VY])
         return ANG180 + tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 4
 
     return ANG270 - 1 - tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 5
@@ -1852,12 +1852,12 @@ double M_DirectionToAngleXY(double dx, double dy)
 {
     double angle;
 
-    if(dx == 0)
+    if (dx == 0)
         return (dy > 0? 90.0 : 270.0);
 
     angle = atan2((double) dy, (double) dx) * 180.0 / DD_PI_D;
 
-    if(angle < 0)
+    if (angle < 0)
         angle += 360.0;
 
     return angle;
@@ -1876,7 +1876,7 @@ double M_PointDistance(double const a[], double const b[])
     delta[VX] = fabs(b[VX] - a[VX]);
     delta[VY] = fabs(b[VY] - a[VY]);
 
-    if(delta[VY] > delta[VX])
+    if (delta[VY] > delta[VX])
     {
         double temp = delta[VX];
         delta[VX] = delta[VY];
@@ -1898,7 +1898,7 @@ double M_ApproxDistance(double dx, double dy)
 {
     dx = fabs(dx);
     dy = fabs(dy);
-    if(dx < dy)
+    if (dx < dy)
         return dx + dy - dx / 2;
     return dx + dy - dy / 2;
 }
@@ -1907,7 +1907,7 @@ float M_ApproxDistancef(float dx, float dy)
 {
     dx = (float) fabs(dx);
     dy = (float) fabs(dy);
-    if(dx < dy)
+    if (dx < dy)
         return dx + dy - dx / 2;
     return dx + dy - dy / 2;
 }
@@ -1931,7 +1931,7 @@ double M_TriangleArea(double const v1[], double const v2[], double const v3[])
     V2d_Subtract(b, v3, v1);
 
     area = (a[VX] * b[VY] - b[VX] * a[VY]) / 2;
-    if(area < 0)
+    if (area < 0)
         return -area;
     return area;
 }
@@ -1946,7 +1946,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     float Cos, Sin, res[3];
 
     // Yaw.
-    if(radYaw != 0)
+    if (radYaw != 0)
     {
         Cos = (float) cos(radYaw);
         Sin = (float) sin(radYaw);
@@ -1957,7 +1957,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     }
 
     // Pitch.
-    if(radPitch != 0)
+    if (radPitch != 0)
     {
         Cos = (float) cos(radPitch);
         Sin = (float) sin(radPitch);
@@ -1972,7 +1972,7 @@ int M_CeilPow2(int num)
 {
     int         cumul;
 
-    for(cumul = 1; num > cumul; cumul <<= 1);
+    for (cumul = 1; num > cumul; cumul <<= 1);
 
     return cumul;
 }
@@ -1989,7 +1989,7 @@ int M_WeightPow2(int num, float weight)
     int         fp2 = M_FloorPow2(num);
     float       frac = (num - fp2) / (float) fp2;
 
-    if(frac <= weight)
+    if (frac <= weight)
         return fp2;
     else
         return (fp2 << 1);
@@ -1997,11 +1997,11 @@ int M_WeightPow2(int num, float weight)
 
 float M_CycleIntoRange(float value, float length)
 {
-    if(value < 0)
+    if (value < 0)
     {
         return value - ((int) (value / length) - 1) * length;
     }
-    if(value > length)
+    if (value > length)
     {
         return value - ((int) (value / length)) * length;
     }
@@ -2012,17 +2012,17 @@ int M_RatioReduce(int* numerator, int* denominator)
 {
     int n, d, temp;
 
-    if(!numerator || !denominator)
+    if (!numerator || !denominator)
     {
         return 1;
     }
 
-    if(*numerator == *denominator) return 1; // 1:1
+    if (*numerator == *denominator) return 1; // 1:1
 
     n = ABS(*numerator);
     d = ABS(*denominator);
     // Ensure numerator is larger.
-    if(n < d)
+    if (n < d)
     {
         temp = n;
         n = d;
@@ -2030,7 +2030,7 @@ int M_RatioReduce(int* numerator, int* denominator)
     }
 
     // Reduce to the common divisor.
-    while(d != 0)
+    while (d != 0)
     {
         temp = n;
         n = d;
@@ -2047,7 +2047,7 @@ int M_FloorPow2(int num)
 {
     int         fl = M_CeilPow2(num);
 
-    if(fl > num)
+    if (fl > num)
         fl >>= 1;
     return fl;
 }
@@ -2059,15 +2059,15 @@ slopetype_t M_SlopeType(double const direction[])
 
 slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy)
 {
-    if(!dx)
+    if (!dx)
     {
         return ST_VERTICAL;
     }
-    else if(!dy)
+    else if (!dy)
     {
         return ST_HORIZONTAL;
     }
-    else if(FixedDiv(dy, dx) > 0)
+    else if (FixedDiv(dy, dx) > 0)
     {
         return ST_POSITIVE;
     }
@@ -2079,15 +2079,15 @@ slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy)
 
 slopetype_t M_SlopeTypeXY(double dx, double dy)
 {
-    if(FEQUAL(dx, 0))
+    if (FEQUAL(dx, 0))
     {
         return ST_VERTICAL;
     }
-    else if(FEQUAL(dy, 0))
+    else if (FEQUAL(dy, 0))
     {
         return ST_HORIZONTAL;
     }
-    else if(dy / dx > 0)
+    else if (dy / dx > 0)
     {
         return ST_POSITIVE;
     }
@@ -2099,7 +2099,7 @@ slopetype_t M_SlopeTypeXY(double dx, double dy)
 
 double M_InverseAngle(double angle)
 {
-    if(angle < 180.0)
+    if (angle < 180.0)
     {
         return (180.0 - -angle);
     }
@@ -2111,17 +2111,17 @@ void M_HSVToRGB(float* rgb, float h, float s, float v)
     int                 i;
     float               f, p, q, t;
 
-    if(!rgb)
+    if (!rgb)
         return;
 
-    if(s == 0)
+    if (s == 0)
     {
         // achromatic (grey)
         rgb[0] = rgb[1] = rgb[2] = v;
         return;
     }
 
-    if(h >= 1)
+    if (h >= 1)
         h -= 1;
 
     h *= 6; // sector 0 to 5
@@ -2131,7 +2131,7 @@ void M_HSVToRGB(float* rgb, float h, float s, float v)
     q = v * (1 - s * f);
     t = v * (1 - s * (1 - f));
 
-    switch(i)
+    switch (i)
     {
     case 0:
         rgb[0] = v;

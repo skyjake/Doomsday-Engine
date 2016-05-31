@@ -48,7 +48,7 @@ DENG2_PIMPL(Margins)
         zap(inputs);
         zap(outputs);
 
-        for(int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             setInput(i, defaultId);
         }
@@ -56,13 +56,13 @@ DENG2_PIMPL(Margins)
 
     ~Instance()
     {
-        for(int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             releaseRef(inputs[i]);
         }
-        for(int i = 0; i < int(MAX_SIDES); ++i)
+        for (int i = 0; i < int(MAX_SIDES); ++i)
         {
-            if(outputs[i])
+            if (outputs[i])
             {
                 outputs[i]->unsetSource();
                 releaseRef(outputs[i]);
@@ -89,22 +89,22 @@ DENG2_PIMPL(Margins)
 
     void updateOutput(int side)
     {
-        if(side < 4 && outputs[side] && inputs[side])
+        if (side < 4 && outputs[side] && inputs[side])
         {
             outputs[side]->setSource(*inputs[side]);
         }
 
         // Update the sums.
-        if(side == LeftRight || side == SideLeft || side == SideRight)
+        if (side == LeftRight || side == SideLeft || side == SideRight)
         {
-            if(outputs[LeftRight] && inputs[SideLeft] && inputs[SideRight])
+            if (outputs[LeftRight] && inputs[SideLeft] && inputs[SideRight])
             {
                 outputs[LeftRight]->setSource(*inputs[SideLeft] + *inputs[SideRight]);
             }
         }
-        else if(side == TopBottom || side == SideTop || side == SideBottom)
+        else if (side == TopBottom || side == SideTop || side == SideBottom)
         {
-            if(outputs[TopBottom] && inputs[SideTop] && inputs[SideBottom])
+            if (outputs[TopBottom] && inputs[SideTop] && inputs[SideBottom])
             {
                 outputs[TopBottom]->setSource(*inputs[SideTop] + *inputs[SideBottom]);
             }
@@ -113,7 +113,7 @@ DENG2_PIMPL(Margins)
 
     Rule const &getOutput(int side)
     {
-        if(!outputs[side])
+        if (!outputs[side])
         {
             outputs[side] = new IndirectRule;
             updateOutput(side);
@@ -195,7 +195,7 @@ Margins &Margins::set(Rule const &rule)
 
 Margins &Margins::setAll(Margins const &margins)
 {
-    if(this == &margins) return *this;
+    if (this == &margins) return *this;
 
     set(Left,  margins.left());
     set(Right, margins.right());

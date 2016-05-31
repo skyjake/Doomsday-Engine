@@ -71,7 +71,7 @@ void ArchiveEntryFile::clear()
 void ArchiveEntryFile::flush()
 {
     ByteArrayFile::flush();
-    if(ArchiveFeed *feed = originFeed()->maybeAs<ArchiveFeed>())
+    if (ArchiveFeed *feed = originFeed()->maybeAs<ArchiveFeed>())
     {
         feed->rewriteFile();
     }

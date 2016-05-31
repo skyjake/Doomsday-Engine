@@ -33,7 +33,7 @@ IfStatement::~IfStatement()
 
 void IfStatement::clear()
 {
-    for(Branches::iterator i = _branches.begin(); i != _branches.end(); ++i)
+    for (Branches::iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
         delete i->condition;
         delete i->compound;
@@ -60,15 +60,15 @@ void IfStatement::execute(Context &context) const
 {
     Evaluator &eval = context.evaluator();
 
-    for(Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
+    for (Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
-        if(eval.evaluate(i->condition).isTrue())
+        if (eval.evaluate(i->condition).isTrue())
         {
             context.start(i->compound->firstStatement(), next());
             return;
         }
     }
-    if(_elseCompound.size())
+    if (_elseCompound.size())
     {
         context.start(_elseCompound.firstStatement(), next());
     }
@@ -84,7 +84,7 @@ void IfStatement::operator >> (Writer &to) const
     
     // Branches.
     to << duint16(_branches.size());
-    for(Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
+    for (Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
         DENG2_ASSERT(i->condition != NULL);
         to << *i->condition << *i->compound;
@@ -97,7 +97,7 @@ void IfStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != IF)
+    if (id != IF)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.
@@ -108,7 +108,7 @@ void IfStatement::operator << (Reader &from)
     // Branches.
     duint16 count;
     from >> count;
-    while(count--)
+    while (count--)
     {
         newBranch();
         setBranchCondition(Expression::constructFrom(from));

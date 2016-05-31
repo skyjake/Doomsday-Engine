@@ -49,7 +49,7 @@ File const &LinkFile::target() const
 {
     DENG2_GUARD(this);
 
-    if(d->target)
+    if (d->target)
     {
         return *d->target;
     }
@@ -60,7 +60,7 @@ File &LinkFile::target()
 {
     DENG2_GUARD(this);
 
-    if(d->target)
+    if (d->target)
     {
         return *const_cast<File *>(d->target.get());
     }
@@ -93,7 +93,7 @@ String LinkFile::describe() const
 {
     DENG2_GUARD(this);
 
-    if(!isBroken())
+    if (!isBroken())
     {
         DENG2_GUARD_FOR(target(), G);
         return "link to " + target().description();
@@ -103,7 +103,7 @@ String LinkFile::describe() const
 
 filesys::Node const *LinkFile::tryFollowPath(PathRef const &path) const
 {
-    if(Folder const *folder = targetFolder())
+    if (Folder const *folder = targetFolder())
     {
         return folder->tryFollowPath(path);
     }
@@ -112,7 +112,7 @@ filesys::Node const *LinkFile::tryFollowPath(PathRef const &path) const
 
 filesys::Node const *LinkFile::tryGetChild(String const &name) const
 {
-    if(Folder const *folder = targetFolder())
+    if (Folder const *folder = targetFolder())
     {
         return folder->tryGetChild(name);
     }
@@ -122,7 +122,7 @@ filesys::Node const *LinkFile::tryGetChild(String const &name) const
 LinkFile *LinkFile::newLinkToFile(File const &file, String linkName)
 {
     // Fall back to using the target's name.
-    if(linkName.isEmpty()) linkName = file.name();
+    if (linkName.isEmpty()) linkName = file.name();
 
     LinkFile *link = new LinkFile(linkName);
     link->setTarget(file);

@@ -50,25 +50,25 @@ Item const &ListData::at(Pos pos) const
 
 Data::Pos ListData::find(Item const &item) const
 {
-    for(Pos i = 0; i < size(); ++i)
+    for (Pos i = 0; i < size(); ++i)
     {
-        if(&at(i) == &item) return i;
+        if (&at(i) == &item) return i;
     }
     return InvalidPos;
 }
 
 Data::Pos ListData::findData(QVariant const &data) const
 {
-    for(Pos i = 0; i < size(); ++i)
+    for (Pos i = 0; i < size(); ++i)
     {
-        if(at(i).data() == data) return i;
+        if (at(i).data() == data) return i;
     }
     return InvalidPos;
 }
 
 Data &ListData::clear()
 {
-    while(!isEmpty())
+    while (!isEmpty())
     {
         remove(size() - 1);
     }

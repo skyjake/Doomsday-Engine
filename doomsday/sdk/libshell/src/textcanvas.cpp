@@ -38,7 +38,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
     Instance(Size const &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
-        for(duint row = 0; row < size.y; ++row)
+        for (duint row = 0; row < size.y; ++row)
         {
             lines.append(makeLine());
         }
@@ -46,7 +46,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
 
     ~Instance()
     {
-        for(int i = 0; i < lines.size(); ++i)
+        for (int i = 0; i < lines.size(); ++i)
         {
             delete [] lines[i];
         }
@@ -64,14 +64,14 @@ DENG2_PIMPL_NOREF(TextCanvas)
 
     void resize(Size const &newSize)
     {
-        if(newSize == size) return;
+        if (newSize == size) return;
 
         // Allocate or free lines.
-        while(newSize.y < lineCount())
+        while (newSize.y < lineCount())
         {
             lines.removeLast();
         }
-        while(newSize.y > lineCount())
+        while (newSize.y > lineCount())
         {
             lines.append(makeLine());
         }
@@ -80,7 +80,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
         size.y = newSize.y;
 
         // Make sure all lines are the correct width.
-        for(int row = 0; row < lines.size(); ++row)
+        for (int row = 0; row < lines.size(); ++row)
         {
             Char *newLine = new Char[newSize.x];
             memcpy(newLine, lines[row], sizeof(Char) * de::min(size.x, newSize.x));
@@ -93,13 +93,13 @@ DENG2_PIMPL_NOREF(TextCanvas)
 
     void markAllAsDirty(bool markDirty)
     {
-        for(int row = 0; row < lines.size(); ++row)
+        for (int row = 0; row < lines.size(); ++row)
         {
             Char *line = lines[row];
-            for(duint col = 0; col < size.x; ++col)
+            for (duint col = 0; col < size.x; ++col)
             {
                 Char &c = line[col];
-                if(markDirty)
+                if (markDirty)
                     c.attribs |= Char::Dirty;
                 else
                     c.attribs &= ~Char::Dirty;
@@ -110,9 +110,9 @@ DENG2_PIMPL_NOREF(TextCanvas)
     Char::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
     {
         Char::Attribs attr;
-        foreach(RichFormat const &rf, richFormats)
+        foreach (RichFormat const &rf, richFormats)
         {
-            if(rf.range.contains(offset + pos))
+            if (rf.range.contains(offset + pos))
             {
                 attr |= rf.attrib;
             }
@@ -183,19 +183,19 @@ void TextCanvas::clear(Char const &ch)
 
 void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
 {
-    for(int y = rect.top(); y < rect.bottom(); ++y)
+    for (int y = rect.top(); y < rect.bottom(); ++y)
     {
-        for(int x = rect.left(); x < rect.right(); ++x)
+        for (int x = rect.left(); x < rect.right(); ++x)
         {
             Coord const xy(x, y);
-            if(isValid(xy)) at(xy) = ch;
+            if (isValid(xy)) at(xy) = ch;
         }
     }
 }
 
 void TextCanvas::put(Vector2i const &pos, Char const &ch)
 {
-    if(isValid(pos))
+    if (isValid(pos))
     {
         at(pos) = ch;
     }
@@ -218,9 +218,9 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text,
                           Char::Attribs const &attribs, int richOffset)
 {
     Vector2i p = pos;
-    for(int i = 0; i < text.size(); ++i)
+    for (int i = 0; i < text.size(); ++i)
     {
-        if(isValid(p))
+        if (isValid(p))
         {
             at(p) = Char(text[i], attribs | d->richAttribsForTextIndex(i, richOffset));
         }
@@ -234,16 +234,16 @@ void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
 {
     int const width = wraps.width();
 
-    for(int y = 0; y < wraps.height(); ++y)
+    for (int y = 0; y < wraps.height(); ++y)
     {
         WrappedLine const &span = wraps.line(y);
         String part = text.substr(span.range);
         int x = 0;
-        if(lineAlignment.testFlag(AlignRight))
+        if (lineAlignment.testFlag(AlignRight))
         {
             x = width - part.size();
         }
-        else if(!lineAlignment.testFlag(AlignLeft))
+        else if (!lineAlignment.testFlag(AlignLeft))
         {
             x = width/2 - part.size()/2;
         }
@@ -258,14 +258,14 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
     Char const vEdge ('|', attribs);
 
     // Horizontal edges.
-    for(duint x = 1; x < rect.width() - 1; ++x)
+    for (duint x = 1; x < rect.width() - 1; ++x)
     {
         put(rect.topLeft + Vector2i(x, 0), hEdge);
         put(rect.bottomLeft() + Vector2i(x, -1), hEdge);
     }
 
     // Vertical edges.
-    for(duint y = 1; y < rect.height() - 1; ++y)
+    for (duint y = 1; y < rect.height() - 1; ++y)
     {
         put(rect.topLeft + Vector2i(0, y), vEdge);
         put(rect.topRight() + Vector2i(-1, y), vEdge);
@@ -279,13 +279,13 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
 
 void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)
 {
-    for(duint y = 0; y < canvas.d->size.y; ++y)
+    for (duint y = 0; y < canvas.d->size.y; ++y)
     {
-        for(duint x = 0; x < canvas.d->size.x; ++x)
+        for (duint x = 0; x < canvas.d->size.x; ++x)
         {
             Coord const xy(x, y);
             Coord const p = topLeft + xy;
-            if(isValid(p))
+            if (isValid(p))
             {
                 at(p) = canvas.at(xy);
             }

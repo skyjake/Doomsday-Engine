@@ -41,14 +41,14 @@ String const Token::SEMICOLON         = ";";
 bool Token::equals(QChar const *str) const
 {
     dsize length = qchar_strlen(str);
-    if(length != dsize(size())) return false;
+    if (length != dsize(size())) return false;
     return String::equals(str, _begin, size());
 }
 
 bool Token::beginsWith(QChar const *str) const
 {
     dsize length = qchar_strlen(str);
-    if(length > dsize(size()))
+    if (length > dsize(size()))
     {
         // We are shorter than the required beginning string.
         return false;
@@ -78,7 +78,7 @@ void TokenBuffer::clear()
     _tokens.clear();
 
     // Empty the allocated pools.
-    for(Pools::iterator i = _pools.begin(); i != _pools.end(); ++i)
+    for (Pools::iterator i = _pools.begin(); i != _pools.end(); ++i)
     {
         i->rover = 0;
     }
@@ -89,9 +89,9 @@ void TokenBuffer::clear()
 
 QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
 {
-    for(;; ++_formPool)
+    for (;; ++_formPool)
     {
-        if(_pools.size() == _formPool)
+        if (_pools.size() == _formPool)
         {
             // Need a new pool.
             _pools.push_back(Pool());
@@ -102,13 +102,13 @@ QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
         }
 
         Pool &fp = _pools[_formPool];
-        if(fp.rover + minimum < fp.size)
+        if (fp.rover + minimum < fp.size)
         {
             return &fp.chars.data()[fp.rover];
         }
         
         // Can we resize this pool?
-        if(!fp.rover)
+        if (!fp.rover)
         {
             fp.size = max(POOL_SIZE + minimum, 2 * minimum);
             fp.chars.resize(fp.size);
@@ -119,7 +119,7 @@ QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
 
 void TokenBuffer::newToken(duint line)
 {
-    if(_forming)
+    if (_forming)
     {
         // Discard the currently formed token. Use the old start address.
         *_forming = Token(_forming->begin(), _forming->begin(), line);
@@ -144,7 +144,7 @@ void TokenBuffer::appendChar(QChar c)
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
     Pool &fp = _pools[_formPool];
-    if(_forming->end() - fp.chars.data() >= dint(fp.size))
+    if (_forming->end() - fp.chars.data() >= dint(fp.size))
     {
         // The pool is full. Find a new pool and move the token.
         String tok = _forming->str();
@@ -162,7 +162,7 @@ void TokenBuffer::setType(Token::Type type)
 
 void TokenBuffer::endToken()
 {
-    if(_forming)
+    if (_forming)
     {
         // Update the pool.
         _pools[_formPool].rover += _forming->size();
@@ -178,7 +178,7 @@ dsize TokenBuffer::size() const
 
 Token const &TokenBuffer::at(duint i) const
 {
-    if(i >= _tokens.size())
+    if (i >= _tokens.size())
     {
         /// @throw OutOfRangeError  Index @a i is out of range.
         throw OutOfRangeError("TokenBuffer::at", "Index out of range");

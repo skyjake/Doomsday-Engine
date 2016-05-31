@@ -55,25 +55,25 @@ DENG2_PIMPL_NOREF(GLInfo)
 
         // Extension names should not have spaces.
         c = (GLubyte *) strchr(name, ' ');
-        if(c || *name == '\0')
+        if (c || *name == '\0')
             return false;
 
-        if(!extensions)
+        if (!extensions)
             return false;
 
         // It takes a bit of care to be fool-proof about parsing the
         // OpenGL extensions string. Don't be fooled by sub-strings, etc.
         start = extensions;
-        for(;;)
+        for (;;)
         {
             c = (GLubyte*) strstr((char const *) start, name);
-            if(!c)
+            if (!c)
                 break;
 
             terminator = c + strlen(name);
-            if(c == start || *(c - 1) == ' ')
+            if (c == start || *(c - 1) == ' ')
             {
-                if(*terminator == ' ' || *terminator == '\0')
+                if (*terminator == ' ' || *terminator == '\0')
                 {
                     return true;
                 }
@@ -90,14 +90,14 @@ DENG2_PIMPL_NOREF(GLInfo)
 
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
-        if(wglGetExtensionsStringARB != nullptr &&
+        if (wglGetExtensionsStringARB != nullptr &&
            checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
             return true;
 #endif
 
 #ifdef DENG_X11
         // Check GLX specific extensions.
-        if(checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
+        if (checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
             return true;
 #endif
 
@@ -115,7 +115,7 @@ DENG2_PIMPL_NOREF(GLInfo)
     {
         LOG_AS("GLInfo");
 
-        if(inited) return;
+        if (inited) return;
 
         // Extensions.
         ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
@@ -150,13 +150,13 @@ DENG2_PIMPL_NOREF(GLInfo)
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint *) &lim.maxTexUnits);
 
-        if(ext.EXT_texture_filter_anisotropic)
+        if (ext.EXT_texture_filter_anisotropic)
         {
             glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *) &lim.maxTexFilterAniso);
         }
 
         // Set a custom maximum size?
-        if(CommandLine_CheckWith("-maxtex", 1))
+        if (CommandLine_CheckWith("-maxtex", 1))
         {
             lim.maxTexSize = min(ceilPow2(String(CommandLine_Next()).toInt()),
                                  lim.maxTexSize);

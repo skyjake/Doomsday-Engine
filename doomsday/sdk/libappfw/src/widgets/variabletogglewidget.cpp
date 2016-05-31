@@ -46,7 +46,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
 
     ~Instance()
     {
-        if(var)
+        if (var)
         {
             var->audienceForDeletion() -= this;
             var->audienceForChange() -= this;
@@ -56,7 +56,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
 
     void updateFromVariable()
     {
-        if(!var) return;
+        if (!var) return;
 
         self.setToggleState(!var->value().compare(activeValue)? Active : Inactive,
                             false /*don't notify*/);
@@ -64,7 +64,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
 
     void setVariableFromWidget()
     {
-        if(!var) return;
+        if (!var) return;
 
         var->audienceForChange() -= this;
         var->set(self.isActive()? activeValue : inactiveValue);
@@ -100,7 +100,7 @@ VariableToggleWidget::VariableToggleWidget(String const &label, Variable &variab
 
 Variable &VariableToggleWidget::variable() const
 {
-    if(!d->var)
+    if (!d->var)
     {
         throw VariableMissingError("VariableToggleWidget::variable",
                                    "Widget is not associated with a variable");

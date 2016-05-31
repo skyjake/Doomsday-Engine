@@ -49,7 +49,7 @@ void Asset::setState(State s)
 {
     State old = d->state;
     d->state = s;
-    if(old != d->state)
+    if (old != d->state)
     {
         DENG2_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
     }
@@ -83,10 +83,10 @@ DENG2_PIMPL_NOREF(AssetGroup)
     {
         DENG2_FOR_EACH_CONST(Members, i, deps)
         {
-            switch(i->second)
+            switch (i->second)
             {
             case Required:
-                if(!i->first->isReady()) return false;
+                if (!i->first->isReady()) return false;
                 break;
 
             default:
@@ -170,7 +170,7 @@ AssetGroup::Members const &AssetGroup::all() const
 
 void AssetGroup::assetBeingDeleted(Asset &asset)
 {
-    if(has(asset))
+    if (has(asset))
     {
         remove(asset);
     }

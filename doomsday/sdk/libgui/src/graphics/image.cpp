@@ -92,7 +92,7 @@ static bool recognize(Block const &data)
                 header.encoding == RLE_ENCODING &&
                 header.bitsPerPixel == 8);
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         return false;
     }
@@ -121,20 +121,20 @@ static QImage load(Block const &data)
     dbyte const *pos = data.data() + HEADER_SIZE;
     dbyte *dst = image.bits();
 
-    for(duint y = 0; y < size.y; ++y, dst += size.x * 3)
+    for (duint y = 0; y < size.y; ++y, dst += size.x * 3)
     {
-        for(duint x = 0; x < size.x; )
+        for (duint x = 0; x < size.x; )
         {
             dbyte value = *pos++;
 
             // RLE inflation.
             int runLength = 1;
-            if((value & 0xc0) == 0xc0)
+            if ((value & 0xc0) == 0xc0)
             {
                 runLength = value & 0x3f;
                 value = *pos++;
             }
-            while(runLength-- > 0)
+            while (runLength-- > 0)
             {
                 // Get the RGB triplets from the palette.
                 std::memcpy(&dst[3 * x++], &palette[3 * value], 3);
@@ -221,8 +221,8 @@ struct Header : public IReadable
         attrib = f & 0x0f;
 
         flags = (f & 0x20? ScreenOriginUpper : NoFlags);
-        if((f & 0xc0) == 0x40) flags |= InterleaveTwoWay;
-        if((f & 0xc0) == 0x80) flags |= InterleaveFourWay;
+        if ((f & 0xc0) == 0x40) flags |= InterleaveTwoWay;
+        if ((f & 0xc0) == 0x80) flags |= InterleaveFourWay;
 
         from.readBytes(identificationSize, identification);
     }
@@ -240,7 +240,7 @@ static bool recognize(Block const &data)
                header.colorMapType == Header::ColorMapNone &&
                (header.depth == 24 || header.depth == 32);
     }
-    catch(...)
+    catch (...)
     {
         return false;
     }
@@ -260,16 +260,16 @@ static QImage load(Block const &data)
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
     // RGB can be read line by line.
-    if(header.imageType == Header::RGB)
+    if (header.imageType == Header::RGB)
     {
-        for(int y = 0; y < header.size.y; y++)
+        for (int y = 0; y < header.size.y; y++)
         {
             int inY = (isUpperOrigin? y : (header.size.y - y - 1));
             ByteRefArray line(base + (inY * img.bytesPerLine()), header.size.x * pixelSize);
             input.readBytesFixedSize(line);
         }
     }
-    else if(header.imageType == Header::RleRGB)
+    else if (header.imageType == Header::RleRGB)
     {
         img.fill(0);
 
@@ -279,14 +279,14 @@ static QImage load(Block const &data)
         int endY = header.size.y - y - 1;
         int stepY = (isUpperOrigin? 1 : -1);
 
-        while(y != endY && x < header.size.x)
+        while (y != endY && x < header.size.x)
         {
             dbyte rle;
             input >> rle;
 
             int count;
             bool repeat = false;
-            if(rle & 0x80) // Repeat?
+            if (rle & 0x80) // Repeat?
             {
                 repeat = true;
                 count = (rle & 0x7f) + 1;
@@ -297,9 +297,9 @@ static QImage load(Block const &data)
             }
 
             Block pixel;
-            for(int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
-                if(i == 0 || !repeat)
+                if (i == 0 || !repeat)
                 {
                     // Read the first/next byte.
                     input.readBytes(pixelSize, pixel);
@@ -309,7 +309,7 @@ static QImage load(Block const &data)
                             pixel.constData(), pixelSize);
 
                 // Advance the position.
-                if(++x == header.size.x)
+                if (++x == header.size.x)
                 {
                     x = 0;
                     y += stepY;
@@ -318,7 +318,7 @@ static QImage load(Block const &data)
         }
     }
 
-    if(pixelSize == 3)
+    if (pixelSize == 3)
     {
         img = img.rgbSwapped();
     }
@@ -400,7 +400,7 @@ Image::Format Image::format() const
 
 QImage::Format Image::qtFormat() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image.format();
     }
@@ -419,7 +419,7 @@ Rectanglei Image::rect() const
 
 int Image::depth() const
 {
-    switch(d->format)
+    switch (d->format)
     {
     case UseQImageFormat:
         return d->image.depth();
@@ -448,7 +448,7 @@ int Image::depth() const
 
 int Image::stride() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image.bytesPerLine();
     }
@@ -457,11 +457,11 @@ int Image::stride() const
 
 int Image::byteCount() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image.byteCount();
     }
-    if(!d->pixels.isEmpty())
+    if (!d->pixels.isEmpty())
     {
         return d->pixels.size();
     }
@@ -470,11 +470,11 @@ int Image::byteCount() const
 
 void const *Image::bits() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image.constBits();
     }
-    if(!d->pixels.isEmpty())
+    if (!d->pixels.isEmpty())
     {
         return d->pixels.constData();
     }
@@ -483,11 +483,11 @@ void const *Image::bits() const
 
 void *Image::bits()
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image.bits();
     }
-    if(!d->pixels.isEmpty())
+    if (!d->pixels.isEmpty())
     {
         return d->pixels.data();
     }
@@ -501,10 +501,10 @@ bool Image::isNull() const
 
 bool Image::isGLCompatible() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         // Some QImage formats are GL compatible.
-        switch(qtFormat())
+        switch (qtFormat())
         {
         case QImage::Format_ARGB32: // 8888
         case QImage::Format_RGB32:  // 8888
@@ -523,7 +523,7 @@ bool Image::isGLCompatible() const
 
 bool Image::canConvertToQImage() const
 {
-    switch(d->format)
+    switch (d->format)
     {
     case RGB_444:
     case RGB_555:
@@ -541,14 +541,14 @@ bool Image::canConvertToQImage() const
 
 QImage Image::toQImage() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return d->image;
     }
 
     // There may be some conversions we can do.
     QImage::Format form = QImage::Format_Invalid;
-    switch(d->format)
+    switch (d->format)
     {
     case RGB_444:
         form = QImage::Format_RGB444;
@@ -580,7 +580,7 @@ QImage Image::toQImage() const
 
 GLPixelFormat Image::glFormat() const
 {
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         return glFormat(d->image.format());
     }
@@ -660,10 +660,10 @@ Image Image::colorized(Color const &color) const
     QColor targetColor(color.x, color.y, color.z, 255);
     int targetHue = targetColor.hue();
 
-    for(duint y = 0; y < height(); ++y)
+    for (duint y = 0; y < height(); ++y)
     {
         duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
-        for(duint x = 0; x < width(); ++x)
+        for (duint x = 0; x < width(); ++x)
         {
             duint16 b =  *ptr & 0xff;
             duint16 g = (*ptr & 0xff00) >> 8;
@@ -691,7 +691,7 @@ void Image::operator >> (Writer &to) const
 {
     to << duint8(d->format);
 
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         Block block;
         QDataStream os(&block, QIODevice::WriteOnly);
@@ -712,7 +712,7 @@ void Image::operator << (Reader &from)
 
     from.readAs<duint8>(d->format);
 
-    if(d->format == UseQImageFormat)
+    if (d->format == UseQImageFormat)
     {
         Block block;
         from >> block;
@@ -733,7 +733,7 @@ GLPixelFormat Image::glFormat(Format imageFormat)
 {
     DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBx_8888);
 
-    switch(imageFormat)
+    switch (imageFormat)
     {
     case Luminance_8:
         return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
@@ -773,7 +773,7 @@ GLPixelFormat Image::glFormat(Format imageFormat)
 
 GLPixelFormat Image::glFormat(QImage::Format format)
 {
-    switch(format)
+    switch (format)
     {
     case QImage::Format_Indexed8:
         return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
@@ -822,13 +822,13 @@ Image Image::fromData(IByteArray const &data, String const &formatHint)
 Image Image::fromData(Block const &data, String const &formatHint)
 {
     // Targa doesn't have a reliable "magic" identifier so we require a hint.
-    if(!formatHint.compareWithoutCase(".tga") && tga::recognize(data))
+    if (!formatHint.compareWithoutCase(".tga") && tga::recognize(data))
     {
         return tga::load(data);
     }
 
     // Qt does not support PCX images (too old school?).
-    if(pcx::recognize(data))
+    if (pcx::recognize(data))
     {
         return pcx::load(data);
     }
@@ -844,14 +844,14 @@ Image Image::fromIndexedData(Size const &size, IByteArray const &image, IByteArr
 
     // Process the source data by row.
     Block color(size.x);
-    for(duint y = 0; y < size.y; ++y)
+    for (duint y = 0; y < size.y; ++y)
     {
         duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
 
         image.get(size.x * y, color.data(), color.size());
         auto const *srcColor = color.dataConst();
 
-        for(duint x = 0; x < size.x; ++x)
+        for (duint x = 0; x < size.x; ++x)
         {
             duint8 paletteColor[3];
             palette.get(*srcColor++ * 3, paletteColor, 3);
@@ -873,7 +873,7 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
     Block color(size.x);
     Block alpha(size.x);
 
-    for(duint y = 0; y < size.y; ++y)
+    for (duint y = 0; y < size.y; ++y)
     {
         duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
 
@@ -883,7 +883,7 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
         auto const *srcColor = color.dataConst();
         auto const *srcAlpha = alpha.dataConst();
 
-        for(duint x = 0; x < size.x; ++x)
+        for (duint x = 0; x < size.x; ++x)
         {
             duint8 paletteColor[3];
             palette.get(*srcColor++ * 3, paletteColor, 3);

@@ -112,7 +112,7 @@ public:
  */
 template <typename Type>
 inline Type *refless(Type *counted) {
-    if(!counted) return 0;
+    if (!counted) return 0;
     counted->addRef(-1);
     return counted;
 }
@@ -124,7 +124,7 @@ inline Type *refless(Type *counted) {
  */
 template <typename CountedType>
 inline CountedType *holdRef(CountedType *counted) {
-    if(!counted) return 0;
+    if (!counted) return 0;
     return counted->template ref<CountedType>();
 }
 
@@ -184,7 +184,7 @@ inline void changeRef(CountedType *&counted, Counted &newRef) {
  */
 template <typename CountedType>
 inline void releaseRef(CountedType *&ref) {
-    if(ref) ref->release();
+    if (ref) ref->release();
     ref = 0;
 }
 
@@ -196,7 +196,7 @@ inline void releaseRef(CountedType *&ref) {
  */
 template <typename CountedType>
 inline void releaseRef(CountedType const *&ref) {
-    if(ref) ref->release();
+    if (ref) ref->release();
     ref = 0;
 }
 

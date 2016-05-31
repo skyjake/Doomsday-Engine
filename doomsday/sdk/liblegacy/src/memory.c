@@ -27,27 +27,27 @@
 void *M_Malloc(size_t size)
 {
     void *p = malloc(size);
-    if(!p) Libdeng_BadAlloc();
+    if (!p) Libdeng_BadAlloc();
     return p;
 }
 
 void *M_Calloc(size_t size)
 {
     void *p = calloc(size, 1);
-    if(!p) Libdeng_BadAlloc();
+    if (!p) Libdeng_BadAlloc();
     return p;
 }
 
 void *M_Realloc(void *ptr, size_t size)
 {
     void *p = 0;
-    if(!size)
+    if (!size)
     {
-        if(ptr) M_Free(ptr);
+        if (ptr) M_Free(ptr);
         return 0;
     }
     p = realloc(ptr, size);
-    if(!p) Libdeng_BadAlloc(); // was supposed to be non-null
+    if (!p) Libdeng_BadAlloc(); // was supposed to be non-null
     return p;
 }
 
@@ -65,6 +65,6 @@ void M_Free(void *ptr)
 
 char *M_StrDup(char const *str)
 {
-    if(!str) return 0;
+    if (!str) return 0;
     return M_MemDup(str, strlen(str) + 1);
 }

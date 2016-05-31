@@ -53,7 +53,7 @@ DENG2_PIMPL(Font)
 #if 0
         // Development aid: list all available fonts and styles.
         QFontDatabase db;
-        foreach(QString fam, db.families())
+        foreach (QString fam, db.families())
         {
             qDebug() << "FONT FAMILY:" << fam;
             qDebug() << "\tStyles:" << db.styles(fam);
@@ -83,7 +83,7 @@ DENG2_PIMPL(Font)
     void updateMetrics()
     {
         ascent = font.ascent();
-        if(font.weight() != NativeFont::Normal)
+        if (font.weight() != NativeFont::Normal)
         {
             // Use the ascent of the normal weight for non-normal weights;
             // we need to align content to baseline regardless of weight.
@@ -108,18 +108,18 @@ DENG2_PIMPL(Font)
      */
     PlatformFont alteredFont(RichFormat::Iterator const &rich) const
     {
-        if(!rich.isDefault())
+        if (!rich.isDefault())
         {
             PlatformFont mod = font;
 
             // Size change.
-            if(!fequal(rich.sizeFactor(), 1.f))
+            if (!fequal(rich.sizeFactor(), 1.f))
             {
                 mod.setSize(mod.size() * rich.sizeFactor());
             }
 
             // Style change (including monospace).
-            switch(rich.style())
+            switch (rich.style())
             {
             case RichFormat::OriginalStyle:
                 break;
@@ -135,9 +135,9 @@ DENG2_PIMPL(Font)
                 break;
 
             case RichFormat::Monospace:
-                if(rich.format.format().hasStyle())
+                if (rich.format.format().hasStyle())
                 {
-                    if(Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
+                    if (Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
                         mod.setFamily(altFont->d->font.family());
                         mod.setStyle (altFont->d->font.style());
@@ -149,7 +149,7 @@ DENG2_PIMPL(Font)
             }
 
             // Weight change.
-            if(rich.weight() != RichFormat::OriginalWeight)
+            if (rich.weight() != RichFormat::OriginalWeight)
             {
                 mod.setWeight(rich.weight() == RichFormat::Normal? NativeFont::Normal :
                               rich.weight() == RichFormat::Bold?   NativeFont::Bold   :
@@ -181,10 +181,10 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
     int advance = 0;
 
     RichFormat::Iterator iter(format);
-    while(iter.hasNext())
+    while (iter.hasNext())
     {
         iter.next();
-        if(iter.range().isEmpty()) continue;
+        if (iter.range().isEmpty()) continue;
 
         PlatformFont const altFont = d->alteredFont(iter);
 
@@ -210,10 +210,10 @@ int Font::advanceWidth(String const &textLine, RichFormatRef const &format) cons
 {
     int advance = 0;
     RichFormat::Iterator iter(format);
-    while(iter.hasNext())
+    while (iter.hasNext())
     {
         iter.next();
-        if(iter.range().isEmpty()) continue;
+        if (iter.range().isEmpty()) continue;
 
         advance += d->alteredFont(iter).width(textLine.substr(iter.range()));
     }
@@ -232,7 +232,7 @@ QImage Font::rasterize(String const &textLine,
                        Vector4ub const &foreground,
                        Vector4ub const &background) const
 {
-    if(textLine.isEmpty())
+    if (textLine.isEmpty())
     {
         return QImage();
     }
@@ -262,14 +262,14 @@ QImage Font::rasterize(String const &textLine,
     // bitmap and then drawing those into the final image.
     int advance = 0;
     RichFormat::Iterator iter(format);
-    while(iter.hasNext())
+    while (iter.hasNext())
     {
         iter.next();
-        if(iter.range().isEmpty()) continue;
+        if (iter.range().isEmpty()) continue;
 
         PlatformFont font = d->font;
 
-        if(iter.isDefault())
+        if (iter.isDefault())
         {
             fg = foreground;
             bg = background;
@@ -278,7 +278,7 @@ QImage Font::rasterize(String const &textLine,
         {
             font = d->alteredFont(iter);
 
-            if(iter.colorIndex() != RichFormat::OriginalColor)
+            if (iter.colorIndex() != RichFormat::OriginalColor)
             {
                 fg = iter.color();
                 bg = Vector4ub(fg, 0);
@@ -295,11 +295,11 @@ QImage Font::rasterize(String const &textLine,
 #ifdef WIN32
         // Kludge: No light-weight fonts available, so reduce opacity to give the
         // illusion of thinness.
-        if(iter.weight() == RichFormat::Light)
+        if (iter.weight() == RichFormat::Light)
         {
-            if(Vector3ub(60, 60, 60) > fg) // dark
+            if (Vector3ub(60, 60, 60) > fg) // dark
                 fg.w *= .66f;
-            else if(Vector3ub(230, 230, 230) < fg) // light
+            else if (Vector3ub(230, 230, 230) < fg) // light
                 fg.w *= .85f;
             else
                 fg.w *= .925f;

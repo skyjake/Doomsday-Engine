@@ -43,11 +43,11 @@ static void setdata(FindData *dta)
     Str_Set(&dta->name, QString::fromWCharArray(fd->data.name).toUtf8());
     Str_ReplaceAll(&dta->name, '\\', '/');
     dta->attrib = 0;
-    if(fd->data.attrib & _A_SUBDIR)
+    if (fd->data.attrib & _A_SUBDIR)
     {
-        if(Str_Compare(&dta->name, ".") && Str_Compare(&dta->name, ".."))
+        if (Str_Compare(&dta->name, ".") && Str_Compare(&dta->name, ".."))
         {
-            if(!Str_EndsWith(&dta->name, "/")) Str_Append(&dta->name, "/");
+            if (!Str_EndsWith(&dta->name, "/")) Str_Append(&dta->name, "/");
         }
         dta->attrib |= A_SUBDIR;
     }
@@ -74,11 +74,11 @@ int FindFile_FindNext(FindData *dta)
     winfinddata_t *fd;
     int result;
 
-    if(!dta) return 0;
+    if (!dta) return 0;
 
     fd = reinterpret_cast<winfinddata_t *>(dta->finddata);
     result = _wfindnext(fd->handle, &fd->data);
-    if(!result)
+    if (!result)
     {
         setdata(dta);
     }

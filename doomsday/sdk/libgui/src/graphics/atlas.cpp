@@ -51,7 +51,7 @@ DENG2_PIMPL(Atlas)
         , needFullCommit(true)
         , mayDefrag(false)
     {
-        if(hasBacking())
+        if (hasBacking())
         {
             backing = QImage(QSize(totalSize.x, totalSize.y), QImage::Format_ARGB32);
         }
@@ -75,7 +75,7 @@ DENG2_PIMPL(Atlas)
 
     void markAsChanged(Rectanglei const &rect)
     {
-        if(needCommit)
+        if (needCommit)
         {
             // Merge to earlier changes.
             changedArea |= rect;
@@ -106,7 +106,7 @@ DENG2_PIMPL(Atlas)
 
     float changedPercentage() const
     {
-        if(!needCommit || totalSize == Size(0, 0)) return 0.0f;
+        if (!needCommit || totalSize == Size(0, 0)) return 0.0f;
 
         duint totalPx   = totalSize.x * totalSize.y;
         duint changedPx = changedArea.width() * changedArea.height();
@@ -116,12 +116,12 @@ DENG2_PIMPL(Atlas)
 
     float usedPercentage() const
     {
-        if(!allocator) return 0;
+        if (!allocator) return 0;
 
         duint totalPx = totalSize.x * totalSize.y;
         duint usedPx = 0;
 
-        foreach(Rectanglei const &alloc, allocator->allocs().values())
+        foreach (Rectanglei const &alloc, allocator->allocs().values())
         {
             usedPx += alloc.width() * alloc.height();
         }
@@ -140,14 +140,14 @@ DENG2_PIMPL(Atlas)
         Rectanglei const noBorders  = rect.shrunk(border);
         Rectanglei const withMargin = rect.expanded(margin);
 
-        if(hasBacking())
+        if (hasBacking())
         {
             // The margin is cleared to transparent black.
             backing.fill(withMargin, Image::Color(0, 0, 0, 0));
 
-            if(border > 0)
+            if (border > 0)
             {
-                if(flags.testFlag(WrapBordersInBackingStore))
+                if (flags.testFlag(WrapBordersInBackingStore))
                 {
                     // Wrap using the source image (left, right, top, bottom edges).
                     backing.drawPartial(image, Rectanglei(0, 0, border, image.height()),
@@ -174,7 +174,7 @@ DENG2_PIMPL(Atlas)
         else
         {
             // No backing, must commit immediately.
-            if(border > 0)
+            if (border > 0)
             {
                 // Expand with borders (repeat edges).
                 QImage const srcImg = image.toQImage();
@@ -215,7 +215,7 @@ DENG2_PIMPL(Atlas)
 
     void submitDeferred()
     {
-        for(auto i = deferred.begin(); i != deferred.end(); ++i)
+        for (auto i = deferred.begin(); i != deferred.end(); ++i)
         {
             try
             {
@@ -223,7 +223,7 @@ DENG2_PIMPL(Atlas)
                 allocator->rect(i.key(), rect);
                 submitImage(*i.value(), rect);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_GL_ERROR("Allocation %s could not be submitted: %s")
                         << i.key() << er.asText();
@@ -241,7 +241,7 @@ DENG2_PIMPL(Atlas)
         DENG2_ASSERT(hasBacking());
 
         IAllocator::Allocations const oldLayout = allocator->allocs();
-        if(!allocator->optimize())
+        if (!allocator->optimize())
         {
             // Optimization did not work out.
             mayDefrag = false;
@@ -304,7 +304,7 @@ void Atlas::setAllocator(IAllocator *allocator)
 
     clear();
     d->allocator.reset(allocator);
-    if(d->allocator.get())
+    if (d->allocator.get())
     {
         d->allocator->setMetrics(d->totalSize, d->margin);
         d->allocator->clear(); // using new metrics
@@ -320,7 +320,7 @@ Atlas::IAllocator *Atlas::takeAllocator()
 void Atlas::setMarginSize(dint marginPixels)
 {
     d->margin = marginPixels;
-    if(d->allocator.get())
+    if (d->allocator.get())
     {
         d->allocator->setMetrics(d->totalSize, d->margin);
     }
@@ -335,11 +335,11 @@ void Atlas::clear()
 {
     DENG2_GUARD(this);
 
-    if(d->allocator)
+    if (d->allocator)
     {
         d->allocator->clear();
     }
-    if(d->hasBacking())
+    if (d->hasBacking())
     {
         d->backing.fill(Image::Color(0, 0, 0, 0));
         d->markFullyChanged();
@@ -353,12 +353,12 @@ void Atlas::setTotalSize(Size const &totalSize)
 
     d->totalSize = totalSize;
 
-    if(d->allocator)
+    if (d->allocator)
     {
         d->allocator->setMetrics(totalSize, d->margin);
     }
 
-    if(d->hasBacking())
+    if (d->hasBacking())
     {
         d->backing.resize(totalSize);
         d->markFullyChanged();
@@ -375,7 +375,7 @@ Atlas::Size Atlas::totalSize() const
 
 Id Atlas::alloc(Image const &image, Id const &chosenId)
 {
-    if(image.isNull())
+    if (image.isNull())
     {
         LOG_AS("Atlas");
         LOGDEV_GL_WARNING("Cannot allocate a zero-size image");
@@ -388,7 +388,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
     Rectanglei rect;
     Id id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect, chosenId);
 
-    if(id.isNone() && d->flags.testFlag(AllowDefragment) && d->mayDefrag)
+    if (id.isNone() && d->flags.testFlag(AllowDefragment) && d->mayDefrag)
     {
         // Allocation failed. Maybe we can defragment to get more space?
         d->defragment();
@@ -397,12 +397,12 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
         id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect, chosenId);
     }
 
-    if(!id.isNone())
+    if (!id.isNone())
     {
         // Defragmenting may again be helpful.
         d->mayDefrag = true;
 
-        if(!d->usingDeferredMode())
+        if (!d->usingDeferredMode())
         {
             // Submit the image to the backing store (or commit).
             d->submitImage(image, rect);
@@ -414,10 +414,10 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
             d->deferred.insert(id, new Image(image));
         }
     }
-    else if(!d->usingDeferredMode())
+    else if (!d->usingDeferredMode())
     {
         LOG_AS("Atlas");
-        if(!d->fullReportedAt.isValid() || d->fullReportedAt.since() > 1.0)
+        if (!d->fullReportedAt.isValid() || d->fullReportedAt.since() > 1.0)
         {
             LOGDEV_GL_XVERBOSE("Full with %.1f%% usage") << d->usedPercentage() * 100;
             d->fullReportedAt = Time::currentHighPerformanceTime();
@@ -433,7 +433,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
 
 void Atlas::release(Id const &id)
 {
-    if(id.isNone()) return;
+    if (id.isNone()) return;
 
     DENG2_GUARD(this);
     DENG2_ASSERT(d->allocator.get());
@@ -448,7 +448,7 @@ bool Atlas::contains(Id const &id) const
 {
     DENG2_GUARD(this);
 
-    if(d->allocator.get())
+    if (d->allocator.get())
     {
         return d->allocator->ids().contains(id);
     }
@@ -495,11 +495,11 @@ Rectanglef Atlas::imageRectf(Id const &id) const
 Image Atlas::image(Id const &id) const
 {
     DENG2_GUARD(this);
-    if(d->deferred.contains(id))
+    if (d->deferred.contains(id))
     {
         return *d->deferred[id];
     }
-    if(d->hasBacking() && d->allocator.get() && contains(id))
+    if (d->hasBacking() && d->allocator.get() && contains(id))
     {
         return d->backing.subImage(imageRect(id));
     }
@@ -513,12 +513,12 @@ void Atlas::commit() const
     LOG_AS("Atlas");
     d->submitDeferred();
 
-    if(!d->needCommit || !d->hasBacking()) return;
+    if (!d->needCommit || !d->hasBacking()) return;
 
-    if(d->mustCommitFull())
+    if (d->mustCommitFull())
     {
         DENG2_ASSERT(d->backing.size() == d->totalSize);
-        if(d->flags.testFlag(LogCommitsAsXVerbose))
+        if (d->flags.testFlag(LogCommitsAsXVerbose))
         {
             LOGDEV_GL_XVERBOSE("Full commit ") << d->backing.size().asText();
         }
@@ -526,7 +526,7 @@ void Atlas::commit() const
     }
     else
     {
-        if(d->flags.testFlag(LogCommitsAsXVerbose))
+        if (d->flags.testFlag(LogCommitsAsXVerbose))
         {
             LOGDEV_GL_XVERBOSE("Partial commit ") << d->changedArea.asText();
         }
@@ -541,10 +541,10 @@ void Atlas::commit() const
 
 void Atlas::cancelDeferred()
 {
-    for(auto i = d->deferred.constBegin(); i != d->deferred.constEnd(); ++i)
+    for (auto i = d->deferred.constBegin(); i != d->deferred.constEnd(); ++i)
     {
         delete i.value(); // we own a copy of the Image
-        if(d->allocator)
+        if (d->allocator)
         {
             release(i.key());
         }

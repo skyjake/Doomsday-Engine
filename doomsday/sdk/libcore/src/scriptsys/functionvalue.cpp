@@ -61,16 +61,16 @@ bool FunctionValue::isFalse() const
 dint FunctionValue::compare(Value const &value) const
 {
     FunctionValue const *other = dynamic_cast<FunctionValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         return -1;
     }
     // Address comparison.
-    if(_func == other->_func)
+    if (_func == other->_func)
     {
         return 0;
     }
-    if(_func > other->_func)
+    if (_func > other->_func)
     {
         return 1;
     }
@@ -80,7 +80,7 @@ dint FunctionValue::compare(Value const &value) const
 void FunctionValue::call(Process &process, Value const &arguments, Value *self) const
 {
     ArrayValue const *array = dynamic_cast<ArrayValue const *>(&arguments);
-    if(!array)
+    if (!array)
     {
         /// @throw IllegalError  The call arguments must be an array value.
         throw IllegalError("FunctionValue::call", "Arguments is not an array");
@@ -97,7 +97,7 @@ void FunctionValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != FUNCTION)
+    if (id != FUNCTION)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.

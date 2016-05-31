@@ -37,7 +37,7 @@ DictionaryExpression::~DictionaryExpression()
 
 void DictionaryExpression::clear()
 {
-    for(Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    for (Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         delete i->first;
         delete i->second;
@@ -58,7 +58,7 @@ void DictionaryExpression::push(Evaluator &evaluator, Value *scope) const
 
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).
-    for(Arguments::const_reverse_iterator i = _arguments.rbegin();
+    for (Arguments::const_reverse_iterator i = _arguments.rbegin();
         i != _arguments.rend(); ++i)
     {
         i->second->push(evaluator);
@@ -73,7 +73,7 @@ Value *DictionaryExpression::evaluate(Evaluator &evaluator) const
     std::list<Value *> keys, values;
 
     // Collect the right number of results into the array.
-    for(Arguments::const_reverse_iterator i = _arguments.rbegin();
+    for (Arguments::const_reverse_iterator i = _arguments.rbegin();
         i != _arguments.rend(); ++i)
     {
         values.push_back(evaluator.popResult());
@@ -84,7 +84,7 @@ Value *DictionaryExpression::evaluate(Evaluator &evaluator) const
     // order, i.e., the same order as they are in the source.
     std::list<Value *>::reverse_iterator key = keys.rbegin();
     std::list<Value *>::reverse_iterator value = values.rbegin();
-    for(; key != keys.rend(); ++key, ++value)
+    for (; key != keys.rend(); ++key, ++value)
     {
         dict->add(*key, *value);
     }
@@ -99,7 +99,7 @@ void DictionaryExpression::operator >> (Writer &to) const
     Expression::operator >> (to);
 
     to << duint16(_arguments.size());
-    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    for (Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << *i->first << *i->second;
     }
@@ -109,7 +109,7 @@ void DictionaryExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != DICTIONARY)
+    if (id != DICTIONARY)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
@@ -121,7 +121,7 @@ void DictionaryExpression::operator << (Reader &from)
     duint16 count;
     from >> count;
     clear();
-    while(count--)
+    while (count--)
     {
         QScopedPointer<Expression> key(Expression::constructFrom(from));
         QScopedPointer<Expression> value(Expression::constructFrom(from));

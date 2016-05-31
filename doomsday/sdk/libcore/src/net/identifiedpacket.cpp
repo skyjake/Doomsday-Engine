@@ -43,7 +43,7 @@ void IdentifiedPacket::operator << (Reader &from)
 
 IdentifiedPacket::Id IdentifiedPacket::id() const
 {
-    if(!_id)
+    if (!_id)
     {
         // Late assignment of the id. If the id is never asked, one is never set.
         _id = ++idGen;

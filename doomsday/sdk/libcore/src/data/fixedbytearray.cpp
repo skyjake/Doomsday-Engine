@@ -40,7 +40,7 @@ FixedByteArray::FixedByteArray(IByteArray const &mainArray, Offset at, Size size
 void FixedByteArray::set(Offset at, Byte const *values, Size count)
 {
     // Increasing the size is not allowed.
-    if(at + count > size())
+    if (at + count > size())
     {
         throw OffsetError("FixedByteArray::set", "Fixed byte arrays cannot grow");
     }

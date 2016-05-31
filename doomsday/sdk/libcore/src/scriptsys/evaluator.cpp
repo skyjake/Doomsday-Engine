@@ -38,7 +38,7 @@ DENG2_PIMPL(Evaluator)
 
         ScopedExpression(Expression const *e = 0, Value *s = 0) : expression(e), scope(s) {}
         Record *names() const {
-            if(!scope) return 0;
+            if (!scope) return 0;
             return scope->memberScope();
         }
     };
@@ -79,7 +79,7 @@ DENG2_PIMPL(Evaluator)
 
     void clearNames()
     {
-        if(names)
+        if (names)
         {
             names = 0;
         }
@@ -87,7 +87,7 @@ DENG2_PIMPL(Evaluator)
 
     void clearResults()
     {
-        foreach(ScopedResult const &i, results)
+        foreach (ScopedResult const &i, results)
         {
             delete i.result;
             delete i.scope;
@@ -97,7 +97,7 @@ DENG2_PIMPL(Evaluator)
 
     void clearStack()
     {
-        while(!stack.empty())
+        while (!stack.empty())
         {
             ScopedExpression top = stack.takeLast();
             clearNames();
@@ -110,7 +110,7 @@ DENG2_PIMPL(Evaluator)
     {
         // NULLs are not pushed onto the results stack as they indicate that
         // no result was given.
-        if(value)
+        if (value)
         {
             /*qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
                         << (scope? scope->asText() : "null");*/
@@ -120,7 +120,7 @@ DENG2_PIMPL(Evaluator)
 
     Value &result()
     {
-        if(results.isEmpty())
+        if (results.isEmpty())
         {
             return noResult;
         }
@@ -141,7 +141,7 @@ DENG2_PIMPL(Evaluator)
         // Clear the result stack.
         clearResults();
 
-        while(!stack.empty())
+        while (!stack.empty())
         {
             // Continue by processing the next step in the evaluation.
             ScopedExpression top = stack.takeLast();
@@ -203,7 +203,7 @@ Value &Evaluator::evaluate(Expression const *expression)
 
 void Evaluator::namespaces(Namespaces &spaces) const
 {
-    if(d->names)
+    if (d->names)
     {
         // A specific namespace has been defined.
         spaces.clear();
@@ -253,7 +253,7 @@ Value *Evaluator::popResult(Value **evaluationScope)
     /*qDebug() << "Evaluator: Popping result" << result.result->asText()
              << "in scope" << (result.scope? result.scope->asText() : "null");*/
 
-    if(evaluationScope)
+    if (evaluationScope)
     {
         *evaluationScope = result.scope;
     }

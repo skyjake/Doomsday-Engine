@@ -41,7 +41,7 @@ OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOpe
 OperatorExpression::OperatorExpression(Operator op, Expression *operand)
     : _op(op), _leftOperand(0), _rightOperand(operand)
 {
-    if(!isUnary(op))
+    if (!isUnary(op))
     {
         throw NonUnaryError("OperatorExpression::OperatorExpression",
             "Unary " + operatorToText(op) + " not defined");
@@ -51,7 +51,7 @@ OperatorExpression::OperatorExpression(Operator op, Expression *operand)
 OperatorExpression::OperatorExpression(Operator op, Expression *leftOperand, Expression *rightOperand)
     : _op(op), _leftOperand(leftOperand), _rightOperand(rightOperand)
 {
-    if(!isBinary(op))
+    if (!isBinary(op))
     {
         throw NonBinaryError("OperatorExpression::OperatorExpression",
             "Binary " + operatorToText(op) + " not defined");
@@ -68,20 +68,20 @@ void OperatorExpression::push(Evaluator &evaluator, Value *scope) const
 {
     Expression::push(evaluator);
 
-    if(_op == MEMBER)
+    if (_op == MEMBER)
     {
         // The MEMBER operator works a bit differently. Just push the left side
         // now. We'll push the other side when we've found out what is the
         // scope defined by the result of the left side.
         _leftOperand->push(evaluator, scope);
     }
-    else if(_op == AND || _op == OR)
+    else if (_op == AND || _op == OR)
     {
         // Early termination: AND/OR only push the left operand, and skip evaluation
         // of the right operand if False/True is encountered.
         _leftOperand->push(evaluator, scope);
     }
-    else if(_op == RESULT_TRUE)
+    else if (_op == RESULT_TRUE)
     {
         // This is not a normal operator: it pops a result and checks if it is True.
         // We have no operands to push.
@@ -89,7 +89,7 @@ void OperatorExpression::push(Evaluator &evaluator, Value *scope) const
     else
     {
         _rightOperand->push(evaluator);
-        if(_leftOperand)
+        if (_leftOperand)
         {
             _leftOperand->push(evaluator, scope);
         }
@@ -105,7 +105,7 @@ Value *OperatorExpression::newBooleanValue(bool isTrue)
 void OperatorExpression::verifyAssignable(Value *value)
 {
     DENG2_ASSERT(value != 0);
-    if(!dynamic_cast<RefValue *>(value))
+    if (!dynamic_cast<RefValue *>(value))
     {
         throw NotAssignableError("OperatorExpression::verifyAssignable",
             "Cannot assign to: " + value->asText());
@@ -130,10 +130,10 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
     try
     {
-        switch(_op)
+        switch (_op)
         {
         case PLUS:
-            if(leftValue)
+            if (leftValue)
             {
                 leftValue->sum(*rightValue);
             }
@@ -149,7 +149,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case MINUS:
-            if(leftValue)
+            if (leftValue)
             {
                 leftValue->subtract(*rightValue);
             }
@@ -201,7 +201,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case AND:
-            if(!leftValue->isTrue())
+            if (!leftValue->isTrue())
             {
                 // Early termination.
                 result = newBooleanValue(false);
@@ -215,7 +215,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case OR:
-            if(leftValue->isTrue())
+            if (leftValue->isTrue())
             {
                 // Early termination.
                 result = newBooleanValue(true);
@@ -272,7 +272,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
             // As a special case, records can be indexed also by reference.
             RecordValue *recValue = dynamic_cast<RecordValue *>(leftValue);
-            if(flags().testFlag(ByReference) && recValue)
+            if (flags().testFlag(ByReference) && recValue)
             {
                 result = new RefValue(&recValue->dereference()[rightValue->asText()]);
             }
@@ -291,7 +291,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case MEMBER:
         {
             Record *scope = (leftValue? leftValue->memberScope() : 0);
-            if(!scope)
+            if (!scope)
             {
                 throw ScopeError("OperatorExpression::evaluate",
                     "Left side of " + operatorToText(_op) + " does not have members [" +
@@ -316,7 +316,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
                 "Operator " + operatorToText(_op) + " not implemented");
         }
     }
-    catch(Error const &)
+    catch (Error const &)
     {
         delete rightValue;
         delete leftValue;
@@ -324,8 +324,8 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     }
 
     // Delete the unnecessary values.
-    if(result != rightValue) delete rightValue;
-    if(result != leftValue) delete leftValue;
+    if (result != rightValue) delete rightValue;
+    if (result != leftValue) delete leftValue;
 
     return result;
 }
@@ -341,12 +341,12 @@ void OperatorExpression::operator >> (Writer &to) const
     Expression::operator >> (to);
 
     duint8 header = _op;
-    if(_leftOperand)
+    if (_leftOperand)
     {
         header |= HAS_LEFT_OPERAND;
     }
     to << header << *_rightOperand;
-    if(_leftOperand)
+    if (_leftOperand)
     {
         to << *_leftOperand;
     }
@@ -356,7 +356,7 @@ void OperatorExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != OPERATOR)
+    if (id != OPERATOR)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
@@ -375,7 +375,7 @@ void OperatorExpression::operator << (Reader &from)
     _rightOperand = 0;
 
     _rightOperand = Expression::constructFrom(from);
-    if(header & HAS_LEFT_OPERAND)
+    if (header & HAS_LEFT_OPERAND)
     {
         _leftOperand = Expression::constructFrom(from);
     }
@@ -424,7 +424,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
 
     // The resulting slice of leftValue's elements.
     std::unique_ptr<SliceTarget> slice;
-    if(dynamic_cast<TextValue *>(&leftValue))
+    if (dynamic_cast<TextValue *>(&leftValue))
     {
         slice.reset(new TextSliceTarget);
     }
@@ -435,10 +435,10 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
 
     // Determine the stepping of the slice.
     dint step = 1;
-    if(args->size() >= 3)
+    if (args->size() >= 3)
     {
         step = dint(args->elements()[2]->asNumber());
-        if(!step)
+        if (!step)
         {
             throw SliceError("OperatorExpression::evaluate",
                 operatorToText(_op) + " cannot use zero as step");
@@ -453,7 +453,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
 
     // Check the start index of the slice.
     Value const *startValue = args->elements()[0];
-    if(dynamic_cast<NoneValue const *>(startValue))
+    if (dynamic_cast<NoneValue const *>(startValue))
     {
         unspecifiedStart = true;
     }
@@ -464,7 +464,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
 
     // Check the end index of the slice.
     Value const *endValue = args->elements()[1];
-    if(dynamic_cast<NoneValue const *>(endValue))
+    if (dynamic_cast<NoneValue const *>(endValue))
     {
         unspecifiedEnd = true;
     }
@@ -474,22 +474,22 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     }
 
     // Convert them to positive indices.
-    if(begin < 0)
+    if (begin < 0)
     {
         begin += leftSize;
     }
-    if(end < 0)
+    if (end < 0)
     {
         end += leftSize;
     }
-    if((end > begin && step < 0) || (begin > end && step > 0))
+    if ((end > begin && step < 0) || (begin > end && step > 0))
     {
         // The step goes to the wrong direction.
         begin = end = 0;
     }
 
     // Full reverse range?
-    if(unspecifiedStart && unspecifiedEnd && step < 0)
+    if (unspecifiedStart && unspecifiedEnd && step < 0)
     {
         begin = leftSize - 1;
         end = -1;
@@ -498,7 +498,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     begin = clamp(0, begin, leftSize - 1);
     end = clamp(-1, end, leftSize);
 
-    for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
+    for (dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
     {
         slice->append(leftValue, i);
     }

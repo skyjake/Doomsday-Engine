@@ -79,7 +79,7 @@ unsigned int Timer_RealMilliseconds(void)
     now = timeGetTime();
 #else
     now = uint(startedAt.elapsed());
-    if(now > TIMER_WARP_INTERVAL)
+    if (now > TIMER_WARP_INTERVAL)
     {
         now += timerOffset;
 
@@ -93,7 +93,7 @@ unsigned int Timer_RealMilliseconds(void)
     }
 #endif
 
-    if(first)
+    if (first)
     {
         first = false;
         start = now;
@@ -103,7 +103,7 @@ unsigned int Timer_RealMilliseconds(void)
     }
 
     // Wrapped around? (Every 50 days...)
-    if(now < start)
+    if (now < start)
     {
         return_time = 0xffffffff - start + now + 1;
 
@@ -141,7 +141,7 @@ void Timer_SetTicksPerSecond(float newTics)
 {
     double  nowTime = Timer_RealMilliseconds() / 1000.0;
 
-    if(newTics <= 0)
+    if (newTics <= 0)
         newTics = TICSPERSEC;
 
     // Update the time offset so that after the change time will

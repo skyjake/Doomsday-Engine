@@ -65,7 +65,7 @@ public:
     }
 
     static Rule const &maximum(Rule const &left, Rule const *rightOrNull) {
-        if(rightOrNull) return *refless(new OperatorRule(Maximum, left, *rightOrNull));
+        if (rightOrNull) return *refless(new OperatorRule(Maximum, left, *rightOrNull));
         return left;
     }
 
@@ -137,14 +137,14 @@ inline OperatorRule &operator - (Rule const &left, Rule const &right) {
 }
 
 inline OperatorRule &operator * (int left, Rule const &right) {
-    if(left == 2) {
+    if (left == 2) {
         return *refless(new OperatorRule(OperatorRule::Double, right));
     }
     return *refless(new OperatorRule(OperatorRule::Multiply, Const(left), right));
 }
 
 inline OperatorRule &operator * (Rule const &left, int right) {
-    if(right == 2) {
+    if (right == 2) {
         return *refless(new OperatorRule(OperatorRule::Double, left));
     }
     return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
@@ -163,14 +163,14 @@ inline OperatorRule &operator * (Rule const &left, Rule const &right) {
 }
 
 inline OperatorRule &operator / (Rule const &left, int right) {
-    if(right == 2) {
+    if (right == 2) {
         return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
     }
     return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
 }
 
 inline OperatorRule &operator / (Rule const &left, dsize right) {
-    if(right == 2) {
+    if (right == 2) {
         return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
     }
     return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
@@ -186,13 +186,13 @@ inline OperatorRule &operator / (Rule const &left, Rule const &right) {
 
 template <typename RuleType>
 inline void sumInto(RuleType const *&sum, Rule const &value) {
-    if(!sum) { sum = holdRef(value); }
+    if (!sum) { sum = holdRef(value); }
     else { changeRef(sum, *sum + value); }
 }
 
 template <typename RuleType>
 inline void maxInto(RuleType const *&maximum, Rule const &value) {
-    if(!maximum) { maximum = holdRef(value); }
+    if (!maximum) { maximum = holdRef(value); }
     else { changeRef(maximum, OperatorRule::maximum(*maximum, value)); }
 }
 

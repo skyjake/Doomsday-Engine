@@ -63,7 +63,7 @@ bool FadeToBlackWidget::isDone() const
 
 void FadeToBlackWidget::disposeIfDone()
 {
-    if(isDone())
+    if (isDone())
     {
         destroyLater(this);
     }

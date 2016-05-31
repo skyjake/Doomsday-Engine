@@ -96,7 +96,7 @@ DENG2_PIMPL(Context)
         , ownsNamespace(false)
         , names(globals)
     {
-        if(!names)
+        if (!names)
         {
             // Create a private empty namespace.
             DENG2_ASSERT(type != GlobalNamespace);
@@ -107,7 +107,7 @@ DENG2_PIMPL(Context)
 
     ~Instance()
     {
-        if(ownsNamespace)
+        if (ownsNamespace)
         {
             delete names;
         }
@@ -132,7 +132,7 @@ DENG2_PIMPL(Context)
     /// Sets the currently executed statement.
     void setCurrent(Statement const *statement)
     {
-        if(controlFlow.size())
+        if (controlFlow.size())
         {
             evaluator.reset();
             flow().setCurrent(statement);
@@ -180,7 +180,7 @@ void Context::start(Statement const *statement,    Statement const *fallback,
 
     // When the current statement is NULL it means that the sequence of statements
     // has ended, so we shouldn't do that until there really is no more statements.
-    if(!current())
+    if (!current())
     {
         proceed();
     }
@@ -188,7 +188,7 @@ void Context::start(Statement const *statement,    Statement const *fallback,
 
 void Context::reset()
 {
-    while(!d->controlFlow.empty())
+    while (!d->controlFlow.empty())
     {
         d->popFlow();
     }
@@ -197,7 +197,7 @@ void Context::reset()
 
 bool Context::execute()
 {
-    if(current() != NULL)
+    if (current() != NULL)
     {
         current()->execute(*this);
         return true;
@@ -208,12 +208,12 @@ bool Context::execute()
 void Context::proceed()
 {
     Statement const *st = NULL;
-    if(current())
+    if (current())
     {
         st = current()->next();
     }
     // Should we fall back to a point that was specified earlier?
-    while(!st && d->controlFlow.size())
+    while (!st && d->controlFlow.size())
     {
         st = d->controlFlow.back().flow;
         d->popFlow();
@@ -224,12 +224,12 @@ void Context::proceed()
 void Context::jumpContinue()
 {
     Statement const *st = NULL;
-    while(!st && d->controlFlow.size())
+    while (!st && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpContinue;
         d->popFlow();
     }
-    if(!st)
+    if (!st)
     {
         throw JumpError("Context::jumpContinue", "No jump targets defined for continue");
     }
@@ -238,26 +238,26 @@ void Context::jumpContinue()
 
 void Context::jumpBreak(duint count)
 {
-    if(count < 1)
+    if (count < 1)
     {
         throw JumpError("Context::jumpBreak", "Invalid number of nested breaks");
     }
 
     Statement const *st = NULL;
-    while((!st || count > 0) && d->controlFlow.size())
+    while ((!st || count > 0) && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpBreak;
-        if(st)
+        if (st)
         {
             --count;
         }
         d->popFlow();
     }
-    if(count > 0)
+    if (count > 0)
     {
         throw JumpError("Context::jumpBreak", "Too few nested compounds to break out of");
     }
-    if(!st)
+    if (!st)
     {
         throw JumpError("Context::jumpBreak", "No jump targets defined for break");
     }
@@ -267,7 +267,7 @@ void Context::jumpBreak(duint count)
 
 Statement const *Context::current()
 {
-    if(d->controlFlow.size())
+    if (d->controlFlow.size())
     {
         return d->flow().current();
     }
@@ -285,7 +285,7 @@ void Context::setIterationValue(Value *value)
     DENG2_ASSERT(d->controlFlow.size());
 
     Instance::ControlFlow &fl = d->flow();
-    if(fl.iteration)
+    if (fl.iteration)
     {
         delete fl.iteration;
     }
@@ -300,7 +300,7 @@ void Context::setNativeSelf(Value *scope)
 Value &Context::nativeSelf() const
 {
     DENG2_ASSERT(!d->nativeSelf.isNull());
-    if(d->nativeSelf.isNull())
+    if (d->nativeSelf.isNull())
     {
         throw UndefinedScopeError("Context::nativeSelf",
                                   "Context is not executing in scope of any instance");
@@ -311,7 +311,7 @@ Value &Context::nativeSelf() const
 Record &Context::selfInstance() const
 {
     Record *obj = nativeSelf().as<RecordValue>().record();
-    if(!obj)
+    if (!obj)
     {
         throw UndefinedScopeError("Context::selfInstance", "No \"self\" instance has been set");
     }

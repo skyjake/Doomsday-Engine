@@ -149,7 +149,7 @@ struct Huffman
 
         // Initialize the priority queue that holds the remaining nodes.
         queue.count = 0;
-        for(i = 0; i < 256; ++i)
+        for (i = 0; i < 256; ++i)
         {
             // These are the leaves of the tree.
             node = (HuffNode *) calloc(1, sizeof(HuffNode));
@@ -159,7 +159,7 @@ struct Huffman
         }
 
         // Build the tree.
-        for(i = 0; i < 255; ++i)
+        for (i = 0; i < 255; ++i)
         {
             node = (HuffNode *) calloc(1, sizeof(HuffNode));
             node->left = Huff_QueueExtract(&queue);
@@ -175,19 +175,19 @@ struct Huffman
         Huff_BuildLookup(huffRoot, 0, 0);
 
 #if 0
-        if(qApp->arguments().contains("-huffcodes"))
+        if (qApp->arguments().contains("-huffcodes"))
         {
             double realBits = 0;
             double huffBits = 0;
 
             LOG_MSG("Huffman codes:");
-            for(i = 0; i < 256; ++i)
+            for (i = 0; i < 256; ++i)
             {
                 uint k;
                 realBits += freqs[i] * 8;
                 huffBits += freqs[i] * huffCodes[i].length;
                 LOG_MSG("%03i: (%07i) ", i, (int) (6e6 * freqs[i]));
-                for(k = 0; k < huffCodes[i].length; ++k)
+                for (k = 0; k < huffCodes[i].length; ++k)
                 {
                     LogBuffer_Printf(0, "%c", huffCodes[i].code & (1 << k) ? '1' : '0');
                 }
@@ -231,12 +231,12 @@ struct Huffman
         ++queue->count;
 
         // Rise in the heap until the correct place is found.
-        while(i > 0)
+        while (i > 0)
         {
             parent = HEAP_PARENT(i);
 
             // Is it good now?
-            if(queue->nodes[parent]->freq <= node->freq)
+            if (queue->nodes[parent]->freq <= node->freq)
                 break;
 
             // Exchange with the parent.
@@ -264,26 +264,26 @@ struct Huffman
 
         // Heapify the heap. This is O(log n).
         i = 0;
-        for(;;)
+        for (;;)
         {
             left = HEAP_LEFT(i);
             right = HEAP_RIGHT(i);
             small = i;
 
             // Which child has smaller freq?
-            if(left < queue->count &&
+            if (left < queue->count &&
                queue->nodes[left]->freq < queue->nodes[i]->freq)
             {
                 small = left;
             }
-            if(right < queue->count &&
+            if (right < queue->count &&
                queue->nodes[right]->freq < queue->nodes[small]->freq)
             {
                 small = right;
             }
 
             // Can we stop now?
-            if(i == small)
+            if (i == small)
             {
                 // Heapifying is complete.
                 break;
@@ -302,7 +302,7 @@ struct Huffman
      */
     void Huff_BuildLookup(HuffNode *node, uint code, uint length)
     {
-        if(!node->left && !node->right)
+        if (!node->left && !node->right)
         {
             // This is a leaf.
             huffCodes[node->value].code = code;
@@ -314,12 +314,12 @@ struct Huffman
         DENG2_ASSERT(length < 32);
 
         // Descend into the left and right subtrees.
-        if(node->left)
+        if (node->left)
         {
             // This child's bit is zero.
             Huff_BuildLookup(node->left, code, length + 1);
         }
-        if(node->right)
+        if (node->right)
         {
             // This child's bit is one.
             Huff_BuildLookup(node->right, code | (1 << length), length + 1);
@@ -332,9 +332,9 @@ struct Huffman
      */
     void Huff_ResizeBuffer(HuffBuffer *buffer, dsize neededSize)
     {
-        while(neededSize > buffer->size)
+        while (neededSize > buffer->size)
         {
-            if(!buffer->size)
+            if (!buffer->size)
                 buffer->size = qMax(dsize(1024), neededSize);
             else
                 buffer->size *= 2;
@@ -347,7 +347,7 @@ struct Huffman
      */
     void Huff_DestroyNode(HuffNode *node)
     {
-        if(node)
+        if (node)
         {
             Huff_DestroyNode(node->left);
             Huff_DestroyNode(node->right);
@@ -387,15 +387,15 @@ struct Huffman
         out = huffEnc.data;
         *out = 0;
 
-        for(i = 0; i < size; ++i)
+        for (i = 0; i < size; ++i)
         {
             remaining = huffCodes[data[i]].length;
             code = huffCodes[data[i]].code;
 
-            while(remaining > 0)
+            while (remaining > 0)
             {
                 fits = 8 - bit;
-                if(fits > remaining)
+                if (fits > remaining)
                     fits = remaining;
 
                 // Write the bits that fit the current dbyte.
@@ -405,7 +405,7 @@ struct Huffman
 
                 // Advance the bit position.
                 bit += fits;
-                if(bit == 8)
+                if (bit == 8)
                 {
                     bit = 0;
                     *++out = 0;
@@ -414,13 +414,13 @@ struct Huffman
         }
 
         // If the last dbyte is empty, back up.
-        if(bit == 0)
+        if (bit == 0)
         {
             out--;
             bit = 8;
         }
 
-        if(encodedSize)
+        if (encodedSize)
             *encodedSize = out - huffEnc.data + 1;
 
         // The number of valid bits - 1 in the last dbyte.
@@ -448,10 +448,10 @@ struct Huffman
         // Start from the root node.
         node = huffRoot;
 
-        while(in < lastIn || bit < lastByteBits)
+        while (in < lastIn || bit < lastByteBits)
         {
             // Go left or right?
-            if(*in & (1 << bit))
+            if (*in & (1 << bit))
             {
                 node = node->right;
             }
@@ -461,13 +461,13 @@ struct Huffman
             }
 
             // Did we arrive at a leaf?
-            if(!node->left && !node->right)
+            if (!node->left && !node->right)
             {
                 // This node represents a value.
                 huffDec.data[outBytes++] = node->value;
 
                 // Should we allocate more memory?
-                if(outBytes == huffDec.size)
+                if (outBytes == huffDec.size)
                 {
                     Huff_ResizeBuffer(&huffDec, 2 * huffDec.size);
                 }
@@ -477,17 +477,17 @@ struct Huffman
             }
 
             // Advance bit position.
-            if(++bit == 8)
+            if (++bit == 8)
             {
                 bit = 0;
                 ++in;
 
                 // Out of buffer?
-                if(in > lastIn)
+                if (in > lastIn)
                     break;
             }
         }
-        if(decodedSize)
+        if (decodedSize)
         {
             *decodedSize = outBytes;
         }
@@ -504,7 +504,7 @@ Block codec::huffmanEncode(Block const &data)
     Block result;
     dsize size = 0;
     dbyte *coded = huff.encode(data.data(), data.size(), &size);
-    if(coded)
+    if (coded)
     {
         result.copyFrom(ByteRefArray(coded, size), 0, size);
         free(coded);
@@ -517,7 +517,7 @@ Block codec::huffmanDecode(Block const &codedData)
     Block result;
     dsize size = 0;
     dbyte *decoded = huff.decode(codedData.data(), codedData.size(), &size);
-    if(decoded)
+    if (decoded)
     {
         result.copyFrom(ByteRefArray(decoded, size), 0, size);
         free(decoded);

@@ -59,7 +59,7 @@ DENG2_PIMPL(AssetObserver)
     void fileAdded(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if(!pattern.exactMatch(link.name())) return;
+        if (!pattern.exactMatch(link.name())) return;
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
         {
@@ -70,7 +70,7 @@ DENG2_PIMPL(AssetObserver)
     void fileRemoved(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if(!pattern.exactMatch(link.name())) return;
+        if (!pattern.exactMatch(link.name())) return;
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
         {

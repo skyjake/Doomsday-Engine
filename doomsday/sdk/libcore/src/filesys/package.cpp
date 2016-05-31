@@ -46,7 +46,7 @@ String Package::Asset::absolutePath(String const &name) const
     // For the context, we'll accept either the variable's own record or the package
     // metadata.
     Record const *context = &accessedRecord().parentRecordForMember(name);
-    if(!context->has(ScriptedInfo::VAR_SOURCE))
+    if (!context->has(ScriptedInfo::VAR_SOURCE))
     {
         context = &accessedRecord();
     }
@@ -62,12 +62,12 @@ DENG2_PIMPL(Package)
         : Base(i)
         , file(f)
     {
-        if(file) file->audienceForDeletion() += this;
+        if (file) file->audienceForDeletion() += this;
     }
 
     ~Instance()
     {
-        if(file) file->audienceForDeletion() -= this;
+        if (file) file->audienceForDeletion() -= this;
     }
 
     void fileBeingDeleted(File const &)
@@ -77,7 +77,7 @@ DENG2_PIMPL(Package)
 
     void verifyFile() const
     {
-        if(!file)
+        if (!file)
         {
             throw SourceError("Package::verify", "Package's source file missing");
         }
@@ -86,13 +86,13 @@ DENG2_PIMPL(Package)
     StringList importPaths() const
     {
         StringList paths;
-        if(self.objectNamespace().has(PACKAGE_IMPORT_PATH))
+        if (self.objectNamespace().has(PACKAGE_IMPORT_PATH))
         {
             ArrayValue const &imp = self.objectNamespace().geta(PACKAGE_IMPORT_PATH);
             DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
                 Path importPath = (*i)->asText();
-                if(!importPath.isAbsolute())
+                if (!importPath.isAbsolute())
                 {
                     // Relative to the package root, and must exist.
                     importPath = self.root().locate<File const >(importPath).path();
@@ -157,7 +157,7 @@ Package::Assets Package::assets() const
 bool Package::executeFunction(String const &name)
 {
     Record &pkgInfo = d->packageInfo();
-    if(pkgInfo.has(name))
+    if (pkgInfo.has(name))
     {
         // The global namespace for this function is the package's info namespace.
         Process::scriptCall(Process::IgnoreResult, pkgInfo, name);
@@ -184,7 +184,7 @@ void Package::findPartialPath(String const &path, FileIndex::FoundFiles &found) 
 void Package::didLoad()
 {
     // The package's own import paths come into effect when loaded.
-    foreach(String imp, d->importPaths())
+    foreach (String imp, d->importPaths())
     {
         App::scriptSystem().addModuleImportPath(imp);
     }
@@ -196,7 +196,7 @@ void Package::aboutToUnload()
 {
     executeFunction("onUnload");
 
-    foreach(String imp, d->importPaths())
+    foreach (String imp, d->importPaths())
     {
         App::scriptSystem().removeModuleImportPath(imp);
     }
@@ -209,42 +209,42 @@ void Package::parseMetadata(File &packageFile) // static
 {
     static String const TIMESTAMP("__timestamp__");
 
-    if(Folder *folder = packageFile.maybeAs<Folder>())
+    if (Folder *folder = packageFile.maybeAs<Folder>())
     {
         File *initializerScript = folder->tryLocateFile("__init__.de");
         File *metadataInfo      = folder->tryLocateFile("Info.dei");
-        if(!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
+        if (!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
         Time parsedAt           = Time::invalidTime();
         bool needParse          = true;
 
-        if(!metadataInfo && !initializerScript) return; // Nothing to do.
+        if (!metadataInfo && !initializerScript) return; // Nothing to do.
 
         // If the metadata has already been parsed, we may not need to do much.
         // The package's information is stored in a subrecord.
-        if(packageFile.objectNamespace().has(VAR_PACKAGE))
+        if (packageFile.objectNamespace().has(VAR_PACKAGE))
         {
             Record &metadata = packageFile.objectNamespace().subrecord(VAR_PACKAGE);
-            if(metadata.has(TIMESTAMP))
+            if (metadata.has(TIMESTAMP))
             {
                 // Already parsed.
                 needParse = false;
 
                 // Only parse if the source has changed.
-                if(TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
+                if (TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
                 {
                     needParse =
                             (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||
                             (initializerScript && initializerScript->status().modifiedAt > time->time());
                 }
             }
-            if(!needParse) return;
+            if (!needParse) return;
         }
 
         // The package identifier and path are automatically set.
         Record &metadata = initializeMetadata(packageFile);
 
         // Check for a ScriptedInfo source.
-        if(metadataInfo)
+        if (metadataInfo)
         {
             ScriptedInfo script(&metadata);
             script.parse(*metadataInfo);
@@ -253,14 +253,14 @@ void Package::parseMetadata(File &packageFile) // static
         }
 
         // Check for an initialization script.
-        if(initializerScript)
+        if (initializerScript)
         {
             Script script(*initializerScript);
             Process proc(&metadata);
             proc.run(script);
             proc.execute();
 
-            if(parsedAt.isValid() && initializerScript->status().modifiedAt > parsedAt)
+            if (parsedAt.isValid() && initializerScript->status().modifiedAt > parsedAt)
             {
                 parsedAt = initializerScript->status().modifiedAt;
             }
@@ -276,7 +276,7 @@ void Package::parseMetadata(File &packageFile) // static
 
 void Package::validateMetadata(Record const &packageInfo)
 {
-    if(!packageInfo.has(VAR_ID))
+    if (!packageInfo.has(VAR_ID))
     {
         throw ValidationError("Package::validateMetadata", "Not a package");
     }
@@ -284,7 +284,7 @@ void Package::validateMetadata(Record const &packageInfo)
     // A domain is required in all package identifiers.
     DotPath const ident(packageInfo.gets(VAR_ID));
 
-    if(ident.segmentCount() <= 1)
+    if (ident.segmentCount() <= 1)
     {
         throw ValidationError("Package::validateMetadata",
                               QString("Identifier of package \"%1\" must specify a domain")
@@ -292,7 +292,7 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 
     String const &topLevelDomain = ident.segment(0).toString();
-    if(topLevelDomain == QStringLiteral("feature") ||
+    if (topLevelDomain == QStringLiteral("feature") ||
        topLevelDomain == QStringLiteral("asset"))
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
@@ -303,9 +303,9 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 
     static String const required[] = { "title", "version", "license", "tags" };
-    for(auto const &req : required)
+    for (auto const &req : required)
     {
-        if(!packageInfo.has(req))
+        if (!packageInfo.has(req))
         {
             throw IncompleteMetadataError("Package::validateMetadata",
                                           QString("Package \"%1\" does not have '%2' in its metadata")
@@ -317,7 +317,7 @@ void Package::validateMetadata(Record const &packageInfo)
 
 Record &Package::initializeMetadata(File &packageFile, String const &id)
 {
-    if(!packageFile.objectNamespace().has(VAR_PACKAGE))
+    if (!packageFile.objectNamespace().has(VAR_PACKAGE))
     {
         packageFile.objectNamespace().addSubrecord(VAR_PACKAGE);
     }
@@ -341,9 +341,9 @@ QStringList Package::tags(String const &tagsString)
 StringList Package::requires(File const &packageFile)
 {
     StringList ids;
-    if(packageFile.objectNamespace().has(PACKAGE_REQUIRES))
+    if (packageFile.objectNamespace().has(PACKAGE_REQUIRES))
     {
-        for(auto const *value : packageFile.objectNamespace().geta(PACKAGE_REQUIRES).elements())
+        for (auto const *value : packageFile.objectNamespace().geta(PACKAGE_REQUIRES).elements())
         {
             ids << value->asText();
         }
@@ -354,7 +354,7 @@ StringList Package::requires(File const &packageFile)
 static String stripAfterFirstUnderscore(String str)
 {
     int pos = str.indexOf('_');
-    if(pos > 0) return str.left(pos);
+    if (pos > 0) return str.left(pos);
     return str;
 }
 
@@ -366,7 +366,7 @@ static String extractIdentifier(String str)
 std::pair<String, Version> Package::split(String const &identifier_version)
 {
     std::pair<String, Version> idVer;
-    if(identifier_version.contains(QChar('_')))
+    if (identifier_version.contains(QChar('_')))
     {
         idVer.first  = stripAfterFirstUnderscore(identifier_version);
         idVer.second = Version(identifier_version.substr(idVer.first.size() + 1));
@@ -384,7 +384,7 @@ String Package::identifierForFile(File const &file)
     // Form the prefix if there are enclosing packs as parents.
     String prefix;
     Folder const *parent = file.parent();
-    while(parent && parent->name().fileNameExtension() == ".pack")
+    while (parent && parent->name().fileNameExtension() == ".pack")
     {
         prefix = extractIdentifier(parent->name()) + "." + prefix;
         parent = parent->parent();
@@ -396,7 +396,7 @@ File const *Package::containerOfFile(File const &file)
 {
     // Find the containing package.
     File const *i = file.parent();
-    while(i && i->name().fileNameExtension() != ".pack")
+    while (i && i->name().fileNameExtension() != ".pack")
     {
         i = i->parent();
     }
@@ -413,7 +413,7 @@ String Package::identifierForContainerOfFile(File const &file)
 Time Package::containerOfFileModifiedAt(File const &file)
 {
     File const *c = containerOfFile(file);
-    if(!c) return file.status().modifiedAt;
+    if (!c) return file.status().modifiedAt;
     return c->status().modifiedAt;
 }
 

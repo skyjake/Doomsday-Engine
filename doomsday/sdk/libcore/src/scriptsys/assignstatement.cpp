@@ -36,7 +36,7 @@ AssignStatement::AssignStatement(Expression *target, Indices const &indices, Exp
 {
     _args.add(value);
     _indexCount = dint(indices.size());
-    for(Indices::const_reverse_iterator i = indices.rbegin(); i != indices.rend(); ++i)
+    for (Indices::const_reverse_iterator i = indices.rbegin(); i != indices.rend(); ++i)
     {
         _args.add(*i);
     }
@@ -55,7 +55,7 @@ void AssignStatement::execute(Context &context) const
     results.reverse();
 
     RefValue *ref = dynamic_cast<RefValue *>(results.elements().front());
-    if(!ref)
+    if (!ref)
     {
         throw LeftValueError("AssignStatement::execute",
             "Cannot assign into '" + results.at(0).asText() + "'");
@@ -65,16 +65,16 @@ void AssignStatement::execute(Context &context) const
     // Ownership of this instance will be given to the variable.
     QScopedPointer<Value> value(results.popLast());
 
-    if(_indexCount > 0)
+    if (_indexCount > 0)
     {
         // The value we will be modifying.
         Value *target = &ref->dereference();
 
-        for(dint i = 0; i < _indexCount; ++i)
+        for (dint i = 0; i < _indexCount; ++i)
         {   
             // Get the evaluated index.
             QScopedPointer<Value> index(results.popLast()); // Not released -- will be destroyed.
-            if(i < _indexCount - 1)
+            if (i < _indexCount - 1)
             {
                 // Switch targets to a subelement.
                 target = &target->element(*index.data());
@@ -93,7 +93,7 @@ void AssignStatement::execute(Context &context) const
     }
     
     // Should we set the variable to read-only mode?
-    if(_args.back().flags() & Expression::ReadOnly)
+    if (_args.back().flags() & Expression::ReadOnly)
     {
         DENG2_ASSERT(ref->variable() != NULL);
         ref->variable()->setMode(Variable::ReadOnly | ref->variable()->mode());
@@ -111,7 +111,7 @@ void AssignStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != ASSIGN)
+    if (id != ASSIGN)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

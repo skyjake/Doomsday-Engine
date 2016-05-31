@@ -172,7 +172,7 @@ DENG_PUBLIC void ZBlockSet_Delete(zblockset_t *set);
 DENG_PUBLIC void *ZBlockSet_Allocate(zblockset_t *set);
 
 #define Z_ChangeTag(p,t) { \
-    if(Z_GetId(p) != LIBDENG_ZONEID) \
+    if (Z_GetId(p) != LIBDENG_ZONEID) \
         Con_Error("Z_ChangeTag at " __FILE__ ":%i", __LINE__); \
     Z_ChangeTag2(p, t); }
 

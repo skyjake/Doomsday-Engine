@@ -105,20 +105,20 @@ void RootWidget::setViewSize(Size const &size)
 
 void RootWidget::setFocus(Widget *widget)
 {
-    if(widget == d->focus) return; // No change.
+    if (widget == d->focus) return; // No change.
 
     Widget *oldFocus = d->focus;
 
     d->focus.reset();
-    if(oldFocus) oldFocus->focusLost();
+    if (oldFocus) oldFocus->focusLost();
 
-    if(widget && widget->behavior().testFlag(Focusable))
+    if (widget && widget->behavior().testFlag(Focusable))
     {
         d->focus.reset(widget);
-        if(d->focus) d->focus->focusGained();
+        if (d->focus) d->focus->focusGained();
     }
 
-    if(d->focus != oldFocus)
+    if (d->focus != oldFocus)
     {
         DENG2_FOR_AUDIENCE2(FocusChange, i)
         {
@@ -156,7 +156,7 @@ void RootWidget::draw()
 bool RootWidget::processEvent(Event const &event)
 {
     // Focus is only for the keyboard.
-    if(event.isKey() && focus() && focus()->handleEvent(event))
+    if (event.isKey() && focus() && focus()->handleEvent(event))
     {
         // The focused widget ate the event.
         return true;

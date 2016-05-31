@@ -61,7 +61,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void set(ui::Data const *ctx)
     {
-        if(context)
+        if (context)
         {
             context->audienceForAddition() -= this;
             context->audienceForRemoval() -= this;
@@ -73,7 +73,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
         context = ctx;
 
-        if(context)
+        if (context)
         {
             makeWidgets();
 
@@ -91,9 +91,9 @@ DENG2_OBSERVES(ui::Item, Change     )
         DENG2_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
         DENG2_ASSERT(factory != 0);
 
-        if(filter && !behavior.testFlag(IgnoreFilter))
+        if (filter && !behavior.testFlag(IgnoreFilter))
         {
-            if(!filter->isItemAccepted(self, *context, pos))
+            if (!filter->isItemAccepted(self, *context, pos))
             {
                 // Skip this one.
                 return;
@@ -102,20 +102,20 @@ DENG2_OBSERVES(ui::Item, Change     )
 
         ui::Item const &item = context->at(pos);
         GuiWidget *w = factory->makeItemWidget(item, container);
-        if(!w) return; // Unpresentable.
+        if (!w) return; // Unpresentable.
 
         // Update the widget immediately.
         mapping.insert(&item, w);
         itemChanged(item);
 
-        if(behavior.testFlag(AlwaysAppend) || pos == context->size() - 1)
+        if (behavior.testFlag(AlwaysAppend) || pos == context->size() - 1)
         {
             // This is the last item.
             container->add(w);
         }
         else
         {
-            if(GuiWidget *nextWidget = findNextWidget(pos))
+            if (GuiWidget *nextWidget = findNextWidget(pos))
             {
                 container->insertBefore(w, *nextWidget);
             }
@@ -140,10 +140,10 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         // Some items may not be represented as widgets, so continue looking
         // until the next widget is found.
-        while(++afterPos < context->size())
+        while (++afterPos < context->size())
         {
             auto found = mapping.constFind(&context->at(afterPos));
-            if(found != mapping.constEnd())
+            if (found != mapping.constEnd())
             {
                 return found.value();
             }
@@ -156,7 +156,7 @@ DENG2_OBSERVES(ui::Item, Change     )
         DENG2_ASSERT(context != 0);
         DENG2_ASSERT(container != 0);
 
-        for(ui::Data::Pos i = 0; i < context->size(); ++i)
+        for (ui::Data::Pos i = 0; i < context->size(); ++i)
         {
             addItemWidget(i, AlwaysAppend);
         }
@@ -186,10 +186,10 @@ DENG2_OBSERVES(ui::Item, Change     )
          * Organizer are not usually manually deleted.
          */
         MutableMappingIterator iter(mapping);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.value() == &widget)
+            if (iter.value() == &widget)
             {
                 iter.remove();
                 break;
@@ -205,7 +205,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     void dataItemRemoved(ui::Data::Pos, ui::Item &item)
     {
         Mapping::iterator found = mapping.find(&item);
-        if(found != mapping.constEnd())
+        if (found != mapping.constEnd())
         {
             found.key()->audienceForChange() -= this;
             deleteWidget(found.value());
@@ -220,9 +220,9 @@ DENG2_OBSERVES(ui::Item, Change     )
         {
             container->remove(*i.value());
         }
-        for(ui::Data::Pos i = 0; i < context->size(); ++i)
+        for (ui::Data::Pos i = 0; i < context->size(); ++i)
         {
-            if(mapping.contains(&context->at(i)))
+            if (mapping.contains(&context->at(i)))
             {
                 container->add(mapping[&context->at(i)]);
             }
@@ -231,7 +231,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void itemChanged(ui::Item const &item)
     {
-        if(!mapping.contains(&item))
+        if (!mapping.contains(&item))
         {
             // Not represented as a child widget.
             return;
@@ -250,7 +250,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     GuiWidget *find(ui::Item const &item) const
     {
         Mapping::const_iterator found = mapping.constFind(&item);
-        if(found == mapping.constEnd()) return 0;
+        if (found == mapping.constEnd()) return 0;
         return found.value();
     }
 
@@ -258,7 +258,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            if(i.key()->label() == label)
+            if (i.key()->label() == label)
             {
                 return i.value();
             }
@@ -270,7 +270,7 @@ DENG2_OBSERVES(ui::Item, Change     )
     {
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            if(i.value() == &widget)
+            if (i.value() == &widget)
             {
                 return i.key();
             }
@@ -280,20 +280,20 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void refilter()
     {
-        if(!filter) return;
+        if (!filter) return;
 
-        for(ui::DataPos i = 0; i < context->size(); ++i)
+        for (ui::DataPos i = 0; i < context->size(); ++i)
         {
             bool const accepted = filter->isItemAccepted(self, *context, i);
             ui::Item const *item = &context->at(i);
 
-            if(!accepted && mapping.contains(item))
+            if (!accepted && mapping.contains(item))
             {
                 // This widget needs to be removed.
                 deleteWidget(mapping[item]);
                 mapping.remove(item);
             }
-            else if(accepted && !mapping.contains(item))
+            else if (accepted && !mapping.contains(item))
             {
                 // This widget may need to be created.
                 addItemWidget(i, IgnoreFilter);

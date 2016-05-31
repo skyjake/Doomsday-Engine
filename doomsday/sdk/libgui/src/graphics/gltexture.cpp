@@ -70,7 +70,7 @@ DENG2_PIMPL(GLTexture)
 
     void alloc()
     {
-        if(!name)
+        if (!name)
         {
             glGenTextures(1, &name);
         }
@@ -78,7 +78,7 @@ DENG2_PIMPL(GLTexture)
 
     void release()
     {
-        if(name)
+        if (name)
         {
             glDeleteTextures(1, &name);
             name = 0;
@@ -101,7 +101,7 @@ DENG2_PIMPL(GLTexture)
 
     static GLenum glWrap(gl::Wrapping w)
     {
-        switch(w)
+        switch (w)
         {
         case Repeat:         return GL_REPEAT;
         case RepeatMirrored: return GL_MIRRORED_REPEAT;
@@ -112,27 +112,27 @@ DENG2_PIMPL(GLTexture)
 
     static GLenum glMinFilter(gl::Filter min, gl::MipFilter mip)
     {
-        if(mip == MipNone)
+        if (mip == MipNone)
         {
-            if(min == Nearest) return GL_NEAREST;
-            if(min == Linear)  return GL_LINEAR;
+            if (min == Nearest) return GL_NEAREST;
+            if (min == Linear)  return GL_LINEAR;
         }
-        else if(mip == MipNearest)
+        else if (mip == MipNearest)
         {
-            if(min == Nearest) return GL_NEAREST_MIPMAP_NEAREST;
-            if(min == Linear)  return GL_LINEAR_MIPMAP_NEAREST;
+            if (min == Nearest) return GL_NEAREST_MIPMAP_NEAREST;
+            if (min == Linear)  return GL_LINEAR_MIPMAP_NEAREST;
         }
         else // MipLinear
         {
-            if(min == Nearest) return GL_NEAREST_MIPMAP_LINEAR;
-            if(min == Linear)  return GL_LINEAR_MIPMAP_LINEAR;
+            if (min == Nearest) return GL_NEAREST_MIPMAP_LINEAR;
+            if (min == Linear)  return GL_LINEAR_MIPMAP_LINEAR;
         }
         return GL_NEAREST;
     }
 
     static GLenum glFace(gl::CubeFace face)
     {
-        switch(face)
+        switch (face)
         {
         case PositiveX: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
         case PositiveY: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
@@ -167,7 +167,7 @@ DENG2_PIMPL(GLTexture)
         glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
         glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
 
-        if(GLInfo::extensions().EXT_texture_filter_anisotropic)
+        if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
             glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
@@ -192,7 +192,7 @@ DENG2_PIMPL(GLTexture)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
-        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
@@ -203,7 +203,7 @@ DENG2_PIMPL(GLTexture)
     void glSubImage(int level, Vector2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);
@@ -311,7 +311,7 @@ bool GLTexture::isCubeMap() const
 
 void GLTexture::setAutoGenMips(bool genMips)
 {
-    if(genMips)
+    if (genMips)
         d->flags |= AutoMips;
     else
         d->flags &= ~AutoMips;
@@ -395,7 +395,7 @@ void GLTexture::setImage(Image const &image, int level)
     d->glImage(level, image.size(), image.glFormat(), image.bits());
     d->glUnbind();
 
-    if(!level && d->flags.testFlag(AutoMips))
+    if (!level && d->flags.testFlag(AutoMips))
     {
         generateMipmap();
     }
@@ -414,7 +414,7 @@ void GLTexture::setImage(CubeFace face, Image const &image, int level)
     d->glImage(level, image.size(), image.glFormat(), image.bits(), face);
     d->glUnbind();
 
-    if(!level && d->flags.testFlag(AutoMips))
+    if (!level && d->flags.testFlag(AutoMips))
     {
         generateMipmap();
     }
@@ -431,7 +431,7 @@ void GLTexture::setSubImage(Image const &image, Vector2i const &pos, int level)
     d->glSubImage(level, pos, image.size(), image.glFormat(), image.bits());
     d->glUnbind();
 
-    if(!level && d->flags.testFlag(AutoMips))
+    if (!level && d->flags.testFlag(AutoMips))
     {
         generateMipmap();
     }
@@ -446,7 +446,7 @@ void GLTexture::setSubImage(CubeFace face, Image const &image, Vector2i const &p
     d->glSubImage(level, pos, image.size(), image.glFormat(), image.bits(), face);
     d->glUnbind();
 
-    if(!level && d->flags.testFlag(AutoMips))
+    if (!level && d->flags.testFlag(AutoMips))
     {
         generateMipmap();
     }
@@ -454,7 +454,7 @@ void GLTexture::setSubImage(CubeFace face, Image const &image, Vector2i const &p
 
 void GLTexture::generateMipmap()
 {
-    if(d->name)
+    if (d->name)
     {
         d->glBind();
         glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
@@ -471,13 +471,13 @@ GLTexture::Size GLTexture::size() const
 
 int GLTexture::mipLevels() const
 {
-    if(!isReady()) return 0;
+    if (!isReady()) return 0;
     return d->flags.testFlag(MipmapAvailable)? levelsForSize(d->size) : 1;
 }
 
 GLTexture::Size GLTexture::levelSize(int level) const
 {
-    if(level < 0) return Size();
+    if (level < 0) return Size();
     return levelSize(d->size, level);
 }
 
@@ -494,7 +494,7 @@ void GLTexture::glBindToUnit(int unit) const
 
     d->glBind();
 
-    if(d->flags.testFlag(ParamsChanged))
+    if (d->flags.testFlag(ParamsChanged))
     {
         d->glUpdateParamsOfBoundTexture();
     }
@@ -502,7 +502,7 @@ void GLTexture::glBindToUnit(int unit) const
 
 void GLTexture::glApplyParameters()
 {
-    if(d->flags.testFlag(ParamsChanged))
+    if (d->flags.testFlag(ParamsChanged))
     {
         d->glBind();
         d->glUpdateParamsOfBoundTexture();
@@ -532,7 +532,7 @@ int GLTexture::levelsForSize(GLTexture::Size const &size)
     int mipLevels = 0;
     duint w = size.x;
     duint h = size.y;
-    while(w > 1 || h > 1)
+    while (w > 1 || h > 1)
     {
         w = de::max(1u, w >> 1);
         h = de::max(1u, h >> 1);
@@ -544,7 +544,7 @@ int GLTexture::levelsForSize(GLTexture::Size const &size)
 GLTexture::Size GLTexture::levelSize(GLTexture::Size const &size0, int level)
 {
     Size s = size0;
-    for(int i = 0; i < level; ++i)
+    for (int i = 0; i < level; ++i)
     {
         s.x = de::max(1u, s.x >> 1);
         s.y = de::max(1u, s.y >> 1);

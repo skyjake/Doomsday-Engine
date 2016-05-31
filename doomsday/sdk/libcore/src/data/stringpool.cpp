@@ -171,9 +171,9 @@ DENG2_PIMPL_NOREF(StringPool)
 
     void clear()
     {
-        for(dsize i = 0; i < idMap.size(); ++i)
+        for (dsize i = 0; i < idMap.size(); ++i)
         {
-            if(!idMap[i]) continue; // Unused slot.
+            if (!idMap[i]) continue; // Unused slot.
             delete idMap[i];
         }
         count = 0;
@@ -224,7 +224,7 @@ DENG2_PIMPL_NOREF(StringPool)
         InternalId idx;
 
         // Any available ids in the shortlist?
-        if(!available.empty()) // O(1)
+        if (!available.empty()) // O(1)
         {
             idx = available.front();
             available.pop_front();
@@ -232,7 +232,7 @@ DENG2_PIMPL_NOREF(StringPool)
         }
         else
         {
-            if(idMap.size() >= MAXIMUM_VALID_ID)
+            if (idMap.size() >= MAXIMUM_VALID_ID)
             {
                 throw StringPool::FullError("StringPool::assignUniqueId",
                                             "Out of valid 32-bit identifiers");
@@ -267,7 +267,7 @@ DENG2_PIMPL_NOREF(StringPool)
         // If the caller already located the interned string, let's use it
         // to erase the string in O(1) time. Otherwise it's up to the
         // caller to make sure it gets removed from the interns.
-        if(iterToErase) interns.erase(*iterToErase); // O(1) (amortized)
+        if (iterToErase) interns.erase(*iterToErase); // O(1) (amortized)
 
         // One less string.
         count--;
@@ -281,7 +281,7 @@ StringPool::StringPool() : d(new Instance)
 
 StringPool::StringPool(String const *strings, uint count) : d(new Instance)
 {
-    for(uint i = 0; strings && i < count; ++i)
+    for (uint i = 0; strings && i < count; ++i)
     {
         intern(strings[i]);
     }
@@ -307,7 +307,7 @@ dsize StringPool::size() const
 StringPool::Id StringPool::intern(String str)
 {
     Interns::iterator found = d->findIntern(str); // O(log n)
-    if(found != d->interns.end())
+    if (found != d->interns.end())
     {
         // Already got this one.
         return EXPORT_ID(found->id());
@@ -323,7 +323,7 @@ String StringPool::internAndRetrieve(String str)
 
 void StringPool::setUserValue(Id id, uint value)
 {
-    if(id == 0) return;
+    if (id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -335,7 +335,7 @@ void StringPool::setUserValue(Id id, uint value)
 
 uint StringPool::userValue(Id id) const
 {
-    if(id == 0) return 0;
+    if (id == 0) return 0;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -347,7 +347,7 @@ uint StringPool::userValue(Id id) const
 
 void StringPool::setUserPointer(Id id, void *ptr)
 {
-    if(id == 0) return;
+    if (id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -359,7 +359,7 @@ void StringPool::setUserPointer(Id id, void *ptr)
 
 void *StringPool::userPointer(Id id) const
 {
-    if(id == 0) return NULL;
+    if (id == 0) return NULL;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -372,7 +372,7 @@ void *StringPool::userPointer(Id id) const
 StringPool::Id StringPool::isInterned(String str) const
 {
     Interns::const_iterator found = d->findIntern(str); // O(log n)
-    if(found != d->interns.end())
+    if (found != d->interns.end())
     {
         return EXPORT_ID(found->id());
     }
@@ -388,7 +388,7 @@ String StringPool::string(Id id) const
 
 String const &StringPool::stringRef(StringPool::Id id) const
 {
-    if(id == 0)
+    if (id == 0)
     {
         /// @throws InvalidIdError Provided identifier is not in use.
         //throw InvalidIdError("StringPool::stringRef", "Invalid identifier");
@@ -404,7 +404,7 @@ String const &StringPool::stringRef(StringPool::Id id) const
 bool StringPool::remove(String str)
 {
     Interns::iterator found = d->findIntern(str); // O(log n)
-    if(found != d->interns.end())
+    if (found != d->interns.end())
     {
         d->releaseAndDestroy(found->id(), &found); // O(1) (amortized)
         return true;
@@ -414,13 +414,13 @@ bool StringPool::remove(String str)
 
 bool StringPool::removeById(Id id)
 {
-    if(id == 0) return false;
+    if (id == 0) return false;
 
     InternalId const internalId = IMPORT_ID(id);
-    if(id >= d->idMap.size()) return false;
+    if (id >= d->idMap.size()) return false;
 
     CaselessString *str = d->idMap[internalId];
-    if(!str) return false;
+    if (!str) return false;
 
     d->interns.erase(str); // O(log n)
     d->releaseAndDestroy(str->id());
@@ -429,11 +429,11 @@ bool StringPool::removeById(Id id)
 
 LoopResult StringPool::forAll(std::function<LoopResult (Id)> func) const
 {
-    for(duint i = 0; i < d->idMap.size(); ++i)
+    for (duint i = 0; i < d->idMap.size(); ++i)
     {
-        if(d->idMap[i])
+        if (d->idMap[i])
         {
-            if(auto result = func(EXPORT_ID(i)))
+            if (auto result = func(EXPORT_ID(i)))
                 return result;
         }
     }
@@ -448,7 +448,7 @@ void StringPool::operator >> (Writer &to) const
 
     // Write the interns.
     to << duint32(d->interns.size());
-    for(Interns::const_iterator i = d->interns.begin(); i != d->interns.end(); ++i)
+    for (Interns::const_iterator i = d->interns.begin(); i != d->interns.end(); ++i)
     {
         to << *i->toStr();
     }
@@ -466,7 +466,7 @@ void StringPool::operator << (Reader &from)
     // Read the interns.
     uint numInterns;
     from >> numInterns;
-    while(numInterns--)
+    while (numInterns--)
     {
         CaselessString *str = new CaselessString;
         from >> *str;
@@ -479,9 +479,9 @@ void StringPool::operator << (Reader &from)
     }
 
     // Update the available ids.
-    for(uint i = 0; i < d->idMap.size(); ++i)
+    for (uint i = 0; i < d->idMap.size(); ++i)
     {
-        if(!d->idMap[i]) d->available.push_back(i);
+        if (!d->idMap[i]) d->available.push_back(i);
     }
 
     d->assertCount();

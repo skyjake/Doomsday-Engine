@@ -51,7 +51,7 @@ void Packet::operator << (Reader &from)
     
     // Having been constructed as a specific type, the identifier is already
     // set and cannot change. Let's check if it's the correct one.
-    if(_type.compareWithCase(ident))
+    if (_type.compareWithCase(ident))
     {
         throw InvalidTypeError("Packet::operator <<", "Invalid ID");
     }

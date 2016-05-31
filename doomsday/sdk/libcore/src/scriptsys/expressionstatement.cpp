@@ -50,7 +50,7 @@ void ExpressionStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != EXPRESSION)
+    if (id != EXPRESSION)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

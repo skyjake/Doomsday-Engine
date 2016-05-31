@@ -82,10 +82,10 @@ void DialogWidget::draw()
 
 bool DialogWidget::handleEvent(Event const &event)
 {
-    if(event.type() == Event::KeyPress)
+    if (event.type() == Event::KeyPress)
     {
         KeyEvent const &ev = event.as<KeyEvent>();
-        if(ev.key() == Qt::Key_Escape)
+        if (ev.key() == Qt::Key_Escape)
         {
             reject();
             return true;
@@ -98,7 +98,7 @@ bool DialogWidget::handleEvent(Event const &event)
 
 void DialogWidget::accept(int result)
 {
-    if(d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
         d->subloop.exit(result);
         emit accepted(result);
@@ -107,7 +107,7 @@ void DialogWidget::accept(int result)
 
 void DialogWidget::reject(int result)
 {
-    if(d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
         d->subloop.exit(result);
         emit rejected(result);

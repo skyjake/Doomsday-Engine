@@ -65,11 +65,11 @@ Value::Text NumberValue::asText() const
 {
     Text result;
     QTextStream s(&result);
-    if(_semantic.testFlag(Boolean) && (_value == True || _value == False))
+    if (_semantic.testFlag(Boolean) && (_value == True || _value == False))
     {
         s << (isTrue()? "True" : "False");
     }
-    else if(_semantic.testFlag(Hex))
+    else if (_semantic.testFlag(Hex))
     {
         s << "0x" << QString::number(duint32(_value), 16);
     }
@@ -88,9 +88,9 @@ bool NumberValue::isTrue() const
 dint NumberValue::compare(Value const &value) const
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
-    if(other)
+    if (other)
     {
-        if(fequal(_value, other->_value))
+        if (fequal(_value, other->_value))
         {
             return 0;
         }
@@ -107,7 +107,7 @@ void NumberValue::negate()
 void NumberValue::sum(Value const &value)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("NumberValue::sum", "Values cannot be summed");
     }
@@ -118,7 +118,7 @@ void NumberValue::sum(Value const &value)
 void NumberValue::subtract(Value const &value)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");
     }
@@ -129,7 +129,7 @@ void NumberValue::subtract(Value const &value)
 void NumberValue::divide(Value const &divisor)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&divisor);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("NumberValue::divide", "Value cannot be divided");
     }
@@ -140,7 +140,7 @@ void NumberValue::divide(Value const &divisor)
 void NumberValue::multiply(Value const &value)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("NumberValue::multiply", "Value cannot be multiplied");
     }
@@ -151,7 +151,7 @@ void NumberValue::multiply(Value const &value)
 void NumberValue::modulo(Value const &divisor)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&divisor);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("Value::modulo", "Modulo not defined");
     }
@@ -176,7 +176,7 @@ void NumberValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != NUMBER)
+    if (id != NUMBER)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.

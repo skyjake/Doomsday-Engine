@@ -106,7 +106,7 @@ DENG2_PIMPL(ScriptSystem)
         _scriptSystem->d->listImportPaths(importPaths);
 
         auto *array = new ArrayValue;
-        for(auto const &path : importPaths)
+        for (auto const &path : importPaths)
         {
             *array << TextValue(path);
         }
@@ -132,7 +132,7 @@ DENG2_PIMPL(ScriptSystem)
 
     void removeNativeModule(String const &name)
     {
-        if(!nativeModules.contains(name)) return;
+        if (!nativeModules.contains(name)) return;
 
         nativeModules[name]->audienceForDeletion() -= this;
         nativeModules.remove(name);
@@ -141,10 +141,10 @@ DENG2_PIMPL(ScriptSystem)
     void recordBeingDeleted(Record &record)
     {
         QMutableMapIterator<String, Record *> iter(nativeModules);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             iter.next();
-            if(iter.value() == &record)
+            if (iter.value() == &record)
             {
                 iter.remove();
             }
@@ -161,7 +161,7 @@ DENG2_PIMPL(ScriptSystem)
         {
             importPath = &App::config().geta("importPath");
         }
-        catch(Record::NotFoundError const &)
+        catch (Record::NotFoundError const &)
         {}
 
         // Compile a list of all possible import locations.
@@ -170,7 +170,7 @@ DENG2_PIMPL(ScriptSystem)
         {
             importPaths << (*i)->asText();
         }
-        foreach(Path const &path, additionalImportPaths)
+        foreach (Path const &path, additionalImportPaths)
         {
             importPaths << path;
         }
@@ -233,14 +233,14 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     d->listImportPaths(importPaths);
 
     // Search all import locations.
-    foreach(String dir, importPaths)
+    foreach (String dir, importPaths)
     {
         String p;
         FileSystem::FoundFiles matching;
         File *found = 0;
-        if(dir.empty())
+        if (dir.empty())
         {
-            if(!localPath.empty())
+            if (!localPath.empty())
             {
                 // Try the local folder.
                 p = localPath / name;
@@ -250,10 +250,10 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
                 continue;
             }
         }
-        else if(dir == "*")
+        else if (dir == "*")
         {
             App::fileSystem().findAll(name + ".de", matching);
-            if(matching.empty())
+            if (matching.empty())
             {
                 continue;
             }
@@ -266,11 +266,11 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         {
             p = dir / name;
         }
-        if(!found)
+        if (!found)
         {
             found = App::rootFolder().tryLocateFile(p + ".de");
         }
-        if(found)
+        if (found)
         {
             return found;
         }
@@ -282,7 +282,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
 File const &ScriptSystem::findModuleSource(String const &name, String const &localPath)
 {
     File const *src = tryFindModuleSource(name, localPath);
-    if(!src)
+    if (!src)
     {
         /// @throw NotFoundError  Module could not be found.
         throw NotFoundError("ScriptSystem::findModuleSource", "Cannot find module '" + name + "'");
@@ -313,21 +313,21 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
 
     // There are some special native modules.
     Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
-    if(foundNative != d->nativeModules.constEnd())
+    if (foundNative != d->nativeModules.constEnd())
     {
         return *foundNative.value();
     }
 
     // Maybe we already have this module?
     Instance::Modules::iterator found = d->modules.find(name);
-    if(found != d->modules.end())
+    if (found != d->modules.end())
     {
         return found.value()->names();
     }
 
     // Get it from a file, then.
     File const *src = tryFindModuleSource(name, importedFromPath.fileNamePath());
-    if(src)
+    if (src)
     {
         Module *module = new Module(*src);
         d->modules.insert(name, module); // owned

@@ -85,9 +85,9 @@ Image HeightMap::makeNormalMap() const
     int const w = heightMap.width();
     int const h = heightMap.height();
 
-    for(int y = 0; y < h; y++)
+    for (int y = 0; y < h; y++)
     {
-        for(int x = 0; x < w; x++)
+        for (int x = 0; x < w; x++)
         {
             Vector3f norm = d->normalAtCoord(Vector2i(x, y));
 
@@ -110,7 +110,7 @@ float HeightMap::heightAtPosition(Vector2f const &worldPos) const
     Vector2f coord = d->pixelCoordf(worldPos);
     Vector2i pixelCoord = coord.toVector2i();
 
-    if(pixelCoord.x < 0 || pixelCoord.y < 0 ||
+    if (pixelCoord.x < 0 || pixelCoord.y < 0 ||
        pixelCoord.x >= img.width() - 1 || pixelCoord.y >= img.height() - 1) return 0;
 
     float A = qRed(img.pixel(pixelCoord.x,     pixelCoord.y))     / 255.f - 0.5f;

@@ -63,13 +63,13 @@ DENG2_PIMPL_NOREF(Config)
             oldVersion.patch = int(vers.at(2).asNumber());
             oldVersion.build = int(vers.at(3).asNumber());
         }
-        catch(...)
+        catch (...)
         {}
     }
 
     void write()
     {
-        if(configPath.isEmpty()) return;
+        if (configPath.isEmpty()) return;
         refuge.write();
     }
 };
@@ -81,7 +81,7 @@ Config::Config(Path const &path) : RecordAccessor(0), d(new Instance(path))
 
 void Config::read()
 {
-    if(d->configPath.isEmpty()) return;
+    if (d->configPath.isEmpty()) return;
 
     LOG_AS("Config::read");
 
@@ -104,11 +104,11 @@ void Config::read()
         LOG_DEBUG("Found serialized Config:\n") << objectNamespace();
 
         // If the saved config is from a different version, rerun the script.
-        if(objectNamespace().has("__version__"))
+        if (objectNamespace().has("__version__"))
         {
             Value const &oldVersion = objectNamespace()["__version__"].value();
             d->setOldVersion(oldVersion);
-            if(oldVersion.compare(*version))
+            if (oldVersion.compare(*version))
             {
                 // Version mismatch: store the old version in a separate variable.
                 d->config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
@@ -129,7 +129,7 @@ void Config::read()
 
         // Also check the timestamp of written config vs. the config script.
         // If script is newer, it should be rerun.
-        if(scriptFile.status().modifiedAt > d->refuge.lastWrittenAt())
+        if (scriptFile.status().modifiedAt > d->refuge.lastWrittenAt())
         {
             LOG_MSG("%s is newer than %s, rerunning the script")
                     << d->configPath << d->refuge.path();
@@ -137,7 +137,7 @@ void Config::read()
         }
 
         // Check the container, too.
-        if(!shouldRunScript &&
+        if (!shouldRunScript &&
            Package::containerOfFileModifiedAt(scriptFile) > d->refuge.lastWrittenAt())
         {
             LOG_MSG("Package '%s' is newer than %s, rerunning the script")
@@ -146,17 +146,17 @@ void Config::read()
             shouldRunScript = true;
         }
     }
-    catch(Archive::NotFoundError const &)
+    catch (Archive::NotFoundError const &)
     {
         // It is missing from persist.pack if the config hasn't been written yet.
         shouldRunScript = true;
     }
-    catch(IByteArray::OffsetError const &)
+    catch (IByteArray::OffsetError const &)
     {
         // Empty or missing serialization?
         shouldRunScript = true;
     }
-    catch(Error const &error)
+    catch (Error const &error)
     {
         LOG_WARNING(error.what());
 
@@ -168,7 +168,7 @@ void Config::read()
     d->config.globals().add(new Variable("__version__", version.take(),
                                          Variable::AllowArray | Variable::ReadOnly));
 
-    if(shouldRunScript)
+    if (shouldRunScript)
     {
         // Read the main configuration.
         Script script(scriptFile);

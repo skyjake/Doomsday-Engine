@@ -90,14 +90,14 @@ void LineEditWidget::draw()
     buf.drawText(Vector2i(0, 0), prompt(), attr | TextCanvas::Char::Bold);
 
     // Underline the suggestion for completion.
-    if(isSuggestingCompletion())
+    if (isSuggestingCompletion())
     {
         buf.setRichFormatRange(TextCanvas::Char::Underline, completionRange());
     }
 
     // Echo mode determines what we actually draw.
     String txt = text();
-    if(echoMode() == PasswordEchoMode)
+    if (echoMode() == PasswordEchoMode)
     {
         txt = String(txt.size(), '*');
     }
@@ -115,7 +115,7 @@ bool LineEditWidget::handleEvent(Event const &event)
     bool eaten = true;
 
     // Insert text?
-    if(!ev.text().isEmpty())
+    if (!ev.text().isEmpty())
     {
         insert(ev.text());
     }
@@ -125,18 +125,18 @@ bool LineEditWidget::handleEvent(Event const &event)
         eaten = handleControlKey(ev.key());
     }
 
-    if(eaten) return true;
+    if (eaten) return true;
 
     return TextWidget::handleEvent(event);
 }
 
 bool LineEditWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
 {
-    if(AbstractLineEditor::handleControlKey(qtKey, mods))
+    if (AbstractLineEditor::handleControlKey(qtKey, mods))
     {
-        if(qtKey == Qt::Key_Enter)
+        if (qtKey == Qt::Key_Enter)
         {
-            if(d->signalOnEnter)
+            if (d->signalOnEnter)
             {
                 emit enterPressed(text());
             }
@@ -168,7 +168,7 @@ void LineEditWidget::numberOfLinesChanged(int lineCount)
 
 void LineEditWidget::contentChanged()
 {
-    if(hasRoot())
+    if (hasRoot())
     {
         updateLineWraps(RewrapNow);
     }

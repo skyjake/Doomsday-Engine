@@ -48,7 +48,7 @@ Statement *Statement::constructFrom(Reader &reader)
     reader.rewind();
 
     std::unique_ptr<Statement> result;
-    switch(id)
+    switch (id)
     {
     case ASSIGN:
         result.reset(new AssignStatement);

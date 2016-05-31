@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(LabelWidget)
     void updateWraps(int width)
     {
         wraps.wrapTextToWidth(label, width);
-        if(vertExpand) height->set(wraps.height());
+        if (vertExpand) height->set(wraps.height());
     }
 };
 
@@ -94,7 +94,7 @@ void LabelWidget::setAlignment(Alignment align)
 void LabelWidget::setExpandsToFitLines(bool expand)
 {
     d->vertExpand = expand;
-    if(expand)
+    if (expand)
     {
         rule().setInput(Rule::Height, *d->height);
     }
@@ -108,7 +108,7 @@ String LabelWidget::label() const
 
 void LabelWidget::update()
 {
-    if(d->wraps.isEmpty())
+    if (d->wraps.isEmpty())
     {
         d->updateWraps(rule().width().valuei());
     }
@@ -126,19 +126,19 @@ void LabelWidget::draw()
 
     // Determine position of the label based on alignment.
     Vector2i labelPos;
-    if(d->align.testFlag(AlignRight))
+    if (d->align.testFlag(AlignRight))
     {
         labelPos.x = buf.width() - labelSize.x;
     }
-    else if(!d->align.testFlag(AlignLeft))
+    else if (!d->align.testFlag(AlignLeft))
     {
         labelPos.x = buf.width()/2 - labelSize.x/2;
     }
-    if(d->align.testFlag(AlignBottom))
+    if (d->align.testFlag(AlignBottom))
     {
         labelPos.y = buf.height() - labelSize.y;
     }
-    else if(!d->align.testFlag(AlignTop))
+    else if (!d->align.testFlag(AlignTop))
     {
         labelPos.y = buf.height()/2 - labelSize.y/2;
     }

@@ -66,7 +66,7 @@ DENG2_PIMPL(VRWindowTransform)
 
     float displayModeDependentUIScalingFactor() const
     {
-        if(GuiWidget::toDevicePixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
+        if (GuiWidget::toDevicePixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
@@ -109,10 +109,10 @@ DENG2_PIMPL(VRWindowTransform)
         GLFramebuffer::Size const fbSize = unwarpedFB.size();
 
         // Left eye view on left side of screen.
-        for(int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
+        for (int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
         {
             ovr.setCurrentEye(eyeIdx);
-            if(ovr.currentEye() == OculusRift::LeftEye)
+            if (ovr.currentEye() == OculusRift::LeftEye)
             {
                 // Left eye on the left side of the screen.
                 unwarpedFB.target().setActiveRect(Rectangleui(0, 0, fbSize.x/2, fbSize.y), true);
@@ -133,7 +133,7 @@ DENG2_PIMPL(VRWindowTransform)
 
     void draw()
     {
-        switch(vrCfg.mode())
+        switch (vrCfg.mode())
         {
         // A) Single view type stereo 3D modes here:
         case VRConfig::Mono:
@@ -228,7 +228,7 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::QuadBuffered:
-            if(canvas().format().stereo())
+            if (canvas().format().stereo())
             {
                 // Left eye view
                 vrCfg.setCurrentEye(VRConfig::LeftEye);
@@ -299,7 +299,7 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
 {
     Canvas::Size size = physicalCanvasSize;
 
-    switch(d->vrCfg.mode())
+    switch (d->vrCfg.mode())
     {
     // Left-right screen split modes
     case VRConfig::CrossEye:
@@ -338,7 +338,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     Vector2f const size = window().canvas().size();
     Vector2f viewSize = window().windowContentSize();
 
-    switch(d->vrCfg.mode())
+    switch (d->vrCfg.mode())
     {
     // Left-right screen split modes
     case VRConfig::SideBySide:
@@ -346,7 +346,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     case VRConfig::Parallel:
     case VRConfig::OculusRift:
         // Make it possible to access both frames.
-        if(pos.x >= size.x/2)
+        if (pos.x >= size.x/2)
         {
             pos.x -= size.x/2;
         }
@@ -356,7 +356,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     // Top-bottom screen split modes
     case VRConfig::TopBottom:
         // Make it possible to access both frames.
-        if(pos.y >= size.y/2)
+        if (pos.y >= size.y/2)
         {
             pos.y -= size.y/2;
         }

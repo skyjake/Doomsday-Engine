@@ -63,7 +63,7 @@ void *BlockSet_Allocate(blockset_t *set)
     ++block->count;
 
     // If we run out of space in the topmost block, add a new one.
-    if(block->count == set->_elementsPerBlock)
+    if (block->count == set->_elementsPerBlock)
     {
         // Just being cautious: adding a new block invalidates existing
         // pointers to the blocks.
@@ -112,7 +112,7 @@ void BlockSet_Delete(blockset_t *set)
     DENG_ASSERT(set);
 
     // Free the elements from each block.
-    for(i = 0; i < set->_blockCount; ++i)
+    for (i = 0; i < set->_blockCount; ++i)
         M_Free(set->_blocks[i].elements);
 
     M_Free(set->_blocks);

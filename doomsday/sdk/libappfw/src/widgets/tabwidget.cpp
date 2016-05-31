@@ -97,7 +97,7 @@ DENG_GUI_PIMPL(TabWidget)
 
     void setCurrent(ui::Data::Pos pos)
     {
-        if(current != pos && pos < buttons->items().size())
+        if (current != pos && pos < buttons->items().size())
         {
             current = pos;
             updateSelected();
@@ -109,13 +109,13 @@ DENG_GUI_PIMPL(TabWidget)
     {
         selected->set(Background(style().colors().colorf(invertedStyle? "tab.inverted.selected" : "tab.selected")));
 
-        for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
+        for (ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             bool const sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
             w.setFont(sel? "tab.selected" : "tab.label");
             w.setOpacity(sel? 1 : 0.7, 0.4);
-            if(!invertedStyle)
+            if (!invertedStyle)
             {
                 w.setTextColor(sel? "tab.selected" : "text");
                 w.setHoverTextColor(sel? "tab.selected" : "text");
@@ -125,10 +125,10 @@ DENG_GUI_PIMPL(TabWidget)
                 w.setTextColor(sel? "tab.inverted.selected" : "inverted.text");
                 w.setHoverTextColor(sel? "tab.inverted.selected" : "inverted.text");
             }
-            if(sel)
+            if (sel)
             {
                 TimeDelta span = .2;
-                if(!selLeft)
+                if (!selLeft)
                 {
                     // Initialize the animated rules for positioning the
                     // selection highlight.
@@ -187,7 +187,7 @@ void TabWidget::update()
 {
     GuiWidget::update();
 
-    if(d->needUpdate)
+    if (d->needUpdate)
     {
         d->updateSelected();
         d->needUpdate = false;

@@ -58,10 +58,10 @@ DENG_GUI_PIMPL(AuxButtonWidget)
 
     void buttonStateChanged(ButtonWidget &, ButtonWidget::State state)
     {
-        switch(state)
+        switch (state)
         {
         case ButtonWidget::Up:
-            if(!isInverted())
+            if (!isInverted())
             {
                 setAuxBorderColorf(style().colors().colorf("accent"));
                 aux->setTextModulationColorf(style().colors().colorf("accent"));
@@ -74,7 +74,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
             break;
 
         case ButtonWidget::Hover:
-            if(!isInverted())
+            if (!isInverted())
             {
                 setAuxBorderColorf(style().colors().colorf("text"));
                 aux->setTextModulationColorf(style().colors().colorf("text"));
@@ -87,7 +87,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
             break;
 
         case ButtonWidget::Down:
-            if(!isInverted())
+            if (!isInverted())
             {
                 setAuxBorderColorf(style().colors().colorf(""),
                                    style().colors().colorf("inverted.background"));
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
 
     void updateStyle()
     {
-        if(isInverted())
+        if (isInverted())
         {
             applyInvertedStyle();
         }

@@ -38,7 +38,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         String name = file.name().lower();
 
         // Ignore the package version in the indexed names.
-        if(name.endsWith(".pack"))
+        if (name.endsWith(".pack"))
         {
             name = Package::split(name.fileNameWithoutExtension()).first + ".pack";
         }
@@ -57,7 +57,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
     {
         DENG2_GUARD_WRITE(this);
 
-        if(index.empty())
+        if (index.empty())
         {
             return;
         }
@@ -65,9 +65,9 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         // Look up the ones that might be this file.
         IndexRange range = index.equal_range(indexedName(file));
 
-        for(Index::iterator i = range.first; i != range.second; ++i)
+        for (Index::iterator i = range.first; i != range.second; ++i)
         {
-            if(i->second == &file)
+            if (i->second == &file)
             {
                 // This is the one to deindex.
                 index.erase(i);
@@ -81,7 +81,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         String baseName = path.fileName().lower();
         String dir      = path.fileNamePath().lower();
 
-        if(!dir.empty() && !dir.beginsWith("/"))
+        if (!dir.empty() && !dir.beginsWith("/"))
         {
             // Always begin with a slash. We don't want to match partial folder names.
             dir = "/" + dir;
@@ -90,10 +90,10 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         DENG2_GUARD_READ(this);
 
         ConstIndexRange range = index.equal_range(baseName);
-        for(Index::const_iterator i = range.first; i != range.second; ++i)
+        for (Index::const_iterator i = range.first; i != range.second; ++i)
         {
             File *file = i->second;
-            if(file->path().fileNamePath().endsWith(dir, Qt::CaseInsensitive))
+            if (file->path().fileNamePath().endsWith(dir, Qt::CaseInsensitive))
             {
                 found.push_back(file);
             }
@@ -117,7 +117,7 @@ void FileIndex::setPredicate(IPredicate const &predicate)
 
 bool FileIndex::maybeAdd(File const &file)
 {
-    if(d->predicate && !d->predicate->shouldIncludeInIndex(file))
+    if (d->predicate && !d->predicate->shouldIncludeInIndex(file))
     {
         return false;
     }
@@ -159,7 +159,7 @@ void FileIndex::findPartialPath(String const &path, FoundFiles &found, Behavior 
 {
     d->findPartialPath(path, found);
 
-    if(behavior == FindOnlyInLoadedPackages)
+    if (behavior == FindOnlyInLoadedPackages)
     {
         found.remove_if(fileNotInAnyLoadedPackage);
     }
@@ -181,7 +181,7 @@ void FileIndex::findPartialPath(String const &packageId, String const &path,
 {
     // We can only look in Folder-like packages.
     Package const &pkg = App::packageLoader().package(packageId);
-    if(pkg.file().is<Folder>())
+    if (pkg.file().is<Folder>())
     {
         findPartialPath(pkg.root(), path, found, FindInEntireIndex);
 
@@ -211,7 +211,7 @@ FileIndex::Index::const_iterator FileIndex::end() const
 
 void FileIndex::print() const
 {
-    for(Index::const_iterator i = d->index.begin(); i != d->index.end(); ++i)
+    for (Index::const_iterator i = d->index.begin(); i != d->index.end(); ++i)
     {
         LOG_TRACE("\"%s\": ") << i->first << i->second->description();
     }

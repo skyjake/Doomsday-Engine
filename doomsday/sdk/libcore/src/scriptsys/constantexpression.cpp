@@ -76,7 +76,7 @@ void ConstantExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != CONSTANT)
+    if (id != CONSTANT)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized expression was invalid.

@@ -87,11 +87,11 @@ DENG2_PIMPL(LogWidget)
     {
         // Remove old entries if there are too many.
         int excess = sink.entryCount() - maxEntries;
-        if(excess > 0)
+        if (excess > 0)
         {
             sink.remove(0, excess);
         }
-        while(excess-- > 0 && !cache.isEmpty())
+        while (excess-- > 0 && !cache.isEmpty())
         {
             delete cache.takeFirst();
         }
@@ -100,7 +100,7 @@ DENG2_PIMPL(LogWidget)
     int totalHeight()
     {
         int total = 0;
-        for(int idx = sink.entryCount() - 1; idx >= 0; --idx)
+        for (int idx = sink.entryCount() - 1; idx >= 0; --idx)
         {
             total += cache[idx]->size().y;
         }
@@ -120,7 +120,7 @@ DENG2_PIMPL(LogWidget)
 
     void setVisibleOffset(int off)
     {
-        if(visibleOffset != off)
+        if (visibleOffset != off)
         {
             visibleOffset = off;
             emit self.scrollPositionChanged(off);
@@ -173,7 +173,7 @@ void LogWidget::draw()
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
-    if(d->cacheWidth != pos.width())
+    if (d->cacheWidth != pos.width())
     {
         d->cacheWidth = pos.width();
         d->formatter.setMaxLength(d->cacheWidth);
@@ -187,7 +187,7 @@ void LogWidget::draw()
 
     // Cache entries we don't yet have. We'll do this in normal order so that
     // the formatter gets them chronologically.
-    while(d->cache.size() < d->sink.entryCount())
+    while (d->cache.size() < d->sink.entryCount())
     {
         int idx = d->cache.size();
 
@@ -203,13 +203,13 @@ void LogWidget::draw()
                 TextCanvas::Char::DefaultAttributes : TextCanvas::Char::Bold);
 
         // Draw the text.
-        for(int i = 0; i < lines.size(); ++i)
+        for (int i = 0; i < lines.size(); ++i)
         {
             buf->drawText(Vector2i(0, i), lines[i], attribs);
         }
 
         // Adjust visible offset.
-        if(d->visibleOffset > 0)
+        if (d->visibleOffset > 0)
         {
             d->setVisibleOffset(d->visibleOffset + lines.size());
         }
@@ -222,11 +222,11 @@ void LogWidget::draw()
     // Draw in reverse, as much as we need.
     int yBottom = buf.height() + d->visibleOffset;
 
-    for(int idx = d->sink.entryCount() - 1; yBottom > 0 && idx >= 0; --idx)
+    for (int idx = d->sink.entryCount() - 1; yBottom > 0 && idx >= 0; --idx)
     {
         TextCanvas *canvas = d->cache[idx];
         yBottom -= canvas->size().y;
-        if(yBottom < buf.height())
+        if (yBottom < buf.height())
         {
             buf.draw(*canvas, Vector2i(0, yBottom));
         }
@@ -234,13 +234,13 @@ void LogWidget::draw()
 
     // Draw the scroll indicator.
     int const maxScroll = d->maxVisibleOffset(buf.height());
-    if(d->showScrollIndicator && d->visibleOffset > 0)
+    if (d->showScrollIndicator && d->visibleOffset > 0)
     {
         int const indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
                                                float(d->totalHeight())), buf.height() / 2);
         float const indPos = float(d->visibleOffset) / float(maxScroll);
         int const avail = buf.height() - indHeight;
-        for(int i = 0; i < indHeight; ++i)
+        for (int i = 0; i < indHeight; ++i)
         {
             buf.put(Vector2i(buf.width() - 1, i + avail - indPos * avail),
                     TextCanvas::Char(':', TextCanvas::Char::Reverse));
@@ -253,7 +253,7 @@ void LogWidget::draw()
     d->sink.unlock();
 
     // Notify now that we know what the max scroll is.
-    if(d->lastMaxScroll != maxScroll)
+    if (d->lastMaxScroll != maxScroll)
     {
         d->lastMaxScroll = maxScroll;
         emit scrollMaxChanged(maxScroll);
@@ -262,13 +262,13 @@ void LogWidget::draw()
 
 bool LogWidget::handleEvent(Event const &event)
 {
-    if(event.type() != Event::KeyPress) return false;
+    if (event.type() != Event::KeyPress) return false;
 
     KeyEvent const &ev = event.as<KeyEvent>();
 
     int pageSize = scrollPageSize();
 
-    switch(ev.key())
+    switch (ev.key())
     {
     case Qt::Key_PageUp:
         d->setVisibleOffset(d->visibleOffset + pageSize);

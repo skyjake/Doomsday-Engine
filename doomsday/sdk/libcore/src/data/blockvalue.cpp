@@ -77,7 +77,7 @@ bool BlockValue::isTrue() const
 void BlockValue::sum(Value const &value)
 {
     BlockValue const *other = dynamic_cast<BlockValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         /// @throw ArithmeticError @a value was not a BlockValue. BlockValue can only be
         /// summed with another BlockValue.
@@ -95,7 +95,7 @@ void BlockValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != BLOCK)
+    if (id != BLOCK)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.

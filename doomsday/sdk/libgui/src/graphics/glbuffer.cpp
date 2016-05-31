@@ -143,7 +143,7 @@ DENG2_PIMPL(GLBuffer)
 
     void alloc()
     {
-        if(!name)
+        if (!name)
         {
             glGenBuffers(1, &name);
         }
@@ -151,7 +151,7 @@ DENG2_PIMPL(GLBuffer)
 
     void allocIndices()
     {
-        if(!idxName)
+        if (!idxName)
         {
             glGenBuffers(1, &idxName);
         }
@@ -159,7 +159,7 @@ DENG2_PIMPL(GLBuffer)
 
     void release()
     {
-        if(name)
+        if (name)
         {
             glDeleteBuffers(1, &name);
             name = 0;
@@ -169,7 +169,7 @@ DENG2_PIMPL(GLBuffer)
 
     void releaseIndices()
     {
-        if(idxName)
+        if (idxName)
         {
             glDeleteBuffers(1, &idxName);
             idxName = 0;
@@ -179,7 +179,7 @@ DENG2_PIMPL(GLBuffer)
 
     static GLenum glUsage(Usage u)
     {
-        switch(u)
+        switch (u)
         {
         case Static:  return GL_STATIC_DRAW;
         case Dynamic: return GL_DYNAMIC_DRAW;
@@ -191,7 +191,7 @@ DENG2_PIMPL(GLBuffer)
 
     static GLenum glPrimitive(Primitive p)
     {
-        switch(p)
+        switch (p)
         {
         case Points:        return GL_POINTS;
         case LineStrip:     return GL_LINE_STRIP;
@@ -221,7 +221,7 @@ DENG2_PIMPL(GLBuffer)
         LIBGUI_ASSERT_GL_OK();
 
 #ifdef GL_ARB_instanced_arrays
-        if(GLInfo::extensions().ARB_instanced_arrays)
+        if (GLInfo::extensions().ARB_instanced_arrays)
         {
             glVertexAttribDivisorARB(index + part, divisor);
             LIBGUI_ASSERT_GL_OK();
@@ -234,19 +234,19 @@ DENG2_PIMPL(GLBuffer)
         DENG2_ASSERT(GLProgram::programInUse());
         DENG2_ASSERT(specs.first != 0); // must have a spec
 
-        for(duint i = 0; i < specs.second; ++i)
+        for (duint i = 0; i < specs.second; ++i)
         {
             AttribSpec const &spec = specs.first[i];
 
             int index = GLProgram::programInUse()->attributeLocation(spec.semantic);
-            if(index < 0) continue; // Not used.
+            if (index < 0) continue; // Not used.
 
-            if(spec.size == 16)
+            if (spec.size == 16)
             {
                 // Attributes with more than 4 elements must be broken down.
-                for(int part = 0; part < 4; ++part)
+                for (int part = 0; part < 4; ++part)
                 {
-                    if(enable)
+                    if (enable)
                         setAttribPointer(index, spec, divisor, part);
                     else
                     {
@@ -257,7 +257,7 @@ DENG2_PIMPL(GLBuffer)
             }
             else
             {
-                if(enable)
+                if (enable)
                     setAttribPointer(index, spec, divisor);
                 else
                 {
@@ -292,11 +292,11 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
     d->defaultRange.clear();
     d->defaultRange.append(Rangeui(0, count));
 
-    if(data)
+    if (data)
     {
         d->alloc();
 
-        if(dataSize && count)
+        if (dataSize && count)
         {
             glBindBuffer(GL_ARRAY_BUFFER, d->name);
             glBufferData(GL_ARRAY_BUFFER, dataSize, data, Instance::glUsage(usage));
@@ -321,7 +321,7 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     d->defaultRange.clear();
     d->defaultRange.append(Rangeui(0, count));
 
-    if(indices && count)
+    if (indices && count)
     {
         d->allocIndices();
 
@@ -342,7 +342,7 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
 
 void GLBuffer::draw(DrawRanges const *ranges) const
 {
-    if(!isReady() || !GLProgram::programInUse()) return;
+    if (!isReady() || !GLProgram::programInUse()) return;
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
@@ -351,10 +351,10 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     d->enableArrays(true);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    if(d->idxName)
+    if (d->idxName)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        for(Rangeui const &range : (ranges? *ranges : d->defaultRange))
+        for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
             glDrawElements(Instance::glPrimitive(d->prim),
                            range.size(), GL_UNSIGNED_SHORT,
@@ -365,7 +365,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     }
     else
     {
-        for(Rangeui const &range : (ranges? *ranges : d->defaultRange))
+        for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
             glDrawArrays(Instance::glPrimitive(d->prim), range.start, range.size());
             LIBGUI_ASSERT_GL_OK();
@@ -377,10 +377,10 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
 {
-    if(!GLInfo::extensions().ARB_draw_instanced ||
+    if (!GLInfo::extensions().ARB_draw_instanced ||
        !GLInfo::extensions().ARB_instanced_arrays) return;
 
-    if(!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;
+    if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;
 
 #if defined(GL_ARB_instanced_arrays) && defined(GL_ARB_draw_instanced)
 
@@ -396,10 +396,10 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    if(d->idxName)
+    if (d->idxName)
     {
-        if(count < 0) count = d->idxCount;
-        if(first + count > d->idxCount) count = d->idxCount - first;
+        if (count < 0) count = d->idxCount;
+        if (first + count > d->idxCount) count = d->idxCount - first;
 
         DENG2_ASSERT(count >= 0);
 
@@ -412,8 +412,8 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
     }
     else
     {
-        if(count < 0) count = d->count;
-        if(first + count > d->count) count = d->count - first;
+        if (count < 0) count = d->count;
+        if (first + count > d->count) count = d->count - first;
 
         DENG2_ASSERT(count >= 0);
 

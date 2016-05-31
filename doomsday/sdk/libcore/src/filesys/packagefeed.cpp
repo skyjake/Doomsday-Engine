@@ -35,7 +35,7 @@ DENG2_PIMPL(PackageFeed)
     {
         /// @todo Resolve conflicts: replace, ignore, or fail. -jk
 
-        if(folder.has(linkName)) return; // Already there, keep the existing link.
+        if (folder.has(linkName)) return; // Already there, keep the existing link.
 
         // Create a link to the loaded package's file.
         LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg.file(), linkName));
@@ -55,13 +55,13 @@ DENG2_PIMPL(PackageFeed)
             linkToPackage(*pkg, i.key(), folder);
 
             // Also link it under its possible alias identifier (for variants).
-            if(pkg->objectNamespace().has("package.alias"))
+            if (pkg->objectNamespace().has("package.alias"))
             {
                 linkToPackage(*pkg, pkg->objectNamespace().gets("package.alias"), folder);
             }
 
             // Link each contained asset, too.
-            foreach(String ident, pkg->assets())
+            foreach (String ident, pkg->assets())
             {
                 linkToPackage(*pkg, "asset." + ident, folder);
             }
@@ -92,15 +92,15 @@ void PackageFeed::populate(Folder &folder)
 
 bool PackageFeed::prune(File &file) const
 {
-    if(LinkFile const *link = file.maybeAs<LinkFile>())
+    if (LinkFile const *link = file.maybeAs<LinkFile>())
     {
-        if(Folder const *pkg = link->target().maybeAs<Folder>())
+        if (Folder const *pkg = link->target().maybeAs<Folder>())
         {
             // Links to unloaded packages should be pruned.
-            if(!d->loader.isLoaded(*pkg)) return true;
+            if (!d->loader.isLoaded(*pkg)) return true;
 
             // Package has been modified, should be pruned.
-            if(link->status() != pkg->status()) return true;
+            if (link->status() != pkg->status()) return true;
         }
     }
     return false; // Don't prune.

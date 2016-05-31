@@ -98,7 +98,7 @@ NativePath &NativePath::operator = (char const *nullTerminatedCStr)
 
 NativePath NativePath::concatenatePath(NativePath const &nativePath) const
 {
-    if(nativePath.isAbsolute()) return nativePath;
+    if (nativePath.isAbsolute()) return nativePath;
     return toString().concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
@@ -139,24 +139,24 @@ bool NativePath::isAbsolute() const
 
 NativePath NativePath::expand(bool *didExpand) const
 {
-    if(first() == '>' || first() == '}')
+    if (first() == '>' || first() == '}')
     {
-        if(didExpand) *didExpand = true;
+        if (didExpand) *didExpand = true;
         return App::app().nativeBasePath() / toString().mid(1);
     }
 #ifdef UNIX
-    else if(first() == '~')
+    else if (first() == '~')
     {
-        if(didExpand) *didExpand = true;
+        if (didExpand) *didExpand = true;
 
         String const path = toString();
         int firstSlash = path.indexOf('/');
-        if(firstSlash > 1)
+        if (firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
             QByteArray userName = path.mid(1, firstSlash - 1).toLatin1();
             struct passwd *pw = getpwnam(userName);
-            if(!pw)
+            if (!pw)
             {
                 /// @throws UnknownUserError  User is not known.
                 throw UnknownUserError("NativePath::expand",
@@ -174,18 +174,18 @@ NativePath NativePath::expand(bool *didExpand) const
 #endif
 
     // No expansion done.
-    if(didExpand) *didExpand = false;
+    if (didExpand) *didExpand = false;
     return *this;
 }
 
 String NativePath::pretty() const
 {
-    if(isEmpty()) return *this;
+    if (isEmpty()) return *this;
 
     String result = *this;
 
     // Replace relative directives like '}' (used in FS1 only) with a full symbol.
-    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
+    if (result.length() > 1 && (result.first() == '}' || result.first() == '>'))
     {
         return String(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.mid(1);
     }
@@ -193,10 +193,10 @@ String NativePath::pretty() const
     // If within one of the known native directories, cut out the known path,
     // replacing it with a symbolic. This retains the absolute nature of the path
     // while omitting potentially redundant/verbose information.
-    if(QDir::isAbsolutePath(result))
+    if (QDir::isAbsolutePath(result))
     {
         NativePath basePath = App::app().nativeBasePath();
-        if(result.beginsWith(basePath))
+        if (result.beginsWith(basePath))
         {
             result = NATIVE_BASE_SYMBOLIC + result.mid(basePath.length());
         }
@@ -204,13 +204,13 @@ String NativePath::pretty() const
         {
 #ifdef MACOSX
             NativePath contentsPath = App::app().nativeAppContentsPath();
-            if(result.beginsWith(contentsPath))
+            if (result.beginsWith(contentsPath))
             {
                 return "(app)" + result.mid(contentsPath.length());
             }
 #endif
             NativePath homePath = QDir::homePath(); // actual native home dir, not FS2 "/home"
-            if(result.beginsWith(homePath))
+            if (result.beginsWith(homePath))
             {
                 result = NATIVE_HOME_SYMBOLIC + result.mid(homePath.length());
             }
@@ -239,7 +239,7 @@ static NativePath currentNativeWorkPath;
 
 NativePath NativePath::workPath()
 {
-    if(currentNativeWorkPath.isEmpty())
+    if (currentNativeWorkPath.isEmpty())
     {
         currentNativeWorkPath = QDir::currentPath();
     }
@@ -248,7 +248,7 @@ NativePath NativePath::workPath()
 
 bool NativePath::setWorkPath(NativePath const &cwd)
 {
-    if(QDir::setCurrent(cwd))
+    if (QDir::setCurrent(cwd))
     {
         currentNativeWorkPath = cwd;
         return true;
@@ -264,12 +264,12 @@ bool NativePath::exists(NativePath const &nativePath)
 void NativePath::createPath(NativePath const &nativePath)
 {
     NativePath parentPath = nativePath.fileNamePath();
-    if(!parentPath.isEmpty() && !exists(parentPath))
+    if (!parentPath.isEmpty() && !exists(parentPath))
     {
         createPath(parentPath);
     }
 
-    if(!QDir::current().mkdir(nativePath))
+    if (!QDir::current().mkdir(nativePath))
     {
         /// @throw CreateDirError Failed to create directory @a nativePath.
         throw CreateDirError("NativePath::createPath", "Could not create: " + nativePath);

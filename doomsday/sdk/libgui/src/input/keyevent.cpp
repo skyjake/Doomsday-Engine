@@ -50,7 +50,7 @@ static int win32Keymap[256];
  */
 static void checkWin32Keymap()
 {
-    if(win32Keymap[VK_BACK] == DDKEY_BACKSPACE)
+    if (win32Keymap[VK_BACK] == DDKEY_BACKSPACE)
     {
         // Already go it.
         return;
@@ -184,7 +184,7 @@ static void checkWin32Keymap()
 int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
 {
 #ifdef MACOSX
-    switch(qtKey)
+    switch (qtKey)
     {
     case Qt::Key_Meta:          return DDKEY_RCTRL;
     case Qt::Key_Control:       return 0; // Don't map the Command key.
@@ -199,13 +199,13 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
 #ifdef XFREE_KEYMAPPING
     // We'll check before the generic Qt keys to detect the numpad.
     int mapped = x11ScancodeToDDKey(nativeScanCode);
-    if(mapped) return mapped;
+    if (mapped) return mapped;
 #else
     DENG2_UNUSED(nativeScanCode);
 #endif
 
     // Non-character-inserting keys.
-    switch(qtKey)
+    switch (qtKey)
     {
     case Qt::Key_Escape:        return DDKEY_ESCAPE;
     case Qt::Key_Tab:           return DDKEY_TAB;
@@ -260,7 +260,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
     /// @todo Would the native scancodes be more appropriate than virtual keys?
     /// (no influence from language settings)
     checkWin32Keymap();
-    if(win32Keymap[nativeVirtualKey] > 0)
+    if (win32Keymap[nativeVirtualKey] > 0)
     {
         // We know a mapping for this.
         return win32Keymap[nativeVirtualKey];
@@ -268,7 +268,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
 #endif
 
 #ifdef MACOSX
-    switch(nativeVirtualKey)
+    switch (nativeVirtualKey)
     {
     case 0x00:                  return 'a';
     case 0x01:                  return 's';
@@ -351,7 +351,7 @@ static int x11ScancodeToDDKey(int scancode)
 {
     int symCount;
     KeySym *syms = XGetKeyboardMapping(QX11Info::display(), scancode, 1, &symCount);
-    if(!symCount)
+    if (!symCount)
     {
         XFree(syms);
         return 0;
@@ -360,18 +360,18 @@ static int x11ScancodeToDDKey(int scancode)
     XFree(syms);
     syms = nullptr;
 
-    if(sym == NoSymbol) return 0;
+    if (sym == NoSymbol) return 0;
 
     unsigned int ucs4 = X11_KeySymToUcs4(sym);
-    if(ucs4)
+    if (ucs4)
     {
         // ASCII range.
-        if(ucs4 > ' ' && ucs4 < 128) return ucs4;
+        if (ucs4 > ' ' && ucs4 < 128) return ucs4;
         //qDebug() << "ucs4:" << ucs4 << hex << ucs4 << dec;
         return 0;
     }
     //qDebug() << "sym:" << hex << sym << dec;
-    switch(sym)
+    switch (sym)
     {
     case XK_KP_Insert:          return DDKEY_NUMPAD0;
     case XK_KP_End:             return DDKEY_NUMPAD1;
@@ -432,7 +432,7 @@ KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCo
 
 KeyEvent::State KeyEvent::state() const
 {
-    switch(type())
+    switch (type())
     {
     case KeyPress:  return Pressed;
     case KeyRepeat: return Repeat;

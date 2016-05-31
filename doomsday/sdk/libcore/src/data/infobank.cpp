@@ -41,7 +41,7 @@ DENG2_PIMPL(InfoBank)
 
     void parsedNamedBlock(String const &, Record &block)
     {
-        if(block.gets("__type__") != ScriptedInfo::BLOCK_GROUP)
+        if (block.gets("__type__") != ScriptedInfo::BLOCK_GROUP)
         {
             block.addBoolean(VAR_NOT_IN_BANK, true);
         }
@@ -60,11 +60,11 @@ DENG2_PIMPL(InfoBank)
                             (String const &name, Record &sub)
         {
             String fullIdentifier = identifierBase.concatenateMember(name);
-            if(ScriptedInfo::blockType(sub) == ScriptedInfo::BLOCK_GROUP)
+            if (ScriptedInfo::blockType(sub) == ScriptedInfo::BLOCK_GROUP)
             {
                 removeFromGroup(sub, shouldRemove, fullIdentifier);
             }
-            else if(shouldRemove(name, sub))
+            else if (shouldRemove(name, sub))
             {
                 LOG_RES_VERBOSE("Removing '%s' that was read from \"%s\"")
                         << fullIdentifier
@@ -91,7 +91,7 @@ void InfoBank::parse(String const &source)
         d->modTime = Time();
         d->info.parse(source);
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to read Info source:\n") << er.asText();
     }
@@ -105,7 +105,7 @@ void InfoBank::parse(File const &file)
         d->modTime = file.status().modifiedAt;
         d->info.parse(file);
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Failed to read Info file:\n") << er.asText();
     }
@@ -133,10 +133,10 @@ Record const &InfoBank::objectNamespace() const
 
 void InfoBank::addFromInfoBlocks(String const &blockType)
 {
-    foreach(String id, d->info.allBlocksOfType(blockType))
+    foreach (String id, d->info.allBlocksOfType(blockType))
     {
         Record &rec = d->names[id];
-        if(!rec.has(VAR_NOT_IN_BANK))
+        if (!rec.has(VAR_NOT_IN_BANK))
         {
             // Already added, from the looks of it.
             continue;
@@ -178,14 +178,14 @@ String InfoBank::bankRootPath() const
 
 String InfoBank::absolutePathInContext(Record const &context, String const &relativePath) const
 {
-    if(Path(relativePath).isAbsolute())
+    if (Path(relativePath).isAbsolute())
     {
         // Already absolute.
         return relativePath;
     }
 
     String const path = ScriptedInfo::absolutePathInContext(context, relativePath);
-    if(path == relativePath)
+    if (path == relativePath)
     {
         return bankRootPath() / relativePath;
     }

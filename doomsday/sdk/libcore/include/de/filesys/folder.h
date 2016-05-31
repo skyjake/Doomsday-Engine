@@ -258,12 +258,12 @@ public:
     template <typename Type>
     Type &locate(String const &path) const {
         File *found = tryLocateFile(path);
-        if(!found) {
+        if (!found) {
             /// @throw NotFoundError  Path didn't exist.
             throw NotFoundError("Folder::locate", "\"" + path + "\" was not found "
                                 "(in " + description() + ")");
         }
-        if(Type *casted = dynamic_cast<Type *>(found)) {
+        if (Type *casted = dynamic_cast<Type *>(found)) {
             return *casted;
         }
         /// @throw NotFoundError  Found file could not be cast to the

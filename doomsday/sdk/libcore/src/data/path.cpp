@@ -36,14 +36,14 @@ Path::hash_type const Path::hash_range = 512;
 ushort Path::Segment::hash() const
 {
     // Is it time to compute the hash?
-    if(!gotHashKey)
+    if (!gotHashKey)
     {
         hashKey = 0;
         int op = 0;
-        for(int i = 0; i < range.length(); ++i)
+        for (int i = 0; i < range.length(); ++i)
         {
             ushort unicode = range.at(i).toLower().unicode();
-            switch(op)
+            switch (op)
             {
             case 0: hashKey ^= unicode; ++op;   break;
             case 1: hashKey *= unicode; ++op;   break;
@@ -140,7 +140,7 @@ struct Path::Instance
      */
     void clearSegments()
     {
-        while(!extraSegments.isEmpty())
+        while (!extraSegments.isEmpty())
         {
             delete extraSegments.takeFirst();
         }
@@ -157,7 +157,7 @@ struct Path::Instance
     Path::Segment *allocSegment(QStringRef const &range)
     {
         Path::Segment *segment;
-        if(segmentCount < SEGMENT_BUFFER_SIZE)
+        if (segmentCount < SEGMENT_BUFFER_SIZE)
         {
             segment = segments + segmentCount;
         }
@@ -184,12 +184,12 @@ struct Path::Instance
     void parse()
     {
         // Already been here?
-        if(segmentCount > 0) return;
+        if (segmentCount > 0) return;
 
         segmentCount = 0;
         extraSegments.clear();
 
-        if(path.isEmpty())
+        if (path.isEmpty())
         {
             // There always has to be at least one segment.
             allocSegment(&emptyPath);
@@ -202,7 +202,7 @@ struct Path::Instance
         QChar const *segEnd   = path.constData() + path.length() - 1;
 
         // Skip over any trailing delimiters.
-        for(int i = path.length();
+        for (int i = path.length();
             segEnd->unicode() && *segEnd == separator && i-- > 0;
             --segEnd) {}
 
@@ -210,10 +210,10 @@ struct Path::Instance
         QChar const *from;
         forever
         {
-            if(segEnd < segBegin) break; // E.g., path is "/"
+            if (segEnd < segBegin) break; // E.g., path is "/"
 
             // Find the start of the next segment.
-            for(from = segEnd; from > segBegin && !(*from == separator); from--)
+            for (from = segEnd; from > segBegin && !(*from == separator); from--)
             {}
 
             int startIndex = (*from == separator? from + 1 : from) - path.constData();
@@ -221,7 +221,7 @@ struct Path::Instance
             allocSegment(QStringRef(&path, startIndex, length));
 
             // Are there no more parent directories?
-            if(from == segBegin) break;
+            if (from == segBegin) break;
 
             // So far so good. Move one directory level upwards.
             // The next name ends here.
@@ -229,7 +229,7 @@ struct Path::Instance
         }
 
         // Unix style zero-length root name?
-        if(*segBegin == separator)
+        if (*segBegin == separator)
         {
             allocSegment(&emptyPath);
         }
@@ -303,14 +303,14 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
 {
     d->parse();
 
-    if(reverseIndex < 0 || reverseIndex >= d->segmentCount)
+    if (reverseIndex < 0 || reverseIndex >= d->segmentCount)
     {
         /// @throw OutOfBoundsError  Attempt to reference a nonexistent segment.
         throw OutOfBoundsError("Path::reverseSegment", String("Reverse index %1 is out of bounds").arg(reverseIndex));
     }
 
     // Is this in the static buffer?
-    if(reverseIndex < SEGMENT_BUFFER_SIZE)
+    if (reverseIndex < SEGMENT_BUFFER_SIZE)
     {
         return d->segments[reverseIndex];
     }
@@ -321,20 +321,20 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
 
 bool Path::operator == (Path const &other) const
 {
-    if(this == &other) return true;
+    if (this == &other) return true;
 
-    if(segmentCount() != other.segmentCount()) return false;
+    if (segmentCount() != other.segmentCount()) return false;
 
     // If the hashes are different, the segments can't be the same.
-    for(int i = 0; i < d->segmentCount; ++i)
+    for (int i = 0; i < d->segmentCount; ++i)
     {
-        if(segment(i).hash() != other.segment(i).hash())
+        if (segment(i).hash() != other.segment(i).hash())
             return false;
     }
 
     // Probably the same, but we have to make sure by comparing
     // the textual segments.
-    if(d->separator == other.d->separator)
+    if (d->separator == other.d->separator)
     {
         // The same separators, do one string-based test.
         return !d->path.compareWithoutCase(other.d->path);
@@ -342,9 +342,9 @@ bool Path::operator == (Path const &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for(int i = 0; i < d->segmentCount; ++i)
+        for (int i = 0; i < d->segmentCount; ++i)
         {
-            if(segment(i) != other.segment(i)) return false;
+            if (segment(i) != other.segment(i)) return false;
         }
         return true;
     }
@@ -352,7 +352,7 @@ bool Path::operator == (Path const &other) const
 
 bool Path::operator < (Path const &other) const
 {
-    if(d->separator == other.d->separator)
+    if (d->separator == other.d->separator)
     {
         // The same separators, do one string-based test.
         return d->path.compareWithoutCase(other.d->path) < 0;
@@ -360,9 +360,9 @@ bool Path::operator < (Path const &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for(int i = 0; i < d->segmentCount; ++i)
+        for (int i = 0; i < d->segmentCount; ++i)
         {
-            if(!(segment(i) < other.segment(i))) return false;
+            if (!(segment(i) < other.segment(i))) return false;
         }
         return true;
     }
@@ -372,7 +372,7 @@ Path Path::operator / (Path const &other) const
 {
     // Unify the separators.
     String otherPath = other.d->path;
-    if(other.separator() != d->separator)
+    if (other.separator() != d->separator)
     {
         otherPath.replace(other.d->separator, d->separator);
     }
@@ -453,7 +453,7 @@ Path &Path::set(String const &newPath, QChar sep)
 
 Path Path::withSeparators(QChar sep) const
 {
-    if(sep == d->separator) return *this;
+    if (sep == d->separator) return *this;
 
     String modPath = d->path;
     modPath.replace(d->separator, sep);
@@ -467,7 +467,7 @@ QChar Path::separator() const
 
 String Path::fileName() const
 {
-    if(last() == d->separator) return "";
+    if (last() == d->separator) return "";
     return lastSegment();
 }
 
@@ -494,11 +494,11 @@ void Path::operator << (Reader &from)
 String Path::normalizeString(String const &text, QChar replaceWith)
 {
     String result = text;
-    if(replaceWith != '/')
+    if (replaceWith != '/')
     {
         result.replace('/', replaceWith);
     }
-    if(replaceWith != '\\')
+    if (replaceWith != '\\')
     {
         result.replace('\\', replaceWith);
     }
@@ -512,10 +512,10 @@ Path Path::normalize(String const &text, QChar replaceWith)
 
 Path PathRef::toPath() const
 {
-    if(!segmentCount()) return Path(); // Empty.
+    if (!segmentCount()) return Path(); // Empty.
 
     String composed = segment(0);
-    for(int i = 1; i < segmentCount(); ++i)
+    for (int i = 1; i < segmentCount(); ++i)
     {
         composed += path().separator();
         composed += segment(i);
@@ -662,7 +662,7 @@ static int Path_UnitTest()
             DENG2_ASSERT(d.fileName() == String(d).fileName());
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         qWarning() << er.asText();
         return false;

@@ -138,7 +138,7 @@ DENG2_PIMPL(GuiRootWidget)
 
     void initAtlas()
     {
-        if(atlas.isNull())
+        if (atlas.isNull())
         {
             atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
@@ -163,7 +163,7 @@ DENG2_PIMPL(GuiRootWidget)
         Style const &st = Style::get();
         ImageBank::Names imageNames;
         st.images().allItems(imageNames);
-        foreach(String const &name, imageNames)
+        foreach (String const &name, imageNames)
         {
             texBank.add("Style." + name, new StyleImage(name));
         }
@@ -181,10 +181,10 @@ DENG2_PIMPL(GuiRootWidget)
 
     void focusedWidgetChanged(Widget *focused)
     {
-        if(GuiWidget *w = focused->maybeAs<GuiWidget>())
+        if (GuiWidget *w = focused->maybeAs<GuiWidget>())
         {
             focusIndicator->rule().setRect(w->rule());
-            if(!w->attributes().testFlag(GuiWidget::FocusHidden))
+            if (!w->attributes().testFlag(GuiWidget::FocusHidden))
             {
                 focusIndicator->startFlashing(w);
             }
@@ -222,7 +222,7 @@ void GuiRootWidget::addOnTop(GuiWidget *widget)
 
 void GuiRootWidget::moveToTop(GuiWidget &widget)
 {
-    if(widget.parentWidget())
+    if (widget.parentWidget())
     {
         widget.parentWidget()->remove(widget);
     }
@@ -300,9 +300,9 @@ void GuiRootWidget::dispatchLatestMousePosition()
 
 bool GuiRootWidget::processEvent(Event const &event)
 {
-    if(!RootWidget::processEvent(event))
+    if (!RootWidget::processEvent(event))
     {
-        if(event.type() == Event::MouseButton)
+        if (event.type() == Event::MouseButton)
         {
             // Button events that no one handles will relinquish input focus.
             setFocus(0);
@@ -323,11 +323,11 @@ void GuiRootWidget::loadCommonTextures()
 GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
 {
     Widget::Children const childs = children();
-    for(int i = childs.size() - 1; i >= 0; --i)
+    for (int i = childs.size() - 1; i >= 0; --i)
     {
-        if(GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        if (GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
         {
-            if(GuiWidget const *hit = w->treeHitTest(pos))
+            if (GuiWidget const *hit = w->treeHitTest(pos))
             {
                 return hit;
             }
@@ -343,7 +343,7 @@ GuiWidget const *GuiRootWidget::guiFind(String const &name) const
 
 void GuiRootWidget::update()
 {
-    if(window().canvas().isGLReady())
+    if (window().canvas().isGLReady())
     {
         // Allow GL operations.
         window().canvas().makeCurrent();
@@ -357,7 +357,7 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
-    if(d->noFramesDrawnYet)
+    if (d->noFramesDrawnYet)
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.

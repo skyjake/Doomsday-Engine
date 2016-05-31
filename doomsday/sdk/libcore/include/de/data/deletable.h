@@ -50,9 +50,9 @@ public:
         reset(nullptr);
     }
     void reset(Type *ptr = nullptr) {
-        if(_ptr) _ptr->Deletable::audienceForDeletion -= this;
+        if (_ptr) _ptr->Deletable::audienceForDeletion -= this;
         _ptr = ptr;
-        if(_ptr) _ptr->Deletable::audienceForDeletion += this;
+        if (_ptr) _ptr->Deletable::audienceForDeletion += this;
     }
     Type *operator -> () const {
         return _ptr;
@@ -70,7 +70,7 @@ public:
         return _ptr != nullptr;
     }
     void objectWasDeleted(Deletable *obj) {
-        if(obj == _ptr) {
+        if (obj == _ptr) {
             _ptr = nullptr;
         }
     }

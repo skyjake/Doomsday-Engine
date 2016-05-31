@@ -66,7 +66,7 @@ dd_bool Point2_IsNull(Point2 const *p)
 Point2Raw *Point2_Raw(Point2 const *p, Point2Raw *rawPoint)
 {
     DENG_ASSERT(p);
-    if(!rawPoint) return NULL;
+    if (!rawPoint) return NULL;
     memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
     return rawPoint;
 }
@@ -111,7 +111,7 @@ void Point2_SetXY(Point2 *p, int x, int y)
 void Point2_Translate(Point2 *p, Point2Raw const *delta)
 {
     DENG_ASSERT(p);
-    if(!delta) return;
+    if (!delta) return;
     p->raw.x += delta->x;
     p->raw.y += delta->y;
 }
@@ -182,7 +182,7 @@ dd_bool Point2f_IsNull(Point2f const *p)
 Point2Rawf *Point2f_Raw(Point2f const *p, Point2Rawf *rawPoint)
 {
     DENG_ASSERT(p);
-    if(!rawPoint) return NULL;
+    if (!rawPoint) return NULL;
     memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
     return rawPoint;
 }
@@ -227,7 +227,7 @@ void Point2f_SetXY(Point2f *p, double x, double y)
 void Point2f_Translate(Point2f *p, Point2Rawf const *delta)
 {
     DENG_ASSERT(p);
-    if(!delta) return;
+    if (!delta) return;
     p->raw.x += delta->x;
     p->raw.y += delta->y;
 }
@@ -308,7 +308,7 @@ dd_bool Point3_IsNull(Point3 const *p)
 Point3Raw *Point3_Raw(Point3 const *p, Point3Raw *rawPoint)
 {
     DENG_ASSERT(p);
-    if(!rawPoint) return NULL;
+    if (!rawPoint) return NULL;
     memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
     return rawPoint;
 }
@@ -439,7 +439,7 @@ dd_bool Point3f_IsNull(Point3f const *p)
 Point3Rawf *Point3f_Raw(Point3f const *p, Point3Rawf *rawPoint)
 {
     DENG_ASSERT(p);
-    if(!rawPoint) return NULL;
+    if (!rawPoint) return NULL;
     memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
     return rawPoint;
 }

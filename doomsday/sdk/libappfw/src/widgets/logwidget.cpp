@@ -113,7 +113,7 @@ public Font::RichFormat::IStyle
         int update()
         {
             int const old = _height;
-            if(drawable.update())
+            if (drawable.update())
             {
                 _height = drawable.wraps().height() * drawable.font().lineSpacing().valuei();
                 return _height - old;
@@ -123,7 +123,7 @@ public Font::RichFormat::IStyle
 
         void beginWrap()
         {
-            if(_needWrap)
+            if (_needWrap)
             {
                 drawable.setLineWrapWidth(_wrapWidth);
                 _needWrap = false;
@@ -158,12 +158,12 @@ public Font::RichFormat::IStyle
              * - wrapping may have completed for an updated content
              */
 
-            if(!drawable.isBeingWrapped())
+            if (!drawable.isBeingWrapped())
             {
                 // We may now have the number of wrapped lines.
                 heightDelta += update();
             }
-            if(!_height)
+            if (!_height)
             {
                 // Content not ready yet.
                 return 0;
@@ -174,22 +174,22 @@ public Font::RichFormat::IStyle
             int const yTop = yBottom - _height;
             Rangei range;
 
-            if(yBottom < visiblePixels.start || yTop > visiblePixels.end)
+            if (yBottom < visiblePixels.start || yTop > visiblePixels.end)
             {
                 // Completely outside.
             }
-            else if(yTop >= visiblePixels.start && yBottom <= visiblePixels.end)
+            else if (yTop >= visiblePixels.start && yBottom <= visiblePixels.end)
             {
                 // Completely inside.
                 range = Rangei(0, drawable.wraps().height());
             }
-            else if(yTop < visiblePixels.start && yBottom > visiblePixels.end)
+            else if (yTop < visiblePixels.start && yBottom > visiblePixels.end)
             {
                 // Extends over the whole range and beyond.
                 range = Rangei::fromSize((visiblePixels.start - yTop) / lineSpacing,
                                          (visiblePixels.end - visiblePixels.start) / lineSpacing + 1);
             }
-            else if(yBottom > visiblePixels.end)
+            else if (yBottom > visiblePixels.end)
             {
                 DENG2_ASSERT(yTop >= visiblePixels.start);
 
@@ -279,7 +279,7 @@ public Font::RichFormat::IStyle
         CacheEntry *nextCachedEntry()
         {
             DENG2_GUARD(_wrappedEntries);
-            if(_wrappedEntries.isEmpty()) return 0;
+            if (_wrappedEntries.isEmpty()) return 0;
             return _wrappedEntries.takeFirst();
         }
 
@@ -288,11 +288,11 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
-            if(!d->formatter) return; // Must have a formatter.
+            if (!d->formatter) return; // Must have a formatter.
 
             DENG2_GUARD(this);
 
-            while(_width > 0 && _next >= 0 && _next < entryCount())
+            while (_width > 0 && _next >= 0 && _next < entryCount())
             {
                 LogEntry const &ent = entry(_next);
                 String const styled = d->formatter->logEntryToTextLines(ent).at(0);
@@ -416,7 +416,7 @@ public Font::RichFormat::IStyle
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
     {
-        switch(index)
+        switch (index)
         {
         default:
         case Font::RichFormat::NormalColor:
@@ -499,7 +499,7 @@ public Font::RichFormat::IStyle
 
     void atlasContentRepositioned(Atlas &atlas)
     {
-        if(entryAtlas == &atlas)
+        if (entryAtlas == &atlas)
         {
             entryAtlasLayoutChanged = true;
             self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
@@ -508,7 +508,7 @@ public Font::RichFormat::IStyle
 
     void atlasOutOfSpace(Atlas &atlas)
     {
-        if(entryAtlas == &atlas)
+        if (entryAtlas == &atlas)
         {
             entryAtlasFull = true;
         }
@@ -532,7 +532,7 @@ public Font::RichFormat::IStyle
         // the current scroll position so that the entries don't change position
         // inside the view.
 
-        if(!self.isAtBottom())
+        if (!self.isAtBottom())
         {
             self.scrollPositionY().shift(delta);
         }
@@ -540,7 +540,7 @@ public Font::RichFormat::IStyle
 
     void fetchNewCachedEntries()
     {
-        while(CacheEntry *cached = sink.nextCachedEntry())
+        while (CacheEntry *cached = sink.nextCachedEntry())
         {
             cache << cached;
         }
@@ -552,13 +552,13 @@ public Font::RichFormat::IStyle
 
         // Resize entries starting from the first visible entry, continue down to the
         // most recent entry.
-        for(int idx = startFrom; idx < cache.size(); ++idx)
+        for (int idx = startFrom; idx < cache.size(); ++idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
 
         // Resize the rest of the items (above the visible range).
-        for(int idx = startFrom - 1; idx >= 0; --idx)
+        for (int idx = startFrom - 1; idx >= 0; --idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
@@ -566,20 +566,20 @@ public Font::RichFormat::IStyle
 
     void releaseExcessComposedEntries()
     {
-        if(visibleRange < 0) return;
+        if (visibleRange < 0) return;
 
         int len = de::max(10, visibleRange.size());
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
-        for(int i = 0; i <= excess && i < cache.size(); ++i)
+        for (int i = 0; i <= excess && i < cache.size(); ++i)
         {
             cache[i]->releaseFromAtlas();
         }
 
         // Excess entries after the visible range.
         excess = visibleRange.end + len;
-        for(int i = excess; i < cache.size(); ++i)
+        for (int i = excess; i < cache.size(); ++i)
         {
             cache[i]->releaseFromAtlas();
         }
@@ -590,9 +590,9 @@ public Font::RichFormat::IStyle
      */
     void releaseAllNonVisibleEntries()
     {
-        for(int i = 0; i < cache.size(); ++i)
+        for (int i = 0; i < cache.size(); ++i)
         {
-            if(!visibleRange.contains(i))
+            if (!visibleRange.contains(i))
             {
                 cache[i]->releaseFromAtlas();
             }
@@ -608,11 +608,11 @@ public Font::RichFormat::IStyle
 
         // Remove oldest excess entries.
         int num = cache.size() - sink.maxEntries();
-        if(num > 0)
+        if (num > 0)
         {
             // There is one sink entry and one cached entry for each log entry.
             sink.remove(0, num);
-            for(int i = 0; i < num; ++i)
+            for (int i = 0; i < num; ++i)
             {
                 self.modifyContentHeight(-cache.first()->height());
                 delete cache.takeFirst();
@@ -641,7 +641,7 @@ public Font::RichFormat::IStyle
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
-        if(cacheWidth != contentSize.x)
+        if (cacheWidth != contentSize.x)
         {
             rewrapCache();
             cacheWidth = contentSize.x;
@@ -658,15 +658,15 @@ public Font::RichFormat::IStyle
 
         Rangei visiblePixelRange = extendPixelRangeWithPadding(
                     Rangei(-contentOffsetForDrawing, contentSize.y - contentOffsetForDrawing));
-        if(!isVisible())
+        if (!isVisible())
         {
             // The widget is hidden, so there's no point in loading anything into the atlas.
             visiblePixelRange = Rangei(); // Nothing to be seen.
         }
 
-        for(int attempt = 0; attempt < 2; ++attempt)
+        for (int attempt = 0; attempt < 2; ++attempt)
         {
-            if(entryAtlasFull)
+            if (entryAtlasFull)
             {
                 // Hopefully releasing some entries will make it possible to fit the
                 // new entries.
@@ -679,15 +679,15 @@ public Font::RichFormat::IStyle
             entryAtlasLayoutChanged = false;
 
             // Find the visible range and update all visible entries.
-            for(int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
+            for (int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
             {
                 CacheEntry *entry = cache[idx];
 
-                if(int delta = entry->updateVisibility(yBottom, visiblePixelRange))
+                if (int delta = entry->updateVisibility(yBottom, visiblePixelRange))
                 {
                     heightDelta += delta;
 
-                    if(!entry->oldHeight())
+                    if (!entry->oldHeight())
                     {
                         // A bit of the kludge: height was changed due to a first-time
                         // update of content (new content appears rather than being a rewrap).
@@ -703,19 +703,19 @@ public Font::RichFormat::IStyle
 
                 yBottom -= entry->height();
 
-                if(entry->isReady() && yBottom + contentOffsetForDrawing <= contentSize.y)
+                if (entry->isReady() && yBottom + contentOffsetForDrawing <= contentSize.y)
                 {
                     entry->make(verts, yBottom);
 
                     // Update the visible range.
-                    if(visibleRange.end == -1)
+                    if (visibleRange.end == -1)
                     {
                         visibleRange.end = idx;
                     }
                     visibleRange.start = idx;
                 }
 
-                if(entryAtlasLayoutChanged || entryAtlasFull)
+                if (entryAtlasLayoutChanged || entryAtlasFull)
                 {
                     goto nextAttempt;
                 }
@@ -737,10 +737,10 @@ nextAttempt:
 
         // Apply changes to content height that may have occurred as text becomes
         // available for drawing.
-        if(heightDelta)
+        if (heightDelta)
         {
             modifyContentHeight(heightDelta);
-            if(needHeightNotify && heightDelta > 0)
+            if (needHeightNotify && heightDelta > 0)
             {
                 emit self.contentHeightIncreased(heightDelta);
             }
@@ -759,7 +759,7 @@ nextAttempt:
     void draw()
     {
         Rectanglei pos;
-        if(self.hasChangedPlace(pos) || !bgBuf->isReady())
+        if (self.hasChangedPlace(pos) || !bgBuf->isReady())
         {
             // Update the background quad.
             VertexBuf::Builder bgVerts;
@@ -770,7 +770,7 @@ nextAttempt:
         background.draw();
 
         Rectanglei vp = self.viewport();
-        if(vp.height() > 0)
+        if (vp.height() > 0)
         {
             GLState &st = GLState::push();
 
@@ -826,7 +826,7 @@ void LogWidget::clear()
 
 void LogWidget::setContentYOffset(Animation const &anim)
 {
-    if(isAtBottom())
+    if (isAtBottom())
     {
         d->contentOffset = anim;
     }

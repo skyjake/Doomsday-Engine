@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     FileIndex &getTypeIndex(String const &typeName)
     {
         FileIndex *&idx = typeIndex[typeName];
-        if(!idx)
+        if (!idx)
         {
             idx = new FileIndex;
         }
@@ -93,7 +93,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     LOG_AS("FS::makeFolder");
 
     Folder *subFolder = d->root.tryLocate<Folder>(path);
-    if(!subFolder)
+    if (!subFolder)
     {
         // This folder does not exist yet. Let's create it.
         Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
@@ -103,33 +103,33 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
         subFolder = &interpret(new Folder(path.fileName()))->as<Folder>();
 
         // If parent folder is writable, this will be too.
-        if(parentFolder.mode() & File::Write)
+        if (parentFolder.mode() & File::Write)
         {
             subFolder->setMode(File::Write);
         }
 
         // Inherit parent's feeds?
-        if(behavior & (InheritPrimaryFeed | InheritAllFeeds))
+        if (behavior & (InheritPrimaryFeed | InheritAllFeeds))
         {
             DENG2_GUARD(parentFolder);
             DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
             {
                 Feed *feed = (*i)->newSubFeed(subFolder->name());
-                if(!feed) continue; // Check next one instead.
+                if (!feed) continue; // Check next one instead.
 
                 LOGDEV_RES_XVERBOSE_DEBUGONLY("Creating subfeed \"%s\" from %s",
                                              subFolder->name() << (*i)->description());
 
                 subFolder->attach(feed);
 
-                if(!behavior.testFlag(InheritAllFeeds)) break;
+                if (!behavior.testFlag(InheritAllFeeds)) break;
             }
         }
 
         parentFolder.add(subFolder);
         index(*subFolder);
 
-        if(behavior.testFlag(PopulateNewFolder))
+        if (behavior.testFlag(PopulateNewFolder))
         {
             // Populate the new folder.
             subFolder->populate();
@@ -148,7 +148,7 @@ Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
     folder.clear();
     folder.clearFeeds();
     folder.attach(feed);
-    if(behavior & PopulateNewFolder)
+    if (behavior & PopulateNewFolder)
     {
         folder.populate(populationBehavior);
     }
@@ -162,15 +162,15 @@ File *FileSystem::interpret(File *sourceData)
     LOG_AS("FS::interpret");
     try
     {
-        for(filesys::IInterpreter const *i : d->interpreters)
+        for (filesys::IInterpreter const *i : d->interpreters)
         {
-            if(auto *file = i->interpretFile(sourceData))
+            if (auto *file = i->interpretFile(sourceData))
             {
                 return file;
             }
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_ERROR("Failed to interpret contents of %s: %s")
                 << sourceData->description() << er.asText();
@@ -202,9 +202,9 @@ LoopResult FileSystem::forAll(String const &partialPath, std::function<LoopResul
 {
     FoundFiles files;
     findAll(partialPath, files);
-    for(File *f : files)
+    for (File *f : files)
     {
-        if(auto result = func(*f)) return result;
+        if (auto result = func(*f)) return result;
     }
     return LoopContinue;
 }
@@ -221,9 +221,9 @@ LoopResult FileSystem::forAllOfType(String const &typeIdentifier, String const &
 {
     FoundFiles files;
     findAllOfType(typeIdentifier, path, files);
-    for(File *f : files)
+    for (File *f : files)
     {
-        if(auto result = func(*f)) return result;
+        if (auto result = func(*f)) return result;
     }
     return LoopContinue;
 }
@@ -233,7 +233,7 @@ int FileSystem::findAllOfTypes(StringList const &typeIdentifiers, String const &
     LOG_AS("FS::findAllOfTypes");
 
     found.clear();
-    foreach(String const &id, typeIdentifiers)
+    foreach (String const &id, typeIdentifiers)
     {
         indexFor(id).findPartialPath(path, found);
     }
@@ -253,7 +253,7 @@ void FileSystem::index(File &file)
     d->getTypeIndex(DENG2_TYPE_NAME(file)).maybeAdd(file);
 
     // Also offer to custom indices.
-    foreach(FileIndex *user, d->userIndices)
+    foreach (FileIndex *user, d->userIndices)
     {
         user->maybeAdd(file);
     }
@@ -265,7 +265,7 @@ void FileSystem::deindex(File &file)
     d->getTypeIndex(DENG2_TYPE_NAME(file)).remove(file);
 
     // Also remove from any custom indices.
-    foreach(FileIndex *user, d->userIndices)
+    foreach (FileIndex *user, d->userIndices)
     {
         user->remove(file);
     }
@@ -281,13 +281,13 @@ File &FileSystem::copySerialized(String const &sourcePath, String const &destina
     *dest << contents;
     dest->flush();
 
-    if(behavior & ReinterpretDestination)
+    if (behavior & ReinterpretDestination)
     {
         // We can now reinterpret and populate the contents of the archive.
         dest = dest->reinterpret();
     }
 
-    if(behavior.testFlag(PopulateDestination) && dest->is<Folder>())
+    if (behavior.testFlag(PopulateDestination) && dest->is<Folder>())
     {
         dest->as<Folder>().populate();
     }
@@ -317,7 +317,7 @@ void FileSystem::removeUserIndex(FileIndex &userIndex)
 
 void FileSystem::printIndex()
 {
-    if(!LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Dev | LogEntry::Verbose))
+    if (!LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Dev | LogEntry::Verbose))
         return;
 
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
@@ -339,10 +339,10 @@ String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flag
     makeFolder(folders);
 
     String const path = folders / nativePath.fileNamePath().fileName();
-    if(!root().has(path))
+    if (!root().has(path))
     {
         DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
-        if(flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
+        if (flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
         makeFolderWithFeed(path,
                            new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
                            Folder::PopulateOnlyThisFolder,

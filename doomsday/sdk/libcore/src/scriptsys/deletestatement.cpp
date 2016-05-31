@@ -45,7 +45,7 @@ void DeleteStatement::execute(Context &context) const
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, results.elements())
     {
         RefValue *ref = dynamic_cast<RefValue *>(*i);
-        if(!ref)
+        if (!ref)
         {
             throw LeftValueError("DeleteStatement::execute",
                                  "Cannot delete l-value '" + (*i)->asText() + "'");
@@ -67,7 +67,7 @@ void DeleteStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != DELETE)
+    if (id != DELETE)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

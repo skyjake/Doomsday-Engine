@@ -61,7 +61,7 @@ DENG2_PIMPL(Scheduler)
 
     void clear()
     {
-        while(!events.empty())
+        while (!events.empty())
         {
             delete events.top();
             events.pop();
@@ -70,14 +70,14 @@ DENG2_PIMPL(Scheduler)
 
     void setContext(Record *rec)
     {
-        if(context) context->audienceForDeletion() -= this;
+        if (context) context->audienceForDeletion() -= this;
         context = rec;
-        if(context) context->audienceForDeletion() += this;
+        if (context) context->audienceForDeletion() += this;
     }
 
     void recordBeingDeleted(Record &record)
     {
-        if(context == &record)
+        if (context == &record)
         {
             context = nullptr;
         }
@@ -108,7 +108,7 @@ Script &Scheduler::addScript(TimeDelta at, String const &source, String const &s
 void Scheduler::addFromInfo(Record const &timelineRecord)
 {
     auto scripts = ScriptedInfo::subrecordsOfType(ScriptedInfo::SCRIPT, timelineRecord);
-    for(String key : ScriptedInfo::sortRecordsBySource(scripts))
+    for (String key : ScriptedInfo::sortRecordsBySource(scripts))
     {
         auto const &def = *scripts[key];
         try
@@ -117,7 +117,7 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
                       def.gets(ScriptedInfo::SCRIPT),
                       ScriptedInfo::sourceLocation(def));
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_RES_ERROR("%s: Error in timeline script: %s")
                     << ScriptedInfo::sourceLocation(def)
@@ -144,9 +144,9 @@ DENG2_PIMPL_NOREF(Scheduler::Clock)
 
         // Restore events into the queue.
         events = scheduler->d->events;
-        while(!events.empty())
+        while (!events.empty())
         {
-            if(events.top()->at < at)
+            if (events.top()->at < at)
             {
                 events.pop();
             }
@@ -158,10 +158,10 @@ DENG2_PIMPL_NOREF(Scheduler::Clock)
     {
         at += elapsed;
 
-        while(!events.empty())
+        while (!events.empty())
         {
             Event const *ev = events.top();
-            if(ev->at > at) break;
+            if (ev->at > at) break;
 
             events.pop();
 

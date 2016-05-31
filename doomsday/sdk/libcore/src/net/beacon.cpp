@@ -74,9 +74,9 @@ void Beacon::start(duint16 serviceListenPort)
     d->socket = new QUdpSocket;
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncoming()));
 
-    for(duint16 attempt = 0; attempt < MAX_LISTEN_RANGE; ++attempt)
+    for (duint16 attempt = 0; attempt < MAX_LISTEN_RANGE; ++attempt)
     {
-        if(d->socket->bind(d->port + attempt, QUdpSocket::DontShareAddress))
+        if (d->socket->bind(d->port + attempt, QUdpSocket::DontShareAddress))
         {
             d->port = d->port + attempt;
             return;
@@ -105,7 +105,7 @@ void Beacon::stop()
 
 void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
 {
-    if(d->timer) return; // Already discovering.
+    if (d->timer) return; // Already discovering.
 
     DENG2_ASSERT(!d->socket);
 
@@ -116,12 +116,12 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     int tries = 10;
     forever
     {
-        if(d->socket->bind(d->port + 1 + qrand() % 0x4000, QUdpSocket::DontShareAddress))
+        if (d->socket->bind(d->port + 1 + qrand() % 0x4000, QUdpSocket::DontShareAddress))
         {
             // Got a port open successfully.
             break;
         }
-        if(!--tries)
+        if (!--tries)
         {
             /// @throws PortError Could not open the UDP port.
             throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
@@ -131,7 +131,7 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     d->found.clear();
 
     // Time-out timer.
-    if(timeOut > 0.0)
+    if (timeOut > 0.0)
     {
         d->discoveryEndsAt = Time() + timeOut;
     }
@@ -153,7 +153,7 @@ QList<Address> Beacon::foundHosts() const
 
 Block Beacon::messageFromHost(Address const &host) const
 {
-    if(!d->found.contains(host)) return Block();
+    if (!d->found.contains(host)) return Block();
     return d->found[host];
 }
 
@@ -161,9 +161,9 @@ void Beacon::readIncoming()
 {
     LOG_AS("Beacon");
 
-    if(!d->socket) return;
+    if (!d->socket) return;
 
-    while(d->socket->hasPendingDatagrams())
+    while (d->socket->hasPendingDatagrams())
     {
         QHostAddress from;
         quint16 port = 0;
@@ -173,7 +173,7 @@ void Beacon::readIncoming()
 
         LOG_NET_XVERBOSE("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
 
-        if(block == discoveryMessage)
+        if (block == discoveryMessage)
         {
             // Send a reply.
             d->socket->writeDatagram(d->message, from, port);
@@ -185,9 +185,9 @@ void Beacon::readDiscoveryReply()
 {
     LOG_AS("Beacon");
 
-    if(!d->socket) return;
+    if (!d->socket) return;
 
-    while(d->socket->hasPendingDatagrams())
+    while (d->socket->hasPendingDatagrams())
     {
         QHostAddress from;
         quint16 port = 0;
@@ -195,7 +195,7 @@ void Beacon::readDiscoveryReply()
         d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
                                 block.size(), &from, &port);
 
-        if(block == discoveryMessage)
+        if (block == discoveryMessage)
             continue;
 
         try
@@ -210,7 +210,7 @@ void Beacon::readDiscoveryReply()
 
             emit found(host, block);
         }
-        catch(Error const &)
+        catch (Error const &)
         {
             // Bogus message, ignore.
         }
@@ -223,7 +223,7 @@ void Beacon::continueDiscovery()
     DENG2_ASSERT(d->timer);
 
     // Time to stop discovering?
-    if(d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
+    if (d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
     {
         d->timer->stop();
 
@@ -242,7 +242,7 @@ void Beacon::continueDiscovery()
     LOG_NET_XVERBOSE("Broadcasting %i bytes") << block.size();
 
     // Send a new broadcast to the whole listening range of the beacons.
-    for(duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
+    for (duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
     {
         d->socket->writeDatagram(block,
                                  QHostAddress::Broadcast,

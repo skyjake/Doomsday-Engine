@@ -39,7 +39,7 @@ struct VertexBuilder
             QVector<VertexType>::reserve(64);
         }
         void transform(Matrix4f const &matrix) {
-            for(int i = 0; i < QVector<VertexType>::size(); ++i) {
+            for (int i = 0; i < QVector<VertexType>::size(); ++i) {
                 (*this)[i].pos = matrix * (*this)[i].pos;
             }
         }
@@ -80,7 +80,7 @@ struct VertexBuilder
             v.pos = rect.topRight();   v.texCoord = uv.topRight();   quad << v;
             v.pos = rect.bottomLeft(); v.texCoord = uv.bottomLeft(); quad << v;
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
-            if(matrix) quad.transform(*matrix);
+            if (matrix) quad.transform(*matrix);
             return *this += quad;
         }
         /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
@@ -153,11 +153,11 @@ struct VertexBuilder
         Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
                            int divisions, Vector4f const &color, Rectanglef const &uv,
                            float innerTexRadius = -1) {
-            if(innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
+            if (innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
             Vertices ring;
             VertexType v;
             v.rgba = color;
-            for(int i = 0; i <= divisions; ++i) {
+            for (int i = 0; i <= divisions; ++i) {
                 float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
                 Vector2f r(cos(ang), sin(ang));
                 // Outer.
@@ -290,8 +290,8 @@ struct VertexBuilder
 
     static void concatenate(Vertices const &stripSequence, Vertices &destStrip)
     {
-        if(!stripSequence.size()) return;
-        if(!destStrip.isEmpty())
+        if (!stripSequence.size()) return;
+        if (!destStrip.isEmpty())
         {
             destStrip << destStrip.back();
             destStrip << stripSequence.front();

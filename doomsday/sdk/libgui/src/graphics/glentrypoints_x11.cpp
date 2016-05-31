@@ -44,7 +44,7 @@ char const *getGLXExtensionsString()
 
 void setXSwapInterval(int interval)
 {
-    if(glXSwapIntervalEXT)
+    if (glXSwapIntervalEXT)
     {
         DENG2_ASSERT(de::CanvasWindow::mainExists());
         glXSwapIntervalEXT(QX11Info::display(), de::CanvasWindow::main().canvas().winId(), interval);

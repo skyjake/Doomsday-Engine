@@ -39,7 +39,7 @@ DENG2_PIMPL(BitField)
     static dbyte elementMask(int numBits, int skipBits)
     {
         dbyte mask = 0xff;
-        if(numBits - skipBits < 8)
+        if (numBits - skipBits < 8)
         {
             mask >>= 8 - (numBits - skipBits);
         }
@@ -58,7 +58,7 @@ DENG2_PIMPL(BitField)
         int shift     = eFirstBit & 7;
         int written   = 0;
 
-        while(written < eNumBits)
+        while (written < eNumBits)
         {
             dbyte const mask = elementMask(eNumBits, written) << shift;
 
@@ -89,7 +89,7 @@ DENG2_PIMPL(BitField)
         int shift     = eFirstBit & 7;
         int read      = 0;
 
-        while(read < eNumBits)
+        while (read < eNumBits)
         {
             dbyte const mask = elementMask(eNumBits, read) << shift;
 
@@ -108,21 +108,21 @@ DENG2_PIMPL(BitField)
         DENG2_ASSERT(elements != 0);
         DENG2_ASSERT(other.elements != 0);
 
-        if(elements->size() != other.elements->size())
+        if (elements->size() != other.elements->size())
         {
             throw ComparisonError("BitField::delta",
                                   "The compared fields have a different number of elements");
         }
-        if(packed.size() != other.packed.size())
+        if (packed.size() != other.packed.size())
         {
             throw ComparisonError("BitField::delta",
                                   "The compared fields have incompatible element sizes");
         }
 
         Ids diffs;
-        for(duint pos = 0; pos < packed.size(); ++pos)
+        for (duint pos = 0; pos < packed.size(); ++pos)
         {
-            if(packed[pos] == other.packed[pos])
+            if (packed[pos] == other.packed[pos])
                 continue;
 
             // The elements on this byte are different; which are they?
@@ -131,10 +131,10 @@ DENG2_PIMPL(BitField)
             {
                 Id const &id = *i;
 
-                if(diffs.contains(id))
+                if (diffs.contains(id))
                     continue; // Already in the delta.
 
-                if(get(id) != other.get(id))
+                if (get(id) != other.get(id))
                 {
                     diffs.insert(id);
                 }
@@ -174,7 +174,7 @@ void BitField::setElements(Elements const &elements)
     d->elements = &elements;
 
     // Initialize all new elements to zero.
-    for(int i = 0; i < elements.size(); ++i)
+    for (int i = 0; i < elements.size(); ++i)
     {
         set(elements.at(i).id, 0u);
     }
@@ -242,7 +242,7 @@ String BitField::asText() const
     QTextStream os(&str);
     os << "BitField (" << d->elements->bitCount() << " bits, " << d->elements->size() << " elements):";
     os.setIntegerBase(2);
-    for(int i = int(d->packed.size()) - 1; i >= 0; --i)
+    for (int i = int(d->packed.size()) - 1; i >= 0; --i)
     {
         os << " " << qSetPadChar('0') << qSetFieldWidth(8) << dbyte(d->packed[i])
            << qSetFieldWidth(0);

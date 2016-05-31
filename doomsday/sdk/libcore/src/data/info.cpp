@@ -48,7 +48,7 @@ DENG2_PIMPL(Info)
                                       String *sourcePath) const
         {
             String path = info.sourcePath().fileNamePath() / includeName;
-            if(sourcePath) *sourcePath = path;
+            if (sourcePath) *sourcePath = path;
             return String::fromUtf8(Block(App::rootFolder().locate<File const>(path)));
         }
     };
@@ -116,12 +116,12 @@ DENG2_PIMPL(Info)
      */
     void nextChar()
     {
-        if(cursor >= content.size())
+        if (cursor >= content.size())
         {
             // No more characters to read.
             throw EndOfFile(QString("EOF on line %1").arg(currentLine));
         }
-        if(currentChar == '\n')
+        if (currentChar == '\n')
         {
             currentLine++;
         }
@@ -136,7 +136,7 @@ DENG2_PIMPL(Info)
     {
         String line;
         nextChar();
-        while(currentChar != '\n')
+        while (currentChar != '\n')
         {
             line += currentChar;
             nextChar();
@@ -155,7 +155,7 @@ DENG2_PIMPL(Info)
         {
             nextChar();
         }
-        catch(EndOfFile const &)
+        catch (EndOfFile const &)
         {
             // If the file ends right after the line, we'll get the EOF
             // exception.  We can safely ignore it for now.
@@ -174,17 +174,17 @@ DENG2_PIMPL(Info)
     String nextToken()
     {
         // Already drawn a blank?
-        if(currentToken.isEmpty()) throw EndOfFile("out of tokens");
+        if (currentToken.isEmpty()) throw EndOfFile("out of tokens");
 
         currentToken = "";
 
         try
         {
             // Skip over any whitespace.
-            while(WHITESPACE_OR_COMMENT.contains(peekChar()))
+            while (WHITESPACE_OR_COMMENT.contains(peekChar()))
             {
                 // Comments are considered whitespace.
-                if(peekChar() == '#') readLine();
+                if (peekChar() == '#') readLine();
                 nextChar();
             }
 
@@ -196,16 +196,16 @@ DENG2_PIMPL(Info)
             nextChar();
 
             // Token breakers are tokens all by themselves.
-            if(TOKEN_BREAKING_CHARS.contains(currentToken[0]))
+            if (TOKEN_BREAKING_CHARS.contains(currentToken[0]))
                 return currentToken;
 
-            while(!TOKEN_BREAKING_CHARS.contains(peekChar()))
+            while (!TOKEN_BREAKING_CHARS.contains(peekChar()))
             {
                 currentToken += peekChar();
                 nextChar();
             }
         }
-        catch(EndOfFile const &)
+        catch (EndOfFile const &)
         {}
 
         return currentToken;
@@ -221,7 +221,7 @@ DENG2_PIMPL(Info)
     Element *get()
     {
         Element *e = parseElement();
-        if(!e) throw OutOfElements("");
+        if (!e) throw OutOfElements("");
         return e;
     }
 
@@ -240,7 +240,7 @@ DENG2_PIMPL(Info)
             // The next token decides what kind of element we have here.
             next = nextToken();
         }
-        catch(EndOfFile const &)
+        catch (EndOfFile const &)
         {
             // The file ended.
             return 0;
@@ -249,11 +249,11 @@ DENG2_PIMPL(Info)
         int const elementLine = currentLine;
         Element *result = 0;
 
-        if(next == ":" || next == "=" || next == "$")
+        if (next == ":" || next == "=" || next == "$")
         {
             result = parseKeyElement(key);
         }
-        else if(next == "<")
+        else if (next == "<")
         {
             result = parseListElement(key);
         }
@@ -275,7 +275,7 @@ DENG2_PIMPL(Info)
      */
     String parseString()
     {
-        if(peekToken() != "\"")
+        if (peekToken() != "\"")
         {
             throw SyntaxError("Info::parseString",
                               QString("Expected string to begin with '\"', but '%1' found instead (on line %2).")
@@ -285,13 +285,13 @@ DENG2_PIMPL(Info)
         // The collected characters.
         String chars;
 
-        while(peekChar() != '"')
+        while (peekChar() != '"')
         {
-            if(peekChar() == '\'')
+            if (peekChar() == '\'')
             {
                 // Double single quotes form a double quote ('' => ").
                 nextChar();
-                if(peekChar() == '\'')
+                if (peekChar() == '\'')
                 {
                     chars.append("\"");
                 }
@@ -327,7 +327,7 @@ DENG2_PIMPL(Info)
     {
         InfoValue value;
 
-        if(peekToken() == "$")
+        if (peekToken() == "$")
         {
             // Marks a script value.
             value.flags |= InfoValue::Script;
@@ -336,10 +336,10 @@ DENG2_PIMPL(Info)
 
         // Check if it is the beginning of a string literal.
         // The value will be composed of any number of sub-strings.
-        if(peekToken() == "\"")
+        if (peekToken() == "\"")
         {
             value.flags |= InfoValue::StringLiteral;
-            while(peekToken() == "\"")
+            while (peekToken() == "\"")
             {
                 value.text += parseString();
             }
@@ -347,11 +347,11 @@ DENG2_PIMPL(Info)
         else
         {
             // Then it must be a single token.
-            if(peekToken() != ";")
+            if (peekToken() != ";")
             {
                 value = peekToken();
                 nextToken();
-                if(peekToken() == ";") nextToken(); // Ignore the semicolon.
+                if (peekToken() == ";") nextToken(); // Ignore the semicolon.
             }
         }
         return value;
@@ -367,21 +367,21 @@ DENG2_PIMPL(Info)
         int count = 0;
 
         // Read an appropriate number of statements.
-        while(lex.getStatement(tokens, ScriptLex::StopAtMismatchedCloseBrace))
+        while (lex.getStatement(tokens, ScriptLex::StopAtMismatchedCloseBrace))
         {
-            if(requiredStatementCount > 0 &&
+            if (requiredStatementCount > 0 &&
                ++count == requiredStatementCount) break; // We're good now.
         }
 
         // Continue parsing normally from here.
         int endPos = startPos + lex.pos();
-        do { nextChar(); } while(cursor < endPos); // fast-forward
+        do { nextChar(); } while (cursor < endPos); // fast-forward
 
         // Update the current token.
         currentToken = QString(peekChar());
         nextChar();
 
-        if(currentToken != ")" && currentToken != "}")
+        if (currentToken != ")" && currentToken != "}")
         {
             // When parsing just a statement, we might stop at something else
             // than a bracket; if so, skip to the next valid token.
@@ -402,7 +402,7 @@ DENG2_PIMPL(Info)
     {
         InfoValue value;
 
-        if(peekToken() == "$")
+        if (peekToken() == "$")
         {
             // This is a script value.
             value.flags |= InfoValue::Script;
@@ -411,14 +411,14 @@ DENG2_PIMPL(Info)
 
         // A colon means that that the rest of the line is the value of
         // the key element.
-        if(peekToken() == ":")
+        if (peekToken() == ":")
         {
             value.text = readToEOL().trimmed();
             nextToken();
         }
-        else if(peekToken() == "=")
+        else if (peekToken() == "=")
         {
-            if(value.flags.testFlag(InfoValue::Script))
+            if (value.flags.testFlag(InfoValue::Script))
             {
                 // Parse one script statement.
                 value = parseScript(1);
@@ -449,7 +449,7 @@ DENG2_PIMPL(Info)
      */
     ListElement *parseListElement(String const &name)
     {
-        if(peekToken() != "<")
+        if (peekToken() != "<")
         {
             throw SyntaxError("Info::parseListElement",
                               QString("List must begin with a '<', but '%1' found instead (on line %2).")
@@ -465,7 +465,7 @@ DENG2_PIMPL(Info)
         // Move past the opening angle bracket.
         nextToken();
 
-        if(peekToken() == ">")
+        if (peekToken() == ">")
         {
             nextToken();
             return element.take();
@@ -480,10 +480,10 @@ DENG2_PIMPL(Info)
             nextToken();
 
             // The closing bracket?
-            if(separator == ">") break;
+            if (separator == ">") break;
 
             // There should be a comma here.
-            if(separator != ",")
+            if (separator != ",")
             {
                 throw SyntaxError("Info::parseListElement",
                                   QString("List values must be separated with a comma, but '%1' found instead (on line %2).")
@@ -504,15 +504,15 @@ DENG2_PIMPL(Info)
 
         String blockName;
 
-        if(!scriptBlockTypes.contains(blockType)) // script blocks are never named
+        if (!scriptBlockTypes.contains(blockType)) // script blocks are never named
         {
-            if(peekToken() != "(" && peekToken() != "{")
+            if (peekToken() != "(" && peekToken() != "{")
             {
                 blockName = parseValue();
             }
         }
 
-        if(!implicitBlockType.isEmpty() && blockName.isEmpty() &&
+        if (!implicitBlockType.isEmpty() && blockName.isEmpty() &&
            blockType != implicitBlockType &&
            !scriptBlockTypes.contains(blockType))
         {
@@ -530,11 +530,11 @@ DENG2_PIMPL(Info)
             // How about some attributes?
             // Syntax: {token value} '('|'{'
 
-            while(peekToken() != "(" && peekToken() != "{")
+            while (peekToken() != "(" && peekToken() != "{")
             {
                 String keyName = peekToken();
                 nextToken();
-                if(peekToken() == "(" || peekToken() == "{")
+                if (peekToken() == "(" || peekToken() == "{")
                 {
                     throw SyntaxError("Info::parseBlockElement",
                                       QString("Attribute on line %1 is missing a value")
@@ -550,7 +550,7 @@ DENG2_PIMPL(Info)
             endToken = (peekToken() == "("? ")" : "}");
 
             // Parse the contents of the block.
-            if(scriptBlockTypes.contains(blockType))
+            if (scriptBlockTypes.contains(blockType))
             {
                 // Parse as Doomsday Script.
                 block->add(new KeyElement(SCRIPT_TOKEN, parseScript()));
@@ -561,10 +561,10 @@ DENG2_PIMPL(Info)
                 nextToken();
 
                 // Parse normally as Info.
-                while(peekToken() != endToken)
+                while (peekToken() != endToken)
                 {
                     Element *element = parseElement();
-                    if(!element)
+                    if (!element)
                     {
                         throw SyntaxError("Info::parseBlockElement",
                                           QString("Block element (on line %1) was never closed, end of file encountered before '%2' was found (on line %3).")
@@ -574,7 +574,7 @@ DENG2_PIMPL(Info)
                 }
             }
         }
-        catch(EndOfFile const &)
+        catch (EndOfFile const &)
         {
             throw SyntaxError("Info::parseBlockElement",
                               QString("End of file encountered unexpectedly while parsing a block element (block started on line %1).")
@@ -609,7 +609,7 @@ DENG2_PIMPL(Info)
             // Move the contents of the resulting root block to our root block.
             included.d->rootBlock.moveContents(rootBlock);
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             throw IIncludeFinder::NotFoundError("Info::includeFrom",
                     QString("Cannot include '%1': %2")
@@ -624,13 +624,13 @@ DENG2_PIMPL(Info)
         forever
         {
             Element *e = parseElement();
-            if(!e) break;
+            if (!e) break;
 
             // If this is an include directive, try to acquire the inclusion and parse it
             // instead. Inclusions are only possible at the root level.
-            if(e->isList() && e->name() == INCLUDE_TOKEN)
+            if (e->isList() && e->name() == INCLUDE_TOKEN)
             {
-                foreach(Element::Value const &val, e->as<ListElement>().values())
+                foreach (Element::Value const &val, e->as<ListElement>().values())
                 {
                     includeFrom(val);
                 }
@@ -714,7 +714,7 @@ Info::BlockElement::~BlockElement()
 
 void Info::BlockElement::clear()
 {
-    for(ContentsInOrder::iterator i = _contentsInOrder.begin(); i != _contentsInOrder.end(); ++i)
+    for (ContentsInOrder::iterator i = _contentsInOrder.begin(); i != _contentsInOrder.end(); ++i)
     {
         delete *i;
     }
@@ -728,7 +728,7 @@ void Info::BlockElement::add(Info::Element *elem)
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned
-    if(!elem->name().isEmpty())
+    if (!elem->name().isEmpty())
     {
         _contents.insert(elem->name().toLower(), elem); // not owned (name may be empty)
     }
@@ -737,14 +737,14 @@ void Info::BlockElement::add(Info::Element *elem)
 Info::Element *Info::BlockElement::find(String const &name) const
 {
     Contents::const_iterator found = _contents.find(name.toLower());
-    if(found == _contents.end()) return 0;
+    if (found == _contents.end()) return 0;
     return found.value();
 }
 
 Info::Element::Value Info::BlockElement::keyValue(String const &name) const
 {
     Element *e = findByPath(name);
-    if(!e || !e->isKey()) return Value();
+    if (!e || !e->isKey()) return Value();
     return e->as<KeyElement>().value();
 }
 
@@ -753,7 +753,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
     String name;
     String remainder;
     int pos = path.indexOf(':');
-    if(pos >= 0)
+    if (pos >= 0)
     {
         name = path.left(pos);
         remainder = path.mid(pos + 1);
@@ -766,9 +766,9 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
 
     // Does this element exist?
     Element *e = find(name);
-    if(!e) return 0;
+    if (!e) return 0;
 
-    if(e->isBlock())
+    if (e->isBlock())
     {
         // Descend into sub-blocks.
         return e->as<BlockElement>().findByPath(remainder);
@@ -778,7 +778,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
 
 void Info::BlockElement::moveContents(BlockElement &destination)
 {
-    foreach(Element *e, _contentsInOrder)
+    foreach (Element *e, _contentsInOrder)
     {
         destination.add(e);
     }
@@ -851,7 +851,7 @@ void Info::parse(File const &file)
 void Info::parseNativeFile(NativePath const &nativePath)
 {
     QFile file(nativePath);
-    if(file.open(QFile::ReadOnly | QFile::Text))
+    if (file.open(QFile::ReadOnly | QFile::Text))
     {
         parse(file.readAll().constData());
     }
@@ -880,14 +880,14 @@ Info::BlockElement const &Info::root() const
 
 Info::Element const *Info::findByPath(String const &path) const
 {
-    if(path.isEmpty()) return &d->rootBlock;
+    if (path.isEmpty()) return &d->rootBlock;
     return d->rootBlock.findByPath(path);
 }
 
 bool Info::findValueForKey(String const &key, String &value) const
 {
     Element const *element = findByPath(key);
-    if(element && element->isKey())
+    if (element && element->isKey())
     {
         value = element->as<KeyElement>().value();
         return true;

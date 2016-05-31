@@ -59,7 +59,7 @@ Rule::~Rule()
 
 float Rule::value() const
 {
-    if(!d->isValid)
+    if (!d->isValid)
     {
         // Force an update.
         const_cast<Rule *>(this)->update();
@@ -124,7 +124,7 @@ void Rule::dependsOn(Rule const &dependency)
 
 void Rule::dependsOn(Rule const *dependencyOrNull)
 {
-    if(dependencyOrNull) dependsOn(*dependencyOrNull);
+    if (dependencyOrNull) dependsOn(*dependencyOrNull);
 }
 
 void Rule::independentOf(Rule const &dependency)
@@ -138,12 +138,12 @@ void Rule::independentOf(Rule const &dependency)
 
 void Rule::independentOf(Rule const *dependencyOrNull)
 {
-    if(dependencyOrNull) independentOf(*dependencyOrNull);
+    if (dependencyOrNull) independentOf(*dependencyOrNull);
 }
 
 void Rule::invalidate()
 {
-    if(d->isValid)
+    if (d->isValid)
     {
         d->isValid = false;
 

@@ -92,7 +92,7 @@ void Smoother_Debug(Smoother const *sm)
 static dd_bool Smoother_IsValid(Smoother const *sm)
 {
     DENG_ASSERT(sm);
-    if(sm->past.time == 0 || sm->now.time == 0)
+    if (sm->past.time == 0 || sm->now.time == 0)
     {
         // We don't have valid data.
         return false;
@@ -102,7 +102,7 @@ static dd_bool Smoother_IsValid(Smoother const *sm)
 
 void Smoother_Clear(Smoother *sm)
 {
-    if(!sm) return;
+    if (!sm) return;
 
     float maxDelta = sm->maxDeltaBetweenPastAndNow;
     memset(sm, 0, sizeof(*sm));
@@ -121,9 +121,9 @@ void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, 
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
-    if(last->time == time)
+    if (last->time == time)
     {
-        if(last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
+        if (last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
         {
             // Ignore it.
             return;
@@ -133,7 +133,7 @@ void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, 
         goto replaceLastPoint;
     }
 
-    if(time <= sm->now.time)
+    if (time <= sm->now.time)
     {
         // The new point would be in the past, this is no good.
 #ifdef _DEBUG
@@ -145,7 +145,7 @@ void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, 
 
     // If we are about to discard an unused future point, we will force
     // the current interpolation into the future.
-    if(Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
+    if (Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
     {
         coord_t mid[3];
         float remaining;
@@ -175,7 +175,7 @@ replaceLastPoint:
     last->onFloor = onFloor;
 
     // Is this the first one?
-    if(sm->now.time == 0)
+    if (sm->now.time == 0)
     {
         sm->at = time;
         memcpy(&sm->past, last, sizeof(pos_t));
@@ -190,7 +190,7 @@ dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
     DENG_ASSERT(component >= 0 && component < 3);
     DENG_ASSERT(v != 0);
 
-    if(!Smoother_Evaluate(sm, xyz)) return false;
+    if (!Smoother_Evaluate(sm, xyz)) return false;
 
     *v = xyz[component];
     return true;
@@ -202,10 +202,10 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     pos_t const *past = &sm->past;
     pos_t const *now = &sm->now;
 
-    if(!Smoother_IsValid(sm))
+    if (!Smoother_IsValid(sm))
         return false;
 
-    if(sm->at < past->time)
+    if (sm->at < past->time)
     {
         // Before our time.
         xyz[VX] = past->xyz[VX];
@@ -215,7 +215,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         return true;
     }
     //DENG_ASSERT(sm->at <= now->time);
-    if(now->time <= past->time)
+    if (now->time <= past->time)
     {
         // Too far in the ever-shifting future.
         xyz[VX] = now->xyz[VX];
@@ -227,7 +227,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 
     // We're somewhere between past and now.
     float const t = (sm->at - past->time) / (now->time - past->time);
-    for(int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         // Linear interpolation.
         xyz[i] = now->xyz[i] * t + past->xyz[i] * (1-t);
@@ -237,7 +237,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     {
         float dt = sm->at - sm->prevAt;
         //Smoother_Debug(sm);
-        if(dt > 0)
+        if (dt > 0)
         {
             float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
             LOGDEV_MSG("Smoother_Evaluate: [%05.3f] diff = %06.3f  %06.3f")
@@ -258,7 +258,7 @@ dd_bool Smoother_IsOnFloor(Smoother const *sm)
     const pos_t *past = &sm->past;
     const pos_t *now = &sm->now;
 
-    if(!Smoother_IsValid(sm)) return false;
+    if (!Smoother_IsValid(sm)) return false;
     return (past->onFloor && now->onFloor);
 }
 
@@ -283,12 +283,12 @@ void Smoother_Advance(Smoother *sm, float period)
 
     DENG_ASSERT(sm);
 
-    if(period <= 0) return;
+    if (period <= 0) return;
 
     sm->at += period;
 
     // Did we go past the present?
-    while(sm->at > sm->now.time)
+    while (sm->at > sm->now.time)
     {
         int j = -1;
 
@@ -296,16 +296,16 @@ void Smoother_Advance(Smoother *sm, float period)
         memcpy(&sm->past, &sm->now, sizeof(pos_t));
 
         // Choose the next point from the future.
-        for(i = 0; i < SM_NUM_POINTS; ++i)
+        for (i = 0; i < SM_NUM_POINTS; ++i)
         {
-            if(sm->points[i].time > sm->now.time)
+            if (sm->points[i].time > sm->now.time)
             {
                 // Use this one.
                 j = i;
                 break;
             }
         }
-        if(j < 0)
+        if (j < 0)
         {
             // No points were applicable. We need to stop here until
             // new points are received.
@@ -318,14 +318,14 @@ void Smoother_Advance(Smoother *sm, float period)
         }
     }
 
-    if(sm->maxDeltaBetweenPastAndNow > 0 &&
+    if (sm->maxDeltaBetweenPastAndNow > 0 &&
        sm->now.time - sm->past.time > sm->maxDeltaBetweenPastAndNow)
     {
         // Refresh the past.
         sm->past.time = sm->now.time;
     }
 
-    if(sm->at < sm->past.time)
+    if (sm->at < sm->past.time)
     {
         // Don't fall too far back.
         sm->at = sm->past.time;

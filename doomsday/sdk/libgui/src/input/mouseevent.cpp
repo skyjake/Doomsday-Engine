@@ -36,7 +36,7 @@ MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
       _button(Unknown),
       _state(Released)
 {
-    if(motion == Wheel)
+    if (motion == Wheel)
     {
         _pos = Vector2i();
         _wheel = pos;

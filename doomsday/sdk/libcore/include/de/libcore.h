@@ -153,9 +153,9 @@
 #  define DENG2_DEBUG
    DENG2_EXTERN_C DENG2_PUBLIC void LogBuffer_Flush(void);
 #  ifdef DENG2_USE_QT
-#    define DENG2_ASSERT(x) {if(!(x)) {LogBuffer_Flush(); Q_ASSERT(x);}}
+#    define DENG2_ASSERT(x) {if (!(x)) {LogBuffer_Flush(); Q_ASSERT(x);}}
 #  else
-#    define DENG2_ASSERT(x) {if(!(x)) {LogBuffer_Flush(); assert(x);}}
+#    define DENG2_ASSERT(x) {if (!(x)) {LogBuffer_Flush(); assert(x);}}
 #  endif
 #  define DENG2_DEBUG_ONLY(x) x
 #else
@@ -175,14 +175,14 @@
         void *callstack[128]; \
         int i, frames = backtrace(callstack, 128); \
         char** strs = backtrace_symbols(callstack, frames); \
-        for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+        for (i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
         free(strs); }
 #    define DENG2_BACKTRACE(n, out) { \
         void *callstack[n]; \
         int i, frames = backtrace(callstack, n); \
         char** strs = backtrace_symbols(callstack, frames); \
         out = ""; \
-        for(i = 0; i < frames; ++i) { out.append(strs[i]); out.append('\n'); } \
+        for (i = 0; i < frames; ++i) { out.append(strs[i]); out.append('\n'); } \
         free(strs); }
 #  endif
 #endif
@@ -248,11 +248,11 @@
  * @param ContainerRef  Container.
  */
 #define DENG2_FOR_EACH(IterClass, Iter, ContainerRef) \
-    for(IterClass::iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+    for (IterClass::iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
 /// @copydoc DENG2_FOR_EACH
 #define DENG2_FOR_EACH_CONST(IterClass, Iter, ContainerRef) \
-    for(IterClass::const_iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+    for (IterClass::const_iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
 /**
  * Macro for iterating through an STL container in reverse. Note that @a ContainerRef
@@ -265,11 +265,11 @@
  * @param ContainerRef  Container.
  */
 #define DENG2_FOR_EACH_REVERSE(IterClass, Var, ContainerRef) \
-    for(IterClass::reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
+    for (IterClass::reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 /// @copydoc DENG2_FOR_EACH_REVERSE
 #define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
-    for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
+    for (IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #define DENG2_NO_ASSIGN(ClassName) \
     private: ClassName &operator = (ClassName const &);
@@ -307,12 +307,12 @@
     T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); } \
     template <typename T_> \
     T_ &expectedAs() { \
-        if(auto *t = maybeAs<T_>()) return *t; \
+        if (auto *t = maybeAs<T_>()) return *t; \
         throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
     } \
     template <typename T_> \
     T_ const &expectedAs() const { \
-        if(auto const *t = maybeAs<T_>()) return *t; \
+        if (auto const *t = maybeAs<T_>()) return *t; \
         throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
     }
 
@@ -389,7 +389,7 @@ public:
     InstType *operator -> () const { return ptr; }
     void reset(InstType *p = 0) {
         IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
-        if(ip)
+        if (ip)
         {
             DENG2_ASSERT(ip->privateInstVerification() == DENG2_IPRIVATE_VERIFICATION);
             delete ip;
@@ -496,7 +496,7 @@ enum FlagOp {
 
 template <typename FlagsType, typename FlagsCompatibleType>
 void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOp operation) {
-    switch(operation) {
+    switch (operation) {
     case SetFlags:     flags |= newFlags;  break;
     case UnsetFlags:   flags &= ~newFlags; break;
     case ReplaceFlags: flags = newFlags;   break;

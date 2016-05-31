@@ -28,7 +28,7 @@ DENG2_PIMPL(Untrapper)
     Instance(Public *i, CanvasWindow &w) : Base(i), window(w)
     {
         wasTrapped = window.canvas().isMouseTrapped();
-        if(wasTrapped)
+        if (wasTrapped)
         {
             window.canvas().trapMouse(false);
         }
@@ -36,7 +36,7 @@ DENG2_PIMPL(Untrapper)
 
     ~Instance()
     {
-        if(wasTrapped)
+        if (wasTrapped)
         {
             window.canvas().trapMouse();
         }

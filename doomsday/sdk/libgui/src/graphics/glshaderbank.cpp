@@ -52,7 +52,7 @@ DENG2_PIMPL(GLShaderBank)
 
             void convertToSourceText()
             {
-                if(type == FilePath)
+                if (type == FilePath)
                 {
                     source = String::fromLatin1(Block(App::rootFolder().locate<File const>(source)));
                     type = ShaderSourceText;
@@ -88,7 +88,7 @@ DENG2_PIMPL(GLShaderBank)
 
         Time sourceModifiedAt(ShaderSource const &src) const
         {
-            if(src.type == ShaderSource::FilePath && !src.source.isEmpty())
+            if (src.type == ShaderSource::FilePath && !src.source.isEmpty())
             {
                 return App::rootFolder().locate<File const>(src.source).status().modifiedAt;
             }
@@ -106,7 +106,7 @@ DENG2_PIMPL(GLShaderBank)
         {
             ShaderSource const &src = (type == GLShader::Vertex? vertex : fragment);
 
-            if(src.type == ShaderSource::FilePath)
+            if (src.type == ShaderSource::FilePath)
             {
                 return bank.d->findShader(src.source, type);
             }
@@ -148,7 +148,7 @@ DENG2_PIMPL(GLShaderBank)
     void clearShaders()
     {
         // Release all of our references to the shaders.
-        foreach(GLShader *shader, shaders.values())
+        foreach (GLShader *shader, shaders.values())
         {
             shader->release();
         }
@@ -160,7 +160,7 @@ DENG2_PIMPL(GLShaderBank)
         /// @todo Should check the modification time of the file to determine
         /// if recompiling the shader is appropriate.
 
-        if(shaders.contains(path))
+        if (shaders.contains(path))
         {
             return shaders[path];
         }
@@ -186,7 +186,7 @@ GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
     Instance::Data &i = data(path).as<Instance::Data>();
 
-    if(type == GLShader::Vertex)
+    if (type == GLShader::Vertex)
     {
         return *i.vertex;
     }
@@ -203,7 +203,7 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 
     // Bind the default uniforms. These will be used if no overriding
     // uniforms are bound.
-    for(GLUniform *uniform : i.defaultUniforms)
+    for (GLUniform *uniform : i.defaultUniforms)
     {
         program << *uniform;
     }
@@ -222,57 +222,57 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     ShaderSource frag;
 
     // Vertex shader definition.
-    if(def.has("vertex"))
+    if (def.has("vertex"))
     {
         vtx = ShaderSource(def["vertex"], ShaderSource::ShaderSourceText);
     }
-    else if(def.has("path.vertex"))
+    else if (def.has("path.vertex"))
     {
         vtx = ShaderSource(absolutePathInContext(def, def["path.vertex"]), ShaderSource::FilePath);
     }
-    else if(def.has("path"))
+    else if (def.has("path"))
     {
         vtx = ShaderSource(absolutePathInContext(def, def.gets("path") + ".vsh"), ShaderSource::FilePath);
     }
 
     // Fragment shader definition.
-    if(def.has("fragment"))
+    if (def.has("fragment"))
     {
         frag = ShaderSource(def["fragment"], ShaderSource::ShaderSourceText);
     }
-    else if(def.has("path.fragment"))
+    else if (def.has("path.fragment"))
     {
         frag = ShaderSource(absolutePathInContext(def, def["path.fragment"]), ShaderSource::FilePath);
     }
-    else if(def.has("path"))
+    else if (def.has("path"))
     {
         frag = ShaderSource(absolutePathInContext(def, def.gets("path") + ".fsh"), ShaderSource::FilePath);
     }
 
     // Additional shaders to append to the main source.
-    if(def.has("include.vertex"))
+    if (def.has("include.vertex"))
     {
         // Including in reverse to retain order -- each one is prepended.
         auto const &incs = def["include.vertex"].value().as<ArrayValue>().elements();
-        for(int i = incs.size() - 1; i >= 0; --i)
+        for (int i = incs.size() - 1; i >= 0; --i)
         {
             vtx.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
         }
     }
-    if(def.has("include.fragment"))
+    if (def.has("include.fragment"))
     {
         // Including in reverse to retain order -- each one is prepended.
         auto const &incs = def["include.fragment"].value().as<ArrayValue>().elements();
-        for(int i = incs.size() - 1; i >= 0; --i)
+        for (int i = incs.size() - 1; i >= 0; --i)
         {
             frag.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
         }
     }
 
-    if(def.has("defines"))
+    if (def.has("defines"))
     {
         DictionaryValue const &dict = def.getdt("defines");
-        for(auto i : dict.elements())
+        for (auto i : dict.elements())
         {
             String const macroName = i.first.value->asText();
             String const content   = i.second->asText();
@@ -292,19 +292,19 @@ Bank::IData *GLShaderBank::loadFromSource(ISource &source)
     // Create default uniforms.
     Record const &def = info()[src.id];
     auto const vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), def);
-    for(auto i = vars.begin(); i != vars.end(); ++i)
+    for (auto i = vars.begin(); i != vars.end(); ++i)
     {
         std::unique_ptr<GLUniform> uniform;
         Block const uName = i.key().toLatin1();
 
-        if(!i.value()->has(QStringLiteral("value"))) continue;
+        if (!i.value()->has(QStringLiteral("value"))) continue;
 
         // Initialize the appropriate type of value animation and uniform,
         // depending on the "value" key in the definition.
         Value const &valueDef = i.value()->get(QStringLiteral("value"));
-        if(auto const *array = valueDef.maybeAs<ArrayValue>())
+        if (auto const *array = valueDef.maybeAs<ArrayValue>())
         {
-            switch(array->size())
+            switch (array->size())
             {
             default:
                 throw DefinitionError("GLShaderBank::loadFromSource",

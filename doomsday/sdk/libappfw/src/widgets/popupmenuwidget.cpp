@@ -47,7 +47,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             : _owner(owner)
             , _id(Id::None)
         {
-            if(_owner.hasRoot())
+            if (_owner.hasRoot())
             {
                 // We can set this up right away.
                 alloc();
@@ -77,7 +77,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
         {
-            if(!_id.isNone())
+            if (!_id.isNone())
             {
                 Rectanglef visible = rect;
                 visible.setWidth(_owner.rule().width().value());
@@ -126,7 +126,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // Popup menu items' background is provided by the popup.
         widget.set(Background());
 
-        if(item.semantics().testFlag(ui::Item::Separator))
+        if (item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
             lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" :
@@ -136,7 +136,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             return;
         }
 
-        if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
+        if (LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
             lab->margins().set("popup.menu.margin");
             addToMaxWidth(widget);
@@ -145,14 +145,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
         // gets triggered.
-        if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
+        if (ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
             addToMaxWidth(widget);
 
             setButtonColors(*b);
             b->setSizePolicy(ui::Expand, ui::Expand);
 
-            if(!b->is<ToggleWidget>())
+            if (!b->is<ToggleWidget>())
             {
                 b->setTextGap("dialog.gap");
                 b->setOverrideImageSize(style().fonts().font("default").height().valuei());
@@ -161,7 +161,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             b->audienceForStateChange() += this;
 
             // Triggered actions close the menu.
-            if(item.semantics().testFlag(ui::Item::ActivationClosesPopup))
+            if (item.semantics().testFlag(ui::Item::ActivationClosesPopup))
             {
                 b->audienceForTriggered() += this;
             }
@@ -170,9 +170,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(item.semantics().testFlag(ui::Item::Annotation))
+        if (item.semantics().testFlag(ui::Item::Annotation))
         {
-            if(!App::config().getb(VAR_SHOW_ANNOTATIONS))
+            if (!App::config().getb(VAR_SHOW_ANNOTATIONS))
             {
                 widget.hide();
             }
@@ -180,10 +180,10 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             widget.margins().set("halfunit").setLeft("popup.menu.margin");
             widget.setFont("separator.annotation");
         }
-        else if(item.semantics().testFlag(ui::Item::Separator))
+        else if (item.semantics().testFlag(ui::Item::Separator))
         {
             // The label of a separator may change.
-            if(item.label().isEmpty())
+            if (item.label().isEmpty())
             {
                 widget.margins().set("");
                 widget.setFont("separator.empty");
@@ -217,10 +217,10 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         GridLayout const &layout = self.menu().layout();
 
-        foreach(Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self.menu().childWidgets())
         {
             GuiWidget &widget = child->as<GuiWidget>();
-            if(self.menu().isWidgetPartOfMenu(widget))
+            if (self.menu().isWidgetPartOfMenu(widget))
             {
                 Vector2i cell = layout.widgetPos(widget);
                 DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
@@ -238,12 +238,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     bool hasButtonsWithImages() const
     {
-        foreach(Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self.menu().childWidgets())
         {
-            if(ButtonWidget *button = child->maybeAs<ButtonWidget>())
+            if (ButtonWidget *button = child->maybeAs<ButtonWidget>())
             {
                 // Menu item images are expected to be on the left side.
-                if(button->hasImage() && button->textAlignment() == ui::AlignRight)
+                if (button->hasImage() && button->textAlignment() == ui::AlignRight)
                     return true;
             }
         }
@@ -262,17 +262,17 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         auto const &padding = rule("popup.menu.paddedmargin");
         auto const &none    = rule("popup.menu.margin");
 
-        foreach(Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self.menu().childWidgets())
         {
             GuiWidget &widget = child->as<GuiWidget>();
 
             // Pad annotations with the full amount.
-            if(LabelWidget *label = widget.maybeAs<LabelWidget>())
+            if (LabelWidget *label = widget.maybeAs<LabelWidget>())
             {
                 ui::Item const *item = self.menu().organizer().findItemForWidget(widget);
-                if(item->semantics().testFlag(ui::Item::Annotation))
+                if (item->semantics().testFlag(ui::Item::Annotation))
                 {
-                    if(useExtraPadding)
+                    if (useExtraPadding)
                     {
                         label->setMaximumTextWidth(*maxItemWidth - padding);
                         widget.margins().setLeft(padding);
@@ -286,13 +286,13 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
 
             // Pad buttons according to their image size.
-            if(ButtonWidget *button = widget.maybeAs<ButtonWidget>())
+            if (ButtonWidget *button = widget.maybeAs<ButtonWidget>())
             {
                 updateImageColor(*button);
-                if(useExtraPadding)
+                if (useExtraPadding)
                 {
                     Rule const *padRule = holdRef(padding);
-                    if(button->hasImage() && button->textAlignment() == ui::AlignRight)
+                    if (button->hasImage() && button->textAlignment() == ui::AlignRight)
                     {
                         LabelWidget::ContentLayout layout;
                         button->contentLayout(layout);
@@ -321,14 +321,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         updateImageColor(button, state != ButtonWidget::Up);
 
         // Position item highlight.
-        if(&button == hover && state == ButtonWidget::Up)
+        if (&button == hover && state == ButtonWidget::Up)
         {
             hover = 0;
             self.requestGeometry();
             return;
         }
 
-        if(state == ButtonWidget::Hover || state == ButtonWidget::Down)
+        if (state == ButtonWidget::Hover || state == ButtonWidget::Down)
         {
             hover = &button;
             self.requestGeometry();
@@ -338,7 +338,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     Rectanglei highlightRect() const
     {
         Rectanglei hi;
-        if(hover)
+        if (hover)
         {
             hi.topLeft.x     = hover->hitRule().left().valuei();
             hi.topLeft.y     = hover->hitRule().top().valuei();
@@ -354,14 +354,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // The popup menu is closed when an action is triggered.
         self.close();
 
-        if(parentPopup) parentPopup->close();
+        if (parentPopup) parentPopup->close();
     }
 
     void updateIfScrolled()
     {
         // If the menu is scrolled, we need to update some things.
         int scrollY = self.menu().scrollPositionY().valuei();
-        if(scrollY == oldScrollY)
+        if (scrollY == oldScrollY)
         {
             return;
         }
@@ -381,14 +381,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
         // Update widgets of annotation items.
         self.items().forAll([this, &newValue, &changed] (ui::Item const &item) {
-            if(item.semantics().testFlag(ui::Item::Annotation)) {
+            if (item.semantics().testFlag(ui::Item::Annotation)) {
                 self.menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
                 changed = true;
             }
             return LoopContinue;
         });
 
-        if(changed)
+        if (changed)
         {
             self.menu().updateLayout();
         }
@@ -396,9 +396,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void updateButtonColors()
     {
-        for(Widget *w : self.menu().childWidgets())
+        for (Widget *w : self.menu().childWidgets())
         {
-            if(ButtonWidget *btn = w->maybeAs<ButtonWidget>())
+            if (ButtonWidget *btn = w->maybeAs<ButtonWidget>())
             {
                 setButtonColors(*btn);
             }
@@ -450,7 +450,7 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     PopupWidget::glMakeGeometry(verts);
 
-    if(d->hover && d->hover->isEnabled())
+    if (d->hover && d->hover->isEnabled())
     {
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?
@@ -474,7 +474,7 @@ void PopupMenuWidget::panelClosing()
 {
     PopupWidget::panelClosing();
 
-    if(d->hover)
+    if (d->hover)
     {
         auto &btn = *d->hover;
         d->hover = 0;

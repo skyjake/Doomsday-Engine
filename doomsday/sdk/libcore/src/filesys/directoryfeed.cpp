@@ -47,18 +47,18 @@ NativePath const &DirectoryFeed::nativePath() const
 
 void DirectoryFeed::populate(Folder &folder)
 {
-    if(_mode & AllowWrite)
+    if (_mode & AllowWrite)
     {
         // Automatically enable modifying the Folder.
         folder.setMode(File::Write);
     }
-    if(_mode.testFlag(CreateIfMissing) && !NativePath::exists(_nativePath))
+    if (_mode.testFlag(CreateIfMissing) && !NativePath::exists(_nativePath))
     {
         NativePath::createPath(_nativePath);
     }
 
     QDir dir(_nativePath);
-    if(!dir.isReadable())
+    if (!dir.isReadable())
     {
         /// @throw NotFoundError The native directory was not accessible.
         throw NotFoundError("DirectoryFeed::populate", "Path '" + _nativePath + "' inaccessible");
@@ -66,13 +66,13 @@ void DirectoryFeed::populate(Folder &folder)
     QStringList nameFilters;
     nameFilters << "*";
     QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
-    if(_mode.testFlag(PopulateNativeSubfolders))
+    if (_mode.testFlag(PopulateNativeSubfolders))
     {
         dirFlags |= QDir::Dirs;
     }
-    foreach(QFileInfo entry, dir.entryInfoList(nameFilters, dirFlags))
+    foreach (QFileInfo entry, dir.entryInfoList(nameFilters, dirFlags))
     {
-        if(entry.isDir())
+        if (entry.isDir())
         {
             populateSubFolder(folder, entry.fileName());
         }
@@ -87,10 +87,10 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
 {
     LOG_AS("DirectoryFeed::populateSubFolder");
 
-    if(entryName != "." && entryName != "..")
+    if (entryName != "." && entryName != "..")
     {
         Folder *subFolder = nullptr;
-        if(!folder.has(entryName))
+        if (!folder.has(entryName))
         {
             subFolder = &folder.fileSystem()
                     .makeFolderWithFeed(folder.path() / entryName,
@@ -104,7 +104,7 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
             subFolder = &folder.locate<Folder>(entryName);
         }
 
-        if(_mode & AllowWrite)
+        if (_mode & AllowWrite)
         {
             subFolder->setMode(File::Write);
         }
@@ -119,7 +119,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
 {
     try
     {
-        if(folder.has(entryName))
+        if (folder.has(entryName))
         {
             // Already has an entry for this, skip it (wasn't pruned so it's OK).
             return;
@@ -130,7 +130,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
         // Open the native file.
         std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
         nativeFile->setStatus(fileStatus(entryPath));
-        if(_mode & AllowWrite)
+        if (_mode & AllowWrite)
         {
             nativeFile->setMode(File::Write);
         }
@@ -144,7 +144,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
         // Include files in the main index.
         folder.fileSystem().index(*file);
     }
-    catch(StatusError const &er)
+    catch (StatusError const &er)
     {
         LOG_WARNING("Error with \"%s\" in %s: %s")
                 << entryName
@@ -160,18 +160,18 @@ bool DirectoryFeed::prune(File &file) const
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
-    if(NativeFile *nativeFile = file.maybeAs<NativeFile>())
+    if (NativeFile *nativeFile = file.maybeAs<NativeFile>())
     {
         try
         {
-            if(fileStatus(nativeFile->nativePath()) != nativeFile->status())
+            if (fileStatus(nativeFile->nativePath()) != nativeFile->status())
             {
                 // It's not up to date.
                 LOG_RES_MSG("Pruning \"%s\": status has changed") << nativeFile->nativePath();
                 return true;
             }
         }
-        catch(StatusError const &)
+        catch (StatusError const &)
         {
             // Get rid of it.
             return true;
@@ -180,12 +180,12 @@ bool DirectoryFeed::prune(File &file) const
 
     /// - A Folder will be pruned if the corresponding directory does not exist (providing
     ///   a DirectoryFeed is the sole feed in the folder).
-    if(Folder *subFolder = file.maybeAs<Folder>())
+    if (Folder *subFolder = file.maybeAs<Folder>())
     {
-        if(subFolder->feeds().size() == 1)
+        if (subFolder->feeds().size() == 1)
         {
             DirectoryFeed *dirFeed = subFolder->feeds().front()->maybeAs<DirectoryFeed>();
-            if(dirFeed && !NativePath::exists(dirFeed->_nativePath))
+            if (dirFeed && !NativePath::exists(dirFeed->_nativePath))
             {
                 LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;
                 return true;
@@ -200,7 +200,7 @@ bool DirectoryFeed::prune(File &file) const
 File *DirectoryFeed::newFile(String const &name)
 {
     NativePath newPath = _nativePath / name;
-    if(NativePath::exists(newPath))
+    if (NativePath::exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
         throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
@@ -214,13 +214,13 @@ void DirectoryFeed::removeFile(String const &name)
 {
     NativePath path = _nativePath / name;
 
-    if(!NativePath::exists(path))
+    if (!NativePath::exists(path))
     {
         // The file doesn't exist in the native file system, we can ignore this.
         return;
     }
 
-    if(!QDir::current().remove(path))
+    if (!QDir::current().remove(path))
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
         throw RemoveError("DirectoryFeed::removeFile", "Cannot remove \"" + name +
@@ -231,7 +231,7 @@ void DirectoryFeed::removeFile(String const &name)
 Feed *DirectoryFeed::newSubFeed(String const &name)
 {
     NativePath subPath = _nativePath / name;
-    if(_mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
+    if (_mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
     {
         return new DirectoryFeed(subPath, _mode);
     }
@@ -240,7 +240,7 @@ Feed *DirectoryFeed::newSubFeed(String const &name)
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 {
-    if(!App::setCurrentWorkPath(nativePath))
+    if (!App::setCurrentWorkPath(nativePath))
     {
         /// @throw WorkingDirError Changing to @a nativePath failed.
         throw WorkingDirError("DirectoryFeed::changeWorkingDir",
@@ -252,7 +252,7 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
     QFileInfo info(nativePath);
 
-    if(!info.exists())
+    if (!info.exists())
     {
         /// @throw StatusError Determining the file status was not possible.
         throw StatusError("DirectoryFeed::fileStatus", nativePath + " inaccessible");

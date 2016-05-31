@@ -36,7 +36,7 @@ Error::~Error() throw()
 
 QString Error::name() const
 {
-    if(!_name.size()) return "Error";
+    if (!_name.size()) return "Error";
     return QString::fromStdString(_name);
 }
 
@@ -47,7 +47,7 @@ QString Error::asText() const
 
 void Error::setName(QString const &name)
 {
-    if(_name.size()) _name += "_";
+    if (_name.size()) _name += "_";
     _name += name.toStdString();
 }
 

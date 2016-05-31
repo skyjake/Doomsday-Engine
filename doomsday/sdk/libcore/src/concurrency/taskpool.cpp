@@ -52,7 +52,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     {
         DENG2_GUARD(this);
         t->_pool = this;
-        if(tasks.isEmpty())
+        if (tasks.isEmpty())
         {
             wait(); // Semaphore now unavailable.
         }
@@ -64,7 +64,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     {
         DENG2_GUARD(this);
         tasks.remove(t);
-        if(tasks.isEmpty())
+        if (tasks.isEmpty())
         {
             post();
             return true;
@@ -89,9 +89,9 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     void taskFinishedRunning(Task &task)
     {
         lock();
-        if(remove(&task))
+        if (remove(&task))
         {
-            if(deleteWhenDone)
+            if (deleteWhenDone)
             {
                 // All done, clean up!
                 unlock();
@@ -115,7 +115,7 @@ TaskPool::TaskPool() : d(new Instance(this))
 TaskPool::~TaskPool()
 {
     DENG2_GUARD(d);
-    if(!d->isEmpty())
+    if (!d->isEmpty())
     {
         // Detach the private instance and make it auto-delete itself when done.
         // The ongoing tasks will report themselves finished to the private instance.

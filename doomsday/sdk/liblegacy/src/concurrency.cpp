@@ -48,7 +48,7 @@ CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
 
 CallbackThread::~CallbackThread()
 {
-    if(isRunning())
+    if (isRunning())
     {
         //qDebug() << "CallbackThread:" << this << "forcibly stopping, deleting.";
         terminate();
@@ -71,13 +71,13 @@ void CallbackThread::run()
 
     try
     {
-        if(_callback)
+        if (_callback)
         {
             _returnValue = _callback(_parm);
         }
         _exitStatus = DENG_THREAD_STOPPED_NORMALLY;
     }
-    catch(std::exception const &error)
+    catch (std::exception const &error)
     {
         LOG_AS("CallbackThread");
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
@@ -85,7 +85,7 @@ void CallbackThread::run()
         _exitStatus = DENG_THREAD_STOPPED_WITH_EXCEPTION;
     }
 
-    if(_terminationFunc)
+    if (_terminationFunc)
     {
         _terminationFunc(_exitStatus);
     }
@@ -142,7 +142,7 @@ thread_t Sys_StartThread(int (*startpos)(void *), void *parm)
 void Thread_KillAbnormally(thread_t handle)
 {
     QThread *t = reinterpret_cast<QThread *>(handle);
-    if(!handle)
+    if (!handle)
     {
         t = QThread::currentThread();
     }
@@ -154,30 +154,30 @@ void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitst
 {
     CallbackThread *t = reinterpret_cast<CallbackThread *>(thread);
     DENG_ASSERT(t);
-    if(!t) return;
+    if (!t) return;
 
     t->setTerminationFunc(terminationFunc);
 }
 
 int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus)
 {
-    if(!handle)
+    if (!handle)
     {
-        if(exitStatus) *exitStatus = DENG_THREAD_STOPPED_NORMALLY;
+        if (exitStatus) *exitStatus = DENG_THREAD_STOPPED_NORMALLY;
         return 0;
     }
 
     CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
     assert(static_cast<QThread *>(t) != QThread::currentThread());
     t->wait(timeoutMs);
-    if(!t->isFinished())
+    if (!t->isFinished())
     {
         LOG_WARNING("Thread did not stop in time, forcibly killing it.");
-        if(exitStatus) *exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
+        if (exitStatus) *exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
     }
     else
     {
-        if(exitStatus) *exitStatus = t->exitStatus();
+        if (exitStatus) *exitStatus = t->exitStatus();
     }
     t->deleteLater(); // get rid of it
     return t->exitValue();
@@ -186,7 +186,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
 uint32_t Sys_ThreadId(thread_t handle)
 {
     QThread *t = reinterpret_cast<QThread *>(handle);
-    if(!t) t = QThread::currentThread();
+    if (!t) t = QThread::currentThread();
     return uint32_t(PTR2INT(t));
 }
 
@@ -203,7 +203,7 @@ mutex_t Sys_CreateMutex(const char *)
 
 void Sys_DestroyMutex(mutex_t handle)
 {
-    if(handle)
+    if (handle)
     {
         delete reinterpret_cast<QMutex *>(handle);
     }
@@ -213,7 +213,7 @@ void Sys_Lock(mutex_t handle)
 {
     QMutex *m = reinterpret_cast<QMutex *>(handle);
     assert(m != 0);
-    if(m)
+    if (m)
     {
         m->lock();
     }
@@ -223,7 +223,7 @@ void Sys_Unlock(mutex_t handle)
 {
     QMutex *m = reinterpret_cast<QMutex *>(handle);
     assert(m != 0);
-    if(m)
+    if (m)
     {
         m->unlock();
     }

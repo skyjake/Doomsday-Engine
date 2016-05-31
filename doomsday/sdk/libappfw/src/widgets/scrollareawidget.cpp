@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     void glInit()
     {
-        if(indicatorShown)
+        if (indicatorShown)
         {
             DefaultVertexBuf *buf = new DefaultVertexBuf;
             drawable.addBuffer(buf);
@@ -121,7 +121,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     void restartScrollOpacityFade()
     {
         indicatorAnimating = true;
-        if(origin == Bottom && self.isAtBottom())
+        if (origin == Bottom && self.isAtBottom())
         {
             scrollOpacity.setValue(0, .7f, .2f);
         }
@@ -159,7 +159,7 @@ void ScrollAreaWidget::setOrigin(Origin origin)
 
     d->origin = origin;
 
-    if(origin == Top)
+    if (origin == Top)
     {
         // Anchor content to the top of the widget.
         d->contentRule.setInput(Rule::Top, rule().top() + margins().top() -
@@ -294,7 +294,7 @@ Rectanglei ScrollAreaWidget::viewport() const
     Vector4i const margin = margins().toVector();
 
     Rectanglei vp = rule().recti().moved(margin.xy());
-    if(int(vp.width()) <= margin.x + margin.z)
+    if (int(vp.width()) <= margin.x + margin.z)
     {
         vp.setWidth(0);
     }
@@ -302,7 +302,7 @@ Rectanglei ScrollAreaWidget::viewport() const
     {
         vp.bottomRight.x -= margin.x + margin.z;
     }
-    if(int(vp.height()) <= margin.y + margin.w)
+    if (int(vp.height()) <= margin.y + margin.w)
     {
         vp.setHeight(0);
     }
@@ -388,11 +388,11 @@ void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
 bool ScrollAreaWidget::handleEvent(Event const &event)
 {
     // Mouse wheel scrolling.
-    if(d->scrollingEnabled && event.type() == Event::MouseWheel && hitTest(event))
+    if (d->scrollingEnabled && event.type() == Event::MouseWheel && hitTest(event))
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
 #ifdef MACOSX
-        if(mouse.wheelMotion() == MouseEvent::FineAngle)
+        if (mouse.wheelMotion() == MouseEvent::FineAngle)
         {
             d->y->set(de::clamp(0, int(d->y->animation().target()) +
                                 toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
@@ -400,13 +400,13 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             d->restartScrollOpacityFade();
         }
 #else
-        if(mouse.wheelMotion() == MouseEvent::Step)
+        if (mouse.wheelMotion() == MouseEvent::Step)
         {
             unsigned int lineCount = 1;
 #ifdef WIN32
             // Use the number of lines to scroll from system preferences.
             SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lineCount, 0);
-            if(lineCount == WHEEL_PAGESCROLL)
+            if (lineCount == WHEEL_PAGESCROLL)
             {
                 lineCount = contentRect().height() / style().fonts().font("default").height().valuei();
             }
@@ -421,18 +421,18 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     }
 
     // Page key scrolling.
-    if(d->scrollingEnabled && event.isKeyDown())
+    if (d->scrollingEnabled && event.isKeyDown())
     {
         KeyEvent const &ev = event.as<KeyEvent>();
 
         float pageSize = scrollPageSize().y;
-        if(d->origin == Bottom) pageSize = -pageSize;
+        if (d->origin == Bottom) pageSize = -pageSize;
 
-        switch(ev.ddKey())
+        switch (ev.ddKey())
         {
         case DDKEY_PGUP:
-            if(!d->pageKeysEnabled) return false;
-            if(ev.modifiers().testFlag(KeyEvent::Shift))
+            if (!d->pageKeysEnabled) return false;
+            if (ev.modifiers().testFlag(KeyEvent::Shift))
             {
                 scrollToTop();
             }
@@ -443,8 +443,8 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             return true;
 
         case DDKEY_PGDN:
-            if(!d->pageKeysEnabled) return false;
-            if(ev.modifiers().testFlag(KeyEvent::Shift))
+            if (!d->pageKeysEnabled) return false;
+            if (ev.modifiers().testFlag(KeyEvent::Shift))
             {
                 scrollToBottom();
             }
@@ -464,7 +464,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
 
 void ScrollAreaWidget::scrollToTop(TimeDelta span)
 {
-    if(d->origin == Top)
+    if (d->origin == Top)
     {
         scrollY(0, span);
     }
@@ -476,7 +476,7 @@ void ScrollAreaWidget::scrollToTop(TimeDelta span)
 
 void ScrollAreaWidget::scrollToBottom(TimeDelta span)
 {
-    if(d->origin == Top)
+    if (d->origin == Top)
     {
         scrollY(maximumScrollY().valuei(), span);
     }
@@ -505,11 +505,11 @@ void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
 
 ScrollAreaWidget &ScrollAreaWidget::findTopmostScrollable()
 {
-    for(Widget *parent = parentWidget(); parent; parent = parent->parent())
+    for (Widget *parent = parentWidget(); parent; parent = parent->parent())
     {
-        if(ScrollAreaWidget *scroll = parent->maybeAs<ScrollAreaWidget>())
+        if (ScrollAreaWidget *scroll = parent->maybeAs<ScrollAreaWidget>())
         {
-            if(scroll->isScrollable())
+            if (scroll->isScrollable())
             {
                 return *scroll;
             }
@@ -532,10 +532,10 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
                                                      Vector2f const &origin)
 {
     // Draw the scroll indicator.
-    if(d->scrollOpacity <= 0) return;
+    if (d->scrollOpacity <= 0) return;
 
     Vector2i const viewSize = viewportSize();
-    if(viewSize == Vector2i(0, 0)) return;
+    if (viewSize == Vector2i(0, 0)) return;
 
     int const indHeight = de::clamp(
                 margins().height().valuei(),
@@ -543,7 +543,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
                 viewSize.y / 2);
 
     float indPos = scrollPositionY().value() / maximumScrollY().value();
-    if(d->origin == Top) indPos = 1 - indPos;
+    if (d->origin == Top) indPos = 1 - indPos;
 
     float const avail = viewSize.y - indHeight;
 
@@ -565,21 +565,21 @@ void ScrollAreaWidget::update()
 {
     GuiWidget::update();
 
-    if(d->indicatorAnimating)
+    if (d->indicatorAnimating)
     {
         requestGeometry();
     }
-    if(d->scrollOpacity.done())
+    if (d->scrollOpacity.done())
     {
         d->indicatorAnimating = false;
     }
 
     // Clamp the scroll position.
-    if(d->x->value() > d->maxX->value())
+    if (d->x->value() > d->maxX->value())
     {
         d->x->set(d->maxX->value());
     }
-    if(d->y->value() > d->maxY->value())
+    if (d->y->value() > d->maxY->value())
     {
         d->y->set(d->maxY->value());
     }
@@ -587,7 +587,7 @@ void ScrollAreaWidget::update()
 
 void ScrollAreaWidget::drawContent()
 {
-    if(d->indicatorShown)
+    if (d->indicatorShown)
     {
         d->uColor = Vector4f(1, 1, 1, visibleOpacity());
 

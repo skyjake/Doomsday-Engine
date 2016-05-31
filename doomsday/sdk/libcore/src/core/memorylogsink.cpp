@@ -47,14 +47,14 @@ void MemoryLogSink::clear()
 
 LogSink &MemoryLogSink::operator << (LogEntry const &entry)
 {
-    if((!_privileged &&  (entry.context() & LogEntry::Privileged)) ||
+    if ((!_privileged &&  (entry.context() & LogEntry::Privileged)) ||
         (_privileged && !(entry.context() & LogEntry::Privileged)))
     {
         // Skip (non-)privileged entry.
         return *this;
     }
 
-    if(entry.level() >= _minLevel)
+    if (entry.level() >= _minLevel)
     {
         DENG2_GUARD(this);
         _entries.append(new LogEntry(entry));
@@ -89,7 +89,7 @@ void MemoryLogSink::remove(int pos, int n)
 {
     DENG2_GUARD(this);
 
-    while(n-- > 0)
+    while (n-- > 0)
     {
         delete _entries.takeAt(pos);
     }

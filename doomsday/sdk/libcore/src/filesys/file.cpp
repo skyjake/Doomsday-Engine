@@ -79,13 +79,13 @@ File::~File()
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
 
     flush();
-    if(d->source != this)
+    if (d->source != this)
     {
         // If we own a source, get rid of it.
         delete d->source;
         d->source = 0;
     }
-    if(Folder *parentFolder = parent())
+    if (Folder *parentFolder = parent())
     {
         // Remove from parent folder.
         parentFolder->remove(this);
@@ -125,29 +125,29 @@ String File::description(int verbosity) const
 
     // Check for additional contextual information that may be relevant. First
     // determine if this is being called for a log entry.
-    if(verbosity < 0)
+    if (verbosity < 0)
     {
         Log &log = Log::threadLog();
         int verbosity = 0;
-        if(!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
+        if (!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
         {
             // For dev entries and everything outside log entries, use a full description.
             verbosity = 2;
         }
-        else if((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
+        else if ((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
         {
             // Verbose entries can contain some additional information.
             verbosity = 1;
         }
     }
 
-    if(verbosity > 0)
+    if (verbosity > 0)
     {
-        if(!mode().testFlag(Write))
+        if (!mode().testFlag(Write))
         {
             desc = "read-only " + desc;
         }
-        if(parent())
+        if (parent())
         {
             desc += " (path \"" + path() + "\")";
         }
@@ -156,7 +156,7 @@ String File::description(int verbosity) const
     // In case of DirectoryFeed, the native file desciption itself already contains
     // information about the full native path, so we don't have to describe the
     // feed itself (would be redundant).
-    if(originFeed() && (verbosity >= 2 || !originFeed()->is<DirectoryFeed>()))
+    if (originFeed() && (verbosity >= 2 || !originFeed()->is<DirectoryFeed>()))
     {
         desc += " from " + originFeed()->description();
     }
@@ -165,7 +165,7 @@ String File::description(int verbosity) const
     // Describing the source file is usually redundant (or even misleading),
     // so only do that in debug builds so that developers can see that a
     // file interpretation is being applied.
-    if(source() != this)
+    if (source() != this)
     {
         desc += _E(i) " {data sourced from " + source()->description(verbosity) + "}" _E(.);
     }
@@ -195,7 +195,7 @@ void File::setSource(File *source)
 {
     DENG2_GUARD(this);
 
-    if(d->source != this)
+    if (d->source != this)
     {
         // Delete the old source.
         delete d->source;
@@ -207,7 +207,7 @@ File const *File::source() const
 {
     DENG2_GUARD(this);
 
-    if(d->source != this)
+    if (d->source != this)
     {
         return d->source->source();
     }
@@ -218,7 +218,7 @@ File *File::source()
 {
     DENG2_GUARD(this);
 
-    if(d->source != this)
+    if (d->source != this)
     {
         return d->source->source();
     }
@@ -240,7 +240,7 @@ void File::setStatus(Status const &status)
     DENG2_GUARD(this);
 
     // The source file status is the official one.
-    if(this != d->source)
+    if (this != d->source)
     {
         d->source->setStatus(status);
     }
@@ -254,7 +254,7 @@ File::Status const &File::status() const
 {
     DENG2_GUARD(this);
 
-    if(this != d->source)
+    if (this != d->source)
     {
         return d->source->status();
     }
@@ -266,12 +266,12 @@ void File::setMode(Flags const &newMode)
     DENG2_GUARD(this);
 
     // Implicitly flush the file before switching away from write mode.
-    if(d->mode.testFlag(Write) && !newMode.testFlag(Write))
+    if (d->mode.testFlag(Write) && !newMode.testFlag(Write))
     {
         flush();
     }
 
-    if(this != d->source)
+    if (this != d->source)
     {
         d->source->setMode(newMode);
     }
@@ -295,7 +295,7 @@ File::Flags const &File::mode() const
 {
     DENG2_GUARD(this);
 
-    if(this != d->source)
+    if (this != d->source)
     {
         return d->source->mode();
     }
@@ -304,7 +304,7 @@ File::Flags const &File::mode() const
 
 void File::verifyWriteAccess()
 {
-    if(!mode().testFlag(Write))
+    if (!mode().testFlag(Write))
     {
         /// @throw ReadOnlyError  File is in read-only mode.
         throw ReadOnlyError("File::verifyWriteAccess", path() + " is in read-only mode");
@@ -317,14 +317,14 @@ File *File::reinterpret()
     File *original  = source();
     bool deleteThis = false;
 
-    if(original != this)
+    if (original != this)
     {
         // Already interpreted. The current interpretation will be replaced.
         DENG2_ASSERT(!original->parent());
         d->source = 0; // source is owned, so take it away
         deleteThis = true;
     }
-    if(folder)
+    if (folder)
     {
         folder->remove(*this);
     }
@@ -335,12 +335,12 @@ File *File::reinterpret()
     // The interpreter should use whatever origin feed the file was previously using.
     result->setOriginFeed(d->originFeed);
 
-    if(deleteThis)
+    if (deleteThis)
     {
         DENG2_ASSERT(result != this);
         delete this;
     }
-    if(folder)
+    if (folder)
     {
         folder->add(result);
     }
@@ -375,10 +375,10 @@ String File::fileListAsText(QList<File const *> files)
     qSort(files.begin(), files.end(), sortByNameAsc);
 
     String txt;
-    foreach(File const *f, files)
+    foreach (File const *f, files)
     {
         // One line per file.
-        if(!txt.isEmpty()) txt += "\n";
+        if (!txt.isEmpty()) txt += "\n";
 
         // Folder / Access flags / source flag / has origin feed.
         String flags = QString("%1%2%3%4%5")
@@ -394,9 +394,9 @@ String File::fileListAsText(QList<File const *> files)
                 .arg(f->name());
 
         // Link target.
-        if(LinkFile const *link = f->maybeAs<LinkFile>())
+        if (LinkFile const *link = f->maybeAs<LinkFile>())
         {
-            if(!link->isBroken())
+            if (!link->isBroken())
             {
                 txt += QString(" -> %1").arg(link->target().path());
             }
@@ -426,7 +426,7 @@ void File::Accessor::update() const
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
 
-    switch(_prop)
+    switch (_prop)
     {
     case NAME:
         nonConst->setValue(_owner.name());
@@ -452,7 +452,7 @@ void File::Accessor::update() const
 
 Value *File::Accessor::duplicateContent() const
 {
-    if(_prop == SIZE)
+    if (_prop == SIZE)
     {
         return new NumberValue(asNumber());
     }

@@ -38,7 +38,7 @@ Refuge::Refuge(String const &persistentPath) : d(new Instance)
     {
         read();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_AS("Refuge");
         LOGDEV_RES_MSG("\"%s\" could not be read: %s") << persistentPath << er.asText();
@@ -57,7 +57,7 @@ Refuge::~Refuge()
     {
         write();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_AS("~Refuge");
         LOG_ERROR("\"%s\" could not be written: %s") << d->persistentPath << er.asText();
@@ -66,7 +66,7 @@ Refuge::~Refuge()
 
 void Refuge::read()
 {
-    if(App::hasPersistentData())
+    if (App::hasPersistentData())
     {
         Reader(App::persistentData().entryBlock(d->persistentPath)).withHeader() >> d->names;
     }
@@ -74,7 +74,7 @@ void Refuge::read()
 
 void Refuge::write() const
 {
-    if(App::hasPersistentData())
+    if (App::hasPersistentData())
     {
         Writer(App::mutablePersistentData().entryBlock(d->persistentPath)).withHeader()
             << d->names;
@@ -83,7 +83,7 @@ void Refuge::write() const
 
 Time Refuge::lastWrittenAt() const
 {
-    if(App::hasPersistentData())
+    if (App::hasPersistentData())
     {
         return App::persistentData().entryStatus(d->persistentPath).modifiedAt;
     }

@@ -196,7 +196,7 @@ public:
     Reader &readObjects(ListType &list) {
         duint32 count;
         *this >> count;
-        while(count-- > 0) {
+        while (count-- > 0) {
             std::unique_ptr<ObjectType> entry(new ObjectType);
             *this >> *entry.get();
             list.push_back(entry.release());

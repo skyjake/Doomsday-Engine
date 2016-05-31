@@ -51,7 +51,7 @@ GLTarget::AlternativeBuffer::~AlternativeBuffer()
 
 bool GLTarget::AlternativeBuffer::init()
 {
-    if(d->original)
+    if (d->original)
     {
         // Already done.
         return false;
@@ -62,9 +62,9 @@ bool GLTarget::AlternativeBuffer::init()
     DENG2_ASSERT(d->original != 0);
 
     // Resize the alternative buffer to match current target size.
-    if(d->texture->size() != d->target->size())
+    if (d->texture->size() != d->target->size())
     {
-        if(d->attachment == GLTarget::DepthStencil)
+        if (d->attachment == GLTarget::DepthStencil)
         {
             d->texture->setDepthStencilContent(d->target->size());
         }
@@ -79,7 +79,7 @@ bool GLTarget::AlternativeBuffer::init()
 
 bool GLTarget::AlternativeBuffer::deinit()
 {
-    if(!d->original) return false; // Not inited.
+    if (!d->original) return false; // Not inited.
 
     d->target->replaceAttachment(d->attachment, *d->original);
     return true;

@@ -48,11 +48,11 @@ public:
 
     void setValueIfDifferentTarget(Vector2f const &vector, TimeDelta transitionSpan = 0.0)
     {
-        if(!fequal(x.target(), vector.x))
+        if (!fequal(x.target(), vector.x))
         {
             x.setValue(vector.x, transitionSpan);
         }
-        if(!fequal(y.target(), vector.y))
+        if (!fequal(y.target(), vector.y))
         {
             y.setValue(vector.y, transitionSpan);
         }

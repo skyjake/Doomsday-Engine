@@ -116,7 +116,7 @@ DENG2_PIMPL(GuiWidget)
          * first before beginning destruction.
          */
 #ifdef DENG2_DEBUG
-        if(inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
+        if (inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
         DENG2_ASSERT(!inited);
 #endif
     }
@@ -135,7 +135,7 @@ DENG2_PIMPL(GuiWidget)
 
     void widgetChildAdded(Widget &child)
     {
-        if(self.hasRoot())
+        if (self.hasRoot())
         {
             // Make sure newly added children know the view size.
             child.viewResized();
@@ -151,20 +151,20 @@ DENG2_PIMPL(GuiWidget)
         bool wasClipped = false;
         Rectanglei visibleArea = self.root().viewRule().recti();
 
-        for(Widget const *w = self.parentWidget(); w; w = w->parent())
+        for (Widget const *w = self.parentWidget(); w; w = w->parent())
         {
-            if(!w->is<GuiWidget>()) continue;
+            if (!w->is<GuiWidget>()) continue;
 
             // Does this ancestor use child clipping?
-            if(w->behavior().testFlag(ChildVisibilityClipping))
+            if (w->behavior().testFlag(ChildVisibilityClipping))
             {
                 wasClipped = true;
                 visibleArea &= w->as<GuiWidget>().rule().recti();
             }
         }
-        if(!wasClipped) return false;
+        if (!wasClipped) return false;
 
-        if(self.isClipped())
+        if (self.isClipped())
         {
             int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
 
@@ -177,12 +177,12 @@ DENG2_PIMPL(GuiWidget)
 
     void initBlur()
     {
-        if(blurInited) return;
+        if (blurInited) return;
 
         // The blurred version of the view is downsampled.
         blurSize = (self.root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
 
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             // Multisampling is disabled in the blurs for now.
             blurFB[i].reset(new GLFramebuffer(Image::RGB_888, blurSize, 1));
@@ -230,9 +230,9 @@ DENG2_PIMPL(GuiWidget)
 
     void deinitBlur()
     {
-        if(!blurInited) return;
+        if (!blurInited) return;
 
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             blurFB[i].reset();
         }
@@ -243,7 +243,7 @@ DENG2_PIMPL(GuiWidget)
 
     void reinitBlur()
     {
-        if(blurInited)
+        if (blurInited)
         {
             deinitBlur();
             initBlur();
@@ -252,19 +252,19 @@ DENG2_PIMPL(GuiWidget)
 
     void drawBlurredBackground()
     {
-        if(background.type == Background::SharedBlur ||
+        if (background.type == Background::SharedBlur ||
            background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
             DENG2_ASSERT(background.blur != 0);
-            if(background.blur)
+            if (background.blur)
             {
                 background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
             }
             return;
         }
 
-        if(background.type != Background::Blurred &&
+        if (background.type != Background::Blurred &&
            background.type != Background::BlurredWithBorderGlow &&
            background.type != Background::BlurredWithSolidFill)
         {
@@ -302,11 +302,11 @@ DENG2_PIMPL(GuiWidget)
         // into the original target.
         Vector4f blurColor = background.solidFill;
         float blurOpacity  = self.visibleOpacity();
-        if(background.type == Background::BlurredWithSolidFill)
+        if (background.type == Background::BlurredWithSolidFill)
         {
             blurColor.w = 1;
         }
-        if(!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        if (!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
         {
             self.drawBlurredRect(self.rule().recti(), blurColor, blurOpacity);
         }
@@ -320,11 +320,11 @@ DENG2_PIMPL(GuiWidget)
     void updateOpacityForDisabledWidgets()
     {
         float const opac = (self.isDisabled()? .3f : 1.f);
-        if(opacityWhenDisabled.target() != opac)
+        if (opacityWhenDisabled.target() != opac)
         {
             opacityWhenDisabled.setValue(opac, .3f);
         }
-        if(firstUpdateAfterCreation ||
+        if (firstUpdateAfterCreation ||
            !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
         {
             opacityWhenDisabled.finish();
@@ -335,12 +335,12 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if(IPersistent *po = self.maybeAs<IPersistent>())
+            if (IPersistent *po = self.maybeAs<IPersistent>())
             {
                 DENG2_BASE_GUI_APP->persistentUIState() >> *po;
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             // Benign: widget will use default state.
             LOG_VERBOSE("Failed to restore state of widget '%s': %s")
@@ -352,12 +352,12 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if(IPersistent *po = self.maybeAs<IPersistent>())
+            if (IPersistent *po = self.maybeAs<IPersistent>())
             {
                 DENG2_BASE_GUI_APP->persistentUIState() << *po;
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_WARNING("Failed to save state of widget '%s': %s")
                     << self.path() << er.asText();
@@ -377,7 +377,7 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 
 void GuiWidget::destroy(GuiWidget *widget)
 {
-    if(widget)
+    if (widget)
     {
         widget->deinitialize();
         delete widget;
@@ -386,7 +386,7 @@ void GuiWidget::destroy(GuiWidget *widget)
 
 void GuiWidget::destroyLater(GuiWidget *widget)
 {
-    if(widget)
+    if (widget)
     {
         widget->deinitialize();
         widget->guiDeleteLater();
@@ -566,11 +566,11 @@ Animation GuiWidget::opacity() const
 float GuiWidget::visibleOpacity() const
 {
     float opacity = d->currentOpacity();
-    if(!d->attribs.testFlag(IndependentOpacity))
+    if (!d->attribs.testFlag(IndependentOpacity))
     {
-        for(Widget *i = Widget::parent(); i != 0; i = i->parent())
+        for (Widget *i = Widget::parent(); i != 0; i = i->parent())
         {
-            if(GuiWidget *w = i->maybeAs<GuiWidget>())
+            if (GuiWidget *w = i->maybeAs<GuiWidget>())
             {
                 opacity *= w->d->currentOpacity();
             }
@@ -603,9 +603,9 @@ void GuiWidget::saveState()
 {
     d->saveState();
 
-    foreach(Widget *child, childWidgets())
+    foreach (Widget *child, childWidgets())
     {
-        if(GuiWidget *widget = child->maybeAs<GuiWidget>())
+        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
         {
             widget->saveState();
         }
@@ -616,9 +616,9 @@ void GuiWidget::restoreState()
 {
     d->restoreState();
 
-    foreach(Widget *child, childWidgets())
+    foreach (Widget *child, childWidgets())
     {
-        if(GuiWidget *widget = child->maybeAs<GuiWidget>())
+        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
         {
             widget->restoreState();
         }
@@ -627,19 +627,19 @@ void GuiWidget::restoreState()
 
 void GuiWidget::initialize()
 {
-    if(d->inited) return;
+    if (d->inited) return;
 
     try
     {
         d->inited = true;
         glInit();
 
-        if(d->attribs.testFlag(RetainStatePersistently))
+        if (d->attribs.testFlag(RetainStatePersistently))
         {
             d->restoreState();
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Error when initializing widget '%s': %s")
                 << name() << er.asText();
@@ -648,11 +648,11 @@ void GuiWidget::initialize()
 
 void GuiWidget::deinitialize()
 {
-    if(!d->inited) return;
+    if (!d->inited) return;
 
     try
     {
-        if(d->attribs.testFlag(RetainStatePersistently))
+        if (d->attribs.testFlag(RetainStatePersistently))
         {
             d->saveState();
         }
@@ -661,7 +661,7 @@ void GuiWidget::deinitialize()
         d->deinitBlur();
         glDeinit();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_WARNING("Error when deinitializing widget '%s': %s")
                 << name() << er.asText();
@@ -675,16 +675,16 @@ void GuiWidget::viewResized()
 
 void GuiWidget::update()
 {
-    if(!d->inited)
+    if (!d->inited)
     {
         initialize();
     }
-    if(d->styleChanged)
+    if (d->styleChanged)
     {
         d->styleChanged = false;
         updateStyle();
     }
-    if(!d->attribs.testFlag(ManualOpacity))
+    if (!d->attribs.testFlag(ManualOpacity))
     {
         d->updateOpacityForDisabledWidgets();
     }
@@ -694,7 +694,7 @@ void GuiWidget::update()
 
 void GuiWidget::draw()
 {
-    if(d->inited && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
+    if (d->inited && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
     {
 #ifdef DENG2_DEBUG
         // Detect mistakes in GLState stack usage.
@@ -703,16 +703,16 @@ void GuiWidget::draw()
 
         d->drawBlurredBackground();
 
-        if(!d->attribs.testFlag(DontDrawContent))
+        if (!d->attribs.testFlag(DontDrawContent))
         {
-            if(isClipped())
+            if (isClipped())
             {
                 GLState::push().setNormalizedScissor(normalizedRect());
             }
 
             drawContent();
 
-            if(isClipped())
+            if (isClipped())
             {
                 GLState::pop();
             }
@@ -724,22 +724,22 @@ void GuiWidget::draw()
 
 bool GuiWidget::handleEvent(Event const &event)
 {
-    foreach(IEventHandler *handler, d->eventHandlers)
+    foreach (IEventHandler *handler, d->eventHandlers)
     {
-        if(handler->handleEvent(*this, event))
+        if (handler->handleEvent(*this, event))
         {
             return true;
         }
     }
 
-    if(Widget::handleEvent(event))
+    if (Widget::handleEvent(event))
     {
         return true;
     }
 
-    if(d->attribs.testFlag(EatAllMouseEvents))
+    if (d->attribs.testFlag(EatAllMouseEvents))
     {
-        if((event.type() == Event::MouseButton ||
+        if ((event.type() == Event::MouseButton ||
             event.type() == Event::MousePosition ||
             event.type() == Event::MouseWheel) && hitTest(event))
         {
@@ -751,19 +751,19 @@ bool GuiWidget::handleEvent(Event const &event)
 
 bool GuiWidget::hitTest(Vector2i const &pos) const
 {
-    if(behavior().testFlag(Unhittable))
+    if (behavior().testFlag(Unhittable))
     {
         // Can never be hit by anything.
         return false;
     }
 
     Widget const *w = Widget::parent();
-    while(w)
+    while (w)
     {
         GuiWidget const *gui = dynamic_cast<GuiWidget const *>(w);
-        if(gui)
+        if (gui)
         {
-            if(gui->behavior().testFlag(ChildHitClipping) &&
+            if (gui->behavior().testFlag(ChildHitClipping) &&
                !gui->d->hitRule.recti().contains(pos))
             {
                 // Must hit clipped parent widgets as well.
@@ -784,18 +784,18 @@ bool GuiWidget::hitTest(Event const &event) const
 GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
 {
     Children const childs = childWidgets();
-    for(int i = childs.size() - 1; i >= 0; --i)
+    for (int i = childs.size() - 1; i >= 0; --i)
     {
-        if(GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        if (GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
         {
             // Check children first.
-            if(GuiWidget const *hit = w->treeHitTest(pos))
+            if (GuiWidget const *hit = w->treeHitTest(pos))
             {
                 return hit;
             }
         }
     }
-    if(hitTest(pos))
+    if (hitTest(pos))
     {
         return this;
     }
@@ -809,26 +809,26 @@ RuleRectangle &GuiWidget::hitRule()
 
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event, MouseEvent::Button button)
 {
-    if(isDisabled()) return MouseClickUnrelated;
+    if (isDisabled()) return MouseClickUnrelated;
 
-    if(event.type() == Event::MouseButton)
+    if (event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.button() != button)
+        if (mouse.button() != button)
         {
             return MouseClickUnrelated;
         }
 
-        if(mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
+        if (mouse.state() == MouseEvent::Pressed && hitTest(mouse.pos()))
         {
             root().routeMouse(this);
             return MouseClickStarted;
         }
 
-        if(mouse.state() == MouseEvent::Released && root().isEventRouted(event.type(), this))
+        if (mouse.state() == MouseEvent::Released && root().isEventRouted(event.type(), this))
         {
             root().routeMouse(0);
-            if(hitTest(mouse.pos()))
+            if (hitTest(mouse.pos()))
             {
                 return MouseClickFinished;
             }
@@ -850,7 +850,7 @@ void GuiWidget::drawContent()
 void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
 {
     //DENG2_ASSERT(d->blurInited);
-    if(!d->blurInited) return;
+    if (!d->blurInited) return;
 
     DENG2_ASSERT(d->blurFB[1]->isReady());
 
@@ -899,13 +899,13 @@ GuiWidget const *GuiWidget::guiFind(String const &name) const
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    if(d->background.type != Background::Blurred &&
+    if (d->background.type != Background::Blurred &&
        d->background.type != Background::BlurredWithBorderGlow &&
        d->background.type != Background::SharedBlur &&
        d->background.type != Background::SharedBlurWithBorderGlow)
     {
         // Is there a solid fill?
-        if(d->background.solidFill.w > 0)
+        if (d->background.solidFill.w > 0)
         {
             verts.makeQuad(rule().recti(),
                            d->background.solidFill,
@@ -915,7 +915,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     float const thick = d->toDevicePixels(d->background.thickness);
 
-    switch(d->background.type)
+    switch (d->background.type)
     {
     case Background::GradientFrame:
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
@@ -968,7 +968,7 @@ Animation &GuiWidget::opacityAnimation()
 
 void GuiWidget::preDrawChildren()
 {
-    if(behavior().testFlag(ChildVisibilityClipping))
+    if (behavior().testFlag(ChildVisibilityClipping))
     {
         GLState::push().setNormalizedScissor(normalizedRect());
     }
@@ -976,7 +976,7 @@ void GuiWidget::preDrawChildren()
 
 void GuiWidget::postDrawChildren()
 {
-    if(behavior().testFlag(ChildVisibilityClipping))
+    if (behavior().testFlag(ChildVisibilityClipping))
     {
         GLState::pop();
     }

@@ -39,7 +39,7 @@ static inline float easeIn(TimeDelta t)
 
 static inline float easeBoth(TimeDelta t)
 {
-    if(t < .5)
+    if (t < .5)
     {
         // First half acceleretes.
         return easeIn(t * 2.0) / 2.0;
@@ -100,14 +100,14 @@ DENG2_PIMPL_NOREF(Animation)
         TimeDelta peak2 = 0;
 
         // Spring values.
-        if(style == Bounce || style == FixedBounce)
+        if (style == Bounce || style == FixedBounce)
         {
             s2 = spring * spring;
             peak = 1.f/3;
             peak2 = 2.f/3;
         }
 
-        if(now >= targetTime || span <= 0)
+        if (now >= targetTime || span <= 0)
         {
             return target;
         }
@@ -117,7 +117,7 @@ DENG2_PIMPL_NOREF(Animation)
             TimeDelta const elapsed = now - setTime - startDelay;
             TimeDelta const t = clamp(0.0, elapsed/span, 1.0);
             float const delta = target - value;
-            switch(style)
+            switch (style)
             {
             case EaseOut:
                 return value + easeOut(t) * delta;
@@ -135,11 +135,11 @@ DENG2_PIMPL_NOREF(Animation)
                 const float bounce2 = (style == Bounce? delta/s2 : (delta>=0? spring/2 : -spring/2));
                 float peakDelta = (delta + bounce1);
 
-                if(t < peak)
+                if (t < peak)
                 {
                     return value + easeOut(t/peak) * peakDelta;
                 }
-                else if(t < peak2)
+                else if (t < peak2)
                 {
                     return (value + peakDelta) - easeBoth((t - peak)/(peak2 - peak)) * (bounce1 + bounce2);
                 }
@@ -160,7 +160,7 @@ DENG2_PIMPL_NOREF(Animation)
 
     Time const &currentTime() const
     {
-        if(flags.testFlag(Paused)) return pauseTime;
+        if (flags.testFlag(Paused)) return pauseTime;
         return Animation::currentTime();
     }
 };
@@ -188,7 +188,7 @@ void Animation::setStyle(Style style, float bounce)
 {
     d->style = style;
     d->spring = bounce;
-    if(!d->spring)
+    if (!d->spring)
     {
         d->spring = DEFAULT_SPRING;
     }
@@ -210,7 +210,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
 
     Time const &now = d->currentTime();
 
-    if(transitionSpan <= 0)
+    if (transitionSpan <= 0)
     {
         d->value = d->target = v;
         d->setTime = d->targetTime = now;
@@ -259,7 +259,7 @@ void Animation::adjustTarget(float newTarget)
 TimeDelta Animation::remainingTime() const
 {
     Time const &now = d->currentTime();
-    if(now >= d->targetTime)
+    if (now >= d->targetTime)
     {
         return 0;
     }
@@ -279,7 +279,7 @@ void Animation::shift(float valueDelta)
 
 void Animation::pause()
 {
-    if(d->flags.testFlag(Paused) || done()) return;
+    if (d->flags.testFlag(Paused) || done()) return;
 
     d->pauseTime = d->currentTime();
     d->flags |= Paused;
@@ -287,7 +287,7 @@ void Animation::pause()
 
 void Animation::resume()
 {
-    if(!d->flags.testFlag(Paused)) return;
+    if (!d->flags.testFlag(Paused)) return;
 
     d->flags &= ~Paused;
 
@@ -309,7 +309,7 @@ String Animation::asText() const
 Clock const &Animation::clock()
 {
     DENG2_ASSERT(_clock != 0);
-    if(!_clock)
+    if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
@@ -357,7 +357,7 @@ void Animation::setClock(Clock const *clock)
 Time const &Animation::currentTime() // static
 {
     DENG2_ASSERT(_clock != 0);
-    if(!_clock)
+    if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
@@ -369,7 +369,7 @@ Time const &Animation::currentTime() // static
     DENG2_GUARD(timeMutex);
 
     duint32 const tc = _clock->tickCount();
-    if(latestTick != tc)
+    if (latestTick != tc)
     {
         theTime = _clock->time();
         latestTick = tc;

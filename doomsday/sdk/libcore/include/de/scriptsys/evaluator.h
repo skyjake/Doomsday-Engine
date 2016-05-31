@@ -79,7 +79,7 @@ public:
     template <typename Type>
     Type &evaluateTo(Expression const *expr) {
         Type *r = dynamic_cast<Type *>(&evaluate(expr));
-        if(!r) {
+        if (!r) {
             throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
         }
         return *r;
@@ -147,7 +147,7 @@ public:
      */
     template <typename Type>
     Type *popResultAs() {
-        if(!dynamic_cast<Type *>(&result())) {
+        if (!dynamic_cast<Type *>(&result())) {
             throw ResultTypeError("Evaluator::result<Type>",
                 "Result type is not compatible with Type");
         }

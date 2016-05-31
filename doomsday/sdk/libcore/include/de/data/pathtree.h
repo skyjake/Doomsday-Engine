@@ -433,7 +433,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
  * Example of using the iterator:
  * @code
  *  PathTreeIterator<MyTree> iter(myTree.leafNodes());
- *  while(iter.hasNext()) {
+ *  while (iter.hasNext()) {
  *      MyTree::Node &node = iter.next();
  *      // ...
  *  }
@@ -447,7 +447,7 @@ class PathTreeIterator
 public:
     PathTreeIterator(PathTree::Nodes const &nodes) : _nodes(nodes) {
         _next = _iter = _nodes.begin();
-        if(_next != _nodes.end()) ++_next;
+        if (_next != _nodes.end()) ++_next;
         _current = _nodes.end();
     }
 
@@ -464,7 +464,7 @@ public:
         _current = _iter;
         typename TreeType::Node &val = value();
         _iter = _next;
-        if(_next != _nodes.end()) ++_next;
+        if (_next != _nodes.end()) ++_next;
         return val;
     }
 
@@ -521,10 +521,10 @@ public:
                        void *context = 0) const {
         int numFoundSoFar = found.size();
         PathTreeIterator<PathTreeT> iter(leafNodes());
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             Type &node = iter.next();
-            if(predicate(node, context))
+            if (predicate(node, context))
             {
                 found << &node;
             }

@@ -48,15 +48,15 @@ DENG2_OBSERVES(Action, Triggered)
 
     ~Instance()
     {
-        if(action) action->audienceForTriggered() -= this;
+        if (action) action->audienceForTriggered() -= this;
         releaseRef(action);
     }
 
     void setState(State st)
     {
-        if(state == st) return;
+        if (state == st) return;
 
-        if(st == Hover && state == Up)
+        if (st == Hover && state == Up)
         {
             // Remember the original text color.
             originalTextColor = self.textColorId();
@@ -67,16 +67,16 @@ DENG2_OBSERVES(Action, Triggered)
         state = st;
         animating = true;
 
-        switch(st)
+        switch (st)
         {
         case Up:
             scale.setValue(1.f, .3f);
             scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             frameOpacity.setValue(.08f, .6f);
-            if(!hoverTextColor.isEmpty())
+            if (!hoverTextColor.isEmpty())
             {
                 // Restore old color.
-                switch(hoverColorMode)
+                switch (hoverColorMode)
                 {
                 case ModulateColor:
                     self.setTextModulationColorf(originalTextModColor);
@@ -90,9 +90,9 @@ DENG2_OBSERVES(Action, Triggered)
 
         case Hover:
             frameOpacity.setValue(.4f, .15f);
-            if(!hoverTextColor.isEmpty())
+            if (!hoverTextColor.isEmpty())
             {
-                switch(hoverColorMode)
+                switch (hoverColorMode)
                 {
                 case ModulateColor:
                     self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
@@ -118,18 +118,18 @@ DENG2_OBSERVES(Action, Triggered)
 
     void updateHover(Vector2i const &pos)
     {
-        if(state == Down) return;
-        if(self.isDisabled())
+        if (state == Down) return;
+        if (self.isDisabled())
         {
             setState(Up);
             return;
         }
 
-        if(self.hitTest(pos))
+        if (self.hitTest(pos))
         {
-            if(state == Up) setState(Hover);
+            if (state == Up) setState(Hover);
         }
-        else if(state == Hover)
+        else if (state == Hover)
         {
             setState(Up);
         }
@@ -151,7 +151,7 @@ DENG2_OBSERVES(Action, Triggered)
     void updateBackground()
     {
         Background bg = self.background();
-        if(bg.type == Background::GradientFrame)
+        if (bg.type == Background::GradientFrame)
         {
             bg.solidFill = style().colors().colorf(bgColorId);
             bg.color = borderColor();
@@ -161,11 +161,11 @@ DENG2_OBSERVES(Action, Triggered)
 
     void updateAnimation()
     {
-        if(animating)
+        if (animating)
         {
             updateBackground();
             self.requestGeometry();
-            if(scale.done() && frameOpacity.done())
+            if (scale.done() && frameOpacity.done())
             {
                 animating = false;
             }
@@ -207,7 +207,7 @@ bool ButtonWidget::isUsingInfoStyle() const
 void ButtonWidget::setColorTheme(ColorTheme theme)
 {
     d->colorTheme = theme;
-    if(theme == Inverted)
+    if (theme == Inverted)
     {
         d->originalTextColor = "inverted.text";
         setHoverTextColor("inverted.text", ReplaceColor);
@@ -252,14 +252,14 @@ void ButtonWidget::setBorderColor(DotPath const &borderColorId)
 
 void ButtonWidget::setAction(RefArg<Action> action)
 {
-    if(d->action)
+    if (d->action)
     {
         d->action->audienceForTriggered() -= d;
     }
 
     changeRef(d->action, action);
 
-    if(action)
+    if (action)
     {
         action->audienceForTriggered() += d;
     }
@@ -277,7 +277,7 @@ Action const *ButtonWidget::action() const
 
 void ButtonWidget::trigger()
 {
-    if(behavior().testFlag(Focusable))
+    if (behavior().testFlag(Focusable))
     {
         root().setFocus(this);
     }
@@ -289,7 +289,7 @@ void ButtonWidget::trigger()
     emit pressed();
     DENG2_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
 
-    if(held)
+    if (held)
     {
         held->trigger();
     }
@@ -302,19 +302,19 @@ ButtonWidget::State ButtonWidget::state() const
 
 bool ButtonWidget::handleEvent(Event const &event)
 {
-    if(isDisabled()) return false;
+    if (isDisabled()) return false;
 
-    if(event.isMouse())
+    if (event.isMouse())
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
 
-        if(mouse.type() == Event::MousePosition)
+        if (mouse.type() == Event::MousePosition)
         {
             d->updateHover(mouse.pos());
         }
-        else if(mouse.type() == Event::MouseButton)
+        else if (mouse.type() == Event::MouseButton)
         {
-            switch(handleMouseClick(event))
+            switch (handleMouseClick(event))
             {
             case MouseClickStarted:
                 d->setState(Down);
@@ -323,7 +323,7 @@ bool ButtonWidget::handleEvent(Event const &event)
             case MouseClickFinished:
                 d->setState(Up);
                 d->updateHover(mouse.pos());
-                if(hitTest(mouse.pos()))
+                if (hitTest(mouse.pos()))
                 {
                     trigger();
                 }
@@ -346,7 +346,7 @@ void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)
 {
     uMvp = root().projMatrix2D();
 
-    if(!fequal(d->scale, 1.f))
+    if (!fequal(d->scale, 1.f))
     {
         Rectanglef const &pos = rule().rect();
 

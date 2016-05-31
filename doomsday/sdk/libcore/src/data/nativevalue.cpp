@@ -33,9 +33,9 @@ DENG2_PIMPL_NOREF(NativeValue)
 
     void setObject(Object *obj)
     {
-        if(object) object->audienceForDeletion -= this;
+        if (object) object->audienceForDeletion -= this;
         object = obj;
-        if(object) object->audienceForDeletion += this;
+        if (object) object->audienceForDeletion += this;
     }
 
     void objectWasDeleted(Deletable *obj)

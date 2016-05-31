@@ -24,7 +24,7 @@ namespace de {
 
 String operatorToText(Operator op)
 {
-    switch(op)
+    switch (op)
     {
     case NOT:
         return "NOT";
@@ -89,7 +89,7 @@ String operatorToText(Operator op)
 
 bool leftOperandByReference(Operator op)
 {
-    switch(op)
+    switch (op)
     {
     case PLUS_ASSIGN:
     case MINUS_ASSIGN:

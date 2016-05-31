@@ -31,7 +31,7 @@ internal::CallbackTimer::CallbackTimer(std::function<void ()> func, QObject *par
 
 void internal::CallbackTimer::callbackAndDeleteLater()
 {
-    if(_func) _func();
+    if (_func) _func();
 
     // The timer will be gone.
     this->deleteLater();

@@ -47,15 +47,15 @@ struct TabFiller
         // except for tabs.
         esc.parse(text);
 
-        if(!current.isEmpty()) lines << current;
+        if (!current.isEmpty()) lines << current;
     }
 
     void handlePlainText(Rangei const &range)
     {
-        for(int i = range.start; i < range.end; ++i)
+        for (int i = range.start; i < range.end; ++i)
         {
             QChar ch = esc.originalText().at(i);
-            if(ch == '\n')
+            if (ch == '\n')
             {
                 lines << current;
                 current.clear();
@@ -71,12 +71,12 @@ struct TabFiller
     void handleEscapeSequence(Rangei const &range)
     {
         String seq = esc.originalText().substr(range);
-        if(seq.at(0) == '\t')
+        if (seq.at(0) == '\t')
         {
             current.append("\t+");
             hasTabs = true;
         }
-        else if(seq.at(0) == 'T')
+        else if (seq.at(0) == 'T')
         {
             current.append('\t');
             current.append(seq.at(1));
@@ -87,19 +87,19 @@ struct TabFiller
     int highestTabStop() const
     {
         int maxStop = 0;
-        foreach(QString const &ln, lines)
+        foreach (QString const &ln, lines)
         {
             int stop = 0;
-            for(int i = 0; i < ln.size(); ++i)
+            for (int i = 0; i < ln.size(); ++i)
             {
-                if(ln.at(i) == '\t')
+                if (ln.at(i) == '\t')
                 {
                     ++i;
-                    if(ln.at(i) == '+')
+                    if (ln.at(i) == '+')
                     {
                         stop++;
                     }
-                    else if(ln.at(i) == '`')
+                    else if (ln.at(i) == '`')
                     {
                         stop = 0;
                     }
@@ -120,27 +120,27 @@ struct TabFiller
         // The T` escape marks the place where tab stops are completely reset.
         Vector2i resetAt(-1, -1);
 
-        for(int stop = 0; stop <= maxStop; ++stop)
+        for (int stop = 0; stop <= maxStop; ++stop)
         {
             int tabWidth = 0;
 
             // Find the widest position for this tab stop by checking all lines.
-            for(int idx = 0; idx < fills.size(); ++idx)
+            for (int idx = 0; idx < fills.size(); ++idx)
             {
                 String const &ln = fills.at(idx);
                 int w = (idx > 0? minIndent : 0);
-                for(int i = 0; i < ln.size(); ++i)
+                for (int i = 0; i < ln.size(); ++i)
                 {
-                    if(ln.at(i) == '\t')
+                    if (ln.at(i) == '\t')
                     {
                         ++i;
-                        if(ln.at(i) == '`')
+                        if (ln.at(i) == '`')
                         {
                             // Any tabs following this will need re-evaluating;
                             // continue to the tab-replacing phase.
                             goto replaceTabs;
                         }
-                        if(ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
+                        if (ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
                         {
                             // This is it.
                             tabWidth = max(tabWidth, w);
@@ -157,23 +157,23 @@ struct TabFiller
 replaceTabs:
             // Fill up (replace) the tabs with spaces according to the widest found
             // position.
-            for(int idx = 0; idx < fills.size(); ++idx)
+            for (int idx = 0; idx < fills.size(); ++idx)
             {
                 QString &ln = fills[idx];
                 int w = (idx > 0? minIndent : 0);
-                for(int i = 0; i < ln.size(); ++i)
+                for (int i = 0; i < ln.size(); ++i)
                 {
-                    if(ln.at(i) == '\t')
+                    if (ln.at(i) == '\t')
                     {
                         ++i;
-                        if(ln.at(i) == '`')
+                        if (ln.at(i) == '`')
                         {
                             // This T` escape will be removed once we've checked
                             // all the tab stops preceding it.
                             resetAt = Vector2i(idx, i - 1);
                             goto nextStop;
                         }
-                        if(ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
+                        if (ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)
                         {
                             // Replace this stop with spaces.
                             ln.remove(--i, 2);
@@ -191,7 +191,7 @@ nextStop:;
         }
 
         // Now we can remove the possible T` escape.
-        if(resetAt.x >= 0)
+        if (resetAt.x >= 0)
         {
             fills[resetAt.x].remove(resetAt.y, 2);
             return false;
@@ -206,17 +206,17 @@ nextStop:;
     String filled(int minIndent) const
     {
         // The fast way out.
-        if(!hasTabs) return esc.plainText();
+        if (!hasTabs) return esc.plainText();
 
         int const maxStop = highestTabStop();
 
         QStringList fills = lines;
-        while(!fillTabs(fills, maxStop, minIndent)) {}
+        while (!fillTabs(fills, maxStop, minIndent)) {}
 
 #if 0
 #ifdef DENG2_DEBUG
         // No tabs should remain.
-        foreach(QString ln, fills) DENG2_ASSERT(!ln.contains('\t'));
+        foreach (QString ln, fills) DENG2_ASSERT(!ln.contains('\t'));
 #endif
 #endif
 
@@ -251,16 +251,16 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
     // Compare the current entry's section with the previous one
     // and if there is an opportunity to omit or abbreviate.
-    if(!_sectionOfPreviousLine.isEmpty()
+    if (!_sectionOfPreviousLine.isEmpty()
             && entry.sectionDepth() >= 1
             && _sectionDepthOfPreviousLine <= entry.sectionDepth())
     {
-        if(_sectionOfPreviousLine == section)
+        if (_sectionOfPreviousLine == section)
         {
             // Previous section is exactly the same, omit completely.
             entryFlags |= LogEntry::SectionSameAsBefore;
         }
-        else if(section.startsWith(_sectionOfPreviousLine))
+        else if (section.startsWith(_sectionOfPreviousLine))
         {
             // Previous section is partially the same, omit the common beginning.
             cutSection = _sectionOfPreviousLine.size();
@@ -269,7 +269,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         else
         {
             int prefix = section.commonPrefixLength(_sectionOfPreviousLine);
-            if(prefix > 5)
+            if (prefix > 5)
             {
                 // Some commonality with previous section, we can abbreviate
                 // those parts of the section.
@@ -293,13 +293,13 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
     // Print line by line.
     String::size_type pos = 0;
-    while(pos != String::npos)
+    while (pos != String::npos)
     {
         // Find the length of the current line.
         String::size_type next = message.indexOf('\n', pos);
         duint lineLen = (next == String::npos? message.size() - pos : next - pos);
         duint const maxLen = (pos > 0? _maxLength - wrapIndent : _maxLength);
-        if(lineLen > maxLen)
+        if (lineLen > maxLen)
         {
             // Wrap overly long lines.
             next = pos + maxLen;
@@ -307,10 +307,10 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
             // Maybe there's whitespace we can wrap at.
             int checkPos = pos + maxLen;
-            while(checkPos > pos)
+            while (checkPos > pos)
             {
                 /// @todo remove isPunct() and just check for the breaking chars
-                if(message[checkPos].isSpace() ||
+                if (message[checkPos].isSpace() ||
                         (message[checkPos].isPunct() && message[checkPos] != '.' &&
                          message[checkPos] != ','    && message[checkPos] != '-' &&
                          message[checkPos] != '\''   && message[checkPos] != '"' &&
@@ -318,7 +318,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
                          message[checkPos] != '['    && message[checkPos] != ']' &&
                          message[checkPos] != '_'))
                 {
-                    if(!message[checkPos].isSpace())
+                    if (!message[checkPos].isSpace())
                     {
                         // Include the punctuation on this line.
                         checkPos++;
@@ -339,7 +339,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         //qDebug() << "[formatting]" << wrapIndent << lineText;
 
         // For lines other than the first one, print an indentation.
-        if(pos > 0)
+        if (pos > 0)
         {
             lineText = QString(wrapIndent, QChar(' ')) + lineText;
         }
@@ -347,27 +347,27 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         // The wrap indent for this paragraph depends on the first line's content.
         bool const lineStartsWithSpace = lineText.isEmpty() || lineText[0].isSpace();
         int firstNonSpace = -1;
-        if(nextWrapIndent < 0 && !lineStartsWithSpace)
+        if (nextWrapIndent < 0 && !lineStartsWithSpace)
         {
             int w = _minimumIndent;
             int firstBracket = -1;
-            for(; w < lineText.size(); ++w)
+            for (; w < lineText.size(); ++w)
             {
                 // Indent to colons automatically (but not too deeply).
-                if(w < lineText.size() - 1 && lineText[w + 1].isSpace())
+                if (w < lineText.size() - 1 && lineText[w + 1].isSpace())
                 {
-                    if(firstBracket == -1 && lineText[w] == ']') firstBracket = w;
+                    if (firstBracket == -1 && lineText[w] == ']') firstBracket = w;
                 }
 
-                if(firstNonSpace == -1 && !lineText[w].isSpace())
+                if (firstNonSpace == -1 && !lineText[w].isSpace())
                     firstNonSpace = w;
             }
 
-            if(firstBracket > 0)
+            if (firstBracket > 0)
             {
                 nextWrapIndent = firstBracket + 2;
             }
-            else if(firstNonSpace > 0)
+            else if (firstNonSpace > 0)
             {
                 nextWrapIndent = firstNonSpace;
             }
@@ -379,7 +379,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
             //qDebug() << "min" << _minimumIndent << "nsp" << firstNonSpace
             //         << "bct" << firstBracket;
         }
-        if(firstNonSpace < 0) firstNonSpace = _minimumIndent;
+        if (firstNonSpace < 0) firstNonSpace = _minimumIndent;
 
         // Check for formatting symbols.
         lineText.replace(DENG2_ESC("R"), String(maxLen - _minimumIndent, '-'));
@@ -389,10 +389,10 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         // Advance to the next line.
         wrapIndent = nextWrapIndent;
         pos = next;
-        if(pos != String::npos && message[pos].isSpace())
+        if (pos != String::npos && message[pos].isSpace())
         {
             // At a forced newline, reset the wrap indentation.
-            if(message[pos] == '\n')
+            if (message[pos] == '\n')
             {
                 //nextWrapIndent = -1;
                 //wrapIndent = firstNonSpace;

@@ -95,7 +95,7 @@ namespace internal
     class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
         GLTarget *_target;
         void assetBeingDeleted(Asset &asset) {
-            if(&asset == _target) {
+            if (&asset == _target) {
                 LOG_AS("GLState");
                 LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
                 _target = 0;
@@ -107,11 +107,11 @@ namespace internal
             set(0);
         }
         void set(GLTarget *trg) {
-            if(_target) {
+            if (_target) {
                 _target->audienceForDeletion() -= this;
             }
             _target = trg;
-            if(_target) {
+            if (_target) {
                 _target->audienceForDeletion() += this;
             }
         }
@@ -153,7 +153,7 @@ DENG2_PIMPL(GLState)
 
     static GLenum glComp(gl::Comparison comp)
     {
-        switch(comp)
+        switch (comp)
         {
         case gl::Never:          return GL_NEVER;
         case gl::Always:         return GL_ALWAYS;
@@ -169,7 +169,7 @@ DENG2_PIMPL(GLState)
 
     static GLenum glBFunc(gl::Blend f)
     {
-        switch(f)
+        switch (f)
         {
         case gl::Zero:              return GL_ZERO;
         case gl::One:               return GL_ONE;
@@ -187,7 +187,7 @@ DENG2_PIMPL(GLState)
 
     static gl::Blend fromGlBFunc(GLenum e)
     {
-        switch(e)
+        switch (e)
         {
         case GL_ZERO: return gl::Zero;
         case GL_ONE: return gl::One;
@@ -205,10 +205,10 @@ DENG2_PIMPL(GLState)
 
     void glApply(Property prop)
     {
-        switch(prop)
+        switch (prop)
         {
         case CullMode:
-            switch(self.cull())
+            switch (self.cull())
             {
             case gl::None:
                 glDisable(GL_CULL_FACE);
@@ -225,7 +225,7 @@ DENG2_PIMPL(GLState)
             break;
 
         case DepthTest:
-            if(self.depthTest())
+            if (self.depthTest())
                 glEnable(GL_DEPTH_TEST);
             else
                 glDisable(GL_DEPTH_TEST);
@@ -236,14 +236,14 @@ DENG2_PIMPL(GLState)
             break;
 
         case DepthWrite:
-            if(self.depthWrite())
+            if (self.depthWrite())
                 glDepthMask(GL_TRUE);
             else
                 glDepthMask(GL_FALSE);
             break;
 
         case AlphaTest:
-            if(self.alphaTest())
+            if (self.alphaTest())
                 glEnable(GL_ALPHA_TEST);
             else
                 glDisable(GL_ALPHA_TEST);
@@ -254,7 +254,7 @@ DENG2_PIMPL(GLState)
             break;
 
         case Blend:
-            if(self.blend())
+            if (self.blend())
                 glEnable(GL_BLEND);
             else
                 glDisable(GL_BLEND);
@@ -268,7 +268,7 @@ DENG2_PIMPL(GLState)
             break;
 
         case BlendOp:
-            switch(self.blendOp())
+            switch (self.blendOp())
             {
             case gl::Add:
                 glBlendEquation(GL_FUNC_ADD);
@@ -298,12 +298,12 @@ DENG2_PIMPL(GLState)
         case ScissorWidth:
         case ScissorHeight:
         {
-            if(self.scissor() || self.target().hasActiveRect())
+            if (self.scissor() || self.target().hasActiveRect())
             {
                 glEnable(GL_SCISSOR_TEST);
 
                 Rectangleui origScr;
-                if(self.scissor())
+                if (self.scissor())
                 {
                     origScr = self.scissorRect();
                 }
@@ -345,12 +345,12 @@ DENG2_PIMPL(GLState)
 
     void removeRedundancies(BitField::Ids &changed)
     {
-        if(changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
+        if (changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
         {
             changed.remove(BlendFuncDest);
         }
 
-        if(changed.contains(ScissorX) || changed.contains(ScissorY) ||
+        if (changed.contains(ScissorX) || changed.contains(ScissorY) ||
            changed.contains(ScissorWidth) || changed.contains(ScissorHeight))
         {
             changed.insert(ScissorX);
@@ -359,7 +359,7 @@ DENG2_PIMPL(GLState)
             changed.remove(ScissorHeight);
         }
 
-        if(changed.contains(ViewportX) || changed.contains(ViewportY) ||
+        if (changed.contains(ViewportX) || changed.contains(ViewportY) ||
            changed.contains(ViewportWidth) || changed.contains(ViewportHeight))
         {
             changed.insert(ViewportX);
@@ -502,7 +502,7 @@ GLState &GLState::setScissor(Rectanglei const &scissorRect)
 GLState &GLState::setScissor(Rectangleui const &newScissorRect)
 {
     Rectangleui cumulative;
-    if(scissor())
+    if (scissor())
     {
         cumulative = scissorRect() & newScissorRect;
     }
@@ -601,7 +601,7 @@ gl::ColorMask GLState::colorMask() const
 
 GLTarget &GLState::target() const
 {
-    if(d->target)
+    if (d->target)
     {
         return *d->target;
     }
@@ -643,7 +643,7 @@ void GLState::apply() const
 {
     LIBGUI_ASSERT_GL_OK();
 #ifdef LIBGUI_USE_GLENTRYPOINTS
-    if(!glBindFramebuffer) return;
+    if (!glBindFramebuffer) return;
 #endif
 
     bool forceViewportAndScissor = false;
@@ -652,10 +652,10 @@ void GLState::apply() const
     GLTarget *newTarget = &target();
     DENG2_ASSERT(newTarget != 0);
 
-    if(currentTarget != newTarget)
+    if (currentTarget != newTarget)
     {
         GLTarget const *oldTarget = currentTarget;
-        if(oldTarget)
+        if (oldTarget)
         {
             oldTarget->glRelease();
         }
@@ -663,7 +663,7 @@ void GLState::apply() const
         currentTarget = newTarget;
         currentTarget.get()->glBind();
 
-        if((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
+        if ((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
         {
             // We can't trust that the viewport or scissor can remain the same
             // as the active rectangle may have changed.
@@ -675,7 +675,7 @@ void GLState::apply() const
 
     // Determine which properties have changed.
     BitField::Ids changed;
-    if(currentProps.isEmpty())
+    if (currentProps.isEmpty())
     {
         // Apply everything.
         changed = d->props.elements().ids();
@@ -685,19 +685,19 @@ void GLState::apply() const
         // Just apply the changed parts of the state.
         changed = d->props.delta(currentProps);
 
-        if(forceViewportAndScissor)
+        if (forceViewportAndScissor)
         {
             changed.insert(ViewportX);
             changed.insert(ScissorX);
         }
     }
 
-    if(!changed.isEmpty())
+    if (!changed.isEmpty())
     {
         d->removeRedundancies(changed);
 
         // Apply the changed properties.
-        foreach(BitField::Id id, changed)
+        foreach (BitField::Id id, changed)
         {
             d->glApply(Property(id));
         }
@@ -706,11 +706,11 @@ void GLState::apply() const
 
 #if 0
     // Verify that the state is correct.
-    for(int i = 0; i < d->props.elements().size(); ++i)
+    for (int i = 0; i < d->props.elements().size(); ++i)
     {
         auto const &elem = d->props.elements().at(i);
         int val;
-        switch(elem.id)
+        switch (elem.id)
         {
         case Blend:
             glGetIntegerv(GL_BLEND, &val);

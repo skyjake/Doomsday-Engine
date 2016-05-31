@@ -29,7 +29,7 @@ Id::Type Id::_generator = 1;
 
 Id::Id() : _id(_generator++)
 {
-    if(_id == None) 
+    if (_id == None) 
     {
         ++_id;
     }
@@ -37,7 +37,7 @@ Id::Id() : _id(_generator++)
 
 Id::Id(String const &text) : _id(None)
 {
-    if(text.beginsWith("{") && text.endsWith("}"))
+    if (text.beginsWith("{") && text.endsWith("}"))
     {
         _id = text.substr(1, text.size() - 2).toUInt();
     }

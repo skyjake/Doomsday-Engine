@@ -59,7 +59,7 @@ void ByteRefArray::clear()
 
 void ByteRefArray::fill(IByteArray::Byte value)
 {
-    if(!_writeBase)
+    if (!_writeBase)
     {
         /// @throw NonModifiableError  The referenced array is read-only.
         throw NonModifiableError("ByteRefArray::fill", "Array is read-only");
@@ -75,7 +75,7 @@ ByteRefArray::Size ByteRefArray::size() const
 void ByteRefArray::get(Offset at, Byte *values, Size count) const
 {
     DENG2_ASSERT(_readBase != 0);
-    if(at + count > size())
+    if (at + count > size())
     {
         /// @throw OffsetError  The accessed region was out of range.
         throw OffsetError("ByteRefArray::get", "Out of range");
@@ -85,13 +85,13 @@ void ByteRefArray::get(Offset at, Byte *values, Size count) const
 
 void ByteRefArray::set(Offset at, Byte const *values, Size count)
 {
-    if(!_writeBase)
+    if (!_writeBase)
     {
         /// @throw NonModifiableError  The referenced array is read-only.
         throw NonModifiableError("ByteRefArray::set", "Array is read-only");
     }
 
-    if(at + count > size())
+    if (at + count > size())
     {
         /// @throw OffsetError  The accessed region was out of range.
         throw OffsetError("ByteRefArray::set", "Out of range");

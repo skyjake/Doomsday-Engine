@@ -43,7 +43,7 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
         Block data(App::rootFolder().locate<File const>(args.at(0)->asText()));
         int id;
         id = QFontDatabase::addApplicationFontFromData(data);
-        if(id < 0)
+        if (id < 0)
         {
             LOG_RES_WARNING("Failed to load font:");
         }
@@ -54,7 +54,7 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
             //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_WARNING("Failed to load font:\n") << er.asText();
     }
@@ -76,7 +76,7 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     {
         NativeFont::Spec spec;
         ArrayValue const &key = i->first.value->as<ArrayValue>();
-        if(key.at(0).asText() == "italic")
+        if (key.at(0).asText() == "italic")
         {
             spec.style = NativeFont::Italic;
         }
@@ -104,7 +104,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
         // Use the Direct2D API to find out the desktop DPI factor.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
-        if(SUCCEEDED(hr))
+        if (SUCCEEDED(hr))
         {
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
@@ -146,7 +146,7 @@ void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 #endif
 
     // The "-dpi" option overrides the detected DPI factor.
-    if(auto dpi = commandLine().check("-dpi", 1))
+    if (auto dpi = commandLine().check("-dpi", 1))
     {
         d->dpiFactor = dpi.params.at(0).toDouble();
     }

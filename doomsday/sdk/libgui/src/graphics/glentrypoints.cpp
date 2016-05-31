@@ -126,7 +126,7 @@ static void reportMissingEntryPoint(char const *name)
 void getAllOpenGLEntryPoints()
 {
     static bool haveProcs = false;
-    if(haveProcs) return;
+    if (haveProcs) return;
 
 #ifdef WIN32
 #  ifdef MSVC
@@ -142,13 +142,13 @@ void getAllOpenGLEntryPoints()
 #endif
 
 #define GET_PROC(name)  GET_PROC_EXT(name); DENG2_ASSERT(name != 0); \
-                        if(!name) { reportMissingEntryPoint(#name); } // must have
+                        if (!name) { reportMissingEntryPoint(#name); } // must have
 
 #define GET_PROC_ALT(name, altName) \
     GET_PROC_EXT_ALT(name, altName); /* try the alternative name first */ \
-    if(!name) { \
+    if (!name) { \
         GET_PROC_EXT(name); DENG2_ASSERT(name != 0); \
-        if(!name) { reportMissingEntryPoint(#name); } /* must have */ \
+        if (!name) { reportMissingEntryPoint(#name); } /* must have */ \
     }
 
 #ifdef LIBGUI_FETCH_GL_1_3

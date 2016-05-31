@@ -52,7 +52,7 @@ DENG2_PIMPL(Widget)
 
     void clear()
     {
-        while(!children.isEmpty())
+        while (!children.isEmpty())
         {
             children.first()->d->parent = 0;
             Widget *w = children.takeFirst();
@@ -64,17 +64,17 @@ DENG2_PIMPL(Widget)
 
     RootWidget *findRoot() const
     {
-        if(manualRoot)
+        if (manualRoot)
         {
             return manualRoot;
         }
         Widget const *w = thisPublic;
-        while(w->parent())
+        while (w->parent())
         {
             w = w->parent();
-            if(w->d->manualRoot) return w->d->manualRoot;
+            if (w->d->manualRoot) return w->d->manualRoot;
         }
-        if(w->is<RootWidget>())
+        if (w->is<RootWidget>())
         {
             return const_cast<RootWidget *>(&w->as<RootWidget>());
         }
@@ -97,7 +97,7 @@ Widget::Widget(String const &name) : d(new Instance(this, name))
 
 Widget::~Widget()
 {
-    if(hasRoot() && root().focus() == this)
+    if (hasRoot() && root().focus() == this)
     {
         root().setFocus(0);
     }
@@ -105,7 +105,7 @@ Widget::~Widget()
     audienceForParentChange().clear();
 
     // Remove from parent automatically.
-    if(d->parent)
+    if (d->parent)
     {
         d->parent->remove(*this);
     }
@@ -130,7 +130,7 @@ String Widget::name() const
 void Widget::setName(String const &name)
 {
     // Remove old name from parent's index.
-    if(d->parent && !d->name.isEmpty())
+    if (d->parent && !d->name.isEmpty())
     {
         d->parent->d->index.remove(d->name);
     }
@@ -138,7 +138,7 @@ void Widget::setName(String const &name)
     d->name = name;
 
     // Update parent's index with new name.
-    if(d->parent && !name.isEmpty())
+    if (d->parent && !name.isEmpty())
     {
         d->parent->d->index.insert(name, this);
     }
@@ -148,10 +148,10 @@ DotPath Widget::path() const
 {
     Widget const *w = this;
     String result;
-    while(w)
+    while (w)
     {
-        if(!result.isEmpty()) result = "." + result;
-        if(!w->d->name.isEmpty())
+        if (!result.isEmpty()) result = "." + result;
+        if (!w->d->name.isEmpty())
         {
             result = w->d->name + result;
         }
@@ -171,7 +171,7 @@ bool Widget::hasRoot() const
 
 RootWidget &Widget::root() const
 {
-    if(auto *rw = d->findRoot())
+    if (auto *rw = d->findRoot())
     {
         return *rw;
     }
@@ -190,9 +190,9 @@ bool Widget::hasFocus() const
 
 bool Widget::hasFamilyBehavior(Behavior const &flags) const
 {
-    for(Widget const *w = this; w != 0; w = w->d->parent)
+    for (Widget const *w = this; w != 0; w = w->d->parent)
     {
-        if(w->d->behavior.testFlag(flags)) return true;
+        if (w->d->behavior.testFlag(flags)) return true;
     }
     return false;
 }
@@ -239,9 +239,9 @@ String Widget::focusPrev() const
 
 void Widget::setEventRouting(QList<int> const &types, Widget *routeTo)
 {
-    foreach(int type, types)
+    foreach (int type, types)
     {
-        if(routeTo)
+        if (routeTo)
         {
             d->routing.insert(type, routeTo);
         }
@@ -274,9 +274,9 @@ Widget &Widget::add(Widget *child)
 
 #ifdef _DEBUG
     // Can't have double ownership.
-    if(parent())
+    if (parent())
     {
-        if(parent()->hasRoot())
+        if (parent()->hasRoot())
         {
             DENG2_ASSERT(!parent()->root().isInTree(*child));
         }
@@ -295,7 +295,7 @@ Widget &Widget::add(Widget *child)
     d->children.append(child);
 
     // Update index.
-    if(!child->name().isEmpty())
+    if (!child->name().isEmpty())
     {
         d->index.insert(child->name(), child);
     }
@@ -332,7 +332,7 @@ Widget *Widget::remove(Widget &child)
 
     DENG2_ASSERT(!d->children.contains(&child));
 
-    if(!child.name().isEmpty())
+    if (!child.name().isEmpty())
     {
         d->index.remove(child.name());
     }
@@ -352,7 +352,7 @@ Widget *Widget::remove(Widget &child)
 
 void Widget::orphan()
 {
-    if(d->parent)
+    if (d->parent)
     {
         d->parent->remove(*this);
     }
@@ -361,10 +361,10 @@ void Widget::orphan()
 
 Widget *Widget::find(String const &name)
 {
-    if(d->name == name) return this;
+    if (d->name == name) return this;
 
     Instance::NamedChildren::const_iterator found = d->index.constFind(name);
-    if(found != d->index.constEnd())
+    if (found != d->index.constEnd())
     {
         return found.value();
     }
@@ -373,7 +373,7 @@ Widget *Widget::find(String const &name)
     DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
     {
         Widget *w = (*i)->find(name);
-        if(w) return w;
+        if (w) return w;
     }
 
     return 0;
@@ -381,11 +381,11 @@ Widget *Widget::find(String const &name)
 
 bool Widget::isInTree(Widget const &child) const
 {
-    if(this == &child) return true;
+    if (this == &child) return true;
 
     DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
     {
-        if((*i)->isInTree(child))
+        if ((*i)->isInTree(child))
         {
             return true;
         }
@@ -395,9 +395,9 @@ bool Widget::isInTree(Widget const &child) const
 
 bool Widget::hasAncestor(Widget const &ancestorOrParent) const
 {
-    for(Widget const *iter = parent(); iter; iter = iter->parent())
+    for (Widget const *iter = parent(); iter; iter = iter->parent())
     {
-        if(iter == &ancestorOrParent) return true;
+        if (iter == &ancestorOrParent) return true;
     }
     return false;
 }
@@ -409,19 +409,19 @@ Widget const *Widget::find(String const &name) const
 
 void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
 {
-    if(child == &otherChild) return; // invalid
+    if (child == &otherChild) return; // invalid
 
     int from = -1;
     int to = -1;
 
     // Note: O(n)
-    for(int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
+    for (int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
     {
-        if(d->children.at(i) == child)
+        if (d->children.at(i) == child)
         {
             from = i;
         }
-        if(d->children.at(i) == &otherChild)
+        if (d->children.at(i) == &otherChild)
         {
             to = i;
         }
@@ -431,7 +431,7 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
     DENG2_ASSERT(to != -1);
 
     d->children.removeAt(from);
-    if(to > from) to--;
+    if (to > from) to--;
 
     d->children.insert(to, child);
 }
@@ -439,7 +439,7 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
 void Widget::moveChildToLast(Widget &child)
 {
     DENG2_ASSERT(child.parent() == this);
-    if(!child.isLastChild())
+    if (!child.isLastChild())
     {
         remove(child);
         add(&child);
@@ -453,13 +453,13 @@ Widget *Widget::parent() const
 
 bool Widget::isFirstChild() const
 {
-    if(!parent()) return false;
+    if (!parent()) return false;
     return this == parent()->d->children.first();
 }
 
 bool Widget::isLastChild() const
 {
-    if(!parent()) return false;
+    if (!parent()) return false;
     return this == parent()->d->children.last();
 }
 
@@ -473,20 +473,20 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
     NotifyArgs::Result result = NotifyArgs::Continue;
     bool preNotified = false;
 
-    for(int idx = 0; idx < d->children.size(); ++idx)
+    for (int idx = 0; idx < d->children.size(); ++idx)
     {
         Widget *i = d->children.at(idx);
 
-        if(i == args.until)
+        if (i == args.until)
         {
             result = NotifyArgs::Abort;
             break;
         }
 
-        if(args.conditionFunc && !(i->*args.conditionFunc)())
+        if (args.conditionFunc && !(i->*args.conditionFunc)())
             continue; // Skip this one.
 
-        if(args.preNotifyFunc && !preNotified)
+        if (args.preNotifyFunc && !preNotified)
         {
             preNotified = true;
             (this->*args.preNotifyFunc)();
@@ -494,14 +494,14 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 
         (i->*args.notifyFunc)();
 
-        if(i != d->children.at(idx))
+        if (i != d->children.at(idx))
         {
             // The list of children was modified; let's update the current
             // index accordingly.
             int newIdx = d->children.indexOf(i);
 
             // The current widget remains in the tree.
-            if(newIdx >= 0)
+            if (newIdx >= 0)
             {
                 idx = newIdx;
                 i = d->children.at(newIdx);
@@ -515,9 +515,9 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
         }
 
         // Continue down the tree by notifying any children of this widget.
-        if(i->childCount())
+        if (i->childCount())
         {
-            if(i->notifyTree(args) == NotifyArgs::Abort)
+            if (i->notifyTree(args) == NotifyArgs::Abort)
             {
                 result = NotifyArgs::Abort;
                 break;
@@ -525,7 +525,7 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
         }
     }
 
-    if(args.postNotifyFunc && preNotified)
+    if (args.postNotifyFunc && preNotified)
     {
         (this->*args.postNotifyFunc)();
     }
@@ -541,23 +541,23 @@ Widget::NotifyArgs::Result Widget::notifySelfAndTree(NotifyArgs const &args)
 
 void Widget::notifyTreeReversed(NotifyArgs const &args)
 {
-    if(args.preNotifyFunc)
+    if (args.preNotifyFunc)
     {
         (this->*args.preNotifyFunc)();
     }
 
-    for(int i = d->children.size() - 1; i >= 0; --i)
+    for (int i = d->children.size() - 1; i >= 0; --i)
     {
         Widget *w = d->children.at(i);
 
-        if(args.conditionFunc && !(w->*args.conditionFunc)())
+        if (args.conditionFunc && !(w->*args.conditionFunc)())
             continue; // Skip this one.
 
         w->notifyTreeReversed(args);
         (w->*args.notifyFunc)();
     }
 
-    if(args.postNotifyFunc)
+    if (args.postNotifyFunc)
     {
         (this->*args.postNotifyFunc)();
     }
@@ -566,10 +566,10 @@ void Widget::notifyTreeReversed(NotifyArgs const &args)
 bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Hidden widgets do not get events.
-    if(isHidden() || d->behavior.testFlag(DisableEventDispatch)) return false;
+    if (isHidden() || d->behavior.testFlag(DisableEventDispatch)) return false;
 
     // Routing has priority.
-    if(d->routing.contains(event.type()))
+    if (d->routing.contains(event.type()))
     {
         return d->routing[event.type()]->dispatchEvent(event, memberFunc);
     }
@@ -577,29 +577,29 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
     // Focus only affects key events.
     bool const thisHasFocus = (hasRoot() && root().focus() == this && event.isKey());
 
-    if(d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
+    if (d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
     {
         return false;
     }
-    if(thisHasFocus)
+    if (thisHasFocus)
     {
         // The focused widget is offered events before dispatching to the tree.
         return false;
     }
 
-    if(!d->behavior.testFlag(DisableEventDispatchToChildren))
+    if (!d->behavior.testFlag(DisableEventDispatchToChildren))
     {
         // Tree is traversed in reverse order so that the visibly topmost
         // widgets get events first.
-        for(int i = d->children.size() - 1; i >= 0; --i)
+        for (int i = d->children.size() - 1; i >= 0; --i)
         {
             Widget *w = d->children.at(i);
             bool eaten = w->dispatchEvent(event, memberFunc);
-            if(eaten) return true;
+            if (eaten) return true;
         }
     }
 
-    if((this->*memberFunc)(event))
+    if ((this->*memberFunc)(event))
     {
         // Eaten.
         return true;
@@ -654,7 +654,7 @@ bool Widget::handleEvent(Event const &)
 
 void Widget::setFocusCycle(WidgetList const &order)
 {
-    for(int i = 0; i < order.size(); ++i)
+    for (int i = 0; i < order.size(); ++i)
     {
         Widget *a = order[i];
         Widget *b = order[(i + 1) % order.size()];

@@ -59,7 +59,7 @@ void ScopeStatement::execute(Context &context) const
     // Possible super records.
     eval.evaluate(d->superRecords.data());
     QScopedPointer<ArrayValue> newSupers(eval.popResultAs<ArrayValue>());
-    while(newSupers->size() > 0)
+    while (newSupers->size() > 0)
     {
         classRecord.addSuperRecord(newSupers->popFirst());
     }
@@ -82,7 +82,7 @@ void ScopeStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != SCOPE)
+    if (id != SCOPE)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

@@ -43,15 +43,15 @@ void linkAfter(Type *where, Type *object)
     object->next = where->next;
     object->prev = where;
 
-    if(where->next) where->next->prev = object;
+    if (where->next) where->next->prev = object;
     where->next = object;
 }
 
 template <typename Type>
 void unlink(Type *object)
 {
-    if(object->prev) object->prev->next = object->next;
-    if(object->next) object->next->prev = object->prev;
+    if (object->prev) object->prev->next = object->next;
+    if (object->next) object->next->prev = object->prev;
     object->next = object->prev = nullptr;
 }
 
@@ -104,7 +104,7 @@ DENG2_PIMPL(RowAtlasAllocator)
                 id    = allocId;
                 width = widthWithMargin;
 
-                if(remainder > 0)
+                if (remainder > 0)
                 {
                     Slot *split = new Slot(row);
                     linkAfter(this, split);
@@ -118,7 +118,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             Slot *mergeWithNext()
             {
                 DENG2_ASSERT(isEmpty());
-                if(!next || !next->isEmpty()) return nullptr;
+                if (!next || !next->isEmpty()) return nullptr;
 
                 Slot *merged = next;
                 unlink(merged);
@@ -129,11 +129,11 @@ DENG2_PIMPL(RowAtlasAllocator)
             Slot *mergeWithPrevious()
             {
                 DENG2_ASSERT(isEmpty());
-                if(!prev || !prev->isEmpty()) return nullptr;
+                if (!prev || !prev->isEmpty()) return nullptr;
 
                 Slot *merged = prev;
                 unlink(merged);
-                if(row->first == merged)
+                if (row->first == merged)
                 {
                     row->first = this;
                 }
@@ -145,7 +145,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             struct SortByWidth {
                 bool operator () (Slot const *a, Slot const *b) const {
-                    if(a->width == b->width) return a < b;
+                    if (a->width == b->width) return a < b;
                     return a->width > b->width;
                 }
             };
@@ -166,7 +166,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             {
                 // Delete all the slots.
                 Slot *next;
-                for(Slot *s = first; s; s = next)
+                for (Slot *s = first; s; s = next)
                 {
                     next = s->next;
                     delete s;
@@ -180,9 +180,9 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             bool isTallEnough(duint heightWithMargin) const
             {
-                if(height >= heightWithMargin) return true;
+                if (height >= heightWithMargin) return true;
                 // The row might be able to expand.
-                if(next && next->isEmpty())
+                if (next && next->isEmpty())
                 {
                     return (height + next->height) >= heightWithMargin;
                 }
@@ -196,7 +196,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
                 duint const remainder = height - newHeight;
                 height = newHeight;
-                if(remainder > 0)
+                if (remainder > 0)
                 {
                     Row *below = new Row;
                     linkAfter(this, below);
@@ -249,7 +249,7 @@ DENG2_PIMPL(RowAtlasAllocator)
         ~Rows()
         {
             Row *next;
-            for(Row *r = top; r; r = next)
+            for (Row *r = top; r; r = next)
             {
                 next = r->next;
                 delete r;
@@ -276,11 +276,11 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             // Look through the vacancies starting with the widest one. Statistically
             // there are more narrow empty slots than wide ones.
-            for(Slot *s : vacant)
+            for (Slot *s : vacant)
             {
-                if(s->width >= size.x + d->margin)
+                if (s->width >= size.x + d->margin)
                 {
-                    if(s->row->isTallEnough(size.y + d->margin))
+                    if (s->row->isTallEnough(size.y + d->margin))
                     {
                         best = s;
                     }
@@ -308,7 +308,7 @@ DENG2_PIMPL(RowAtlasAllocator)
         Slot *alloc(Atlas::Size const &size, Rectanglei &rect, Id::Type id = Id::None)
         {
             Slot *slot = findBestVacancy(size);
-            if(!slot) return nullptr;
+            if (!slot) return nullptr;
 
             DENG2_ASSERT(slot->isEmpty());
 
@@ -319,9 +319,9 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             // The first allocation determines the initial row height. The remainder
             // is split into a new empty row (if something remains).
-            if(slot->row->isEmpty())
+            if (slot->row->isEmpty())
             {
-                if(Row *addedRow = slot->row->split(needed.y))
+                if (Row *addedRow = slot->row->split(needed.y))
                 {
                     // Give this new row the correct width.
                     addedRow->first->x = d->margin;
@@ -332,13 +332,13 @@ DENG2_PIMPL(RowAtlasAllocator)
             }
 
             // The row may expand if needed.
-            if(slot->row->height < needed.y)
+            if (slot->row->height < needed.y)
             {
                 slot->row->grow(needed.y);
             }
 
             // Got a place, mark it down.
-            if(Slot *addedSlot = slot->allocateAndSplit(id? Id(id) : Id(), needed.x))
+            if (Slot *addedSlot = slot->allocateAndSplit(id? Id(id) : Id(), needed.x))
             {
                 addVacant(addedSlot);
             }
@@ -356,7 +356,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void mergeLeft(Slot *slot)
         {
-            if(Slot *removed = slot->mergeWithPrevious())
+            if (Slot *removed = slot->mergeWithPrevious())
             {
                 removeVacant(removed);
                 delete removed;
@@ -365,7 +365,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void mergeRight(Slot *slot)
         {
-            if(Slot *removed = slot->mergeWithNext())
+            if (Slot *removed = slot->mergeWithNext())
             {
                 removeVacant(removed);
                 delete removed;
@@ -375,11 +375,11 @@ DENG2_PIMPL(RowAtlasAllocator)
         void mergeAbove(Row *row)
         {
             DENG2_ASSERT(row->isEmpty());
-            if(row->prev && row->prev->isEmpty())
+            if (row->prev && row->prev->isEmpty())
             {
                 Row *merged = row->prev;
                 unlink(merged);
-                if(top == merged)
+                if (top == merged)
                 {
                     top = row;
                 }
@@ -394,7 +394,7 @@ DENG2_PIMPL(RowAtlasAllocator)
         void mergeBelow(Row *row)
         {
             DENG2_ASSERT(row->isEmpty());
-            if(row->next && row->next->isEmpty())
+            if (row->next && row->next->isEmpty())
             {
                 Row *merged = row->next;
                 unlink(merged);
@@ -424,7 +424,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             addVacant(slot);
 
             // Empty rows will merge together.
-            if(slot->row->isEmpty())
+            if (slot->row->isEmpty())
             {
                 mergeAbove(slot->row);
                 mergeBelow(slot->row);
@@ -448,7 +448,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         ContentSize(Id const &allocId, Vector2ui const &sz) : id(allocId), size(sz) {}
         bool operator < (ContentSize const &other) const {
-            if(size.y == other.size.y) {
+            if (size.y == other.size.y) {
                 // Secondary sorting by descending width.
                 return size.x > other.size.x;
             }
@@ -469,10 +469,10 @@ DENG2_PIMPL(RowAtlasAllocator)
         Allocations optimal;
         std::unique_ptr<Rows> revised(new Rows(this));
 
-        for(auto const &ct : descending)
+        for (auto const &ct : descending)
         {
             Rectanglei optRect;
-            if(!revised->alloc(ct.size, optRect, ct.id))
+            if (!revised->alloc(ct.size, optRect, ct.id))
             {
                 return false; // Ugh, can't actually fit these.
             }
@@ -511,7 +511,7 @@ void RowAtlasAllocator::clear()
 Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
                                Id const &knownId)
 {
-    if(auto *slot = d->rows->alloc(size, rect, knownId))
+    if (auto *slot = d->rows->alloc(size, rect, knownId))
     {
         d->allocs[slot->id] = rect;
         return slot->id;
@@ -537,7 +537,7 @@ int RowAtlasAllocator::count() const
 Atlas::Ids RowAtlasAllocator::ids() const
 {
     Atlas::Ids ids;
-    foreach(Id const &id, d->allocs.keys())
+    foreach (Id const &id, d->allocs.keys())
     {
         ids.insert(id);
     }
@@ -559,7 +559,7 @@ bool RowAtlasAllocator::optimize()
 {
     // Optimization is not attempted unless there is a significant portion of
     // unused space.
-    if(d->usage() >= OPTIMIZATION_USAGE_THRESHOLD) return false;
+    if (d->usage() >= OPTIMIZATION_USAGE_THRESHOLD) return false;
 
     return d->optimize();
 }

@@ -67,7 +67,7 @@ public:
 
     void release()
     {
-        if(_atlas)
+        if (_atlas)
         {
             _atlas->release(_id);
             _atlas = 0;
@@ -83,7 +83,7 @@ public:
 
     bool update()
     {
-        if(_needUpdate)
+        if (_needUpdate)
         {
             alloc();
             _needUpdate = false;
@@ -104,7 +104,7 @@ public:
 
     void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
     {
-        if(_atlas)
+        if (_atlas)
         {
             verts.makeQuad(rect, color(), _atlas->imageRectf(_id));
         }

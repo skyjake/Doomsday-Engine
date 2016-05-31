@@ -109,7 +109,7 @@ void AnimationRule::resume()
 String AnimationRule::description() const
 {
     String desc = "Scalar(" + _animation.asText();
-    if(_targetRule)
+    if (_targetRule)
     {
         desc += "; target: " + _targetRule->description();
     }
@@ -119,9 +119,9 @@ String AnimationRule::description() const
 void AnimationRule::update()
 {
     // When using a rule for the target, keep it updated.
-    if(_targetRule)
+    if (_targetRule)
     {
-        if(_behavior == Singleshot || !_animation.done() /*||
+        if (_behavior == Singleshot || !_animation.done() /*||
            fequal(_animation.target(), 0) || // Don't animate to/from zero.
            fequal(_targetRule->value(), 0)*/)
         {
@@ -130,7 +130,7 @@ void AnimationRule::update()
         else
         {
             // Start a new animation with the previously used transition time.
-            if(!fequal(_animation.target(), _targetRule->value()))
+            if (!fequal(_animation.target(), _targetRule->value()))
             {
                 _animation.setValue(_targetRule->value(), _animation.transitionTime());
                 _animation.clock().audienceForPriorityTimeChange += this;
@@ -145,7 +145,7 @@ void AnimationRule::timeChanged(Clock const &clock)
 {
     invalidate();
 
-    if(_animation.done())
+    if (_animation.done())
     {
         clock.audienceForPriorityTimeChange -= this;
     }

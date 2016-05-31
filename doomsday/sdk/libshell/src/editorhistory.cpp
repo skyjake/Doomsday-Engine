@@ -79,7 +79,7 @@ DENG2_PIMPL(EditorHistory)
 
     bool navigateHistory(int offset)
     {
-        if((offset < 0 && historyPos >= -offset) ||
+        if ((offset < 0 && historyPos >= -offset) ||
            (offset > 0 && historyPos < history.size() - offset))
         {
             // Save the current state.
@@ -96,7 +96,7 @@ DENG2_PIMPL(EditorHistory)
 
     void restoreTextsToOriginal()
     {
-        for(int i = 0; i < history.size(); ++i)
+        for (int i = 0; i < history.size(); ++i)
         {
             Command &cmd = history[i];
             cmd.text = cmd.original;
@@ -138,12 +138,12 @@ String EditorHistory::enter()
     d->updateCommandFromEditor();
 
     String entered = d->command().text;
-    if(!entered.isEmpty())
+    if (!entered.isEmpty())
     {
         // Update the history.
-        if(d->historyPos < d->history.size() - 1)
+        if (d->historyPos < d->history.size() - 1)
         {
-            if(d->history.last().text.isEmpty())
+            if (d->history.last().text.isEmpty())
             {
                 // Prune an empty entry in the end of history.
                 d->history.removeLast();
@@ -165,7 +165,7 @@ String EditorHistory::enter()
 
 bool EditorHistory::handleControlKey(int qtKey)
 {
-    switch(qtKey)
+    switch (qtKey)
     {
     case Qt::Key_Up:
         d->navigateHistory(-1);

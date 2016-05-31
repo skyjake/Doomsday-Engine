@@ -29,7 +29,7 @@ using namespace de;
 
 CatchStatement::CatchStatement(ArrayExpression *args) : _args(args)
 {
-    if(!_args)
+    if (!_args)
     {
         _args = new ArrayExpression;
     }
@@ -52,7 +52,7 @@ bool CatchStatement::isFinal() const
 
 bool CatchStatement::matches(Error const &err) const
 {
-    if(!_args->size())
+    if (!_args->size())
     {
         // Not specified, so catches all.
         return true;
@@ -68,7 +68,7 @@ bool CatchStatement::matches(Error const &err) const
 
 void CatchStatement::executeCatch(Context &context, Error const &err) const
 {
-    if(_args->size() > 1)
+    if (_args->size() > 1)
     {
         // Place the error message into the specified variable.
         RefValue &ref = context.evaluator().evaluateTo<RefValue>(&_args->at(1));
@@ -88,7 +88,7 @@ void CatchStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != CATCH)
+    if (id != CATCH)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

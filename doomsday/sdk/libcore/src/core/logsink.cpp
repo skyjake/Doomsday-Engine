@@ -45,7 +45,7 @@ LogSink::Mode LogSink::mode() const
 
 bool LogSink::willAccept(LogEntry const &entry) const
 {
-    switch(_mode)
+    switch (_mode)
     {
     case Enabled:
         return true;
@@ -71,7 +71,7 @@ LogSink &LogSink::operator << (LogEntry const &entry)
 {
     DENG2_ASSERT(formatter());
 
-    foreach(String line, formatter()->logEntryToTextLines(entry))
+    foreach (String line, formatter()->logEntryToTextLines(entry))
     {
         *this << line;
     }

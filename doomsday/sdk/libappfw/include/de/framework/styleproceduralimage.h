@@ -36,7 +36,7 @@ public:
     StyleProceduralImage(DotPath const &styleImageId, GuiWidget &owner, float angle = 0)
         : _owner(owner), _imageId(styleImageId), _id(Id::None), _angle(angle)
     {
-        if(_owner.hasRoot())
+        if (_owner.hasRoot())
         {
             // We can set this up right away.
             alloc();
@@ -81,7 +81,7 @@ public:
 
     void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
     {
-        if(!_id.isNone())
+        if (!_id.isNone())
         {
             Matrix4f turn = Matrix4f::rotateAround(rect.middle(), _angle);
             verts.makeQuad(rect, color(), root().atlas().imageRectf(_id), &turn);

@@ -55,7 +55,7 @@ DENG2_PIMPL(BaseWindow)
         /// subsystem passes it to window system. -jk
 
         // Pass the event onto the window system.
-        if(!WindowSystem::get().processEvent(ev))
+        if (!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);
@@ -67,14 +67,14 @@ DENG2_PIMPL(BaseWindow)
         MouseEvent ev = event;
 
         // Translate mouse coordinates for direct interaction.
-        if(ev.type() == Event::MousePosition ||
+        if (ev.type() == Event::MousePosition ||
            ev.type() == Event::MouseButton ||
            ev.type() == Event::MouseWheel)
         {
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVector2i());
         }
 
-        if(!WindowSystem::get().processEvent(ev))
+        if (!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);
@@ -118,7 +118,7 @@ bool BaseWindow::prepareForDraw()
 
 void BaseWindow::draw()
 {
-    if(!prepareForDraw())
+    if (!prepareForDraw())
     {
         // Not right now, please.
         return;
@@ -126,9 +126,9 @@ void BaseWindow::draw()
 
     // Initialize Oculus Rift if needed.
     auto &vr = DENG2_BASE_GUI_APP->vr();
-    if(vr.mode() == VRConfig::OculusRift)
+    if (vr.mode() == VRConfig::OculusRift)
     {
-        if(canvas().isGLReady())
+        if (canvas().isGLReady())
         {
             canvas().makeCurrent();
             vr.oculusRift().init();
@@ -140,7 +140,7 @@ void BaseWindow::draw()
         vr.oculusRift().deinit();
     }
 
-    if(shouldRepaintManually())
+    if (shouldRepaintManually())
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
@@ -175,7 +175,7 @@ void BaseWindow::swapBuffers()
 void BaseWindow::preDraw()
 {
     auto &vr = DENG2_BASE_GUI_APP->vr();
-    if(vr.mode() == VRConfig::OculusRift)
+    if (vr.mode() == VRConfig::OculusRift)
     {
         vr.oculusRift().beginFrame();
     }
@@ -184,7 +184,7 @@ void BaseWindow::preDraw()
 void BaseWindow::postDraw()
 {
     auto &vr = DENG2_BASE_GUI_APP->vr();
-    if(vr.mode() == VRConfig::OculusRift)
+    if (vr.mode() == VRConfig::OculusRift)
     {
         vr.oculusRift().endFrame();
     }

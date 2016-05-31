@@ -36,7 +36,7 @@ void WhileStatement::execute(Context &context) const
 {
     Evaluator &eval = context.evaluator();
 
-    if(eval.evaluate(_loopCondition).isTrue())
+    if (eval.evaluate(_loopCondition).isTrue())
     {
         // Continue and break jump points are defined within a while compound.
         context.start(_compound.firstStatement(), this, this, this);
@@ -56,7 +56,7 @@ void WhileStatement::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != WHILE)
+    if (id != WHILE)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.

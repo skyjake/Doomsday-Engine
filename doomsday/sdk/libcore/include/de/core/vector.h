@@ -71,7 +71,7 @@ inline bool numberEqual(ddouble const &a, ddouble const &b) {
 template <typename VecType>
 VecType vectorFromValue(Value const &value) {
     VecType converted;
-    for(int i = 0; i < converted.size(); ++i) {
+    for (int i = 0; i < converted.size(); ++i) {
         converted[i] = typename VecType::ValueType(value.element(i).asNumber());
     }
     return converted;
@@ -137,7 +137,7 @@ public:
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
         Type *ptrs[] = { &x, &y };
-        if(index >= 0 && index < 2)
+        if (index >= 0 && index < 2)
         {
             return *ptrs[index];
         }
@@ -197,11 +197,11 @@ public:
         return !(*this == other);
     }
     bool operator > (Vector2 const &other) const {
-        if(x == other.x) return y > other.y;
+        if (x == other.x) return y > other.y;
         return x > other.x && y > other.y;
     }
     bool operator < (Vector2 const &other) const {
-        if(x == other.x) return y < other.y;
+        if (x == other.x) return y < other.y;
         return x < other.x && y < other.y;
     }
     bool operator >= (Vector2 const &other) const {
@@ -221,7 +221,7 @@ public:
     }
     Vector2 normalize() const {
         ddouble const len = length();
-        if(len != 0) {
+        if (len != 0) {
             return *this / len;
         }
         return Vector2();
@@ -259,7 +259,7 @@ public:
         return vecAbs.x > vecAbs.y? 1 : 0;
     }
     inline void decompose(Type *array) const {
-        for(int i = 0; i < 2; ++i) array[i] = (*this)[i];
+        for (int i = 0; i < 2; ++i) array[i] = (*this)[i];
     }
     Vector2<Type> yx() const { return swizzle(*this, AxisY, AxisX); }
 
@@ -345,7 +345,7 @@ public:
         Type *ptrs[] = { &(this->Vector2<Type>::x),
                          &(this->Vector2<Type>::y),
                          &z };
-        if(index >= 0 && index < 3)
+        if (index >= 0 && index < 3)
         {
             return *ptrs[index];
         }
@@ -405,11 +405,11 @@ public:
         return !(*this == other);
     }
     bool operator > (Vector3 const &other) const {
-        if(Vector2<Type>::operator == (other)) return z > other.z;
+        if (Vector2<Type>::operator == (other)) return z > other.z;
         return Vector2<Type>::operator > (other) && z > other.z;
     }
     bool operator < (Vector3 const &other) const {
-        if(Vector2<Type>::operator == (other)) return z < other.z;
+        if (Vector2<Type>::operator == (other)) return z < other.z;
         return Vector2<Type>::operator < (other) && z < other.z;
     }
     bool operator >= (Vector3 const &other) const {
@@ -429,7 +429,7 @@ public:
     }
     Vector3 normalize() const {
         ddouble const len = length();
-        if(len != 0) {
+        if (len != 0) {
             return *this / len;
         }
         return Vector3();
@@ -468,19 +468,19 @@ public:
     int minAxis() const {
         Vector3 vecAbs = abs();
         int axis = 2;
-        if(vecAbs.y < vecAbs[axis]) axis = 1;
-        if(vecAbs.x < vecAbs[axis]) axis = 0;
+        if (vecAbs.y < vecAbs[axis]) axis = 1;
+        if (vecAbs.x < vecAbs[axis]) axis = 0;
         return axis;
     }
     int maxAxis() const {
         Vector3 vecAbs = abs();
         int axis = 0;
-        if(vecAbs.y > vecAbs[axis]) axis = 1;
-        if(vecAbs.z > vecAbs[axis]) axis = 2;
+        if (vecAbs.y > vecAbs[axis]) axis = 1;
+        if (vecAbs.z > vecAbs[axis]) axis = 2;
         return axis;
     }
     inline void decompose(Type *array) const {
-        for(int i = 0; i < 3; ++i) array[i] = (*this)[i];
+        for (int i = 0; i < 3; ++i) array[i] = (*this)[i];
     }
     Vector2<Type> xz() const { return swizzle(*this, AxisX, AxisZ); }
     Vector3<Type> xzy() const { return swizzle(*this, AxisX, AxisZ, AxisY); }
@@ -576,7 +576,7 @@ public:
                          &(this->Vector2<Type>::y),
                          &(this->Vector3<Type>::z),
                          &w };
-        if(index >= 0 && index < 4)
+        if (index >= 0 && index < 4)
         {
             return *ptrs[index];
         }
@@ -641,11 +641,11 @@ public:
         return !(*this == other);
     }
     bool operator > (Vector4 const &other) const {
-        if(Vector3<Type>::operator == (other)) return w > other.w;
+        if (Vector3<Type>::operator == (other)) return w > other.w;
         return Vector3<Type>::operator > (other) && w > other.w;
     }
     bool operator < (Vector4 const &other) const {
-        if(Vector3<Type>::operator == (other)) return w < other.w;
+        if (Vector3<Type>::operator == (other)) return w < other.w;
         return Vector3<Type>::operator < (other) && w < other.w;
     }
     bool operator >= (Vector4 const &other) const {
@@ -684,21 +684,21 @@ public:
     int minAxis() const {
         Vector4 vecAbs = abs();
         int axis = 3;
-        if(vecAbs.z < vecAbs[axis]) axis = 2;
-        if(vecAbs.y < vecAbs[axis]) axis = 1;
-        if(vecAbs.x < vecAbs[axis]) axis = 0;
+        if (vecAbs.z < vecAbs[axis]) axis = 2;
+        if (vecAbs.y < vecAbs[axis]) axis = 1;
+        if (vecAbs.x < vecAbs[axis]) axis = 0;
         return axis;
     }
     int maxAxis() const {
         Vector4 vecAbs = abs();
         int axis = 0;
-        if(vecAbs.y > vecAbs[axis]) axis = 1;
-        if(vecAbs.z > vecAbs[axis]) axis = 2;
-        if(vecAbs.w > vecAbs[axis]) axis = 3;
+        if (vecAbs.y > vecAbs[axis]) axis = 1;
+        if (vecAbs.z > vecAbs[axis]) axis = 2;
+        if (vecAbs.w > vecAbs[axis]) axis = 3;
         return axis;
     }
     inline void decompose(Type *array) const {
-        for(int i = 0; i < 4; ++i) array[i] = (*this)[i];
+        for (int i = 0; i < 4; ++i) array[i] = (*this)[i];
     }
 
     // Implements ISerializable.
@@ -715,7 +715,7 @@ public:
         return Vector4(vec3, Type(1));
     }
     Vector3<Type> toEuclidean() const {
-        if(w != 0)
+        if (w != 0)
         {
             return Vector3<Type>(Vector2<Type>::x/w, Vector2<Type>::y/w, Vector3<Type>::z/w);
         }
@@ -732,7 +732,7 @@ public:
 // Swizzling.
 template <typename Type>
 typename Type::ValueType swizzledComponent(Type const &vec, SwizzleAxis axis) {
-    if(axis >= 0) return vec[axis];
+    if (axis >= 0) return vec[axis];
     return -vec[-axis - 1];
 }
 

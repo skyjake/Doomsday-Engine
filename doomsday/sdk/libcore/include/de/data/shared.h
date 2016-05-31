@@ -50,7 +50,7 @@ public:
     }
 
     static Shared<Type> *hold() {
-        if(!instance) {
+        if (!instance) {
             instance = new Shared<Type>;
         }
         else {

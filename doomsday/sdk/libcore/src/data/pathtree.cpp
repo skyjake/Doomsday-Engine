@@ -87,18 +87,18 @@ struct PathTree::Instance
 
         // Have we already encountered this?
         PathTree::SegmentId segmentId = segments.isInterned(segment);
-        if(segmentId)
+        if (segmentId)
         {
             // The name is known. Perhaps we have.
             Path::hash_type hashKey = segments.userValue(segmentId);
-            for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
+            for (PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node *node = *i;
-                if(parent    != &node->parent()) continue;
-                if(segmentId != node->segmentId()) continue;
+                if (parent    != &node->parent()) continue;
+                if (segmentId != node->segmentId()) continue;
 
-                if(nodeType == PathTree::Branch || !(flags & PathTree::MultiLeaf))
+                if (nodeType == PathTree::Branch || !(flags & PathTree::MultiLeaf))
                     return node;
             }
         }
@@ -109,7 +109,7 @@ struct PathTree::Instance
 
         // Do we need a new identifier (and hash)?
         Path::hash_type hashKey;
-        if(!segmentId)
+        if (!segmentId)
         {
             hashKey   = segment.hash();
             segmentId = internSegmentAndUpdateIdHashMap(segment, hashKey);
@@ -139,7 +139,7 @@ struct PathTree::Instance
         bool const hasLeaf = !path.toStringRef().endsWith(QStringLiteral("/"));
 
         PathTree::Node *node = 0, *parent = &rootNode;
-        for(int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)
+        for (int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)
         {
             Path::Segment const &pn = path.segment(i);
             //qDebug() << "Add branch: " << pn.toString();
@@ -147,7 +147,7 @@ struct PathTree::Instance
             parent = node;
         }
 
-        if(hasLeaf)
+        if (hasLeaf)
         {
             Path::Segment const &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
@@ -160,14 +160,14 @@ struct PathTree::Instance
                                Path const &searchPath,
                                PathTree::ComparisonFlags compFlags)
     {
-        for(Nodes::iterator i = hash.find(hashKey);
+        for (Nodes::iterator i = hash.find(hashKey);
             i != hash.end() && i.key() == hashKey; ++i)
         {
             PathTree::Node *node = *i;
-            if(!node->comparePath(searchPath, compFlags))
+            if (!node->comparePath(searchPath, compFlags))
             {
                 // This is the leaf node we're looking for.
-                if(compFlags.testFlag(RelinquishMatching))
+                if (compFlags.testFlag(RelinquishMatching))
                 {
                     node->parent().removeChild(*node);
                     hash.erase(i);
@@ -183,25 +183,25 @@ struct PathTree::Instance
 
     PathTree::Node *find(Path const &searchPath, PathTree::ComparisonFlags compFlags)
     {
-        if(searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
+        if (searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
         {
             return &rootNode;
         }
 
         PathTree::Node *found = 0;
-        if(size)
+        if (size)
         {
             Path::hash_type hashKey = searchPath.lastSegment().hash();
 
-            if(!compFlags.testFlag(NoLeaf))
+            if (!compFlags.testFlag(NoLeaf))
             {
-                if((found = findInHash(hash.leaves, hashKey, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.leaves, hashKey, searchPath, compFlags)) != 0)
                     return found;
             }
 
-            if(!compFlags.testFlag(NoBranch))
+            if (!compFlags.testFlag(NoBranch))
             {
-                if((found = findInHash(hash.branches, hashKey, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.branches, hashKey, searchPath, compFlags)) != 0)
                     return found;
             }
         }
@@ -254,7 +254,7 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
     DENG2_GUARD(this);
 
     PathTree::Node *node = d->find(path, flags | RelinquishMatching);
-    if(node)
+    if (node)
     {
         delete node;
 
@@ -313,7 +313,7 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
     DENG2_GUARD(this);
 
     Node const *found = d->find(searchPath, flags);
-    if(!found)
+    if (!found)
     {
         /// @throw NotFoundError  The referenced node could not be found.
         throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
@@ -372,7 +372,7 @@ PathTree::Nodes const &PathTree::nodes(NodeType type) const
 
 static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar separator)
 {
-    if(ph.empty()) return;
+    if (ph.empty()) return;
 
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
@@ -386,11 +386,11 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separ
     DENG2_GUARD(this);
 
     int numFoundSoFar = found.count();
-    if(!(flags & NoBranch))
+    if (!(flags & NoBranch))
     {
         collectPathsInHash(found, d->hash.branches, separator);
     }
-    if(!(flags & NoLeaf))
+    if (!(flags & NoLeaf))
     {
         collectPathsInHash(found, d->hash.leaves, separator);
     }
@@ -404,7 +404,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 {
     int result = 0;
 
-    if(hashKey != PathTree::no_hash && hashKey >= Path::hash_range)
+    if (hashKey != PathTree::no_hash && hashKey >= Path::hash_range)
     {
         throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
     }
@@ -413,22 +413,22 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 
     // If the parent is known, we can narrow our search to all the parent's
     // children.
-    if(flags.testFlag(PathTree::MatchParent) && parent)
+    if (flags.testFlag(PathTree::MatchParent) && parent)
     {
         nodes = &parent->childNodes(type);
     }
 
     // Are we iterating nodes with a known hash?
-    if(hashKey != PathTree::no_hash)
+    if (hashKey != PathTree::no_hash)
     {
         // Yes.
         PathTree::Nodes::const_iterator i = nodes->constFind(hashKey);
-        for(; i != nodes->end() && i.key() == hashKey; ++i)
+        for (; i != nodes->end() && i.key() == hashKey; ++i)
         {
-            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
+            if (!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
-                if(result) break;
+                if (result) break;
             }
         }
     }
@@ -437,10 +437,10 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
         // No known hash -- iterate all potential nodes.
         DENG2_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
         {
-            if(!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
+            if (!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
                 result = callback(**i, parameters);
-                if(result) break;
+                if (result) break;
             }
         }
     }
@@ -453,12 +453,12 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
     DENG2_GUARD(this);
 
     int result = 0;
-    if(callback)
+    if (callback)
     {
-        if(!(flags & NoLeaf))
+        if (!(flags & NoLeaf))
             result = iteratePathsInHash(*this, hashKey, Leaf, flags, parent, callback, parameters);
 
-        if(!result && !(flags & NoBranch))
+        if (!result && !(flags & NoBranch))
             result = iteratePathsInHash(*this, hashKey, Branch, flags, parent, callback, parameters);
     }
     return result;
@@ -469,7 +469,7 @@ void PathTree::debugPrint(QChar separator) const
 {
     LOGDEV_MSG("PathTree [%p]:") << de::dintptr(this);
     FoundPaths found;
-    if(findAllPaths(found, 0, separator))
+    if (findAllPaths(found, 0, separator))
     {
         qSort(found.begin(), found.end());
 
@@ -489,7 +489,7 @@ static void printDistributionOverviewElement(int const *colWidths, char const *n
     DENG2_ASSERT(colWidths);
 
     float coverage, collision, variance;
-    if(0 != total)
+    if (0 != total)
     {
         size_t sumSqr = sum*sum;
         float mean = (signed)sum / total;
@@ -529,9 +529,9 @@ static void printDistributionOverview(PathTree *pt,
     DENG2_ASSERT(pt);
 
     size_t collisionsMax = 0, countSum = 0, countTotal = 0;
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        if(nodeBucketCollisionsMax[i] > collisionsMax)
+        if (nodeBucketCollisionsMax[i] > collisionsMax)
             collisionsMax = nodeBucketCollisionsMax[i];
         countSum += nodeCountSum[i];
         countTotal += nodeCountTotal[i];
@@ -543,10 +543,10 @@ static void printDistributionOverview(PathTree *pt,
     int colWidths[NUMCOLS];
     int *col = colWidths;
     *col = 0;
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         PathTree::NodeType type = PathTree::NodeType(i);
-        if(Str_Length(PathTreeNode::typeName(type)) > *col)
+        if (Str_Length(PathTreeNode::typeName(type)) > *col)
             *col = Str_Length(PathTreeNode::typeName(type));
     }
     col++;
@@ -566,7 +566,7 @@ static void printDistributionOverview(PathTree *pt,
     spans[1][0] = colWidths[2] + 1/*:*/ + colWidths[3];
     spans[2][0] = colWidths[4] + 1/* */ + colWidths[5] + 1/* */ + colWidths[6];
     spans[3][0] = colWidths[7] + 1/* */ + colWidths[8] + 1/* */ + colWidths[9];
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         int remainder = spans[i][0] % 2;
         spans[i][1] = remainder + (spans[i][0] /= 2);
@@ -594,9 +594,9 @@ static void printDistributionOverview(PathTree *pt,
     Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "variance");
     Con_FPrintf(CPF_LIGHT, "%-*s\n", *col++, "maxheight");
 
-    if(countTotal != 0)
+    if (countTotal != 0)
     {
-        for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+        for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
         {
             PathTree::NodeType type = PathTree::NodeType(i);
             printDistributionOverviewElement(colWidths, Str_Text(PathTreeNode::typeName(type)),
@@ -629,16 +629,16 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
     DENG2_ASSERT(pt);
 
     total = 0;
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         total += nodeCountTotal[i];
     }
-    if(0 == total) return;
+    if (0 == total) return;
 
     // Calculate minimum field widths:
     hashIndexDigits = M_NumDigits(Path::hash_range);
     col = 0;
-    if(size != 0)
+    if (size != 0)
         colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
     else
         colWidths[col] = 2/*braces*/+hashIndexDigits;
@@ -646,29 +646,29 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
     ++col;
 
     { size_t max = 0;
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        if(nodeCountTotal[i] > max)
+        if (nodeCountTotal[i] > max)
             max = nodeCountTotal[i];
     }
     colWidths[col++] = MAX_OF(M_NumDigits((int)max), 5/*total*/);
     }
 
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
     {
         PathTree::NodeType type = PathTree::NodeType(i);
         colWidths[col] = Str_Length(PathTreeNode::typeName(type));
     }
 
     // Apply formatting:
-    for(int i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
+    for (int i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
 
     Con_FPrintf(CPF_YELLOW, "Histogram (p:%p):\n", pt);
     // Print heading:
     col = 0;
     Con_Printf("%*s", colWidths[col++], "range");
     Con_Printf("%*s", colWidths[col++], "total");
-    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
+    for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         PathTree::NodeType type = PathTree::NodeType(i);
         Con_Printf("%*s", colWidths[col++], Str_Text(PathTreeNode::typeName(type)));
@@ -679,28 +679,28 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
     { Path::hash_type from = 0, n = 0, range = (size != 0? Path::hash_range / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(Path::hash_type i = 0; i < Path::hash_range; ++i)
+    for (Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
         pathtree_pathhash_t **phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
-        if(*phAdr)
-        for(node = (**phAdr)[i].head; node; node = node->next)
+        if (*phAdr)
+        for (node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PathTree::Node::Branch];
 
         phAdr = hashAddressForNodeType(pt, PT_LEAF);
-        if(*phAdr)
-        for(node = (**phAdr)[i].head; node; node = node->next)
+        if (*phAdr)
+        for (node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_LEAF];
 
-        if(size != 0 && (++n != range && i != Path::hash_range-1))
+        if (size != 0 && (++n != range && i != Path::hash_range-1))
             continue;
 
         totalForRange = 0;
-        for(j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
+        for (j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
             totalForRange += nodeCount[j];
 
         col = 0;
-        if(size != 0)
+        if (size != 0)
         {
             Str range; Str_Init(&range);
             Str_Appendf(&range, "%*u...%*u", hashIndexDigits, from, hashIndexDigits, from+n-1);
@@ -713,15 +713,15 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
         }
 
         Con_Printf("%*lu", colWidths[col++], (unsigned long) totalForRange);
-        if(0 != totalForRange)
+        if (0 != totalForRange)
         {
-            for(j = 0; j < PATHTREENODE_TYPE_COUNT; ++j, ++col)
+            for (j = 0; j < PATHTREENODE_TYPE_COUNT; ++j, ++col)
             {
-                if(0 != nodeCount[j])
+                if (0 != nodeCount[j])
                 {
                     Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCount[j]);
                 }
-                else if(j < PATHTREENODE_TYPE_COUNT-1 || 0 == size)
+                else if (j < PATHTREENODE_TYPE_COUNT-1 || 0 == size)
                 {
                     Con_Printf("%*s", colWidths[col], "");
                 }
@@ -729,14 +729,14 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
         }
 
         // Are we printing a "graphical" representation?
-        if(0 != totalForRange)
+        if (0 != totalForRange)
         {
             size_t max = MAX_OF(1, ROUND(total/(float)size/10));
             size_t scale = totalForRange / (float)max;
 
             scale = MAX_OF(scale, 1);
             Con_Printf(" ");
-            for(n = 0; n < scale; ++n)
+            for (n = 0; n < scale; ++n)
                 Con_Printf("*");
         }
 
@@ -751,16 +751,16 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
     col = 0;
     Con_Printf("%*s",  colWidths[col++], "Sum");
     Con_Printf("%*lu", colWidths[col++], (unsigned long) total);
-    if(0 != total)
+    if (0 != total)
     {
         int i;
-        for(i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
+        for (i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
         {
-            if(0 != nodeCountTotal[i])
+            if (0 != nodeCountTotal[i])
             {
                 Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCountTotal[i]);
             }
-            else if(i < PATHTREENODE_TYPE_COUNT-1)
+            else if (i < PATHTREENODE_TYPE_COUNT-1)
             {
                 Con_Printf("%*s", colWidths[col], "");
             }
@@ -793,34 +793,34 @@ void PathTree::debugPrintHashDistribution() const
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(Path::hash_type i = 0; i < Path::hash_range; ++i)
+    for (Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
         pathtree_pathhash_t **phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
         nodeCount[PathTree::Node::Branch] = 0;
-        if(*phAdr)
-        for(node = (**phAdr)[i].head; node; node = node->next)
+        if (*phAdr)
+        for (node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PathTree::Node::Branch];
 
         phAdr = hashAddressForNodeType(pt, PT_LEAF);
         nodeCount[PT_LEAF] = 0;
-        if(*phAdr)
+        if (*phAdr)
         {
             size_t chainHeight = 0;
-            for(node = (**phAdr)[i].head; node; node = node->next)
+            for (node = (**phAdr)[i].head; node; node = node->next)
             {
                 size_t height = 0;
                 PathTreeNode *other = node;
 
                 ++nodeCount[PT_LEAF];
 
-                while((other = other->parent())) { ++height; }
+                while ((other = other->parent())) { ++height; }
 
-                if(height > chainHeight)
+                if (height > chainHeight)
                     chainHeight = height;
             }
 
-            if(chainHeight > nodeBucketHeight)
+            if (chainHeight > nodeBucketHeight)
                 nodeBucketHeight = chainHeight;
         }
 
@@ -829,39 +829,39 @@ void PathTree::debugPrintHashDistribution() const
         nodeCountSum[PT_BRANCH] += nodeCount[PathTree::Node::Branch];
         nodeCountSum[PT_LEAF]   += nodeCount[PT_LEAF];
 
-        for(int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
+        for (int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
         {
-            if(nodeCount[j] != 0)
+            if (nodeCount[j] != 0)
             {
-                if(nodeCount[j] > 1)
+                if (nodeCount[j] > 1)
                     nodeBucketCollisions[j] += nodeCount[j]-1;
             }
             else
             {
                 ++(nodeBucketEmpty[j]);
             }
-            if(nodeCount[j] > nodeBucketCollisionsMax[j])
+            if (nodeCount[j] > nodeBucketCollisionsMax[j])
                 nodeBucketCollisionsMax[j] = nodeCount[j];
         }
 
         size_t max = 0;
-        for(int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
+        for (int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
         {
             max += nodeCount[j];
         }
-        if(max > nodeBucketCollisionsMaxTotal)
+        if (max > nodeBucketCollisionsMaxTotal)
             nodeBucketCollisionsMaxTotal = max;
 
-        if(totalForRange != 0)
+        if (totalForRange != 0)
         {
-            if(totalForRange > 1)
+            if (totalForRange > 1)
                 nodeBucketCollisionsTotal += totalForRange-1;
         }
         else
         {
             ++nodeBucketEmptyTotal;
         }
-        if(totalForRange > nodeBucketCollisionsMaxTotal)
+        if (totalForRange > nodeBucketCollisionsMaxTotal)
             nodeBucketCollisionsMaxTotal = totalForRange;
     }
 

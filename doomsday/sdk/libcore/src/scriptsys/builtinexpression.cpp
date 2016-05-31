@@ -60,10 +60,10 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     std::unique_ptr<Value> value(evaluator.popResult());
     ArrayValue const &args = value.get()->as<ArrayValue>();
 
-    switch(_type)
+    switch (_type)
     {
     case LENGTH:
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for LENGTH");
@@ -73,7 +73,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     case DICTIONARY_KEYS:
     case DICTIONARY_VALUES:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
@@ -82,7 +82,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
 
         DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args.at(1));
-        if(!dict)
+        if (!dict)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a dictionary");
@@ -94,14 +94,14 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case DIR:
     {
-        if(args.size() > 2)
+        if (args.size() > 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly at most one arguments for DIR");
         }
 
         Record const *ns;
-        if(args.size() == 1)
+        if (args.size() == 1)
         {
             ns = evaluator.localNamespace();
         }
@@ -113,7 +113,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         ArrayValue *keys = new ArrayValue;
         auto names = ns->members().keys();
         qSort(names);
-        for(auto const &name : names)
+        for (auto const &name : names)
         {
             *keys << new TextValue(name);
         }
@@ -123,7 +123,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     case RECORD_MEMBERS:
     case RECORD_SUBRECORDS:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
@@ -131,15 +131,15 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
 
         RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
-        if(!rec)
+        if (!rec)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a record");
         }
         DictionaryValue *dict = new DictionaryValue();
-        if(_type == RECORD_MEMBERS)
+        if (_type == RECORD_MEMBERS)
         {
-            for(Record::Members::const_iterator i = rec->dereference().members().begin();
+            for (Record::Members::const_iterator i = rec->dereference().members().begin();
                 i != rec->dereference().members().end(); ++i)
             {
                 dict->add(new TextValue(i.key()), new RefValue(i.value()));
@@ -158,16 +158,16 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case AS_RECORD:
     {
-        if(args.size() == 1)
+        if (args.size() == 1)
         {
             // No arguments: produce an owned, empty Record.
             return new RecordValue(new Record, RecordValue::OwnsRecord);
         }
-        if(args.size() == 2)
+        if (args.size() == 2)
         {
             // One argument: make an owned copy of a referenced record.
             RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
-            if(!rec)
+            if (!rec)
             {
                 throw WrongArgumentsError("BuiltInExpression::evaluate",
                                           "Argument 1 of AS_RECORD must be a record");
@@ -180,7 +180,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case AS_FILE:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for AS_FILE");
@@ -190,7 +190,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     }
 
     case AS_NUMBER:
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for AS_NUMBER");
@@ -198,7 +198,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return new NumberValue(args.at(1).asNumber());
 
     case AS_TEXT:
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for AS_TEXT");
@@ -206,15 +206,15 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return new TextValue(args.at(1).asText());
 
     case AS_TIME:
-        if(args.size() == 1)
+        if (args.size() == 1)
         {
             // Current time.
             return new TimeValue;
         }
-        if(args.size() == 2)
+        if (args.size() == 2)
         {
             Time t = Time::fromText(args.at(1).asText());
-            if(!t.isValid())
+            if (!t.isValid())
             {
                 // Maybe just a date?
                 t = Time::fromText(args.at(1).asText(), Time::ISODateOnly);
@@ -226,18 +226,18 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case TIME_DELTA:
     {
-        if(args.size() != 3)
+        if (args.size() != 3)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly two arguments for TIME_DELTA");
         }
         TimeValue const *fromTime = dynamic_cast<TimeValue const *>(&args.at(1));
-        if(!fromTime)
+        if (!fromTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 1 of TIME_DELTA must be a time");
         }
         TimeValue const *toTime = dynamic_cast<TimeValue const *>(&args.at(2));
-        if(!toTime)
+        if (!toTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 2 of TIME_DELTA must be a time");
         }
@@ -246,7 +246,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case LOCAL_NAMESPACE:
     {
-        if(args.size() != 1)
+        if (args.size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for LOCAL_NAMESPACE");
@@ -256,7 +256,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case GLOBAL_NAMESPACE:
     {
-        if(args.size() != 1)
+        if (args.size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for GLOBAL_NAMESPACE");
@@ -266,7 +266,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case SERIALIZE:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for SERIALIZE");
@@ -278,13 +278,13 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case DESERIALIZE:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for DESERIALIZE");
         }
         BlockValue const *block = dynamic_cast<BlockValue const *>(&args.at(1));
-        if(block)
+        if (block)
         {
             Reader reader(*block);
             return Value::constructFrom(reader);
@@ -292,7 +292,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         /*
         // Alternatively allow deserializing from a text value.
         TextValue const *text = dynamic_cast<TextValue const *>(&args.at(1));
-        if(text)
+        if (text)
         {
             return Value::constructFrom(Reader(Block(text->asText().toUtf8())));
         }
@@ -302,7 +302,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     }
 
     case FLOOR:
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for FLOOR");
@@ -311,7 +311,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 
     case EVALUATE:
     {
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for EVALUATE");
@@ -327,7 +327,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
     }
 
     case TYPE_OF:
-        if(args.size() != 2)
+        if (args.size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly one argument for TYPE_OF");
@@ -353,7 +353,7 @@ void BuiltInExpression::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != BUILT_IN)
+    if (id != BUILT_IN)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
@@ -398,9 +398,9 @@ static struct {
 
 BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
 {
-    for(duint i = 0; types[i].str; ++i)
+    for (duint i = 0; types[i].str; ++i)
     {
-        if(identifier == types[i].str)
+        if (identifier == types[i].str)
         {
             return types[i].type;
         }
@@ -411,7 +411,7 @@ BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
 StringList BuiltInExpression::identifiers()
 {
     StringList names;
-    for(int i = 0; types[i].str; ++i)
+    for (int i = 0; types[i].str; ++i)
     {
         names << types[i].str;
     }

@@ -34,7 +34,7 @@ DictionaryValue::DictionaryValue() : /*_iteration(0),*/ _validIteration(false)
 DictionaryValue::DictionaryValue(DictionaryValue const &other)
     : Value(), /*_iteration(0),*/ _validIteration(false)
 {
-    for(Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
+    for (Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
     {
         Value *value = i->second->duplicate();
         _elements[ValueRef(i->first.value->duplicate())] = value;
@@ -48,7 +48,7 @@ DictionaryValue::~DictionaryValue()
 
 void DictionaryValue::clear()
 {
-    for(Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         delete i->first.value;
         delete i->second;
@@ -60,7 +60,7 @@ void DictionaryValue::add(Value *key, Value *value)
 {
     Elements::iterator existing = _elements.find(ValueRef(key));
 
-    if(existing != _elements.end())
+    if (existing != _elements.end())
     {
         // Found it. Replace old value.
         delete existing->second;
@@ -79,7 +79,7 @@ void DictionaryValue::add(Value *key, Value *value)
 void DictionaryValue::remove(Value const &key)
 {
     Elements::iterator i = _elements.find(ValueRef(&key));
-    if(i != _elements.end())
+    if (i != _elements.end())
     {
         remove(i);
     }
@@ -98,7 +98,7 @@ ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
 
     DENG2_FOR_EACH_CONST(Elements, i, elements())
     {
-        if(selection == Keys)
+        if (selection == Keys)
         {
             array->add(i->first.value->duplicateAsReference());
         }
@@ -130,14 +130,14 @@ Value::Text DictionaryValue::asText() const
     bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
-    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         String const label = i->first.value->asText() + ": ";
         String content = i->second->asText();
         bool const multiline = content.contains('\n');
-        if(!isFirst)
+        if (!isFirst)
         {
-            if(hadNewline || multiline) s << "\n";
+            if (hadNewline || multiline) s << "\n";
             s << ",";
         }
         hadNewline = multiline;
@@ -162,7 +162,7 @@ dsize DictionaryValue::size() const
 Value const &DictionaryValue::element(Value const &index) const
 {
     Elements::const_iterator i = _elements.find(ValueRef(&index));
-    if(i == _elements.end())
+    if (i == _elements.end())
     {
         throw KeyError("DictionaryValue::element",
             "Key '" + index.asText() + "' does not exist in the dictionary");
@@ -178,7 +178,7 @@ Value &DictionaryValue::element(Value const &index)
 void DictionaryValue::setElement(Value const &index, Value *value)
 {
     Elements::iterator i = _elements.find(ValueRef(&index));
-    if(i == _elements.end())
+    if (i == _elements.end())
     {
         // Add it to the dictionary.
         _elements[ValueRef(index.duplicate())] = value;
@@ -203,12 +203,12 @@ Value *DictionaryValue::begin()
 
 Value *DictionaryValue::next()
 {
-    if(!_validIteration)
+    if (!_validIteration)
     {
         _iteration = _elements.begin();
         _validIteration = true;
     }
-    else if(_iteration == _elements.end())
+    else if (_iteration == _elements.end())
     {
         return 0;
     }
@@ -227,26 +227,26 @@ bool DictionaryValue::isTrue() const
 dint DictionaryValue::compare(Value const &value) const
 {
     DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
-    if(other)
+    if (other)
     {
-        if(size() < other->size())
+        if (size() < other->size())
         {
             return -1;
         }
-        if(size() > other->size())
+        if (size() > other->size())
         {
             return 1;
         }
         // If all the keys and values compare equal, these are equal.
         Elements::const_iterator mine = _elements.begin();
         Elements::const_iterator theirs = other->_elements.begin();
-        for(; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
+        for (; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
         {
             dint result = mine->first.value->compare(*theirs->first.value);
-            if(result) return result;
+            if (result) return result;
 
             result = mine->second->compare(*theirs->second);
-            if(result) return result;
+            if (result) return result;
         }
         // These appear identical.
         return 0;
@@ -257,12 +257,12 @@ dint DictionaryValue::compare(Value const &value) const
 void DictionaryValue::sum(Value const &value)
 {
     DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
-    if(!other)
+    if (!other)
     {
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
     }
 
-    for(Elements::const_iterator i = other->_elements.begin();
+    for (Elements::const_iterator i = other->_elements.begin();
         i != other->_elements.end(); ++i)
     {
         add(i->first.value->duplicate(), i->second->duplicate());
@@ -272,7 +272,7 @@ void DictionaryValue::sum(Value const &value)
 void DictionaryValue::subtract(Value const &subtrahend)
 {
     Elements::iterator i = _elements.find(ValueRef(&subtrahend));
-    if(i == _elements.end())
+    if (i == _elements.end())
     {
         throw KeyError("DictionaryValue::subtract",
             "Key '" + subtrahend.asText() + "' does not exist in the dictionary");
@@ -285,9 +285,9 @@ void DictionaryValue::operator >> (Writer &to) const
 {
     to << SerialId(DICTIONARY) << duint(_elements.size());
 
-    if(!_elements.empty())
+    if (!_elements.empty())
     {
-        for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+        for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
         {
             to << *i->first.value << *i->second;
         }
@@ -298,7 +298,7 @@ void DictionaryValue::operator << (Reader &from)
 {
     SerialId id;
     from >> id;
-    if(id != DICTIONARY)
+    if (id != DICTIONARY)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
@@ -307,7 +307,7 @@ void DictionaryValue::operator << (Reader &from)
     duint count = 0;
     from >> count;
     clear();
-    while(count--)
+    while (count--)
     {
         QScopedPointer<Value> key(Value::constructFrom(from));
         QScopedPointer<Value> value(Value::constructFrom(from));

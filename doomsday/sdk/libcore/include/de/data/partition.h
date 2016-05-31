@@ -68,10 +68,10 @@ public:
     bool isParallelTo(Partition const &other, ddouble epsilon = .99999999) const
     {
         ddouble len = direction.length();
-        if(len == 0) return true;
+        if (len == 0) return true;
 
         ddouble otherLen = other.direction.length();
-        if(otherLen == 0) return true;
+        if (otherLen == 0) return true;
 
         ddouble dot = direction.dot(other.direction) / len / otherLen;
 
@@ -96,7 +96,7 @@ public:
                          direction.y * other.direction.x;
 
         // Special case: parallel?
-        if(divsor == 0) return 0;
+        if (divsor == 0) return 0;
 
         Vector2d delta = origin - other.origin;
         return (delta.y * other.direction.x - delta.x * other.direction.y) / divsor;
