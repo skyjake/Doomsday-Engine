@@ -464,7 +464,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
+            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"));
 
     d->showOrHideMenuItems();
 
