@@ -467,8 +467,19 @@ Record &Record::add(String const &name, Record *subrecord)
     return *subrecord;
 }
 
-Record &Record::addSubrecord(String const &name)
+Record &Record::addSubrecord(String const &name, SubrecordAdditionBehavior behavior)
 {
+    if (behavior == KeepExisting)
+    {
+        if (name.isEmpty())
+        {
+            return *this;
+        }
+        if (hasSubrecord(name))
+        {
+            return subrecord(name);
+        }
+    }
     return add(name, new Record);
 }
 

@@ -308,16 +308,23 @@ public:
      */
     Record &add(String const &name, Record *subrecord);
 
+    enum SubrecordAdditionBehavior { ReplaceExisting, KeepExisting };
+
     /**
      * Adds a new empty subrecord to the record. Adds a variable named @a name and
-     * creates a new record owned by it. An existing subrecord with the same name is
-     * deleted first.
+     * creates a new record owned by it.
      *
-     * @param name  Name to use for the subrecord. This must be a valid variable name.
+     * The default behavior is to first delete an existing subrecord with the same name.
+     *
+     * Note that if @a name is empty and behavior is KeepExisting, the returned record
+     * is `*this`.
+     *
+     * @param name      Name to use for the subrecord. This must be a valid variable name.
+     * @param behavior  Addition behavior (keep or replace existing subrecord).
      *
      * @return  The new subrecord.
      */
-    Record &addSubrecord(String const &name);
+    Record &addSubrecord(String const &name, SubrecordAdditionBehavior behavior = ReplaceExisting);
 
     /**
      * Removes a subrecord from the record.
