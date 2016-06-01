@@ -18,6 +18,7 @@
 
 #include "render/stateanimator.h"
 #include "render/rendersystem.h"
+#include "render/shadervar.h"
 #include "clientapp.h"
 #include "dd_loop.h"
 
@@ -42,7 +43,6 @@ static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
 static String const DEF_RENDER        ("render");
 static String const DEF_PASS          ("pass");
 static String const DEF_VARIABLE      ("variable");
-static String const DEF_WRAP          ("wrap");
 static String const DEF_ENABLED       ("enabled");
 static String const DEF_MATERIAL      ("material");
 static String const DEF_ANIMATION     ("animation");
@@ -116,7 +116,7 @@ DENG2_PIMPL(StateAnimator)
 
         bool isRunning() const
         {
-            if(looping == Looping)
+            if (looping == Looping)
             {
                 // Looping animations are always running.
                 return true;
@@ -137,87 +137,7 @@ DENG2_PIMPL(StateAnimator)
     QHash<String, int> indexForPassName;
     QHash<Variable *, int> passForMaterialVariable;
 
-    /**
-     * Animatable variable bound to a GL uniform. The value can have 1...4 float
-     * components.
-     */
-    struct RenderVar
-    {
-        struct Value {
-            Animation anim;
-            Rangef wrap;
-
-            Value(Animation const &a) : anim(a) {}
-        };
-        QList<Value> values;
-        GLUniform *uniform = nullptr;
-
-        void init(float value)
-        {
-            values.clear();
-            values.append(Animation(value, Animation::Linear));
-        }
-
-        template <typename VecType>
-        void init(VecType const &vec)
-        {
-            values.clear();
-            for(int i = 0; i < vec.size(); ++i)
-            {
-                values.append(Animation(vec[i], Animation::Linear));
-            }
-        }
-
-        ~RenderVar()
-        {
-            delete uniform;
-        }
-
-        float currentValue(int index) const
-        {
-            auto const &val = values.at(index);
-            float v = val.anim.value();
-            if(val.wrap.isEmpty())
-            {
-                return v;
-            }
-            return val.wrap.wrap(v);
-        }
-
-        /**
-         * Copies the current values to the uniform.
-         */
-        void updateUniform()
-        {
-            switch(values.size())
-            {
-            case 1:
-                *uniform = currentValue(0);
-                break;
-
-            case 2:
-                *uniform = Vector2f(currentValue(0),
-                                    currentValue(1));
-                break;
-
-            case 3:
-                *uniform = Vector3f(currentValue(0),
-                                    currentValue(1),
-                                    currentValue(2));
-                break;
-
-            case 4:
-                *uniform = Vector4f(currentValue(0),
-                                    currentValue(1),
-                                    currentValue(2),
-                                    currentValue(3));
-                break;
-            }
-        }
-    };
-
-    typedef QHash<String, RenderVar *> RenderVars;
-    QHash<String, RenderVars> passVars;
+    QHash<String, ShaderVars *> passVars;
 
     struct AnimVar
     {
@@ -240,7 +160,7 @@ DENG2_PIMPL(StateAnimator)
         initVariables();
 
         // Set up the model drawing parameters.
-        if(!self.model().passes.isEmpty())
+        if (!self.model().passes.isEmpty())
         {
             appearance.drawPasses = &self.model().passes;
         }
@@ -269,14 +189,14 @@ DENG2_PIMPL(StateAnimator)
         // Clear lookups affected by the variables.
         indexForPassName.clear();
         appearance.passMaterial.clear();
-        if(!passCount)
+        if (!passCount)
         {
             // Material to be used with the default pass.
             appearance.passMaterial << 0;
         }
         else
         {
-            for(int i = 0; i < passCount; ++i)
+            for (int i = 0; i < passCount; ++i)
             {
                 appearance.passMaterial << 0;
             }
@@ -289,7 +209,7 @@ DENG2_PIMPL(StateAnimator)
 
         int passIndex = 0;
         auto const &def = names[VAR_ASSET].valueAsRecord();
-        if(def.has(DEF_RENDER))
+        if (def.has(DEF_RENDER))
         {
             Record const &renderBlock = def.subrecord(DEF_RENDER);
 
@@ -298,7 +218,7 @@ DENG2_PIMPL(StateAnimator)
             // Each rendering pass is represented by a subrecord, named
             // according the to the pass names.
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
-            for(String passName : ScriptedInfo::sortRecordsBySource(passes))
+            for (String passName : ScriptedInfo::sortRecordsBySource(passes))
             {
                 Record const &passDef = *passes[passName];
 
@@ -313,10 +233,10 @@ DENG2_PIMPL(StateAnimator)
             }
         }
 
-        if(def.has(DEF_ANIMATION))
+        if (def.has(DEF_ANIMATION))
         {
             auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(DEF_ANIMATION));
-            for(String varName : varDefs.keys())
+            for (String varName : varDefs.keys())
             {
                 initAnimationVariable(varName, *varDefs[varName]);
             }
@@ -341,12 +261,21 @@ DENG2_PIMPL(StateAnimator)
 
         /// @todo Should observe if the variable above is deleted unexpectedly. -jk
 
+        ShaderVars *vars = passVars[passName];
+        if (!vars)
+        {
+            vars = new ShaderVars;
+            passVars.insert(passName, vars);
+        }
+
         // Create the animated variables to be used with the shader based
         // on the pass definitions.
-        auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
-        for(auto i = vars.constBegin(); i != vars.constEnd(); ++i)
+        auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
+        for (auto i = varDefs.constBegin(); i != varDefs.constEnd(); ++i)
         {
-            initRenderVariable(i.key(), *i.value(), passName);
+            vars->initVariableFromDefinition(
+                        i.key(), *i.value(),
+                        names.addSubrecord(passName, Record::KeepExisting));
         }
     }
 
@@ -370,91 +299,11 @@ DENG2_PIMPL(StateAnimator)
             // animation sequences so that the variables are applied.
             self.setFlags(AlwaysTransformNodes);
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_GL_WARNING("%s: %s") << ScriptedInfo::sourceLocation(variableDef)
                                      << er.asText();
         }
-    }
-
-    void initRenderVariable(String const &variableName,
-                            Record const &valueDef,
-                            String const &passName)
-    {
-        static char const *componentNames[] = { "x", "y", "z", "w" };
-
-        GLUniform::Type uniformType = GLUniform::Float;
-        std::unique_ptr<RenderVar> var(new RenderVar);
-
-        // Initialize the appropriate type of value animation and uniform,
-        // depending on the "value" key in the definition.
-        Value const &initialValue = valueDef.get("value");
-        if(auto const *array = initialValue.maybeAs<ArrayValue>())
-        {
-            switch(array->size())
-            {
-            default:
-                throw DefinitionError("StateAnimator::initVariables",
-                                      QString("%1: Invalid initial value size (%2) for render.variable")
-                                      .arg(ScriptedInfo::sourceLocation(valueDef))
-                                      .arg(array->size()));
-
-            case 2:
-                var->init(vectorFromValue<Vector2f>(*array));
-                uniformType = GLUniform::Vec2;
-                break;
-
-            case 3:
-                var->init(vectorFromValue<Vector3f>(*array));
-                uniformType = GLUniform::Vec3;
-                break;
-
-            case 4:
-                var->init(vectorFromValue<Vector4f>(*array));
-                uniformType = GLUniform::Vec4;
-                break;
-            }
-
-            // Expose the components individually in the namespace for scripts.
-            for(int k = 0; k < var->values.size(); ++k)
-            {
-                addBinding(passName.concatenateMember(String(variableName)
-                                                      .concatenateMember(componentNames[k])),
-                           var->values[k].anim);
-            }
-        }
-        else
-        {
-            var->init(float(initialValue.asNumber()));
-
-            // Expose in the namespace for scripts.
-            addBinding(passName.concatenateMember(variableName),
-                       var->values[0].anim);
-        }
-
-        // Optional range wrapping.
-        if(valueDef.hasSubrecord(DEF_WRAP))
-        {
-            for(int k = 0; k < 4; ++k)
-            {
-                String const varName = QString("%1.%2").arg(DEF_WRAP).arg(componentNames[k]);
-                if(valueDef.has(varName))
-                {
-                    var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
-                }
-            }
-        }
-        else if(valueDef.has(DEF_WRAP))
-        {
-            var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
-        }
-
-        // Uniform to be passed to the shader.
-        var->uniform = new GLUniform(variableName.toLatin1(), uniformType);
-
-        // Compose a lookup for quickly finding the variables of each pass
-        // (by pass name).
-        passVars[passName][variableName] = var.release();
     }
 
     void addBinding(String const &varName, Animation &anim)
@@ -469,10 +318,7 @@ DENG2_PIMPL(StateAnimator)
         appearance.passMaterial.clear();
 
         // Shader variables.
-        for(RenderVars const &vars : passVars.values())
-        {
-            qDeleteAll(vars.values());
-        }
+        qDeleteAll(passVars.values());
         passVars.clear();
 
         // Animator variables.
@@ -483,10 +329,10 @@ DENG2_PIMPL(StateAnimator)
     Variable const &materialVariableForPass(duint passIndex) const
     {
         auto const &model = self.model();
-        if(!model.passes.isEmpty())
+        if (!model.passes.isEmpty())
         {
             String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
-            if(names.has(varName))
+            if (names.has(varName))
             {
                 return names[varName];
             }
@@ -496,7 +342,7 @@ DENG2_PIMPL(StateAnimator)
 
     void updatePassMaterials()
     {
-        for(int i = 0; i < appearance.passMaterial.size(); ++i)
+        for (int i = 0; i < appearance.passMaterial.size(); ++i)
         {
             appearance.passMaterial[i] = materialForUserProvidedName(
                         materialVariableForPass(i).value().asText());
@@ -505,11 +351,11 @@ DENG2_PIMPL(StateAnimator)
 
     void variableValueChanged(Variable &var, Value const &newValue)
     {
-        if(var.name() == VAR_MATERIAL)
+        if (var.name() == VAR_MATERIAL)
         {
             // Update the corresponding pass material.
             int passIndex = passForMaterialVariable[&var];
-            if(passIndex < 0)
+            if (passIndex < 0)
             {
                 updatePassMaterials();
             }
@@ -539,7 +385,7 @@ DENG2_PIMPL(StateAnimator)
     {
        auto const &model = self.model();
        auto const matIndex = model.materialIndexForName.constFind(materialName);
-       if(matIndex != model.materialIndexForName.constEnd())
+       if (matIndex != model.materialIndexForName.constEnd())
        {
            return matIndex.value();
        }
@@ -555,7 +401,7 @@ DENG2_PIMPL(StateAnimator)
         });
 
         appearance.passMask.fill(false);
-        for(String name : enabledPasses.keys())
+        for (String name : enabledPasses.keys())
         {
             DENG2_ASSERT(indexForPassName.contains(name));
             appearance.passMask.setBit(indexForPassName[name], true);
@@ -600,15 +446,15 @@ DENG2_PIMPL(StateAnimator)
         auto const &modelRenderer = ClientApp::renderSystem().modelRenderer();
 
         auto const vars = passVars.constFind(passName);
-        if(vars != passVars.constEnd())
+        if (vars != passVars.constEnd())
         {
-            for(auto i : vars.value())
+            for (auto i : vars.value()->members)
             {
-                if(!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
+                if (!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
                                         *i->uniform))
                     continue;
 
-                if(operation == Bind)
+                if (operation == Bind)
                 {
                     i->updateUniform();
                     program.bind(*i->uniform);
@@ -632,7 +478,7 @@ DENG2_PIMPL(StateAnimator)
     {
         Sequence &anim = self.start(spec.animId, spec.node).as<Sequence>();
         anim.apply(spec);
-        if(anim.timeline)
+        if (anim.timeline)
         {
             anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
         }
@@ -657,7 +503,7 @@ void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
     d->names.add(varName).set(new RecordValue(names));
 
     // Call the onInit() function if there is one.
-    if(d->names.has(QStringLiteral("ASSET.onInit")))
+    if (d->names.has(QStringLiteral("ASSET.onInit")))
     {
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
@@ -673,23 +519,23 @@ void StateAnimator::triggerByState(String const &stateName)
 
     // No animations can be triggered if none are available.
     auto const *stateAnims = &model().animations;
-    if(!stateAnims) return;
+    if (!stateAnims) return;
 
     auto found = stateAnims->constFind(stateName);
-    if(found == stateAnims->constEnd()) return;
+    if (found == stateAnims->constEnd()) return;
 
     LOG_AS("StateAnimator");
     //LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
 
-    foreach(Model::AnimSequence const &seq, found.value())
+    foreach (Model::AnimSequence const &seq, found.value())
     {
         try
         {
             // Test for the probability of this animation.
             float chance = seq.def->getf(DEF_PROBABILITY, 1.f);
-            if(frand() > chance) continue;
+            if (frand() > chance) continue;
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.
@@ -697,22 +543,22 @@ void StateAnimator::triggerByState(String const &stateName)
             int animId = d->animationId(seq.name);
 
             bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
-            if(!alwaysTrigger)
+            if (!alwaysTrigger)
             {
                 // Do not restart running sequences.
                 /// @todo Only restart the animation if the current state is not the expected
                 /// one (checking the state cycle).
-                if(isRunning(animId, node)) continue;
+                if (isRunning(animId, node)) continue;
             }
 
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
             // Look up the timeline.
             Scheduler *timeline = seq.timeline;
-            if(!seq.sharedTimeline.isEmpty())
+            if (!seq.sharedTimeline.isEmpty())
             {
                 auto tl = model().timelines.constFind(seq.sharedTimeline);
-                if(tl != model().timelines.constEnd())
+                if (tl != model().timelines.constEnd())
                 {
                     timeline = tl.value();
                 }
@@ -726,9 +572,9 @@ void StateAnimator::triggerByState(String const &stateName)
                           timeline);
 
             // Do not override higher-priority animations.
-            if(auto *existing = find(node)->maybeAs<Sequence>())
+            if (auto *existing = find(node)->maybeAs<Sequence>())
             {
-                if(priority < existing->priority)
+                if (priority < existing->priority)
                 {
                     // This will be started once the higher-priority animation
                     // has finished.
@@ -742,7 +588,7 @@ void StateAnimator::triggerByState(String const &stateName)
             // Start a new sequence.
             d->start(anim);
         }
-        catch(ModelDrawable::Animator::InvalidError const &er)
+        catch (ModelDrawable::Animator::InvalidError const &er)
         {
             LOGDEV_GL_WARNING("Failed to start animation \"%s\": %s")
                     << seq.name << er.asText();
@@ -762,7 +608,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-    if(d->names.has(QStringLiteral("ASSET.onDamage")))
+    if (d->names.has(QStringLiteral("ASSET.onDamage")))
     {
         /*
          * We need to provide the StateAnimator instance to the script as an
@@ -795,17 +641,17 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
     bool retrigger = false;
 
     // Update animation variables values.
-    for(auto *var : d->animVars.values())
+    for (auto *var : d->animVars.values())
     {
         var->angle.shift(var->speed * elapsed);
 
         // Keep the angle in the 0..360 range.
         float varAngle = var->angle;
-        if(varAngle > 360)    var->angle.shift(-360);
-        else if(varAngle < 0) var->angle.shift(+360);
+        if (varAngle > 360)    var->angle.shift(-360);
+        else if (varAngle < 0) var->angle.shift(+360);
     }
 
-    for(int i = 0; i < count(); ++i)
+    for (int i = 0; i < count(); ++i)
     {
         auto &anim = at(i).as<Sequence>();
         ddouble factor = 1.0;
@@ -815,21 +661,21 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
         TimeDelta animElapsed = factor * elapsed;
         anim.time += animElapsed;
 
-        if(anim.looping == Sequence::NotLooping)
+        if (anim.looping == Sequence::NotLooping)
         {
             // Clamp at the end.
             anim.time = min(anim.time, anim.duration);
         }
 
-        if(anim.looping == Sequence::Looping)
+        if (anim.looping == Sequence::Looping)
         {
             // When a looping animation has completed a loop, it may still
             // trigger a variant.
-            if(anim.atEnd())
+            if (anim.atEnd())
             {
                 retrigger = true;
                 anim.time -= anim.duration; // Trigger only once per loop.
-                if(anim.clock)
+                if (anim.clock)
                 {
                     anim.clock->rewind(anim.time);
                 }
@@ -837,27 +683,27 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
         }
 
         // Scheduled events.
-        if(anim.clock)
+        if (anim.clock)
         {
             anim.clock->advanceTime(animElapsed);
         }
 
         // Stop finished animations.
-        if(!anim.isRunning())
+        if (!anim.isRunning())
         {
             String const node = anim.node;
 
             // Keep the last animation intact so there's something to update the
             // model state with (ModelDrawable being shared with multiple objects,
             // so each animator needs to retain its bone transformations).
-            if(count() > 1)
+            if (count() > 1)
             {
                 stop(i--); // `anim` gets deleted
             }
 
             // Start a previously triggered pending animation.
             auto &pending = d->pendingAnimForNode;
-            if(pending.contains(node))
+            if (pending.contains(node))
             {
                 LOG_GL_VERBOSE("Starting pending animation %i") << pending[node].animId;
                 d->start(pending[node]);
@@ -866,7 +712,7 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
         }
     }
 
-    if(retrigger && !d->currentStateName.isEmpty())
+    if (retrigger && !d->currentStateName.isEmpty())
     {
         triggerByState(d->currentStateName);
     }
@@ -882,7 +728,7 @@ ddouble StateAnimator::currentTime(int index) const
 Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
 {
     auto found = d->animVars.constFind(nodeName);
-    if(found != d->animVars.constEnd())
+    if (found != d->animVars.constEnd())
     {
         Instance::AnimVar const &var = *found.value();
         return Vector4f(var.axis, var.angle);

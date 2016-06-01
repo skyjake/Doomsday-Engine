@@ -91,7 +91,7 @@ DENG2_PIMPL(ModelRenderer)
         ~Programs()
         {
 #ifdef DENG2_DEBUG
-            for(auto i = constBegin(); i != constEnd(); ++i)
+            for (auto i = constBegin(); i != constEnd(); ++i)
             {
                 qDebug() << i.key() << i.value();
                 DENG2_ASSERT(i.value());
@@ -171,7 +171,7 @@ DENG2_PIMPL(ModelRenderer)
                 << (event == filesys::AssetObserver::Added? "available" :
                                                             "unavailable");
 
-        if(event == filesys::AssetObserver::Added)
+        if (event == filesys::AssetObserver::Added)
         {
             bank.add(identifier, App::asset(identifier).absolutePath("path"));
 
@@ -183,16 +183,16 @@ DENG2_PIMPL(ModelRenderer)
             auto const &model = bank.model<render::Model const>(identifier);
 
             // Unload programs used by the various rendering passes.
-            for(auto const &pass : model.passes)
+            for (auto const &pass : model.passes)
             {
                 DENG2_ASSERT(pass.program);
                 unloadProgram(*static_cast<Program *>(pass.program));
             }
 
             // Alternatively, the entire model may be using a single program.
-            if(model.passes.isEmpty())
+            if (model.passes.isEmpty())
             {
-                if(model.program())
+                if (model.program())
                 {
                     unloadProgram(*static_cast<Program *>(model.program()));
                 }
@@ -216,7 +216,7 @@ DENG2_PIMPL(ModelRenderer)
      */
     Program *loadProgram(String const &name)
     {
-        if(programs.contains(name))
+        if (programs.contains(name))
         {
             programs[name]->useCount++;
             return programs[name];
@@ -242,7 +242,7 @@ DENG2_PIMPL(ModelRenderer)
                 << uFogColor;
 
         // Built-in special uniforms.
-        if(prog->def->hasMember(VAR_U_MAP_TIME))
+        if (prog->def->hasMember(VAR_U_MAP_TIME))
         {
             *prog << ClientApp::renderSystem().uMapTime();
         }
@@ -259,7 +259,7 @@ DENG2_PIMPL(ModelRenderer)
      */
     void unloadProgram(Program &program)
     {
-        if(--program.useCount == 0)
+        if (--program.useCount == 0)
         {
             String name = program.shaderName;
             LOG_RES_VERBOSE("Model shader \"%s\" unloaded (no more users)") << name;
@@ -288,9 +288,9 @@ DENG2_PIMPL(ModelRenderer)
             { "LessOrEqual",    gl::LessOrEqual },
             { "GreaterOrEqual", gl::GreaterOrEqual }
         };
-        for(auto const &p : cs)
+        for (auto const &p : cs)
         {
-            if(text == p.txt)
+            if (text == p.txt)
             {
                 return p.comp;
             }
@@ -313,9 +313,9 @@ DENG2_PIMPL(ModelRenderer)
             { "DestAlpha",         gl::DestAlpha },
             { "OneMinusDestAlpha", gl::OneMinusDestAlpha }
         };
-        for(auto const &p : bs)
+        for (auto const &p : bs)
         {
-            if(text == p.txt)
+            if (text == p.txt)
             {
                 return p.blend;
             }
@@ -326,9 +326,9 @@ DENG2_PIMPL(ModelRenderer)
 
     static gl::BlendOp textToBlendOp(String const &text)
     {
-        if(text == "Add") return gl::Add;
-        if(text == "Subtract") return gl::Subtract;
-        if(text == "ReverseSubtract") return gl::ReverseSubtract;
+        if (text == "Add") return gl::Add;
+        if (text == "Subtract") return gl::Subtract;
+        if (text == "ReverseSubtract") return gl::ReverseSubtract;
         throw DefinitionError("ModelRenderer::textToBlendOp",
                               QString("Invalid blending operation \"%1\"").arg(text));
     }
@@ -346,21 +346,21 @@ DENG2_PIMPL(ModelRenderer)
     void composeTextureMappings(ModelDrawable::Mapping &mapping,
                                 Record const &shaderDef)
     {
-        if(shaderDef.has(DEF_TEXTURE_MAPPING))
+        if (shaderDef.has(DEF_TEXTURE_MAPPING))
         {
             ArrayValue const &array = shaderDef.geta(DEF_TEXTURE_MAPPING);
-            for(int i = 0; i < int(array.size()); ++i)
+            for (int i = 0; i < int(array.size()); ++i)
             {
                 ModelDrawable::TextureMap map = ModelDrawable::textToTextureMap(array.element(i).asText());
-                if(i == mapping.size())
+                if (i == mapping.size())
                 {
                     mapping << map;
                 }
-                else if(mapping.at(i) != map)
+                else if (mapping.at(i) != map)
                 {
                     // Must match what the shader expects to receive.
                     QStringList list;
-                    for(auto map : mapping) list << ModelDrawable::textureMapToText(map);
+                    for (auto map : mapping) list << ModelDrawable::textureMapToText(map);
                     throw TextureMappingError("ModelRenderer::composeTextureMappings",
                                               QString("Texture mapping <%1> is incompatible with shader %2")
                                                   .arg(list.join(", "))
@@ -388,11 +388,11 @@ DENG2_PIMPL(ModelRenderer)
         // Determine the coordinate system of the model.
         Vector3f front(0, 0, 1);
         Vector3f up   (0, 1, 0);
-        if(asset.has(DEF_FRONT_VECTOR))
+        if (asset.has(DEF_FRONT_VECTOR))
         {
             front = Vector3f(asset.geta(DEF_FRONT_VECTOR));
         }
-        if(asset.has(DEF_UP_VECTOR))
+        if (asset.has(DEF_UP_VECTOR))
         {
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
@@ -401,7 +401,7 @@ DENG2_PIMPL(ModelRenderer)
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
         model.transformation = Matrix4f::frame(front, up, !mirror);
-        if(asset.has(DEF_OFFSET))
+        if (asset.has(DEF_OFFSET))
         {
             model.offset = vectorFromValue<Vector3f>(asset.get(DEF_OFFSET));
         }
@@ -409,15 +409,15 @@ DENG2_PIMPL(ModelRenderer)
 
         // Custom texture maps and additional materials.
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
-        if(asset.has(DEF_MATERIAL))
+        if (asset.has(DEF_MATERIAL))
         {
             asset.subrecord(DEF_MATERIAL).forSubrecords(
                 [this, &model] (String const &blockName, Record const &block)
             {
-                if(ScriptedInfo::blockType(block) == DEF_VARIANT)
+                if (ScriptedInfo::blockType(block) == DEF_VARIANT)
                 {
                     String const materialName = blockName;
-                    if(!model.materialIndexForName.contains(materialName))
+                    if (!model.materialIndexForName.contains(materialName))
                     {
                         // Add a new material.
                         model.materialIndexForName.insert(materialName, model.addMaterial());
@@ -439,14 +439,14 @@ DENG2_PIMPL(ModelRenderer)
         }
 
         // Set up the animation sequences for states.
-        if(asset.has(DEF_ANIMATION))
+        if (asset.has(DEF_ANIMATION))
         {
             auto states = ScriptedInfo::subrecordsOfType(DEF_STATE, asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
                 // Sequences are added in source order.
                 auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
-                for(String key : ScriptedInfo::sortRecordsBySource(seqs))
+                for (String key : ScriptedInfo::sortRecordsBySource(seqs))
                 {
                     model.animations[state.key()] << render::Model::AnimSequence(key, *seqs[key]);
                 }
@@ -466,13 +466,13 @@ DENG2_PIMPL(ModelRenderer)
         String modelShader = SHADER_DEFAULT;
 
         // Rendering passes.
-        if(asset.has(DEF_RENDER))
+        if (asset.has(DEF_RENDER))
         {
             Record const &renderBlock = asset.subrecord(DEF_RENDER);
             modelShader = renderBlock.gets(DEF_SHADER, modelShader);
 
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
-            for(String key : ScriptedInfo::sortRecordsBySource(passes))
+            for (String key : ScriptedInfo::sortRecordsBySource(passes))
             {
                 try
                 {
@@ -482,7 +482,7 @@ DENG2_PIMPL(ModelRenderer)
                     pass.name = key;
 
                     pass.meshes.resize(model.meshCount());
-                    for(Value const *value : def.geta(DEF_MESHES).elements())
+                    for (Value const *value : def.geta(DEF_MESHES).elements())
                     {
                         int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
                             return model.meshId(text);
@@ -491,7 +491,7 @@ DENG2_PIMPL(ModelRenderer)
                     }
 
                     // GL state parameters.
-                    if(def.has(DEF_BLENDFUNC))
+                    if (def.has(DEF_BLENDFUNC))
                     {
                         ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC);
                         pass.blendFunc.first  = textToBlendFunc(blendDef.at(0).asText());
@@ -508,7 +508,7 @@ DENG2_PIMPL(ModelRenderer)
 
                     model.passes.append(pass);
                 }
-                catch(Error const &er)
+                catch (Error const &er)
                 {
                     LOG_RES_ERROR("Rendering pass \"%s\" in asset \"%s\" is invalid: %s")
                             << key << path << er.asText();
@@ -519,7 +519,7 @@ DENG2_PIMPL(ModelRenderer)
         // Rendering passes will always have programs associated with them.
         // However, if there are no passes, we need to set up the default
         // shader for the entire model.
-        if(model.passes.isEmpty())
+        if (model.passes.isEmpty())
         {
             try
             {
@@ -527,7 +527,7 @@ DENG2_PIMPL(ModelRenderer)
                 composeTextureMappings(textureMapping,
                                        ClientApp::shaders()[modelShader]);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_ERROR("Asset \"%s\" cannot use shader \"%s\": %s")
                         << path << modelShader << er.asText();
@@ -568,7 +568,7 @@ DENG2_PIMPL(ModelRenderer)
                               String const &textureName,
                               ModelDrawable::TextureMap map)
     {
-        if(matDef.has(textureName))
+        if (matDef.has(textureName))
         {
             String const path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
             model.setTexturePath(mesh, map, path);
@@ -585,7 +585,7 @@ DENG2_PIMPL(ModelRenderer)
                                                      [this, excludeSourceMobj]
                                                      (VectorLightData const &vlight)
         {
-            if(excludeSourceMobj && vlight.sourceMobj == excludeSourceMobj)
+            if (excludeSourceMobj && vlight.sourceMobj == excludeSourceMobj)
             {
                 // This source should not be included.
                 return LoopContinue;
@@ -605,7 +605,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         lightCount = 0;
 
-        for(int i = 0; i < MAX_LIGHTS; ++i)
+        for (int i = 0; i < MAX_LIGHTS; ++i)
         {
             uLightDirs       .set(i, Vector3f());
             uLightIntensities.set(i, Vector4f());
@@ -614,7 +614,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void addLight(Vector3f const &direction, Vector3f const &intensity)
     {
-        if(lightCount == MAX_LIGHTS) return;
+        if (lightCount == MAX_LIGHTS) return;
 
         int idx = lightCount;
         uLightDirs       .set(idx, (inverseLocal * direction).normalize());
@@ -625,7 +625,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void setupFog()
     {
-        if(fogParams.usingFog)
+        if (fogParams.usingFog)
         {
             uFogColor = Vector4f(fogParams.fogColor[0],
                                  fogParams.fogColor[1],
@@ -663,7 +663,7 @@ DENG2_PIMPL(ModelRenderer)
         uReflectionMatrix = Matrix4f::rotate(-yawAngle,  Vector3f(0, 1, 0)) *
                             Matrix4f::rotate(pitchAngle, Vector3f(0, 0, 1));
 
-        if(preModelToLocal)
+        if (preModelToLocal)
         {
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
@@ -702,7 +702,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void setReflectionForObject(mobj_t const *object)
     {
-        if(object && Mobj_HasSubspace(*object))
+        if (object && Mobj_HasSubspace(*object))
         {
             setReflectionForCluster(&Mobj_Cluster(*object));
         }
@@ -744,7 +744,7 @@ ModelBank &ModelRenderer::bank()
 render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
 {
     auto const &model = d->bank.model<render::Model const>(modelId);
-    if(!model.animations.isEmpty())
+    if (!model.animations.isEmpty())
     {
         return &model.animations;
     }
@@ -828,7 +828,7 @@ int ModelRenderer::identifierFromText(String const &text,
     /// @todo This might be useful on a more general level, outside ModelRenderer. -jk
 
     int id = 0;
-    if(text.beginsWith('@'))
+    if (text.beginsWith('@'))
     {
         id = text.mid(1).toInt();
     }
@@ -843,9 +843,9 @@ int ModelRenderer::identifierFromText(String const &text,
 
 static render::StateAnimator &animatorInstance(Context &ctx)
 {
-    if(auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativeValue>())
+    if (auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativeValue>())
     {
-        if(auto *obj = self->nativeObject<render::StateAnimator>())
+        if (auto *obj = self->nativeObject<render::StateAnimator>())
         {
             return *obj;
         }
@@ -858,7 +858,7 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     std::unique_ptr<ArrayValue> playing(new ArrayValue);
-    for(int i = 0; i < anim.count(); ++i)
+    for (int i = 0; i < anim.count(); ++i)
     {
         playing->add(new NumberValue(anim.at(i).animId));
     }

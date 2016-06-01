@@ -29,12 +29,12 @@ Model::AnimSequence::AnimSequence(String const &name, Record const &def)
     , def(&def)
 {
     // Parse timeline events.
-    if(def.hasSubrecord(DEF_TIMELINE))
+    if (def.hasSubrecord(DEF_TIMELINE))
     {
         timeline = new Scheduler;
         timeline->addFromInfo(def.subrecord(DEF_TIMELINE));
     }
-    else if(def.hasMember(DEF_TIMELINE))
+    else if (def.hasMember(DEF_TIMELINE))
     {
         // Uses a shared timeline in the definition. This will be looked up when
         // the animation starts.
@@ -46,7 +46,7 @@ Model::~Model()
 {
     // The commit group will be deleted now.
     unsetAtlas();
-    
+
     qDeleteAll(timelines.values());
 }
 

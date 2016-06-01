@@ -48,13 +48,13 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
     {
         angleOffset = Vector2f();
 
-        if(animator)
+        if (animator)
         {
             animator->model().audienceForDeletion() -= this;
         }
 
         // Is there a model for the weapon?
-        if(modelBank().has(identifier))
+        if (modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
             auto &model = modelBank().model<Model>(identifier);
@@ -90,7 +90,7 @@ void PlayerWeaponAnimator::setAsset(String const &identifier)
 
 void PlayerWeaponAnimator::stateChanged(state_s const *state)
 {
-    if(d->animator)
+    if (d->animator)
     {
         d->animator->triggerByState(Def_GetStateName(state));
     }
@@ -127,9 +127,9 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
 
 void PlayerWeaponAnimator::advanceTime(TimeDelta const &elapsed)
 {
-    if(clientPaused) return;
+    if (clientPaused) return;
 
-    if(d->animator)
+    if (d->animator)
     {
         d->animator->advanceTime(elapsed);
     }
@@ -142,7 +142,7 @@ bool PlayerWeaponAnimator::hasModel() const
 
 Model const *PlayerWeaponAnimator::model() const
 {
-    if(!hasModel()) return nullptr;
+    if (!hasModel()) return nullptr;
     return &d->animator->model();
 }
 
