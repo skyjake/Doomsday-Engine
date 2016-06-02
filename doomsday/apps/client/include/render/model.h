@@ -55,6 +55,8 @@ struct Model : public de::ModelDrawable
     std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
 
     bool autoscaleToThingHeight = true;
+    bool alignToViewYaw         = false;
+    bool alignToViewPitch       = false;
 
     /// Combined scaling and rotation of the model.
     de::Matrix4f transformation;

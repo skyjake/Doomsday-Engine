@@ -45,6 +45,7 @@ static String const DEF_VARIANT     ("variant");
 static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
+static String const DEF_VIEW_ALIGN  ("viewAlign");
 static String const DEF_MIRROR      ("mirror");
 static String const DEF_OFFSET      ("offset");
 static String const DEF_STATE       ("state");
@@ -406,6 +407,26 @@ DENG2_PIMPL(ModelRenderer)
             model.offset = vectorFromValue<Vector3f>(asset.get(DEF_OFFSET));
         }
         model.autoscaleToThingHeight = ScriptedInfo::isTrue(asset, DEF_AUTOSCALE);
+
+        // View alignment mode.
+        {
+            String const viewAlign = asset.gets(DEF_VIEW_ALIGN, "none");
+
+            if (ScriptedInfo::isTrue(asset, DEF_VIEW_ALIGN) ||
+                !viewAlign.compareWithoutCase("full") ||
+                !viewAlign.compareWithoutCase("both"))
+            {
+                model.alignToViewYaw = model.alignToViewPitch = true;
+            }
+            else if (!viewAlign.compareWithoutCase("yaw"))
+            {
+                model.alignToViewYaw = true;
+            }
+            else if (!viewAlign.compareWithoutCase("pitch"))
+            {
+                model.alignToViewPitch = true;
+            }
+        }
 
         // Custom texture maps and additional materials.
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
@@ -772,8 +793,8 @@ void ModelRenderer::render(vissprite_t const &spr)
 
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
-                 /*Timer_RealSeconds()*20 +*/ (spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw),
-                 0 /*Timer_RealSeconds()*50*/ /* pitch */,
+                 spr.pose.yaw   + spr.pose.yawAngleOffset,
+                 spr.pose.pitch + spr.pose.pitchAngleOffset,
                  mobjData? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.

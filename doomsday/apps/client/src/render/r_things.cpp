@@ -252,8 +252,8 @@ void R_ProjectSprite(mobj_t &mob)
 
     bool const fullbright = ((mob.state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
     // Align to the view plane? (Means scaling down Z with models)
-    bool const viewAlign  = (!hasModel && ((mob.ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
-                            || alwaysAlign == 3;
+    bool viewAlign  = (!hasModel && ((mob.ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
+                       || alwaysAlign == 3;
 
     // Perform visibility checking by projecting a view-aligned line segment
     // relative to the viewer and determining if the whole of the segment has
@@ -312,58 +312,48 @@ void R_ProjectSprite(mobj_t &mob)
     // Determine angles.
     /// @todo Surely this can be done in a subclass/function. -jk
     dfloat yaw = 0, pitch = 0;
-    if(animator)
-    {
-        // TODO: More angle options with GL2 models.
 
-        yaw = Mobj_AngleSmoothed(&mob) / dfloat( ANGLE_MAX ) * -360;
+    // Determine the rotation angles (in degrees).
+    if((mf && mf->testSubFlag(0, MFF_ALIGN_YAW)) ||
+       (animator && animator->model().alignToViewYaw))
+    {
+        // Transform the origin point.
+        viewdata_t const *viewData = &viewPlayer->viewport();
+        Vector2d delta(moPos.y - viewData->current.origin.y,
+                       moPos.x - viewData->current.origin.x);
+
+        yaw = 90 - (BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2) / PI * 180;
     }
-    else if(mf)
+    else if(mf && mf->testSubFlag(0, MFF_SPIN))
     {
-        // Determine the rotation angles (in degrees).
-        if(mf->testSubFlag(0, MFF_ALIGN_YAW))
-        {
-            // Transform the origin point.
-            viewdata_t const *viewData = &viewPlayer->viewport();
-            Vector2d delta(moPos.y - viewData->current.origin.y,
-                           moPos.x - viewData->current.origin.x);
+        yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(&mob) % 360;
+    }
+    else if(mf && mf->testSubFlag(0, MFF_MOVEMENT_YAW))
+    {
+        yaw = R_MovementXYYaw(mob.mom[0], mob.mom[1]);
+    }
+    else
+    {
+        yaw = Mobj_AngleSmoothed(&mob) / dfloat(ANGLE_MAX) * -360.f;
+    }
 
-            yaw = 90 - (BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2) / PI * 180;
-        }
-        else if(mf->testSubFlag(0, MFF_SPIN))
-        {
-            yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(&mob) % 360;
-        }
-        else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
-        {
-            yaw = R_MovementXYYaw(mob.mom[0], mob.mom[1]);
-        }
-        else
-        {
-            yaw = Mobj_AngleSmoothed(&mob) / dfloat( ANGLE_MAX ) * -360;
-        }
+    // How about a unique offset?
+    if(mf && mf->testSubFlag(0, MFF_IDANGLE))
+    {
+        yaw += MOBJ_TO_ID(&mob) % 360;  // arbitrary
+    }
 
-        // How about a unique offset?
-        if(mf->testSubFlag(0, MFF_IDANGLE))
-        {
-            yaw += MOBJ_TO_ID(&mob) % 360;  // arbitrary
-        }
+    if((mf && mf->testSubFlag(0, MFF_ALIGN_PITCH)) ||
+       (animator && animator->model().alignToViewPitch))
+    {
+        viewdata_t const *viewData = &viewPlayer->viewport();
+        Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
-        if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
-        {
-            viewdata_t const *viewData = &viewPlayer->viewport();
-            Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
-
-            pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
-        }
-        else if(mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
-        {
-            pitch = R_MovementXYZPitch(mob.mom[0], mob.mom[1], mob.mom[2]);
-        }
-        else
-        {
-            pitch = 0;
-        }
+        pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
+    }
+    else if(mf && mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
+    {
+        pitch = R_MovementXYZPitch(mob.mom[0], mob.mom[1], mob.mom[2]);
     }
 
     // Determine possible short-range visual offset.

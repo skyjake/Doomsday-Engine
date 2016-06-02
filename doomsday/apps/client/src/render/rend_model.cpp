@@ -772,10 +772,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // Model rotation.
-    glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
-              0, 1, 0);
-    glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch,
-              0, 0, 1);
+    glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset   : spr.pose.yaw,   0, 1, 0);
+    glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch, 0, 0, 1);
 
     // Scaling and model space offset.
     glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
