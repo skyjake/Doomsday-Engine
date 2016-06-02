@@ -178,7 +178,9 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
     void updateColors()
     {
-        background->set(Background(style().colors().colorf(selected? selectedBgColor : bgColor)));
+        auto bg = Background(style().colors().colorf(selected? selectedBgColor : bgColor));
+        icon->set(bg);
+        background->set(bg);
         label->setTextColor(selected? selectedTextColor : textColor);
     }
 };

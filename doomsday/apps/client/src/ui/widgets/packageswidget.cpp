@@ -138,7 +138,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             : _owner(owner)
             , _item(&item)
         {
-            icon().set(Background());
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
             icon().setStyleImage("package", "default");
             icon().margins().set("gap");
