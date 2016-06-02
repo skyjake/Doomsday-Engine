@@ -107,11 +107,11 @@ DENG_GUI_PIMPL(ConsoleWidget)
     void expandLog(int delta, bool useOffsetAnimation)
     {
         // Cannot expand if the user is grabbing the top edge.
-        if(grabbed == TopEdge) return;
+        if (grabbed == TopEdge) return;
 
         Animation::Style style = useOffsetAnimation? Animation::EaseOut : Animation::Linear;
 
-        if(height->animation().target() == 0)
+        if (height->animation().target() == 0)
         {
             // On the first expansion make sure the margins are taken into account.
             delta += log->margins().height().valuei();
@@ -120,7 +120,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         height->set(height->animation().target() + delta, .25f);
         height->setStyle(style);
 
-        if(useOffsetAnimation && opened)
+        if (useOffsetAnimation && opened)
         {
             // Sync the log content with the height animation.
             log->setContentYOffset(Animation::range(style,
@@ -131,15 +131,15 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
     bool handleMousePositionEvent(MouseEvent const &mouse)
     {
-        if(grabbed == RightEdge)
+        if (grabbed == RightEdge)
         {
             // Adjust width.
             width->set(mouse.pos().x - self.rule().left().valuei(), .1f);
             return true;
         }
-        else if(grabbed == TopEdge)
+        else if (grabbed == TopEdge)
         {
-            if(mouse.pos().y < self.rule().bottom().valuei())
+            if (mouse.pos().y < self.rule().bottom().valuei())
             {
                 height->set(self.rule().bottom().valuei() - mouse.pos().y, .1f);
                 log->enablePageKeys(false);
@@ -150,9 +150,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
         // Check for grab at the right edge.
         Rectanglei pos = self.rule().recti();
         pos.topLeft.x = pos.bottomRight.x - grabWidth;
-        if(pos.contains(mouse.pos()))
+        if (pos.contains(mouse.pos()))
         {
-            if(grabHover != RightEdge)
+            if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
                 self.root().window().canvas().setCursor(Qt::SizeHorCursor);
@@ -163,15 +163,15 @@ DENG_GUI_PIMPL(ConsoleWidget)
             // Maybe a grab at the top edge, then.
             pos = self.rule().recti();
             pos.bottomRight.y = pos.topLeft.y + grabWidth;
-            if(pos.contains(mouse.pos()))
+            if (pos.contains(mouse.pos()))
             {
-                if(grabHover != TopEdge)
+                if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
                     self.root().window().canvas().setCursor(Qt::SizeVerCursor);
                 }
             }
-            else if(grabHover != NotGrabbed)
+            else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
                 self.root().window().canvas().setCursor(Qt::ArrowCursor);
@@ -192,7 +192,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         CommandWidget *current;
         CommandWidget *next;
 
-        if(scriptMode)
+        if (scriptMode)
         {
             current = scriptCmd;
         }
@@ -201,7 +201,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
             current = cmdLine;
         }
 
-        if(yes)
+        if (yes)
         {
             next = scriptCmd;
         }
@@ -216,7 +216,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         // Bottom of the console must follow the active command line height.
         self.rule().setInput(Rule::Bottom, next->rule().top() - rule("unit"));
 
-        if(scriptMode == yes)
+        if (scriptMode == yes)
         {
             return; // No need to change anything else.
         }
@@ -230,7 +230,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         cmdLine->disable(yes);
 
         // Transfer focus.
-        if(current->hasFocus())
+        if (current->hasFocus())
         {
             root().setFocus(next);
         }
@@ -248,7 +248,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
         bool handleEvent(GuiWidget &widget, Event const &event)
         {
-            switch(widget.handleMouseClick(event, MouseEvent::Right))
+            switch (widget.handleMouseClick(event, MouseEvent::Right))
             {
             case MouseClickFinished:
                 // Toggle the script mode.
@@ -409,7 +409,7 @@ GuiWidget &ConsoleWidget::buttons()
 
 CommandWidget &ConsoleWidget::commandLine()
 {
-    if(d->scriptMode) return *d->scriptCmd;
+    if (d->scriptMode) return *d->scriptCmd;
     return *d->cmdLine;
 }
 
@@ -431,7 +431,7 @@ bool ConsoleWidget::isLogOpen() const
 void ConsoleWidget::enableBlur(bool yes)
 {
     Background logBg = d->log->background();
-    if(yes)
+    if (yes)
     {
         logBg.type = Background::SharedBlur;
         logBg.blur = &ClientWindow::main().taskBarBlur();
@@ -447,7 +447,7 @@ void ConsoleWidget::viewResized()
 {
     GuiWidget::viewResized();
 
-    if(!d->opened)
+    if (!d->opened)
     {
         // Make sure it stays shifted out of the view.
         d->horizShift->set(-rule().width().valuei() - 1);
@@ -458,7 +458,7 @@ void ConsoleWidget::update()
 {
     GuiWidget::update();
 
-    if(rule().top().valuei() <= 0)
+    if (rule().top().valuei() <= 0)
     {
         // The expansion has reached the top of the screen, so we
         // can enable PageUp/Dn keys for the log.
@@ -469,18 +469,18 @@ void ConsoleWidget::update()
 bool ConsoleWidget::handleEvent(Event const &event)
 {
     // Hovering over the right edge shows the <-> cursor.
-    if(event.type() == Event::MousePosition)
+    if (event.type() == Event::MousePosition)
     {
-        if(d->handleMousePositionEvent(event.as<MouseEvent>()))
+        if (d->handleMousePositionEvent(event.as<MouseEvent>()))
         {
             return true;
         }
     }
 
     // Dragging an edge resizes the widget.
-    if(d->grabHover != Instance::NotGrabbed && event.type() == Event::MouseButton)
+    if (d->grabHover != Instance::NotGrabbed && event.type() == Event::MouseButton)
     {
-        switch(handleMouseClick(event))
+        switch (handleMouseClick(event))
         {
         case MouseClickStarted:
             d->grabbed = d->grabHover;
@@ -496,25 +496,25 @@ bool ConsoleWidget::handleEvent(Event const &event)
         }
     }
 
-    if(event.type() == Event::MouseButton && hitTest(event))
+    if (event.type() == Event::MouseButton && hitTest(event))
     {
         // Prevent clicks from leaking through.
         return true;
     }
 
-    if(event.type() == Event::KeyPress)
+    if (event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if(key.qtKey() == Qt::Key_PageUp ||
+        if (key.qtKey() == Qt::Key_PageUp ||
            key.qtKey() == Qt::Key_PageDown)
         {
-            if(!isLogOpen()) openLog();
+            if (!isLogOpen()) openLog();
             showFullLog();
             return true;
         }
 
-        if(key.qtKey() == Qt::Key_F5) // Clear history.
+        if (key.qtKey() == Qt::Key_F5) // Clear history.
         {
             clearLog();
             return true;
@@ -532,7 +532,7 @@ void ConsoleWidget::operator << (PersistentState const &fromState)
 {
     d->width->set(fromState["console.width"]);
 
-    if(!d->opened)
+    if (!d->opened)
     {
         // Make sure it stays out of the view.
         d->horizShift->set(-rule().width().valuei() - 1);
@@ -541,7 +541,7 @@ void ConsoleWidget::operator << (PersistentState const &fromState)
 
 void ConsoleWidget::openLog()
 {
-    if(d->opened) return;
+    if (d->opened) return;
 
     d->opened = true;
     d->horizShift->set(0, LOG_OPEN_CLOSE_SPAN);
@@ -550,7 +550,7 @@ void ConsoleWidget::openLog()
 
 void ConsoleWidget::closeLog()
 {
-    if(!d->opened) return;
+    if (!d->opened) return;
 
     d->opened = false;
     d->horizShift->set(-rule().width().valuei() - 1, LOG_OPEN_CLOSE_SPAN);
@@ -630,7 +630,7 @@ void ConsoleWidget::closeMenu()
 
 void ConsoleWidget::commandWasEntered(String const &)
 {
-    if(App::config().getb("console.snap") && !d->log->isAtBottom())
+    if (App::config().getb("console.snap") && !d->log->isAtBottom())
     {
         d->log->scrollToBottom();
     }
@@ -638,7 +638,7 @@ void ConsoleWidget::commandWasEntered(String const &)
 
 void ConsoleWidget::copyLogPathToClipboard()
 {
-    if(NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
+    if (NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
     {
         qApp->clipboard()->setText(native->nativePath());
     }

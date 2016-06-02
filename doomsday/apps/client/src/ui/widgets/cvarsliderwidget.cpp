@@ -39,9 +39,9 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
     d->cvar = cvarPath;
 
     // Default range and precision for floating point variables (may be altered later).
-    if(d->var()->type == CVT_FLOAT)
+    if (d->var()->type == CVT_FLOAT)
     {
-        if(!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+        if (!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
         {
             setRange(Rangef(d->var()->min, d->var()->max));
         }
@@ -49,7 +49,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
     }
     else
     {
-        if(!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+        if (!(d->var()->flags & (CVF_NO_MIN | CVF_NO_MAX)))
         {
             setRange(Rangei(d->var()->min, d->var()->max));
         }
@@ -68,7 +68,7 @@ char const *CVarSliderWidget::cvarPath() const
 void CVarSliderWidget::updateFromCVar()
 {
     cvar_t *var = d->var();
-    if(var->type == CVT_FLOAT)
+    if (var->type == CVT_FLOAT)
     {
         setValue(CVar_Float(var));
     }
@@ -81,7 +81,7 @@ void CVarSliderWidget::updateFromCVar()
 void CVarSliderWidget::setCVarValueFromWidget()
 {
     cvar_t *var = d->var();
-    if(var->type == CVT_FLOAT)
+    if (var->type == CVT_FLOAT)
     {
         CVar_SetFloat(d->var(), value());
     }

@@ -25,7 +25,7 @@ using namespace de;
 
 PackagePopupWidget::PackagePopupWidget(String const &packageId)
 {
-    if(!setup(App::packageLoader().select(packageId)))
+    if (!setup(App::packageLoader().select(packageId)))
     {
         document().setText(packageId);
     }
@@ -33,7 +33,7 @@ PackagePopupWidget::PackagePopupWidget(String const &packageId)
 
 PackagePopupWidget::PackagePopupWidget(File const *packageFile)
 {
-    if(!setup(packageFile))
+    if (!setup(packageFile))
     {
         document().setText(tr("No package"));
     }
@@ -41,7 +41,7 @@ PackagePopupWidget::PackagePopupWidget(File const *packageFile)
 
 bool PackagePopupWidget::setup(File const *file)
 {
-    if(file && file->objectNamespace().has(Package::VAR_PACKAGE))
+    if (file && file->objectNamespace().has(Package::VAR_PACKAGE))
     {
         Record const &info = file->objectNamespace().subrecord(Package::VAR_PACKAGE);
 

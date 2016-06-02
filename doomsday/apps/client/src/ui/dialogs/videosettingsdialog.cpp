@@ -81,7 +81,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 #endif
         win.audienceForAttributeChange() += this;
 
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             stretchChoices
                 << new ChoiceItem(tr("Smart"),        SCALEMODE_SMART_STRETCH)
@@ -103,7 +103,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ~Instance()
     {
         // The common stretchChoices is being deleted now, before the widget tree.
-        if(finaleAspect)
+        if (finaleAspect)
         {
             finaleAspect->useDefaultItems();
             hudAspect->useDefaultItems();
@@ -131,13 +131,13 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         // Update selected display mode.
         ui::Data::Pos closest = ui::Data::InvalidPos;
         int delta = 0;
-        for(ui::Data::Pos i = 0; i < modes->items().size(); ++i)
+        for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
         {
             QPoint const res = modes->items().at(i).data().toPoint();
             int dx = res.x() - current.x;
             int dy = res.y() - current.y;
             int d = dx*dx + dy*dy;
-            if(closest == ui::Data::InvalidPos || d < delta)
+            if (closest == ui::Data::InvalidPos || d < delta)
             {
                 closest = i;
                 delta = d;
@@ -150,9 +150,9 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
 
-        foreach(Widget *child, self.area().childWidgets())
+        foreach (Widget *child, self.area().childWidgets())
         {
-            if(ICVarWidget *cw = child->maybeAs<ICVarWidget>())
+            if (ICVarWidget *cw = child->maybeAs<ICVarWidget>())
                 cw->updateFromCVar();
         }
     }
@@ -190,20 +190,20 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #ifdef USE_COLOR_DEPTH_CHOICE
     LabelWidget *colorLabel = 0;
 #endif
-    if(gotDisplayMode)
+    if (gotDisplayMode)
     {
         // Choice of display modes + 16/32-bit color depth.
         d->modes->setOpeningDirection(ui::Up);
-        if(DisplayMode_Count() > 10)
+        if (DisplayMode_Count() > 10)
         {
             d->modes->popup().menu().setGridSize(2, ui::Expand, 0, ui::Expand);
         }
-        for(int i = 0; i < DisplayMode_Count(); ++i)
+        for (int i = 0; i < DisplayMode_Count(); ++i)
         {
             DisplayMode const *m = DisplayMode_ByIndex(i);
             QPoint const res(m->width, m->height);
 
-            if(d->modes->items().findData(res) != ui::Data::InvalidPos)
+            if (d->modes->items().findData(res) != ui::Data::InvalidPos)
             {
                 // Got this already.
                 continue;
@@ -255,7 +255,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
 
-    if(gotDisplayMode)
+    if (gotDisplayMode)
     {
         modeLayout << *LabelWidget::newWithText(tr("Resolution:"), &area());
 
@@ -277,7 +277,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         modeLayout << Const(0) << *adjustButton;
     }
 
-    if(d->inludeAspect)
+    if (d->inludeAspect)
     {
         // Aspect ratio options.
         auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());

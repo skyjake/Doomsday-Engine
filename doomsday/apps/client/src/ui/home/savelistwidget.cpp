@@ -40,10 +40,10 @@ DENG_GUI_PIMPL(SaveListWidget)
 
         bool handleEvent(GuiWidget &button, Event const &event)
         {
-            if(event.type() == Event::MouseButton)
+            if (event.type() == Event::MouseButton)
             {
                 MouseEvent const &mouse = event.as<MouseEvent>();
-                if(button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
+                if (button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
                 {
                     emit d->self.doubleClicked(d->self.items().find(
                             *d->self.organizer().findItemForWidget(button)));
@@ -88,7 +88,7 @@ DENG_GUI_PIMPL(SaveListWidget)
     {
         auto const buttonItemPos = self.items().find(*self.organizer().findItemForWidget(button));
 
-        if(selected == buttonItemPos)
+        if (selected == buttonItemPos)
         {
             // Unselect.
             selected = ui::Data::InvalidPos;
@@ -105,11 +105,11 @@ DENG_GUI_PIMPL(SaveListWidget)
 
     void updateItemHighlights(ButtonWidget *selectedButton)
     {
-        for(auto *w : self.childWidgets())
+        for (auto *w : self.childWidgets())
         {
-            if(auto *bw = w->maybeAs<ButtonWidget>())
+            if (auto *bw = w->maybeAs<ButtonWidget>())
             {
-                if(selectedButton == bw)
+                if (selectedButton == bw)
                 {
                     bw->useInfoStyle();
                     bw->set(Background(style().colors().colorf("inverted.background")));
@@ -139,7 +139,7 @@ ui::DataPos SaveListWidget::selectedPos() const
 
 void SaveListWidget::setSelectedPos(ui::DataPos pos)
 {
-    if(d->selected != pos)
+    if (d->selected != pos)
     {
         d->selected = pos;
         d->updateItemHighlights(&itemWidget<ButtonWidget>(items().at(pos)));
@@ -149,7 +149,7 @@ void SaveListWidget::setSelectedPos(ui::DataPos pos)
 
 void SaveListWidget::clearSelection()
 {
-    if(d->selected != ui::Data::InvalidPos)
+    if (d->selected != ui::Data::InvalidPos)
     {
         d->selected = ui::Data::InvalidPos;
         d->updateItemHighlights(nullptr);

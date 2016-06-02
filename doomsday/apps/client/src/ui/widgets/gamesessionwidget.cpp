@@ -48,7 +48,7 @@ DENG2_PIMPL(GameSessionWidget)
         // Set up the buttons.
         self.add(load = new ButtonWidget);
         self.add(info = new PopupButtonWidget);
-        if(popupStyle == PopupMenu)
+        if (popupStyle == PopupMenu)
         {
             self.add(funcs = new PopupButtonWidget);
         }
@@ -65,7 +65,7 @@ DENG2_PIMPL(GameSessionWidget)
         info->setText(_E(s)_E(B) + tr("..."));
 
         // Set up the info/actions popup widget.
-        if(popupStyle == PopupWithDataFileButton)
+        if (popupStyle == PopupWithDataFileButton)
         {
             actionButton = new ButtonWidget;
             self.add(doc = new DocumentPopupWidget(actionButton));
@@ -81,7 +81,7 @@ DENG2_PIMPL(GameSessionWidget)
             doc->open();
         });
 
-        if(popupStyle == PopupMenu)
+        if (popupStyle == PopupMenu)
         {
             self.add(menu = new PopupMenuWidget);
             funcs->setPopup(*menu, ui::Right);
@@ -94,14 +94,14 @@ DENG2_PIMPL(GameSessionWidget)
     {
         DoomsdayApp::app().audienceForGameUnload() -= this;
 
-        if(menu) menu->dismiss();
+        if (menu) menu->dismiss();
         doc->dismiss();
     }
 
     void aboutToUnloadGame(Game const &)
     {
         doc->close(0);
-        if(menu) menu->close(0);
+        if (menu) menu->close(0);
     }
 };
 
@@ -126,7 +126,7 @@ GameSessionWidget::GameSessionWidget(PopupStyle ps,
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Bottom, rule().bottom());
 
-    if(d->popupStyle == PopupMenu)
+    if (d->popupStyle == PopupMenu)
     {
         d->funcs->rule()
                 .setInput(Rule::Top,    rule().top())
@@ -172,7 +172,7 @@ PopupMenuWidget &GameSessionWidget::menu()
 
 void GameSessionWidget::setDataFileAction(DataFileAction action)
 {
-    if(action == Select)
+    if (action == Select)
     {
         d->actionButton->setText(tr("Data Files..."));
         d->actionButton->setAction(new SignalAction(this, SLOT(browseDataFiles())));
@@ -199,10 +199,10 @@ void GameSessionWidget::browseDataFiles()
     dlg.setFileMode(QFileDialog::ExistingFiles);
     dlg.setNameFilter("Data files (*.wad *.deh *.ded *.lmp *.pk3)");
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    if(dlg.exec())
+    if (dlg.exec())
     {
         StringList paths;
-        for(QString const &p : dlg.selectedFiles()) paths << p;
+        for (QString const &p : dlg.selectedFiles()) paths << p;
         setDataFiles(paths);
     }
 

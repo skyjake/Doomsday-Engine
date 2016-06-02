@@ -62,16 +62,16 @@ DENG2_PIMPL(GameWidget)
     {
         bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
 
-        if(renderWireframe || cannotDraw)
+        if (renderWireframe || cannotDraw)
         {
             // When rendering is wireframe mode, we must clear the screen
             // before rendering a frame.
             glClear(GL_COLOR_BUFFER_BIT);
         }
 
-        if(cannotDraw) return;
+        if (cannotDraw) return;
 
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
@@ -97,7 +97,7 @@ DENG2_PIMPL(GameWidget)
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(!App_GameLoaded())
+        if (!App_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
@@ -124,7 +124,7 @@ void GameWidget::viewResized()
     GuiWidget::viewResized();
 
     /*
-    if(BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
+    if (BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
        !ClientApp::windowSystem().hasMain())
     {
         return;
@@ -137,7 +137,7 @@ void GameWidget::update()
 {
     GuiWidget::update();
 
-    if(isDisabled() || BusyMode_Active()) return;
+    if (isDisabled() || BusyMode_Active()) return;
 
     // We may be performing GL operations.
     ClientWindow::main().glActivate();
@@ -147,14 +147,14 @@ void GameWidget::update()
 
     // We may have received a Quit message from the windowing system
     // during events/tics processing.
-    if(Sys_IsShuttingDown())
+    if (Sys_IsShuttingDown())
         return;
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Release the busy transition frame now when we can be sure that busy mode
     // is over / didn't start at all.
-    if(!Con_TransitionInProgress())
+    if (!Con_TransitionInProgress())
     {
         ClientWindow::main().busy().releaseTransitionFrame();
     }
@@ -162,13 +162,13 @@ void GameWidget::update()
 
 void GameWidget::drawContent()
 {
-    if(isDisabled() || !GL_IsFullyInited())
+    if (isDisabled() || !GL_IsFullyInited())
         return;
 
     GLState::push();
 
     Rectanglei pos;
-    if(hasChangedPlace(pos))
+    if (hasChangedPlace(pos))
     {
         // Automatically update if the widget is resized.
         d->updateSize();
@@ -193,10 +193,10 @@ bool GameWidget::handleEvent(Event const &event)
 
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
+    if (event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
        rule().recti().contains(event.as<MouseEvent>().pos()))
     {
-        if(!window.hasSidebar())
+        if (!window.hasSidebar())
         {
             // If the mouse is not trapped, we will just eat button clicks which
             // will prevent them from reaching the legacy input system.
@@ -205,7 +205,7 @@ bool GameWidget::handleEvent(Event const &event)
 
         // If the sidebar is open, we must explicitly click on the GameWidget to
         // cause input to be trapped.
-        switch(handleMouseClick(event))
+        switch (handleMouseClick(event))
         {
         case MouseClickFinished:
             // Click completed on the widget, trap the mouse.
@@ -220,7 +220,7 @@ bool GameWidget::handleEvent(Event const &event)
         }
     }
 
-    if(event.type() == Event::KeyPress ||
+    if (event.type() == Event::KeyPress ||
        event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {

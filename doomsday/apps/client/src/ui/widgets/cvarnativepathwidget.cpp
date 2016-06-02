@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
 
     String labelText() const
     {
-        if(path.isEmpty())
+        if (path.isEmpty())
         {
             return String(_E(l)) + blankText + _E(.);
         }
@@ -75,7 +75,7 @@ CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
 void CVarNativePathWidget::setFilters(StringList const &filters)
 {
     d->filters.clear();
-    for(auto const &f : filters)
+    for (auto const &f : filters)
     {
         d->filters << f;
     }
@@ -103,16 +103,16 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
 
     // Use a native dialog to pick the path.
     QDir dir(d->path);
-    if(d->path.isEmpty()) dir = QDir::home();
+    if (d->path.isEmpty()) dir = QDir::home();
     QFileDialog dlg(&ClientWindow::main(), tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
-    if(!d->filters.isEmpty())
+    if (!d->filters.isEmpty())
     {
         dlg.setNameFilters(d->filters);
     }
     dlg.setFileMode(QFileDialog::ExistingFile);
     dlg.setOption(QFileDialog::ReadOnly, true);
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    if(dlg.exec())
+    if (dlg.exec())
     {
         d->path = dlg.selectedFiles().at(0);
         setCVarValueFromWidget();
@@ -131,7 +131,7 @@ void CVarNativePathWidget::clearPath()
 
 void CVarNativePathWidget::showActionsPopup()
 {
-    if(!d->menu->isOpen())
+    if (!d->menu->isOpen())
     {
         d->menu->open();
     }

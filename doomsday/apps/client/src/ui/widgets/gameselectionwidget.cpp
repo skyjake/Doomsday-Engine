@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             title().setTextShadow(LabelWidget::RectangleShadow);
             title().margins().setLeft("").setRight("");
 
-            switch(type)
+            switch (type)
             {
             case AvailableGames:
                 menu = new SingleplayerSessionMenuWidget(SingleplayerSessionMenuWidget::ShowAvailableGames);
@@ -135,7 +135,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             numCols = cols;
 
             // However, if the subset is empty, just use a single column for noGames.
-            if(items().isEmpty())
+            if (items().isEmpty())
             {
                 cols = 1;
             }
@@ -150,9 +150,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         String textForTitle(bool whenOpen) const
         {
-            if(whenOpen) return titleText;
+            if (whenOpen) return titleText;
             int count = menu->count();
-            if(!noGames->behavior().testFlag(Widget::Hidden)) count = 0;
+            if (!noGames->behavior().testFlag(Widget::Hidden)) count = 0;
             return QString("%1 (%2)").arg(titleText).arg(count);
         }
 
@@ -218,7 +218,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         subsets << available << incomplete << multi << saved;
 
         self.add(filter = new GameFilterWidget);
-        foreach(SubsetWidget *sub, subsets) sub->menu->setFilter(filter);
+        foreach (SubsetWidget *sub, subsets) sub->menu->setFilter(filter);
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
 
@@ -229,7 +229,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     ~Instance()
     {
-        foreach(SubsetWidget *sub, subsets) sub->menu->setFilter(0);
+        foreach (SubsetWidget *sub, subsets) sub->menu->setFilter(0);
 
         DoomsdayApp::app().audienceForGameChange() -= this;
     }
@@ -240,11 +240,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     bool isSubsetVisible(SubsetWidget const *sub) const
     {
         GameFilterWidget::Filter flt = filter->filter();
-        if(sub == available || sub == incomplete || sub == saved)
+        if (sub == available || sub == incomplete || sub == saved)
         {
             return flt.testFlag(GameFilterWidget::Singleplayer);
         }
-        if(sub == multi)
+        if (sub == multi)
         {
             return flt.testFlag(GameFilterWidget::Multiplayer);
         }
@@ -253,7 +253,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     void updateSubsetVisibility()
     {
-        foreach(SubsetWidget *sub, subsets)
+        foreach (SubsetWidget *sub, subsets)
         {
             bool shown = isSubsetVisible(sub);
             sub->show(shown);
@@ -270,7 +270,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         superLayout.clear();
 
         QList<SubsetWidget *> order;
-        if(!App_GameLoaded())
+        if (!App_GameLoaded())
         {
             order << available << multi << saved << incomplete;
         }
@@ -283,24 +283,24 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         // Filter out the requested subsets.
         GameFilterWidget::Filter flt = filter->filter();
-        if(!flt.testFlag(GameFilterWidget::Singleplayer))
+        if (!flt.testFlag(GameFilterWidget::Singleplayer))
         {
             order.removeOne(available);
             order.removeOne(incomplete);
             order.removeOne(saved);
         }
-        if(!flt.testFlag(GameFilterWidget::Multiplayer))
+        if (!flt.testFlag(GameFilterWidget::Multiplayer))
         {
             order.removeOne(multi);
         }
 
-        foreach(SubsetWidget *s, order)
+        foreach (SubsetWidget *s, order)
         {
             s->updateTitleText();
             superLayout << s->title() << *s;
 
             // Show a notice when there are no games in the group.
-            if(s->items().isEmpty())
+            if (s->items().isEmpty())
             {
                 // Go to one-column layout for the "no games" indicator.
                 s->menu->setGridSize(1, ui::Filled, 1, ui::Expand);
@@ -328,7 +328,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         int const maxWidth = rule("gameselection.max.width").valuei();
 
         int const suitable = clamp(1, 4 * width / maxWidth, 3);
-        foreach(SubsetWidget *s, subsets)
+        foreach (SubsetWidget *s, subsets)
         {
             s->setColumns(suitable);
         }
@@ -349,7 +349,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
 
     // Default open/closed folds.
     d->multi->open();
-    if(!App_GameLoaded())
+    if (!App_GameLoaded())
     {
         d->available->open();
         //d->incomplete->open();
@@ -367,7 +367,7 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
                                         DotPath const &hoverColorId,
                                         ButtonWidget::HoverColorMode mode)
 {
-    foreach(Instance::SubsetWidget *s, d->subsets)
+    foreach (Instance::SubsetWidget *s, d->subsets)
     {
         s->setTitleColor(colorId, hoverColorId, mode);
     }
@@ -375,7 +375,7 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
 
 void GameSelectionWidget::setTitleFont(DotPath const &fontId)
 {
-    foreach(Instance::SubsetWidget *s, d->subsets)
+    foreach (Instance::SubsetWidget *s, d->subsets)
     {
         s->title().setFont(fontId);
     }
@@ -399,10 +399,10 @@ void GameSelectionWidget::enableActionOnSelection(bool doAction)
 Action *GameSelectionWidget::makeAction(ui::Item const &item) const
 {
     // Find the session menu that owns this item.
-    foreach(Instance::SubsetWidget *sub, d->subsets)
+    foreach (Instance::SubsetWidget *sub, d->subsets)
     {
         ui::DataPos const pos = sub->menu->items().find(item);
-        if(pos != ui::Data::InvalidPos)
+        if (pos != ui::Data::InvalidPos)
         {
             return sub->menu->makeAction(item);
         }
@@ -417,7 +417,7 @@ void GameSelectionWidget::update()
 
     // Adapt grid layout for the widget width.
     Rectanglei rect;
-    if(hasChangedPlace(rect))
+    if (hasChangedPlace(rect))
     {
         d->updateLayoutForWidth(rect.width());
     }
@@ -426,7 +426,7 @@ void GameSelectionWidget::update()
 void GameSelectionWidget::operator >> (PersistentState &toState) const
 {
     Record &st = toState.objectNamespace();
-    foreach(Instance::SubsetWidget *s, d->subsets)
+    foreach (Instance::SubsetWidget *s, d->subsets)
     {
         // Save the fold open/closed state.
         st.set(name() + "." + s->name() + ".open", s->isOpen());
@@ -436,10 +436,10 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
 void GameSelectionWidget::operator << (PersistentState const &fromState)
 {
     Record const &st = fromState.objectNamespace();
-    foreach(Instance::SubsetWidget *s, d->subsets)
+    foreach (Instance::SubsetWidget *s, d->subsets)
     {
         // Restore the fold open/closed state.
-        if(st[name() + "." + s->name() + ".open"].value().isTrue())
+        if (st[name() + "." + s->name() + ".open"].value().isTrue())
         {
             s->open(); // automatically shows the panel
         }
@@ -460,7 +460,7 @@ void GameSelectionWidget::updateSubsetLayout()
 
 void GameSelectionWidget::select(ui::Item const *item)
 {
-    if(!item) return;
+    if (!item) return;
 
     // Should we perform an action afterwards? The signal handling may lead to
     // destruction of the widget, so we'll hold a ref to the action.
@@ -469,7 +469,7 @@ void GameSelectionWidget::select(ui::Item const *item)
     // Notify.
     emit gameSessionSelected(item);
 
-    if(bool(postAction))
+    if (bool(postAction))
     {
         postAction->trigger();
     }

@@ -54,7 +54,7 @@ void PanelButtonWidget::setSelected(bool selected)
 {
     HomeItemWidget::setSelected(selected);
 
-    if(selected)
+    if (selected)
     {
         d->drawer->set(Background(Vector4f(0, 0, 0, .4f)));
     }

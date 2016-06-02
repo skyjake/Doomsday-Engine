@@ -45,9 +45,9 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         bool valid = false;
 
         String const entry = self.profileName();
-        if(!entry.isEmpty())
+        if (!entry.isEmpty())
         {
-            if(editing && oldName == entry)
+            if (editing && oldName == entry)
             {
                 valid = true;
             }
@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
             {
                 // Must be a new, unique name.
                 valid = DoomsdayApp::gameProfiles().forAll([this, &entry] (GameProfile &prof) {
-                    if(!entry.compareWithoutCase(prof.name())) {
+                    if (!entry.compareWithoutCase(prof.name())) {
                         return LoopAbort;
                     }
                     return LoopContinue;
@@ -64,7 +64,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         }
 
         // A game must be selected, too.
-        if(!gameChoice->isValidSelection()) valid = false;
+        if (!gameChoice->isValidSelection()) valid = false;
 
         self.buttonWidget(Id1)->enable(valid);
     }
@@ -91,7 +91,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     form->add(d->gameChoice = new ChoiceWidget);
     DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
     {
-        if(game.isPlayable() && game.family() == gameFamily)
+        if (game.isPlayable() && game.family() == gameFamily)
         {
             d->gameChoice->items() << new ChoiceItem(game.title(), game.id());
         }

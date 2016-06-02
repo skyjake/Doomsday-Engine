@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             setData(packageId);
 
             _file = App::packageLoader().select(packageId);
-            if(_file)
+            if (_file)
             {
                 _info = &_file->objectNamespace().subrecord(Package::VAR_PACKAGE);
             }
@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         void updateContents()
         {
-            if(_item->info())
+            if (_item->info())
             {
                 label().setText(_item->info()->gets("title"));
             }
@@ -199,7 +199,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
         {
-            if(index >= 0)
+            if (index >= 0)
             {
                 browser->scrollToPackage(menu->items().at(index)
                                          .as<SelectedPackageItem>().packageId());
@@ -232,7 +232,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         menu->items().clear();
 
         // Remove from the list those packages that are no longer listed.
-        for(String packageId : selectedPackages)
+        for (String packageId : selectedPackages)
         {
             menu->items() << new SelectedPackageItem(packageId);
         }
@@ -247,19 +247,19 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     void updateGameTitle()
     {
-        if(game && catalog.setPackages(requiredPackages + selectedPackages))
+        if (game && catalog.setPackages(requiredPackages + selectedPackages))
         {
             gameTitle->setImage(HomeItemWidget::makeGameLogo(*game, catalog,
                                                              HomeItemWidget::UnmodifiedAppearance));
             // List of the native required files.
             StringList dataFiles;
-            for(String packageId : requiredPackages)
+            for (String packageId : requiredPackages)
             {
-                if(File const *file = App::packageLoader().select(packageId))
+                if (File const *file = App::packageLoader().select(packageId))
                 {
                     // Only list here the game data files; Doomsday's PK3s are always
                     // there so listing them is not very helpful.
-                    if(Package::tags(*file).contains(QStringLiteral("gamedata")))
+                    if (Package::tags(*file).contains(QStringLiteral("gamedata")))
                     {
                         // Resolve indirection (symbolic links and interpretations) to
                         // describe the actual source file of the package.
@@ -289,7 +289,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     void packageButtonClicked(ButtonWidget &, String const &packageId) override
     {
-        if(!selectedPackages.contains(packageId))
+        if (!selectedPackages.contains(packageId))
         {
             selectedPackages.append(packageId);
             menu->items() << new SelectedPackageItem(packageId);
@@ -327,7 +327,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
     : DialogWidget("packages", WithHeading)
     , d(new Instance(this))
 {
-    if(titleText.isEmpty())
+    if (titleText.isEmpty())
     {
         heading().setText(tr("Packages"));
     }

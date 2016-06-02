@@ -39,7 +39,7 @@ static QString defaultLocationName()
 #else
     QString name = QDesktopServices::displayName(QDesktopServices::CacheLocation);
 #endif
-    if(name.isEmpty())
+    if (name.isEmpty())
     {
         name = "Temporary Files";
     }
@@ -134,7 +134,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self.buttons()
                 << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));
 
-        if(mode == WithApplyAndCheckButton)
+        if (mode == WithApplyAndCheckButton)
         {
             self.buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("Check Now"),
@@ -147,7 +147,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         UpdaterSettings st;
 
         String ago = st.lastCheckAgo();
-        if(!ago.isEmpty())
+        if (!ago.isEmpty())
         {
             lastChecked->setText(tr("Last checked %1.").arg(st.lastCheckAgo()));
         }
@@ -167,7 +167,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
     void toggleStateChanged(ToggleWidget &toggle)
     {
-        if(&toggle == autoCheck)
+        if (&toggle == autoCheck)
         {
             freqs->enable(autoCheck->isActive());
         }
@@ -179,12 +179,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         st.setOnlyCheckManually(autoCheck->isInactive());
         ui::Data::Pos sel = freqs->selected();
-        if(sel != ui::Data::InvalidPos)
+        if (sel != ui::Data::InvalidPos)
         {
             st.setFrequency(UpdaterSettings::Frequency(freqs->items().at(sel).data().toInt()));
         }
         sel = channels->selected();
-        if(sel != ui::Data::InvalidPos)
+        if (sel != ui::Data::InvalidPos)
         {
             st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().toInt()));
         }
@@ -197,10 +197,10 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     {
         paths->setSelected(0);
         /*
-        if(dir != UpdaterSettings::defaultDownloadPath())
+        if (dir != UpdaterSettings::defaultDownloadPath())
         {
             // Remove extra items.
-            while(pathList->count() > 2)
+            while (pathList->count() > 2)
             {
                 pathList->removeItem(0);
             }
@@ -240,7 +240,7 @@ void UpdaterSettingsDialog::applyAndCheckNow()
 
 void UpdaterSettingsDialog::finish(int result)
 {
-    if(result)
+    if (result)
     {
         d->apply();
     }
@@ -252,10 +252,10 @@ void UpdaterSettingsDialog::finish(int result)
 void UpdaterSettingsDialog::pathActivated(int index)
 {
     QString path = d->pathList->itemData(index).toString();
-    if(path.isEmpty())
+    if (path.isEmpty())
     {
         QString dir = QFileDialog::getExistingDirectory(this, tr("Download Folder"), QDir::homePath());
-        if(!dir.isEmpty())
+        if (!dir.isEmpty())
         {
             d->setDownloadPath(dir);
         }

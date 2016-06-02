@@ -67,7 +67,7 @@ DENG_GUI_PIMPL(SidebarWidget)
 
     void currentGameChanged(Game const &newGame)
     {
-        if(newGame.isNull())
+        if (newGame.isNull())
         {
             // Back to Home -- sidebars are not expected to remain open.
             self.close();
@@ -121,9 +121,9 @@ LabelWidget &SidebarWidget::title()
 Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
     Rule const *max = 0;
-    foreach(Widget *child, d->container->childWidgets())
+    foreach (Widget *child, d->container->childWidgets())
     {
-        if(auto *g = child->maybeAs<VariableGroupEditor>())
+        if (auto *g = child->maybeAs<VariableGroupEditor>())
         {
             changeRef(max, OperatorRule::maximum(g->firstColumnWidth(), max));
         }

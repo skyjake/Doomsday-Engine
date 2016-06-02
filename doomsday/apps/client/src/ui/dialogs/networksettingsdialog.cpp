@@ -52,9 +52,9 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
     void fetch()
     {
-        foreach(Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        foreach (Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
         {
-            if(ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            if (ICVarWidget *cv = w->maybeAs<ICVarWidget>())
             {
                 cv->updateFromCVar();
             }

@@ -63,7 +63,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
     String prettyKey(String const &eventDesc)
     {
-        if(!eventDesc.startsWith("key-"))
+        if (!eventDesc.startsWith("key-"))
         {
             // Doesn't look like a key.
             return eventDesc;
@@ -74,18 +74,18 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
         // Any modifiers?
         int idx = eventDesc.indexOf("+");
-        if(idx > 0)
+        if (idx > 0)
         {
             String const conds = eventDesc.mid(idx + 1);
-            if(conds.contains("key-alt-down"))
+            if (conds.contains("key-alt-down"))
             {
                 name = String(DENG2_CHAR_ALT_KEY) + name;
             }
-            if(conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
+            if (conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
             {
                 name = String(CONTROL_CHAR) + name;
             }
-            if(conds.contains("key-shift-down"))
+            if (conds.contains("key-shift-down"))
             {
                 name = String(DENG2_CHAR_SHIFT_KEY) + name;
             }
@@ -100,12 +100,12 @@ DENG_GUI_PIMPL(InputBindingWidget)
         String text = _E(l) + tr("(not bound)");
 
         // Check all the contexts associated with this widget.
-        foreach(QString bcName, contexts)
+        foreach (QString bcName, contexts)
         {
-            if(!inputSys().hasContext(bcName)) continue;
+            if (!inputSys().hasContext(bcName)) continue;
             BindContext const &context = inputSys().context(bcName);
 
-            if(Record const *rec = context.findCommandBinding(command.toLatin1(), device))
+            if (Record const *rec = context.findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 CommandBinding bind(*rec);
@@ -122,14 +122,14 @@ DENG_GUI_PIMPL(InputBindingWidget)
         Block const cmd = command.toLatin1();
         inputSys().forAllContexts([&cmd] (BindContext &context)
         {
-            while(Record *bind = context.findCommandBinding(cmd.constData()))
+            while (Record *bind = context.findCommandBinding(cmd.constData()))
             {
                 context.deleteBinding(bind->geti("id"));
             }
             return LoopContinue;
         });
 
-        foreach(QString bcName, contexts)
+        foreach (QString bcName, contexts)
         {
             String ev = String("%1:%2").arg(bcName, eventDesc);
             inputSys().bindCommand(ev.toLatin1(), command.toLatin1());
@@ -138,9 +138,9 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
     void buttonPressed(ButtonWidget &button)
     {
-        if(&button == thisPublic)
+        if (&button == thisPublic)
         {
-            if(!self.hasFocus())
+            if (!self.hasFocus())
             {
                 focus();
             }
@@ -203,19 +203,19 @@ void InputBindingWidget::setContexts(QStringList const &contexts)
 
 bool InputBindingWidget::handleEvent(Event const &event)
 {
-    if(hasFocus())
+    if (hasFocus())
     {
-        if(KeyEvent const *key = event.maybeAs<KeyEvent>())
+        if (KeyEvent const *key = event.maybeAs<KeyEvent>())
         {
-            if(key->state() != KeyEvent::Pressed) return false;
+            if (key->state() != KeyEvent::Pressed) return false;
 
             // Include modifier keys if they will be included in the binding.
-            if(d->useModifiers && key->isModifier())
+            if (d->useModifiers && key->isModifier())
             {
                 return false;
             }
 
-            if(key->ddKey() == DDKEY_ESCAPE)
+            if (key->ddKey() == DDKEY_ESCAPE)
             {
                 d->unfocus();
                 return true;
@@ -226,9 +226,9 @@ bool InputBindingWidget::handleEvent(Event const &event)
             String desc = B_EventToString(ev);
 
             // Apply current modifiers as conditions.
-            if(d->useModifiers)
+            if (d->useModifiers)
             {
-                if(key->modifiers().testFlag(KeyEvent::Shift))
+                if (key->modifiers().testFlag(KeyEvent::Shift))
                 {
                     desc += " + key-shift-down";
                 }
@@ -237,7 +237,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
                     desc += " + key-shift-up";
                 }
 
-                if(key->modifiers().testFlag(KeyEvent::Alt))
+                if (key->modifiers().testFlag(KeyEvent::Alt))
                 {
                     desc += " + key-alt-down";
                 }
@@ -246,7 +246,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
                     desc += " + key-alt-up";
                 }
 
-                if(key->modifiers().testFlag(CONTROL_MOD))
+                if (key->modifiers().testFlag(CONTROL_MOD))
                 {
                     desc += " + key-ctrl-down";
                 }
@@ -262,9 +262,9 @@ bool InputBindingWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if(MouseEvent const *mouse = event.maybeAs<MouseEvent>())
+        if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
         {
-            if(mouse->type() == Event::MouseButton &&
+            if (mouse->type() == Event::MouseButton &&
                mouse->state() == MouseEvent::Released &&
                !hitTest(event))
             {

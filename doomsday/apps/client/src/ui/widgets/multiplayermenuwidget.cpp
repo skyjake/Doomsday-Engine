@@ -82,7 +82,7 @@ MultiplayerMenuWidget::MultiplayerMenuWidget()
 
 void MultiplayerMenuWidget::updateElapsedTime()
 {
-    if(d->link().status() != ServerLink::Connected)
+    if (d->link().status() != ServerLink::Connected)
         return;
     
     TimeDelta const elapsed = d->link().connectedAt().since();

@@ -115,9 +115,9 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         /// @todo These widgets should be intelligent enough to fetch their
         /// cvar values when they need to....
 
-        foreach(Widget *child, self.area().childWidgets() + devPopup->content().childWidgets())
+        foreach (Widget *child, self.area().childWidgets() + devPopup->content().childWidgets())
         {
-            if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+            if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {
                 w->updateFromCVar();
             }

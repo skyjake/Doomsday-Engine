@@ -62,12 +62,12 @@ dd_bool DD_Unix_Init(void)
     // Determine our basedir and other global paths.
     DoomsdayApp::app().determineGlobalPaths();
 
-    if(!DD_EarlyInit())
+    if (!DD_EarlyInit())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
 #ifdef __CLIENT__
-    else if(!initDGL())
+    else if (!initDGL())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
     }

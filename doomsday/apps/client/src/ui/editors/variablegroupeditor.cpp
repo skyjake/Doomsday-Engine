@@ -36,7 +36,7 @@ struct RightClickHandler : public GuiWidget::IEventHandler
 
     bool handleEvent(GuiWidget &widget, Event const &event)
     {
-        switch(widget.handleMouseClick(event, MouseEvent::Right))
+        switch (widget.handleMouseClick(event, MouseEvent::Right))
         {
         case GuiWidget::MouseClickFinished: {
             PopupMenuWidget *pop = new PopupMenuWidget;
@@ -81,11 +81,11 @@ DENG2_PIMPL(VariableGroupEditor)
 
     void foldAll(bool fold)
     {
-        foreach(Widget *child, owner->containerWidget().childWidgets())
+        foreach (Widget *child, owner->containerWidget().childWidgets())
         {
-            if(auto *g = child->maybeAs<VariableGroupEditor>())
+            if (auto *g = child->maybeAs<VariableGroupEditor>())
             {
-                if(fold)
+                if (fold)
                     g->close(0);
                 else
                     g->open();
@@ -108,7 +108,7 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
     title().addEventHandler(new RightClickHandler(this));
 
     d->header = header;
-    if(header)
+    if (header)
     {
         d->content->add(header);
         header->rule()
@@ -122,7 +122,7 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
 
     d->layout.setGridSize(2, 0);
     d->layout.setColumnAlignment(0, ui::AlignRight);
-    if(header)
+    if (header)
     {
         d->layout.setLeftTop(d->content->rule().left(),
                              d->content->rule().top() + header->rule().height());
@@ -176,7 +176,7 @@ Rule const &VariableGroupEditor::firstColumnWidth() const
 void VariableGroupEditor::preparePanelForOpening()
 {
     FoldPanelWidget::preparePanelForOpening();
-    if(d->resetable)
+    if (d->resetable)
     {
         d->resetButton->enable();
     }
@@ -196,7 +196,7 @@ void VariableGroupEditor::addSpace()
 LabelWidget *VariableGroupEditor::addLabel(String const &text, LabelType labelType)
 {
     LabelWidget *w = LabelWidget::newWithText(text, d->content);
-    if(labelType == SingleCell)
+    if (labelType == SingleCell)
     {
         d->layout << *w;
     }
@@ -283,16 +283,16 @@ void VariableGroupEditor::commit()
     title().rule().setInput(Rule::Right, d->resetButton->rule().left());
 
     // Calculate the maximum rule for the first column items.
-    for(int i = 0; i < d->layout.gridSize().y; ++i)
+    for (int i = 0; i < d->layout.gridSize().y; ++i)
     {
         GuiWidget const *w = d->layout.at(Vector2i(0, i));
-        if(w && d->layout.widgetCellSpan(*w) == 1)
+        if (w && d->layout.widgetCellSpan(*w) == 1)
         {
             changeRef(d->firstColumnWidth,
                       OperatorRule::maximum(w->rule().width(), d->firstColumnWidth));
         }
     }
-    if(d->header)
+    if (d->header)
     {
         // Make sure the editor is wide enough to fit the entire header.
         d->content->rule().setInput(Rule::Width,
@@ -302,9 +302,9 @@ void VariableGroupEditor::commit()
 
 void VariableGroupEditor::fetch()
 {
-    foreach(Widget *child, d->content->childWidgets())
+    foreach (Widget *child, d->content->childWidgets())
     {
-        if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+        if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {
             w->updateFromCVar();
         }
@@ -313,9 +313,9 @@ void VariableGroupEditor::fetch()
 
 void VariableGroupEditor::resetToDefaults()
 {
-    foreach(Widget *child, d->content->childWidgets())
+    foreach (Widget *child, d->content->childWidgets())
     {
-        if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+        if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {
             d->owner->resetToDefaults(w->cvarPath());
             //d->settings.resetSettingToDefaults(w->cvarPath());

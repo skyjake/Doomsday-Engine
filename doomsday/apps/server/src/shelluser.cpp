@@ -70,7 +70,7 @@ DENG2_PIMPL(ShellUser), public LogSink
      */
     void flush()
     {
-        if(!logEntryPacket.isEmpty() && self.status() == shell::Link::Connected)
+        if (!logEntryPacket.isEmpty() && self.status() == shell::Link::Connected)
         {
             self << logEntryPacket;
             logEntryPacket.clear();
@@ -119,7 +119,7 @@ void ShellUser::sendGameState()
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if(App_World().hasMap())
+    if (App_World().hasMap())
     {
         world::Map &map = App_World().map();
 
@@ -136,7 +136,7 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if(!App_World().hasMap()) return;
+    if (!App_World().hasMap()) return;
 
     std::unique_ptr<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
@@ -154,15 +154,15 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if(!App_World().hasMap()) return;
+    if (!App_World().hasMap()) return;
 
     QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 
-    for(uint i = 1; i < DDMAXPLAYERS; ++i)
+    for (uint i = 1; i < DDMAXPLAYERS; ++i)
     {
         ServerPlayer *plr = DD_Player(i);
 
-        if(!plr->isInGame())
+        if (!plr->isInGame())
             continue;
 
         shell::PlayerInfoPacket::Player info;
@@ -190,11 +190,11 @@ void ShellUser::handleIncomingPackets()
     forever
     {
         QScopedPointer<Packet> packet(nextPacket());
-        if(packet.isNull()) break;
+        if (packet.isNull()) break;
 
         try
         {
-            switch(protocol().recognize(packet.data()))
+            switch (protocol().recognize(packet.data()))
             {
             case shell::Protocol::Command:
                 Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
@@ -204,7 +204,7 @@ void ShellUser::handleIncomingPackets()
                 break;
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_NET_WARNING("Error while processing packet from %s: %s") << packet->from() << er.asText();
         }

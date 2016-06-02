@@ -97,11 +97,11 @@ DENG_GUI_PIMPL(TutorialWidget)
      */
     void flash()
     {
-        if(highlight->opacity().target() == 0)
+        if (highlight->opacity().target() == 0)
         {
             highlight->setOpacity(.8f, FLASH_SPAN + .1, .1);
         }
-        else if(highlight->opacity().target() > .5f)
+        else if (highlight->opacity().target() > .5f)
         {
             highlight->setOpacity(.2f, FLASH_SPAN);
         }
@@ -123,14 +123,14 @@ DENG_GUI_PIMPL(TutorialWidget)
     int stepCount() const
     {
         int count = 0;
-        for(Step s = Welcome; s != Finish; s = advanceStep(s)) count++;
+        for (Step s = Welcome; s != Finish; s = advanceStep(s)) count++;
         return count;
     }
 
     int stepOrdinal(Step s) const
     {
         int ord = stepCount() - 1;
-        for(; s != Finish; s = advanceStep(s)) ord--;
+        for (; s != Finish; s = advanceStep(s)) ord--;
         return ord;
     }
 
@@ -148,12 +148,12 @@ DENG_GUI_PIMPL(TutorialWidget)
 
     Step previousStep(Step s) const
     {
-        if(s == Welcome) return s;
+        if (s == Welcome) return s;
         Step prev = Welcome;
-        while(prev != Finish)
+        while (prev != Finish)
         {
             Step following = advanceStep(prev);
-            if(following == s) break;
+            if (following == s) break;
             prev = following;
         }
         return prev;
@@ -170,15 +170,15 @@ DENG_GUI_PIMPL(TutorialWidget)
         forever
         {
             bool skip = false;
-            if(!App_GameLoaded()) // in Home
+            if (!App_GameLoaded()) // in Home
             {
-                if(s == RendererAppearance) skip = true;
+                if (s == RendererAppearance) skip = true;
             }
             else // A game is loaded.
             {
-                if(s == HomeScreen) skip = true;
+                if (s == HomeScreen) skip = true;
             }
-            if(!skip) break;
+            if (!skip) break;
 
             s = Step(s + 1);
         }
@@ -191,7 +191,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         // Jump to the next valid step, if necessary.
         validateStep(s);
 
-        if(s == Finish)
+        if (s == Finish)
         {
             self.stop();
             return;
@@ -209,7 +209,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         QObject::connect(dlg, SIGNAL(rejected(int)), thisPublic, SLOT(stop()));
         dlg->buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default | DialogWidget::Id1,
                                                isLastStep? tr("Done") : tr("Next"));
-        if(!isFirstStep)
+        if (!isFirstStep)
         {
             dlg->buttons() << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id2, "",
                                                    new SignalAction(thisPublic, SLOT(backToPreviousStep())));
@@ -219,7 +219,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             prevBtn.setImageColor(style().colors().colorf("inverted.text"));
         }
 
-        if(!isLastStep)
+        if (!isLastStep)
         {
             dlg->buttons() << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,
                                                    tr("Close"));
@@ -232,7 +232,7 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         // Insert the content for the dialog.
         ClientWindow &win = ClientWindow::main();
-        switch(current)
+        switch (current)
         {
         case Welcome:
             dlg->title().setText(tr("Welcome to Doomsday"));
@@ -335,7 +335,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             String msg = tr("The console is a \"Quake style\" command line prompt where "
                             "you enter commands and change variable values. To get started, "
                             "try typing %1 in the console.").arg(_E(b) "help" _E(.));
-            if(App_GameLoaded())
+            if (App_GameLoaded())
             {
                 // Event bindings are currently stored per-game, so we can't set a
                 // binding unless a game is loaded.
@@ -388,7 +388,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     void deinitStep()
     {
         // Get rid of the previous dialog.
-        if(dlg)
+        if (dlg)
         {
             dlg->close(0);
             dlg = 0;
@@ -397,7 +397,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         stopHighlight();
 
         ClientWindow &win = ClientWindow::main();
-        switch(current)
+        switch (current)
         {
         case Notifications:
             notifs->hideChild(*exampleAlert);
@@ -439,7 +439,7 @@ void TutorialWidget::start()
 
 void TutorialWidget::stop()
 {
-    if(!d->taskBarInitiallyOpen)
+    if (!d->taskBarInitiallyOpen)
     {
         ClientWindow::main().taskBar().close();
     }

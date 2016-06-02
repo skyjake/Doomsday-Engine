@@ -56,7 +56,7 @@ static void initialize(void)
 {
     int joycount;
 
-    if(isDedicated || CommandLine_Check("-nojoy"))
+    if (isDedicated || CommandLine_Check("-nojoy"))
         return;
 
 #ifdef SOLARIS
@@ -67,14 +67,14 @@ static void initialize(void)
     return;
 #endif
 
-    if(SDL_InitSubSystem(SDL_INIT_JOYSTICK))
+    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK))
     {
         LOG_INPUT_ERROR("SDL init failed for joystick: %s") << SDL_GetError();
     }
 
-    if((joycount = SDL_NumJoysticks()) > 0)
+    if ((joycount = SDL_NumJoysticks()) > 0)
     {
-        if(joydevice > joycount)
+        if (joydevice > joycount)
         {
             LOG_INPUT_WARNING("Using the default joystick instead of joystick #%i") << joydevice;
             joy = SDL_JoystickOpen(0);
@@ -83,7 +83,7 @@ static void initialize(void)
             joy = SDL_JoystickOpen(joydevice);
     }
 
-    if(joy)
+    if (joy)
     {
         // Show some info.
         LOG_INPUT_MSG("Joystick name: %s" ) << Joystick_Name();
@@ -110,7 +110,7 @@ static void initialize(void)
 bool Joystick_Init(void)
 {
 #ifndef DENG_NO_SDL
-    if(joyInited) return true; // Already initialized.
+    if (joyInited) return true; // Already initialized.
 
     LOG_AS("Joystick_Init");
 
@@ -123,9 +123,9 @@ bool Joystick_Init(void)
 void Joystick_Shutdown(void)
 {
 #ifndef DENG_NO_SDL
-    if(!joyInited) return; // Not initialized.
+    if (!joyInited) return; // Not initialized.
 
-    if(joy)
+    if (joy)
     {
         SDL_JoystickClose(joy);
         joy = 0;
@@ -148,7 +148,7 @@ void Joystick_GetState(joystate_t *state)
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
-    if(!Joystick_IsPresent() || !useJoystickCvar || !joyInited)
+    if (!Joystick_IsPresent() || !useJoystickCvar || !joyInited)
         return;
 
     // Update joysticks
@@ -159,7 +159,7 @@ void Joystick_GetState(joystate_t *state)
     state->numButtons = MIN_OF( SDL_JoystickNumButtons(joy), IJOY_MAXBUTTONS );
     state->numHats =    MIN_OF( SDL_JoystickNumHats(joy),    IJOY_MAXHATS );
 
-    for(i = 0; i < state->numAxes; ++i)
+    for (i = 0; i < state->numAxes; ++i)
     {
         int value = SDL_JoystickGetAxis(joy, i);
         // SDL returns a value between -32768 and 32767, but Doomsday is expecting
@@ -167,16 +167,16 @@ void Joystick_GetState(joystate_t *state)
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
         state->axis[i] = value;
     }
-    for(i = 0; i < state->numButtons; ++i)
+    for (i = 0; i < state->numButtons; ++i)
     {
         int isDown = SDL_JoystickGetButton(joy, i);
 
-        if(isDown && !joyButtonWasDown[i])
+        if (isDown && !joyButtonWasDown[i])
         {
             state->buttonDowns[i] = 1;
             state->buttonUps[i] = 0;
         }
-        else if(!isDown && joyButtonWasDown[i])
+        else if (!isDown && joyButtonWasDown[i])
         {
             state->buttonDowns[i] = 0;
             state->buttonUps[i] = 1;
@@ -184,10 +184,10 @@ void Joystick_GetState(joystate_t *state)
 
         joyButtonWasDown[i] = isDown;
     }
-    for(i = 0; i < state->numHats; ++i)
+    for (i = 0; i < state->numHats; ++i)
     {
         pov = SDL_JoystickGetHat(joy, i);
-        switch(pov)
+        switch (pov)
         {
             case SDL_HAT_UP:
                 state->hatAngle[i] = 0;

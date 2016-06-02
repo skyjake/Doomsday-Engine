@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
     {
-        if(widget.is<HomeItemWidget>())
+        if (widget.is<HomeItemWidget>())
         {
             QObject::connect(&widget, SIGNAL(mouseActivity()),
                              thisPublic, SLOT(mouseActivityInItem()));
@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void assetStateChanged(Asset &asset)
     {
-        if(asset.state() == Asset::Ready)
+        if (asset.state() == Asset::Ready)
         {
             self.assets().audienceForStateChange() -= this; // only scroll once
             scrollToSelected();
@@ -60,9 +60,9 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void scrollToSelected()
     {
-        if(self.hasRoot())
+        if (self.hasRoot())
         {
-            if(auto *widget = self.itemWidget<GuiWidget>(selectedIndex))
+            if (auto *widget = self.itemWidget<GuiWidget>(selectedIndex))
             {
                 self.findTopmostScrollable().scrollToWidget(*widget);
             }
@@ -83,17 +83,17 @@ HomeMenuWidget::HomeMenuWidget(String const &name)
 
 void HomeMenuWidget::unselectAll()
 {
-    if(d->selectedIndex < items().size())
+    if (d->selectedIndex < items().size())
     {
         d->selectedIndex = ui::Data::InvalidPos;
 
         // Unselect all items.
-        for(auto *w : childWidgets())
+        for (auto *w : childWidgets())
         {
-            if(auto *item = w->maybeAs<HomeItemWidget>())
+            if (auto *item = w->maybeAs<HomeItemWidget>())
             {
                 // Never deselect the currently focused item.
-                if(root().focus() != item)
+                if (root().focus() != item)
                 {
                     item->setSelected(false);
                 }
@@ -114,13 +114,13 @@ ui::DataPos HomeMenuWidget::selectedIndex() const
 
 void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
-    if(auto *widget = itemWidget<HomeItemWidget>(index))
+    if (auto *widget = itemWidget<HomeItemWidget>(index))
     {
         widget->acquireFocus();
 
         // Check if we can scroll to the selected widget right away.
         // If not, we are observing the asset and will scroll when it is ready.
-        if(assets().isReady())
+        if (assets().isReady())
         {
             d->scrollToSelected();
         }
@@ -133,7 +133,7 @@ void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 
 void HomeMenuWidget::mouseActivityInItem()
 {
-    if(auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
+    if (auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
     {
         emit itemClicked(findItem(*clickedWidget));
     }
@@ -141,13 +141,13 @@ void HomeMenuWidget::mouseActivityInItem()
 
 void HomeMenuWidget::itemSelectionChanged()
 {
-    if(auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
+    if (auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
     {
         ui::DataPos const newSelection = findItem(*clickedItem);
-        if(d->selectedIndex != newSelection)
+        if (d->selectedIndex != newSelection)
         {
             // Deselect the previous selection.
-            if(auto *item = itemWidget<HomeItemWidget>(d->selectedIndex))
+            if (auto *item = itemWidget<HomeItemWidget>(d->selectedIndex))
             {
                 item->setSelected(false);
             }

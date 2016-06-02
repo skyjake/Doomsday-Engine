@@ -102,7 +102,7 @@ void BusyWidget::update()
 {
     GuiWidget::update();
 
-    if(BusyMode_Active())
+    if (BusyMode_Active())
     {
         BusyMode_Loop();
     }
@@ -110,11 +110,11 @@ void BusyWidget::update()
 
 void BusyWidget::drawContent()
 {
-    if(!BusyMode_Active())
+    if (!BusyMode_Active())
     {
         d->progress->hide();
 
-        if(Con_TransitionInProgress())
+        if (Con_TransitionInProgress())
         {
             GLState::push()
                     .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
@@ -132,7 +132,7 @@ void BusyWidget::drawContent()
         return;
     }
 
-    if(d->haveTransitionFrame())
+    if (d->haveTransitionFrame())
     {
         //glDisable(GL_ALPHA_TEST); /// @todo get rid of these
         //glDisable(GL_BLEND);
@@ -167,7 +167,7 @@ void BusyWidget::renderTransitionFrame()
 {
     LOG_AS("BusyWidget");
 
-    if(d->haveTransitionFrame())
+    if (d->haveTransitionFrame())
     {
         // We already have a valid frame, no need to render again.
         LOGDEV_GL_VERBOSE("Skipping rendering of transition frame (got one already)");
@@ -185,7 +185,7 @@ void BusyWidget::renderTransitionFrame()
     LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
 
     d->transitionFrame.resize(grabRect.size());
-    if(!d->transitionFrame.isReady())
+    if (!d->transitionFrame.isReady())
     {
         d->transitionFrame.glInit();
     }
@@ -204,7 +204,7 @@ void BusyWidget::renderTransitionFrame()
 
 void BusyWidget::releaseTransitionFrame()
 {
-    if(d->haveTransitionFrame())
+    if (d->haveTransitionFrame())
     {
         LOGDEV_GL_VERBOSE("Releasing transition frame");
         d->transitionFrame.glDeinit();
@@ -213,7 +213,7 @@ void BusyWidget::releaseTransitionFrame()
 
 GLTexture const *BusyWidget::transitionFrame() const
 {
-    if(d->haveTransitionFrame())
+    if (d->haveTransitionFrame())
     {
         return &d->transitionFrame.colorTexture();
     }

@@ -56,11 +56,11 @@ int clientPaused; // Set by the server.
 
 void Cl_InitID()
 {
-    if(auto arg = CommandLine::get().check("-id", 1))
+    if (auto arg = CommandLine::get().check("-id", 1))
     {
         bool ok;
         auto newId = arg.params.at(0).toUInt(&ok, 0);
-        if(ok)
+        if (ok)
         {
             clientID = newId;
             LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
@@ -75,7 +75,7 @@ void Cl_InitID()
 
     auto &config = Config::get();
 
-    if(config.has(VAR_NETWORK_ID))
+    if (config.has(VAR_NETWORK_ID))
     {
         clientID = config.gets(VAR_NETWORK_ID).toUInt(nullptr, 16);
         return;
@@ -154,7 +154,7 @@ void Cl_AnswerHandshake()
     Net_SendBuffer(0, 0);
 
     // Check the version number.
-    if(remoteVersion != SV_VERSION)
+    if (remoteVersion != SV_VERSION)
     {
         LOG_NET_ERROR("Version conflict! (you:%i, server:%i)")
                 << SV_VERSION << remoteVersion;
@@ -166,7 +166,7 @@ void Cl_AnswerHandshake()
 
     // Update time and player ingame status.
     gameTime = remoteGameTime;
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         /// @todo With multiple local players, must clear only the appropriate flags.
         DD_Player(i)->publicData().flags &= ~DDPF_LOCAL;
@@ -190,7 +190,7 @@ void Cl_AnswerHandshake()
     netLoggedIn = false;
     clientPaused = false;
 
-    if(handshakeReceived)
+    if (handshakeReceived)
         return;
 
     // This prevents redundant re-initialization.
@@ -232,7 +232,7 @@ void Cl_HandlePlayerInfo()
     LOG_NET_VERBOSE("Player %i named \"%s\"") << console << name;
 
     // Is the console number valid?
-    if(console >= DDMAXPLAYERS)
+    if (console >= DDMAXPLAYERS)
         return;
 
     player_t *plr = DD_Player(console);
@@ -241,7 +241,7 @@ void Cl_HandlePlayerInfo()
 
     strcpy(plr->name, name);
 
-    if(!present)
+    if (!present)
     {
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(console, DDPE_ARRIVAL, 0);
@@ -260,15 +260,15 @@ void Cl_PlayerLeaves(int plrNum)
 void Cl_GetPackets()
 {
     // All messages come from the server.
-    while(Net_GetPacket())
+    while (Net_GetPacket())
     {
         Msg_BeginRead();
 
         // First check for packets that are only valid when
         // a game is in progress.
-        if(Cl_GameReady())
+        if (Cl_GameReady())
         {
-            switch(netBuffer.msg.type)
+            switch (netBuffer.msg.type)
             {
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
@@ -286,7 +286,7 @@ void Cl_GetPackets()
         }
 
         // How about the rest?
-        switch(netBuffer.msg.type)
+        switch (netBuffer.msg.type)
         {
         case PSV_PLAYER_FIX:
             ClPlayer_HandleFix();
@@ -378,7 +378,7 @@ void Cl_GetPackets()
             break;
 
         default:
-            if(netBuffer.msg.type >= PKT_GAME_MARKER)
+            if (netBuffer.msg.type >= PKT_GAME_MARKER)
             {
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
                                 netBuffer.msg.data, netBuffer.length);
@@ -402,18 +402,18 @@ static void assertPlayerIsValid(int plrNum)
 {
     LOG_AS("Client.assertPlayerIsValid");
 
-    if(!isClient || !Cl_GameReady() || clientPaused) return;
-    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
+    if (!isClient || !Cl_GameReady() || clientPaused) return;
+    if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
     player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
 
     // Must have a mobj!
-    if(!s->clMobjId || !plr->publicData().mo)
+    if (!s->clMobjId || !plr->publicData().mo)
         return;
 
     mobj_t *clmo = ClMobj_Find(s->clMobjId);
-    if(!clmo)
+    if (!clmo)
     {
         LOGDEV_NET_NOTE("Player %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
@@ -425,11 +425,11 @@ static void assertPlayerIsValid(int plrNum)
     */
 
     // Make sure the flags are correctly set for a client.
-    if(mo->ddFlags & DDMF_REMOTE)
+    if (mo->ddFlags & DDMF_REMOTE)
     {
         LOGDEV_NET_NOTE("Player %i's mobj should not be remote") << plrNum;
     }
-    if(clmo->ddFlags & DDMF_SOLID)
+    if (clmo->ddFlags & DDMF_SOLID)
     {
         LOGDEV_NET_NOTE("Player %i's clmobj should not be solid (when player is alive)") << plrNum;
     }
@@ -439,7 +439,7 @@ static void assertPlayerIsValid(int plrNum)
 
 void Cl_Ticker(timespan_t ticLength)
 {
-    if(!isClient || !Cl_GameReady() || clientPaused)
+    if (!isClient || !Cl_GameReady() || clientPaused)
         return;
 
     // On clientside, players are represented by two mobjs: the real mobj,
@@ -448,13 +448,13 @@ void Cl_Ticker(timespan_t ticLength)
     // the changes from the server) to match the changes. The game ticker
     // has already been run when Cl_Ticker() is called, so let's update the
     // player's clmobj to its updated state.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!DD_Player(i)->publicData().inGame) continue;
+        if (!DD_Player(i)->publicData().inGame) continue;
 
-        if(i != consolePlayer)
+        if (i != consolePlayer)
         {
-            if(DD_Player(i)->publicData().mo)
+            if (DD_Player(i)->publicData().mo)
             {
                 Smoother_AddPos(DD_Player(i)->smoother(),
                                 Cl_FrameGameTime(),
@@ -476,7 +476,7 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    if(App_World().hasMap())
+    if (App_World().hasMap())
     {
         App_World().map().expireClMobjs();
     }
@@ -490,16 +490,16 @@ D_CMD(Login)
     DENG2_UNUSED(src);
 
     // Only clients can log in.
-    if(!isClient)
+    if (!isClient)
         return false;
 
     Msg_Begin(PKT_LOGIN);
     // Write the password.
-    if(argc == 1)
+    if (argc == 1)
     {
         Writer_WriteByte(msgWriter, 0); // No password given!
     }
-    else if(strlen(argv[1]) <= 255)
+    else if (strlen(argv[1]) <= 255)
     {
         Writer_WriteByte(msgWriter, strlen(argv[1]));
         Writer_Write(msgWriter, argv[1], strlen(argv[1]));

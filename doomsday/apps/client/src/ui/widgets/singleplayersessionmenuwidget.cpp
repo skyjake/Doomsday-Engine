@@ -102,7 +102,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void addExistingGames()
     {
-        for(int i = 0; i < App_Games().count(); ++i)
+        for (int i = 0; i < App_Games().count(); ++i)
         {
             gameAdded(App_Games().byIndex(i));
         }
@@ -117,9 +117,9 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void addPendingGames()
     {
-        if(pendingGames.isEmpty()) return;
+        if (pendingGames.isEmpty()) return;
 
-        while(Game *game = pendingGames.take())
+        while (Game *game = pendingGames.take())
         {
             ui::Item *item = makeItemForGame(*game);
             self.items() << item;
@@ -137,7 +137,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
                 .arg(game.title())
                 .arg(game.id());
 
-        /*if(!game.userFiles().isEmpty())
+        /*if (!game.userFiles().isEmpty())
         {
             label += _E(b) " +" + QString::number(game.userFiles().size());
         }*/
@@ -148,7 +148,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     {
         GameItem *item = new GameItem(game, labelForGame(game), self);
 
-        if(style().images().has(game.logoImageId()))
+        if (style().images().has(game.logoImageId()))
         {
             item->setImage(style().images().image(game.logoImageId()));
         }
@@ -158,7 +158,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void updateItemLabels()
     {
-        for(uint i = 0; i < self.items().size(); ++i)
+        for (uint i = 0; i < self.items().size(); ++i)
         {
             GameItem &item = self.items().at(i).as<GameItem>();
             item.setLabel(labelForGame(item.game));
@@ -190,7 +190,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void updateGameAvailability()
     {
-        for(uint i = 0; i < self.items().size(); ++i)
+        for (uint i = 0; i < self.items().size(); ++i)
         {
             updateWidgetWithGameStatus(self.items().at(i));
         }

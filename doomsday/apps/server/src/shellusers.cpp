@@ -53,7 +53,7 @@ ShellUsers::~ShellUsers()
 {
     d->infoTimer->stop();
 
-    foreach(ShellUser *user, d->users)
+    foreach (ShellUser *user, d->users)
     {
         delete user;
     }
@@ -76,7 +76,7 @@ int ShellUsers::count() const
 
 void ShellUsers::worldMapChanged()
 {
-    foreach(ShellUser *user, d->users)
+    foreach (ShellUser *user, d->users)
     {
         user->sendGameState();
         user->sendMapOutline();
@@ -86,7 +86,7 @@ void ShellUsers::worldMapChanged()
 
 void ShellUsers::sendPlayerInfoToAll()
 {
-    foreach(ShellUser *user, d->users)
+    foreach (ShellUser *user, d->users)
     {
         user->sendPlayerInfo();
     }

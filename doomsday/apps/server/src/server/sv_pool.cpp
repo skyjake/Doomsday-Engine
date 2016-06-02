@@ -108,12 +108,12 @@ void Sv_InitPools()
     Time startedAt;
 
     // Clients don't register anything.
-    if(::isClient) return;
+    if (::isClient) return;
 
     LOG_AS("Sv_InitPools");
 
     // Set base priority scores for all the delta types.
-    for(dint i = 0; i < NUM_DELTA_TYPES; ++i)
+    for (dint i = 0; i < NUM_DELTA_TYPES; ++i)
     {
         ::deltaBaseScores[i] = DEFAULT_DELTA_BASE_SCORE;
     }
@@ -134,7 +134,7 @@ void Sv_InitPools()
 
     // Since the map has changed, PU_MAP memory has been freed.
     // Reset all pools (set numbers are kept, though).
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         pool_t &pool = *Sv_GetPool(i);
 
@@ -210,9 +210,9 @@ reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 
     // See if there already is a register-mobj for this id.
     mobjhash_t const &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
-    for(reg_mobj_t *it = hash.first; it; it = it->next)
+    for (reg_mobj_t *it = hash.first; it; it = it->next)
     {
-        if(it->mo.thinker.id == id) return it;
+        if (it->mo.thinker.id == id) return it;
     }
 
     return nullptr;  // Not found.
@@ -227,21 +227,21 @@ reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
 
     // Try to find an existing register-mobj.
-    if(reg_mobj_t *newRegMo = Sv_RegisterFindMobj(reg, id))
+    if (reg_mobj_t *newRegMo = Sv_RegisterFindMobj(reg, id))
         return newRegMo;
 
     // Allocate the new register-mobj.
     auto *newRegMo = (reg_mobj_t *) Z_Calloc(sizeof(reg_mobj_t), PU_MAP, 0);
 
     // Link it to the end of the hash list.
-    if(hash.last)
+    if (hash.last)
     {
         hash.last->next = newRegMo;
         newRegMo->prev = hash.last;
     }
     hash.last = newRegMo;
 
-    if(!hash.first)
+    if (!hash.first)
     {
         hash.first = newRegMo;
     }
@@ -258,21 +258,21 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
 
     // Update the first and last links.
-    if(hash.last == regMo)
+    if (hash.last == regMo)
     {
         hash.last = regMo->prev;
     }
-    if(hash.first == regMo)
+    if (hash.first == regMo)
     {
         hash.first = regMo->next;
     }
 
     // Link out of the list.
-    if(regMo->next)
+    if (regMo->next)
     {
         regMo->next->prev = regMo->prev;
     }
-    if(regMo->prev)
+    if (regMo->prev)
     {
         regMo->prev->next = regMo->next;
     }
@@ -289,11 +289,11 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 dfloat Sv_GetMaxedMobjZ(mobj_t const *mob)
 {
     // No maxing for now.
-    /*if(mob->origin[VZ] == mob->floorZ)
+    /*if (mob->origin[VZ] == mob->floorZ)
     {
         return DDMINFLOAT;
     }
-    if(mob->origin[VZ] + mob->height == mob->ceilingZ)
+    if (mob->origin[VZ] + mob->height == mob->ceilingZ)
     {
         return DDMAXFLOAT;
     }*/
@@ -384,7 +384,7 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
     reg->friction      = ddpl->mo && (gx.MobjFriction ? gx.MobjFriction(ddpl->mo) : DEFAULT_FRICTION);
     reg->extraLight    = ddpl->extraLight;
     reg->fixedColorMap = ddpl->fixedColorMap;
-    if(ddpl->flags & DDPF_VIEW_FILTER)
+    if (ddpl->flags & DDPF_VIEW_FILTER)
     {
         reg->filter = FMAKERGBA(ddpl->filterColor[0],
                                 ddpl->filterColor[1],
@@ -415,13 +415,13 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
     Sector &sector = worldSys().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
-    for(dint i = 0; i < 3; ++i)
+    for (dint i = 0; i < 3; ++i)
     {
         reg->rgb[i] = sector.lightColor()[i];
     }
 
     // @todo $nplanes
-    for(dint i = 0; i < 2; ++i) // number of planes in sector.
+    for (dint i = 0; i < 2; ++i) // number of planes in sector.
     {
         Plane const &plane = sector.plane(i);
 
@@ -434,7 +434,7 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
         Surface const &surface = plane.surface();
 
         Vector3f const &tintColor = surface.tintColor();
-        for(dint c = 0; c < 3; ++c)
+        for (dint c = 0; c < 3; ++c)
         {
             reg->planes[i].surface.rgba[c] = tintColor[c];
         }
@@ -453,13 +453,13 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
 
     LineSide *side = worldSys().map().sidePtr(number);
 
-    if(side->hasSections())
+    if (side->hasSections())
     {
         reg->top   .material = side->top   ().materialPtr();
         reg->middle.material = side->middle().materialPtr();
         reg->bottom.material = side->bottom().materialPtr();
 
-        for(dint c = 0; c < 3; ++c)
+        for (dint c = 0; c < 3; ++c)
         {
             reg->middle.rgba[c] = side->middle().tintColor()[c];
             reg->bottom.rgba[c] = side->bottom().tintColor()[c];
@@ -499,7 +499,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
     dint df;
     dt_mobj_t const *r = ::dummyZeroMobj;
     reg_mobj_t *regMo  = Sv_RegisterFindMobj(reg, s->thinker.id);
-    if(regMo)
+    if (regMo)
     {
         // Use the registered data.
         r  = &regMo->mo;
@@ -511,14 +511,14 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
         df = MDFC_CREATE | MDF_EVERYTHING | MDFC_TYPE;
     }
 
-    if(r->origin[0] != s->origin[0])
+    if (r->origin[0] != s->origin[0])
         df |= MDF_ORIGIN_X;
-    if(r->origin[1] != s->origin[1])
+    if (r->origin[1] != s->origin[1])
         df |= MDF_ORIGIN_Y;
-    if(r->origin[2] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
+    if (r->origin[2] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
     {
         df |= MDF_ORIGIN_Z;
-        if(!(df & MDFC_CREATE) && s->origin[2] <= s->floorZ)
+        if (!(df & MDFC_CREATE) && s->origin[2] <= s->floorZ)
         {
             // It is currently on the floor. The client will place it on its
             // clientside floor and disregard the Z coordinate.
@@ -526,51 +526,51 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
         }
     }
 
-    if(r->mom[0] != s->mom[0])
+    if (r->mom[0] != s->mom[0])
         df |= MDF_MOM_X;
-    if(r->mom[1] != s->mom[1])
+    if (r->mom[1] != s->mom[1])
         df |= MDF_MOM_Y;
-    if(r->mom[2] != s->mom[2])
+    if (r->mom[2] != s->mom[2])
         df |= MDF_MOM_Z;
 
-    if(r->angle != s->angle)
+    if (r->angle != s->angle)
         df |= MDF_ANGLE;
-    if(r->selector != s->selector)
+    if (r->selector != s->selector)
         df |= MDF_SELECTOR;
-    if(r->translucency != s->translucency)
+    if (r->translucency != s->translucency)
         df |= MDFC_TRANSLUCENCY;
-    if(r->visTarget != s->visTarget)
+    if (r->visTarget != s->visTarget)
         df |= MDFC_FADETARGET;
-    if(r->type != s->type)
+    if (r->type != s->type)
         df |= MDFC_TYPE;
 
     // Mobj state sent periodically, if the sequence keeps changing.
-    if(regMo && !Def_SameStateSequence(s->state, r->state))
+    if (regMo && !Def_SameStateSequence(s->state, r->state))
     {
         df |= MDF_STATE;
 
-        if(s->state == nullptr)
+        if (s->state == nullptr)
         {
             // No valid comparison can be generated because the mobj is gone.
             return false;
         }
     }
 
-    if(r->radius != s->radius)
+    if (r->radius != s->radius)
         df |= MDF_RADIUS;
-    if(r->height != s->height)
+    if (r->height != s->height)
         df |= MDF_HEIGHT;
-    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK) ||
+    if ((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK) ||
        r->flags != s->flags || r->flags2 != s->flags2 || r->flags3 != s->flags3)
     {
         df |= MDF_FLAGS;
     }
-    if(r->health != s->health)
+    if (r->health != s->health)
         df |= MDF_HEALTH;
-    if(r->floorClip != s->floorClip)
+    if (r->floorClip != s->floorClip)
         df |= MDF_FLOORCLIP;
 
-    if(df)
+    if (df)
     {
         // Init the delta with current data.
         Sv_NewDelta(d, DT_MOBJ, s->thinker.id);
@@ -597,19 +597,19 @@ dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *
     Sv_RegisterPlayer(&d->player, number);
 
     // Determine which data is different.
-    if(r->mobj != s->mobj)
+    if (r->mobj != s->mobj)
         df |= PDF_MOBJ;
-    if(r->forwardMove != s->forwardMove)
+    if (r->forwardMove != s->forwardMove)
         df |= PDF_FORWARDMOVE;
-    if(r->sideMove != s->sideMove)
+    if (r->sideMove != s->sideMove)
         df |= PDF_SIDEMOVE;
-    if(r->turnDelta != s->turnDelta)
+    if (r->turnDelta != s->turnDelta)
         df |= PDF_TURNDELTA;
-    if(r->friction != s->friction)
+    if (r->friction != s->friction)
         df |= PDF_FRICTION;
-    if(r->extraLight != s->extraLight || r->fixedColorMap != s->fixedColorMap)
+    if (r->extraLight != s->extraLight || r->fixedColorMap != s->fixedColorMap)
         df |= PDF_EXTRALIGHT;
-    if(r->filter != s->filter)
+    if (r->filter != s->filter)
         df |= PDF_FILTER;
 
     d->delta.flags = df;
@@ -627,31 +627,31 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
     dint df = 0;
 
     // Determine which data is different.
-    if(s.floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
+    if (s.floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
-    if(s.ceilingSurface().materialPtr() != r->planes[PLN_CEILING].surface.material)
+    if (s.ceilingSurface().materialPtr() != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
-    if(r->lightLevel != s.lightLevel())
+    if (r->lightLevel != s.lightLevel())
         df |= SDF_LIGHT;
-    if(r->rgb[0] != s.lightColor().x)
+    if (r->rgb[0] != s.lightColor().x)
         df |= SDF_COLOR_RED;
-    if(r->rgb[1] != s.lightColor().y)
+    if (r->rgb[1] != s.lightColor().y)
         df |= SDF_COLOR_GREEN;
-    if(r->rgb[2] != s.lightColor().z)
+    if (r->rgb[2] != s.lightColor().z)
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s.floorSurface().tintColor().x)
+    if (r->planes[PLN_FLOOR].surface.rgba[0] != s.floorSurface().tintColor().x)
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s.floorSurface().tintColor().y)
+    if (r->planes[PLN_FLOOR].surface.rgba[1] != s.floorSurface().tintColor().y)
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s.floorSurface().tintColor().z)
+    if (r->planes[PLN_FLOOR].surface.rgba[2] != s.floorSurface().tintColor().z)
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s.ceilingSurface().tintColor().x)
+    if (r->planes[PLN_CEILING].surface.rgba[0] != s.ceilingSurface().tintColor().x)
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s.ceilingSurface().tintColor().y)
+    if (r->planes[PLN_CEILING].surface.rgba[1] != s.ceilingSurface().tintColor().y)
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s.ceilingSurface().tintColor().z)
+    if (r->planes[PLN_CEILING].surface.rgba[2] != s.ceilingSurface().tintColor().z)
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -661,53 +661,53 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(fequal(r->planes[PLN_FLOOR].speed, 0) && fequal(s.floor().speed(), 0))
+    if (fequal(r->planes[PLN_FLOOR].speed, 0) && fequal(s.floor().speed(), 0))
     {
-        if(!fequal(r->planes[PLN_FLOOR].height, s.floor().height()))
+        if (!fequal(r->planes[PLN_FLOOR].height, s.floor().height()))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s.floor().height()) > PLANE_SKIP_LIMIT)
+        if (fabs(r->planes[PLN_FLOOR].height - s.floor().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(fequal(r->planes[PLN_CEILING].speed, 0) && fequal(s.ceiling().speed(), 0))
+    if (fequal(r->planes[PLN_CEILING].speed, 0) && fequal(s.ceiling().speed(), 0))
     {
-        if(!fequal(r->planes[PLN_CEILING].height, s.ceiling().height()))
+        if (!fequal(r->planes[PLN_CEILING].height, s.ceiling().height()))
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s.ceiling().height()) > PLANE_SKIP_LIMIT)
+        if (fabs(r->planes[PLN_CEILING].height - s.ceiling().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(!fequal(r->planes[PLN_FLOOR].target, s.floor().heightTarget()))
+    if (!fequal(r->planes[PLN_FLOOR].target, s.floor().heightTarget()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(!fequal(r->planes[PLN_FLOOR].speed, s.floor().speed()))
+    if (!fequal(r->planes[PLN_FLOOR].speed, s.floor().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!fequal(r->planes[PLN_CEILING].target, s.ceiling().heightTarget()))
+    if (!fequal(r->planes[PLN_CEILING].target, s.ceiling().heightTarget()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(!fequal(r->planes[PLN_CEILING].speed, s.ceiling().speed()))
+    if (!fequal(r->planes[PLN_CEILING].speed, s.ceiling().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
 
 #ifdef DENG2_DEBUG
-    if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
+    if (df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
             << number << s.ceiling().heightTarget();
@@ -715,19 +715,19 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
 #endif
 
     // Only do a delta when something changes.
-    if(df)
+    if (df)
     {
         // Init the delta with current data.
         Sv_NewDelta(d, DT_SECTOR, number);
         Sv_RegisterSector(&d->sector, number);
 
-        if(doUpdate)
+        if (doUpdate)
         {
             Sv_RegisterSector(r, number);
         }
     }
 
-    if(doUpdate)
+    if (doUpdate)
     {
         // The plane heights should be tracked regardless of the
         // change flags.
@@ -752,123 +752,123 @@ dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, b
     byte sideFlags = side->flags() & 0xff;
     dint df = 0;
 
-    if(side->hasSections())
+    if (side->hasSections())
     {
-        if(!side->top().hasFixMaterial() && r->top.material != side->top().materialPtr())
+        if (!side->top().hasFixMaterial() && r->top.material != side->top().materialPtr())
         {
             df |= SIDF_TOP_MATERIAL;
-            if(doUpdate)
+            if (doUpdate)
                 r->top.material = side->top().materialPtr();
         }
 
-        if(!side->middle().hasFixMaterial() && r->middle.material != side->middle().materialPtr())
+        if (!side->middle().hasFixMaterial() && r->middle.material != side->middle().materialPtr())
         {
             df |= SIDF_MID_MATERIAL;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.material = side->middle().materialPtr();
         }
 
-        if(!side->bottom().hasFixMaterial() && r->bottom.material != side->bottom().materialPtr())
+        if (!side->bottom().hasFixMaterial() && r->bottom.material != side->bottom().materialPtr())
         {
             df |= SIDF_BOTTOM_MATERIAL;
-            if(doUpdate)
+            if (doUpdate)
                 r->bottom.material = side->bottom().materialPtr();
         }
 
-        if(r->top.rgba[0] != side->top().tintColor().x)
+        if (r->top.rgba[0] != side->top().tintColor().x)
         {
             df |= SIDF_TOP_COLOR_RED;
-            if(doUpdate)
+            if (doUpdate)
                 r->top.rgba[0] = side->top().tintColor().x;
         }
 
-        if(r->top.rgba[1] != side->top().tintColor().y)
+        if (r->top.rgba[1] != side->top().tintColor().y)
         {
             df |= SIDF_TOP_COLOR_GREEN;
-            if(doUpdate)
+            if (doUpdate)
                 r->top.rgba[1] = side->top().tintColor().y;
         }
 
-        if(r->top.rgba[2] != side->top().tintColor().z)
+        if (r->top.rgba[2] != side->top().tintColor().z)
         {
             df |= SIDF_TOP_COLOR_BLUE;
-            if(doUpdate)
+            if (doUpdate)
                 r->top.rgba[3] = side->top().tintColor().z;
         }
 
-        if(r->middle.rgba[0] != side->middle().tintColor().x)
+        if (r->middle.rgba[0] != side->middle().tintColor().x)
         {
             df |= SIDF_MID_COLOR_RED;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.rgba[0] = side->middle().tintColor().x;
         }
 
-        if(r->middle.rgba[1] != side->middle().tintColor().y)
+        if (r->middle.rgba[1] != side->middle().tintColor().y)
         {
             df |= SIDF_MID_COLOR_GREEN;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.rgba[1] = side->middle().tintColor().y;
         }
 
-        if(r->middle.rgba[2] != side->middle().tintColor().z)
+        if (r->middle.rgba[2] != side->middle().tintColor().z)
         {
             df |= SIDF_MID_COLOR_BLUE;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.rgba[3] = side->middle().tintColor().z;
         }
 
-        if(r->middle.rgba[3] != side->middle().opacity())
+        if (r->middle.rgba[3] != side->middle().opacity())
         {
             df |= SIDF_MID_COLOR_ALPHA;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.rgba[3] = side->middle().opacity();
         }
 
-        if(r->bottom.rgba[0] != side->bottom().tintColor().x)
+        if (r->bottom.rgba[0] != side->bottom().tintColor().x)
         {
             df |= SIDF_BOTTOM_COLOR_RED;
-            if(doUpdate)
+            if (doUpdate)
                 r->bottom.rgba[0] = side->bottom().tintColor().x;
         }
 
-        if(r->bottom.rgba[1] != side->bottom().tintColor().y)
+        if (r->bottom.rgba[1] != side->bottom().tintColor().y)
         {
             df |= SIDF_BOTTOM_COLOR_GREEN;
-            if(doUpdate)
+            if (doUpdate)
                 r->bottom.rgba[1] = side->bottom().tintColor().y;
         }
 
-        if(r->bottom.rgba[2] != side->bottom().tintColor().z)
+        if (r->bottom.rgba[2] != side->bottom().tintColor().z)
         {
             df |= SIDF_BOTTOM_COLOR_BLUE;
-            if(doUpdate)
+            if (doUpdate)
                 r->bottom.rgba[3] = side->bottom().tintColor().z;
         }
 
-        if(r->middle.blendMode != side->middle().blendMode())
+        if (r->middle.blendMode != side->middle().blendMode())
         {
             df |= SIDF_MID_BLENDMODE;
-            if(doUpdate)
+            if (doUpdate)
                 r->middle.blendMode = side->middle().blendMode();
         }
     }
 
-    if(r->lineFlags != lineFlags)
+    if (r->lineFlags != lineFlags)
     {
         df |= SIDF_LINE_FLAGS;
-        if(doUpdate)
+        if (doUpdate)
             r->lineFlags = lineFlags;
     }
 
-    if(r->flags != sideFlags)
+    if (r->flags != sideFlags)
     {
         df |= SIDF_FLAGS;
-        if(doUpdate)
+        if (doUpdate)
             r->flags = sideFlags;
     }
 
     // Was there any change?
-    if(df)
+    if (df)
     {
         // This happens quite rarely.
         // Init the delta with current data.
@@ -895,15 +895,15 @@ dd_bool Sv_RegisterComparePoly(cregister_t *reg, dint number, polydelta_t *d)
     Sv_RegisterPoly(&d->po, number);
 
     // What is different?
-    if(r->dest[VX] != s->dest[VX])
+    if (r->dest[VX] != s->dest[VX])
         df |= PODF_DEST_X;
-    if(r->dest[VY] != s->dest[VY])
+    if (r->dest[VY] != s->dest[VY])
         df |= PODF_DEST_Y;
-    if(r->speed != s->speed)
+    if (r->speed != s->speed)
         df |= PODF_SPEED;
-    if(r->destAngle != s->destAngle)
+    if (r->destAngle != s->destAngle)
         df |= PODF_DEST_ANGLE;
-    if(r->angleSpeed != s->angleSpeed)
+    if (r->angleSpeed != s->angleSpeed)
         df |= PODF_ANGSPEED;
 
     d->delta.flags = df;
@@ -950,24 +950,24 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 
     // Init sectors.
     reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(*reg->sectors) * map.sectorCount(), PU_MAP, 0);
-    for(dint i = 0; i < map.sectorCount(); ++i)
+    for (dint i = 0; i < map.sectorCount(); ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
     reg->sides = (dt_side_t *) Z_Calloc(sizeof(*reg->sides) * map.sideCount(), PU_MAP, 0);
-    for(dint i = 0; i < map.sideCount(); ++i)
+    for (dint i = 0; i < map.sideCount(); ++i)
     {
         Sv_RegisterSide(&reg->sides[i], i);
     }
 
     // Init polyobjs.
     dint numPolyobjs = map.polyobjCount();
-    if(numPolyobjs)
+    if (numPolyobjs)
     {
         reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * map.polyobjCount(), PU_MAP, 0);
-        for(dint i = 0; i < numPolyobjs; ++i)
+        for (dint i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
@@ -992,7 +992,7 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
     // Pointer to the owner's pool.
     info->pool = pool;
 
-    if(plr->publicData().mo)
+    if (plr->publicData().mo)
     {
         mobj_t *mob = plr->publicData().mo;
 
@@ -1020,7 +1020,7 @@ uint Sv_GetTimeStamp()
  */
 void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 {
-    if(!deltaPtr) return;
+    if (!deltaPtr) return;
 
     delta_t *delta = (delta_t *) deltaPtr;
     /// @note: This only clears the common delta_t part, not the extra data.
@@ -1125,7 +1125,7 @@ void* Sv_CopyDelta(void* deltaPtr)
          /* : delta->type == DT_LUMP?   sizeof(lumpdelta_t) */
         : 0);
 
-    if(size == 0)
+    if (size == 0)
     {
         App_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
     }
@@ -1149,13 +1149,13 @@ void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
     const delta_t*      sub = (delta_t const *) deltaPtr2;
 
 #ifdef _DEBUG
-    if(!Sv_IsSameDelta(delta, sub))
+    if (!Sv_IsSameDelta(delta, sub))
     {
         App_Error("Sv_SubtractDelta: Not the same!\n");
     }
 #endif
 
-    if(Sv_IsNullMobjDelta(sub))
+    if (Sv_IsNullMobjDelta(sub))
     {
         // Null deltas kill everything.
         delta->flags = 0;
@@ -1177,7 +1177,7 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
     delta_t *dest      = (delta_t *) destDelta;
     int sf = src->flags;
 
-    if(src->type == DT_MOBJ)
+    if (src->type == DT_MOBJ)
     {
         dt_mobj_t const *s = &((mobjdelta_t const *) src)->mo;
         dt_mobj_t *d       = &((mobjdelta_t *) dest)->mo;
@@ -1185,92 +1185,92 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
         // *Always* set the player pointer.
         d->dPlayer = s->dPlayer;
 
-        if(sf & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
+        if (sf & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
             d->_bspLeaf = s->_bspLeaf;
-        if(sf & MDF_ORIGIN_X)
+        if (sf & MDF_ORIGIN_X)
             d->origin[VX] = s->origin[VX];
-        if(sf & MDF_ORIGIN_Y)
+        if (sf & MDF_ORIGIN_Y)
             d->origin[VY] = s->origin[VY];
-        if(sf & MDF_ORIGIN_Z)
+        if (sf & MDF_ORIGIN_Z)
             d->origin[VZ] = s->origin[VZ];
-        if(sf & MDF_MOM_X)
+        if (sf & MDF_MOM_X)
             d->mom[MX] = s->mom[MX];
-        if(sf & MDF_MOM_Y)
+        if (sf & MDF_MOM_Y)
             d->mom[MY] = s->mom[MY];
-        if(sf & MDF_MOM_Z)
+        if (sf & MDF_MOM_Z)
             d->mom[MZ] = s->mom[MZ];
-        if(sf & MDF_ANGLE)
+        if (sf & MDF_ANGLE)
             d->angle = s->angle;
-        if(sf & MDF_SELECTOR)
+        if (sf & MDF_SELECTOR)
             d->selector = s->selector;
-        if(sf & MDF_STATE)
+        if (sf & MDF_STATE)
         {
             d->state = s->state;
             d->tics = (s->state ? s->state->tics : 0);
         }
-        if(sf & MDF_RADIUS)
+        if (sf & MDF_RADIUS)
             d->radius = s->radius;
-        if(sf & MDF_HEIGHT)
+        if (sf & MDF_HEIGHT)
             d->height = s->height;
-        if(sf & MDF_FLAGS)
+        if (sf & MDF_FLAGS)
         {
             d->ddFlags = s->ddFlags;
             d->flags   = s->flags;
             d->flags2  = s->flags2;
             d->flags3  = s->flags3;
         }
-        if(sf & MDF_FLOORCLIP)
+        if (sf & MDF_FLOORCLIP)
             d->floorClip = s->floorClip;
-        if(sf & MDFC_TRANSLUCENCY)
+        if (sf & MDFC_TRANSLUCENCY)
             d->translucency = s->translucency;
-        if(sf & MDFC_FADETARGET)
+        if (sf & MDFC_FADETARGET)
             d->visTarget = s->visTarget;
     }
-    else if(src->type == DT_PLAYER)
+    else if (src->type == DT_PLAYER)
     {
         const dt_player_t*  s = &((const playerdelta_t *) src)->player;
         dt_player_t*        d = &((playerdelta_t *) dest)->player;
 
-        if(sf & PDF_MOBJ)
+        if (sf & PDF_MOBJ)
             d->mobj = s->mobj;
-        if(sf & PDF_FORWARDMOVE)
+        if (sf & PDF_FORWARDMOVE)
             d->forwardMove = s->forwardMove;
-        if(sf & PDF_SIDEMOVE)
+        if (sf & PDF_SIDEMOVE)
             d->sideMove = s->sideMove;
-        /*if(sf & PDF_ANGLE)
+        /*if (sf & PDF_ANGLE)
             d->angle = s->angle;*/
-        if(sf & PDF_TURNDELTA)
+        if (sf & PDF_TURNDELTA)
             d->turnDelta = s->turnDelta;
-        if(sf & PDF_FRICTION)
+        if (sf & PDF_FRICTION)
             d->friction = s->friction;
-        if(sf & PDF_EXTRALIGHT)
+        if (sf & PDF_EXTRALIGHT)
         {
             d->extraLight = s->extraLight;
             d->fixedColorMap = s->fixedColorMap;
         }
-        if(sf & PDF_FILTER)
+        if (sf & PDF_FILTER)
             d->filter = s->filter;
-        if(sf & PDF_PSPRITES)
+        if (sf & PDF_PSPRITES)
         {
             uint                i;
 
-            for(i = 0; i < 2; ++i)
+            for (i = 0; i < 2; ++i)
             {
                 int                 off = 16 + i * 8;
 
-                if(sf & (PSDF_STATEPTR << off))
+                if (sf & (PSDF_STATEPTR << off))
                 {
                     d->psp[i].statePtr = s->psp[i].statePtr;
                     d->psp[i].tics =
                         (s->psp[i].statePtr ? s->psp[i].statePtr->tics : 0);
                 }
-                /*if(sf & (PSDF_LIGHT << off))
+                /*if (sf & (PSDF_LIGHT << off))
                     d->psp[i].light = s->psp[i].light;*/
-                if(sf & (PSDF_ALPHA << off))
+                if (sf & (PSDF_ALPHA << off))
                     d->psp[i].alpha = s->psp[i].alpha;
-                if(sf & (PSDF_STATE << off))
+                if (sf & (PSDF_STATE << off))
                     d->psp[i].state = s->psp[i].state;
-                if(sf & (PSDF_OFFSET << off))
+                if (sf & (PSDF_OFFSET << off))
                 {
                     d->psp[i].offset[VX] = s->psp[i].offset[VX];
                     d->psp[i].offset[VY] = s->psp[i].offset[VY];
@@ -1278,123 +1278,123 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
             }
         }
     }
-    else if(src->type == DT_SECTOR)
+    else if (src->type == DT_SECTOR)
     {
         const dt_sector_t*  s = &((const sectordelta_t *) src)->sector;
         dt_sector_t*        d = &((sectordelta_t *) dest)->sector;
 
-        if(sf & SDF_FLOOR_MATERIAL)
+        if (sf & SDF_FLOOR_MATERIAL)
             d->planes[PLN_FLOOR].surface.material =
                 s->planes[PLN_FLOOR].surface.material;
-        if(sf & SDF_CEILING_MATERIAL)
+        if (sf & SDF_CEILING_MATERIAL)
             d->planes[PLN_CEILING].surface.material =
                 s->planes[PLN_CEILING].surface.material;
-        if(sf & SDF_LIGHT)
+        if (sf & SDF_LIGHT)
             d->lightLevel = s->lightLevel;
-        if(sf & SDF_FLOOR_TARGET)
+        if (sf & SDF_FLOOR_TARGET)
             d->planes[PLN_FLOOR].target = s->planes[PLN_FLOOR].target;
-        if(sf & SDF_FLOOR_SPEED)
+        if (sf & SDF_FLOOR_SPEED)
             d->planes[PLN_FLOOR].speed = s->planes[PLN_FLOOR].speed;
-        if(sf & SDF_CEILING_TARGET)
+        if (sf & SDF_CEILING_TARGET)
             d->planes[PLN_CEILING].target = s->planes[PLN_CEILING].target;
-        if(sf & SDF_CEILING_SPEED)
+        if (sf & SDF_CEILING_SPEED)
             d->planes[PLN_CEILING].speed = s->planes[PLN_CEILING].speed;
-        if(sf & SDF_FLOOR_HEIGHT)
+        if (sf & SDF_FLOOR_HEIGHT)
             d->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
-        if(sf & SDF_CEILING_HEIGHT)
+        if (sf & SDF_CEILING_HEIGHT)
             d->planes[PLN_CEILING].height = s->planes[PLN_CEILING].height;
-        if(sf & SDF_COLOR_RED)
+        if (sf & SDF_COLOR_RED)
             d->rgb[0] = s->rgb[0];
-        if(sf & SDF_COLOR_GREEN)
+        if (sf & SDF_COLOR_GREEN)
             d->rgb[1] = s->rgb[1];
-        if(sf & SDF_COLOR_BLUE)
+        if (sf & SDF_COLOR_BLUE)
             d->rgb[2] = s->rgb[2];
 
-        if(sf & SDF_FLOOR_COLOR_RED)
+        if (sf & SDF_FLOOR_COLOR_RED)
             d->planes[PLN_FLOOR].surface.rgba[0] =
                 s->planes[PLN_FLOOR].surface.rgba[0];
-        if(sf & SDF_FLOOR_COLOR_GREEN)
+        if (sf & SDF_FLOOR_COLOR_GREEN)
             d->planes[PLN_FLOOR].surface.rgba[1] =
                 s->planes[PLN_FLOOR].surface.rgba[1];
-        if(sf & SDF_FLOOR_COLOR_BLUE)
+        if (sf & SDF_FLOOR_COLOR_BLUE)
             d->planes[PLN_FLOOR].surface.rgba[2] =
                 s->planes[PLN_FLOOR].surface.rgba[2];
 
-        if(sf & SDF_CEIL_COLOR_RED)
+        if (sf & SDF_CEIL_COLOR_RED)
             d->planes[PLN_CEILING].surface.rgba[0] =
                 s->planes[PLN_CEILING].surface.rgba[0];
-        if(sf & SDF_CEIL_COLOR_GREEN)
+        if (sf & SDF_CEIL_COLOR_GREEN)
             d->planes[PLN_CEILING].surface.rgba[1] =
                 s->planes[PLN_CEILING].surface.rgba[1];
-        if(sf & SDF_CEIL_COLOR_BLUE)
+        if (sf & SDF_CEIL_COLOR_BLUE)
             d->planes[PLN_CEILING].surface.rgba[2] =
                 s->planes[PLN_CEILING].surface.rgba[2];
     }
-    else if(src->type == DT_SIDE)
+    else if (src->type == DT_SIDE)
     {
         const dt_side_t*    s = &((const sidedelta_t *) src)->side;
         dt_side_t*          d = &((sidedelta_t *) dest)->side;
 
-        if(sf & SIDF_TOP_MATERIAL)
+        if (sf & SIDF_TOP_MATERIAL)
             d->top.material = s->top.material;
-        if(sf & SIDF_MID_MATERIAL)
+        if (sf & SIDF_MID_MATERIAL)
             d->middle.material = s->middle.material;
-        if(sf & SIDF_BOTTOM_MATERIAL)
+        if (sf & SIDF_BOTTOM_MATERIAL)
             d->bottom.material = s->bottom.material;
-        if(sf & SIDF_LINE_FLAGS)
+        if (sf & SIDF_LINE_FLAGS)
             d->lineFlags = s->lineFlags;
 
-        if(sf & SIDF_TOP_COLOR_RED)
+        if (sf & SIDF_TOP_COLOR_RED)
             d->top.rgba[0] = s->top.rgba[0];
-        if(sf & SIDF_TOP_COLOR_GREEN)
+        if (sf & SIDF_TOP_COLOR_GREEN)
             d->top.rgba[1] = s->top.rgba[1];
-        if(sf & SIDF_TOP_COLOR_BLUE)
+        if (sf & SIDF_TOP_COLOR_BLUE)
             d->top.rgba[2] = s->top.rgba[2];
 
-        if(sf & SIDF_MID_COLOR_RED)
+        if (sf & SIDF_MID_COLOR_RED)
             d->middle.rgba[0] = s->middle.rgba[0];
-        if(sf & SIDF_MID_COLOR_GREEN)
+        if (sf & SIDF_MID_COLOR_GREEN)
             d->middle.rgba[1] = s->middle.rgba[1];
-        if(sf & SIDF_MID_COLOR_BLUE)
+        if (sf & SIDF_MID_COLOR_BLUE)
             d->middle.rgba[2] = s->middle.rgba[2];
-        if(sf & SIDF_MID_COLOR_ALPHA)
+        if (sf & SIDF_MID_COLOR_ALPHA)
             d->middle.rgba[3] = s->middle.rgba[3];
 
-        if(sf & SIDF_BOTTOM_COLOR_RED)
+        if (sf & SIDF_BOTTOM_COLOR_RED)
             d->bottom.rgba[0] = s->bottom.rgba[0];
-        if(sf & SIDF_BOTTOM_COLOR_GREEN)
+        if (sf & SIDF_BOTTOM_COLOR_GREEN)
             d->bottom.rgba[1] = s->bottom.rgba[1];
-        if(sf & SIDF_BOTTOM_COLOR_BLUE)
+        if (sf & SIDF_BOTTOM_COLOR_BLUE)
             d->bottom.rgba[2] = s->bottom.rgba[2];
 
-        if(sf & SIDF_MID_BLENDMODE)
+        if (sf & SIDF_MID_BLENDMODE)
             d->middle.blendMode = s->middle.blendMode;
 
-        if(sf & SIDF_FLAGS)
+        if (sf & SIDF_FLAGS)
             d->flags = s->flags;
     }
-    else if(src->type == DT_POLY)
+    else if (src->type == DT_POLY)
     {
         const dt_poly_t*    s = &((const polydelta_t *) src)->po;
         dt_poly_t*          d = &((polydelta_t *) dest)->po;
 
-        if(sf & PODF_DEST_X)
+        if (sf & PODF_DEST_X)
             d->dest[VX] = s->dest[VX];
-        if(sf & PODF_DEST_Y)
+        if (sf & PODF_DEST_Y)
             d->dest[VY] = s->dest[VY];
-        if(sf & PODF_SPEED)
+        if (sf & PODF_SPEED)
             d->speed = s->speed;
-        if(sf & PODF_DEST_ANGLE)
+        if (sf & PODF_DEST_ANGLE)
             d->destAngle = s->destAngle;
-        if(sf & PODF_ANGSPEED)
+        if (sf & PODF_ANGSPEED)
             d->angleSpeed = s->angleSpeed;
     }
-    else if(Sv_IsSoundDelta(src))
+    else if (Sv_IsSoundDelta(src))
     {
         const sounddelta_t* s = (sounddelta_t const *) srcDelta;
         sounddelta_t*       d = (sounddelta_t *) destDelta;
 
-        if(sf & SNDDF_VOLUME)
+        if (sf & SNDDF_VOLUME)
             d->volume = s->volume;
         d->sound = s->sound;
     }
@@ -1416,30 +1416,30 @@ dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
     delta_t *dest = (delta_t *) destDelta;
 
 #ifdef _DEBUG
-    if(!Sv_IsSameDelta(src, dest))
+    if (!Sv_IsSameDelta(src, dest))
     {
         App_Error("Sv_MergeDelta: Not the same!\n");
     }
-    if(dest->state != DELTA_NEW)
+    if (dest->state != DELTA_NEW)
     {
         App_Error("Sv_MergeDelta: Dest is not NEW.\n");
     }
 #endif
 
-    if(Sv_IsNullMobjDelta(dest))
+    if (Sv_IsNullMobjDelta(dest))
     {
         // Nothing can be merged with a null mobj delta.
         return true;
     }
 
-    if(Sv_IsNullMobjDelta(src))
+    if (Sv_IsNullMobjDelta(src))
     {
         // Null mobj deltas kill the destination.
         dest->flags = MDFC_NULL;
         return true;
     }
 
-    if(Sv_IsCreateMobjDelta(dest) && Sv_IsNullMobjDelta(src))
+    if (Sv_IsCreateMobjDelta(dest) && Sv_IsNullMobjDelta(src))
     {
         // Applying a Null mobj delta on a Create mobj delta causes
         // the two deltas to negate each other. Returning false
@@ -1448,7 +1448,7 @@ dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
         return false;
     }
 
-    if(Sv_IsStartSoundDelta(src) || Sv_IsStopSoundDelta(src))
+    if (Sv_IsStartSoundDelta(src) || Sv_IsStopSoundDelta(src))
     {
         // Sound deltas completely override what they're being
         // merged with. (Only one sound per source.) Stop Sound deltas must
@@ -1497,7 +1497,7 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
 {
     coord_t z;
 
-    if(isReal && !Mobj_Map(*mo).thinkers().isUsedMobjId(mo->thinker.id))
+    if (isReal && !Mobj_Map(*mo).thinkers().isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -1506,11 +1506,11 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
     z = mo->origin[VZ];
 
     // Registered mobjs may have a maxed out Z coordinate.
-    if(!isReal)
+    if (!isReal)
     {
-        if(z == DDMINFLOAT)
+        if (z == DDMINFLOAT)
             z = mo->floorZ;
-        if(z == DDMAXFLOAT)
+        if (z == DDMAXFLOAT)
             z = mo->ceilingZ - mo->height;
     }
 
@@ -1553,29 +1553,29 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 {
     delta_t const *delta = (delta_t const *) deltaPtr;
 
-    if(delta->type == DT_MOBJ)
+    if (delta->type == DT_MOBJ)
     {
         // Use the delta's registered mobj position. For old unacked data,
         // it may be somewhat inaccurate.
         return Sv_MobjDistance(&((mobjdelta_t *) deltaPtr)->mo, info, false);
     }
 
-    if(delta->type == DT_PLAYER)
+    if (delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
         mobj_t const *mo = DD_Player(delta->id)->publicData().mo;
-        if(mo)
+        if (mo)
         {
             return Sv_MobjDistance(mo, info, true);
         }
     }
 
-    if(delta->type == DT_SECTOR)
+    if (delta->type == DT_SECTOR)
     {
         return Sv_SectorDistance(delta->id, info);
     }
 
-    if(delta->type == DT_SIDE)
+    if (delta->type == DT_SIDE)
     {
         LineSide *side = worldSys().map().sidePtr(delta->id);
         Line &line = side->line();
@@ -1583,30 +1583,30 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
                                 info->origin[VY] - line.center().y);
     }
 
-    if(delta->type == DT_POLY)
+    if (delta->type == DT_POLY)
     {
         Polyobj const &pob = worldSys().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
                                 info->origin[VY] - pob.origin[VY]);
     }
 
-    if(delta->type == DT_MOBJ_SOUND)
+    if (delta->type == DT_MOBJ_SOUND)
     {
         sounddelta_t const *sound = (sounddelta_t const *) deltaPtr;
         return Sv_MobjDistance(sound->mobj, info, true);
     }
 
-    if(delta->type == DT_SECTOR_SOUND)
+    if (delta->type == DT_SECTOR_SOUND)
     {
         return Sv_SectorDistance(delta->id, info);
     }
 
-    if(delta->type == DT_SIDE_SOUND)
+    if (delta->type == DT_SIDE_SOUND)
     {
         return Sv_SideDistance(delta->id, delta->flags, info);
     }
 
-    if(delta->type == DT_POLY_SOUND)
+    if (delta->type == DT_POLY_SOUND)
     {
         Polyobj const &pob = worldSys().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
@@ -1634,22 +1634,22 @@ void Sv_RemoveDelta(pool_t* pool, void* deltaPtr)
     deltalink_t*        hash = Sv_PoolHash(pool, delta->id);
 
     // Update first and last links.
-    if(hash->last == delta)
+    if (hash->last == delta)
     {
         hash->last = delta->prev;
     }
-    if(hash->first == delta)
+    if (hash->first == delta)
     {
         hash->first = delta->next;
     }
 
     // Link the delta out of the list.
-    if(delta->next)
+    if (delta->next)
     {
         delta->next->prev = delta->prev;
     }
 
-    if(delta->prev)
+    if (delta->prev)
     {
         delta->prev->next = delta->next;
     }
@@ -1679,9 +1679,9 @@ void Sv_DrainPool(uint clientNumber)
     Sv_PoolQueueClear(pool);
 
     // Free all deltas stored in the hash.
-    for(i = 0; i < POOL_HASH_SIZE; ++i)
+    for (i = 0; i < POOL_HASH_SIZE; ++i)
     {
-        for(delta = (delta_t *) pool->hash[i].first; delta; delta = (delta_t *) next)
+        for (delta = (delta_t *) pool->hash[i].first; delta; delta = (delta_t *) next)
         {
             next = delta->next;
             Z_Free(delta);
@@ -1689,9 +1689,9 @@ void Sv_DrainPool(uint clientNumber)
     }
 
     // Free all missile records in the pool.
-    for(i = 0; i < POOL_MISSILE_HASH_SIZE; ++i)
+    for (i = 0; i < POOL_MISSILE_HASH_SIZE; ++i)
     {
-        for(mis = (misrecord_t *) pool->misHash[i].first; mis; mis = (misrecord_t *) next)
+        for (mis = (misrecord_t *) pool->misHash[i].first; mis; mis = (misrecord_t *) next)
         {
             next = mis->next;
             Z_Free(mis);
@@ -1713,12 +1713,12 @@ dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
 
     // Volume shortens the maximum distance (why send it if it's not
     // audible?).
-    if(delta->delta.flags & SNDDF_VOLUME)
+    if (delta->delta.flags & SNDDF_VOLUME)
     {
         volume = delta->volume;
     }
 
-    if(volume <= 0)
+    if (volume <= 0)
     {
         // Silence is heard all over the world.
         return DDMAXFLOAT;
@@ -1738,11 +1738,11 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
     int                 flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
-    if(delta->type == DT_MOBJ)
+    if (delta->type == DT_MOBJ)
     {
         const mobjdelta_t *mobjDelta = (mobjdelta_t const *) deltaPtr;
 
-        if(poolViewer && poolViewer->thinker.id == delta->id)
+        if (poolViewer && poolViewer->thinker.id == delta->id)
         {
             // This is the mobj the owner of the pool uses as a camera.
             flags &= ~MDF_CAMERA_EXCLUDE;
@@ -1757,15 +1757,15 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
 
         // What about missiles? We might be allowed to exclude some
         // information.
-        if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
+        if (mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
-            if(Sv_IsNullMobjDelta(delta))
+            if (Sv_IsNullMobjDelta(delta))
             {
                 // The missile is being removed entirely.
                 // Remove the entry from the missile record.
                 Sv_MRRemove(pool, delta->id);
             }
-            else if(!Sv_IsCreateMobjDelta(delta))
+            else if (!Sv_IsCreateMobjDelta(delta))
             {
                 // This'll might exclude the coordinates.
                 // The missile is put on record when the client acknowledges
@@ -1774,16 +1774,16 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
             }
         }
     }
-    else if(delta->type == DT_PLAYER)
+    else if (delta->type == DT_PLAYER)
     {
-        if(pool->owner == delta->id)
+        if (pool->owner == delta->id)
         {
             // All information does not need to be sent.
             flags &= ~PDF_CAMERA_EXCLUDE;
 
             /* $unifiedangles */
             /*
-            if(!(player->flags & DDPF_FIXANGLES))
+            if (!(player->flags & DDPF_FIXANGLES))
             {
                 // Fixangles means that the server overrides the clientside
                 // view angles. Normally they are always clientside, so
@@ -1799,11 +1799,11 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
             flags &= ~PDF_NONCAMERA_EXCLUDE;
         }
     }
-    else if(Sv_IsSoundDelta(delta))
+    else if (Sv_IsSoundDelta(delta))
     {
         // Sounds that originate from too far away are not added to a pool.
         // Stop Sound deltas have an infinite max distance, though.
-        if(Sv_DeltaDistance(delta, &pool->ownerInfo) >
+        if (Sv_DeltaDistance(delta, &pool->ownerInfo) >
            Sv_GetMaxSoundDistance((sounddelta_t const *) deltaPtr))
         {
             // Don't add it.
@@ -1838,7 +1838,7 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
     // use for it.
     flags = Sv_ExcludeDelta(pool, delta);
 
-    if(!flags)
+    if (!flags)
     {
         // No data remains... No need to add this delta.
         return;
@@ -1850,20 +1850,20 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
 
     // While subtracting from old deltas, we'll look for a pointer to
     // an existing NEW delta.
-    for(iter = hash->first; iter; iter = next)
+    for (iter = hash->first; iter; iter = next)
     {
         // Iter is removed if it becomes void.
         next = iter->next;
 
         // Sameness is determined with type and ID.
-        if(Sv_IsSameDelta(iter, delta))
+        if (Sv_IsSameDelta(iter, delta))
         {
-            if(iter->state == DELTA_NEW)
+            if (iter->state == DELTA_NEW)
             {
                 // We'll merge with this instead of adding a new delta.
                 existingNew = iter;
             }
-            else if(iter->state == DELTA_UNACKED)
+            else if (iter->state == DELTA_UNACKED)
             {
                 // The new information in the delta overrides the info in
                 // this unacked delta. Let's subtract. This way, if the
@@ -1872,7 +1872,7 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
                 Sv_SubtractDelta(iter, delta);
 
                 // Was everything removed?
-                if(Sv_IsVoidDelta(iter))
+                if (Sv_IsVoidDelta(iter))
                 {
                     Sv_RemoveDelta(pool, iter);
                     continue;
@@ -1881,10 +1881,10 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
         }
     }
 
-    if(existingNew)
+    if (existingNew)
     {
         // Merge the new delta with the older NEW delta.
-        if(!Sv_MergeDelta(existingNew, delta))
+        if (!Sv_MergeDelta(existingNew, delta))
         {
             // The deltas negated each other (Null -> Create).
             // The existing delta must be removed.
@@ -1897,14 +1897,14 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
         // of the delta so it can be stored in the hash.
         iter = (delta_t *) Sv_CopyDelta(delta);
 
-        if(hash->last)
+        if (hash->last)
         {
             hash->last->next = iter;
             iter->prev = hash->last;
         }
         hash->last = iter;
 
-        if(!hash->first)
+        if (!hash->first)
         {
             hash->first = iter;
         }
@@ -1921,7 +1921,7 @@ void Sv_AddDelta(pool_t* pool, void* deltaPtr)
  */
 void Sv_AddDeltaToPools(void* deltaPtr, pool_t** targets)
 {
-    for(; *targets; targets++)
+    for (; *targets; targets++)
     {
         Sv_AddDelta(*targets, deltaPtr);
     }
@@ -1935,11 +1935,11 @@ void Sv_PoolMobjRemoved(pool_t* pool, thid_t id)
     deltalink_t*        hash = Sv_PoolHash(pool, id);
     delta_t*            delta, *next = NULL;
 
-    for(delta = hash->first; delta; delta = next)
+    for (delta = hash->first; delta; delta = next)
     {
         next = delta->next;
 
-        if(delta->state == DELTA_NEW && delta->type == DT_MOBJ &&
+        if (delta->state == DELTA_NEW && delta->type == DT_MOBJ &&
            delta->id == id)
         {
             // This must be removed!
@@ -1962,7 +1962,7 @@ void Sv_MobjRemoved(thid_t id)
     uint                i;
     reg_mobj_t*         mo = Sv_RegisterFindMobj(&worldRegister, id);
 
-    if(mo)
+    if (mo)
     {
         Sv_RegisterRemoveMobj(&worldRegister, mo);
 
@@ -1972,9 +1972,9 @@ void Sv_MobjRemoved(thid_t id)
         // the register, no Null Mobj delta is generated, and thus the
         // client will eventually receive those mobj deltas unnecessarily.
 
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        for (i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(DD_Player(i)->isConnected())
+            if (DD_Player(i)->isConnected())
             {
                 Sv_PoolMobjRemoved(Sv_GetPool(i), id);
             }
@@ -1997,9 +1997,9 @@ void Sv_PlayerRemoved(uint playerNumber)
  */
 dd_bool Sv_IsPoolTargeted(pool_t* pool, pool_t** targets)
 {
-    for(; *targets; targets++)
+    for (; *targets; targets++)
     {
-        if(pool == *targets)
+        if (pool == *targets)
             return true;
     }
 
@@ -2016,28 +2016,28 @@ int Sv_GetTargetPools(pool_t** targets, int clientsMask)
 {
     int i, numTargets = 0;
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for (i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clientsMask & (1 << i) && DD_Player(i)->isConnected())
+        if (clientsMask & (1 << i) && DD_Player(i)->isConnected())
         {
             targets[numTargets++] = Sv_GetPool(i);
         }
     }
 /*
-    if(specificClient & SVSF_ specificClient >= 0)
+    if (specificClient & SVSF_ specificClient >= 0)
     {
         targets[0] = &pools[specificClient];
         targets[1] = NULL;
         return 1;
     }
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for (i = 0; i < DDMAXPLAYERS; ++i)
     {
         // Deltas must be generated for all connected players, even
         // if they aren't yet ready to receive them.
-        if(clients[i].connected)
+        if (clients[i].connected)
         {
-            if(specificClient == SV_TARGET_ALL_POOLS || i != -specificClient)
+            if (specificClient == SV_TARGET_ALL_POOLS || i != -specificClient)
                 targets[numTargets++] = &pools[i];
         }
     }
@@ -2061,15 +2061,15 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     reg_mobj_t *obj, *next = 0;
     mobjdelta_t null;
 
-    for(i = 0, hash = reg->mobjs; i < REG_MOBJ_HASH_SIZE; ++i, hash++)
+    for (i = 0, hash = reg->mobjs; i < REG_MOBJ_HASH_SIZE; ++i, hash++)
     {
-        for(obj = hash->first; obj; obj = next)
+        for (obj = hash->first; obj; obj = next)
         {
             // This reg_mobj_t might be removed.
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if (!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2080,7 +2080,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 
                 Sv_AddDeltaToPools(&null, targets);
 
-                if(doUpdate)
+                if (doUpdate)
                 {
                     // Keep the register up to date.
                     Sv_RegisterRemoveMobj(reg, obj);
@@ -2101,15 +2101,15 @@ void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
         auto &mob = *reinterpret_cast<mobj_t *>(th);
 
         // Some objects should not be processed.
-        if(!Sv_IsMobjIgnored(mob))
+        if (!Sv_IsMobjIgnored(mob))
         {
             // Compare to produce a delta.
             mobjdelta_t delta;
-            if(Sv_RegisterCompareMobj(reg, &mob, &delta))
+            if (Sv_RegisterCompareMobj(reg, &mob, &delta))
             {
                 Sv_AddDeltaToPools(&delta, targets);
 
-                if(doUpdate)
+                if (doUpdate)
                 {
                     // This'll add a new register-mobj if it doesn't already exist.
                     Sv_RegisterMobj(&Sv_RegisterAddMobj(reg, mob.thinker.id)->mo, &mob);
@@ -2128,22 +2128,22 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
     playerdelta_t player;
     uint i;
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for (i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(Sv_IsPlayerIgnored(i)) continue;
+        if (Sv_IsPlayerIgnored(i)) continue;
 
         // Compare to produce a delta.
-        if(Sv_RegisterComparePlayer(reg, i, &player))
+        if (Sv_RegisterComparePlayer(reg, i, &player))
         {
             // Did the mobj change? If so, the old mobj must be zeroed
             // in the register. Otherwise, the clients may not receive
             // all the data they need (because of viewpoint exclusion
             // flags).
-            if(doUpdate && (player.delta.flags & PDF_MOBJ))
+            if (doUpdate && (player.delta.flags & PDF_MOBJ))
             {
                 reg_mobj_t* registered = Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
 
-                if(registered)
+                if (registered)
                 {
                     Sv_RegisterResetMobj(&registered->mo);
                 }
@@ -2152,16 +2152,16 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
             Sv_AddDeltaToPools(&player, targets);
         }
 
-        if(doUpdate)
+        if (doUpdate)
         {
             Sv_RegisterPlayer(&reg->ddPlayers[i], i);
         }
 
         // What about forced deltas?
-        if(Sv_IsPoolTargeted(Sv_GetPool(i), targets))
+        if (Sv_IsPoolTargeted(Sv_GetPool(i), targets))
         {
 #if 0
-            if(DD_Player(i).flags & DDPF_FIXANGLES)
+            if (DD_Player(i).flags & DDPF_FIXANGLES)
             {
                 Sv_NewDelta(&player, DT_PLAYER, i);
                 Sv_RegisterPlayer(&player.player, i);
@@ -2175,18 +2175,18 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
             }
 
             // Generate a FIXPOS/FIXMOM mobj delta, too?
-            if(DD_Player(i).mo && (DD_Player(i).flags & (DDPF_FIXORIGIN | DDPF_FIXMOM)))
+            if (DD_Player(i).mo && (DD_Player(i).flags & (DDPF_FIXORIGIN | DDPF_FIXMOM)))
             {
                 const mobj_t *mo = DD_Player(i).mo;
                 mobjdelta_t mobj;
 
                 Sv_NewDelta(&mobj, DT_MOBJ, mo->thinker.id);
                 Sv_RegisterMobj(&mobj.mo, mo);
-                if(DD_Player(i).flags & DDPF_FIXORIGIN)
+                if (DD_Player(i).flags & DDPF_FIXORIGIN)
                 {
                     mobj.delta.flags |= MDF_ORIGIN;
                 }
-                if(DD_Player(i).flags & DDPF_FIXMOM)
+                if (DD_Player(i).flags & DDPF_FIXMOM)
                 {
                     mobj.delta.flags |= MDF_MOM;
                 }
@@ -2208,9 +2208,9 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for(int i = 0; i < worldSys().map().sectorCount(); ++i)
+    for (int i = 0; i < worldSys().map().sectorCount(); ++i)
     {
-        if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
+        if (Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
             Sv_AddDeltaToPools(&delta, targets);
         }
@@ -2232,7 +2232,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
     uint start, end;
-    if(reg->isInitial)
+    if (reg->isInitial)
     {
         start = 0;
         end = map.sideCount();
@@ -2248,9 +2248,9 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 
     sidedelta_t delta;
-    for(uint i = start; i < end; ++i)
+    for (uint i = start; i < end; ++i)
     {
-        if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
+        if (Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {
             Sv_AddDeltaToPools(&delta, targets);
         }
@@ -2267,16 +2267,16 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for(int i = 0; i < worldSys().map().polyobjCount(); ++i)
+    for (int i = 0; i < worldSys().map().polyobjCount(); ++i)
     {
-        if(Sv_RegisterComparePoly(reg, i, &delta))
+        if (Sv_RegisterComparePoly(reg, i, &delta))
         {
             LOGDEV_NET_XVERBOSE_DEBUGONLY("Change in poly %i", i);
 
             Sv_AddDeltaToPools(&delta, targets);
         }
 
-        if(doUpdate)
+        if (doUpdate)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
@@ -2295,29 +2295,29 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
 
-    if(sourceSector)
+    if (sourceSector)
     {
         type = DT_SECTOR_SOUND;
         id = sourceSector->indexInMap();
         // Client assumes the sector's sound origin.
     }
-    else if(sourcePoly)
+    else if (sourcePoly)
     {
         type = DT_POLY_SOUND;
         id = sourcePoly->indexInMap();
     }
-    else if(sourcePlane)
+    else if (sourcePlane)
     {
         type = DT_SECTOR_SOUND;
 
         // Clients need to know which emitter to use.
-        if(emitter && emitter == (mobj_t *) &sourcePlane->soundEmitter())
+        if (emitter && emitter == (mobj_t *) &sourcePlane->soundEmitter())
         {
-            if(sourcePlane->isSectorFloor())
+            if (sourcePlane->isSectorFloor())
             {
                 df |= SNDDF_PLANE_FLOOR;
             }
-            else if(sourcePlane->isSectorCeiling())
+            else if (sourcePlane->isSectorCeiling())
             {
                 df |= SNDDF_PLANE_CEILING;
             }
@@ -2326,7 +2326,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
 
         id = sourcePlane->sector().indexInMap();
     }
-    else if(sourceSurface)
+    else if (sourceSurface)
     {
         DENG_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
         DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
@@ -2336,22 +2336,22 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
         // Clients need to know which emitter to use.
         LineSide &side = sourceSurface->parent().as<LineSide>();
 
-        if(&side.middle() == sourceSurface)
+        if (&side.middle() == sourceSurface)
         {
             df |= SNDDF_SIDE_MIDDLE;
         }
-        else if(&side.bottom() == sourceSurface)
+        else if (&side.bottom() == sourceSurface)
         {
             df |= SNDDF_SIDE_BOTTOM;
         }
-        else if(&side.top() == sourceSurface)
+        else if (&side.top() == sourceSurface)
         {
             df |= SNDDF_SIDE_TOP;
         }
 
         id = side.indexInMap();
     }
-    else if(emitter)
+    else if (emitter)
     {
         type = DT_MOBJ_SOUND;
         id = emitter->thinker.id;
@@ -2365,7 +2365,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
     df |= SNDDF_VOLUME;
     soundDelta.volume = volume;
 
-    if(isRepeating)
+    if (isRepeating)
         df |= SNDDF_REPEAT;
 
     LOGDEV_NET_XVERBOSE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
@@ -2411,7 +2411,7 @@ void Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber, dd_bool doUpdate)
     Sv_GetTargetPools(targets, (clientNumber < 0 ? 0xff : (1 << clientNumber)));
 
     // Update the info of the pool owners.
-    for(pool = targets; *pool; pool++)
+    for (pool = targets; *pool; pool++)
     {
         Sv_UpdateOwnerInfo(*pool);
     }
@@ -2434,7 +2434,7 @@ void Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber, dd_bool doUpdate)
     // Generate poly deltas.
     Sv_NewPolyDeltas(reg, doUpdate, targets);
 
-    if(doUpdate)
+    if (doUpdate)
     {
         // The register has now been updated to the current time.
         reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -2478,13 +2478,13 @@ void Sv_PoolQueueAdd(pool_t* pool, delta_t* delta)
     int                 i, parent;
 
     // Do we need more memory?
-    if(pool->allocatedSize == pool->queueSize)
+    if (pool->allocatedSize == pool->queueSize)
     {
         delta_t**           newQueue;
 
         // Double the memory.
         pool->allocatedSize *= 2;
-        if(!pool->allocatedSize)
+        if (!pool->allocatedSize)
         {
             // At least eight.
             pool->allocatedSize = 8;
@@ -2494,7 +2494,7 @@ void Sv_PoolQueueAdd(pool_t* pool, delta_t* delta)
         newQueue = (delta_t **) Z_Malloc(pool->allocatedSize * sizeof(delta_t *), PU_MAP, 0);
 
         // Copy the old data.
-        if(pool->queue)
+        if (pool->queue)
         {
             memcpy(newQueue, pool->queue,
                    sizeof(delta_t *) * pool->queueSize);
@@ -2512,12 +2512,12 @@ void Sv_PoolQueueAdd(pool_t* pool, delta_t* delta)
     ++pool->queueSize;
 
     // Rise in the heap until the correct place is found.
-    while(i > 0)
+    while (i > 0)
     {
         parent = HEAP_PARENT(i);
 
         // Is it good now?
-        if(pool->queue[parent]->score >= delta->score)
+        if (pool->queue[parent]->score >= delta->score)
             break;
 
         // Exchange with the parent.
@@ -2538,7 +2538,7 @@ delta_t* Sv_PoolQueueExtract(pool_t* pool)
     int                 i, left, right, big;
     dd_bool             isDone;
 
-    if(!pool->queueSize)
+    if (!pool->queueSize)
     {
         // There is nothing in the queue.
         return NULL;
@@ -2553,26 +2553,26 @@ delta_t* Sv_PoolQueueExtract(pool_t* pool)
     // Heapify the heap. This is O(log n).
     i = 0;
     isDone = false;
-    while(!isDone)
+    while (!isDone)
     {
         left = HEAP_LEFT(i);
         right = HEAP_RIGHT(i);
         big = i;
 
         // Which child is more important?
-        if(left < pool->queueSize &&
+        if (left < pool->queueSize &&
            pool->queue[left]->score > pool->queue[i]->score)
         {
             big = left;
         }
-        if(right < pool->queueSize &&
+        if (right < pool->queueSize &&
            pool->queue[right]->score > pool->queue[big]->score)
         {
             big = right;
         }
 
         // Can we stop now?
-        if(big != i)
+        if (big != i)
         {
             // Exchange and continue.
             Sv_PoolQueueExchange(pool, i, big);
@@ -2596,17 +2596,17 @@ dd_bool Sv_IsPostponedDelta(void* deltaPtr, ownerinfo_t* info)
     delta_t *delta = (delta_t *) deltaPtr;
     uint age = Sv_DeltaAge(delta);
 
-    if(delta->state == DELTA_UNACKED)
+    if (delta->state == DELTA_UNACKED)
     {
         // Is it old enough? If not, it's still possible that the ack
         // has not reached us yet.
         return age < info->ackThreshold;
     }
-    else if(delta->state == DELTA_NEW)
+    else if (delta->state == DELTA_NEW)
     {
         // Normally NEW deltas are never postponed. They are sent as soon
         // as possible.
-        if(Sv_IsStopSoundDelta(delta))
+        if (Sv_IsStopSoundDelta(delta))
         {
             // Stop Sound deltas require a bit of care. To make sure they
             // arrive to the client in the correct order, we won't send
@@ -2616,10 +2616,10 @@ dd_bool Sv_IsPostponedDelta(void* deltaPtr, ownerinfo_t* info)
 
             delta_t*            iter;
 
-            for(iter = Sv_PoolHash(info->pool, delta->id)->first; iter;
+            for (iter = Sv_PoolHash(info->pool, delta->id)->first; iter;
                 iter = iter->next)
             {
-                if(iter->state == DELTA_UNACKED && Sv_IsSameDelta(iter, delta)
+                if (iter->state == DELTA_UNACKED && Sv_IsSameDelta(iter, delta)
                    && Sv_IsStartSoundDelta(iter))
                 {
                     // Must postpone this Stop Sound delta until this one
@@ -2652,7 +2652,7 @@ dd_bool Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     // The importance doubles normally in 1 second.
     float ageScoreDouble = 1.0f;
 
-    if(Sv_IsPostponedDelta(delta, info))
+    if (Sv_IsPostponedDelta(delta, info))
     {
         // This delta will not be considered at this time.
         return false;
@@ -2661,7 +2661,7 @@ dd_bool Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     // Calculate the distance to the delta's origin.
     // If no distance can be determined, it's 1.0.
     distance = Sv_DeltaDistance(delta, info);
-    if(distance < 1)
+    if (distance < 1)
         distance = 1;
     distance = distance * distance; // Power of two.
 
@@ -2669,7 +2669,7 @@ dd_bool Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     score = deltaBaseScores[delta->type] / distance;
 
     // It's very important to send sound deltas in time.
-    if(Sv_IsSoundDelta(delta))
+    if (Sv_IsSoundDelta(delta))
     {
         // Score doubles very quickly.
         ageScoreDouble = 1;
@@ -2681,58 +2681,58 @@ dd_bool Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     /// @todo Consider viewpoint speed and angle.
 
     // Priority bonuses based on the contents of the delta.
-    if(delta->type == DT_MOBJ)
+    if (delta->type == DT_MOBJ)
     {
         const mobj_t* mo = &((mobjdelta_t *) delta)->mo;
 
         // Seeing new mobjs is interesting.
-        if(df & MDFC_CREATE)
+        if (df & MDFC_CREATE)
             score *= 1.5f;
 
         // Position changes are important.
-        if(df & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
+        if (df & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
             score *= 1.2f;
 
         // Small objects are not that important.
         size = MAX_OF(mo->radius, mo->height);
-        if(size < 16)
+        if (size < 16)
         {
             // Not too small, though.
-            if(size < 2)
+            if (size < 2)
                 size = 2;
 
             score *= size / 16;
         }
-        else if(size > 50)
+        else if (size > 50)
         {
             // Large objects are important.
             score *= size / 50;
         }
     }
-    else if(delta->type == DT_PLAYER)
+    else if (delta->type == DT_PLAYER)
     {
         // Knowing the player's mobj is quite important.
-        if(df & PDF_MOBJ)
+        if (df & PDF_MOBJ)
             score *= 2;
     }
-    else if(delta->type == DT_SECTOR)
+    else if (delta->type == DT_SECTOR)
     {
         // Lightlevel changes are very noticeable.
-        if(df & SDF_LIGHT)
+        if (df & SDF_LIGHT)
             score *= 1.2f;
 
         // Plane movements are very important (can be seen from far away).
-        if(df &
+        if (df &
            (SDF_FLOOR_HEIGHT | SDF_CEILING_HEIGHT | SDF_FLOOR_SPEED |
             SDF_CEILING_SPEED | SDF_FLOOR_TARGET | SDF_CEILING_TARGET))
         {
             score *= 3;
         }
     }
-    else if(delta->type == DT_POLY)
+    else if (delta->type == DT_POLY)
     {
         // Changes in speed are noticeable.
-        if(df & PODF_SPEED)
+        if (df & PODF_SPEED)
             score *= 1.2f;
     }
 
@@ -2756,7 +2756,7 @@ void Sv_RatePool(pool_t* pool)
     int                 i;
 
 #ifdef _DEBUG
-    if(!plr->publicData().mo)
+    if (!plr->publicData().mo)
     {
         App_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
     }
@@ -2767,11 +2767,11 @@ void Sv_RatePool(pool_t* pool)
 
     // We will rate all the deltas in the pool. After each delta
     // has been rated, it's added to the priority queue.
-    for(i = 0; i < POOL_HASH_SIZE; ++i)
+    for (i = 0; i < POOL_HASH_SIZE; ++i)
     {
-        for(delta = pool->hash[i].first; delta; delta = delta->next)
+        for (delta = pool->hash[i].first; delta; delta = delta->next)
         {
-            if(Sv_RateDelta(delta, &pool->ownerInfo))
+            if (Sv_RateDelta(delta, &pool->ownerInfo))
             {
                 Sv_PoolQueueAdd(pool, delta);
             }
@@ -2784,12 +2784,12 @@ void Sv_RatePool(pool_t* pool)
  */
 void Sv_AckDelta(pool_t* pool, delta_t* delta)
 {
-    if(Sv_IsCreateMobjDelta(delta))
+    if (Sv_IsCreateMobjDelta(delta))
     {
         mobjdelta_t*        mobjDelta = (mobjdelta_t *) delta;
 
         // Created missiles are put on record.
-        if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
+        if (mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
             // Once again, we're assuming the delta is always completely
             // filled with valid information. (There are no 'partial' deltas.)
@@ -2815,12 +2815,12 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
     delta_t *delta, *next = NULL;
 
     // Iterate through the entire hash table.
-    for(int i = 0; i < POOL_HASH_SIZE; ++i)
+    for (int i = 0; i < POOL_HASH_SIZE; ++i)
     {
-        for(delta = pool->hash[i].first; delta; delta = next)
+        for (delta = pool->hash[i].first; delta; delta = next)
         {
             next = delta->next;
-            if(delta->state == DELTA_UNACKED &&
+            if (delta->state == DELTA_UNACKED &&
                ((!resent && delta->set == set) ||
                 (resent && delta->resend == resent)))
             {
@@ -2846,11 +2846,11 @@ uint Sv_CountUnackedDeltas(uint clientNumber)
 
     // Iterate through the entire hash table.
     count = 0;
-    for(i = 0; i < POOL_HASH_SIZE; ++i)
+    for (i = 0; i < POOL_HASH_SIZE; ++i)
     {
-        for(delta = pool->hash[i].first; delta; delta = delta->next)
+        for (delta = pool->hash[i].first; delta; delta = delta->next)
         {
-            if(delta->state == DELTA_UNACKED)
+            if (delta->state == DELTA_UNACKED)
                ++count;
         }
     }

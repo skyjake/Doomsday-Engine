@@ -74,7 +74,7 @@ DENG_GUI_PIMPL(AlertDialog)
             ClientApp::windowSystem().style()
                     .richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
 
-            if(contentStyle == Font::RichFormat::MajorStyle ||
+            if (contentStyle == Font::RichFormat::MajorStyle ||
                contentStyle == Font::RichFormat::MajorMetaStyle)
             {
                 // Keep the major style normal-weight.
@@ -147,7 +147,7 @@ DENG_GUI_PIMPL(AlertDialog)
     void variableValueChanged(Variable &, Value const &)
     {
         // Update the auto-hide timer.
-        if(!autoHideAfterSeconds())
+        if (!autoHideAfterSeconds())
         {
             // Never autohide.
             hideTimer.stop();
@@ -155,7 +155,7 @@ DENG_GUI_PIMPL(AlertDialog)
         else
         {
             hideTimer.setInterval(autoHideAfterSeconds() * 1000);
-            if(!hideTimer.isActive()) hideTimer.start();
+            if (!hideTimer.isActive()) hideTimer.start();
         }
     }
 
@@ -167,13 +167,13 @@ DENG_GUI_PIMPL(AlertDialog)
     bool addPendingAlerts()
     {
         bool changed = false;
-        while(AlertItem *alert = pending.take())
+        while (AlertItem *alert = pending.take())
         {
             add(alert);
             changed = true;
         }
         // Remove excess alerts.
-        while(alerts->items().size() > maxCount)
+        while (alerts->items().size() > maxCount)
         {
             alerts->items().remove(alerts->items().size() - 1);
             changed = true;
@@ -186,9 +186,9 @@ DENG_GUI_PIMPL(AlertDialog)
         DENG2_ASSERT_IN_MAIN_THREAD();
 
         // If we already have this, don't re-add.
-        for(ui::Data::Pos i = 0; i < alerts->items().size(); ++i)
+        for (ui::Data::Pos i = 0; i < alerts->items().size(); ++i)
         {
-            if(!alerts->items().at(i).label().compareWithoutCase(alert->label()))
+            if (!alerts->items().at(i).label().compareWithoutCase(alert->label()))
                 return;
         }
 
@@ -220,7 +220,7 @@ DENG_GUI_PIMPL(AlertDialog)
                 .setBottom("");
 
         AlertItem const &alert = item.as<AlertItem>();
-        switch(alert.level())
+        switch (alert.level())
         {
         case Minor:
             label.setImageColor(Vector4f(style().colors().colorf("text"), .5f));
@@ -251,7 +251,7 @@ DENG_GUI_PIMPL(AlertDialog)
         notifs().showOrHide(*notification, true);
 
         // Restart the autohiding timer.
-        if(autoHideAfterSeconds() > 0)
+        if (autoHideAfterSeconds() > 0)
         {
             hideTimer.start(autoHideAfterSeconds() * 1000);
         }
@@ -268,7 +268,7 @@ DENG_GUI_PIMPL(AlertDialog)
      */
     bool hideIfEmpty()
     {
-        if(alerts->items().isEmpty())
+        if (alerts->items().isEmpty())
         {
             // No alerts to show.
             hideNotification();
@@ -281,7 +281,7 @@ DENG_GUI_PIMPL(AlertDialog)
     {
         int const time = autoHideAfterSeconds();
         ui::DataPos pos = autohideTimes->items().findData(time);
-        if(pos != ui::Data::InvalidPos)
+        if (pos != ui::Data::InvalidPos)
         {
             autohideTimes->setSelected(pos);
         }
@@ -355,7 +355,7 @@ void AlertDialog::update()
 {
     DialogWidget::update();
 
-    if(d->addPendingAlerts())
+    if (d->addPendingAlerts())
     {
         d->showNotification();
     }
@@ -363,7 +363,7 @@ void AlertDialog::update()
 
 void AlertDialog::showListOfAlerts()
 {
-    if(isOpen() || d->hideIfEmpty()) return;
+    if (isOpen() || d->hideIfEmpty()) return;
 
     // Restore the normal color.
     d->notification->setImageColor(style().colors().colorf("text"));
@@ -392,7 +392,7 @@ void AlertDialog::finish(int result)
 
 void AlertDialog::panelDismissed()
 {
-    if(d->clearOnDismiss)
+    if (d->clearOnDismiss)
     {
         d->clearOnDismiss = false;
         d->alerts->items().clear();

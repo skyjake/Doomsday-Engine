@@ -37,13 +37,13 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
     {
         self.setStyleImage("package");
 
-        if(packages.isEmpty())
+        if (packages.isEmpty())
         {
             self.setText(noneLabel);
             self.setTextColor("text");
             self.setImageColor(style().colors().colorf("text"));
 
-            if(!noneLabel.isEmpty()) self.setImage(nullptr);
+            if (!noneLabel.isEmpty()) self.setImage(nullptr);
         }
         else
         {
@@ -58,7 +58,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         // The Packages dialog allows selecting which packages are loaded, and in
         // which order. One can also browse the available packages.
         auto *dlg = new PackagesDialog(dialogTitle);
-        if(profile)
+        if (profile)
         {
             dlg->setGame(profile->game());
         }
@@ -71,7 +71,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 
             // Notify.
             QStringList ids;
-            for(auto const &p : packages) ids << p;
+            for (auto const &p : packages) ids << p;
             emit self.packageSelectionChanged(ids);
         }));
         root().addOnTop(dlg);

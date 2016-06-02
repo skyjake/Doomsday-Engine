@@ -33,7 +33,7 @@ using namespace de;
 thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating) // static
 {
     // If there is an existing mover, modify it.
-    if(ClPolyMover *mover = polyobj.data().mover())
+    if (ClPolyMover *mover = polyobj.data().mover())
     {
         mover->_move   = moving;
         mover->_rotate = rotating;
@@ -71,13 +71,13 @@ void ClPolyMover::think()
     LOG_AS("ClPolyMover::think");
 
     Polyobj *po = _polyobj;
-    if(_move)
+    if (_move)
     {
         // How much to go?
         Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
 
         ddouble dist = M_ApproxDistance(delta.x, delta.y);
-        if(dist <= po->speed || de::fequal(po->speed, 0))
+        if (dist <= po->speed || de::fequal(po->speed, 0))
         {
             // We'll arrive at the destination.
             _move = false;
@@ -92,16 +92,16 @@ void ClPolyMover::think()
         po->move(delta);
     }
 
-    if(_rotate)
+    if (_rotate)
     {
         // How much to go?
         int dist = po->destAngle - po->angle;
         int speed = po->angleSpeed;
 
         //dist = FIX2FLT(po->destAngle - po->angle);
-        //if(!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
+        //if (!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
         //    /* && po->destAngle != -1*/) || !po->angleSpeed)
-        if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
+        if (!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
             LOGDEV_MAP_XVERBOSE("Mover %p reached end of turn, destAngle=%i")
                     << &thinker() << po->destAngle;
@@ -119,7 +119,7 @@ void ClPolyMover::think()
     }
 
     // Can we get rid of this mover?
-    if(!_move && !_rotate)
+    if (!_move && !_rotate)
     {
         _polyobj->map().thinkers().remove(thinker()); // we get deleted
     }

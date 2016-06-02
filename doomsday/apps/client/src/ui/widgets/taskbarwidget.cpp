@@ -169,26 +169,26 @@ DENG_GUI_PIMPL(TaskBarWidget)
         LayoutMode wanted = layoutMode;
 
         // Does the command line have enough space?
-        if(console->commandLine().rule().width().valuei() < minSpace)
+        if (console->commandLine().rule().width().valuei() < minSpace)
         {
             wanted = (layoutMode == NormalLayout?     CompressedLayout :
                       layoutMode == CompressedLayout? ExtraCompressedLayout :
                                                       layoutMode);
         }
-        else if(console->commandLine().rule().width().valuei() > maxSpace)
+        else if (console->commandLine().rule().width().valuei() > maxSpace)
         {
             wanted = (layoutMode == CompressedLayout?      NormalLayout :
                       layoutMode == ExtraCompressedLayout? CompressedLayout :
                                                            layoutMode);
         }
 
-        if(layoutMode != wanted)
+        if (layoutMode != wanted)
         {
             layoutMode = wanted;
             updateLogoButtonText();
 
             // Adjust widget visibility and rules.
-            switch(layoutMode)
+            switch (layoutMode)
             {
             case NormalLayout:
             case CompressedLayout:
@@ -226,10 +226,10 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         String text;
 
-        if(layoutMode == NormalLayout)
+        if (layoutMode == NormalLayout)
         {
             VersionInfo currentVersion;
-            if(String(DOOMSDAY_RELEASE_TYPE) == "Stable")
+            if (String(DOOMSDAY_RELEASE_TYPE) == "Stable")
             {
                 text = _E(b) + currentVersion.base();
             }
@@ -255,7 +255,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     void updateGeometry()
     {
         Rectanglei pos;
-        if(self.hasChangedPlace(pos) || self.geometryRequested())
+        if (self.hasChangedPlace(pos) || self.geometryRequested())
         {
             self.requestGeometry(false);
 
@@ -289,7 +289,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
         //itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
 
-        if(self.hasRoot())
+        if (self.hasRoot())
         {
             configMenu->menu().updateLayout();
             mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
@@ -317,7 +317,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void updateStatus()
     {
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             status->setText(App_CurrentGame().id());
         }
@@ -537,14 +537,14 @@ bool TaskBarWidget::handleEvent(Event const &event)
     Canvas &canvas = root().window().canvas();
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+    if (!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
        !window.hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
+        if (mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
         {
-            /*if(root().focus())
+            /*if (root().focus())
             {
                 // First click will remove UI focus, allowing GameWidget
                 // to receive events.
@@ -552,7 +552,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 return true;
             }*/
 
-            if(App_GameLoaded())
+            if (App_GameLoaded())
             {
                 // Allow game to use the mouse.
                 canvas.trapMouse();
@@ -563,34 +563,34 @@ bool TaskBarWidget::handleEvent(Event const &event)
         }
     }
 
-    if(event.type() == Event::MouseButton)
+    if (event.type() == Event::MouseButton)
     {
         // Eat all button events occurring inside the task bar area.
-        if(hitTest(event))
+        if (hitTest(event))
         {
             return true;
         }
     }
 
     // Don't let modifier keys fall through to the game.
-    if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
+    if (isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
     {
         // However, let the bindings system know about the modifier state.
         ClientApp::inputSystem().trackEvent(event);
         return true;
     }
 
-    if(event.type() == Event::KeyPress)
+    if (event.type() == Event::KeyPress)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
         // Shift-Esc opens and closes the task bar.
-        if(key.ddKey() == DDKEY_ESCAPE)
+        if (key.ddKey() == DDKEY_ESCAPE)
         {
-            if(isOpen())
+            if (isOpen())
             {
                 // First press of Esc will just dismiss the console.
-                if(d->console->isLogOpen() && !key.modifiers().testFlag(KeyEvent::Shift))
+                if (d->console->isLogOpen() && !key.modifiers().testFlag(KeyEvent::Shift))
                 {
                     d->console->commandLine().setText("");
                     d->console->closeLog();
@@ -604,10 +604,10 @@ bool TaskBarWidget::handleEvent(Event const &event)
             else
             {
                 // Task bar is closed, so let's open it.
-                if(key.modifiers().testFlag(KeyEvent::Shift) ||
+                if (key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    if(!window.hasSidebar())
+                    if (!window.hasSidebar())
                     {
                         // Automatically focus the command line, unless an editor is open.
                         root().setFocus(&d->console->commandLine());
@@ -625,7 +625,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
 
 void TaskBarWidget::open()
 {
-    if(!d->opened)
+    if (!d->opened)
     {
         d->opened = true;
 
@@ -640,16 +640,16 @@ void TaskBarWidget::open()
     }
 
     // Untrap the mouse if it is trapped.
-    if(hasRoot())
+    if (hasRoot())
     {
         Canvas &canvas = root().window().canvas();
         d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-        if(canvas.isMouseTrapped())
+        if (canvas.isMouseTrapped())
         {
             canvas.trapMouse(false);
         }
 
-        if(!App_GameLoaded())
+        if (!App_GameLoaded())
         {
             root().setFocus(&d->console->commandLine());
         }
@@ -658,7 +658,7 @@ void TaskBarWidget::open()
 
 void TaskBarWidget::openAndPauseGame()
 {
-    if(App_GameLoaded() && !clientPaused)
+    if (App_GameLoaded() && !clientPaused)
     {
         Con_Execute(CMDS_DDAY, "pause", true, false);
     }
@@ -667,7 +667,7 @@ void TaskBarWidget::openAndPauseGame()
 
 void TaskBarWidget::close()
 {
-    if(d->opened)
+    if (d->opened)
     {
         d->opened = false;
 
@@ -685,15 +685,15 @@ void TaskBarWidget::close()
         closeConfigMenu();
 
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
-        if(hasRoot()) root().setFocus(0);
+        if (hasRoot()) root().setFocus(0);
 
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
+        if (hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
         {
             Canvas &canvas = root().window().canvas();
-            if(d->mouseWasTrappedWhenOpening)
+            if (d->mouseWasTrappedWhenOpening)
             {
                 canvas.trapMouse();
             }
@@ -739,7 +739,7 @@ void TaskBarWidget::chooseIWADFolder()
     dlg.setReadOnly(true);
     dlg.setNameFilter("*.wad");
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    if(dlg.exec())
+    if (dlg.exec())
     {
         App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
         reload = true;
@@ -748,7 +748,7 @@ void TaskBarWidget::chooseIWADFolder()
     ClientApp::app().endNativeUIMode();
 
     // Reload packages and recheck for game availability.
-    if(reload)
+    if (reload)
     {
         ClientWindow::main().console().closeLogAndUnfocusCommandLine();
 
@@ -795,7 +795,7 @@ void TaskBarWidget::showMultiplayer()
 {
     GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
     games->setDeleteAfterDismissed(true);
-    if(isOpen())
+    if (isOpen())
     {
         games->exec(root());
     }
@@ -815,7 +815,7 @@ void TaskBarWidget::connectToServerManually()
 
 void TaskBarWidget::showTutorial()
 {
-    if(BusyMode_Active()) return;
+    if (BusyMode_Active()) return;
 
     d->mainMenu->close();
 
@@ -837,11 +837,11 @@ void TaskBarWidget::updateCommandLineLayout()
     SequentialLayout layout(rule().right(), rule().top(), ui::Left);
     layout << *d->logo << *d->conf;
 
-    if(!d->multi->behavior().testFlag(Hidden))
+    if (!d->multi->behavior().testFlag(Hidden))
     {
         layout << *d->multi;
     }
-    if(!d->status->behavior().testFlag(Hidden))
+    if (!d->status->behavior().testFlag(Hidden))
     {
         layout << *d->status;
     }

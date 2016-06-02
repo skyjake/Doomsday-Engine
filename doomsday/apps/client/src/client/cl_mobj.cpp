@@ -74,7 +74,7 @@ void ClMobj_Link(mobj_t *mo)
 
     CL_ASSERT_CLMOBJ(mo);
 
-    if((info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dPlayer)
+    if ((info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dPlayer)
     {
         // We do not yet have all the details about Hidden mobjs.
         // The server hasn't sent us a Create Mobj delta for them.
@@ -95,8 +95,8 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
     LOG_AS("ClMobj_EnableLocalActions");
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if(!isClient || !info) return;
-    if(enable)
+    if (!isClient || !info) return;
+    if (enable)
     {
         LOG_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
         info->flags |= CLMF_LOCAL_ACTIONS;
@@ -112,26 +112,26 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if(!isClient || !info) return true;
+    if (!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
 void ClMobj_SetState(mobj_t *mo, int stnum)
 {
-    if(stnum < 0) return;
+    if (stnum < 0) return;
 
     do
     {
         Mobj_SetState(mo, stnum);
         stnum = runtimeDefs.states[stnum].nextState;
 
-    } while(!mo->tics && stnum > 0);
+    } while (!mo->tics && stnum > 0);
 }
 
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
                              int flags, dd_bool onFloor)
 {
-    if(!localMobj || !remoteClientMobj)
+    if (!localMobj || !remoteClientMobj)
     {
         LOGDEV_MAP_VERBOSE("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p") << localMobj << remoteClientMobj;
         return;
@@ -139,10 +139,10 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 
     localMobj->radius = Mobj_Radius(*remoteClientMobj);
 
-    if(flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
-    if(flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
-    if(flags & MDF_MOM_Z) localMobj->mom[MZ] = remoteClientMobj->mom[MZ];
-    if(flags & MDF_ANGLE)
+    if (flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
+    if (flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
+    if (flags & MDF_MOM_Z) localMobj->mom[MZ] = remoteClientMobj->mom[MZ];
+    if (flags & MDF_ANGLE)
     {
         localMobj->angle = remoteClientMobj->angle;
 
@@ -157,7 +157,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
-    if(flags & MDF_FLAGS)
+    if (flags & MDF_FLAGS)
     {
         localMobj->flags = (localMobj->flags & ~0x1c000000) |
                            (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
@@ -169,7 +169,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;
 
-    if(flags & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
+    if (flags & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
     {
         /*
         // We have to unlink the real mobj before we move it.
@@ -180,23 +180,23 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         */
 
         // This'll update the contacted floor and ceiling heights as well.
-        if(gx.MobjTryMoveXYZ)
+        if (gx.MobjTryMoveXYZ)
         {
-            if(gx.MobjTryMoveXYZ(localMobj,
+            if (gx.MobjTryMoveXYZ(localMobj,
                                  remoteClientMobj->origin[VX],
                                  remoteClientMobj->origin[VY],
                                  (flags & MDF_ORIGIN_Z)? remoteClientMobj->origin[VZ] : localMobj->origin[VZ]))
             {
-                if((flags & MDF_ORIGIN_Z) && onFloor)
+                if ((flags & MDF_ORIGIN_Z) && onFloor)
                 {
                     localMobj->origin[VZ] = remoteClientMobj->origin[VZ] = localMobj->floorZ;
                 }
             }
         }
     }
-    if(flags & MDF_ORIGIN_Z)
+    if (flags & MDF_ORIGIN_Z)
     {
-        if(!onFloor)
+        if (!onFloor)
         {
             localMobj->floorZ = remoteClientMobj->floorZ;
         }
@@ -205,7 +205,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         localMobj->origin[VZ] = remoteClientMobj->origin[VZ];
 
         // Don't go below the floor level.
-        if(localMobj->origin[VZ] < localMobj->floorZ)
+        if (localMobj->origin[VZ] < localMobj->floorZ)
             localMobj->origin[VZ] = localMobj->floorZ;
     }
 }
@@ -213,7 +213,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 dd_bool Cl_IsClientMobj(mobj_t const *mob)
 {
     DENG2_ASSERT(mob);
-    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
+    if (ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
         return data->hasRemoteSync();
     }
@@ -223,15 +223,15 @@ dd_bool Cl_IsClientMobj(mobj_t const *mob)
 #undef ClMobj_IsValid
 dd_bool ClMobj_IsValid(mobj_t *mob)
 {
-    if(!Cl_IsClientMobj(mob)) return true;
+    if (!Cl_IsClientMobj(mob)) return true;
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
-    if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
+    if (info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
     {
         // Should not use this for playsim.
         return false;
     }
-    if(!mob->info)
+    if (!mob->info)
     {
         // We haven't yet received info about the mobj's type?
         return false;
@@ -241,11 +241,11 @@ dd_bool ClMobj_IsValid(mobj_t *mob)
 
 ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mob)
 {
-    if(!mob) return nullptr;
+    if (!mob) return nullptr;
 
-    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
+    if (ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
-        if(!data->hasRemoteSync()) return nullptr;
+        if (!data->hasRemoteSync()) return nullptr;
         return &data->remoteSync();
     }
 
@@ -261,7 +261,7 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
     CL_ASSERT_CLMOBJ(mob);
 
     // Check that we know enough about the clmobj.
-    if(mob->dPlayer != &DD_Player(consolePlayer)->publicData() &&
+    if (mob->dPlayer != &DD_Player(consolePlayer)->publicData() &&
        (!(info->flags & CLMF_KNOWN_X) ||
         !(info->flags & CLMF_KNOWN_Y) ||
         //!(info->flags & CLMF_KNOWN_Z) ||
@@ -278,7 +278,7 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
     // Start a sound that has been queued for playing at the time
     // of unhiding. Sounds are queued if a sound delta arrives for an
     // object ID we don't know (yet).
-    if(info->flags & CLMF_SOUND)
+    if (info->flags & CLMF_SOUND)
     {
         info->flags &= ~CLMF_SOUND;
         S_StartSoundAtVolume(info->sound, mob, info->volume);
@@ -300,26 +300,26 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
  */
 static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 {
-    if(!(mo->ddFlags & DDMF_SOLID) || mo->dPlayer)
+    if (!(mo->ddFlags & DDMF_SOLID) || mo->dPlayer)
         return false;
 
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!DD_Player(i)->publicData().inGame) continue;
-        if(P_ConsoleToLocal(i) < 0) continue; // Not a local player.
+        if (!DD_Player(i)->publicData().inGame) continue;
+        if (P_ConsoleToLocal(i) < 0) continue; // Not a local player.
 
         mobj_t *plmo = DD_Player(i)->publicData().mo;
-        if(!plmo) continue;
+        if (!plmo) continue;
 
         float blockRadius = Mobj_Radius(*mo) + Mobj_Radius(*plmo);
-        if(fabs(mo->origin[VX] - plmo->origin[VX]) >= blockRadius ||
+        if (fabs(mo->origin[VX] - plmo->origin[VX]) >= blockRadius ||
            fabs(mo->origin[VY] - plmo->origin[VY]) >= blockRadius)
             continue; // Too far.
 
-        if(mo->origin[VZ] > plmo->origin[VZ] + plmo->height)
+        if (mo->origin[VZ] > plmo->origin[VZ] + plmo->height)
             continue; // Above.
 
-        if(plmo->origin[VZ] > mo->origin[VZ] + mo->height)
+        if (plmo->origin[VZ] > mo->origin[VZ] + mo->height)
             continue; // Under.
 
         // Seems to be blocking the player...
@@ -339,12 +339,12 @@ void ClMobj_ReadDelta()
 
     // More flags?
     byte moreFlags = 0, fastMom = false;
-    if(df & MDF_MORE_FLAGS)
+    if (df & MDF_MORE_FLAGS)
     {
         moreFlags = Reader_ReadByte(msgReader);
 
         // Fast momentum uses 10.6 fixed point instead of the normal 8.8.
-        if(moreFlags & MDFE_FAST_MOM)
+        if (moreFlags & MDFE_FAST_MOM)
             fastMom = true;
     }
 
@@ -355,7 +355,7 @@ void ClMobj_ReadDelta()
     mobj_t *mo = map.clMobjFor(id);
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     bool needsLinking = false, justCreated = false;
-    if(!mo)
+    if (!mo)
     {
         LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
 
@@ -370,7 +370,7 @@ void ClMobj_ReadDelta()
         info->flags |= CLMF_HIDDEN;
     }
 
-    if(!(info->flags & CLMF_NULLED))
+    if (!(info->flags & CLMF_NULLED))
     {
         // Now that we've received a delta, the mobj's Predictable again.
         info->flags &= ~CLMF_UNPREDICTABLE;
@@ -381,14 +381,14 @@ void ClMobj_ReadDelta()
 
     mobj_t *d = mo;
 
-    /*if(d->dPlayer && d->dPlayer == DD_Player(consolePlayer))
+    /*if (d->dPlayer && d->dPlayer == DD_Player(consolePlayer))
     {
         // Mark the local player known.
         cmo->flags |= CLMF_KNOWN;
     }*/
 
     // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-    if(df & (MDF_ORIGIN_X | MDF_ORIGIN_Y | MDF_ORIGIN_Z | MDF_FLAGS) &&
+    if (df & (MDF_ORIGIN_X | MDF_ORIGIN_Y | MDF_ORIGIN_Z | MDF_FLAGS) &&
        !justCreated && !d->dPlayer)
     {
         needsLinking = true;
@@ -401,24 +401,24 @@ void ClMobj_ReadDelta()
     bool onFloor = false;
 
     // Coordinates with three bytes.
-    if(df & MDF_ORIGIN_X)
+    if (df & MDF_ORIGIN_X)
     {
         d->origin[VX] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
-        if(info)
+        if (info)
             info->flags |= CLMF_KNOWN_X;
     }
-    if(df & MDF_ORIGIN_Y)
+    if (df & MDF_ORIGIN_Y)
     {
         d->origin[VY] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
-        if(info)
+        if (info)
             info->flags |= CLMF_KNOWN_Y;
     }
-    if(df & MDF_ORIGIN_Z)
+    if (df & MDF_ORIGIN_Z)
     {
-        if(!(moreFlags & MDFE_Z_FLOOR))
+        if (!(moreFlags & MDFE_Z_FLOOR))
         {
             d->origin[VZ] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
-            if(info)
+            if (info)
             {
                 info->flags |= CLMF_KNOWN_Z;
 
@@ -444,33 +444,33 @@ void ClMobj_ReadDelta()
     }
 
     // Momentum using 8.8 fixed point.
-    if(df & MDF_MOM_X)
+    if (df & MDF_MOM_X)
     {
         short mom = Reader_ReadInt16(msgReader);
         d->mom[MX] = FIX2FLT(fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
-    if(df & MDF_MOM_Y)
+    if (df & MDF_MOM_Y)
     {
         short mom = Reader_ReadInt16(msgReader);
         d->mom[MY] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
-    if(df & MDF_MOM_Z)
+    if (df & MDF_MOM_Z)
     {
         short mom = Reader_ReadInt16(msgReader);
         d->mom[MZ] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
 
     // Angles with 16-bit accuracy.
-    if(df & MDF_ANGLE)
+    if (df & MDF_ANGLE)
         d->angle = Reader_ReadInt16(msgReader) << 16;
 
     // MDF_SELSPEC is never used without MDF_SELECTOR.
-    if(df & MDF_SELECTOR)
+    if (df & MDF_SELECTOR)
         d->selector = Reader_ReadPackedUInt16(msgReader);
-    if(df & MDF_SELSPEC)
+    if (df & MDF_SELSPEC)
         d->selector |= Reader_ReadByte(msgReader) << 24;
 
-    if(df & MDF_STATE)
+    if (df & MDF_STATE)
     {
         int stateIdx = Reader_ReadPackedUInt16(msgReader);
 
@@ -479,14 +479,14 @@ void ClMobj_ReadDelta()
 
         // When local actions are allowed, the assumption is that
         // the client will be doing the state changes.
-        if(!(info->flags & CLMF_LOCAL_ACTIONS))
+        if (!(info->flags & CLMF_LOCAL_ACTIONS))
         {
             ClMobj_SetState(d, stateIdx);
             info->flags |= CLMF_KNOWN_STATE;
         }
     }
 
-    if(df & MDF_FLAGS)
+    if (df & MDF_FLAGS)
     {
         // Only the flags in the pack mask are affected.
         d->ddFlags &= ~DDMF_PACK_MASK;
@@ -497,35 +497,35 @@ void ClMobj_ReadDelta()
         d->flags3 = Reader_ReadUInt32(msgReader);
     }
 
-    if(df & MDF_HEALTH)
+    if (df & MDF_HEALTH)
         d->health = Reader_ReadInt32(msgReader);
 
-    if(df & MDF_RADIUS)
+    if (df & MDF_RADIUS)
         d->radius = Reader_ReadFloat(msgReader);
 
-    if(df & MDF_HEIGHT)
+    if (df & MDF_HEIGHT)
         d->height = Reader_ReadFloat(msgReader);
 
-    if(df & MDF_FLOORCLIP)
+    if (df & MDF_FLOORCLIP)
         d->floorClip = Reader_ReadFloat(msgReader);
 
-    if(moreFlags & MDFE_TRANSLUCENCY)
+    if (moreFlags & MDFE_TRANSLUCENCY)
         d->translucency = Reader_ReadByte(msgReader);
 
-    if(moreFlags & MDFE_FADETARGET)
+    if (moreFlags & MDFE_FADETARGET)
         d->visTarget = ((short)Reader_ReadByte(msgReader)) - 1;
 
-    if(moreFlags & MDFE_TYPE)
+    if (moreFlags & MDFE_TYPE)
     {
         d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
         d->info = &runtimeDefs.mobjInfo[d->type];
     }
 
     // Is it time to remove the Hidden status?
-    if(info->flags & CLMF_HIDDEN)
+    if (info->flags & CLMF_HIDDEN)
     {
         // Now it can be displayed (potentially).
-        if(ClMobj_Reveal(d))
+        if (ClMobj_Reveal(d))
         {
             // Now it can be linked to the world.
             needsLinking = true;
@@ -534,9 +534,9 @@ void ClMobj_ReadDelta()
 
     // Non-player mobjs: update the Z position to be on the local floor, which may be
     // different than the server-side floor.
-    if(!d->dPlayer && onFloor && gx.MobjCheckPositionXYZ)
+    if (!d->dPlayer && onFloor && gx.MobjCheckPositionXYZ)
     {
-        if(coord_t *floorZ = (coord_t *) gx.GetVariable(DD_TM_FLOOR_Z))
+        if (coord_t *floorZ = (coord_t *) gx.GetVariable(DD_TM_FLOOR_Z))
         {
             gx.MobjCheckPositionXYZ(d, d->origin[VX], d->origin[VY], DDMAXFLOAT);
             d->origin[VZ] = d->floorZ = *floorZ;
@@ -546,14 +546,14 @@ void ClMobj_ReadDelta()
     // If the clmobj is Hidden (or Nulled), it will not be linked back to
     // the world until it's officially Created. (Otherwise, partially updated
     // mobjs may be visible for a while.)
-    if(!(info->flags & (CLMF_HIDDEN | CLMF_NULLED)))
+    if (!(info->flags & (CLMF_HIDDEN | CLMF_NULLED)))
     {
         // Link again.
-        if(needsLinking && !d->dPlayer)
+        if (needsLinking && !d->dPlayer)
         {
             ClMobj_Link(mo);
 
-            if(ClMobj_IsStuckInsideLocalPlayer(mo))
+            if (ClMobj_IsStuckInsideLocalPlayer(mo))
             {
                 // Oopsie, on second thought we shouldn't do this move.
                 Mobj_Unlink(mo);
@@ -565,7 +565,7 @@ void ClMobj_ReadDelta()
         }
 
         // Update players.
-        if(d->dPlayer)
+        if (d->dPlayer)
         {
             LOG_NET_XVERBOSE("Updating player %i local mobj with new clmobj state {%f, %f, %f}")
                     << P_GetDDPlayerIdx(d->dPlayer)
@@ -589,7 +589,7 @@ void ClMobj_ReadNullDelta()
     LOGDEV_NET_XVERBOSE("Null %i") << id;
 
     mobj_t *mo = map.clMobjFor(id);
-    if(!mo)
+    if (!mo)
     {
         // Wasted bandwidth...
         LOGDEV_NET_MSG("Request to remove id %i that doesn't exist here") << id;
@@ -599,7 +599,7 @@ void ClMobj_ReadNullDelta()
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
 
     // Get rid of this mobj.
-    if(!mo->dPlayer)
+    if (!mo->dPlayer)
     {
         Mobj_Unlink(mo);
     }
@@ -620,7 +620,7 @@ void ClMobj_ReadNullDelta()
 #undef ClMobj_Find
 mobj_t *ClMobj_Find(thid_t id)
 {
-    if(!App_World().hasMap()) return nullptr;
+    if (!App_World().hasMap()) return nullptr;
     
     /// @todo Do not assume the CURRENT map.
     return App_World().map().clMobjFor(id);

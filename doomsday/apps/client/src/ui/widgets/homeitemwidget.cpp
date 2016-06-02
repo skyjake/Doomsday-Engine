@@ -44,16 +44,16 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
         bool handleEvent(GuiWidget &widget, Event const &event)
         {
-            if(widget.isDisabled()) return false;
+            if (widget.isDisabled()) return false;
 
-            if(event.type() == Event::MouseButton)
+            if (event.type() == Event::MouseButton)
             {
                 MouseEvent const &mouse = event.as<MouseEvent>();
-                if(owner.hitTest(event))
+                if (owner.hitTest(event))
                 {
-                    if(mouse.button() == MouseEvent::Right)
+                    if (mouse.button() == MouseEvent::Right)
                     {
-                        switch(widget.handleMouseClick(event, MouseEvent::Right))
+                        switch (widget.handleMouseClick(event, MouseEvent::Right))
                         {
                         case MouseClickStarted:
                             acquireFocus();
@@ -71,12 +71,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
                         }
                     }
 
-                    if(mouse.state() == MouseEvent::Pressed ||
+                    if (mouse.state() == MouseEvent::Pressed ||
                        mouse.state() == MouseEvent::DoubleClick)
                     {
                         acquireFocus();
                     }
-                    if(mouse.state()  == MouseEvent::DoubleClick &&
+                    if (mouse.state()  == MouseEvent::DoubleClick &&
                        mouse.button() == MouseEvent::Left)
                     {
                         emit owner.doubleClicked();
@@ -131,7 +131,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         buttonHideTimer.setSingleShot(true);
         QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
         {
-            for(auto *btn : buttons) btn->hide();
+            for (auto *btn : buttons) btn->hide();
         });
     }
 
@@ -145,7 +145,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     {
         SequentialLayout layout(label->rule().right() - *labelRightMargin,
                                 label->rule().top(), ui::Right);
-        for(auto *button : buttons)
+        for (auto *button : buttons)
         {
             layout << *button;
             button->rule().setMidAnchorY(label->rule().midY());
@@ -155,16 +155,16 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
     void showButtons(bool show)
     {
-        if(!buttonsWidth) return;
+        if (!buttonsWidth) return;
 
-        if(show)
+        if (show)
         {
             buttonHideTimer.stop();
-            for(auto *button : buttons) button->show();
+            for (auto *button : buttons) button->show();
         }
 
         TimeDelta const SPAN = .4;
-        if(show)
+        if (show)
         {
             labelRightMargin->set(*buttonsWidth, SPAN/2);
         }
@@ -236,14 +236,14 @@ LabelWidget &HomeItemWidget::label()
 
 void HomeItemWidget::setSelected(bool selected)
 {
-    if(d->selected != selected)
+    if (d->selected != selected)
     {
         d->selected = selected;
-        if(selected)
+        if (selected)
         {
             d->showButtons(true);
         }
-        else if(!d->keepButtonsVisible)
+        else if (!d->keepButtonsVisible)
         {
             d->showButtons(false);
         }
@@ -273,7 +273,7 @@ void HomeItemWidget::useColorTheme(ColorTheme style)
 
 void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
 {
-    if(unselected == Inverted)
+    if (unselected == Inverted)
     {
         d->bgColor   = "accent";
         d->textColor = "inverted.accent";
@@ -284,7 +284,7 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
         d->textColor = "text";
     }
 
-    if(selected == Inverted)
+    if (selected == Inverted)
     {
         d->selectedBgColor   = "accent";
         d->selectedTextColor = "inverted.text";
@@ -325,7 +325,7 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
 {
     try
     {
-        if(game.isPlayable())
+        if (game.isPlayable())
         {
             Block const playPal  = catalog.read("PLAYPAL");
             Block const title    = catalog.read("TITLE");
@@ -340,7 +340,7 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
             Image logoImage(img.toQImage().scaled(finalSize.x, finalSize.y,
                                                   Qt::IgnoreAspectRatio,
                                                   Qt::SmoothTransformation));
-            if(flags.testFlag(ColorizedByFamily))
+            if (flags.testFlag(ColorizedByFamily))
             {
                 String const colorId = "home.icon." +
                         (game.family().isEmpty()? "other" : game.family());
@@ -349,7 +349,7 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
             return logoImage;
         }
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
                 << game.title()
@@ -375,11 +375,11 @@ void HomeItemWidget::addButton(ButtonWidget *button)
 void HomeItemWidget::setKeepButtonsVisible(bool yes)
 {
     d->keepButtonsVisible = yes;
-    if(yes)
+    if (yes)
     {
         d->showButtons(true);
     }
-    else if(!d->selected)
+    else if (!d->selected)
     {
         d->showButtons(false);
     }

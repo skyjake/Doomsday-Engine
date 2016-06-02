@@ -67,7 +67,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             ClientWindow::main().taskBar().close();
 
             // Automatically leave the current MP game.
-            if(netGame && isClient)
+            if (netGame && isClient)
             {
                 ClientApp::serverLink().disconnect();
             }
@@ -129,7 +129,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
         Game const *game() const
         {
-            if(!svItem) return nullptr;
+            if (!svItem) return nullptr;
             return &App_Games()[svItem->info().gameIdentityKey];
         }
 
@@ -140,7 +140,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 svItem = &item;
                 Game const &svGame = *game();
 
-                if(style().images().has(svGame.logoImageId()))
+                if (style().images().has(svGame.logoImageId()))
                 {
                     loadButton().setImage(style().images().image(svGame.logoImageId()));
                 }
@@ -159,7 +159,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
                 updateAvailability();
             }
-            catch(Error const &)
+            catch (Error const &)
             {
                 svItem = nullptr;
 
@@ -205,12 +205,12 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     {
         // Form a rule that is the maximum of all load button heights.
         Rule const *maxHgt = nullptr;
-        foreach(Widget *w, self.childWidgets())
+        foreach (Widget *w, self.childWidgets())
         {
-            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            if (ServerWidget *sw = w->maybeAs<ServerWidget>())
             {
                 auto const &itemHeight = sw->loadButton().contentHeight();
-                if(!maxHgt)
+                if (!maxHgt)
                 {
                     maxHgt = holdRef(itemHeight);
                 }
@@ -221,7 +221,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             }
         }
 
-        if(maxHgt)
+        if (maxHgt)
         {
             maxHeightRule->setSource(*maxHgt);
         }
@@ -237,10 +237,10 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         bool changed = false;
 
         // Remove obsolete entries.
-        for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
+        for (ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             String const id = self.items().at(idx).data().toString();
-            if(!link.isFound(Address::parse(id), mask))
+            if (!link.isFound(Address::parse(id), mask))
             {
                 self.items().remove(idx--);
                 changed = true;
@@ -248,13 +248,13 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         }
 
         // Add new entries and update existing ones.
-        foreach(de::Address const &host, link.foundServers(mask))
+        foreach (de::Address const &host, link.foundServers(mask))
         {
             serverinfo_t info;
-            if(!link.foundServerInfo(host, &info, mask)) continue;
+            if (!link.foundServerInfo(host, &info, mask)) continue;
 
             ui::Data::Pos found = self.items().findData(hostId(info));
-            if(found == ui::Data::InvalidPos)
+            if (found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
                 self.items().append(new ServerListItem(info, self));
@@ -267,7 +267,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             }
         }
 
-        if(changed)
+        if (changed)
         {
             updateItemMaxHeight();
             self.sort();
@@ -280,7 +280,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
     void currentGameChanged(Game const &newGame)
     {
-        if(newGame.isNull() && mode == DiscoverUsingMaster)
+        if (newGame.isNull() && mode == DiscoverUsingMaster)
         {
             // If the session menu exists across game changes, it's good to
             // keep it up to date.
@@ -290,9 +290,9 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
     void gameReadinessUpdated()
     {
-        foreach(Widget *w, self.childWidgets())
+        foreach (Widget *w, self.childWidgets())
         {
-            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            if (ServerWidget *sw = w->maybeAs<ServerWidget>())
             {
                 sw->updateAvailability();
             }
@@ -305,7 +305,7 @@ MPSessionMenuWidget::MPSessionMenuWidget(DiscoveryMode discovery)
 {
     d->mode = discovery;
 
-    switch(discovery)
+    switch (discovery)
     {
     case DiscoverUsingMaster:
         d->link().discoverUsingMaster();

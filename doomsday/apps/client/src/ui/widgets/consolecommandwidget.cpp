@@ -80,12 +80,12 @@ void ConsoleCommandWidget::focusLost()
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
-    if(isDisabled()) return false;
+    if (isDisabled()) return false;
 
-    if(hasFocus())
+    if (hasFocus())
     {
         // Console bindings override normal event handling.
-        if(ClientApp::inputSystem().tryEvent(event, "console"))
+        if (ClientApp::inputSystem().tryEvent(event, "console"))
         {
             // Eaten by bindings.
             return true;
@@ -113,7 +113,7 @@ void ConsoleCommandWidget::autoCompletionBegan(String const &)
 {
     // Prepare a list of annotated completions to show in the popup.
     QStringList const compls = suggestedCompletions();
-    if(compls.size() > 1)
+    if (compls.size() > 1)
     {
         showAutocompletionPopup(Con_AnnotatedConsoleTerms(compls));
     }

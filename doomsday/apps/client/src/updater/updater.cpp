@@ -185,13 +185,13 @@ DENG2_PIMPL(Updater)
 
         // Delete a package installed earlier?
         UpdaterSettings st;
-        if(st.deleteAfterUpdate())
+        if (st.deleteAfterUpdate())
         {
             de::String p = st.pathToDeleteAtStartup();
-            if(!p.isEmpty())
+            if (!p.isEmpty())
             {
                 QFile file(p);
-                if(file.exists())
+                if (file.exists())
                 {
                     LOG_NOTE("Deleting previously installed package: %s") << p;
                     file.remove();
@@ -221,10 +221,10 @@ DENG2_PIMPL(Updater)
     bool shouldCheckForUpdate() const
     {
         UpdaterSettings st;
-        if(st.onlyCheckManually()) return false;
+        if (st.onlyCheckManually()) return false;
 
         float dayInterval = 30;
-        switch(st.frequency())
+        switch (st.frequency())
         {
         case UpdaterSettings::AtStartup:
             dayInterval = 0;
@@ -251,15 +251,15 @@ DENG2_PIMPL(Updater)
         // Check always when the day interval has passed. Note that this
         // doesn't check the actual time interval since the last check, but the
         // difference in "calendar" days.
-        if(st.lastCheckTime().asDate().daysTo(de::Date()) >= dayInterval)
+        if (st.lastCheckTime().asDate().daysTo(de::Date()) >= dayInterval)
             return true;
 
-        if(st.frequency() == UpdaterSettings::Biweekly)
+        if (st.frequency() == UpdaterSettings::Biweekly)
         {
             // Check on Tuesday and Saturday, as the builds are usually on
             // Monday and Friday.
             int weekday = now.asDateTime().date().dayOfWeek();
-            if(weekday == 2 || weekday == 6) return true;
+            if (weekday == 2 || weekday == 6) return true;
         }
 
         // No need to check right now.
@@ -271,7 +271,7 @@ DENG2_PIMPL(Updater)
         LOG_AS("Updater")
         LOG_DEBUG("App startup was completed");
 
-        if(shouldCheckForUpdate())
+        if (shouldCheckForUpdate())
         {
             queryLatestVersion(false);
         }
@@ -319,21 +319,21 @@ DENG2_PIMPL(Updater)
         DENG2_ASSERT_IN_MAIN_THREAD();
         showNotification(false);
 
-        if(reply->error() != QNetworkReply::NoError)
+        if (reply->error() != QNetworkReply::NoError)
         {
             LOG_WARNING("Network request failed: %s") << reply->url().toString();
             return;
         }
 
         QVariant result = de::parseJSON(QString::fromUtf8(reply->readAll()));
-        if(!result.isValid()) return;
+        if (!result.isValid()) return;
 
         QVariantMap map  = result.toMap();
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri     = map["release_changeloguri"].toString();
 
         // Check if a fallback location is specified for the download.
-        if(map.contains("direct_download_fallback_uri"))
+        if (map.contains("direct_download_fallback_uri"))
         {
             latestPackageUri2 = map["direct_download_fallback_uri"].toString();
         }
@@ -352,7 +352,7 @@ DENG2_PIMPL(Updater)
         LOG_MSG(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
         LOG_MSG(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
-        if(availableDlg)
+        if (availableDlg)
         {
             // This was a recheck.
             availableDlg->showResult(latestVersion, latestLogUri);
@@ -362,13 +362,13 @@ DENG2_PIMPL(Updater)
         bool const gotUpdate = latestVersion > currentVersion;
 
         // Is this newer than what we're running?
-        if(gotUpdate)
+        if (gotUpdate)
         {
             LOG_NOTE("Found an update: " _E(b)) << latestVersion.asText();
 
-            if(!alwaysShowNotification)
+            if (!alwaysShowNotification)
             {
-                if(UpdaterSettings().autoDownload())
+                if (UpdaterSettings().autoDownload())
                 {
                     startDownload();
                     return;
@@ -385,7 +385,7 @@ DENG2_PIMPL(Updater)
                     << (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
 
-        if(alwaysShowNotification)
+        if (alwaysShowNotification)
         {
             showAvailableDialogAndPause();
         }
@@ -393,7 +393,7 @@ DENG2_PIMPL(Updater)
 
     void showAvailableDialogAndPause()
     {
-        if(availableDlg) return; // Just one at a time.
+        if (availableDlg) return; // Just one at a time.
 
         // Modal dialogs will interrupt gameplay.
         ClientWindow::main().taskBar().openAndPauseGame();
@@ -409,7 +409,7 @@ DENG2_PIMPL(Updater)
         availableDlg->setDeleteAfterDismissed(true);
         QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
 
-        if(availableDlg->exec(ClientWindow::main().root()))
+        if (availableDlg->exec(ClientWindow::main().root()))
         {
             startDownload();
             download->open();
@@ -455,7 +455,7 @@ DENG2_PIMPL(Updater)
         QDir::current().mkpath(scriptPath); // may not exist
         scriptPath = QDir(scriptPath).filePath(INSTALL_SCRIPT_NAME);
         QFile file(scriptPath);
-        if(file.open(QFile::WriteOnly | QFile::Truncate))
+        if (file.open(QFile::WriteOnly | QFile::Truncate))
         {
             QTextStream out(&file);
             out << "tell application \"System Events\" to set visible of process \"Finder\" to false\n"
@@ -529,7 +529,7 @@ DENG2_PIMPL(Updater)
         // (This will work better when there is no more separate frontend, as
         // the engine is restarted after the install.)
         UpdaterSettings st;
-        if(st.deleteAfterUpdate())
+        if (st.deleteAfterUpdate())
         {
             st.setPathToDeleteAtStartup(distribPackagePath);
         }
@@ -571,7 +571,7 @@ void Updater::downloadCompleted(int)
 {
     // Autosave the game.
     // Well, we can't do that yet so just remind the user about saving.
-    if(App_GameLoaded() && !d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
+    if (App_GameLoaded() && !d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
     {
         d->savingSuggested = true;
 
@@ -586,7 +586,7 @@ void Updater::downloadCompleted(int)
                 << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
                 << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
 
-        if(msg->exec(ClientWindow::main().root()))
+        if (msg->exec(ClientWindow::main().root()))
         {
             Con_Execute(CMDS_DDAY, "savegame", false, false);
             return;
@@ -623,7 +623,7 @@ void Updater::showSettings()
 
 void Updater::showCurrentDownload()
 {
-    if(d->download)
+    if (d->download)
     {
         d->download->open();
     }
@@ -637,7 +637,7 @@ void Updater::showCurrentDownload()
 void Updater::checkNow(CheckMode mode)
 {
     // Not if there is an ongoing download.
-    if(d->download)
+    if (d->download)
     {
         d->download->open();
         return;
@@ -649,7 +649,7 @@ void Updater::checkNow(CheckMode mode)
 void Updater::checkNowShowingProgress()
 {
     // Not if there is an ongoing download.
-    if(d->download) return;
+    if (d->download) return;
 
     d->availableDlg = new UpdateAvailableDialog;
     d->queryLatestVersion(true);
@@ -659,7 +659,7 @@ void Updater::checkNowShowingProgress()
 void Updater::printLastUpdated(void)
 {
     String ago = UpdaterSettings().lastCheckAgo();
-    if(ago.isEmpty())
+    if (ago.isEmpty())
     {
         LOG_MSG("Never checked for updates");
     }
@@ -671,9 +671,9 @@ void Updater::printLastUpdated(void)
 
 void Updater::downloadDialogClosed()
 {
-    if(!d->download || d->download->isFailed())
+    if (!d->download || d->download->isFailed())
     {
-        if(d->download)
+        if (d->download)
         {
             d->download->setDeleteAfterDismissed(true);
             d->download = 0;

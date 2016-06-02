@@ -92,7 +92,7 @@ DENG2_PIMPL(LogSettingsDialog)
             foldLayout.setColumnFixedWidth(1, *columnWidth);
             foldLayout.setColumnAlignment(0, ui::AlignRight);
 
-            for(uint i = 0; i < NUM_DOMAINS; ++i)
+            for (uint i = 0; i < NUM_DOMAINS; ++i)
             {
                 initDomain(domainText[i],
                            domWidgets[i],
@@ -104,7 +104,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
             separately->audienceForToggle() += this;
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOGDEV_ERROR("") << er.asText();
             deinit();
@@ -144,7 +144,7 @@ DENG2_PIMPL(LogSettingsDialog)
         wgt.alert->setInactiveValue(LogEntry::HighestLogLevel + 1);
 
         // Lay out the folding panel's contents.
-        if(parent == &fold->content())
+        if (parent == &fold->content())
         {
             foldLayout << *wgt.label << *wgt.level << *wgt.dev << *wgt.alert;
         }
@@ -153,9 +153,9 @@ DENG2_PIMPL(LogSettingsDialog)
     void deinit()
     {
         // The common 'levels' will be deleted soon.
-        for(uint i = 0; i < NUM_DOMAINS; ++i)
+        for (uint i = 0; i < NUM_DOMAINS; ++i)
         {
-            if(domWidgets[i].level)
+            if (domWidgets[i].level)
             {
                 domWidgets[i].level->useDefaultItems();
             }
@@ -178,7 +178,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
         // Update the variables (UI updated automatically).
         logf.write(cfg.objectNamespace().subrecord("log.filter"));
-        for(uint i = 0; i < NUM_DOMAINS; ++i)
+        for (uint i = 0; i < NUM_DOMAINS; ++i)
         {
             char const *name = domainText[i].name;
             cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : (LogEntry::HighestLogLevel + 1)));
@@ -187,7 +187,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
     void toggleStateChanged(ToggleWidget &toggle)
     {
-        if(toggle.isActive())
+        if (toggle.isActive())
         {
             overrideWithGeneric();
             fold->open();
@@ -201,7 +201,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
     void updateLogFilter()
     {
-        if(separately->isInactive())
+        if (separately->isInactive())
         {
             overrideWithGeneric();
         }
@@ -247,7 +247,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
 
-    if(d->separately->isActive())
+    if (d->separately->isActive())
     {
         d->fold->open();
     }

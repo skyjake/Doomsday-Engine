@@ -42,7 +42,7 @@ void Cl_Finale(Reader *msg)
     int const flags           = Reader_ReadByte(msg);
     finaleid_t const finaleId = Reader_ReadUInt32(msg);
 
-    if(flags & FINF_SCRIPT)
+    if (flags & FINF_SCRIPT)
     {
         // Read the script into map-scope memory. It will be freed
         // when the next map is loaded.
@@ -52,7 +52,7 @@ void Cl_Finale(Reader *msg)
         script[len] = 0;
     }
 
-    if((flags & FINF_SCRIPT) && (flags & FINF_BEGIN))
+    if ((flags & FINF_SCRIPT) && (flags & FINF_BEGIN))
     {
         // Start the script.
         currentFinale = FI_Execute((const char*)script, FF_LOCAL);
@@ -63,19 +63,19 @@ void Cl_Finale(Reader *msg)
     /// @todo Wouldn't hurt to make sure that the server is talking about the
     /// same finale as before... (check remoteFinale)
 
-    if((flags & FINF_END) && currentFinale)
+    if ((flags & FINF_END) && currentFinale)
     {
         FI_ScriptTerminate(currentFinale);
         currentFinale = 0;
         remoteFinale = 0;
     }
 
-    if((flags & FINF_SKIP) && currentFinale)
+    if ((flags & FINF_SKIP) && currentFinale)
     {       
         FI_ScriptRequestSkip(currentFinale);
     }
 
-    if(script) M_Free(script);
+    if (script) M_Free(script);
 }
 
 void Cl_RequestFinaleSkip()

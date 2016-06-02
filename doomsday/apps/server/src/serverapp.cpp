@@ -98,14 +98,14 @@ DENG2_PIMPL(ServerApp)
 
     void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
     {
-        if(netGame && isServer)
+        if (netGame && isServer)
         {
             N_ServerClose();
         }
 
         infineSystem().reset();
 
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             Con_SaveDefaults();
         }
@@ -182,19 +182,19 @@ void ServerApp::initialize()
 
 #ifdef UNIX
     // Some common Unix command line options.
-    if(commandLine().has("--version") || commandLine().has("-version"))
+    if (commandLine().has("--version") || commandLine().has("-version"))
     {
         d->printVersionToStdOut();
         ::exit(0);
     }
-    if(commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+    if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
     {
         d->printHelpToStdOut();
         ::exit(0);
     }
 #endif
 
-    if(!CommandLine_Exists("-stdout"))
+    if (!CommandLine_Exists("-stdout"))
     {
         // In server mode, stay quiet on the standard outputs.
         LogBuffer::get().enableStandardOutput(false);
@@ -208,12 +208,12 @@ void ServerApp::initialize()
 
     // Initialize.
 #if WIN32
-    if(!DD_Win32_Init())
+    if (!DD_Win32_Init())
     {
         throw Error("ServerApp::initialize", "DD_Win32_Init failed");
     }
 #elif UNIX
-    if(!DD_Unix_Init())
+    if (!DD_Unix_Init())
     {
         throw Error("ServerApp::initialize", "DD_Unix_Init failed");
     }

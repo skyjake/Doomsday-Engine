@@ -32,13 +32,13 @@ static bool isProcessRunning(char const *name)
 {
     QProcess wmic;
     wmic.start("wmic.exe", QStringList() << "PROCESS" << "get" << "Caption");
-    if(!wmic.waitForStarted()) return false;
-    if(!wmic.waitForFinished()) return false;
+    if (!wmic.waitForStarted()) return false;
+    if (!wmic.waitForFinished()) return false;
 
     QByteArray result = wmic.readAll();
-    foreach(QString p, QString(result).split("\n", QString::SkipEmptyParts))
+    foreach (QString p, QString(result).split("\n", QString::SkipEmptyParts))
     {
-        if(!p.trimmed().compare(QLatin1String(name), Qt::CaseInsensitive))
+        if (!p.trimmed().compare(QLatin1String(name), Qt::CaseInsensitive))
             return true;
     }
     return false;
@@ -46,7 +46,7 @@ static bool isProcessRunning(char const *name)
 
 dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
 {
-    while(isProcessRunning(processName))
+    while (isProcessRunning(processName))
     {
         MessageDialog *msg = new MessageDialog;
         msg->setDeleteAfterDismissed(true);
@@ -60,7 +60,7 @@ dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
                 << new DialogButtonItem(DialogWidget::Reject, QObject::tr("Ignore"));
 
         // Show a notification dialog.
-        if(!msg->exec(ClientWindow::main().root()))
+        if (!msg->exec(ClientWindow::main().root()))
         {
             return !isProcessRunning(processName);
         }

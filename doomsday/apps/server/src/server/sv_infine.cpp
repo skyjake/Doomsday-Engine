@@ -28,11 +28,11 @@ using namespace de;
 
 void Sv_Finale(finaleid_t id, dint flags, char const *script)
 {
-    if(::isClient) return;
+    if (::isClient) return;
 
     // How much memory do we need?
     dsize scriptLen = 0;
-    if(script)
+    if (script)
     {
         flags |= FINF_SCRIPT;
         scriptLen = qstrlen(script);
@@ -43,7 +43,7 @@ void Sv_Finale(finaleid_t id, dint flags, char const *script)
     Writer_WriteByte(::msgWriter, flags);
     Writer_WriteUInt32(::msgWriter, id); // serverside Id
 
-    if(script)
+    if (script)
     {
         // Then the script itself.
         Writer_WriteUInt32(::msgWriter, scriptLen);

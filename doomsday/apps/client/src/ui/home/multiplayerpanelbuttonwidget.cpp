@@ -94,7 +94,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         ClientWindow::main().taskBar().close();
 
         // Automatically leave the current MP game.
-        if(netGame && isClient)
+        if (netGame && isClient)
         {
             ClientApp::serverLink().disconnect();
         }
@@ -137,7 +137,7 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
 
     //label().setText(info.name);
     String meta;
-    if(info.numPlayers > 0)
+    if (info.numPlayers > 0)
     {
         meta = String("%1 player%2 " DENG2_CHAR_MDASH " ")
                 .arg(info.numPlayers)
@@ -154,14 +154,14 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
 
     // Additional information.
     String infoText = String(info.map) + " " DENG2_CHAR_MDASH " ";
-    if(DoomsdayApp::games().contains(info.gameIdentityKey))
+    if (DoomsdayApp::games().contains(info.gameIdentityKey))
     {
         auto const &game = DoomsdayApp::games()[info.gameIdentityKey];
         infoText += game.title();
         d->joinButton->enable();
 
         /// @todo The server info should include the list of packages.
-        if(d->catalog.setPackages(game.requiredPackages()))
+        if (d->catalog.setPackages(game.requiredPackages()))
         {
             icon().setImage(makeGameLogo(game, d->catalog));
         }

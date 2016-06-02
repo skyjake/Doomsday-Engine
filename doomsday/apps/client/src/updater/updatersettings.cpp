@@ -84,7 +84,7 @@ de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
     de::NativePath p = App::config().gets(CONF(VAR_DELETE_PATH));
     de::String ext = p.toString().fileNameExtension();
-    if(p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
+    if (p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
         return p;
     }
@@ -100,7 +100,7 @@ bool UpdaterSettings::isDefaultDownloadPath() const
 de::NativePath UpdaterSettings::downloadPath() const
 {
     de::NativePath dir = App::config().gets(CONF(VAR_DOWNLOAD_PATH));
-    if(dir.toString() == SYMBOL_DEFAULT_DOWNLOAD)
+    if (dir.toString() == SYMBOL_DEFAULT_DOWNLOAD)
     {
         dir = defaultDownloadPath();
     }
@@ -109,7 +109,7 @@ de::NativePath UpdaterSettings::downloadPath() const
 
 void UpdaterSettings::setDownloadPath(de::NativePath downloadPath)
 {
-    if(downloadPath == defaultDownloadPath())
+    if (downloadPath == defaultDownloadPath())
     {
         downloadPath = SYMBOL_DEFAULT_DOWNLOAD;
     }
@@ -168,13 +168,13 @@ de::NativePath UpdaterSettings::defaultDownloadPath()
 de::String UpdaterSettings::lastCheckAgo() const
 {
     de::Time when = lastCheckTime();
-    if(!when.isValid()) return ""; // Never checked.
+    if (!when.isValid()) return ""; // Never checked.
 
     de::TimeDelta delta = when.since();
-    if(delta < 0.0) return "";
+    if (delta < 0.0) return "";
 
     int t;
-    if(delta < 60.0)
+    if (delta < 60.0)
     {
         t = delta.asMilliSeconds() / 1000;
         return de::String(QObject::tr("%1 %2 ago")).arg(t).
@@ -182,21 +182,21 @@ de::String UpdaterSettings::lastCheckAgo() const
     }
 
     t = delta.asMinutes();
-    if(t <= 60)
+    if (t <= 60)
     {
         return de::String(QObject::tr("%1 %2 ago")).arg(t).
                 arg(t != 1? QObject::tr("minutes") : QObject::tr("minute"));
     }
 
     t = delta.asHours();
-    if(t <= 24)
+    if (t <= 24)
     {
         return de::String(QObject::tr("%1 %2 ago")).arg(t).
                 arg(t != 1? QObject::tr("hours") : QObject::tr("hour"));
     }
 
     t = delta.asDays();
-    if(t <= 7)
+    if (t <= 7)
     {
         return de::String(QObject::tr("%1 %2 ago")).arg(t).
                 arg(t != 1? QObject::tr("days") : QObject::tr("day"));

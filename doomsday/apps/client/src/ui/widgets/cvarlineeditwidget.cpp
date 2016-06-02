@@ -48,7 +48,7 @@ void CVarLineEditWidget::contentChanged()
 {
     LineEditWidget::contentChanged();
 
-    if(String(CVar_String(d->var())) != text())
+    if (String(CVar_String(d->var())) != text())
     {
         setCVarValueFromWidget();
     }

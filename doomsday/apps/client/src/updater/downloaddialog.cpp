@@ -133,7 +133,7 @@ DENG2_PIMPL(DownloadDialog)
 
         const double MB = 1.0e6; // MiB would be 2^20
 
-        switch(state)
+        switch (state)
         {
         default:
             msg = String(tr("Connecting to %1")).arg(_E(b) + location + _E(.));
@@ -168,7 +168,7 @@ DownloadDialog::~DownloadDialog()
 
 String DownloadDialog::downloadedFilePath() const
 {
-    if(!isReadyToInstall()) return "";
+    if (!isReadyToInstall()) return "";
     return d->savedFilePath;
 }
 
@@ -189,7 +189,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
     reply->deleteLater();
     d->reply = 0;
 
-    if(reply->error() != QNetworkReply::NoError)
+    if (reply->error() != QNetworkReply::NoError)
     {
         LOG_WARNING("Failed: ") << reply->errorString();
 
@@ -202,7 +202,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
 
     /// @todo If/when we include WebKit, this can be done more intelligently using QWebPage. -jk
 
-    if(!d->redirected.isEmpty())
+    if (!d->redirected.isEmpty())
     {
         LOG_NOTE("Redirected to: %s") << d->redirected;
         d->uri = QUrl(d->redirected);
@@ -211,7 +211,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
         return;
     }
 
-    if(d->state == Instance::MaybeRedirected)
+    if (d->state == Instance::MaybeRedirected)
     {
         // This does not look like a binary file... Let's see if we can parse the page.
         QString html = QString::fromUtf8(reply->readAll());
@@ -219,12 +219,12 @@ void DownloadDialog::finished(QNetworkReply *reply)
         /// @todo Use a regular expression for parsing the redirection.
 
         int start = html.indexOf("<meta http-equiv=\"refresh\"", 0, Qt::CaseInsensitive);
-        if(start < 0)
+        if (start < 0)
         {
             LOG_WARNING("Received an HTML page instead of a binary file");
 
             // Do we have a fallback option?
-            if(!d->uri2.isEmpty() && d->uri2 != d->uri)
+            if (!d->uri2.isEmpty() && d->uri2 != d->uri)
             {
                 d->uri = d->uri2;
                 d->updateLocation(d->uri);
@@ -236,7 +236,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
             return;
         }
         start = html.indexOf("url=\"", start, Qt::CaseInsensitive);
-        if(start < 0)
+        if (start < 0)
         {
             emit downloadFailed(d->uri.toString());
             return;
@@ -256,7 +256,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
 
     // Save the received data.
     QFile file(d->savedFilePath);
-    if(file.open(QFile::WriteOnly | QFile::Truncate))
+    if (file.open(QFile::WriteOnly | QFile::Truncate))
     {
         file.write(reply->readAll());
     }
@@ -288,7 +288,7 @@ void DownloadDialog::cancel()
     d->state = Instance::Error;
     d->progress->setRotationSpeed(0);
 
-    if(d->reply)
+    if (d->reply)
     {
         d->reply->abort();
         buttons().clear()
@@ -304,7 +304,7 @@ void DownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
 
-    if(d->state == Instance::Downloading && total > 0)
+    if (d->state == Instance::Downloading && total > 0)
     {
         d->totalBytes = total;
         d->receivedBytes = received;
@@ -324,11 +324,11 @@ void DownloadDialog::replyMetaDataChanged()
     String contentType = d->reply->header(QNetworkRequest::ContentTypeHeader).toString();
     String redirection = d->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
 
-    if(!redirection.isEmpty())
+    if (!redirection.isEmpty())
     {
         d->redirected = redirection;
     }
-    else if(contentType.startsWith("text/html"))
+    else if (contentType.startsWith("text/html"))
     {
         // Looks like a redirection page.
         d->state = Instance::MaybeRedirected;
@@ -353,7 +353,7 @@ DownloadDialog &DownloadDialog::currentDownload()
 
 void DownloadDialog::showCompletedDownload()
 {
-    if(downloadInProgress && downloadInProgress->isReadyToInstall())
+    if (downloadInProgress && downloadInProgress->isReadyToInstall())
     {
         ClientWindow::main().taskBar().openAndPauseGame();
         downloadInProgress->open();

@@ -97,20 +97,20 @@ DENG_GUI_PIMPL(GameFilterWidget)
     void updateBackgroundOpacity()
     {
         float opacity = (bgOpacityRule->value() > 1? 1 : 0);
-        if(!fequal(bgOpacity.target(), opacity))
+        if (!fequal(bgOpacity.target(), opacity))
         {
             bgOpacity.setValue(opacity, BACKGROUND_FADE_SPAN);
             background->setOpacity(opacity, BACKGROUND_FADE_SPAN);
             animatingOpacity = true;
         }
 
-        if(animatingOpacity)
+        if (animatingOpacity)
         {
             Background bg = background->background();
             bg.solidFill.w = bgOpacity * BACKGROUND_FILL_OPACITY;
             background->set(bg);
 
-            if(bgOpacity.done()) animatingOpacity = false;
+            if (bgOpacity.done()) animatingOpacity = false;
         }
     }
 };
@@ -134,13 +134,13 @@ void GameFilterWidget::useInvertedStyle()
 void GameFilterWidget::setFilter(Filter flt, FilterMode mode)
 {
     ui::DataPos pos = d->tabs->items().findData(duint(flt));
-    if(pos != ui::Data::InvalidPos)
+    if (pos != ui::Data::InvalidPos)
     {
         d->tabs->setCurrent(pos);
     }
     d->filterMode = mode;
 
-    if(d->filterMode == Permanent)
+    if (d->filterMode == Permanent)
     {
         d->tabs->disable();
     }
@@ -175,7 +175,7 @@ void GameFilterWidget::update()
 {
     GuiWidget::update();
 
-    if(d->background->isVisible())
+    if (d->background->isVisible())
     {
         d->updateBackgroundOpacity();
     }
@@ -184,7 +184,7 @@ void GameFilterWidget::update()
 void GameFilterWidget::operator >> (PersistentState &toState) const
 {
     Record &st = toState.objectNamespace();
-    if(d->filterMode != Permanent)
+    if (d->filterMode != Permanent)
     {
         st.set(d->persistId("filter"), dint(filter()));
     }
@@ -194,7 +194,7 @@ void GameFilterWidget::operator >> (PersistentState &toState) const
 void GameFilterWidget::operator << (PersistentState const &fromState)
 {
     Record const &st = fromState.objectNamespace();
-    if(d->filterMode != Permanent)
+    if (d->filterMode != Permanent)
     {
         d->tabs->setCurrent(d->tabs->items().findData(int(st[d->persistId("filter")])));
     }

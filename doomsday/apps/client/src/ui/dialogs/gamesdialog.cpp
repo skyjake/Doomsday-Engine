@@ -53,7 +53,7 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(1, 0);
 
-    if(d->mode == ShowAll)
+    if (d->mode == ShowAll)
     {
         // Include the filter in the layout.
         d->gameSel->filter().rule().setInput(Rule::Width, d->gameSel->rule().width());
@@ -71,7 +71,7 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
                                            GameFilterWidget::Multiplayer,
                                        GameFilterWidget::Permanent);
 
-        switch(d->mode)
+        switch (d->mode)
         {
         case ShowSingleplayerOnly:
             d->gameSel->subsetFold("available")->open();
@@ -93,7 +93,7 @@ GamesDialog::GamesDialog(Mode mode, String const &name)
     // Buttons appropriate for the mode:
     buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
 
-    if(d->mode != ShowSingleplayerOnly)
+    if (d->mode != ShowSingleplayerOnly)
     {
         buttons() << new DialogButtonItem(Action | Id2, tr("Connect Manually..."),
                                           new SignalAction(this, SLOT(connectManually())));

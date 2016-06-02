@@ -115,11 +115,11 @@ void Cl_Frame2Received(int packetType)
 
     // All frames that arrive before the first frame are ignored.
     // They are most likely from the wrong map.
-    if(packetType == PSV_FIRST_FRAME2)
+    if (packetType == PSV_FIRST_FRAME2)
     {
         gotFirstFrame = true;
     }
-    else if(!gotFirstFrame)
+    else if (!gotFirstFrame)
     {
         // Just ignore. If this was a legitimate frame, the server will
         // send it again when it notices no ack is coming.
@@ -127,11 +127,11 @@ void Cl_Frame2Received(int packetType)
     }
 
     // Read and process the message.
-    while(!Reader_AtEnd(msgReader))
+    while (!Reader_AtEnd(msgReader))
     {
         byte const deltaType = Reader_ReadByte(msgReader);
 
-        switch(deltaType)
+        switch (deltaType)
         {
         case DT_CREATE_MOBJ:
             // The mobj will be created/shown.
@@ -180,7 +180,7 @@ void Cl_Frame2Received(int packetType)
         }
     }
 
-    if(!gotFrame)
+    if (!gotFrame)
     {
         LOGDEV_NET_NOTE("First frame received");
     }

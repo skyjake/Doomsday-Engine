@@ -53,7 +53,7 @@ DENG2_PIMPL(ManualConnectionDialog)
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {
-        if(querying)
+        if (querying)
         {
             // Time to show what we found.
             querying = false;
@@ -61,12 +61,12 @@ DENG2_PIMPL(ManualConnectionDialog)
             self.editor().enable();
             self.validate();
 
-            if(link.foundServerCount(ServerLink::Direct) > 0)
+            if (link.foundServerCount(ServerLink::Direct) > 0)
             {
                 progress->hide();
                 fold->open();
 
-                if(link.foundServerCount(ServerLink::Direct) == 1)
+                if (link.foundServerCount(ServerLink::Direct) == 1)
                 {
                     joinWhenEnterPressed = true;
                 }
@@ -156,16 +156,16 @@ void ManualConnectionDialog::operator << (PersistentState const &fromState)
 
 void ManualConnectionDialog::queryOrConnect()
 {
-    if(d->connectButton().isDisabled())
+    if (d->connectButton().isDisabled())
     {
         // Should not try now.
         return;
     }
 
-    if(!d->querying)
+    if (!d->querying)
     {
         // Automatically connect if there is a single choice.
-        if(d->joinWhenEnterPressed)
+        if (d->joinWhenEnterPressed)
         {
             emit selected(&d->games->items().at(0));
             serverSelected(&d->games->items().at(0));
@@ -194,12 +194,12 @@ void ManualConnectionDialog::validate()
 {
     bool valid = true;
 
-    if(d->querying)
+    if (d->querying)
     {
         valid = false;
     }
 
-    if(editor().text().isEmpty() || editor().text().contains(';') ||
+    if (editor().text().isEmpty() || editor().text().contains(';') ||
        editor().text().endsWith(":") || editor().text().startsWith(":"))
     {
         valid = false;
@@ -210,7 +210,7 @@ void ManualConnectionDialog::validate()
 
 void ManualConnectionDialog::serverSelected(ui::Item const *item)
 {
-    if(d->autoJoin)
+    if (d->autoJoin)
     {
         setAcceptanceAction(makeAction(*item));
     }
@@ -219,7 +219,7 @@ void ManualConnectionDialog::serverSelected(ui::Item const *item)
 
 void ManualConnectionDialog::finish(int result)
 {
-    if(result)
+    if (result)
     {
         // The dialog was accepted.
         d->usedAddress = editor().text();

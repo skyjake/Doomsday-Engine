@@ -55,12 +55,12 @@ DENG2_PIMPL(GameUIWidget)
 
     void draw()
     {
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             R_RenderViewPorts(HUDLayer);
 
             // Draw finales.
-            if(App_InFineSystem().finaleInProgess())
+            if (App_InFineSystem().finaleInProgess())
             {
                 dgl_borderedprojectionstate_t bp;
                 //dd_bool bordered;
@@ -69,14 +69,14 @@ DENG2_PIMPL(GameUIWidget)
                 GL_BeginBorderedProjection(&bp);
 
                 /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
-                if(bordered)
+                if (bordered)
                 {
                     // Draw using the special bordered projection.
                     GL_ConfigureBorderedProjection(&borderedProjection);
                     GL_BeginBorderedProjection(&borderedProjection);
                 }*/
 
-                for(Finale *finale : App_InFineSystem().finales())
+                for (Finale *finale : App_InFineSystem().finales())
                 {
                     finale->interpreter().page(FinaleInterpreter::Anims).draw();
                     finale->interpreter().page(FinaleInterpreter::Texts).draw();
@@ -84,12 +84,12 @@ DENG2_PIMPL(GameUIWidget)
 
                 GL_EndBorderedProjection(&bp);
 
-                //if(bordered)
+                //if (bordered)
                 //    GL_EndBorderedProjection(&borderedProjection);
             }
 
             // Draw any full window game graphics.
-            if(gx.DrawWindow)
+            if (gx.DrawWindow)
             {
                 Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
                 gx.DrawWindow(&dimensions);
@@ -102,7 +102,7 @@ DENG2_PIMPL(GameUIWidget)
         /*
          * Draw debug information.
          */
-        if(App_World().hasMap() && App_World().map().hasLightGrid())
+        if (App_World().hasMap() && App_World().map().hasLightGrid())
         {
             Rend_LightGridVisual(App_World().map().lightGrid());
         }
@@ -118,14 +118,14 @@ GameUIWidget::GameUIWidget() : GuiWidget("game_ui"), d(new Instance(this))
 
 void GameUIWidget::drawContent()
 {
-    if(isDisabled() || !GL_IsFullyInited())
+    if (isDisabled() || !GL_IsFullyInited())
         return;
 
     GLState::push().apply();
 
     /*
     Rectanglei pos;
-    if(hasChangedPlace(pos))
+    if (hasChangedPlace(pos))
     {
         // Automatically update if the widget is resized.
         d->updateSize();

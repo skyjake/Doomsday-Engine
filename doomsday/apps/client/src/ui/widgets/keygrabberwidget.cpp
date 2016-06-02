@@ -57,9 +57,9 @@ KeyGrabberWidget::KeyGrabberWidget(String const &name)
 
 bool KeyGrabberWidget::handleEvent(Event const &event)
 {
-    if(!hasFocus())
+    if (!hasFocus())
     {
-        switch(handleMouseClick(event))
+        switch (handleMouseClick(event))
         {
         case MouseClickFinished:
             d->focus();
@@ -71,9 +71,9 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
     }
     else
     {
-        if(KeyEvent const *key = event.maybeAs<KeyEvent>())
+        if (KeyEvent const *key = event.maybeAs<KeyEvent>())
         {
-            if(key->ddKey() == DDKEY_ESCAPE)
+            if (key->ddKey() == DDKEY_ESCAPE)
             {
                 d->unfocus();
                 return true;
@@ -92,9 +92,9 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if(MouseEvent const *mouse = event.maybeAs<MouseEvent>())
+        if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
         {
-            if(mouse->type() == Event::MouseButton &&
+            if (mouse->type() == Event::MouseButton &&
                mouse->state() == MouseEvent::Released &&
                !hitTest(event))
             {

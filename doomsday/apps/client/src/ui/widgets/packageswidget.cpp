@@ -53,7 +53,7 @@ struct LoadOrUnloadPackage : public PackagesWidget::IButtonHandler
     {
         auto &loader = App::packageLoader();
 
-        if(loader.isLoaded(packageId))
+        if (loader.isLoaded(packageId))
         {
             loader.unload(packageId);
         }
@@ -63,7 +63,7 @@ struct LoadOrUnloadPackage : public PackagesWidget::IButtonHandler
             {
                 loader.load(packageId);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_ERROR("Package \"" + packageId +
                               "\" could not be loaded: " + er.asText());
@@ -216,14 +216,14 @@ DENG_GUI_PIMPL(PackagesWidget)
             SequentialLayout layout(label().rule().left() + label().margins().left(),
                                     label().rule().bottom() - label().margins().bottom(), ui::Right);
 
-            for(QString tag : Package::tags(*_item->file))
+            for (QString tag : Package::tags(*_item->file))
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
                 btn->setActionFn([this, tag] ()
                 {
                     String terms = _owner.d->search->text();
-                    if(!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
+                    if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
                     terms += tag.toLower();
                     _owner.d->search->setText(terms);
                 });
@@ -238,7 +238,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _tags.append(btn);
             }
 
-            if(!_tags.isEmpty())
+            if (!_tags.isEmpty())
             {
                 //rule().setInput(Rule::Height, label().rule().height());
                 label().margins().setBottom(rule("unit")*2 +
@@ -264,10 +264,10 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             auto &imageIds = _owner.d->buttonImages;
 
-            if(_owner.d->packageStatus->isPackageHighlighted(packageId()))
+            if (_owner.d->packageStatus->isPackageHighlighted(packageId()))
             {
                 _actionButton->setText(_owner.d->buttonLabels[1]);
-                if(!imageIds[1].isEmpty())
+                if (!imageIds[1].isEmpty())
                 {
                     _actionButton->setStyleImage(imageIds[1]);
                     _actionButton->setImageColor(style().colors().colorf("text"));
@@ -280,7 +280,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             else
             {
                 _actionButton->setText(_owner.d->buttonLabels[0]);
-                if(!imageIds[0].isEmpty())
+                if (!imageIds[0].isEmpty())
                 {
                     _actionButton->setStyleImage(imageIds[0]);
                     _actionButton->setImageColor(style().colors().colorf("inverted.text"));
@@ -290,7 +290,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
             }
 
-            for(ButtonWidget *b : _tags)
+            for (ButtonWidget *b : _tags)
             {
                 updateTagButtonStyle(b, auxColor);
             }
@@ -365,26 +365,26 @@ DENG_GUI_PIMPL(PackagesWidget)
         StringList packages = App::packageLoader().findAllPackages();
 
         // Remove from the list those packages that are no longer listed.
-        for(ui::DataPos i = 0; i < menu->items().size(); ++i)
+        for (ui::DataPos i = 0; i < menu->items().size(); ++i)
         {
-            if(!packages.contains(menu->items().at(i).data().toString()))
+            if (!packages.contains(menu->items().at(i).data().toString()))
             {
                 menu->items().remove(i--);
             }
         }
 
         // Add/update the listed packages.
-        for(String const &path : packages)
+        for (String const &path : packages)
         {
             File const &pack = App::rootFolder().locate<File>(path);
 
             // Core packages are mandatory and thus omitted.
             auto const tags = Package::tags(pack);
-            if(tags.contains("core") || tags.contains("gamedata")) continue;
+            if (tags.contains("core") || tags.contains("gamedata")) continue;
 
             // Is this already in the list?
             ui::DataPos pos = menu->items().findData(pack.objectNamespace().gets("package.ID"));
-            if(pos != ui::Data::InvalidPos)
+            if (pos != ui::Data::InvalidPos)
             {
                 menu->items().at(pos).as<PackageItem>().setFile(pack);
             }
@@ -415,23 +415,23 @@ DENG_GUI_PIMPL(PackagesWidget)
         filterTerms = terms;
         clearSearch->show(!terms.isEmpty());
         showHidden = filterTerms.contains(TAG_HIDDEN);
-        if(showHidden) filterTerms.removeAll(TAG_HIDDEN);
+        if (showHidden) filterTerms.removeAll(TAG_HIDDEN);
 
         menu->organizer().refilter();
     }
 
     void focusFirstListedPackge()
     {
-        //if(menu-)
+        //if (menu-)
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
 
     bool checkTerms(String const &text) const
     {
-        for(QString const &filterTerm : filterTerms)
+        for (QString const &filterTerm : filterTerms)
         {
-            if(!text.contains(filterTerm, Qt::CaseInsensitive))
+            if (!text.contains(filterTerm, Qt::CaseInsensitive))
             {
                 return false;
             }
@@ -450,7 +450,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         // - tags
 
         bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
-        if(showHidden ^ hidden)
+        if (showHidden ^ hidden)
         {
             return false;
         }
@@ -514,9 +514,9 @@ void PackagesWidget::setActionButtonAlwaysShown(bool showActions)
     d->actionOnlyForSelection = !showActions;
 
     // Update existing widgets.
-    for(auto *w : d->menu->childWidgets())
+    for (auto *w : d->menu->childWidgets())
     {
-        if(HomeItemWidget *item = w->maybeAs<HomeItemWidget>())
+        if (HomeItemWidget *item = w->maybeAs<HomeItemWidget>())
         {
             item->setKeepButtonsVisible(showActions);
         }
@@ -547,7 +547,7 @@ void PackagesWidget::updateItems()
 ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
 {
     ui::DataPos found = d->menu->items().findData(packageId);
-    if(found != ui::Data::InvalidPos)
+    if (found != ui::Data::InvalidPos)
     {
         return &d->menu->items().at(found);
     }
@@ -556,9 +556,9 @@ ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
 
 void PackagesWidget::scrollToPackage(String const &packageId) const
 {
-    if(auto const *item = itemForPackage(packageId))
+    if (auto const *item = itemForPackage(packageId))
     {
-        if(auto const *widget = d->menu->organizer().itemWidget(*item))
+        if (auto const *widget = d->menu->organizer().itemWidget(*item))
         {
             d->menu->findTopmostScrollable().scrollToWidget(*widget);
         }
@@ -572,7 +572,7 @@ LineEditWidget &PackagesWidget::searchTermsEditor()
 
 void PackagesWidget::operator >> (PersistentState &toState) const
 {
-    if(name().isEmpty()) return;
+    if (name().isEmpty()) return;
 
     Record &rec = toState.objectNamespace();
     rec.set(name().concatenateMember("search"), d->search->text());
@@ -580,7 +580,7 @@ void PackagesWidget::operator >> (PersistentState &toState) const
 
 void PackagesWidget::operator << (PersistentState const &fromState)
 {
-    if(name().isEmpty()) return;
+    if (name().isEmpty()) return;
 
     Record const &rec = fromState.objectNamespace();
     d->search->setText(rec.gets(name().concatenateMember("search"), ""));

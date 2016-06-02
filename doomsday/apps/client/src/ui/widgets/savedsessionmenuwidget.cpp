@@ -131,7 +131,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
                 SavedSession const &session = item.savedSession();
 
                 Game const &sGame = App_Games()[item.gameId()];
-                if(style().images().has(sGame.logoImageId()))
+                if (style().images().has(sGame.logoImageId()))
                 {
                     loadButton().setImage(style().images().image(sGame.logoImageId()));
                 }
@@ -160,7 +160,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
                         << new ui::ActionItem(tr("Delete Savegame"), new DeleteAction(this, session.path()))
                         << new ui::ActionItem(tr("Cancel"), new SignalAction(&menu(), SLOT(close())));
             }
-            catch(Error const &)
+            catch (Error const &)
             {
                 /// @todo
             }
@@ -185,7 +185,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
     {
         // Startup resources for all games have been located.
         // We can now determine which of the saved sessions are loadable.
-        for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
+        for (ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             ui::Item const &item = self.items().at(idx);
             self.updateItemWidget(*self.organizer().itemWidget(item), item);
@@ -201,12 +201,12 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         bool changed = false;
 
         // Remove obsolete entries.
-        for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
+        for (ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
             String const savePath = self.items().at(idx).data().toString();
-            if(!Session::savedIndex().find(savePath))
+            if (!Session::savedIndex().find(savePath))
             {
-                if(!pendingDismiss.contains(savePath))
+                if (!pendingDismiss.contains(savePath))
                 {
                     // Make this item disappear after a delay.
                     pendingDismiss.insert(savePath);
@@ -222,10 +222,10 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         DENG2_FOR_EACH_CONST(Session::SavedIndex::All, i, Session::savedIndex().all())
         {
             ui::Data::Pos found = self.items().findData(i.key());
-            if(found == ui::Data::InvalidPos)
+            if (found == ui::Data::InvalidPos)
             {
                 SavedSession &session = *i.value();
-                if(session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
+                if (session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
                 {
                     // Needs to be added.
                     self.items().append(new SavegameListItem(session, self));
@@ -234,7 +234,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             }
         }
 
-        if(changed)
+        if (changed)
         {
             // Let others know that one or more games have appeared or disappeared from the menu.
             emit self.availabilityChanged();
@@ -243,22 +243,22 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     void removeDismissedItems()
     {
-        if(pendingDismiss.isEmpty()) return;
+        if (pendingDismiss.isEmpty()) return;
 
         bool changed = false;
 
         QMutableSetIterator<String> iter(pendingDismiss);
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             String const path = iter.next();
             ui::DataPos idx = self.items().findData(path);
-            if(idx == ui::Data::InvalidPos)
+            if (idx == ui::Data::InvalidPos)
             {
                 iter.remove(); // It's already gone?
                 continue;
             }
             auto &wgt = self.itemWidget<GuiWidget>(self.items().at(idx));
-            if(fequal(wgt.opacity(), 0.f))
+            if (fequal(wgt.opacity(), 0.f))
             {
                 // Time to erase this item.
                 self.items().remove(idx);
@@ -266,7 +266,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             }
         }
 
-        if(changed)
+        if (changed)
         {
             // Let others know that one or more games have appeared or disappeared from the menu.
             emit self.availabilityChanged();

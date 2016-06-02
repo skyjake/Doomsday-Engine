@@ -98,12 +98,12 @@ static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_P
     {
         File1 &file = (*i)->file();
 
-        if(flags & PTSF_QUOTED)
+        if (flags & PTSF_QUOTED)
             result.append('"');
 
-        if(flags & PTSF_TRANSFORM_EXCLUDE_PATH)
+        if (flags & PTSF_TRANSFORM_EXCLUDE_PATH)
         {
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
                 result.append(file.name().fileNameWithoutExtension());
             else
                 result.append(file.name());
@@ -111,7 +111,7 @@ static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_P
         else
         {
             String path = file.composePath();
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
             {
                 result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
             }
@@ -121,10 +121,10 @@ static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_P
             }
         }
 
-        if(flags & PTSF_QUOTED)
+        if (flags & PTSF_QUOTED)
             result.append('"');
 
-        if(*i != files.last())
+        if (*i != files.last())
             result.append(delimiter);
     }
 
@@ -141,11 +141,11 @@ static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
  */
 static void composePWADFileList(char *outBuf, dsize outBufSize, char const *delimiter)
 {
-    if(!outBuf || 0 == outBufSize) return;
+    if (!outBuf || 0 == outBufSize) return;
     std::memset(outBuf, 0, outBufSize);
 
     FS1::FileList foundFiles;
-    if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
+    if (!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
 
     String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
     QByteArray strUtf8 = str.toUtf8();
@@ -176,7 +176,7 @@ void Sv_GetInfo(serverinfo_t *info)
     info->maxPlayers = DDMAXPLAYERS - (::isDedicated ? 1 : 0);
 
     // Don't go over the limit.
-    if(info->maxPlayers > ::svMaxPlayers)
+    if (info->maxPlayers > ::svMaxPlayers)
         info->maxPlayers = ::svMaxPlayers;
 
     info->canJoin = (::isServer != 0 && Sv_GetNumPlayers() < ::svMaxPlayers);
@@ -192,9 +192,9 @@ void Sv_GetInfo(serverinfo_t *info)
     info->port = ::nptIPPort;
 
     // Let's compile a list of client names.
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->isConnected())
+        if (DD_Player(i)->isConnected())
         {
             M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
         }
@@ -230,7 +230,7 @@ Record *Sv_InfoToRecord(serverinfo_t *info)
     rec->addText   ("plrn",  info->clientNames);
 
     ArrayValue &data = rec->addArray("data").value<ArrayValue>();
-    for(duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
+    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
     {
         data << NumberValue(info->data[i]);
     }
@@ -260,7 +260,7 @@ dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
     Str_Appendf(msg, "maxp:%i\n",  info->maxPlayers);
     Str_Appendf(msg, "open:%i\n",  info->canJoin);
     Str_Appendf(msg, "plrn:%s\n",  info->clientNames);
-    for(duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
+    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
     {
         Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
     }
@@ -282,20 +282,20 @@ dint Sv_Latency(byte cmdtime)
 /*
 void Sv_FixLocalAngles(bool clearFixAnglesFlag)
 {
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         ddplayer_t &pl = players[i];
 
-        if(!pl.inGame || !(pl.flags & DDPF_LOCAL))
+        if (!pl.inGame || !(pl.flags & DDPF_LOCAL))
             continue;
 
         // This is not for clients.
-        if(::isDedicated && i == 0)
+        if (::isDedicated && i == 0)
             continue;
 
-        if(pl.flags & DDPF_FIXANGLES)
+        if (pl.flags & DDPF_FIXANGLES)
         {
-            if(clearFixAnglesFlag)
+            if (clearFixAnglesFlag)
             {
                 pl.flags &= ~DDPF_FIXANGLES;
             }
@@ -347,7 +347,7 @@ void Sv_HandlePacket()
     player_t *sender = DD_Player(from);
     ddplayer_t *ddpl = &sender->publicData();
 
-    switch(netBuffer.msg.type)
+    switch (netBuffer.msg.type)
     {
     case PCL_HELLO:
     case PCL_HELLO2: {
@@ -356,13 +356,13 @@ void Sv_HandlePacket()
         LOG_NET_XVERBOSE("Hello from client %i (%08X)") << from << id;
 
         // Check for duplicate IDs.
-        if(!ddpl->inGame && !sender->handshake)
+        if (!ddpl->inGame && !sender->handshake)
         {
             // Console 0 is always reserved for the server itself (not a player).
             dint i = 1;
-            for( ; i < DDMAXPLAYERS; ++i)
+            for ( ; i < DDMAXPLAYERS; ++i)
             {
-                if(sender->isConnected() && sender->id == id)
+                if (sender->isConnected() && sender->id == id)
                 {
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
@@ -371,17 +371,17 @@ void Sv_HandlePacket()
                     break;
                 }
             }
-            if(i < DDMAXPLAYERS) break;  // Can't continue, refused!
+            if (i < DDMAXPLAYERS) break;  // Can't continue, refused!
         }
 
         // This is OK.
         sender->id = id;
 
-        if(netBuffer.msg.type == PCL_HELLO2)
+        if (netBuffer.msg.type == PCL_HELLO2)
         {
             // Check the game mode (max 16 chars).
             char buf[17]; Reader_Read(::msgReader, buf, 16);
-            if(strnicmp(buf, App_CurrentGame().id().toUtf8().constData(), 16))
+            if (strnicmp(buf, App_CurrentGame().id().toUtf8().constData(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
                 N_TerminateClient(from);
@@ -390,7 +390,7 @@ void Sv_HandlePacket()
         }
 
         // The client requests a handshake.
-        if(!ddpl->inGame && !sender->handshake)
+        if (!ddpl->inGame && !sender->handshake)
         {
             // This'll be true until the client says it's ready.
             sender->handshake = true;
@@ -407,7 +407,7 @@ void Sv_HandlePacket()
             // Note the time when the player entered.
             sender->enterTime = Timer_RealSeconds();
         }
-        else if(ddpl->inGame)
+        else if (ddpl->inGame)
         {
             // The player is already in the game but requests a new
             // handshake. Perhaps it's starting to record a demo.
@@ -419,7 +419,7 @@ void Sv_HandlePacket()
         // The client says it's ready to receive frames.
         sender->ready = true;
         LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << sender->id;
-        if(sender->handshake)
+        if (sender->handshake)
         {
             // The handshake is complete. The client has acknowledged it
             // and sends its regards.
@@ -447,7 +447,7 @@ void Sv_HandlePacket()
         msg[len] = 0;
 
         // Message for us? Show it locally.
-        if(mask & 1)
+        if (mask & 1)
         {
             Net_ShowChatMessage(msgfrom, msg);
             gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
@@ -455,9 +455,9 @@ void Sv_HandlePacket()
 
         // Servers relay chat messages to all the recipients.
         Net_WriteChatMessage(msgfrom, mask, msg);
-        for(dint i = 1; i < DDMAXPLAYERS; ++i)
+        for (dint i = 1; i < DDMAXPLAYERS; ++i)
         {
-            if(DD_Player(i)->publicData().inGame && (mask & (1 << i)) && i != from)
+            if (DD_Player(i)->publicData().inGame && (mask & (1 << i)) && i != from)
             {
                 Net_SendBuffer(i, 0);
             }
@@ -469,7 +469,7 @@ void Sv_HandlePacket()
         finaleid_t const fid = Reader_ReadUInt32(::msgReader);
         duint16 const params = Reader_ReadUInt16(::msgReader);
         LOGDEV_NET_MSG("PCL_FINALE_REQUEST: fid=%i params=%i") << fid << params;
-        if(params == 1)
+        if (params == 1)
         {
             // Skip.
             FI_ScriptRequestSkip(fid);
@@ -495,7 +495,7 @@ void Sv_Login(void)
     char password[300];
     byte passLen = 0;
 
-    if(netRemoteUser)
+    if (netRemoteUser)
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_PRINT_FLAGS,
                     "Sv_Login: A client is already logged in.\n");
@@ -508,7 +508,7 @@ void Sv_Login(void)
     passLen = Reader_ReadByte(msgReader);
     de::zap(password);
     Reader_Read(msgReader, password, passLen);
-    if(strcmp(password, netPassword))
+    if (strcmp(password, netPassword))
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_PRINT_FLAGS,
                     "Sv_Login: Invalid password.\n");
@@ -539,7 +539,7 @@ void Sv_ExecuteCommand(void)
 
     LOG_AS("Sv_ExecuteCommand");
 
-    if(!netRemoteUser)
+    if (!netRemoteUser)
     {
         LOGDEV_NET_ERROR("Command received but no one's logged in!");
         return;
@@ -549,7 +549,7 @@ void Sv_ExecuteCommand(void)
     len = Reader_ReadUInt16(msgReader);
     silent = (len & 0x8000) != 0;
     len &= 0x7fff;
-    switch(netBuffer.msg.type)
+    switch (netBuffer.msg.type)
     {
     /*case PKT_COMMAND:
         cmdSource = CMDS_UNKNOWN; // unknown command source.
@@ -585,10 +585,10 @@ void Sv_GetPackets(void)
 {
     int netconsole;
 
-    while(Net_GetPacket())
+    while (Net_GetPacket())
     {
         Msg_BeginRead();
-        switch(netBuffer.msg.type)
+        switch (netBuffer.msg.type)
         {
         case PCL_GOODBYE:
             // The client is leaving.
@@ -603,7 +603,7 @@ void Sv_GetPackets(void)
             // The client has acknowledged our handshake.
             // Note the time (this isn't perfectly accurate, though).
             netconsole = netBuffer.player;
-            if(netconsole >= 0 && netconsole < DDMAXPLAYERS)
+            if (netconsole >= 0 && netconsole < DDMAXPLAYERS)
             {
                 ServerPlayer *sender = DD_Player(netconsole);
                 sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
@@ -650,7 +650,7 @@ void Sv_GetPackets(void)
             break;
 
         default:
-            if(netBuffer.msg.type >= PKT_GAME_MARKER)
+            if (netBuffer.msg.type >= PKT_GAME_MARKER)
             {
                 // A client has sent a game specific packet.
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
@@ -672,11 +672,11 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
     LOG_NET_NOTE("'%s' has arrived") << name;
 
     // We need to find the new player a client entry.
-    for(int i = 1; i < DDMAXPLAYERS; ++i)
+    for (int i = 1; i < DDMAXPLAYERS; ++i)
     {
         player_t *plr = DD_Player(i);
 
-        if(!plr->isConnected())
+        if (!plr->isConnected())
         {
             ddplayer_t *ddpl = &plr->publicData();
 
@@ -720,12 +720,12 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     dd_bool             wasInGame;
     player_t           *plr;
 
-    if(plrNum == -1) return; // Bogus?
+    if (plrNum == -1) return; // Bogus?
 
     LOG_AS("Sv_PlayerLeaves");
 
     // Log off automatically.
-    if(netRemoteUser == plrNum)
+    if (netRemoteUser == plrNum)
         netRemoteUser = 0;
 
     plr = DD_Player(plrNum);
@@ -743,7 +743,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     // Remove the player's data from the register.
     Sv_PlayerRemoved(plrNum);
 
-    if(wasInGame)
+    if (wasInGame)
     {
         // Inform the DLL about this.
         gx.NetPlayerEvent(plrNum, DDPE_EXIT, NULL);
@@ -768,7 +768,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 static StringArray *listThingTypeIDs()
 {
     StringArray *array = StringArray_New();
-    for(dint i = 0; i < ::defs.things.size(); ++i)
+    for (dint i = 0; i < ::defs.things.size(); ++i)
     {
         StringArray_Append(array, ::defs.things[i].gets("id").toUtf8());
     }
@@ -784,7 +784,7 @@ static StringArray *listThingTypeIDs()
 static StringArray *listStateIDs()
 {
     StringArray *array = StringArray_New();
-    for(dint i = 0; i < ::defs.states.size(); ++i)
+    for (dint i = 0; i < ::defs.states.size(); ++i)
     {
         StringArray_Append(array, ::defs.states[i].gets("id").toUtf8());
     }
@@ -800,9 +800,9 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     LOG_NET_VERBOSE("Shaking hands with player %i (newPlayer:%b)") << plrNum << newPlayer;
 
     duint playersInGame = 0;
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->isConnected())
+        if (DD_Player(i)->isConnected())
             playersInGame |= 1 << i;
     }
 
@@ -840,7 +840,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
         StringArray_Delete(ar);
     }
 
-    if(newPlayer)
+    if (newPlayer)
     {
         // Note the time when the handshake was sent.
         DD_Player(plrNum)->shakePing = Timer_RealMilliseconds();
@@ -850,21 +850,21 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     gx.NetWorldEvent(DDWE_HANDSHAKE, plrNum, (void *) &newPlayer);
 
     // Propagate client information.
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->isConnected())
+        if (DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(i, plrNum);
         }
 
         // Send the new player's info to other players.
-        if(newPlayer && i != 0 && i != plrNum && DD_Player(i)->isConnected())
+        if (newPlayer && i != 0 && i != plrNum && DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(plrNum, i);
         }
     }
 
-    if(!newPlayer)
+    if (!newPlayer)
     {
         // This is not a new player (just a re-handshake) but we'll
         // nevertheless re-init the client's state register. For new
@@ -880,7 +880,7 @@ void Sv_StartNetGame(void)
     int                 i;
 
     // Reset all the counters and other data.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for (i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t   *plr = DD_Player(i);
         ddplayer_t *ddpl = &plr->publicData();
@@ -917,7 +917,7 @@ void Sv_StartNetGame(void)
 
 void Sv_StopNetGame(void)
 {
-    if(materialDict)
+    if (materialDict)
     {
         MaterialArchive_Delete(materialDict);
         materialDict = 0;
@@ -948,7 +948,7 @@ void Sv_SendText(int to, int con_flags, const char* text)
  */
 void Sv_Kick(int who)
 {
-    if(!DD_Player(who)->isConnected())
+    if (!DD_Player(who)->isConnected())
         return;
 
     Sv_SendText(who, SV_CONSOLE_PRINT_FLAGS, "You were kicked out!\n");
@@ -967,7 +967,7 @@ void Sv_SendPlayerFixes(int plrNum)
     player_t           *plr = DD_Player(plrNum);
     ddplayer_t         *ddpl = &plr->publicData();
 
-    if(!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
+    if (!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
     {
         // Nothing to fix.
         return;
@@ -982,9 +982,9 @@ void Sv_SendPlayerFixes(int plrNum)
     Writer_WriteByte(msgWriter, plrNum);
 
     // Indicate what is included in the message.
-    if(ddpl->flags & DDPF_FIXANGLES) fixes |= 1;
-    if(ddpl->flags & DDPF_FIXORIGIN) fixes |= 2;
-    if(ddpl->flags & DDPF_FIXMOM) fixes |= 4;
+    if (ddpl->flags & DDPF_FIXANGLES) fixes |= 1;
+    if (ddpl->flags & DDPF_FIXORIGIN) fixes |= 2;
+    if (ddpl->flags & DDPF_FIXMOM) fixes |= 4;
 
     Writer_WriteUInt32(msgWriter, fixes);
     Writer_WriteUInt16(msgWriter, ddpl->mo->thinker.id);
@@ -992,7 +992,7 @@ void Sv_SendPlayerFixes(int plrNum)
     LOGDEV_NET_MSG("Fixing mobj %i of player %i") << ddpl->mo->thinker.id << plrNum;
 
     // Increment counters.
-    if(ddpl->flags & DDPF_FIXANGLES)
+    if (ddpl->flags & DDPF_FIXANGLES)
     {
         Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.angles);
         Writer_WriteUInt32(msgWriter, ddpl->mo->angle);
@@ -1002,7 +1002,7 @@ void Sv_SendPlayerFixes(int plrNum)
                 << ddpl->fixCounter.angles << ddpl->mo->angle << ddpl->lookDir;
     }
 
-    if(ddpl->flags & DDPF_FIXORIGIN)
+    if (ddpl->flags & DDPF_FIXORIGIN)
     {
         Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.origin);
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VX]);
@@ -1013,7 +1013,7 @@ void Sv_SendPlayerFixes(int plrNum)
                 << ddpl->fixCounter.origin << Vector3d(ddpl->mo->origin).asText();
     }
 
-    if(ddpl->flags & DDPF_FIXMOM)
+    if (ddpl->flags & DDPF_FIXMOM)
     {
         Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.mom);
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MX]);
@@ -1041,23 +1041,23 @@ void Sv_Ticker(timespan_t ticLength)
 {
     int i;
 
-    if(!isDedicated) return;
+    if (!isDedicated) return;
 
     // Note last angles for all players.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for (i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t *plr = DD_Player(i);
 
-        if(!plr->publicData().inGame || !plr->publicData().mo)
+        if (!plr->publicData().inGame || !plr->publicData().mo)
             continue;
 
         // Update the smoother?
-        if(plr->smoother())
+        if (plr->smoother())
         {
             Smoother_Advance(plr->smoother(), ticLength);
         }
 
-        if(DD_IsSharpTick())
+        if (DD_IsSharpTick())
         {
             plr->publicData().lastAngle = plr->publicData().mo->angle;
         }
@@ -1075,12 +1075,12 @@ int Sv_GetNumPlayers(void)
     int i, count;
 
     // Clients can't count.
-    if(isClient)
+    if (isClient)
         return 1;
 
-    for(i = count = 0; i < DDMAXPLAYERS; ++i)
+    for (i = count = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->isInGame())
+        if (DD_Player(i)->isInGame())
             count++;
     }
 
@@ -1095,11 +1095,11 @@ int Sv_GetNumConnected(void)
     int                 i, count = 0;
 
     // Clients can't count.
-    if(isClient)
+    if (isClient)
         return 1;
 
-    for(i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
-        if(DD_Player(i)->isConnected())
+    for (i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
+        if (DD_Player(i)->isConnected())
             count++;
 
     return count;
@@ -1125,7 +1125,7 @@ dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
 
     // If there are too many messages in the queue, the player's bandwidth
     // is overrated.
-    if(qSize > limit)
+    if (qSize > limit)
     {
         // Drop quickly to allow the send queue to clear out sooner.
         client->bandwidthRating -= 10;
@@ -1133,7 +1133,7 @@ dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
 
     // If the send queue is practically empty, we can use more bandwidth.
     // (Providing we have BWR adjust time.)
-    if(qSize < limit / 20 && client->bwrAdjustTime > 0)
+    if (qSize < limit / 20 && client->bwrAdjustTime > 0)
     {
         client->bandwidthRating++;
 
@@ -1142,11 +1142,11 @@ dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
     }
 
     // Do not go past the boundaries, though.
-    if(client->bandwidthRating < 0)
+    if (client->bandwidthRating < 0)
     {
         client->bandwidthRating = 0;
     }
-    if(client->bandwidthRating > MAX_BANDWIDTH_RATING)
+    if (client->bandwidthRating > MAX_BANDWIDTH_RATING)
     {
         client->bandwidthRating = MAX_BANDWIDTH_RATING;
     }
@@ -1174,7 +1174,7 @@ void Sv_ClientCoords(int plrNum)
     dd_bool             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
-    if(!plr->isInGame() || (ddpl->flags & DDPF_DEAD))
+    if (!plr->isInGame() || (ddpl->flags & DDPF_DEAD))
         return;
 
     clientGameTime = Reader_ReadFloat(msgReader);
@@ -1183,7 +1183,7 @@ void Sv_ClientCoords(int plrNum)
     clientPos[VY] = Reader_ReadFloat(msgReader);
 
     clz = Reader_ReadInt32(msgReader);
-    if(clz == DDMININT)
+    if (clz == DDMININT)
     {
         clientPos[VZ] = mo->floorZ;
         onFloor = true;
@@ -1201,7 +1201,7 @@ void Sv_ClientCoords(int plrNum)
     ddpl->forwardMove = FIX2FLT(Reader_ReadChar(msgReader) << 13);
     ddpl->sideMove = FIX2FLT(Reader_ReadChar(msgReader) << 13);
 
-    if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
+    if (ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
         LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting angles for player %i: %x, %f",
                                      plrNum << clientAngle << clientLookDir);
@@ -1215,7 +1215,7 @@ void Sv_ClientCoords(int plrNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(Sv_CanTrustClientPos(plrNum))
+    if (Sv_CanTrustClientPos(plrNum))
     {
         LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f",
                                      plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
@@ -1230,7 +1230,7 @@ dd_bool Sv_CanTrustClientPos(int plrNum)
     player_t* plr = DD_Player(plrNum);
     ddplayer_t* ddpl = &plr->publicData();
 
-    if(ddpl->fixCounter.origin == ddpl->fixAcked.origin && !(ddpl->flags & DDPF_FIXORIGIN))
+    if (ddpl->fixCounter.origin == ddpl->fixAcked.origin && !(ddpl->flags & DDPF_FIXORIGIN))
     {
         return true;
     }
@@ -1246,7 +1246,7 @@ D_CMD(Logout)
     DENG2_UNUSED3(src, argc, argv);
 
     // Only servers can execute this command.
-    if(!netRemoteUser || !isServer)
+    if (!netRemoteUser || !isServer)
         return false;
     // Notice that the server WILL execute this command when a client
     // is logged in and types "logout".

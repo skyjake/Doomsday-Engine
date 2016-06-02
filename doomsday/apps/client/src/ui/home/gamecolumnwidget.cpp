@@ -64,7 +64,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         ~ProfileItem()
         {
-            if(profile) profile->audienceForDeletion -= this;
+            if (profile) profile->audienceForDeletion -= this;
         }
 
         Game const &game() const
@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             auto *dlg = new CreateProfileDialog(this->gameFamily);
             dlg->setDeleteAfterDismissed(true);
             dlg->setAnchorAndOpeningDirection(newProfileButton->rule(), ui::Up);
-            if(dlg->exec(root()))
+            if (dlg->exec(root()))
             {
                 // Adding the profile has the side effect that a widget is
                 // created for it.
@@ -161,13 +161,13 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     ui::Item const *findProfileItem(GameProfile const &profile) const
     {
-        for(dsize i = 0; i < menu->items().size(); ++i)
+        for (dsize i = 0; i < menu->items().size(); ++i)
         {
             ui::Item const &item = menu->items().at(i);
             //qDebug() << i << item.label();
-            if(!item.semantics().testFlag(ui::Item::Separator))
+            if (!item.semantics().testFlag(ui::Item::Separator))
             {
-                if(item.as<ProfileItem>().profile == &profile) return &item;
+                if (item.as<ProfileItem>().profile == &profile) return &item;
             }
         }
         return nullptr;
@@ -183,9 +183,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         int count = 0;
         menu->items().forAll([this, &count] (ui::Item const &item) {
-            if(!item.semantics().testFlag(ui::Item::Separator)) {
+            if (!item.semantics().testFlag(ui::Item::Separator)) {
                 auto const *profile = item.as<ProfileItem>().profile;
-                if(profile && profile->isUserCreated()) ++count;
+                if (profile && profile->isUserCreated()) ++count;
             }
             return LoopContinue;
         });
@@ -195,9 +195,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
     bool addItemForProfile(GameProfile &profile)
     {
         auto const &games = DoomsdayApp::games();
-        if(games.contains(profile.game()))
+        if (games.contains(profile.game()))
         {
-            if(games[profile.game()].family() == gameFamily)
+            if (games[profile.game()].family() == gameFamily)
             {
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
@@ -212,7 +212,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         // This may be called from another thread.
         mainCall.enqueue([this, &prof] ()
         {
-            if(addItemForProfile(prof.as<GameProfile>()))
+            if (addItemForProfile(prof.as<GameProfile>()))
             {
                 sortItems();
 
@@ -228,16 +228,16 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         int const userCount = userProfileCount();
 
-        if(userCount > 0 && !gotSubheading)
+        if (userCount > 0 && !gotSubheading)
         {
             gotSubheading = true;
             menu->items() << new ui::Item(ui::Item::Separator, tr("Custom Profiles"));
         }
-        else if(!userCount && gotSubheading)
+        else if (!userCount && gotSubheading)
         {
-            for(dsize pos = 0; pos < menu->items().size(); ++pos)
+            for (dsize pos = 0; pos < menu->items().size(); ++pos)
             {
-                if(menu->items().at(pos).semantics().testFlag(ui::Item::Separator))
+                if (menu->items().at(pos).semantics().testFlag(ui::Item::Separator))
                 {
                     menu->items().remove(pos);
                     break;
@@ -266,7 +266,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     static Section itemSection(ui::Item const &item)
     {
         // The list is divided into three sections.
-        if(item.semantics().testFlag(ui::Item::Separator)) return Subheading;
+        if (item.semantics().testFlag(ui::Item::Separator)) return Subheading;
         return item.as<ProfileItem>().profile->isUserCreated()? Custom : BuiltIn;
     }
 
@@ -277,11 +277,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
             Section const section1 = itemSection(a);
             Section const section2 = itemSection(b);
 
-            if(section1 < section2)
+            if (section1 < section2)
             {
                 return true;
             }
-            if(section1 > section2)
+            if (section1 > section2)
             {
                 return false;
             }
@@ -289,7 +289,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             GameProfile const &prof1 = *a.as<ProfileItem>().profile;
             GameProfile const &prof2 = *b.as<ProfileItem>().profile;
 
-            if(section1 == Custom)
+            if (section1 == Custom)
             {
                 // Sorted alphabetically.
                 return prof1.name().compareWithoutCase(prof2.name()) < 0;
@@ -298,7 +298,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             // Sort built-in games by release date.
             int year = a.as<ProfileItem>().game().releaseDate().year() -
                        b.as<ProfileItem>().game().releaseDate().year();
-            if(!year)
+            if (!year)
             {
                 // ...or identifier.
                 return prof1.game().compareWithoutCase(prof2.game()) < 0;
@@ -311,7 +311,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         menu->items().forAll([] (ui::Item const &item)
         {
-            if(!item.semantics().testFlag(ui::Item::Separator))
+            if (!item.semantics().testFlag(ui::Item::Separator))
             {
                 item.as<ProfileItem>().update();
             }
@@ -325,7 +325,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         populateItems();
 
         // Restore earlier selection?
-        if(restoredSelected >= 0)
+        if (restoredSelected >= 0)
         {
             menu->setSelectedIndex(restoredSelected);
             restoredSelected = -1;
@@ -341,7 +341,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        if(item.semantics().testFlag(ui::Item::Separator))
+        if (item.semantics().testFlag(ui::Item::Separator))
         {
             auto *heading = LabelWidget::newWithText(tr("Custom Profiles"));
             heading->setSizePolicy(ui::Filled, ui::Expand);
@@ -366,7 +366,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
             bool const isUserProfile = profileItem->profile->isUserCreated();
 
-            if(isUserProfile)
+            if (isUserProfile)
             {
                 popup->items()
                     << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
@@ -375,7 +375,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                         dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
                         dlg->setAnchorX(button->rule().midX()); // keep centered in column
                         dlg->setDeleteAfterDismissed(true);
-                        if(dlg->exec(root()))
+                        if (dlg->exec(root()))
                         {
                             dlg->applyTo(*profileItem->profile);
                             profileItem->update();
@@ -396,12 +396,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     dup->setUserCreated(true);
 
                     // Generate a unique name.
-                    for(int attempt = 1; ; ++attempt)
+                    for (int attempt = 1; ; ++attempt)
                     {
                         String newName;
-                        if(attempt > 1) newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
+                        if (attempt > 1) newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
                                    else newName = String("%1 (Copy)").arg(dup->name());
-                        if(!DoomsdayApp::gameProfiles().tryFind(newName))
+                        if (!DoomsdayApp::gameProfiles().tryFind(newName))
                         {
                             dup->setName(newName);
                             DoomsdayApp::gameProfiles().add(dup);
@@ -410,7 +410,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     }
                 }));
 
-            if(isUserProfile)
+            if (isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
                                                       tr("Delete"), ui::Left);
@@ -442,12 +442,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
-        if(item.semantics().testFlag(ui::Item::Separator)) return; // Ignore.
+        if (item.semantics().testFlag(ui::Item::Separator)) return; // Ignore.
 
         auto &drawer = widget.as<GamePanelButtonWidget>();
         drawer.updateContent();
 
-        if(!App::config().getb("home.showUnplayableGames"))
+        if (!App::config().getb("home.showUnplayableGames"))
         {
             drawer.show(item.as<ProfileItem>().game().isPlayable());
         }
@@ -467,7 +467,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
         TimeDelta const SPAN = 0.25;
-        switch(state)
+        switch (state)
         {
         case ButtonWidget::Up:
             button.setOpacity(actionOpacity(), SPAN);
@@ -506,7 +506,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                   !gameFamily.isEmpty()? "Raven Software" : "")
                              .arg(!gameFamily.isEmpty()? QString(gameFamily)
                                                        : tr("Other Games")));
-    if(!gameFamily.isEmpty())
+    if (!gameFamily.isEmpty())
     {
         header().setLogoImage("logo.game." + gameFamily.toLower());
         header().setLogoBackground("home.background." + d->gameFamily);
@@ -515,7 +515,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
 
     /// @todo Get these description from the game family defs.
     {
-    if(name() == "doom-column")
+    if (name() == "doom-column")
     {
         header().info().setText("id Software released DOOM for MS-DOS in 1993. "
                                 "It soon became a massive hit and is regarded as "
@@ -526,7 +526,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 "have been ported to numerous other platforms, and "
                                 "to this day remains a favorite among gamers.");
     }
-    else if(name() == "heretic-column")
+    else if (name() == "heretic-column")
     {
         header().info().setText("Raven Software released Heretic in 1994. It used "
                                 "a modified version of id Software's DOOM engine. "
@@ -535,7 +535,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 "Ambient sound effects were used to improve the "
                                 "atmosphere of the game world.");
     }
-    else if(name() == "hexen-column")
+    else if (name() == "hexen-column")
     {
         header().info().setText("Raven Software released Hexen in 1996. The "
                                 "company had continued making heavy modifications "
@@ -559,7 +559,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
 
 String GameColumnWidget::tabHeading() const
 {
-    if(d->gameFamily.isEmpty()) return tr("Other");
+    if (d->gameFamily.isEmpty()) return tr("Other");
     return d->gameFamily.at(0).toUpper() + d->gameFamily.mid(1);
 }
 
@@ -573,7 +573,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);
 
-    if(highlighted)
+    if (highlighted)
     {
         d->menu->restorePreviousSelection();
     }

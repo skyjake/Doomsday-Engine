@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "remoteuser.h"
@@ -79,12 +79,12 @@ DENG2_PIMPL(RemoteUser)
 
     void disconnect()
     {
-        if(state == Disconnected) return;
+        if (state == Disconnected) return;
 
         LOG_NET_NOTE("Closing connection to remote user %s (from %s)") << id << address;
         DENG2_ASSERT(socket->isOpen());
 
-        if(state == Joined)
+        if (state == Joined)
         {
             // Send a msg notifying of disconnection.
             Msg_Begin(PSV_SERVER_CLOSE);
@@ -97,7 +97,7 @@ DENG2_PIMPL(RemoteUser)
 
         state = Disconnected;
 
-        if(socket && socket->isOpen())
+        if (socket && socket->isOpen())
         {
             socket->close();
         }
@@ -119,14 +119,14 @@ DENG2_PIMPL(RemoteUser)
         int length = command.size();
 
         // If the command is too long, it'll be considered invalid.
-        if(length >= 256)
+        if (length >= 256)
         {
             self.deleteLater();
             return false;
         }
 
         // Status query?
-        if(command == "Info?")
+        if (command == "Info?")
         {
             Sv_GetInfo(&info);
             Str_Init(&msg);
@@ -139,24 +139,24 @@ DENG2_PIMPL(RemoteUser)
 
             Str_Free(&msg);
         }
-        else if(length >= 5 && command.startsWith("Shell"))
+        else if (length >= 5 && command.startsWith("Shell"))
         {
-            if(length == 5)
+            if (length == 5)
             {
                 // Password is not required for connections from the local computer.
-                if(strlen(netPassword) > 0 && !isFromLocal)
+                if (strlen(netPassword) > 0 && !isFromLocal)
                 {
                     // Need to ask for a password, too.
                     self << ByteRefArray("Psw?", 4);
                     return true;
                 }
             }
-            else if(length > 5)
+            else if (length > 5)
             {
                 // A password was included.
                 QByteArray supplied = command.mid(5);
                 QByteArray pwd(netPassword, strlen(netPassword));
-                if(supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
+                if (supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
                 {
                     // Wrong!
                     self.deleteLater();
@@ -169,7 +169,7 @@ DENG2_PIMPL(RemoteUser)
             App_ServerSystem().convertToShellUser(thisPublic);
             return false;
         }
-        else if(length >= 10 && command.startsWith("Join ") && command[9] == ' ')
+        else if (length >= 10 && command.startsWith("Join ") && command[9] == ' ')
         {
             protocolVersion = command.mid(5, 4).toInt(0, 16);
 
@@ -178,8 +178,8 @@ DENG2_PIMPL(RemoteUser)
             // with ours.
             name = String::fromUtf8(Block(command.mid(10)));
 
-            if(App_ServerSystem().isUserAllowedToJoin(self))
-            {              
+            if (App_ServerSystem().isUserAllowedToJoin(self))
+            {
                 state = Joined;
 
                 // Successful! Send a reply.
@@ -218,7 +218,7 @@ RemoteUser::~RemoteUser()
 {
     emit userDestroyed();
 
-    d->disconnect();   
+    d->disconnect();
 }
 
 Id RemoteUser::id() const
@@ -241,7 +241,7 @@ Socket *RemoteUser::takeSocket()
 
 void RemoteUser::send(IByteArray const &data)
 {
-    if(d->state != Disconnected && d->socket->isOpen())
+    if (d->state != Disconnected && d->socket->isOpen())
     {
         d->socket->send(data);
     }
@@ -253,13 +253,13 @@ void RemoteUser::handleIncomingPackets()
     forever
     {
         QScopedPointer<Message> packet(d->socket->receive());
-        if(packet.isNull()) break;
+        if (packet.isNull()) break;
 
-        switch(d->state)
+        switch (d->state)
         {
         case Unjoined:
             // Let's see if it is a command we recognize.
-            if(!d->handleRequest(*packet)) return;
+            if (!d->handleRequest(*packet)) return;
             break;
 
         case Joined: {

@@ -37,14 +37,14 @@ DENG_GUI_PIMPL(SessionMenuWidget)
     {
         SessionItem const *x = a.maybeAs<SessionItem>();
         SessionItem const *y = b.maybeAs<SessionItem>();
-        if(x && y)
+        if (x && y)
         {
             int cmp = x->sortKey().compareWithoutCase(y->sortKey());
-            if(cmp < 0) return true;
-            if(cmp > 0) return false;
+            if (cmp < 0) return true;
+            if (cmp > 0) return false;
 
             // Secondarily by title.
-            if(x->menu().filter().sortOrder() != GameFilterWidget::SortByTitle)
+            if (x->menu().filter().sortOrder() != GameFilterWidget::SortByTitle)
             {
                 return x->title().compareWithoutCase(y->title()) < 0;
             }
@@ -84,14 +84,14 @@ SessionMenuWidget::SessionMenuWidget(String const &name)
 
 void SessionMenuWidget::setFilter(GameFilterWidget *filter)
 {
-    if(d->filter)
+    if (d->filter)
     {
         disconnect(d->filter, SIGNAL(sortOrderChanged()), this, SLOT(sort()));
     }
 
     d->filter = filter;
 
-    if(filter)
+    if (filter)
     {
         connect(filter, SIGNAL(sortOrderChanged()), this, SLOT(sort()));
     }
@@ -105,7 +105,7 @@ GameFilterWidget &SessionMenuWidget::filter() const
 
 void SessionMenuWidget::setColumns(int numberOfColumns)
 {
-    if(layout().maxGridSize().x != numberOfColumns)
+    if (layout().maxGridSize().x != numberOfColumns)
     {
         setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
     }
@@ -113,7 +113,7 @@ void SessionMenuWidget::setColumns(int numberOfColumns)
 
 void SessionMenuWidget::sort()
 {
-    if(d->filter)
+    if (d->filter)
     {
         d->sortSessions();
     }
@@ -142,7 +142,7 @@ SessionMenuWidget &SessionMenuWidget::SessionItem::menu() const
 
 String SessionMenuWidget::SessionItem::sortKey() const
 {
-    switch(menu().filter().sortOrder())
+    switch (menu().filter().sortOrder())
     {
     case GameFilterWidget::SortByTitle:
         return title();

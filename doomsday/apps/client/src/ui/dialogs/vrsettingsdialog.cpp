@@ -66,7 +66,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
                 << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
                 << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered);
 
-        if(vrCfg().oculusRift().isEnabled())
+        if (vrCfg().oculusRift().isEnabled())
         {
             mode->items() << new ChoiceItem(tr("Oculus Rift"), VRConfig::OculusRift);
         }
@@ -80,7 +80,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         ipd->setDisplayFactor(1000);
         ipd->setPrecision(1);
 
-        if(vrCfg().oculusRift().isReady())
+        if (vrCfg().oculusRift().isReady())
         {
             area.add(riftDensity = new VariableSliderWidget(App::config("vr.oculusRift.pixelDensity"),
                      Ranged(0.5, 1.0), .01));
@@ -102,9 +102,9 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
     void fetch()
     {
-        foreach(Widget *child, self.area().childWidgets())
+        foreach (Widget *child, self.area().childWidgets())
         {
-            if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+            if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {
                 w->updateFromCVar();
             }
@@ -144,7 +144,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     layout.append(*ovrLabel, 2);
 
     LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());
-    if(vrCfg().oculusRift().isReady())
+    if (vrCfg().oculusRift().isReady())
     {
         layout << *sampleLabel << *d->riftSamples
                << *LabelWidget::newWithText(tr("Pixel Density:"), &area())

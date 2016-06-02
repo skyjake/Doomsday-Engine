@@ -44,14 +44,14 @@ static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
     *plane   = nullptr;
     *surface = nullptr;
 
-    if(!*base || isRealMobj(*base)) return;
+    if (!*base || isRealMobj(*base)) return;
 
     /// @todo fixme: Do not assume the current map.
     App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter *>(*base),
                                                  sector, poly, plane, surface);
 
 #ifdef DENG2_DEBUG
-    if(!*sector && !*poly && !*plane && !*surface)
+    if (!*sector && !*poly && !*plane && !*surface)
     {
         throw Error("Sv_IdentifySoundBase", "Bad sound base");
     }
@@ -67,10 +67,10 @@ void Sv_Sound(dint soundId, mobj_t *origin, dint toPlr)
 
 void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint toPlr)
 {
-    if(::isClient) return;
+    if (::isClient) return;
 
     dint soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
-    if(!soundID) return;
+    if (!soundID) return;
 
     Sector *sector;
     Polyobj *poly;
@@ -79,7 +79,7 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint 
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     dint targetPlayers = 0;
-    if(toPlr & SVSF_TO_ALL)
+    if (toPlr & SVSF_TO_ALL)
     {
         targetPlayers = -1;
     }
@@ -88,10 +88,10 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint 
         targetPlayers = (1 << (toPlr & 0xf));
     }
 
-    if(toPlr & SVSF_EXCLUDE_ORIGIN)
+    if (toPlr & SVSF_EXCLUDE_ORIGIN)
     {
         // Remove the bit of the player who owns the origin mobj (if any).
-        if(origin && origin->dPlayer)
+        if (origin && origin->dPlayer)
         {
             targetPlayers &= ~(1 << P_GetDDPlayerIdx(origin->dPlayer));
         }
@@ -106,7 +106,7 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint 
 
 void Sv_StopSound(dint soundId, mobj_t *origin)
 {
-    if(::isClient) return;
+    if (::isClient) return;
 
     Sector *sector;
     Polyobj *poly;

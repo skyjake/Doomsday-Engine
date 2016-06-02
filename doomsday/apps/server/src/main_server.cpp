@@ -32,7 +32,7 @@ int main(int argc, char** argv)
         serverApp.initialize();
         return serverApp.execLoop();
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         qFatal("App init failed: %s", er.asText().toLatin1().constData());
         return -1;

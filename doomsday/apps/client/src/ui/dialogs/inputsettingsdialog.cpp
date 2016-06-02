@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         gamepad->items() << new ChoiceItem(tr("None"), "");
         QStringList ids = ClientApp::inputSystem().gameControllerPresets().ids();
         ids.sort(Qt::CaseInsensitive);
-        foreach(QString id, ids)
+        foreach (QString id, ids)
         {
             gamepad->items() << new ChoiceItem(id, id);
         }
@@ -239,9 +239,9 @@ void InputSettingsDialog::mouseTogglesChanged()
 void InputSettingsDialog::mouseSensitivityChanged(double value)
 {
     // Keep mouse axes synced?
-    if(d->syncMouse->isActive())
+    if (d->syncMouse->isActive())
     {
-        if(sender() == d->mouseSensiX)
+        if (sender() == d->mouseSensiX)
         {
             d->mouseSensiY->setValue(value);
             d->mouseSensiY->setCVarValueFromWidget();

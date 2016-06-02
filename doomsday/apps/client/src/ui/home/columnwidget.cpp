@@ -52,20 +52,20 @@ DENG_GUI_PIMPL(ColumnWidget)
         {
             StyleProceduralImage::update();
             Size const newSize = owner().rule().size();
-            if(newSize != size())
+            if (newSize != size())
             {
                 setSize(newSize);
                 return true;
             }
             bool update = !colorAnim.done() || needUpdate;
             // Make sure one more update happens after the animation is done.
-            if(!colorAnim.done()) needUpdate = true;
+            if (!colorAnim.done()) needUpdate = true;
             return update;
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) override
         {
-            if(!allocId().isNone())
+            if (!allocId().isNone())
             {
                 Rectanglef uv = root().atlas().imageRectf(allocId());
                 Vector2f const reduction(uv.width() / 40, uv.height() / 40);
@@ -161,13 +161,13 @@ String ColumnWidget::configVariableName() const
 Variable *ColumnWidget::configVariable() const
 {
     String name = configVariableName();
-    if(name.isEmpty()) return nullptr;
+    if (name.isEmpty()) return nullptr;
     return &App::config(name);
 }
 
 void ColumnWidget::setHighlighted(bool highlighted)
 {
-    if(d->highlighted != highlighted)
+    if (d->highlighted != highlighted)
     {
         d->highlighted = highlighted;
 
@@ -184,11 +184,11 @@ bool ColumnWidget::isHighlighted() const
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Observe mouse clicks occurring in the column.
-    if(event.type() == Event::MouseButton ||
+    if (event.type() == Event::MouseButton ||
        event.type() == Event::MouseWheel)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
+        if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
            rule().recti().contains(mouse.pos()))
         {
             emit mouseActivity(this);

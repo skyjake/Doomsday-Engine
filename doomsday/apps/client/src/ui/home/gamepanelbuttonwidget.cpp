@@ -64,9 +64,9 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                          [this] (QStringList ids)
         {
             StringList pkgs;
-            for(auto const &i : ids) pkgs << i;
+            for (auto const &i : ids) pkgs << i;
             gameProfile.setPackages(pkgs);
-            if(catalog.setPackages(gameProfile.allRequiredPackages()))
+            if (catalog.setPackages(gameProfile.allRequiredPackages()))
             {
                 updateGameTitleImage();
             }
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         // Switch the game.
         DoomsdayApp::app().changeGame(game(), DD_ActivateGameWorker);
 
-        if(saves->selectedPos() != ui::Data::InvalidPos)
+        if (saves->selectedPos() != ui::Data::InvalidPos)
         {
             // Load a saved game.
             auto const &saveItem = savedItems.at(saves->selectedPos());
@@ -156,7 +156,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                         ui::Data const &data, ui::Data::Pos pos) const
     {
         // User-created profiles currently have no saves associated with them.
-        if(gameProfile.isUserCreated()) return false;
+        if (gameProfile.isUserCreated()) return false;
 
         // Only saved sessions for this game are to be included.
         auto const &item = data.at(pos).as<SavedSessionListData::SaveItem>();
@@ -178,7 +178,7 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
     d->playButton->enable(selected);
 
-    if(!selected)
+    if (!selected)
     {
         unselectSave();
     }
@@ -193,19 +193,19 @@ void GamePanelButtonWidget::updateContent()
     String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
                                                  : d->game().title();
 
-    if(isSelected())
+    if (isSelected())
     {
-        if(d->saves->selectedPos() != ui::Data::InvalidPos)
+        if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
             meta = tr("Restore saved game");
         }
-        /*else if(d->saves->childCount() > 0)
+        /*else if (d->saves->childCount() > 0)
         {
             meta = tr("%1 saved game%2")
                     .arg(d->saves->childCount())
                     .arg(d->saves->childCount() != 1? "s" : "");
         }*/
-        else if(!d->gameProfile.isUserCreated())
+        else if (!d->gameProfile.isUserCreated())
         {
             meta = tr("Start new session");
         }
@@ -216,7 +216,7 @@ void GamePanelButtonWidget::updateContent()
                     .arg(meta));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
-    if(d->catalog.setPackages(d->gameProfile.allRequiredPackages()))
+    if (d->catalog.setPackages(d->gameProfile.allRequiredPackages()))
     {
         d->updateGameTitleImage();
     }
@@ -239,7 +239,7 @@ void GamePanelButtonWidget::play()
 
 void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
 {
-    if(savePos != ui::Data::InvalidPos)
+    if (savePos != ui::Data::InvalidPos)
     {
         // Ensure that this game is selected.
         DENG2_ASSERT(parentMenu() != nullptr);

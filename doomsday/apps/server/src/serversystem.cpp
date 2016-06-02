@@ -89,7 +89,7 @@ DENG2_PIMPL(ServerSystem)
 
         // Open a listening TCP socket. It will accept client connections.
         DENG2_ASSERT(!serverSock);
-        if(!(serverSock = new ListenSocket(port)))
+        if (!(serverSock = new ListenSocket(port)))
             return false;
 
         QObject::connect(serverSock, SIGNAL(incomingConnection()), thisPublic, SLOT(handleIncomingConnection()));
@@ -106,7 +106,7 @@ DENG2_PIMPL(ServerSystem)
     void clearUsers()
     {
         // Clear the client nodes.
-        for(RemoteUser *u : users.values())
+        for (RemoteUser *u : users.values())
         {
             delete u;
         }
@@ -115,10 +115,10 @@ DENG2_PIMPL(ServerSystem)
 
     void deinit()
     {
-        if(!inited) return;
+        if (!inited) return;
         inited = false;
 
-        if(ServerApp::appExists())
+        if (ServerApp::appExists())
         {
             App_World().audienceForMapChange() -= shellUsers;
         }
@@ -140,12 +140,12 @@ DENG2_PIMPL(ServerSystem)
 
     void updateBeacon(Clock const &clock)
     {
-        if(lastBeaconUpdateAt.since() > 0.5)
+        if (lastBeaconUpdateAt.since() > 0.5)
         {
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if(serverSock && App_World().hasMap())
+            if (serverSock && App_World().hasMap())
             {
                 serverinfo_t info;
                 Sv_GetInfo(&info);
@@ -164,7 +164,7 @@ DENG2_PIMPL(ServerSystem)
      */
     void terminateNode(Id const &id)
     {
-        if(id)
+        if (id)
         {
             DENG2_ASSERT(users.contains(id));
 
@@ -176,7 +176,7 @@ DENG2_PIMPL(ServerSystem)
 
     void printStatus()
     {
-        if(serverSock)
+        if (serverSock)
         {
             LOG_NOTE("SERVER: Listening on TCP port %i") << serverSock->port();
         }
@@ -186,15 +186,15 @@ DENG2_PIMPL(ServerSystem)
         }
 
         int first = true;
-        for(int i = 1; i < DDMAXPLAYERS; ++i)
+        for (int i = 1; i < DDMAXPLAYERS; ++i)
         {
             player_t *plr = DD_Player(i);
-            if(plr->remoteUserId)
+            if (plr->remoteUserId)
             {
                 DENG2_ASSERT(users.contains(plr->remoteUserId));
 
                 RemoteUser *user = users[plr->remoteUserId];
-                if(first)
+                if (first)
                 {
                     LOG_MSG(_E(m) "P# Name:      Nd Jo Hs Rd Gm Age:");
                     first = false;
@@ -209,12 +209,12 @@ DENG2_PIMPL(ServerSystem)
                         << (Timer_RealSeconds() - plr->enterTime);
             }
         }
-        if(first)
+        if (first)
         {
             LOG_MSG("No clients connected");
         }
 
-        if(shellUsers.count())
+        if (shellUsers.count())
         {
             LOG_MSG("%i shell user%s")
                     << shellUsers.count()
@@ -254,7 +254,7 @@ void ServerSystem::terminateNode(Id const &id)
 
 RemoteUser &ServerSystem::user(Id const &id) const
 {
-    if(!d->users.contains(id))
+    if (!d->users.contains(id))
     {
         throw IdError("ServerSystem::user", "User " + id.asText() + " does not exist");
     }
@@ -282,16 +282,16 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
 
 void ServerSystem::timeChanged(Clock const &clock)
 {
-    if(Sys_IsShuttingDown())
+    if (Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
     Garbage_Recycle();
 
     // Adjust loop rate depending on whether players are in game.
     int count = 0;
-    for(int i = 1; i < DDMAXPLAYERS; ++i)
+    for (int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->publicData().inGame) count++;
+        if (DD_Player(i)->publicData().inGame) count++;
     }
 
     DENG2_TEXT_APP->loop().setRate(count? 35 : 3);
@@ -316,7 +316,7 @@ void ServerSystem::handleIncomingConnection()
     forever
     {
         Socket *sock = d->serverSock->accept();
-        if(!sock) break;
+        if (!sock) break;
 
         RemoteUser *user = new RemoteUser(sock);
         connect(user, SIGNAL(userDestroyed()), this, SLOT(userDestroyed()));
@@ -366,7 +366,7 @@ dd_bool N_ServerOpen()
     App_ServerSystem().start(Server_ListenPort());
 
     // The game module may have something that needs doing before we actually begin.
-    if(gx.NetServerStart)
+    if (gx.NetServerStart)
     {
         gx.NetServerStart(true);
     }
@@ -374,12 +374,12 @@ dd_bool N_ServerOpen()
     Sv_StartNetGame();
 
     // The game DLL might want to do something now that the server is started.
-    if(gx.NetServerStart)
+    if (gx.NetServerStart)
     {
         gx.NetServerStart(false);
     }
 
-    if(masterAware)
+    if (masterAware)
     {
         // Let the master server know that we are running a public server.
         N_MasterAnnounceServer(true);
@@ -390,16 +390,16 @@ dd_bool N_ServerOpen()
 
 dd_bool N_ServerClose()
 {
-    if(!App_ServerSystem().isListening()) return true;
+    if (!App_ServerSystem().isListening()) return true;
 
-    if(masterAware)
+    if (masterAware)
     {
         // Bye-bye, master server.
         N_MAClear();
         N_MasterAnnounceServer(false);
     }
 
-    if(gx.NetServerStop)
+    if (gx.NetServerStop)
     {
         gx.NetServerStop(true);
     }
@@ -407,7 +407,7 @@ dd_bool N_ServerClose()
     Net_StopGame();
     Sv_StopNetGame();
 
-    if(gx.NetServerStop)
+    if (gx.NetServerStop)
     {
         gx.NetServerStop(false);
     }

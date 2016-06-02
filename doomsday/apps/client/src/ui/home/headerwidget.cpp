@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 
         info  = new LabelWidget;
         infoPanel->setContent(info);
-        if(showDescriptionVar().value().isTrue())
+        if (showDescriptionVar().value().isTrue())
         {
             infoPanel->open();
         }
@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 
     void variableValueChanged(Variable &, Value const &newValue)
     {
-        if(newValue.isTrue())
+        if (newValue.isTrue())
         {
             infoPanel->open();
         }
@@ -111,7 +111,7 @@ HeaderWidget::HeaderWidget()
     d->menuButton->margins().setTopBottom("unit");
     /*d->menuButton->setAction(new CallbackAction([this] ()
     {
-        if(d->infoPanel->isOpen())
+        if (d->infoPanel->isOpen())
         {
             d->infoPanel->close(0);
         }

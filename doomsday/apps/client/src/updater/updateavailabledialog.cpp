@@ -73,7 +73,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         checking->setOpacity(show? 1 : 0, span);
         self.area().setOpacity(show? 0 : 1, span);
 
-        if(show)
+        if (show)
         {
             // Set up a cancel button.
             self.buttons().clear()
@@ -113,7 +113,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 
-        if(latestVersion > currentVersion)
+        if (latestVersion > currentVersion)
         {
             askUpgrade = true;
 
@@ -124,14 +124,14 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                                    .arg(_E(b) + latestVersion.asText() + _E(.))
                                    .arg(currentVersion.asText()));
         }
-        else if(channel == builtInType) // same release type
+        else if (channel == builtInType) // same release type
         {
             self.title().setText(tr("Up to Date"));
             self.message().setText(tr("The installed %1 is the latest available %2 build.")
                                    .arg(currentVersion.asText())
                                    .arg(_E(b) + channel + _E(.)));
         }
-        else if(latestVersion < currentVersion)
+        else if (latestVersion < currentVersion)
         {
             askDowngrade = true;
 
@@ -145,13 +145,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         self.buttons().clear();
 
-        if(askDowngrade)
+        if (askDowngrade)
         {
             self.buttons()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
         }
-        else if(askUpgrade)
+        else if (askUpgrade)
         {
             self.buttons()
                     << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
@@ -169,7 +169,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                                         style().images().image("gear"),
                                         new SignalAction(thisPublic, SLOT(editSettings())));
 
-        if(askUpgrade)
+        if (askUpgrade)
         {
             self.buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
@@ -212,12 +212,12 @@ void UpdateAvailableDialog::editSettings()
     UpdaterSettingsDialog *st = new UpdaterSettingsDialog;
     st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Up);
     st->setDeleteAfterDismissed(true);
-    if(st->exec(root()))
+    if (st->exec(root()))
     {
         // The Gear button will soon be deleted, so we'll need to detach from it.
         st->detachAnchor();
 
-        if(st->settingsHaveChanged())
+        if (st->settingsHaveChanged())
         {
             d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
             d->showProgress(true, SHOW_ANIM_SPAN);

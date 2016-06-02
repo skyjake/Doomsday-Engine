@@ -64,7 +64,7 @@ clplayerstate_t *ClPlayer_State(int plrNum)
 #undef ClPlayer_ClMobj
 DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
-    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
+    if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
     return ClMobj_Find(ClPlayer_State(plrNum)->clMobjId);
 }
 
@@ -75,7 +75,7 @@ void ClPlayer_UpdateOrigin(int plrNum)
     player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
 
-    if(!s->clMobjId || !plr->publicData().mo)
+    if (!s->clMobjId || !plr->publicData().mo)
         return;                 // Must have a mobj!
 
     mobj_t *remoteClientMobj = ClMobj_Find(s->clMobjId);
@@ -109,14 +109,14 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     bool sendAck = false;
 
     // If either mobj is missing, the fix cannot be applied yet.
-    if(!mo || !clmo) return;
+    if (!mo || !clmo) return;
 
-    if(clmo->thinker.id != state->pendingFixTargetClMobjId)
+    if (clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
 
     DENG_ASSERT(clmo->thinker.id == state->clMobjId);
 
-    if(state->pendingFixes & DDPF_FIXANGLES)
+    if (state->pendingFixes & DDPF_FIXANGLES)
     {
         state->pendingFixes &= ~DDPF_FIXANGLES;
         ddpl->fixAcked.angles = ddpl->fixCounter.angles;
@@ -129,7 +129,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->lookDir = state->pendingLookDirFix;
     }
 
-    if(state->pendingFixes & DDPF_FIXORIGIN)
+    if (state->pendingFixes & DDPF_FIXORIGIN)
     {
         state->pendingFixes &= ~DDPF_FIXORIGIN;
         ddpl->fixAcked.origin = ddpl->fixCounter.origin;
@@ -149,7 +149,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ClPlayer_UpdateOrigin(plrNum);
     }
 
-    if(state->pendingFixes & DDPF_FIXMOM)
+    if (state->pendingFixes & DDPF_FIXMOM)
     {
         state->pendingFixes &= ~DDPF_FIXMOM;
         ddpl->fixAcked.mom = ddpl->fixCounter.mom;
@@ -165,7 +165,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     }
 
     // We'll only need to ack fixes targeted to the consoleplayer.
-    if(sendAck && plrNum == consolePlayer)
+    if (sendAck && plrNum == consolePlayer)
     {
         // Send an acknowledgement.
         Msg_Begin(PCL_ACK_PLAYER_FIX);
@@ -194,7 +194,7 @@ void ClPlayer_HandleFix()
 
     LOGDEV_NET_MSG("Fixing player %i") << plrNum;
 
-    if(fixes & 1) // fix angles?
+    if (fixes & 1) // fix angles?
     {
         ddpl->fixCounter.angles = Reader_ReadInt32(msgReader);
         state->pendingAngleFix = Reader_ReadUInt32(msgReader);
@@ -205,7 +205,7 @@ void ClPlayer_HandleFix()
                 << ddpl->fixAcked.angles << state->pendingAngleFix << state->pendingLookDirFix;
     }
 
-    if(fixes & 2) // fix pos?
+    if (fixes & 2) // fix pos?
     {
         ddpl->fixCounter.origin = Reader_ReadInt32(msgReader);
         state->pendingOriginFix[VX] = Reader_ReadFloat(msgReader);
@@ -217,7 +217,7 @@ void ClPlayer_HandleFix()
                 << ddpl->fixAcked.origin << Vector3d(state->pendingOriginFix).asText();
     }
 
-    if(fixes & 4) // fix momentum?
+    if (fixes & 4) // fix momentum?
     {
         ddpl->fixCounter.mom = Reader_ReadInt32(msgReader);
         state->pendingMomFix[VX] = Reader_ReadFloat(msgReader);
@@ -237,7 +237,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
     player_t *plr = DD_Player(consolePlayer);
     ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mo = ddpl->mo;
-    if(!mo) return;
+    if (!mo) return;
 
     // Place the new momentum in the appropriate place.
     cpMom[MX][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dx;
@@ -245,7 +245,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 
     // Calculate an average.
     Vector2d mom;
-    for(int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
+    for (int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
         mom += Vector2d(cpMom[MX][i], cpMom[MY][i]);
     }
@@ -254,7 +254,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
     mo->mom[MX] = mom.x;
     mo->mom[MY] = mom.y;
 
-    if(dx != 0 || dy != 0)
+    if (dx != 0 || dy != 0)
     {
         Mobj_Unlink(mo);
         mo->origin[VX] += dx;
@@ -266,7 +266,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
     mo->floorZ   = Mobj_Sector(mo)->floor().height();
     mo->ceilingZ = Mobj_Sector(mo)->ceiling().height();
 
-    if(onground)
+    if (onground)
     {
         mo->origin[VZ] = z - 1;
     }
@@ -297,14 +297,14 @@ void ClPlayer_ReadDelta()
     clplayerstate_t *s = ClPlayer_State(num);
     ddplayer_t *ddpl = &DD_Player(num)->publicData();
 
-    if(df & PDF_MOBJ)
+    if (df & PDF_MOBJ)
     {
         mobj_t *old  = map.clMobjFor(s->clMobjId);
         ushort newId = Reader_ReadUInt16(msgReader);
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
-        if(newId != s->clMobjId)
+        if (newId != s->clMobjId)
         {
             // We are now changing the player's mobj.
             mobj_t *clmo = 0;
@@ -316,7 +316,7 @@ void ClPlayer_ReadDelta()
             // Find the new mobj.
             clmo = map.clMobjFor(s->clMobjId);
             //info = ClMobj_GetInfo(clmo);
-            if(!clmo)
+            if (!clmo)
             {
                 LOGDEV_NET_NOTE("Player %i's new clmobj is %i, but we haven't received it yet")
                         << num << newId;
@@ -326,7 +326,7 @@ void ClPlayer_ReadDelta()
                 clmo = map.clMobjFor(s->clMobjId, true/*create*/);
                 //info = ClMobj_GetInfo(clmo);
                 /*
-                if(num == consolePlayer)
+                if (num == consolePlayer)
                 {
                     // Mark everything known about our local player.
                     //info->flags |= CLMF_KNOWN;
@@ -343,7 +343,7 @@ void ClPlayer_ReadDelta()
             clmo->dPlayer = ddpl;
 
             // Make the old clmobj a non-player one (if any).
-            if(old)
+            if (old)
             {
                 old->dPlayer = NULL;
                 ClMobj_Link(old);
@@ -351,7 +351,7 @@ void ClPlayer_ReadDelta()
 
             // If it was just created, the coordinates are not yet correct.
             // The update will be made when the mobj data is received.
-            if(!justCreated) // && num != consolePlayer)
+            if (!justCreated) // && num != consolePlayer)
             {
                 LOGDEV_NET_XVERBOSE("Copying clmo %i state to real player %i mobj %p")
                         << newId << num << ddpl->mo;
@@ -367,40 +367,40 @@ void ClPlayer_ReadDelta()
         }
     }
 
-    if(df & PDF_FORWARDMOVE)
+    if (df & PDF_FORWARDMOVE)
     {
         s->forwardMove = (char) Reader_ReadByte(msgReader) * 2048;
     }
 
-    if(df & PDF_SIDEMOVE)
+    if (df & PDF_SIDEMOVE)
     {
         s->sideMove = (char) Reader_ReadByte(msgReader) * 2048;
     }
 
-    if(df & PDF_ANGLE)
+    if (df & PDF_ANGLE)
     {
         //s->angle = Reader_ReadByte(msgReader) << 24;
         DENG_UNUSED(Reader_ReadByte(msgReader));
     }
 
-    if(df & PDF_TURNDELTA)
+    if (df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Reader_ReadByte(msgReader) << 24) / 16;
     }
 
-    if(df & PDF_FRICTION)
+    if (df & PDF_FRICTION)
     {
         s->friction = Reader_ReadByte(msgReader) << 8;
     }
 
-    if(df & PDF_EXTRALIGHT)
+    if (df & PDF_EXTRALIGHT)
     {
         int val = Reader_ReadByte(msgReader);
         ddpl->fixedColorMap = val & 7;
         ddpl->extraLight    = val & 0xf8;
     }
 
-    if(df & PDF_FILTER)
+    if (df & PDF_FILTER)
     {
         uint filter = Reader_ReadUInt32(msgReader);
 
@@ -409,7 +409,7 @@ void ClPlayer_ReadDelta()
         ddpl->filterColor[CB] = ((filter >> 16) & 0xff) / 255.f;
         ddpl->filterColor[CA] = ((filter >> 24) & 0xff) / 255.f;
 
-        if(ddpl->filterColor[CA] > 0)
+        if (ddpl->filterColor[CA] > 0)
         {
             ddpl->flags |= DDPF_REMOTE_VIEW_FILTER;
         }
@@ -421,44 +421,44 @@ void ClPlayer_ReadDelta()
                 << Vector4f(ddpl->filterColor).asText();
     }
 
-    if(df & PDF_PSPRITES)
+    if (df & PDF_PSPRITES)
     {
-        for(int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             // First the flags.
             int psdf = Reader_ReadByte(msgReader);
             ddpsprite_t *psp = ddpl->pSprites + i;
 
-            if(psdf & PSDF_STATEPTR)
+            if (psdf & PSDF_STATEPTR)
             {
                 int idx = Reader_ReadPackedUInt16(msgReader);
-                if(!idx)
+                if (!idx)
                 {
                     psp->statePtr = 0;
                 }
-                else if(idx < runtimeDefs.states.size())
+                else if (idx < runtimeDefs.states.size())
                 {
                     psp->statePtr = &runtimeDefs.states[idx - 1];
                     psp->tics = psp->statePtr->tics;
                 }
             }
 
-            /*if(psdf & PSDF_LIGHT)
+            /*if (psdf & PSDF_LIGHT)
             {
                 psp->light = Reader_ReadByte(msgReader) / 255.0f;
             }*/
 
-            if(psdf & PSDF_ALPHA)
+            if (psdf & PSDF_ALPHA)
             {
                 psp->alpha = Reader_ReadByte(msgReader) / 255.0f;
             }
 
-            if(psdf & PSDF_STATE)
+            if (psdf & PSDF_STATE)
             {
                 psp->state = Reader_ReadByte(msgReader);
             }
 
-            if(psdf & PSDF_OFFSET)
+            if (psdf & PSDF_OFFSET)
             {
                 psp->offset[VX] = (char) Reader_ReadByte(msgReader) * 2;
                 psp->offset[VY] = (char) Reader_ReadByte(msgReader) * 2;
@@ -475,7 +475,7 @@ mobj_t *ClPlayer_LocalGameMobj(int plrNum)
 bool ClPlayer_IsFreeToMove(int plrNum)
 {
     mobj_t *mo = ClPlayer_LocalGameMobj(plrNum);
-    if(!mo) return false;
+    if (!mo) return false;
 
     return (mo->origin[VZ] >= mo->floorZ &&
             mo->origin[VZ] + mo->height <= mo->ceilingZ);

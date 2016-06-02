@@ -132,19 +132,19 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 .bank().model<render::Model>(id);
 
         QStringList animNames;
-        for(int i = 0; i < model.animationCount(); ++i)
+        for (int i = 0; i < model.animationCount(); ++i)
         {
             animNames << model.animationName(i);
         }
 
         QStringList meshNames;
-        for(int i = 0; i < model.meshCount(); ++i)
+        for (int i = 0; i < model.meshCount(); ++i)
         {
             meshNames << model.meshName(i);
         }
 
         QStringList materialNames;
-        for(String n : model.materialIndexForName.keys())
+        for (String n : model.materialIndexForName.keys())
         {
             materialNames << n;
         }
@@ -160,7 +160,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 .arg(materialNames.size())
                 .arg(pluralSuffix(materialNames.size()))
                 .arg(materialNames.join(", "));
-        if(!animNames.isEmpty())
+        if (!animNames.isEmpty())
         {
             msg += QString(_E(Ta)_E(l) "\n%1 Animation%2: " _E(.)_E(Tb) "%3")
                     .arg(model.animationCount())
@@ -175,7 +175,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         clearGroups();
         updateInstanceList();
 
-        if(!instChoice->items().isEmpty())
+        if (!instChoice->items().isEmpty())
         {
             instChoice->setSelected(0);
         }
@@ -199,7 +199,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     void clearGroups()
     {
-        foreach(Group *g, groups)
+        foreach (Group *g, groups)
         {
             // Ownership of the optional title and reset button was given
             // to the container, but the container is not being destroyed.
@@ -216,23 +216,23 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     render::StateAnimator *assetAnimator()
     {
-        if(instChoice->items().isEmpty())
+        if (instChoice->items().isEmpty())
         {
             return nullptr;
         }
 
         int const idNum = idNumber();
-        if(isWeaponAsset())
+        if (isWeaponAsset())
         {
             auto &weaponAnim = ClientApp::players().at(idNum).as<ClientPlayer>().playerWeaponAnimator();
-            if(weaponAnim.hasModel())
+            if (weaponAnim.hasModel())
             {
                 return &weaponAnim.animator();
             }
         }
         else
         {
-            if(mobj_t const *mo = ClientApp::world().map().thinkers().mobjById(idNum))
+            if (mobj_t const *mo = ClientApp::world().map().thinkers().mobjById(idNum))
             {
                 auto &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
                 return mobjData.animator();
@@ -245,7 +245,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         clearGroups();
 
-        if(render::StateAnimator *anim = assetAnimator())
+        if (render::StateAnimator *anim = assetAnimator())
         {
             Record &ns = anim->objectNamespace();
 
@@ -255,7 +255,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             g->addLabel(tr("Play:"));
             animChoice.reset(new ChoiceWidget);
             render::Model const &model = anim->model();
-            for(int i = 0; i < model.animationCount(); ++i)
+            for (int i = 0; i < model.animationCount(); ++i)
             {
                 QVariant var;
                 var.setValue(PlayData(idNumber(), i));
@@ -313,7 +313,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 orderedGroups.insert(name, makeGroup(*anim, rec, name, true));
                 return LoopContinue;
             });
-            for(auto *g : orderedGroups.values())
+            for (auto *g : orderedGroups.values())
             {
                 groups << g;
             }
@@ -334,7 +334,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     static coord_t distanceToMobj(thid_t id)
     {
         mobj_t const *mo = Mobj_ById(id);
-        if(mo)
+        if (mo)
         {
             return (Rend_EyeOrigin().xzy() - Vector3d(mo->origin)).length();
         }
@@ -346,9 +346,9 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         StringList names = rec.members().keys();
         qSort(names);
 
-        for(String const &name : names)
+        for (String const &name : names)
         {
-            if(name.startsWith("__") || name == "ASSET" || name == "ID" || name == "uMapTime")
+            if (name.startsWith("__") || name == "ASSET" || name == "ID" || name == "uMapTime")
                 continue;
 
             Variable &var = rec[name];
@@ -357,19 +357,19 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             double step = .01;
             int precision = 2;
 
-            if(name == "uGlossiness")
+            if (name == "uGlossiness")
             {
                 range = Ranged(0, 200);
                 step = 1;
                 precision = 1;
             }
-            if(name == "uReflectionBlur")
+            if (name == "uReflectionBlur")
             {
                 range = Ranged(0, 40);
                 step = .1;
                 precision = 1;
             }
-            if(name == "uSpecular")
+            if (name == "uSpecular")
             {
                 range = Ranged(0, 10);
                 step = .1;
@@ -378,9 +378,9 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
             String label = namePrefix.concatenateMember(name);
 
-            if(NumberValue const *num = var.value().maybeAs<NumberValue>())
+            if (NumberValue const *num = var.value().maybeAs<NumberValue>())
             {
-                if(num->semanticHints().testFlag(NumberValue::Boolean))
+                if (num->semanticHints().testFlag(NumberValue::Boolean))
                 {
                     g->addSpace();
                     g->addToggle(var, _E(m) + label);
@@ -391,17 +391,17 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                     g->addSlider(var, range, step, precision);
                 }
             }
-            else if(var.value().is<TextValue>())
+            else if (var.value().is<TextValue>())
             {
                 g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
-            else if(var.value().is<NativeValue>())
+            else if (var.value().is<NativeValue>())
             {
                 g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);
             }
-            else if(descend && var.value().is<RecordValue>())
+            else if (descend && var.value().is<RecordValue>())
             {
                 populateGroup(g, var.valueAsRecord(), descend, label);
             }
@@ -415,7 +415,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         // Check for a rendering pass.
         int passIndex = animator.model().passes.findName(titleText);
-        if(passIndex >= 0)
+        if (passIndex >= 0)
         {
             titleText = QString("Render Pass \"%1\"").arg(titleText);
 
@@ -431,10 +431,10 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                                                        shaderDef).keys();
             qSort(vars);
             QStringList names;
-            for(String const &n : vars)
+            for (String const &n : vars)
             {
                 // Used variables are shown in bold.
-                if(rec.has(n))
+                if (rec.has(n))
                     names << _E(b) + n + _E(.);
                 else
                     names << n;
@@ -452,7 +452,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         g->setResetable(false);
         populateGroup(g.get(), rec, descend);
         g->commit();
-        if(info)
+        if (info)
         {
             setInfoLabelParams(*info);
         }
@@ -465,7 +465,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         layout.clear();
         layout << *info
                << *instLabel;
-        foreach(Group *g, groups)
+        foreach (Group *g, groups)
         {
             layout << g->title() << *g;
         }
@@ -478,18 +478,18 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         instChoice->items().clear();
 
-        if(!ClientApp::world().hasMap())
+        if (!ClientApp::world().hasMap())
             return;
 
-        if(isWeaponAsset())
+        if (isWeaponAsset())
         {
-            for(int idx = 0; idx < ClientApp::players().count(); ++idx)
+            for (int idx = 0; idx < ClientApp::players().count(); ++idx)
             {
                 auto &client = ClientApp::players().at(idx).as<ClientPlayer>();
                 auto &anim = client.playerWeaponAnimator();
-                if(anim.hasModel())
+                if (anim.hasModel())
                 {
-                    if(anim.animator()["ID"] == assetId)
+                    if (anim.animator()["ID"] == assetId)
                     {
                         instChoice->items()
                                 << new ChoiceItem(QString("Player %1").arg(idx), idx);
@@ -502,11 +502,11 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             ClientApp::world().map().thinkers().forAll(0x1 /* public */, [this] (thinker_t *th)
             {
                 auto const *mobjData = THINKER_DATA_MAYBE(*th, ClientMobjThinkerData);
-                if(mobjData && mobjData->animator())
+                if (mobjData && mobjData->animator())
                 {
                     render::StateAnimator const *anim = mobjData->animator();
 
-                    if(anim && (*anim)["ID"] == assetId)
+                    if (anim && (*anim)["ID"] == assetId)
                     {
                         instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), th->id);
                     }
@@ -519,7 +519,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     void sortInstancesByDistance(bool rememberSelection)
     {
-        if(isWeaponAsset() || instChoice->items().isEmpty())
+        if (isWeaponAsset() || instChoice->items().isEmpty())
             return;
 
         int selId = (instChoice->isValidSelection()?
@@ -536,7 +536,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             return distanceToMobj(a.data().toInt()) < distanceToMobj(b.data().toInt());
         });
 
-        if(rememberSelection && selId > 0)
+        if (rememberSelection && selId > 0)
         {
             instChoice->setSelected(instChoice->items().findData(selId));
         }
@@ -551,10 +551,10 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         assetChoice->items().clear();
 
-        for(auto i : App::rootFolder().locate<Folder const>("/packs").contents())
+        for (auto i : App::rootFolder().locate<Folder const>("/packs").contents())
         {
             QRegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
-            if(regex.exactMatch(i.first))
+            if (regex.exactMatch(i.first))
             {
                 assetChoice->items() << new ChoiceItem(regex.cap(2), regex.cap(1));
             }
@@ -563,29 +563,29 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     void playSelectedAnimation()
     {
-        if(!animChoice || !animChoice->isValidSelection())
+        if (!animChoice || !animChoice->isValidSelection())
             return;
 
         PlayData const data = animChoice->selectedItem().data().value<PlayData>();
         render::StateAnimator *animator = nullptr;
 
-        if(isWeaponAsset())
+        if (isWeaponAsset())
         {
             auto &weapon = ClientApp::players().at(data.mobjId).as<ClientPlayer>().playerWeaponAnimator();
-            if(weapon.hasModel()) animator = &weapon.animator();
+            if (weapon.hasModel()) animator = &weapon.animator();
         }
         else
         {
-            if(mobj_t const *mo = Mobj_ById(data.mobjId))
+            if (mobj_t const *mo = Mobj_ById(data.mobjId))
             {
-                if(auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
+                if (auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
                 {
                     animator = thinker->animator();
                 }
             }
         }
 
-        if(animator)
+        if (animator)
         {
             animator->startSequence(data.animationId, 10, false);
         }
@@ -593,8 +593,8 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     void updateOffsetVector()
     {
-        if(!offsetX) return;
-        if(render::StateAnimator *anim = assetAnimator())
+        if (!offsetX) return;
+        if (render::StateAnimator *anim = assetAnimator())
         {
             render::Model *model = const_cast<render::Model *>(&anim->model());
             model->offset = Vector3f(offsetX->value(), offsetY->value(), offsetZ->value());

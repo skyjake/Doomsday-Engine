@@ -135,9 +135,9 @@ DENG_GUI_PIMPL(HomeWidget)
 
     ~Instance()
     {
-        for(Column const &col : allColumns)
+        for (Column const &col : allColumns)
         {
-            if(col.configVar)
+            if (col.configVar)
             {
                 col.configVar->audienceForChange() -= this;
             }
@@ -171,7 +171,7 @@ DENG_GUI_PIMPL(HomeWidget)
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
         // Hide navigation buttons when they are not being used.
-        if(state == ButtonWidget::Down)
+        if (state == ButtonWidget::Down)
         {
             button.setOpacity(.3f);
         }
@@ -189,10 +189,10 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Show columns depending on whether there are playable games.
         allColumns.at(0).widget->show(!gotGames);
-        for(int i = 1; i < allColumns.size(); ++i)
+        for (int i = 1; i < allColumns.size(); ++i)
         {
             Column const &col = allColumns.at(i);
-            if(col.configVar)
+            if (col.configVar)
             {
                 col.widget->show(gotGames && col.configVar->value().isTrue());
             }
@@ -200,9 +200,9 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Tab headings for visible columns.
         int index = 0;
-        for(Column const &col : allColumns)
+        for (Column const &col : allColumns)
         {
-            if(col.widget->isVisible())
+            if (col.widget->isVisible())
             {
                 tabs->items() << new TabItem(col.widget->tabHeading(), index++);
             }
@@ -218,7 +218,7 @@ DENG_GUI_PIMPL(HomeWidget)
         updateLayout();
 
         // Restore previous state?
-        if(restoredActiveTab >= 0)
+        if (restoredActiveTab >= 0)
         {
             currentOffsetTab = restoredOffsetTab;
             setScrollOffset(currentOffsetTab, 0.0);
@@ -231,7 +231,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void currentGameChanged(Game const &newGame)
     {
-        if(newGame.isNull())
+        if (newGame.isNull())
         {
             self.show();
         }
@@ -243,7 +243,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
-        if(gameBeingUnloaded.isNull())
+        if (gameBeingUnloaded.isNull())
         {
             self.hide();
         }
@@ -268,7 +268,7 @@ DENG_GUI_PIMPL(HomeWidget)
         self.add(col);
 
         Variable *conf = col->configVariable();
-        if(conf)
+        if (conf)
         {
             conf->audienceForChange() += this;
         }
@@ -290,13 +290,13 @@ DENG_GUI_PIMPL(HomeWidget)
         // Lay out the columns from left to right.
         SequentialLayout layout(self.rule().left() - *scrollOffset,
                                 self.rule().top(), ui::Right);
-        for(Widget *widget : self.childWidgets())
+        for (Widget *widget : self.childWidgets())
         {
-            if(widget->isHidden())
+            if (widget->isHidden())
             {
                 continue;
             }
-            if(ColumnWidget *column = widget->maybeAs<ColumnWidget>())
+            if (ColumnWidget *column = widget->maybeAs<ColumnWidget>())
             {
                 layout << *column;
                 columns << column;
@@ -313,18 +313,18 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void switchTab(int dir, bool scrollInstantly = false)
     {
-        if(scrollInstantly && dir)
+        if (scrollInstantly && dir)
         {
             Rangei const vis = visibleTabRange();
             tabs->setCurrent(dir < 0? vis.start : vis.end - 1);
         }
 
         auto pos = tabs->current();
-        if(dir < 0 && pos > 0)
+        if (dir < 0 && pos > 0)
         {
             tabs->setCurrent(pos - 1);
         }
-        else if(dir > 0 && pos < tabs->items().size() - 1)
+        else if (dir > 0 && pos < tabs->items().size() - 1)
         {
             tabs->setCurrent(pos + 1);
         }
@@ -339,18 +339,18 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
 
-        if(currentOffsetTab + int(visibleColumnCount) > columns.size())
+        if (currentOffsetTab + int(visibleColumnCount) > columns.size())
         {
             // Don't let the visible range extend outside the view.
             currentOffsetTab = columns.size() - visibleColumnCount;
             span = 0;
         }
-        else if(visibleTabRange().contains(pos))
+        else if (visibleTabRange().contains(pos))
         {
             // No need to scroll anywhere, the requested tab is already visible.
             return;
         }
-        if(pos < currentOffsetTab)
+        if (pos < currentOffsetTab)
         {
             currentOffsetTab = pos;
         }
@@ -369,16 +369,16 @@ DENG_GUI_PIMPL(HomeWidget)
     void updateHighlightedTab()
     {
         // Are we still in a valid tab?
-        if(tabs->current() >= tabs->items().size())
+        if (tabs->current() >= tabs->items().size())
         {
             tabs->setCurrent(tabs->items().size() - 1); // calls back here via observer
             return;
         }
 
         // Remove the highlight.
-        for(int pos = 0; pos < columns.size(); ++pos)
+        for (int pos = 0; pos < columns.size(); ++pos)
         {
-            if(columns[pos]->isHighlighted())
+            if (columns[pos]->isHighlighted())
             {
                 columns[pos]->setHighlighted(false);
             }
@@ -390,9 +390,9 @@ DENG_GUI_PIMPL(HomeWidget)
 
     int highlightedTab() const
     {
-        for(int pos = 0; pos < columns.size(); ++pos)
+        for (int pos = 0; pos < columns.size(); ++pos)
         {
-            if(columns[pos]->isHighlighted())
+            if (columns[pos]->isHighlighted())
             {
                 return pos;
             }
@@ -476,26 +476,26 @@ void HomeWidget::viewResized()
 
 bool HomeWidget::handleEvent(Event const &event)
 {
-    if(event.isKeyDown())
+    if (event.isKeyDown())
     {
         // Keyboard navigation between tabs.
         KeyEvent const &key = event.as<KeyEvent>();
-        if(key.qtKey() == Qt::Key_Left)
+        if (key.qtKey() == Qt::Key_Left)
         {
             d->switchTab(-1);
             return true;
         }
-        else if(key.qtKey() == Qt::Key_Right)
+        else if (key.qtKey() == Qt::Key_Right)
         {
             d->switchTab(+1);
             return true;
         }
-        else if(key.qtKey() == Qt::Key_Home)
+        else if (key.qtKey() == Qt::Key_Home)
         {
             d->tabs->setCurrent(0);
             return true;
         }
-        else if(key.qtKey() == Qt::Key_End)
+        else if (key.qtKey() == Qt::Key_End)
         {
             d->tabs->setCurrent(d->tabs->items().size() - 1);
             return true;
@@ -523,16 +523,16 @@ PopupWidget *HomeWidget::makeSettingsPopup()
 
 bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(const Event &))
 {
-    if(event.type() == Event::MouseWheel)
+    if (event.type() == Event::MouseWheel)
     {
-        if(event.isMouse())
+        if (event.isMouse())
         {
 #if 0
             MouseEvent const &mouse = event.as<MouseEvent>();
-            if(event.type() == Event::MouseWheel &&
+            if (event.type() == Event::MouseWheel &&
                mouse.wheelMotion() == MouseEvent::Step)
             {
-                if(abs(mouse.wheel().x) > abs(mouse.wheel().y))
+                if (abs(mouse.wheel().x) > abs(mouse.wheel().y))
                 {
                     d->switchTab(-de::sign(mouse.wheel().x), true /*instant*/);
                 }
@@ -551,9 +551,9 @@ void HomeWidget::tabChanged()
 
 void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
 {
-    for(int i = 0; i < d->columns.size(); ++i)
+    for (int i = 0; i < d->columns.size(); ++i)
     {
-        if(d->columns.at(i) == columnWidget)
+        if (d->columns.at(i) == columnWidget)
         {
             d->tabs->setCurrent(i);
         }

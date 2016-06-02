@@ -38,9 +38,9 @@ misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
     mislink_t *hash = Sv_MRHash(pool, id);
     misrecord_t *mis;
 
-    for(mis = hash->first; mis; mis = mis->next)
+    for (mis = hash->first; mis; mis = mis->next)
     {
-        if(mis->id == id)
+        if (mis->id == id)
         {
             // This is it.
             return mis;
@@ -59,7 +59,7 @@ void Sv_MRAdd(pool_t *pool, const mobjdelta_t *delta)
     misrecord_t *mis;
 
 #ifdef _DEBUG
-if(!(delta->mo.ddFlags & DDMF_MISSILE))
+if (!(delta->mo.ddFlags & DDMF_MISSILE))
 {
     App_Error("Sv_MRAdd: Not a missile.\n");
 }
@@ -69,7 +69,7 @@ if(!(delta->mo.ddFlags & DDMF_MISSILE))
     mis = Sv_MRFind(pool, id);
 
     // Create a new record if necessary.
-    if(!mis)
+    if (!mis)
     {
         mis = (misrecord_t *) Z_Malloc(sizeof(misrecord_t), PU_MAP, 0);
         mis->id = id;
@@ -77,10 +77,10 @@ if(!(delta->mo.ddFlags & DDMF_MISSILE))
         // Link it in.
         mis->next = NULL;
         mis->prev = hash->last;
-        if(hash->last)
+        if (hash->last)
             hash->last->next = mis;
         hash->last = mis;
-        if(!hash->first)
+        if (!hash->first)
             hash->first = mis;
     }
 
@@ -101,18 +101,18 @@ void Sv_MRRemove(pool_t *pool, thid_t id)
     mislink_t *hash = Sv_MRHash(pool, id);
     misrecord_t *mis;
 
-    for(mis = hash->first; mis; mis = mis->next)
+    for (mis = hash->first; mis; mis = mis->next)
     {
-        if(mis->id == id)
+        if (mis->id == id)
         {
             // This will be removed.
-            if(hash->first == mis)
+            if (hash->first == mis)
                 hash->first = mis->next;
-            if(hash->last == mis)
+            if (hash->last == mis)
                 hash->last = mis->prev;
-            if(mis->next)
+            if (mis->next)
                 mis->next->prev = mis->prev;
-            if(mis->prev)
+            if (mis->prev)
                 mis->prev->next = mis->next;
 
             // There will be no more records to remove.
@@ -130,24 +130,24 @@ int Sv_MRCheck(pool_t *pool, const mobjdelta_t *mobj)
     int         exclude = 0;
 
 #ifdef _DEBUG
-if(!(mobj->mo.ddFlags & DDMF_MISSILE))
+if (!(mobj->mo.ddFlags & DDMF_MISSILE))
 {
     App_Error("Sv_MRCheck: Not a missile.\n");
 }
 #endif
 
-    if((mis = Sv_MRFind(pool, mobj->delta.id)) == NULL)
+    if ((mis = Sv_MRFind(pool, mobj->delta.id)) == NULL)
     {
         // No record for this; no basis for exclusion.
         return 0;
     }
 
     // Exclude each axis separately. If no change in momentum, exclude coord.
-    if(!(mobj->delta.flags & MDF_MOM_X))
+    if (!(mobj->delta.flags & MDF_MOM_X))
         exclude |= MDF_ORIGIN_X;
-    if(!(mobj->delta.flags & MDF_MOM_Y))
+    if (!(mobj->delta.flags & MDF_MOM_Y))
         exclude |= MDF_ORIGIN_Y;
-    if(!(mobj->delta.flags & MDF_MOM_Z))
+    if (!(mobj->delta.flags & MDF_MOM_Z))
         exclude |= MDF_ORIGIN_Z;
 
     return exclude;

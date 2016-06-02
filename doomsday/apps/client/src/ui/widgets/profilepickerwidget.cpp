@@ -60,7 +60,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     {
         self.items().clear();
 
-        foreach(String prof, settings.profiles())
+        foreach (String prof, settings.profiles())
         {
             self.items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
         }
@@ -117,7 +117,7 @@ void ProfilePickerWidget::openMenu()
     auto *menu = new PopupMenuWidget;
     menu->setAllowDirectionFlip(false);
     menu->setDeleteAfterDismissed(true);
-    if(d->invertedPopups) menu->useInfoStyle();
+    if (d->invertedPopups) menu->useInfoStyle();
     d->button->setPopup(*menu, ui::Down);
     menu->items()
             << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(edit())))
@@ -134,7 +134,7 @@ void ProfilePickerWidget::openMenu()
 
     // Enable or disable buttons depending on the selected profile.
     String selProf = selectedItem().data().toString();
-    if(reg.find(selProf).isReadOnly())
+    if (reg.find(selProf).isReadOnly())
     {
         // Read-only profiles can only be duplicated.
         menu->items().at(0).setLabel("View");
@@ -142,12 +142,12 @@ void ProfilePickerWidget::openMenu()
         org.itemWidget(5)->disable();
         org.itemWidget(6)->disable();
     }
-    if(reg.count() == 1)
+    if (reg.count() == 1)
     {
         // The last profile cannot be deleted.
         org.itemWidget(6)->disable();
     }
-    if(root().window().as<ClientWindow>().hasSidebar())
+    if (root().window().as<ClientWindow>().hasSidebar())
     {
         // The sidebar is already open, so don't allow editing.
         org.itemWidget(0)->disable();
@@ -171,12 +171,12 @@ void ProfilePickerWidget::rename()
 
     dlg->editor().setText(d->currentProfile());
 
-    if(dlg->exec(root()))
+    if (dlg->exec(root()))
     {
         String newName = dlg->editor().text().trimmed().left(MAX_PROFILE_NAME);
-        if(!newName.isEmpty() && d->currentProfile() != newName)
+        if (!newName.isEmpty() && d->currentProfile() != newName)
         {
-            if(d->settings.rename(newName))
+            if (d->settings.rename(newName))
             {
                 ui::Item &item = items().at(selected());
                 item.setLabel(newName.left(MAX_VISIBLE_PROFILE_NAME));
@@ -202,12 +202,12 @@ void ProfilePickerWidget::duplicate()
     dlg->message().setText(tr("Enter a name for the new %1 profile:").arg(d->description));
     dlg->defaultActionItem()->setLabel(tr("Duplicate Profile"));
 
-    if(dlg->exec(root()))
+    if (dlg->exec(root()))
     {
         String newName = dlg->editor().text().trimmed().left(MAX_PROFILE_NAME);
-        if(!newName.isEmpty())
+        if (!newName.isEmpty())
         {
-            if(d->settings.saveAsProfile(newName))
+            if (d->settings.saveAsProfile(newName))
             {
                 d->settings.setProfile(newName);
 
@@ -238,7 +238,7 @@ void ProfilePickerWidget::reset()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
             << new DialogButtonItem(DialogWidget::Accept, tr("Reset Profile"));
 
-    if(dlg->exec(root()))
+    if (dlg->exec(root()))
     {
         d->settings.resetToDefaults();
     }
@@ -257,7 +257,7 @@ void ProfilePickerWidget::remove()
                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
                << new DialogButtonItem(DialogWidget::Accept, tr("Delete Profile"));
 
-    if(!dlg->exec(root())) return;
+    if (!dlg->exec(root())) return;
 
     // We've got the permission.
     String const profToDelete = d->currentProfile();
