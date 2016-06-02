@@ -220,11 +220,12 @@ public:
          * @param name  Name of a key element in the block. This may also be
          *              a path where a color ':' is used for separating
          *              element names.
+         * @param defaultValue  If the key is not found, this value is returned instead.
          *
          * @return Value of the key element. If the located element is not a
-         * key element, returns an empty string.
+         * key element, returns @a defaultValue.
          */
-        Value keyValue(String const &name) const;
+        Value keyValue(String const &name, String const &defaultValue = String()) const;
 
         /**
          * Looks for an element based on a path where a colon ':' is used to

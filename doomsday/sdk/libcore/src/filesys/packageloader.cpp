@@ -32,6 +32,8 @@
 
 namespace de {
 
+static String const VAR_PACKAGE_VERSION("package.version");
+
 DENG2_PIMPL(PackageLoader)
 {
     LoadedPackages loaded;
@@ -166,7 +168,7 @@ DENG2_PIMPL(PackageLoader)
         if (idVer.second.isValid())
         {
             found.remove_if([&idVer] (File *f) {
-                Version const pkgVer = f->objectNamespace().gets("package.version");
+                Version const pkgVer = f->objectNamespace().gets(VAR_PACKAGE_VERSION);
                 return (pkgVer != idVer.second); // Ignore other versions.
             });
             // Did we run out of candidates?
@@ -177,8 +179,8 @@ DENG2_PIMPL(PackageLoader)
         found.sort([] (File const *a, File const *b) -> bool
         {
             // The version must be specified using a format understood by Version.
-            Version const aVer(a->objectNamespace().gets("package.version"));
-            Version const bVer(b->objectNamespace().gets("package.version"));
+            Version const aVer(a->objectNamespace().gets(VAR_PACKAGE_VERSION));
+            Version const bVer(b->objectNamespace().gets(VAR_PACKAGE_VERSION));
 
             if (aVer == bVer)
             {

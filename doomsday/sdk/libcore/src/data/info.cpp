@@ -741,10 +741,11 @@ Info::Element *Info::BlockElement::find(String const &name) const
     return found.value();
 }
 
-Info::Element::Value Info::BlockElement::keyValue(String const &name) const
+Info::Element::Value Info::BlockElement::keyValue(String const &name,
+                                                  String const &defaultValue) const
 {
     Element *e = findByPath(name);
-    if (!e || !e->isKey()) return Value();
+    if (!e || !e->isKey()) return Value(defaultValue);
     return e->as<KeyElement>().value();
 }
 
