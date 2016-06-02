@@ -620,7 +620,7 @@ bool ZipArchive::recognize(File const &file)
     if (file.status().type() == File::Status::FILE)
     {
         // For now, just check the name.
-        return recognizeZipExtension(file.name().fileNameExtension().lower());
+        return recognizeZipExtension(file.extension().lower());
     }
     return false;
 }

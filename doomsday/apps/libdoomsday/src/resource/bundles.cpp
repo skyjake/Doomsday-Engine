@@ -193,7 +193,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 
         // Additional criteria for recognizing WADs.
         if (bundle.format() == DataBundle::Iwad ||
-           bundle.format() == DataBundle::Pwad)
+            bundle.format() == DataBundle::Pwad)
         {
             String lumpDirCRC32 = def->keyValue(QStringLiteral("lumpDirCRC32"));
             if (!lumpDirCRC32.isEmpty())

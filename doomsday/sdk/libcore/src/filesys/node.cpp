@@ -43,6 +43,11 @@ String Node::name() const
     return d->name;
 }
 
+String Node::extension() const
+{
+    return d->name.fileNameExtension();
+}
+
 void Node::setParent(Node *parent)
 {
     DENG2_GUARD(this);

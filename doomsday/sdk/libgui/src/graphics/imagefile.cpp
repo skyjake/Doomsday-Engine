@@ -155,7 +155,7 @@ Image ImageFile::image() const
     }
     else
     {
-        return Image::fromData(*source(), name().fileNameExtension());
+        return Image::fromData(*source(), extension());
     }
 }
 

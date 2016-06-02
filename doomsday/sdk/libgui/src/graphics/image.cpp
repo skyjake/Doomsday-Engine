@@ -896,7 +896,7 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
 
 bool Image::recognize(File const &file)
 {
-    String const ext = file.name().fileNameExtension().toLower();
+    String const ext = file.extension().toLower();
     return (ext == ".tga"  || ext == ".pcx" || ext == ".png"  || ext == ".jpg" ||
             ext == ".jpeg" || ext == ".gif" || ext == ".tiff" || ext == ".ico");
 }

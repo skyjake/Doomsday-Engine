@@ -392,7 +392,7 @@ File *SavedSession::Interpreter::interpretFile(File *sourceData) const
         if (ZipArchive::recognize(*sourceData))
         {
             // It is a ZIP archive: we will represent it as a folder.
-            if (sourceData->name().fileNameExtension() == ".save")
+            if (sourceData->extension() == ".save")
             {
                 /// @todo fixme: Don't assume this is a save package.
                 LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();

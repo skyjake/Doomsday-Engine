@@ -112,7 +112,7 @@ DENG2_PIMPL(Waveform)
 
     void load(File const &src)
     {
-        if (!src.name().fileNameExtension().compareWithoutCase(".wav"))
+        if (!src.extension().compareWithoutCase(".wav"))
         {
             // We know how to read WAV files.
             loadWAV(Block(src));

@@ -651,7 +651,7 @@ DENG2_PIMPL(ModelDrawable)
          * Autodetect if these exist and make a list of their names.
          */
         String anims;
-        if (file.name().fileNameExtension() == ".md5mesh")
+        if (file.extension() == ".md5mesh")
         {
             String const baseName = file.name().fileNameWithoutExtension() + "_";
             for (auto const i : file.parent()->contents())

@@ -46,6 +46,9 @@ public:
     /// Returns the name of the file.
     String name() const;
 
+    /// Returns the file name extension, including the preceding dot (".zip").
+    String extension() const;
+
     /**
      * Sets the parent node of this file.
      */

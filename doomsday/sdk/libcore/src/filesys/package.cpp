@@ -384,7 +384,7 @@ String Package::identifierForFile(File const &file)
     // Form the prefix if there are enclosing packs as parents.
     String prefix;
     Folder const *parent = file.parent();
-    while (parent && parent->name().fileNameExtension() == ".pack")
+    while (parent && parent->extension() == ".pack")
     {
         prefix = extractIdentifier(parent->name()) + "." + prefix;
         parent = parent->parent();
@@ -396,7 +396,7 @@ File const *Package::containerOfFile(File const &file)
 {
     // Find the containing package.
     File const *i = file.parent();
-    while (i && i->name().fileNameExtension() != ".pack")
+    while (i && i->extension() != ".pack")
     {
         i = i->parent();
     }

@@ -374,7 +374,7 @@ DENG2_PIMPL(Info)
         }
 
         // Continue parsing normally from here.
-        int endPos = startPos + lex.pos();
+        int endPos = startPos + int(lex.pos());
         do { nextChar(); } while (cursor < endPos); // fast-forward
 
         // Update the current token.
@@ -391,7 +391,7 @@ DENG2_PIMPL(Info)
         //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
         // Whitespace is removed from beginning and end.
-        return InfoValue(content.substr(startPos, lex.pos() - 1).trimmed(), InfoValue::Script);
+        return InfoValue(content.substr(startPos, int(lex.pos()) - 1).trimmed(), InfoValue::Script);
     }
 
     /**
