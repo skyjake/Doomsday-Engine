@@ -234,7 +234,7 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
                                 d->menu->rule().height());
 
     header().title().setText(_E(s) "dengine.net\n" _E(.)_E(w) + tr("Multiplayer Games"));
-    header().info().setText(tr("Multiplayer servers are located via the dengine.net master server and by broadcasting on the local network."));
+    header().info().setText(tr("Multiplayer servers are discovered via the dengine.net master server and broadcasting on the local network."));
 }
 
 String MultiplayerColumnWidget::tabHeading() const
