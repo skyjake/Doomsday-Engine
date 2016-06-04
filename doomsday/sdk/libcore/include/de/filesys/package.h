@@ -172,6 +172,8 @@ public:
 
     static StringList requires(File const &packageFile);
 
+    static void addRequiredPackage(File &packageFile, String const &id);
+
     /**
      * Splits a string containing a package identifier and version. The
      * expected format of the string is `{packageId}_{version}`.

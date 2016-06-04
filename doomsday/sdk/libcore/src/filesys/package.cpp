@@ -351,6 +351,20 @@ StringList Package::requires(File const &packageFile)
     return ids;
 }
 
+void Package::addRequiredPackage(File &packageFile, String const &id)
+{
+    Record &names = packageFile.objectNamespace();
+
+    if (!names.has(PACKAGE_REQUIRES))
+    {
+        names.addArray(PACKAGE_REQUIRES, new ArrayValue({ new TextValue(id) }));
+    }
+    else
+    {
+        names[PACKAGE_REQUIRES].value<ArrayValue>().add(new TextValue(id));
+    }
+}
+
 static String stripAfterFirstUnderscore(String str)
 {
     int pos = str.indexOf('_');
