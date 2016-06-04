@@ -2,7 +2,8 @@
 #
 # This file contains the identification criteria for common known data
 # files from the original games. Each data file is represented by a
-# package with the given identifier and version.
+# package with the given identifier and version. At least two of the
+# criteria must match for successful identification.
 #
 # When Doomsday locates a WAD file, the lump directory CRC32 and other
 # information is printed in the log. These can be used when adding new

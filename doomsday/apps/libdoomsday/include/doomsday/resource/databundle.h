@@ -65,6 +65,11 @@ public:
     de::File const &sourceFile() const;
 
     /**
+     * Identifier of the package representing this data bundle (after being identified).
+     */
+    de::String packageId() const;
+
+    /**
      * Generates appropriate packages according to the contents of the data bundle.
      */
     void identifyPackages() const;

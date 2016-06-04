@@ -31,6 +31,8 @@ using namespace de;
 
 namespace res {
 
+static int const MATCH_MINIMUM_SCORE = 2;
+
 DENG2_PIMPL(Bundles)
 , DENG2_OBSERVES(FileIndex, Addition)
 {
@@ -258,6 +260,12 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             // which version this actually is.
             match.packageVersion = (!crcMismatch? idVer.second : Version(""));
         }
+    }
+
+    if (match.bestScore < MATCH_MINIMUM_SCORE)
+    {
+        // No go.
+        return MatchResult();
     }
 
     LOG_RES_VERBOSE("Matched: %s %s %s score: %i")
