@@ -13,26 +13,23 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/HighPerformanceTimer"
 
 #include <de/Guard>
 #include <de/Lockable>
-#include <QTime>
+#include <QElapsedTimer>
 
 namespace de {
 
-static duint32 const WARP_INTERVAL = 12 * 60 * 60 * 1000;
-
-DENG2_PIMPL_NOREF(HighPerformanceTimer), public Lockable
+DENG2_PIMPL_NOREF(HighPerformanceTimer)
 {
     QDateTime origin;
-    QTime startedAt;
-    duint64 timerOffset; /// Range extension. QTime only provides a 24h range.
+    QElapsedTimer startedAt;
 
-    Instance() : timerOffset(0)
+    Instance()
     {
         origin = QDateTime::currentDateTime();
         startedAt.start();
@@ -40,19 +37,7 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer), public Lockable
 
     duint64 milliSeconds()
     {
-        DENG2_GUARD(this);
-
-        int const elapsed = startedAt.elapsed();
-        duint64 now = duint64(elapsed) + timerOffset;
-
-        if (duint64(elapsed) > WARP_INTERVAL)
-        {
-            // QTime will wrap around every 24 hours; we'll wrap it manually before that.
-            timerOffset += WARP_INTERVAL;
-            startedAt = startedAt.addMSecs(WARP_INTERVAL);
-        }
-
-        return now;
+        return duint64(startedAt.elapsed());
     }
 };
 
