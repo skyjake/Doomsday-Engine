@@ -34,14 +34,20 @@ using namespace de;
 ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
 
-ArrayValue::ArrayValue(ArrayValue const &other) : Value()
+ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
 {
-    for (Elements::const_iterator i = other._elements.begin();
-        i != other._elements.end(); ++i)
+    for (auto i : other._elements)
     {
-        _elements.push_back((*i)->duplicate());
+        _elements.push_back(i->duplicate());
     }
-    _iteration = 0;
+}
+
+ArrayValue::ArrayValue(std::initializer_list<Value *> values) : _iteration(0)
+{
+    for (auto *v : values)
+    {
+        _elements.push_back(v);
+    }
 }
 
 ArrayValue::~ArrayValue()

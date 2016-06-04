@@ -49,6 +49,7 @@ public:
 public:
     ArrayValue();
     ArrayValue(ArrayValue const &other);
+    ArrayValue(std::initializer_list<Value *> values);
 
     /**
      * Construct an array out of the values in a vector.

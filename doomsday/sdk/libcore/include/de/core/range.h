@@ -50,6 +50,14 @@ struct Range
         if (i > end) return end;
         return i;
     }
+    inline Range intersection(Range const &other) {
+        if (start > other.end || end < other.start) {
+            return Range(); // Do not intersect.
+        }
+        Range inter(de::max(start, other.start), de::min(end, other.end));
+        if (inter.end <= inter.start) return Range();
+        return inter;
+    }
     inline Type wrap(Type const &i) const {
         return de::wrap(i, start, end);
     }
@@ -146,6 +154,8 @@ struct Range
 typedef Range<dint32>  Rangei;
 typedef Range<duint32> Rangeui;
 typedef Range<dint64>  Rangei64;
+typedef Range<duint64> Rangeui64;
+typedef Range<dsize>   Ranges;
 typedef Range<dfloat>  Rangef;
 typedef Range<ddouble> Ranged;
 

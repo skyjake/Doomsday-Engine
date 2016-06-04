@@ -174,6 +174,7 @@ String String::concatenatePath(String const &other, QChar dirChar) const
 
 String String::concatenateMember(String const &member) const
 {
+    if (member.isEmpty()) return *this;
     if (member.first() == '.')
     {
         throw InvalidMemberError("String::concatenateMember", "Invalid: '" + member + "'");

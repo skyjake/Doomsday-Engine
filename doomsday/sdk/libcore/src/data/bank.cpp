@@ -156,7 +156,7 @@ DENG2_PIMPL(Bank)
             DENG2_ASSERT(newData != 0);
 
             data.reset(newData);
-            accessedAt = Time();
+            accessedAt = Time::currentHighPerformanceTime();
             bank->d->notify(Notification(Notification::Loaded, path(bank->d->sepChar)));
         }
 
@@ -873,7 +873,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     DENG2_GUARD(item);
 
     // Mark it used.
-    item.accessedAt = Time();
+    item.accessedAt = Time::currentHighPerformanceTime();
 
     if (item.data.get())
     {
