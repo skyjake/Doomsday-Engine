@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Time"
@@ -265,7 +265,7 @@ bool Time::operator == (Time const &t) const
 }
 
 Time Time::operator + (Delta const &delta) const
-{    
+{
     Time result = *this;
     result += delta;
     return result;
@@ -322,7 +322,7 @@ String Time::asText(Format format) const
             {
                 elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
             }
-            int hours = elapsed.asHours();
+            int hours = int(elapsed.asHours());
             TimeDelta sec = elapsed - hours * 3600.0;
             if (hours > 0)
             {
@@ -399,7 +399,11 @@ QDateTime &de::Time::asDateTime()
 
 QDateTime const &de::Time::asDateTime() const
 {
-    DENG2_ASSERT(d->hasDateTime());
+    if (!d->hasDateTime() && d->flags.testFlag(Instance::HighPerformance))
+    {
+        d->dateTime = (highPerfTimer.startedAt() + d->highPerfElapsed).asDateTime();
+        d->flags |= Instance::DateTime;
+    }
     return d->dateTime;
 }
 
