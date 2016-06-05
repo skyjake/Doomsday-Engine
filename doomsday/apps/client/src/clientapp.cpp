@@ -499,7 +499,8 @@ ClientApp::ClientApp(int &argc, char **argv)
     QPixmap const pixmap(doomsdaySplashXpm);
     QSplashScreen *splash = new QSplashScreen(pixmap);
     splash->show();
-    splash->showMessage(Version().asText(), Qt::AlignHCenter | Qt::AlignBottom,
+    splash->showMessage(Version::currentBuild().asText(),
+                        Qt::AlignHCenter | Qt::AlignBottom,
                         QColor(90, 110, 95));
     processEvents();
     splash->deleteLater();

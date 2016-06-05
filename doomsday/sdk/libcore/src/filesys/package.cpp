@@ -380,6 +380,7 @@ static String extractIdentifier(String str)
 std::pair<String, Version> Package::split(String const &identifier_version)
 {
     std::pair<String, Version> idVer;
+
     if (identifier_version.contains(QChar('_')))
     {
         idVer.first  = stripAfterFirstUnderscore(identifier_version);
@@ -388,7 +389,6 @@ std::pair<String, Version> Package::split(String const &identifier_version)
     else
     {
         idVer.first  = identifier_version;
-        idVer.second = Version("");
     }
     return idVer;
 }

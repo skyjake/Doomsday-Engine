@@ -6,6 +6,9 @@
 #include <de/Time>
 #include "dd_version.h"
 
+/**
+ * @deprecated Use de::Version instead.
+ */
 struct VersionInfo
 {
     int major;
@@ -47,7 +50,7 @@ struct VersionInfo
     void parseVersionString(de::String const &version)
     {
         major = minor = revision = patch = 0;
-        
+
         QStringList const parts = version.split('.');
         if(parts.size() > 0)
         {

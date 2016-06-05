@@ -897,7 +897,7 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 String Net_UserAgent()
 {
     return String(DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT)
-           + " (" + de::Version().operatingSystem() + ")";
+           + " (" + de::Version::operatingSystem() + ")";
 }
 
 /**

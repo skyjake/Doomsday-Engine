@@ -52,7 +52,7 @@ public:
     String gitDescription;  ///< Output from "git describe".
 
     /**
-     * Version information about this build.
+     * Initializes an invalid all-zero version.
      */
     Version();
 
@@ -66,6 +66,12 @@ public:
      * @param buildNumber  Build number.
      */
     Version(String const &version, int buildNumber = 0);
+
+    /**
+     * Version information about this build. The version information is hardcoded in the
+     * build configuration.
+     */
+    static Version currentBuild();
 
     /**
      * Determines if the version is valid, i.e., it contains something other

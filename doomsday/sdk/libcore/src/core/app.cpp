@@ -610,7 +610,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // Immediately after upgrading, OLD_VERSION is also present in the Version module.
     Version oldVer = d->config->upgradedFromVersion();
-    if (oldVer != Version())
+    if (oldVer != Version::currentBuild())
     {
         ArrayValue *old = new ArrayValue;
         *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
@@ -677,7 +677,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version().asText();
+    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version::currentBuild().asText();
 }
 
 void App::addSystem(System &system)

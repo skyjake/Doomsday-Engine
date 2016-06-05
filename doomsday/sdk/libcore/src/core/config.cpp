@@ -86,7 +86,7 @@ void Config::read()
     LOG_AS("Config::read");
 
     // Current version.
-    Version verInfo;
+    Version verInfo = Version::currentBuild();
     QScopedPointer<ArrayValue> version(new ArrayValue);
     *version << NumberValue(verInfo.major)
              << NumberValue(verInfo.minor)

@@ -64,7 +64,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
     VersionInfo version;
-    de::Version ver2;
+    de::Version ver2 = de::Version::currentBuild();
 
     // Set up the contents of the widget.
     LabelWidget *title = LabelWidget::newWithText(String("%1 %2.%3")

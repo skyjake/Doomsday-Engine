@@ -24,21 +24,32 @@
 
 namespace de {
 
-Version::Version() : build(Time().asBuildNumber())
+Version::Version()
+    : major(0)
+    , minor(0)
+    , patch(0)
+    , build(0)
+{}
+
+Version Version::currentBuild()
 {
-    major = LIBDENG2_MAJOR_VERSION;
-    minor = LIBDENG2_MINOR_VERSION;
-    patch = LIBDENG2_PATCHLEVEL;
+    Version v;
+    v.major = LIBDENG2_MAJOR_VERSION;
+    v.minor = LIBDENG2_MINOR_VERSION;
+    v.patch = LIBDENG2_PATCHLEVEL;
 
 #ifdef LIBDENG2_BUILD_TEXT
-    build = String(LIBDENG2_BUILD_TEXT).toInt();
+    v.build = String(LIBDENG2_BUILD_TEXT).toInt();
+#else
+    v.build = Time().asBuildNumber(); // only used in development builds
 #endif
 
-    label = LIBDENG2_RELEASE_LABEL;
+    v.label = LIBDENG2_RELEASE_LABEL;
 
 #ifdef LIBDENG2_GIT_DESCRIPTION
-    gitDescription = LIBDENG2_GIT_DESCRIPTION;
+    v.gitDescription = LIBDENG2_GIT_DESCRIPTION;
 #endif
+    return v;
 }
 
 Version::Version(String const &version, int buildNumber) : build(buildNumber)
@@ -114,9 +125,9 @@ bool Version::operator > (Version const &other) const
 
 String Version::operatingSystem()
 {
-#ifdef WIN32
+#if defined(WIN32)
     return "windows";
-#elif MACOSX
+#elif defined(MACOSX)
     return "macx";
 #else
     return "unix";
