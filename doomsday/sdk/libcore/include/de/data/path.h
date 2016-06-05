@@ -106,6 +106,8 @@ public:
          */
         hash_type hash() const;
 
+        bool hasWildCard() const;
+
         /**
          * Case insensitive equality test.
          *
@@ -136,8 +138,11 @@ public:
         friend class Path;
         friend struct Path::Instance;
 
+        enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
     private:
-        mutable bool gotHashKey;
+        mutable Flags flags;
         mutable hash_type hashKey;
         QStringRef range;
     };
@@ -456,6 +461,8 @@ public:
 private:
     Instance *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)
 
 /**
  * Utility class for specifying paths that use a dot (.) as the path separator.

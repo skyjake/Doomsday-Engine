@@ -50,6 +50,11 @@ DENG2_PIMPL_NOREF(PathTree::Node)
     {
         delete children;
     }
+
+    void cacheSegmentText()
+    {
+        segmentText = &tree.segmentName(segmentId);
+    }
 };
 
 PathTree::Node::Node(PathTree::NodeArgs const &args) : d(nullptr)
@@ -127,7 +132,7 @@ String const &PathTree::Node::name() const
         // Cache the string, because PathTree::segmentName() locks the tree and that has
         // performance implications. The segment text string will not change while the
         // node exists.
-        d->segmentText = &tree().segmentName(d->segmentId);
+        d->cacheSegmentText();
     }
     return *d->segmentText;
 }
@@ -143,91 +148,95 @@ static int matchName(QChar const *string,  dsize stringSize,
 {
     QChar const *in    = string;
     QChar const *inEnd = string + stringSize;
-    QChar const *st    = pattern;
+    QChar const *pat   = pattern;
 
     while (in < inEnd)
     {
-        if (*st == QChar('*'))
+        if (*pat == QChar('*'))
         {
-            st++;
+            pat++;
             continue;
         }
 
-        if (*st != QChar('?') && (st->toLower() != in->toLower()))
+        if (/**st != QChar('?') && */ pat->toLower() != in->toLower())
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while (st >= pattern && *st != QChar('*')) { st--; }
+            while (pat >= pattern && *pat != QChar('*')) { --pat; }
 
             // No match?
-            if (st < pattern) return false;
+            if (pat < pattern) return false;
 
             // The asterisk lets us continue.
         }
 
         // This character of the pattern is OK.
-        st++;
+        pat++;
         in++;
     }
 
     // Skip remaining asterisks.
-    while (*st == QChar('*')) { st++; }
+    while (*pat == QChar('*')) { pat  ++; }
 
     // Match is good if the end of the pattern was reached.
-    return st == (pattern + patternSize);
+    return pat == (pattern + patternSize);
 }
 
 int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
 {
     if (((flags & PathTree::NoLeaf)   && isLeaf()) ||
-       ((flags & PathTree::NoBranch) && isBranch()))
-        return 1;
-
-    try
+        ((flags & PathTree::NoBranch) && isBranch()))
     {
-        de::Path::Segment const *snode = &searchPattern.lastSegment();
+        return 1;
+    }
 
-        // In reverse order, compare each path node in the search term.
-        int pathNodeCount = searchPattern.segmentCount();
+    de::Path::Segment const *snode = &searchPattern.lastSegment();
 
-        PathTree::Node const *node = this;
-        for (int i = 0; i < pathNodeCount; ++i)
+    // In reverse order, compare each path node in the search term.
+    int pathNodeCount = searchPattern.segmentCount();
+
+    PathTree::Node const *node = this;
+    for (int i = 0; i < pathNodeCount; ++i)
+    {
+        // If the hashes don't match it can't possibly be this.
+        if (snode->hash() != node->hash())
         {
-            bool const snameIsWild = !snode->toStringRef().compare(QStringLiteral("*"));
-            if (!snameIsWild)
-            {
-                // If the hashes don't match it can't possibly be this.
-                if (snode->hash() != node->hash())
-                {
-                    return 1;
-                }
+            return 1;
+        }
 
-                // Compare the names.
-                if (!matchName(node->name().constData(), node->name().size(),
-                              snode->toStringRef().constData(), snode->toStringRef().size()))
-                {
-                    return 1;
-                }
-            }
-
-            // Have we arrived at the search target?
-            if (i == pathNodeCount - 1)
-            {
-                return !(!(flags & MatchFull) || node->isAtRootLevel());
-            }
-
-            // Is the hierarchy too shallow?
-            if (node->isAtRootLevel())
+        if (!snode->hasWildCard())
+        {
+            if (node->name().compare(snode->toStringRef(), Qt::CaseInsensitive))
             {
                 return 1;
             }
-
-            // So far so good. Move one level up the hierarchy.
-            node  = &node->parent();
-            snode = &searchPattern.reverseSegment(i + 1);
         }
+        else
+        {
+            // Compare the names using wildcard pattern matching.
+            // Note: This has relatively slow performance.
+            if (!matchName(node->name().constData(), node->name().size(),
+                           snode->toStringRef().constData(), snode->toStringRef().size()))
+            {
+                return 1;
+            }
+        }
+
+        // Have we arrived at the search target?
+        if (i == pathNodeCount - 1)
+        {
+            return !(!(flags & MatchFull) || node->isAtRootLevel());
+        }
+
+        // Is the hierarchy too shallow?
+        if (node->isAtRootLevel())
+        {
+            return 1;
+        }
+
+        // So far so good. Move one level up the hierarchy.
+        node  = &node->parent();
+        snode = &searchPattern.reverseSegment(i + 1);
     }
-    catch (de::Path::OutOfBoundsError const &)
-    {} // Ignore this error.
 
     return 1;
 }

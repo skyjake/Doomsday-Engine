@@ -111,10 +111,10 @@ public:
         };
 
     public:
-        Status(dsize s = 0, Time const &modTime = Time())
+        Status(dsize s = 0, Time const &modTime = Time::invalidTime())
             : size(s), modifiedAt(modTime), _type(FILE) {}
 
-        Status(Type t, dsize s = 0, Time const &modTime = Time())
+        Status(Type t, dsize s = 0, Time const &modTime = Time::invalidTime())
             : size(s), modifiedAt(modTime), _type(t) {}
 
         Type type() const { return _type; }

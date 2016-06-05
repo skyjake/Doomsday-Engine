@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ARCHIVE_H
@@ -248,7 +248,7 @@ protected:
      * Interface for derived classes:
      */
     /// Base class for archive entries.
-    struct Entry : public PathTree::Node
+    struct DENG2_PUBLIC Entry : public PathTree::Node
     {
         dsize offset;           ///< Offset from the start of the source array.
         dsize size;             ///< Deserialized size.
@@ -262,21 +262,11 @@ protected:
         /// Cached copy of the serialized data. Can be @c NULL. Entry has ownership.
         Block mutable *dataInArchive;
 
-        Entry(PathTree::NodeArgs const &args) : Node(args),
-              offset(0),
-              size(0),
-              sizeInArchive(0),
-              maybeChanged(false),
-              data(0),
-              dataInArchive(0)
-        {}
+        Entry(PathTree::NodeArgs const &args);
+        virtual ~Entry();
 
-        virtual ~Entry()
-        {
-            // Entry has ownership of the cached data.
-            delete data;
-            delete dataInArchive;
-        }
+        // Must be constructed with args.
+        Entry() = delete;
     };
 
     /**

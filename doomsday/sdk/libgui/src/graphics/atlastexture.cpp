@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/AtlasTexture"
@@ -75,6 +75,19 @@ void AtlasTexture::commit(Image const &image, Vector2i const &topLeft) const
     }
 
     tex->setSubImage(image, topLeft);
+}
+
+void AtlasTexture::commit(Image const &fullImage, Rectanglei const &subregion) const
+{
+    GLTexture *tex = const_cast<AtlasTexture *>(this);
+
+    if (size() == GLTexture::Size(0, 0))
+    {
+        // Hasn't been full-committed yet.
+        tex->setUndefinedImage(totalSize(), Image::RGBA_8888);
+    }
+
+    tex->setSubImage(fullImage, subregion);
 }
 
 } // namespace de

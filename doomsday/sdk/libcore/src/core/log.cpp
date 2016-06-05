@@ -588,7 +588,7 @@ Log::Section::~Section()
 
 DENG2_PIMPL_NOREF(Log)
 {
-    typedef QList<char const *> SectionStack;
+    typedef QVector<char const *> SectionStack;
     SectionStack sectionStack;
     LogEntry *throwawayEntry;
     duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
@@ -630,13 +630,13 @@ bool Log::isStaging() const
 
 void Log::beginSection(char const *name)
 {
-    d->sectionStack.append(name);
+    d->sectionStack.push_back(name);
 }
 
 void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
 {
     DENG2_ASSERT(d->sectionStack.back() == name);
-    d->sectionStack.takeLast();
+    d->sectionStack.pop_back();
 }
 
 void Log::beginInteractive()

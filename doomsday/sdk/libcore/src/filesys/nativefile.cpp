@@ -203,7 +203,7 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
         throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
                           String("(%1[+%2] > %3)").arg(at).arg(count).arg(size()));
     }
-    in.seek(at);
+    if (in.pos() != qint64(at)) in.seek(qint64(at));
     in.read(reinterpret_cast<char *>(values), count);
 }
 

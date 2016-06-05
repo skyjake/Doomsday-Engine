@@ -20,6 +20,8 @@
 #include "de/Block"
 #include "de/File"
 
+#include <cstring>
+
 using namespace de;
 
 Block::Block(Size initialSize)
@@ -79,10 +81,7 @@ void Block::get(Offset atPos, Byte *values, Size count) const
                           String("(%1[+%2] > %3)").arg(atPos).arg(count).arg(size()));
     }
 
-    for (Offset i = atPos; count > 0; ++i, --count)
-    {
-        *values++ = Byte(at(i));
-    }
+    std::memcpy(values, constData() + atPos, count);
 }
 
 void Block::set(Offset at, Byte const *values, Size count)
@@ -92,7 +91,7 @@ void Block::set(Offset at, Byte const *values, Size count)
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::set", "Out of range");
     }
-    replace(at, count, QByteArray((char const *) values, count));
+    replace(at, count, QByteArray(reinterpret_cast<char const *>(values), count));
 }
 
 void Block::copyFrom(IByteArray const &array, Offset at, Size count)

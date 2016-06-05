@@ -97,11 +97,10 @@ DENG2_PIMPL(Atlas)
     bool mustCommitFull() const
     {
         /*
-         * Simple heuristic: if more than 70% of the pixels are included in the
-         * changed area, simply copy the whole thing rather than doing a large
-         * extra copy.
+         * Simple heuristic: if more than 95% of the pixels are included in the
+         * changed area, simply copy the whole thing.
          */
-        return (needFullCommit || changedPercentage() > .7f);
+        return (needFullCommit || changedPercentage() > .95f);
     }
 
     float changedPercentage() const
@@ -530,9 +529,7 @@ void Atlas::commit() const
         {
             LOGDEV_GL_XVERBOSE("Partial commit ") << d->changedArea.asText();
         }
-
-        // An extra copy is done to crop to the changed area.
-        commit(d->backing.subImage(d->changedArea), d->changedArea.topLeft);
+        commit(d->backing, d->changedArea);
     }
 
     d->needCommit = false;

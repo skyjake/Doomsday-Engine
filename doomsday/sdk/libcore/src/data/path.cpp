@@ -36,7 +36,7 @@ Path::hash_type const Path::hash_range = 512;
 ushort Path::Segment::hash() const
 {
     // Is it time to compute the hash?
-    if (!gotHashKey)
+    if (!(flags & GotHashKey))
     {
         hashKey = 0;
         int op = 0;
@@ -51,9 +51,21 @@ ushort Path::Segment::hash() const
             }
         }
         hashKey %= hash_range;
-        gotHashKey = true;
+        flags |= GotHashKey;
     }
     return hashKey;
+}
+
+bool Path::Segment::hasWildCard() const
+{
+    if (flags & WildCardChecked)
+    {
+        return flags.testFlag(IncludesWildCard);
+    }
+    bool isWild = toStringRef().contains(QChar('*'));
+    applyFlagOperation(flags, IncludesWildCard, isWild? SetFlags : UnsetFlags);
+    flags |= WildCardChecked;
+    return isWild;
 }
 
 bool Path::Segment::operator == (Path::Segment const &other) const

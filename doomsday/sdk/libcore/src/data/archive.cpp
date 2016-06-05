@@ -192,7 +192,7 @@ Block &Archive::entryBlock(Path const &path)
     // Mark for recompression.
     Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
     entry.maybeChanged = true;
-    entry.modifiedAt   = Time();
+    entry.modifiedAt   = Time::currentHighPerformanceTime();
 
     d->modified = true;
 
@@ -215,7 +215,7 @@ void Archive::add(Path const &path, IByteArray const &data)
 
     Entry &entry = static_cast<Entry &>(d->index->insert(path));
     entry.data         = new Block(data);
-    entry.modifiedAt   = Time();
+    entry.modifiedAt   = Time::currentHighPerformanceTime();
     entry.maybeChanged = true;
 
     // The rest of the data gets updated when the archive is written.
@@ -267,6 +267,24 @@ PathTree const &Archive::index() const
     DENG2_ASSERT(d->index != 0);
 
     return *d->index;
+}
+
+Archive::Entry::Entry(PathTree::NodeArgs const &args)
+    : Node(args)
+    , offset(0)
+    , size(0)
+    , sizeInArchive(0)
+    , modifiedAt(Time::invalidTime())
+    , maybeChanged(false)
+    , data(0)
+    , dataInArchive(0)
+{}
+
+Archive::Entry::~Entry()
+{
+    // Entry has ownership of the cached data.
+    delete data;
+    delete dataInArchive;
 }
 
 } // namespace de

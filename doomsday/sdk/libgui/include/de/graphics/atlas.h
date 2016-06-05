@@ -291,12 +291,20 @@ protected:
     virtual void commitFull(Image const &fullImage) const = 0;
 
     /**
-     * Commits a image to the actual physical atlas storage.
+     * Commits an an image to the actual physical atlas storage.
      *
      * @param image    Image to commit.
-     * @param topLeft  Top left corner of where to place the image.
+     * @param topleft  Top left corner of where to place the image.
      */
     virtual void commit(Image const &image, Vector2i const &topLeft) const = 0;
+
+    /**
+     * Commits a subregion of an image to the actual physical atlas storage.
+     *
+     * @param fullImage  Image to commit.
+     * @param subregion  Section of the image to commit.
+     */
+    virtual void commit(Image const &fullImage, Rectanglei const &subregion) const = 0;
 
 private:
     DENG2_PRIVATE(d)

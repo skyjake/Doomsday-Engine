@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_GLTEXTURE_H
@@ -183,7 +183,7 @@ public:
     void setImage(gl::CubeFace face, Image const &image, int level = 0);
 
     /**
-     * Replaces a portion of existing content. The image should be provided in
+     * Replaces a portion of existing content. The image must be provided in
      * the same format as the previous full content.
      *
      * @param image  Image to copy.
@@ -192,7 +192,20 @@ public:
      */
     void setSubImage(Image const &image, Vector2i const &pos, int level = 0);
 
+    /**
+     * Replaces a portion of existing content. The image must be provided in the same
+     * format as the previous full content.
+     *
+     * The image data is copied directly from the specified subregion of the image.
+     *
+     * @param image  Image to copy.
+     * @param rect   Region of the image to copy.
+     * @param level  Mipmap level.
+     */
+    void setSubImage(Image const &image, Rectanglei const &rect, int level = 0);
+
     void setSubImage(gl::CubeFace face, Image const &image, Vector2i const &pos, int level = 0);
+    void setSubImage(gl::CubeFace face, Image const &image, Rectanglei const &rect, int level = 0);
 
     /**
      * Generate a full set of mipmap levels based on the content on level 0.

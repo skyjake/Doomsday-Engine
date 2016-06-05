@@ -192,7 +192,7 @@ DENG2_PIMPL(GLTexture)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
-        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
@@ -203,10 +203,31 @@ DENG2_PIMPL(GLTexture)
     void glSubImage(int level, Vector2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);
+
+        LIBGUI_ASSERT_GL_OK();
+    }
+
+    void glSubImage(int level, Rectanglei const &rect, Image const &image,
+                    CubeFace face = PositiveX)
+    {
+        auto const &glFormat = image.glFormat();
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowAlignment));
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
+
+        int const bytesPerPixel = image.depth() / 8;
+
+        glTexSubImage2D(isCube()? glFace(face) : texTarget,
+                        level, rect.left(), rect.top(), rect.width(), rect.height(),
+                        glFormat.format, glFormat.type,
+                        static_cast<dbyte const *>(image.bits()) +
+                        bytesPerPixel * rect.left() + image.stride() * rect.top());
+
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
         LIBGUI_ASSERT_GL_OK();
     }
@@ -437,6 +458,21 @@ void GLTexture::setSubImage(Image const &image, Vector2i const &pos, int level)
     }
 }
 
+void GLTexture::setSubImage(Image const &image, Rectanglei const &rect, int level)
+{
+    d->texTarget = GL_TEXTURE_2D;
+
+    d->alloc();
+    d->glBind();
+    d->glSubImage(level, rect, image);
+    d->glUnbind();
+
+    if (!level && d->flags.testFlag(AutoMips))
+    {
+        generateMipmap();
+    }
+}
+
 void GLTexture::setSubImage(CubeFace face, Image const &image, Vector2i const &pos, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
@@ -444,6 +480,21 @@ void GLTexture::setSubImage(CubeFace face, Image const &image, Vector2i const &p
     d->alloc();
     d->glBind();
     d->glSubImage(level, pos, image.size(), image.glFormat(), image.bits(), face);
+    d->glUnbind();
+
+    if (!level && d->flags.testFlag(AutoMips))
+    {
+        generateMipmap();
+    }
+}
+
+void GLTexture::setSubImage(CubeFace face, Image const &image, Rectanglei const &rect, int level)
+{
+    d->texTarget = GL_TEXTURE_CUBE_MAP;
+
+    d->alloc();
+    d->glBind();
+    d->glSubImage(level, rect, image, face);
     d->glUnbind();
 
     if (!level && d->flags.testFlag(AutoMips))
