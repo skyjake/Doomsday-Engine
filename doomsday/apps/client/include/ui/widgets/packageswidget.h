@@ -76,6 +76,9 @@ public:
 
     de::LineEditWidget &searchTermsEditor();
 
+    // Events.
+    void initialize();
+
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);

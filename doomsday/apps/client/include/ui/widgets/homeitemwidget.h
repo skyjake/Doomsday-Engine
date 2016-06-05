@@ -35,7 +35,15 @@ class HomeItemWidget : public de::GuiWidget, public de::IAssetGroup
     Q_OBJECT
 
 public:
-    HomeItemWidget(de::String const &name = "");
+    enum Flag
+    {
+        NonAnimatedHeight = 0,
+        AnimatedHeight    = 0x1,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+public:
+    HomeItemWidget(Flags flags = AnimatedHeight, de::String const &name = "");
 
     de::AssetGroup &assets() override;
 
@@ -97,6 +105,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(HomeItemWidget::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(HomeItemWidget::LogoFlags)
 
 #endif // DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H

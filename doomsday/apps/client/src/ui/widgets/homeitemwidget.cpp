@@ -185,7 +185,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     }
 };
 
-HomeItemWidget::HomeItemWidget(String const &name)
+HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
@@ -196,16 +196,24 @@ HomeItemWidget::HomeItemWidget(String const &name)
                            style().fonts().font("default").height() +
                            style().fonts().font("default").lineSpacing();
 
-    AutoRef<Rule> smoothHeight(new AnimationRule(d->label->rule().height(), 0.3));
+    AutoRef<Rule> height;
+    if(flags.testFlag(AnimatedHeight))
+    {
+        height.reset(new AnimationRule(d->label->rule().height(), 0.3));
+    }
+    else
+    {
+        height.reset(d->label->rule().height());
+    }
 
     d->background->rule()
             .setInput(Rule::Top,    rule().top())
-            .setInput(Rule::Height, smoothHeight)
+            .setInput(Rule::Height, height)
             .setInput(Rule::Left,   d->icon->rule().right())
             .setInput(Rule::Right,  rule().right());
 
     d->icon->rule()
-            .setSize(iconSize,    smoothHeight)
+            .setSize(iconSize,    height)
             .setInput(Rule::Left, rule().left())
             .setInput(Rule::Top,  rule().top());
     d->icon->set(Background(Background::BorderGlow,
@@ -218,7 +226,7 @@ HomeItemWidget::HomeItemWidget(String const &name)
     d->label->margins().setRight(*d->labelRightMargin + rule("gap"));
 
     // Use an animated height rule for smoother list layout behavior.
-    rule().setInput(Rule::Height, smoothHeight);
+    rule().setInput(Rule::Height, height);
 }
 
 AssetGroup &HomeItemWidget::assets()

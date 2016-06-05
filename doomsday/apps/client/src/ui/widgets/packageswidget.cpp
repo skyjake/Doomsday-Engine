@@ -27,6 +27,7 @@
 #include <de/DocumentPopupWidget>
 #include <de/FileSystem>
 #include <de/LineEditWidget>
+#include <de/Loop>
 #include <de/MenuWidget>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
@@ -82,6 +83,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
+    LoopCallback mainCall;
     LineEditWidget *search;
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
@@ -135,7 +137,8 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
     public:
         PackageListWidget(PackageItem const &item, PackagesWidget &owner)
-            : _owner(owner)
+            : HomeItemWidget(NonAnimatedHeight) // virtualized, so don't make things difficult
+            , _owner(owner)
             , _item(&item)
         {
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
@@ -352,11 +355,19 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Top,   search->rule().bottom());
         menu->organizer().setWidgetFactory(*this);
         menu->organizer().setFilter(*this);
+        menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule("unit").valuei() +
+                                       int(style().fonts().font("default").height().value()*3));
 
         QObject::connect(search, &LineEditWidget::editorContentChanged,
                          [this] () { updateFilterTerms(); });
         QObject::connect(search, &LineEditWidget::enterPressed,
                          [this] () { focusFirstListedPackge(); });
+    }
+
+    ~Instance()
+    {
+        // Private instance deleted before child widgets.
+        menu->organizer().unsetFilter();
     }
 
     void populate()
@@ -405,8 +416,13 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void updateFilterTerms()
     {
-        /// @todo Parse quoted terms. -jk
-        setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+        // Refiltering will potentially alter the widget tree, so doing it during
+        // event handling is not a great idea.
+        mainCall.enqueue([this] ()
+        {
+            /// @todo Parse quoted terms. -jk
+            setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+        });
     }
 
     void setFilterTerms(QStringList const &terms)
@@ -438,10 +454,10 @@ DENG_GUI_PIMPL(PackagesWidget)
         return true;
     }
 
-    bool isItemAccepted(ChildWidgetOrganizer const &,
-                        ui::Data const &data, ui::Data::Pos pos) const
+    bool isItemAccepted(ChildWidgetOrganizer const &, ui::Data const &,
+                        ui::Item const &it) const
     {
-        auto &item = data.at(pos).as<PackageItem>();
+        auto &item = it.as<PackageItem>();
 
         // The terms are looked in:
         // - title
@@ -567,6 +583,12 @@ void PackagesWidget::scrollToPackage(String const &packageId) const
 LineEditWidget &PackagesWidget::searchTermsEditor()
 {
     return *d->search;
+}
+
+void PackagesWidget::initialize()
+{
+    GuiWidget::initialize();
+    d->menu->organizer().setVisibleArea(root().viewTop(), root().viewBottom());
 }
 
 void PackagesWidget::operator >> (PersistentState &toState) const

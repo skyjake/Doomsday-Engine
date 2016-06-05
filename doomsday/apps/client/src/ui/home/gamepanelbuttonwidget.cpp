@@ -152,14 +152,14 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
 
-    bool isItemAccepted(ChildWidgetOrganizer const &,
-                        ui::Data const &data, ui::Data::Pos pos) const
+    bool isItemAccepted(ChildWidgetOrganizer const &, ui::Data const &,
+                        ui::Item const &it) const
     {
         // User-created profiles currently have no saves associated with them.
         if (gameProfile.isUserCreated()) return false;
 
         // Only saved sessions for this game are to be included.
-        auto const &item = data.at(pos).as<SavedSessionListData::SaveItem>();
+        auto const &item = it.as<SavedSessionListData::SaveItem>();
         return item.gameId() == gameProfile.game();
     }
 };

@@ -32,7 +32,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
 };
 
 PanelButtonWidget::PanelButtonWidget(String const &name)
-    : HomeItemWidget(name)
+    : HomeItemWidget(AnimatedHeight, name)
     , d(new Instance(this))
 {
     setBehavior(Focusable);
