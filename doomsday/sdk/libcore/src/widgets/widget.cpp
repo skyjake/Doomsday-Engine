@@ -81,6 +81,66 @@ DENG2_PIMPL(Widget)
         return nullptr;
     }
 
+    enum AddBehavior { Append, Prepend, InsertBefore };
+
+    void add(Widget *child, AddBehavior behavior, Widget const *ref = nullptr)
+    {
+        DENG2_ASSERT(child != 0);
+        DENG2_ASSERT(child->d->parent == 0);
+
+#ifdef _DEBUG
+        // Can't have double ownership.
+        if (self.parent())
+        {
+            if (self.parent()->hasRoot())
+            {
+                DENG2_ASSERT(!self.parent()->root().isInTree(*child));
+            }
+            else
+            {
+                DENG2_ASSERT(!self.parent()->isInTree(*child));
+            }
+        }
+        else
+        {
+            DENG2_ASSERT(!self.isInTree(*child));
+        }
+#endif
+
+        child->d->parent = &self;
+
+        switch (behavior)
+        {
+        case Append:
+            children.append(child);
+            break;
+
+        case Prepend:
+            children.push_front(child);
+            break;
+
+        case InsertBefore:
+            children.insert(children.indexOf(const_cast<Widget *>(ref)), child);
+            break;
+        }
+
+        // Update index.
+        if (!child->name().isEmpty())
+        {
+            index.insert(child->name(), child);
+        }
+
+        // Notify.
+        DENG2_FOR_PUBLIC_AUDIENCE2(ChildAddition, i)
+        {
+            i->widgetChildAdded(*child);
+        }
+        DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
+        {
+            i->widgetParentChanged(*child, 0, &self);
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(ParentChange)
     DENG2_PIMPL_AUDIENCE(ChildAddition)
@@ -267,58 +327,24 @@ void Widget::clearTree()
     d->clear();
 }
 
-Widget &Widget::add(Widget *child)
+Widget &Widget::addLast(Widget *child)
 {
-    DENG2_ASSERT(child != 0);
-    DENG2_ASSERT(child->d->parent == 0);
+    d->add(child, Instance::Append);
+    return *child;
+}
 
-#ifdef _DEBUG
-    // Can't have double ownership.
-    if (parent())
-    {
-        if (parent()->hasRoot())
-        {
-            DENG2_ASSERT(!parent()->root().isInTree(*child));
-        }
-        else
-        {
-            DENG2_ASSERT(!parent()->isInTree(*child));
-        }
-    }
-    else
-    {
-        DENG2_ASSERT(!isInTree(*child));
-    }
-#endif
-
-    child->d->parent = this;
-    d->children.append(child);
-
-    // Update index.
-    if (!child->name().isEmpty())
-    {
-        d->index.insert(child->name(), child);
-    }
-
-    // Notify.
-    DENG2_FOR_AUDIENCE2(ChildAddition, i)
-    {
-        i->widgetChildAdded(*child);
-    }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
-    {
-        i->widgetParentChanged(*child, 0, this);
-    }
-
+Widget &Widget::addFirst(Widget *child)
+{
+    d->add(child, Instance::Prepend);
     return *child;
 }
 
 Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 {
     DENG2_ASSERT(child != &otherChild);
+    DENG2_ASSERT(otherChild.parent() == this);
 
-    add(child);
-    moveChildBefore(child, otherChild);
+    d->add(child, Instance::InsertBefore, &otherChild);
     return *child;
 }
 
@@ -616,7 +642,7 @@ Widget::Children Widget::children() const
 
 dsize de::Widget::childCount() const
 {
-    return d->children.size();
+    return dsize(d->children.size());
 }
 
 void Widget::initialize()
