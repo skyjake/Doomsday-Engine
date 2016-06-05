@@ -109,9 +109,6 @@ DENG2_PIMPL(GridLayout)
 
     ~Instance()
     {
-        publicWidth->unsetSource();
-        publicHeight->unsetSource();
-
         releaseRef(initialX);
         releaseRef(initialY);
         releaseRef(baseX);
