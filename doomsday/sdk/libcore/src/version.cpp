@@ -22,6 +22,11 @@
 #include "de/Version"
 #include <QStringList>
 
+#ifdef __GNUC__
+#  undef major
+#  undef minor
+#endif
+
 namespace de {
 
 Version::Version()
