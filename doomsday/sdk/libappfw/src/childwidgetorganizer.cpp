@@ -25,34 +25,65 @@
 
 namespace de {
 
+namespace internal
+{
+    enum AddBehavior
+    {
+        AlwaysAppend    = 0x1,
+        AlwaysPrepend   = 0x2,
+        IgnoreFilter    = 0x4,
+        DefaultBehavior = 0,
+    };
+
+    Q_DECLARE_FLAGS(AddBehaviors, AddBehavior)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(AddBehaviors)
+}
+
+using namespace internal;
+
 static DefaultWidgetFactory defaultWidgetFactory;
 
-DENG2_PIMPL(ChildWidgetOrganizer),
-DENG2_OBSERVES(Widget,   Deletion   ),
-DENG2_OBSERVES(ui::Data, Addition   ),
-DENG2_OBSERVES(ui::Data, Removal    ),
-DENG2_OBSERVES(ui::Data, OrderChange),
-DENG2_OBSERVES(ui::Item, Change     )
+struct ChildWidgetOrganizer::Instance
+    : public de::Private<ChildWidgetOrganizer>
+    , DENG2_OBSERVES(Widget,   Deletion   )
+    , DENG2_OBSERVES(ui::Data, Addition   )
+    , DENG2_OBSERVES(ui::Data, Removal    )
+    , DENG2_OBSERVES(ui::Data, OrderChange)
+    , DENG2_OBSERVES(ui::Item, Change     )
 {
+    ui::Data const *dataItems = nullptr;
+    IFilter const *filter = nullptr;
     GuiWidget *container;
-    ui::Data const *context;
     IWidgetFactory *factory;
-    IFilter const *filter;
+    ui::DataPos firstAcceptedPos = 0;
 
     typedef QMap<ui::Item const *, GuiWidget *> Mapping;
     typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
+    bool virtualEnabled = false;
+    Rule const *virtualMin = nullptr;
+    Rule const *virtualMax = nullptr;
+    ConstantRule *virtualStrut = nullptr;
+    ConstantRule *estimatedHeight = nullptr;
+    int averageItemHeight = 0;
+    dsize virtualItemCount = 0;
+    Ranges virtualPvsRange;
+    QSet<GuiWidget *> pendingStrutAdjust;
+
     Instance(Public *i, GuiWidget *c)
-        : Base(i),
-          container(c),
-          context(0),
-          factory(&defaultWidgetFactory),
-          filter(0)
+        : Base(i)
+        , container(c)
+        , factory(&defaultWidgetFactory)
     {}
 
     ~Instance()
     {
+        releaseRef(virtualMin);
+        releaseRef(virtualMax);
+        releaseRef(virtualStrut);
+        releaseRef(estimatedHeight);
+
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
             i.value()->audienceForDeletion() -= this;
@@ -61,57 +92,71 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void set(ui::Data const *ctx)
     {
-        if (context)
+        if (dataItems)
         {
-            context->audienceForAddition() -= this;
-            context->audienceForRemoval() -= this;
-            context->audienceForOrderChange() -= this;
+            dataItems->audienceForAddition() -= this;
+            dataItems->audienceForRemoval() -= this;
+            dataItems->audienceForOrderChange() -= this;
 
             clearWidgets();
-            context = 0;
+            dataItems = 0;
         }
 
-        context = ctx;
+        dataItems = ctx;
 
-        if (context)
+        if (dataItems)
         {
             makeWidgets();
 
-            context->audienceForAddition() += this;
-            context->audienceForRemoval() += this;
-            context->audienceForOrderChange() += this;
+            dataItems->audienceForAddition() += this;
+            dataItems->audienceForRemoval() += this;
+            dataItems->audienceForOrderChange() += this;
         }
     }
 
-    enum AddBehavior { AlwaysAppend = 0x1, IgnoreFilter = 0x2, DefaultBehavior = 0 };
-    Q_DECLARE_FLAGS(AddBehaviors, AddBehavior)
+    Ranges itemRange() const
+    {
+        Ranges range(0, dataItems->size());
+        if (virtualEnabled) range = range.intersection(virtualPvsRange);
+        return range;
+    }
 
-    void addItemWidget(ui::Data::Pos pos, AddBehaviors behavior = DefaultBehavior)
+    GuiWidget *addItemWidget(ui::Data::Pos pos, AddBehaviors behavior = DefaultBehavior)
     {
         DENG2_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
         DENG2_ASSERT(factory != 0);
 
+        if (!itemRange().contains(pos))
+        {
+            // Outside the current potentially visible range.
+            return nullptr;
+        }
+
+        ui::Item const &item = dataItems->at(pos);
+
         if (filter && !behavior.testFlag(IgnoreFilter))
         {
-            if (!filter->isItemAccepted(self, *context, pos))
+            if (!filter->isItemAccepted(self, *dataItems, item))
             {
                 // Skip this one.
-                return;
+                return nullptr;
             }
         }
 
-        ui::Item const &item = context->at(pos);
         GuiWidget *w = factory->makeItemWidget(item, container);
-        if (!w) return; // Unpresentable.
+        if (!w) return nullptr; // Unpresentable.
 
         // Update the widget immediately.
         mapping.insert(&item, w);
         itemChanged(item);
 
-        if (behavior.testFlag(AlwaysAppend) || pos == context->size() - 1)
+        if (behavior.testFlag(AlwaysAppend) || pos == dataItems->size() - 1)
         {
-            // This is the last item.
-            container->add(w);
+            container->addLast(w);
+        }
+        else if (behavior.testFlag(AlwaysPrepend) || pos == 0)
+        {
+            container->addFirst(w);
         }
         else
         {
@@ -134,15 +179,30 @@ DENG2_OBSERVES(ui::Item, Change     )
         // Observe.
         w->audienceForDeletion() += this; // in case it's manually deleted
         item.audienceForChange() += this;
+
+        return w;
+    }
+
+    void removeItemWidget(ui::DataPos pos)
+    {
+        ui::Item const *item = &dataItems->at(pos);
+        auto found = mapping.find(item);
+        if (found != mapping.end())
+        {
+            GuiWidget *w = found.value();
+            mapping.erase(found);
+            deleteWidget(w);
+            item->audienceForChange() -= this;
+        }
     }
 
     GuiWidget *findNextWidget(ui::DataPos afterPos) const
     {
         // Some items may not be represented as widgets, so continue looking
         // until the next widget is found.
-        while (++afterPos < context->size())
+        while (++afterPos < dataItems->size())
         {
-            auto found = mapping.constFind(&context->at(afterPos));
+            auto found = mapping.constFind(&dataItems->at(afterPos));
             if (found != mapping.constEnd())
             {
                 return found.value();
@@ -153,10 +213,10 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void makeWidgets()
     {
-        DENG2_ASSERT(context != 0);
+        DENG2_ASSERT(dataItems != 0);
         DENG2_ASSERT(container != 0);
 
-        for (ui::Data::Pos i = 0; i < context->size(); ++i)
+        for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
         {
             addItemWidget(i, AlwaysAppend);
         }
@@ -164,6 +224,8 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void deleteWidget(GuiWidget *w)
     {
+        pendingStrutAdjust.remove(w);
+
         w->audienceForDeletion() -= this;
         GuiWidget::destroy(w);
     }
@@ -173,7 +235,6 @@ DENG2_OBSERVES(ui::Item, Change     )
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
         {
             i.key()->audienceForChange() -= this;
-
             deleteWidget(i.value());
         }
         mapping.clear();
@@ -181,10 +242,6 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void widgetBeingDeleted(Widget &widget)
     {
-        /*
-         * Note: this should not occur normally, as the widgets created by the
-         * Organizer are not usually manually deleted.
-         */
         MutableMappingIterator iter(mapping);
         while (iter.hasNext())
         {
@@ -197,15 +254,39 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
     }
 
-    void dataItemAdded(ui::Data::Pos pos, ui::Item const &)
+    void dataItemAdded(ui::Data::Pos pos, ui::Item const &item)
     {
         addItemWidget(pos);
+
+        if (!filter)
+        {
+            virtualItemCount = dataItems->size();
+            updateVirtualHeight();
+        }
+        else
+        {
+            if (filter->isItemAccepted(self, *dataItems, item))
+            {
+                ++virtualItemCount;
+                updateVirtualHeight();
+            }
+        }
     }
 
-    void dataItemRemoved(ui::Data::Pos, ui::Item &item)
+    void dataItemRemoved(ui::Data::Pos pos, ui::Item &item)
     {
+        if (pos < firstAcceptedPos)
+        {
+            --firstAcceptedPos;
+        }
+        if (!filter || filter->isItemAccepted(self, *dataItems, item))
+        {
+            --virtualItemCount;
+            updateVirtualHeight();
+        }
+
         Mapping::iterator found = mapping.find(&item);
-        if (found != mapping.constEnd())
+        if (found != mapping.end())
         {
             found.key()->audienceForChange() -= this;
             deleteWidget(found.value());
@@ -220,11 +301,11 @@ DENG2_OBSERVES(ui::Item, Change     )
         {
             container->remove(*i.value());
         }
-        for (ui::Data::Pos i = 0; i < context->size(); ++i)
+        for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
         {
-            if (mapping.contains(&context->at(i)))
+            if (mapping.contains(&dataItems->at(i)))
             {
-                container->add(mapping[&context->at(i)]);
+                container->add(mapping[&dataItems->at(i)]);
             }
         }
     }
@@ -280,25 +361,280 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void refilter()
     {
-        if (!filter) return;
-
-        for (ui::DataPos i = 0; i < context->size(); ++i)
+        if (!filter)
         {
-            bool const accepted = filter->isItemAccepted(self, *context, i);
-            ui::Item const *item = &context->at(i);
+            firstAcceptedPos = 0;
+            return;
+        }
 
-            if (!accepted && mapping.contains(item))
+        firstAcceptedPos = ui::Data::InvalidPos;
+
+        if (virtualEnabled)
+        {
+            virtualPvsRange = Ranges();
+            virtualItemCount = 0;
+            virtualStrut->set(0);
+            clearWidgets();
+        }
+
+        for (ui::DataPos i = 0; i < dataItems->size(); ++i)
+        {
+            ui::Item const *item = &dataItems->at(i);
+            bool const accepted = filter->isItemAccepted(self, *dataItems, *item);
+
+            if (!virtualEnabled)
             {
-                // This widget needs to be removed.
-                deleteWidget(mapping[item]);
-                mapping.remove(item);
+                if (!accepted && mapping.contains(item))
+                {
+                    // This widget needs to be removed.
+                    removeItemWidget(i);
+                }
+                else if (accepted && !mapping.contains(item))
+                {
+                    // This widget may need to be created.
+                    addItemWidget(i, IgnoreFilter);
+                }
             }
-            else if (accepted && !mapping.contains(item))
+
+            if (accepted)
             {
-                // This widget may need to be created.
-                addItemWidget(i, IgnoreFilter);
+                ++virtualItemCount;
+
+                if (firstAcceptedPos == ui::Data::InvalidPos)
+                {
+                    firstAcceptedPos = i;
+                }
             }
         }
+
+        updateVirtualHeight();
+    }
+
+//- Child Widget Virtualization ---------------------------------------------------------
+
+    void updateVirtualHeight()
+    {
+        if (virtualEnabled)
+        {
+            estimatedHeight->set(virtualItemCount * float(averageItemHeight));
+        }
+    }
+
+    GuiWidget *firstChild() const
+    {
+        return &container->childWidgets().first()->as<GuiWidget>();
+    }
+
+    GuiWidget *lastChild() const
+    {
+        return &container->childWidgets().last()->as<GuiWidget>();
+    }
+
+    float virtualItemHeight(GuiWidget const *widget) const
+    {
+        if (float hgt = widget->rule().height().value())
+        {
+            return hgt;
+        }
+        return averageItemHeight;
+    }
+
+    duint maxVisibleItems() const
+    {
+        if (!virtualMin) return 0;
+        return duint(std::ceil((virtualMax->value() - virtualMin->value()) /
+                                float(averageItemHeight)));
+    }
+
+    void updateVirtualization()
+    {
+        if (!virtualEnabled || !virtualMin || !virtualMax ||
+            virtualMin->valuei() >= virtualMax->valuei())
+        {
+            return;
+        }
+
+        // Apply the pending strut reductions, if the widget heights are now known.
+        // TODO: Changes in item heights should be observed and immediately applied...
+        {
+            QMutableSetIterator<GuiWidget *> iter(pendingStrutAdjust);
+            while (iter.hasNext())
+            {
+                iter.next();
+                if (iter.value()->rule().height().value() > 0)
+                {
+                    // Adjust based on the difference to the average height.
+                    virtualStrut->set(de::max(0.f, virtualStrut->value() -
+                                              (iter.value()->rule().height().value() -
+                                               averageItemHeight)));
+                    iter.remove();
+                }
+            }
+        }
+
+        Rangef estimatedExtents; // Range covered by items (estimated).
+        if (container->childCount() > 0)
+        {
+            estimatedExtents = Rangef(firstChild()->rule().top()   .value(),
+                                       lastChild()->rule().bottom().value());
+        }
+        else
+        {
+            estimatedExtents = Rangef(virtualMin->value(), virtualMin->value());
+        }
+
+        duint const maxVisible = maxVisibleItems();
+        bool changed = true;
+
+        while (changed)
+        {
+            changed = false;
+
+            // Can we remove widgets?
+            while (container->childCount() > 1 &&
+                   lastChild()->rule().top().value() > virtualMax->value())
+            {
+                // Remove from the bottom.
+                ui::DataPos const pos = virtualPvsRange.end - 1;
+                if (reduceVirtualPvs(ui::Down))
+                {
+                    estimatedExtents.end -= virtualItemHeight(lastChild());
+                    removeItemWidget(pos);
+                    changed = true;
+                }
+                else break;
+            }
+
+            while (container->childCount() > 1 &&
+                   firstChild()->rule().bottom().value() < virtualMin->value())
+            {
+                // Remove from the top.
+                ui::DataPos const pos = virtualPvsRange.start;
+                if (reduceVirtualPvs(ui::Up))
+                {
+                    float const itemHeight = virtualItemHeight(firstChild());
+                    estimatedExtents.start += itemHeight;
+                    virtualStrut->set(de::max(0.f, virtualStrut->value() + itemHeight));
+                    removeItemWidget(pos);
+                    changed = true;
+                }
+                else break;
+            }
+
+            // Can we add more widgets in the bottom?
+            while (container->childCount() < virtualItemCount &&
+                   estimatedExtents.end < virtualMax->value() &&
+                   container->childCount() < maxVisible)
+            {
+                ui::DataPos pos = extendVirtualPvs(ui::Down);
+                if (pos != ui::Data::InvalidPos)
+                {
+                    estimatedExtents.end += averageItemHeight;
+                    addItemWidget(pos, AlwaysAppend | IgnoreFilter);
+                    changed = true;
+                }
+                else break;
+            }
+
+            // Add widgets to the top?
+            while (container->childCount() < virtualItemCount &&
+                   estimatedExtents.start > virtualMin->value() &&
+                   container->childCount() < maxVisible)
+            {
+                ui::DataPos pos = extendVirtualPvs(ui::Up);
+                if (pos != ui::Data::InvalidPos)
+                {
+                    GuiWidget *w = addItemWidget(pos, AlwaysPrepend | IgnoreFilter);
+                    pendingStrutAdjust.insert(w);
+                    estimatedExtents.start -= averageItemHeight;
+                    virtualStrut->set(de::max(0.f, virtualStrut->value() - averageItemHeight));
+                    changed = true;
+                }
+                else break;
+            }
+        }
+
+        if (virtualPvsRange.start == firstAcceptedPos)
+        {
+            virtualStrut->set(0);
+            pendingStrutAdjust.clear();
+        }
+    }
+
+    /**
+     * Extends the potentially visible range by one item.
+     * @param dir  Direction for expansion.
+     * @return Position of the newly added item.
+     */
+    ui::DataPos extendVirtualPvs(ui::Direction dir)
+    {
+        ui::DataPos pos;
+
+        if (dir == ui::Down)
+        {
+            pos = virtualPvsRange.end;
+            do
+            {
+                if (pos == dataItems->size())
+                {
+                    return ui::Data::InvalidPos; // Out of items.
+                }
+                ++pos;
+            }
+            while (!filter || !filter->isItemAccepted(self, *dataItems, dataItems->at(pos - 1)));
+
+            virtualPvsRange.end = pos;
+            //qDebug() << "PVS extended (down):" << virtualPvsRange.asText();
+            return pos - 1;
+        }
+        else
+        {
+            pos = virtualPvsRange.start;
+            do
+            {
+                if (pos == 0)
+                {
+                    return ui::Data::InvalidPos; // Out of items.
+                }
+                --pos;
+            }
+            while (!filter || !filter->isItemAccepted(self, *dataItems, dataItems->at(pos)));
+
+            virtualPvsRange.start = pos;
+            //qDebug() << "PVS extended (up):" << virtualPvsRange.asText();
+            return virtualPvsRange.start;
+        }
+    }
+
+    bool reduceVirtualPvs(ui::Direction dir)
+    {
+        if (virtualPvsRange.isEmpty()) return false;
+
+        if (dir == ui::Down)
+        {
+            do
+            {
+                --virtualPvsRange.end;
+            }
+            while (!virtualPvsRange.isEmpty() &&
+                   (!filter ||
+                    !filter->isItemAccepted(self, *dataItems,
+                                            dataItems->at(virtualPvsRange.end - 1))));
+            //qDebug() << "PVS reduced (down):" << virtualPvsRange.asText();
+        }
+        else if (dir == ui::Up)
+        {
+            do
+            {
+                ++virtualPvsRange.start;
+            }
+            while (!virtualPvsRange.isEmpty() &&
+                   (!filter ||
+                    !filter->isItemAccepted(self, *dataItems,
+                                            dataItems->at(virtualPvsRange.start))));
+            //qDebug() << "PVS reduced (up):" << virtualPvsRange.asText();
+        }
+        return true;
     }
 
     DENG2_PIMPL_AUDIENCE(WidgetCreation)
@@ -324,8 +660,8 @@ void ChildWidgetOrganizer::unsetContext()
 
 ui::Data const &ChildWidgetOrganizer::context() const
 {
-    DENG2_ASSERT(d->context != 0);
-    return *d->context;
+    DENG2_ASSERT(d->dataItems != 0);
+    return *d->dataItems;
 }
 
 GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Data::Pos pos) const
@@ -344,9 +680,14 @@ ChildWidgetOrganizer::IWidgetFactory &ChildWidgetOrganizer::widgetFactory() cons
     return *d->factory;
 }
 
-void ChildWidgetOrganizer::setFilter(ChildWidgetOrganizer::IFilter const &filter)
+void ChildWidgetOrganizer::setFilter(IFilter const &filter)
 {
     d->filter = &filter;
+}
+
+void ChildWidgetOrganizer::unsetFilter()
+{
+    d->filter = nullptr;
 }
 
 GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Item const &item) const
@@ -367,6 +708,56 @@ ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget)
 void ChildWidgetOrganizer::refilter()
 {
     d->refilter();
+}
+
+void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
+{
+    d->virtualEnabled = enabled;
+    d->virtualPvsRange = Ranges(0, 0);
+
+    if (d->virtualEnabled)
+    {
+        d->estimatedHeight = new ConstantRule(0);
+        d->virtualStrut    = new ConstantRule(0);
+    }
+    else
+    {
+        releaseRef(d->estimatedHeight);
+        releaseRef(d->virtualStrut);
+    }
+}
+
+void ChildWidgetOrganizer::setVisibleArea(Rule const &minimum, Rule const &maximum)
+{
+    changeRef(d->virtualMin, minimum);
+    changeRef(d->virtualMax, maximum);
+}
+
+bool ChildWidgetOrganizer::virtualizationEnabled() const
+{
+    return d->virtualEnabled;
+}
+
+Rule const &ChildWidgetOrganizer::virtualStrut() const
+{
+    DENG2_ASSERT(d->virtualEnabled);
+    return *d->virtualStrut;
+}
+
+void ChildWidgetOrganizer::setAverageChildHeight(int height)
+{
+    d->averageItemHeight = height;
+    d->updateVirtualHeight();
+}
+
+Rule const &ChildWidgetOrganizer::estimatedTotalHeight() const
+{
+    return *d->estimatedHeight;
+}
+
+void ChildWidgetOrganizer::updateVirtualization()
+{
+    d->updateVirtualization();
 }
 
 GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)

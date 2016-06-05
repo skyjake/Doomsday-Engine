@@ -427,6 +427,12 @@ DENG2_PIMPL(MenuWidget)
     {
         layout.clear();
 
+        if (organizer.virtualizationEnabled())
+        {
+            layout.setLeftTop(self.contentRule().left(),
+                              self.contentRule().top() + organizer.virtualStrut());
+        }
+
         foreach (Widget *child, self.childWidgets())
         {
             GuiWidget *w = child->maybeAs<GuiWidget>();
@@ -434,6 +440,16 @@ DENG2_PIMPL(MenuWidget)
 
             layout << *w;
         }
+    }
+
+    Rule const &contentHeight() const
+    {
+        if (organizer.virtualizationEnabled())
+        {
+            return OperatorRule::maximum(organizer.estimatedTotalHeight(),
+                                         organizer.virtualStrut() + layout.height());
+        }
+        return layout.height();
     }
 };
 
@@ -516,7 +532,7 @@ void MenuWidget::updateLayout()
 {
     d->relayout();
 
-    setContentSize(d->layout.width(), d->layout.height());
+    setContentSize(d->layout.width(), d->contentHeight());
 
     // Expanding policy causes the size of the menu widget to change.
     if (d->colPolicy == Expand)
@@ -525,7 +541,7 @@ void MenuWidget::updateLayout()
     }
     if (d->rowPolicy == Expand)
     {
-        rule().setInput(Rule::Height, d->layout.height() + margins().height());
+        rule().setInput(Rule::Height, d->contentHeight() + margins().height());
     }
 
     d->needLayout = false;
@@ -551,6 +567,13 @@ ChildWidgetOrganizer const &MenuWidget::organizer() const
     return d->organizer;
 }
 
+void MenuWidget::setVirtualizationEnabled(bool enabled, int averageItemHeight)
+{
+    d->organizer.setVirtualizationEnabled(enabled);
+    d->organizer.setAverageChildHeight(averageItemHeight);
+    d->needLayout = true;
+}
+
 ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
 {
     if (auto const *item = organizer().findItemForWidget(widget))
@@ -562,6 +585,11 @@ ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
 
 void MenuWidget::update()
 {
+    if (d->organizer.virtualizationEnabled())
+    {
+        d->organizer.updateVirtualization();
+    }
+
     if (d->needLayout)
     {
         updateLayout();

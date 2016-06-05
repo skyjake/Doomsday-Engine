@@ -105,6 +105,8 @@ public:
     ChildWidgetOrganizer &organizer();
     ChildWidgetOrganizer const &organizer() const;
 
+    void setVirtualizationEnabled(bool enabled, int averageItemHeight = 0);
+
     template <typename WidgetType>
     WidgetType &itemWidget(ui::Item const &item) const {
         return organizer().itemWidget(item)->as<WidgetType>();

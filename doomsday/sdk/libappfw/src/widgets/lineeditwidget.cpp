@@ -90,7 +90,7 @@ DENG_GUI_PIMPL(LineEditWidget)
      */
     void updateStyle()
     {
-        font   = &self.font();
+        font = &self.font();
 
         updateBackground();
 
@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(LineEditWidget)
         wraps.clear();
         composer.setWrapping(wraps);
 
-        contentChanged();
+        contentChanged(false);
     }
 
     int calculateHeight()
@@ -217,11 +217,13 @@ DENG_GUI_PIMPL(LineEditWidget)
         }
     }
 
-    void contentChanged()
+    void contentChanged(bool notify)
     {
         composer.setText(self.text());
-
-        emit self.editorContentChanged();
+        if (notify)
+        {
+            emit self.editorContentChanged();
+        }
     }
 
     void atlasContentRepositioned(Atlas &)
@@ -349,7 +351,7 @@ void LineEditWidget::viewResized()
 
 void LineEditWidget::focusGained()
 {
-    d->contentChanged();
+    d->contentChanged(false /* don't notify */);
 
     if (d->hint)
     {
@@ -359,7 +361,7 @@ void LineEditWidget::focusGained()
 
 void LineEditWidget::focusLost()
 {
-    d->contentChanged();
+    d->contentChanged(false /* don't notify */);
 
     if (d->hint && d->showingHint())
     {
@@ -510,7 +512,7 @@ void LineEditWidget::cursorMoved()
 
 void LineEditWidget::contentChanged()
 {
-    d->contentChanged();
+    d->contentChanged(true);
 
     if (hasRoot())
     {

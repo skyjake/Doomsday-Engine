@@ -85,17 +85,17 @@ public:
         virtual ~IFilter() {}
 
         /**
-         * Determines whether an item should be ignored by the organizer.
+         * Determines whether an item should be accepted or ignored by the organizer.
          *
          * @param organizer  Which organizer is asking the question.
          * @param data       Data context.
-         * @param pos        Position of the item in the context.
+         * @param item       Item to check.
          *
          * @return @c true to accept item, @c false to ignore it.
          */
         virtual bool isItemAccepted(ChildWidgetOrganizer const &organizer,
                                     ui::Data const &data,
-                                    ui::Data::Pos pos) const = 0;
+                                    ui::Item const &item) const = 0;
     };
 
 public:
@@ -118,6 +118,8 @@ public:
      * @param filter  Filtering object.
      */
     void setFilter(IFilter const &filter);
+
+    void unsetFilter();
 
     /**
      * Sets the data context of the organizer. If there was a previous context,
@@ -143,6 +145,51 @@ public:
      * created and removed as needed according to the filter.
      */
     void refilter();
+
+//- Child Widget Virtualization ---------------------------------------------------------
+
+    /**
+     * Enables or disables child widget virtualization. When enabled, widgets are
+     * only created for items that are potentially visible.
+     *
+     * Virtualization is necessary when the set of data items is very large.
+     *
+     * If enabled, you must also provide the top and bottom rules for the visible
+     * area, and the approximated average child widget height.
+     *
+     * @param enabled  Enable or disable child virtualization.
+     */
+    void setVirtualizationEnabled(bool enabled);
+
+    void setVisibleArea(Rule const &minimum, Rule const &maximum);
+
+    bool virtualizationEnabled() const;
+
+    /**
+     * Returns the rule that defines the height of all the currently nonexistent widgets
+     * above the first visible child. This will be automatically updated as children are
+     * recycled and the top child changes.
+     *
+     * The initial value is zero.
+     */
+    Rule const &virtualStrut() const;
+
+    /**
+     * The average child height is used when estimating the maximum number of widgets
+     * that can be created.
+     *
+     * @param height  Average child height.
+     */
+    void setAverageChildHeight(int height);
+
+    Rule const &estimatedTotalHeight() const;
+
+    /**
+     * After child widgets have been moved around, this must be called to update the
+     * potentially visible item range and to recycle any widgets that are outside the
+     * range. Items entering the range will be given widgets.
+     */
+    void updateVirtualization();
 
 public:
     /**

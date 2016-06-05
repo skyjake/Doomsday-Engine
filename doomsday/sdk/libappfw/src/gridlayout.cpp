@@ -82,28 +82,36 @@ DENG2_PIMPL(GridLayout)
     SequentialLayout *current;
     bool needTotalUpdate;
 
+    IndirectRule *publicWidth;
+    IndirectRule *publicHeight;
+
     Instance(Public *i, Rule const &x, Rule const &y, Mode layoutMode)
-        : Base(i),
-          mode(layoutMode),
-          maxCols(1),
-          maxRows(1),
-          initialX(holdRef(x)),
-          initialY(holdRef(y)),
-          baseX(holdRef(x)),
-          baseY(holdRef(y)),
-          fixedCellWidth(0),
-          fixedCellHeight(0),
-          colPad(0),
-          rowPad(0),
-          zeroRule(new ConstantRule(0)),
-          totalWidth(new ConstantRule(0)),
-          totalHeight(new ConstantRule(0)),
-          current(0),
-          needTotalUpdate(false)
+        : Base(i)
+        , mode(layoutMode)
+        , maxCols(1)
+        , maxRows(1)
+        , initialX(holdRef(x))
+        , initialY(holdRef(y))
+        , baseX(holdRef(x))
+        , baseY(holdRef(y))
+        , fixedCellWidth(0)
+        , fixedCellHeight(0)
+        , colPad(0)
+        , rowPad(0)
+        , zeroRule(new ConstantRule(0))
+        , totalWidth(new ConstantRule(0))
+        , totalHeight(new ConstantRule(0))
+        , current(0)
+        , needTotalUpdate(false)
+        , publicWidth(new IndirectRule)
+        , publicHeight(new IndirectRule)
     {}
 
     ~Instance()
     {
+        publicWidth->unsetSource();
+        publicHeight->unsetSource();
+
         releaseRef(initialX);
         releaseRef(initialY);
         releaseRef(baseX);
@@ -115,6 +123,8 @@ DENG2_PIMPL(GridLayout)
         releaseRef(zeroRule);
         releaseRef(totalWidth);
         releaseRef(totalHeight);
+        releaseRef(publicWidth);
+        releaseRef(publicHeight);
 
         foreach (Rule const *rule, fixedColWidths.values())
         {
@@ -135,6 +145,8 @@ DENG2_PIMPL(GridLayout)
         delete current;
         current = 0;
 
+        publicWidth ->unsetSource();
+        publicHeight->unsetSource();
         needTotalUpdate = true;
 
         widgets.clear();
@@ -470,6 +482,9 @@ DENG2_PIMPL(GridLayout)
         if (!totalWidth)  totalWidth  = new ConstantRule(0);
         if (!totalHeight) totalHeight = new ConstantRule(0);
 
+        publicWidth ->setSource(*totalWidth);
+        publicHeight->setSource(*totalHeight);
+
         needTotalUpdate = false;
     }
 };
@@ -697,13 +712,13 @@ int GridLayout::widgetCellSpan(GuiWidget const &widget) const
 Rule const &GridLayout::width() const
 {
     d->updateTotal();
-    return *d->totalWidth;
+    return *d->publicWidth;
 }
 
 Rule const &GridLayout::height() const
 {
     d->updateTotal();
-    return *d->totalHeight;
+    return *d->publicHeight;
 }
 
 Rule const &GridLayout::columnLeft(int col) const

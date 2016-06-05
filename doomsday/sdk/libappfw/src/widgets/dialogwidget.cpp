@@ -276,20 +276,20 @@ public ChildWidgetOrganizer::IFilter
         releaseRef(maxHeight);
     }
 
-    bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &data, ui::Data::Pos pos) const
+    bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &, ui::Item const &it) const
     {
         // Only dialog buttons allowed in the dialog button menus.
-        if (!data.at(pos).is<DialogButtonItem>()) return false;
+        if (!it.is<DialogButtonItem>()) return false;
 
         if (&organizer == &buttons->organizer())
         {
             // Non-Action buttons only.
-            return !data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
+            return !it.as<DialogButtonItem>().role().testFlag(Action);
         }
         else if (&organizer == &extraButtons->organizer())
         {
             // Only Action buttons allowed.
-            return data.at(pos).as<DialogButtonItem>().role().testFlag(Action);
+            return it.as<DialogButtonItem>().role().testFlag(Action);
         }
 
         DENG2_ASSERT(false); // unexpected
