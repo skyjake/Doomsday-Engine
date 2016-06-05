@@ -230,11 +230,6 @@ DENG2_PIMPL(DataBundle)
             {
                 parseSnowberryInfo(*sbInfo, meta);
             }
-
-            if (!dataFile.extension().compareWithoutCase(".box"))
-            {
-                meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + " box");
-            }
         }
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
