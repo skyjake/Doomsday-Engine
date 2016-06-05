@@ -32,6 +32,8 @@ class HomeItemWidget;
  */
 class PackagesWidget : public de::GuiWidget, public de::IPersistent
 {
+    Q_OBJECT
+
 public:
     /// Determines whether an item should be shown as highlighted or not.
     class IPackageStatus
@@ -50,6 +52,8 @@ public:
 
 public:
     PackagesWidget(de::String const &name = "");
+
+    void setFilterEditorMinimumY(de::Rule const &minY);
 
     void setPackageStatus(IPackageStatus const &packageStatus);
     void setButtonHandler(IButtonHandler &buttonHandler);
@@ -85,6 +89,9 @@ public:
 
 public slots:
     void refreshPackages();
+
+signals:
+    void itemCountChanged(unsigned int shownItems, unsigned int totalItems);
 
 private:
     DENG2_PRIVATE(d)

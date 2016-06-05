@@ -90,6 +90,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     LoopCallback mainCall;
     LineEditWidget *search;
     ButtonWidget *clearSearch;
+    Rule const *searchMinY = nullptr;
     HomeMenuWidget *menu;
     String buttonLabels[2];
     DotPath buttonImages[2];
@@ -328,8 +329,11 @@ DENG_GUI_PIMPL(PackagesWidget)
         buttonLabels[0] = tr("Load");
         buttonLabels[1] = tr("Unload");
 
-        // Search/filter terms.
+        self.add(menu = new HomeMenuWidget);
         self.add(search = new LineEditWidget);
+        self.add(clearSearch = new ButtonWidget);
+
+        // Search/filter terms.
         search->rule()
                 .setInput(Rule::Left,  self.rule().left())
                 .setInput(Rule::Right, self.rule().right())
@@ -338,7 +342,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         search->margins().setRight(style().fonts().font("default").height() +
                                    rule("gap"));
 
-        self.add(clearSearch = new ButtonWidget);
         clearSearch->set(Background());
         clearSearch->setStyleImage("close.ring", "default");
         clearSearch->setSizePolicy(ui::Expand, ui::Expand);
@@ -351,13 +354,12 @@ DENG_GUI_PIMPL(PackagesWidget)
         });
 
         // Filtered list of packages.
-        self.add(menu = new HomeMenuWidget);
         menu->setBehavior(ChildVisibilityClipping);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
                 .setInput(Rule::Left,  self.rule().left())
                 .setInput(Rule::Right, self.rule().right())
-                .setInput(Rule::Top,   search->rule().bottom());
+                .setInput(Rule::Top,   self.rule().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
         menu->organizer().setFilter(*this);
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule("unit").valuei() +
@@ -412,6 +414,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 menu->items() << new PackageItem(pack);
             }
         }
+
+        emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
 
     void updateItems()
@@ -455,6 +459,8 @@ DENG_GUI_PIMPL(PackagesWidget)
         if (showHidden) filterTerms.removeAll(TAG_HIDDEN);
 
         menu->organizer().refilter();
+
+        emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
 
     void focusFirstListedPackge()
@@ -518,6 +524,11 @@ PackagesWidget::PackagesWidget(String const &name)
     rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
 
     refreshPackages();
+}
+
+void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
+{
+    d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top()));
 }
 
 void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)

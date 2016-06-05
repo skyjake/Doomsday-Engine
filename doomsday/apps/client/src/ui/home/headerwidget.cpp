@@ -166,6 +166,11 @@ PanelWidget &HeaderWidget::infoPanel()
     return *d->infoPanel;
 }
 
+de::ButtonWidget &HeaderWidget::menuButton()
+{
+    return *d->menuButton;
+}
+
 void HeaderWidget::setLogoImage(DotPath const &imageId)
 {
     d->logo->setStyleImage(imageId);
