@@ -34,11 +34,15 @@
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 
+#include <QTimer>
+
 using namespace de;
 
 static String const VAR_TITLE ("title");
 static String const VAR_TAGS  ("tags");
 static String const TAG_HIDDEN("hidden");
+
+static TimeDelta const REFILTER_DELAY(0.2);
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus
 {
@@ -92,6 +96,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     QStringList filterTerms;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
+    QTimer refilterTimer;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
     IButtonHandler       *buttonHandler = &loadOrUnloadPackage;
@@ -362,6 +367,10 @@ DENG_GUI_PIMPL(PackagesWidget)
                          [this] () { updateFilterTerms(); });
         QObject::connect(search, &LineEditWidget::enterPressed,
                          [this] () { focusFirstListedPackge(); });
+
+        refilterTimer.setSingleShot(true);
+        refilterTimer.setInterval(int(REFILTER_DELAY.asMilliSeconds()));
+        QObject::connect(&refilterTimer, &QTimer::timeout, [this] () { updateFilterTerms(true); });
     }
 
     ~Instance()
@@ -414,15 +423,28 @@ DENG_GUI_PIMPL(PackagesWidget)
         });
     }
 
-    void updateFilterTerms()
+    void updateFilterTerms(bool immediately = false)
     {
-        // Refiltering will potentially alter the widget tree, so doing it during
-        // event handling is not a great idea.
-        mainCall.enqueue([this] ()
+        if (!immediately)
         {
-            /// @todo Parse quoted terms. -jk
-            setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
-        });
+            if (!refilterTimer.isActive())
+            {
+                menu->setOpacity(0.f, REFILTER_DELAY);
+            }
+            refilterTimer.start();
+        }
+        else
+        {
+            // Refiltering will potentially alter the widget tree, so doing it during
+            // event handling is not a great idea.
+            mainCall.enqueue([this] ()
+            {
+                /// @todo Parse quoted terms. -jk
+                setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+
+                menu->setOpacity(1.f, REFILTER_DELAY);
+            });
+        }
     }
 
     void setFilterTerms(QStringList const &terms)
