@@ -24,7 +24,6 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 #include "clientapp.h"
-#include "versioninfo.h"
 #include <de/GuiApp>
 #include <de/Log>
 #include <de/ProgressWidget>
@@ -43,7 +42,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ProgressWidget *checking;
     ToggleWidget *autoCheck;
     //ButtonWidget *settings;
-    VersionInfo latestVersion;
+    Version latestVersion;
     String changeLog;
 
     Instance(Public *d) : Base(*d)
@@ -51,7 +50,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         initForChecking();
     }
 
-    Instance(Public *d, VersionInfo const &latest) : Base(*d)
+    Instance(Public *d, Version const &latest) : Base(*d)
     {
         initForResult(latest);
     }
@@ -62,7 +61,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         showProgress(true, 0);
     }
 
-    void initForResult(VersionInfo const &latest)
+    void initForResult(Version const &latest)
     {
         init();
         updateResult(latest, 0);
@@ -100,13 +99,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self.updateLayout();
     }
 
-    void updateResult(VersionInfo const &latest, TimeDelta showSpan)
+    void updateResult(Version const &latest, TimeDelta showSpan)
     {
         showProgress(false, showSpan);
 
         latestVersion = latest;
 
-        VersionInfo currentVersion;
+        Version currentVersion = Version::currentBuild();
 
         String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         String builtInType = (String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
@@ -190,13 +189,13 @@ UpdateAvailableDialog::UpdateAvailableDialog()
     : MessageDialog("updateavailable"), d(new Instance(this))
 {}
 
-UpdateAvailableDialog::UpdateAvailableDialog(VersionInfo const &latestVersion, String changeLogUri)
+UpdateAvailableDialog::UpdateAvailableDialog(Version const &latestVersion, String changeLogUri)
     : MessageDialog("updateavailable"), d(new Instance(this, latestVersion))
 {
     d->changeLog = changeLogUri;
 }
 
-void UpdateAvailableDialog::showResult(VersionInfo const &latestVersion, String changeLogUri)
+void UpdateAvailableDialog::showResult(Version const &latestVersion, String changeLogUri)
 {
     d->changeLog = changeLogUri;
     d->updateResult(latestVersion, SHOW_ANIM_SPAN);

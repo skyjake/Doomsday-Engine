@@ -2136,7 +2136,7 @@ D_CMD(Version)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " %s") << Version::currentBuild().asText();
     LOG_SCR_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
             "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
 
@@ -2209,7 +2209,7 @@ D_CMD(Help)
 #endif
 */
 
-    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " %s Console") << Version::currentBuild().asText();
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 

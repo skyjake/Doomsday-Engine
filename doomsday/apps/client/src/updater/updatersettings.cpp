@@ -1,4 +1,4 @@
-/** @file updatersettings.cpp Persistent settings for automatic updates. 
+/** @file updatersettings.cpp Persistent settings for automatic updates.
  * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -20,7 +20,6 @@
  */
 
 #include "updater/updatersettings.h"
-#include "versioninfo.h"
 #include <QDateTime>
 #include <QDesktopServices>
 #include <de/Record>

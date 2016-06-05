@@ -57,7 +57,6 @@
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
-#include "versioninfo.h"
 
 #include <de/App>
 #include <de/CommandLine>
@@ -174,7 +173,7 @@ DENG2_PIMPL(Updater)
     bool alwaysShowNotification;
     bool savingSuggested = false;
 
-    VersionInfo latestVersion;
+    Version latestVersion;
     QString latestPackageUri;
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
@@ -342,9 +341,9 @@ DENG2_PIMPL(Updater)
             latestPackageUri2 = "";
         }
 
-        latestVersion = VersionInfo(map["version"].toString(), map["build_uniqueid"].toInt());
+        latestVersion = Version(map["version"].toString(), map["build_uniqueid"].toInt());
 
-        VersionInfo currentVersion;
+        Version const currentVersion = Version::currentBuild();
 
         LOG_MSG(_E(b) "Received version information:\n" _E(.)
                 " - installed version: " _E(>) "%s ") << currentVersion.asText();
@@ -445,7 +444,7 @@ DENG2_PIMPL(Updater)
     void startInstall(de::String distribPackagePath)
     {
 #ifdef MACOSX
-        de::String volName = "Doomsday Engine " + latestVersion.base();
+        de::String volName = "Doomsday Engine " + latestVersion.baseNumber();
 
 #ifdef DENG2_QT_5_0_OR_NEWER
         QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

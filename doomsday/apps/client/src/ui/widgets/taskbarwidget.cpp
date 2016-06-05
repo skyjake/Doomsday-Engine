@@ -41,7 +41,6 @@
 #include "client/cl_def.h" // clientPaused
 #include "ui/ui_main.h"
 #include "ui/progress.h"
-#include "versioninfo.h"
 #include "dd_main.h"
 
 #include <doomsday/filesys/fs_main.h>
@@ -228,14 +227,14 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         if (layoutMode == NormalLayout)
         {
-            VersionInfo currentVersion;
+            Version const currentVersion = Version::currentBuild();
             if (String(DOOMSDAY_RELEASE_TYPE) == "Stable")
             {
-                text = _E(b) + currentVersion.base();
+                text = _E(b) + currentVersion.baseNumber();
             }
             else
             {
-                text = _E(b) + currentVersion.base() + " " +
+                text = _E(b) + currentVersion.baseNumber() + " " +
                        _E(l) + String("#%1").arg(currentVersion.build);
             }
         }

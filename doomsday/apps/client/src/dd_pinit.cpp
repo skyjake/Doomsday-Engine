@@ -87,7 +87,7 @@ DENG_DECLARE_API(InternalData) =
 #ifdef __CLIENT__
 de::String DD_ComposeMainWindowTitle()
 {
-    de::String title = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
+    de::String title = DOOMSDAY_NICENAME " " + Version::currentBuild().baseNumber();
 
     if(App_GameLoaded() && gx.GetVariable)
     {

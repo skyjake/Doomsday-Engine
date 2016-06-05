@@ -24,7 +24,7 @@
 #define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 
 #include <de/MessageDialog>
-#include "versioninfo.h"
+#include <de/Version>
 
 class UpdateAvailableDialog : public de::MessageDialog
 {
@@ -35,10 +35,10 @@ public:
     UpdateAvailableDialog();
 
     /// The dialog is initialized with the result page visible.
-    UpdateAvailableDialog(VersionInfo const& latestVersion, de::String changeLogUri);
+    UpdateAvailableDialog(de::Version const& latestVersion, de::String changeLogUri);
 
 public slots:
-    void showResult(VersionInfo const &latestVersion, de::String changeLogUri);
+    void showResult(de::Version const &latestVersion, de::String changeLogUri);
     void showWhatsNew();
     void editSettings();
 

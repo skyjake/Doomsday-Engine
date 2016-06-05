@@ -52,9 +52,10 @@ Version Version::currentBuild()
     return v;
 }
 
-Version::Version(String const &version, int buildNumber) : build(buildNumber)
+Version::Version(String const &version, int buildNumber)
 {
     parseVersionString(version);
+    build = buildNumber;
 }
 
 bool Version::isValid() const
@@ -65,15 +66,24 @@ bool Version::isValid() const
 
 String Version::base() const
 {
-    String v = String("%1.%2.%3").arg(major).arg(minor).arg(patch);
+    String v = baseNumber();
     if (!label.isEmpty()) v += String("-%1").arg(label);
     return v;
+}
+
+String Version::baseNumber() const
+{
+    if (patch != 0)
+    {
+        return String("%1.%2.%3").arg(major).arg(minor).arg(patch);
+    }
+    return String("%1.%2").arg(major).arg(minor);
 }
 
 String Version::asText() const
 {
     if (!build) return base();
-    return base() + String(" Build %1").arg(build);
+    return base() + String(" [#%1]").arg(build);
 }
 
 void Version::parseVersionString(String const &version)

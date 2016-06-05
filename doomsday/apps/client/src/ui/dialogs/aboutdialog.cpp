@@ -21,7 +21,6 @@
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"
-#include "versioninfo.h"
 
 #include "dd_main.h"
 #include "dd_def.h"
@@ -63,8 +62,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     logo->setImage(style().images().image("logo.px256"));
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
-    VersionInfo version;
-    de::Version ver2 = de::Version::currentBuild();
+    de::Version const version = de::Version::currentBuild();
 
     // Set up the contents of the widget.
     LabelWidget *title = LabelWidget::newWithText(String("%1 %2.%3")
@@ -78,17 +76,17 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
 
     LabelWidget *info = new LabelWidget;
     String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7%9\n\n%1 (%2-%8)%3")
-            .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
-                 ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
-            .arg(ver2.cpuBits())
-            .arg(ver2.isDebugBuild()? tr(" Debug") : "")
+            .arg(version.operatingSystem() == "windows"? tr("Windows") :
+                 version.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
+            .arg(version.cpuBits())
+            .arg(version.isDebugBuild()? tr(" Debug") : "")
             .arg(DOOMSDAY_RELEASE_TYPE)
-            .arg(version.base())
-            .arg(ver2.build)
+            .arg(version.baseNumber())
+            .arg(version.build)
             .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
                  .asDateTime().toString(Qt::SystemLocaleShortDate))
             .arg(tr("bit"))
-            .arg(ver2.gitDescription.isEmpty()? "" : ("\n" _E(s)_E(F) + ver2.gitDescription + _E(.)_E(.)));
+            .arg(version.gitDescription.isEmpty()? "" : ("\n" _E(s)_E(F) + version.gitDescription + _E(.)_E(.)));
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
 

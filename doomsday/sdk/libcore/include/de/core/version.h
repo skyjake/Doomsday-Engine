@@ -86,6 +86,11 @@ public:
     String base() const;
 
     /**
+     * Forms a version string in the form "x.y.z".
+     */
+    String baseNumber() const;
+
+    /**
      * Forms a version string that includes the build number (unless it is
      * zero).
      */
