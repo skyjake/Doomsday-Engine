@@ -136,7 +136,7 @@ public:
 
     GuiWidget *itemWidget(ui::Data::Pos pos) const;
     GuiWidget *itemWidget(ui::Item const &item) const;
-    GuiWidget *itemWidget(de::String const &label) const;
+    GuiWidget *itemWidget(String const &label) const;
 
     ui::Item const *findItemForWidget(GuiWidget const &widget) const;
 
@@ -145,6 +145,11 @@ public:
      * created and removed as needed according to the filter.
      */
     void refilter();
+
+    /**
+     * Number of items currently being organized. This is affected by the filtering.
+     */
+    dsize itemCount() const;
 
 //- Child Widget Virtualization ---------------------------------------------------------
 

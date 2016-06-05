@@ -114,7 +114,7 @@ DENG_GUI_PIMPL(TabWidget)
             bool const sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
             w.setFont(sel? "tab.selected" : "tab.label");
-            w.setOpacity(sel? 1 : 0.7, 0.4);
+            w.setOpacity(sel? 1.f : 0.7f, 0.4);
             if (!invertedStyle)
             {
                 w.setTextColor(sel? "tab.selected" : "text");

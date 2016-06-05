@@ -710,6 +710,11 @@ void ChildWidgetOrganizer::refilter()
     d->refilter();
 }
 
+dsize ChildWidgetOrganizer::itemCount() const
+{
+    return d->virtualItemCount;
+}
+
 void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
 {
     d->virtualEnabled = enabled;
