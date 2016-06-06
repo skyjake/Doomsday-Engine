@@ -368,6 +368,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void updateHighlightedTab()
     {
+        if (columns.isEmpty()) return;
+
         // Are we still in a valid tab?
         if (tabs->current() >= tabs->items().size())
         {
