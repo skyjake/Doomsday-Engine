@@ -207,6 +207,10 @@ File const *File::source() const
 {
     DENG2_GUARD(this);
 
+    if (&target() != this)
+    {
+        return target().source();
+    }
     if (d->source != this)
     {
         return d->source->source();
@@ -218,6 +222,10 @@ File *File::source()
 {
     DENG2_GUARD(this);
 
+    if (&target() != this)
+    {
+        return target().source();
+    }
     if (d->source != this)
     {
         return d->source->source();

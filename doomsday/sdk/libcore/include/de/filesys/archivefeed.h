@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ARCHIVEFEED_H
@@ -85,6 +85,11 @@ public:
      * Returns the base path within the archive.
      */
     String const &basePath() const;
+
+    /**
+     * Returns the file where the archive is stored (in a serialized format).
+     */
+    File const &archiveSourceFile() const;
 
     /**
      * Serializes the contents of the in-memory Archive to the File associated with

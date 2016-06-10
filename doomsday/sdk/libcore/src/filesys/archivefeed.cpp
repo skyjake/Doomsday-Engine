@@ -293,6 +293,15 @@ String const &ArchiveFeed::basePath() const
     return d->basePath;
 }
 
+File const &ArchiveFeed::archiveSourceFile() const
+{
+    if (d->file)
+    {
+        return *d->file;
+    }
+    throw InvalidSourceError("ArchiveFeed::archiveSourceFile", "Archive source file is gone");
+}
+
 void ArchiveFeed::rewriteFile()
 {
     if (d->parentFeed)

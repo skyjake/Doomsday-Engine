@@ -298,6 +298,8 @@ public:
      */
     String escaped() const;
 
+    String truncateWithEllipsis(int maxLength) const;
+
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.

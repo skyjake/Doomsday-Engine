@@ -542,6 +542,15 @@ String String::escaped() const
     return esc;
 }
 
+String String::truncateWithEllipsis(int maxLength) const
+{
+    if (size() <= maxLength)
+    {
+        return *this;
+    }
+    return left(maxLength/2 - 1) + "..." + right(maxLength/2 - 1);
+}
+
 void String::advanceFormat(String::const_iterator &i, String::const_iterator const &end)
 {
     ++i;
