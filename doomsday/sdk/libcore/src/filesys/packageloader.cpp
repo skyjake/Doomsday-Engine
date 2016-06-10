@@ -392,13 +392,16 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
 
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
-    QMap<int, File const *> files; // sorted in package order
-    for (Package const *pkg : loadedPackages().values())
-    {
-        files.insert(pkg->order(), &pkg->sourceFile());
-    }
+    QList<Package *> pkgs = loadedPackages().values();
+    qSort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
+        return a->order() < b->order();
+    });
+
     FS::FoundFiles sorted;
-    for (auto i : files) sorted.push_back(const_cast<File *>(i));
+    for (auto p : pkgs)
+    {
+        sorted.push_back(const_cast<File *>(&p->sourceFile()));
+    }
     return sorted;
 }
 
@@ -466,12 +469,17 @@ StringList PackageLoader::findAllPackages() const
 {
     StringList all;
     for (QString typeName : QStringList({ DENG2_TYPE_NAME(Folder),
-                                         DENG2_TYPE_NAME(ArchiveFolder),
-                                         DENG2_TYPE_NAME(LinkFile) }))
+                                          DENG2_TYPE_NAME(ArchiveFolder),
+                                          DENG2_TYPE_NAME(LinkFile) }))
     {
         d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);
     }
     return all;
+}
+
+PackageLoader &PackageLoader::get()
+{
+    return App::packageLoader();
 }
 
 PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)

@@ -168,6 +168,8 @@ public:
 
     static QStringList tags(File const &packageFile);
 
+    static bool matchTags(File const &packageFile, String const &tagRegExp);
+
     static QStringList tags(String const& tagsString);
 
     static StringList requires(File const &packageFile);
@@ -209,6 +211,7 @@ public:
     static Time containerOfFileModifiedAt(File const &file);
 
     static String const VAR_PACKAGE;
+    static String const VAR_TITLE;
 
 private:
     DENG2_PRIVATE(d)

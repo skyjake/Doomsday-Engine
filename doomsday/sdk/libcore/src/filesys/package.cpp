@@ -29,12 +29,14 @@
 namespace de {
 
 String const Package::VAR_PACKAGE("package");
+String const Package::VAR_TITLE  ("title");
 
-static String const PACKAGE_ORDER("package.__order__");
+static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
-static String const PACKAGE_REQUIRES("package.requires");
+static String const PACKAGE_REQUIRES   ("package.requires");
+static String const PACKAGE_TAGS       ("package.tags");
 
-static String const VAR_ID("ID");
+static String const VAR_ID  ("ID");
 static String const VAR_PATH("path");
 
 Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
@@ -330,7 +332,12 @@ Record &Package::initializeMetadata(File &packageFile, String const &id)
 
 QStringList Package::tags(File const &packageFile)
 {
-    return tags(packageFile.objectNamespace().gets(QStringLiteral("package.tags")));
+    return tags(packageFile.objectNamespace().gets(PACKAGE_TAGS));
+}
+
+bool Package::matchTags(File const &packageFile, String const &tagRegExp)
+{
+    return QRegExp(tagRegExp).indexIn(packageFile.objectNamespace().gets(PACKAGE_TAGS, "")) >= 0;
 }
 
 QStringList Package::tags(String const &tagsString)

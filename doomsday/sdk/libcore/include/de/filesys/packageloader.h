@@ -146,6 +146,8 @@ public:
      */
     StringList findAllPackages() const;
 
+    static PackageLoader &get();
+
 private:
     DENG2_PRIVATE(d)
 };
