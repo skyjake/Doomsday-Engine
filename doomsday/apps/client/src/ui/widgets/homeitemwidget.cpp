@@ -367,7 +367,7 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
     }
     // Use a generic logo, some files are missing.
     QImage img(64, 64, QImage::Format_ARGB32);
-    img.fill(Qt::white);
+    img.fill(Qt::black);
     return img;
 }
 

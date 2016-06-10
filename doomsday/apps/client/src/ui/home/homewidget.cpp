@@ -39,6 +39,8 @@
 #include <de/StyleProceduralImage>
 #include <de/TabWidget>
 
+#include <QTimer>
+
 using namespace de;
 
 static TimeDelta const SCROLL_SPAN = .5;
@@ -71,6 +73,7 @@ DENG_GUI_PIMPL(HomeWidget)
     AnimationRule *scrollOffset;
     ButtonWidget *moveLeft;
     ButtonWidget *moveRight;
+    QTimer moveShowTimer;
     ButtonWidget *taskBarHintButton;
 
     int restoredOffsetTab = -1;
@@ -130,6 +133,16 @@ DENG_GUI_PIMPL(HomeWidget)
                 taskBarHintButton->enable();
                 taskBarHintButton->setOpacity(.66f, 0.5);
             });
+        });
+
+        // The navigation buttons should be hidden with a delay or otherwise the user
+        // may inadvertely click on them right after they're gone.
+        moveShowTimer.setSingleShot(true);
+        moveShowTimer.setInterval(SCROLL_SPAN.asMilliSeconds());
+        QObject::connect(&moveShowTimer, &QTimer::timeout, [this] ()
+        {
+            moveLeft ->show(tabs->current() != 0);
+            moveRight->show(tabs->current() < tabs->items().size() - 1);
         });
     }
 
@@ -202,7 +215,7 @@ DENG_GUI_PIMPL(HomeWidget)
         int index = 0;
         for (Column const &col : allColumns)
         {
-            if (col.widget->isVisible())
+            if (!col.widget->behavior().testFlag(Widget::Hidden))
             {
                 tabs->items() << new TabItem(col.widget->tabHeading(), index++);
             }
@@ -292,16 +305,14 @@ DENG_GUI_PIMPL(HomeWidget)
                                 self.rule().top(), ui::Right);
         for (Widget *widget : self.childWidgets())
         {
-            if (widget->isHidden())
+            if (!widget->behavior().testFlag(Widget::Hidden))
             {
-                continue;
+                if (ColumnWidget *column = widget->maybeAs<ColumnWidget>())
+                {
+                    layout << *column;
+                    columns << column;
+                }
             }
-            if (ColumnWidget *column = widget->maybeAs<ColumnWidget>())
-            {
-                layout << *column;
-                columns << column;
-            }
-
         }
         updateHighlightedTab();
     }
@@ -388,6 +399,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Set new highlight.
         columns[tabs->currentItem().data().toInt()]->setHighlighted(true);
+
+        moveShowTimer.start();
     }
 
     int highlightedTab() const
