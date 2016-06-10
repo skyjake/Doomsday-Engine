@@ -38,6 +38,9 @@ public:
     DocumentPopupWidget(String const &name = "");
     DocumentPopupWidget(ButtonWidget *actionButton, String const &name = "");
 
+    void setPreferredHeight(Rule const &preferredHeight);
+    void setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight);
+
     DocumentWidget &document();
     DocumentWidget const &document() const;
 

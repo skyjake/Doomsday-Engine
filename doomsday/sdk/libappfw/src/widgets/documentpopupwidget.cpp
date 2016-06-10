@@ -65,6 +65,24 @@ DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String cons
     setContent(box);
 }
 
+void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight)
+{
+    d->doc->rule().setInput(Rule::Height,
+                OperatorRule::minimum(preferredHeight,
+                                      d->doc->contentRule().height() +
+                                      d->doc->margins().height()));
+}
+
+void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight)
+{
+    d->doc->rule().setInput(Rule::Height,
+            OperatorRule::minimum(
+                OperatorRule::minimum(preferredHeight,
+                                      d->doc->contentRule().height() +
+                                      d->doc->margins().height()),
+                maxHeight));
+}
+
 DocumentWidget &DocumentPopupWidget::document()
 {
     return *d->doc;

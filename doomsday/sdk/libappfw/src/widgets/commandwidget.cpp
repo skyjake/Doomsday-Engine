@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/CommandWidget"
@@ -40,12 +40,8 @@ DENG_GUI_PIMPL(CommandWidget)
 
         // Height for the content: depends on the document height (plus margins), but at
         // most 400; never extend outside the view, though.
-        popup->document().rule().setInput(Rule::Height,
-                OperatorRule::minimum(
-                    OperatorRule::minimum(rule("editor.completion.height"),
-                                          popup->document().contentRule().height() +
-                                          popup->document().margins().height()),
-                    self.rule().top() - rule("gap")));
+        popup->setPreferredHeight(rule("editor.completion.height"),
+                                  self.rule().top() - rule("gap"));
 
         self.add(popup);
     }
