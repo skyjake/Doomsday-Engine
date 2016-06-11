@@ -41,19 +41,55 @@ PackagePopupWidget::PackagePopupWidget(File const *packageFile)
 
 bool PackagePopupWidget::setup(File const *file)
 {
-    if (file && file->objectNamespace().has(Package::VAR_PACKAGE))
-    {
-        Record const &info = file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+    document().setMaximumLineWidth(rule("home.popup.width").valuei());
+    setPreferredHeight(rule("home.popup.height"));
 
-        document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
-                                   _E(l) "Version: " _E(.) "%3\n"
-                                   _E(l) "License: " _E(.)_E(>) "%4" _E(<)
-                                   _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
-                           .arg(info.gets("title"))
-                           .arg(info.gets("ID"))
-                           .arg(info.gets("version"))
-                           .arg(info.gets("license"))
-                           .arg(file->description()));
+    Record const &names = file->objectNamespace();
+    if (file && names.has(Package::VAR_PACKAGE))
+    {
+        Record const &meta = names.subrecord(Package::VAR_PACKAGE);
+
+        String msg = String(_E(1) "%1" _E(.) "\n%2\n"
+                            _E(l) "Version: " _E(.) "%3\n"
+                            _E(l) "License: " _E(.)_E(>) "%4" _E(<)
+                            _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5" _E(.)_E(<))
+                    .arg(meta.gets(Package::VAR_TITLE))
+                    .arg(meta.gets("ID"))
+                    .arg(meta.gets("version"))
+                    .arg(meta.gets("license"))
+                    .arg(file->description());
+
+        if (meta.has("author"))
+        {
+            msg += "\n" _E(l) "Author(s): " _E(.)_E(>) + meta.gets("author") + _E(<);
+        }
+
+        if (meta.has("requires"))
+        {
+            msg += "\n" _E(l) "Requires:" _E(.);
+            ArrayValue const &reqs = meta.geta("requires");
+            for (Value const *val : reqs.elements())
+            {
+                msg += "\n - " _E(>) + val->asText() + _E(<);
+            }
+        }
+
+        if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
+        {
+            msg += "\n" _E(l) "Data files:" _E(.);
+            ArrayValue const &files = meta.geta("dataFiles");
+            for (Value const *val : files.elements())
+            {
+                msg += "\n - " _E(>) + val->asText() + _E(<);
+            }
+        }
+
+        if (meta.has("notes"))
+        {
+            msg += "\n\n" + meta.gets("notes");
+        }
+
+        document().setText(msg);
         return true;
     }
     return false;

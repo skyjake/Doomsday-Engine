@@ -120,12 +120,14 @@ DENG_GUI_PIMPL(PackagesWidget)
             , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
             setData(QString(info->gets("ID")));
+            setLabel(info->gets(Package::VAR_TITLE));
         }
 
         void setFile(File const &packFile)
         {
             file = &packFile;
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+            setLabel(info->gets(Package::VAR_TITLE));
             notifyChange();
         }
 
@@ -265,7 +267,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         void updateContents()
         {
             label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                            .arg(_item->info->gets("title"))
+                            .arg(_item->label())
                             .arg(packageId()));
 
             String auxColor = "accent";
@@ -414,6 +416,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 menu->items() << new PackageItem(pack);
             }
         }
+
+        menu->items().sort();
 
         emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
