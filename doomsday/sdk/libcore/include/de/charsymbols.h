@@ -19,6 +19,8 @@
 #ifndef LIBDENG2_CHARSYMBOLS_H
 #define LIBDENG2_CHARSYMBOLS_H
 
+#include "libcore.h"
+
 /**
  * @defgroup unicodeSymbols Unicode Symbols
  * Unicode key symbols. @ingroup types
@@ -55,5 +57,19 @@
 #  define DENG2_CHAR_MDASH               "-"
 #endif
 /** @} */
+
+namespace de {
+
+/**
+ * Converts the IBM PC character set to the Unicode equivalents.
+ * See: https://en.wikipedia.org/wiki/Code_page_437
+ *
+ * @param code  Character code.
+ *
+ * @return Unicode character.
+ */
+DENG2_PUBLIC duint codePage437ToUnicode(dbyte code);
+
+} // namespace de
 
 #endif // LIBDENG2_CHARSYMBOLS_H

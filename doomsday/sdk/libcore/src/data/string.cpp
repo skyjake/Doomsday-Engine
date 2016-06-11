@@ -20,6 +20,7 @@
 #include "de/App"
 #include "de/String"
 #include "de/Block"
+#include "de/charsymbols.h"
 
 #include <QDir>
 #include <QTextStream>
@@ -706,6 +707,18 @@ String String::fromUtf8(IByteArray const &byteArray)
 String String::fromLatin1(IByteArray const &byteArray)
 {
     return QString::fromLatin1(reinterpret_cast<char const *>(Block(byteArray).data()));
+}
+
+String String::fromCP437(IByteArray const &byteArray)
+{
+    Block const chars(byteArray);
+    String conv;
+    conv.reserve(byteArray.size());
+    for (dbyte ch : chars)
+    {
+        conv.append(codePage437ToUnicode(ch));
+    }
+    return conv;
 }
 
 size_t de::qchar_strlen(QChar const *str)

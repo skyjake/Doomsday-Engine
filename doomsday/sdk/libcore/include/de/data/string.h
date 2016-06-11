@@ -311,6 +311,16 @@ public:
      */
     static String fromLatin1(IByteArray const &byteArray);
 
+    /**
+     * Builds a String out of an array of bytes using the IBM PC character set
+     * (DOS code page 437).
+     *
+     * @param byteArray  Characters to convert.
+     *
+     * @return Converted string.
+     */
+    static String fromCP437(IByteArray const &byteArray);
+
     static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
 
     /**
