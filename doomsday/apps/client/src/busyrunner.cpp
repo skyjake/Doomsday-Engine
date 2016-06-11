@@ -81,14 +81,14 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
     void busyModeWillBegin(BusyTask &firstTask)
     {
-        if(auto *fader = ClientWindow::main().contentFade())
+        if (auto *fader = ClientWindow::main().contentFade())
         {
             fader->cancel();
         }
 
         // Are we doing a transition effect?
         busyWillAnimateTransition = animatedTransitionActive(firstTask.mode);
-        if(busyWillAnimateTransition)
+        if (busyWillAnimateTransition)
         {
             Con_TransitionConfigure();
         }
@@ -120,7 +120,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
     void busyTaskWillStart(BusyTask &task)
     {
         // Is the worker updating its progress?
-        if(task.maxProgress > 0)
+        if (task.maxProgress > 0)
         {
             Con_InitProgress2(task.maxProgress, task.progressStart, task.progressEnd);
         }
@@ -134,7 +134,6 @@ DENG2_PIMPL_NOREF(BusyRunner)
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT(eventLoop);
-        DENG_ASSERT(busyThread);
 
         busyDone = true;
 
@@ -144,7 +143,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
         eventLoop->exit(result);
 
-        if(fadeFromBlack)
+        if (fadeFromBlack)
         {
             ClientWindow::main().fadeContentFromBlack(2);
         }
@@ -170,7 +169,7 @@ static void busyWorkerTerminated(systhreadexitstatus_t status)
 {
     DENG_ASSERT(busy().isActive());
 
-    if(status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
+    if (status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
     {
         busy().abort("Uncaught exception from busy thread");
     }
@@ -207,13 +206,13 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     d->eventLoop = nullptr;
 
     // Teardown.
-    if(d->busyWillAnimateTransition)
+    if (d->busyWillAnimateTransition)
     {
         Con_TransitionBegin();
     }
 
     // Make sure that any remaining deferred content gets uploaded.
-    if(!(task->mode & BUSYF_NO_UPLOADS))
+    if (!(task->mode & BUSYF_NO_UPLOADS))
     {
         GL_ProcessDeferredTasks(0);
     }
@@ -229,7 +228,7 @@ bool BusyRunner::isTransitionAnimated() const
 void BusyRunner::loop()
 {
     BusyTask *const busyTask = busy().currentTask();
-    if(!busyTask || !busy().isActive()) return;
+    if (!busyTask || !busy().isActive()) return;
 
     bool const canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
 
@@ -237,7 +236,7 @@ void BusyRunner::loop()
     ClientApp::inputSystem().processEvents(0);
     ClientApp::inputSystem().processSharpEvents(0);
 
-    if(canUpload)
+    if (canUpload)
     {
         ClientWindow::main().glActivate();
 
@@ -245,7 +244,7 @@ void BusyRunner::loop()
         GL_ProcessDeferredTasks(15);
     }
 
-    if(!d->busyDone ||
+    if (!d->busyDone ||
        (canUpload && GL_DeferredTaskCount() > 0) ||
        !Con_IsProgressAnimationCompleted())
     {
@@ -269,7 +268,7 @@ void BusyMode_Loop()
 
 bool BusyRunner::isWorkerThread(uint threadId) const
 {
-    if(!busy().isActive() || !d->busyThread) return false;
+    if (!busy().isActive() || !d->busyThread) return false;
 
     return (Sys_ThreadId(d->busyThread) == threadId);
 }
@@ -283,7 +282,7 @@ bool BusyRunner::inWorkerThread() const
 void BusyMode_FreezeGameForBusyMode(void)
 {
     // This is only possible from the main thread.
-    if(ClientWindow::mainExists() &&
+    if (ClientWindow::mainExists() &&
        DoomsdayApp::app().busyMode().taskRunner() &&
        de::App::inMainThread())
     {
