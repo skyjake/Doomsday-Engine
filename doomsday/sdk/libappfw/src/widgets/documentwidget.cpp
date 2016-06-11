@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DocumentWidget"
@@ -121,7 +121,7 @@ public Font::RichFormat::IStyle
     }
 
     void glInit()
-    {        
+    {
         atlas().audienceForReposition() += this;
 
         glText.init(atlas(), self.font(), this);
@@ -208,7 +208,7 @@ public Font::RichFormat::IStyle
 
             // Determine visible range of lines.
             Font const &font     = self.font();
-            int contentHeight    = self.contentHeight();
+            int contentHeight    = de::min(self.contentHeight(), self.rule().height().valuei());
             int const extraLines = 1;
             int numVisLines      = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
             int firstVisLine     = scrollY / font.lineSpacing().valuei() - extraLines + 1;
