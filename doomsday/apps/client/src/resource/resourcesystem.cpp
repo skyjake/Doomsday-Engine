@@ -1556,7 +1556,7 @@ DENG2_PIMPL(ResourceSystem)
 
     String findSkinPath(Path const &skinPath, Path const &modelFilePath)
     {
-        DENG2_ASSERT(!skinPath.isEmpty());
+        //DENG2_ASSERT(!skinPath.isEmpty());
 
         // Try the "first choice" directory first.
         if(!modelFilePath.isEmpty())

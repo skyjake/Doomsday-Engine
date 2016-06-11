@@ -263,7 +263,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                     {
                         // Resolve indirection (symbolic links and interpretations) to
                         // describe the actual source file of the package.
-                        dataFiles << file->target().source()->description(0);
+                        dataFiles << file->source()->description(0);
                     }
                 }
             }
