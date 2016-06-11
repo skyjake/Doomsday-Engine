@@ -189,6 +189,12 @@ DENG2_PIMPL(MenuWidget)
 
     ~Instance()
     {
+        for (PanelWidget *sub : openSubs)
+        {
+            sub->audienceForClose()    -= this;
+            sub->audienceForDeletion() -= this;
+        }
+        
         self.audienceForChildAddition() -= this;
         self.audienceForChildRemoval()  -= this;
 
@@ -378,6 +384,8 @@ DENG2_PIMPL(MenuWidget)
 
     void panelBeingClosed(PanelWidget &popup)
     {
+        popup.audienceForClose()    -= this;
+        popup.audienceForDeletion() -= this;
         openSubs.remove(&popup);
     }
 
@@ -392,7 +400,7 @@ DENG2_PIMPL(MenuWidget)
 
         openSubs.insert(w);
 
-        w->audienceForClose() += this;
+        w->audienceForClose()    += this;
         w->audienceForDeletion() += this;
 
         emit self.subWidgetOpened(w);
