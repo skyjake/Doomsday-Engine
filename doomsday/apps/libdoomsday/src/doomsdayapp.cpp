@@ -42,6 +42,7 @@
 #include <de/DirectoryFeed>
 #include <de/Folder>
 #include <de/Loop>
+#include <de/PackageLoader>
 #include <de/ScriptSystem>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
@@ -77,6 +78,7 @@ DENG2_PIMPL(DoomsdayApp)
     Games games;
     Game *currentGame = nullptr;
     GameProfile const *currentProfile = nullptr;
+    StringList preGamePackages;
     GameProfiles gameProfiles;
     BusyMode busyMode;
     Players players;
@@ -536,9 +538,13 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
             plugins().setActivePluginId(0);
         }
 
-        if (d->currentProfile)
+        // Unload all packages that weren't loaded before the game was loaded.
+        for (String const &packageId : PackageLoader::get().loadedPackages().keys())
         {
-            d->currentProfile->unloadPackages();
+            if (!d->preGamePackages.contains(packageId))
+            {
+                PackageLoader::get().unload(packageId);
+            }
         }
 
         // Clear application and subsystem state.
@@ -621,6 +627,12 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     setGame(newGame);
     d->currentProfile = &profile;
     Session::profile().gameId = newGame.id();
+
+    if (!newGame.isNull())
+    {
+        // Remember what was loaded beforehand.
+        d->preGamePackages = PackageLoader::get().loadedPackagesInOrder();
+    }
 
     profile.loadPackages();
 }

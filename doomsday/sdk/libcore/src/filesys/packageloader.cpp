@@ -283,6 +283,15 @@ DENG2_PIMPL(PackageLoader)
         }
     }
 
+    QList<Package *> loadedInOrder() const
+    {
+        QList<Package *> pkgs = loaded.values();
+        qSort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
+            return a->order() < b->order();
+        });
+        return pkgs;
+    }
+
     DENG2_PIMPL_AUDIENCE(Activity)
     DENG2_PIMPL_AUDIENCE(Load)
     DENG2_PIMPL_AUDIENCE(Unload)
@@ -392,17 +401,24 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
 
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
-    QList<Package *> pkgs = loadedPackages().values();
-    qSort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
-        return a->order() < b->order();
-    });
-
+    QList<Package *> pkgs = d->loadedInOrder();
     FS::FoundFiles sorted;
     for (auto p : pkgs)
     {
         sorted.push_back(const_cast<File *>(&p->sourceFile()));
     }
     return sorted;
+}
+
+StringList PackageLoader::loadedPackagesInOrder() const
+{
+    QList<Package *> pkgs = d->loadedInOrder();
+    StringList ids;
+    for (auto p : pkgs)
+    {
+        ids << p->identifier();
+    }
+    return ids;
 }
 
 Package const &PackageLoader::package(String const &packageId) const

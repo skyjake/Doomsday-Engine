@@ -115,6 +115,8 @@ public:
 
     FileSystem::FoundFiles loadedPackagesAsFilesInPackageOrder() const;
 
+    StringList loadedPackagesInOrder() const;
+
     /**
      * Retrieves a specific loaded package. The package must already be loaded
      * using load().

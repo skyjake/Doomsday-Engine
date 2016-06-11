@@ -164,19 +164,18 @@ DENG2_PIMPL(DataBundle)
             meta.addArray(VAR_DATA_FILES);
         }
 
+        if (isAutoLoaded())
+        {
+            // We're still loading with FS1, so it will handle auto-loaded files.
+            ignored = true;
+            return;
+        }
+
         DataBundle *container = self.containerBundle();
         if (container)
         {
             // Make sure that the container has been fully identified.
             container->identifyPackages();
-
-            if (isAutoLoaded()/* && container->format() != Collection*/)
-            {
-                // We're still loading with FS1, and it cannot load stuff directly
-                // from within bundles.
-                ignored = true;
-                return;
-            }
 
             if (format == Ded && container->format() == Pk3)
             {
@@ -278,16 +277,7 @@ DENG2_PIMPL(DataBundle)
                 {
                     Block txt;
                     *wadTxt >> txt;
-                    String notes;
-                    if (auto *codec = QTextCodec::codecForName("CP437")) // DOS Latin US
-                    {
-                        notes = codec->toUnicode(txt);
-                    }
-                    else
-                    {
-                        notes = String::fromLocal8Bit(txt);
-                    }
-                    meta.set("notes", _E(m) + notes);
+                    meta.set("notes", _E(m) + String::fromCP437(txt));
                 }
             }
 
