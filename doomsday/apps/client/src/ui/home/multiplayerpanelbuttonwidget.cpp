@@ -99,8 +99,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
             ClientApp::serverLink().disconnect();
         }
 
+        /// @todo Set up a temporary profile using packages from the server.
+
         DoomsdayApp::app().changeGame(
-                    DoomsdayApp::games()[serverInfo.gameIdentityKey],
+                    DoomsdayApp::games()[serverInfo.gameIdentityKey].profile(),
                     DD_ActivateGameWorker);
         Con_Execute(CMDS_DDAY, String("connect %1 %2")
                     .arg(serverInfo.address).arg(serverInfo.port).toLatin1(),

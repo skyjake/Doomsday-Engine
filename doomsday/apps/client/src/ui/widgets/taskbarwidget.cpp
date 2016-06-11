@@ -316,7 +316,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void updateStatus()
     {
-        if (App_GameLoaded())
+        if (auto const *prof = DoomsdayApp::currentGameProfile())
+        {
+            status->setText(prof->name().truncateWithEllipsis(30));
+        }
+        else if (App_GameLoaded())
         {
             status->setText(App_CurrentGame().id());
         }

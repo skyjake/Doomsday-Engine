@@ -224,7 +224,7 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-void ServerApp::unloadGame(Game const &upcomingGame)
+void ServerApp::unloadGame(GameProfile const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 

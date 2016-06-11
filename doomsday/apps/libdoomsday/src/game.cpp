@@ -82,12 +82,16 @@ DENG2_PIMPL(Game)
         qDeleteAll(manifests);
     }
 
+    GameProfile const *profile() const
+    {
+        return DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfile>();
+    }
+
     StringList packagesFromProfile() const
     {
-        auto const *profile = DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfiles::Profile>();
-        if (profile)
+        if (auto const *prof = profile())
         {
-            return profile->packages();
+            return prof->packages();
         }
         return StringList();
     }
@@ -181,7 +185,7 @@ bool Game::isPlayable() const
 
 Game::Status Game::status() const
 {
-    if (App_GameLoaded() && &DoomsdayApp::currentGame() == this)
+    if (App_GameLoaded() && &DoomsdayApp::game() == this)
     {
         return Loaded;
     }
@@ -380,21 +384,10 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     }
 }
 
-void Game::loadPackages() const
+GameProfile const &Game::profile() const
 {
-    for (String const &id : d->requiredPackages + d->packagesFromProfile())
-    {
-        App::packageLoader().load(id);
-    }
-}
-
-void Game::unloadPackages() const
-{
-    StringList const allPackages = d->requiredPackages + d->packagesFromProfile();
-    for (int i = allPackages.size() - 1; i >= 0; --i)
-    {
-        App::packageLoader().unload(allPackages.at(i));
-    }
+    DENG2_ASSERT(d->profile()); // all games have a matching built-in profile
+    return *d->profile();
 }
 
 Record const &Game::objectNamespace() const
@@ -481,7 +474,7 @@ D_CMD(InspectGame)
             LOG_WARNING("No game is currently loaded.\nPlease specify the identifier of the game to inspect.");
             return false;
         }
-        game = &DoomsdayApp::currentGame();
+        game = &DoomsdayApp::game();
     }
     else
     {

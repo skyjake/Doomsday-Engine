@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 ClientApp::serverLink().disconnect();
             }
 
-            DoomsdayApp::app().changeGame(DoomsdayApp::games()[gameId], DD_ActivateGameWorker);
+            DoomsdayApp::app().changeGame(DoomsdayApp::games()[gameId].profile(), DD_ActivateGameWorker);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
         }
     };

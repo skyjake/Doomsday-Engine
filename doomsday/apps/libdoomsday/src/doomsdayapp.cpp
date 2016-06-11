@@ -76,6 +76,7 @@ DENG2_PIMPL(DoomsdayApp)
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
+    GameProfile const *currentProfile = nullptr;
     GameProfiles gameProfiles;
     BusyMode busyMode;
     Players players;
@@ -418,11 +419,6 @@ Players &DoomsdayApp::players()
     return DoomsdayApp::app().d->players;
 }
 
-Game const &DoomsdayApp::currentGame()
-{
-    return game();
-}
-
 BusyMode &DoomsdayApp::busyMode()
 {
     return DoomsdayApp::app().d->busyMode;
@@ -508,12 +504,17 @@ Game const &DoomsdayApp::game()
     return *app().d->currentGame;
 }
 
-bool DoomsdayApp::isGameLoaded()
+GameProfile const *DoomsdayApp::currentGameProfile()
 {
-    return App::appExists() && !DoomsdayApp::currentGame().isNull();
+    return app().d->currentProfile;
 }
 
-void DoomsdayApp::unloadGame(Game const &/*upcomingGame*/)
+bool DoomsdayApp::isGameLoaded()
+{
+    return App::appExists() && !DoomsdayApp::game().isNull();
+}
+
+void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
 {
     auto &gx = plugins().gameExports();
 
@@ -535,7 +536,10 @@ void DoomsdayApp::unloadGame(Game const &/*upcomingGame*/)
             plugins().setActivePluginId(0);
         }
 
-        game().unloadPackages();
+        if (d->currentProfile)
+        {
+            d->currentProfile->unloadPackages();
+        }
 
         // Clear application and subsystem state.
         reset();
@@ -582,6 +586,8 @@ void DoomsdayApp::reset()
     {
         i->consoleRegistration();
     }
+
+    d->currentProfile = nullptr;
 }
 
 void DoomsdayApp::setGame(Game const &game)
@@ -589,11 +595,13 @@ void DoomsdayApp::setGame(Game const &game)
     app().d->currentGame = const_cast<Game *>(&game);
 }
 
-void DoomsdayApp::makeGameCurrent(Game const &newGame)
+void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
 {
+    auto const &newGame = games()[profile.game()];
+
     if (!newGame.isNull())
     {
-        LOG_MSG("Loading game '%s'...") << newGame.id();
+        LOG_MSG("Loading game \"%s\"...") << profile.name();
     }
 
     Library_ReleaseGames();
@@ -611,10 +619,10 @@ void DoomsdayApp::makeGameCurrent(Game const &newGame)
 
     // This is now the current game.
     setGame(newGame);
+    d->currentProfile = &profile;
     Session::profile().gameId = newGame.id();
 
-    // Load the game's packages.
-    newGame.loadPackages();
+    profile.loadPackages();
 }
 
 // from game_init.cpp
@@ -622,10 +630,12 @@ extern int beginGameChangeBusyWorker(void *context);
 extern int loadGameStartupResourcesBusyWorker(void *context);
 extern int loadAddonResourcesBusyWorker(void *context);
 
-bool DoomsdayApp::changeGame(Game const &newGame,
+bool DoomsdayApp::changeGame(GameProfile const &profile,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
+    auto const &newGame = games()[profile.game()];
+
     // Ignore attempts to reload the current game?
     if (game().id() == newGame.id())
     {
@@ -646,10 +656,10 @@ bool DoomsdayApp::changeGame(Game const &newGame,
         i->aboutToUnloadGame(game());
     }
 
-    unloadGame(newGame);
+    unloadGame(profile);
 
     // Do the switch.
-    makeGameCurrent(newGame);
+    makeGameCurrent(profile);
 
     /*
      * If we aren't shutting down then we are either loading a game or switching

@@ -59,7 +59,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             BusyMode_FreezeGameForBusyMode();
             ClientWindow::main().taskBar().close();
 
-            DoomsdayApp::app().changeGame(DoomsdayApp::games()[gameId], DD_ActivateGameWorker);
+            DoomsdayApp::app().changeGame(DoomsdayApp::games()[gameId].profile(), DD_ActivateGameWorker);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
         }
     };

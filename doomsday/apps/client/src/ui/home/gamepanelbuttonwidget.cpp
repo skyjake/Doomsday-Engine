@@ -105,19 +105,22 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void playButtonPressed()
     {
-        BusyMode_FreezeGameForBusyMode();
-        //ClientWindow::main().taskBar().close();
-        // TODO: Emit a signal that hides the Home and closes the taskbar.
-
-        // Switch the game.
-        DoomsdayApp::app().changeGame(game(), DD_ActivateGameWorker);
-
-        if (saves->selectedPos() != ui::Data::InvalidPos)
+        if (playButton->isEnabled())
         {
-            // Load a saved game.
-            auto const &saveItem = savedItems.at(saves->selectedPos());
-            Con_Execute(CMDS_DDAY, ("loadgame " + saveItem.name() + " confirm").toLatin1(),
-                        false, false);
+            BusyMode_FreezeGameForBusyMode();
+            //ClientWindow::main().taskBar().close();
+            // TODO: Emit a signal that hides the Home and closes the taskbar.
+
+            // Switch the game.
+            DoomsdayApp::app().changeGame(gameProfile, DD_ActivateGameWorker);
+
+            if (saves->selectedPos() != ui::Data::InvalidPos)
+            {
+                // Load a saved game.
+                auto const &saveItem = savedItems.at(saves->selectedPos());
+                Con_Execute(CMDS_DDAY, ("loadgame " + saveItem.name() + " confirm").toLatin1(),
+                            false, false);
+            }
         }
     }
 
@@ -188,23 +191,21 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    enable(d->game().isPlayable());
+    playButton().enable(d->game().isPlayable());
 
     String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
                                                  : d->game().title();
 
     if (isSelected())
     {
-        if (d->saves->selectedPos() != ui::Data::InvalidPos)
+        if (!d->game().isPlayable())
+        {
+            meta = _E(D) + tr("Missing data files") + _E(.);
+        }
+        else if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
             meta = tr("Restore saved game");
         }
-        /*else if (d->saves->childCount() > 0)
-        {
-            meta = tr("%1 saved game%2")
-                    .arg(d->saves->childCount())
-                    .arg(d->saves->childCount() != 1? "s" : "");
-        }*/
         else if (!d->gameProfile.isUserCreated())
         {
             meta = tr("Start new session");

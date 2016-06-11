@@ -23,6 +23,7 @@
 #include "busymode.h"
 #include "gameapi.h"
 #include "players.h"
+#include "gameprofiles.h"
 
 #include <de/NativePath>
 #include <de/Info>
@@ -34,7 +35,6 @@ namespace res { class Bundles; }
 
 class Game;
 class Games;
-class GameProfiles;
 
 /**
  * Common application-level state and components.
@@ -94,12 +94,12 @@ public:
     /**
      * Switch to/activate the specified game.
      *
-     * @param newGame    Game to change to.
+     * @param profile    Game to change to.
      * @param gameActivationFunc  Callback to call after the new game has
      *                   been made current.
      * @param behaviors  Change behavior flags.
      */
-    bool changeGame(Game const &newGame,
+    bool changeGame(GameProfile const &profile,
                     std::function<int (void *)> gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
@@ -141,7 +141,7 @@ public:
      */
     static Game const &game();
 
-    static Game const &currentGame(); // alias, remove?
+    static GameProfile const *currentGameProfile();
 
     static bool isGameLoaded();
 
@@ -152,9 +152,9 @@ protected:
      *
      * @param upcomingGame  Upcoming game that we will be changing to.
      */
-    virtual void unloadGame(Game const &upcomingGame);
+    virtual void unloadGame(GameProfile const &upcomingGame);
 
-    virtual void makeGameCurrent(Game const &newGame);
+    virtual void makeGameCurrent(GameProfile const &game);
 
     /**
      * Clears all allocated resources and subsystems. This is called when

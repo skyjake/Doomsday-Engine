@@ -45,7 +45,7 @@ public:
     void initialize();
 
 protected:
-    void unloadGame(Game const &upcomingGame) override;
+    void unloadGame(GameProfile const &upcomingGame) override;
 
 public:
     static ServerApp &app();

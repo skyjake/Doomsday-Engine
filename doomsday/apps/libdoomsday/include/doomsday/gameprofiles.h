@@ -54,6 +54,11 @@ public:
          */
         de::StringList allRequiredPackages() const;
 
+        bool isPlayable() const;
+
+        void loadPackages() const;
+        void unloadPackages() const;
+
         virtual bool resetToDefaults();
         virtual de::String toInfoSource() const;
 
@@ -72,7 +77,16 @@ public:
      */
     void setGames(Games &games);
 
+    /**
+     * Finds the built-in profile for a particular game.
+     * @param gameId  Game identifier.
+     * @return Profile.
+     */
+    Profile const &builtInProfile(de::String const &gameId) const;
+
     de::LoopResult forAll(std::function<de::LoopResult (Profile &)> func);
+
+    static Profile const &null();
 
 protected:
     AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);

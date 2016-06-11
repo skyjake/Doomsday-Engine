@@ -144,17 +144,19 @@ int Games::numPlayable() const
     return count;
 }
 
-Game *Games::firstPlayable() const
+GameProfile const *Games::firstPlayable() const
 {
     foreach (Game *game, d->games)
     {
-        if (game->allStartupFilesFound()) return game;
+        if (game->profile().isPlayable()) return &game->profile();
     }
-    return NULL;
+    return nullptr;
 }
 
 Game &Games::operator [] (String const &id) const
 {
+    if (id.isEmpty()) return *d->nullGame;
+
     if (auto *game = d->findById(id))
     {
         return *game;
@@ -351,7 +353,7 @@ D_CMD(ListGames)
     DENG2_FOR_EACH_CONST(Games::GameList, i, found)
     {
         Game *game = i->game;
-        bool isCurrent = (&DoomsdayApp::currentGame() == game);
+        bool isCurrent = (&DoomsdayApp::game() == game);
 
         if (!list.isEmpty()) list += "\n";
 

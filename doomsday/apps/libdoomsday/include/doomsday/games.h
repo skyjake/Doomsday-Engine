@@ -139,7 +139,7 @@ public:
      * Find the first playable game in this collection (in registration order).
      * @return  The found game else @c NULL.
      */
-    Game *firstPlayable() const;
+    GameProfile const *firstPlayable() const;
 
     /**
      * Try to locate all startup resources for @a game.

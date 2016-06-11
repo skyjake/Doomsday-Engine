@@ -25,6 +25,7 @@
 
 #include <doomsday/plugins.h>
 #include <doomsday/resource/resourceclass.h>
+#include <doomsday/GameProfiles>
 #include <de/Error>
 #include <de/Path>
 #include <de/Date>
@@ -235,9 +236,10 @@ public:
     void addResource(resourceclassid_t classId, de::dint rflags,
                      char const *names, void const *params);
 
-    void loadPackages() const;
-
-    void unloadPackages() const;
+    /**
+     * Returns the built-in profile of the game.
+     */
+    GameProfile const &profile() const;
 
     // IObject.
     de::Record const &objectNamespace() const;

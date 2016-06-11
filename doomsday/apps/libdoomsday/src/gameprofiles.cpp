@@ -20,6 +20,8 @@
 #include "doomsday/Games"
 #include "doomsday/DoomsdayApp"
 
+#include <de/App>
+#include <de/PackageLoader>
 #include <de/Record>
 
 #include <QTextStream>
@@ -29,6 +31,8 @@ using namespace de;
 static String const VAR_GAME        ("game");
 static String const VAR_PACKAGES    ("packages");
 static String const VAR_USER_CREATED("userCreated");
+
+static GameProfile nullGameProfile;
 
 DENG2_PIMPL(GameProfiles)
 , DENG2_OBSERVES(Games, Addition)
@@ -60,6 +64,16 @@ GameProfiles::GameProfiles()
 void GameProfiles::setGames(Games &games)
 {
     games.audienceForAddition() += d;
+}
+
+GameProfiles::Profile const &GameProfiles::null()
+{
+    return nullGameProfile;
+}
+
+GameProfile const &GameProfiles::builtInProfile(String const &gameId) const
+{
+    return find(DoomsdayApp::games()[gameId].title()).as<GameProfile>();
 }
 
 LoopResult GameProfiles::forAll(std::function<LoopResult (Profile &)> func)
@@ -153,7 +167,34 @@ bool GameProfiles::Profile::isUserCreated() const
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
     return DoomsdayApp::games()[d->gameId].requiredPackages() +
-           d->packages;
+            d->packages;
+}
+
+bool GameProfiles::Profile::isPlayable() const
+{
+    for (String const &pkg : allRequiredPackages())
+    {
+        if (!App::packageLoader().isAvailable(pkg))
+            return false;
+    }
+    return true;
+}
+
+void GameProfiles::Profile::loadPackages() const
+{
+    for (String const &id : allRequiredPackages())
+    {
+        PackageLoader::get().load(id);
+    }
+}
+
+void GameProfiles::Profile::unloadPackages() const
+{
+    StringList const allPackages = allRequiredPackages();
+    for (int i = allPackages.size() - 1; i >= 0; --i)
+    {
+        PackageLoader::get().unload(allPackages.at(i));
+    }
 }
 
 bool GameProfiles::Profile::resetToDefaults()

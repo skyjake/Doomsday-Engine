@@ -101,7 +101,7 @@ static void handleLegacyCoreTerminate(char const *msg)
 
 static void continueInitWithEventLoopRunning()
 {
-    if(!ClientWindowSystem::mainExists()) return;
+    if (!ClientWindowSystem::mainExists()) return;
 
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
@@ -112,14 +112,14 @@ static void continueInitWithEventLoopRunning()
 
 static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
-    if(App_CurrentGame().isNull())
+    if (App_CurrentGame().isNull())
     {
         // The null game has no plugin.
         return 0;
     }
     String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
             .name().fileNameWithoutExtension();
-    if(name.startsWith("lib")) name.remove(0, 3);
+    if (name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
 }
 
@@ -173,11 +173,11 @@ DENG2_PIMPL(ClientApp)
 
         LogSink &operator << (LogEntry const &entry)
         {
-            if(alertMask.shouldRaiseAlert(entry.metadata()))
+            if (alertMask.shouldRaiseAlert(entry.metadata()))
             {
                 // Don't raise alerts if the console history is open; the
                 // warning/error will be shown there.
-                if(ClientWindow::mainExists() &&
+                if (ClientWindow::mainExists() &&
                    ClientWindow::main().taskBar().isOpen() &&
                    ClientWindow::main().taskBar().console().isLogOpen())
                 {
@@ -186,17 +186,17 @@ DENG2_PIMPL(ClientApp)
 
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
-                if((entry.metadata() & LogEntry::Map) &&
+                if ((entry.metadata() & LogEntry::Map) &&
                    ClientApp::world().hasMap())
                 {
                     world::Map const &map = ClientApp::world().map();
-                    if(map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
+                    if (map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
                         return *this;
                     }
                 }
 
-                foreach(String msg, formatter.logEntryToTextLines(entry))
+                foreach (String msg, formatter.logEntryToTextLines(entry))
                 {
                     ClientApp::alert(msg, entry.level());
                 }
@@ -248,7 +248,7 @@ DENG2_PIMPL(ClientApp)
             Sys_Shutdown();
             DD_Shutdown();
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             qWarning() << "Exception during ~ClientApp:" << er.asText();
             DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
@@ -280,7 +280,7 @@ DENG2_PIMPL(ClientApp)
     {
         LOG_AS("ClientApp::pluginSentNotification");
 
-        switch(notification)
+        switch (notification)
         {
         case DD_NOTIFY_GAME_SAVED:
             // If an update has been downloaded and is ready to go, we should
@@ -290,7 +290,7 @@ DENG2_PIMPL(ClientApp)
             break;
 
         case DD_NOTIFY_PSPRITE_STATE_CHANGED:
-            if(data)
+            if (data)
             {
                 auto const *args = (ddnotify_psprite_state_changed_t *) data;
                 self.players().at(args->player)
@@ -300,7 +300,7 @@ DENG2_PIMPL(ClientApp)
             break;
 
         case DD_NOTIFY_PLAYER_WEAPON_CHANGED:
-            if(data)
+            if (data)
             {
                 auto const *args = (ddnotify_player_weapon_changed_t *) data;
                 self.players().at(args->player)
@@ -329,7 +329,7 @@ DENG2_PIMPL(ClientApp)
         DENG_ASSERT(ClientWindow::mainExists());
 
         // Quit netGame if one is in progress.
-        if(netGame)
+        if (netGame)
         {
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
         }
@@ -346,7 +346,7 @@ DENG2_PIMPL(ClientApp)
 
         infineSystem().reset();
 
-        if(App_GameLoaded())
+        if (App_GameLoaded())
         {
             // Write cvars and bindings to .cfg files.
             Con_SaveDefaults();
@@ -365,7 +365,7 @@ DENG2_PIMPL(ClientApp)
 
     void currentGameChanged(Game const &newGame)
     {
-        if(Sys_IsShuttingDown()) return;
+        if (Sys_IsShuttingDown()) return;
 
         infineSys.initBindingContext();
 
@@ -379,7 +379,7 @@ DENG2_PIMPL(ClientApp)
          */
         inputSys->clearEvents();
 
-        if(newGame.isNull())
+        if (newGame.isNull())
         {
             // The mouse is free while in the Home.
             ClientWindow::main().canvas().trapMouse(false);
@@ -407,7 +407,7 @@ DENG2_PIMPL(ClientApp)
         using Prof = ConfigProfiles; // convenience
 
         // Log filter and alert settings.
-        for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+        for (int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
         {
             String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
@@ -512,12 +512,12 @@ void ClientApp::initialize()
 
 #ifdef UNIX
     // Some common Unix command line options.
-    if(commandLine().has("--version") || commandLine().has("-version"))
+    if (commandLine().has("--version") || commandLine().has("-version"))
     {
         d->printVersionToStdOut();
         ::exit(0);
     }
-    if(commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+    if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
     {
         d->printHelpToStdOut();
         ::exit(0);
@@ -547,12 +547,12 @@ void ClientApp::initialize()
 
     // Initialize.
 #if WIN32
-    if(!DD_Win32_Init())
+    if (!DD_Win32_Init())
     {
         throw Error("ClientApp::initialize", "DD_Win32_Init failed");
     }
 #elif UNIX
-    if(!DD_Unix_Init())
+    if (!DD_Unix_Init())
     {
         throw Error("ClientApp::initialize", "DD_Unix_Init failed");
     }
@@ -607,7 +607,7 @@ void ClientApp::preFrame()
     // Frame synchronous I/O operations.
     App_AudioSystem().startFrame();
 
-    if(gx.BeginFrame) /// @todo Move to GameSystem::timeChanged().
+    if (gx.BeginFrame) /// @todo Move to GameSystem::timeChanged().
     {
         gx.BeginFrame();
     }
@@ -622,7 +622,7 @@ void ClientApp::postFrame()
     // frame: it is a good time to update the mouse state.
     Mouse_Poll();
 
-    if(gx.EndFrame)
+    if (gx.EndFrame)
     {
         gx.EndFrame();
     }
@@ -637,7 +637,7 @@ void ClientApp::postFrame()
 
 void ClientApp::alert(String const &msg, LogEntry::Level level)
 {
-    if(ClientWindow::mainExists())
+    if (ClientWindow::mainExists())
     {
         ClientWindow::main().alerts()
                 .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
@@ -797,20 +797,20 @@ void ClientApp::endNativeUIMode()
 #endif
 }
 
-void ClientApp::unloadGame(Game const &upcomingGame)
+void ClientApp::unloadGame(GameProfile const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 
     // Game has been set to null, update window.
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 
-    if(!upcomingGame.isNull())
+    if (!upcomingGame.game().isEmpty())
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();
 
         // Trap the mouse automatically when loading a game in fullscreen.
-        if(mainWin.isFullScreen())
+        if (mainWin.isFullScreen())
         {
             mainWin.canvas().trapMouse();
         }
@@ -822,7 +822,7 @@ void ClientApp::unloadGame(Game const &upcomingGame)
     world::Map::initDummies();
 }
 
-void ClientApp::makeGameCurrent(Game const &newGame)
+void ClientApp::makeGameCurrent(GameProfile const &newGame)
 {
     DoomsdayApp::makeGameCurrent(newGame);
 
@@ -834,7 +834,7 @@ void ClientApp::reset()
 {
     DoomsdayApp::reset();
 
-    if(App_GameLoaded())
+    if (App_GameLoaded())
     {
         d->inputSys->initAllDevices();
     }
