@@ -156,13 +156,15 @@ DENG2_PIMPL(ScriptSystem)
         std::unique_ptr<ArrayValue> defaultImportPath(new ArrayValue);
         defaultImportPath->add("");
         //defaultImportPath->add("*"); // Newest module with a matching name.
-        ArrayValue const *importPath = defaultImportPath.get();
+        ArrayValue const *importPath;
         try
         {
             importPath = &App::config().geta("importPath");
         }
         catch (Record::NotFoundError const &)
-        {}
+        {
+            importPath = defaultImportPath.get();
+        }
 
         // Compile a list of all possible import locations.
         importPaths.clear();

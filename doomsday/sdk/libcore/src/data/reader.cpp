@@ -332,9 +332,9 @@ Reader &Reader::operator >> (IByteArray &byteArray)
      * because the destination byte array is not guaranteed to be
      * a memory buffer where you can copy the contents directly.
      */
-    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
+    Block data(size);
     d->readBytes(data.data(), size);
-    byteArray.set(0, data.data(), size);
+    byteArray.set(0, data.dataConst(), size);
     return *this;
 }
 
@@ -346,9 +346,9 @@ Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
      * a memory buffer where you can copy the contents directly.
      */
     dsize const size = fixedByteArray.size();
-    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
+    Block data(size);
     d->readBytes(data.data(), size);
-    fixedByteArray.set(0, data.data(), size);
+    fixedByteArray.set(0, data.dataConst(), size);
     return *this;
 }
 

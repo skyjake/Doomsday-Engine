@@ -68,7 +68,7 @@ DENG2_PIMPL(ServerSystem)
 
     ListenSocket *serverSock = nullptr;
 
-    QMap<Id, RemoteUser *> users;
+    QHash<Id, RemoteUser *> users;
     ShellUsers shellUsers;
 
     Instance(Public *i) : Base(i) {}
