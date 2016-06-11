@@ -100,6 +100,22 @@ DENG2_PIMPL(DataBundle)
         return text;
     }
 
+    static String stripRedundantParts(String const &id)
+    {
+        DotPath const path(id);
+        String stripped = path.segment(0);
+        for (int i = 1; i < path.segmentCount(); ++i)
+        {
+            String seg = path.segment(i);
+            if (seg.startsWith(path.segment(i - 1) + "-"))
+            {
+                seg = seg.mid(path.segment(i - 1).size() + 1);
+            }
+            stripped = stripped.concatenateMember(seg);
+        }
+        return stripped;
+    }
+
     /**
      * Identifies the data bundle and sets up a package link under "/sys/bundles" with
      * the appropriate metadata.
@@ -265,9 +281,9 @@ DENG2_PIMPL(DataBundle)
                 meta.set("version", parsedVersion.asText());
             }
 
-            packageId = formatDomains[format]
-                    .concatenateMember(packageId)
-                    .concatenateMember(cleanIdentifier(strippedName));
+            packageId = stripRedundantParts(formatDomains[format]
+                                            .concatenateMember(packageId)
+                                            .concatenateMember(cleanIdentifier(strippedName)));
 
             // WAD files sometimes come with a matching TXT file.
             if (format == Pwad || format == Iwad)
