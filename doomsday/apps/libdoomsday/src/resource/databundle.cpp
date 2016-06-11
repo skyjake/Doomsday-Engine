@@ -31,10 +31,12 @@
 #include <de/Package>
 #include <de/Path>
 #include <QRegExp>
+#include <QTextCodec>
 
 using namespace de;
 
-static String const VAR_TAGS("tags");
+static String const VAR_TAGS      ("tags");
+static String const VAR_DATA_FILES("dataFiles");
 
 namespace internal
 {
@@ -54,6 +56,7 @@ namespace internal
 
 DENG2_PIMPL(DataBundle)
 {
+    bool ignored = false;
     SafePtr<File> source;
     Format format;
     String packageId; // linked under /sys/bundles/
@@ -107,7 +110,7 @@ DENG2_PIMPL(DataBundle)
     void identify()
     {
         // It is sufficient to identify each bundle only once.
-        if (!packageId.isEmpty()) return;
+        if (ignored || !packageId.isEmpty()) return;
 
         // Load the lump directory of WAD files.
         if (format == Wad || format == Pwad || format == Iwad)
@@ -135,11 +138,13 @@ DENG2_PIMPL(DataBundle)
             // This file is inside a package, so the package will take care of it.
             /*qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
                      << "is nested, no package will be generated";*/
+            ignored = true;
             return;
         }
 
         // Search for known data files in the bundle registry.
         res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self);
+
         File &dataFile = self.asFile();
         String const dataFilePath = dataFile.path();
 
@@ -148,7 +153,62 @@ DENG2_PIMPL(DataBundle)
         meta.set("path",        dataFilePath);
         meta.set("bundleScore", matched.bestScore);
 
-        DataBundle const *container = self.containerBundle();
+        if (format != Collection)
+        {
+            // Classic data files are loaded via the "dataFiles" array (in the listed order).
+            // However, collections are represented directly as Doomsday packages.
+            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath) }));
+        }
+        else
+        {
+            meta.addArray(VAR_DATA_FILES);
+        }
+
+        DataBundle *container = self.containerBundle();
+        if (container)
+        {
+            // Make sure that the container has been fully identified.
+            container->identifyPackages();
+
+            if (isAutoLoaded()/* && container->format() != Collection*/)
+            {
+                // We're still loading with FS1, and it cannot load stuff directly
+                // from within bundles.
+                ignored = true;
+                return;
+            }
+
+            if (format == Ded && container->format() == Pk3)
+            {
+                // DED files are typically explicitly imported from some main DED file
+                // in the container.
+                ignored = true;
+                return;
+            }
+#if 0
+            if (container->isLinkedAsPackage() &&
+                container->format() != Collection &&
+                isAutoLoaded())
+            {
+                qDebug() << container->d->versionedPackageId
+                         << "loads data file"
+                         << dataFilePath;
+
+                // No package will be generated for this file. It will be loaded via
+                // the container package.
+                container->packageMetadata()[VAR_DATA_FILES]
+                        .value<ArrayValue>().add(new TextValue(dataFilePath));
+                //ignored = true;
+                //return;
+            }
+#endif
+
+            if (container->d->ignored)
+            {
+                ignored = true; // No package for this.
+                return;
+            }
+        }
 
         // At least two criteria must match -- otherwise simply having the correct
         // type would be accepted.
@@ -163,19 +223,19 @@ DENG2_PIMPL(DataBundle)
                         .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
             }
 
+            meta.set(Package::VAR_TITLE, matched.bestMatch->keyValue("info:title"));
             meta.set("version", matched.packageVersion.asText());
-            meta.set("title",   matched.bestMatch->keyValue("info:title"));
             meta.set("author",  matched.bestMatch->keyValue("info:author"));
             meta.set("license", matched.bestMatch->keyValue("info:license", "Unknown"));
             meta.set(VAR_TAGS,  matched.bestMatch->keyValue("info:tags"));
         }
         else
         {
+            meta.set(Package::VAR_TITLE, dataFile.name());
             meta.set("version", "0.0");
-            meta.set("title",   dataFile.name());
             meta.set("author",  "Unknown");
             meta.set("license", "Unknown");
-            meta.set(VAR_TAGS,  dataFile.extension());
+            meta.set(VAR_TAGS, (format == Iwad || format == Pwad)? ".wad" : "");
 
             // Generate a default identifier based on the information we have.
             static String const formatDomains[] = {
@@ -184,10 +244,10 @@ DENG2_PIMPL(DataBundle)
                 "file.wad",
                 "file.iwad",
                 "file.pwad",
-                "file.lump",
-                "file.defs",
-                "file.dehacked",
-                "file.collection"
+                "file.lmp",
+                "file.ded",
+                "file.deh",
+                "file.box"
             };
 
             // Containers become part of the identifier.
@@ -210,11 +270,30 @@ DENG2_PIMPL(DataBundle)
                     .concatenateMember(packageId)
                     .concatenateMember(cleanIdentifier(strippedName));
 
-            /*
-             *  There may be non-native metadata available, though:
-             * - Info entry inside root folder
-             * - .manifest companion
-             */
+            // WAD files sometimes come with a matching TXT file.
+            if (format == Pwad || format == Iwad)
+            {
+                if(File const *wadTxt = App::rootFolder().tryLocate<File const>(
+                            dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() + ".txt"))
+                {
+                    Block txt;
+                    *wadTxt >> txt;
+                    String notes;
+                    if (auto *codec = QTextCodec::codecForName("CP437")) // DOS Latin US
+                    {
+                        notes = codec->toUnicode(txt);
+                    }
+                    else
+                    {
+                        notes = String::fromLocal8Bit(txt);
+                    }
+                    meta.set("notes", _E(m) + notes);
+                }
+            }
+
+            // There may be Snowberry metadata available:
+            // - Info entry inside root folder
+            // - .manifest companion
             File const *sbInfo = App::rootFolder().tryLocate<File const>(
                         dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() +
                         ".manifest");
@@ -231,6 +310,8 @@ DENG2_PIMPL(DataBundle)
                 parseSnowberryInfo(*sbInfo, meta);
             }
         }
+
+        determineGameTags(meta);
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
                 << packageId
@@ -265,21 +346,30 @@ DENG2_PIMPL(DataBundle)
             App::fileSystem().index(*pkgLink);
 
             // Make this a required package in the container bundle.
-            if (container && isAutoLoaded())
+            if (container &&
+                container->isLinkedAsPackage() &&
+                container->format() == Collection)
             {
-                // Autoloaded data files are hidden.
-                meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + " hidden");
-
-                // Make sure that the container has been fully identified.
-                container->identifyPackages();
-
-                if (container->d->pkgLink)
+                if (isAutoLoaded()) /*||
+                    Package::matchTags(container->d->pkgLink, "\\b(hidden|core|gamedata)\\b"))*/
                 {
-                    qDebug() << container->d->versionedPackageId << "loads" << versionedPackageId
-                             << "from" << dataFilePath;
-                    Package::addRequiredPackage(*container->d->pkgLink, versionedPackageId);
+                    // Autoloaded data files are hidden.
+                    metadata.set(VAR_TAGS, meta.gets(VAR_TAGS) + " hidden");
                 }
+
+                qDebug() << container->d->versionedPackageId
+                         << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
+                         << "requires"
+                         << versionedPackageId
+                         << "[" << metadata.gets("tags", "") << "]"
+                         << "from" << dataFilePath;
+
+                Package::addRequiredPackage(*container->d->pkgLink, versionedPackageId);
             }
+        }
+        else
+        {
+            ignored = true;
         }
     }
 
@@ -291,32 +381,50 @@ DENG2_PIMPL(DataBundle)
     {
         Path const path(self.asFile().path());
 
+        //qDebug() << "checking" << path.toString();
+
         if (path.segmentCount() >= 3)
         {
             String const parent      = path.reverseSegment(1).toString().toLower();
             String const grandParent = path.reverseSegment(2).toString().toLower();
 
             if (parent.fileNameExtension() == ".pk3" ||
-                parent.fileNameExtension() == ".box")
+                parent.fileNameExtension() == ".zip" /*||
+                parent.fileNameExtension() == ".box"*/)
             {
                 // Data files in the root of a PK3/box are all automatically loaded.
+                //qDebug() << "-> autoload";
                 return true;
             }
-            if (parent.fileNameExtension().isEmpty() &&
-                (parent == "auto" || parent.beginsWith("#") || parent.beginsWith("@")))
+            if (//parent.fileNameExtension().isEmpty() &&
+                (/*parent == "auto" || */ parent.beginsWith("#") || parent.beginsWith("@")))
             {
+                //qDebug() << "-> autoload";
                 return true;
             }
 
-            if (grandParent.fileNameExtension() == ".box")
+//            if (grandParent.fileNameExtension() == ".box")
+//            {
+//                if (parent == "required")
+//                {
+//                    return true;
+//                }
+//                /// @todo What about "Extra"?
+//            }
+        }
+
+        for (int i = 1; i < path.segmentCount() - 3; ++i)
+        {
+            if ((path.segment(i) == "Defs" || path.segment(i) == "Data") &&
+                (path.segment(i + 1) == "jDoom" || path.segment(i + 1) == "jHeretic" || path.segment(i + 1) == "jHexen") &&
+                 path.segment(i + 2) == "Auto")
             {
-                if (parent == "required")
-                {
-                    return true;
-                }
-                /// @todo What about "Extra"?
+                //qDebug() << "-> autoload";
+                return true;
             }
         }
+
+        //qDebug() << "NOT AUTOLOADED";
         return false;
     }
 
@@ -337,7 +445,7 @@ DENG2_PIMPL(DataBundle)
 
         if (rootBlock.contains("name"))
         {
-            meta.set("title", rootBlock.keyValue("name"));
+            meta.set(Package::VAR_TITLE, rootBlock.keyValue("name"));
         }
 
         String component = rootBlock.keyValue("component");
@@ -371,9 +479,22 @@ DENG2_PIMPL(DataBundle)
                 meta.set("author",  english->keyValue("author"));
                 meta.set("license", english->keyValue("license"));
                 meta.set("contact", english->keyValue("contact"));
-                meta.set("notes",   english->keyValue("readme"));
+
+                String notes = english->keyValue("readme").text.strip();
+                if (!notes.isEmpty())
+                {
+                    notes.replace(QRegExp("\\s+"), " "); // normalize whitespace
+                    meta.set("notes", notes);
+                }
             }
         }
+    }
+
+    void determineGameTags(Record &meta)
+    {
+        // Look at the path and contents of the bundle to estimate which game it is
+        // compatible with.
+
     }
 
     struct PathAndVersion {
@@ -568,19 +689,39 @@ void DataBundle::identifyPackages() const
     }
 }
 
+bool DataBundle::isLinkedAsPackage() const
+{
+    return bool(d->pkgLink);
+}
+
+Record &DataBundle::packageMetadata()
+{
+    if (!isLinkedAsPackage())
+    {
+        throw LinkError("DataBundle::packageMetadata", "Data bundle " +
+                        description() + " has not been identified and linked as a package");
+    }
+    return d->pkgLink->objectNamespace().subrecord(Package::VAR_PACKAGE);
+}
+
+Record const &DataBundle::packageMetadata() const
+{
+    return const_cast<DataBundle *>(this)->packageMetadata();
+}
+
 bool DataBundle::isNested() const
 {
     return containerBundle() != nullptr || !containerPackageId().isEmpty();
 }
 
-DataBundle const *DataBundle::containerBundle() const
+DataBundle *DataBundle::containerBundle() const
 {
     auto const *file = dynamic_cast<File const *>(this);
     DENG2_ASSERT(file != nullptr);
 
-    for (Folder const *folder = file->parent(); folder; folder = folder->parent())
+    for (Folder *folder = file->parent(); folder; folder = folder->parent())
     {
-        if (auto const *data = folder->maybeAs<DataFolder>())
+        if (auto *data = folder->maybeAs<DataFolder>())
         {
             return data;
         }

@@ -49,6 +49,7 @@ public:
     enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked, Collection };
 
     DENG2_ERROR(FormatError);
+    DENG2_ERROR(LinkError);
 
     struct LIBDOOMSDAY_PUBLIC Interpreter : public de::filesys::IInterpreter {
         de::File *interpretFile(de::File *sourceData) const override;
@@ -75,6 +76,20 @@ public:
     void identifyPackages() const;
 
     /**
+     * Determines if the data bundle has been identified and now available as a package
+     * link.
+     */
+    bool isLinkedAsPackage() const;
+
+    /**
+     * Returns the metadata record of the package representing this bundle. The bundle
+     * must be linked as a package.
+     */
+    de::Record &packageMetadata();
+
+    de::Record const &packageMetadata() const;
+
+    /**
      * Determines if the bundle is nested inside another bundle.
      */
     bool isNested() const;
@@ -86,7 +101,7 @@ public:
      * @return DataBundle that contains this bundle, or @c nullptr if not
      * nested. Ownership not transferred.
      */
-    DataBundle const *containerBundle() const;
+    DataBundle *containerBundle() const;
 
     /**
      * Finds the Package that contains this bunle, if this bundle is inside
