@@ -43,7 +43,8 @@ public Font::RichFormat::IStyle
 
     // State.
     ui::SizePolicy widthPolicy = ui::Expand;
-    int maxLineWidth = 1000;
+    int maxLineWidth;
+    ConstantRule *contentMaxWidth = new ConstantRule(0);
     int oldScrollY = 0;
     String styledText;
     String text;
@@ -68,6 +69,13 @@ public Font::RichFormat::IStyle
         progress->rule().setRect(self.rule());
         progress->hide();
         self.add(progress);
+
+        maxLineWidth = GuiWidget::toDevicePixels(1000);
+    }
+
+    ~Instance()
+    {
+        releaseRef(contentMaxWidth);
     }
 
     void updateStyle()
@@ -185,7 +193,8 @@ public Font::RichFormat::IStyle
             // Text is ready for drawing?
             if (!glText.isBeingWrapped() && progress->isVisible())
             {
-                self.setContentSize(glText.wrappedSize());
+                contentMaxWidth->set(de::max(contentMaxWidth->value(), float(glText.wrappedSize().x)));
+                self.setContentSize(Vector2ui(contentMaxWidth->valuei(), glText.wrappedSize().y));
                 progress->hide();
             }
 
@@ -274,6 +283,7 @@ void DocumentWidget::setText(String const &styledText)
 
         int indSize = rule("document.progress").valuei();
         setContentSize(Vector2i(indSize, indSize));
+        d->contentMaxWidth->set(indSize);
 
         d->styledText = styledText;
 
@@ -291,7 +301,7 @@ void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
 
     if (policy == ui::Expand)
     {
-        rule().setInput(Rule::Width, contentRule().width() + margins().width());
+        rule().setInput(Rule::Width, *d->contentMaxWidth + margins().width());
     }
     else
     {
@@ -304,6 +314,7 @@ void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
 void DocumentWidget::setMaximumLineWidth(int maxWidth)
 {
     d->maxLineWidth = maxWidth;
+    d->contentMaxWidth->set(0);
     requestGeometry();
 }
 
