@@ -207,7 +207,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         });
 
         // Package browser.
-        self.rightArea().add(browser = new PackagesWidget);
+        self.rightArea().add(browser = new PackagesWidget(self.name() + ".filter"));
         browser->setActionButtonAlwaysShown(true);
         browser->setPackageStatus(*this);
         browser->setButtonHandler(*this);
@@ -220,6 +220,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                 .setInput(Rule::Top,   self.rightArea().contentRule().top())
                 .setInput(Rule::Width, menu->rule().width());
         self.rightArea().enableIndicatorDraw(true);
+        browser->setFilterEditorMinimumY(self.rightArea().rule().top());
     }
 
     ~Instance()
@@ -324,7 +325,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 };
 
 PackagesDialog::PackagesDialog(String const &titleText)
-    : DialogWidget("packages", WithHeading)
+    : DialogWidget("packagesdialog", WithHeading)
     , d(new Instance(this))
 {
     if (titleText.isEmpty())

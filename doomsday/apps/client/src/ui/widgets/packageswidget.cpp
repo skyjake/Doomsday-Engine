@@ -90,7 +90,6 @@ DENG_GUI_PIMPL(PackagesWidget)
     LoopCallback mainCall;
     LineEditWidget *search;
     ButtonWidget *clearSearch;
-    Rule const *searchMinY = nullptr;
     HomeMenuWidget *menu;
     String buttonLabels[2];
     DotPath buttonImages[2];
@@ -341,6 +340,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   self.rule().top());
         search->setEmptyContentHint(tr("Search packages"));
+        search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() +
                                    rule("gap"));
 
@@ -357,6 +357,10 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // Filtered list of packages.
         menu->setBehavior(ChildVisibilityClipping);
+        if (!self.name().isEmpty())
+        {
+            menu->setOpacity(0); // initially
+        }
         menu->layout().setRowPadding(Const(0));
         menu->rule()
                 .setInput(Rule::Left,  self.rule().left())
@@ -370,7 +374,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         QObject::connect(search, &LineEditWidget::editorContentChanged,
                          [this] () { updateFilterTerms(); });
         QObject::connect(search, &LineEditWidget::enterPressed,
-                         [this] () { focusFirstListedPackge(); });
+                         [this] () { focusFirstListedPackage(); });
 
         refilterTimer.setSingleShot(true);
         refilterTimer.setInterval(int(REFILTER_DELAY.asMilliSeconds()));
@@ -467,9 +471,13 @@ DENG_GUI_PIMPL(PackagesWidget)
         emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
 
-    void focusFirstListedPackge()
+    void focusFirstListedPackage()
     {
-        //if (menu-)
+        if (menu->organizer().itemCount() > 0)
+        {
+            menu->scrollY(0);
+            root().setFocus(menu->childWidgets().first());
+        }
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -642,6 +650,7 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 
     Record const &rec = fromState.objectNamespace();
     d->search->setText(rec.gets(name().concatenateMember("search"), ""));
+    d->updateFilterTerms(true);
 }
 
 void PackagesWidget::refreshPackages()
