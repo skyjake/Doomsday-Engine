@@ -69,6 +69,7 @@ int G_RegisterGames(int hookType, int param, void* data)
                             Game::DEF_TITLE, "Doom 64: Absolution",
                             Game::DEF_AUTHOR, "Kaiser et al.",
                             Game::DEF_FAMILY, "",
+                            Game::DEF_TAGS, "doom64",
                             Game::DEF_RELEASE_DATE, "2003-12-31",
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom64.mapinfo"));
     //game.addResource(RC_PACKAGE, FF_STARTUP, "libdoom64.pk3", 0);

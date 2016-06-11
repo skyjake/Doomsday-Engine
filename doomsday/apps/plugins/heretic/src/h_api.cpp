@@ -79,6 +79,7 @@ int G_RegisterGames(int hookType, int param, void* data)
                             Game::DEF_TITLE, "Heretic: Shadow of the Serpent Riders",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1996-03-31",
+                            Game::DEF_TAGS, "heretic",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic-ext.mapinfo"));
@@ -94,6 +95,7 @@ int G_RegisterGames(int hookType, int param, void* data)
                             Game::DEF_TITLE, "Heretic Registered",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1994-12-23",
+                            Game::DEF_TAGS, "heretic",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic.mapinfo"));
@@ -109,6 +111,7 @@ int G_RegisterGames(int hookType, int param, void* data)
                             Game::DEF_TITLE, "Heretic Shareware",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1994-12-23",
+                            Game::DEF_TAGS, "heretic shareware",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic-share.mapinfo"));

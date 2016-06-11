@@ -95,6 +95,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_AUTHOR, "Banjo Software",
                             Game::DEF_RELEASE_DATE, "1997-09-01",
                             Game::DEF_FAMILY, "",
+                            Game::DEF_TAGS, "hacx",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hacx.mapinfo"));
@@ -110,6 +111,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_AUTHOR, "Digital Cafe",
                             Game::DEF_RELEASE_DATE, "1996-01-01",
                             Game::DEF_FAMILY, "",
+                            Game::DEF_TAGS, "chex chexquest",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/chex.mapinfo"));
@@ -124,6 +126,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "Final DOOM: TNT: Evilution",
                             Game::DEF_AUTHOR, "Team TNT",
                             Game::DEF_RELEASE_DATE, "1996-06-17",
+                            Game::DEF_TAGS, "finaldoom tnt evilution",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-tnt.mapinfo"));
@@ -138,6 +141,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "Final DOOM: The Plutonia Experiment",
                             Game::DEF_AUTHOR, "Dario Casali and Milo Casali",
                             Game::DEF_RELEASE_DATE, "1996-06-17",
+                            Game::DEF_TAGS, "finaldoom plutonia",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-plut.mapinfo"));
@@ -153,6 +157,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_AUTHOR, "Freedoom Project",
                             Game::DEF_RELEASE_DATE, "2015-12-23",
                             Game::DEF_FAMILY, "",
+                            Game::DEF_TAGS, "freedoom multiplayer",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedm.mapinfo"));
@@ -167,6 +172,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "DOOM 2: Hell on Earth",
                             Game::DEF_AUTHOR, "id Software",
                             Game::DEF_RELEASE_DATE, "1994-09-30",
+                            Game::DEF_TAGS, "doom2",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"));
@@ -181,6 +187,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "Ultimate DOOM",
                             Game::DEF_AUTHOR, "id Software",
                             Game::DEF_RELEASE_DATE, "1995-04-30",
+                            Game::DEF_TAGS, "doom",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"));
@@ -195,6 +202,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "DOOM Registered",
                             Game::DEF_AUTHOR, "id Software",
                             Game::DEF_RELEASE_DATE, "1993-12-10",
+                            Game::DEF_TAGS, "doom",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"));
@@ -209,6 +217,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_TITLE, "DOOM Shareware",
                             Game::DEF_AUTHOR, "id Software",
                             Game::DEF_RELEASE_DATE, "1993-12-10",
+                            Game::DEF_TAGS, "doom shareware",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"));

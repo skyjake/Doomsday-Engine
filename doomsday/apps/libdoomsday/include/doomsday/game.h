@@ -70,6 +70,7 @@ public:
     static de::String const DEF_TITLE;        ///< Title for the game (intended for humans).
     static de::String const DEF_AUTHOR;       ///< Author of the game (intended for humans).
     static de::String const DEF_RELEASE_DATE;
+    static de::String const DEF_TAGS;
     static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
     static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
     static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.

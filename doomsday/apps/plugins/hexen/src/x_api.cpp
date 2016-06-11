@@ -85,6 +85,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_TITLE, "Hexen: Deathkings of the Dark Citadel",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1996-01-01",
+                            Game::DEF_TAGS, "hexen deathkings",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"));
@@ -101,6 +102,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_TITLE, "Hexen",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1995-12-01",
+                            Game::DEF_TAGS, "hexen",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
@@ -115,6 +117,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_TITLE, "Hexen v1.0",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1995-10-30",
+                            Game::DEF_TAGS, "hexen",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
@@ -129,6 +132,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_TITLE, "Hexen 4-map Demo",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1995-10-18",
+                            Game::DEF_TAGS, "hexen demo",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
@@ -144,6 +148,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_TITLE, "Hexen 4-map Beta Demo",
                             Game::DEF_AUTHOR, "Raven Software",
                             Game::DEF_RELEASE_DATE, "1995-10-01",
+                            Game::DEF_TAGS, "hexen demo",
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));

@@ -48,6 +48,7 @@ String const Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
 String const Game::DEF_TITLE("title");
 String const Game::DEF_AUTHOR("author");
 String const Game::DEF_RELEASE_DATE("releaseDate");
+String const Game::DEF_TAGS("tags");
 String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
 String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
