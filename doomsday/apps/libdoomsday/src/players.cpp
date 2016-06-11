@@ -29,6 +29,15 @@ DENG2_PIMPL_NOREF(Players)
     {
         zap(players);
     }
+
+    ~Instance()
+    {
+        for (auto *plr : players)
+        {
+            delete plr;
+        }
+        zap(players);
+    }
 };
 
 Players::Players(Constructor playerConstructor) : d(new Instance)
