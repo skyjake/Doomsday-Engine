@@ -23,6 +23,7 @@
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/lumpdirectory.h"
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/Games"
 
 #include <de/App>
 #include <de/ArchiveFeed>
@@ -496,11 +497,58 @@ DENG2_PIMPL(DataBundle)
         }
     }
 
+    /**
+     * Automatically guesses some appropriate game tags for the bundle.
+     * @param meta  Package metadata.
+     */
     void determineGameTags(Record &meta)
     {
+        // Collect a list of all game tags.
+        StringList gameTags({ "doom", "doom2", "heretic", "hexen" });
+
+        // TODO: Games may not have been registered yet...
+        /*
+        qDebug() << "Games count:" << DoomsdayApp::games().count();
+        auto aborted = DoomsdayApp::games().forAll([&gameTags, &meta] (Game &game)
+        {
+            auto const tags = game[VAR_TAGS].value().asText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
+            for (auto const &tag : tags)
+            {
+                gameTags << tag;
+
+                if (QRegExp("\\b" + tag + "\\b", Qt::CaseInsensitive).indexIn(meta.gets(VAR_TAGS)) >= 0)
+                {
+                    // Already has at least one game tag.
+                    return LoopAbort;
+                }
+            }
+            return LoopContinue;
+        });
+        if (aborted) return;*/
+
+        for (auto const &tag : gameTags)
+        {
+            if (QRegExp("\\b" + tag + "\\b", Qt::CaseInsensitive).indexIn(meta.gets(VAR_TAGS)) >= 0)
+            {
+                // Already has at least one game tag.
+                return;
+            }
+        }
+
         // Look at the path and contents of the bundle to estimate which game it is
         // compatible with.
-
+        Path const path(self.asFile().path());
+        for (auto const &tag : gameTags)
+        {
+            QRegExp reTag(tag, Qt::CaseInsensitive);
+            for (int i = 0; i < path.segmentCount(); ++i)
+            {
+                if (reTag.indexIn(path.segment(i)) >= 0)
+                {
+                    meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + " " + tag);
+                }
+            }
+        }
     }
 
     struct PathAndVersion {
