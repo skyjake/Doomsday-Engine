@@ -76,7 +76,7 @@ static char const *gameIds[NUM_GAME_MODES] =
 static void setCommonParameters(Game &game)
 {
     //game.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    game.setRequiredPackages(StringList() << "net.dengine.legacy.doom_2");
+    game.addRequiredPackage("net.dengine.legacy.doom_2");
 }
 
 /**
@@ -98,8 +98,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hacx.mapinfo"));
-    setCommonParameters(hacx);
     hacx.addRequiredPackage("banjo.hacx");
+    setCommonParameters(hacx);
     //hacx.addResource(RC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
     hacx.addResource(RC_DEFINITION, 0, "hacx.ded", 0);
 
@@ -113,8 +113,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/chex.mapinfo"));
-    setCommonParameters(chex);
     chex.addRequiredPackage("digitalcafe.chexquest");
+    setCommonParameters(chex);
     //chex.addResource(RC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
     chex.addResource(RC_DEFINITION, 0, "chex.ded", 0);
 
@@ -127,8 +127,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-tnt.mapinfo"));
-    setCommonParameters(tnt);
     tnt.addRequiredPackage("com.idsoftware.finaldoom.tnt");
+    setCommonParameters(tnt);
     //tnt.addResource(RC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
     tnt.addResource(RC_DEFINITION, 0, "doom2-tnt.ded", 0);
 
@@ -141,8 +141,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-plut.mapinfo"));
-    setCommonParameters(plut);
     plut.addRequiredPackage("com.idsoftware.finaldoom.plutonia");
+    setCommonParameters(plut);
     //plut.addResource(RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
     plut.addResource(RC_DEFINITION, 0, "doom2-plut.ded", 0);
 
@@ -156,8 +156,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedm.mapinfo"));
-    setCommonParameters(freedm);
     freedm.addRequiredPackage("freedoom.freedm");
+    setCommonParameters(freedm);
     //freedm.addResource(RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
     freedm.addResource(RC_DEFINITION, 0, "doom2-freedm.ded", 0);
 
@@ -170,8 +170,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"));
-    setCommonParameters(d2);
     d2.addRequiredPackage("com.idsoftware.doom2");
+    setCommonParameters(d2);
     //d2.addResource(RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
     d2.addResource(RC_DEFINITION, 0, "doom2.ded", 0);
 
@@ -184,8 +184,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"));
-    setCommonParameters(ultimate);
     ultimate.addRequiredPackage("com.idsoftware.doom.ultimate");
+    setCommonParameters(ultimate);
     //ultimate.addResource(RC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
     ultimate.addResource(RC_DEFINITION, 0, "doom1-ultimate.ded", 0);
 
@@ -198,8 +198,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"));
+    d1.addRequiredPackage("com.idsoftware.doom");
     setCommonParameters(d1);
-    d1.addRequiredPackage("com.idsoftware.doom  com.idsoftware.doom.ultimate");
     //d1.addResource(RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
     d1.addResource(RC_DEFINITION, 0, "doom1.ded", 0);
 
@@ -212,8 +212,8 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"));
-    setCommonParameters(shareware);
     shareware.addRequiredPackage("com.idsoftware.doom.shareware");
+    setCommonParameters(shareware);
     //shareware.addResource(RC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
     shareware.addResource(RC_DEFINITION, 0, "doom1-share.ded", 0);
     return true;

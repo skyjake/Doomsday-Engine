@@ -85,8 +85,8 @@ int G_RegisterGames(int hookType, int param, void* data)
     //extended.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     //extended.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     extended.addResource(RC_DEFINITION, 0, "heretic-ext.ded", 0);
-    extended.setRequiredPackages(StringList() << "net.dengine.legacy.heretic_2"
-                                              << "com.ravensoftware.heretic.extended");
+    extended.setRequiredPackages(StringList() << "com.ravensoftware.heretic.extended"
+                                              << "net.dengine.legacy.heretic_2");
 
     /* Heretic */
     Game &htc = games.defineGame(gameIds[heretic],
@@ -100,8 +100,8 @@ int G_RegisterGames(int hookType, int param, void* data)
     //htc.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     //htc.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     htc.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
-    htc.setRequiredPackages(StringList() << "net.dengine.legacy.heretic_2"
-                                         << "com.ravensoftware.heretic  com.ravensoftware.heretic.extended");
+    htc.setRequiredPackages(StringList() << "com.ravensoftware.heretic"
+                                         << "net.dengine.legacy.heretic_2");
 
     /* Heretic (Shareware) */
     Game &shareware = games.defineGame(gameIds[heretic_shareware],
@@ -115,8 +115,8 @@ int G_RegisterGames(int hookType, int param, void* data)
     //shareware.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     //shareware.addResource(RC_PACKAGE, FF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     shareware.addResource(RC_DEFINITION, 0, "heretic-share.ded", 0);
-    shareware.setRequiredPackages(StringList() << "net.dengine.legacy.heretic_2"
-                                               << "com.ravensoftware.heretic.shareware");
+    shareware.setRequiredPackages(StringList() << "com.ravensoftware.heretic.shareware"
+                                               << "net.dengine.legacy.heretic_2");
     return true;
 
 #undef STARTUPPK3
