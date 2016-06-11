@@ -23,6 +23,8 @@
 #include <QDir>
 #include <QFile>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/resource/bundles.h>
+#include <doomsday/DoomsdayApp>
 #include <de/App>
 #include <de/CommandLine>
 #include <de/Block>
@@ -42,12 +44,12 @@ String origActionNames[NUMSTATES];
 
 static void backupData()
 {
-    for(int i = 0; i < NUMSPRITES && i < ded->sprites.size(); i++)
+    for (int i = 0; i < NUMSPRITES && i < ded->sprites.size(); i++)
     {
         qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
     }
 
-    for(int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
+    for (int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
     {
         origActionNames[i] = ded->states[i].gets("action");
     }
@@ -55,7 +57,7 @@ static void backupData()
 
 static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 {
-    if(0 > lumpNum || lumpNum >= lumpIndex.size())
+    if (0 > lumpNum || lumpNum >= lumpIndex.size())
     {
         LOG_AS("DehRead::readLump");
         LOG_WARNING("Invalid lump index #%i, ignoring.") << lumpNum;
@@ -86,48 +88,77 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 
 static void readFile(String const &sourcePath, bool sourceIsCustom = true)
 {
+    LOG_AS("DehRead::readFile");
+
     QFile file(sourcePath);
-    if(!file.open(QFile::ReadOnly | QFile::Text))
+    if (!file.open(QFile::ReadOnly | QFile::Text))
     {
-        LOG_AS("DehRead::readFile");
         LOG_WARNING("Failed opening \"%s\" for read, aborting...") << QDir::toNativeSeparators(sourcePath);
         return;
     }
-
-    /// @todo Do not use a local buffer.
-    Block deh = file.readAll();
-    deh.append(QChar(0));
 
     LOG_RES_MSG("Applying DeHackEd patch file \"%s\"%s")
             << NativePath(sourcePath).pretty()
             << (sourceIsCustom? " (custom)" : "");
 
-    readDehPatch(deh, sourceIsCustom, IgnoreEOF);
+    readDehPatch(file.readAll(), sourceIsCustom, IgnoreEOF);
+}
+
+static void readFile2(String const &path, bool sourceIsCustom = true)
+{
+    LOG_AS("DehRead::readFile2");
+
+    if (File const *file = App::rootFolder().tryLocate<File const>(path))
+    {
+        LOG_RES_MSG("Applying %s%s")
+                << file->description()
+                << (sourceIsCustom? " (custom)" : "");
+
+        Block deh;
+        *file >> deh;
+        readDehPatch(deh, sourceIsCustom, IgnoreEOF);
+    }
+    else
+    {
+        LOG_RES_WARNING("\"%s\" not found") << path;
+    }
 }
 
 static void readPatchLumps(LumpIndex const &lumpIndex)
 {
     bool const readAll = DENG2_APP->commandLine().check("-alldehs");
-    for(int i = lumpIndex.size() - 1; i >= 0; i--)
+    for (int i = lumpIndex.size() - 1; i >= 0; i--)
     {
-        if(lumpIndex[i].name().fileNameExtension().toLower() == ".deh")
+        if (lumpIndex[i].name().fileNameExtension().toLower() == ".deh")
         {
             readLump(lumpIndex, i);
-            if(!readAll) return;
+            if (!readAll) return;
         }
     }
 }
 
 static void readPatchFiles()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    // Patches may be loaded as data bundles.
+    for (DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    {
+        if (bundle->format() == DataBundle::Dehacked)
+        {
+            for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
+            {
+                readFile2(path->asText());
+            }
+        }
+    }
 
-    for(int p = 0; p < cmdLine.count(); ++p)
+    // Command line options.
+    CommandLine &cmdLine = DENG2_APP->commandLine();
+    for (int p = 0; p < cmdLine.count(); ++p)
     {
         char const *arg = *(cmdLine.argv() + p);
-        if(!cmdLine.matches("-deh", arg)) continue;
+        if (!cmdLine.matches("-deh", arg)) continue;
 
-        while(++p != cmdLine.count() && !cmdLine.isOption(p))
+        while (++p != cmdLine.count() && !cmdLine.isOption(p))
         {
             cmdLine.makeAbsolutePath(p);
             readFile(NativePath(*(cmdLine.argv() + p)));
