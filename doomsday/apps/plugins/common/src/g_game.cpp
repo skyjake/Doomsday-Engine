@@ -1368,8 +1368,9 @@ static void runGameAction()
             break;
 
         case GA_QUIT:
-            quitTime = Timer_RealMilliseconds();
             ::quitInProgress = true;
+            unloadTriggered  = false;
+            quitTime         = Timer_RealMilliseconds();
 
             Hu_MenuCommand(MCMD_CLOSEFAST);
 
