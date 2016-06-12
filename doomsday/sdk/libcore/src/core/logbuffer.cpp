@@ -40,7 +40,8 @@ namespace de {
 
 TimeDelta const FLUSH_INTERVAL = .2; // seconds
 
-DENG2_PIMPL_NOREF(LogBuffer)
+DENG2_PIMPL(LogBuffer)
+, DENG2_OBSERVES(File, Deletion)
 {
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;
@@ -50,6 +51,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
     dint maxEntryCount;
     bool useStandardOutput;
     bool flushingEnabled;
+    String outputPath;
     File *outputFile;
     FileLogSink *fileLogSink;
 #ifndef WIN32
@@ -65,8 +67,9 @@ DENG2_PIMPL_NOREF(LogBuffer)
     QTimer *autoFlushTimer;
     Sinks sinks;
 
-    Instance(duint maxEntryCount)
-        : entryFilter(&defaultFilter)
+    Instance(Public *i, duint maxEntryCount)
+        : Base(i)
+        , entryFilter(&defaultFilter)
         , maxEntryCount(maxEntryCount)
         , useStandardOutput(true)
         , flushingEnabled(true)
@@ -114,21 +117,53 @@ DENG2_PIMPL_NOREF(LogBuffer)
         }
     }
 
+    void fileBeingDeleted(File const &file)
+    {
+        DENG2_ASSERT(outputFile == &file);
+        DENG2_UNUSED(file);
+
+        self.flush();
+        disposeFileLogSink();
+        outputFile = 0;
+    }
+
+    void createFileLogSink(bool truncate)
+    {
+        if (!outputPath.isEmpty())
+        {
+            File *existing = (!truncate? App::rootFolder().tryLocate<File>(outputPath) : nullptr);
+            if (!existing)
+            {
+                outputFile = &App::rootFolder().replaceFile(outputPath);
+            }
+            else
+            {
+                outputFile = existing;
+            }
+            outputFile->audienceForDeletion() += this;
+
+            // Add a sink for the file.
+            DENG2_ASSERT(!fileLogSink);
+            fileLogSink = new FileLogSink(*outputFile);
+            sinks.insert(fileLogSink);
+        }
+    }
+
     void disposeFileLogSink()
     {
         if (fileLogSink)
         {
             sinks.remove(fileLogSink);
             delete fileLogSink;
-            fileLogSink = 0;
+            fileLogSink = nullptr;
         }
     }
 };
 
-LogBuffer *LogBuffer::_appBuffer = 0;
+LogBuffer *LogBuffer::_appBuffer = nullptr;
 
 LogBuffer::LogBuffer(duint maxEntryCount)
-    : d(new Instance(maxEntryCount))
+    : d(new Instance(this, maxEntryCount))
 {
     d->autoFlushTimer = new QTimer(this);
     connect(d->autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
@@ -254,22 +289,14 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
     }
 
     d->disposeFileLogSink();
-
     if (d->outputFile)
     {
-        d->outputFile->audienceForDeletion() -= this;
+        d->outputFile->audienceForDeletion() -= d;
         d->outputFile = 0;
     }
 
-    if (!path.isEmpty())
-    {
-        d->outputFile = &App::rootFolder().replaceFile(path);
-        d->outputFile->audienceForDeletion() += this;
-
-        // Add a sink for the file.
-        d->fileLogSink = new FileLogSink(*d->outputFile);
-        d->sinks.insert(d->fileLogSink);
-    }
+    d->outputPath = path;
+    d->createFileLogSink(true /* truncated */);
 }
 
 String LogBuffer::outputFile() const
@@ -297,6 +324,12 @@ void LogBuffer::flush()
     if (!d->flushingEnabled) return;
 
     DENG2_GUARD(this);
+
+    if (!d->outputFile && !d->outputPath.isEmpty())
+    {
+        // Reopen the file sink.
+        d->createFileLogSink(false);
+    }
 
     if (!d->toBeFlushed.isEmpty())
     {
@@ -336,16 +369,6 @@ void LogBuffer::flush()
         d->entries.pop_front();
         delete old;
     }
-}
-
-void LogBuffer::fileBeingDeleted(File const &file)
-{
-    DENG2_ASSERT(d->outputFile == &file);
-    DENG2_UNUSED(file);
-
-    flush();
-    d->disposeFileLogSink();
-    d->outputFile = 0;
 }
 
 void LogBuffer::setAppBuffer(LogBuffer &appBuffer)

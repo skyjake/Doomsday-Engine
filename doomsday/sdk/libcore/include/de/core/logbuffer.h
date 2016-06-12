@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_LOGBUFFER_H
@@ -42,7 +42,7 @@ class LogSink;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
+class DENG2_PUBLIC LogBuffer : public QObject, public Lockable
 {
     Q_OBJECT
 
@@ -191,9 +191,6 @@ public:
      * @param sink  Log sink to remove.
      */
     void removeSink(LogSink &sink);
-
-    // File observer.
-    void fileBeingDeleted(File const &file);
 
 public:
     /**

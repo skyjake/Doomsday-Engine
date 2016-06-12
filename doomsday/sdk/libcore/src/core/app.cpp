@@ -158,6 +158,7 @@ DENG2_PIMPL(App)
         }
 
         Clock::setAppClock(0);
+        logBuffer.setOutputFile("");
     }
 
     NativePath defaultNativeModulePath() const
