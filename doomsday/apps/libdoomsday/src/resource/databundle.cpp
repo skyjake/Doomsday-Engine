@@ -286,10 +286,12 @@ DENG2_PIMPL(DataBundle)
                                             .concatenateMember(packageId)
                                             .concatenateMember(cleanIdentifier(strippedName)));
 
+            auto &root = App::rootFolder();
+
             // WAD files sometimes come with a matching TXT file.
             if (format == Pwad || format == Iwad)
             {
-                if(File const *wadTxt = App::rootFolder().tryLocate<File const>(
+                if(File const *wadTxt = root.tryLocate<File const>(
                             dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() + ".txt"))
                 {
                     Block txt;
@@ -301,7 +303,6 @@ DENG2_PIMPL(DataBundle)
             // There may be Snowberry metadata available:
             // - Info entry inside root folder
             // - .manifest companion
-            auto &root = App::rootFolder();
             File const *sbInfo = root.tryLocate<File const>(
                         dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() +
                         ".manifest");
