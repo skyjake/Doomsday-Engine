@@ -301,16 +301,24 @@ DENG2_PIMPL(DataBundle)
             // There may be Snowberry metadata available:
             // - Info entry inside root folder
             // - .manifest companion
-            File const *sbInfo = App::rootFolder().tryLocate<File const>(
+            auto &root = App::rootFolder();
+            File const *sbInfo = root.tryLocate<File const>(
                         dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() +
                         ".manifest");
             if (!sbInfo)
             {
-                sbInfo = App::rootFolder().tryLocate<File const>(dataFilePath/"Info");
+                // Check the Snowberry-style ID.
+                String fn = dataFilePath.fileName();
+                fn.replace(".", "-");
+                sbInfo = root.tryLocate<File const>(dataFilePath.fileNamePath()/fn + ".manifest");
             }
             if (!sbInfo)
             {
-                sbInfo = App::rootFolder().tryLocate<File const>(dataFilePath/"Contents/Info");
+                sbInfo = root.tryLocate<File const>(dataFilePath/"Info");
+            }
+            if (!sbInfo)
+            {
+                sbInfo = root.tryLocate<File const>(dataFilePath/"Contents/Info");
             }
             if (sbInfo)
             {
