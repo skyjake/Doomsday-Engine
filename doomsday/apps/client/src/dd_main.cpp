@@ -740,7 +740,7 @@ int DD_ActivateGameWorker(void *context)
         // If a custom top-level config is specified; let it override.
         if (CommandLine_CheckWith("-config", 1))
         {
-            Con_ParseCommands(NativePath(CommandLine_NextAsPath()), CPCF_ALLOW_SAVE_STATE);
+            Con_ParseCommands(NativePath(CommandLine_NextAsPath()));
         }
         else
         {
@@ -751,9 +751,10 @@ int DD_ActivateGameWorker(void *context)
             if (configFile)
             {
                 LOG_SCR_NOTE("Parsing primary config %s...") << configFile->description();
-                Con_ParseCommands(*configFile, CPCF_ALLOW_SAVE_STATE);
+                Con_ParseCommands(*configFile);
             }
         }
+        Con_SetAllowed(CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
@@ -763,8 +764,9 @@ int DD_ActivateGameWorker(void *context)
         if ((configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().bindingConfig()))
                 != nullptr)
         {
-            Con_ParseCommands(*configFile, CPCF_ALLOW_SAVE_BINDINGS);
+            Con_ParseCommands(*configFile);
         }
+        Con_SetAllowed(CPCF_ALLOW_SAVE_BINDINGS);
 #endif
     }
 

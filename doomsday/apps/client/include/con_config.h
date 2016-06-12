@@ -31,6 +31,8 @@
 #define CPCF_ALLOW_SAVE_STATE       0x2
 #define CPCF_ALLOW_SAVE_BINDINGS    0x4
 
+void Con_SetAllowed(int flags);
+
 bool Con_ParseCommands(de::NativePath const &nativePath, int flags = 0);
 
 bool Con_ParseCommands(de::File const &file, int flags = 0);

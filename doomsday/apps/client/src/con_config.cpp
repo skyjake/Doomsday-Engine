@@ -278,11 +278,13 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
     return true;
 }
 
+void Con_SetAllowed(int flags)
+{
+    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+}
+
 bool Con_ParseCommands(File const &file, int flags)
 {
-    // Update the allowed operations.
-    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
-
     LOG_SCR_MSG("Parsing console commands in %s...") << file.description();
 
     return Con_Parse(file, (flags & CPCF_SILENT) != 0);
