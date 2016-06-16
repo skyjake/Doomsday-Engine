@@ -50,6 +50,7 @@ DENG_GUI_PIMPL(LineEditWidget)
     Font const *font;
     Time blinkTime;
     Animation hovering;
+    float unfocusedBackgroundOpacity = 0.f;
 
     // GL objects.
     GLTextComposer composer;
@@ -122,19 +123,16 @@ DENG_GUI_PIMPL(LineEditWidget)
             if (!self.hasFocus())
             {
                 bg = Background(Background::GradientFrame, Vector4f(1, 1, 1, .15f + hovering * .2f), 6);
-                //style().colors().colorf("background"));
+                if (unfocusedBackgroundOpacity > 0.f)
+                {
+                    bg.solidFill = Vector4f(style().colors().colorf("background").xyz(),
+                                            unfocusedBackgroundOpacity);
+                }
             }
             else
             {
                 bg = Background(style().colors().colorf("background"), Background::GradientFrame,
                                 Vector4f(1, 1, 1, .25f + hovering * .3f), 6);
-                /*if (hovering > 0)
-                {
-                    bg.type = Background::GradientFrame;
-                    bg.thickness = 6;
-                    bg.color = Vector4f(1, 1, 1, .15f * hovering);
-                    self.requestGeometry();
-                }*/
             }
             self.set(bg);
         }
@@ -291,6 +289,16 @@ Rectanglei LineEditWidget::cursorRect() const
 
     return Rectanglei(cp + toDevicePixels(Vector2i(-1, 0)),
                       cp + Vector2i(toDevicePixels(1), d->font->height().valuei()));
+}
+
+void LineEditWidget::setUnfocusedBackgroundOpacity(float opacity)
+{
+    d->unfocusedBackgroundOpacity = opacity;
+
+    if (!hasFocus())
+    {
+        d->updateBackground();
+    }
 }
 
 void LineEditWidget::glInit()

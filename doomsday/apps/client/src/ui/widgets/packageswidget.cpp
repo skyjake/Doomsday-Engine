@@ -88,15 +88,21 @@ DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     LoopCallback mainCall;
+
+    // Search filter:
     LineEditWidget *search;
+    Rule const *searchMinY = nullptr;
     ButtonWidget *clearSearch;
+    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
+    QStringList filterTerms;
+    QTimer refilterTimer;
+
+    // Packages list:
     HomeMenuWidget *menu;
     String buttonLabels[2];
     DotPath buttonImages[2];
-    QStringList filterTerms;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
-    QTimer refilterTimer;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
     IButtonHandler       *buttonHandler = &loadOrUnloadPackage;
@@ -383,6 +389,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     ~Instance()
     {
+        releaseRef(searchMinY);
+
         // Private instance deleted before child widgets.
         menu->organizer().unsetFilter();
     }
@@ -541,6 +549,7 @@ PackagesWidget::PackagesWidget(String const &name)
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
 {
     d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top()));
+    changeRef(d->searchMinY, minY);
 }
 
 void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
@@ -634,6 +643,31 @@ void PackagesWidget::initialize()
 {
     GuiWidget::initialize();
     d->menu->organizer().setVisibleArea(root().viewTop(), root().viewBottom());
+}
+
+void PackagesWidget::update()
+{
+    GuiWidget::update();
+
+    if (d->searchMinY)
+    {
+        TimeDelta const SPAN = 0.3;
+
+        // Time to show or hide the background?
+        if (d->searchBackgroundOpacity.target() < .5f &&
+            d->search->rule().top().valuei() == d->searchMinY->valuei())
+        {
+            d->searchBackgroundOpacity.setValue(1.f, SPAN);
+        }
+        else if (d->searchBackgroundOpacity.target() > .5f &&
+                 d->search->rule().top().valuei() > d->searchMinY->valuei())
+        {
+            d->searchBackgroundOpacity.setValue(0.f, SPAN);
+        }
+
+        // Update search field background opacity.
+        d->search->setUnfocusedBackgroundOpacity(d->searchBackgroundOpacity);
+    }
 }
 
 void PackagesWidget::operator >> (PersistentState &toState) const

@@ -82,6 +82,7 @@ public:
 
     // Events.
     void initialize();
+    void update();
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;

@@ -64,6 +64,8 @@ public:
      */
     Rectanglei cursorRect() const;
 
+    void setUnfocusedBackgroundOpacity(float opacity);
+
     // Events.
     void viewResized() override;
     void focusGained() override;
