@@ -721,8 +721,9 @@ public:
         }
         return Vector3<Type>();
     }
-    Vector2<Type> xy() const { return *this; }
-    Vector2<Type> zw() const { return swizzle(*this, AxisZ, AxisW); }
+    Vector2<Type> xy() const   { return *this; }
+    Vector2<Type> zw() const   { return swizzle(*this, AxisZ, AxisW); }
+    Vector3<Type> xyz() const  { return *this; }
     Vector4<Type> zyxw() const { return swizzle(*this, AxisZ, AxisY, AxisX, AxisW); }
 
 public:
