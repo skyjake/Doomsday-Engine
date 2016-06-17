@@ -211,6 +211,7 @@ public:
     static Time containerOfFileModifiedAt(File const &file);
 
     static String const VAR_PACKAGE;
+    static String const VAR_PACKAGE_ID;
     static String const VAR_TITLE;
 
 private:

@@ -28,8 +28,9 @@
 
 namespace de {
 
-String const Package::VAR_PACKAGE("package");
-String const Package::VAR_TITLE  ("title");
+String const Package::VAR_PACKAGE   ("package");
+String const Package::VAR_PACKAGE_ID("package.ID");
+String const Package::VAR_TITLE     ("title");
 
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
