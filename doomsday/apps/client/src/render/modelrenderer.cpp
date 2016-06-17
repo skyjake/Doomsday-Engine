@@ -39,32 +39,33 @@
 
 using namespace de;
 
-static String const DEF_ANIMATION   ("animation");
-static String const DEF_MATERIAL    ("material");
-static String const DEF_VARIANT     ("variant");
-static String const DEF_UP_VECTOR   ("up");
-static String const DEF_FRONT_VECTOR("front");
-static String const DEF_AUTOSCALE   ("autoscale");
-static String const DEF_VIEW_ALIGN  ("viewAlign");
-static String const DEF_MIRROR      ("mirror");
-static String const DEF_OFFSET      ("offset");
-static String const DEF_STATE       ("state");
-static String const DEF_SEQUENCE    ("sequence");
-static String const DEF_RENDER      ("render");
+static String const DEF_ANIMATION      ("animation");
+static String const DEF_MATERIAL       ("material");
+static String const DEF_VARIANT        ("variant");
+static String const DEF_UP_VECTOR      ("up");
+static String const DEF_FRONT_VECTOR   ("front");
+static String const DEF_AUTOSCALE      ("autoscale");
+static String const DEF_ALIGNMENT_YAW  ("alignment.yaw");
+static String const DEF_ALIGNMENT_PITCH("alignment.pitch");
+static String const DEF_MIRROR         ("mirror");
+static String const DEF_OFFSET         ("offset");
+static String const DEF_STATE          ("state");
+static String const DEF_SEQUENCE       ("sequence");
+static String const DEF_RENDER         ("render");
 static String const DEF_TEXTURE_MAPPING("textureMapping");
-static String const DEF_SHADER      ("shader");
-static String const DEF_PASS        ("pass");
-static String const DEF_MESHES      ("meshes");
-static String const DEF_BLENDFUNC   ("blendFunc");
-static String const DEF_BLENDOP     ("blendOp");
-static String const DEF_DEPTHFUNC   ("depthFunc");
-static String const DEF_DEPTHWRITE  ("depthWrite");
-static String const DEF_TIMELINE    ("timeline");
+static String const DEF_SHADER         ("shader");
+static String const DEF_PASS           ("pass");
+static String const DEF_MESHES         ("meshes");
+static String const DEF_BLENDFUNC      ("blendFunc");
+static String const DEF_BLENDOP        ("blendOp");
+static String const DEF_DEPTHFUNC      ("depthFunc");
+static String const DEF_DEPTHWRITE     ("depthWrite");
+static String const DEF_TIMELINE       ("timeline");
 
-static String const SHADER_DEFAULT  ("model.skeletal.generic");
-static String const MATERIAL_DEFAULT("default");
+static String const SHADER_DEFAULT     ("model.skeletal.generic");
+static String const MATERIAL_DEFAULT   ("default");
 
-static String const VAR_U_MAP_TIME  ("uMapTime");
+static String const VAR_U_MAP_TIME     ("uMapTime");
 
 static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
 
@@ -100,7 +101,6 @@ DENG2_PIMPL(ModelRenderer)
                            << "still has" << i.value()->useCount << "users";
             }
 #endif
-
             // Everything should have been unloaded, because all models
             // have been destroyed at this point.
             DENG2_ASSERT(empty());
@@ -406,27 +406,12 @@ DENG2_PIMPL(ModelRenderer)
         {
             model.offset = vectorFromValue<Vector3f>(asset.get(DEF_OFFSET));
         }
-        model.autoscaleToThingHeight = ScriptedInfo::isTrue(asset, DEF_AUTOSCALE);
+        applyFlagOperation(model.flags, render::Model::AutoscaleToThingHeight,
+                           ScriptedInfo::isTrue(asset, DEF_AUTOSCALE)? SetFlags : UnsetFlags);
 
-        // View alignment mode.
-        {
-            String const viewAlign = asset.gets(DEF_VIEW_ALIGN, "none");
-
-            if (ScriptedInfo::isTrue(asset, DEF_VIEW_ALIGN) ||
-                !viewAlign.compareWithoutCase("full") ||
-                !viewAlign.compareWithoutCase("both"))
-            {
-                model.alignToViewYaw = model.alignToViewPitch = true;
-            }
-            else if (!viewAlign.compareWithoutCase("yaw"))
-            {
-                model.alignToViewYaw = true;
-            }
-            else if (!viewAlign.compareWithoutCase("pitch"))
-            {
-                model.alignToViewPitch = true;
-            }
-        }
+        // Alignment modes.
+        model.alignYaw   = parseAlignment(asset, DEF_ALIGNMENT_YAW);
+        model.alignPitch = parseAlignment(asset, DEF_ALIGNMENT_PITCH);
 
         // Custom texture maps and additional materials.
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
@@ -563,6 +548,37 @@ DENG2_PIMPL(ModelRenderer)
 
         // Textures of the model will be kept here.
         model.textures.reset(new MultiAtlas::AllocGroup(atlasPool));
+    }
+
+    render::Model::Alignment parseAlignment(RecordAccessor const &def, String const &key)
+    {
+        if (!def.has(key)) return render::Model::NotAligned;
+
+        String const value = def.gets(key);
+        if (!value.compareWithoutCase("movement"))
+        {
+            return render::Model::AlignToMomentum;
+        }
+        else if (!value.compareWithoutCase("view"))
+        {
+            return render::Model::AlignToView;
+        }
+        else if (!value.compareWithoutCase("random"))
+        {
+            return render::Model::AlignRandomly;
+        }
+        else if (ScriptedInfo::isFalse(def, key, false))
+        {
+            return render::Model::NotAligned;
+        }
+        else
+        {
+            throw DefinitionError("ModelRenderer::parseAlignment",
+                                  String("Unknown alignment value \"%1\" for %2 in %3")
+                                  .arg(value)
+                                  .arg(key)
+                                  .arg(ScriptedInfo::sourceLocation(def)));
+        }
     }
 
     void setupMaterial(ModelDrawable &model,

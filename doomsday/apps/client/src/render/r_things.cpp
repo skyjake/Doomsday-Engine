@@ -315,7 +315,7 @@ void R_ProjectSprite(mobj_t &mob)
 
     // Determine the rotation angles (in degrees).
     if((mf && mf->testSubFlag(0, MFF_ALIGN_YAW)) ||
-       (animator && animator->model().alignToViewYaw))
+       (animator && animator->model().alignYaw == render::Model::AlignToView))
     {
         // Transform the origin point.
         viewdata_t const *viewData = &viewPlayer->viewport();
@@ -328,7 +328,8 @@ void R_ProjectSprite(mobj_t &mob)
     {
         yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(&mob) % 360;
     }
-    else if(mf && mf->testSubFlag(0, MFF_MOVEMENT_YAW))
+    else if((mf && mf->testSubFlag(0, MFF_MOVEMENT_YAW)) ||
+            (animator && animator->model().alignYaw == render::Model::AlignToMomentum))
     {
         yaw = R_MovementXYYaw(mob.mom[0], mob.mom[1]);
     }
@@ -338,20 +339,22 @@ void R_ProjectSprite(mobj_t &mob)
     }
 
     // How about a unique offset?
-    if(mf && mf->testSubFlag(0, MFF_IDANGLE))
+    if((mf && mf->testSubFlag(0, MFF_IDANGLE)) ||
+       (animator && animator->model().alignYaw == render::Model::AlignRandomly))
     {
         yaw += MOBJ_TO_ID(&mob) % 360;  // arbitrary
     }
 
     if((mf && mf->testSubFlag(0, MFF_ALIGN_PITCH)) ||
-       (animator && animator->model().alignToViewPitch))
+       (animator && animator->model().alignPitch == render::Model::AlignToView))
     {
         viewdata_t const *viewData = &viewPlayer->viewport();
         Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
         pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
     }
-    else if(mf && mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
+    else if((mf && mf->testSubFlag(0, MFF_MOVEMENT_PITCH)) ||
+            (animator && animator->model().alignPitch == render::Model::AlignToMomentum))
     {
         pitch = R_MovementXYZPitch(mob.mom[0], mob.mom[1], mob.mom[2]);
     }

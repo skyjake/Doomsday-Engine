@@ -124,7 +124,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
-                if(model.autoscaleToThingHeight)
+                if(model.flags & render::Model::AutoscaleToThingHeight)
                 {
                     Vector3f const dims = modelMatrix * model.dimensions();
                     modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
@@ -156,13 +156,12 @@ DENG2_PIMPL(ClientMobjThinkerData)
      */
     void triggerStateAnimations(state_t const *state = nullptr)
     {
-        if(flags.testFlag(StateChanged))
+        if(flags & StateChanged)
         {
             flags &= ~StateChanged;
             if(animator)
             {
-                animator->triggerByState(state? Def_GetStateName(state) :
-                                                stateName());
+                animator->triggerByState(state? Def_GetStateName(state) : stateName());
             }
         }
     }
@@ -267,7 +266,7 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     bool const justSpawned = !previousState;
 
     d->initOnce();
-    if(d->flags.testFlag(StateChanged) && d->isStateInCurrentSequence(previousState))
+    if((d->flags & StateChanged) && d->isStateInCurrentSequence(previousState))
     {
         /*
          * Mobj state has already been flagged as changed, but triggers for the

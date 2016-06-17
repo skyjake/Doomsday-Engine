@@ -671,8 +671,8 @@ StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
 {
     StringList keys = subrecs.keys();
 
-    std::sort(keys.begin(), keys.end(),
-              [&subrecs] (String const &a, String const &b) -> bool {
+    std::sort(keys.begin(), keys.end(), [&subrecs] (String const &a, String const &b) -> bool
+    {
         auto const src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
         auto const src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
         if (!String(src1.first).compareWithoutCase(src2.first))
@@ -687,12 +687,12 @@ StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
     return keys;
 }
 
-String ScriptedInfo::sourceLocation(Record const &record)
+String ScriptedInfo::sourceLocation(RecordAccessor const &record)
 {
     return Info::sourceLocation(record.getui(VAR_SOURCE, 0));
 }
 
-SourceLineTable::PathAndLine ScriptedInfo::sourcePathAndLine(Record const &record)
+SourceLineTable::PathAndLine ScriptedInfo::sourcePathAndLine(RecordAccessor const &record)
 {
     return Info::sourceLineTable().sourcePathAndLineNumber(record.getui(VAR_SOURCE, 0));
 }

@@ -231,9 +231,9 @@ public:
      */
     static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
 
-    static String sourceLocation(Record const &record);
+    static String sourceLocation(RecordAccessor const &record);
 
-    static SourceLineTable::PathAndLine sourcePathAndLine(Record const &record);
+    static SourceLineTable::PathAndLine sourcePathAndLine(RecordAccessor const &record);
 
 public:
     static String const SCRIPT;

@@ -25,6 +25,7 @@
 #include <de/MultiAtlas>
 
 #include <QHash>
+#include <QFlags>
 
 namespace render {
 
@@ -48,15 +49,36 @@ struct Model : public de::ModelDrawable
 
         AnimSequence(de::String const &n, de::Record const &d);
     };
-    typedef QList<AnimSequence> AnimSequences;
 
-    struct StateAnims : public QMap<de::String, AnimSequences> {};
+    struct StateAnims : public QMap<de::String, QList<AnimSequence>>
+    {};
+
+    enum Flag
+    {
+        AutoscaleToThingHeight = 0x1,
+        DefaultFlags = AutoscaleToThingHeight
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    enum Alignment
+    {
+        NotAligned,
+        AlignToView,
+        AlignToMomentum,
+        AlignRandomly
+    };
+
+//---------------------------------------------------------------------------------------
+
+    ~Model();
+
+//---------------------------------------------------------------------------------------
 
     std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
 
-    bool autoscaleToThingHeight = true;
-    bool alignToViewYaw         = false;
-    bool alignToViewPitch       = false;
+    Flags flags          = DefaultFlags;
+    Alignment alignYaw   = NotAligned;
+    Alignment alignPitch = NotAligned;
 
     /// Combined scaling and rotation of the model.
     de::Matrix4f transformation;
@@ -75,9 +97,9 @@ struct Model : public de::ModelDrawable
 
     /// Shared timelines (not sequence-specific). Owned.
     QHash<de::String, de::Scheduler *> timelines;
-
-    ~Model();
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)
 
 } // namespace render
 
