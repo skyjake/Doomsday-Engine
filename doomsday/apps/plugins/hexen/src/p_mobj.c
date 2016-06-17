@@ -943,6 +943,8 @@ void P_MobjThinker(void *thinkerPtr)
 
                 if(changexy)
                 {
+                    mobj_t *fx;
+
                     if(mobj->type == MT_MWAND_MISSILE && (P_Random() < 128))
                     {
                         z = mobj->origin[VZ] - 8;
@@ -951,8 +953,13 @@ void P_MobjThinker(void *thinkerPtr)
                             z = mobj->floorZ;
                         }
 
-                        P_SpawnMobjXYZ(MT_MWANDSMOKE, mobj->origin[VX],
-                                                      mobj->origin[VY], z, mobj->angle, 0);
+                        fx = P_SpawnMobjXYZ(MT_MWANDSMOKE, mobj->origin[VX],
+                                            mobj->origin[VY], z, mobj->angle, 0);
+
+                        // Give a small amount of momentum so the movement direction
+                        // can be determined.
+                        V3d_Copy (fx->mom, mobj->mom);
+                        V3d_Scale(fx->mom, .00001);
                     }
                     else if(!--mobj->special1)
                     {
@@ -964,7 +971,7 @@ void P_MobjThinker(void *thinkerPtr)
                         }
 
                         P_SpawnMobjXYZ(MT_CFLAMEFLOOR, mobj->origin[VX],
-                                                       mobj->origin[VY], z, mobj->angle, 0);
+                                       mobj->origin[VY], z, mobj->angle, 0);
                     }
                 }
             }
