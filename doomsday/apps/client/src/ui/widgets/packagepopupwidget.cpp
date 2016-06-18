@@ -41,6 +41,7 @@ PackagePopupWidget::PackagePopupWidget(File const *packageFile)
 
 bool PackagePopupWidget::setup(File const *file)
 {
+    enableCloseButton(true);
     document().setMaximumLineWidth(rule("home.popup.width").valuei());
     setPreferredHeight(rule("home.popup.height"));
 

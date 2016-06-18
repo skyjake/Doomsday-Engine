@@ -27,15 +27,12 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 {
     ui::DataPos selectedIndex = ui::Data::InvalidPos;
     ui::DataPos previousSelectedIndex = 0;
+    ui::Item const *interacted = nullptr;
+    ui::Item const *interactedAction = nullptr;
 
     Instance(Public *i) : Base(i)
     {
         self.organizer().audienceForWidgetCreation() += this;
-    }
-
-    ~Instance()
-    {
-        self.assets().audienceForStateChange() -= this;
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
@@ -129,6 +126,22 @@ void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
             assets().audienceForStateChange() += d;
         }
     }
+}
+
+void HomeMenuWidget::setInteractedItem(ui::Item const *menuItem, ui::Item const *actionItem)
+{
+    d->interacted       = menuItem;
+    d->interactedAction = actionItem;
+}
+
+ui::Item const *HomeMenuWidget::interactedItem() const
+{
+    return d->interacted;
+}
+
+ui::Item const *HomeMenuWidget::actionItem() const
+{
+    return d->interactedAction;
 }
 
 void HomeMenuWidget::mouseActivityInItem()

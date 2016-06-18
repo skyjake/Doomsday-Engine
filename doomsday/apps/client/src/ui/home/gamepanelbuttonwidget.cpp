@@ -57,6 +57,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
         packagesButton->setDialogTitle(profile.name());
+        packagesButton->setSetupCallback([this] (PackagesDialog &dialog)
+        {
+            // Add a button for starting the game.
+            dialog.buttons()
+                    << new DialogButtonItem(DialogWidget::Action,
+                                            style().images().image("play"),
+                                            tr("Play"),
+                                            new CallbackAction([this, &dialog] () {
+                                                dialog.accept();
+                                                playButtonPressed();
+                                            }));
+        });
         self.addButton(packagesButton);
 
         QObject::connect(packagesButton,

@@ -28,6 +28,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(HomeItemWidget)
+, DENG2_OBSERVES(MenuWidget, ItemTriggered)
 {
     struct ClickHandler : public GuiWidget::IEventHandler
     {
@@ -92,7 +93,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     LabelWidget *background;
     LabelWidget *icon;
     LabelWidget *label;
-    QList<ButtonWidget *> buttons;
+    QList<GuiWidget *> buttons;
     AnimationRule *labelRightMargin;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
@@ -174,6 +175,14 @@ DENG_GUI_PIMPL(HomeItemWidget)
             buttonHideTimer.setInterval(SPAN.asMilliSeconds());
             buttonHideTimer.start();
         }
+    }
+
+    void menuItemTriggered(ui::Item const &actionItem) override
+    {
+        // Let the parent menu know which of its items is being interacted with.
+        self.parentMenu()->setInteractedItem(self.parentMenu()->organizer()
+                                             .findItemForWidget(self),
+                                             &actionItem);
     }
 
     void updateColors()
@@ -371,15 +380,29 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
     return img;
 }
 
-void HomeItemWidget::addButton(ButtonWidget *button)
+void HomeItemWidget::addButton(GuiWidget *widget)
 {
     // Common styling.
-    button->setSizePolicy(ui::Expand, ui::Expand);
+    if (auto *label = widget->maybeAs<LabelWidget>())
+    {
+        label->setSizePolicy(ui::Expand, ui::Expand);
+    }
 
-    d->buttons << button;
-    d->label->add(button);
-    button->hide();
+    // Observing triggers.
+    if (auto *menu = widget->maybeAs<MenuWidget>())
+    {
+        menu->audienceForItemTriggered() += d;
+    }
+
+    d->buttons << widget;
+    d->label->add(widget);
+    widget->hide();
     d->updateButtonLayout();
+}
+
+GuiWidget &HomeItemWidget::buttonWidget(int index) const
+{
+    return *d->buttons.at(index);
 }
 
 void HomeItemWidget::setKeepButtonsVisible(bool yes)

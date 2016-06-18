@@ -19,6 +19,8 @@
 #ifndef DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
 #define DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
 
+#include "ui/dialogs/packagesdialog.h"
+
 #include <doomsday/GameProfiles>
 #include <de/ButtonWidget>
 #include <QStringList>
@@ -33,11 +35,12 @@ class PackagesButtonWidget : public de::ButtonWidget
 public:
     PackagesButtonWidget();
 
-    void setGameProfile(GameProfile const &profile);
-
-    void setNoneLabel(de::String const &noneLabel);
     void setDialogTitle(de::String const &title);
+    void setGameProfile(GameProfile const &profile);
+    void setSetupCallback(std::function<void (PackagesDialog &dialog)> func);
+    void setNoneLabel(de::String const &noneLabel);
     void setPackages(de::StringList const &packageIds);
+
     de::StringList packages() const;
 
 signals:

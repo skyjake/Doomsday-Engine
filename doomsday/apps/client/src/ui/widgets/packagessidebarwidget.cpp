@@ -18,6 +18,11 @@
 
 #include "ui/widgets/packagessidebarwidget.h"
 #include "ui/widgets/packageswidget.h"
+#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/homeitemwidget.h"
+
+#include <de/CallbackAction>
+#include <de/ui/ActionItem>
 
 using namespace de;
 
@@ -30,7 +35,19 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         GuiWidget *container = &self.containerWidget();
 
         container->add(browser = new PackagesWidget);
+        browser->setFilterEditorMinimumY(Const(0));
         browser->rule().setInput(Rule::Width, rule("sidebar.width"));
+
+        // Action for showing information about the package.
+        browser->actionItems().insert(0, new ui::ActionItem(tr("..."), new CallbackAction([this] ()
+        {
+            auto *pop = new PackagePopupWidget(browser->actionPackage());
+            root().addOnTop(pop);
+            pop->setDeleteAfterDismissed(true);
+            pop->setAnchorAndOpeningDirection(browser->actionWidget()->as<HomeItemWidget>()
+                                              .buttonWidget(0).rule(), ui::Up);
+            pop->open();
+        })));
     }
 };
 

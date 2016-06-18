@@ -43,28 +43,27 @@ public:
         virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
     };
 
-    class IButtonHandler
-    {
-    public:
-        virtual ~IButtonHandler();
-        virtual void packageButtonClicked(de::ButtonWidget &button, de::String const &packageId) = 0;
-    };
-
 public:
     PackagesWidget(de::String const &name = "");
 
     void setFilterEditorMinimumY(de::Rule const &minY);
 
     void setPackageStatus(IPackageStatus const &packageStatus);
-    void setButtonHandler(IButtonHandler &buttonHandler);
-    void setButtonLabels(de::String const &buttonLabel,
-                         de::String const &highlightedButtonLabel);
-    void setButtonImages(de::DotPath const &styleId,
-                         de::DotPath const &highlightedStyleId);
-    void setActionButtonAlwaysShown(bool showActions);
+
+    /**
+     * Sets the data items that determine what kind of action buttons get created
+     * for the items of the list.
+     *
+     * @param actionItem  Items for action buttons.
+     */
+    void setActionItems(de::ui::Data const &actionItems);
+
+    de::ui::Data &actionItems();
+
+    void setActionsAlwaysShown(bool showActions);
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
-                       ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);
+                       ColorTheme unselectedItemHilit, ColorTheme selectedItemHilit);
 
     void populate();
     void updateItems();
@@ -75,6 +74,18 @@ public:
      * @return  Item.
      */
     de::ui::Item const *itemForPackage(de::String const &packageId) const;
+
+    /**
+     * Returns the ID of the package whose action buttons were most recently interacted
+     * with.
+     *
+     * @return Package ID.
+     */
+    de::String actionPackage() const;
+
+    de::GuiWidget *actionWidget() const;
+
+    de::ui::Item const *actionItem() const;
 
     void scrollToPackage(de::String const &packageId) const;
 

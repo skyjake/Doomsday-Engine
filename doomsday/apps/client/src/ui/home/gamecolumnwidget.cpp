@@ -501,7 +501,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 d->menu->rule().height() +
                                 d->newProfileButton->rule().height());
 
-    header().title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")
+    header().title().setText(String(_E(s)_E(C) "%1\n" _E(.)_E(.)_E(w) "%2")
                              .arg( gameFamily == "DOOM"? "id Software" :
                                   !gameFamily.isEmpty()? "Raven Software" : "")
                              .arg(!gameFamily.isEmpty()? QString(gameFamily)

@@ -37,18 +37,19 @@
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
+#include <de/ui/VariantActionItem>
 
 using namespace de;
 
 DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
-, public PackagesWidget::IButtonHandler
 , DENG2_OBSERVES(Widget, ChildAddition)
 {
     StringList requiredPackages; // loaded first, cannot be changed
     StringList selectedPackages;
     LabelWidget *nothingSelected;
+    ui::ListData actions;
     HomeMenuWidget *menu;
     PackagesWidget *browser;
     LabelWidget *gameTitle;
@@ -163,7 +164,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
-        nothingSelected->setText(_E(b) + tr("Nothing Selected"));
+        nothingSelected->setText(_E(b) + tr("No Packages Selected"));
         nothingSelected->setFont("heading");
         nothingSelected->setOpacity(0.5f);
         nothingSelected->rule()
@@ -208,12 +209,38 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         // Package browser.
         self.rightArea().add(browser = new PackagesWidget(self.name() + ".filter"));
-        browser->setActionButtonAlwaysShown(true);
+        browser->setActionsAlwaysShown(true);
         browser->setPackageStatus(*this);
-        browser->setButtonHandler(*this);
-        //browser->setButtonLabels(tr("Add"), tr("Remove"));
-        browser->setButtonLabels("", "");
-        browser->setButtonImages("create", "close.ringless");
+
+        // Action for showing information about the package.
+        actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
+        {
+            return new PackagePopupWidget(browser->actionPackage());
+        });
+
+        // Action for (de)selecting the package.
+        actions << new ui::VariantActionItem("create",
+                                             "close.ringless",
+                                             String(),
+                                             String(),
+                                             new CallbackAction([this] ()
+        {
+            String const packageId = browser->actionPackage();
+            if (!selectedPackages.contains(packageId))
+            {
+                selectedPackages.append(packageId);
+                menu->items() << new SelectedPackageItem(packageId);
+                updateNothingIndicator();
+                updateGameTitle();
+            }
+            else
+            {
+                removePackage(packageId);
+            }
+            browser->actionItem()->notifyChange();
+        }));
+        browser->setActionItems(actions);
+
         //browser->setColorTheme(Normal, Normal, Normal, Normal);
         browser->rule()
                 .setInput(Rule::Left,  self.rightArea().contentRule().left())
@@ -221,11 +248,6 @@ DENG_GUI_PIMPL(PackagesDialog)
                 .setInput(Rule::Width, menu->rule().width());
         self.rightArea().enableIndicatorDraw(true);
         browser->setFilterEditorMinimumY(self.rightArea().rule().top());
-    }
-
-    ~Instance()
-    {
-        menu->audienceForChildAddition() -= this;
     }
 
     void populate()
@@ -288,20 +310,6 @@ DENG_GUI_PIMPL(PackagesDialog)
         return selectedPackages.contains(packageId);
     }
 
-    void packageButtonClicked(ButtonWidget &, String const &packageId) override
-    {
-        if (!selectedPackages.contains(packageId))
-        {
-            selectedPackages.append(packageId);
-            menu->items() << new SelectedPackageItem(packageId);
-            updateNothingIndicator();
-        }
-        else
-        {
-            removePackage(packageId);
-        }
-    }
-
     void removePackage(String const &packageId)
     {
         selectedPackages.removeOne(packageId);
@@ -309,6 +317,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         DENG2_ASSERT(pos != ui::Data::InvalidPos);
         menu->items().remove(pos);
         updateNothingIndicator();
+        updateGameTitle();
     }
 
     void widgetChildAdded(Widget &child)

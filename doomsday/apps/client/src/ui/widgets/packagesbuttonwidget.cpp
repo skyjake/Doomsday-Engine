@@ -29,6 +29,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
     String dialogTitle;
     String noneLabel;
     GameProfile const *profile = nullptr;
+    std::function<void (PackagesDialog &)> setupFunc;
 
     Instance(Public *i) : Base(i)
     {}
@@ -75,6 +76,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
             emit self.packageSelectionChanged(ids);
         }));
         root().addOnTop(dlg);
+        if (setupFunc) setupFunc(*dlg);
         dlg->open();
     }
 };
@@ -93,6 +95,11 @@ PackagesButtonWidget::PackagesButtonWidget()
 void PackagesButtonWidget::setGameProfile(GameProfile const &profile)
 {
     d->profile = &profile;
+}
+
+void PackagesButtonWidget::setSetupCallback(std::function<void (PackagesDialog &)> func)
+{
+    d->setupFunc = func;
 }
 
 void PackagesButtonWidget::setNoneLabel(String const &noneLabel)

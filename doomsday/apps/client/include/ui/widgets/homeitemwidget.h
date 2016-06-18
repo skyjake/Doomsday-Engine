@@ -50,7 +50,8 @@ public:
     de::LabelWidget &icon();
     de::LabelWidget &label();
 
-    void addButton(de::ButtonWidget *button);
+    void addButton(de::GuiWidget *button);
+    de::GuiWidget &buttonWidget(int index) const;
     void setKeepButtonsVisible(bool yes);
 
     virtual void setSelected(bool selected);

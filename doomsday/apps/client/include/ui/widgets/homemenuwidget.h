@@ -21,6 +21,8 @@
 
 #include <de/MenuWidget>
 
+class HomeItemWidget;
+
 /**
  * Menu for items in Home columns.
  *
@@ -48,6 +50,11 @@ public:
      * @return The highlighted widget, if one was highlighted. Otherwise, returns nullptr.
      */
     void setSelectedIndex(de::ui::DataPos index);
+
+    de::ui::Item const *interactedItem() const;
+    de::ui::Item const *actionItem() const;
+    void setInteractedItem(de::ui::Item const *menuItem,
+                           de::ui::Item const *actionItem);
 
 signals:
     void selectedIndexChanged(int index);

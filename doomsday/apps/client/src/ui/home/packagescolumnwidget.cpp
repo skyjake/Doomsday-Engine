@@ -19,26 +19,44 @@
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/homeitemwidget.h"
 
 #include <de/PopupMenuWidget>
+#include <de/CallbackAction>
+#include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
 
 using namespace de;
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
-, public PackagesWidget::IButtonHandler
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
+    ui::ListData actions;
 
     Instance(Public *i) : Base(i)
     {
+        actions << new ui::SubwidgetItem(tr("..."), ui::Down, [this] () -> PopupWidget *
+        {
+            String const packageId = packages->actionPackage();
+
+            auto *popMenu = new PopupMenuWidget;
+            popMenu->setColorTheme(Inverted);
+            popMenu->items()
+                    << new ui::SubwidgetItem(tr("Info"), ui::Down,
+                                             [this, packageId] () -> PopupWidget * {
+                                                 return new PackagePopupWidget(packageId);
+                                             })
+                    << new ui::Item(ui::Item::Separator)
+                    << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
+            return popMenu;
+        });
+
         countLabel = new LabelWidget;
 
         ScrollAreaWidget &area = self.scrollArea();
         area.add(packages = new PackagesWidget("home-packages"));
-        packages->setButtonHandler(*this);
-        packages->setButtonLabels(tr("..."), tr("..."));
+        packages->setActionItems(actions);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self.header().rule().bottom() +
@@ -58,23 +76,6 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             }
         });
     }
-
-    void packageButtonClicked(ButtonWidget &button, de::String const &packageId) override
-    {
-        auto *popMenu = new PopupMenuWidget;
-        popMenu->setDeleteAfterDismissed(true);
-        popMenu->setColorTheme(Inverted);
-        popMenu->setAnchorAndOpeningDirection(button.rule(), ui::Down);
-        popMenu->items()
-                << new ui::SubwidgetItem(tr("Info"), ui::Down,
-                                         [this, packageId] () -> PopupWidget * {
-                                             return new PackagePopupWidget(packageId);
-                                         })
-                << new ui::Item(ui::Item::Separator)
-                << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
-        root().addOnTop(popMenu);
-        popMenu->open();
-    }
 };
 
 PackagesColumnWidget::PackagesColumnWidget()
@@ -84,8 +85,6 @@ PackagesColumnWidget::PackagesColumnWidget()
     header().title().setText(_E(s) "\n" _E(.) + tr("Packages"));
     header().info().setText(tr("Browse available packages and install new ones."));
     header().infoPanel().close(0);
-
-    d->packages->setFilterEditorMinimumY(scrollArea().margins().top());
 
     // Total number of packages listed.
     d->countLabel->setFont("small");
@@ -100,6 +99,9 @@ PackagesColumnWidget::PackagesColumnWidget()
                                 header().rule().height() +
                                 rule("gap") +
                                 d->packages->rule().height());
+
+    d->packages->setFilterEditorMinimumY(scrollArea().margins().top());
+    d->packages->refreshPackages();
 }
 
 String PackagesColumnWidget::tabHeading() const
