@@ -26,6 +26,7 @@
 #include "de/ui/ListData"
 #include "de/ui/ActionItem"
 #include "de/ui/SubwidgetItem"
+#include "de/ui/VariantActionItem"
 
 namespace de {
 
@@ -39,6 +40,7 @@ DENG2_PIMPL(MenuWidget)
 , DENG2_OBSERVES(Widget, ChildRemoval)  // for layout update
 , DENG2_OBSERVES(PopupWidget, Close)
 , DENG2_OBSERVES(Widget, Deletion)
+, DENG2_OBSERVES(ButtonWidget, Press) // child button triggers
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -164,6 +166,7 @@ DENG2_PIMPL(MenuWidget)
 
     AssetGroup assets;
     bool needLayout = false;
+    bool variantsEnabled = false;
     GridLayout layout;
     ListData defaultItems;
     Data const *items = nullptr;
@@ -242,6 +245,10 @@ DENG2_PIMPL(MenuWidget)
         {
             assets += *asset; // part of the asset group (observes for deletion)
         }
+        if (ButtonWidget *button = child.maybeAs<ButtonWidget>())
+        {
+            button->audienceForPress() += this;
+        }
     }
 
     void widgetChildRemoved(Widget &child)
@@ -253,6 +260,10 @@ DENG2_PIMPL(MenuWidget)
         if (IAssetGroup *asset = child.maybeAs<IAssetGroup>())
         {
             assets -= *asset; // no longer part of the asset group
+        }
+        if (ButtonWidget *button = child.maybeAs<ButtonWidget>())
+        {
+            button->audienceForPress() -= this;
         }
     }
 
@@ -450,7 +461,22 @@ DENG2_PIMPL(MenuWidget)
         }
         return layout.height();
     }
+
+    void buttonPressed(ButtonWidget &button)
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(ItemTriggered, i)
+        {
+            if (auto *item = organizer.findItemForWidget(button))
+            {
+                i->menuItemTriggered(*item);
+            }
+        }
+    }
+
+    DENG2_PIMPL_AUDIENCE(ItemTriggered)
 };
+
+DENG2_AUDIENCE_METHOD(MenuWidget, ItemTriggered)
 
 MenuWidget::MenuWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
@@ -571,6 +597,28 @@ void MenuWidget::setVirtualizationEnabled(bool enabled, int averageItemHeight)
     d->organizer.setVirtualizationEnabled(enabled);
     d->organizer.setAverageChildHeight(averageItemHeight);
     d->needLayout = true;
+}
+
+void MenuWidget::setVariantItemsEnabled(bool variantsEnabled)
+{
+    if (d->variantsEnabled != variantsEnabled)
+    {
+        d->variantsEnabled = variantsEnabled;
+
+        items().forAll([this] (ui::Item const &item)
+        {
+            if (item.is<ui::VariantActionItem>())
+            {
+                item.notifyChange();
+            }
+            return LoopContinue;
+        });
+    }
+}
+
+bool MenuWidget::variantItemsEnabled() const
+{
+    return d->variantsEnabled;
 }
 
 ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const

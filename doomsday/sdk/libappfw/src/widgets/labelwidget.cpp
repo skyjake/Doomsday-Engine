@@ -614,10 +614,13 @@ void LabelWidget::setImage(ProceduralImage *procImage)
 
 void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
 {
-    setImage(new StyleProceduralImage(id, *this));
-    if (!heightFromFont.isEmpty())
+    if (!id.isEmpty())
     {
-        setOverrideImageSize(style().fonts().font(heightFromFont).height().value());
+        setImage(new StyleProceduralImage(id, *this));
+        if (!heightFromFont.isEmpty())
+        {
+            setOverrideImageSize(style().fonts().font(heightFromFont).height().value());
+        }
     }
 }
 

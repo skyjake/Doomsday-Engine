@@ -59,6 +59,19 @@ public:
         : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
         , _action(action.holdRef()) {}
 
+    ActionItem(Semantics semantics,
+               DotPath const &styleImageId,
+               String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : ImageItem(semantics, styleImageId, label)
+        , _action(action.holdRef()) {}
+
+    ActionItem(DotPath const &styleImageId,
+               String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : ImageItem(ShownAsButton | ActivationClosesPopup, styleImageId, label)
+        , _action(action.holdRef()) {}
+
     Action const *action() const { return _action; }
 
     void setAction(RefArg<Action> action)

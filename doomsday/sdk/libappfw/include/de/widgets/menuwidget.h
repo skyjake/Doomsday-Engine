@@ -55,6 +55,13 @@ class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget, public IAssetGroup
     Q_OBJECT
 
 public:
+    /**
+     * Notified when an item in the menu is triggered. The corresponding UI item is
+     * passed as argument.
+     */
+    DENG2_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
+
+public:
     MenuWidget(String const &name = "");
 
     AssetGroup &assets() override;
@@ -106,6 +113,16 @@ public:
     ChildWidgetOrganizer const &organizer() const;
 
     void setVirtualizationEnabled(bool enabled, int averageItemHeight = 0);
+
+    /**
+     * Enables or disables the variant labels and images from `VariantActionItem`s.
+     * Affects items will be updated.
+     *
+     * @param variantsEnabled  @c true to enable variants.
+     */
+    void setVariantItemsEnabled(bool variantsEnabled);
+
+    bool variantItemsEnabled() const;
 
     template <typename WidgetType>
     WidgetType &itemWidget(ui::Item const &item) const {

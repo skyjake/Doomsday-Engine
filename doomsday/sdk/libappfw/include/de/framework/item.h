@@ -102,7 +102,6 @@ public:
 
     DENG2_AS_IS_METHODS()
 
-protected:
     /**
      * Notifies the Change audience of a changed property.
      */

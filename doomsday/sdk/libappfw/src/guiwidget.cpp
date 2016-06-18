@@ -423,6 +423,11 @@ Font const &GuiWidget::font() const
     return style().fonts().font(d->fontId);
 }
 
+DotPath const &GuiWidget::fontId() const
+{
+    return d->fontId;
+}
+
 DotPath const &GuiWidget::textColorId() const
 {
     return d->textColorId;

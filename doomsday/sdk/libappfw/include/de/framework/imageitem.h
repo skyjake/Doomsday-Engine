@@ -21,6 +21,7 @@
 
 #include "item.h"
 #include <de/Image>
+#include <de/DotPath>
 
 namespace de {
 namespace ui {
@@ -39,16 +40,18 @@ public:
     ImageItem(Semantics semantics, Image const &image, String const &label = "")
         : Item(semantics, label), _image(image) {}
 
-    Image const &image() const { return _image; }
+    ImageItem(Semantics semantics, DotPath const &styleImageId, String const &label = "")
+        : Item(semantics, label), _styleId(styleImageId) {}
 
-    void setImage(Image const &image)
-    {
-        _image = image;
-        notifyChange();
-    }
+    Image const &image() const;
+    DotPath const &styleImageId() const;
+
+    void setImage(Image const &image);
+    void setImage(DotPath const &styleImageId);
 
 private:
     Image _image;
+    DotPath _styleId;
 };
 
 } // namespace ui

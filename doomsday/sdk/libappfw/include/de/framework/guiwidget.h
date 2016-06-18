@@ -275,6 +275,7 @@ public:
     void set(Background const &bg);
 
     Font const &font() const;
+    DotPath const &fontId() const;
     DotPath const &textColorId() const;
     ColorBank::Color textColor() const;
     ColorBank::Colorf textColorf() const;
