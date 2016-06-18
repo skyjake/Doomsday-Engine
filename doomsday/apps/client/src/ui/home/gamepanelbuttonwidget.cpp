@@ -47,6 +47,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     PackagesButtonWidget *packagesButton;
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
+    LabelWidget *problemIcon;
     res::LumpCatalog catalog;
 
     Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
@@ -105,6 +106,13 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         deleteSaveButton->hide();
         deleteSaveButton->setActionFn([this] () { deleteButtonPressed(); });
         self.panel().add(deleteSaveButton);
+
+        problemIcon = new LabelWidget;
+        problemIcon->setStyleImage("alert", "default");
+        problemIcon->setImageColor(style().colors().colorf("accent"));
+        problemIcon->rule().setRect(self.icon().rule());
+        problemIcon->hide();
+        self.icon().add(problemIcon);
 
         self.panel().setContent(saves);
         self.panel().open();
@@ -203,7 +211,10 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    playButton().enable(d->game().isPlayable());
+    bool const isPlayable = d->game().isPlayable();
+
+    playButton().enable(isPlayable);
+    d->problemIcon->show(!isPlayable);
 
     String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
                                                  : d->game().title();

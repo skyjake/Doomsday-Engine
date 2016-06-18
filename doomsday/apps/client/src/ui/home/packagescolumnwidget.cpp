@@ -59,8 +59,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         packages->setActionItems(actions);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
-                .setInput(Rule::Top,   self.header().rule().bottom() +
-                                       rule("gap"))
+                .setInput(Rule::Top,   self.header().rule().bottom() + rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
 
         QObject::connect(packages, &PackagesWidget::itemCountChanged,
