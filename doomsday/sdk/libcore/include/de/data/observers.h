@@ -40,7 +40,7 @@
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
 #define DENG2_DECLARE_AUDIENCE(Name, Method) \
-    class DENG2_AUDIENCE_INTERFACE(Name) { \
+    class DENG2_AUDIENCE_INTERFACE(Name) : public de::ObserverBase { \
     public: \
         virtual ~DENG2_AUDIENCE_INTERFACE(Name)() {} \
         virtual Method = 0; \
@@ -145,9 +145,35 @@
 
 namespace de {
 
+class ObserverBase;
+
+/**
+ * Interface for a group of observers.
+ */
+class DENG2_PUBLIC IAudience
+{
+public:
+    virtual ~IAudience();
+    virtual void addMember   (ObserverBase *member) = 0;
+    virtual void removeMember(ObserverBase *member) = 0;
+};
+
+class DENG2_PUBLIC ObserverBase
+{
+public:
+    virtual ~ObserverBase();
+
+    void addMemberOf   (IAudience &observers);
+    void removeMemberOf(IAudience &observers);
+
+private:
+    QSet<IAudience *> _memberOf;
+};
+
 /**
  * Template for observer sets. The template type should be an interface
- * implemented by all the observers. @ingroup data
+ * implemented by all the observers. The observer type must implement ObserverBase.
+ * @ingroup data
  *
  * @par How to use the non-pimpl audience macros
  *
@@ -196,7 +222,7 @@ namespace de {
  * and writing as appropriate.
  */
 template <typename Type>
-class Observers : public Lockable
+class Observers : public Lockable, public IAudience
 {
 public:
     typedef QSet<Type *> Members; // note: unordered, hash-based
@@ -257,6 +283,9 @@ public:
 
     void clear() {
         DENG2_GUARD(this);
+        for (Type *observer : _members) {
+            observer->removeMemberOf(*this);
+        }
         _members.clear();
     }
 
@@ -265,15 +294,17 @@ public:
         DENG2_GUARD(other);
         DENG2_GUARD(this);
         _members = other._members;
+        for (Type *observer : _members) {
+            observer->addMemberOf(*this);
+        }
         return *this;
     }
 
     /// Add an observer into the set. The set does not receive
     /// ownership of the observer instance.
     void add(Type *observer) {
-        DENG2_GUARD(this);
-        DENG2_ASSERT(observer != 0);
-        _members.insert(observer);
+        _add(observer);
+        observer->addMemberOf(*this);
     }
 
     Observers<Type> &operator += (Type *observer) {
@@ -297,8 +328,8 @@ public:
     }
 
     void remove(Type *observer) {
-        DENG2_GUARD(this);
-        _members.remove(observer);
+        _remove(observer);
+        observer->removeMemberOf(*this);
     }
 
     Observers<Type> &operator -= (Type *observer) {
@@ -351,7 +382,22 @@ public:
         return _members.constEnd();
     }
 
+    // Implements IAudience.
+    void addMember   (ObserverBase *member) { _add   (static_cast<Type *>(member)); }
+    void removeMember(ObserverBase *member) { _remove(static_cast<Type *>(member)); }
+
 private:
+    void _add(Type *observer) {
+        DENG2_GUARD(this);
+        DENG2_ASSERT(observer != 0);
+        _members.insert(observer);
+    }
+
+    void _remove(Type *observer) {
+        DENG2_GUARD(this);
+        _members.remove(observer);
+    }
+
     Members _members;
 };
 
