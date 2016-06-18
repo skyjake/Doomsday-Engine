@@ -123,9 +123,7 @@ LoopCallback::LoopCallback()
 {}
 
 LoopCallback::~LoopCallback()
-{
-    Loop::get().audienceForIteration() -= this;
-}
+{}
 
 bool LoopCallback::isEmpty() const
 {
@@ -137,6 +135,7 @@ void LoopCallback::enqueue(Callback func)
     DENG2_GUARD(this);
 
     _funcs << func;
+
     Loop::get().audienceForIteration() += this;
 }
 

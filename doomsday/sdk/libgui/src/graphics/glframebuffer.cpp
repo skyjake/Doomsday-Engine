@@ -57,13 +57,11 @@ DENG2_PIMPL(GLFramebuffer)
         , uColor    ("uColor",     GLUniform::Vec4)
     {
         pDefaultSampleCount.audienceForChange() += this;
-        //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
 
     ~Instance()
     {
-        pDefaultSampleCount.audienceForChange() -= this;
-        //DENG2_GUI_APP->audienceForGLContextChange -= this;
+        //pDefaultSampleCount.audienceForChange() -= this;
 
         release();
     }

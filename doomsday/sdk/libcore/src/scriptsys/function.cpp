@@ -93,11 +93,6 @@ Function::~Function()
     {
         delete i.value();
     }
-    if (d->globals)
-    {
-        // Stop observing the namespace.
-        d->globals->audienceForDeletion() -= this;
-    }
 }
 
 String Function::asText() const

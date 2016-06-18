@@ -82,7 +82,6 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     ~Instance()
     {
-        choices->items().audienceForRemoval() -= this;
         releaseRef(maxWidth);
     }
 

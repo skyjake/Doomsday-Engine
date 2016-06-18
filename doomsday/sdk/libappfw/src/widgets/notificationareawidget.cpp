@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/NotificationAreaWidget"
@@ -54,7 +54,6 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         foreach (GuiWidget *w, shown.keys())
         {
             DENG2_ASSERT(w->audienceForDeletion().contains(this));
-            w->audienceForDeletion() -= this;
         }
         releaseRef(shift);
     }
@@ -108,19 +107,19 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
          */
         self.remove(*relay);
         GuiWidget::destroyLater(relay);
-        
+
         if (!self.childCount())
         {
             self.hide();
         }
         updateChildLayout();
     }
-    
+
     void dismissChild(GuiWidget &notif)
     {
         DENG2_ASSERT(notif.audienceForDeletion().contains(this));
         notif.audienceForDeletion() -= this;
-        
+
         removeChild(notif);
 
         notif.deinitialize();

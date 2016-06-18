@@ -79,9 +79,6 @@ DENG2_PIMPL(ServerApp)
 
     ~Instance()
     {
-        self.audienceForGameUnload() -= this;
-        self.audienceForConsoleRegistration() -= this;
-
         Sys_Shutdown();
         DD_Shutdown();
     }

@@ -56,14 +56,6 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         , status      (Unused)
     {}
 
-    ~Instance()
-    {
-        if(session)
-        {
-            session->audienceForMetadataChange() -= this;
-        }
-    }
-
     void updateStatus()
     {
         LOGDEV_XVERBOSE("Updating SaveSlot '%s' status") << id;
@@ -233,7 +225,6 @@ DENG2_PIMPL(SaveSlots)
 
     ~Instance()
     {
-        GameSession::savedIndex().audienceForAvailabilityUpdate() -= this;
         DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 

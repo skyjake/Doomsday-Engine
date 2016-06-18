@@ -37,15 +37,6 @@ DENG2_OBSERVES(Variable, Change  )
         var->audienceForChange() += this;
     }
 
-    ~Instance()
-    {
-        if (var)
-        {
-            var->audienceForDeletion() -= this;
-            var->audienceForChange() -= this;
-        }
-    }
-
     void updateFromVariable()
     {
         if (!var) return;

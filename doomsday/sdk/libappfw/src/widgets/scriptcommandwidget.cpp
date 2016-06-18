@@ -44,11 +44,6 @@ DENG2_PIMPL(ScriptCommandWidget)
         App::app().audienceForStartupComplete() += this;
     }
 
-    ~Instance()
-    {
-        App::app().audienceForStartupComplete() -= this;
-    }
-
     void appStartupCompleted()
     {
         self.updateCompletion();

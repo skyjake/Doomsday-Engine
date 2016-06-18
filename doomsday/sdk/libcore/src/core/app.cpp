@@ -138,14 +138,10 @@ DENG2_PIMPL(App)
 
     ~Instance()
     {
-        packageLoader.audienceForActivity() -= this;
-
         if (!errorSink.isNull())
         {
             logBuffer.removeSink(*errorSink);
         }
-
-        clock.audienceForTimeChange() -= self;
 
         if (config)
         {

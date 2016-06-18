@@ -50,12 +50,6 @@ DENG2_PIMPL(AssetObserver)
         linkIndex().audienceForRemoval()  += this;
     }
 
-    ~Instance()
-    {
-        linkIndex().audienceForAddition() -= this;
-        linkIndex().audienceForRemoval()  -= this;
-    }
-
     void fileAdded(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.

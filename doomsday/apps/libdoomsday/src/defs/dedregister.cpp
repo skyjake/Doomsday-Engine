@@ -53,11 +53,6 @@ DENG2_PIMPL(DEDRegister)
         orderArray = &names->addArray(VAR_ORDER).array();
     }
 
-    ~Instance()
-    {
-        if (names) names->audienceForDeletion() -= this;
-    }
-
     void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
     {
         DENG2_ASSERT(names == &record);

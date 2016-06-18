@@ -91,11 +91,6 @@ DENG2_PIMPL(ScriptSystem)
     ~Instance()
     {
         qDeleteAll(modules.values());
-
-        DENG2_FOR_EACH(NativeModules, i, nativeModules)
-        {
-            i.value()->audienceForDeletion() -= this;
-        }
     }
 
     static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)

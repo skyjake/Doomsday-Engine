@@ -68,11 +68,6 @@ DENG2_PIMPL(Package)
         if (file) file->audienceForDeletion() += this;
     }
 
-    ~Instance()
-    {
-        if (file) file->audienceForDeletion() -= this;
-    }
-
     void fileBeingDeleted(File const &)
     {
         file = 0;

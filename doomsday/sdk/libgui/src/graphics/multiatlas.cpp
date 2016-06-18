@@ -145,13 +145,8 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
 
     ~Instance()
     {
-        if (atlas)
-        {
-            atlas->audienceForDeletion -= this;
-        }
         if (owner)
         {
-            owner->d->audienceForDeletion -= this;
             release();
         }
     }

@@ -189,15 +189,6 @@ DENG2_PIMPL(MenuWidget)
 
     ~Instance()
     {
-        for (PanelWidget *sub : openSubs)
-        {
-            sub->audienceForClose()    -= this;
-            sub->audienceForDeletion() -= this;
-        }
-        
-        self.audienceForChildAddition() -= this;
-        self.audienceForChildRemoval()  -= this;
-
         // Clear the data model first, so possible sub-widgets are deleted at the right time.
         // Note that we can't clear an external data model.
         defaultItems.clear();

@@ -37,15 +37,6 @@ DENG2_PIMPL(VariableSliderWidget)
         var->audienceForChange() += this;
     }
 
-    ~Instance()
-    {
-        if (var)
-        {
-            var->audienceForDeletion() -= this;
-            var->audienceForChange() -= this;
-        }
-    }
-
     void init()
     {
         self.updateFromVariable();

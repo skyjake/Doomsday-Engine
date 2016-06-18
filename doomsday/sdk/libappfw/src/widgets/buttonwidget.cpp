@@ -48,7 +48,6 @@ DENG2_OBSERVES(Action, Triggered)
 
     ~Instance()
     {
-        if (action) action->audienceForTriggered() -= this;
         releaseRef(action);
     }
 

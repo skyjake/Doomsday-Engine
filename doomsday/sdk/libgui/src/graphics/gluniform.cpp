@@ -124,7 +124,7 @@ DENG2_PIMPL(GLUniform)
 
         case Sampler2D:
         case SamplerCube:
-            if (value.tex) value.tex->audienceForDeletion() -= this;
+            //if (value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
         default:

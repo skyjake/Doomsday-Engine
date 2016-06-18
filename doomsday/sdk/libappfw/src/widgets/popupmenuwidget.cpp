@@ -110,7 +110,6 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     ~Instance()
     {
-        App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() -= this;
         releaseRef(maxItemWidth);
         releaseRef(widestItem);
     }

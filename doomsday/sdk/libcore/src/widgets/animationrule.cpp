@@ -42,7 +42,6 @@ AnimationRule::AnimationRule(Rule const &target, TimeDelta transition)
 AnimationRule::~AnimationRule()
 {
     independentOf(_targetRule);
-    _animation.clock().audienceForPriorityTimeChange -= this;
 }
 
 void AnimationRule::set(float target, TimeDelta transition, TimeDelta delay)

@@ -32,13 +32,10 @@ DENG2_PIMPL(GLShader)
     Block compiledSource;
 
     Instance(Public *i) : Base(i), name(0), type(Vertex)
-    {
-        //DENG2_GUI_APP->audienceForGLContextChange += this;
-    }
+    {}
 
     ~Instance()
     {
-        //DENG2_GUI_APP->audienceForGLContextChange -= this;
         release();
     }
 

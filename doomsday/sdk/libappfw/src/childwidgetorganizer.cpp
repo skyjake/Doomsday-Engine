@@ -83,11 +83,6 @@ struct ChildWidgetOrganizer::Instance
         releaseRef(virtualMax);
         releaseRef(virtualStrut);
         releaseRef(estimatedHeight);
-
-        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
-        {
-            i.value()->audienceForDeletion() -= this;
-        }
     }
 
     void set(ui::Data const *ctx)

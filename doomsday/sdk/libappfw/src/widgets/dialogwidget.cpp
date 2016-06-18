@@ -125,8 +125,6 @@ public ChildWidgetOrganizer::IFilter
         buttons = new MenuWidget("buttons");
         buttons->margins().setTop("");
         buttons->setItems(buttonItems);
-        buttons->items().audienceForAddition() += this;
-        buttons->items().audienceForRemoval() += this;
         buttons->organizer().audienceForWidgetCreation() += this;
         buttons->organizer().audienceForWidgetUpdate() += this;
         buttons->organizer().setFilter(*this);
@@ -134,11 +132,12 @@ public ChildWidgetOrganizer::IFilter
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
         extraButtons->setItems(buttonItems);
-        extraButtons->items().audienceForAddition() += this;
-        extraButtons->items().audienceForRemoval() += this;
         extraButtons->organizer().audienceForWidgetCreation() += this;
         extraButtons->organizer().audienceForWidgetUpdate() += this;
         extraButtons->organizer().setFilter(*this);
+
+        buttonItems.audienceForAddition() += this;
+        buttonItems.audienceForRemoval()  += this;
 
         // The menu maintains its own width and height based on children.
         // Set up one row with variable number of columns.

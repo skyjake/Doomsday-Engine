@@ -32,12 +32,7 @@ RefValue::RefValue(Variable *variable) : _variable(variable)
 }
 
 RefValue::~RefValue()
-{
-    if (_variable)
-    {
-        _variable->audienceForDeletion() -= this;
-    }
-}
+{}
 
 void RefValue::verify() const
 {

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BaseWindow"
@@ -41,12 +41,6 @@ DENG2_PIMPL(BaseWindow)
         // Listen to input.
         self.canvas().audienceForKeyEvent()   += this;
         self.canvas().audienceForMouseEvent() += this;
-    }
-
-    ~Instance()
-    {
-        self.canvas().audienceForKeyEvent()   -= this;
-        self.canvas().audienceForMouseEvent() -= this;
     }
 
     void keyEvent(KeyEvent const &ev)

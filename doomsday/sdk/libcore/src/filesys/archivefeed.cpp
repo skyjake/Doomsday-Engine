@@ -89,11 +89,6 @@ DENG2_PIMPL(ArchiveFeed)
 
     ~Instance()
     {
-        if (file)
-        {
-            file->audienceForDeletion() -= this;
-        }
-
         if (arch)
         {
             writeIfModified();

@@ -35,7 +35,6 @@ DENG2_PIMPL(BaseMap)
 
     ~Instance()
     {
-        if (manifest) manifest->audienceForDeletion() -= this;
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
     }
 

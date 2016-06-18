@@ -759,11 +759,12 @@ void Record::operator << (Reader &from)
     // Find referenced records and relink them to their original targets.
     d->reconnectReferencesAfterDeserialization(refMap);
 
-    // Observe all members for deletion.
+#ifdef DENG2_DEBUG
     DENG2_FOR_EACH(Members, i, d->members)
     {
-        i.value()->audienceForDeletion() += this;
+        DENG2_ASSERT(i.value()->audienceForDeletion().contains(this));
     }
+#endif
 }
 
 void Record::variableBeingDeleted(Variable &variable)
