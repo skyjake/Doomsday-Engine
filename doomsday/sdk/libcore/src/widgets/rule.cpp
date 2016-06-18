@@ -14,12 +14,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Rule"
 #include "de/math.h"
-#include <set>
+#include <unordered_set>
 
 namespace de {
 
@@ -27,7 +27,7 @@ bool Rule::_invalidRulesExist = false;
 
 DENG2_PIMPL_NOREF(Rule)
 {
-    typedef std::set<Rule const *> Dependencies;
+    typedef std::unordered_set<Rule const *> Dependencies;
     Dependencies dependencies; // ref'd
 
     /// Current value of the rule.
