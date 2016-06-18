@@ -187,8 +187,8 @@ DENG2_PIMPL(ConfigProfiles)
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameUnload() -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
+        //DoomsdayApp::app().audienceForGameUnload() -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     Profile *addProfile(String const &name)

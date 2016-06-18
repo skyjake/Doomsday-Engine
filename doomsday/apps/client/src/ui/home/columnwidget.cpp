@@ -185,11 +185,11 @@ bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(
 {
     // Observe mouse clicks occurring in the column.
     if (event.type() == Event::MouseButton ||
-       event.type() == Event::MouseWheel)
+        event.type() == Event::MouseWheel)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
         if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
-           rule().recti().contains(mouse.pos()))
+            rule().recti().contains(mouse.pos()))
         {
             emit mouseActivity(this);
         }

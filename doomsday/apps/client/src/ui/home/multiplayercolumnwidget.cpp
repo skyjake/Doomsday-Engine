@@ -101,12 +101,12 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                                        rule("gap")*/);
     }
 
-    ~Instance()
-    {
-        link().audienceForDiscoveryUpdate -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        DoomsdayApp::games().audienceForReadiness() -= this;
-    }
+//    ~Instance()
+//    {
+//        link().audienceForDiscoveryUpdate -= this;
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//        DoomsdayApp::games().audienceForReadiness() -= this;
+//    }
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {

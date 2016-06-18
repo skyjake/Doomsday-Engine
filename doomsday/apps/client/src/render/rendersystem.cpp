@@ -339,11 +339,11 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
 
-    ~Instance()
-    {
-        App::packageLoader().audienceForLoad()   -= this;
-        App::packageLoader().audienceForUnload() -= this;
-    }
+    //~Instance()
+    //{
+        //App::packageLoader().audienceForLoad()   -= this;
+        //App::packageLoader().audienceForUnload() -= this;
+    //}
 
     void packageLoaded(String const &packageId)
     {

@@ -192,9 +192,9 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     ~Instance()
     {
         releaseRef(maxHeightRule);
-        link().audienceForDiscoveryUpdate -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        App_Games().audienceForReadiness() -= this;
+        //link().audienceForDiscoveryUpdate -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
+        //App_Games().audienceForReadiness() -= this;
     }
 
     /**

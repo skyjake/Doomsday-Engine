@@ -38,11 +38,11 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Instance()
-    {
-        App::app().audienceForStartupComplete() -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        App::app().audienceForStartupComplete() -= this;
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//    }
 
     void appStartupCompleted()
     {

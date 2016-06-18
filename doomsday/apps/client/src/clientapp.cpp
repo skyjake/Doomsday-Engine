@@ -254,9 +254,9 @@ DENG2_PIMPL(ClientApp)
             DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
         }
 
-        self.audienceForGameChange() -= this;
-        self.audienceForGameUnload() -= this;
-        self.audienceForConsoleRegistration() -= this;
+        //self.audienceForGameChange() -= this;
+        //self.audienceForGameUnload() -= this;
+        //self.audienceForConsoleRegistration() -= this;
 
         updater.reset();
         //delete infineSys;

@@ -81,12 +81,12 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Instance()
-    {
-        App_Games().audienceForAddition() -= this;
-        App_Games().audienceForReadiness() -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        App_Games().audienceForAddition() -= this;
+//        App_Games().audienceForReadiness() -= this;
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//    }
 
     void gameAdded(Game &game)
     {

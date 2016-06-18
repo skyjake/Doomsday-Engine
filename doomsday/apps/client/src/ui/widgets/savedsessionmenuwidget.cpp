@@ -175,11 +175,11 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
-    ~Instance()
-    {
-        App_Games().audienceForReadiness() -= this;
-        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
-    }
+//    ~Instance()
+//    {
+//        App_Games().audienceForReadiness() -= this;
+//        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
+//    }
 
     void gameReadinessUpdated()
     {

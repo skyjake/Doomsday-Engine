@@ -611,10 +611,10 @@ DENG2_PIMPL(System)
     ~Instance()
     {
         sfxClearLogical();
-#ifdef __CLIENT__
-        sfxSampleCache.audienceForSampleRemove() -= this;
-        DoomsdayApp::app().audienceForGameUnload() -= this;
-#endif
+//#ifdef __CLIENT__
+//        sfxSampleCache.audienceForSampleRemove() -= this;
+//        DoomsdayApp::app().audienceForGameUnload() -= this;
+//#endif
 
         theAudioSystem = nullptr;
     }

@@ -82,10 +82,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self.panel().open();
     }
 
-    ~Instance()
-    {
-        DoomsdayApp::games().audienceForReadiness() -= this;
-    }
+//    ~Instance()
+//    {
+//        DoomsdayApp::games().audienceForReadiness() -= this;
+//    }
 
     void joinButtonPressed() const
     {

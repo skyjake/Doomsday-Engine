@@ -602,7 +602,7 @@ DENG2_PIMPL(ResourceSystem)
     {
         convertSavegameTasks.waitForDone();
 
-        App_Games().audienceForAddition() -= this;
+        //App_Games().audienceForAddition() -= this;
 
         self.clearAllAnimGroups();
 #ifdef __CLIENT__

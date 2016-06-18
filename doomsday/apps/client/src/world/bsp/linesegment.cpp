@@ -350,11 +350,11 @@ DENG2_PIMPL(LineSegment)
         to->audienceForOriginChange   += this;
     }
 
-    ~Instance()
-    {
-        from->audienceForOriginChange -= this;
-        to->audienceForOriginChange   -= this;
-    }
+//    ~Instance()
+//    {
+//        from->audienceForOriginChange -= this;
+//        to->audienceForOriginChange   -= this;
+//    }
 
     inline Vertex **vertexAdr(int edge) {
         return edge? &to : &from;

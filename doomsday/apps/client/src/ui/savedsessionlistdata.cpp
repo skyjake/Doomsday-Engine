@@ -35,10 +35,10 @@ DENG2_PIMPL(SavedSessionListData)
         Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
-    ~Instance()
-    {
-        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
-    }
+//    ~Instance()
+//    {
+//        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
+//    }
 
     void updateFromSavedIndex()
     {

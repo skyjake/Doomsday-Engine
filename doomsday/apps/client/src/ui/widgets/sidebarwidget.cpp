@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(SidebarWidget)
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameChange() -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
         releaseRef(firstColumnWidth);
     }
 

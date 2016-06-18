@@ -62,10 +62,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
             profile->audienceForDeletion += this;
         }
 
-        ~ProfileItem()
-        {
-            if (profile) profile->audienceForDeletion -= this;
-        }
+//        ~ProfileItem()
+//        {
+//            if (profile) profile->audienceForDeletion -= this;
+//        }
 
         Game const &game() const
         {
@@ -152,12 +152,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
         App::config("home.showUnplayableGames").audienceForChange() += this;
     }
 
-    ~Instance()
-    {
-        DoomsdayApp::games().audienceForReadiness() -= this;
-        DoomsdayApp::gameProfiles().audienceForAddition() -= this;
-        App::config("home.showUnplayableGames").audienceForChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        DoomsdayApp::games().audienceForReadiness() -= this;
+//        DoomsdayApp::gameProfiles().audienceForAddition() -= this;
+//        App::config("home.showUnplayableGames").audienceForChange() -= this;
+//    }
 
     ui::Item const *findProfileItem(GameProfile const &profile) const
     {

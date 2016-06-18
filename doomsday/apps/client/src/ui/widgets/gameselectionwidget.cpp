@@ -231,7 +231,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         foreach (SubsetWidget *sub, subsets) sub->menu->setFilter(0);
 
-        DoomsdayApp::app().audienceForGameChange() -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     /**

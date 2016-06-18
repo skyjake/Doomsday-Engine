@@ -148,17 +148,17 @@ DENG_GUI_PIMPL(HomeWidget)
 
     ~Instance()
     {
-        for (Column const &col : allColumns)
-        {
-            if (col.configVar)
-            {
-                col.configVar->audienceForChange() -= this;
-            }
-        }
+//        for (Column const &col : allColumns)
+//        {
+//            if (col.configVar)
+//            {
+//                col.configVar->audienceForChange() -= this;
+//            }
+//        }
 
-        DoomsdayApp::games().audienceForReadiness() -= this;
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        DoomsdayApp::app().audienceForGameUnload() -= this;
+//        DoomsdayApp::games().audienceForReadiness() -= this;
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//        DoomsdayApp::app().audienceForGameUnload() -= this;
 
         releaseRef(columnWidth);
         releaseRef(scrollOffset);

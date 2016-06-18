@@ -150,9 +150,9 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        ClientApp::serverLink().audienceForJoin -= this;
-        ClientApp::serverLink().audienceForLeave -= this;
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//        ClientApp::serverLink().audienceForJoin -= this;
+//        ClientApp::serverLink().audienceForLeave -= this;
 
         releaseRef(vertShift);
     }

@@ -337,13 +337,13 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
 
-#ifdef __CLIENT__
-        // Stop observing client mobjs.
-        for(mobj_t *mo : clMobjHash)
-        {
-            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
-        }
-#endif
+//#ifdef __CLIENT__
+//        // Stop observing client mobjs.
+//        for(mobj_t *mo : clMobjHash)
+//        {
+//            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
+//        }
+//#endif
 
         /// @todo fixme: Free all memory we have ownership of.
         // mobjNodes/lineNodes/lineLinks

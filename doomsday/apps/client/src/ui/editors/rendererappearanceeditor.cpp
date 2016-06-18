@@ -370,10 +370,10 @@ public VariableGroupEditor::IOwner
         partGroup->commit();
     }
 
-    ~Instance()
-    {
-        settings.audienceForProfileChange -= this;
-    }
+//    ~Instance()
+//    {
+//        settings.audienceForProfileChange -= this;
+//    }
 
     Rule const &firstColumnWidthRule() const
     {

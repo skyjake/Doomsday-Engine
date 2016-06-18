@@ -46,10 +46,10 @@ DENG2_PIMPL(ManualConnectionDialog)
         ClientApp::serverLink().audienceForDiscoveryUpdate += this;
     }
 
-    ~Instance()
-    {
-        ClientApp::serverLink().audienceForDiscoveryUpdate -= this;
-    }
+//    ~Instance()
+//    {
+//        ClientApp::serverLink().audienceForDiscoveryUpdate -= this;
+//    }
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {

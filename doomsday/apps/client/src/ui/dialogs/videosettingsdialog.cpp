@@ -111,7 +111,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
             menuAspect->useDefaultItems();
         }
 
-        win.audienceForAttributeChange() -= this;
+        //win.audienceForAttributeChange() -= this;
     }
 
     /**

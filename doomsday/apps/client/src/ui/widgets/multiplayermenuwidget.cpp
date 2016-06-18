@@ -45,11 +45,11 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
         link().audienceForLeave += this;
     }
 
-    ~Instance()
-    {
-        link().audienceForJoin -= this;
-        link().audienceForLeave -= this;
-    }
+//    ~Instance()
+//    {
+//        link().audienceForJoin -= this;
+//        link().audienceForLeave -= this;
+//    }
 
     void networkGameJoined()
     {
@@ -71,7 +71,7 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
 
 MultiplayerMenuWidget::MultiplayerMenuWidget()
     : PopupMenuWidget("multiplayer-menu"), d(new Instance(this))
-{    
+{
     connect(&d->timer, SIGNAL(timeout()), this, SLOT(updateElapsedTime()));
 
     items()
@@ -84,7 +84,7 @@ void MultiplayerMenuWidget::updateElapsedTime()
 {
     if (d->link().status() != ServerLink::Connected)
         return;
-    
+
     TimeDelta const elapsed = d->link().connectedAt().since();
 
     items().at(POS_STATUS).setLabel(

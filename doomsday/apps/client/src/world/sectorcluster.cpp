@@ -143,8 +143,8 @@ DENG2_PIMPL(SectorCluster)
         observePlane(&sector().ceiling(), false);
 
 #ifdef __CLIENT__
-        sector().audienceForLightLevelChange -= this;
-        sector().audienceForLightColorChange -= this;
+        //sector().audienceForLightLevelChange -= this;
+        //sector().audienceForLightColorChange -= this;
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {

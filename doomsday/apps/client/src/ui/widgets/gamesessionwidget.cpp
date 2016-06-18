@@ -92,7 +92,7 @@ DENG2_PIMPL(GameSessionWidget)
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameUnload() -= this;
+        //DoomsdayApp::app().audienceForGameUnload() -= this;
 
         if (menu) menu->dismiss();
         doc->dismiss();

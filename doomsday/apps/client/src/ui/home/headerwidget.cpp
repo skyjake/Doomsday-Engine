@@ -54,10 +54,10 @@ DENG_GUI_PIMPL(HeaderWidget)
         showDescriptionVar().audienceForChange() += this;
     }
 
-    ~Instance()
-    {
-        showDescriptionVar().audienceForChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        showDescriptionVar().audienceForChange() -= this;
+//    }
 
     void variableValueChanged(Variable &, Value const &newValue)
     {

@@ -91,8 +91,8 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        App::config("console.script").audienceForChange() -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
+        //App::config("console.script").audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);

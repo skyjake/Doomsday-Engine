@@ -92,10 +92,10 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 .setInput(Rule::Top,  instLabel->rule().top());
     }
 
-    ~Instance()
-    {
-        App::packageLoader().audienceForActivity() -= this;
-    }
+//    ~Instance()
+//    {
+//        App::packageLoader().audienceForActivity() -= this;
+//    }
 
     void setOfLoadedPackagesChanged()
     {

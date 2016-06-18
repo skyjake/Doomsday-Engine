@@ -145,17 +145,17 @@ DENG2_PIMPL(ClientWindow)
 
     ~Instance()
     {
-        foreach(String s, configVariableNames())
-        {
-            App::config(s).audienceForChange() -= this;
-        }
+//        foreach(String s, configVariableNames())
+//        {
+//            App::config(s).audienceForChange() -= this;
+//        }
 
-        DoomsdayApp::app().audienceForGameChange() -= this;
-        App::app().audienceForStartupComplete() -= this;
+        //DoomsdayApp::app().audienceForGameChange() -= this;
+        //App::app().audienceForStartupComplete() -= this;
         //App_Games().audienceForReadiness() -= this;
 
-        self.canvas().audienceForFocusChange() -= this;
-        self.canvas().audienceForMouseStateChange() -= this;
+        //self.canvas().audienceForFocusChange() -= this;
+        //self.canvas().audienceForMouseStateChange() -= this;
 
         releaseRef(cursorX);
         releaseRef(cursorY);

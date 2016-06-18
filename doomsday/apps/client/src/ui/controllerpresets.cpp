@@ -48,10 +48,10 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Instance()
-    {
-        DoomsdayApp::app().audienceForGameChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        DoomsdayApp::app().audienceForGameChange() -= this;
+//    }
 
     DictionaryValue const &presets() const
     {

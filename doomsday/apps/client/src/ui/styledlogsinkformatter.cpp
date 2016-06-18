@@ -47,13 +47,13 @@ DENG2_PIMPL(StyledLogSinkFormatter)
         }
     }
 
-    ~Instance()
-    {
-        if(observe)
-        {
-            App::config()[VAR_METADATA].audienceForChange() -= this;
-        }
-    }
+//    ~Instance()
+//    {
+//        if(observe)
+//        {
+//            App::config()[VAR_METADATA].audienceForChange() -= this;
+//        }
+//    }
 
     void variableValueChanged(Variable &, Value const &newValue)
     {

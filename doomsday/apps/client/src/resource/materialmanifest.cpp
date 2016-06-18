@@ -30,10 +30,10 @@ DENG2_PIMPL_NOREF(MaterialManifest)
     materialid_t id = 0;                 ///< Globally unique identifier.
     std::unique_ptr<Material> material;  ///< Associated resource (if any).
 
-    ~Instance()
-    {
-        if(material) material->audienceForDeletion() -= this;
-    }
+//    ~Instance()
+//    {
+//        if(material) material->audienceForDeletion() -= this;
+//    }
 
     void materialBeingDeleted(Material const &)
     {

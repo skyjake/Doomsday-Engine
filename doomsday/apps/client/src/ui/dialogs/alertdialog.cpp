@@ -129,10 +129,10 @@ DENG_GUI_PIMPL(AlertDialog)
         App::config(VAR_AUTOHIDE).audienceForChange() += this;
     }
 
-    ~Instance()
-    {
-        App::config(VAR_AUTOHIDE).audienceForChange() -= this;
-    }
+//    ~Instance()
+//    {
+//        App::config(VAR_AUTOHIDE).audienceForChange() -= this;
+//    }
 
     NotificationAreaWidget &notifs()
     {
