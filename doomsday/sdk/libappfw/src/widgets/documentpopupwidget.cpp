@@ -17,6 +17,7 @@
  */
 
 #include "de/DocumentPopupWidget"
+#include "de/ButtonWidget"
 
 namespace de {
 
@@ -24,6 +25,7 @@ DENG2_PIMPL_NOREF(DocumentPopupWidget)
 {
     DocumentWidget *doc;
     ButtonWidget *button = nullptr;
+    ButtonWidget *close = nullptr;
 };
 
 DocumentPopupWidget::DocumentPopupWidget(String const &name)
@@ -63,6 +65,29 @@ DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String cons
             .setInput(Rule::Top,   d->doc->rule().bottom());
 
     setContent(box);
+}
+
+void DocumentPopupWidget::enableCloseButton(bool enable)
+{
+    if (enable && !d->close)
+    {
+        d->close = new ButtonWidget;
+        d->close->setColorTheme(Inverted);
+        d->close->setStyleImage("close.ringless", "small");
+        d->close->margins().set("dialog.gap").setTopBottom("unit");
+        d->close->setImageColor(d->close->textColorf());
+        d->close->setSizePolicy(ui::Expand, ui::Expand);
+        d->close->setActionFn([this] () { close(); });
+        d->close->rule()
+                .setInput(Rule::Top,   rule().top()   + margins().top())
+                .setInput(Rule::Right, rule().right() - margins().right());
+        add(d->close);
+    }
+    else if (!enable && d->close)
+    {
+        delete d->close;
+        d->close = nullptr;
+    }
 }
 
 void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight)
