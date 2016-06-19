@@ -57,6 +57,7 @@ public:
     AtlasTexture &atlas();
     GLUniform &uAtlas();
     Id solidWhitePixel() const;
+    Id solidRoundCorners() const;
     Id roundCorners() const;
     Id boldRoundCorners() const;
     Id borderGlow() const;

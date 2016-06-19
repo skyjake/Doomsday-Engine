@@ -98,8 +98,9 @@ public:
      */
     struct Background {
         enum Type {
-            None,               ///< No background or solid fill.
-            GradientFrame,      ///< Use the "gradient frame" from the UI atlas.
+            None,               ///< No background, no solid fill.
+            GradientFrame,      ///< Bold round corners, square background.
+            GradientFrameWithRoundedFill, ///< Bold round corners with solid rounded background.
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,

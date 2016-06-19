@@ -52,6 +52,7 @@ DENG_GUI_PIMPL(PanelWidget)
     Instance(Public *i) : Base(i)
     {
         openingRule = new AnimationRule(0);
+        openingRule->setBehavior(AnimationRule::RestartWhenTargetChanges);
 
         dismissTimer.setSingleShot(true);
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));

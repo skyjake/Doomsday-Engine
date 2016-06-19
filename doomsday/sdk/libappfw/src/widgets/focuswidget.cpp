@@ -28,11 +28,13 @@ DENG2_PIMPL(FocusWidget)
 {
     QTimer flashing;
     SafeWidgetPtr<GuiWidget const> reference;
+    Animation color { 0.f, Animation::Linear };
+    Vector4f flashColors[2];
 
     Instance(Public *i) : Base(i)
     {
-        self.set(Background(Background::GradientFrame,
-                            Style::get().colors().colorf("accent"), 6));
+        flashColors[0] = Style::get().colors().colorf("focus.flash.off");
+        flashColors[1] = Style::get().colors().colorf("focus.flash.on");
 
         flashing.setInterval(FLASH_SPAN.asMilliSeconds());
         flashing.setSingleShot(false);
@@ -41,24 +43,30 @@ DENG2_PIMPL(FocusWidget)
     void flash()
     {
         // Flashing depends on the reference widget's visibility.
-        float const maxOpacity = (reference? reference->visibleOpacity() : 1.f);
+        //float const maxOpacity = (reference? reference->visibleOpacity() : 1.f);
         if (reference)
         {
             self.show(reference->isVisible());
         }
 
-        if (self.opacity().target() == 0)
+        /*if (color.target() == 0)
         {
-            self.setOpacity(.8f * maxOpacity, FLASH_SPAN + .1, .1);
+            color.setValue(.8f * maxOpacity, FLASH_SPAN + .1, .1);
         }
-        else if (self.opacity().target() > .5f)
+        else*/
+        if (color.target() > .5f)
         {
-            self.setOpacity(.2f * maxOpacity, FLASH_SPAN);
+            color.setValue(0, FLASH_SPAN);
         }
         else
         {
-            self.setOpacity(.8f * maxOpacity, FLASH_SPAN);
+            color.setValue(1, FLASH_SPAN);
         }
+    }
+
+    Vector4f currentColor() const
+    {
+        return flashColors[0] * (1.f - color) + flashColors[1] * color;
     }
 };
 
@@ -76,8 +84,8 @@ void FocusWidget::startFlashing(GuiWidget const *reference)
     show();
     if (!d->flashing.isActive())
     {
-        setOpacity(0);
         d->flashing.start();
+        d->color = 1;
     }
 }
 
@@ -85,6 +93,18 @@ void FocusWidget::stopFlashing()
 {
     d->flashing.stop();
     hide();
+}
+
+void FocusWidget::update()
+{
+    setOpacity(d->reference? d->reference->visibleOpacity() : 0.f);
+
+    if (isVisible())
+    {
+        set(Background(Background::GradientFrame, d->currentColor(), 6));
+    }
+
+    LabelWidget::update();
 }
 
 void FocusWidget::updateFlash()

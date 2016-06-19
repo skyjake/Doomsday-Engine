@@ -39,6 +39,9 @@ public:
     void startFlashing(GuiWidget const *reference = nullptr);
     void stopFlashing();
 
+    // Events.
+    void update() override;
+
 protected slots:
     void updateFlash();
 

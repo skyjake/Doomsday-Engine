@@ -904,36 +904,46 @@ GuiWidget const *GuiWidget::guiFind(String const &name) const
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
-    if (d->background.type != Background::Blurred &&
-       d->background.type != Background::BlurredWithBorderGlow &&
-       d->background.type != Background::SharedBlur &&
-       d->background.type != Background::SharedBlurWithBorderGlow)
+    auto &rootWgt = root();
+    float const thick = d->toDevicePixels(d->background.thickness);
+
+    // Is there a solid fill?
+    if (d->background.solidFill.w > 0)
     {
-        // Is there a solid fill?
-        if (d->background.solidFill.w > 0)
+        if (d->background.type == Background::GradientFrameWithRoundedFill)
+        {
+            Rectanglei const recti = rule().recti().shrunk(d->toDevicePixels(2));
+            verts.makeQuad(recti.shrunk(thick), d->background.solidFill,
+                           rootWgt.atlas().imageRectf(rootWgt.solidRoundCorners()).middle());
+            verts.makeFlexibleFrame(recti, thick, d->background.solidFill,
+                                    rootWgt.atlas().imageRectf(rootWgt.solidRoundCorners()));
+        }
+        else if (d->background.type != Background::Blurred &&
+                 d->background.type != Background::BlurredWithBorderGlow &&
+                 d->background.type != Background::SharedBlur &&
+                 d->background.type != Background::SharedBlurWithBorderGlow)
         {
             verts.makeQuad(rule().recti(),
                            d->background.solidFill,
-                           root().atlas().imageRectf(root().solidWhitePixel()).middle());
+                           rootWgt.atlas().imageRectf(rootWgt.solidWhitePixel()).middle());
         }
     }
-
-    float const thick = d->toDevicePixels(d->background.thickness);
 
     switch (d->background.type)
     {
     case Background::GradientFrame:
+    case Background::GradientFrameWithRoundedFill:
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
                                 thick,
                                 d->background.color,
-                                root().atlas().imageRectf(root().boldRoundCorners()));
+                                rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         break;
 
     case Background::Rounded:
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(d->background.thickness - 4)),
                                 thick,
                                 d->background.color,
-                                root().atlas().imageRectf(root().roundCorners()));
+                                rootWgt.atlas().imageRectf(rootWgt.roundCorners()));
         break;
 
     case Background::BorderGlow:
@@ -942,7 +952,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         verts.makeFlexibleFrame(rule().recti().expanded(thick),
                                 thick,
                                 d->background.color,
-                                root().atlas().imageRectf(root().borderGlow()));
+                                rootWgt.atlas().imageRectf(rootWgt.borderGlow()));
         break;
 
     case Background::Blurred: // blurs drawn separately in GuiWidget::draw()

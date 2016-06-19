@@ -33,6 +33,7 @@ DENG2_OBSERVES(Action, Triggered)
     DotPath borderColorId         { "text" };
     HoverColorMode hoverColorMode = ReplaceColor;
     ColorTheme colorTheme         = Normal;
+    Background::Type bgType       = Background::GradientFrame;
     Action *action                = nullptr;
     Animation scale               { 1.f };
     Animation frameOpacity        { .08f, Animation::Linear };
@@ -143,14 +144,14 @@ DENG2_OBSERVES(Action, Triggered)
     void setDefaultBackground()
     {
         self.set(Background(style().colors().colorf(bgColorId),
-                            Background::GradientFrame,
-                            borderColor(), 6));
+                            bgType, borderColor(), 6));
     }
 
     void updateBackground()
     {
         Background bg = self.background();
-        if (bg.type == Background::GradientFrame)
+        if (bg.type == Background::GradientFrame ||
+            bg.type == Background::GradientFrameWithRoundedFill)
         {
             bg.solidFill = style().colors().colorf(bgColorId);
             bg.color = borderColor();
@@ -205,9 +206,13 @@ bool ButtonWidget::isUsingInfoStyle() const
 
 void ButtonWidget::setColorTheme(ColorTheme theme)
 {
+    auto bg = background();
+
     d->colorTheme = theme;
     if (theme == Inverted)
     {
+        d->bgType = Background::GradientFrameWithRoundedFill;
+        if (bg.type == Background::GradientFrame) bg.type = d->bgType;
         d->originalTextColor = "inverted.text";
         setHoverTextColor("inverted.text", ReplaceColor);
         setBorderColor("inverted.text");
@@ -215,11 +220,14 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
     }
     else
     {
+        d->bgType = Background::GradientFrame;
+        if (bg.type == Background::GradientFrameWithRoundedFill) bg.type = d->bgType;
         d->originalTextColor = "text";
         setHoverTextColor("text", ReplaceColor);
         setBorderColor("text");
         setBackgroundColor("background");
     }
+    set(bg);
     setTextColor(d->originalTextColor);
     d->originalTextModColor = Vector4f(1, 1, 1, 1);
     setTextModulationColorf(d->originalTextModColor);
