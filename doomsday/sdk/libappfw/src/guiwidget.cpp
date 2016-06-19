@@ -41,7 +41,7 @@ DENG2_PIMPL(GuiWidget)
 #endif
 {
     RuleRectangle rule;     ///< Visual rule, used when drawing.
-    RuleRectangle hitRule;  ///< Used only for hit testing. By default matches the visual rule.
+    std::unique_ptr<RuleRectangle> hitRule; ///< Used only for hit testing. By default matches the visual rule.
     ui::Margins margins;
     Rectanglei savedPos;
     bool inited;
@@ -59,15 +59,18 @@ DENG2_PIMPL(GuiWidget)
     DotPath textColorId;
 
     // Background blurring.
-    bool blurInited;
-    Vector2ui blurSize;
-    QScopedPointer<GLFramebuffer> blurFB[2];
-    Drawable blurring;
-    GLUniform uBlurMvpMatrix;
-    GLUniform uBlurColor;
-    GLUniform uBlurTex;
-    GLUniform uBlurStep;
-    GLUniform uBlurWindow;
+    struct BlurState
+    {
+        Vector2ui size;
+        QScopedPointer<GLFramebuffer> fb[2];
+        Drawable drawable;
+        GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+        GLUniform uColor     { "uColor",     GLUniform::Vec4 };
+        GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
+        GLUniform uBlurStep  { "uBlurStep",  GLUniform::Vec2 };
+        GLUniform uWindow    { "uWindow",    GLUniform::Vec4 };
+    };
+    std::unique_ptr<BlurState> blur;
 
     Instance(Public *i)
         : Base(i)
@@ -81,12 +84,6 @@ DENG2_PIMPL(GuiWidget)
         , firstUpdateAfterCreation(true)
         , fontId("default")
         , textColorId("text")
-        , blurInited(false)
-        , uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uBlurColor    ("uColor",     GLUniform::Vec4)
-        , uBlurTex      ("uTex",       GLUniform::Sampler2D)
-        , uBlurStep     ("uBlurStep",  GLUniform::Vec2)
-        , uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
         self.audienceForChildAddition() += this;
         margins.audienceForChange() += this;
@@ -95,9 +92,6 @@ DENG2_PIMPL(GuiWidget)
         self.audienceForParentChange() += this;
         rule.setDebugName(self.path());
 #endif
-
-        // By default use the visual rule as the hit test rule.
-        hitRule.setRect(rule);
     }
 
     ~Instance()
@@ -177,34 +171,24 @@ DENG2_PIMPL(GuiWidget)
 
     void initBlur()
     {
-        if (blurInited) return;
+        if (blur) return;
+
+        blur.reset(new BlurState);
 
         // The blurred version of the view is downsampled.
-        blurSize = (self.root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
+        blur->size = (self.root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
 
         for (int i = 0; i < 2; ++i)
         {
             // Multisampling is disabled in the blurs for now.
-            blurFB[i].reset(new GLFramebuffer(Image::RGB_888, blurSize, 1));
-            blurFB[i]->glInit();
-
-#if 0
-            QImage test(QSize(blurSize.x, blurSize.y), QImage::Format_ARGB32);
-            QPainter pnt(&test);
-            test.fill(0xff00ffff);
-            pnt.setPen(Qt::black);
-            pnt.setBrush(Qt::white);
-            pnt.drawEllipse(QPoint(blurSize.x/2, blurSize.y/2),
-                            blurSize.x/2 - 1, blurSize.y/2 - 1);
-            blur[i].setImage(test);
-#endif
-
-            blurFB[i]->colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            blur->fb[i].reset(new GLFramebuffer(Image::RGB_888, blur->size, 1));
+            blur->fb[i]->glInit();
+            blur->fb[i]->colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
         }
 
         // Set up the drawble.
         DefaultVertexBuf *buf = new DefaultVertexBuf;
-        blurring.addBuffer(buf);
+        blur->drawable.addBuffer(buf);
         buf->setVertices(gl::TriangleStrip,
                          DefaultVertexBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
@@ -212,38 +196,40 @@ DENG2_PIMPL(GuiWidget)
                              Rectanglef(0, 0, 1, 1)),
                          gl::Static);
 
-        uBlurStep = Vector2f(1.f / float(blurSize.x), 1.f / float(blurSize.y));
+        blur->uBlurStep = Vector2f(1.f / float(blur->size.x),
+                                   1.f / float(blur->size.y));
 
-        self.root().shaders().build(blurring.program(), "fx.blur.horizontal")
-                << uBlurMvpMatrix
-                << uBlurTex
-                << uBlurStep << uBlurWindow;
+        self.root().shaders().build(blur->drawable.program(), "fx.blur.horizontal")
+                << blur->uMvpMatrix
+                << blur->uTex
+                << blur->uBlurStep
+                << blur->uWindow;
 
-        blurring.addProgram("vert");
-        self.root().shaders().build(blurring.program("vert"), "fx.blur.vertical")
-                << uBlurMvpMatrix
-                << uBlurTex
-                << uBlurColor << uBlurStep << uBlurWindow;
-
-        blurInited = true;
+        blur->drawable.addProgram("vert");
+        self.root().shaders().build(blur->drawable.program("vert"), "fx.blur.vertical")
+                << blur->uMvpMatrix
+                << blur->uTex
+                << blur->uColor
+                << blur->uBlurStep
+                << blur->uWindow;
     }
 
     void deinitBlur()
     {
-        if (!blurInited) return;
+        if (!blur) return;
 
         for (int i = 0; i < 2; ++i)
         {
-            blurFB[i].reset();
+            blur->fb[i].reset();
         }
-        blurring.clear();
+        blur->drawable.clear();
 
-        blurInited = false;
+        blur.reset();
     }
 
     void reinitBlur()
     {
-        if (blurInited)
+        if (blur)
         {
             deinitBlur();
             initBlur();
@@ -253,7 +239,7 @@ DENG2_PIMPL(GuiWidget)
     void drawBlurredBackground()
     {
         if (background.type == Background::SharedBlur ||
-           background.type == Background::SharedBlurWithBorderGlow)
+            background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
             DENG2_ASSERT(background.blur != 0);
@@ -265,8 +251,8 @@ DENG2_PIMPL(GuiWidget)
         }
 
         if (background.type != Background::Blurred &&
-           background.type != Background::BlurredWithBorderGlow &&
-           background.type != Background::BlurredWithSolidFill)
+            background.type != Background::BlurredWithBorderGlow &&
+            background.type != Background::BlurredWithSolidFill)
         {
             deinitBlur();
             return;
@@ -275,27 +261,27 @@ DENG2_PIMPL(GuiWidget)
         // Make sure blurring is initialized.
         initBlur();
 
-        DENG2_ASSERT(blurFB[0]->isReady());
+        DENG2_ASSERT(blur->fb[0]->isReady());
 
         // Pass 1: render all the widgets behind this one onto the first blur
         // texture, downsampled.
         GLState::push()
-                .setTarget(blurFB[0]->target())
-                .setViewport(Rectangleui::fromSize(blurSize));
-        blurFB[0]->target().clear(GLTarget::Depth);
+                .setTarget(blur->fb[0]->target())
+                .setViewport(Rectangleui::fromSize(blur->size));
+        blur->fb[0]->target().clear(GLTarget::Depth);
         self.root().drawUntil(self);
         GLState::pop();
 
         // Pass 2: apply the horizontal blur filter to draw the background
         // contents onto the second blur texture.
         GLState::push()
-                .setTarget(blurFB[1]->target())
-                .setViewport(Rectangleui::fromSize(blurSize));
-        uBlurTex = blurFB[0]->colorTexture();
-        uBlurMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uBlurWindow = Vector4f(0, 0, 1, 1);
-        blurring.setProgram(blurring.program());
-        blurring.draw();
+                .setTarget(blur->fb[1]->target())
+                .setViewport(Rectangleui::fromSize(blur->size));
+        blur->uTex = blur->fb[0]->colorTexture();
+        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        blur->uWindow = Vector4f(0, 0, 1, 1);
+        blur->drawable.setProgram(blur->drawable.program());
+        blur->drawable.draw();
         GLState::pop();
 
         // Pass 3: apply the vertical blur filter, drawing the final result
@@ -769,7 +755,7 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         if (gui)
         {
             if (gui->behavior().testFlag(ChildHitClipping) &&
-               !gui->d->hitRule.recti().contains(pos))
+               !gui->hitRule().recti().contains(pos))
             {
                 // Must hit clipped parent widgets as well.
                 return false;
@@ -778,7 +764,7 @@ bool GuiWidget::hitTest(Vector2i const &pos) const
         w = w->Widget::parent();
     }
 
-    return d->hitRule.recti().contains(pos);
+    return hitRule().recti().contains(pos);
 }
 
 bool GuiWidget::hitTest(Event const &event) const
@@ -809,7 +795,18 @@ GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
 
 RuleRectangle &GuiWidget::hitRule()
 {
-    return d->hitRule;
+    if (!d->hitRule)
+    {
+        d->hitRule.reset(new RuleRectangle);
+        d->hitRule->setRect(d->rule);
+    }
+    return *d->hitRule;
+}
+
+RuleRectangle const &GuiWidget::hitRule() const
+{
+    if (d->hitRule) return *d->hitRule;
+    return d->rule;
 }
 
 GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event, MouseEvent::Button button)
@@ -854,27 +851,27 @@ void GuiWidget::drawContent()
 
 void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
 {
-    //DENG2_ASSERT(d->blurInited);
-    if (!d->blurInited) return;
+    auto *blur = d->blur.get();
+    if (!blur) return;
 
-    DENG2_ASSERT(d->blurFB[1]->isReady());
+    DENG2_ASSERT(blur->fb[1]->isReady());
 
     Vector2ui const viewSize = root().viewSize();
 
-    d->uBlurTex = d->blurFB[1]->colorTexture();
-    d->uBlurColor = Vector4f((1 - color.w) + color.x * color.w,
-                             (1 - color.w) + color.y * color.w,
-                             (1 - color.w) + color.z * color.w,
-                             opacity);
-    d->uBlurWindow = Vector4f(rect.left()   / float(viewSize.x),
-                              rect.top()    / float(viewSize.y),
-                              rect.width()  / float(viewSize.x),
-                              rect.height() / float(viewSize.y));
-    d->uBlurMvpMatrix = root().projMatrix2D() *
-            Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
-    d->blurring.setProgram("vert");
+    blur->uTex = blur->fb[1]->colorTexture();
+    blur->uColor = Vector4f((1 - color.w) + color.x * color.w,
+                            (1 - color.w) + color.y * color.w,
+                            (1 - color.w) + color.z * color.w,
+                            opacity);
+    blur->uWindow = Vector4f(rect.left()   / float(viewSize.x),
+                             rect.top()    / float(viewSize.y),
+                             rect.width()  / float(viewSize.x),
+                             rect.height() / float(viewSize.y));
+    blur->uMvpMatrix = root().projMatrix2D() *
+                       Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
+    blur->drawable.setProgram("vert");
 
-    d->blurring.draw();
+    blur->drawable.draw();
 }
 
 void GuiWidget::requestGeometry(bool yes)

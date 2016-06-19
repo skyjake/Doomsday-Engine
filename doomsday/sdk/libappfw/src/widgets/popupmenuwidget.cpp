@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     };
 
     ColorTheme colorTheme = Normal;
-    ButtonWidget *hover;
+    ButtonWidget const *hover;
     int oldScrollY;
     Rule const *widestItem;
     IndirectRule *maxItemWidth;
@@ -475,7 +475,7 @@ void PopupMenuWidget::panelClosing()
 
     if (d->hover)
     {
-        auto &btn = *d->hover;
+        auto &btn = *const_cast<ButtonWidget *>(d->hover);
         d->hover = 0;
         d->setButtonColors(btn);
         d->updateImageColor(btn);

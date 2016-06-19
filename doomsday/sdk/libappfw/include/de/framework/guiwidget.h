@@ -384,6 +384,8 @@ public:
      */
     RuleRectangle &hitRule();
 
+    RuleRectangle const &hitRule() const;
+
     enum MouseClickStatus {
         MouseClickUnrelated, ///< Event was not related to mouse clicks.
         MouseClickStarted,
