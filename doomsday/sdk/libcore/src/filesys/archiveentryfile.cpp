@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ArchiveEntryFile"
@@ -25,9 +25,33 @@
 
 namespace de {
 
+DENG2_PIMPL_NOREF(ArchiveEntryFile)
+{
+    Archive *archive;
+
+    /// Path of the entry within the archive.
+    Path entryPath;
+
+    /// Pointer to the data of the entry within the archive.
+    Block const *readBlock = nullptr;
+
+    Block const &entryData()
+    {
+        if (!readBlock)
+        {
+            readBlock = &const_cast<Archive const *>(archive)->entryBlock(entryPath);
+        }
+        return *readBlock;
+    }
+};
+
 ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath)
-    : ByteArrayFile(name), _archive(archive), _entryPath(entryPath)
-{}
+    : ByteArrayFile(name)
+    , d(new Instance)
+{
+    d->archive   = &archive;
+    d->entryPath = entryPath;
+}
 
 ArchiveEntryFile::~ArchiveEntryFile()
 {
@@ -35,20 +59,20 @@ ArchiveEntryFile::~ArchiveEntryFile()
 
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
-    
+
     deindex();
 }
 
 String ArchiveEntryFile::entryPath() const
 {
-    return _entryPath;
+    return d->entryPath;
 }
 
 String ArchiveEntryFile::describe() const
 {
     DENG2_GUARD(this);
 
-    return String("archive entry \"%1\"").arg(_entryPath);
+    return String("archive entry \"%1\"").arg(d->entryPath);
 }
 
 void ArchiveEntryFile::clear()
@@ -58,9 +82,9 @@ void ArchiveEntryFile::clear()
     verifyWriteAccess();
 
     File::clear();
-    
-    archive().entryBlock(_entryPath).clear();
-    
+
+    archive().entryBlock(d->entryPath).clear();
+
     // Update status.
     Status st = status();
     st.size = 0;
@@ -77,18 +101,28 @@ void ArchiveEntryFile::flush()
     }
 }
 
+Archive &ArchiveEntryFile::archive()
+{
+    return *d->archive;
+}
+
+Archive const &ArchiveEntryFile::archive() const
+{
+    return *d->archive;
+}
+
 IByteArray::Size ArchiveEntryFile::size() const
 {
     DENG2_GUARD(this);
 
-    return archive().entryBlock(_entryPath).size();
+    return d->entryData().size();
 }
 
 void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const
 {
     DENG2_GUARD(this);
 
-    archive().entryBlock(_entryPath).get(at, values, count);
+    d->entryData().get(at, values, count);
 }
 
 void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
@@ -96,16 +130,16 @@ void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
     DENG2_GUARD(this);
 
     verifyWriteAccess();
-    
+
     // The entry will be marked for recompression (due to non-const access).
-    Block &entryBlock = archive().entryBlock(_entryPath);
+    Block &entryBlock = archive().entryBlock(d->entryPath);
     entryBlock.set(at, values, count);
-    
+
     // Update status.
     Status st = status();
     st.size = entryBlock.size();
     // Timestamps must match, otherwise would be pruned needlessly.
-    st.modifiedAt = archive().entryStatus(_entryPath).modifiedAt;
+    st.modifiedAt = archive().entryStatus(d->entryPath).modifiedAt;
     setStatus(st);
 }
 

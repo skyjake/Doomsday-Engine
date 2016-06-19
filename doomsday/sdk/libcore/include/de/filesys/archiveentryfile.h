@@ -66,10 +66,10 @@ public:
     void flush();
 
     /// Returns the archive of the file.
-    Archive &archive() { return _archive; }
+    Archive &archive();
 
     /// Returns the archive of the file (non-modifiable).
-    Archive const &archive() const { return _archive; }
+    Archive const &archive() const;
 
     // Implements IByteArray.
     Size size() const;
@@ -87,10 +87,7 @@ public:
     void set(Offset at, Byte const *values, Size count);
 
 private:
-    Archive &_archive;
-
-    /// Path of the entry within the archive.
-    String _entryPath;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

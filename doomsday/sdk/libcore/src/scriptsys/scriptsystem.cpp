@@ -47,14 +47,14 @@ DENG2_PIMPL(ScriptSystem)
 
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
-    typedef QMap<String, Record *> NativeModules;
+    typedef QHash<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
     Record coreModule;    ///< Script: built-in script classes and functions.
     Record mathModule;    ///< Math: math related functions.
     Record versionModule; ///< Version: information about the platform and build
 
     /// Resident modules.
-    typedef QMap<String, Module *> Modules; // owned
+    typedef QHash<String, Module *> Modules; // owned
     Modules modules;
 
     QList<Path> additionalImportPaths;
@@ -135,7 +135,7 @@ DENG2_PIMPL(ScriptSystem)
 
     void recordBeingDeleted(Record &record)
     {
-        QMutableMapIterator<String, Record *> iter(nativeModules);
+        QMutableHashIterator<String, Record *> iter(nativeModules);
         while (iter.hasNext())
         {
             iter.next();
