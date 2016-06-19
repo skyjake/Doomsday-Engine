@@ -114,8 +114,9 @@ DENG_GUI_PIMPL(PackagesDialog)
             _removeButton->margins().setTopBottom("unit");
             _removeButton->setActionFn([this] ()
             {
-                _owner.d->removePackage(packageId());
-                _owner.d->browser->updateItems();
+                PackagesDialog::Instance *d = _owner.d;
+                d->removePackage(packageId());
+                d->browser->updateItems();
             });
             addButton(_removeButton);
             setKeepButtonsVisible(true);
