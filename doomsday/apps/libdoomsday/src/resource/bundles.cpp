@@ -62,6 +62,8 @@ DENG2_PIMPL(Bundles)
     {
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
+        Time startedAt;
+
         LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
         for (DataBundle const *bundle : bundlesToIdentify)
         {
@@ -69,6 +71,8 @@ DENG2_PIMPL(Bundles)
             bundle->identifyPackages();
         }
         bundlesToIdentify.clear();
+
+        LOG_RES_MSG("Data bundle identification took %.1f seconds") << startedAt.since();
     }
 
     void parseRegistry()
