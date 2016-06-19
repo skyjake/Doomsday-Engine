@@ -53,6 +53,7 @@ public:
     void addButton(de::GuiWidget *button);
     de::GuiWidget &buttonWidget(int index) const;
     void setKeepButtonsVisible(bool yes);
+    void setLabelMinimumRightMargin(de::Rule const &rule);
 
     virtual void setSelected(bool selected);
     bool isSelected() const;

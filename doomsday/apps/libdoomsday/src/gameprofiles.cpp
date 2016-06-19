@@ -166,8 +166,7 @@ bool GameProfiles::Profile::isUserCreated() const
 
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
-    return DoomsdayApp::games()[d->gameId].requiredPackages() +
-            d->packages;
+    return DoomsdayApp::games()[d->gameId].requiredPackages() + d->packages;
 }
 
 bool GameProfiles::Profile::isPlayable() const

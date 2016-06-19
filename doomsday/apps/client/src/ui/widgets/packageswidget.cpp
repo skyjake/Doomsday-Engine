@@ -105,11 +105,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             setLabel(info->gets(Package::VAR_TITLE));
             notifyChange();
         }
-
-        void update()
-        {
-            notifyChange();
-        }
     };
 
     /**
@@ -422,7 +417,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         menu->items().forAll([this] (ui::Item &item)
         {
-            item.as<PackageItem>().update();
+            item.as<PackageItem>().notifyChange();
             return LoopContinue;
         });
     }

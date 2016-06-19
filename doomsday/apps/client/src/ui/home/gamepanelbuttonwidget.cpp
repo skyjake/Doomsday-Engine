@@ -48,6 +48,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
     LabelWidget *problemIcon;
+    LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
 
     Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
@@ -79,6 +80,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             StringList pkgs;
             for (auto const &i : ids) pkgs << i;
             gameProfile.setPackages(pkgs);
+            updatePackagesIndicator();
             if (catalog.setPackages(gameProfile.allRequiredPackages()))
             {
                 updateGameTitleImage();
@@ -114,6 +116,21 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         problemIcon->hide();
         self.icon().add(problemIcon);
 
+        // Package count indicator (non-interactive).
+        packagesCounter = new LabelWidget;
+        packagesCounter->setOpacity(.5f);
+        packagesCounter->setSizePolicy(ui::Expand, ui::Expand);
+        packagesCounter->set(GuiWidget::Background());
+        packagesCounter->setStyleImage("package", "small");
+        packagesCounter->setFont("small");
+        packagesCounter->margins().setLeft("");
+        packagesCounter->setTextAlignment(ui::AlignLeft);
+        packagesCounter->rule()
+                .setInput(Rule::Right, self.label().rule().right())
+                .setMidAnchorY(self.label().rule().midY());
+        packagesCounter->hide();
+        self.label().add(packagesCounter);
+
         self.panel().setContent(saves);
         self.panel().open();
     }
@@ -121,6 +138,24 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     Game const &game() const
     {
         return DoomsdayApp::games()[gameProfile.game()];
+    }
+
+    void updatePackagesIndicator()
+    {
+        int const  count = gameProfile.packages().size();
+        bool const shown = count > 0 && !self.isSelected();
+
+        packagesCounter->setText(String::number(count));
+        packagesCounter->show(shown);
+
+        if (shown)
+        {
+            self.setLabelMinimumRightMargin(packagesCounter->rule().width());
+        }
+        else
+        {
+            self.setLabelMinimumRightMargin(Const(0));
+        }
     }
 
     void playButtonPressed()
@@ -215,6 +250,7 @@ void GamePanelButtonWidget::updateContent()
 
     playButton().enable(isPlayable);
     d->problemIcon->show(!isPlayable);
+    d->updatePackagesIndicator();
 
     String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
                                                  : d->game().title();
@@ -240,6 +276,7 @@ void GamePanelButtonWidget::updateContent()
                     .arg(meta));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
+    d->updatePackagesIndicator();
     if (d->catalog.setPackages(d->gameProfile.allRequiredPackages()))
     {
         d->updateGameTitleImage();

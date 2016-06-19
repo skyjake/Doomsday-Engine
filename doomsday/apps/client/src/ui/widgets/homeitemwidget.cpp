@@ -95,6 +95,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     LabelWidget *label;
     QList<GuiWidget *> buttons;
     AnimationRule *labelRightMargin;
+    IndirectRule *labelMinRightMargin = new IndirectRule;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
     bool keepButtonsVisible = false;
@@ -139,6 +140,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     ~Instance()
     {
         releaseRef(labelRightMargin);
+        releaseRef(labelMinRightMargin);
         releaseRef(buttonsWidth);
     }
 
@@ -232,7 +234,8 @@ HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
             .setInput(Rule::Top,   rule().top())
             .setInput(Rule::Left,  d->icon->rule().right())
             .setInput(Rule::Right, rule().right());
-    d->label->margins().setRight(*d->labelRightMargin + rule("gap"));
+    d->label->margins().setRight(OperatorRule::maximum(*d->labelMinRightMargin,
+                                                       *d->labelRightMargin) + rule("gap"));
 
     // Use an animated height rule for smoother list layout behavior.
     rule().setInput(Rule::Height, height);
@@ -416,4 +419,9 @@ void HomeItemWidget::setKeepButtonsVisible(bool yes)
     {
         d->showButtons(false);
     }
+}
+
+void HomeItemWidget::setLabelMinimumRightMargin(Rule const &rule)
+{
+    d->labelMinRightMargin->setSource(rule);
 }
