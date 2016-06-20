@@ -43,6 +43,10 @@ slider {
     rule editor { constant $= UNIT * 20 }
 }
 
+list {
+    rule width { constant $= UNIT * 120 }
+}
+
 dialog {
     rule gap { constant $= UNIT * 2 }
 

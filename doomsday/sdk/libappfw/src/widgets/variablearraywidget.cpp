@@ -1,0 +1,238 @@
+/** @file variablearraywidget.cpp  Widget for editing Variables with array values.
+ *
+ * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#include "de/VariableArrayWidget"
+
+namespace de {
+
+DENG_GUI_PIMPL(VariableArrayWidget)
+, DENG2_OBSERVES(Variable, Deletion)
+, DENG2_OBSERVES(Variable, Change  )
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+{
+    Variable *var = nullptr;
+    IndirectRule *maxWidth;
+    MenuWidget *menu;
+    ButtonWidget *addButton;
+    ButtonWidget *deleteButton;
+    ui::DataPos hoverItem = ui::Data::InvalidPos;
+
+    /// Notifies the widget when the mouse is over one of the items.
+    struct HoverHandler : public GuiWidget::IEventHandler
+    {
+        VariableArrayWidget &owner;
+
+        HoverHandler(VariableArrayWidget &owner) : owner(owner) {}
+        bool handleEvent(GuiWidget &widget, Event const &event) {
+            if (event.isMouse() && widget.hitTest(event)) {
+                owner.d->setHoverItem(widget);
+            }
+            return false;
+        }
+    };
+
+    Instance(Public *i, Variable &var) : Base(i), var(&var)
+    {
+        maxWidth = new IndirectRule;
+        maxWidth->setSource(rule("list.width"));
+
+        menu         = new MenuWidget;
+        addButton    = new ButtonWidget;
+        deleteButton = new ButtonWidget;
+
+        menu->organizer().audienceForWidgetCreation() += this;
+        menu->organizer().audienceForWidgetUpdate()   += this;
+        menu->setGridSize(1, ui::Expand, 0, ui::Expand);
+
+        updateFromVariable();
+        var.audienceForDeletion() += this;
+        var.audienceForChange()   += this;
+    }
+
+    ~Instance()
+    {
+        releaseRef(maxWidth);
+    }
+
+    void setHoverItem(GuiWidget &widget)
+    {
+        hoverItem = menu->findItem(widget);
+
+        deleteButton->show();
+        deleteButton->rule().setMidAnchorY(widget.rule().midY());
+    }
+
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
+    {
+        auto &label = widget.as<LabelWidget>();
+        label.setSizePolicy(ui::Expand, ui::Expand);
+        label.setMaximumTextWidth(*maxWidth);
+        widget.margins().setLeftRight("").setTopBottom("unit");
+        widget.addEventHandler(new HoverHandler(self));
+    }
+
+    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
+    {
+        widget.as<LabelWidget>().setText(item.label());
+    }
+
+    void updateFromVariable()
+    {
+        if (!var) return;
+
+        menu->items().clear();
+
+        if (auto const *array = var->value().maybeAs<ArrayValue>())
+        {
+            for (Value const *value : array->elements())
+            {
+                menu->items() << self.makeItem(*value);
+            }
+        }
+        else
+        {
+            String const value = var->value().asText();
+            if (!value.isEmpty())
+            {
+                menu->items() << self.makeItem(var->value());
+            }
+        }
+    }
+
+    void setVariableFromWidget()
+    {
+        if (!var) return;
+
+        var->audienceForChange() -= this;
+
+        if (menu->items().isEmpty())
+        {
+            var->set(new TextValue());
+        }
+        else if (menu->items().size() == 1)
+        {
+            var->set(new TextValue(menu->items().at(0).data().toString()));
+        }
+        else
+        {
+            auto *array = new ArrayValue;
+            for (ui::DataPos i = 0; i < menu->items().size(); ++i)
+            {
+                array->add(new TextValue(menu->items().at(i).data().toString()));
+            }
+            var->set(array);
+        }
+        var->audienceForChange() += this;
+    }
+
+    void variableValueChanged(Variable &, Value const &) override
+    {
+        updateFromVariable();
+    }
+
+    void variableBeingDeleted(Variable &) override
+    {
+        var = nullptr;
+        self.disable();
+    }
+};
+
+VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
+    : GuiWidget(name)
+    , d(new Instance(this, variable))
+{
+    d->deleteButton->setSizePolicy(ui::Expand, ui::Expand);
+    d->deleteButton->setStyleImage("close.ring", "default");
+    d->deleteButton->set(Background());
+
+    d->menu->margins()
+            .setLeft(d->deleteButton->rule().width())
+            .setBottom("dialog.gap");
+
+    d->menu->enableScrolling(false);
+    d->menu->enablePageKeys(false);
+    d->menu->rule()
+            .setLeftTop(margins().left() + rule().left(),
+                        margins().top()  + rule().top());
+
+    d->addButton->setStyleImage("create", d->addButton->fontId());
+    d->addButton->setTextAlignment(ui::AlignRight);
+    d->addButton->setSizePolicy(ui::Fixed, ui::Expand);
+
+    AutoRef<Rule> totalWidth(OperatorRule::maximum(d->menu->rule().width(),
+                                                   d->addButton->contentWidth()));
+
+    d->addButton->rule()
+            .setInput(Rule::Width, totalWidth)
+            .setLeftTop(d->menu->rule().left(), d->menu->rule().bottom());
+
+    d->deleteButton->rule().setInput(Rule::Left, d->menu->rule().left());
+    d->deleteButton->setActionFn([this] ()
+    {
+        d->deleteButton->hide();
+        d->menu->items().remove(d->hoverItem);
+        setVariableFromWidget();
+    });
+
+    rule().setSize(totalWidth + margins().width(),
+                   d->menu->rule().height() + d->addButton->rule().height() + margins().height());
+
+    add(d->menu);
+    add(d->deleteButton);
+    add(d->addButton);
+}
+
+Variable &VariableArrayWidget::variable() const
+{
+    return *d->var;
+}
+
+MenuWidget &VariableArrayWidget::elementsMenu()
+{
+    return *d->menu;
+}
+
+String VariableArrayWidget::labelForElement(Value const &value) const
+{
+    return value.asText();
+}
+
+ButtonWidget &VariableArrayWidget::addButton()
+{
+    return *d->addButton;
+}
+
+ui::Item *VariableArrayWidget::makeItem(Value const &value)
+{
+    auto *item = new ui::Item(ui::Item::ShownAsLabel, labelForElement(value));
+    item->setData(value.asText());
+    return item;
+}
+
+void VariableArrayWidget::updateFromVariable()
+{
+    d->updateFromVariable();
+}
+
+void VariableArrayWidget::setVariableFromWidget()
+{
+    d->setVariableFromWidget();
+}
+
+} // namespace de
