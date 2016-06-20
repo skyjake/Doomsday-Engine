@@ -51,7 +51,7 @@ class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
     Q_OBJECT
 
 public:
-    TextWidget(String const &name = "");
+    TextWidget(String const &name = String());
 
     TextRootWidget &root() const;
 
