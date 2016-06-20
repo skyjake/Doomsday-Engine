@@ -22,7 +22,7 @@
 
 namespace de {
 
-static TimeDelta FLASH_SPAN = .3;
+static TimeDelta FLASH_SPAN = .5;
 
 DENG2_PIMPL(FocusWidget)
 {
@@ -85,8 +85,8 @@ void FocusWidget::startFlashing(GuiWidget const *reference)
     if (!d->flashing.isActive())
     {
         d->flashing.start();
-        d->color = 1;
     }
+    d->color = 1;
 }
 
 void FocusWidget::stopFlashing()
