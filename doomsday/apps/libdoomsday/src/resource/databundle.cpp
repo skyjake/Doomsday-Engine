@@ -453,7 +453,7 @@ DENG2_PIMPL(DataBundle)
      */
     void parseSnowberryInfo(File const &infoFile, Record &meta)
     {
-        Info info(String::fromUtf8(Block(infoFile)));
+        Info info(infoFile);
         auto const &rootBlock = info.root();
 
         // Tag it as a Snowberry package.

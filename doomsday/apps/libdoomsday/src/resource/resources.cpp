@@ -110,6 +110,7 @@ ResourceClass &Resources::resClass(resourceclassid_t id)
 
 void Resources::updateOverrideIWADPathFromConfig()
 {
+    /*
     String path = App::config().gets("resource.iwadFolder", "");
     if (!path.isEmpty())
     {
@@ -119,7 +120,7 @@ void Resources::updateOverrideIWADPathFromConfig()
         ps.clearSearchPathGroup(FS1::OverridePaths);
         ps.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path, RC_PACKAGE),
                                     SearchPath::NoDescend), FS1::OverridePaths);
-    }
+    }*/
 }
 
 NativePath Resources::nativeSavePath() const

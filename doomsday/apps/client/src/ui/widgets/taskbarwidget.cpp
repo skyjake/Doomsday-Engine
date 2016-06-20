@@ -46,14 +46,15 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
 
+#include <de/AnimationRule>
 #include <de/BlurWidget>
 #include <de/ButtonWidget>
 #include <de/Config>
+#include <de/DirectoryArrayWidget>
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/KeyEvent>
 #include <de/PopupMenuWidget>
-#include <de/AnimationRule>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
@@ -150,10 +151,6 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     ~Instance()
     {
-//        DoomsdayApp::app().audienceForGameChange() -= this;
-//        ClientApp::serverLink().audienceForJoin -= this;
-//        ClientApp::serverLink().audienceForLeave -= this;
-
         releaseRef(vertShift);
     }
 
@@ -350,10 +347,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->backBlur = new LabelWidget;
     d->backBlur->rule()
-            .setInput(Rule::Left, rule().left())
+            .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Bottom, rule().bottom())
-            .setInput(Rule::Right, rule().right())
-            .setInput(Rule::Top, rule().top());
+            .setInput(Rule::Right,  rule().right())
+            .setInput(Rule::Top,    rule().top());
     d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
     add(d->backBlur);
 
@@ -461,8 +458,13 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
-            << new ui::ActionItem(tr("Packages"), new SignalAction(this, SLOT(openPackagesSidebar())))
-            << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
+            << new ui::ActionItem(tr("Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            //<< new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
+            << new ui::SubwidgetItem(tr("IWAD Folders"), ui::Left, [] () -> PopupWidget * {
+                                         PopupWidget *pop = new PopupWidget;
+                                         pop->setContent(new DirectoryArrayWidget(App::config("resource.iwadFolder")));
+                                         return pop;
+                                     })
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
@@ -732,8 +734,10 @@ void TaskBarWidget::chooseIWADFolder()
 
     bool reload = false;
 
+
+
     // Use a native dialog to select the IWAD folder.
-    ClientApp::app().beginNativeUIMode();
+    /*ClientApp::app().beginNativeUIMode();
 
     QFileDialog dlg(&ClientWindow::main(),
                     tr("Select IWAD Folder"),
@@ -748,7 +752,7 @@ void TaskBarWidget::chooseIWADFolder()
         reload = true;
     }
 
-    ClientApp::app().endNativeUIMode();
+    ClientApp::app().endNativeUIMode();*/
 
     // Reload packages and recheck for game availability.
     if (reload)

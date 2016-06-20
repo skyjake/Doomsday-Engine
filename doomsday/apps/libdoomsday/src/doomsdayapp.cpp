@@ -256,7 +256,10 @@ DENG2_PIMPL(DoomsdayApp)
         }
 
         // Configured via GUI.
-        attachWadFeed("user-selected", App::config().gets("resource.iwadFolder", ""));
+        for (String path : App::config().getStringList("resource.iwadFolder"))
+        {
+            attachWadFeed("user-selected", path);
+        }
 
         wads.populate();
     }
