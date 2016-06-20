@@ -92,15 +92,29 @@ DENG2_PIMPL(Info)
 
         currentChar = '\0';
         cursor = 0;
-        nextChar();
-        tokenStartOffset = 0;
 
         // When nextToken() is called and the current token is empty,
         // it is deduced that the source file has ended. We must
         // therefore set a dummy token that will be discarded
         // immediately.
         currentToken = " ";
-        nextToken();
+        tokenStartOffset = 0;
+
+        if (source.isEmpty())
+        {
+            content.clear();
+            currentLine = 0;
+        }
+
+        try
+        {
+            nextChar();
+            nextToken();
+        }
+        catch(EndOfFile const &)
+        {
+            currentToken.clear();
+        }
     }
 
     /**
@@ -174,7 +188,10 @@ DENG2_PIMPL(Info)
     String nextToken()
     {
         // Already drawn a blank?
-        if (currentToken.isEmpty()) throw EndOfFile("out of tokens");
+        if (currentToken.isEmpty())
+        {
+            throw EndOfFile(QStringLiteral("out of tokens"));
+        }
 
         currentToken = "";
 
@@ -503,30 +520,31 @@ DENG2_PIMPL(Info)
         DENG2_ASSERT(blockType != ")");
 
         String blockName;
-
-        if (!scriptBlockTypes.contains(blockType)) // script blocks are never named
-        {
-            if (peekToken() != "(" && peekToken() != "{")
-            {
-                blockName = parseValue();
-            }
-        }
-
-        if (!implicitBlockType.isEmpty() && blockName.isEmpty() &&
-           blockType != implicitBlockType &&
-           !scriptBlockTypes.contains(blockType))
-        {
-            blockName = blockType;
-            blockType = implicitBlockType;
-        }
-
-        QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName, self));
-        int startLine = currentLine;
-
         String endToken;
+        std::unique_ptr<BlockElement> block;
+        int startLine = currentLine;
 
         try
         {
+            if (!scriptBlockTypes.contains(blockType)) // script blocks are never named
+            {
+                if (peekToken() != "(" && peekToken() != "{")
+                {
+                    blockName = parseValue();
+                }
+            }
+
+            if (!implicitBlockType.isEmpty() && blockName.isEmpty() &&
+                blockType != implicitBlockType &&
+                !scriptBlockTypes.contains(blockType))
+            {
+                blockName = blockType;
+                blockType = implicitBlockType;
+            }
+
+            block.reset(new BlockElement(blockType, blockName, self));
+            startLine = currentLine;
+
             // How about some attributes?
             // Syntax: {token value} '('|'{'
 
@@ -573,6 +591,11 @@ DENG2_PIMPL(Info)
                     block->add(element);
                 }
             }
+
+            DENG2_ASSERT(peekToken() == endToken);
+
+            // Move past the closing parentheses.
+            nextToken();
         }
         catch (EndOfFile const &)
         {
@@ -581,12 +604,7 @@ DENG2_PIMPL(Info)
                               .arg(startLine));
         }
 
-        DENG2_ASSERT(peekToken() == endToken);
-
-        // Move past the closing parentheses.
-        nextToken();
-
-        return block.take();
+        return block.release();
     }
 
     void includeFrom(String const &includeName)

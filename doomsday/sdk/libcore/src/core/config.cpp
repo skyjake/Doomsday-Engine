@@ -138,7 +138,7 @@ void Config::read()
 
         // Check the container, too.
         if (!shouldRunScript &&
-           Package::containerOfFileModifiedAt(scriptFile) > d->refuge.lastWrittenAt())
+            Package::containerOfFileModifiedAt(scriptFile) > d->refuge.lastWrittenAt())
         {
             LOG_MSG("Package '%s' is newer than %s, rerunning the script")
                     << Package::identifierForContainerOfFile(scriptFile)
