@@ -44,7 +44,7 @@ public:
     };
 
 public:
-    PackagesWidget(de::String const &name = "");
+    PackagesWidget(de::String const &name = de::String());
 
     void setFilterEditorMinimumY(de::Rule const &minY);
 

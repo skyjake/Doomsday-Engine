@@ -28,7 +28,7 @@
 class KeyGrabberWidget : public de::LabelWidget
 {
 public:
-    KeyGrabberWidget(de::String const &name = "");
+    KeyGrabberWidget(de::String const &name = de::String());
 
     bool handleEvent(de::Event const &event);
 

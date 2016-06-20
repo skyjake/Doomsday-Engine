@@ -52,7 +52,7 @@ public:
     };
 
 public:
-    ProgressWidget(String const &name = "");
+    ProgressWidget(String const &name = String());
 
     void useMiniStyle(DotPath const &colorId = "text");
     void setRotationSpeed(float anglesPerSecond);

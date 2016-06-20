@@ -46,7 +46,7 @@ class LIBAPPFW_PUBLIC FoldPanelWidget : public PanelWidget
     Q_OBJECT
 
 public:
-    FoldPanelWidget(String const &name = "");
+    FoldPanelWidget(String const &name = String());
 
     /**
      * Creates a title button widget for toggling the fold open and closed.

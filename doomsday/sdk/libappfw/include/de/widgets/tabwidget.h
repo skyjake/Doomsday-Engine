@@ -52,7 +52,7 @@ public:
     };
 
 public:
-    TabWidget(String const &name = "");
+    TabWidget(String const &name = String());
 
     void useInvertedStyle();
 

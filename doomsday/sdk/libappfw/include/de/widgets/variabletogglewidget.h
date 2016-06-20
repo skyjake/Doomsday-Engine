@@ -37,8 +37,8 @@ public:
     DENG2_ERROR(VariableMissingError);
 
 public:
-    VariableToggleWidget(Variable &variable, String const &name = "");
-    VariableToggleWidget(String const &styledText, Variable &variable, String const &name = "");
+    VariableToggleWidget(Variable &variable, String const &name = String());
+    VariableToggleWidget(String const &styledText, Variable &variable, String const &name = String());
 
     Variable &variable() const;
 

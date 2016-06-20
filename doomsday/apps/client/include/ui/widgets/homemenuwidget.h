@@ -33,7 +33,7 @@ class HomeMenuWidget : public de::MenuWidget
     Q_OBJECT
 
 public:
-    HomeMenuWidget(de::String const &name = "");
+    HomeMenuWidget(de::String const &name = de::String());
 
     void unselectAll();
     void restorePreviousSelection();

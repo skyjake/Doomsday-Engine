@@ -62,7 +62,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(Triggered, void buttonActionTriggered(ButtonWidget &button))
 
 public:
-    ButtonWidget(String const &name = "");
+    ButtonWidget(String const &name = String());
 
     enum HoverColorMode {
         ReplaceColor,

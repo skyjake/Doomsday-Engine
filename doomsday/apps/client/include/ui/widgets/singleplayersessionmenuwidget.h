@@ -30,7 +30,7 @@ public:
     };
 
     SingleplayerSessionMenuWidget(Mode mode = ShowAvailableGames,
-                                  de::String const &name = "");
+                                  de::String const &name = de::String());
 
     Mode mode() const;
 

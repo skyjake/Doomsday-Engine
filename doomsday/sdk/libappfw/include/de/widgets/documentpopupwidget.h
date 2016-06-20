@@ -35,8 +35,8 @@ class LIBAPPFW_PUBLIC DocumentPopupWidget : public PopupWidget
     Q_OBJECT
 
 public:
-    DocumentPopupWidget(String const &name = "");
-    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = "");
+    DocumentPopupWidget(String const &name = String());
+    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = String());
 
     void enableCloseButton(bool enable);
 

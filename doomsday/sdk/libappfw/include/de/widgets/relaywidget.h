@@ -31,7 +31,7 @@ namespace de {
 class RelayWidget : public GuiWidget
 {
 public:
-    RelayWidget(GuiWidget *target = nullptr, String const &name = "");
+    RelayWidget(GuiWidget *target = nullptr, String const &name = String());
 
     /**
      * Sets the widget that will be drawn when the relay widget is supposed to be

@@ -38,7 +38,7 @@ class LIBAPPFW_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractL
     Q_OBJECT
 
 public:
-    LineEditWidget(String const &name = "");
+    LineEditWidget(String const &name = String());
 
     void setText(String const &lineText) override;
 

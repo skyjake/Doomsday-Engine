@@ -39,7 +39,7 @@ namespace de {
 class LIBAPPFW_PUBLIC CompositorWidget : public GuiWidget
 {
 public:
-    CompositorWidget(String const &name = "");
+    CompositorWidget(String const &name = String());
 
     GLTexture &composite() const;
 

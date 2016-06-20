@@ -31,7 +31,7 @@ namespace de {
 class LIBAPPFW_PUBLIC AuxButtonWidget : public ButtonWidget
 {
 public:
-    AuxButtonWidget(String const &name = "");
+    AuxButtonWidget(String const &name = String());
 
     ButtonWidget &auxiliary();
 

@@ -47,7 +47,7 @@ public:
      *                           ArchiveFolder uses this file as its source.
      * @param name               Name for the folder.
      */
-    ArchiveFolder(File &sourceArchiveFile, String const &name = "");
+    ArchiveFolder(File &sourceArchiveFile, String const &name = String());
 
     virtual ~ArchiveFolder();
 

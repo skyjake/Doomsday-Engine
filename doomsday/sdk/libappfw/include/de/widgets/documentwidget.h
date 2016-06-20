@@ -44,7 +44,7 @@ namespace de {
 class LIBAPPFW_PUBLIC DocumentWidget : public ScrollAreaWidget
 {
 public:
-    DocumentWidget(String const &name = "");
+    DocumentWidget(String const &name = String());
 
     /**
      * Sets the text content of the widget. Style escapes can be used.

@@ -36,7 +36,7 @@ class LIBAPPFW_PUBLIC CommandWidget : public LineEditWidget
     Q_OBJECT
 
 public:
-    CommandWidget(String const &name = "");
+    CommandWidget(String const &name = String());
 
     PopupWidget &autocompletionPopup();
 

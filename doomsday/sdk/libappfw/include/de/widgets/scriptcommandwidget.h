@@ -41,7 +41,7 @@ namespace de {
 class LIBAPPFW_PUBLIC ScriptCommandWidget : public CommandWidget
 {
 public:
-    ScriptCommandWidget(String const &name = "");
+    ScriptCommandWidget(String const &name = String());
 
     bool handleEvent(Event const &event);
 

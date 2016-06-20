@@ -85,7 +85,7 @@ public:
          * @param type  Type of the element.
          * @param name  Case-independent name of the element.
          */
-        Element(Type type = None, String const &name = "");
+        Element(Type type = None, String const &name = String());
         virtual ~Element();
 
         void setParent(BlockElement *parent);

@@ -38,7 +38,7 @@ public:
     typedef QList<String> Items;
 
 public:
-    ChoiceWidget(String const &name = "");
+    ChoiceWidget(String const &name = String());
 
     void setItems(Items const &items);
 

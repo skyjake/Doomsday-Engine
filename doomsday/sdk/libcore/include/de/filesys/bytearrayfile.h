@@ -42,7 +42,7 @@ namespace de {
 class DENG2_PUBLIC ByteArrayFile : public File, public IByteArray
 {
 protected:
-    ByteArrayFile(String const &name = "") : File(name) {}
+    ByteArrayFile(String const &name = String()) : File(name) {}
 
 public:
     dsize size() const;

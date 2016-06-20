@@ -56,7 +56,7 @@ public:
     };
 
 public:
-    MenuWidget(Preset preset, String const &name = "");
+    MenuWidget(Preset preset, String const &name = String());
 
     int itemCount() const;
 

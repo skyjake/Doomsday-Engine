@@ -28,7 +28,7 @@
 class BusyWidget : public de::GuiWidget
 {
 public:
-    BusyWidget(de::String const &name = "");
+    BusyWidget(de::String const &name = de::String());
 
     de::ProgressWidget &progress();
 

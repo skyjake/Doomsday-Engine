@@ -43,7 +43,7 @@ public:
      * @param name         Name for the widget.
      */
     ProfilePickerWidget(ConfigProfiles &settings, de::String const &description,
-                        de::String const &name = "");
+                        de::String const &name = de::String());
 
     ButtonWidget &button();
 

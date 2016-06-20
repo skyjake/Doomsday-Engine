@@ -39,7 +39,7 @@ class GridLayout;
 class LIBAPPFW_PUBLIC GridPopupWidget : public PopupWidget
 {
 public:
-    GridPopupWidget(String const &name = "");
+    GridPopupWidget(String const &name = String());
 
     /**
      * Returns the layout used by the popup's contents.

@@ -34,7 +34,7 @@ class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
     Q_OBJECT
 
 public:
-    CommandLineWidget(String const &name = "");
+    CommandLineWidget(String const &name = String());
     bool handleEvent(Event const &event);
 
 signals:

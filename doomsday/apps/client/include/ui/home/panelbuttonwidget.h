@@ -31,7 +31,7 @@ class PanelButtonWidget : public HomeItemWidget
     Q_OBJECT
 
 public:
-    PanelButtonWidget(de::String const &name = "");
+    PanelButtonWidget(de::String const &name = de::String());
 
     de::PanelWidget &panel();
 

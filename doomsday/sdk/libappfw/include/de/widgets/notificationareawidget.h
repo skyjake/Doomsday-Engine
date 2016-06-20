@@ -48,7 +48,7 @@ class LIBAPPFW_PUBLIC NotificationAreaWidget : public GuiWidget
     Q_OBJECT
 
 public:
-    NotificationAreaWidget(String const &name = "");
+    NotificationAreaWidget(String const &name = String());
 
     /**
      * Places the notification widget in the top right corner of @a area.

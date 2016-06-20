@@ -40,7 +40,7 @@ class LIBAPPFW_PUBLIC LogWidget : public ScrollAreaWidget
     Q_OBJECT
 
 public:
-    LogWidget(String const &name = "");
+    LogWidget(String const &name = String());
 
     /**
      * Sets the formatter that will be used for formatting log entries for the widget.

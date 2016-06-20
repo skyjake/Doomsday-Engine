@@ -32,7 +32,7 @@ namespace de {
 class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
 {
 public:
-    PopupMenuWidget(String const &name = "");
+    PopupMenuWidget(String const &name = String());
 
     void setParentPopup(PopupWidget *parentPopup);
 

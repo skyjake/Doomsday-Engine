@@ -34,7 +34,7 @@ class LIBSHELL_PUBLIC DialogWidget : public TextWidget
     Q_OBJECT
 
 public:
-    DialogWidget(String const &name = "");
+    DialogWidget(String const &name = String());
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the

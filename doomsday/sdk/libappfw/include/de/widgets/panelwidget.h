@@ -50,7 +50,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
 
 public:
-    PanelWidget(String const &name = "");
+    PanelWidget(String const &name = String());
 
     /**
      * Sets the size policy for the secondary dimension. For instance, for a

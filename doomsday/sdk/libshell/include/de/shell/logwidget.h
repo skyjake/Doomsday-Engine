@@ -35,7 +35,7 @@ class LIBSHELL_PUBLIC LogWidget : public TextWidget
     Q_OBJECT
 
 public:
-    LogWidget(String const &name = "");
+    LogWidget(String const &name = String());
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving

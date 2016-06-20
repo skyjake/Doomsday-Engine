@@ -146,7 +146,7 @@ public:
     DENG2_ERROR(UndefinedLabel);
 
 public:
-    DialogWidget(String const &name = "", Flags const &flags = DefaultFlags);
+    DialogWidget(String const &name = String(), Flags const &flags = DefaultFlags);
 
     Modality modality() const;
 

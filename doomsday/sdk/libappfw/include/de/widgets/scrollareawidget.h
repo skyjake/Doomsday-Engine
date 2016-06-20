@@ -52,7 +52,7 @@ public:
     };
 
 public:
-    ScrollAreaWidget(String const &name = "");
+    ScrollAreaWidget(String const &name = String());
 
     void setScrollBarColor(DotPath const &colorId);
 

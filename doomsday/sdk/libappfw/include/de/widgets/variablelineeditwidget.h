@@ -39,7 +39,7 @@ public:
     DENG2_ERROR(VariableMissingError);
 
 public:
-    VariableLineEditWidget(Variable &variable, String const &name = "");
+    VariableLineEditWidget(Variable &variable, String const &name = String());
 
     Variable &variable() const;
 

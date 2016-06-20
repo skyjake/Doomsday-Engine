@@ -46,11 +46,11 @@ public:
 
 public:
     VariableSliderWidget(Variable &variable, Ranged const &range, ddouble step = 0,
-                         String const &name = "");
+                         String const &name = String());
 
     VariableSliderWidget(ValueType valueType, Variable &variable,
                          Ranged const &range, ddouble step = 0,
-                         String const &name = "");
+                         String const &name = String());
 
     Variable &variable() const;
 

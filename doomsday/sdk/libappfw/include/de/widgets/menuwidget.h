@@ -62,7 +62,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
 
 public:
-    MenuWidget(String const &name = "");
+    MenuWidget(String const &name = String());
 
     AssetGroup &assets() override;
 

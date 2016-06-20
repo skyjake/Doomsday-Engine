@@ -38,7 +38,7 @@ namespace de {
 class DENG2_PUBLIC LinkFile : public File
 {
 public:
-    LinkFile(String const &name = "");
+    LinkFile(String const &name = String());
 
     ~LinkFile();
 

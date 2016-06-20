@@ -30,7 +30,7 @@
 class InputDeviceHatControl : public InputDeviceControl
 {
 public:
-    explicit InputDeviceHatControl(de::String const &name = "");
+    explicit InputDeviceHatControl(de::String const &name = de::String());
     virtual ~InputDeviceHatControl();
 
     /**

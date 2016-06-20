@@ -33,7 +33,7 @@ namespace shell {
 class LIBSHELL_PUBLIC LabelWidget : public TextWidget
 {
 public:
-    LabelWidget(String const &name = "");
+    LabelWidget(String const &name = String());
 
     /**
      * Sets the background for the label.

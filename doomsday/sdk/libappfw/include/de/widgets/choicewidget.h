@@ -58,7 +58,7 @@ public:
     };
 
 public:
-    ChoiceWidget(String const &name = "");
+    ChoiceWidget(String const &name = String());
 
     ui::Data &items();
 

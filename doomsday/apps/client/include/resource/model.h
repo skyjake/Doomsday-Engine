@@ -77,7 +77,7 @@ public:
         de::Vector3f max;
         de::String name;
 
-        Frame(Model &model, de::String const &name = "")
+        Frame(Model &model, de::String const &name = de::String())
             : model(model), name(name)
         {}
 
@@ -95,7 +95,7 @@ public:
         de::String name;
         de::Texture *texture; // Not owned.
 
-        Skin(de::String const &name = "", de::Texture *texture = 0)
+        Skin(de::String const &name = de::String(), de::Texture *texture = 0)
             : name(name), texture(texture)
         {}
     };

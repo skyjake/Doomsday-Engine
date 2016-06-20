@@ -127,7 +127,7 @@ public:
     };
 
 public:
-    SavedSession(File &sourceArchiveFile, de::String const &name = "");
+    SavedSession(File &sourceArchiveFile, de::String const &name = de::String());
 
     virtual ~SavedSession();
 

@@ -71,7 +71,7 @@ class Image;
 class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public IAssetGroup
 {
 public:
-    LabelWidget(String const &name = "");
+    LabelWidget(String const &name = String());
 
     AssetGroup &assets() override;
 

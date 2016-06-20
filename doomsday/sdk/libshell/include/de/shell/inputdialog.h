@@ -36,7 +36,7 @@ class MenuWidget;
 class InputDialog : public de::shell::DialogWidget
 {
 public:
-    InputDialog(de::String const &name = "");
+    InputDialog(de::String const &name = de::String());
 
     LabelWidget &label();
     LineEditWidget &lineEdit();

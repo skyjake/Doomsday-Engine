@@ -41,7 +41,7 @@ class Variable;
 class DENG2_PUBLIC RecordPacket : public IdentifiedPacket
 {
 public:
-    RecordPacket(String const &name = "", Id id = 0);
+    RecordPacket(String const &name = String(), Id id = 0);
     virtual ~RecordPacket();
 
     /// Returns the caption of the packet.

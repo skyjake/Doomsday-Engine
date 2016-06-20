@@ -107,7 +107,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
-    Widget(String const &name = "");
+    Widget(String const &name = String());
     virtual ~Widget();
 
     DENG2_AS_IS_METHODS()

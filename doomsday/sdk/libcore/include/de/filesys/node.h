@@ -102,7 +102,7 @@ protected:
      *
      * @param name  Name of the node.
      */
-    explicit Node(String const &name = "");
+    explicit Node(String const &name = String());
 
 private:
     DENG2_PRIVATE(d)

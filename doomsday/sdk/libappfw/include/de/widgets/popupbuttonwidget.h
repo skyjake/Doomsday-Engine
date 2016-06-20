@@ -41,7 +41,7 @@ public:
     typedef std::function<void (PopupWidget *)> Opener;
 
 public:
-    PopupButtonWidget(String const &name = "");
+    PopupButtonWidget(String const &name = String());
 
     /**
      * Sets the popup that this button controls. The popup is automatically anchored

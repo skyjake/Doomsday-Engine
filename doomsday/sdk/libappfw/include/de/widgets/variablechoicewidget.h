@@ -39,7 +39,7 @@ public:
     DENG2_ERROR(VariableMissingError);
 
 public:
-    VariableChoiceWidget(Variable &variable, String const &name = "");
+    VariableChoiceWidget(Variable &variable, String const &name = String());
 
     Variable &variable() const;
 

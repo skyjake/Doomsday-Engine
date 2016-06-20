@@ -33,7 +33,7 @@ namespace de {
 class LIBAPPFW_PUBLIC BlurWidget : public GuiWidget
 {
 public:
-    BlurWidget(String const &name = "");
+    BlurWidget(String const &name = String());
 };
 
 } // namespace de

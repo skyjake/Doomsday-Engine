@@ -32,7 +32,7 @@ class SidebarWidget : public de::PanelWidget
     Q_OBJECT
 
 public:
-    SidebarWidget(de::String const &title, de::String const &name = "");
+    SidebarWidget(de::String const &title, de::String const &name = de::String());
 
     de::SequentialLayout &layout();
     de::LabelWidget &title();

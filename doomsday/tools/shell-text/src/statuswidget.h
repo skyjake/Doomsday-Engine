@@ -27,7 +27,7 @@ class StatusWidget : public de::shell::TextWidget
     Q_OBJECT
 
 public:
-    StatusWidget(de::String const &name = "");
+    StatusWidget(de::String const &name = de::String());
 
     /**
      * Sets the shell Link whose status is to be shown on screen.

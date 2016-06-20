@@ -45,7 +45,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
 
 public:
-    ToggleWidget(String const &name = "");
+    ToggleWidget(String const &name = String());
 
     /**
      * Sets the toggle state of the widget.

@@ -33,7 +33,7 @@ class ColumnWidget : public de::GuiWidget
     Q_OBJECT
 
 public:
-    ColumnWidget(de::String const &name = "");
+    ColumnWidget(de::String const &name = de::String());
 
     void setBackgroundImage(de::DotPath const &imageId);
 

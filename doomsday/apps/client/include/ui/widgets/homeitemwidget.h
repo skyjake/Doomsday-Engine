@@ -43,7 +43,7 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
-    HomeItemWidget(Flags flags = AnimatedHeight, de::String const &name = "");
+    HomeItemWidget(Flags flags = AnimatedHeight, de::String const &name = de::String());
 
     de::AssetGroup &assets() override;
 

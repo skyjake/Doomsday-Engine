@@ -216,7 +216,7 @@ public:
     enum ColorTheme { Normal, Inverted };
 
 public:
-    GuiWidget(String const &name = "");
+    GuiWidget(String const &name = String());
 
     /**
      * Deletes a widget. The widget is first deinitialized.

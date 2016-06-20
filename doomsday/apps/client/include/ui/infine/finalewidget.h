@@ -41,7 +41,7 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(FinaleWidget const &widget))
 
 public:
-    explicit FinaleWidget(de::String const &name = "");
+    explicit FinaleWidget(de::String const &name = de::String());
     virtual ~FinaleWidget();
 
     DENG2_AS_IS_METHODS()

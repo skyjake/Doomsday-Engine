@@ -374,7 +374,7 @@ protected:
      *
      * @param name  Name of the file.
      */
-    explicit File(String const &name = "");
+    explicit File(String const &name = String());
 
 private:
     DENG2_PRIVATE(d)

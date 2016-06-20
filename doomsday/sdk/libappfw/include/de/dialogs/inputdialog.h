@@ -32,7 +32,7 @@ namespace de {
 class LIBAPPFW_PUBLIC InputDialog : public MessageDialog
 {
 public:
-    InputDialog(String const &name = "");
+    InputDialog(String const &name = String());
 
     LineEditWidget &editor();
     LineEditWidget const &editor() const;

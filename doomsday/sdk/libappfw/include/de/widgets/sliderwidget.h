@@ -37,7 +37,7 @@ class LIBAPPFW_PUBLIC SliderWidget : public GuiWidget
     Q_OBJECT
 
 public:
-    SliderWidget(String const &name = "");
+    SliderWidget(String const &name = String());
 
     void setRange(Rangei const &intRange, int step = 1);
     void setRange(Rangef const &floatRange, float step = 0);

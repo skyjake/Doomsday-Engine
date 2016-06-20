@@ -45,7 +45,7 @@ public:
     };
 
 public:
-    SessionMenuWidget(de::String const &name = "");
+    SessionMenuWidget(de::String const &name = de::String());
 
     /**
      * Sets the game filter widget that defines the filter and sort

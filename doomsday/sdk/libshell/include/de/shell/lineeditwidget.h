@@ -44,7 +44,7 @@ public:
      *
      * @param name  Widget name.
      */
-    LineEditWidget(String const &name = "");
+    LineEditWidget(String const &name = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an

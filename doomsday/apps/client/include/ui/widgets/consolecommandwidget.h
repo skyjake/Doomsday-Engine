@@ -33,7 +33,7 @@
 class ConsoleCommandWidget : public de::CommandWidget
 {
 public:
-    ConsoleCommandWidget(de::String const &name = "");
+    ConsoleCommandWidget(de::String const &name = de::String());
 
     // Events.
     void focusGained();

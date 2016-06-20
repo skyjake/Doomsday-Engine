@@ -31,7 +31,7 @@ namespace de {
 class LIBAPPFW_PUBLIC MessageDialog : public DialogWidget
 {
 public:
-    MessageDialog(String const &name = "");
+    MessageDialog(String const &name = String());
 
     void useInfoStyle();
 

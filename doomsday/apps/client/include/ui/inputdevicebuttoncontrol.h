@@ -31,7 +31,7 @@
 class InputDeviceButtonControl : public InputDeviceControl
 {
 public:
-    explicit InputDeviceButtonControl(de::String const &name = "");
+    explicit InputDeviceButtonControl(de::String const &name = de::String());
     virtual ~InputDeviceButtonControl();
 
     /**

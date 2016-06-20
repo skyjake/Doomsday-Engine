@@ -27,7 +27,7 @@
 class OpenConnectionDialog : public de::shell::InputDialog
 {
 public:
-    OpenConnectionDialog(de::String const &name = "");
+    OpenConnectionDialog(de::String const &name = de::String());
 
     /**
      * Returns the address that the user entered in the dialog. If the dialog
