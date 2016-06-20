@@ -88,21 +88,6 @@ public slots:
     void openHomepageInBrowser();
     void openInBrowser(QUrl url);
 
-    /**
-     * Enters the "native UI" mode that temporarily switches the main window to a
-     * regular window and restores the desktop display mode. This allows the user to
-     * access native UI widgets normally.
-     *
-     * Call this before showing native UI widgets. You must call endNativeUIMode()
-     * afterwards.
-     */
-    void beginNativeUIMode();
-
-    /**
-     * Ends the "native UI" mode, restoring the previous main window properties.
-     */
-    void endNativeUIMode();
-
 protected:
     void unloadGame(GameProfile const &upcomingGame) override;
     void makeGameCurrent(GameProfile const &newGame) override;

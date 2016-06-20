@@ -775,28 +775,6 @@ void ClientApp::openInBrowser(QUrl url)
     QDesktopServices::openUrl(url);
 }
 
-void ClientApp::beginNativeUIMode()
-{
-    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
-    // is never changed on that platform.
-#ifndef MACOSX
-    auto &win = ClientWindow::main();
-    win.saveState();
-    int const windowedMode[] = {
-        ClientWindow::Fullscreen, false,
-        ClientWindow::End
-    };
-    win.changeAttributes(windowedMode);
-#endif
-}
-
-void ClientApp::endNativeUIMode()
-{
-#ifndef MACOSX
-    ClientWindow::main().restoreState();
-#endif
-}
-
 void ClientApp::unloadGame(GameProfile const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);

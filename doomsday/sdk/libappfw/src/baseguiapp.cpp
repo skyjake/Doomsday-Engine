@@ -25,6 +25,7 @@
 #include <de/DictionaryValue>
 #include <de/Function>
 #include <de/NativeFont>
+#include <de/BaseWindow>
 #include <de/ScriptSystem>
 #include <QFontDatabase>
 
@@ -184,4 +185,25 @@ VRConfig &BaseGuiApp::vr()
     return app().d->vr;
 }
 
+void BaseGuiApp::beginNativeUIMode()
+{
+    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
+    // is never changed on that platform.
+#ifndef MACOSX
+    auto &win = static_cast<BaseWindow &>(CanvasWindow::main());
+    win.saveState();
+    int const windowedMode[] = {
+        BaseWindow::Fullscreen, false,
+        BaseWindow::End
+    };
+    win.changeAttributes(windowedMode);
+#endif
+}
+
+void BaseGuiApp::endNativeUIMode()
+{
+#ifndef MACOSX
+    static_cast<BaseWindow &>(CanvasWindow::main()).restoreState();
+#endif
+}
 } // namespace de
