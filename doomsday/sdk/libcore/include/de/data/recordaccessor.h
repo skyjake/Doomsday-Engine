@@ -68,6 +68,7 @@ public:
     ArrayValue const &geta(String const &name) const;
     DictionaryValue const &getdt(String const &name) const;
     RecordValue const &getr(String const &name) const;
+    StringList getStringList(String const &name, StringList const &defaultValue = StringList()) const;
 
     Record const &subrecord(String const &name) const;
 

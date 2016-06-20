@@ -130,6 +130,26 @@ RecordValue const &RecordAccessor::getr(String const &name) const
     return getAs<RecordValue>(name);
 }
 
+StringList RecordAccessor::getStringList(String const &name, StringList const &defaultValue) const
+{
+    if (!accessedRecord().has(name)) return defaultValue;
+
+    StringList str;
+    Value const &value = get(name);
+    if (value.is<ArrayValue>())
+    {
+        for (Value const *val : value.as<ArrayValue>().elements())
+        {
+            str << val->asText();
+        }
+    }
+    else
+    {
+        str << value.asText();
+    }
+    return str;
+}
+
 Record const &RecordAccessor::subrecord(String const &name) const
 {
     return accessedRecord().subrecord(name);
