@@ -110,16 +110,17 @@ public:
 
     Action const *action() const;
 
-    /**
-     * Triggers the action of the button.
-     */
-    void trigger();
-
     State state() const;
 
     // Events.
     void update();
     bool handleEvent(Event const &event);
+
+public slots:
+    /**
+     * Triggers the action of the button.
+     */
+    void trigger();
 
 signals:
     void pressed();

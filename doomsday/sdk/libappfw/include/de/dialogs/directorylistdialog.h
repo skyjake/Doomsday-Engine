@@ -1,4 +1,4 @@
-/** @file directoryarraywidget.h  Widget for an array of native directories.
+/** @file directorylistdialog.h  Dialog for editing a list of directories.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DIRECTORYARRAYWIDGET_H
-#define LIBAPPFW_DIRECTORYARRAYWIDGET_H
+#ifndef LIBAPPFW_DIRECTORYLISTDIALOG_H
+#define LIBAPPFW_DIRECTORYLISTDIALOG_H
 
-#include "../VariableArrayWidget"
+#include "../MessageDialog"
+#include "../DirectoryArrayWidget"
 
 namespace de {
 
 /**
- * Widget for choosing an array of native directories.
- *
- * @group guiWidgets
+ * Dialog for editing a list of directories.
  */
-class LIBAPPFW_PUBLIC DirectoryArrayWidget : public VariableArrayWidget
+class LIBAPPFW_PUBLIC DirectoryListDialog : public MessageDialog
 {
 public:
-    DirectoryArrayWidget(Variable &variable, String const &name = String());
+    DirectoryListDialog(String const &name = String());
 
-protected:
-    String labelForElement(Value const &value) const override;
+    /**
+     * Sets the list elements.
+     * @param elements  Array of text strings, or a single TextValue.
+     */
+    void setValue(Value const &elements);
+
+    /**
+     * Returns the contents of the directory list.
+     * Array of text strings, or a single TextValue.
+     */
+    Value const &value() const;
 
 private:
     DENG2_PRIVATE(d)
@@ -42,4 +50,4 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_DIRECTORYARRAYWIDGET_H
+#endif // LIBAPPFW_DIRECTORYLISTDIALOG_H

@@ -1,4 +1,4 @@
-/** @file directoryarraywidget.cpp
+/** @file directoryarraywidget.cpp  Widget for an array of native directories.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -49,9 +49,6 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
         dlg.setLabelText(QFileDialog::Accept, tr("Select"));
         if (dlg.exec())
         {
-            //App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
-            //reload = true;
-
             elementsMenu().items() << makeItem(TextValue(dlg.selectedFiles().at(0)));
             setVariableFromWidget();
         }

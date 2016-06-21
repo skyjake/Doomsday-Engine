@@ -30,6 +30,8 @@ class ButtonWidget;
 /**
  * Widget for editing Variables with array values.
  *
+ * Uses an expanding sizing policy.
+ *
  * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC VariableArrayWidget : public GuiWidget
@@ -46,6 +48,17 @@ public:
     Variable &variable() const;
     MenuWidget &elementsMenu();
     ButtonWidget &addButton();
+
+    /**
+     * Changes the layout of the widget so that the add button can be freely
+     * positioned outside the widget's area. By default the add button is attached
+     * under the array values.
+     *
+     * @param contentWidth  The widget contents use this as the width.
+     *
+     * @return Pointer to the add button, whose ownership is given to the caller.
+     */
+    ButtonWidget *detachAddButton(Rule const &contentWidth);
 
     ui::Item *makeItem(Value const &value);
 

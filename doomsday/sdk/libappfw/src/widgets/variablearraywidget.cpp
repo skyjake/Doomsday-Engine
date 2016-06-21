@@ -218,6 +218,20 @@ ButtonWidget &VariableArrayWidget::addButton()
     return *d->addButton;
 }
 
+ButtonWidget *VariableArrayWidget::detachAddButton(Rule const &contentWidth)
+{
+    d->addButton->setSizePolicy(ui::Expand, ui::Expand);
+    d->addButton->orphan();
+
+    d->maxWidth->setSource(contentWidth - margins().width());
+    d->menu->setGridSize(1, ui::Fixed, 0, ui::Expand);
+    d->menu->rule().setInput(Rule::Width, contentWidth - margins().width());
+    rule().setSize(contentWidth,
+                   d->menu->rule().height() + margins().height());
+
+    return d->addButton;
+}
+
 ui::Item *VariableArrayWidget::makeItem(Value const &value)
 {
     auto *item = new ui::Item(ui::Item::ShownAsLabel, labelForElement(value));

@@ -33,9 +33,8 @@ InputDialog::InputDialog(String const &name)
     d->editor->setSignalOnEnter(true);
     connect(d->editor, SIGNAL(enterPressed(QString)), this, SLOT(accept()));
 
-    buttons()
-            << new DialogButtonItem(Default | Accept)
-            << new DialogButtonItem(Reject);
+    buttons() << new DialogButtonItem(Default | Accept)
+              << new DialogButtonItem(Reject);
 
     updateLayout();
 }
