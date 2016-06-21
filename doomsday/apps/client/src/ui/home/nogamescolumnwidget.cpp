@@ -19,9 +19,12 @@
 #include "ui/home/nogamescolumnwidget.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "clientapp.h"
 
 #include <de/ButtonWidget>
+#include <de/Config>
 #include <de/SignalAction>
+#include <QFileDialog>
 
 using namespace de;
 
@@ -58,5 +61,29 @@ String NoGamesColumnWidget::tabHeading() const
 
 void NoGamesColumnWidget::browseForDataFiles()
 {
-    ClientWindow::main().taskBar().chooseIWADFolder();
+    // Use a native dialog to select the IWAD folder.
+    ClientApp::app().beginNativeUIMode();
+
+    QFileDialog dlg(&ClientWindow::main(),
+                    tr("Select IWAD Folder"),
+                    App::config().gets("resource.iwadFolder", ""));
+    dlg.setFileMode(QFileDialog::Directory);
+    dlg.setReadOnly(true);
+    dlg.setNameFilter("*.wad");
+    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    bool reload = false;
+    if (dlg.exec())
+    {
+        App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
+        reload = true;
+    }
+
+    ClientApp::app().endNativeUIMode();
+
+    // Reload packages and recheck for game availability.
+    if (reload)
+    {
+        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
+        DoomsdayApp::app().initWadFolders();
+    }
 }

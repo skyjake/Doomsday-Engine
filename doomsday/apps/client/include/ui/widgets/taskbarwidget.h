@@ -59,7 +59,6 @@ public slots:
     void closeConfigMenu();
     void openMainMenu();
     void closeMainMenu();
-    void chooseIWADFolder();
     void openMultiplayerMenu();
     void unloadGame();
     void showAbout();

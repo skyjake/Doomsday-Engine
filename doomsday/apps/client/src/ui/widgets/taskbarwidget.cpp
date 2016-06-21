@@ -49,8 +49,9 @@
 #include <de/AnimationRule>
 #include <de/BlurWidget>
 #include <de/ButtonWidget>
+#include <de/CallbackAction>
 #include <de/Config>
-#include <de/DirectoryArrayWidget>
+#include <de/DirectoryListDialog>
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/KeyEvent>
@@ -69,21 +70,21 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    POS_GAMES             = 1,
-    POS_MULTIPLAYER       = 2,
-    POS_CONNECT           = 3,
-    POS_GAMES_SEPARATOR   = 4,
-    POS_UNLOAD            = 5,
-    POS_PACKAGES          = 8,
-    POS_IWAD_FOLDER       = 9,
+    //POS_GAMES             = 1,
+    POS_MULTIPLAYER       = 1,
+    POS_CONNECT           = 2,
+    POS_GAMES_SEPARATOR   = 3,
+    POS_UNLOAD            = 4,
+    POS_PACKAGES          = 7,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
-    POS_VR_SETTINGS       = 1,
+    POS_3D_VR_SETTINGS    = 1,
     POS_CONFIG_SEPARATOR  = 2,
     POS_AUDIO_SETTINGS    = 4,
     POS_INPUT_SETTINGS    = 5,
-    POS_HOME_SETTINGS     = 8,
+    POS_DATA_FILES        = 8,
+    POS_UI_SETTINGS       = 9,
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -270,20 +271,20 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         Game const &game = App_CurrentGame();
 
-        itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
+        //itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
-        itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
+        //itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
-        itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
+        itemWidget(configMenu, POS_3D_VR_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
-        //itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
+        itemWidget(configMenu, POS_DATA_FILES)       .show(game.isNull());
 
         if (self.hasRoot())
         {
@@ -328,8 +329,31 @@ DENG_GUI_PIMPL(TaskBarWidget)
     }
 };
 
-PopupWidget *makeUpdaterSettings() {
+static PopupWidget *makeUpdaterSettings()
+{
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
+}
+
+static PopupWidget *makeIWADFolders()
+{
+    DENG2_ASSERT(!App_GameLoaded());
+
+    Variable &iwadFolders = App::config("resource.iwadFolder");
+
+    auto *dlg = new DirectoryListDialog;
+    dlg->title().setFont("heading");
+    dlg->title().setText(QObject::tr("IWAD Folders"));
+    dlg->message().setText(QObject::tr("The following folders are searched for game data files:"));
+    dlg->setValue(iwadFolders.value());
+    dlg->setAcceptanceAction(new CallbackAction([dlg, &iwadFolders] ()
+    {
+        iwadFolders.set(dlg->value());
+
+        // Reload packages and recheck for game availability.
+        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
+        DoomsdayApp::app().initWadFolders();
+    }));
+    return dlg;
 }
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
@@ -441,8 +465,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("audio"),     tr("Audio"),          ui::Left, makePopup<AudioSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("input"),     tr("Input"),          ui::Left, makePopup<InputSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings)
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
+            << new ui::Item(ui::Item::Separator)
+            << new ui::SubwidgetItem(style().images().image("package"),   tr("Data Files"),     ui::Left, makeIWADFolders)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
 
     auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
     helpMenu->items()
@@ -451,8 +477,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
-            << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
-            << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
+            //<< new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
+            << new ui::ActionItem(tr("Multiplayer..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
@@ -460,12 +486,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
             << new ui::ActionItem(tr("Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
             //<< new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
-            << new ui::SubwidgetItem(tr("IWAD Folders"), ui::Left, [] () -> PopupWidget * {
-                                         PopupWidget *pop = new PopupWidget;
-                                         pop->setContent(new DirectoryArrayWidget(App::config("resource.iwadFolder")));
-                                         return pop;
-                                     })
-            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
             << new ui::Item(ui::Item::Separator)
@@ -728,41 +749,6 @@ void TaskBarWidget::closeMainMenu()
     d->mainMenu->close();
 }
 
-void TaskBarWidget::chooseIWADFolder()
-{
-    DENG2_ASSERT(!App_GameLoaded());
-
-    bool reload = false;
-
-
-
-    // Use a native dialog to select the IWAD folder.
-    /*ClientApp::app().beginNativeUIMode();
-
-    QFileDialog dlg(&ClientWindow::main(),
-                    tr("Select IWAD Folder"),
-                    App::config().gets("resource.iwadFolder", ""));
-    dlg.setFileMode(QFileDialog::Directory);
-    dlg.setReadOnly(true);
-    dlg.setNameFilter("*.wad");
-    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    if (dlg.exec())
-    {
-        App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
-        reload = true;
-    }
-
-    ClientApp::app().endNativeUIMode();*/
-
-    // Reload packages and recheck for game availability.
-    if (reload)
-    {
-        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
-
-        DoomsdayApp::app().initWadFolders();
-    }
-}
-
 void TaskBarWidget::openMultiplayerMenu()
 {
     d->multiMenu->open();
@@ -800,7 +786,11 @@ void TaskBarWidget::switchGame()
 
 void TaskBarWidget::showMultiplayer()
 {
-    GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
+    DENG2_ASSERT(App_GameLoaded());
+
+    /// @todo Minimize the game, switch to MP column in Home.
+
+/*    GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
     games->setDeleteAfterDismissed(true);
     if (isOpen())
     {
@@ -810,7 +800,7 @@ void TaskBarWidget::showMultiplayer()
     {
         root().addOnTop(games);
         games->open();
-    }
+    }*/
 }
 
 void TaskBarWidget::connectToServerManually()
