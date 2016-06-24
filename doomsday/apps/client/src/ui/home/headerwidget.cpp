@@ -34,7 +34,7 @@ DENG_GUI_PIMPL(HeaderWidget)
     LabelWidget *title;
     PanelWidget *infoPanel;
     LabelWidget *info;
-    ButtonWidget *menuButton;
+    PopupButtonWidget *menuButton;
 
     Instance(Public *i) : Base(i)
     {
@@ -49,15 +49,10 @@ DENG_GUI_PIMPL(HeaderWidget)
         {
             infoPanel->open();
         }
-        self.add(menuButton = new ButtonWidget);
+        self.add(menuButton = new PopupButtonWidget);
 
         showDescriptionVar().audienceForChange() += this;
     }
-
-//    ~Instance()
-//    {
-//        showDescriptionVar().audienceForChange() -= this;
-//    }
 
     void variableValueChanged(Variable &, Value const &newValue)
     {
@@ -73,7 +68,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 
     static Variable const &showDescriptionVar()
     {
-        return Config::get().accessedRecord()["home.showColumnDescription"];
+        return Config::get()["home.showColumnDescription"];
     }
 };
 
@@ -166,7 +161,7 @@ PanelWidget &HeaderWidget::infoPanel()
     return *d->infoPanel;
 }
 
-de::ButtonWidget &HeaderWidget::menuButton()
+PopupButtonWidget &HeaderWidget::menuButton()
 {
     return *d->menuButton;
 }

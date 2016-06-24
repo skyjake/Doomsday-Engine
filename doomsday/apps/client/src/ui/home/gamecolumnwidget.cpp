@@ -26,10 +26,10 @@
 #include <doomsday/Games>
 #include <doomsday/GameProfiles>
 
-#include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/Config>
+#include <de/DirectoryListDialog>
 #include <de/Loop>
 #include <de/MenuWidget>
 #include <de/PersistentState>
@@ -61,11 +61,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
             //setData(game().id());
             profile->audienceForDeletion += this;
         }
-
-//        ~ProfileItem()
-//        {
-//            if (profile) profile->audienceForDeletion -= this;
-//        }
 
         Game const &game() const
         {
@@ -149,15 +144,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::gameProfiles().audienceForAddition() += this;
-        App::config("home.showUnplayableGames").audienceForChange() += this;
+        Config::get()["home.showUnplayableGames"].audienceForChange() += this;
     }
-
-//    ~Instance()
-//    {
-//        DoomsdayApp::games().audienceForReadiness() -= this;
-//        DoomsdayApp::gameProfiles().audienceForAddition() -= this;
-//        App::config("home.showUnplayableGames").audienceForChange() -= this;
-//    }
 
     ui::Item const *findProfileItem(GameProfile const &profile) const
     {
@@ -447,7 +435,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         auto &drawer = widget.as<GamePanelButtonWidget>();
         drawer.updateContent();
 
-        if (!App::config().getb("home.showUnplayableGames"))
+        if (!Config::get().getb("home.showUnplayableGames"))
         {
             drawer.show(item.as<ProfileItem>().game().isPlayable());
         }

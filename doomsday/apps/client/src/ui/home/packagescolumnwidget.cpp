@@ -23,10 +23,33 @@
 
 #include <de/PopupMenuWidget>
 #include <de/CallbackAction>
+#include <de/Config>
+#include <de/DirectoryListDialog>
 #include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
 
+#include <doomsday/DoomsdayApp>
+
 using namespace de;
+
+static PopupWidget *makePackageFoldersDialog()
+{
+    Variable &pkgFolders = Config::get()["resource.packageFolder"];
+
+    auto *dlg = new DirectoryListDialog;
+    dlg->title().setFont("heading");
+    dlg->title().setText(QObject::tr("Add-on and Package Folders"));
+    dlg->message().setText(QObject::tr("The following folders are searched for resource packs and other add-ons:"));
+    dlg->setValue(pkgFolders.value());
+    dlg->setAcceptanceAction(new CallbackAction([dlg, &pkgFolders] ()
+    {
+        pkgFolders.set(dlg->value());
+
+        // Reload packages and recheck for game availability.
+        DoomsdayApp::app().initPackageFolders();
+    }));
+    return dlg;
+}
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
 {
@@ -74,6 +97,13 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
                 countLabel->setText(tr("%1 shown out of %2 available").arg(shown).arg(total));
             }
         });
+
+        // Column menu.
+        self.header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+            auto *menu = new PopupMenuWidget;
+            menu->items() << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
+            return menu;
+        }, ui::Down);
     }
 };
 

@@ -35,6 +35,9 @@
 #include <de/SignalAction>
 #include <de/ui/VariantActionItem>
 
+#include <doomsday/DoomsdayApp>
+#include <doomsday/resource/bundles.h>
+
 #include <QTimer>
 
 using namespace de;
@@ -55,6 +58,7 @@ static PackageLoadStatus isPackageLoaded;
 PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
+, DENG2_OBSERVES(res::Bundles, Refresh)
 , public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
@@ -85,7 +89,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     /**
      * Information about an available package.
      */
-    struct PackageItem : public ui::Item
+    struct PackageItem : public ui::Item, DENG2_OBSERVES(File, Deletion)
     {
         File const *file;
         Record const *info;
@@ -94,16 +98,24 @@ DENG_GUI_PIMPL(PackagesWidget)
             : file(&packFile)
             , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
+            file->audienceForDeletion() += this;
             setData(QString(info->gets("ID")));
             setLabel(info->gets(Package::VAR_TITLE));
         }
 
         void setFile(File const &packFile)
         {
+            packFile.audienceForDeletion() += this;
             file = &packFile;
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
             setLabel(info->gets(Package::VAR_TITLE));
             notifyChange();
+        }
+
+        void fileBeingDeleted(File const &)
+        {
+            file = nullptr;
+            info = nullptr;
         }
     };
 
@@ -380,7 +392,8 @@ DENG_GUI_PIMPL(PackagesWidget)
         // Remove from the list those packages that are no longer listed.
         for (ui::DataPos i = 0; i < menu->items().size(); ++i)
         {
-            if (!packages.contains(menu->items().at(i).data().toString()))
+            auto &pkgItem = menu->items().at(i).as<PackageItem>();
+            if (!pkgItem.info || !packages.contains(pkgItem.data().toString()))
             {
                 menu->items().remove(i--);
             }
@@ -409,6 +422,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
 
         menu->items().sort();
+        menu->organizer().refilter();
 
         emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
@@ -467,6 +481,16 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
+    void dataBundlesRefreshed()
+    {
+        // After bundles have been refreshed, make sure the list items are up to date.
+        mainCall.enqueue([this] ()
+        {
+            App::fileSystem().refresh();
+            self.populate();
+        });
+    }
+
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
 
     bool checkTerms(String const &text) const
@@ -490,6 +514,8 @@ DENG_GUI_PIMPL(PackagesWidget)
         // - title
         // - identifier
         // - tags
+
+        if (!item.info) return false;
 
         bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
         if (showHidden ^ hidden)
@@ -521,6 +547,8 @@ PackagesWidget::PackagesWidget(String const &name)
     , d(new Instance(this))
 {
     rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
+
+    DoomsdayApp::bundles().audienceForRefresh() += d;
 }
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
@@ -679,5 +707,5 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 void PackagesWidget::refreshPackages()
 {
     App::fileSystem().refresh();
-    d->populate();
+    DoomsdayApp::bundles().identify();
 }

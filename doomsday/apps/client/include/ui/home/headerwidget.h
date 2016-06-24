@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HEADERWIDGET_H
 #define DENG_CLIENT_UI_HEADERWIDGET_H
 
-#include <de/ButtonWidget>
+#include <de/PopupButtonWidget>
 #include <de/PanelWidget>
 
 /**
@@ -34,7 +34,7 @@ public:
     de::LabelWidget &title();
     de::LabelWidget &info();
     de::PanelWidget &infoPanel();
-    de::ButtonWidget &menuButton();
+    de::PopupButtonWidget &menuButton();
 
     void setLogoImage(de::DotPath const &imageId);
     void setLogoBackground(de::DotPath const &imageId);
