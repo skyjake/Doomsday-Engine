@@ -72,8 +72,9 @@ public:
 
     /**
      * Generates appropriate packages according to the contents of the data bundle.
+     * @return @c true, if the bundle was identid and linked as a package.
      */
-    void identifyPackages() const;
+    bool identifyPackages() const;
 
     /**
      * Determines if the data bundle has been identified and now available as a package

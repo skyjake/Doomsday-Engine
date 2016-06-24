@@ -24,6 +24,7 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/bundles.h"
+#include "doomsday/resource/bundlelinkfeed.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
@@ -294,6 +295,12 @@ DENG2_PIMPL(DoomsdayApp)
             }
         }
 
+        // Configured via GUI.
+        for (String path : App::config().getStringList("resource.packageFolder"))
+        {
+            attachPacksFeed("user-selected", path);
+        }
+
         packs.populate();
     }
 
@@ -369,7 +376,8 @@ void DoomsdayApp::initialize()
 
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
-    fs.makeFolder("/sys/bundles", FS::DontInheritFeeds);
+    fs.makeFolder("/sys/bundles", FS::DontInheritFeeds)
+            .attach(new res::BundleLinkFeed); // prunes expired symlinks
 
     d->initialized = true;
 
@@ -380,6 +388,17 @@ void DoomsdayApp::initialize()
 void DoomsdayApp::initWadFolders()
 {
     d->initWadFolders();
+    d->dataBundles.identify();
+
+    if (d->initialized)
+    {
+        games().checkReadiness();
+    }
+}
+
+void DoomsdayApp::initPackageFolders()
+{
+    d->initPackageFolders();
     d->dataBundles.identify();
 
     if (d->initialized)

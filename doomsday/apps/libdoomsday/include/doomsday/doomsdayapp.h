@@ -45,19 +45,13 @@ class Games;
 class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
-    /**
-     * Notified before the current game is unloaded.
-     */
+    /// Notified before the current game is unloaded.
     DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
 
-    /**
-     * Notified after the current game has been changed.
-     */
+    /// Notified after the current game has been changed.
     DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
 
-    /**
-     * Notified when console variables and commands should be registered.
-     */
+    /// Notified when console variables and commands should be registered.
     DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
 
     struct GameChangeParameters
@@ -68,6 +62,8 @@ public:
 
 public:
     DoomsdayApp(Players::Constructor playerConstructor);
+
+    void determineGlobalPaths();
 
     /**
      * Initialize application state.
@@ -80,9 +76,10 @@ public:
      */
     void initWadFolders();
 
-    void identifyDataBundles();
-
-    void determineGlobalPaths();
+    /**
+     * Initializes the /local/packs folder.
+     */
+    void initPackageFolders();
 
     enum Behavior
     {

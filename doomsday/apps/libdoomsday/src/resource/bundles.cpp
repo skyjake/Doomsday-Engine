@@ -58,21 +58,26 @@ DENG2_PIMPL(Bundles)
         }
     }
 
-    void identifyAddedDataBundles()
+    bool identifyAddedDataBundles()
     {
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
+        bool wasIdentified = false;
         Time startedAt;
 
         LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
         for (DataBundle const *bundle : bundlesToIdentify)
         {
             DENG2_ASSERT(bundle);
-            bundle->identifyPackages();
+            if (bundle->identifyPackages())
+            {
+                wasIdentified = true;
+            }
         }
         bundlesToIdentify.clear();
 
         LOG_RES_MSG("Data bundle identification took %.1f seconds") << startedAt.since();
+        return wasIdentified;
     }
 
     void parseRegistry()
@@ -117,7 +122,11 @@ DENG2_PIMPL(Bundles)
             formatEntries[bundleFormat].append(&block);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Refresh)
 };
+
+DENG2_AUDIENCE_METHOD(Bundles, Refresh)
 
 Bundles::Bundles()
     : d(new Instance(this))
@@ -135,11 +144,14 @@ Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
     return d->formatEntries[format];
 }
 
-void Bundles::identify()
+bool Bundles::identify()
 {
-    d->identifyAddedDataBundles();
-
-    //qDebug() << App::rootFolder().locate<Folder const>("/sys/bundles").contentsAsText();
+    bool const identified = d->identifyAddedDataBundles();
+    DENG2_FOR_AUDIENCE2(Refresh, i)
+    {
+        i->dataBundlesRefreshed();
+    }
+    return identified;
 }
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const

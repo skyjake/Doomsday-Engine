@@ -40,6 +40,9 @@ class LIBDOOMSDAY_PUBLIC Bundles
 public:
     typedef QList<de::Info::BlockElement const *> BlockElements;
 
+    /// Notified when a data bundle refresh/identification has been made.
+    DENG2_DEFINE_AUDIENCE2(Refresh, void dataBundlesRefreshed())
+
     DENG2_ERROR(InvalidError);
 
     struct LIBDOOMSDAY_PUBLIC MatchResult
@@ -69,8 +72,10 @@ public:
      * packages under the /sys/bundles folder.
      *
      * @see res::DataBundle::identifyPackages()
+     *
+     * @return @c true, if one or more bundles were identified.
      */
-    void identify();
+    bool identify();
 
     /**
      * Finds a matching entry in the registry for a given data bundle.
