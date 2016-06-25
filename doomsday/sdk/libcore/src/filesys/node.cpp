@@ -96,8 +96,6 @@ Node const *Node::tryFollowPath(PathRef const &path) const
         return this;
     }
 
-    DENG2_GUARD(this);
-
     // Extract the next component.
     Path::Segment const &component = path.firstSegment();
 
