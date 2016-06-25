@@ -61,6 +61,8 @@ public:
         virtual void taskFinishedRunning(Task &) = 0;
     };
 
+    typedef std::function<void ()> TaskFunction;
+
 public:
     TaskPool();
 
@@ -79,6 +81,8 @@ public:
      * @param priority  Priority of the task.
      */
     void start(Task *task, Priority priority = LowPriority);
+
+    void start(TaskFunction taskFunction, Priority priority = LowPriority);
 
     /**
      * Blocks execution until all running tasks have finished. A Task is considered

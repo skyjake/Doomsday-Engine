@@ -654,13 +654,13 @@ DENG2_PIMPL(ModelDrawable)
         if (file.extension() == ".md5mesh")
         {
             String const baseName = file.name().fileNameWithoutExtension() + "_";
-            for (auto const i : file.parent()->contents())
+            for (auto fileName : file.parent()->contents().keys())
             {
-                if (i.first.startsWith(baseName) &&
-                   i.first.fileNameExtension() == ".md5anim")
+                if (fileName.startsWith(baseName) &&
+                    fileName.fileNameExtension() == ".md5anim")
                 {
                     if (!anims.isEmpty()) anims += ";";
-                    anims += i.first.substr(baseName.size()).fileNameWithoutExtension();
+                    anims += fileName.substr(baseName.size()).fileNameWithoutExtension();
                 }
             }
         }

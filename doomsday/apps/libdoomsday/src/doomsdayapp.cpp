@@ -70,6 +70,7 @@ static String const PATH_LOCAL_PACKS("/local/packs");
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL(DoomsdayApp)
+, DENG2_OBSERVES(Folder, Population)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
@@ -84,6 +85,7 @@ DENG2_PIMPL(DoomsdayApp)
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
+    LoopCallback mainCall;
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -262,6 +264,7 @@ DENG2_PIMPL(DoomsdayApp)
             attachWadFeed("user-selected", path);
         }
 
+        wads.audienceForPopulation() += this;
         wads.populate();
     }
 
@@ -301,7 +304,20 @@ DENG2_PIMPL(DoomsdayApp)
             attachPacksFeed("user-selected", path);
         }
 
+        packs.audienceForPopulation() += this;
         packs.populate();
+    }
+
+    void folderPopulated(Folder &)
+    {
+        dataBundles.identify();
+        mainCall.enqueue([this] ()
+        {
+            if (initialized)
+            {
+                games.checkReadiness();
+            }
+        });
     }
 
 #ifdef UNIX
@@ -359,9 +375,6 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
 
 void DoomsdayApp::initialize()
 {
-    d->initWadFolders();
-    d->initPackageFolders();
-
     auto &fs = App::fileSystem();
 
     // Folder for temporary native files.
@@ -379,6 +392,9 @@ void DoomsdayApp::initialize()
     fs.makeFolder("/sys/bundles", FS::DontInheritFeeds)
             .attach(new res::BundleLinkFeed); // prunes expired symlinks
 
+    d->initWadFolders();
+    d->initPackageFolders();
+
     d->initialized = true;
 
     d->dataBundles.identify();
@@ -388,23 +404,23 @@ void DoomsdayApp::initialize()
 void DoomsdayApp::initWadFolders()
 {
     d->initWadFolders();
-    d->dataBundles.identify();
+    /*d->dataBundles.identify();
 
     if (d->initialized)
     {
         games().checkReadiness();
-    }
+    }*/
 }
 
 void DoomsdayApp::initPackageFolders()
 {
     d->initPackageFolders();
-    d->dataBundles.identify();
+    /*d->dataBundles.identify();
 
     if (d->initialized)
     {
         games().checkReadiness();
-    }
+    }*/
 }
 
 void DoomsdayApp::determineGlobalPaths()

@@ -66,6 +66,8 @@ public:
     /// Creating a new file was unsuccessful. @ingroup errors
     DENG2_ERROR(NewFileError);
 
+    DENG2_DEFINE_AUDIENCE2(Population, void folderPopulated(Folder &))
+
     /**
      * Accesses the properties of a Folder. Allows using properties of a
      * folder (like how many items it contains) as a Value, for instance in
@@ -91,13 +93,14 @@ public:
         Property _prop;
     };
 
-    typedef std::list<Feed *> Feeds;
-    typedef std::map<String, File *> Contents;
+    typedef QList<Feed *> Feeds;
+    typedef QMap<String, File *> Contents;
 
     enum PopulationBehavior {
-        PopulateFullTree       = 0,     ///< The full tree is populated.
-        PopulateOnlyThisFolder = 0x1    ///< Do not descend into subfolders while populating.
+        PopulateFullTree       = 0x1,   ///< The full tree is populated.
+        PopulateOnlyThisFolder = 0x2,   ///< Do not descend into subfolders while populating.
     };
+    Q_DECLARE_FLAGS(PopulationBehaviors, PopulationBehavior)
 
     /// Behavior for creating new files.
     enum FileCreationBehavior {
@@ -135,12 +138,12 @@ public:
      * @param behavior  Behavior of the population operation, see
      *                  Folder::PopulationBehavior.
      */
-    virtual void populate(PopulationBehavior behavior = PopulateFullTree);
+    virtual void populate(PopulationBehaviors behavior = PopulateFullTree);
 
     /**
-     * Provides direct read-only access to the content of the folder.
+     * Provides read-only access to the content of the folder.
      */
-    Contents const &contents() const;
+    Contents contents() const;
 
     /**
      * Empties the contents of the folder: all contained file instances are
@@ -220,7 +223,7 @@ public:
      * @return  The removed file object. Ownership of the object is given to
      * the caller.
      */
-    File *remove(String const &name);
+    File *remove(String name);
 
     File *remove(char const *nameUtf8);
 
@@ -310,7 +313,7 @@ public:
      * Provides access to the list of Feeds for this folder. The feeds are responsible
      * for creating File and Folder instances in the folder.
      */
-    Feeds const &feeds() const;
+    Feeds feeds() const;
 
     String contentsAsText() const;
 
@@ -321,6 +324,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Folder::PopulationBehaviors)
 
 } // namespace de
 

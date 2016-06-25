@@ -45,6 +45,8 @@ String Node::name() const
 
 String Node::extension() const
 {
+    DENG2_GUARD(this);
+
     return d->name.fileNameExtension();
 }
 
@@ -71,7 +73,7 @@ Node *Node::parent() const
     return d->parent;
 }
 
-String const Node::path() const
+String Node::path() const
 {
     DENG2_GUARD(this);
 
@@ -122,7 +124,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
         if (!parent())
         {
             // Can't go there.
-            return 0;
+            return nullptr;
         }
         return parent()->tryFollowPath(remainder);
     }
@@ -134,13 +136,13 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Dead end.
-    return 0;
+    return nullptr;
 }
 
 Node const *Node::tryGetChild(String const &) const
 {
     // We have no knowledge of children.
-    return 0;
+    return nullptr;
 }
 
 } // namespace filesys

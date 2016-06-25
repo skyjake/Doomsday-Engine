@@ -334,7 +334,7 @@ SavedSession::~SavedSession()
     Session::savedIndex().remove(path());
 }
 
-void SavedSession::populate(PopulationBehavior behavior)
+void SavedSession::populate(PopulationBehaviors behavior)
 {
     ArchiveFolder::populate(behavior);
     Session::savedIndex().add(*this);

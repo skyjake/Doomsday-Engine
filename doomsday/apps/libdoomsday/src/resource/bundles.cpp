@@ -26,6 +26,7 @@
 #include <de/Loop>
 
 #include <QList>
+#include <QSet>
 
 using namespace de;
 
@@ -35,9 +36,11 @@ static int const MATCH_MINIMUM_SCORE = 2;
 
 DENG2_PIMPL(Bundles)
 , DENG2_OBSERVES(FileIndex, Addition)
+, DENG2_OBSERVES(FileIndex, Removal)
+, public Lockable
 {
     de::Info identityRegistry;
-    QList<DataBundle const *> bundlesToIdentify;
+    QSet<DataBundle const *> bundlesToIdentify; // lock for access
     LoopCallback mainCall;
     QHash<DataBundle::Format, BlockElements> formatEntries;
 
@@ -45,17 +48,42 @@ DENG2_PIMPL(Bundles)
     {
         // Observe new data files.
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForAddition() += this;
+        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForRemoval()  += this;
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForAddition() += this;
+        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
 
     void fileAdded(File const &dataFile, FileIndex const &)
     {
         DENG2_ASSERT(dataFile.is<DataBundle>());
-        bundlesToIdentify << dataFile.maybeAs<DataBundle>();
+        {
+            DENG2_GUARD(this);
+            bundlesToIdentify.insert(dataFile.maybeAs<DataBundle>());
+        }
         if (mainCall.isEmpty())
         {
             mainCall.enqueue([this] () { identifyAddedDataBundles(); });
         }
+    }
+
+    void fileRemoved(File const &dataFile, FileIndex const &)
+    {
+        DENG2_ASSERT(dataFile.is<DataBundle>());
+
+        DENG2_GUARD(this);
+        bundlesToIdentify.remove(dataFile.maybeAs<DataBundle>());
+    }
+
+    DataBundle const *nextToIdentify()
+    {
+        DENG2_GUARD(this);
+        if (bundlesToIdentify.isEmpty())
+        {
+            return nullptr;
+        }
+        auto const *bundle = *bundlesToIdentify.begin();
+        bundlesToIdentify.remove(bundle);
+        return bundle;
     }
 
     bool identifyAddedDataBundles()
@@ -66,7 +94,7 @@ DENG2_PIMPL(Bundles)
         Time startedAt;
 
         LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
-        for (DataBundle const *bundle : bundlesToIdentify)
+        while (auto const *bundle = nextToIdentify())
         {
             DENG2_ASSERT(bundle);
             if (bundle->identifyPackages())
@@ -74,8 +102,6 @@ DENG2_PIMPL(Bundles)
                 wasIdentified = true;
             }
         }
-        bundlesToIdentify.clear();
-
         LOG_RES_MSG("Data bundle identification took %.1f seconds") << startedAt.since();
         return wasIdentified;
     }

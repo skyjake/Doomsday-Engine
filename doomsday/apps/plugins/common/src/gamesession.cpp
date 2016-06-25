@@ -1177,10 +1177,10 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #endif
         {
             // Clear all saved map states in the current hub.
-            Folder::Contents contents = mapsFolder.contents();
-            DENG2_FOR_EACH_CONST(Folder::Contents, i, contents)
+            Folder::Contents const contents = mapsFolder.contents();
+            for (auto i = contents.begin(); i != contents.end(); ++i)
             {
-                mapsFolder.removeFile(i->first);
+                mapsFolder.removeFile(i.key());
             }
         }
 #if __JHEXEN__

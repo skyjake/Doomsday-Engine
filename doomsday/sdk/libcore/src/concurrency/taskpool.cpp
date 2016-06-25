@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TaskPool"
@@ -26,6 +26,16 @@
 #include <de/Waitable>
 
 namespace de {
+
+namespace internal
+{
+    struct CallbackTask : public Task
+    {
+        TaskPool::TaskFunction func;
+        CallbackTask(TaskPool::TaskFunction func) : func(func) {}
+        void runTask() { func(); }
+    };
+}
 
 DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
@@ -95,7 +105,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
             {
                 // All done, clean up!
                 unlock();
-                
+
                 // NOTE: Guard isn't used because the object doesn't exist past this point.
                 delete this;
                 return;
@@ -127,6 +137,11 @@ void TaskPool::start(Task *task, Priority priority)
 {
     d->add(task);
     QThreadPool::globalInstance()->start(task, int(priority));
+}
+
+void TaskPool::start(TaskFunction taskFunction, Priority priority)
+{
+    start(new internal::CallbackTask(taskFunction), priority);
 }
 
 void TaskPool::waitForDone()

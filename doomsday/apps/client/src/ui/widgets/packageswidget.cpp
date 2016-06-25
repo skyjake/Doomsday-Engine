@@ -33,6 +33,7 @@
 #include <de/PopupButtonWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/TaskPool>
 #include <de/ui/VariantActionItem>
 
 #include <doomsday/DoomsdayApp>
@@ -85,6 +86,8 @@ DENG_GUI_PIMPL(PackagesWidget)
     GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
     GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
     GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
+
+    TaskPool tasks;
 
     /**
      * Information about an available package.
@@ -707,5 +710,5 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 void PackagesWidget::refreshPackages()
 {
     App::fileSystem().refresh();
-    DoomsdayApp::bundles().identify();
+    d->tasks.start([] () { DoomsdayApp::bundles().identify(); });
 }

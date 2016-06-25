@@ -112,13 +112,13 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
         if (behavior & (InheritPrimaryFeed | InheritAllFeeds))
         {
             DENG2_GUARD(parentFolder);
-            DENG2_FOR_EACH_CONST(Folder::Feeds, i, parentFolder.feeds())
+            foreach (Feed *parentFeed, parentFolder.feeds())
             {
-                Feed *feed = (*i)->newSubFeed(subFolder->name());
+                Feed *feed = parentFeed->newSubFeed(subFolder->name());
                 if (!feed) continue; // Check next one instead.
 
                 LOGDEV_RES_XVERBOSE_DEBUGONLY("Creating subfeed \"%s\" from %s",
-                                             subFolder->name() << (*i)->description());
+                                             subFolder->name() << parentFeed->description());
 
                 subFolder->attach(feed);
 

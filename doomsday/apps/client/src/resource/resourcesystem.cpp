@@ -3834,30 +3834,30 @@ void ResourceSystem::cacheForCurrentMap()
 bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &sourcePath)
 {
     // A converter plugin is required.
-    if(!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
+    if (!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
 
     // Populate /sys/legacysavegames/<gameId> with new savegames which may have appeared.
     d->locateLegacySavegames(gameId);
 
     bool didSchedule = false;
-    if(sourcePath.isEmpty())
+    if (sourcePath.isEmpty())
     {
         // Process all legacy savegames.
-        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("sys/legacysavegames")/gameId))
+        if (Folder const *saveFolder = App::rootFolder().tryLocate<Folder>("sys/legacysavegames"/gameId))
         {
             /// @todo File name pattern matching should not be done here. This is to prevent
             /// attempting to convert Hexen's map state side car files separately when this
             /// is called from Doomsday Script (in bootstrap.de).
             Game const &game = App_Games()[gameId];
             QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
-            if(namePattern.isValid() && !namePattern.isEmpty())
+            if (namePattern.isValid() && !namePattern.isEmpty())
             {
-                DENG2_FOR_EACH_CONST(Folder::Contents, i, saveFolder->contents())
+                for (auto i = saveFolder->contents().begin(); i != saveFolder->contents().end(); ++i)
                 {
-                    if(namePattern.exactMatch(i->first.fileName()))
+                    if(namePattern.exactMatch(i.key().fileName()))
                     {
                         // Schedule the conversion task.
-                        d->beginConvertLegacySavegame(i->second->path(), gameId);
+                        d->beginConvertLegacySavegame(i.value()->path(), gameId);
                         didSchedule = true;
                     }
                 }
@@ -3865,7 +3865,7 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
         }
     }
     // Just the one legacy savegame.
-    else if(App::rootFolder().has(sourcePath))
+    else if (App::rootFolder().has(sourcePath))
     {
         // Schedule the conversion task.
         d->beginConvertLegacySavegame(sourcePath, gameId);

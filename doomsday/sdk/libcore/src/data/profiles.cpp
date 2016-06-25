@@ -307,10 +307,10 @@ void Profiles::deserialize()
             // Let's see if it contains any .dei files.
             DENG2_FOR_EACH_CONST(Folder::Contents, k, folder->contents())
             {
-                if (k->first.fileNameExtension() == ".dei")
+                if (k.key().fileNameExtension() == ".dei")
                 {
                     // Load this profile.
-                    d->loadProfilesFromInfo(*k->second, true /* read-only */);
+                    d->loadProfilesFromInfo(*k.value(), true /* read-only */);
                 }
             }
         }

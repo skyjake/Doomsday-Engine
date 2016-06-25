@@ -189,6 +189,8 @@ void File::setOriginFeed(Feed *feed)
 
 Feed *File::originFeed() const
 {
+    DENG2_GUARD(this);
+
     return d->originFeed;
 }
 

@@ -23,17 +23,23 @@
 #include "de/NumberValue"
 #include "de/Log"
 #include "de/Guard"
+#include "de/TaskPool"
+#include "de/Task"
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Folder)
+DENG2_PIMPL_NOREF(Folder), public Lockable
 {
     /// A map of file names to file instances.
     Contents contents;
 
     /// Feeds provide content for the folder.
     Feeds feeds;
+
+    DENG2_PIMPL_AUDIENCE(Population)
 };
+
+DENG2_AUDIENCE_METHOD(Folder, Population)
 
 Folder::Folder(String const &name) : File(name), d(new Instance)
 {
@@ -66,8 +72,6 @@ Folder::~Folder()
 
 String Folder::describe() const
 {
-    DENG2_GUARD(this);
-
     String desc;
     if (name().isEmpty())
     {
@@ -89,7 +93,7 @@ String Folder::describe() const
 
 String Folder::describeFeeds() const
 {
-    DENG2_GUARD(this);
+    DENG2_GUARD(d);
 
     String desc;
 
@@ -123,100 +127,102 @@ String Folder::describeFeeds() const
 
 void Folder::clear()
 {
-    DENG2_GUARD(this);
+    DENG2_GUARD(d);
 
     if (d->contents.empty()) return;
 
     // Destroy all the file objects.
     for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
-        i->second->setParent(0);
-        delete i->second;
+        i.value()->setParent(0);
+        delete i.value();
     }
     d->contents.clear();
 }
 
-void Folder::populate(PopulationBehavior behavior)
+void Folder::populate(PopulationBehaviors behavior)
 {
-    DENG2_GUARD(this);
-
     LOG_AS("Folder");
-
-    // Prune the existing files first.
-    for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); )
     {
-        // By default we will NOT prune if there are no feeds attached to the folder.
-        // In this case the files were probably created manually, so we shouldn't
-        // touch them.
-        bool mustPrune = false;
+        DENG2_GUARD(d);
 
-        File *file = i->second;
+        // Prune the existing files first.
+        QMutableMapIterator<String, File *> iter(d->contents);
+        while (iter.hasNext())
+        {
+            iter.next();
 
-        // If the file has a designated feed, ask it about pruning.
-        if (file->originFeed() && file->originFeed()->prune(*file))
-        {
-            LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s") << file->path() << file->originFeed()->description();
-            mustPrune = true;
-        }
-        else if (!file->originFeed())
-        {
-            // There is no designated feed, ask all feeds of this folder.
-            // If even one of the feeds thinks that the file is out of date,
-            // it will be pruned.
-            for (Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
+            // By default we will NOT prune if there are no feeds attached to the folder.
+            // In this case the files were probably created manually, so we shouldn't
+            // touch them.
+            bool mustPrune = false;
+
+            File *file = iter.value();
+            Feed *originFeed = file->originFeed();
+
+            // If the file has a designated feed, ask it about pruning.
+            if (originFeed && originFeed->prune(*file))
             {
-                if ((*f)->prune(*file))
+                LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s") << file->path() << originFeed->description();
+                mustPrune = true;
+            }
+            else if (!originFeed)
+            {
+                // There is no designated feed, ask all feeds of this folder.
+                // If even one of the feeds thinks that the file is out of date,
+                // it will be pruned.
+                for (Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
                 {
-                    LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s")
-                            << file->path() << (*f)->description();
-                    mustPrune = true;
-                    break;
+                    if ((*f)->prune(*file))
+                    {
+                        LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s") << file->path() << (*f)->description();
+                        mustPrune = true;
+                        break;
+                    }
+                }
+            }
+
+            if (mustPrune)
+            {
+                // It needs to go.
+                file->setParent(nullptr);
+                iter.remove();
+                delete file;
+            }
+        }
+
+        // Populate with new/updated ones.
+        for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
+        {
+            (*i)->populate(*this);
+        }
+
+        if (behavior & PopulateFullTree)
+        {
+            // Call populate on subfolders.
+            for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
+            {
+                if (Folder *folder = i.value()->maybeAs<Folder>())
+                {
+                    folder->populate(behavior);
                 }
             }
         }
-
-        if (mustPrune)
-        {
-            // It needs to go.
-            d->contents.erase(i++);
-            delete file;
-        }
-        else
-        {
-            ++i;
-        }
     }
 
-    // Populate with new/updated ones.
-    for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
-    {
-        (*i)->populate(*this);
-    }
-
-    if (behavior == PopulateFullTree)
-    {
-        // Call populate on subfolders.
-        for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
-        {
-            if (Folder *folder = i->second->maybeAs<Folder>())
-            {
-                folder->populate();
-            }
-        }
-    }
+    // Notify.
+    DENG2_FOR_AUDIENCE2(Population, i) i->folderPopulated(*this);
 }
 
-Folder::Contents const &Folder::contents() const
+Folder::Contents Folder::contents() const
 {
-    DENG2_GUARD(this);
+    DENG2_GUARD(d);
 
     return d->contents;
 }
 
 File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
 {
-    DENG2_GUARD(this);
-
     String path = newPath.fileNamePath();
     if (!path.empty())
     {
@@ -293,8 +299,6 @@ void Folder::removeFile(String const &removePath)
 
 bool Folder::has(String const &name) const
 {
-    DENG2_GUARD(this);
-
     if (name.isEmpty()) return false;
 
     // Check if we were given a path rather than just a name.
@@ -309,13 +313,12 @@ bool Folder::has(String const &name) const
         return false;
     }
 
+    DENG2_GUARD(d);
     return (d->contents.find(name.lower()) != d->contents.end());
 }
 
 File &Folder::add(File *file)
 {
-    DENG2_GUARD(this);
-
     DENG2_ASSERT(file != 0);
 
     if (has(file->name()))
@@ -324,14 +327,22 @@ File &Folder::add(File *file)
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
             file->name() + "'");
     }
+    DENG2_GUARD(d);
     d->contents[file->name().lower()] = file;
     file->setParent(this);
     return *file;
 }
 
-File *Folder::remove(String const &name)
+File *Folder::remove(String name)
 {
-    return remove(locate<File>(name));
+    DENG2_GUARD(d);
+
+    String const key = name.toLower();
+    DENG2_ASSERT(d->contents.contains(key));
+
+    File *removed = d->contents.take(key);
+    removed->setParent(nullptr);
+    return removed;
 }
 
 File *Folder::remove(char const *nameUtf8)
@@ -341,28 +352,19 @@ File *Folder::remove(char const *nameUtf8)
 
 File *Folder::remove(File &file)
 {
-    DENG2_GUARD(this);
-
-    for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
-    {
-        if (i->second == &file)
-        {
-            d->contents.erase(i);
-            break;
-        }
-    }
-    file.setParent(0);
-    return &file;
+    return remove(file.name());
 }
 
 filesys::Node const *Folder::tryGetChild(String const &name) const
 {
-    Contents::const_iterator found = d->contents.find(name.lower());
+    DENG2_GUARD(d);
+
+    Contents::const_iterator found = d->contents.find(name.toLower());
     if (found != d->contents.end())
     {
-        return found->second;
+        return found.value();
     }
-    return 0;
+    return nullptr;
 }
 
 filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
@@ -382,56 +384,62 @@ File *Folder::tryLocateFile(String const &path) const
     {
         return const_cast<File *>(node->maybeAs<File>());
     }
-    return 0;
+    return nullptr;
 }
 
 void Folder::attach(Feed *feed)
 {
     if (feed)
     {
-        DENG2_GUARD(this);
+        DENG2_GUARD(d);
         d->feeds.push_back(feed);
     }
 }
 
 Feed *Folder::detach(Feed &feed)
 {
-    DENG2_GUARD(this);
+    DENG2_GUARD(d);
 
-    d->feeds.remove(&feed);
+    d->feeds.removeOne(&feed);
     return &feed;
 }
 
 void Folder::setPrimaryFeed(Feed &feed)
 {
-    DENG2_GUARD(this);
+    DENG2_GUARD(d);
 
-    d->feeds.remove(&feed);
+    d->feeds.removeOne(&feed);
     d->feeds.push_front(&feed);
 }
 
 void Folder::clearFeeds()
 {
+    DENG2_GUARD(d);
+
     while (!d->feeds.empty())
     {
         delete detach(*d->feeds.front());
     }
 }
 
-Folder::Feeds const &Folder::feeds() const
+Folder::Feeds Folder::feeds() const
 {
+    DENG2_GUARD(d);
+
     return d->feeds;
 }
 
 String Folder::contentsAsText() const
 {
     QList<File const *> files;
-    DENG2_FOR_EACH_CONST(Contents, i, contents())
+    for (auto *f : contents().values())
     {
-        files << i->second;
+        files << f;
     }
     return File::fileListAsText(files);
 }
+
+// Folder::Accessor ---------------------------------------------------------------------
 
 Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
 {}

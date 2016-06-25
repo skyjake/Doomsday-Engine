@@ -135,7 +135,7 @@ public:
      * Specialized population behavior which first populates the ArchiveFolder
      * before then adding the saved session into the (shared) Session::SavedIndex.
      */
-    virtual void populate(PopulationBehavior behavior = PopulateFullTree);
+    virtual void populate(PopulationBehaviors behavior = PopulateFullTree) override;
 
     /**
      * Re-read the metadata for the saved session from the package and cache it.

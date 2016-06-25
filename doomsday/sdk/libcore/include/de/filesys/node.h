@@ -69,7 +69,7 @@ public:
      *
      * @return Absolute path of the node.
      */
-    String const path() const;
+    String path() const;
 
     /**
      * Locates another node starting with a path from this node. The basic logic
