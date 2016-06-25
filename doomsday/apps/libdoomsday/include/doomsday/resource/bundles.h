@@ -41,7 +41,7 @@ public:
     typedef QList<de::Info::BlockElement const *> BlockElements;
 
     /// Notified when a data bundle refresh/identification has been made.
-    DENG2_DEFINE_AUDIENCE2(Refresh, void dataBundlesRefreshed())
+    DENG2_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified(bool wereIdentified))
 
     DENG2_ERROR(InvalidError);
 
@@ -71,11 +71,13 @@ public:
      * previous call of this method. Recognized data files are linked as
      * packages under the /sys/bundles folder.
      *
-     * @see res::DataBundle::identifyPackages()
+     * Calling this starts a background task where the identification is performed.
+     * The method returns immediately. The Identify audience is notified once the
+     * task is finished.
      *
-     * @return @c true, if one or more bundles were identified.
+     * @see res::DataBundle::identifyPackages()
      */
-    bool identify();
+    void identify();
 
     /**
      * Finds a matching entry in the registry for a given data bundle.

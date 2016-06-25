@@ -24,18 +24,21 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/resource/bundles.h>
 
 #include <de/App>
 #include <de/ScriptSystem>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/Log>
+#include <de/Loop>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 
 using namespace de;
 
 DENG2_PIMPL(Games)
+, DENG2_OBSERVES(res::Bundles, Identify)
 {
     /// The actual collection.
     All games;
@@ -44,6 +47,8 @@ DENG2_PIMPL(Games)
     NullGame *nullGame;
 
     QHash<String, Game *> idLookup; // not owned, lower case
+
+    LoopCallback mainCall;
 
     /**
      * Delegates game addition notifications to scripts.
@@ -112,6 +117,14 @@ DENG2_PIMPL(Games)
             return found.value();
         }
         return nullptr;
+    }
+
+    void dataBundlesIdentified(bool wereIdentified)
+    {
+        if (wereIdentified && mainCall.isEmpty())
+        {
+            mainCall.enqueue([this] () { self.checkReadiness(); });
+        }
     }
 
     DENG2_PIMPL_AUDIENCE(Addition)

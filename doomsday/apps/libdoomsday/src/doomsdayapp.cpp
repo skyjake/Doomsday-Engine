@@ -308,16 +308,9 @@ DENG2_PIMPL(DoomsdayApp)
         packs.populate();
     }
 
-    void folderPopulated(Folder &)
+    void folderPopulated(Folder &) // "/local/packs" or "/local/wads"
     {
         dataBundles.identify();
-        mainCall.enqueue([this] ()
-        {
-            if (initialized)
-            {
-                games.checkReadiness();
-            }
-        });
     }
 
 #ifdef UNIX
@@ -404,23 +397,11 @@ void DoomsdayApp::initialize()
 void DoomsdayApp::initWadFolders()
 {
     d->initWadFolders();
-    /*d->dataBundles.identify();
-
-    if (d->initialized)
-    {
-        games().checkReadiness();
-    }*/
 }
 
 void DoomsdayApp::initPackageFolders()
 {
     d->initPackageFolders();
-    /*d->dataBundles.identify();
-
-    if (d->initialized)
-    {
-        games().checkReadiness();
-    }*/
 }
 
 void DoomsdayApp::determineGlobalPaths()

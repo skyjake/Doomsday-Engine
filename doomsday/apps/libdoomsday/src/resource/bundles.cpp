@@ -24,6 +24,7 @@
 #include <de/PackageLoader>
 #include <de/LinkFile>
 #include <de/Loop>
+#include <de/TaskPool>
 
 #include <QList>
 #include <QSet>
@@ -43,6 +44,7 @@ DENG2_PIMPL(Bundles)
     QSet<DataBundle const *> bundlesToIdentify; // lock for access
     LoopCallback mainCall;
     QHash<DataBundle::Format, BlockElements> formatEntries;
+    TaskPool tasks;
 
     Instance(Public *i) : Base(i)
     {
@@ -149,10 +151,10 @@ DENG2_PIMPL(Bundles)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Refresh)
+    DENG2_PIMPL_AUDIENCE(Identify)
 };
 
-DENG2_AUDIENCE_METHOD(Bundles, Refresh)
+DENG2_AUDIENCE_METHOD(Bundles, Identify)
 
 Bundles::Bundles()
     : d(new Instance(this))
@@ -170,14 +172,16 @@ Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
     return d->formatEntries[format];
 }
 
-bool Bundles::identify()
+void Bundles::identify()
 {
-    bool const identified = d->identifyAddedDataBundles();
-    DENG2_FOR_AUDIENCE2(Refresh, i)
+    d->tasks.start([this] ()
     {
-        i->dataBundlesRefreshed();
-    }
-    return identified;
+        bool const identified = d->identifyAddedDataBundles();
+        DENG2_FOR_AUDIENCE2(Identify, i)
+        {
+            i->dataBundlesIdentified(identified);
+        }
+    });
 }
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
@@ -221,7 +225,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         String fileType = def->keyValue(QStringLiteral("fileType"));
         if (fileType.isEmpty()) fileType = "file"; // prefer files by default
         if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
-           (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
+            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
         {
             ++score;
         }
@@ -281,7 +285,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                     }
 
                     if (requiredSize >= 0 &&
-                       bundle.lumpDirectory()->lumpSize(lumpName) != duint32(requiredSize))
+                        bundle.lumpDirectory()->lumpSize(lumpName) != duint32(requiredSize))
                     {
                         --score;
                         break;

@@ -59,7 +59,7 @@ static PackageLoadStatus isPackageLoaded;
 PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
-, DENG2_OBSERVES(res::Bundles, Refresh)
+, DENG2_OBSERVES(res::Bundles, Identify)
 , public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
@@ -484,14 +484,16 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void dataBundlesRefreshed()
+    void dataBundlesIdentified(bool) override
     {
         // After bundles have been refreshed, make sure the list items are up to date.
-        mainCall.enqueue([this] ()
+        if (mainCall.isEmpty())
         {
-            App::fileSystem().refresh();
-            self.populate();
-        });
+            mainCall.enqueue([this] ()
+            {
+                self.populate();
+            });
+        }
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -551,7 +553,7 @@ PackagesWidget::PackagesWidget(String const &name)
 {
     rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
 
-    DoomsdayApp::bundles().audienceForRefresh() += d;
+    DoomsdayApp::bundles().audienceForIdentify() += d;
 }
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
@@ -710,5 +712,5 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 void PackagesWidget::refreshPackages()
 {
     App::fileSystem().refresh();
-    d->tasks.start([] () { DoomsdayApp::bundles().identify(); });
+    DoomsdayApp::bundles().identify();
 }

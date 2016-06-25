@@ -25,10 +25,12 @@
 #include <de/CallbackAction>
 #include <de/Config>
 #include <de/DirectoryListDialog>
+#include <de/Loop>
 #include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
 
 #include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
 
 using namespace de;
 
@@ -52,10 +54,12 @@ static PopupWidget *makePackageFoldersDialog()
 }
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
+, DENG2_OBSERVES(Games, Readiness)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
     ui::ListData actions;
+    LoopCallback mainCall;
 
     Instance(Public *i) : Base(i)
     {
@@ -105,6 +109,14 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             return menu;
         }, ui::Down);
     }
+
+    void gameReadinessUpdated() override
+    {
+        if (mainCall.isEmpty())
+        {
+            mainCall.enqueue([this] () { packages->refreshPackages(); });
+        }
+    }
 };
 
 PackagesColumnWidget::PackagesColumnWidget()
@@ -130,7 +142,8 @@ PackagesColumnWidget::PackagesColumnWidget()
                                 d->packages->rule().height());
 
     d->packages->setFilterEditorMinimumY(scrollArea().margins().top());
-    d->packages->refreshPackages();
+
+    DoomsdayApp::games().audienceForReadiness() += d;
 }
 
 String PackagesColumnWidget::tabHeading() const
