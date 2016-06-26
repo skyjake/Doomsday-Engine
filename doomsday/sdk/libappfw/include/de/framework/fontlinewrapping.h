@@ -65,6 +65,13 @@ public:
     void wrapTextToWidth(String const &text, int maxWidth);
     void wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth);
 
+    /**
+     * Cancels the ongoing wrapping operation. This is useful when doing long wrapping
+     * operations in the background. An exception is thrown from the ongoing 
+     * wrapTextToWidth() call.
+     */
+    void cancel();    
+    
     bool isEmpty() const;
     String const &text() const;
     shell::WrappedLine line(int index) const;

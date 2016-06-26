@@ -70,12 +70,20 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     int indent;                 ///< Current left indentation (in pixels).
     QList<int> prevIndents;
     int tabStop;
+    volatile bool cancelled = false;
+    
+    DENG2_ERROR(CancelError);
 
     Instance() : font(0), maxWidth(0), indent(0), tabStop(0) {}
 
     ~Instance()
     {
         clearLines();
+    }
+    
+    inline void checkCancel() const
+    {
+        if (cancelled) throw CancelError("FontLineWrapping::checkCancel", "Cancelled");
     }
 
     void clearLines()
@@ -100,6 +108,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
     int rangeAdvanceWidth(Rangei const &range) const
     {
+        checkCancel();
         if (font)
         {
             return font->advanceWidth(rangeText(range), format.subRange(range));
@@ -147,6 +156,8 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
      */
     Line *makeLine(Rangei const &range, int width = -1)
     {
+        checkCancel();
+        
         if (width < 0)
         {
             // Determine the full width now.
@@ -308,6 +319,8 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         Lines wrappedLines;
         while (begin < rangeToWrap.end)
         {
+            checkCancel();
+
             int mw = maxWidth;
             if (!wrappedLines.isEmpty() && subsequentMaxWidth > 0) mw = subsequentMaxWidth;
 
@@ -539,6 +552,7 @@ void FontLineWrapping::reset()
     d->indent = 0;
     d->prevIndents.clear();
     d->tabStop = 0;
+    d->cancelled = false;
 }
 
 void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
@@ -549,7 +563,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
     DENG2_GUARD(this);
-
+    
     String newText = text;
 
     clear();
@@ -617,6 +631,11 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
         }
     }
 #endif
+}
+    
+void FontLineWrapping::cancel()
+{
+    d->cancelled = true;
 }
 
 String const &FontLineWrapping::text() const

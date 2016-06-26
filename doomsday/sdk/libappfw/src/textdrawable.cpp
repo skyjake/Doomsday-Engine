@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TextDrawable"
@@ -132,11 +132,24 @@ DENG2_PIMPL(TextDrawable)
             , _font(font)
             , _style(style)
             , _valid(inst->sync)
+            , _wrapper(nullptr)
         {
             d->audienceForDeletion += this;
         }
-
+        
         void runTask()
+        {
+            try
+            {
+                runWrapTask();
+            }
+            catch (Error const &)
+            {
+                // Cancelled.
+            }
+        }
+
+        void runWrapTask()
         {
             // Check that it's okay if we start the operation now.
             {
@@ -151,16 +164,16 @@ DENG2_PIMPL(TextDrawable)
             }
 
             // Ok, we have a go. Set up the wrapper first.
-            auto *wrapper = new Wrapper;
-            wrapper->setFont(_font);
+            _wrapper.reset(new Wrapper);
+            _wrapper->setFont(_font);
             if (_style)
             {
-                wrapper->format.setStyle(*_style);
+                _wrapper->format.setStyle(*_style);
             }
-            wrapper->plainText = wrapper->format.initFromStyledText(_text);
-            
+            _wrapper->plainText = _wrapper->format.initFromStyledText(_text);
+
             // This is where most of the time will be spent:
-            wrapper->wrapTextToWidth(wrapper->plainText, wrapper->format, _width);
+            _wrapper->wrapTextToWidth(_wrapper->plainText, _wrapper->format, _width);
 
             // Pass the finished wrapping to the owner.
             {
@@ -168,12 +181,7 @@ DENG2_PIMPL(TextDrawable)
                 if (d) d->audienceForDeletion -= this;
                 if (d && d->sync.isValid(_valid))
                 {
-                    d->incoming.reset(wrapper);
-                }
-                else
-                {
-                    // Well, that was a waste of time.
-                    delete wrapper;
+                    d->incoming.reset(_wrapper.release());
                 }
             }
         }
@@ -181,6 +189,7 @@ DENG2_PIMPL(TextDrawable)
         void ownerDeleted()
         {
             d = nullptr;
+            if (_wrapper) _wrapper->cancel();
         }
 
     private:
@@ -190,6 +199,7 @@ DENG2_PIMPL(TextDrawable)
         Font const &_font;
         Font::RichFormat::IStyle const *_style;
         duint32 _valid;
+        std::unique_ptr<Wrapper> _wrapper;
     };
 
     bool inited { false };
@@ -217,6 +227,8 @@ DENG2_PIMPL(TextDrawable)
         // Let the background tasks know that we are gone.
         DENG2_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
 
+        tasks.waitForDone();
+        
         delete visibleWrap;
     }
 
