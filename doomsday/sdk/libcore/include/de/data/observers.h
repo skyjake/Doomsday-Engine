@@ -59,7 +59,7 @@
 
 #define DENG2_EXTERN_AUDIENCE(Name) \
     typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
-    extern Name##Audience audienceFor##Name;
+    DENG2_PUBLIC extern Name##Audience audienceFor##Name;
 
 #define DENG2_DECLARE_AUDIENCE_METHOD(Name) \
     typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
@@ -278,14 +278,13 @@ public:
     }
 
     virtual ~Observers() {
-        clear();
+        DENG2_GUARD(this);
+        _disassociateAllMembers();
     }
 
     void clear() {
         DENG2_GUARD(this);
-        for (Type *observer : _members) {
-            observer->removeMemberOf(*this);
-        }
+        _disassociateAllMembers();
         _members.clear();
     }
 
@@ -387,6 +386,12 @@ public:
     void removeMember(ObserverBase *member) { _remove(static_cast<Type *>(member)); }
 
 private:
+    void _disassociateAllMembers() {
+        for (Type *observer : _members) {
+            observer->removeMemberOf(*this);
+        }
+    }
+
     void _add(Type *observer) {
         DENG2_GUARD(this);
         DENG2_ASSERT(observer != 0);
