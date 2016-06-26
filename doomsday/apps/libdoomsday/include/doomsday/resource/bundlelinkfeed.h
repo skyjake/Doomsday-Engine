@@ -34,7 +34,7 @@ public:
     BundleLinkFeed();
 
     de::String description() const override;
-    void populate(de::Folder &folder) override;
+    PopulatedFiles populate(de::Folder const &folder) override;
     bool prune(de::File &file) const override;
 };
 

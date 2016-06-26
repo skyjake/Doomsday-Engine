@@ -3846,21 +3846,22 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
         if (Folder const *saveFolder = App::rootFolder().tryLocate<Folder>("sys/legacysavegames"/gameId))
         {
             /// @todo File name pattern matching should not be done here. This is to prevent
-            /// attempting to convert Hexen's map state side car files separately when this
+            /// attempting to convert Hexen's map state sidecar files separately when this
             /// is called from Doomsday Script (in bootstrap.de).
             Game const &game = App_Games()[gameId];
             QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
             if (namePattern.isValid() && !namePattern.isEmpty())
             {
-                for (auto i = saveFolder->contents().begin(); i != saveFolder->contents().end(); ++i)
+                saveFolder->forContents([this, &gameId, &namePattern, &didSchedule] (String name, File &file)
                 {
-                    if(namePattern.exactMatch(i.key().fileName()))
+                    if(namePattern.exactMatch(name.fileName()))
                     {
                         // Schedule the conversion task.
-                        d->beginConvertLegacySavegame(i.value()->path(), gameId);
+                        d->beginConvertLegacySavegame(file.path(), gameId);
                         didSchedule = true;
                     }
-                }
+                    return LoopContinue;
+                });
             }
         }
     }

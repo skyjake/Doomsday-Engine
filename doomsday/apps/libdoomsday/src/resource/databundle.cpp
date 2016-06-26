@@ -380,12 +380,14 @@ DENG2_PIMPL(DataBundle)
                     metadata.set(VAR_TAGS, meta.gets(VAR_TAGS) + " hidden");
                 }
 
+                /*
                 qDebug() << container->d->versionedPackageId
                          << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
                          << "requires"
                          << versionedPackageId
                          << "[" << metadata.gets("tags", "") << "]"
                          << "from" << dataFilePath;
+                         */
 
                 Package::addRequiredPackage(*container->d->pkgLink, versionedPackageId);
             }

@@ -654,7 +654,7 @@ DENG2_PIMPL(ModelDrawable)
         if (file.extension() == ".md5mesh")
         {
             String const baseName = file.name().fileNameWithoutExtension() + "_";
-            for (auto fileName : file.parent()->contents().keys())
+            file.parent()->forContents([&anims, &baseName] (String fileName, File &)
             {
                 if (fileName.startsWith(baseName) &&
                     fileName.fileNameExtension() == ".md5anim")
@@ -662,7 +662,8 @@ DENG2_PIMPL(ModelDrawable)
                     if (!anims.isEmpty()) anims += ";";
                     anims += fileName.substr(baseName.size()).fileNameWithoutExtension();
                 }
-            }
+                return LoopContinue;
+            });
         }
         importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
 

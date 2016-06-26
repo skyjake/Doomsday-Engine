@@ -75,6 +75,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         void objectWasDeleted(Deletable *obj)
         {
             DENG2_ASSERT(static_cast<GameProfile *>(obj) == profile);
+            DENG2_UNUSED(obj);
 
             profile = nullptr;
             d->addOrRemoveSubheading();

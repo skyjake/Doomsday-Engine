@@ -32,9 +32,10 @@ String BundleLinkFeed::description() const
     return "data bundle links";
 }
 
-void BundleLinkFeed::populate(Folder &)
+Feed::PopulatedFiles BundleLinkFeed::populate(Folder const &)
 {
     // Links are populated by DataBundle when files are identified.
+    return PopulatedFiles();
 }
 
 bool BundleLinkFeed::prune(File &file) const

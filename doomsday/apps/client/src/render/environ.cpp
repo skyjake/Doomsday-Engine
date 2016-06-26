@@ -68,8 +68,6 @@ DENG2_PIMPL(Environment)
 
     ~Instance()
     {
-        //World::get().audienceForMapChange() -= this;
-
         release();
     }
 

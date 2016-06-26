@@ -551,14 +551,15 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         assetChoice->items().clear();
 
-        for (auto i : App::rootFolder().locate<Folder const>("/packs").contents().keys())
+        App::rootFolder().locate<Folder const>("/packs").forContents([this] (String name, File &)
         {
             QRegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
-            if (regex.exactMatch(i))
+            if (regex.exactMatch(name))
             {
                 assetChoice->items() << new ChoiceItem(regex.cap(2), regex.cap(1));
             }
-        }
+            return LoopContinue;
+        });
     }
 
     void playSelectedAnimation()
