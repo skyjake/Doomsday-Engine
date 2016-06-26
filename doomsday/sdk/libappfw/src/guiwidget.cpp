@@ -829,7 +829,7 @@ GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event, Mous
 
         if (mouse.state() == MouseEvent::Released && root().isEventRouted(event.type(), this))
         {
-            root().routeMouse(0);
+            root().routeMouse(nullptr);
             if (hitTest(mouse.pos()))
             {
                 return MouseClickFinished;

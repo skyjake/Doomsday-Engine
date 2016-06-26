@@ -464,10 +464,11 @@ public Font::RichFormat::IStyle
         entryAtlas->audienceForOutOfSpace() += this;
 
         // Simple texture for the scroll indicator.
-        Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
+        /*Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
         scrollTex = entryAtlas->alloc(solidWhitePixel);
-        self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
+        self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());*/
+        //self.setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
         uTex = entryAtlas;
         uColor = Vector4f(1, 1, 1, 1);
@@ -731,7 +732,7 @@ nextAttempt:
         }
 
         // Draw the scroll indicator, too.
-        self.glMakeScrollIndicatorGeometry(verts);
+        //self.glMakeScrollIndicatorGeometry(verts);
 
         buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
 
@@ -800,6 +801,7 @@ LogWidget::LogWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
     setOrigin(Bottom);
+    enableIndicatorDraw(true);
 
     LogBuffer::get().addSink(d->sink);
 }
@@ -844,7 +846,7 @@ Animation const &LogWidget::contentYOffset() const
 
 void LogWidget::viewResized()
 {
-    GuiWidget::viewResized();
+    ScrollAreaWidget::viewResized();
 
     d->updateProjection();
 }
@@ -864,6 +866,7 @@ void LogWidget::update()
 void LogWidget::drawContent()
 {
     d->draw();
+    ScrollAreaWidget::drawContent();
 }
 
 bool LogWidget::handleEvent(Event const &event)
@@ -873,11 +876,13 @@ bool LogWidget::handleEvent(Event const &event)
 
 void LogWidget::glInit()
 {
+    ScrollAreaWidget::glInit();
     d->glInit();
 }
 
 void LogWidget::glDeinit()
 {
+    ScrollAreaWidget::glDeinit();
     d->glDeinit();
 }
 

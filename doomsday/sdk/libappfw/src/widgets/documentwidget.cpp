@@ -265,8 +265,9 @@ DocumentWidget::DocumentWidget(String const &name)
     , d(new Instance(this))
 {
     setWidthPolicy(ui::Expand);
-
     rule().setInput(Rule::Height, contentRule().height() + margins().height());
+
+    enableIndicatorDraw(true);
 }
 
 void DocumentWidget::setText(String const &styledText)
@@ -329,6 +330,7 @@ void DocumentWidget::viewResized()
 void DocumentWidget::drawContent()
 {
     d->draw();
+    ScrollAreaWidget::drawContent();
 }
 
 void DocumentWidget::glInit()
@@ -341,14 +343,6 @@ void DocumentWidget::glDeinit()
 {
     ScrollAreaWidget::glDeinit();
     d->glDeinit();
-}
-
-void DocumentWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
-{
-    ScrollAreaWidget::glMakeGeometry(verts);
-
-    glMakeScrollIndicatorGeometry(verts, Vector2f(rule().left().value() + margins().left().value(),
-                                                  rule().top().value()  + margins().top().value()));
 }
 
 void DocumentWidget::updateStyle()

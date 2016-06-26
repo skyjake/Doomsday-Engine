@@ -42,34 +42,29 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     Rule *maxX;
     Rule *maxY;
 
-    Origin origin;
-    bool pageKeysEnabled;
-    bool scrollingEnabled;
-    Animation scrollOpacity;
-    int scrollBarWidth;
+    Origin origin = Top;
+    bool pageKeysEnabled = true;
+    bool scrollingEnabled = true;
+    Animation scrollOpacity { 0 };
+    int scrollBarWidth = 0;
     Rectanglef indicatorUv;
-    bool indicatorAnimating;
-    String scrollBarColorId;
+    bool indicatorAnimating = false;
+    String scrollBarColorId { "accent" };
     ColorBank::Colorf scrollBarColor;
+    ColorBank::Colorf scrollBarHoverColor;
+    bool scrollBarGrabbed = false;
+    int grabOffset;
 
     // GL objects.
-    bool indicatorShown;
+    bool indicatorDrawEnabled = false;
+    bool scrollBarHover = false;
+    Rectanglef scrollBarVisRect;
+    Rectanglef scrollBarLaneRect;
     Drawable drawable;
-    GLUniform uMvpMatrix;
-    GLUniform uColor;
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uColor     { "uColor",     GLUniform::Vec4 };
 
-    Instance(Public *i)
-        : Base(i)
-        , origin(Top)
-        , pageKeysEnabled(true)
-        , scrollingEnabled(true)
-        , scrollOpacity(0)
-        , scrollBarWidth(0)
-        , indicatorAnimating(false)
-        , scrollBarColorId("accent")
-        , indicatorShown(false)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uColor    ("uColor",     GLUniform::Vec4)
+    Instance(Public *i) : Base(i)
     {
         contentRule.setDebugName("ScrollArea-contentRule");
 
@@ -95,7 +90,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     void glInit()
     {
-        if (indicatorShown)
+        if (indicatorDrawEnabled)
         {
             DefaultVertexBuf *buf = new DefaultVertexBuf;
             drawable.addBuffer(buf);
@@ -114,8 +109,9 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     {
         Style const &st = style();
 
-        scrollBarWidth = st.rules().rule("scrollarea.bar").valuei();
-        scrollBarColor = st.colors().colorf(scrollBarColorId);
+        scrollBarWidth      = st.rules().rule("scrollarea.bar").valuei();
+        scrollBarColor      = st.colors().colorf(scrollBarColorId);
+        scrollBarHoverColor = st.colors().colorf("background");
     }
 
     void restartScrollOpacityFade()
@@ -129,6 +125,44 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         {
             scrollOpacity.setValueFrom(.8f, .333f, 5, 2);
         }
+    }
+
+    void setScrollBarHovering(bool hover)
+    {
+        if (hover) restartScrollOpacityFade();
+        if (hover != scrollBarHover)
+        {
+            scrollBarHover = hover;
+            self.requestGeometry();
+        }
+    }
+
+    typedef std::pair<Rectanglef, Rectanglef> RectanglefPair;
+
+    RectanglefPair scrollIndicatorRects(Vector2f const &originPos) const
+    {
+        Vector2i const viewSize = self.viewportSize();
+        if (viewSize == Vector2i()) return RectanglefPair();
+
+        auto const &margins = self.margins();
+
+        int const indHeight = de::clamp(
+                    margins.height().valuei(),
+                    int(float(viewSize.y * viewSize.y) / float(contentRule.height().value())),
+                    viewSize.y / 2);
+
+        float indPos = self.scrollPositionY().value() / self.maximumScrollY().value();
+        if (origin == Top) indPos = 1 - indPos;
+
+        float const avail = viewSize.y - indHeight;
+        Rectanglef rect { originPos + Vector2f(viewSize.x + margins.left().value() - 2 * scrollBarWidth,
+                                               avail - indPos * avail),
+                          originPos + Vector2f(viewSize.x + margins.left().value() - scrollBarWidth,
+                                               avail - indPos * avail + indHeight) };
+
+        Rectanglef laneRect(rect.left(), originPos.y, scrollBarWidth, viewSize.y);
+
+        return RectanglefPair(rect, laneRect);
     }
 };
 
@@ -382,42 +416,98 @@ void ScrollAreaWidget::enablePageKeys(bool enabled)
 
 void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
 {
-    d->indicatorShown = enabled;
+    d->indicatorDrawEnabled = enabled;
 }
 
 bool ScrollAreaWidget::handleEvent(Event const &event)
 {
-    // Mouse wheel scrolling.
-    if (d->scrollingEnabled && event.type() == Event::MouseWheel && hitTest(event))
+    if (d->scrollBarGrabbed && event.isMouse())
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
-#ifdef MACOSX
-        if (mouse.wheelMotion() == MouseEvent::FineAngle)
+        // Update position.
+        if (event.type() == Event::MousePosition)
         {
-            d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
-                                d->maxY->valuei()), .05f);
-            d->restartScrollOpacityFade();
-        }
-#else
-        if (mouse.wheelMotion() == MouseEvent::Step)
-        {
-            unsigned int lineCount = 1;
-#ifdef WIN32
-            // Use the number of lines to scroll from system preferences.
-            SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lineCount, 0);
-            if (lineCount == WHEEL_PAGESCROLL)
+            int const mouseY = event.as<MouseEvent>().pos().y;
+            int topEdge = mouseY - d->scrollBarLaneRect.top() - d->grabOffset;
+            float relativePos = topEdge / (d->scrollBarLaneRect.height() - d->scrollBarVisRect.height());
+            if (d->origin == Bottom)
             {
-                lineCount = contentRect().height() / style().fonts().font("default").height().valuei();
+                relativePos = 1.f - relativePos;
+            }
+            scrollY(relativePos * (contentHeight() - viewportSize().y));
+        }
+
+        // Click status.
+        switch (handleMouseClick(event))
+        {
+        case MouseClickFinished:
+        case MouseClickAborted:
+            d->scrollBarGrabbed = false;
+            break;
+
+        default:
+            break;
+        }
+        return true;
+    }
+
+    // Mouse wheel scrolling.
+    if (d->scrollingEnabled && event.isMouse() && hitTest(event))
+    {
+        if (event.type() == Event::MouseWheel)
+        {
+            MouseEvent const &mouse = event.as<MouseEvent>();
+#ifdef MACOSX
+            if (mouse.wheelMotion() == MouseEvent::FineAngle)
+            {
+                d->y->set(de::clamp(0, int(d->y->animation().target()) +
+                                    toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
+                                    d->maxY->valuei()), .05f);
+                d->restartScrollOpacityFade();
+            }
+#else
+            if (mouse.wheelMotion() == MouseEvent::Step)
+            {
+                unsigned int lineCount = 1;
+#ifdef WIN32
+                // Use the number of lines to scroll from system preferences.
+                SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lineCount, 0);
+                if (lineCount == WHEEL_PAGESCROLL)
+                {
+                    lineCount = contentRect().height() / style().fonts().font("default").height().valuei();
+                }
+#endif
+                d->y->set(de::clamp(0, int(d->y->animation().target()) +
+                                    int(mouse.wheel().y * lineCount * style().fonts().font("default").height().valuei() *
+                                        (d->origin == Top? -1 : 1)), d->maxY->valuei()), .15f);
+                d->restartScrollOpacityFade();
             }
 #endif
-            d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                int(mouse.wheel().y * lineCount * style().fonts().font("default").height().valuei() *
-                                (d->origin == Top? -1 : 1)), d->maxY->valuei()), .15f);
-            d->restartScrollOpacityFade();
+            return true;
         }
-#endif
-        return true;
+        else if (d->indicatorDrawEnabled)
+        {
+            if (event.type() == Event::MousePosition)
+            {
+                bool const hovering = (d->scrollBarVisRect.expanded(toDevicePixels(1))
+                                       .contains(event.as<MouseEvent>().pos()));
+                d->setScrollBarHovering(hovering);
+            }
+
+            if (d->scrollBarHover && !d->scrollBarGrabbed)
+            {
+                if(handleMouseClick(event) == MouseClickStarted)
+                {
+                    d->scrollBarGrabbed = true;
+                    d->grabOffset = event.as<MouseEvent>().pos().y - d->scrollBarVisRect.top();
+                    return true;
+                }
+            }
+        }
+    }
+
+    if (d->scrollBarHover && event.type() == Event::MousePosition && !hitTest(event))
+    {
+        d->setScrollBarHovering(false);
     }
 
     // Page key scrolling.
@@ -534,25 +624,21 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
     // Draw the scroll indicator.
     if (d->scrollOpacity <= 0) return;
 
-    Vector2i const viewSize = viewportSize();
-    if (viewSize == Vector2i(0, 0)) return;
+    auto rects = d->scrollIndicatorRects(origin);
+    d->scrollBarVisRect  = rects.first;
+    d->scrollBarLaneRect = rects.second;
+    if (d->scrollBarVisRect.isNull()) return;
 
-    int const indHeight = de::clamp(
-                margins().height().valuei(),
-                int(float(viewSize.y * viewSize.y) / float(d->contentRule.height().value())),
-                viewSize.y / 2);
+    Vector4f const barOpacity { 1, 1, 1, d->scrollOpacity };
 
-    float indPos = scrollPositionY().value() / maximumScrollY().value();
-    if (d->origin == Top) indPos = 1 - indPos;
-
-    float const avail = viewSize.y - indHeight;
-
-    verts.makeQuad(Rectanglef(origin + Vector2f(viewSize.x + margins().left().value() - 2 * d->scrollBarWidth,
-                                                avail - indPos * avail + indHeight),
-                              origin + Vector2f(viewSize.x + margins().left().value() - d->scrollBarWidth,
-                                                avail - indPos * avail)),
-                   Vector4f(1, 1, 1, d->scrollOpacity) * d->scrollBarColor,
+    verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover? toDevicePixels(1) : 0)),
+                   barOpacity * d->scrollBarColor,
                    d->indicatorUv);
+
+    if (d->scrollBarHover)
+    {
+        verts.makeQuad(d->scrollBarVisRect, barOpacity * d->scrollBarHoverColor, d->indicatorUv);
+    }
 }
 
 void ScrollAreaWidget::viewResized()
@@ -587,7 +673,7 @@ void ScrollAreaWidget::update()
 
 void ScrollAreaWidget::drawContent()
 {
-    if (d->indicatorShown)
+    if (d->indicatorDrawEnabled)
     {
         d->uColor = Vector4f(1, 1, 1, visibleOpacity());
 
