@@ -54,6 +54,16 @@ DENG2_PIMPL(Bundles)
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForAddition() += this;
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
+    
+    ~Instance()
+    {
+        // Ongoing identification tasks should first finish.
+        {
+            DENG2_GUARD(this);
+            bundlesToIdentify.clear();
+        }
+        tasks.waitForDone();
+    }
 
     void fileAdded(File const &dataFile, FileIndex const &)
     {
