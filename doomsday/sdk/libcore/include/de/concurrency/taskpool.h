@@ -19,9 +19,9 @@
 #ifndef LIBDENG2_TASKPOOL_H
 #define LIBDENG2_TASKPOOL_H
 
-#include <QObject>
-
 #include "../Observers"
+#include <QObject>
+#include <functional>
 
 namespace de {
 
