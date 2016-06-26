@@ -49,6 +49,7 @@ DENG2_PIMPL(Games)
     QHash<String, Game *> idLookup; // not owned, lower case
 
     LoopCallback mainCall;
+    QSet<Game const *> lastCheckedPlayable; // determines when notification sent
 
     /**
      * Delegates game addition notifications to scripts.
@@ -103,6 +104,8 @@ DENG2_PIMPL(Games)
         games.push_back(game);
         idLookup.insert(game->id().toLower(), game);
 
+        DoomsdayApp::bundles().audienceForIdentify() += this;
+
         DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
         {
             i->gameAdded(*game);
@@ -121,7 +124,7 @@ DENG2_PIMPL(Games)
 
     void dataBundlesIdentified(bool wereIdentified)
     {
-        if (wereIdentified && mainCall.isEmpty())
+        if (/*wereIdentified && */!mainCall)
         {
             mainCall.enqueue([this] () { self.checkReadiness(); });
         }
@@ -318,10 +321,22 @@ void Games::checkReadiness()
     });
 */
 
-    DENG2_FOR_AUDIENCE2(Readiness, i)
+    QSet<Game const *> playable;
+    forAll([this, &playable] (Game &game)
     {
-        i->gameReadinessUpdated();
+        if (game.isPlayable()) playable.insert(&game);
+        return LoopContinue;
+    });
+
+    // Only notify when the set of playable games changes.
+    if (playable != d->lastCheckedPlayable)
+    {
+        DENG2_FOR_AUDIENCE2(Readiness, i)
+        {
+            i->gameReadinessUpdated();
+        }
     }
+    d->lastCheckedPlayable = playable;
 }
 
 /*void Games::forgetAllResources()

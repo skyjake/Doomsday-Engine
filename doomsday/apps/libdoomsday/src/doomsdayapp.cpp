@@ -70,7 +70,7 @@ static String const PATH_LOCAL_PACKS("/local/packs");
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL(DoomsdayApp)
-, DENG2_OBSERVES(Folder, Population)
+, public IFolderPopulationObserver
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
@@ -121,6 +121,8 @@ DENG2_PIMPL(DoomsdayApp)
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
 #endif
+
+        audienceForFolderPopulation += this;
     }
 
     ~Instance()
@@ -264,8 +266,7 @@ DENG2_PIMPL(DoomsdayApp)
             attachWadFeed("user-selected", path);
         }
 
-        wads.audienceForPopulation() += this;
-        wads.populate();
+        wads.populate(Folder::PopulateAsyncFullTree);
     }
 
     void initPackageFolders()
@@ -304,13 +305,15 @@ DENG2_PIMPL(DoomsdayApp)
             attachPacksFeed("user-selected", path);
         }
 
-        packs.audienceForPopulation() += this;
-        packs.populate();
+        packs.populate(Folder::PopulateAsyncFullTree);
     }
 
-    void folderPopulated(Folder &) // "/local/packs" or "/local/wads"
+    void folderPopulationFinished()
     {
-        dataBundles.identify();
+        if (initialized)
+        {
+            dataBundles.identify();
+        }
     }
 
 #ifdef UNIX
@@ -345,11 +348,13 @@ DENG2_PIMPL(DoomsdayApp)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
     DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
+    DENG2_PIMPL_AUDIENCE(FileRefresh)
 };
 
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
+DENG2_AUDIENCE_METHOD(DoomsdayApp, FileRefresh)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     : d(new Instance(this, playerConstructor))
@@ -388,10 +393,12 @@ void DoomsdayApp::initialize()
     d->initWadFolders();
     d->initPackageFolders();
 
-    d->initialized = true;
+    Folder::waitForPopulation();
 
     d->dataBundles.identify();
     d->gameProfiles.deserialize();
+
+    d->initialized = true;
 }
 
 void DoomsdayApp::initWadFolders()
@@ -401,6 +408,7 @@ void DoomsdayApp::initWadFolders()
 
 void DoomsdayApp::initPackageFolders()
 {
+    DENG2_FOR_AUDIENCE2(FileRefresh, i) i->aboutToRefreshFiles();
     d->initPackageFolders();
 }
 

@@ -359,6 +359,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
                                                      d->nothingSelected->rule().height()) +
                                d->gameTitle->rule().height());
     rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
+    d->browser->progress().rule().setRect(rightArea().rule());
 
     refreshPackages();
 }
@@ -384,8 +385,9 @@ StringList PackagesDialog::selectedPackages() const
 
 void PackagesDialog::refreshPackages()
 {
-    App::fileSystem().refresh();
-    d->populate();
+    d->browser->refreshPackages();
+    //App::fileSystem().refresh();
+    //d->populate();
 }
 
 void PackagesDialog::preparePanelForOpening()

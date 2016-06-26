@@ -31,6 +31,7 @@
 #include <de/MenuWidget>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
+#include <de/ProgressWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/TaskPool>
@@ -60,6 +61,7 @@ PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
 , DENG2_OBSERVES(res::Bundles, Identify)
+, DENG2_OBSERVES(DoomsdayApp, FileRefresh)
 , public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
@@ -72,6 +74,8 @@ DENG_GUI_PIMPL(PackagesWidget)
     Animation searchBackgroundOpacity { 0.f, Animation::Linear };
     QStringList filterTerms;
     QTimer refilterTimer;
+
+    ProgressWidget *refreshProgress;
 
     // Packages list:
     HomeMenuWidget *menu;
@@ -370,14 +374,21 @@ DENG_GUI_PIMPL(PackagesWidget)
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule("unit").valuei() +
                                        int(style().fonts().font("default").height().value()*3));
 
-        QObject::connect(search, &LineEditWidget::editorContentChanged,
-                         [this] () { updateFilterTerms(); });
-        QObject::connect(search, &LineEditWidget::enterPressed,
-                         [this] () { focusFirstListedPackage(); });
+        QObject::connect(search, &LineEditWidget::editorContentChanged, [this] () { updateFilterTerms(); });
+        QObject::connect(search, &LineEditWidget::enterPressed,         [this] () { focusFirstListedPackage(); });
 
         refilterTimer.setSingleShot(true);
         refilterTimer.setInterval(int(REFILTER_DELAY.asMilliSeconds()));
         QObject::connect(&refilterTimer, &QTimer::timeout, [this] () { updateFilterTerms(true); });
+
+        // Refresh progress indicator.
+        refreshProgress = new ProgressWidget;
+        refreshProgress->setMode(ProgressWidget::Indefinite);
+        refreshProgress->setImageScale(.3f);
+        self.add(refreshProgress);
+
+        // By default, only the progress indicator is shown.
+        showProgressIndicator(true);
     }
 
     ~Instance()
@@ -386,6 +397,24 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // Private instance deleted before child widgets.
         menu->organizer().unsetFilter();
+    }
+
+    void showProgressIndicator(bool show)
+    {
+        if (show)
+        {
+            refreshProgress->setOpacity(1);
+            menu->hide();
+            search->hide();
+            clearSearch->hide();
+        }
+        else
+        {
+            refreshProgress->setOpacity(0, 0.3);
+            menu->show();
+            search->show();
+            clearSearch->show();
+        }
     }
 
     void populate()
@@ -426,6 +455,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         menu->items().sort();
         menu->organizer().refilter();
+        showProgressIndicator(false);
 
         emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
     }
@@ -487,13 +517,19 @@ DENG_GUI_PIMPL(PackagesWidget)
     void dataBundlesIdentified(bool) override
     {
         // After bundles have been refreshed, make sure the list items are up to date.
-        if (mainCall.isEmpty())
+        if (!mainCall)
         {
             mainCall.enqueue([this] ()
             {
+                //qDebug() << "Bundles identified, re-populating" << &self;
                 self.populate();
             });
         }
+    }
+
+    void aboutToRefreshFiles()
+    {
+        showProgressIndicator(true);
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -553,7 +589,18 @@ PackagesWidget::PackagesWidget(String const &name)
 {
     rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
 
-    DoomsdayApp::bundles().audienceForIdentify() += d;
+    auto &bundles = DoomsdayApp::bundles();
+    bundles.audienceForIdentify() += d;
+
+    if (bundles.isEverythingIdentified())
+    {
+        populate();
+    }
+}
+
+ProgressWidget &PackagesWidget::progress()
+{
+    return *d->refreshProgress;
 }
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
@@ -711,6 +758,6 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 
 void PackagesWidget::refreshPackages()
 {
+    d->showProgressIndicator(true);
     App::fileSystem().refresh();
-    DoomsdayApp::bundles().identify();
 }

@@ -54,7 +54,7 @@ static PopupWidget *makePackageFoldersDialog()
 }
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
-, DENG2_OBSERVES(Games, Readiness)
+//, DENG2_OBSERVES(Games, Readiness)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
@@ -110,13 +110,13 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         }, ui::Down);
     }
 
-    void gameReadinessUpdated() override
+    /*void gameReadinessUpdated() override
     {
-        if (mainCall.isEmpty())
+        if (!mainCall)
         {
-            mainCall.enqueue([this] () { packages->refreshPackages(); });
+            mainCall.enqueue([this] () { packages->populate(); });
         }
-    }
+    }*/
 };
 
 PackagesColumnWidget::PackagesColumnWidget()
@@ -141,9 +141,9 @@ PackagesColumnWidget::PackagesColumnWidget()
                                 rule("gap") +
                                 d->packages->rule().height());
 
+    // Additional layout for the packages list.
     d->packages->setFilterEditorMinimumY(scrollArea().margins().top());
-
-    DoomsdayApp::games().audienceForReadiness() += d;
+    d->packages->progress().rule().setRect(scrollArea().rule());
 }
 
 String PackagesColumnWidget::tabHeading() const

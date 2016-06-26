@@ -54,6 +54,8 @@ public:
     /// Notified when console variables and commands should be registered.
     DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
 
+    DENG2_DEFINE_AUDIENCE2(FileRefresh, void aboutToRefreshFiles())
+
     struct GameChangeParameters
     {
         /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.

@@ -59,7 +59,6 @@ DENG_GUI_PIMPL(HomeWidget)
     };
 
     LoopCallback mainCall;
-
     SavedSessionListData savedItems; ///< All the available save games as items.
 
     dsize visibleColumnCount = 2;

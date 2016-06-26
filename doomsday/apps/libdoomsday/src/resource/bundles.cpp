@@ -62,7 +62,7 @@ DENG2_PIMPL(Bundles)
             DENG2_GUARD(this);
             bundlesToIdentify.insert(dataFile.maybeAs<DataBundle>());
         }
-        if (mainCall.isEmpty())
+        if (!mainCall)
         {
             mainCall.enqueue([this] () { identifyAddedDataBundles(); });
         }
@@ -93,18 +93,21 @@ DENG2_PIMPL(Bundles)
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         bool wasIdentified = false;
+        int count = 0;
         Time startedAt;
 
-        LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
         while (auto const *bundle = nextToIdentify())
         {
-            DENG2_ASSERT(bundle);
+            ++count;
             if (bundle->identifyPackages())
             {
                 wasIdentified = true;
             }
         }
-        LOG_RES_MSG("Data bundle identification took %.1f seconds") << startedAt.since();
+        if (count)
+        {
+            LOG_RES_MSG("Identified %i data bundles in %.1f seconds") << count << startedAt.since();
+        }
         return wasIdentified;
     }
 
@@ -182,6 +185,12 @@ void Bundles::identify()
             i->dataBundlesIdentified(identified);
         }
     });
+}
+
+bool Bundles::isEverythingIdentified() const
+{
+    DENG2_GUARD(d);
+    return d->bundlesToIdentify.isEmpty();
 }
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const

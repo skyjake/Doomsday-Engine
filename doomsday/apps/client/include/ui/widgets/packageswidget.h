@@ -22,6 +22,7 @@
 #include <de/ButtonWidget>
 #include <de/LineEditWidget>
 #include <de/IPersistent>
+#include <de/ProgressWidget>
 
 class HomeItemWidget;
 
@@ -45,6 +46,8 @@ public:
 
 public:
     PackagesWidget(de::String const &name = de::String());
+
+    de::ProgressWidget &progress();
 
     void setFilterEditorMinimumY(de::Rule const &minY);
 
