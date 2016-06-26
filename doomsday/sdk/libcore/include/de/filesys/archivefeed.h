@@ -63,13 +63,13 @@ public:
 
     virtual ~ArchiveFeed();
 
-    String description() const;
+    String description() const override;
 
-    void populate(Folder &folder);
-    bool prune(File &file) const;
-    File *newFile(String const &name);
-    void removeFile(String const &name);
-    Feed *newSubFeed(String const &name);
+    PopulatedFiles populate(Folder const &folder) override;
+    bool prune(File &file) const override;
+    File *newFile(String const &name) override;
+    void removeFile(String const &name) override;
+    Feed *newSubFeed(String const &name) override;
 
     /**
      * Returns the archive that the feed accesses.

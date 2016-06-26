@@ -103,9 +103,10 @@ public:
     ~LoopCallback();
 
     bool isEmpty() const;
+    operator bool() const;
 
     void enqueue(Callback func);
-    void loopIteration();
+    void loopIteration() override;
 
 private:
     QList<Callback> _funcs;

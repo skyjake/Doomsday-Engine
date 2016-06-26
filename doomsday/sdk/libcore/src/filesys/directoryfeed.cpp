@@ -45,12 +45,12 @@ NativePath const &DirectoryFeed::nativePath() const
     return _nativePath;
 }
 
-void DirectoryFeed::populate(Folder &folder)
+Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 {
     if (_mode & AllowWrite)
     {
         // Automatically enable modifying the Folder.
-        folder.setMode(File::Write);
+        const_cast<Folder &>(folder).setMode(File::Write);
     }
     if (_mode.testFlag(CreateIfMissing) && !NativePath::exists(_nativePath))
     {
@@ -70,6 +70,7 @@ void DirectoryFeed::populate(Folder &folder)
     {
         dirFlags |= QDir::Dirs;
     }
+    PopulatedFiles populated;
     foreach (QFileInfo entry, dir.entryInfoList(nameFilters, dirFlags))
     {
         if (entry.isDir())
@@ -78,12 +79,13 @@ void DirectoryFeed::populate(Folder &folder)
         }
         else
         {
-            populateFile(folder, entry.fileName());
+            populateFile(folder, entry.fileName(), populated);
         }
     }
+    return populated;
 }
 
-void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
+void DirectoryFeed::populateSubFolder(Folder const &folder, String const &entryName)
 {
     LOG_AS("DirectoryFeed::populateSubFolder");
 
@@ -115,7 +117,8 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
     }
 }
 
-void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
+void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
+                                 PopulatedFiles &populated)
 {
     try
     {
@@ -136,13 +139,14 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
         }
 
         File *file = folder.fileSystem().interpret(nativeFile.release());
-        folder.add(file);
+        //folder.add(file);
 
         // We will decide on pruning this.
         file->setOriginFeed(this);
 
         // Include files in the main index.
-        folder.fileSystem().index(*file);
+        //folder.fileSystem().index(*file);
+        populated << file;
     }
     catch (StatusError const &er)
     {
@@ -200,11 +204,12 @@ bool DirectoryFeed::prune(File &file) const
 File *DirectoryFeed::newFile(String const &name)
 {
     NativePath newPath = _nativePath / name;
-    if (NativePath::exists(newPath))
+    /*if (NativePath::exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
-        throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
-    }
+        //throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
+        //qDebug() << "[DirectoryFeed] Overwriting" << newPath.toString();
+    }*/
     File *file = new NativeFile(name, newPath);
     file->setOriginFeed(this);
     return file;

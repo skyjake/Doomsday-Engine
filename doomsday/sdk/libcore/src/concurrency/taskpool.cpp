@@ -23,6 +23,7 @@
 #include <QThreadPool>
 #include <QSet>
 #include <de/Lockable>
+#include <de/Loop>
 #include <de/Waitable>
 
 namespace de {
@@ -39,11 +40,13 @@ namespace internal
 
 DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
-    bool deleteWhenDone { false }; ///< Private instance will be deleted when pool is empty.
+    LoopCallback mainCall;
 
-    // Set of running tasks.
-    typedef QSet<Task *> Tasks;
-    Tasks tasks;
+    /// Private instance will be deleted when pool is empty.
+    bool deleteWhenDone = false;
+
+    /// Set of running tasks.
+    QSet<Task *> tasks;
 
     Instance(Public *i) : Base(i)
     {
@@ -112,12 +115,25 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
             }
             else
             {
-                emit self.allTasksDone();
+                try
+                {
+                    emit self.allTasksDone();
+                    DENG2_FOR_AUDIENCE(Done, i) i->taskPoolDone(self);
+                }
+                catch (Error const &er)
+                {
+                    unlock();
+                    throw er;
+                }
             }
         }
         unlock();
     }
+
+    DENG2_PIMPL_AUDIENCE(Done)
 };
+
+DENG2_AUDIENCE_METHOD(TaskPool, Done)
 
 TaskPool::TaskPool() : d(new Instance(this))
 {}
@@ -155,4 +171,3 @@ bool TaskPool::isDone() const
 }
 
 } // namespace de
-

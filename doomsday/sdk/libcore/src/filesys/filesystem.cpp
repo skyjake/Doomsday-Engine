@@ -78,14 +78,21 @@ void FileSystem::addInterpreter(filesys::IInterpreter const &interpreter)
 
 void FileSystem::refresh()
 {
+    if (Folder::isPopulatingAsync())
+    {
+        qDebug() << "FileSystem has to wait for previous population to finish...";
+    }
+
+    // Wait for a previous refresh to finish.
+    Folder::waitForPopulation();
+
     LOG_AS("FS::refresh");
 
-    Time startedAt;
-    d->root.populate();
+    //Time startedAt;
+    d->root.populate(Folder::PopulateAsyncFullTree);
 
-    LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
-
-    printIndex();
+    /*LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
+    printIndex();*/
 }
 
 Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behavior)

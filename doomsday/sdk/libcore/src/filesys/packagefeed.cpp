@@ -23,6 +23,7 @@
 #include "de/FS"
 
 namespace de {
+
 DENG2_PIMPL(PackageFeed)
 {
     PackageLoader &loader;
@@ -31,46 +32,45 @@ DENG2_PIMPL(PackageFeed)
         : Base(i), loader(ldr)
     {}
 
-    void linkToPackage(Package &pkg, String const &linkName, Folder &folder)
+    File *linkToPackage(Package &pkg, String const &linkName, Folder const &folder)
     {
         /// @todo Resolve conflicts: replace, ignore, or fail. -jk
 
-        if (folder.has(linkName)) return; // Already there, keep the existing link.
+        if (folder.has(linkName)) return nullptr; // Already there, keep the existing link.
 
         // Create a link to the loaded package's file.
-        LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg.file(), linkName));
+        LinkFile *link = LinkFile::newLinkToFile(pkg.file(), linkName);
 
         // We will decide on pruning this.
-        link.setOriginFeed(thisPublic);
+        link->setOriginFeed(thisPublic);
 
-        // Include new files in the main index.
-        folder.fileSystem().index(link);
+        return link;
     }
 
-    void populate(Folder &folder)
+    PopulatedFiles populate(Folder const &folder)
     {
+        PopulatedFiles populated;
         DENG2_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, loader.loadedPackages())
         {
             Package *pkg = i.value();
-            linkToPackage(*pkg, i.key(), folder);
+            populated << linkToPackage(*pkg, i.key(), folder);
 
             // Also link it under its possible alias identifier (for variants).
-            if (pkg->objectNamespace().has("package.alias"))
+            if (pkg->objectNamespace().has(Package::VAR_PACKAGE_ALIAS))
             {
-                linkToPackage(*pkg, pkg->objectNamespace().gets("package.alias"), folder);
+                populated << linkToPackage(*pkg, pkg->objectNamespace()
+                                           .gets(Package::VAR_PACKAGE_ALIAS), folder);
             }
 
             // Link each contained asset, too.
             foreach (String ident, pkg->assets())
             {
-                linkToPackage(*pkg, "asset." + ident, folder);
+                populated << linkToPackage(*pkg, "asset." + ident, folder);
             }
         }
+        return populated;
     }
 };
-} // namespace de
-
-namespace de {
 
 PackageFeed::PackageFeed(PackageLoader &loader) : d(new Instance(this, loader))
 {}
@@ -85,9 +85,9 @@ String PackageFeed::description() const
     return "loaded packages";
 }
 
-void PackageFeed::populate(Folder &folder)
+Feed::PopulatedFiles PackageFeed::populate(Folder const &folder)
 {
-    d->populate(folder);
+    return d->populate(folder);
 }
 
 bool PackageFeed::prune(File &file) const

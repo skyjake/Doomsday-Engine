@@ -119,6 +119,8 @@ void Loop::nextLoopIteration()
     }
 }
 
+// LoopCallback -------------------------------------------------------------------------
+
 LoopCallback::LoopCallback()
 {}
 
@@ -128,6 +130,11 @@ LoopCallback::~LoopCallback()
 bool LoopCallback::isEmpty() const
 {
     return _funcs.isEmpty();
+}
+
+LoopCallback::operator bool() const
+{
+    return !isEmpty();
 }
 
 void LoopCallback::enqueue(Callback func)

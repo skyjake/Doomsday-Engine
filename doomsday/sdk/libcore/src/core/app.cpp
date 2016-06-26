@@ -223,6 +223,7 @@ DENG2_PIMPL(App)
 
         // Populate the file system.
         fs.refresh();
+        Folder::waitForPopulation();
 
         packageLoader.audienceForActivity() += this;
     }
@@ -231,7 +232,7 @@ DENG2_PIMPL(App)
     {
         // Override the log message level.
         if (cmdLine.has("-loglevel") || cmdLine.has("-verbose") || cmdLine.has("-v") ||
-           cmdLine.has("-vv") || cmdLine.has("-vvv"))
+            cmdLine.has("-vv") || cmdLine.has("-vvv"))
         {
             LogEntry::Level level = LogEntry::Message;
             try

@@ -150,8 +150,10 @@ DENG2_PIMPL(ArchiveFeed)
         return *arch;
     }
 
-    void populate(Folder &folder)
+    PopulatedFiles populate(Folder const &folder)
     {
+        PopulatedFiles populated;
+
         // Get a list of the files in this directory.
         Archive::Names names;
         archive().listFiles(names, basePath);
@@ -176,22 +178,25 @@ DENG2_PIMPL(ArchiveFeed)
 
             // Create a new file that accesses this feed's archive and interpret the contents.
             File *f = folder.fileSystem().interpret(archFile.release());
-            folder.add(f);
+            //folder.add(f);
 
             // We will decide on pruning this.
             f->setOriginFeed(&self);
 
             // Include the file in the main index.
-            folder.fileSystem().index(*f);
+            //folder.fileSystem().index(*f);
+
+            populated << f;
         }
 
-        // Also populate subfolders.
+        // Also create subfolders by inheriting from this feed. They will get
+        // populated later.
         archive().listFolders(names, basePath);
-
         for (Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
             folder.fileSystem().makeFolder(folder.path() / *i, FS::InheritPrimaryFeed);
         }
+        return populated;
     }
 };
 
@@ -214,11 +219,11 @@ String ArchiveFeed::description() const
     return "archive in " + (d->file? d->file->description() : "(deleted file)");
 }
 
-void ArchiveFeed::populate(Folder &folder)
+Feed::PopulatedFiles ArchiveFeed::populate(Folder const &folder)
 {
     LOG_AS("ArchiveFeed::populate");
 
-    d->populate(folder);
+    return d->populate(folder);
 }
 
 bool ArchiveFeed::prune(File &file) const

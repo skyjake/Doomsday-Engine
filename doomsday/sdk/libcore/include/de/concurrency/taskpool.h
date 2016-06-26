@@ -21,7 +21,7 @@
 
 #include <QObject>
 
-#include "../libcore.h"
+#include "../Observers"
 
 namespace de {
 
@@ -62,6 +62,8 @@ public:
     };
 
     typedef std::function<void ()> TaskFunction;
+
+    DENG2_DEFINE_AUDIENCE2(Done, void taskPoolDone(TaskPool &))
 
 public:
     TaskPool();

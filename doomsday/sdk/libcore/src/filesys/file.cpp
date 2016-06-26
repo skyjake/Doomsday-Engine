@@ -167,7 +167,7 @@ String File::description(int verbosity) const
     // file interpretation is being applied.
     if (source() != this)
     {
-        desc += _E(i) " {" _E(s) + path() + _E(.) ": data sourced from " +
+        desc += _E(i) " {" _E(s) "\"" + path() + "\"" _E(.) ": data sourced from " +
                 source()->description(verbosity) + "}" _E(.);
     }
 #endif

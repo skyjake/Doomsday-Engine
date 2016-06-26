@@ -264,7 +264,7 @@ public:
      */
     enum Context
     {
-        // Domains
+        // Domains:
         FirstDomainBit  = 16,
         GenericBit      = FirstDomainBit,
         ResourceBit,
@@ -276,28 +276,33 @@ public:
         NetworkBit,
         LastDomainBit   = NetworkBit,
 
-        Generic  = (1 << GenericBit),   ///< Global domain (bit automatically set if no other domains).
-        Resource = (1 << ResourceBit),  /**< Resource or resource pack domain (files, etc.).
-                                             "Resource" is here meant in a wider sense of all the
-                                             external data that Doomsday utilizes. */
-        Map      = (1 << MapBit),       /**< Map domain: information pertaining to the map and its
-                                             elements, playsim, etc. */
+        Generic  = (1 << GenericBit),   /**< Global domain (bit automatically set if no
+                                             other domains). */
+        Resource = (1 << ResourceBit),  /**< Resource or resource pack domain (files,
+                                             etc.). "Resource" is here meant in a wider
+                                             sense of all the external data that Doomsday
+                                             utilizes. */
+        Map      = (1 << MapBit),       /**< Map domain: information pertaining to the map
+                                             and its elements, playsim, etc. */
         Script   = (1 << ScriptBit),    ///< Script domain
         GL       = (1 << GLBit),        ///< Graphics/renderer domain (shaders, etc.)
         Audio    = (1 << AudioBit),     ///< Audio domain
         Input    = (1 << InputBit),     ///< Input domain: events, devices, etc.
         Network  = (1 << NetworkBit),   ///< Network domain: connections, packets, etc.
 
-        // User groups
-        Dev         = 0x08000000,       /**< Native code developer (i.e., the programmer); can be
-                                             combined with other flags to mark the entry for devs.
-                                             If bit is not set, the entry is for the end-user. */
-        Privileged  = 0x04000000,       /**< Work in progress. Entries with this flag are shown
-                                             regardless of log filtering, in a separate overlay.
-                                             Use this for whatever you are currently working on
-                                             (so there is no need to rely on qDebug). */
-        Interactive = 0x02000000,       /**< Output from a command entered manually by the user.
-                                             Typically these should never be filtered. */
+        // User groups:
+        Dev         = 0x08000000,       /**< Native code developer (i.e., the programmer);
+                                             can be combined with other flags to mark the
+                                             entry for devs. If bit is not set, the entry
+                                             is for the end-user. */
+        Privileged  = 0x04000000,       /**< Work in progress. Entries with this flag are
+                                             shown regardless of log filtering, in a
+                                             separate overlay. Use this for whatever you
+                                             are currently working on (so there is no need
+                                             to rely on qDebug). */
+        Interactive = 0x02000000,       /**< Output from a command entered manually by the
+                                             user. Typically these should never be
+                                             filtered. */
 
         AllDomains  = 0x00ff0000,
         DomainMask  = AllDomains,

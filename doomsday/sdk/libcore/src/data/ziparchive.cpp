@@ -434,7 +434,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         {
             /// @throw InflateError Problem with zlib: inflateInit2 failed.
             throw InflateError("ZipArchive::readEntry",
-                "Inflation failed because initialization failed");
+                               "Inflation failed because initialization failed");
         }
 
         // Do the inflation in one call.
@@ -445,9 +445,9 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
             /// @throw InflateError The actual decompressed size is not equal to the
             /// size listed in the central directory.
             throw InflateError("ZipArchive::readEntry",
-                "Failure due to " +
-                String((result == Z_DATA_ERROR ? "corrupt data in archive" :
-                "zlib error")) + ": " + stream.msg);
+                               "Failure due to " +
+                               String((result == Z_DATA_ERROR ? "corrupt data in archive"
+                                                              : "zlib error")) + ": " + stream.msg);
         }
 
         // We're done.

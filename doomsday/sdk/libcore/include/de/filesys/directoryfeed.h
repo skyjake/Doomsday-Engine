@@ -80,7 +80,7 @@ public:
      */
     NativePath const &nativePath() const;
 
-    void populate(Folder &folder);
+    PopulatedFiles populate(Folder const &folder);
     bool prune(File &file) const;
     File *newFile(String const &name);
     void removeFile(String const &name);
@@ -106,8 +106,8 @@ public:
     static File::Status fileStatus(NativePath const &nativePath);
 
 protected:
-    void populateSubFolder(Folder &folder, String const &entryName);
-    void populateFile(Folder &folder, String const &entryName);
+    void populateSubFolder(Folder const &folder, String const &entryName);
+    void populateFile(Folder const &folder, String const &entryName, PopulatedFiles &populated);
 
 private:
     NativePath const _nativePath;

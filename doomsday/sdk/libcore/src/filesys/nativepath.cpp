@@ -269,7 +269,9 @@ void NativePath::createPath(NativePath const &nativePath)
         createPath(parentPath);
     }
 
-    if (!QDir::current().mkdir(nativePath))
+    QDir::current().mkdir(nativePath);
+
+    if (!exists(nativePath))
     {
         /// @throw CreateDirError Failed to create directory @a nativePath.
         throw CreateDirError("NativePath::createPath", "Could not create: " + nativePath);

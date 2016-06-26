@@ -305,14 +305,15 @@ void Profiles::deserialize()
         if (Folder const *folder = (*i)->maybeAs<Folder>())
         {
             // Let's see if it contains any .dei files.
-            DENG2_FOR_EACH_CONST(Folder::Contents, k, folder->contents())
+            folder->forContents([this] (String name, File &file)
             {
-                if (k.key().fileNameExtension() == ".dei")
+                if (name.fileNameExtension() == ".dei")
                 {
                     // Load this profile.
-                    d->loadProfilesFromInfo(*k.value(), true /* read-only */);
+                    d->loadProfilesFromInfo(file, true /* read-only */);
                 }
-            }
+                return LoopContinue;
+            });
         }
     }
 

@@ -28,7 +28,26 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Folder), public Lockable
+FolderPopulationAudience audienceForFolderPopulation; // public
+
+namespace internal
+{
+    static TaskPool populateTasks;
+
+    /// Forwards internal folder population notifications to the public audience.
+    struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
+    {
+        PopulationNotifier() {
+            populateTasks.audienceForDone() += this;
+        }
+        void taskPoolDone(TaskPool &) {
+            DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished();
+        }
+    };
+    static PopulationNotifier populationNotifier;
+}
+
+DENG2_PIMPL(Folder), public Lockable
 {
     /// A map of file names to file instances.
     Contents contents;
@@ -36,12 +55,30 @@ DENG2_PIMPL_NOREF(Folder), public Lockable
     /// Feeds provide content for the folder.
     Feeds feeds;
 
-    DENG2_PIMPL_AUDIENCE(Population)
+    Instance(Public *i) : Base(i) {}
+
+    void add(File *file)
+    {
+        contents.insert(file->name().toLower(), file);
+        file->setParent(&self);
+    }
+
+    QList<Folder *> subfolders() const
+    {
+        DENG2_GUARD(this);
+        QList<Folder *> subs;
+        for (Contents::const_iterator i = contents.begin(); i != contents.end(); ++i)
+        {
+            if (Folder *folder = i.value()->maybeAs<Folder>())
+            {
+                subs << folder;
+            }
+        }
+        return subs;
+    }
 };
 
-DENG2_AUDIENCE_METHOD(Folder, Population)
-
-Folder::Folder(String const &name) : File(name), d(new Instance)
+Folder::Folder(String const &name) : File(name), d(new Instance(this))
 {
     setStatus(Status::FOLDER);
 
@@ -190,28 +227,50 @@ void Folder::populate(PopulationBehaviors behavior)
                 delete file;
             }
         }
+    }
+
+    internal::populateTasks.start([this, behavior] ()
+    {
+        Feed::PopulatedFiles newFiles;
 
         // Populate with new/updated ones.
         for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
         {
-            (*i)->populate(*this);
+            newFiles.append((*i)->populate(*this));
+        }
+
+        // Insert and index all new files atomically.
+        {
+            DENG2_GUARD(d);
+            for (File *i : newFiles)
+            {
+                if (!i) continue;
+
+                std::unique_ptr<File> file(i);
+                if (!d->contents.contains(i->name().toLower()))
+                {
+                    d->add(file.release());
+                    fileSystem().index(*i);
+                }
+            }
+            newFiles.clear();
         }
 
         if (behavior & PopulateFullTree)
         {
             // Call populate on subfolders.
-            for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
+            for (Folder *folder : d->subfolders())
             {
-                if (Folder *folder = i.value()->maybeAs<Folder>())
-                {
-                    folder->populate(behavior);
-                }
+                folder->populate(behavior);
             }
         }
     }
+    , TaskPool::MediumPriority);
 
-    // Notify.
-    DENG2_FOR_AUDIENCE2(Population, i) i->folderPopulated(*this);
+    if (!(behavior & PopulateAsync))
+    {
+        waitForPopulation();
+    }
 }
 
 Folder::Contents Folder::contents() const
@@ -219,6 +278,20 @@ Folder::Contents Folder::contents() const
     DENG2_GUARD(d);
 
     return d->contents;
+}
+
+LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) const
+{
+    DENG2_GUARD(d);
+
+    for (Contents::const_iterator i = d->contents.constBegin(); i != d->contents.constEnd(); ++i)
+    {
+        if (auto result = func(i.key(), *i.value()))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
 }
 
 File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
@@ -328,8 +401,7 @@ File &Folder::add(File *file)
             file->name() + "'");
     }
     DENG2_GUARD(d);
-    d->contents[file->name().lower()] = file;
-    file->setParent(this);
+    d->add(file);
     return *file;
 }
 
@@ -365,6 +437,16 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
         return found.value();
     }
     return nullptr;
+}
+
+void Folder::waitForPopulation()
+{
+    internal::populateTasks.waitForDone();
+}
+
+bool Folder::isPopulatingAsync()
+{
+    return !internal::populateTasks.isDone();
 }
 
 filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
@@ -432,10 +514,10 @@ Folder::Feeds Folder::feeds() const
 String Folder::contentsAsText() const
 {
     QList<File const *> files;
-    for (auto *f : contents().values())
-    {
-        files << f;
-    }
+    forContents([&files] (String, File &f) {
+        files << &f;
+        return LoopContinue;
+    });
     return File::fileListAsText(files);
 }
 

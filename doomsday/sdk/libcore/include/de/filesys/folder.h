@@ -66,8 +66,6 @@ public:
     /// Creating a new file was unsuccessful. @ingroup errors
     DENG2_ERROR(NewFileError);
 
-    DENG2_DEFINE_AUDIENCE2(Population, void folderPopulated(Folder &))
-
     /**
      * Accesses the properties of a Folder. Allows using properties of a
      * folder (like how many items it contains) as a Value, for instance in
@@ -99,6 +97,8 @@ public:
     enum PopulationBehavior {
         PopulateFullTree       = 0x1,   ///< The full tree is populated.
         PopulateOnlyThisFolder = 0x2,   ///< Do not descend into subfolders while populating.
+        PopulateAsync          = 0x4,   ///< Do not block until complete.
+        PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree
     };
     Q_DECLARE_FLAGS(PopulationBehaviors, PopulationBehavior)
 
@@ -144,6 +144,8 @@ public:
      * Provides read-only access to the content of the folder.
      */
     Contents contents() const;
+
+    LoopResult forContents(std::function<LoopResult (String name, File &file)> func) const;
 
     /**
      * Empties the contents of the folder: all contained file instances are
@@ -321,11 +323,18 @@ public:
     Node const *tryFollowPath(PathRef const &path) const;
     Node const *tryGetChild(String const &name) const;
 
+public:
+    static void waitForPopulation();
+    static bool isPopulatingAsync();
+
 private:
     DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Folder::PopulationBehaviors)
+
+DENG2_DECLARE_AUDIENCE(FolderPopulation, void folderPopulationFinished())
+DENG2_EXTERN_AUDIENCE(FolderPopulation)
 
 } // namespace de
 

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FEED_H
@@ -58,6 +58,8 @@ public:
     /// Failed to remove a file. @ingroup errors
     DENG2_ERROR(RemoveError);
 
+    typedef QList<File *> PopulatedFiles;
+
 public:
     Feed();
 
@@ -74,11 +76,15 @@ public:
      * Populates a folder with File instances. Subclasses implement this to
      * produce the appropriate instances for the data they handle.
      *
-     * @param folder  Folder where the File instances are placed.
+     * @param folder  Folder where the File instances will be placed. The feed
+     *                should check this to find out which files are already present.
+     *
+     * @return New files to insert to the folder. This will be done atomically once
+     * the population is complete.
      *
      * @see Folder::populate()
      */
-    virtual void populate(Folder &folder) = 0;
+    virtual PopulatedFiles populate(Folder const &folder) = 0;
 
     /**
      * Determines whether a file has become obsolete and needs to be pruned.

@@ -37,9 +37,9 @@ public:
 
     PackageLoader &loader();
 
-    String description() const;
-    void populate(Folder &folder);
-    bool prune(File &file) const;
+    String description() const override;
+    PopulatedFiles populate(Folder const &folder) override;
+    bool prune(File &file) const override;
 
 private:
     DENG2_PRIVATE(d)
