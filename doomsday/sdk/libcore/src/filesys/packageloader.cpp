@@ -120,7 +120,7 @@ DENG2_PIMPL(PackageLoader)
 
         if (!packFile.objectNamespace().has(Package::VAR_PACKAGE))
         {
-            throw Package::ValidationError("PackageLoader::checkPackage",
+            throw Package::NotPackageError("PackageLoader::checkPackage",
                                            packFile.description() + " is not a package");
         }
 
@@ -249,20 +249,25 @@ DENG2_PIMPL(PackageLoader)
 
                     list.append(path);
                 }
+                catch (Package::NotPackageError const &er)
+                {
+                    // This is usually a .pack folder used only for nesting.
+                    LOG_RES_XVERBOSE("\"%s\": %s") << i->first << er.asText();
+                }
                 catch (Package::ValidationError const &er)
                 {
                     // Not a loadable package.
-                    qDebug() << i->first << ": Package is invalid:" << er.asText();
+                    LOG_RES_MSG("\"%s\": Package is invalid: %s") << i->first << er.asText();
                 }
                 catch (Parser::SyntaxError const &er)
                 {
-                    LOG_RES_NOTE("\"%s\": Package has a Doomsday Script syntax error: %s")
+                    LOG_RES_WARNING("\"%s\": Package has a Doomsday Script syntax error: %s")
                             << i->first << er.asText();
                 }
                 catch (Info::SyntaxError const &er)
                 {
                     // Not a loadable package.
-                    LOG_RES_NOTE("\"%s\": Package has a syntax error: %s")
+                    LOG_RES_WARNING("\"%s\": Package has a syntax error: %s")
                             << i->first << er.asText();
                 }
 

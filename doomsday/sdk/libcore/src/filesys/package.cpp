@@ -19,6 +19,7 @@
 #include "de/Package"
 #include "de/App"
 #include "de/DotPath"
+#include "de/LogBuffer"
 #include "de/PackageLoader"
 #include "de/Process"
 #include "de/Script"
@@ -28,9 +29,10 @@
 
 namespace de {
 
-String const Package::VAR_PACKAGE   ("package");
-String const Package::VAR_PACKAGE_ID("package.ID");
-String const Package::VAR_TITLE     ("title");
+String const Package::VAR_PACKAGE      ("package");
+String const Package::VAR_PACKAGE_ID   ("package.ID");
+String const Package::VAR_PACKAGE_ALIAS("package.alias");
+String const Package::VAR_TITLE        ("title");
 
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
@@ -266,9 +268,12 @@ void Package::parseMetadata(File &packageFile) // static
 
         metadata.addTime(TIMESTAMP, parsedAt);
 
-        LOGDEV_RES_MSG("Parsed metadata of '%s':\n" _E(m))
-                << identifierForFile(packageFile)
-                << packageFile.objectNamespace().asText();
+        if (LogBuffer::get().isEnabled(LogEntry::Dev | LogEntry::XVerbose | LogEntry::Resource))
+        {
+            LOGDEV_RES_XVERBOSE("Parsed metadata of '%s':\n" _E(m))
+                    << identifierForFile(packageFile)
+                    << packageFile.objectNamespace().asText();
+        }
     }
 }
 
@@ -276,7 +281,7 @@ void Package::validateMetadata(Record const &packageInfo)
 {
     if (!packageInfo.has(VAR_ID))
     {
-        throw ValidationError("Package::validateMetadata", "Not a package");
+        throw NotPackageError("Package::validateMetadata", "Not a package");
     }
 
     // A domain is required in all package identifiers.

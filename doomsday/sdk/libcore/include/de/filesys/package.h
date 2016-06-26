@@ -53,6 +53,9 @@ public:
     /// Package fails validation. @ingroup errors
     DENG2_ERROR(ValidationError);
 
+    /// Checked metadata does not describe a package. @ingroup errors
+    DENG2_SUB_ERROR(ValidationError, NotPackageError);
+
     /// Package is missing some required metadata. @ingroup errors
     DENG2_SUB_ERROR(ValidationError, IncompleteMetadataError);
 
@@ -212,6 +215,7 @@ public:
 
     static String const VAR_PACKAGE;
     static String const VAR_PACKAGE_ID;
+    static String const VAR_PACKAGE_ALIAS;
     static String const VAR_TITLE;
 
 private:
