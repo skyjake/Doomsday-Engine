@@ -101,9 +101,9 @@ Folder::~Folder()
     clear();
 
     // Destroy all feeds that remain.
-    for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
+    while (!d->feeds.isEmpty())
     {
-        delete *i;
+        delete d->feeds.takeLast();
     }
 }
 
@@ -234,9 +234,9 @@ void Folder::populate(PopulationBehaviors behavior)
         Feed::PopulatedFiles newFiles;
 
         // Populate with new/updated ones.
-        for (Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
+        for (int i = d->feeds.size() - 1; i >= 0; --i)
         {
-            newFiles.append((*i)->populate(*this));
+            newFiles.append(d->feeds.at(i)->populate(*this));
         }
 
         // Insert and index all new files atomically.
