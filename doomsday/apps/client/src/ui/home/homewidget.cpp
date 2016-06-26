@@ -96,8 +96,8 @@ DENG_GUI_PIMPL(HomeWidget)
         // Create the column navigation buttons.
         moveLeft  = new ButtonWidget;
         moveRight = new ButtonWidget;
-        moveLeft ->setImage(new StyleProceduralImage("fold", *moveLeft, 90));
-        moveRight->setImage(new StyleProceduralImage("fold", *moveLeft, -90));
+        //moveLeft ->setImage(new StyleProceduralImage("fold", *moveLeft, 90));
+        //moveRight->setImage(new StyleProceduralImage("fold", *moveLeft, -90));
         moveLeft ->setActionFn([this] () { tabs->setCurrent(visibleTabRange().start - 1); });
         moveRight->setActionFn([this] () { tabs->setCurrent(visibleTabRange().end); });
         configureEdgeNavigationButton(*moveLeft);
@@ -147,18 +147,6 @@ DENG_GUI_PIMPL(HomeWidget)
 
     ~Instance()
     {
-//        for (Column const &col : allColumns)
-//        {
-//            if (col.configVar)
-//            {
-//                col.configVar->audienceForChange() -= this;
-//            }
-//        }
-
-//        DoomsdayApp::games().audienceForReadiness() -= this;
-//        DoomsdayApp::app().audienceForGameChange() -= this;
-//        DoomsdayApp::app().audienceForGameUnload() -= this;
-
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
     }
@@ -167,15 +155,15 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         // Edge navigation buttons are only visible when hoving on them.
         button.set(Background(style().colors().colorf("text")));
-        button.setImageColor(style().colors().colorf("inverted.text") + Vector4f(0, 0, 0, 2));
-        button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
+        //button.setImageColor(style().colors().colorf("inverted.text") + Vector4f(0, 0, 0, 2));
+        //button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
         button.setOpacity(0);
         button.setBehavior(Widget::Focusable, UnsetFlags); // only for the mouse
         button.setAttribute(EatAllMouseEvents, SetFlags);
         button.audienceForStateChange() += this;
 
         button.rule()
-                .setInput(Rule::Width,  style().fonts().font("default").height() * 1.4f)
+                .setInput(Rule::Width,  rule("unit"))
                 .setInput(Rule::Bottom, self.rule().bottom())
                 .setInput(Rule::Top,    tabs->rule().bottom());
     }
@@ -453,7 +441,7 @@ HomeWidget::HomeWidget()
     // Hidden navigation buttons.
     add(d->moveLeft);
     add(d->moveRight);
-    d->moveLeft->rule().setInput(Rule::Left, rule().left());
+    d->moveLeft ->rule().setInput(Rule::Left,  rule().left());
     d->moveRight->rule().setInput(Rule::Right, rule().right());
 
     // Hide content until first update.
