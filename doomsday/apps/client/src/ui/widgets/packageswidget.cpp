@@ -91,8 +91,6 @@ DENG_GUI_PIMPL(PackagesWidget)
     GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
     GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
 
-    TaskPool tasks;
-
     /**
      * Information about an available package.
      */
