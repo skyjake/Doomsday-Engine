@@ -197,14 +197,13 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
     PathTree::Node const *node = this;
     for (int i = 0; i < pathNodeCount; ++i)
     {
-        // If the hashes don't match it can't possibly be this.
-        if (snode->hash() != node->hash())
-        {
-            return 1;
-        }
-
         if (!snode->hasWildCard())
         {
+            // If the hashes don't match it can't possibly be this.
+            if (snode->hash() != node->hash())
+            {
+                return 1;
+            }
             if (node->name().compare(snode->toStringRef(), Qt::CaseInsensitive))
             {
                 return 1;
