@@ -72,4 +72,6 @@ PackagesSidebarWidget::PackagesSidebarWidget()
     layout() << *d->browser;
 
     updateSidebarLayout(Const(0), Const(0));
+
+    d->browser->progress().rule().setRect(rule());
 }
