@@ -15,7 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Lockable"
@@ -31,7 +31,7 @@ Lockable::Lockable()
 {}
 
 Lockable::~Lockable()
-{    
+{
     DENG2_ASSERT(!isLocked()); // You should unlock before deleting!
 }
 
@@ -55,7 +55,7 @@ void Lockable::unlock() const
 
     // Release the lock.
     _mutex.unlock();
-    
+
 #ifdef DENG2_DEBUG
     DENG2_ASSERT(_lockCount >= 0);
     _countMutex.unlock();

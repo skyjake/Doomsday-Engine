@@ -161,12 +161,15 @@ public:
 class DENG2_PUBLIC ObserverBase
 {
 public:
+    ObserverBase();
+    ObserverBase(ObserverBase const &) = delete; // copying denied
     virtual ~ObserverBase();
 
     void addMemberOf   (IAudience &observers);
     void removeMemberOf(IAudience &observers);
 
 private:
+    Lockable _lock;
     QSet<IAudience *> _memberOf;
 };
 
@@ -278,8 +281,8 @@ public:
     }
 
     virtual ~Observers() {
-        DENG2_GUARD(this);
         _disassociateAllMembers();
+        DENG2_GUARD(this);
     }
 
     void clear() {
@@ -387,7 +390,7 @@ public:
 
 private:
     void _disassociateAllMembers() {
-        for (Type *observer : _members) {
+        foreach (Type *observer, _members) {
             observer->removeMemberOf(*this);
         }
     }

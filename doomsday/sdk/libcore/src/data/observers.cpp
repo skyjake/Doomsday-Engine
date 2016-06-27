@@ -23,8 +23,12 @@ namespace de {
 IAudience::~IAudience()
 {}
 
+ObserverBase::ObserverBase()
+{}
+
 ObserverBase::~ObserverBase()
 {
+    DENG2_GUARD(_lock);
     for (IAudience *observers : _memberOf)
     {
         observers->removeMember(this);
@@ -33,11 +37,13 @@ ObserverBase::~ObserverBase()
 
 void ObserverBase::addMemberOf(IAudience &observers)
 {
+    DENG2_GUARD(_lock);
     _memberOf.insert(&observers);
 }
 
 void ObserverBase::removeMemberOf(IAudience &observers)
 {
+    DENG2_GUARD(_lock);
     _memberOf.remove(&observers);
 }
 

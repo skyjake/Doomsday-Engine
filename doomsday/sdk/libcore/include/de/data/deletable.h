@@ -46,6 +46,9 @@ public:
     SafePtr(Type *ptr = nullptr) {
         reset(ptr);
     }
+    SafePtr(SafePtr const &other) {
+        reset(other._ptr);
+    }
     ~SafePtr() {
         reset(nullptr);
     }
@@ -53,6 +56,10 @@ public:
         if (_ptr) _ptr->Deletable::audienceForDeletion -= this;
         _ptr = ptr;
         if (_ptr) _ptr->Deletable::audienceForDeletion += this;
+    }
+    SafePtr &operator = (SafePtr const &other) {
+        reset(other._ptr);
+        return *this;
     }
     Type *operator -> () const {
         return _ptr;

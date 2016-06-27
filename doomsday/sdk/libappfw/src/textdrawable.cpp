@@ -136,7 +136,7 @@ DENG2_PIMPL(TextDrawable)
         {
             d->audienceForDeletion += this;
         }
-        
+
         void runTask()
         {
             try
@@ -226,9 +226,10 @@ DENG2_PIMPL(TextDrawable)
 
         // Let the background tasks know that we are gone.
         DENG2_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
+        audienceForDeletion.clear();
 
         tasks.waitForDone();
-        
+
         delete visibleWrap;
     }
 
