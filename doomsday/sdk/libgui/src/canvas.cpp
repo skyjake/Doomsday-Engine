@@ -259,7 +259,11 @@ void Canvas::setParent(CanvasWindow *parent)
 
 QImage Canvas::grabImage(QSize const &outputSize)
 {
+#ifdef DENG2_QT_5_0_OR_NEWER
+    return grabImage(QRect(QPoint(0, 0), rect().size() * qApp->devicePixelRatio()), outputSize);
+#else
     return grabImage(rect(), outputSize);
+#endif
 }
 
 QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
