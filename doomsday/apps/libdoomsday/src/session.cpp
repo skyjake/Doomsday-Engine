@@ -55,7 +55,7 @@ void Session::copySaved(String const &destPath, String const &sourcePath) //stat
     copied.cacheMetadata(original.metadata()); // Avoid immediately opening the .save package.
 }
 
-DENG2_PIMPL(Session::SavedIndex)
+DENG2_PIMPL(Session::SavedIndex), public Lockable
 {
     All entries;
     bool availabilityUpdateDisabled;
@@ -78,6 +78,8 @@ Session::SavedIndex::SavedIndex() : d(new Instance(this))
 
 void Session::SavedIndex::clear()
 {
+    DENG2_GUARD(d);
+
     // Disable updates for now, we'll do that when we're done.
     d->availabilityUpdateDisabled = true;
 
@@ -93,23 +95,34 @@ void Session::SavedIndex::clear()
 void Session::SavedIndex::add(SavedSession &saved)
 {
     String const path = saved.path().toLower();
-    if (!d->entries.contains(path) || d->entries[path] != &saved)
+    bool notify = false;
     {
-        d->entries[path] = &saved;
-        d->notifyAvailabilityUpdate();
+        DENG2_GUARD(d);
+        if (!d->entries.contains(path) || d->entries[path] != &saved)
+        {
+            d->entries[path] = &saved;
+            notify = true;
+        }
     }
+    if (notify) d->notifyAvailabilityUpdate();
 }
 
 void Session::SavedIndex::remove(String path)
 {
-    if (d->entries.remove(path.toLower()))
+    bool notify = false;
     {
-        d->notifyAvailabilityUpdate();
+        DENG2_GUARD(d);
+        if (d->entries.remove(path.toLower()))
+        {
+            notify = true;
+        }
     }
+    if (notify) d->notifyAvailabilityUpdate();
 }
 
 SavedSession *Session::SavedIndex::find(String path) const
 {
+    DENG2_GUARD(d);
     All::iterator found = d->entries.find(path.toLower());
     if (found != d->entries.end())
     {
