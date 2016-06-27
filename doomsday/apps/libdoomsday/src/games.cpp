@@ -122,9 +122,9 @@ DENG2_PIMPL(Games)
         return nullptr;
     }
 
-    void dataBundlesIdentified(bool wereIdentified)
+    void dataBundlesIdentified(bool)
     {
-        if (/*wereIdentified && */!mainCall)
+        if (!mainCall)
         {
             mainCall.enqueue([this] () { self.checkReadiness(); });
         }

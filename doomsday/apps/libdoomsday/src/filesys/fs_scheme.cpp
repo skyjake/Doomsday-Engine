@@ -218,7 +218,7 @@ struct FS1::Scheme::Instance
     void addFromSearchPaths(FS1::PathGroup group)
     {
         for (FS1::Scheme::SearchPaths::const_iterator i = searchPaths.find(group);
-            i != searchPaths.end() && i.key() == group; ++i)
+             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
         }
@@ -434,8 +434,8 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
 
     // Ensure this is a well formed path.
     if (search.isEmpty() ||
-       !search.path().toString().compareWithoutCase("/") ||
-       !search.path().toString().endsWith("/"))
+        !search.path().toString().compareWithoutCase("/") ||
+        !search.path().toString().endsWith("/"))
         return false;
 
     // The addition of a new search path means the scheme is now dirty.
