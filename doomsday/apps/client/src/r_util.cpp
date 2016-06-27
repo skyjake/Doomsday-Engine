@@ -35,8 +35,7 @@ using namespace de;
 
 float R_MovementYaw(float const mom[])
 {
-    // Multiply by 100 to get some artificial accuracy in bamsAtan2.
-    return BANG2DEG(bamsAtan2(-100 * mom[MY], 100 * mom[MX]));
+    return radianToDegree(atan2f(-mom[MY], mom[MX]));
 }
 
 float R_MovementXYYaw(float momx, float momy)
@@ -47,7 +46,7 @@ float R_MovementXYYaw(float momx, float momy)
 
 float R_MovementPitch(float const mom[])
 {
-    return BANG2DEG(bamsAtan2 (100 * mom[MZ], 100 * V2f_Length(mom)));
+    return radianToDegree(atan2f(1.2f * mom[MZ], V2f_Length(mom)));
 }
 
 float R_MovementXYZPitch(float momx, float momy, float momz)

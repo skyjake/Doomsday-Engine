@@ -959,7 +959,7 @@ void P_MobjThinker(void *thinkerPtr)
                         // Give a small amount of momentum so the movement direction
                         // can be determined.
                         V3d_Copy (fx->mom, mobj->mom);
-                        V3d_Scale(fx->mom, .00001);
+                        V3d_Scale(fx->mom, 0.0001 / V3d_Length(fx->mom));
                     }
                     else if(!--mobj->special1)
                     {

@@ -448,7 +448,7 @@ void R_ProjectSprite(mobj_t &mob)
             // Set up a GL2 model for drawing.
             vis->pose = VisEntityPose(vis->pose.origin,
                                       Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                                      viewAlign, topZ, yaw, 0, pitch, 0);
+                                      /*viewAlign*/ false, topZ, yaw, 0, pitch, 0);
             vis->light = VisEntityLighting(ambientColor, vLightListIdx);
 
             vis->data.model2.object   = &mob;
