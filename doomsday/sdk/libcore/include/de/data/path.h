@@ -53,7 +53,7 @@ public:
     DENG2_ERROR(OutOfBoundsError);
 
     /// Type used to represent a path segment hash key.
-    typedef ushort hash_type;
+    typedef duint32 hash_type;
 
     /// Range of a path segment hash key; [0..hash_range)
     static hash_type const hash_range;

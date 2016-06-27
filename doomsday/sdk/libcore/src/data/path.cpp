@@ -22,6 +22,8 @@
 #include "de/Writer"
 
 #include <QList>
+#include <de/math.h>
+#include <de/ByteRefArray>
 #include <cstring> // memset
 
 namespace de {
@@ -31,26 +33,16 @@ static int const SEGMENT_BUFFER_SIZE = 24;
 
 static String emptyPath;
 
-Path::hash_type const Path::hash_range = 512;
+Path::hash_type const Path::hash_range = 0xffffffff;
 
-ushort Path::Segment::hash() const
+Path::hash_type Path::Segment::hash() const
 {
     // Is it time to compute the hash?
     if (!(flags & GotHashKey))
     {
-        hashKey = 0;
-        int op = 0;
-        for (int i = 0; i < range.length(); ++i)
-        {
-            ushort unicode = range.at(i).toLower().unicode();
-            switch (op)
-            {
-            case 0: hashKey ^= unicode; ++op;   break;
-            case 1: hashKey *= unicode; ++op;   break;
-            case 2: hashKey -= unicode;   op=0; break;
-            }
-        }
-        hashKey %= hash_range;
+        String const lower = range.toString().toLower();
+        hashKey = de::crc32(ByteRefArray(lower.constData(), lower.size() * sizeof(QChar)))
+                % hash_range;
         flags |= GotHashKey;
     }
     return hashKey;
