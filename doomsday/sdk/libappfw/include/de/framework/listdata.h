@@ -48,12 +48,33 @@ public:
     Data &insert(Pos pos, Item *item);
     void remove(Pos pos);
     Item *take(Pos pos);
+    void sort(SortMethod method = Ascending) override {
+        Data::sort(method);
+    }
     void sort(LessThanFunc lessThan);
     void stableSort(LessThanFunc lessThan);
 
 private:
     typedef QList<Item *> Items;
     Items _items;
+};
+
+/**
+ * Utility template for data that uses a specific type of item.
+ */
+template <typename ItemType>
+class ListDataT : public ListData
+{
+public:
+    ItemType &at(Pos pos) override {
+        return static_cast<ItemType &>(ListData::at(pos));
+    }
+    ItemType const &at(Pos pos) const override {
+        return static_cast<ItemType const &>(ListData::at(pos));
+    }
+    ItemType *take(Pos pos) override {
+        return static_cast<ItemType *>(ListData::take(pos));
+    }
 };
 
 } // namespace ui

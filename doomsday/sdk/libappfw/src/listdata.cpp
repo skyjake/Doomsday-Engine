@@ -109,26 +109,13 @@ Item *ListData::take(Data::Pos pos)
     return taken;
 }
 
-struct ListItemSorter {
-    Data::LessThanFunc lessThan;
-
-    ListItemSorter(Data::LessThanFunc func) : lessThan(func) {}
-    bool operator () (Item const *a, Item const *b) const {
-        return lessThan(*a, *b);
-    }
-};
-
 void ListData::sort(LessThanFunc lessThan)
 {
     qSort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
 
-    // Notify.
-    DENG2_FOR_AUDIENCE2(OrderChange, i)
-    {
-        i->dataItemOrderChanged();
-    }
+    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void ListData::stableSort(LessThanFunc lessThan)
@@ -137,11 +124,7 @@ void ListData::stableSort(LessThanFunc lessThan)
         return lessThan(*a, *b);
     });
 
-    // Notify.
-    DENG2_FOR_AUDIENCE2(OrderChange, i)
-    {
-        i->dataItemOrderChanged();
-    }
+    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 } // namespace de
