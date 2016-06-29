@@ -76,28 +76,6 @@ public:
         virtual void updateItemWidget(GuiWidget &widget, ui::Item const &item) = 0;
     };
 
-    /**
-     * Filters out data items.
-     */
-    class IFilter
-    {
-    public:
-        virtual ~IFilter() {}
-
-        /**
-         * Determines whether an item should be accepted or ignored by the organizer.
-         *
-         * @param organizer  Which organizer is asking the question.
-         * @param data       Data context.
-         * @param item       Item to check.
-         *
-         * @return @c true to accept item, @c false to ignore it.
-         */
-        virtual bool isItemAccepted(ChildWidgetOrganizer const &organizer,
-                                    ui::Data const &data,
-                                    ui::Item const &item) const = 0;
-    };
-
 public:
     ChildWidgetOrganizer(GuiWidget &container);
 
@@ -111,15 +89,6 @@ public:
     void setWidgetFactory(IWidgetFactory &factory);
 
     IWidgetFactory &widgetFactory() const;
-
-    /**
-     * Sets the object that decides whether items are accepted or ignored.
-     *
-     * @param filter  Filtering object.
-     */
-    void setFilter(IFilter const &filter);
-
-    void unsetFilter();
 
     /**
      * Sets the data context of the organizer. If there was a previous context,
@@ -140,17 +109,6 @@ public:
 
     ui::Item const *findItemForWidget(GuiWidget const &widget) const;
 
-    /**
-     * Filters all items according to the defined IFilter. Widgets are
-     * created and removed as needed according to the filter.
-     */
-    void refilter();
-
-    /**
-     * Number of items currently being organized. This is affected by the filtering.
-     */
-    dsize itemCount() const;
-
 //- Child Widget Virtualization ---------------------------------------------------------
 
     /**
@@ -165,6 +123,8 @@ public:
      * @param enabled  Enable or disable child virtualization.
      */
     void setVirtualizationEnabled(bool enabled);
+
+    void setVirtualTopEdge(Rule const &topEdge);
 
     void setVisibleArea(Rule const &minimum, Rule const &maximum);
 

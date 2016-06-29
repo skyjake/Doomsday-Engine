@@ -31,7 +31,6 @@ namespace internal
     {
         AlwaysAppend    = 0x1,
         AlwaysPrepend   = 0x2,
-        IgnoreFilter    = 0x4,
         DefaultBehavior = 0,
     };
 
@@ -51,24 +50,24 @@ struct ChildWidgetOrganizer::Instance
     , DENG2_OBSERVES(ui::Data, OrderChange)
     , DENG2_OBSERVES(ui::Item, Change     )
 {
+    typedef Range<dsize> PvsRange;
+
     ui::Data const *dataItems = nullptr;
-    IFilter const *filter = nullptr;
     GuiWidget *container;
     IWidgetFactory *factory;
-    ui::DataPos firstAcceptedPos = 0;
 
     typedef QMap<ui::Item const *, GuiWidget *> Mapping;
     typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
     bool virtualEnabled = false;
+    Rule const *virtualTop = nullptr;
     Rule const *virtualMin = nullptr;
     Rule const *virtualMax = nullptr;
     ConstantRule *virtualStrut = nullptr;
     ConstantRule *estimatedHeight = nullptr;
     int averageItemHeight = 0;
-    dsize virtualItemCount = 0;
-    Ranges virtualPvsRange;
+    PvsRange virtualPvs;
     QSet<GuiWidget *> pendingStrutAdjust;
 
     Instance(Public *i, GuiWidget *c)
@@ -79,6 +78,7 @@ struct ChildWidgetOrganizer::Instance
 
     ~Instance()
     {
+        releaseRef(virtualTop);
         releaseRef(virtualMin);
         releaseRef(virtualMax);
         releaseRef(virtualStrut);
@@ -109,10 +109,10 @@ struct ChildWidgetOrganizer::Instance
         }
     }
 
-    Ranges itemRange() const
+    PvsRange itemRange() const
     {
-        Ranges range(0, dataItems->size());
-        if (virtualEnabled) range = range.intersection(virtualPvsRange);
+        PvsRange range(0, dataItems->size());
+        if (virtualEnabled) range = range.intersection(virtualPvs);
         return range;
     }
 
@@ -128,15 +128,6 @@ struct ChildWidgetOrganizer::Instance
         }
 
         ui::Item const &item = dataItems->at(pos);
-
-        if (filter && !behavior.testFlag(IgnoreFilter))
-        {
-            if (!filter->isItemAccepted(self, *dataItems, item))
-            {
-                // Skip this one.
-                return nullptr;
-            }
-        }
 
         GuiWidget *w = factory->makeItemWidget(item, container);
         if (!w) return nullptr; // Unpresentable.
@@ -249,43 +240,44 @@ struct ChildWidgetOrganizer::Instance
         }
     }
 
-    void dataItemAdded(ui::Data::Pos pos, ui::Item const &item)
+    void dataItemAdded(ui::Data::Pos pos, ui::Item const &)
     {
-        addItemWidget(pos);
-
-        if (!filter)
+        if (!virtualEnabled)
         {
-            virtualItemCount = dataItems->size();
-            updateVirtualHeight();
+            addItemWidget(pos);
         }
         else
         {
-            if (filter->isItemAccepted(self, *dataItems, item))
+            // Items added after the PVS can be handled purely virtually. Items
+            // before the PVS will cause the PVS range to be re-estimated.
+            if (pos < virtualPvs.end)
             {
-                ++virtualItemCount;
-                updateVirtualHeight();
+                clearWidgets();
+                virtualPvs = PvsRange();
             }
+            updateVirtualHeight();
         }
     }
 
     void dataItemRemoved(ui::Data::Pos pos, ui::Item &item)
     {
-        if (pos < firstAcceptedPos)
-        {
-            --firstAcceptedPos;
-        }
-        if (!filter || filter->isItemAccepted(self, *dataItems, item))
-        {
-            --virtualItemCount;
-            updateVirtualHeight();
-        }
-
         Mapping::iterator found = mapping.find(&item);
         if (found != mapping.end())
         {
             found.key()->audienceForChange() -= this;
             deleteWidget(found.value());
             mapping.erase(found);
+        }
+
+        if (virtualEnabled)
+        {
+            if (virtualPvs.contains(pos))
+            {
+                clearWidgets();
+                virtualPvs = PvsRange();
+            }
+            // Virtual total height changes even if the item was not represented by a widget.
+            updateVirtualHeight();
         }
     }
 
@@ -354,64 +346,13 @@ struct ChildWidgetOrganizer::Instance
         return 0;
     }
 
-    void refilter()
-    {
-        if (!filter)
-        {
-            firstAcceptedPos = 0;
-            return;
-        }
-
-        firstAcceptedPos = ui::Data::InvalidPos;
-
-        if (virtualEnabled)
-        {
-            virtualPvsRange = Ranges();
-            virtualItemCount = 0;
-            virtualStrut->set(0);
-            clearWidgets();
-        }
-
-        for (ui::DataPos i = 0; i < dataItems->size(); ++i)
-        {
-            ui::Item const *item = &dataItems->at(i);
-            bool const accepted = filter->isItemAccepted(self, *dataItems, *item);
-
-            if (!virtualEnabled)
-            {
-                if (!accepted && mapping.contains(item))
-                {
-                    // This widget needs to be removed.
-                    removeItemWidget(i);
-                }
-                else if (accepted && !mapping.contains(item))
-                {
-                    // This widget may need to be created.
-                    addItemWidget(i, IgnoreFilter);
-                }
-            }
-
-            if (accepted)
-            {
-                ++virtualItemCount;
-
-                if (firstAcceptedPos == ui::Data::InvalidPos)
-                {
-                    firstAcceptedPos = i;
-                }
-            }
-        }
-
-        updateVirtualHeight();
-    }
-
 //- Child Widget Virtualization ---------------------------------------------------------
 
     void updateVirtualHeight()
     {
         if (virtualEnabled)
         {
-            estimatedHeight->set(virtualItemCount * float(averageItemHeight));
+            estimatedHeight->set(dataItems->size() * float(averageItemHeight));
         }
     }
 
@@ -437,199 +378,95 @@ struct ChildWidgetOrganizer::Instance
     duint maxVisibleItems() const
     {
         if (!virtualMin) return 0;
+        // TODO: Include some additional items beyond the visible area.
         return duint(std::ceil((virtualMax->value() - virtualMin->value()) /
                                 float(averageItemHeight)));
     }
 
     void updateVirtualization()
     {
-        if (!virtualEnabled || !virtualMin || !virtualMax ||
+        if (!virtualEnabled || !virtualMin || !virtualMax || !virtualTop ||
             virtualMin->valuei() >= virtualMax->valuei())
         {
             return;
         }
 
-        // Apply the pending strut reductions, if the widget heights are now known.
-        // TODO: Changes in item heights should be observed and immediately applied...
+        // Estimate a new PVS range based on the average item height and the visible area.
+        PvsRange const oldPvs = virtualPvs;
+
+        float const y1 = de::max(0.f, virtualMin->value() - virtualTop->value());
+        float const y2 = de::max(0.f, virtualMax->value() - virtualTop->value());
+        PvsRange estimated = PvsRange(y1 / averageItemHeight, y2 / averageItemHeight)
+                             .intersection(PvsRange(0, dataItems->size()));
+
+        // If this range is completely different than the current range, recreate
+        // all visible widgets.
+        if (oldPvs.isEmpty() ||
+            estimated.start >= oldPvs.end ||
+            estimated.end <= oldPvs.start)
         {
-            QMutableSetIterator<GuiWidget *> iter(pendingStrutAdjust);
-            while (iter.hasNext())
+            clearWidgets();
+
+            // Set up a fully estimated strut.
+            virtualPvs = estimated;
+            virtualStrut->set(averageItemHeight * virtualPvs.start);
+
+            for (auto pos = virtualPvs.start; pos < virtualPvs.end; ++pos)
             {
-                iter.next();
-                if (iter.value()->rule().height().value() > 0)
-                {
-                    // Adjust based on the difference to the average height.
-                    virtualStrut->set(de::max(0.f, virtualStrut->value() -
-                                              (iter.value()->rule().height().value() -
-                                               averageItemHeight)));
-                    iter.remove();
-                }
+                addItemWidget(pos, AlwaysAppend);
             }
+            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+        }
+        else if (estimated.end > oldPvs.end) // Extend downward.
+        {
+            virtualPvs.end = estimated.end;
+            for (auto pos = oldPvs.end; pos < virtualPvs.end; ++pos)
+            {
+                addItemWidget(pos, AlwaysAppend);
+            }
+            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+        }
+        else if (estimated.start < oldPvs.start) // Extend upward.
+        {
+            // Reduce strut length to make room for new items.
+            virtualStrut->set(de::max(0.f, virtualStrut->value() - averageItemHeight *
+                                      (oldPvs.start - estimated.start)));
+
+            virtualPvs.start = estimated.start;
+            for (auto pos = oldPvs.start - 1;
+                 pos >= virtualPvs.start && pos < dataItems->size();
+                 --pos)
+            {
+                addItemWidget(pos, AlwaysPrepend);
+            }
+            DENG2_ASSERT(virtualPvs.size() == container->childCount());
         }
 
-        Rangef estimatedExtents; // Range covered by items (estimated).
         if (container->childCount() > 0)
         {
-            estimatedExtents = Rangef(firstChild()->rule().top()   .value(),
-                                       lastChild()->rule().bottom().value());
-        }
-        else
-        {
-            estimatedExtents = Rangef(virtualMin->value(), virtualMin->value());
-        }
-
-        duint const maxVisible = maxVisibleItems();
-        bool changed = true;
-
-        while (changed)
-        {
-            changed = false;
-
-            // Can we remove widgets?
-            while (container->childCount() > 1 &&
-                   lastChild()->rule().top().value() > virtualMax->value())
+            // Remove excess widgets from the top and extend the strut accordingly.
+            while (virtualPvs.start < estimated.start)
             {
-                // Remove from the bottom.
-                ui::DataPos const pos = virtualPvsRange.end - 1;
-                if (reduceVirtualPvs(ui::Down))
+                float height = firstChild()->rule().height().value();
+                if (!fequal(height, 0.f))
                 {
-                    estimatedExtents.end -= virtualItemHeight(lastChild());
-                    removeItemWidget(pos);
-                    changed = true;
+                    // Actual height is not yet known, so use estimate.
+                    height = averageItemHeight;
                 }
-                else break;
+                removeItemWidget(virtualPvs.start++);
+                virtualStrut->set(virtualStrut->value() + height);
             }
+            DENG2_ASSERT(virtualPvs.size() == container->childCount());
 
-            while (container->childCount() > 1 &&
-                   firstChild()->rule().bottom().value() < virtualMin->value())
+            // Remove excess widgets from the bottom.
+            while (virtualPvs.end > estimated.end)
             {
-                // Remove from the top.
-                ui::DataPos const pos = virtualPvsRange.start;
-                if (reduceVirtualPvs(ui::Up))
-                {
-                    float const itemHeight = virtualItemHeight(firstChild());
-                    estimatedExtents.start += itemHeight;
-                    virtualStrut->set(de::max(0.f, virtualStrut->value() + itemHeight));
-                    removeItemWidget(pos);
-                    changed = true;
-                }
-                else break;
+                removeItemWidget(--virtualPvs.end);
             }
-
-            // Can we add more widgets in the bottom?
-            while (container->childCount() < virtualItemCount &&
-                   estimatedExtents.end < virtualMax->value() &&
-                   container->childCount() < maxVisible)
-            {
-                ui::DataPos pos = extendVirtualPvs(ui::Down);
-                if (pos != ui::Data::InvalidPos)
-                {
-                    estimatedExtents.end += averageItemHeight;
-                    addItemWidget(pos, AlwaysAppend | IgnoreFilter);
-                    changed = true;
-                }
-                else break;
-            }
-
-            // Add widgets to the top?
-            while (container->childCount() < virtualItemCount &&
-                   estimatedExtents.start > virtualMin->value() &&
-                   container->childCount() < maxVisible)
-            {
-                ui::DataPos pos = extendVirtualPvs(ui::Up);
-                if (pos != ui::Data::InvalidPos)
-                {
-                    GuiWidget *w = addItemWidget(pos, AlwaysPrepend | IgnoreFilter);
-                    pendingStrutAdjust.insert(w);
-                    estimatedExtents.start -= averageItemHeight;
-                    virtualStrut->set(de::max(0.f, virtualStrut->value() - averageItemHeight));
-                    changed = true;
-                }
-                else break;
-            }
+            DENG2_ASSERT(virtualPvs.size() == container->childCount());
         }
 
-        if (virtualPvsRange.start == firstAcceptedPos)
-        {
-            virtualStrut->set(0);
-            pendingStrutAdjust.clear();
-        }
-    }
-
-    /**
-     * Extends the potentially visible range by one item.
-     * @param dir  Direction for expansion.
-     * @return Position of the newly added item.
-     */
-    ui::DataPos extendVirtualPvs(ui::Direction dir)
-    {
-        ui::DataPos pos;
-
-        if (dir == ui::Down)
-        {
-            pos = virtualPvsRange.end;
-            do
-            {
-                if (pos == dataItems->size())
-                {
-                    return ui::Data::InvalidPos; // Out of items.
-                }
-                ++pos;
-            }
-            while (!filter || !filter->isItemAccepted(self, *dataItems, dataItems->at(pos - 1)));
-
-            virtualPvsRange.end = pos;
-            //qDebug() << "PVS extended (down):" << virtualPvsRange.asText();
-            return pos - 1;
-        }
-        else
-        {
-            pos = virtualPvsRange.start;
-            do
-            {
-                if (pos == 0)
-                {
-                    return ui::Data::InvalidPos; // Out of items.
-                }
-                --pos;
-            }
-            while (!filter || !filter->isItemAccepted(self, *dataItems, dataItems->at(pos)));
-
-            virtualPvsRange.start = pos;
-            //qDebug() << "PVS extended (up):" << virtualPvsRange.asText();
-            return virtualPvsRange.start;
-        }
-    }
-
-    bool reduceVirtualPvs(ui::Direction dir)
-    {
-        if (virtualPvsRange.isEmpty()) return false;
-
-        if (dir == ui::Down)
-        {
-            do
-            {
-                --virtualPvsRange.end;
-            }
-            while (!virtualPvsRange.isEmpty() &&
-                   (!filter ||
-                    !filter->isItemAccepted(self, *dataItems,
-                                            dataItems->at(virtualPvsRange.end - 1))));
-            //qDebug() << "PVS reduced (down):" << virtualPvsRange.asText();
-        }
-        else if (dir == ui::Up)
-        {
-            do
-            {
-                ++virtualPvsRange.start;
-            }
-            while (!virtualPvsRange.isEmpty() &&
-                   (!filter ||
-                    !filter->isItemAccepted(self, *dataItems,
-                                            dataItems->at(virtualPvsRange.start))));
-            //qDebug() << "PVS reduced (up):" << virtualPvsRange.asText();
-        }
-        return true;
+        DENG2_ASSERT(virtualPvs.size() == container->childCount());
     }
 
     DENG2_PIMPL_AUDIENCE(WidgetCreation)
@@ -675,16 +512,6 @@ ChildWidgetOrganizer::IWidgetFactory &ChildWidgetOrganizer::widgetFactory() cons
     return *d->factory;
 }
 
-void ChildWidgetOrganizer::setFilter(IFilter const &filter)
-{
-    d->filter = &filter;
-}
-
-void ChildWidgetOrganizer::unsetFilter()
-{
-    d->filter = nullptr;
-}
-
 GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Item const &item) const
 {
     return d->find(item);
@@ -700,20 +527,10 @@ ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget)
     return d->findByWidget(widget);
 }
 
-void ChildWidgetOrganizer::refilter()
-{
-    d->refilter();
-}
-
-dsize ChildWidgetOrganizer::itemCount() const
-{
-    return d->virtualItemCount;
-}
-
 void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
 {
     d->virtualEnabled = enabled;
-    d->virtualPvsRange = Ranges(0, 0);
+    d->virtualPvs     = Instance::PvsRange();
 
     if (d->virtualEnabled)
     {
@@ -725,6 +542,11 @@ void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
         releaseRef(d->estimatedHeight);
         releaseRef(d->virtualStrut);
     }
+}
+
+void ChildWidgetOrganizer::setVirtualTopEdge(Rule const &topEdge)
+{
+    changeRef(d->virtualTop, topEdge);
 }
 
 void ChildWidgetOrganizer::setVisibleArea(Rule const &minimum, Rule const &maximum)

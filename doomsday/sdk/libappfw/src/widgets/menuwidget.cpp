@@ -596,6 +596,8 @@ void MenuWidget::setVirtualizationEnabled(bool enabled, int averageItemHeight)
 {
     d->organizer.setVirtualizationEnabled(enabled);
     d->organizer.setAverageChildHeight(averageItemHeight);
+    d->organizer.setVirtualTopEdge(contentRule().top());
+    d->organizer.setVisibleArea(rule().top(), rule().bottom());
     d->needLayout = true;
 }
 

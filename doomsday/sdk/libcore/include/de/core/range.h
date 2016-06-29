@@ -155,7 +155,6 @@ typedef Range<dint32>  Rangei;
 typedef Range<duint32> Rangeui;
 typedef Range<dint64>  Rangei64;
 typedef Range<duint64> Rangeui64;
-typedef Range<dsize>   Ranges;
 typedef Range<dfloat>  Rangef;
 typedef Range<ddouble> Ranged;
 
