@@ -35,14 +35,14 @@
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/PopupMenuWidget>
+#include <de/ui/FilteredData>
 
 using namespace de;
 
 DENG_GUI_PIMPL(GamePanelButtonWidget)
-, public ChildWidgetOrganizer::IFilter
 {
     GameProfile &gameProfile;
-    SavedSessionListData const &savedItems;
+    ui::FilteredDataT<SavedSessionListData::SaveItem> savedItems;
     SaveListWidget *saves;
     PackagesButtonWidget *packagesButton;
     ButtonWidget *playButton;
@@ -51,11 +51,22 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
 
-    Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
+    Instance(Public *i, GameProfile &profile, SavedSessionListData const &allSavedItems)
         : Base(i)
         , gameProfile(profile)
-        , savedItems(savedItems)
+        , savedItems(allSavedItems)
     {
+        // Only show the savegames relevant for this game.
+        savedItems.setFilter([this] (ui::Item const &it)
+        {
+            // User-created profiles currently have no saves associated with them.
+            if (gameProfile.isUserCreated()) return false;
+
+            // Only saved sessions for this game are to be included.
+            auto const &item = it.as<SavedSessionListData::SaveItem>();
+            return item.gameId() == gameProfile.game();
+        });
+
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
         packagesButton->setDialogTitle(profile.name());
@@ -98,7 +109,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         saves = new SaveListWidget(self);
         saves->rule().setInput(Rule::Width, self.rule().width());
         saves->margins().setZero().setLeft(self.icon().rule().width());
-        saves->organizer().setFilter(*this);
         saves->setItems(savedItems);
 
         deleteSaveButton = new ButtonWidget;
@@ -206,19 +216,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     void updateGameTitleImage()
     {
         self.icon().setImage(self.makeGameLogo(game(), catalog));
-    }
-
-//- ChildWidgetOrganizer::IFilter ---------------------------------------------
-
-    bool isItemAccepted(ChildWidgetOrganizer const &, ui::Data const &,
-                        ui::Item const &it) const
-    {
-        // User-created profiles currently have no saves associated with them.
-        if (gameProfile.isUserCreated()) return false;
-
-        // Only saved sessions for this game are to be included.
-        auto const &item = it.as<SavedSessionListData::SaveItem>();
-        return item.gameId() == gameProfile.game();
     }
 };
 

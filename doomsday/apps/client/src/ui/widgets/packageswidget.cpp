@@ -35,6 +35,7 @@
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/TaskPool>
+#include <de/ui/FilteredData>
 #include <de/ui/VariantActionItem>
 
 #include <doomsday/DoomsdayApp>
@@ -62,35 +63,8 @@ PackagesWidget::IPackageStatus::~IPackageStatus() {}
 DENG_GUI_PIMPL(PackagesWidget)
 , DENG2_OBSERVES(res::Bundles, Identify)
 , DENG2_OBSERVES(DoomsdayApp, FileRefresh)
-, public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    LoopCallback mainCall;
-
-    // Search filter:
-    LineEditWidget *search;
-    Rule const *searchMinY = nullptr;
-    ButtonWidget *clearSearch;
-    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
-    QStringList filterTerms;
-    QTimer refilterTimer;
-
-    ProgressWidget *refreshProgress;
-
-    // Packages list:
-    HomeMenuWidget *menu;
-    ui::ListData defaultActionItems;
-    ui::Data const *actionItems = &defaultActionItems;
-    bool showHidden = false;
-    bool actionOnlyForSelection = true;
-
-    IPackageStatus const *packageStatus = &isPackageLoaded;
-
-    GuiWidget::ColorTheme unselectedItem      = GuiWidget::Normal;
-    GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
-    GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
-    GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
-
     /**
      * Information about an available package.
      */
@@ -123,6 +97,34 @@ DENG_GUI_PIMPL(PackagesWidget)
             info = nullptr;
         }
     };
+
+    LoopCallback mainCall;
+
+    // Search filter:
+    LineEditWidget *search;
+    Rule const *searchMinY = nullptr;
+    ButtonWidget *clearSearch;
+    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
+    QStringList filterTerms;
+    QTimer refilterTimer;
+
+    ProgressWidget *refreshProgress;
+
+    // Packages list:
+    HomeMenuWidget *menu;
+    ui::ListDataT<PackageItem> allPackages;
+    ui::FilteredData filteredPackages { allPackages };
+    ui::ListData defaultActionItems;
+    ui::Data const *actionItems = &defaultActionItems;
+    bool showHidden = false;
+    bool actionOnlyForSelection = true;
+
+    IPackageStatus const *packageStatus = &isPackageLoaded;
+
+    GuiWidget::ColorTheme unselectedItem      = GuiWidget::Normal;
+    GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
+    GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
+    GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
 
     /**
      * Widget showing information about a package and containing buttons for manipulating
@@ -357,6 +359,29 @@ DENG_GUI_PIMPL(PackagesWidget)
         });
 
         // Filtered list of packages.
+        filteredPackages.setFilter([this] (ui::Item const &it)
+        {
+            auto &item = it.as<PackageItem>();
+
+            // The terms are looked in:
+            // - title
+            // - identifier
+            // - tags
+
+            if (!item.info) return false;
+
+            bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
+            if (showHidden ^ hidden)
+            {
+                return false;
+            }
+
+            return filterTerms.isEmpty() ||
+                   checkTerms(item.data().toString()) || // ID
+                   checkTerms(item.info->gets(VAR_TITLE)) ||
+                   checkTerms(item.info->gets(VAR_TAGS));
+        });
+        menu->setItems(filteredPackages);
         menu->setBehavior(ChildVisibilityClipping);
         if (!self.name().isEmpty())
         {
@@ -368,7 +393,6 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   self.rule().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
-        menu->organizer().setFilter(*this);
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule("unit").valuei() +
                                        int(style().fonts().font("default").height().value()*3));
 
@@ -394,7 +418,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         releaseRef(searchMinY);
 
         // Private instance deleted before child widgets.
-        menu->organizer().unsetFilter();
+        menu->useDefaultItems();
     }
 
     void showProgressIndicator(bool show)
@@ -420,12 +444,12 @@ DENG_GUI_PIMPL(PackagesWidget)
         StringList packages = App::packageLoader().findAllPackages();
 
         // Remove from the list those packages that are no longer listed.
-        for (ui::DataPos i = 0; i < menu->items().size(); ++i)
+        for (ui::DataPos i = 0; i < allPackages.size(); ++i)
         {
-            auto &pkgItem = menu->items().at(i).as<PackageItem>();
+            auto &pkgItem = allPackages.at(i);
             if (!pkgItem.info || !packages.contains(pkgItem.data().toString()))
             {
-                menu->items().remove(i--);
+                allPackages.remove(i--);
             }
         }
 
@@ -440,27 +464,26 @@ DENG_GUI_PIMPL(PackagesWidget)
                 tags.contains(QStringLiteral("gamedata"))) continue;
 
             // Is this already in the list?
-            ui::DataPos pos = menu->items().findData(pack.objectNamespace().gets(Package::VAR_PACKAGE_ID));
+            ui::DataPos pos = allPackages.findData(pack.objectNamespace().gets(Package::VAR_PACKAGE_ID));
             if (pos != ui::Data::InvalidPos)
             {
-                menu->items().at(pos).as<PackageItem>().setFile(pack);
+                allPackages.at(pos).setFile(pack);
             }
             else
             {
-                menu->items() << new PackageItem(pack);
+                allPackages << new PackageItem(pack);
             }
         }
 
-        menu->items().sort();
-        menu->organizer().refilter();
+        allPackages.sort();
         showProgressIndicator(false);
 
-        emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
+        emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
     }
 
     void updateItems()
     {
-        menu->items().forAll([this] (ui::Item &item)
+        filteredPackages.forAll([this] (ui::Item &item)
         {
             item.as<PackageItem>().notifyChange();
             return LoopContinue;
@@ -498,14 +521,15 @@ DENG_GUI_PIMPL(PackagesWidget)
         showHidden = filterTerms.contains(TAG_HIDDEN);
         if (showHidden) filterTerms.removeAll(TAG_HIDDEN);
 
-        menu->organizer().refilter();
+        //menu->organizer().refilter();
+        filteredPackages.refilter();
 
-        emit self.itemCountChanged(menu->organizer().itemCount(), menu->items().size());
+        emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
     }
 
     void focusFirstListedPackage()
     {
-        if (menu->organizer().itemCount() > 0)
+        if (filteredPackages.size() > 0)
         {
             menu->scrollY(0);
             root().setFocus(menu->childWidgets().first());
@@ -530,8 +554,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         showProgressIndicator(true);
     }
 
-//- ChildWidgetOrganizer::IFilter ---------------------------------------------
-
     bool checkTerms(String const &text) const
     {
         for (QString const &filterTerm : filterTerms)
@@ -542,30 +564,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
         return true;
-    }
-
-    bool isItemAccepted(ChildWidgetOrganizer const &, ui::Data const &,
-                        ui::Item const &it) const
-    {
-        auto &item = it.as<PackageItem>();
-
-        // The terms are looked in:
-        // - title
-        // - identifier
-        // - tags
-
-        if (!item.info) return false;
-
-        bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
-        if (showHidden ^ hidden)
-        {
-            return false;
-        }
-
-        return filterTerms.isEmpty() ||
-               checkTerms(item.data().toString()) || // ID
-               checkTerms(item.info->gets(VAR_TITLE)) ||
-               checkTerms(item.info->gets(VAR_TAGS));
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
@@ -659,10 +657,10 @@ void PackagesWidget::updateItems()
 
 ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
 {
-    ui::DataPos found = d->menu->items().findData(packageId);
+    ui::DataPos found = d->filteredPackages.findData(packageId);
     if (found != ui::Data::InvalidPos)
     {
-        return &d->menu->items().at(found);
+        return &d->filteredPackages.at(found);
     }
     return nullptr;
 }

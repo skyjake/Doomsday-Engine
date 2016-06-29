@@ -22,6 +22,7 @@
 #include "de/GuiRootWidget"
 #include "de/SignalAction"
 #include "de/DialogContentStylist"
+#include "de/ui/FilteredData"
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
@@ -76,12 +77,11 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     return false;
 }
 
-DENG_GUI_PIMPL(DialogWidget),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate),
-DENG2_OBSERVES(ui::Data, Addition),
-DENG2_OBSERVES(ui::Data, Removal),
-public ChildWidgetOrganizer::IFilter
+DENG_GUI_PIMPL(DialogWidget)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DENG2_OBSERVES(ui::Data, Addition)
+, DENG2_OBSERVES(ui::Data, Removal)
 {
     Modality modality;
     Flags flags;
@@ -91,6 +91,8 @@ public ChildWidgetOrganizer::IFilter
     MenuWidget *buttons;
     MenuWidget *extraButtons;
     ui::ListData buttonItems;
+    ui::FilteredData mainButtonItems  { buttonItems };
+    ui::FilteredData extraButtonItems { buttonItems };
     QEventLoop subloop;
     de::Action *acceptAction;
     Animation glow;
@@ -124,20 +126,32 @@ public ChildWidgetOrganizer::IFilter
 
         buttons = new MenuWidget("buttons");
         buttons->margins().setTop("");
-        buttons->setItems(buttonItems);
+        buttons->setItems(mainButtonItems);
         buttons->organizer().audienceForWidgetCreation() += this;
         buttons->organizer().audienceForWidgetUpdate() += this;
-        buttons->organizer().setFilter(*this);
 
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
-        extraButtons->setItems(buttonItems);
+        extraButtons->setItems(extraButtonItems);
         extraButtons->organizer().audienceForWidgetCreation() += this;
         extraButtons->organizer().audienceForWidgetUpdate() += this;
-        extraButtons->organizer().setFilter(*this);
 
         buttonItems.audienceForAddition() += this;
         buttonItems.audienceForRemoval()  += this;
+
+        // Segregate Action buttons into the extra buttons set.
+        mainButtonItems.setFilter([] (ui::Item const &it)
+        {
+            if (!it.is<DialogButtonItem>()) return false;
+            // Non-Action buttons only.
+            return !it.as<DialogButtonItem>().role().testFlag(Action);
+        });
+        extraButtonItems.setFilter([] (ui::Item const &it)
+        {
+            if (!it.is<DialogButtonItem>()) return false;
+            // Only Action buttons allowed.
+            return it.as<DialogButtonItem>().role().testFlag(Action);
+        });
 
         // The menu maintains its own width and height based on children.
         // Set up one row with variable number of columns.
@@ -275,26 +289,6 @@ public ChildWidgetOrganizer::IFilter
         releaseRef(maxHeight);
     }
 
-    bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &, ui::Item const &it) const
-    {
-        // Only dialog buttons allowed in the dialog button menus.
-        if (!it.is<DialogButtonItem>()) return false;
-
-        if (&organizer == &buttons->organizer())
-        {
-            // Non-Action buttons only.
-            return !it.as<DialogButtonItem>().role().testFlag(Action);
-        }
-        else if (&organizer == &extraButtons->organizer())
-        {
-            // Only Action buttons allowed.
-            return it.as<DialogButtonItem>().role().testFlag(Action);
-        }
-
-        DENG2_ASSERT(false); // unexpected
-        return false;
-    }
-
     void dataItemAdded(ui::Data::Pos, ui::Item const &)
     {
         needButtonUpdate = true;
@@ -307,9 +301,7 @@ public ChildWidgetOrganizer::IFilter
 
     void updateButtonLayout()
     {
-        buttons->items().sort(dialogButtonOrder);
-        //extraButtons->item().sort(dialogButtonOrder);
-
+        buttonItems.sort(dialogButtonOrder);
         needButtonUpdate = false;
     }
 
@@ -387,11 +379,11 @@ public ChildWidgetOrganizer::IFilter
     {
         // Note: extra buttons not searched because they shouldn't contain default actions.
 
-        for (ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
+        for (ui::Data::Pos i = 0; i < mainButtonItems.size(); ++i)
         {
-            ButtonItem const *act = buttons->items().at(i).maybeAs<ButtonItem>();
+            ButtonItem const *act = mainButtonItems.at(i).maybeAs<ButtonItem>();
             if (act->role().testFlag(Default) &&
-               buttons->organizer().itemWidget(i)->isEnabled())
+                buttons->organizer().itemWidget(i)->isEnabled())
             {
                 return act;
             }
@@ -399,7 +391,7 @@ public ChildWidgetOrganizer::IFilter
         return 0;
     }
 
-    ButtonWidget const &buttonWidget(ui::Item const &item) const
+    ButtonWidget &buttonWidget(ui::Item const &item) const
     {
         GuiWidget *w = extraButtons->organizer().itemWidget(item);
         if (w) return w->as<ButtonWidget>();
@@ -528,13 +520,10 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
 
         if ((item.role() & IdMask) == roleId)
         {
-            GuiWidget *w = d->buttons->organizer().itemWidget(i);
-            if (w) return &w->as<ButtonWidget>();
-
-            return &d->extraButtons->organizer().itemWidget(i)->as<ButtonWidget>();
+            return &d->buttonWidget(item);
         }
     }
-    return 0;
+    return nullptr;
 }
 
 PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
