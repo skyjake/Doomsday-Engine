@@ -259,6 +259,14 @@ public:
      */
     RuleRectangle const &rule() const;
 
+    /**
+     * Calculates an estimate of the height of the widget. Widgets used in virtualized
+     * lists should implement this and return an accurate value.
+     *
+     * By default returns the current height of the widget rectangle.
+     */
+    virtual float estimatedHeight() const;
+
     ui::Margins &margins();
     ui::Margins const &margins() const;
 

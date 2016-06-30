@@ -256,6 +256,11 @@ LabelWidget &HomeItemWidget::label()
     return *d->label;
 }
 
+LabelWidget const &HomeItemWidget::label() const
+{
+    return *d->label;
+}
+
 void HomeItemWidget::setSelected(bool selected)
 {
     if (d->selected != selected)

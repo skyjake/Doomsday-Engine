@@ -50,7 +50,7 @@ struct ChildWidgetOrganizer::Instance
     , DENG2_OBSERVES(ui::Data, OrderChange)
     , DENG2_OBSERVES(ui::Item, Change     )
 {
-    typedef Range<dsize> PvsRange;
+    typedef Rangei PvsRange;
 
     ui::Data const *dataItems = nullptr;
     GuiWidget *container;
@@ -68,7 +68,9 @@ struct ChildWidgetOrganizer::Instance
     ConstantRule *estimatedHeight = nullptr;
     int averageItemHeight = 0;
     PvsRange virtualPvs;
-    QSet<GuiWidget *> pendingStrutAdjust;
+    float lastTop = 0;
+    float totalCorrection = 0;
+    float correctionPerUnit = 0;
 
     Instance(Public *i, GuiWidget *c)
         : Base(i)
@@ -210,8 +212,7 @@ struct ChildWidgetOrganizer::Instance
 
     void deleteWidget(GuiWidget *w)
     {
-        pendingStrutAdjust.remove(w);
-
+        //pendingStrutAdjust.remove(w);
         w->audienceForDeletion() -= this;
         GuiWidget::destroy(w);
     }
@@ -240,7 +241,7 @@ struct ChildWidgetOrganizer::Instance
         }
     }
 
-    void dataItemAdded(ui::Data::Pos pos, ui::Item const &)
+    void dataItemAdded(ui::DataPos pos, ui::Item const &)
     {
         if (!virtualEnabled)
         {
@@ -248,9 +249,9 @@ struct ChildWidgetOrganizer::Instance
         }
         else
         {
-            // Items added after the PVS can be handled purely virtually. Items
-            // before the PVS will cause the PVS range to be re-estimated.
-            if (pos < virtualPvs.end)
+            // Items added below the PVS can be handled purely virtually (i.e., ignored).
+            // Items above the PVS will cause the PVS range to be re-estimated.
+            if (pos < ui::DataPos(virtualPvs.end))
             {
                 clearWidgets();
                 virtualPvs = PvsRange();
@@ -259,7 +260,7 @@ struct ChildWidgetOrganizer::Instance
         }
     }
 
-    void dataItemRemoved(ui::Data::Pos pos, ui::Item &item)
+    void dataItemRemoved(ui::DataPos pos, ui::Item &item)
     {
         Mapping::iterator found = mapping.find(&item);
         if (found != mapping.end())
@@ -375,14 +376,6 @@ struct ChildWidgetOrganizer::Instance
         return averageItemHeight;
     }
 
-    duint maxVisibleItems() const
-    {
-        if (!virtualMin) return 0;
-        // TODO: Include some additional items beyond the visible area.
-        return duint(std::ceil((virtualMax->value() - virtualMin->value()) /
-                                float(averageItemHeight)));
-    }
-
     void updateVirtualization()
     {
         if (!virtualEnabled || !virtualMin || !virtualMax || !virtualTop ||
@@ -391,13 +384,21 @@ struct ChildWidgetOrganizer::Instance
             return;
         }
 
-        // Estimate a new PVS range based on the average item height and the visible area.
+        PvsRange const fullRange { 0, dataItems->size() };
         PvsRange const oldPvs = virtualPvs;
 
+        // Calculate position delta to compared to last update.
+        float delta = virtualTop->value() - lastTop;
+        lastTop = virtualTop->value();
+
+        // Estimate a new PVS range based on the average item height and the visible area.
         float const y1 = de::max(0.f, virtualMin->value() - virtualTop->value());
         float const y2 = de::max(0.f, virtualMax->value() - virtualTop->value());
-        PvsRange estimated = PvsRange(y1 / averageItemHeight, y2 / averageItemHeight)
-                             .intersection(PvsRange(0, dataItems->size()));
+
+        int const spareItems = 3;
+        PvsRange estimated = PvsRange(y1 / averageItemHeight - spareItems,
+                                      y2 / averageItemHeight + spareItems)
+                             .intersection(fullRange);
 
         // If this range is completely different than the current range, recreate
         // all visible widgets.
@@ -410,6 +411,9 @@ struct ChildWidgetOrganizer::Instance
             // Set up a fully estimated strut.
             virtualPvs = estimated;
             virtualStrut->set(averageItemHeight * virtualPvs.start);
+            lastTop = virtualTop->value();
+            delta = 0;
+            totalCorrection = 0;
 
             for (auto pos = virtualPvs.start; pos < virtualPvs.end; ++pos)
             {
@@ -428,16 +432,18 @@ struct ChildWidgetOrganizer::Instance
         }
         else if (estimated.start < oldPvs.start) // Extend upward.
         {
-            // Reduce strut length to make room for new items.
-            virtualStrut->set(de::max(0.f, virtualStrut->value() - averageItemHeight *
-                                      (oldPvs.start - estimated.start)));
-
             virtualPvs.start = estimated.start;
             for (auto pos = oldPvs.start - 1;
-                 pos >= virtualPvs.start && pos < dataItems->size();
+                 pos >= virtualPvs.start && pos < int(dataItems->size());
                  --pos)
             {
-                addItemWidget(pos, AlwaysPrepend);
+                float height = averageItemHeight;
+                if (GuiWidget *w = addItemWidget(pos, AlwaysPrepend))
+                {
+                    height = w->estimatedHeight();
+                }
+                // Reduce strut length to make room for new items.
+                virtualStrut->set(de::max(0.f, virtualStrut->value() - height));
             }
             DENG2_ASSERT(virtualPvs.size() == container->childCount());
         }
@@ -448,10 +454,10 @@ struct ChildWidgetOrganizer::Instance
             while (virtualPvs.start < estimated.start)
             {
                 float height = firstChild()->rule().height().value();
-                if (!fequal(height, 0.f))
+                if (fequal(height, 0.f))
                 {
-                    // Actual height is not yet known, so use estimate.
-                    height = averageItemHeight;
+                    // Actual height is not yet known, so use the average.
+                    height = firstChild()->estimatedHeight();
                 }
                 removeItemWidget(virtualPvs.start++);
                 virtualStrut->set(virtualStrut->value() + height);
@@ -467,6 +473,28 @@ struct ChildWidgetOrganizer::Instance
         }
 
         DENG2_ASSERT(virtualPvs.size() == container->childCount());
+
+        // Take note of how big a difference there is between the ideal distance and
+        // the virtual top of the list.
+        if (oldPvs.start != virtualPvs.start)
+        {
+            // Calculate a correction delta to be applied while the view is scrolling.
+            // This will ensure that differences in item heights will not accumulate
+            // and cause the estimated PVS to become too inaccurate.
+            float error = virtualStrut->value() - estimated.start * averageItemHeight;
+            correctionPerUnit = -error / GuiWidget::toDevicePixels(100);
+            totalCorrection = de::abs(error);
+        }
+        // Apply correction to the virtual strut.
+        if (!fequal(delta, 0.f))
+        {
+            float applied = correctionPerUnit * de::abs(delta);
+            if (de::abs(applied) > totalCorrection)
+            {
+                applied = de::sign(applied) * totalCorrection;
+            }
+            virtualStrut->set(virtualStrut->value() + applied);
+        }
     }
 
     DENG2_PIMPL_AUDIENCE(WidgetCreation)

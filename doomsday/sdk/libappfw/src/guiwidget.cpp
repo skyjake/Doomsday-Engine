@@ -457,6 +457,11 @@ RuleRectangle const &GuiWidget::rule() const
     return d->rule;
 }
 
+float GuiWidget::estimatedHeight() const
+{
+    return rule().height().value();
+}
+
 ui::Margins &GuiWidget::margins()
 {
     return d->margins;

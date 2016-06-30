@@ -299,6 +299,13 @@ DENG_GUI_PIMPL(PackagesWidget)
             return new PackagePopupWidget(_item->file);
         }
 
+        float estimatedHeight() const override
+        {
+            float const fontHeight = style().fonts().font("default").height().value();
+            float estimate = fontHeight * 2 + label().margins().height().value();
+            return estimate;
+        }
+
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;

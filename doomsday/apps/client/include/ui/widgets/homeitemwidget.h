@@ -47,8 +47,9 @@ public:
 
     de::AssetGroup &assets() override;
 
-    de::LabelWidget &icon();
-    de::LabelWidget &label();
+    de::LabelWidget &       icon();
+    de::LabelWidget &       label();
+    de::LabelWidget const & label() const;
 
     void addButton(de::GuiWidget *button);
     de::GuiWidget &buttonWidget(int index) const;
