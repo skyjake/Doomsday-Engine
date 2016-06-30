@@ -699,9 +699,20 @@ void PackagesWidget::scrollToPackage(String const &packageId) const
 {
     if (auto const *item = itemForPackage(packageId))
     {
+        auto &scrollArea = d->menu->findTopmostScrollable();
+
+        // If the widget exists currently, we can just scroll to it.
         if (auto const *widget = d->menu->organizer().itemWidget(*item))
         {
-            d->menu->findTopmostScrollable().scrollToWidget(*widget);
+            scrollArea.scrollToWidget(*widget);
+        }
+        else
+        {
+            auto const pos = d->filteredPackages.find(*item);
+
+            // Estimate the position.
+            scrollArea.scrollY(pos * d->menu->organizer().averageChildHeight() -
+                               scrollArea.rule().height().value() / 2, 0.3);
         }
     }
 }

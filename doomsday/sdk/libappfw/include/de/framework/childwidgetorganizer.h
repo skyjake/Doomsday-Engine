@@ -147,6 +147,8 @@ public:
      */
     void setAverageChildHeight(int height);
 
+    int averageChildHeight() const;
+
     Rule const &estimatedTotalHeight() const;
 
     /**

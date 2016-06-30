@@ -419,7 +419,7 @@ struct ChildWidgetOrganizer::Instance
             {
                 addItemWidget(pos, AlwaysAppend);
             }
-            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
         else if (estimated.end > oldPvs.end) // Extend downward.
         {
@@ -428,7 +428,7 @@ struct ChildWidgetOrganizer::Instance
             {
                 addItemWidget(pos, AlwaysAppend);
             }
-            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
         else if (estimated.start < oldPvs.start) // Extend upward.
         {
@@ -445,7 +445,7 @@ struct ChildWidgetOrganizer::Instance
                 // Reduce strut length to make room for new items.
                 virtualStrut->set(de::max(0.f, virtualStrut->value() - height));
             }
-            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
 
         if (container->childCount() > 0)
@@ -462,17 +462,17 @@ struct ChildWidgetOrganizer::Instance
                 removeItemWidget(virtualPvs.start++);
                 virtualStrut->set(virtualStrut->value() + height);
             }
-            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
 
             // Remove excess widgets from the bottom.
             while (virtualPvs.end > estimated.end)
             {
                 removeItemWidget(--virtualPvs.end);
             }
-            DENG2_ASSERT(virtualPvs.size() == container->childCount());
+            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
 
-        DENG2_ASSERT(virtualPvs.size() == container->childCount());
+        DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
 
         // Take note of how big a difference there is between the ideal distance and
         // the virtual top of the list.
@@ -598,6 +598,11 @@ void ChildWidgetOrganizer::setAverageChildHeight(int height)
 {
     d->averageItemHeight = height;
     d->updateVirtualHeight();
+}
+
+int ChildWidgetOrganizer::averageChildHeight() const
+{
+    return d->averageItemHeight;
 }
 
 Rule const &ChildWidgetOrganizer::estimatedTotalHeight() const
