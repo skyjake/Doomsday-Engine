@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         DoomsdayApp::app().changeGame(
                     DoomsdayApp::games()[serverInfo.gameIdentityKey].profile(),
                     DD_ActivateGameWorker);
-        Con_Execute(CMDS_DDAY, String("connect %1 %2")
+        Con_Execute(CMDS_DDAY, String("connect %1:%2")
                     .arg(serverInfo.address).arg(serverInfo.port).toLatin1(),
                     false, false);
     }

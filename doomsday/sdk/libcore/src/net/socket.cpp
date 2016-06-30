@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 /**
@@ -407,7 +407,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instanc
 }
 
 void Socket::connect(Address const &address) // non-blocking
-{    
+{
     DENG2_ASSERT(d->socket);
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
@@ -425,7 +425,7 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     duint16 port = defaultPort;
     if (str.contains(':'))
     {
-        int pos = str.indexOf(':');
+        int pos = str.lastIndexOf(':');
         port = duint16(str.mid(pos + 1).toInt());
         if (!port) port = defaultPort;
         str = str.left(pos);
@@ -525,7 +525,7 @@ duint Socket::channel() const
 
 void Socket::setChannel(duint number)
 {
-    DENG2_ASSERT(number < MAX_CHANNELS);    
+    DENG2_ASSERT(number < MAX_CHANNELS);
     d->activeChannel = min(number, MAX_CHANNELS - 1);
 }
 

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Address"
@@ -134,7 +134,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     String str = addressWithOptionalPort;
     if (str.contains(':'))
     {
-        int pos = str.indexOf(':');
+        int pos = str.lastIndexOf(':');
         port = str.mid(pos + 1).toInt();
         str = str.left(pos);
     }

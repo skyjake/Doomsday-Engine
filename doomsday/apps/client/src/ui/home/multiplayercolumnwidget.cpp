@@ -97,16 +97,8 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom()/* +
-                                       rule("gap")*/);
+                .setInput(Rule::Top,   self.header().rule().bottom());
     }
-
-//    ~Instance()
-//    {
-//        link().audienceForDiscoveryUpdate -= this;
-//        DoomsdayApp::app().audienceForGameChange() -= this;
-//        DoomsdayApp::games().audienceForReadiness() -= this;
-//    }
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {
