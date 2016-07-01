@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef CLIENT_SERVERLINK_H
@@ -101,6 +101,8 @@ public:
      */
     bool foundServerInfo(int index, serverinfo_t *info,
                          FoundMask mask = Any) const;
+
+    bool isServerOnLocalNetwork(de::Address const &host) const;
 
 signals:
     void serversDiscovered();

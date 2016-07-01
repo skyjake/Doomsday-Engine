@@ -46,10 +46,16 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
     class ServerListItem : public ui::Item
     {
     public:
-        ServerListItem(serverinfo_t const &serverInfo)
+        ServerListItem(serverinfo_t const &serverInfo, bool isLocal)
+            : _lan(isLocal)
         {
             setData(hostId(serverInfo));
             _info = serverInfo;
+        }
+
+        bool isLocal() const
+        {
+            return _lan;
         }
 
         serverinfo_t const &info() const
@@ -75,6 +81,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
     private:
         serverinfo_t _info;
+        bool _lan;
     };
 
 //- Private state -------------------------------------------------------------
@@ -127,7 +134,8 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
             if (found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
-                items.append(new ServerListItem(info));
+                items.append(new ServerListItem(info,
+                        link.isServerOnLocalNetwork(Address::parse(hostId(info)))));
                 changed = true;
             }
             else
@@ -144,21 +152,26 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 auto const &first  = a.as<ServerListItem>();
                 auto const &second = b.as<ServerListItem>();
 
-                // Primarily sort by number of players.
-                if (first.info().numPlayers == second.info().numPlayers)
+                // LAN games shown first.
+                if (first.isLocal() == second.isLocal())
                 {
-                    // Secondarily by game ID.
-                    int cmp = qstrcmp(first .info().gameIdentityKey,
-                                      second.info().gameIdentityKey);
-                    if (!cmp)
+                    // Sort by number of players.
+                    if (first.info().numPlayers == second.info().numPlayers)
                     {
-                        // Lastly by server name.
-                        return qstricmp(first.info().name,
-                                        second.info().name) < 0;
+                        // Finally, by game ID.
+                        int cmp = qstrcmp(first .info().gameIdentityKey,
+                                          second.info().gameIdentityKey);
+                        if (!cmp)
+                        {
+                            // Lastly by server name.
+                            return qstricmp(first.info().name,
+                                            second.info().name) < 0;
+                        }
+                        return cmp < 0;
                     }
-                    return cmp < 0;
+                    return first.info().numPlayers - second.info().numPlayers > 0;
                 }
-                return first.info().numPlayers - second.info().numPlayers > 0;
+                return first.isLocal();
             });
         }
     }

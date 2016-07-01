@@ -82,11 +82,6 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self.panel().open();
     }
 
-//    ~Instance()
-//    {
-//        DoomsdayApp::games().audienceForReadiness() -= this;
-//    }
-
     void joinButtonPressed() const
     {
         // Switch locally to the game running on the server.
@@ -149,6 +144,11 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
     meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
                                 d->hasConfig("dm2")?  "Deathmatch v2" :
                                                       "Deathmatch"));
+
+    if (ClientApp::serverLink().isServerOnLocalNetwork(Address(info.address, info.port)))
+    {
+        meta = "LAN " DENG2_CHAR_MDASH " " + meta;
+    }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
                     .arg(info.name)

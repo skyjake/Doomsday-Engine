@@ -370,6 +370,11 @@ bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) 
     return true;
 }
 
+bool ServerLink::isServerOnLocalNetwork(Address const &host) const
+{
+    return d->finder.foundServers().contains(host);
+}
+
 bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info, FoundMask mask) const
 {
     Instance::Servers all = d->allFound(mask);

@@ -973,8 +973,8 @@ enum {
 /**
  * Information about a multiplayer server. @ingroup network
  *
- * Do not modify this structure: Servers send it as-is to clients.
- * Only add elements to the end.
+ * This structure is not sent over the network. The information is only sent either
+ * as plain text or as a serialized Record.
  */
 typedef struct serverinfo_s {
     int             version;
