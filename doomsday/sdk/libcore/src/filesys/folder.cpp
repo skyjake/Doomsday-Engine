@@ -229,7 +229,7 @@ void Folder::populate(PopulationBehaviors behavior)
         }
     }
 
-    internal::populateTasks.start([this, behavior] ()
+    auto populationTask = [this, behavior] ()
     {
         Feed::PopulatedFiles newFiles;
 
@@ -264,12 +264,15 @@ void Folder::populate(PopulationBehaviors behavior)
                 folder->populate(behavior);
             }
         }
-    }
-    , TaskPool::MediumPriority);
+    };
 
-    if (!(behavior & PopulateAsync))
+    if (behavior & PopulateAsync)
     {
-        waitForPopulation();
+        internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
+    }
+    else
+    {
+        populationTask();
     }
 }
 
