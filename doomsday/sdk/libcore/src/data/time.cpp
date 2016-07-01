@@ -311,7 +311,8 @@ String Time::asText(Format format) const
         {
             return d->dateTime.toString(Qt::TextDate);
         }
-        else if (format == BuildNumberAndSecondsSinceStart)
+        else if (format == BuildNumberAndSecondsSinceStart ||
+                 format == SecondsSinceStart)
         {
             TimeDelta elapsed;
             if (d->flags.testFlag(Instance::HighPerformance))
@@ -324,15 +325,20 @@ String Time::asText(Format format) const
             }
             int hours = int(elapsed.asHours());
             TimeDelta sec = elapsed - hours * 3600.0;
+            QString prefix;
+            if (format == BuildNumberAndSecondsSinceStart)
+            {
+                prefix = QString("#%1 ").arg(asBuildNumber(), -4);
+            }
             if (hours > 0)
             {
-                return QString("#%1 %2h%3")
-                        .arg(asBuildNumber(), -4)
+                return QString("%1%2h%3")
+                        .arg(prefix)
                         .arg(hours)
                         .arg(sec, 7, 'f', 3, '0');
             }
-            return QString("#%1 %2")
-                    .arg(asBuildNumber(), -4)
+            return QString("%1%2")
+                    .arg(prefix)
                     .arg(sec, 7, 'f', 3, '0');
         }
         else

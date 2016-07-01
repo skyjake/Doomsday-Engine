@@ -350,7 +350,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         // Begin with the timestamp.
         if (flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
 
-        output << _when.asText(Date::BuildNumberAndSecondsSinceStart) << " ";
+        output << _when.asText(Date::SecondsSinceStart) << " ";
 
         if (!flags.testFlag(OmitDomain))
         {

@@ -342,6 +342,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
+    LOG_NOTE("Build: ") << Version::currentBuild().asText();
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command

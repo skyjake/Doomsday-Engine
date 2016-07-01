@@ -229,8 +229,8 @@ MonospaceLogSinkFormatter::MonospaceLogSinkFormatter()
 {
 #ifdef DENG2_DEBUG
     // Debug builds include a timestamp and msg type indicator.
-    _maxLength = 130;
-    _minimumIndent = 21;
+    _maxLength = 125;
+    _minimumIndent = 15;
 #endif
 }
 
