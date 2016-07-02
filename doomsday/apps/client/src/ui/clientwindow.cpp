@@ -508,7 +508,7 @@ DENG2_PIMPL(ClientWindow)
 
             canvas.trapMouse(false);
         }
-        else if(self.isFullScreen() && !taskBar->isOpen())
+        else if(self.isFullScreen() && !taskBar->isOpen() && DoomsdayApp::isGameLoaded())
         {
             // Trap the mouse again in fullscreen mode.
             canvas.trapMouse();
