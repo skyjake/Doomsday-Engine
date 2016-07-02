@@ -372,6 +372,16 @@ public:
     Variable &set(String const &name, ArrayValue *value);
 
     /**
+     * Appends a word to the value of the variable.
+     *
+     * @param name       Name of the variable.
+     * @param word       Word to append.
+     * @param separator  Separator to append before the word, if the variable is not
+     *                   currently empty.
+     */
+    Variable &appendWord(String const &name, String const &word, String const &separator = String(" "));
+
+    /**
      * Looks up a variable in the record. Variables in subrecords can be accessed
      * using the member notation: <code>subrecord-name.variable-name</code>
      *

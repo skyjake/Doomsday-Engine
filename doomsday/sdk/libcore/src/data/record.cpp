@@ -555,6 +555,14 @@ Variable &Record::set(String const &name, ArrayValue *value)
     return addArray(name, value);
 }
 
+Variable &Record::appendWord(String const &name, String const &word, String const &separator)
+{
+    String value = gets(name, "");
+    if (!value.isEmpty()) value.append(separator);
+    set(name, value + word);
+    return (*this)[name];
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);

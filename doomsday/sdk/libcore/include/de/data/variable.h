@@ -210,7 +210,6 @@ public:
     ArrayValue &array();
 
     operator Record & ();
-
     operator Record const & () const;
 
     // Automatic conversion to native primitive types.
