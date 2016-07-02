@@ -379,7 +379,9 @@ public:
      * @param separator  Separator to append before the word, if the variable is not
      *                   currently empty.
      */
-    Variable &appendWord(String const &name, String const &word, String const &separator = String(" "));
+    Variable &appendWord(String const &name, String const &word, String const &separator = " ");
+
+    Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed

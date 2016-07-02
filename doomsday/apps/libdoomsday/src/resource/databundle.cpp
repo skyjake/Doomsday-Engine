@@ -337,6 +337,12 @@ DENG2_PIMPL(DataBundle)
             }
         }
 
+        if (container && container->format() == Collection)
+        {
+            // Box contents are normally hidden.
+            meta.appendUniqueWord(VAR_TAGS, "hidden");
+        }
+
         determineGameTags(meta);
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
@@ -380,7 +386,7 @@ DENG2_PIMPL(DataBundle)
                     Package::matchTags(container->d->pkgLink, "\\b(hidden|core|gamedata)\\b"))*/
                 {
                     // Autoloaded data files are hidden.
-                    metadata.appendWord(VAR_TAGS, "hidden");
+                    metadata.appendUniqueWord(VAR_TAGS, "hidden");
                 }
 
                 /*
@@ -471,7 +477,7 @@ DENG2_PIMPL(DataBundle)
         auto const &rootBlock = info.root();
 
         // Tag it as a Snowberry package.
-        meta.appendWord(VAR_TAGS, "legacy");
+        meta.appendUniqueWord(VAR_TAGS, "legacy");
 
         if (rootBlock.contains("name"))
         {
@@ -481,22 +487,18 @@ DENG2_PIMPL(DataBundle)
         String component = rootBlock.keyValue("component");
         if (!component.isEmpty())
         {
-            String gameTags;
             if (!component.compareWithoutCase("game-jdoom"))
             {
-                gameTags = "doom doom2";
+                meta.appendUniqueWord(VAR_TAGS, "doom");
+                meta.appendUniqueWord(VAR_TAGS, "doom2");
             }
             else if (!component.compareWithoutCase("game-jheretic"))
             {
-                gameTags = "heretic";
+                meta.appendUniqueWord(VAR_TAGS, "heretic");
             }
             else if (!component.compareWithoutCase("game-jhexen"))
             {
-                gameTags = "hexen";
-            }
-            if (!gameTags.isEmpty())
-            {
-                meta.appendWord(VAR_TAGS, gameTags);
+                meta.appendUniqueWord(VAR_TAGS, "hexen");
             }
         }
 
@@ -568,7 +570,7 @@ DENG2_PIMPL(DataBundle)
             {
                 if (reTag.indexIn(path.segment(i)) >= 0)
                 {
-                    meta.appendWord(VAR_TAGS, tag);
+                    meta.appendUniqueWord(VAR_TAGS, tag);
                 }
             }
         }

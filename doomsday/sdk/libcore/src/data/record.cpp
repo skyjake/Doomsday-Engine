@@ -563,6 +563,17 @@ Variable &Record::appendWord(String const &name, String const &word, String cons
     return (*this)[name];
 }
 
+Variable &Record::appendUniqueWord(String const &name, String const &word, String const &separator)
+{
+    QRegExp re(QString("\\b%1\\b").arg(word));
+    String const value = gets(name, "");
+    if (re.indexIn(value) < 0)
+    {
+        appendWord(name, word, separator);
+    }
+    return (*this)[name];
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
