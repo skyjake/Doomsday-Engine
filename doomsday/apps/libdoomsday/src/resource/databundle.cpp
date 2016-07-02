@@ -317,7 +317,10 @@ DENG2_PIMPL(DataBundle)
             {
                 // Check the Snowberry-style ID.
                 String fn = dataFilePath.fileName();
-                fn.replace(".", "-");
+                if (int dotPos = fn.lastIndexOf('.'))
+                {
+                    if (dotPos >= 0) fn[dotPos] = '-';
+                }
                 sbInfo = root.tryLocate<File const>(dataFilePath.fileNamePath()/fn + ".manifest");
             }
             if (!sbInfo)
@@ -832,6 +835,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
 {
     // Naive check using the file extension.
     static struct { String str; Format format; } formats[] = {
+        { ".zip", Pk3 },
         { ".pk3", Pk3 },
         { ".wad", Wad /* type (I or P) checked later */ },
         { ".lmp", Lump },
@@ -842,7 +846,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     String const ext = sourceData->extension();
     for (auto const &fmt : formats)
     {
-        if (!ext.compareWithoutCase(fmt.str))
+        if (!fmt.str.compareWithoutCase(ext))
         {
             LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
                                             << " as "
