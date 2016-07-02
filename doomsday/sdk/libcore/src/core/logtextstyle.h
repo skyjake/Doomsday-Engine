@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_LOGTEXTSTYLE_H
@@ -29,15 +29,15 @@
 
 namespace de {
 
-char const *TEXT_STYLE_NORMAL          = DENG2_ESC("0"); // normal
-char const *TEXT_STYLE_MESSAGE         = DENG2_ESC("0"); // normal
-char const *TEXT_STYLE_MAJOR_MESSAGE   = DENG2_ESC("1"); // major
-char const *TEXT_STYLE_MINOR_MESSAGE   = DENG2_ESC("2"); // minor
-char const *TEXT_STYLE_SECTION         = DENG2_ESC("3"); // meta
-char const *TEXT_STYLE_MAJOR_SECTION   = DENG2_ESC("4"); // major meta
-char const *TEXT_STYLE_MINOR_SECTION   = DENG2_ESC("5"); // minor meta
-char const *TEXT_STYLE_LOG_TIME        = DENG2_ESC("6"); // aux meta
-char const *TEXT_MARK_INDENT           = DENG2_ESC(">");
+extern char const *TEXT_STYLE_NORMAL;
+extern char const *TEXT_STYLE_MESSAGE;
+extern char const *TEXT_STYLE_MAJOR_MESSAGE;
+extern char const *TEXT_STYLE_MINOR_MESSAGE;
+extern char const *TEXT_STYLE_SECTION;
+extern char const *TEXT_STYLE_MINOR_SECTION;
+extern char const *TEXT_STYLE_MAJOR_SECTION;
+extern char const *TEXT_STYLE_LOG_TIME;
+extern char const *TEXT_MARK_INDENT;
 
 } // namespace de
 

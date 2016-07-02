@@ -15,16 +15,22 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/error.h"
+#include "core/logtextstyle.h"
 //#include <iostream>
 
 namespace de {
 
 Error::Error(QString const &where, QString const &message)
-    : std::runtime_error(("(" + where + ") " + message).toStdString()), _name("")
+    : std::runtime_error(QString("%1(in " _E(m) "%2" _E(.) ")" _E(.) " %3")
+                         .arg(TEXT_STYLE_SECTION)
+                         .arg(where)
+                         .arg(message)
+                         .toStdString())
+    , _name("")
 {
     //std::cerr << "Constructed Error " << this << ": " << asText().toAscii().constData() << "\n";
 }
@@ -42,7 +48,10 @@ QString Error::name() const
 
 QString Error::asText() const
 {
-    return "[" + name() + "] " + std::runtime_error::what();
+    return QString("%1[%2]" _E(.) " %4")
+            .arg(TEXT_STYLE_SECTION)
+            .arg(name())
+            .arg(std::runtime_error::what());
 }
 
 void Error::setName(QString const &name)
