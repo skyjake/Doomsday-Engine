@@ -1484,7 +1484,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
     result = (uint8_t *) M_Calloc(comps * width * height);
 
     A = strength;
-    B = .70710678 * strength; // 1/sqrt(2)
+    B = .70710678f * strength; // 1/sqrt(2)
     C = 1 + 4*A + 4*B;
 
     for(y = 1; y < height - 1; ++y)
