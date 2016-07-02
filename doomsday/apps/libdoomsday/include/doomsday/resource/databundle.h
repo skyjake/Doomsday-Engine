@@ -127,6 +127,15 @@ public:
     virtual de::Record &objectNamespace();
     virtual de::Record const &objectNamespace() const;
 
+    /**
+     * Checks the data bundle format of a package, if the package represents a bundle.
+     * The package can be currently loaded or unloaded.
+     *
+     * @param packageId  Identifier.
+     * @return Bundle format.
+     */
+    static Format packageBundleFormat(de::String const &packageId);
+
 protected:
     void setFormat(Format format);
 

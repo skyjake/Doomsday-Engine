@@ -30,6 +30,7 @@
 #include <de/Info>
 #include <de/LinkFile>
 #include <de/Package>
+#include <de/PackageLoader>
 #include <de/Path>
 #include <QRegExp>
 #include <QTextCodec>
@@ -759,6 +760,18 @@ Record const &DataBundle::objectNamespace() const
 {
     DENG2_ASSERT(dynamic_cast<File const *>(this) != nullptr);
     return asFile().objectNamespace().subrecord(QStringLiteral("package"));
+}
+
+DataBundle::Format DataBundle::packageBundleFormat(String const &packageId)
+{
+    if (File const *file = PackageLoader::get().select(packageId))
+    {
+        if (auto const *bundle = file->target().maybeAs<DataBundle>())
+        {
+            return bundle->format();
+        }
+    }
+    return Unknown;
 }
 
 void DataBundle::setFormat(Format format)
