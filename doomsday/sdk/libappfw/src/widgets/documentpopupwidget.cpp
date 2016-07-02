@@ -123,5 +123,10 @@ ButtonWidget *DocumentPopupWidget::button()
     return d->button;
 }
 
+void DocumentPopupWidget::preparePanelForOpening()
+{
+    PopupWidget::preparePanelForOpening();
+    root().setFocus(d->close);
+}
 
 } // namespace de

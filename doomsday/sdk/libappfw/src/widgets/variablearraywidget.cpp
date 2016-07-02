@@ -159,6 +159,8 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
 {
     d->deleteButton->setSizePolicy(ui::Expand, ui::Expand);
     d->deleteButton->setStyleImage("close.ring", "default");
+    d->deleteButton->margins().setLeft("unit").setRight("dialog.gap");
+    d->deleteButton->setBehavior(Focusable, UnsetFlags);
     d->deleteButton->set(Background());
 
     d->menu->margins()

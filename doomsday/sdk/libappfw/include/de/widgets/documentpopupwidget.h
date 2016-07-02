@@ -48,6 +48,9 @@ public:
 
     ButtonWidget *button();
 
+protected:
+    virtual void preparePanelForOpening() override;
+
 private:
     DENG2_PRIVATE(d)
 };
