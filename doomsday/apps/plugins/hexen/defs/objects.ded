@@ -6186,7 +6186,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_viewalign mf_shadow";
+  Flags = "mf_noblockmap mf_noclip mf_nogravity mf_viewalign mf_shadow";
   Flags2 = "mf2_noteleport mf2_cannotpush mf2_nodmgthrust";
 }
 
