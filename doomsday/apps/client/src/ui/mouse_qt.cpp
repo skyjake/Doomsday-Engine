@@ -67,16 +67,16 @@ static void Mouse_Qt_Shutdown(void)
 
 static void Mouse_Qt_Poll()
 {
-    if(!mouseTrapped) return;
+    if (!mouseTrapped) return;
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
-    if(!win) return; // Hmm?
+    if (!win) return; // Hmm?
 
     QPoint curPos = win->mapFromGlobal(QCursor::pos());
-    if(!prevMousePos.isNull())
+    if (!prevMousePos.isNull())
     {
         QPoint delta = curPos - prevMousePos;
-        if(!delta.isNull())
+        if (!delta.isNull())
         {
             Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
@@ -102,7 +102,7 @@ static void Mouse_Qt_GetState(mousestate_t *state)
     memset(state, 0, sizeof(*state));
 
     // Position and wheel.
-    for(i = 0; i < IMA_MAXAXES; ++i)
+    for (i = 0; i < IMA_MAXAXES; ++i)
     {
         state->axis[i].x = mouseDelta[i].dx;
         state->axis[i].y = mouseDelta[i].dy;
@@ -112,7 +112,7 @@ static void Mouse_Qt_GetState(mousestate_t *state)
     }
 
     // Button presses and releases.
-    for(i = 0; i < IMB_MAXBUTTONS; ++i)
+    for (i = 0; i < IMB_MAXBUTTONS; ++i)
     {
         state->buttonDowns[i] = mouseClickers[i].down;
         state->buttonUps[i] = mouseClickers[i].up;
@@ -131,7 +131,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
 
-    if(!yes && !cursorHidden)
+    if (!yes && !cursorHidden)
     {
         cursorHidden = true;
 #ifdef MACOSX
@@ -141,7 +141,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 #endif
     }
-    else if(yes && cursorHidden)
+    else if (yes && cursorHidden)
     {
         cursorHidden = false;
 #ifdef MACOSX
@@ -172,12 +172,12 @@ static void Mouse_Qt_DeinitTrap()
 
 static void Mouse_Qt_Trap(dd_bool enabled)
 {
-    if(mouseTrapped == CPP_BOOL(enabled)) return;
+    if (mouseTrapped == CPP_BOOL(enabled)) return;
 
     mouseTrapped = enabled;
     prevMousePos = QPoint();
 
-    if(enabled)
+    if (enabled)
     {
         Mouse_Qt_InitTrap();
     }
@@ -189,9 +189,9 @@ static void Mouse_Qt_Trap(dd_bool enabled)
 
 void Mouse_Qt_SubmitButton(int button, dd_bool isDown)
 {
-    if(button < 0 || button >= IMB_MAXBUTTONS) return; // Ignore...
+    if (button < 0 || button >= IMB_MAXBUTTONS) return; // Ignore...
 
-    if(isDown)
+    if (isDown)
         mouseClickers[button].down++;
     else
         mouseClickers[button].up++;
@@ -199,11 +199,11 @@ void Mouse_Qt_SubmitButton(int button, dd_bool isDown)
 
 void Mouse_Qt_SubmitMotion(int axis, int deltaX, int deltaY)
 {
-    if(axis < 0 || axis >= IMA_MAXAXES) return; // Ignore...
+    if (axis < 0 || axis >= IMA_MAXAXES) return; // Ignore...
 
     /// @todo It would likely be better to directly post a ddevent out of this.
 
-    if(axis == IMA_WHEEL)
+    if (axis == IMA_WHEEL)
     {
         int idx = ( deltaX < 0? IMB_MWHEELLEFT
                   : deltaX > 0? IMB_MWHEELRIGHT

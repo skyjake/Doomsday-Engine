@@ -51,13 +51,13 @@ DENG2_PIMPL(Finale)
 
     void loadScript(String const &script)
     {
-        if(script.isEmpty()) return;
+        if (script.isEmpty()) return;
 
         LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << id << script;
         Block const scriptAsUtf8 = script.toUtf8();
         interpreter.loadScript(scriptAsUtf8.constData());
 #ifdef __SERVER__
-        if(!(flags & FF_LOCAL) && ::isServer)
+        if (!(flags & FF_LOCAL) && ::isServer)
         {
             // Instruct clients to start playing this Finale.
             Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, scriptAsUtf8.constData());
@@ -112,7 +112,7 @@ void Finale::suspend()
 
 bool Finale::terminate()
 {
-    if(!d->active) return false;
+    if (!d->active) return false;
 
     LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << d->id;
     d->active = false;
@@ -122,7 +122,7 @@ bool Finale::terminate()
 
 bool Finale::runTicks(timespan_t timeDelta)
 {
-    if(d->interpreter.runTicks(timeDelta, d->active && DD_IsSharpTick()))
+    if (d->interpreter.runTicks(timeDelta, d->active && DD_IsSharpTick()))
     {
         // The script has ended!
         terminate();
@@ -133,19 +133,19 @@ bool Finale::runTicks(timespan_t timeDelta)
 
 int Finale::handleEvent(ddevent_t const &ev)
 {
-    if(!d->active) return false;
+    if (!d->active) return false;
     return d->interpreter.handleEvent(ev);
 }
 
 bool Finale::requestSkip()
 {
-    if(!d->active) return false;
+    if (!d->active) return false;
     return d->interpreter.skip();
 }
 
 bool Finale::isMenuTrigger() const
 {
-    if(!d->active) return false;
+    if (!d->active) return false;
     LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << d->interpreter.isMenuTrigger();
     return d->interpreter.isMenuTrigger();
 }

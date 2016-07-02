@@ -38,16 +38,16 @@ using namespace de;
  */
 static int globalContextFallback(ddevent_t const *ddev)
 {
-    if(App_GameLoaded() && !BusyMode_Active())
+    if (App_GameLoaded() && !BusyMode_Active())
     {
         event_t ev;
-        if(InputSystem::convertEvent(*ddev, ev))
+        if (InputSystem::convertEvent(*ddev, ev))
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting). Note that if the event is eaten here,
             // the rest of the bindings contexts won't get a chance to process the
             // event.
-            if(gx.Responder && gx.Responder(&ev))
+            if (gx.Responder && gx.Responder(&ev))
             {
                 return true;
             }

@@ -40,7 +40,7 @@ DENG2_PIMPL(StyledLogSinkFormatter)
         , omitSectionIfNonDev(true)
         , showMetadata(false)
     {
-        if(observe)
+        if (observe)
         {
             showMetadata = App::config().getb(VAR_METADATA);
             App::config()[VAR_METADATA].audienceForChange() += this;
@@ -49,7 +49,7 @@ DENG2_PIMPL(StyledLogSinkFormatter)
 
 //    ~Instance()
 //    {
-//        if(observe)
+//        if (observe)
 //        {
 //            App::config()[VAR_METADATA].audienceForChange() -= this;
 //        }
@@ -77,12 +77,12 @@ LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry 
 {
     LogEntry::Flags form = d->format;
 
-    if(!d->showMetadata)
+    if (!d->showMetadata)
     {
         form |= LogEntry::Simple | LogEntry::OmitDomain;
     }
 
-    if(d->omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
+    if (d->omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
     {
         // The sections refer to names of native code functions, etc.
         // These are relevant only to developers. Non-dev messages must be

@@ -87,7 +87,7 @@ Record const &Binding::condition(int index) const
 bool Binding::equalConditions(Binding const &other) const
 {
     // Quick test (assumes there are no duplicated conditions).
-    if(def()["condition"].array().elements().count() != other.geta("condition").elements().count())
+    if (def()["condition"].array().elements().count() != other.geta("condition").elements().count())
     {
         return false;
     }
@@ -102,13 +102,13 @@ bool Binding::equalConditions(Binding const &other) const
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
         {
             Record const &b = *(*i)->as<RecordValue>().record();
-            if(B_EqualConditions(a, b))
+            if (B_EqualConditions(a, b))
             {
                 found = true;
                 break;
             }
         }
-        if(!found) return false;
+        if (!found) return false;
     }
 
     return true;
@@ -122,6 +122,6 @@ void Binding::resetIdentifiers() // static
 int Binding::newIdentifier() // static
 {
     int id = 0;
-    while(!id) { id = ++idCounter; }
+    while (!id) { id = ++idCounter; }
     return id;
 }

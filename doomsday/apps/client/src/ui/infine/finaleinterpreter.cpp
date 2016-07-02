@@ -74,7 +74,7 @@ enum fi_operand_type_t
 
 static fi_operand_type_t operandTypeForCharCode(char code)
 {
-    switch(code)
+    switch (code)
     {
     case 'i': return FVT_INT;
     case 'f': return FVT_FLOAT;
@@ -355,10 +355,10 @@ static command_t const *findCommand(char const *name)
 
         { nullptr, 0, nullptr } // Terminate.
     };
-    for(size_t i = 0; commands[i].token; ++i)
+    for (size_t i = 0; commands[i].token; ++i)
     {
         command_t const *cmd = &commands[i];
-        if(!qstricmp(cmd->token, name))
+        if (!qstricmp(cmd->token, name))
         {
             return cmd;
         }
@@ -471,13 +471,13 @@ DENG2_PIMPL(FinaleInterpreter)
 
     void stop()
     {
-        if(flags.stopped) return;
+        if (flags.stopped) return;
 
         flags.stopped = true;
         LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << id << scriptBegin;
 
 #ifdef __SERVER__
-        if(::isServer && !(FI_ScriptFlags(id) & FF_LOCAL))
+        if (::isServer && !(FI_ScriptFlags(id) & FF_LOCAL))
         {
             // Tell clients to stop the finale.
             Sv_Finale(id, FINF_END, 0);
@@ -497,40 +497,40 @@ DENG2_PIMPL(FinaleInterpreter)
     void findBegin()
     {
         char const *tok;
-        while(!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "{")) {}
+        while (!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "{")) {}
     }
 
     void findEnd()
     {
         char const *tok;
-        while(!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "}")) {}
+        while (!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "}")) {}
     }
 
     char const *nextToken()
     {
         // Skip whitespace.
-        while(!atEnd() && isspace(*cp)) { cp++; }
+        while (!atEnd() && isspace(*cp)) { cp++; }
 
         // Have we reached the end?
-        if(atEnd()) return nullptr;
+        if (atEnd()) return nullptr;
 
         char *out = token;
-        if(*cp == '"') // A string?
+        if (*cp == '"') // A string?
         {
-            for(cp++; !atEnd(); cp++)
+            for (cp++; !atEnd(); cp++)
             {
-                if(*cp == '"')
+                if (*cp == '"')
                 {
                     cp++;
                     // Convert double quotes to single ones.
-                    if(*cp != '"') break;
+                    if (*cp != '"') break;
                 }
                 *out++ = *cp;
             }
         }
         else
         {
-            while(!isspace(*cp) && !atEnd()) { *out++ = *cp++; }
+            while (!isspace(*cp) && !atEnd()) { *out++ = *cp++; }
         }
         *out++ = 0;
 
@@ -540,11 +540,11 @@ DENG2_PIMPL(FinaleInterpreter)
     /// @return  @c true if the end of the script was reached.
     bool executeNextCommand()
     {
-        if(char const *tok = nextToken())
+        if (char const *tok = nextToken())
         {
             executeCommand(tok, FID_NORMAL);
             // Time to unhide the object page(s)?
-            if(cmdExecuted)
+            if (cmdExecuted)
             {
                 pages[Anims]->makeVisible();
                 pages[Texts]->makeVisible();
@@ -557,7 +557,7 @@ DENG2_PIMPL(FinaleInterpreter)
     static inline char const *findDefaultValueEnd(char const *str)
     {
         char const *defaultValueEnd;
-        for(defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
+        for (defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
         {}
         DENG2_ASSERT(defaultValueEnd < str + qstrlen(str));
         return defaultValueEnd;
@@ -565,11 +565,11 @@ DENG2_PIMPL(FinaleInterpreter)
 
     static char const *nextOperand(char const *operands)
     {
-        if(operands && operands[0])
+        if (operands && operands[0])
         {
             // Some operands might include a default value.
             int len = qstrlen(operands);
-            if(len > 1 && operands[1] == '(')
+            if (len > 1 && operands[1] == '(')
             {
                 // A default value begins. Find the end.
                 return findDefaultValueEnd(operands + 2) + 1;
@@ -583,7 +583,7 @@ DENG2_PIMPL(FinaleInterpreter)
     static int countCommandOperands(char const *operands)
     {
         int count = 0;
-        while(operands && operands[0])
+        while (operands && operands[0])
         {
             count += 1;
             operands = nextOperand(operands);
@@ -604,11 +604,11 @@ DENG2_PIMPL(FinaleInterpreter)
 
         char const *origCursorPos = cp;
         int const operandCount    = countCommandOperands(cmd->operands);
-        if(operandCount <= 0) return nullptr;
+        if (operandCount <= 0) return nullptr;
 
         fi_operand_t *operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
         char const *opRover    = cmd->operands;
-        for(fi_operand_t *op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
+        for (fi_operand_t *op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
         {
             char const charCode = *opRover;
 
@@ -616,22 +616,22 @@ DENG2_PIMPL(FinaleInterpreter)
             bool const opHasDefaultValue = (opRover < cmd->operands + (qstrlen(cmd->operands) - 2) && opRover[1] == '(');
             bool const haveValue         = !!nextToken();
 
-            if(!haveValue && !opHasDefaultValue)
+            if (!haveValue && !opHasDefaultValue)
             {
                 cp = origCursorPos;
 
-                if(operands) M_Free(operands);
-                if(count) *count = 0;
+                if (operands) M_Free(operands);
+                if (count) *count = 0;
 
                 App_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
                 return 0; // Unreachable.
             }
 
-            switch(op->type)
+            switch (op->type)
             {
             case FVT_INT: {
                 char const *valueStr = haveValue? token : nullptr;
-                if(!valueStr)
+                if (!valueStr)
                 {
                     // Use the default.
                     int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
@@ -643,7 +643,7 @@ DENG2_PIMPL(FinaleInterpreter)
 
             case FVT_FLOAT: {
                 char const *valueStr = haveValue? token : nullptr;
-                if(!valueStr)
+                if (!valueStr)
                 {
                     // Use the default.
                     int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
@@ -656,7 +656,7 @@ DENG2_PIMPL(FinaleInterpreter)
             case FVT_STRING: {
                 char const *valueStr = haveValue? token : nullptr;
                 int valueLen         = haveValue? qstrlen(token) : 0;
-                if(!valueStr)
+                if (!valueStr)
                 {
                     // Use the default.
                     int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
@@ -671,13 +671,13 @@ DENG2_PIMPL(FinaleInterpreter)
             case FVT_URI: {
                 uri_s *uri = Uri_New();
                 // Always apply the default as it may contain a default scheme.
-                if(opHasDefaultValue)
+                if (opHasDefaultValue)
                 {
                     int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                     AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
                     Uri_SetUri2(uri, Str_Text(defaultValue), RC_NULL);
                 }
-                if(haveValue)
+                if (haveValue)
                 {
                     Uri_SetUri2(uri, token, RC_NULL);
                 }
@@ -688,7 +688,7 @@ DENG2_PIMPL(FinaleInterpreter)
             }
         }
 
-        if(count) *count = operandCount;
+        if (count) *count = operandCount;
 
         return operands;
     }
@@ -696,13 +696,13 @@ DENG2_PIMPL(FinaleInterpreter)
     bool skippingCommand(command_t const *cmd)
     {
         DENG2_ASSERT(cmd);
-        if((skipNext && !cmd->flags.when_condition_skipping) ||
+        if ((skipNext && !cmd->flags.when_condition_skipping) ||
            ((skipping || gotoSkip) && !cmd->flags.when_skipping))
         {
             // While not DO-skipping, the condskip has now been done.
-            if(!doLevel)
+            if (!doLevel)
             {
-                if(skipNext)
+                if (skipNext)
                     lastSkipped = true;
                 skipNext = false;
             }
@@ -720,11 +720,11 @@ DENG2_PIMPL(FinaleInterpreter)
         bool didSkip = false;
 
         // Semicolon terminates DO-blocks.
-        if(!qstrcmp(commandString, ";"))
+        if (!qstrcmp(commandString, ";"))
         {
-            if(doLevel > 0)
+            if (doLevel > 0)
             {
-                if(--doLevel == 0)
+                if (--doLevel == 0)
                 {
                     // The DO-skip has been completed.
                     skipNext    = false;
@@ -738,12 +738,12 @@ DENG2_PIMPL(FinaleInterpreter)
         cmdExecuted = true;
 
         // Is this a command we know how to execute?
-        if(command_t const *cmd = findCommand(commandString))
+        if (command_t const *cmd = findCommand(commandString))
         {
             bool const requiredOperands = (cmd->operands && cmd->operands[0]);
 
             // Is this command supported for this directive?
-            if(directive != 0 && cmd->excludeDirectives != 0 &&
+            if (directive != 0 && cmd->excludeDirectives != 0 &&
                (cmd->excludeDirectives & directive) == 0)
                 App_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
                           cmd->token, directive);
@@ -752,19 +752,19 @@ DENG2_PIMPL(FinaleInterpreter)
             /// @todo Dynamic memory allocation during script interpretation should be avoided.
             int numOps        = 0;
             fi_operand_t *ops = nullptr;
-            if(!requiredOperands || (ops = prepareCommandOperands(cmd, &numOps)))
+            if (!requiredOperands || (ops = prepareCommandOperands(cmd, &numOps)))
             {
                 // Should we skip this command?
-                if(!(didSkip = skippingCommand(cmd)))
+                if (!(didSkip = skippingCommand(cmd)))
                 {
                     // Execute forthwith!
                     cmd->func(*cmd, ops, self);
                 }
             }
 
-            if(!didSkip)
+            if (!didSkip)
             {
-                if(gotoEnd)
+                if (gotoEnd)
                 {
                     wait = 1;
                 }
@@ -775,12 +775,12 @@ DENG2_PIMPL(FinaleInterpreter)
                 }
             }
 
-            if(ops)
+            if (ops)
             {
-                for(int i = 0; i < numOps; ++i)
+                for (int i = 0; i < numOps; ++i)
                 {
                     fi_operand_t *op = &ops[i];
-                    switch(op->type)
+                    switch (op->type)
                     {
                     case FVT_STRING: M_Free((char *)op->data.cstring); break;
                     case FVT_URI:    Uri_Delete(op->data.uri);         break;
@@ -807,12 +807,12 @@ DENG2_PIMPL(FinaleInterpreter)
 
     FinaleWidget *locateWidget(fi_obtype_e type, String const &name)
     {
-        if(!name.isEmpty())
+        if (!name.isEmpty())
         {
             FinalePageWidget::Children const &children = pages[choosePageFor(type)]->children();
-            for(FinaleWidget *widget : children)
+            for (FinaleWidget *widget : children)
             {
-                if(!widget->name().compareWithoutCase(name))
+                if (!widget->name().compareWithoutCase(name))
                 {
                     return widget;
                 }
@@ -823,11 +823,11 @@ DENG2_PIMPL(FinaleInterpreter)
 
     FinaleWidget *makeWidget(fi_obtype_e type, String const &name)
     {
-        if(type == FI_ANIM)
+        if (type == FI_ANIM)
         {
             return new FinaleAnimWidget(name);
         }
-        if(type == FI_TEXT)
+        if (type == FI_TEXT)
         {
             auto *wi = new FinaleTextWidget(name);
             // Configure the text to use the Page's font and color.
@@ -841,25 +841,25 @@ DENG2_PIMPL(FinaleInterpreter)
 #if __CLIENT__
     EventHandler *findEventHandler(ddevent_t const &ev) const
     {
-        for(EventHandler const &eh : eventHandlers)
+        for (EventHandler const &eh : eventHandlers)
         {
-            if(eh.ev.device != ev.device && eh.ev.type != ev.type)
+            if (eh.ev.device != ev.device && eh.ev.type != ev.type)
                 continue;
 
-            switch(eh.ev.type)
+            switch (eh.ev.type)
             {
             case E_TOGGLE:
-                if(eh.ev.toggle.id != ev.toggle.id)
+                if (eh.ev.toggle.id != ev.toggle.id)
                     continue;
                 break;
 
             case E_AXIS:
-                if(eh.ev.axis.id != ev.axis.id)
+                if (eh.ev.axis.id != ev.axis.id)
                     continue;
                 break;
 
             case E_ANGLE:
-                if(eh.ev.angle.id != ev.angle.id)
+                if (eh.ev.angle.id != ev.angle.id)
                     continue;
                 break;
 
@@ -900,21 +900,21 @@ void FinaleInterpreter::loadScript(char const *script)
     d->initDefaultState();
 
     // Locate the start of the script.
-    if(d->nextToken())
+    if (d->nextToken())
     {
         // The start of the script may include blocks of event directive
         // commands. These commands are automatically executed in response
         // to their associated events.
-        if(!qstricmp(d->token, "OnLoad"))
+        if (!qstricmp(d->token, "OnLoad"))
         {
             d->findBegin();
             forever
             {
                 d->nextToken();
-                if(!qstricmp(d->token, "}"))
+                if (!qstricmp(d->token, "}"))
                     goto end_read;
 
-                if(!d->executeCommand(d->token, FID_ONLOAD))
+                if (!d->executeCommand(d->token, FID_ONLOAD))
                     App_Error("FinaleInterpreter::LoadScript: Unknown error"
                               "occured executing directive \"OnLoad\".");
             }
@@ -923,7 +923,7 @@ end_read:
 
             // Skip over any trailing whitespace to position the read cursor
             // on the first token.
-            while(*d->cp && isspace(*d->cp)) { d->cp++; }
+            while (*d->cp && isspace(*d->cp)) { d->cp++; }
 
             // Calculate the new script entry point and restore default state.
             d->scriptBegin = Str_Text(d->script) + (d->cp - Str_Text(d->script));
@@ -938,13 +938,13 @@ end_read:
 
 void FinaleInterpreter::resume()
 {
-    if(!d->flags.suspended) return;
+    if (!d->flags.suspended) return;
 
     d->flags.suspended = false;
     d->pages[Anims]->pause(false);
     d->pages[Texts]->pause(false);
     // Do we need to unhide any pages?
-    if(d->cmdExecuted)
+    if (d->cmdExecuted)
     {
         d->pages[Anims]->makeVisible();
         d->pages[Texts]->makeVisible();
@@ -955,7 +955,7 @@ void FinaleInterpreter::suspend()
 {
     LOG_AS("FinaleInterpreter");
 
-    if(d->flags.suspended) return;
+    if (d->flags.suspended) return;
 
     d->flags.suspended = true;
     // While suspended, all pages will be paused and hidden.
@@ -976,7 +976,7 @@ void FinaleInterpreter::terminate()
 
 bool FinaleInterpreter::isMenuTrigger() const
 {
-    if(d->flags.paused || d->flags.can_skip)
+    if (d->flags.paused || d->flags.can_skip)
     {
         // We want events to be used for unpausing/skipping.
         return false;
@@ -1023,36 +1023,36 @@ bool FinaleInterpreter::runTicks(timespan_t timeDelta, bool processCommands)
     page(Anims).runTicks(timeDelta);
     page(Texts).runTicks(timeDelta);
 
-    if(!processCommands)   return false;
-    if(d->flags.stopped)   return false;
-    if(d->flags.suspended) return false;
+    if (!processCommands)   return false;
+    if (d->flags.stopped)   return false;
+    if (d->flags.suspended) return false;
 
     d->timer++;
 
-    if(!runOneTick(*this))
+    if (!runOneTick(*this))
         return false;
 
     // If waiting do not execute commands.
-    if(d->wait && --d->wait)
+    if (d->wait && --d->wait)
         return false;
 
     // If paused there is nothing further to do.
-    if(d->flags.paused)
+    if (d->flags.paused)
         return false;
 
     // If waiting on a text to finish typing, do nothing.
-    if(d->waitText)
+    if (d->waitText)
     {
-        if(!d->waitText->animationComplete())
+        if (!d->waitText->animationComplete())
             return false;
 
         d->waitText = nullptr;
     }
 
     // Waiting for an animation to reach its end?
-    if(d->waitAnim)
+    if (d->waitAnim)
     {
-        if(!d->waitAnim->animationComplete())
+        if (!d->waitAnim->animationComplete())
             return false;
 
         d->waitAnim = nullptr;
@@ -1061,7 +1061,7 @@ bool FinaleInterpreter::runTicks(timespan_t timeDelta, bool processCommands)
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (terminates).
     bool foundEnd = false;
-    while(!d->gotoEnd && !d->wait && !d->waitText && !d->waitAnim && !foundEnd)
+    while (!d->gotoEnd && !d->wait && !d->waitText && !d->waitAnim && !foundEnd)
     {
         foundEnd = d->executeNextCommand();
     }
@@ -1072,7 +1072,7 @@ bool FinaleInterpreter::skip()
 {
     LOG_AS("FinaleInterpreter");
 
-    if(d->waitText && d->flags.can_skip && !d->flags.paused)
+    if (d->waitText && d->flags.can_skip && !d->flags.paused)
     {
         // Instead of skipping, just complete the text.
         d->waitText->accelerate();
@@ -1082,14 +1082,14 @@ bool FinaleInterpreter::skip()
     // Stop waiting for objects.
     d->waitText = nullptr;
     d->waitAnim = nullptr;
-    if(d->flags.paused)
+    if (d->flags.paused)
     {
         d->flags.paused = false;
         d->wait = 0;
         return true;
     }
 
-    if(d->flags.can_skip)
+    if (d->flags.can_skip)
     {
         d->skipping = true; // Start skipping ahead.
         d->wait     = 0;
@@ -1103,7 +1103,7 @@ bool FinaleInterpreter::skipToMarker(String const &marker)
 {
     LOG_AS("FinaleInterpreter");
 
-    if(marker.isEmpty()) return false;
+    if (marker.isEmpty()) return false;
 
     d->gotoTarget = marker;
     d->gotoSkip   = true;    // Start skipping until the marker is found.
@@ -1130,25 +1130,25 @@ int FinaleInterpreter::handleEvent(ddevent_t const &ev)
 {
     LOG_AS("FinaleInterpreter");
 
-    if(d->flags.suspended)
+    if (d->flags.suspended)
         return false;
 
     // During the first ~second disallow all events/skipping.
-    if(d->timer < 20)
+    if (d->timer < 20)
         return false;
 
-    if(!::isClient)
+    if (!::isClient)
     {
 #ifdef __CLIENT__
         // Any handlers for this event?
-        if(IS_KEY_DOWN(&ev))
+        if (IS_KEY_DOWN(&ev))
         {
-            if(Instance::EventHandler *eh = d->findEventHandler(ev))
+            if (Instance::EventHandler *eh = d->findEventHandler(ev))
             {
                 skipToMarker(eh->gotoMarker);
 
                 // Never eat up events.
-                if(IS_TOGGLE_UP(&ev)) return false;
+                if (IS_TOGGLE_UP(&ev)) return false;
 
                 return (d->flags.eat_events != 0);
             }
@@ -1157,15 +1157,15 @@ int FinaleInterpreter::handleEvent(ddevent_t const &ev)
     }
 
     // If we can't skip, there's no interaction of any kind.
-    if(!d->flags.can_skip && !d->flags.paused)
+    if (!d->flags.can_skip && !d->flags.paused)
         return false;
 
     // We are only interested in key/button down presses.
-    if(!IS_TOGGLE_DOWN(&ev))
+    if (!IS_TOGGLE_DOWN(&ev))
         return false;
 
 #ifdef __CLIENT__
-    if(::isClient)
+    if (::isClient)
     {
         // Request skip from the server.
         Cl_RequestFinaleSkip();
@@ -1183,17 +1183,17 @@ int FinaleInterpreter::handleEvent(ddevent_t const &ev)
 void FinaleInterpreter::addEventHandler(ddevent_t const &evTemplate, String const &gotoMarker)
 {
     // Does a handler already exist for this?
-    if(d->findEventHandler(evTemplate)) return;
+    if (d->findEventHandler(evTemplate)) return;
 
     d->eventHandlers.append(Instance::EventHandler(&evTemplate, gotoMarker));
 }
 
 void FinaleInterpreter::removeEventHandler(ddevent_t const &evTemplate)
 {
-    if(Instance::EventHandler *eh = d->findEventHandler(evTemplate))
+    if (Instance::EventHandler *eh = d->findEventHandler(evTemplate))
     {
         int index = 0;
-        while(&d->eventHandlers.at(index) != eh) { index++; }
+        while (&d->eventHandlers.at(index) != eh) { index++; }
         d->eventHandlers.removeAt(index);
     }
 }
@@ -1201,7 +1201,7 @@ void FinaleInterpreter::removeEventHandler(ddevent_t const &evTemplate)
 
 FinalePageWidget &FinaleInterpreter::page(PageIndex index)
 {
-    if(index >= Anims && index <= Texts)
+    if (index >= Anims && index <= Texts)
     {
         DENG2_ASSERT(d->pages[index]);
         return *d->pages[index];
@@ -1217,12 +1217,12 @@ FinalePageWidget const &FinaleInterpreter::page(PageIndex index) const
 FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)
 {
     // Perhaps an Anim?
-    if(FinaleWidget *found = d->locateWidget(FI_ANIM, name))
+    if (FinaleWidget *found = d->locateWidget(FI_ANIM, name))
     {
         return found;
     }
     // Perhaps a Text?
-    if(FinaleWidget *found = d->locateWidget(FI_TEXT, name))
+    if (FinaleWidget *found = d->locateWidget(FI_TEXT, name))
     {
         return found;
     }
@@ -1231,7 +1231,7 @@ FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)
 
 FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, String const &name)
 {
-    if(FinaleWidget *foundWidget = d->locateWidget(type, name))
+    if (FinaleWidget *foundWidget = d->locateWidget(type, name))
     {
         return *foundWidget;
     }
@@ -1242,20 +1242,20 @@ FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, String con
 {
     DENG2_ASSERT(type >= FI_ANIM && type <= FI_TEXT);
     DENG2_ASSERT(!name.isEmpty());
-    if(FinaleWidget *foundWidget = d->locateWidget(type, name))
+    if (FinaleWidget *foundWidget = d->locateWidget(type, name))
     {
         return *foundWidget;
     }
 
     FinaleWidget *newWidget = d->makeWidget(type, name);
-    if(!newWidget) throw Error("FinaleInterpreter::findOrCreateWidget", "Failed making widget for type:" + String::number(int(type)));
+    if (!newWidget) throw Error("FinaleInterpreter::findOrCreateWidget", "Failed making widget for type:" + String::number(int(type)));
 
     return *page(d->choosePageFor(*newWidget)).addChild(newWidget);
 }
 
 void FinaleInterpreter::beginDoSkipMode()
 {
-    if(!skipInProgress()) return;
+    if (!skipInProgress()) return;
 
     // A conditional skip has been issued.
     // We'll go into DO-skipping mode. skipnext won't be cleared
@@ -1287,7 +1287,7 @@ void FinaleInterpreter::foundSkipHere()
 void FinaleInterpreter::foundSkipMarker(String const &marker)
 {
     // Does it match the current goto torget?
-    if(!d->gotoTarget.compareWithoutCase(marker))
+    if (!d->gotoTarget.compareWithoutCase(marker))
     {
         d->gotoSkip = false;
     }
@@ -1349,7 +1349,7 @@ DEFFC(End)
 static void changePageBackground(FinalePageWidget &page, Material *newMaterial)
 {
     // If the page does not yet have a background set we must setup the color+alpha.
-    if(newMaterial && !page.backgroundMaterial())
+    if (newMaterial && !page.backgroundMaterial())
     {
         page.setBackgroundTopColorAndAlpha   (Vector4f(1, 1, 1, 1))
             .setBackgroundBottomColorAndAlpha(Vector4f(1, 1, 1, 1));
@@ -1365,7 +1365,7 @@ DEFFC(BGMaterial)
     Material *material = nullptr;
     try
     {
-        if(ded_value_t *value = ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
+        if (ded_value_t *value = ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
         {
             material = &App_ResourceSystem().material(de::Uri(value->text, RC_NULL));
         }
@@ -1374,9 +1374,9 @@ DEFFC(BGMaterial)
             material = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
         }
     }
-    catch(MaterialManifest::MissingMaterialError const &)
+    catch (MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
-    catch(Resources::MissingResourceManifestError const &)
+    catch (Resources::MissingResourceManifestError const &)
     {} // Ignore this error.
 
     changePageBackground(fi.page(FinaleInterpreter::Anims), material);
@@ -1515,24 +1515,24 @@ DEFFC(If)
     bool val          = false;
 
     // Built-in conditions.
-    if(!qstricmp(token, "netgame"))
+    if (!qstricmp(token, "netgame"))
     {
         val = netGame;
     }
-    else if(!qstrnicmp(token, "mode:", 5))
+    else if (!qstrnicmp(token, "mode:", 5))
     {
-        if(App_GameLoaded())
+        if (App_GameLoaded())
             val = !String(token + 5).compareWithoutCase(App_CurrentGame().id());
         else
             val = 0;
     }
     // Any hooks?
-    else if(Plug_CheckForHook(HOOK_FINALE_EVAL_IF))
+    else if (Plug_CheckForHook(HOOK_FINALE_EVAL_IF))
     {
         ddhook_finale_script_evalif_paramaters_t p; de::zap(p);
         p.token     = token;
         p.returnVal = 0;
-        if(DoomsdayApp::plugins().callAllHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
+        if (DoomsdayApp::plugins().callAllHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
         {
             val = p.returnVal;
             LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
@@ -1593,7 +1593,7 @@ DEFFC(Image)
 
     anim.clearAllFrames();
 
-    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
@@ -1616,7 +1616,7 @@ DEFFC(ImageAt)
     anim.clearAllFrames()
         .setOrigin(Vector2f(x, y));
 
-    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
@@ -1631,7 +1631,7 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
     image_t image;
     DGLuint glTexName = 0;
 
-    if(GL_LoadExtImage(image, fileName, LGM_NORMAL))
+    if (GL_LoadExtImage(image, fileName, LGM_NORMAL))
     {
         // Loaded successfully and converted accordingly.
         // Upload the image to GL.
@@ -1666,7 +1666,7 @@ DEFFC(XImage)
 
 #ifdef __CLIENT__
     // Load the external resource.
-    if(DGLuint tex = loadAndPrepareExtTexture(fileName))
+    if (DGLuint tex = loadAndPrepareExtTexture(fileName))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_XIMAGE, -1, &tex, 0, false);
     }
@@ -1689,7 +1689,7 @@ DEFFC(Patch)
     anim.clearAllFrames();
 
     patchid_t patchId = R_DeclarePatch(encodedName);
-    if(patchId)
+    if (patchId)
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_PATCH, -1, (void *)&patchId, 0, 0);
     }
@@ -1708,13 +1708,13 @@ DEFFC(SetPatch)
     char const *encodedName = OP_CSTRING(1);
 
     patchid_t patchId = R_DeclarePatch(encodedName);
-    if(patchId == 0)
+    if (patchId == 0)
     {
         LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
         return;
     }
 
-    if(!anim.frameCount())
+    if (!anim.frameCount())
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_PATCH, -1, (void *)&patchId, 0, false);
         return;
@@ -1731,9 +1731,9 @@ DEFFC(SetPatch)
 DEFFC(ClearAnim)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
-        if(FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
         {
             anim->clearAllFrames();
         }
@@ -1750,7 +1750,7 @@ DEFFC(Anim)
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
 
     patchid_t patchId = R_DeclarePatch(encodedName);
-    if(!patchId)
+    if (!patchId)
     {
         LOG_SCR_WARNING("Patch '%s' not found") << encodedName;
         return;
@@ -1769,7 +1769,7 @@ DEFFC(AnimImage)
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
 
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
-    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         return;
@@ -1794,7 +1794,7 @@ DEFFC(StateAnim)
 
     // Animate N states starting from the given one.
     dint stateId = ::defs.getStateNum(OP_CSTRING(1));
-    for(dint count = OP_INT(2); count > 0 && stateId > 0; count--)
+    for (dint count = OP_INT(2); count > 0 && stateId > 0; count--)
     {
         state_t *st = &runtimeDefs.states[stateId];
 #ifdef __CLIENT__
@@ -1814,7 +1814,7 @@ DEFFC(PicSound)
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
     int const sound        = ::defs.getSoundNum(OP_CSTRING(1));
 
-    if(!anim.frameCount())
+    if (!anim.frameCount())
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_MATERIAL, -1, 0, sound, false);
         return;
@@ -1826,7 +1826,7 @@ DEFFC(PicSound)
 DEFFC(ObjectOffX)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginX(OP_FLOAT(1), fi.inTime());
     }
@@ -1835,7 +1835,7 @@ DEFFC(ObjectOffX)
 DEFFC(ObjectOffY)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginY(OP_FLOAT(1), fi.inTime());
     }
@@ -1844,7 +1844,7 @@ DEFFC(ObjectOffY)
 DEFFC(ObjectOffZ)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginZ(OP_FLOAT(1), fi.inTime());
     }
@@ -1853,14 +1853,14 @@ DEFFC(ObjectOffZ)
 DEFFC(ObjectRGB)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         Vector3f const color(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3));
-        if(FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
+        if (FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
         {
             text->setColor(color, fi.inTime());
         }
-        if(FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
         {
             // This affects all the colors.
             anim->setColor         (color, fi.inTime())
@@ -1874,14 +1874,14 @@ DEFFC(ObjectRGB)
 DEFFC(ObjectAlpha)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         float const alpha = OP_FLOAT(1);
-        if(FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
+        if (FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
         {
             text->setAlpha(alpha, fi.inTime());
         }
-        if(FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
         {
             anim->setAlpha     (alpha, fi.inTime())
                  .setOtherAlpha(alpha, fi.inTime());
@@ -1892,7 +1892,7 @@ DEFFC(ObjectAlpha)
 DEFFC(ObjectScaleX)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime());
     }
@@ -1901,7 +1901,7 @@ DEFFC(ObjectScaleX)
 DEFFC(ObjectScaleY)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleY(OP_FLOAT(1), fi.inTime());
     }
@@ -1910,7 +1910,7 @@ DEFFC(ObjectScaleY)
 DEFFC(ObjectScaleZ)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleZ(OP_FLOAT(1), fi.inTime());
     }
@@ -1919,7 +1919,7 @@ DEFFC(ObjectScaleZ)
 DEFFC(ObjectScale)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime())
            .setScaleY(OP_FLOAT(1), fi.inTime());
@@ -1929,7 +1929,7 @@ DEFFC(ObjectScale)
 DEFFC(ObjectScaleXY)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime())
            .setScaleY(OP_FLOAT(2), fi.inTime());
@@ -1939,7 +1939,7 @@ DEFFC(ObjectScaleXY)
 DEFFC(ObjectScaleXYZ)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScale(Vector3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
     }
@@ -1948,7 +1948,7 @@ DEFFC(ObjectScaleXYZ)
 DEFFC(ObjectAngle)
 {
     DENG2_UNUSED(cmd);
-    if(FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
+    if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setAngle(OP_FLOAT(1), fi.inTime());
     }
@@ -1973,24 +1973,24 @@ DEFFC(FillColor)
 {
     DENG2_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
-    if(!wi || !wi->is<FinaleAnimWidget>()) return;
+    if (!wi || !wi->is<FinaleAnimWidget>()) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
 
     // Which colors to modify?
     int which = 0;
-    if(!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
-    else if(!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    if (!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
+    else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
     else                                        which = 3;
 
     Vector4f color;
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         color[i] = OP_FLOAT(2 + i);
     }
 
-    if(which & 1)
+    if (which & 1)
         anim.setColorAndAlpha(color, fi.inTime());
-    if(which & 2)
+    if (which & 2)
         anim.setOtherColorAndAlpha(color, fi.inTime());
 }
 
@@ -1998,24 +1998,24 @@ DEFFC(EdgeColor)
 {
     DENG2_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
-    if(!wi || !wi->is<FinaleAnimWidget>()) return;
+    if (!wi || !wi->is<FinaleAnimWidget>()) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
 
     // Which colors to modify?
     int which = 0;
-    if(!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
-    else if(!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    if (!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
+    else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
     else                                        which = 3;
 
     Vector4f color;
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         color[i] = OP_FLOAT(2 + i);
     }
 
-    if(which & 1)
+    if (which & 1)
         anim.setEdgeColorAndAlpha(color, fi.inTime());
-    if(which & 2)
+    if (which & 2)
         anim.setOtherEdgeColorAndAlpha(color, fi.inTime());
 }
 
@@ -2049,7 +2049,7 @@ DEFFC(SeeSound)
 {
     DENG2_UNUSED2(cmd, fi);
     dint num = ::defs.getMobjNum(OP_CSTRING(0));
-    if(num >= 0 && ::runtimeDefs.mobjInfo[num].seeSound > 0)
+    if (num >= 0 && ::runtimeDefs.mobjInfo[num].seeSound > 0)
     {
         S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, nullptr);
     }
@@ -2059,7 +2059,7 @@ DEFFC(DieSound)
 {
     DENG2_UNUSED2(cmd, fi);
     dint num = ::defs.getMobjNum(OP_CSTRING(0));
-    if(num >= 0 && ::runtimeDefs.mobjInfo[num].deathSound > 0)
+    if (num >= 0 && ::runtimeDefs.mobjInfo[num].deathSound > 0)
     {
         S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, nullptr);
     }
@@ -2112,7 +2112,7 @@ DEFFC(TextFromLump)
     text.setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
-    if(lumpNum >= 0)
+    if (lumpNum >= 0)
     {
         File1 &lump            = App_FileSystem().lump(lumpNum);
         uint8_t const *rawStr = lump.cache();
@@ -2121,11 +2121,11 @@ DEFFC(TextFromLump)
         Str_Reserve(str, lump.size() * 2);
 
         char *out = Str_Text(str);
-        for(size_t i = 0; i < lump.size(); ++i)
+        for (size_t i = 0; i < lump.size(); ++i)
         {
             char ch = (char)(rawStr[i]);
-            if(ch == '\r') continue;
-            if(ch == '\n')
+            if (ch == '\r') continue;
+            if (ch == '\n')
             {
                 *out++ = '\\';
                 *out++ = 'n';
@@ -2186,7 +2186,7 @@ DEFFC(PredefinedFont)
     LOG_AS("FIC_PredefinedFont");
 
     fontid_t const fontNum = Fonts_ResolveUri(OP_URI(1));
-    if(fontNum)
+    if (fontNum)
     {
         int const idx = de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS) - 1;
         fi.page(FinaleInterpreter::Anims).setPredefinedFont(idx, fontNum);
@@ -2279,7 +2279,7 @@ DEFFC(Font)
 
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     fontid_t fontNum       = Fonts_ResolveUri(OP_URI(1));
-    if(fontNum)
+    if (fontNum)
     {
         text.setFont(fontNum);
         return;
@@ -2342,7 +2342,7 @@ DEFFC(PlayDemo)
     fi.suspend();
 
     // Start the demo.
-    if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", OP_CSTRING(0)))
+    if (!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", OP_CSTRING(0)))
     {
         // Demo playback failed. Here we go again...
         fi.resume();

@@ -68,7 +68,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
 
         AnimatorVector3_Init(offset, 0, 0, 0);
         AnimatorVector4_Init(filter, 0, 0, 0, 0);
-        for(int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+        for (int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
         {
             AnimatorVector3_Init(preColor[i], 1, 1, 1);
         }
@@ -104,10 +104,10 @@ static inline MaterialVariantSpec const &uiMaterialSpec()
 
 void FinalePageWidget::draw() const
 {
-    if(d->flags.hidden) return;
+    if (d->flags.hidden) return;
 
     // Draw a background?
-    if(d->flags.showBackground)
+    if (d->flags.showBackground)
     {
         vec3f_t topColor; V3f_Set(topColor, d->bg.topColor[0].value, d->bg.topColor[1].value, d->bg.topColor[2].value);
         float topAlpha = d->bg.topColor[3].value;
@@ -115,9 +115,9 @@ void FinalePageWidget::draw() const
         vec3f_t bottomColor; V3f_Set(bottomColor, d->bg.bottomColor[0].value, d->bg.bottomColor[1].value, d->bg.bottomColor[2].value);
         float bottomAlpha = d->bg.bottomColor[3].value;
 
-        if(topAlpha > 0 && bottomAlpha > 0)
+        if (topAlpha > 0 && bottomAlpha > 0)
         {
-            if(Material *material = d->bg.material)
+            if (Material *material = d->bg.material)
             {
                 MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec());
 
@@ -128,7 +128,7 @@ void FinalePageWidget::draw() const
                 glEnable(GL_TEXTURE_2D);
             }
 
-            if(d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
+            if (d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
             {
                 GL_BlendMode(BM_NORMAL);
             }
@@ -157,7 +157,7 @@ void FinalePageWidget::draw() const
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    if(renderWireframe > 1)
+    if (renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_ALPHA_TEST);
     GLState::push().setAlphaTest(true).apply();
@@ -166,7 +166,7 @@ void FinalePageWidget::draw() const
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
                          0/*.05f - d->offset[VZ].value*/);
 
-    for(FinaleWidget *widget : d->children)
+    for (FinaleWidget *widget : d->children)
     {
         widget->draw(worldOrigin);
     }
@@ -175,11 +175,11 @@ void FinalePageWidget::draw() const
     //glDisable(GL_ALPHA_TEST);
     GLState::pop().apply();
     // Back from wireframe mode?
-    if(renderWireframe > 1)
+    if (renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Filter on top of everything. Only draw if necessary.
-    if(d->filter[3].value > 0)
+    if (d->filter[3].value > 0)
     {
         GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, d->filter[0].value, d->filter[1].value, d->filter[2].value, d->filter[3].value);
     }
@@ -204,12 +204,12 @@ void FinalePageWidget::pause(bool yes)
 void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
 {
     /// @todo Interpolate in fractional time.
-    if(!DD_IsSharpTick()) return;
+    if (!DD_IsSharpTick()) return;
 
     // A new 'sharp' tick has begun.
     d->timer++;
 
-    for(FinaleWidget *widget : d->children)
+    for (FinaleWidget *widget : d->children)
     {
         widget->runTicks(/*timeDelta*/);
     }
@@ -218,7 +218,7 @@ void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
     AnimatorVector4_Think(d->bg.topColor);
     AnimatorVector4_Think(d->bg.bottomColor);
     AnimatorVector4_Think(d->filter);
-    for(int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+    for (int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
         AnimatorVector3_Think(d->preColor[i]);
     }
@@ -226,13 +226,13 @@ void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
 
 bool FinalePageWidget::hasWidget(FinaleWidget *widget)
 {
-    if(!widget) return false;
+    if (!widget) return false;
     return d->children.contains(widget);
 }
 
 FinaleWidget *FinalePageWidget::addChild(FinaleWidget *widgetToAdd)
 {
-    if(!hasWidget(widgetToAdd))
+    if (!hasWidget(widgetToAdd))
     {
         d->children.append(widgetToAdd);
         widgetToAdd->setPage(this);
@@ -243,7 +243,7 @@ FinaleWidget *FinalePageWidget::addChild(FinaleWidget *widgetToAdd)
 
 FinaleWidget *FinalePageWidget::removeChild(FinaleWidget *widgetToRemove)
 {
-    if(hasWidget(widgetToRemove))
+    if (hasWidget(widgetToRemove))
     {
         widgetToRemove->audienceForDeletion -= d;
         widgetToRemove->setPage(nullptr);
@@ -324,7 +324,7 @@ FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(Vector4f const &newCo
 
 FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vector3f const &newColor, int steps)
 {
-    if(VALID_FIPAGE_PREDEFINED_COLOR(idx))
+    if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {
         AnimatorVector3_Set(d->preColor[idx], newColor.x, newColor.y, newColor.z, steps);
     }
@@ -337,7 +337,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vector3f const 
 
 animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
 {
-    if(VALID_FIPAGE_PREDEFINED_COLOR(idx))
+    if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {
         return &d->preColor[idx];
     }
@@ -346,7 +346,7 @@ animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
 
 FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum)
 {
-    if(VALID_FIPAGE_PREDEFINED_FONT(idx))
+    if (VALID_FIPAGE_PREDEFINED_FONT(idx))
     {
         d->preFont[idx] = fontNum;
     }
@@ -359,7 +359,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum
 
 fontid_t FinalePageWidget::predefinedFont(uint idx)
 {
-    if(VALID_FIPAGE_PREDEFINED_FONT(idx))
+    if (VALID_FIPAGE_PREDEFINED_FONT(idx))
     {
         return d->preFont[idx];
     }

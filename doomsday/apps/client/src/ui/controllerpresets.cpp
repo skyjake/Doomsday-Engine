@@ -61,9 +61,9 @@ DENG2_PIMPL_NOREF(ControllerPresets)
     QList<QString> ids() const
     {
         QSet<QString> ids;
-        for(auto i : presets().elements())
+        for (auto i : presets().elements())
         {
-            if(auto const *value = i.second->maybeAs<RecordValue>())
+            if (auto const *value = i.second->maybeAs<RecordValue>())
             {
                 ids.insert(value->dereference().gets("id"));
             }
@@ -82,12 +82,12 @@ DENG2_PIMPL_NOREF(ControllerPresets)
      */
     Record const *findMatching(String const &deviceName) const
     {
-        for(auto i : presets().elements())
+        for (auto i : presets().elements())
         {
             String const key = i.first.value->asText();
-            if(!key.isEmpty() && QRegExp(key, Qt::CaseInsensitive).exactMatch(deviceName))
+            if (!key.isEmpty() && QRegExp(key, Qt::CaseInsensitive).exactMatch(deviceName))
             {
-                if(auto const *value = i.second->maybeAs<RecordValue>())
+                if (auto const *value = i.second->maybeAs<RecordValue>())
                 {
                     return value->record();
                 }
@@ -98,11 +98,11 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 
     Record const *findById(String const &id) const
     {
-        for(auto i : presets().elements())
+        for (auto i : presets().elements())
         {
-            if(auto const *value = i.second->maybeAs<RecordValue>())
+            if (auto const *value = i.second->maybeAs<RecordValue>())
             {
-                if(value->dereference().gets("id") == id)
+                if (value->dereference().gets("id") == id)
                 {
                     return value->record();
                 }
@@ -122,13 +122,13 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 
         // When loading a game, automatically apply the control scheme matching
         // the connected game controller (unless a specific scheme is already set).
-        if(!newGame.isNull() && !Joystick_Name().isEmpty())
+        if (!newGame.isNull() && !Joystick_Name().isEmpty())
         {
             String const currentScheme = CVar_String(presetCVar());
 
-            if(auto const *gamepad = findMatching(Joystick_Name()))
+            if (auto const *gamepad = findMatching(Joystick_Name()))
             {
-                if(currentScheme.isEmpty())
+                if (currentScheme.isEmpty())
                 {
                     LOG_INPUT_NOTE("Detected a known gamepad: %s") << Joystick_Name();
 
@@ -143,7 +143,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
     {
         ClientApp::inputSystem().removeBindingsForDevice(deviceId);
 
-        if(preset)
+        if (preset)
         {
             LOG_INPUT_MSG("Applying bindings for %s gamepad") << preset->gets("id");
 

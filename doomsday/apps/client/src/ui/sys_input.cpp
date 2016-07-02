@@ -67,7 +67,7 @@ static keyevent_t *getKeyEvent(void)
 {
     keyevent_t *ev;
 
-    if(evHead == evTail)
+    if (evHead == evTail)
         return NULL;            // No more...
     ev = keyEvents + evTail;
     evTail = (evTail + 1) % EVBUFSIZE;
@@ -76,7 +76,7 @@ static keyevent_t *getKeyEvent(void)
 
 static void Mouse_Init(void)
 {
-    if(CommandLine_Check("-nomouse") || novideo)
+    if (CommandLine_Check("-nomouse") || novideo)
         return;
 
     LOG_AS("Mouse_Init");
@@ -90,7 +90,7 @@ static void Mouse_Init(void)
 
 dd_bool I_InitInterfaces(void)
 {
-    if(initOk)
+    if (initOk)
         return true; // Already initialized.
 
 #ifdef __CLIENT__
@@ -113,11 +113,11 @@ dd_bool I_InitInterfaces(void)
 
 void I_ShutdownInterfaces()
 {
-    if(!initOk)
+    if (!initOk)
         return; // Not initialized.
 
 #ifdef __CLIENT__
-    if(useMouse) iMouse->shutdown();
+    if (useMouse) iMouse->shutdown();
     useMouse = false;
 
     Joystick_Shutdown();
@@ -131,13 +131,13 @@ void I_ShutdownInterfaces()
 
 void Keyboard_Submit(int type, int ddKey, int native, const char* text)
 {
-    if(ddKey != 0)
+    if (ddKey != 0)
     {
         keyevent_t* e = newKeyEvent();
         e->type = type;
         e->ddkey = ddKey;
         e->native = native;
-        if(text)
+        if (text)
         {
             strncpy(e->text, text, sizeof(e->text) - 1);
         }
@@ -149,14 +149,14 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
     keyevent_t *e;
     size_t      i = 0;
 
-    if(!initOk)
+    if (!initOk)
         return 0;
 
     // Get the events.
-    for(i = 0; i < bufsize; ++i)
+    for (i = 0; i < bufsize; ++i)
     {
         e = getKeyEvent();
-        if(!e) break; // No more events.
+        if (!e) break; // No more events.
         memcpy(&evbuf[i], e, sizeof(*e));
     }
 
@@ -165,13 +165,13 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
 
 dd_bool Mouse_IsPresent(void)
 {
-    //if(!initOk) I_InitInterfaces();
+    //if (!initOk) I_InitInterfaces();
     return useMouse;
 }
 
 void Mouse_Poll(void)
 {
-    if(useMouse)
+    if (useMouse)
     {
         iMouse->poll();
     }
@@ -179,7 +179,7 @@ void Mouse_Poll(void)
 
 void Mouse_GetState(mousestate_t *state)
 {
-    if(useMouse)
+    if (useMouse)
     {
         iMouse->getState(state);
     }
@@ -187,7 +187,7 @@ void Mouse_GetState(mousestate_t *state)
 
 void Mouse_Trap(dd_bool enabled)
 {
-    if(useMouse)
+    if (useMouse)
     {
         iMouse->trap(enabled);
     }

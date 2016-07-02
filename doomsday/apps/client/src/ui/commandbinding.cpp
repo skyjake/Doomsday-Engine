@@ -57,10 +57,10 @@ void CommandBinding::resetToDefaults()
 String CommandBinding::composeDescriptor()
 {
     LOG_AS("CommandBinding");
-    if(!*this) return "";
+    if (!*this) return "";
 
     String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
-    switch(geti("type"))
+    switch (geti("type"))
     {
     case E_TOGGLE:      str += B_ButtonStateToString(ControlTest(geti("test"))); break;
     case E_AXIS:        str += B_AxisPositionToString(ControlTest(geti("test")), getf("pos")); break;
@@ -97,7 +97,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
 
     // First, we expect to encounter a device name.
     eventDesc = Str_CopyDelim(str, eventDesc, '-');
-    if(!Str_CompareIgnoreCase(str, "key"))
+    if (!Str_CompareIgnoreCase(str, "key"))
     {
         bind.def().set("deviceId", IDEV_KEYBOARD);
         bind.def().set("type", int(E_TOGGLE)); // Keyboards only have toggles (as far as we know).
@@ -106,7 +106,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         eventDesc = Str_CopyDelim(str, eventDesc, '-');
         int controlId = 0;
         bool ok = B_ParseKeyId(controlId, Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("controlId", controlId);
 
@@ -114,11 +114,11 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         eventDesc = Str_CopyDelim(str, eventDesc, '-');
         Binding::ControlTest test = Binding::ControlTest::None;
         ok = B_ParseButtonState(test, Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("test", int(test));
     }
-    else if(!Str_CompareIgnoreCase(str, "mouse"))
+    else if (!Str_CompareIgnoreCase(str, "mouse"))
     {
         bind.def().set("deviceId", IDEV_MOUSE);
 
@@ -127,19 +127,19 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         ddeventtype_t type = E_TOGGLE;
         int controlId = 0;
         bool ok = B_ParseMouseTypeAndId(type, controlId, Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("type", type);
         bind.def().set("controlId", controlId);
 
         // The last part determines the toggle state or the axis position.
         eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        switch(bind.geti("type"))
+        switch (bind.geti("type"))
         {
         case E_TOGGLE: {
             Binding::ControlTest test = Binding::ControlTest::None;
             ok = B_ParseButtonState(test, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("test", int(test));
             break; }
@@ -148,7 +148,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             Binding::ControlTest test = Binding::ControlTest::None;
             float pos;
             ok = B_ParseAxisPosition(test, pos, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("test", int(test));
             bind.def().set("pos", pos);
@@ -157,7 +157,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type"); break;
         }
     }
-    else if(!Str_CompareIgnoreCase(str, "joy") ||
+    else if (!Str_CompareIgnoreCase(str, "joy") ||
             !Str_CompareIgnoreCase(str, "head"))
     {
         bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
@@ -167,19 +167,19 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         ddeventtype_t type = E_TOGGLE;
         int controlId = 0;
         bool ok = B_ParseJoystickTypeAndId(type, controlId, bind.geti("deviceId"), Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("type", type);
         bind.def().set("controlId", controlId);
 
         // What is the state of the toggle, axis, or hat?
         eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        switch(bind.geti("type"))
+        switch (bind.geti("type"))
         {
         case E_TOGGLE: {
             Binding::ControlTest test = Binding::ControlTest::None;
             ok = B_ParseButtonState(test, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("test", int(test));
             break; }
@@ -188,7 +188,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             Binding::ControlTest test = Binding::ControlTest::None;
             float pos;
             ok = B_ParseAxisPosition(test, pos, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("test", int(test));
             bind.def().set("pos", pos);
@@ -197,7 +197,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         case E_ANGLE: {
             float pos;
             ok = B_ParseHatAngle(pos, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("pos", pos);
             break; }
@@ -205,7 +205,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type") break;
         }
     }
-    else if(!Str_CompareIgnoreCase(str, "sym"))
+    else if (!Str_CompareIgnoreCase(str, "sym"))
     {
         // A symbolic event.
         bind.def().set("type", int(E_SYMBOLIC));
@@ -221,7 +221,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
     }
 
     // Anything left that wasn't used?
-    if(eventDesc)
+    if (eventDesc)
     {
         LOG_INPUT_WARNING("Unrecognized \"%s\"") << eventDesc;
         return false;
@@ -240,26 +240,26 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
     AutoStr *str = AutoStr_NewStd();
     eventDesc = Str_CopyDelim(str, eventDesc, '+');
 
-    if(!doConfigure(*this, Str_Text(str), command))
+    if (!doConfigure(*this, Str_Text(str), command))
     {
         throw ConfigureError("CommandBinding::configure", "Descriptor parse error");
     }
 
     // Any conditions?
     def()["condition"].array().clear();
-    while(eventDesc)
+    while (eventDesc)
     {
         // A new condition.
         eventDesc = Str_CopyDelim(str, eventDesc, '+');
 
         Record &cond = addCondition();
-        if(!B_ParseBindingCondition(cond, Str_Text(str)))
+        if (!B_ParseBindingCondition(cond, Str_Text(str)))
         {
             throw ConfigureError("CommandBinding::configure", "Descriptor parse error");
         }
     }
 
-    if(assignNewId)
+    if (assignNewId)
     {
         def().set("id", newIdentifier());
     }
@@ -280,20 +280,20 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
 {
     DENG2_ASSERT(out);
     Block const str = command.toUtf8();
-    for(char const *ptr = str.constData(); *ptr; ptr++)
+    for (char const *ptr = str.constData(); *ptr; ptr++)
     {
-        if(*ptr == '%')
+        if (*ptr == '%')
         {
             // Escape.
             ptr++;
 
             // Must have another character in the placeholder.
-            if(!*ptr) break;
+            if (!*ptr) break;
 
-            if(*ptr == 'i')
+            if (*ptr == 'i')
             {
                 int id = 0;
-                switch(event.type)
+                switch (event.type)
                 {
                 case E_TOGGLE:   id = event.toggle.id;   break;
                 case E_AXIS:     id = event.axis.id;     break;
@@ -304,16 +304,16 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
                 }
                 Str_Appendf(out, "%i", id);
             }
-            else if(*ptr == 'p')
+            else if (*ptr == 'p')
             {
                 int id = 0;
-                if(event.type == E_SYMBOLIC)
+                if (event.type == E_SYMBOLIC)
                 {
                     id = P_ConsoleToLocal(event.symbolic.id);
                 }
                 Str_Appendf(out, "%i", id);
             }
-            else if(*ptr == '%')
+            else if (*ptr == '%')
             {
                 Str_AppendChar(out, *ptr);
             }
@@ -327,33 +327,33 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
 Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &context,
     bool respectHigherContexts) const
 {
-    if(geti("type") != event.type) return nullptr;
+    if (geti("type") != event.type) return nullptr;
 
     InputDevice const *dev = nullptr;
-    if(event.type != E_SYMBOLIC)
+    if (event.type != E_SYMBOLIC)
     {
-        if(geti("deviceId") != event.device) return nullptr;
+        if (geti("deviceId") != event.device) return nullptr;
 
         dev = inputSys().devicePtr(geti("deviceId"));
-        if(!dev || !dev->isActive())
+        if (!dev || !dev->isActive())
         {
             // The device is not active, there is no way this could get executed.
             return nullptr;
         }
     }
 
-    switch(event.type)
+    switch (event.type)
     {
     case E_TOGGLE: {
-        if(geti("controlId") != event.toggle.id)
+        if (geti("controlId") != event.toggle.id)
             return nullptr;
 
         DENG2_ASSERT(dev);
         InputDeviceButtonControl &button = dev->button(geti("controlId"));
 
-        if(respectHigherContexts)
+        if (respectHigherContexts)
         {
-            if(button.bindContext() != &context)
+            if (button.bindContext() != &context)
                 return nullptr; // Shadowed by a more important active class.
         }
 
@@ -361,29 +361,29 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
 
         // Is the state as required?
-        switch(ControlTest(geti("test")))
+        switch (ControlTest(geti("test")))
         {
         case ButtonStateAny:
             // Passes no matter what.
             break;
 
         case ButtonStateDown:
-            if(event.toggle.state != ETOG_DOWN)
+            if (event.toggle.state != ETOG_DOWN)
                 return nullptr;
             break;
 
         case ButtonStateUp:
-            if(event.toggle.state != ETOG_UP)
+            if (event.toggle.state != ETOG_UP)
                 return nullptr;
             break;
 
         case ButtonStateRepeat:
-            if(event.toggle.state != ETOG_REPEAT)
+            if (event.toggle.state != ETOG_REPEAT)
                 return nullptr;
             break;
 
         case ButtonStateDownOrRepeat:
-            if(event.toggle.state == ETOG_UP)
+            if (event.toggle.state == ETOG_UP)
                 return nullptr;
             break;
 
@@ -392,35 +392,35 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         break; }
 
     case E_AXIS:
-        if(geti("controlId") != event.axis.id)
+        if (geti("controlId") != event.axis.id)
             return nullptr;
 
         DENG2_ASSERT(dev);
-        if(dev->axis(geti("controlId")).bindContext() != &context)
+        if (dev->axis(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
-        if(!B_CheckAxisPosition(ControlTest(geti("test")), getf("pos"),
+        if (!B_CheckAxisPosition(ControlTest(geti("test")), getf("pos"),
                                 inputSys().device(event.device).axis(event.axis.id)
                                     .translateRealPosition(event.axis.pos)))
             return nullptr;
         break;
 
     case E_ANGLE:
-        if(geti("controlId") != event.angle.id)
+        if (geti("controlId") != event.angle.id)
             return nullptr;
 
         DENG2_ASSERT(dev);
-        if(dev->hat(geti("controlId")).bindContext() != &context)
+        if (dev->hat(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
-        if(event.angle.pos != getf("pos"))
+        if (event.angle.pos != getf("pos"))
             return nullptr;
         break;
 
     case E_SYMBOLIC:
-        if(gets("symbolicName").compareWithCase(event.symbolic.name))
+        if (gets("symbolicName").compareWithCase(event.symbolic.name))
             return nullptr;
         break;
 
@@ -431,7 +431,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     ArrayValue const &conds = def().geta("condition");
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        if(!B_CheckCondition((*i)->as<RecordValue>().record(), 0, &context))
+        if (!B_CheckCondition((*i)->as<RecordValue>().record(), 0, &context))
             return nullptr;
     }
 

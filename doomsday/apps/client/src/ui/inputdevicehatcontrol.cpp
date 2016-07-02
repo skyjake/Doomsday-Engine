@@ -42,7 +42,7 @@ void InputDeviceHatControl::setPosition(dint newPosition)
     _time = Timer_RealMilliseconds(); // Remember when the change occured.
 
     // We can clear the expiration when centered.
-    if(_pos < 0)
+    if (_pos < 0)
     {
         setBindContextAssociation(Expired, UnsetFlags);
     }

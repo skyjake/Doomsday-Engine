@@ -44,20 +44,20 @@ void ImpulseBinding::resetToDefaults()
 String ImpulseBinding::composeDescriptor()
 {
     LOG_AS("ImpulseBinding");
-    if(!*this) return "";
+    if (!*this) return "";
 
     String str = B_ControlDescToString(geti("deviceId"), IBDTYPE_TO_EVTYPE(geti("type")), geti("controlId"));
-    if(geti("type") == IBD_ANGLE)
+    if (geti("type") == IBD_ANGLE)
     {
         str += B_HatAngleToString(getf("angle"));
     }
 
     // Additional flags.
-    if(geti("flags") & IBDF_TIME_STAGED)
+    if (geti("flags") & IBDF_TIME_STAGED)
     {
         str += "-staged";
     }
-    if(geti("flags") & IBDF_INVERSE)
+    if (geti("flags") & IBDF_INVERSE)
     {
         str += "-inverse";
     }
@@ -85,7 +85,7 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
 
     // First, the device name.
     ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-    if(!Str_CompareIgnoreCase(str, "key"))
+    if (!Str_CompareIgnoreCase(str, "key"))
     {
         bind.def().set("deviceId", IDEV_KEYBOARD);
         bind.def().set("type", int(IBD_TOGGLE));
@@ -95,11 +95,11 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
 
         int keyId;
         bool ok = B_ParseKeyId(keyId, Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("controlId", keyId);
     }
-    else if(!Str_CompareIgnoreCase(str, "mouse"))
+    else if (!Str_CompareIgnoreCase(str, "mouse"))
     {
         bind.def().set("deviceId", IDEV_MOUSE);
 
@@ -108,12 +108,12 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
         ddeventtype_t type;
         int controlId = 0;
         bool ok = B_ParseMouseTypeAndId(type, controlId, Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("controlId", controlId);
         bind.def().set("type", int(EVTYPE_TO_IBDTYPE(type)));
     }
-    else if(!Str_CompareIgnoreCase(str, "joy") ||
+    else if (!Str_CompareIgnoreCase(str, "joy") ||
             !Str_CompareIgnoreCase(str, "head"))
     {
         bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
@@ -124,33 +124,33 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
         ddeventtype_t type;
         int controlId = 0;
         bool ok = B_ParseJoystickTypeAndId(type, controlId, bind.geti("deviceId"), Str_Text(str));
-        if(!ok) return false;
+        if (!ok) return false;
 
         bind.def().set("controlId", controlId);
         bind.def().set("type", int(EVTYPE_TO_IBDTYPE(type)));
 
         // Hats include the angle.
-        if(type == E_ANGLE)
+        if (type == E_ANGLE)
         {
             ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
 
             float angle;
             ok = B_ParseHatAngle(angle, Str_Text(str));
-            if(!ok) return false;
+            if (!ok) return false;
 
             bind.def().set("angle", angle);
         }
     }
 
     // Finally, there may be some flags at the end.
-    while(ctrlDesc)
+    while (ctrlDesc)
     {
         ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-        if(!Str_CompareIgnoreCase(str, "inverse"))
+        if (!Str_CompareIgnoreCase(str, "inverse"))
         {
             bind.def().set("flags", bind.geti("flags") | IBDF_INVERSE);
         }
-        else if(!Str_CompareIgnoreCase(str, "staged"))
+        else if (!Str_CompareIgnoreCase(str, "staged"))
         {
             bind.def().set("flags", bind.geti("flags") | IBDF_TIME_STAGED);
         }
@@ -174,26 +174,26 @@ void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPla
     AutoStr *str = AutoStr_NewStd();
     ctrlDesc = Str_CopyDelim(str, ctrlDesc, '+');
 
-    if(!doConfigure(*this, Str_Text(str), impulseId, localPlayer))
+    if (!doConfigure(*this, Str_Text(str), impulseId, localPlayer))
     {
         throw ConfigureError("ImpulseBinding::configure", "Descriptor parse error");
     }
 
     // Any conditions?
     def()["condition"].array().clear();
-    while(ctrlDesc)
+    while (ctrlDesc)
     {
         // A new condition.
         ctrlDesc = Str_CopyDelim(str, ctrlDesc, '+');
 
         Record &cond = addCondition();
-        if(!B_ParseBindingCondition(cond, Str_Text(str)))
+        if (!B_ParseBindingCondition(cond, Str_Text(str)))
         {
             throw ConfigureError("ImpulseBinding::configure", "Descriptor parse error");
         }
     }
 
-    if(assignNewId)
+    if (assignNewId)
     {
         def().set("id", newIdentifier());
     }

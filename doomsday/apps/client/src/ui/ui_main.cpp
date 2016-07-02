@@ -70,8 +70,8 @@ void UI_Register(void)
 
 char const *UI_ChooseFixedFont()
 {
-    if(DENG_GAMEVIEW_WIDTH < 300) return "console11";
-    if(DENG_GAMEVIEW_WIDTH > 768) return "console18";
+    if (DENG_GAMEVIEW_WIDTH < 300) return "console11";
+    if (DENG_GAMEVIEW_WIDTH > 768) return "console18";
     return "console14";
 }
 
@@ -81,7 +81,7 @@ char const *UI_ChooseVariableFont(fontstyle_t style)
     int const SMALL_LIMIT = 500;
     int const MED_LIMIT   = 800;
 
-    switch(style)
+    switch (style)
     {
     default:
         return (resY < SMALL_LIMIT ? "normal12" :
@@ -118,7 +118,7 @@ static AbstractFont *loadSystemFont(char const *name)
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
     AbstractFont *font = resSys().newFontFromFile(uri, Str_Text(&resourcePath));
-    if(!font)
+    if (!font)
     {
         App_Error("loadSystemFont: Failed loading font \"%s\".", name);
         exit(1); // Unreachable.
@@ -131,21 +131,21 @@ static AbstractFont *loadSystemFont(char const *name)
 static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 {
     *fid = NOFONTID;
-    if(uri && uri[0])
+    if (uri && uri[0])
     {
         try
         {
             FontManifest &manifest = resSys().fontManifest(de::Uri(uri, RC_NULL));
-            if(manifest.hasResource())
+            if (manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());
             }
         }
-        catch(Resources::MissingResourceManifestError const &)
+        catch (Resources::MissingResourceManifestError const &)
         {}
     }
 
-    if(*fid == NOFONTID)
+    if (*fid == NOFONTID)
     {
         *fid = loadSystemFont(uri)->manifest().uniqueId();
     }
@@ -153,7 +153,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 
 void UI_LoadFonts()
 {
-    if(isDedicated) return;
+    if (isDedicated) return;
 
     loadFontIfNeeded(UI_ChooseFixedFont(),             &fontFixed);
     loadFontIfNeeded(UI_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
@@ -175,7 +175,7 @@ int UI_FontHeight(void)
 
 ui_color_t* UI_Color(uint id)
 {
-    if(id >= NUM_UI_COLORS)
+    if (id >= NUM_UI_COLORS)
         return NULL;
     return &ui_colors[id];
 }
@@ -214,7 +214,7 @@ void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color,
 {
     assert(origin);
     //alpha *= uiAlpha;
-    if(alpha <= 0) return;
+    if (alpha <= 0) return;
     FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
     FR_DrawText3(text, origin, alignFlags, textFlags);
 }
@@ -234,17 +234,17 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
 
     //alpha *= uiAlpha;
     //bottomAlpha *= uiAlpha;
-    if(alpha <= 0 && bottomAlpha <= 0) return;
+    if (alpha <= 0 && bottomAlpha <= 0) return;
 
-    if(border < 0)
+    if (border < 0)
     {
         border = -border;
         s[0] = t[0] = 1;
         s[1] = t[1] = 0;
     }
-    if(bottomAlpha < 0)
+    if (bottomAlpha < 0)
         bottomAlpha = alpha;
-    if(!bottomColor)
+    if (!bottomColor)
         bottomColor = topColor;
 
     MaterialAnimator &matAnimator = resSys().material(de::Uri("System", (filled? Path("ui/boxfill") : Path("ui/boxcorner"))))
@@ -257,7 +257,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
 
     // The fill comes first, if there's one.
     glBegin(GL_QUADS);
-    if(filled)
+    if (filled)
     {
         glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
@@ -268,7 +268,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
         glVertex2f(origin->x + border, origin->y + size->height - border);
     }
 
-    if(!filled || border > 0)
+    if (!filled || border > 0)
     {
         // Top Left.
         UI_SetColorA(topColor, alpha);
@@ -367,7 +367,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     GLState::push();
 
     glDisable(GL_TEXTURE_2D);
-    if(alpha < 1.0)
+    if (alpha < 1.0)
     {
         GL_BlendMode(BM_NORMAL);
     }
@@ -423,9 +423,9 @@ D_CMD(UIColor)
         { "help",       UIC_HELP },
         { 0, 0 }
     };
-    for(int i = 0; colors[i].str; ++i)
+    for (int i = 0; colors[i].str; ++i)
     {
-        if(stricmp(argv[1], colors[i].str)) continue;
+        if (stricmp(argv[1], colors[i].str)) continue;
 
         uint idx = colors[i].colorIdx;
         ui_colors[idx].red   = strtod(argv[2], 0);

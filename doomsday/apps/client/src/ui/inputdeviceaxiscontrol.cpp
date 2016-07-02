@@ -65,8 +65,8 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
 
         /*
         // test: clamp
-        if(target < -.7) target = -.7;
-        else if(target > .7) target = .7;
+        if (target < -.7) target = -.7;
+        else if (target > .7) target = .7;
         else target = 0;
         */
 
@@ -75,14 +75,14 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
         float used = target * ticLength;
 
         // Don't go past the available motion.
-        if(used > avail)
+        if (used > avail)
         {
             *accumulation = nullptr;
             used = avail;
         }
         else
         {
-            if(*accumulation > nullptr)
+            if (*accumulation > nullptr)
                 *accumulation -= used;
             else
                 *accumulation += used;
@@ -110,7 +110,7 @@ InputDeviceAxisControl::Type InputDeviceAxisControl::type() const
 
 void InputDeviceAxisControl::setRawInput(bool yes)
 {
-    if(yes) d->flags |= IDA_RAW;
+    if (yes) d->flags |= IDA_RAW;
     else    d->flags &= ~IDA_RAW;
 }
 
@@ -128,9 +128,9 @@ void InputDeviceAxisControl::update(timespan_t ticLength)
 {
     Smoother_Advance(d->smoother, ticLength);
 
-    if(d->type == Stick)
+    if (d->type == Stick)
     {
-        if(d->flags & IDA_RAW)
+        if (d->flags & IDA_RAW)
         {
             // The axis is supposed to be unfiltered.
             d->position = d->realPosition;
@@ -141,9 +141,9 @@ void InputDeviceAxisControl::update(timespan_t ticLength)
             Smoother_EvaluateComponent(d->smoother, 0, &d->position);
         }
     }
-    else if(d->type == Pointer)
+    else if (d->type == Pointer)
     {
-        if(d->flags & IDA_RAW)
+        if (d->flags & IDA_RAW)
         {
             // The axis is supposed to be unfiltered.
             d->position    += d->realPosition;
@@ -181,13 +181,13 @@ void InputDeviceAxisControl::applyRealPosition(dfloat pos)
     // The unfiltered position.
     d->realPosition = transformed;
 
-    if(oldRealPos != d->realPosition)
+    if (oldRealPos != d->realPosition)
     {
         // Mark down the time of the change.
         d->time = DD_LatestRunTicsStartTime();
     }
 
-    if(d->type == Stick)
+    if (d->type == Stick)
     {
         d->sharpPosition = d->realPosition;
     }
@@ -203,13 +203,13 @@ void InputDeviceAxisControl::applyRealPosition(dfloat pos)
 dfloat InputDeviceAxisControl::translateRealPosition(dfloat realPos) const
 {
     // An inactive axis is always zero.
-    if(!isActive()) return 0;
+    if (!isActive()) return 0;
 
     // Apply scaling, deadzone and clamping.
     float outPos = realPos * d->scale;
-    if(d->type == Stick) // Only stick axes are dead-zoned and clamped.
+    if (d->type == Stick) // Only stick axes are dead-zoned and clamped.
     {
-        if(fabs(outPos) <= d->deadZone)
+        if (fabs(outPos) <= d->deadZone)
         {
             outPos = 0;
         }
@@ -221,7 +221,7 @@ dfloat InputDeviceAxisControl::translateRealPosition(dfloat realPos) const
         }
     }
 
-    if(isInverted())
+    if (isInverted())
     {
         // Invert the axis position.
         outPos = -outPos;
@@ -258,11 +258,11 @@ duint InputDeviceAxisControl::time() const
 String InputDeviceAxisControl::description() const
 {
     QStringList flags;
-    if(!isActive()) flags << "disabled";
-    if(isInverted()) flags << "inverted";
+    if (!isActive()) flags << "disabled";
+    if (isInverted()) flags << "inverted";
 
     String flagsString;
-    if(!flags.isEmpty())
+    if (!flags.isEmpty())
     {
         String flagsAsText = flags.join("|");
         flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
@@ -288,7 +288,7 @@ bool InputDeviceAxisControl::inDefaultState() const
 
 void InputDeviceAxisControl::reset()
 {
-    if(d->type == Pointer)
+    if (d->type == Pointer)
     {
         // Clear the accumulation.
         d->position      = 0;
@@ -309,7 +309,7 @@ void InputDeviceAxisControl::consoleRegister()
     Block flags = (controlName + "-flags").toUtf8();
     C_VAR_INT(flags.constData(), &d->flags, 0, 0, 7);
 
-    if(d->type == Stick)
+    if (d->type == Stick)
     {
         Block deadzone = (controlName + "-deadzone").toUtf8();
         C_VAR_FLOAT(deadzone.constData(), &d->deadZone, 0, 0, 1);

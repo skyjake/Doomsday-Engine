@@ -49,14 +49,14 @@ void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, 
 int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg,
                     const char** buttons)
 {
-    if(novideo)
+    if (novideo)
     {
         // There's no GUI...
         qWarning("%s", msg);
         return 0;
     }
 
-    if(ClientWindow::mainExists())
+    if (ClientWindow::mainExists())
     {
         ClientWindow::main().hide();
     }
@@ -64,7 +64,7 @@ int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, c
     QMessageBox box;
     box.setWindowTitle(title);
     box.setText(msg);
-    switch(type)
+    switch (type)
     {
     case MBT_INFORMATION: box.setIcon(QMessageBox::Information); break;
     case MBT_QUESTION:    box.setIcon(QMessageBox::Question);    break;
@@ -73,20 +73,20 @@ int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, c
     default:
         break;
     }
-    if(detailedMsg)
+    if (detailedMsg)
     {
         /// @todo Making the dialog a bit wider would be nice, but it seems one has to
         /// derive a new message box class for that -- the default one has a fixed size.
 
         box.setDetailedText(detailedMsg);
     }
-    if(informativeMsg)
+    if (informativeMsg)
     {
         box.setInformativeText(informativeMsg);
     }
-    if(buttons)
+    if (buttons)
     {
-        for(int i = 0; buttons[i]; ++i)
+        for (int i = 0; buttons[i]; ++i)
         {
             box.addButton(buttons[i],
                           i == 0? QMessageBox::AcceptRole :
@@ -129,7 +129,7 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title,
 
         Sys_MessageBox2(type, title, msg, informativeMsg, details.constData());
     }
-    catch(de::Error const &er)
+    catch (de::Error const &er)
     {
         qWarning() << "Could not read" << detailsFileName << ":" << er.asText().toLatin1().constData();
 

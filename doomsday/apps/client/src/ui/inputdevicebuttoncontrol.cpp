@@ -42,13 +42,13 @@ void InputDeviceButtonControl::setDown(bool yes)
 
     _isDown = yes;
 
-    if(_isDown != oldDown)
+    if (_isDown != oldDown)
     {
         // Remember when the change occurred.
         _time = Timer_RealMilliseconds();
     }
 
-    if(_isDown)
+    if (_isDown)
     {
         // This will get cleared after the state is checked by someone.
         setBindContextAssociation(Triggered);

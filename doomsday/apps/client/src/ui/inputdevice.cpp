@@ -61,14 +61,14 @@ void InputDevice::Control::setName(String const &newName)
 String InputDevice::Control::fullName() const
 {
     String desc;
-    if(hasDevice()) desc += device().name() + "-";
+    if (hasDevice()) desc += device().name() + "-";
     desc += (d->name.isEmpty()? "<unnamed>" : d->name);
     return desc;
 }
 
 InputDevice &InputDevice::Control::device() const
 {
-    if(d->device) return *d->device;
+    if (d->device) return *d->device;
     /// @throw MissingDeviceError  Missing InputDevice attribution.
     throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
 }
@@ -113,7 +113,7 @@ void InputDevice::Control::clearBindContextAssociation()
 void InputDevice::Control::expireBindContextAssociationIfChanged()
 {
     // No change?
-    if(d->bindContext == d->prevBindContext) return;
+    if (d->bindContext == d->prevBindContext) return;
 
     // No longer valid.
     setBindContextAssociation(Expired);
@@ -165,7 +165,7 @@ bool InputDevice::isActive() const
 
 void InputDevice::activate(bool yes)
 {
-    if(d->active != yes)
+    if (d->active != yes)
     {
         d->active = yes;
 
@@ -193,37 +193,37 @@ void InputDevice::setTitle(String const &newTitle)
 String InputDevice::description() const
 {
     String desc;
-    if(!d->title.isEmpty())
+    if (!d->title.isEmpty())
     {
         desc += String(_E(D)_E(b) "%1" _E(.)_E(.) " - ").arg(d->title);
     }
     desc += String(_E(b) "%1" _E(.)_E(l) " (%2)" _E(.)).arg(name()).arg(isActive()? "active" : "inactive");
 
-    if(int const count = axisCount())
+    if (int const count = axisCount())
     {
         desc += String("\n  " _E(b) "%1 axes:" _E(.)).arg(count);
         int idx = 0;
-        for(Control const *axis : d->axes)
+        for (Control const *axis : d->axes)
         {
             desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(axis->description());
         }
     }
 
-    if(int const count = buttonCount())
+    if (int const count = buttonCount())
     {
         desc += String("\n  " _E(b) "%1 buttons:" _E(.)).arg(count);
         int idx = 0;
-        for(Control const *button : d->buttons)
+        for (Control const *button : d->buttons)
         {
             desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(button->description());
         }
     }
 
-    if(int const count = hatCount())
+    if (int const count = hatCount())
     {
         desc += String("\n  " _E(b) "%1 hats:" _E(.)).arg(count);
         int idx = 0;
-        for(Control const *hat : d->hats)
+        for (Control const *hat : d->hats)
         {
             desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(hat->description());
         }
@@ -235,20 +235,20 @@ String InputDevice::description() const
 void InputDevice::reset()
 {
     LOG_AS("InputDevice");
-    for(Control *axis : d->axes)
+    for (Control *axis : d->axes)
     {
         axis->reset();
     }
-    for(Control *button : d->buttons)
+    for (Control *button : d->buttons)
     {
         button->reset();
     }
-    for(Control *hat : d->hats)
+    for (Control *hat : d->hats)
     {
         hat->reset();
     }
 
-    if(!d->name.compareWithCase("key"))
+    if (!d->name.compareWithCase("key"))
     {
         extern bool shiftDown, altDown;
 
@@ -259,28 +259,28 @@ void InputDevice::reset()
 
 LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)
 {
-    for(Control *axis : d->axes)
+    for (Control *axis : d->axes)
     {
-        if(auto result = func(*axis)) return result;
+        if (auto result = func(*axis)) return result;
     }
-    for(Control *button : d->buttons)
+    for (Control *button : d->buttons)
     {
-        if(auto result = func(*button)) return result;
+        if (auto result = func(*button)) return result;
     }
-    for(Control *hat : d->hats)
+    for (Control *hat : d->hats)
     {
-        if(auto result = func(*hat)) return result;
+        if (auto result = func(*hat)) return result;
     }
     return LoopContinue;
 }
 
 dint InputDevice::toAxisId(String const &name) const
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        for(int i = 0; i < d->axes.count(); ++i)
+        for (int i = 0; i < d->axes.count(); ++i)
         {
-            if(!d->axes.at(i)->name().compareWithoutCase(name))
+            if (!d->axes.at(i)->name().compareWithoutCase(name))
                 return i;
         }
     }
@@ -289,11 +289,11 @@ dint InputDevice::toAxisId(String const &name) const
 
 dint InputDevice::toButtonId(String const &name) const
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        for(int i = 0; i < d->buttons.count(); ++i)
+        for (int i = 0; i < d->buttons.count(); ++i)
         {
-            if(!d->buttons.at(i)->name().compareWithoutCase(name))
+            if (!d->buttons.at(i)->name().compareWithoutCase(name))
                 return i;
         }
     }
@@ -307,14 +307,14 @@ bool InputDevice::hasAxis(de::dint id) const
 
 InputDeviceAxisControl &InputDevice::axis(dint id) const
 {
-    if(hasAxis(id)) return *d->axes.at(id);
+    if (hasAxis(id)) return *d->axes.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
 }
 
 void InputDevice::addAxis(InputDeviceAxisControl *axis)
 {
-    if(!axis) return;
+    if (!axis) return;
     d->axes.append(axis);
     axis->setDevice(this);
 }
@@ -331,14 +331,14 @@ bool InputDevice::hasButton(de::dint id) const
 
 InputDeviceButtonControl &InputDevice::button(dint id) const
 {
-    if(hasButton(id)) return *d->buttons.at(id);
+    if (hasButton(id)) return *d->buttons.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
 }
 
 void InputDevice::addButton(InputDeviceButtonControl *button)
 {
-    if(!button) return;
+    if (!button) return;
     d->buttons.append(button);
     button->setDevice(this);
 }
@@ -355,14 +355,14 @@ bool InputDevice::hasHat(de::dint id) const
 
 InputDeviceHatControl &InputDevice::hat(dint id) const
 {
-    if(hasHat(id)) return *d->hats.at(id);
+    if (hasHat(id)) return *d->hats.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
 }
 
 void InputDevice::addHat(InputDeviceHatControl *hat)
 {
-    if(!hat) return;
+    if (!hat) return;
     d->hats.append(hat);
     hat->setDevice(this);
 }
@@ -374,15 +374,15 @@ int InputDevice::hatCount() const
 
 void InputDevice::consoleRegister()
 {
-    for(Control *axis : d->axes)
+    for (Control *axis : d->axes)
     {
         axis->consoleRegister();
     }
-    for(Control *button : d->buttons)
+    for (Control *button : d->buttons)
     {
         button->consoleRegister();
     }
-    for(Control *hat : d->hats)
+    for (Control *hat : d->hats)
     {
         hat->consoleRegister();
     }

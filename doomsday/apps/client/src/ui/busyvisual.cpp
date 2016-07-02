@@ -39,9 +39,9 @@ static void releaseScreenshotTexture()
 void BusyVisual_PrepareResources()
 {
     BusyTask *task = DoomsdayApp::app().busyMode().currentTask();
-    if(!task) return;
+    if (!task) return;
 
-    if(task->mode & BUSYF_STARTUP)
+    if (task->mode & BUSYF_STARTUP)
     {
         // Not in startup, so take a copy of the current frame contents.
         releaseScreenshotTexture();
@@ -82,7 +82,7 @@ void Con_TransitionConfigure(void)
 {
     transition.tics = rTransitionTics;
     transition.style = (transitionstyle_t) rTransition;
-    if(transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
+    if (transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
     {
         seedDoomWipeSine();
     }
@@ -102,7 +102,7 @@ dd_bool Con_TransitionInProgress(void)
 
 static void Con_EndTransition(void)
 {
-    if(!transition.inProgress) return;
+    if (!transition.inProgress) return;
 
     releaseScreenshotTexture();
     transition.inProgress = false;
@@ -110,11 +110,11 @@ static void Con_EndTransition(void)
 
 void Con_TransitionTicker(timespan_t /*ticLength*/)
 {
-    if(isDedicated) return;
-    if(!Con_TransitionInProgress()) return;
+    if (isDedicated) return;
+    if (!Con_TransitionInProgress()) return;
 
     transition.position = (float)(Timer_Ticks() - transition.startTime) / transition.tics;
-    if(transition.position >= 1)
+    if (transition.position >= 1)
     {
         Con_EndTransition();
     }
@@ -125,7 +125,7 @@ static void seedDoomWipeSine(void)
     int i;
 
     doomWipeSine[0] = (128 - RNG_RandByte()) / 128.f;
-    for(i = 1; i < DOOMWIPESINE_NUMSAMPLES; ++i)
+    for (i = 1; i < DOOMWIPESINE_NUMSAMPLES; ++i)
     {
         float r = (128 - RNG_RandByte()) / 512.f;
         doomWipeSine[i] = MINMAX_OF(-1, doomWipeSine[i-1] + r, 1);
@@ -142,7 +142,7 @@ static float sampleDoomWipeSine(float point)
 static void sampleDoomWipe(void)
 {
     int i;
-    for(i = 0; i <= SCREENWIDTH; ++i)
+    for (i = 0; i <= SCREENWIDTH; ++i)
     {
         doomWipeSamples[i] = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
     }
@@ -150,8 +150,8 @@ static void sampleDoomWipe(void)
 
 void Con_DrawTransition(void)
 {
-    if(isDedicated) return;
-    if(!Con_TransitionInProgress()) return;
+    if (isDedicated) return;
+    if (!Con_TransitionInProgress()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -171,7 +171,7 @@ void Con_DrawTransition(void)
     GLState::push().setAlphaTest(false).apply();
     glEnable(GL_TEXTURE_2D);
 
-    switch(transition.style)
+    switch (transition.style)
     {
     case TS_DOOMSMOOTH: {
 
@@ -188,7 +188,7 @@ void Con_DrawTransition(void)
         s = 0;
 
         glBegin(GL_QUAD_STRIP);
-        for(i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
+        for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i];
 
@@ -204,7 +204,7 @@ void Con_DrawTransition(void)
 
         glColor4f(1, 1, 1, 1);
         glBegin(GL_QUAD_STRIP);
-        for(i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
+        for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i] + h;
 
@@ -223,7 +223,7 @@ void Con_DrawTransition(void)
 
         glColor4f(1, 1, 1, 1);
         glBegin(GL_QUADS);
-        for(i = 0; i <= SCREENWIDTH; ++i, x++, s+= colWidth)
+        for (i = 0; i <= SCREENWIDTH; ++i, x++, s+= colWidth)
         {
             y = doomWipeSamples[i];
 

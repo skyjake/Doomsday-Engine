@@ -208,7 +208,7 @@ HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
                            style().fonts().font("default").lineSpacing();
 
     AutoRef<Rule> height;
-    if(flags.testFlag(AnimatedHeight))
+    if (flags.testFlag(AnimatedHeight))
     {
         height.reset(new AnimationRule(d->label->rule().height(), 0.3));
     }

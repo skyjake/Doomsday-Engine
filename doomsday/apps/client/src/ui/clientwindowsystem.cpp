@@ -35,7 +35,7 @@ DENG2_PIMPL(ClientWindowSystem)
             return !App_GameLoaded();
         }
         GuiWidget *sharedBlurWidget() const {
-            if(!ClientWindow::mainExists()) return nullptr;
+            if (!ClientWindow::mainExists()) return nullptr;
             return &ClientWindow::main().taskBarBlur();
         }
     };

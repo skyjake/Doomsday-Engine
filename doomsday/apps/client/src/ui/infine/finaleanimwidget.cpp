@@ -46,7 +46,7 @@ FinaleAnimWidget::Frame::Frame()
 FinaleAnimWidget::Frame::~Frame()
 {
 #ifdef __CLIENT__
-    if(type == PFT_XIMAGE)
+    if (type == PFT_XIMAGE)
     {
         DGL_DeleteTextures(1, (DGLuint *)&texRef.tex);
     }
@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(FinaleAnimWidget)
         f->tics  = tics;
         f->sound = sound;
 
-        switch(f->type)
+        switch (f->type)
         {
         case Frame::PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef);  break;
         case Frame::PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef); break;
@@ -122,11 +122,11 @@ FinaleAnimWidget &FinaleAnimWidget::setLooping(bool yes)
 #ifdef __CLIENT__
 static void useColor(animator_t const *color, int components)
 {
-    if(components == 3)
+    if (components == 3)
     {
         glColor3f(color[0].value, color[1].value, color[2].value);
     }
-    else if(components == 4)
+    else if (components == 4)
     {
         glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
     }
@@ -173,12 +173,12 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
     Vector3f const *posIt   = posCoords;
     Vector4f const *colorIt = colorCoords;
     Vector2f const *texIt   = texCoords;
-    for(int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
+    for (int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
     {
-        if(texCoords)
+        if (texCoords)
             glTexCoord2f(texIt->x, texIt->y);
 
-        if(colorCoords)
+        if (colorCoords)
             glColor4f(colorIt->x, colorIt->y, colorIt->z, colorIt->w);
 
         glVertex3f(posIt->x, posIt->y, posIt->z);
@@ -208,7 +208,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     Vector4f *colorCoords;
     Vector2f *texCoords;
 
-    if(p->frameCount())
+    if (p->frameCount())
     {
         /// @todo Optimize: Texture/Material searches should be NOT be done here -ds
         FinaleAnimWidget::Frame *f = p->allFrames().at(frame);
@@ -216,11 +216,11 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
         flipTextureS = (f->flags.flip != 0);
         showEdges = false;
 
-        switch(f->type)
+        switch (f->type)
         {
         case FinaleAnimWidget::Frame::PFT_RAW: {
             rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(f->texRef.lumpNum);
-            if(rawTex)
+            if (rawTex)
             {
                 DGLuint glName = GL_PrepareRawTexture(*rawTex);
                 V3f_Set(offset, 0, 0, 0);
@@ -231,7 +231,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 V2f_Set(rotateCenter, 160, 100);
                 GL_BindTextureUnmanaged(glName, gl::ClampToEdge, gl::ClampToEdge,
                                         (filterUI ? gl::Linear : gl::Nearest));
-                if(glName)
+                if (glName)
                 {
                     glEnable(GL_TEXTURE_2D);
                     textureEnabled = true;
@@ -245,7 +245,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             V2f_Set(rotateCenter, .5f, .5f);
             GL_BindTextureUnmanaged(f->texRef.tex, gl::ClampToEdge, gl::ClampToEdge,
                                     (filterUI ? gl::Linear : gl::Nearest));
-            if(f->texRef.tex)
+            if (f->texRef.tex)
             {
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
@@ -253,7 +253,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             break;
 
         case FinaleAnimWidget::Frame::PFT_MATERIAL:
-            if(Material *mat = f->texRef.material)
+            if (Material *mat = f->texRef.material)
             {
                 /// @todo Utilize *all* properties of the Material.
                 MaterialAnimator &matAnimator      = mat->getAnimator(uiMaterialSpec());
@@ -275,7 +275,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
                 // Apply a sprite-texture origin offset?
                 bool const texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
-                if(texIsSprite)
+                if (texIsSprite)
                 {
                     V3f_Set(offset, tex->base().origin().x, tex->base().origin().y, 0);
                 }
@@ -289,7 +289,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
         case FinaleAnimWidget::Frame::PFT_PATCH: {
             TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches")
                                             .findByUniqueId(f->texRef.patch);
-            if(manifest.hasTexture())
+            if (manifest.hasTexture())
             {
                 Texture &tex = manifest.texture();
                 TextureVariantSpec const &texSpec =
@@ -312,7 +312,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
     // If we've not chosen a texture by now set some defaults.
     /// @todo This is some seriously funky logic... refactor or remove.
-    if(!textureEnabled)
+    if (!textureEnabled)
     {
         V3f_Copy(dimensions, scale);
         V3f_Set(scale, 1, 1, 1);
@@ -323,7 +323,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
     V3f_Sum(origin, _origin, center);
     V3f_Subtract(origin, origin, offset);
-    for(int i = 0; i < 3; ++i) { origin[i] += worldOffset[i]; }
+    for (int i = 0; i < 3; ++i) { origin[i] += worldOffset[i]; }
 
     V3f_Subtract(originOffset, offset, center);
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
@@ -346,7 +346,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
     glScalef(scale[VX], scale[VY], scale[VZ]);
 
-    if(angle != 0)
+    if (angle != 0)
     {
         glTranslatef(rotateCenter[VX], rotateCenter[VY], 0);
 
@@ -362,7 +362,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     // Scale up our unit-geometry to the desired dimensions.
     glScalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
 
-    if(texScale[0] != 1 || texScale[1] != 1)
+    if (texScale[0] != 1 || texScale[1] != 1)
     {
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
@@ -374,13 +374,13 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
     GL_SetNoTexture();
 
-    if(mustPopTextureMatrix)
+    if (mustPopTextureMatrix)
     {
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
     }
 
-    if(showEdges)
+    if (showEdges)
     {
         glBegin(GL_LINES);
             useColor(p->edgeColor(), 4);
@@ -407,7 +407,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 void FinaleAnimWidget::draw(Vector3f const &offset)
 {
     // Fully transparent pics will not be drawn.
-    if(!(d->color[3].value > 0)) return;
+    if (!(d->color[3].value > 0)) return;
 
     vec3f_t _scale, _origin;
     V3f_Set(_origin, origin()[VX].value, origin()[VY].value, origin()[VZ].value);
@@ -415,7 +415,7 @@ void FinaleAnimWidget::draw(Vector3f const &offset)
 
     vec4f_t rgba, rgba2;
     V4f_Set(rgba, d->color[0].value, d->color[1].value, d->color[2].value, d->color[3].value);
-    if(!frameCount())
+    if (!frameCount())
     {
         V4f_Set(rgba2, d->otherColor[0].value, d->otherColor[1].value, d->otherColor[2].value, d->otherColor[3].value);
     }
@@ -433,24 +433,24 @@ void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
     AnimatorVector4_Think(d->edgeColor);
     AnimatorVector4_Think(d->otherEdgeColor);
 
-    if(!(d->frames.count() > 1)) return;
+    if (!(d->frames.count() > 1)) return;
 
     // If animating, decrease the sequence timer.
-    if(d->frames.at(d->curFrame)->tics > 0)
+    if (d->frames.at(d->curFrame)->tics > 0)
     {
-        if(--d->tics <= 0)
+        if (--d->tics <= 0)
         {
             Frame *f;
             // Advance the sequence position. k = next pos.
             uint next = d->curFrame + 1;
 
-            if(next == uint(d->frames.count()))
+            if (next == uint(d->frames.count()))
             {
                 // This is the end.
                 d->animComplete = true;
 
                 // Stop the sequence?
-                if(d->animLooping)
+                if (d->animLooping)
                 {
                     next = 0; // Rewind back to beginning.
                 }
@@ -465,7 +465,7 @@ void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
             d->tics = f->tics;
 
             // Play a sound?
-            if(f->sound > 0)
+            if (f->sound > 0)
                 S_LocalSound(f->sound, 0);
         }
     }

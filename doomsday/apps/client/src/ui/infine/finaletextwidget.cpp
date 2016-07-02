@@ -60,16 +60,16 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
     {
         int width = 0;
 
-        for(; *text; text++)
+        for (; *text; text++)
         {
-            if(*text == '\\')
+            if (*text == '\\')
             {
-                if(!*++text)     break;
-                if(*text == 'n') break;
+                if (!*++text)     break;
+                if (*text == 'n') break;
 
-                if(*text >= '0' && *text <= '9')
+                if (*text >= '0' && *text <= '9')
                     continue;
-                if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
+                if (*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
                     continue;
             }
             width += FR_CharWidth(*text);
@@ -106,11 +106,11 @@ void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
 
     AnimatorVector4_Think(d->color);
 
-    if(d->wait)
+    if (d->wait)
     {
-        if(--d->timer <= 0)
+        if (--d->timer <= 0)
         {
-            if(d->wait > 0)
+            if (d->wait > 0)
             {
                 // Positive wait: move cursor one position, wait again.
                 d->cursorPos++;
@@ -125,9 +125,9 @@ void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
         }
     }
 
-    if(d->scrollWait)
+    if (d->scrollWait)
     {
-        if(--d->scrollTimer <= 0)
+        if (--d->scrollTimer <= 0)
         {
             d->scrollTimer = d->scrollWait;
             setOriginY(origin()[1].target - 1, d->scrollWait);
@@ -143,7 +143,7 @@ void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
 #ifdef __CLIENT__
 void FinaleTextWidget::draw(Vector3f const &offset)
 {
-    if(!d->text) return;
+    if (!d->text) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -153,7 +153,7 @@ void FinaleTextWidget::draw(Vector3f const &offset)
     //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
     glTranslatef(origin()[0].value + offset.x, origin()[1].value + offset.y, origin()[2].value + offset.z);
 
-    if(angle().value != 0)
+    if (angle().value != 0)
     {
         // Counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
@@ -168,7 +168,7 @@ void FinaleTextWidget::draw(Vector3f const &offset)
 
     // Set the normal color.
     animatorvector3_t const *color;
-    if(d->pageColor == 0)
+    if (d->pageColor == 0)
         color = (animatorvector3_t const *)&d->color;
     else
         color = page()->predefinedColor(d->pageColor - 1);
@@ -177,22 +177,22 @@ void FinaleTextWidget::draw(Vector3f const &offset)
 
     int x = 0, y = 0, ch, linew = -1;
     char *ptr = d->text;
-    for(int cnt = 0; *ptr && (!d->wait || cnt < d->cursorPos); ptr++)
+    for (int cnt = 0; *ptr && (!d->wait || cnt < d->cursorPos); ptr++)
     {
-        if(linew < 0)
+        if (linew < 0)
             linew = d->textLineWidth(ptr);
 
         ch = *ptr;
-        if(*ptr == '\\') // Escape?
+        if (*ptr == '\\') // Escape?
         {
-            if(!*++ptr)
+            if (!*++ptr)
                 break;
 
             // Change of color?
-            if(*ptr >= '0' && *ptr <= '9')
+            if (*ptr >= '0' && *ptr <= '9')
             {
                 uint colorIdx = *ptr - '0';
-                if(colorIdx == 0)
+                if (colorIdx == 0)
                     color = (animatorvector3_t const *)&d->color;
                 else
                     color = page()->predefinedColor(colorIdx - 1);
@@ -202,22 +202,22 @@ void FinaleTextWidget::draw(Vector3f const &offset)
             }
 
             // 'w' = half a second wait, 'W' = second'f wait
-            if(*ptr == 'w' || *ptr == 'W') // Wait?
+            if (*ptr == 'w' || *ptr == 'W') // Wait?
             {
-                if(d->wait)
+                if (d->wait)
                     cnt += int(float(TICRATE) / d->wait / (*ptr == 'w' ? 2 : 1));
                 continue;
             }
 
             // 'p' = 5 second wait, 'P' = 10 second wait
-            if(*ptr == 'p' || *ptr == 'P') // Longer pause?
+            if (*ptr == 'p' || *ptr == 'P') // Longer pause?
             {
-                if(d->wait)
+                if (d->wait)
                     cnt += int(float(TICRATE) / d->wait * (*ptr == 'p' ? 5 : 10));
                 continue;
             }
 
-            if(*ptr == 'n' || *ptr == 'N') // Newline?
+            if (*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
                 y += FR_CharHeight('A') * (1 + d->lineHeight);
@@ -226,12 +226,12 @@ void FinaleTextWidget::draw(Vector3f const &offset)
                 continue;
             }
 
-            if(*ptr == '_')
+            if (*ptr == '_')
                 ch = ' ';
         }
 
         // Let'f do Y-clipping (in case of tall text blocks).
-        if(scale()[1].value * y + origin()[1].value >= -scale()[1].value * d->lineHeight &&
+        if (scale()[1].value * y + origin()[1].value >= -scale()[1].value * d->lineHeight &&
            scale()[1].value * y + origin()[1].value < SCREENHEIGHT)
         {
             FR_DrawCharXY(ch, (d->alignFlags & ALIGN_LEFT) ? x : x - linew / 2, y);
@@ -257,17 +257,17 @@ bool FinaleTextWidget::animationComplete() const
 int FinaleTextWidget::visLength()
 {
     int count = 0;
-    if(d->text)
+    if (d->text)
     {
         float const secondLen = (d->wait? TICRATE / d->wait : 0);
 
-        for(char const *ptr = d->text; *ptr; ptr++)
+        for (char const *ptr = d->text; *ptr; ptr++)
         {
-            if(*ptr == '\\') // Escape?
+            if (*ptr == '\\') // Escape?
             {
-                if(!*++ptr) break;
+                if (!*++ptr) break;
 
-                switch(*ptr)
+                switch (*ptr)
                 {
                 case 'w':   count += secondLen / 2;   break;
                 case 'W':   count += secondLen;       break;
@@ -275,7 +275,7 @@ int FinaleTextWidget::visLength()
                 case 'P':   count += 10 * secondLen;  break;
 
                 default:
-                    if((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
+                    if ((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
                         continue;
                 }
             }
@@ -293,14 +293,14 @@ char const *FinaleTextWidget::text() const
 FinaleTextWidget &FinaleTextWidget::setText(char const *newText)
 {
     Z_Free(d->text); d->text = nullptr;
-    if(newText && newText[0])
+    if (newText && newText[0])
     {
         int len = (int)qstrlen(newText) + 1;
         d->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
         std::memcpy(d->text, newText, len);
     }
     int const visLen = visLength();
-    if(d->cursorPos > visLen)
+    if (d->cursorPos > visLen)
     {
         d->cursorPos = visLen;
     }

@@ -80,36 +80,36 @@ DENG2_PIMPL(BindContext)
         *cmdResult = nullptr;
         *impResult = nullptr;
 
-        if(!matchCmdRec && !matchImpRec) return false;
+        if (!matchCmdRec && !matchImpRec) return false;
 
         CommandBinding matchCmd;
-        if(matchCmdRec) matchCmd = matchCmdRec;
+        if (matchCmdRec) matchCmd = matchCmdRec;
 
         ImpulseBinding matchImp;
-        if(matchImpRec) matchImp = matchImpRec;
+        if (matchImpRec) matchImp = matchImpRec;
 
-        for(Record const *rec : commandBinds)
+        for (Record const *rec : commandBinds)
         {
             CommandBinding bind(*rec);
 
-            if(matchCmd && matchCmd.geti(VAR_ID) != rec->geti(VAR_ID))
+            if (matchCmd && matchCmd.geti(VAR_ID) != rec->geti(VAR_ID))
             {
-                if(matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                   matchCmd.geti(VAR_TEST)       == bind.geti(VAR_TEST) &&
-                   matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                   matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                   matchCmd.equalConditions(bind))
+                if (matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                    matchCmd.geti(VAR_TEST)       == bind.geti(VAR_TEST) &&
+                    matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                    matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
+                    matchCmd.equalConditions(bind))
                 {
                     *cmdResult = const_cast<Record *>(rec);
                     return true;
                 }
             }
-            if(matchImp)
+            if (matchImp)
             {
-                if(matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                   matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                   matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                   matchImp.equalConditions(bind))
+                if (matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                    matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                    matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
+                    matchImp.equalConditions(bind))
                 {
                     *cmdResult = const_cast<Record *>(rec);
                     return true;
@@ -117,29 +117,29 @@ DENG2_PIMPL(BindContext)
             }
         }
 
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        for(Record const *rec : impulseBinds[i])
+        for (int i = 0; i < DDMAXPLAYERS; ++i)
+        for (Record const *rec : impulseBinds[i])
         {
             ImpulseBinding bind(*rec);
 
-            if(matchCmd)
+            if (matchCmd)
             {
-                if(matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                   matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                   matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                   matchCmd.equalConditions(bind))
+                if (matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                    matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                    matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
+                    matchCmd.equalConditions(bind))
                 {
                     *impResult = const_cast<Record *>(rec);
                     return true;
                 }
             }
 
-            if(matchImp && matchImp.geti(VAR_ID) != bind.geti(VAR_ID))
+            if (matchImp && matchImp.geti(VAR_ID) != bind.geti(VAR_ID))
             {
-                if(matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                   matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                   matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                   matchImp.equalConditions(bind))
+                if (matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                    matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                    matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
+                    matchImp.equalConditions(bind))
                 {
                     *impResult = const_cast<Record *>(rec);
                     return true;
@@ -159,11 +159,11 @@ DENG2_PIMPL(BindContext)
         Record *foundCmd = nullptr;
         Record *foundImp = nullptr;
 
-        while(findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
+        while (findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
         {
             // Only either foundCmd or foundImp is returned as non-NULL.
             int bindId = (foundCmd? foundCmd->geti(VAR_ID) : (foundImp? foundImp->geti(VAR_ID) : 0));
-            if(bindId)
+            if (bindId)
             {
                 LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
                         << bindId << (cmdBinding? cmdBinding->geti(VAR_ID) : impBinding->geti(VAR_ID));
@@ -218,7 +218,7 @@ void BindContext::setName(String const &newName)
 
 void BindContext::activate(bool yes)
 {
-    if(d->active == yes) return;
+    if (d->active == yes) return;
 
     LOG_AS("BindContext");
     LOG_INPUT_VERBOSE("%s " _E(b) "'%s'") << (yes? "Activating" : "Deactivating") << d->name;
@@ -233,10 +233,10 @@ void BindContext::acquire(int deviceId, bool yes)
     DENG2_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
     int const countBefore = d->acquireDevices.count();
 
-    if(yes) d->acquireDevices.insert(deviceId);
+    if (yes) d->acquireDevices.insert(deviceId);
     else    d->acquireDevices.remove(deviceId);
 
-    if(countBefore != d->acquireDevices.count())
+    if (countBefore != d->acquireDevices.count())
     {
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
@@ -245,7 +245,7 @@ void BindContext::acquire(int deviceId, bool yes)
 
 void BindContext::acquireAll(bool yes)
 {
-    if(d->acquireAllDevices != yes)
+    if (d->acquireAllDevices != yes)
     {
         d->acquireAllDevices = yes;
 
@@ -280,7 +280,7 @@ void BindContext::clearAllBindings()
     LOG_AS("BindContext");
     qDeleteAll(d->commandBinds);
     d->commandBinds.clear();
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         qDeleteAll(d->impulseBinds[i]);
         d->impulseBinds[i].clear();
@@ -294,7 +294,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
     QSet<int> ids;
     forAllCommandBindings([&ids, &deviceId] (Record const &bind)
     {
-        if(bind.geti(VAR_DEVICE_ID) == deviceId)
+        if (bind.geti(VAR_DEVICE_ID) == deviceId)
         {
             ids.insert(bind.geti(VAR_ID));
         }
@@ -302,14 +302,14 @@ void BindContext::clearBindingsForDevice(int deviceId)
     });
     forAllImpulseBindings([&ids, &deviceId] (Record const &bind)
     {
-        if(bind.geti(VAR_DEVICE_ID) == deviceId)
+        if (bind.geti(VAR_DEVICE_ID) == deviceId)
         {
             ids.insert(bind.geti(VAR_ID));
         }
         return LoopContinue;
     });
 
-    foreach(int id, ids)
+    foreach (int id, ids)
     {
         deleteBinding(id);
     }
@@ -340,7 +340,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 
         return &bind.def();
     }
-    catch(Binding::ConfigureError const &)
+    catch (Binding::ConfigureError const &)
     {}
     return nullptr;
 }
@@ -371,21 +371,21 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
 
         return &bind.def();
     }
-    catch(Binding::ConfigureError const &)
+    catch (Binding::ConfigureError const &)
     {}
     return nullptr;
 }
 
 Record *BindContext::findCommandBinding(char const *command, int deviceId) const
 {
-    if(command && command[0])
+    if (command && command[0])
     {
-        for(Record const *rec : d->commandBinds)
+        for (Record const *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
-            if(bind.gets("command").compareWithoutCase(command)) continue;
+            if (bind.gets("command").compareWithoutCase(command)) continue;
 
-            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti(VAR_DEVICE_ID) == deviceId)
+            if ((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti(VAR_DEVICE_ID) == deviceId)
             {
                 return const_cast<Record *>(rec);
             }
@@ -396,13 +396,13 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
 
 Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(Record const *rec : d->impulseBinds[i])
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
+    for (Record const *rec : d->impulseBinds[i])
     {
         ImpulseBinding bind(*rec);
-        if(bind.geti(VAR_TYPE)       == bindType &&
-           bind.geti(VAR_DEVICE_ID)  == deviceId &&
-           bind.geti(VAR_CONTROL_ID) == controlId)
+        if (bind.geti(VAR_TYPE)       == bindType &&
+            bind.geti(VAR_DEVICE_ID)  == deviceId &&
+            bind.geti(VAR_CONTROL_ID) == controlId)
         {
             return const_cast<Record *>(rec);
         }
@@ -413,10 +413,10 @@ Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, 
 bool BindContext::deleteBinding(int id)
 {
     // Check if it is one of the command bindings.
-    for(int i = 0; i < d->commandBinds.count(); ++i)
+    for (int i = 0; i < d->commandBinds.count(); ++i)
     {
         Record *rec = d->commandBinds.at(i);
-        if(rec->geti(VAR_ID) == id)
+        if (rec->geti(VAR_ID) == id)
         {
             d->commandBinds.removeAt(i);
             delete rec;
@@ -425,11 +425,11 @@ bool BindContext::deleteBinding(int id)
     }
 
     // How about one of the impulse bindings?
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(int k = 0; k < d->impulseBinds[i].count(); ++k)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int k = 0; k < d->impulseBinds[i].count(); ++k)
     {
         Record *rec = d->impulseBinds[i].at(k);
-        if(rec->geti(VAR_ID) == id)
+        if (rec->geti(VAR_ID) == id)
         {
             d->impulseBinds[i].removeAt(k);
             delete rec;
@@ -445,17 +445,17 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     LOG_AS("BindContext");
 
     // Inactive contexts never respond.
-    if(!isActive()) return false;
+    if (!isActive()) return false;
 
     // Is this event bindable to an action?
-    if(event.type != E_FOCUS)
+    if (event.type != E_FOCUS)
     {
         // See if the command bindings will have it.
-        for(Record const *rec : d->commandBinds)
+        for (Record const *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
             AutoRef<Action> act(bind.makeAction(event, *this, respectHigherContexts));
-            if(act.get())
+            if (act.get())
             {
                 act->trigger();
                 return true; // Triggered!
@@ -464,17 +464,17 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     }
 
     // Try the fallback responders.
-    if(d->ddFallbackResponder)
+    if (d->ddFallbackResponder)
     {
-        if(d->ddFallbackResponder(&event))
+        if (d->ddFallbackResponder(&event))
             return true;
     }
-    if(d->fallbackResponder)
+    if (d->fallbackResponder)
     {
         event_t ev;
-        if(/*bool const validGameEvent =*/ InputSystem::convertEvent(event, ev))
+        if (/*bool const validGameEvent =*/ InputSystem::convertEvent(event, ev))
         {
-            if(d->fallbackResponder(&ev))
+            if (d->fallbackResponder(&ev))
                 return true;
         }
     }
@@ -485,9 +485,9 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
 LoopResult BindContext::forAllCommandBindings(
     std::function<de::LoopResult (Record &)> func) const
 {
-    for(Record *rec : d->commandBinds)
+    for (Record *rec : d->commandBinds)
     {
-        if(auto result = func(*rec)) return result;
+        if (auto result = func(*rec)) return result;
     }
     return LoopContinue;
 }
@@ -495,13 +495,13 @@ LoopResult BindContext::forAllCommandBindings(
 LoopResult BindContext::forAllImpulseBindings(int localPlayer,
     std::function<de::LoopResult (Record &)> func) const
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
+        if ((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
-            for(Record *rec : d->impulseBinds[i])
+            for (Record *rec : d->impulseBinds[i])
             {
-                if(auto result = func(*rec)) return result;
+                if (auto result = func(*rec)) return result;
             }
         }
     }
@@ -516,9 +516,9 @@ int BindContext::commandBindingCount() const
 int BindContext::impulseBindingCount(int localPlayer) const
 {
     int count = 0;
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
+        if ((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
             count += d->impulseBinds[i].count();
         }

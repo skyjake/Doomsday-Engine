@@ -38,9 +38,9 @@ DENG2_PIMPL(SavedSessionListData)
     void updateFromSavedIndex()
     {
         // Remove obsolete entries.
-        for(ui::Data::Pos idx = self.size() - 1; idx < self.size(); --idx)
+        for (ui::Data::Pos idx = self.size() - 1; idx < self.size(); --idx)
         {
-            if(!self.at(idx).as<SaveItem>().isValid())
+            if (!self.at(idx).as<SaveItem>().isValid())
             {
                 self.remove(idx);
             }
@@ -50,10 +50,10 @@ DENG2_PIMPL(SavedSessionListData)
         DENG2_FOR_EACH_CONST(Session::SavedIndex::All, i, Session::savedIndex().all())
         {
             ui::Data::Pos found = self.findData(i.key()); // savePath
-            if(found == ui::Data::InvalidPos)
+            if (found == ui::Data::InvalidPos)
             {
                 SavedSession &session = *i.value();
-                if(session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
+                if (session.path().beginsWith("/home/savegames")) // Ignore non-user savegames.
                 {
                     // Needs to be added.
                     self.append(new SaveItem(session));
@@ -86,7 +86,7 @@ SavedSessionListData::SaveItem::SaveItem(SavedSession const &session)
     setLabel(title());
 
     Games &games = DoomsdayApp::games();
-    if(games.contains(gameId()))
+    if (games.contains(gameId()))
     {
         setImage(Style::get().images().image(games[gameId()].logoImageId()));
     }
@@ -94,7 +94,7 @@ SavedSessionListData::SaveItem::SaveItem(SavedSession const &session)
 
 SavedSessionListData::SaveItem::~SaveItem()
 {
-    if(session) session->audienceForDeletion() -= this;
+    if (session) session->audienceForDeletion() -= this;
 }
 
 bool SavedSessionListData::SaveItem::isValid() const
@@ -104,7 +104,7 @@ bool SavedSessionListData::SaveItem::isValid() const
 
 String SavedSessionListData::SaveItem::title() const
 {
-    if(session)
+    if (session)
     {
         return session->metadata().gets("userDescription");
     }
@@ -113,7 +113,7 @@ String SavedSessionListData::SaveItem::title() const
 
 String SavedSessionListData::SaveItem::gameId() const
 {
-    if(session)
+    if (session)
     {
         return session->metadata().gets("gameIdentityKey");
     }
@@ -122,7 +122,7 @@ String SavedSessionListData::SaveItem::gameId() const
 
 String SavedSessionListData::SaveItem::savePath() const
 {
-    if(session)
+    if (session)
     {
         return session->path().toLower();
     }
@@ -131,7 +131,7 @@ String SavedSessionListData::SaveItem::savePath() const
 
 String SavedSessionListData::SaveItem::name() const
 {
-    if(session)
+    if (session)
     {
         return session->name().fileNameWithoutExtension();
     }

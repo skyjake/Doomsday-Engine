@@ -44,11 +44,11 @@ DENG2_PIMPL_NOREF(InFineSystem)
 
     Finale *finaleForId(finaleid_t id)
     {
-        if(id != 0)
+        if (id != 0)
         {
-            for(Finale const *f : finales)
+            for (Finale const *f : finales)
             {
-                if(f->id() == id) return const_cast<Finale *>(f);
+                if (f->id() == id) return const_cast<Finale *>(f);
             }
         }
         return nullptr;
@@ -57,7 +57,7 @@ DENG2_PIMPL_NOREF(InFineSystem)
     finaleid_t nextUnusedId()
     {
         finaleid_t id = 0;
-        while(finaleForId(++id)) {}
+        while (finaleForId(++id)) {}
         return id;
     }
 
@@ -74,7 +74,7 @@ void InFineSystem::reset()
 {
     LOG_AS("InFineSystem");
 
-    while(!d->finales.isEmpty())
+    while (!d->finales.isEmpty())
     {
         std::unique_ptr<Finale> finale(d->finales.takeFirst());
         finale->terminate();
@@ -83,9 +83,9 @@ void InFineSystem::reset()
 
 bool InFineSystem::finaleInProgess() const
 {
-    for(Finale *finale : d->finales)
+    for (Finale *finale : d->finales)
     {
-        if(finale->isActive() || finale->isSuspended())
+        if (finale->isActive() || finale->isSuspended())
             return true;
     }
     return false;
@@ -94,10 +94,10 @@ bool InFineSystem::finaleInProgess() const
 void InFineSystem::runTicks(timespan_t timeDelta)
 {
     LOG_AS("InFineSystem");
-    for(int i = 0; i < d->finales.count(); ++i)
+    for (int i = 0; i < d->finales.count(); ++i)
     {
         Finale *finale = d->finales[i];
-        if(finale->runTicks(timeDelta))
+        if (finale->runTicks(timeDelta))
         {
             // The script has terminated.
             delete finale;
@@ -109,7 +109,7 @@ Finale &InFineSystem::newFinale(int flags, String script, String const &setupCmd
 {
     LOG_AS("InFineSystem");
 
-    if(!setupCmds.isEmpty())
+    if (!setupCmds.isEmpty())
     {
         // Setup commands are included. We must prepend these to the script
         // in a special control block that will be executed immediately.
@@ -130,7 +130,7 @@ bool InFineSystem::hasFinale(finaleid_t id) const
 Finale &InFineSystem::finale(finaleid_t id)
 {
     Finale *finale = d->finaleForId(id);
-    if(finale) return *finale;
+    if (finale) return *finale;
     /// @throw MissingFinaleError The given id does not reference a Finale
     throw MissingFinaleError("finale", "No Finale known by id:" + String::number(id));
 }
@@ -146,7 +146,7 @@ static bool inited;
 void InFineSystem::initBindingContext() // static
 {
     // Already been here?
-    if(inited) return;
+    if (inited) return;
 
     inited = true;
     BindContext &context = ClientApp::inputSystem().context("finale");
@@ -157,7 +157,7 @@ void InFineSystem::initBindingContext() // static
 void InFineSystem::deinitBindingContext() // static
 {
     // Not yet initialized?
-    if(!inited) return;
+    if (!inited) return;
 
     BindContext &context = ClientApp::inputSystem().context("finale");
     context.setDDFallbackResponder(nullptr);
@@ -181,12 +181,12 @@ finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
 {
     LOG_AS("InFine.Execute");
 
-    if(!script || !script[0])
+    if (!script || !script[0])
     {
         LOGDEV_SCR_WARNING("Attempted to play an empty script");
         return 0;
     }
-    if((flags & FF_LOCAL) && isDedicated)
+    if ((flags & FF_LOCAL) && isDedicated)
     {
         // Dedicated servers do not play local Finales.
         LOGDEV_SCR_WARNING("No local finales in dedicated mode");
@@ -204,10 +204,10 @@ finaleid_t FI_Execute(char const *script, int flags)
 void FI_ScriptTerminate(finaleid_t id)
 {
     LOG_AS("InFine.ScriptTerminate");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         Finale &finale = App_InFineSystem().finale(id);
-        if(finale.terminate())
+        if (finale.terminate())
         {
             delete &finale;
         }
@@ -219,7 +219,7 @@ void FI_ScriptTerminate(finaleid_t id)
 dd_bool FI_ScriptActive(finaleid_t id)
 {
     LOG_AS("InFine.ScriptActive");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).isActive();
     }
@@ -230,7 +230,7 @@ dd_bool FI_ScriptActive(finaleid_t id)
 void FI_ScriptSuspend(finaleid_t id)
 {
     LOG_AS("InFine.ScriptSuspend");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         App_InFineSystem().finale(id).suspend();
         return;
@@ -241,7 +241,7 @@ void FI_ScriptSuspend(finaleid_t id)
 void FI_ScriptResume(finaleid_t id)
 {
     LOG_AS("InFine.ScriptResume");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         App_InFineSystem().finale(id).resume();
         return;
@@ -252,7 +252,7 @@ void FI_ScriptResume(finaleid_t id)
 dd_bool FI_ScriptSuspended(finaleid_t id)
 {
     LOG_AS("InFine.ScriptSuspended");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).interpreter().isSuspended();
     }
@@ -263,7 +263,7 @@ dd_bool FI_ScriptSuspended(finaleid_t id)
 int FI_ScriptFlags(finaleid_t id)
 {
     LOG_AS("InFine.ScriptFlags");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).flags();
     }
@@ -275,7 +275,7 @@ int FI_ScriptResponder(finaleid_t id, void const *ev)
 {
     DENG2_ASSERT(ev);
     LOG_AS("InFine.ScriptResponder");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).handleEvent(*static_cast<ddevent_t const *>(ev));
     }
@@ -286,7 +286,7 @@ int FI_ScriptResponder(finaleid_t id, void const *ev)
 dd_bool FI_ScriptCmdExecuted(finaleid_t id)
 {
     LOG_AS("InFine.CmdExecuted");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).interpreter().commandExecuted();
     }
@@ -297,7 +297,7 @@ dd_bool FI_ScriptCmdExecuted(finaleid_t id)
 dd_bool FI_ScriptRequestSkip(finaleid_t id)
 {
     LOG_AS("InFine.ScriptRequestSkip");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).requestSkip();
     }
@@ -308,7 +308,7 @@ dd_bool FI_ScriptRequestSkip(finaleid_t id)
 dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
 {
     LOG_AS("InFine.ScriptIsMenuTrigger");
-    if(App_InFineSystem().hasFinale(id))
+    if (App_InFineSystem().hasFinale(id))
     {
         return App_InFineSystem().finale(id).isMenuTrigger();
     }

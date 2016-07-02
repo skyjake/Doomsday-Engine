@@ -54,7 +54,7 @@ static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start
     int y = start / bytesPerRow + rect.topLeft.y;
     int pixels = de::max<dint>(1, std::ceil(size * toPixelScale));
 
-    while(pixels > 0)
+    while (pixels > 0)
     {
         int const availPixels = edge - x;
         int const usedPixels = de::min(availPixels, pixels);
@@ -97,22 +97,22 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
     glBegin(GL_LINES);
 
     // Visualize each block.
-    for(memblock_t *block = volume->zone->blockList.next;
+    for (memblock_t *block = volume->zone->blockList.next;
         block != &volume->zone->blockList;
         block = block->next)
     {
         float const *color = colOther;
-        if(!block->user) continue; // Free is black.
+        if (!block->user) continue; // Free is black.
 
         // Choose the color for this block.
-        switch(block->tag)
+        switch (block->tag)
         {
         case PU_GAMESTATIC: color = colGameStatic; break;
         case PU_MAP:        color = colMap; break;
         case PU_MAPSTATIC:  color = colMapStatic; break;
         case PU_APPSTATIC:  color = colAppStatic; break;
         default:
-            if(block->tag >= PU_PURGELEVEL)
+            if (block->tag >= PU_PURGELEVEL)
                 color = colCache;
             break;
         }
@@ -122,7 +122,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
 
     glEnd();
 
-    if(pd->isVolumeTooFull(volume))
+    if (pd->isVolumeTooFull(volume))
     {
         glLineWidth(2);
         glColor4f(1, 0, 0, 1);
@@ -138,7 +138,7 @@ void Z_DebugDrawer(void)
     memvolume_t* volume;
     int i, volCount, h;
 
-    if(!CommandLine_Exists("-zonedebug")) return;
+    if (!CommandLine_Exists("-zonedebug")) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -168,13 +168,13 @@ void Z_DebugDrawer(void)
     // Make sure all the volumes fit vertically.
     volCount = pd.volumeCount;
     h = 200;
-    if(h * volCount + 10*(volCount - 1) > DENG_GAMEVIEW_HEIGHT)
+    if (h * volCount + 10*(volCount - 1) > DENG_GAMEVIEW_HEIGHT)
     {
         h = (DENG_GAMEVIEW_HEIGHT - 10*(volCount - 1))/volCount;
     }
 
     i = 0;
-    for(volume = pd.volumeRoot; volume; volume = volume->next, ++i)
+    for (volume = pd.volumeRoot; volume; volume = volume->next, ++i)
     {
         int size = de::min(400, DENG_GAMEVIEW_WIDTH);
         Z_DebugDrawVolume(&pd, volume,
