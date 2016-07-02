@@ -36,6 +36,7 @@ image refresh  { path = "graphics/refresh.png" }
 image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
+image file     { path = "graphics/file.png" }
 image package  { path = "graphics/package.png" }
 close {
     image ring     { path = "graphics/close.png" }

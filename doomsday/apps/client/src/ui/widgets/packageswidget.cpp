@@ -29,6 +29,7 @@
 #include <de/LineEditWidget>
 #include <de/Loop>
 #include <de/MenuWidget>
+#include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
 #include <de/ProgressWidget>
@@ -252,9 +253,20 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
+            String pkgId = packageId();
+            if (pkgId.startsWith("file."))
+            {
+                icon().setStyleImage("file", "default");
+
+                // Local files should not be indicated to be packages.
+                if (NativeFile const *native = _item->file->source()->maybeAs<NativeFile>())
+                {
+                    pkgId = _E(s) + native->nativePath().pretty() + _E(.);
+                }
+            }
             label().setText(String(_E(b) "%1\n" _E(l) "%2")
                             .arg(_item->label())
-                            .arg(packageId()));
+                            .arg(pkgId));
 
             String auxColor = "accent";
 
@@ -273,7 +285,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (highlight)
             {
-                icon().setImageColor(style().colors().colorf("accent"));
+                icon().setImageColor(style().colors().colorf("inverted.text"));
                 useColorTheme(_owner.d->unselectedItemHilit, _owner.d->selectedItemHilit);
                 auxColor = "background";
             }
