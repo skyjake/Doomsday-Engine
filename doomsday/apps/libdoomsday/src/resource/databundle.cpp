@@ -377,7 +377,7 @@ DENG2_PIMPL(DataBundle)
                     Package::matchTags(container->d->pkgLink, "\\b(hidden|core|gamedata)\\b"))*/
                 {
                     // Autoloaded data files are hidden.
-                    metadata.set(VAR_TAGS, meta.gets(VAR_TAGS) + " hidden");
+                    metadata.appendWord(VAR_TAGS, "hidden");
                 }
 
                 /*
@@ -468,7 +468,7 @@ DENG2_PIMPL(DataBundle)
         auto const &rootBlock = info.root();
 
         // Tag it as a Snowberry package.
-        meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + " legacy");
+        meta.appendWord(VAR_TAGS, "legacy");
 
         if (rootBlock.contains("name"))
         {
@@ -481,19 +481,19 @@ DENG2_PIMPL(DataBundle)
             String gameTags;
             if (!component.compareWithoutCase("game-jdoom"))
             {
-                gameTags = " doom doom2";
+                gameTags = "doom doom2";
             }
             else if (!component.compareWithoutCase("game-jheretic"))
             {
-                gameTags = " heretic";
+                gameTags = "heretic";
             }
             else if (!component.compareWithoutCase("game-jhexen"))
             {
-                gameTags = " hexen";
+                gameTags = "hexen";
             }
             if (!gameTags.isEmpty())
             {
-                meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + gameTags);
+                meta.appendWord(VAR_TAGS, gameTags);
             }
         }
 
@@ -565,7 +565,7 @@ DENG2_PIMPL(DataBundle)
             {
                 if (reTag.indexIn(path.segment(i)) >= 0)
                 {
-                    meta.set(VAR_TAGS, meta.gets(VAR_TAGS) + " " + tag);
+                    meta.appendWord(VAR_TAGS, tag);
                 }
             }
         }
