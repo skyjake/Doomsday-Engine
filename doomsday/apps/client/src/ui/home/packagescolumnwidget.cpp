@@ -31,6 +31,7 @@
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
+#include <doomsday/resource/databundle.h>
 
 using namespace de;
 
@@ -54,7 +55,6 @@ static PopupWidget *makePackageFoldersDialog()
 }
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
-//, DENG2_OBSERVES(Games, Readiness)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
@@ -73,7 +73,14 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
                     << new ui::SubwidgetItem(tr("Info"), ui::Down,
                                              [this, packageId] () -> PopupWidget * {
                                                  return new PackagePopupWidget(packageId);
-                                             })
+                                             });
+            if (DataBundle::packageBundleFormat(packageId) == DataBundle::Collection)
+            {
+                popMenu->items()
+                    << new ui::ActionItem(style().images().image("gear"),
+                                          tr("Select Packages"));
+            }
+            popMenu->items()
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
             return popMenu;
