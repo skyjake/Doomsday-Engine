@@ -54,7 +54,7 @@ DENG2_PIMPL(Bundles)
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForAddition() += this;
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
-    
+
     ~Instance()
     {
         // Ongoing identification tasks should first finish.
@@ -100,6 +100,8 @@ DENG2_PIMPL(Bundles)
 
     bool identifyAddedDataBundles()
     {
+        Folder::waitForPopulation();
+
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         bool wasIdentified = false;
