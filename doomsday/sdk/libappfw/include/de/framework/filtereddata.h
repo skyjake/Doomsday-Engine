@@ -38,7 +38,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class FilteredData : public Data
+class LIBAPPFW_PUBLIC FilteredData : public Data
 {
 public:
     /// FilteredData is meant for immutable access only. @ingroup errors

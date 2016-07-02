@@ -384,7 +384,7 @@ struct ChildWidgetOrganizer::Instance
             return;
         }
 
-        PvsRange const fullRange { 0, dataItems->size() };
+        PvsRange const fullRange { 0, int(dataItems->size()) };
         PvsRange const oldPvs = virtualPvs;
 
         // Calculate position delta to compared to last update.
