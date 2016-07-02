@@ -377,7 +377,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (!item.info) return false;
 
-            bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
+            bool const hidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
             if (showHidden ^ hidden)
             {
                 return false;

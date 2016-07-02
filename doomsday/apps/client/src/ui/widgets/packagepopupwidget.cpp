@@ -65,6 +65,11 @@ bool PackagePopupWidget::setup(File const *file)
             msg += "\n" _E(l) "Author(s): " _E(.)_E(>) + meta.gets("author") + _E(<);
         }
 
+        if (meta.has("notes"))
+        {
+            msg += "\n\n" + meta.gets("notes") + "\n";
+        }
+
         if (meta.has("requires"))
         {
             msg += "\n" _E(l) "Requires:" _E(.);
@@ -83,11 +88,6 @@ bool PackagePopupWidget::setup(File const *file)
             {
                 msg += "\n - " _E(>) + val->asText() + _E(<);
             }
-        }
-
-        if (meta.has("notes"))
-        {
-            msg += "\n\n" + meta.gets("notes");
         }
 
         document().setText(msg);
