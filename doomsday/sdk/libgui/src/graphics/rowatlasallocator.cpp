@@ -225,9 +225,9 @@ DENG2_PIMPL(RowAtlasAllocator)
         QHash<Id, Slot *> slotsById; // not owned
 
         dsize usedArea = 0; ///< Total allocated pixels.
-        Instance *d;
+        Impl *d;
 
-        Rows(Instance *inst) : d(inst)
+        Rows(Impl *inst) : d(inst)
         {
             top = new Row;
 
@@ -437,7 +437,7 @@ DENG2_PIMPL(RowAtlasAllocator)
     Allocations allocs;
     std::unique_ptr<Rows> rows;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , rows(new Rows(this))
     {}
@@ -490,7 +490,7 @@ DENG2_PIMPL(RowAtlasAllocator)
     }
 };
 
-RowAtlasAllocator::RowAtlasAllocator() : d(new Instance(this))
+RowAtlasAllocator::RowAtlasAllocator() : d(new Impl(this))
 {}
 
 void RowAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
@@ -499,12 +499,12 @@ void RowAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
     d->margin = margin;
 
     DENG2_ASSERT(d->allocs.isEmpty());
-    d->rows.reset(new Instance::Rows(d));
+    d->rows.reset(new Impl::Rows(d));
 }
 
 void RowAtlasAllocator::clear()
 {
-    d->rows.reset(new Instance::Rows(d));
+    d->rows.reset(new Impl::Rows(d));
     d->allocs.clear();
 }
 

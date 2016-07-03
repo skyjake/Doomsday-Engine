@@ -47,7 +47,7 @@ DENG2_PIMPL(Bloom)
     GLUniform uThreshold;
     GLUniform uIntensity;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uTex      ("uTex",       GLUniform::Sampler2D)
@@ -217,7 +217,7 @@ DENG2_PIMPL(Bloom)
 
 Bloom::Bloom(int console)
     : ConsoleEffect(console)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 void Bloom::glInit()

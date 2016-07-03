@@ -43,7 +43,7 @@ DENG2_PIMPL(GLUniform)
     } value;
     duint elemCount;
 
-    Instance(Public *i, QLatin1String const &n, Type t, duint elems)
+    Impl(Public *i, QLatin1String const &n, Type t, duint elems)
         : Base(i)
         , name(n.latin1())
         , type(t)
@@ -90,7 +90,7 @@ DENG2_PIMPL(GLUniform)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self);
 
@@ -201,7 +201,7 @@ DENG2_AUDIENCE_METHOD(GLUniform, Deletion)
 DENG2_AUDIENCE_METHOD(GLUniform, ValueChange)
 
 GLUniform::GLUniform(char const *nameInShader, Type uniformType, duint elements)
-    : d(new Instance(this, QLatin1String(nameInShader), uniformType, elements))
+    : d(new Impl(this, QLatin1String(nameInShader), uniformType, elements))
 {}
 
 void GLUniform::setName(char const *nameInShader)

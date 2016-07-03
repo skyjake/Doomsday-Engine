@@ -24,11 +24,11 @@ using namespace de;
 
 DENG2_PIMPL(AppRootWidget)
 {
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 };
 
 AppRootWidget::AppRootWidget(CanvasWindow *window)
-    : GuiRootWidget(window), d(new Instance(this))
+    : GuiRootWidget(window), d(new Impl(this))
 {}
 
 MainWindow &AppRootWidget::window()

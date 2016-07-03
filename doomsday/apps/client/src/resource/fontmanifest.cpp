@@ -33,12 +33,12 @@ DENG2_OBSERVES(AbstractFont, Deletion)
     int uniqueId;
     QScopedPointer<AbstractFont>(resource); ///< Associated resource (if any).
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uniqueId(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self);
     }
@@ -51,7 +51,7 @@ DENG2_OBSERVES(AbstractFont, Deletion)
 };
 
 FontManifest::FontManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance(this))
+    : Node(args), d(new Impl(this))
 {}
 
 FontScheme &FontManifest::scheme() const

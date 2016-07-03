@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     PopupMenuWidget *extraMenu;
     res::LumpCatalog catalog;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         DoomsdayApp::games().audienceForReadiness() += this;
 
@@ -118,7 +118,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 };
 
 MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 void MultiplayerPanelButtonWidget::setSelected(bool selected)

@@ -82,7 +82,7 @@ DENG2_PIMPL_NOREF(System)
     };
     QList<ScriptStartTask *> tasks;
 
-    ~Instance()
+    ~Impl()
     {
         clearTasks();
         unloadModule();
@@ -116,7 +116,7 @@ DENG2_PIMPL_NOREF(System)
     }
 };
 
-System::System() : d(new Instance)
+System::System() : d(new Impl)
 {
     mapVars.fill(0);
     worldVars.fill(0);
@@ -225,7 +225,7 @@ bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
         return true;
 
     // Don't allow duplicates.
-    for(Instance::ScriptStartTask const *task : d->tasks)
+    for(Impl::ScriptStartTask const *task : d->tasks)
     {
         if(task->scriptNumber == scriptNumber &&
            task->mapUri       == mapUri)
@@ -235,7 +235,7 @@ bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
     }
 
     // Add it to the store to be started when that map is next entered.
-    d->tasks << new Instance::ScriptStartTask(mapUri, scriptNumber, scriptArgs);
+    d->tasks << new Impl::ScriptStartTask(mapUri, scriptNumber, scriptArgs);
     return true;
 }
 
@@ -267,7 +267,7 @@ void System::readWorldState(de::Reader &from)
     from >> numTasks;
     for(dint32 i = 0; i < numTasks; ++i)
     {
-        d->tasks << Instance::ScriptStartTask::newFromReader(from);
+        d->tasks << Impl::ScriptStartTask::newFromReader(from);
     }
 }
 
@@ -298,7 +298,7 @@ void System::runDeferredTasks(de::Uri const &mapUri)
     LOG_AS("acs::System");
     for(dint i = 0; i < d->tasks.count(); ++i)
     {
-        Instance::ScriptStartTask *task = d->tasks[i];
+        Impl::ScriptStartTask *task = d->tasks[i];
         if(task->mapUri != mapUri) continue;
 
         if(hasScript(task->scriptNumber))

@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
 
 Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
     : MapElement(DMU_SEGMENT, &lineSide)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->hedge = &hedge;
 }
@@ -171,7 +171,7 @@ DENG2_PIMPL_NOREF(Line::Side)
     } radioData;
 #endif
 
-    ~Instance() { qDeleteAll(segments); }
+    ~Impl() { qDeleteAll(segments); }
 
     /**
      * Retrieve the Section associated with @a sectionId.
@@ -276,7 +276,7 @@ DENG2_PIMPL_NOREF(Line::Side)
 
 Line::Side::Side(Line &line, Sector *sector)
     : MapElement(DMU_SIDE, &line)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->sector = sector;
 #ifdef __CLIENT__
@@ -375,7 +375,7 @@ void Line::Side::addSections()
     // Already defined?
     if(hasSections()) return;
 
-    d->sections.reset(new Instance::Sections(*this));
+    d->sections.reset(new Impl::Sections(*this));
 }
 
 Surface &Line::Side::surface(dint sectionId)
@@ -1177,7 +1177,7 @@ DENG2_PIMPL(Line)
     /// Whether the line has been mapped by each player yet.
     bool mapped[DDMAXPLAYERS];
 
-    Instance(Public *i, Vertex &from, Vertex &to, dint flags, Sector *frontSector,
+    Impl(Public *i, Vertex &from, Vertex &to, dint flags, Sector *frontSector,
              Sector *backSector)
         : Base(i)
         , flags    (flags)
@@ -1201,7 +1201,7 @@ DENG2_PIMPL(Line)
 
 Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINE)
-    , d(new Instance(this, from, to, flags, frontSector, backSector))
+    , d(new Impl(this, from, to, flags, frontSector, backSector))
 {
     updateAABox();
 }

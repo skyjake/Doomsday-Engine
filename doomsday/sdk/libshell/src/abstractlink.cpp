@@ -37,12 +37,12 @@ DENG2_PIMPL(AbstractLink)
     Status status;
     Time connectedAt;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           status(Disconnected),
           connectedAt(Time::invalidTime()) {}
 
-    ~Instance()
+    ~Impl()
     {
         // Disconnection is implied since the link is being destroyed.
         if (socket.get())
@@ -52,7 +52,7 @@ DENG2_PIMPL(AbstractLink)
     }
 };
 
-AbstractLink::AbstractLink() : d(new Instance(this))
+AbstractLink::AbstractLink() : d(new Impl(this))
 {}
 
 void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)

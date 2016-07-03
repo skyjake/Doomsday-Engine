@@ -31,7 +31,7 @@ DENG2_PIMPL(VariableSliderWidget)
     ValueType valueType = VariableSliderWidget::Number;
     Variable *var;
 
-    Instance(Public *i, Variable &variable) : Base(i), var(&variable)
+    Impl(Public *i, Variable &variable) : Base(i), var(&variable)
     {
         var->audienceForDeletion() += this;
         var->audienceForChange() += this;
@@ -93,7 +93,7 @@ DENG2_PIMPL(VariableSliderWidget)
 VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &range,
                                            ddouble step, String const &name)
     : SliderWidget(name)
-    , d(new Instance(this, variable))
+    , d(new Impl(this, variable))
 {
     if (!variable.value().is<NumberValue>())
     {
@@ -107,7 +107,7 @@ VariableSliderWidget::VariableSliderWidget(ValueType valueType,
                                            Variable &variable, Ranged const &range,
                                            ddouble step, String const &name)
     : SliderWidget(name)
-    , d(new Instance(this, variable))
+    , d(new Impl(this, variable))
 {
     d->valueType = valueType;
     setRange(range, step);

@@ -32,7 +32,7 @@ DENG2_PIMPL_NOREF(DirectoryArrayWidget)
 
 DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &name)
     : VariableArrayWidget(variable, name)
-    , d(new Instance)
+    , d(new Impl)
 {
     addButton().setText(tr("Add Folder..."));
     addButton().setActionFn([this] ()

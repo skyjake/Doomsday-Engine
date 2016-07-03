@@ -39,10 +39,10 @@ DENG2_PIMPL(PackageLoader)
     LoadedPackages loaded;
     int loadCounter;
 
-    Instance(Public *i) : Base(i), loadCounter(0)
+    Impl(Public *i) : Base(i), loadCounter(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         // We own all loaded packages.
         qDeleteAll(loaded.values());
@@ -306,7 +306,7 @@ DENG2_AUDIENCE_METHOD(PackageLoader, Activity)
 DENG2_AUDIENCE_METHOD(PackageLoader, Load)
 DENG2_AUDIENCE_METHOD(PackageLoader, Unload)
 
-PackageLoader::PackageLoader() : d(new Instance(this))
+PackageLoader::PackageLoader() : d(new Impl(this))
 {}
 
 bool PackageLoader::isAvailable(String const &packageId) const

@@ -62,7 +62,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     CVarChoiceWidget *inludeAspect = nullptr;
     CVarChoiceWidget *menuAspect   = nullptr;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , win(ClientWindow::main())
     {
@@ -100,7 +100,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         // The common stretchChoices is being deleted now, before the widget tree.
         if (finaleAspect)
@@ -164,7 +164,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 };
 
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     bool const gotDisplayMode = DisplayMode_Count() > 0;
 

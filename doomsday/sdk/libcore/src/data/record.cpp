@@ -60,7 +60,7 @@ DENG2_PIMPL(Record)
 
     typedef QHash<duint32, Record *> RefMap;
 
-    Instance(Public &r)
+    Impl(Public &r)
         : Base(r)
         , uniqueId(++recordIdCounter)
         , oldUniqueId(0)
@@ -287,12 +287,12 @@ DENG2_AUDIENCE_METHOD(Record, Deletion)
 DENG2_AUDIENCE_METHOD(Record, Addition)
 DENG2_AUDIENCE_METHOD(Record, Removal)
 
-Record::Record() : RecordAccessor(this), d(new Instance(*this))
+Record::Record() : RecordAccessor(this), d(new Impl(*this))
 {}
 
 Record::Record(Record const &other, Behavior behavior)
     : RecordAccessor(this)
-    , d(new Instance(*this))
+    , d(new Impl(*this))
 {
     copyMembersFrom(other, behavior);
 }
@@ -308,12 +308,12 @@ Record::~Record()
 
 void Record::clear(Behavior behavior)
 {
-    d->clear(Instance::ExcludeByBehavior(behavior));
+    d->clear(Impl::ExcludeByBehavior(behavior));
 }
 
 void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
-    d->copyMembersFrom(other, Instance::ExcludeByBehavior(behavior));
+    d->copyMembersFrom(other, Impl::ExcludeByBehavior(behavior));
 }
 
 Record &Record::operator = (Record const &other)
@@ -330,8 +330,8 @@ Record &Record::assign(Record const &other, Behavior behavior)
 
 Record &Record::assign(Record const &other, QRegExp const &excluded)
 {
-    d->clear(Instance::ExcludeByRegExp(excluded));
-    d->copyMembersFrom(other, Instance::ExcludeByRegExp(excluded));
+    d->clear(Impl::ExcludeByRegExp(excluded));
+    d->copyMembersFrom(other, Impl::ExcludeByRegExp(excluded));
     return *this;
 }
 
@@ -396,20 +396,20 @@ Variable *Record::remove(String const &variableName)
 Variable &Record::add(String const &name)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name)));
+            .add(new Variable(Impl::memberNameFromPath(name)));
 }
 
 Variable &Record::addNumber(String const &name, Value::Number const &number)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new NumberValue(number), Variable::AllowNumber));
 }
 
 Variable &Record::addBoolean(String const &name, bool booleanValue)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new NumberValue(booleanValue, NumberValue::Boolean),
                               Variable::AllowNumber));
 }
@@ -417,14 +417,14 @@ Variable &Record::addBoolean(String const &name, bool booleanValue)
 Variable &Record::addText(String const &name, Value::Text const &text)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new TextValue(text), Variable::AllowText));
 }
 
 Variable &Record::addTime(String const &name, Time const &time)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new TimeValue(time), Variable::AllowTime));
 }
 
@@ -433,28 +433,28 @@ Variable &Record::addArray(String const &name, ArrayValue *array)
     // Automatically create an empty array if one is not provided.
     if (!array) array = new ArrayValue;
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               array, Variable::AllowArray));
 }
 
 Variable &Record::addDictionary(String const &name)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new DictionaryValue, Variable::AllowDictionary));
 }
 
 Variable &Record::addBlock(String const &name)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new BlockValue, Variable::AllowBlock));
 }
 
 Variable &Record::addFunction(const String &name, Function *func)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new FunctionValue(func), Variable::AllowFunction));
 }
 
@@ -462,7 +462,7 @@ Record &Record::add(String const &name, Record *subrecord)
 {
     std::unique_ptr<Record> sub(subrecord);
     d->parentRecordByPath(name)
-            .add(new Variable(Instance::memberNameFromPath(name),
+            .add(new Variable(Impl::memberNameFromPath(name),
                               new RecordValue(sub.release(), RecordValue::OwnsRecord)));
     return *subrecord;
 }
@@ -753,7 +753,7 @@ void Record::operator << (Reader &from)
     from >> d->oldUniqueId >> count;
     clear();
 
-    Instance::RefMap refMap;
+    Impl::RefMap refMap;
     refMap.insert(d->oldUniqueId, this);
 
     while (count-- > 0)

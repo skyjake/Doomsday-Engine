@@ -109,7 +109,7 @@ DENG_GUI_PIMPL(SliderWidget)
     GLUniform uMvpMatrix;
     GLUniform uColor;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           value(0),
           range(0, 0),
@@ -450,7 +450,7 @@ DENG_GUI_PIMPL(SliderWidget)
 };
 
 SliderWidget::SliderWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     // Default size.
     rule().setInput(Rule::Width,  rule("slider.width"))
@@ -567,7 +567,7 @@ bool SliderWidget::handleEvent(Event const &event)
 {
     if (event.type() == Event::MousePosition)
     {
-        if (d->state == Instance::Grabbed)
+        if (d->state == Impl::Grabbed)
         {
             d->updateGrab(event.as<MouseEvent>());
             return true;
@@ -577,7 +577,7 @@ bool SliderWidget::handleEvent(Event const &event)
     }
 
     // Left mouse button can be used to drag/step the value.
-    if (d->state != Instance::Inert)
+    if (d->state != Impl::Inert)
     {
         switch (handleMouseClick(event, MouseEvent::Left))
         {
@@ -596,7 +596,7 @@ bool SliderWidget::handleEvent(Event const &event)
     }
 
     // Right-click to edit the value as text.
-    if (d->state != Instance::Grabbed)
+    if (d->state != Impl::Grabbed)
     {
         switch (handleMouseClick(event, MouseEvent::Right))
         {

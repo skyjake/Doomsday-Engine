@@ -48,7 +48,7 @@ DENG2_PIMPL(GLFramebuffer)
     GLUniform uColor;
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , colorFormat(Image::RGB_888)
         , _samples(0)
@@ -59,7 +59,7 @@ DENG2_PIMPL(GLFramebuffer)
         pDefaultSampleCount.audienceForChange() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         //pDefaultSampleCount.audienceForChange() -= this;
 
@@ -325,7 +325,7 @@ noMultisampling:
 };
 
 GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->colorFormat = colorFormat;
     d->size        = initialSize;

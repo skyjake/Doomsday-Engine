@@ -43,16 +43,16 @@ DENG2_PIMPL_NOREF(Variable)
     /// Mode flags.
     Flags mode;
 
-    Instance() : value(0) {}
+    Impl() : value(0) {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : de::IPrivate()
         , name (other.name)
         , value(other.value->duplicate())
         , mode (other.mode)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete value;
     }
@@ -67,7 +67,7 @@ DENG2_AUDIENCE_METHOD(Variable, Change)
 DENG2_AUDIENCE_METHOD(Variable, ChangeFrom)
 
 Variable::Variable(String const &name, Value *initial, Flags const &m)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->name = name;
     d->mode = m;
@@ -84,7 +84,7 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
 
 Variable::Variable(Variable const &other)
     : ISerializable()
-    , d(new Instance(*other.d))
+    , d(new Impl(*other.d))
 {}
 
 Variable::~Variable()

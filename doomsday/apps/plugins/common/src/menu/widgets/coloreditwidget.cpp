@@ -36,7 +36,7 @@ DENG2_PIMPL(ColorEditWidget)
     Vector4f color      = Vector4f(0, 0, 0, 1.f);
     Vector2i dimensions = Vector2i(MNDATA_COLORBOX_WIDTH, MNDATA_COLORBOX_HEIGHT);  ///< Inner dimensions in fixed 320x200 space.
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     bool setRed(float red, int flags)
     {
@@ -107,7 +107,7 @@ DENG2_PIMPL(ColorEditWidget)
 
 ColorEditWidget::ColorEditWidget(Vector4f const &color, bool rgbaMode)
     : Widget()
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);

@@ -108,7 +108,7 @@ DENG2_PIMPL(DoomsdayApp)
 
     GameChangeScriptAudience scriptAudienceForGameChange;
 
-    Instance(Public *i, Players::Constructor playerConstructor)
+    Impl(Public *i, Players::Constructor playerConstructor)
         : Base(i)
         , players(playerConstructor)
     {
@@ -125,7 +125,7 @@ DENG2_PIMPL(DoomsdayApp)
         audienceForFolderPopulation += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Save any changes to the game profiles.
         gameProfiles.serialize();
@@ -357,7 +357,7 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, FileRefresh)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
-    : d(new Instance(this, playerConstructor))
+    : d(new Impl(this, playerConstructor))
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;

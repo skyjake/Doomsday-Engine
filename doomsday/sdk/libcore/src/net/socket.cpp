@@ -211,7 +211,7 @@ DENG2_PIMPL_NOREF(Socket)
     /// Number of bytes written to the socket so far.
     dint64 totalBytesWritten;
 
-    Instance() :
+    Impl() :
         quiet(false),
         receptionState(ReceivingHeader),
         activeChannel(0),
@@ -219,7 +219,7 @@ DENG2_PIMPL_NOREF(Socket)
         bytesToBeWritten(0),
         totalBytesWritten(0) {}
 
-    ~Instance()
+    ~Impl()
     {
         // Delete received messages left in the buffer.
         foreach (Message *msg, receivedMessages) delete msg;
@@ -341,7 +341,7 @@ DENG2_PIMPL_NOREF(Socket)
                         payload = codec::huffmanDecode(payload);
                         if (!payload.size())
                         {
-                            throw ProtocolError("Socket::Instance::deserializeMessages", "Huffman decoding failed");
+                            throw ProtocolError("Socket::Impl::deserializeMessages", "Huffman decoding failed");
                         }
                     }
                     else if (incomingHeader.isDeflated)
@@ -349,7 +349,7 @@ DENG2_PIMPL_NOREF(Socket)
                         payload = qUncompress(payload);
                         if (!payload.size())
                         {
-                            throw ProtocolError("Socket::Instance::deserializeMessages", "Deflate failed");
+                            throw ProtocolError("Socket::Impl::deserializeMessages", "Deflate failed");
                         }
                     }
 
@@ -370,7 +370,7 @@ DENG2_PIMPL_NOREF(Socket)
     }
 };
 
-Socket::Socket() : d(new Instance)
+Socket::Socket() : d(new Impl)
 {
     d->socket = new QTcpSocket;
     initialize();
@@ -378,7 +378,7 @@ Socket::Socket() : d(new Instance)
     QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instance) // blocking
+Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) // blocking
 {
     LOG_AS("Socket");
 
@@ -457,7 +457,7 @@ void Socket::reconnect()
     connect(d->target);
 }
 
-Socket::Socket(QTcpSocket *existingSocket) : d(new Instance)
+Socket::Socket(QTcpSocket *existingSocket) : d(new Impl)
 {
     d->socket = existingSocket;
     initialize();

@@ -200,10 +200,10 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
     class CostTask : public Task
     {
     public:
-        Instance &evaluator;
+        Impl &evaluator;
         PartitionCandidate &candidate;
 
-        CostTask(Instance &evaluator, PartitionCandidate &candidate)
+        CostTask(Impl &evaluator, PartitionCandidate &candidate)
             : evaluator(evaluator), candidate(candidate)
         {}
 
@@ -393,7 +393,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
     }
 };
 
-PartitionEvaluator::PartitionEvaluator(int splitCostFactor) : d(new Instance)
+PartitionEvaluator::PartitionEvaluator(int splitCostFactor) : d(new Impl)
 {
     d->splitCostFactor = splitCostFactor;
 }
@@ -477,7 +477,7 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
     {
         d->costTaskPool.waitForDone();
         PartitionCost bestCost;
-        while(Instance::PartitionCandidate *candidate = d->nextCandidate())
+        while(Impl::PartitionCandidate *candidate = d->nextCandidate())
         {
             //LOG_DEBUG("%p: %s") << candidate->line << candidate->cost.asText();
 

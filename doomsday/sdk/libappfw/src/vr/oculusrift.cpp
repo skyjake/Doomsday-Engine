@@ -84,7 +84,7 @@ DENG2_PIMPL(OculusRift)
     //float ipd;
     float yawOffset;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         //, screenSize(0.14976f, 0.09360f)
         //, lensSeparationDistance(0.0635f)
@@ -117,7 +117,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_GUARD(this);
         deinit();
@@ -538,7 +538,7 @@ DENG2_PIMPL(OculusRift)
 #endif
 };
 
-OculusRift::OculusRift() : d(new Instance(this))
+OculusRift::OculusRift() : d(new Impl(this))
 {}
 
 bool OculusRift::isEnabled() const

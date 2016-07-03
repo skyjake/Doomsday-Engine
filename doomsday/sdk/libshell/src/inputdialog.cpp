@@ -33,15 +33,15 @@ DENG2_PIMPL_NOREF(InputDialog)
     String userText;
     int result;
 
-    Instance() : label(0), edit(0), menu(0), result(0)
+    Impl() : label(0), edit(0), menu(0), result(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {}
 };
 
 InputDialog::InputDialog(String const &name)
-    : DialogWidget(name), d(new Instance)
+    : DialogWidget(name), d(new Impl)
 {
     RuleRectangle &rect = rule();
 

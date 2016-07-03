@@ -77,10 +77,10 @@ DENG2_PIMPL_NOREF(Uri)
      */
     void *resolvedForGame;
 
-    Instance() : resolvedForGame(0)
+    Impl() : resolvedForGame(0)
     {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : de::IPrivate(),
           path           (other.path),
           strPath        (other.strPath),
@@ -196,15 +196,14 @@ DENG2_PIMPL_NOREF(Uri)
         return result;
     }
 
-private:
-    Instance &operator = (Instance const &); // no assignment
+    Impl &operator = (Impl const &) = delete; // no assignment
 };
 
-Uri::Uri() : d(new Instance)
+Uri::Uri() : d(new Impl)
 {}
 
 Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, QChar sep)
-    : d(new Instance)
+    : d(new Impl)
 {
     if (!percentEncoded.isEmpty())
     {
@@ -212,23 +211,23 @@ Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, Q
     }
 }
 
-Uri::Uri(String const &scheme, Path const &path) : d(new Instance)
+Uri::Uri(String const &scheme, Path const &path) : d(new Impl)
 {
     setScheme(scheme);
     setPath(path);
 }
 
-Uri::Uri(resourceclassid_t resClass, Path const &path) : d(new Instance)
+Uri::Uri(resourceclassid_t resClass, Path const &path) : d(new Impl)
 {
     setUri(path.toString(), resClass, path.separator());
 }
 
-Uri::Uri(Path const &path) : d(new Instance)
+Uri::Uri(Path const &path) : d(new Impl)
 {
     setPath(path);
 }
 
-Uri::Uri(char const *nullTerminatedCStr) : d(new Instance)
+Uri::Uri(char const *nullTerminatedCStr) : d(new Impl)
 {
     setUri(nullTerminatedCStr);
 }
@@ -276,7 +275,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
     return output;
 }
 
-Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Instance(*other.d))
+Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Impl(*other.d))
 {}
 
 Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourceClass)

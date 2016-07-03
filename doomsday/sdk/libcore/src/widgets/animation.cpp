@@ -76,7 +76,7 @@ DENG2_PIMPL_NOREF(Animation)
     AnimationFlags flags;
     Time pauseTime;
 
-    Instance(float val, Style s)
+    Impl(float val, Style s)
         : value(val)
         , target(val)
         , startDelay(0)
@@ -165,17 +165,17 @@ DENG2_PIMPL_NOREF(Animation)
     }
 };
 
-Animation::Animation(float val, Style s) : d(new Instance(val, s))
+Animation::Animation(float val, Style s) : d(new Impl(val, s))
 {}
 
 Animation::Animation(Animation const &other)
     : de::ISerializable()
-    , d(new Instance(*other.d))
+    , d(new Impl(*other.d))
 {}
 
 Animation &Animation::operator = (Animation const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Impl(*other.d));
     return *this;
 }
 

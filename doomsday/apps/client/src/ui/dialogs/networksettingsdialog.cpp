@@ -37,7 +37,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -63,7 +63,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 };
 
 NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Network Settings"));
     heading().setImage(style().images().image("network"));

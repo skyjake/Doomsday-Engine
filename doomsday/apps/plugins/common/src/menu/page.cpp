@@ -69,7 +69,7 @@ DENG2_PIMPL(Page)
     // User data values.
     QVariant userValue;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         fontid_t fontId = FID(GF_FONTA);
         for(int i = 0; i < MENU_FONT_COUNT; ++i)
@@ -82,7 +82,7 @@ DENG2_PIMPL(Page)
         colors[2] = 2;
     }
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(children);
     }
@@ -353,7 +353,7 @@ DENG2_PIMPL(Page)
 
 Page::Page(String name, Vector2i const &origin, Flags const &flags,
     OnDrawCallback drawer, CommandResponder cmdResponder)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->origin       = origin;
     d->name         = name;

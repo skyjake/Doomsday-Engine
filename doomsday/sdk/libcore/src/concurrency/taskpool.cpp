@@ -48,13 +48,13 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     /// Set of running tasks.
     QSet<Task *> tasks;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // When empty, the semaphore is available.
         post();
     }
 
-    ~Instance()
+    ~Impl()
     {
         // The pool is always empty at this point because the destructor is not
         // called until all the tasks have been finished and removed.
@@ -135,7 +135,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 
 DENG2_AUDIENCE_METHOD(TaskPool, Done)
 
-TaskPool::TaskPool() : d(new Instance(this))
+TaskPool::TaskPool() : d(new Impl(this))
 {}
 
 TaskPool::~TaskPool()

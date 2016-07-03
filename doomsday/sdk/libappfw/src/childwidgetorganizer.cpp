@@ -42,8 +42,7 @@ using namespace internal;
 
 static DefaultWidgetFactory defaultWidgetFactory;
 
-struct ChildWidgetOrganizer::Instance
-    : public de::Private<ChildWidgetOrganizer>
+DENG2_PIMPL(ChildWidgetOrganizer)
     , DENG2_OBSERVES(Widget,   Deletion   )
     , DENG2_OBSERVES(ui::Data, Addition   )
     , DENG2_OBSERVES(ui::Data, Removal    )
@@ -72,13 +71,13 @@ struct ChildWidgetOrganizer::Instance
     float totalCorrection = 0;
     float correctionPerUnit = 0;
 
-    Instance(Public *i, GuiWidget *c)
+    Impl(Public *i, GuiWidget *c)
         : Base(i)
         , container(c)
         , factory(&defaultWidgetFactory)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(virtualTop);
         releaseRef(virtualMin);
@@ -505,7 +504,7 @@ DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetCreation)
 DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetUpdate)
 
 ChildWidgetOrganizer::ChildWidgetOrganizer(GuiWidget &container)
-    : d(new Instance(this, &container))
+    : d(new Impl(this, &container))
 {}
 
 void ChildWidgetOrganizer::setContext(ui::Data const &context)
@@ -558,7 +557,7 @@ ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget)
 void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
 {
     d->virtualEnabled = enabled;
-    d->virtualPvs     = Instance::PvsRange();
+    d->virtualPvs     = Impl::PvsRange();
 
     if (d->virtualEnabled)
     {

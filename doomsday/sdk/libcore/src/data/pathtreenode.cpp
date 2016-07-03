@@ -39,14 +39,14 @@ DENG2_PIMPL_NOREF(PathTree::Node)
 
     String const *segmentText = nullptr; // owned by the PathTree
 
-    Instance(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
+    Impl(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node *_parent)
         : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
     {
         if (!isLeaf) children = new PathTree::Node::Children;
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete children;
     }
@@ -59,7 +59,7 @@ DENG2_PIMPL_NOREF(PathTree::Node)
 
 PathTree::Node::Node(PathTree::NodeArgs const &args) : d(nullptr)
 {
-    d.reset(new Instance(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent));
+    d.reset(new Impl(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent));
 
     // Let the parent know of the new child node.
     if (d->parent) d->parent->addChild(*this);

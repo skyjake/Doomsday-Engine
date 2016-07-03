@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(HudWidget)
     fontid_t font = 0;                ///< Current font used for text child objects of this widget.
     dfloat opacity = 1;               ///< Current opacity value for this widget.
 
-    ~Instance() { Rect_Delete(geometry); }
+    ~Impl() { Rect_Delete(geometry); }
 };
 
 HudWidget::HudWidget(void (*updateGeometry) (HudWidget *wi),
@@ -45,7 +45,7 @@ HudWidget::HudWidget(void (*updateGeometry) (HudWidget *wi),
                      dint playerNum, uiwidgetid_t id)
     : updateGeometry(updateGeometry)
     , drawer(drawer)
-    , d(new Instance)
+    , d(new Impl)
 {
     setId(id);
     setPlayer(playerNum);

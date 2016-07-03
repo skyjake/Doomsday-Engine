@@ -169,13 +169,13 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     LoopCallback mainCall;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         App_Games().audienceForReadiness() += this;
         Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        App_Games().audienceForReadiness() -= this;
 //        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
@@ -280,7 +280,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 };
 
 SavedSessionMenuWidget::SavedSessionMenuWidget()
-    : SessionMenuWidget("savegame-session-menu"), d(new Instance(this))
+    : SessionMenuWidget("savegame-session-menu"), d(new Impl(this))
 {
     d->updateItemsFromSavedIndex();
 }
@@ -293,16 +293,16 @@ void SavedSessionMenuWidget::update()
 
 Action *SavedSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    return new Instance::LoadAction(item.as<Instance::SavegameListItem>().savedSession());
+    return new Impl::LoadAction(item.as<Impl::SavegameListItem>().savedSession());
 }
 
 GuiWidget *SavedSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    return new Instance::SavegameWidget;
+    return new Impl::SavegameWidget;
 }
 
 void SavedSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)
 {
-    Instance::SavegameWidget &w = widget.as<Instance::SavegameWidget>();
-    w.updateFromItem(item.as<Instance::SavegameListItem>());
+    Impl::SavegameWidget &w = widget.as<Impl::SavegameWidget>();
+    w.updateFromItem(item.as<Impl::SavegameListItem>());
 }

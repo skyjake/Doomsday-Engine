@@ -41,14 +41,14 @@ DENG2_PIMPL_NOREF(ControllerPresets)
     char const *presetCVarPath = nullptr;
     int deviceId = 0;
 
-    Instance()
+    Impl()
         : inputModule(App::scriptSystem().nativeModule("Input"))
     {
         inputModule.addDictionary(VAR_CONTROLLER_PRESETS);
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        DoomsdayApp::app().audienceForGameChange() -= this;
 //    }
@@ -159,7 +159,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 };
 
 ControllerPresets::ControllerPresets(int deviceId, char const *presetCVarPath)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->deviceId       = deviceId;
     d->presetCVarPath = presetCVarPath;

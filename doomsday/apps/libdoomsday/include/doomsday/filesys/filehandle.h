@@ -134,8 +134,8 @@ public:
 private:
     FileHandle();
 
-    struct Instance;
-    Instance *d;
+    struct Impl;
+    Impl *d;
 };
 
 } // namespace de

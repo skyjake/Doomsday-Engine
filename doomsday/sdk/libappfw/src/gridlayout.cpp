@@ -85,7 +85,7 @@ DENG2_PIMPL(GridLayout)
     IndirectRule *publicWidth;
     IndirectRule *publicHeight;
 
-    Instance(Public *i, Rule const &x, Rule const &y, Mode layoutMode)
+    Impl(Public *i, Rule const &x, Rule const &y, Mode layoutMode)
         : Base(i)
         , mode(layoutMode)
         , maxCols(1)
@@ -107,7 +107,7 @@ DENG2_PIMPL(GridLayout)
         , publicHeight(new IndirectRule)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(initialX);
         releaseRef(initialY);
@@ -487,11 +487,11 @@ DENG2_PIMPL(GridLayout)
 };
 
 GridLayout::GridLayout(Mode mode)
-    : d(new Instance(this, Const(0), Const(0), mode))
+    : d(new Impl(this, Const(0), Const(0), mode))
 {}
 
 GridLayout::GridLayout(Rule const &startX, Rule const &startY, Mode mode)
-    : d(new Instance(this, startX, startY, mode))
+    : d(new Impl(this, startX, startY, mode))
 {}
 
 void GridLayout::clear()

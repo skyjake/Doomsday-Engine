@@ -92,7 +92,7 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     Texture *ceilTex     = nullptr;
     Texture *floorTex    = nullptr;
 
-    Instance() { de::zap(lightLevels); }
+    Impl() { de::zap(lightLevels); }
 
     bool useInterpolation() const
     {
@@ -106,7 +106,7 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
 };
 
 MaterialAnimator::Decoration::Decoration(MaterialDecoration &decor)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->matDecor = &decor;
 }
@@ -327,8 +327,8 @@ DENG2_PIMPL(MaterialAnimator)
     /// Animated material decorations.
     QList<Decoration *> decorations;
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance()
+    Impl(Public *i) : Base(i) {}
+    ~Impl()
     {
         clearLayers();
         clearDecorations();
@@ -621,7 +621,7 @@ DENG2_PIMPL(MaterialAnimator)
 };
 
 MaterialAnimator::MaterialAnimator(Material &material, MaterialVariantSpec const &spec)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->material = &material;
     d->spec     = &spec;

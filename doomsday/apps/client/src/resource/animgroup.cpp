@@ -53,19 +53,19 @@ DENG2_PIMPL(AnimGroup)
     int uniqueId;
     int flags; ///< @ref animationGroupFlags
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uniqueId(0)
         , flags(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clearAllFrames();
     }
 };
 
-AnimGroup::AnimGroup(int uniqueId, int flags) : d(new Instance(this))
+AnimGroup::AnimGroup(int uniqueId, int flags) : d(new Impl(this))
 {
     d->uniqueId = uniqueId;
     d->flags    = flags;

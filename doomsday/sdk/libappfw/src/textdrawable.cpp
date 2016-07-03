@@ -121,10 +121,10 @@ DENG2_PIMPL(TextDrawable)
      * formatting/tab stops. Observes the Instance for deletion so that if it has been
      * destroyed while the task is running, we'll know to discard the results.
      */
-    class WrapTask : public Task, public Instance::IDeletionObserver
+    class WrapTask : public Task, public Impl::IDeletionObserver
     {
     public:
-        WrapTask(Instance *inst, String const &styledText, int toWidth, Font const &font,
+        WrapTask(Impl *inst, String const &styledText, int toWidth, Font const &font,
                  Font::RichFormat::IStyle const *style)
             : d(inst)
             , _text(styledText)
@@ -193,7 +193,7 @@ DENG2_PIMPL(TextDrawable)
         }
 
     private:
-        LockablePointer<Instance> d;
+        LockablePointer<Impl> d;
         String _text;
         int _width;
         Font const &_font;
@@ -212,14 +212,14 @@ DENG2_PIMPL(TextDrawable)
     SyncId sync;
     TaskPool tasks;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // The visible wrapper is replaced when new ones are produced by workers.
         // There always needs to be a visible wrapper, though, so create an empty one.
         visibleWrap = new Wrapper;
     }
 
-    ~Instance()
+    ~Impl()
     {
         // All ongoing tasks will be skipped/discarded.
         sync.invalidate();
@@ -277,7 +277,7 @@ DENG2_PIMPL(TextDrawable)
     }
 };
 
-TextDrawable::TextDrawable() : d(new Instance(this))
+TextDrawable::TextDrawable() : d(new Impl(this))
 {
     setWrapping(*d->visibleWrap);
 }

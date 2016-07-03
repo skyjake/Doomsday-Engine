@@ -64,7 +64,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uColor     { "uColor",     GLUniform::Vec4 };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         contentRule.setDebugName("ScrollArea-contentRule");
 
@@ -80,7 +80,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
                                 contentRule.height() - self.rule().height() + self.margins().height());
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(x);
         releaseRef(y);
@@ -167,7 +167,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 };
 
 ScrollAreaWidget::ScrollAreaWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping); // enable clip-culling

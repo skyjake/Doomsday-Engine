@@ -58,7 +58,7 @@ DENG2_PIMPL(ServerLink)
     Servers fromMaster;
     LoopCallback mainCall;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , state(None)
         , fetching(false)
@@ -245,7 +245,7 @@ DENG2_PIMPL(ServerLink)
     }
 };
 
-ServerLink::ServerLink() : d(new Instance(this))
+ServerLink::ServerLink() : d(new Impl(this))
 {
     connect(&d->finder, SIGNAL(updated()), this, SLOT(localServersFound()));
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
@@ -363,7 +363,7 @@ bool ServerLink::isFound(Address const &host, FoundMask mask) const
 
 bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound(mask);
+    Impl::Servers all = d->allFound(mask);
     QList<Address> listed = all.keys();
     if(index < 0 || index >= listed.size()) return false;
     memcpy(info, &all[listed[index]], sizeof(*info));
@@ -377,7 +377,7 @@ bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 
 bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info, FoundMask mask) const
 {
-    Instance::Servers all = d->allFound(mask);
+    Impl::Servers all = d->allFound(mask);
     if(!all.contains(host)) return false;
     memcpy(info, &all[host], sizeof(*info));
     return true;

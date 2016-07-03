@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     struct GameWidget : public GameSessionWidget
     {
-        SingleplayerSessionMenuWidget::Instance *owner;
+        SingleplayerSessionMenuWidget::Impl *owner;
         Game *game = nullptr;
 
         GameWidget() : GameSessionWidget(PopupWithDataFileButton) {}
@@ -74,14 +74,14 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     FIFO<Game> pendingGames;
     LoopCallback mainCall;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         App_Games().audienceForAddition() += this;
         App_Games().audienceForReadiness() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        App_Games().audienceForAddition() -= this;
 //        App_Games().audienceForReadiness() -= this;
@@ -210,7 +210,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 };
 
 SingleplayerSessionMenuWidget::SingleplayerSessionMenuWidget(Mode mode, String const &name)
-    : SessionMenuWidget(name), d(new Instance(this))
+    : SessionMenuWidget(name), d(new Impl(this))
 {
     d->mode = mode;
 
@@ -225,20 +225,20 @@ SingleplayerSessionMenuWidget::Mode SingleplayerSessionMenuWidget::mode() const
 
 Action *SingleplayerSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    return new CommandAction("load " + item.as<Instance::GameItem>().gameId());
+    return new CommandAction("load " + item.as<Impl::GameItem>().gameId());
 }
 
 GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    auto *gw = new Instance::GameWidget;
+    auto *gw = new Impl::GameWidget;
     gw->owner = d;
     return gw;
 }
 
 void SingleplayerSessionMenuWidget::updateItemWidget(GuiWidget &widget, de::ui::Item const &item)
 {
-    Instance::GameWidget &w = widget.as<Instance::GameWidget>();
-    Instance::GameItem const &it = item.as<Instance::GameItem>();
+    Impl::GameWidget &w = widget.as<Impl::GameWidget>();
+    Impl::GameItem const &it = item.as<Impl::GameItem>();
 
     w.game = &it.game;
 

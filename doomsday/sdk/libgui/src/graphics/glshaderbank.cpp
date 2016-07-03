@@ -137,10 +137,10 @@ DENG2_PIMPL(GLShaderBank)
     typedef QMap<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearShaders();
     }
@@ -172,7 +172,7 @@ DENG2_PIMPL(GLShaderBank)
     }
 };
 
-GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Instance(this))
+GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Impl(this))
 {}
 
 void GLShaderBank::addFromInfo(File const &file)
@@ -184,7 +184,7 @@ void GLShaderBank::addFromInfo(File const &file)
 
 GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
-    Instance::Data &i = data(path).as<Instance::Data>();
+    Impl::Data &i = data(path).as<Impl::Data>();
 
     if (type == GLShader::Vertex)
     {
@@ -198,7 +198,7 @@ GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 
 GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
-    Instance::Data &i = data(path).as<Instance::Data>();
+    Impl::Data &i = data(path).as<Impl::Data>();
     program.build(i.vertex, i.fragment);
 
     // Bind the default uniforms. These will be used if no overriding
@@ -213,8 +213,8 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 
 Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
 {
-    typedef Instance::Source Source;
-    typedef Instance::Source::ShaderSource ShaderSource;
+    typedef Impl::Source Source;
+    typedef Impl::Source::ShaderSource ShaderSource;
 
     Record const &def = info()[id];
 
@@ -286,8 +286,8 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
 
 Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 {
-    Instance::Source &src = source.as<Instance::Source>();
-    std::unique_ptr<Instance::Data> data(new Instance::Data(src.load(GLShader::Vertex),
+    Impl::Source &src = source.as<Impl::Source>();
+    std::unique_ptr<Impl::Data> data(new Impl::Data(src.load(GLShader::Vertex),
                                                             src.load(GLShader::Fragment)));
     // Create default uniforms.
     Record const &def = info()[src.id];

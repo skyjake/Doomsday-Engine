@@ -28,7 +28,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
     IPredicate const *predicate;
     Index index;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , predicate(0)
     {}
@@ -107,7 +107,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
 DENG2_AUDIENCE_METHOD(FileIndex, Addition)
 DENG2_AUDIENCE_METHOD(FileIndex, Removal)
 
-FileIndex::FileIndex() : d(new Instance(this))
+FileIndex::FileIndex() : d(new Impl(this))
 {}
 
 void FileIndex::setPredicate(IPredicate const &predicate)

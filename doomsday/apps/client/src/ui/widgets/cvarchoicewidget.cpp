@@ -34,7 +34,7 @@ DENG2_PIMPL_NOREF(CVarChoiceWidget)
     }
 };
 
-CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath) : d(new Instance)
+CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath) : d(new Impl)
 {
     d->cvar = cvarPath;
     updateFromCVar();

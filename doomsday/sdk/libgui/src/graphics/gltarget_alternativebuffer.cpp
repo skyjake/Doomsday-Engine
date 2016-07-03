@@ -28,7 +28,7 @@ DENG2_PIMPL_NOREF(GLTarget::AlternativeBuffer)
     GLTarget::Flags attachment;
     GLTexture *original;
 
-    Instance()
+    Impl()
         : target(0)
         , texture(0)
         , attachment(GLTarget::NoAttachments)
@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(GLTarget::AlternativeBuffer)
 };
 
 GLTarget::AlternativeBuffer::AlternativeBuffer(GLTarget &target, GLTexture &texture, Flags const &attachment)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->target = &target;
     d->texture = &texture;

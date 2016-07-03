@@ -33,7 +33,7 @@ DENG2_PIMPL(WindowSystem)
     bool mouseMoved;
     Vector2i latestMousePos;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , mouseMoved(false)
     {
@@ -41,7 +41,7 @@ DENG2_PIMPL(WindowSystem)
         setStyle(new Style);
     }
 
-    ~Instance()
+    ~Impl()
     {
         self.closeAll();
     }
@@ -69,7 +69,7 @@ DENG2_PIMPL(WindowSystem)
 
 WindowSystem::WindowSystem()
     : System(ObservesTime | ReceivesInputEvents)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 void WindowSystem::setStyle(Style *style)
@@ -95,7 +95,7 @@ BaseWindow &WindowSystem::main() // static
 
 BaseWindow *WindowSystem::find(String const &id) const
 {
-    Instance::Windows::const_iterator found = d->windows.constFind(id);
+    Impl::Windows::const_iterator found = d->windows.constFind(id);
     if (found != d->windows.constEnd())
     {
         return found.value();

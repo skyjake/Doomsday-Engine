@@ -39,7 +39,7 @@ DENG2_PIMPL(DrawLists)
     DrawListHash shinyHash;
     DrawListHash shadowHash;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         DrawListSpec newSpec;
         newSpec.group = SkyMaskGeom;
@@ -64,7 +64,7 @@ DENG2_PIMPL(DrawLists)
     }
 };
 
-DrawLists::DrawLists() : d(new Instance(this))
+DrawLists::DrawLists() : d(new Impl(this))
 {}
 
 static void clearAllLists(DrawListHash &hash)

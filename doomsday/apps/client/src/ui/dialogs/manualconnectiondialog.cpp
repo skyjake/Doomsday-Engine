@@ -37,7 +37,7 @@ DENG2_PIMPL(ManualConnectionDialog)
     bool joinWhenEnterPressed;
     bool autoJoin;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , querying(false)
         , joinWhenEnterPressed(false)
@@ -46,7 +46,7 @@ DENG2_PIMPL(ManualConnectionDialog)
         ClientApp::serverLink().audienceForDiscoveryUpdate += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        ClientApp::serverLink().audienceForDiscoveryUpdate -= this;
 //    }
@@ -88,7 +88,7 @@ DENG2_PIMPL(ManualConnectionDialog)
 };
 
 ManualConnectionDialog::ManualConnectionDialog(String const &name)
-    : InputDialog(name), d(new Instance(this))
+    : InputDialog(name), d(new Impl(this))
 {
     add(d->progress = new ProgressWidget);
     d->progress->useMiniStyle("altaccent");

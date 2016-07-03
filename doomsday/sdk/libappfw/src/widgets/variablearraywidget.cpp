@@ -47,7 +47,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         }
     };
 
-    Instance(Public *i, Variable &var) : Base(i), var(&var)
+    Impl(Public *i, Variable &var) : Base(i), var(&var)
     {
         maxWidth = new IndirectRule;
         maxWidth->setSource(rule("list.width"));
@@ -65,7 +65,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         var.audienceForChange()   += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(maxWidth);
     }
@@ -155,7 +155,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
 
 VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
     : GuiWidget(name)
-    , d(new Instance(this, variable))
+    , d(new Impl(this, variable))
 {
     d->deleteButton->setSizePolicy(ui::Expand, ui::Expand);
     d->deleteButton->setStyleImage("close.ring", "default");

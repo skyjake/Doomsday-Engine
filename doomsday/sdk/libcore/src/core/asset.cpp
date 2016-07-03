@@ -24,8 +24,8 @@ DENG2_PIMPL_NOREF(Asset)
 {
     State state;
 
-    Instance(State s) : state(s) {}
-    Instance(Instance const &other) : de::IPrivate(), state(other.state) {}
+    Impl(State s) : state(s) {}
+    Impl(Impl const &other) : de::IPrivate(), state(other.state) {}
 
     DENG2_PIMPL_AUDIENCE(StateChange)
     DENG2_PIMPL_AUDIENCE(Deletion)
@@ -34,10 +34,10 @@ DENG2_PIMPL_NOREF(Asset)
 DENG2_AUDIENCE_METHOD(Asset, StateChange)
 DENG2_AUDIENCE_METHOD(Asset, Deletion)
 
-Asset::Asset(State initialState) : d(new Instance(initialState))
+Asset::Asset(State initialState) : d(new Impl(initialState))
 {}
 
-Asset::Asset(Asset const &other) : d(new Instance(*other.d))
+Asset::Asset(Asset const &other) : d(new Impl(*other.d))
 {}
 
 Asset::~Asset()
@@ -103,7 +103,7 @@ DENG2_PIMPL_NOREF(AssetGroup)
     }
 };
 
-AssetGroup::AssetGroup() : d(new Instance)
+AssetGroup::AssetGroup() : d(new Impl)
 {
     // An empty set of members means the group is Ready.
     setState(Ready);

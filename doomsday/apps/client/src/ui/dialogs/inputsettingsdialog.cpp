@@ -50,7 +50,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
     CVarToggleWidget *joyEnable;
     GridPopupWidget *devPopup;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
 };
 
 InputSettingsDialog::InputSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Input Settings"));
     heading().setImage(style().images().image("input"));

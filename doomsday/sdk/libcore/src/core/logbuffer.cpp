@@ -67,7 +67,7 @@ DENG2_PIMPL(LogBuffer)
     QTimer *autoFlushTimer;
     Sinks sinks;
 
-    Instance(Public *i, duint maxEntryCount)
+    Impl(Public *i, duint maxEntryCount)
         : Base(i)
         , entryFilter(&defaultFilter)
         , maxEntryCount(maxEntryCount)
@@ -94,7 +94,7 @@ DENG2_PIMPL(LogBuffer)
         sinks.insert(&errSink);
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
@@ -163,7 +163,7 @@ DENG2_PIMPL(LogBuffer)
 LogBuffer *LogBuffer::_appBuffer = nullptr;
 
 LogBuffer::LogBuffer(duint maxEntryCount)
-    : d(new Instance(this, maxEntryCount))
+    : d(new Impl(this, maxEntryCount))
 {
     d->autoFlushTimer = new QTimer(this);
     connect(d->autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
@@ -186,7 +186,7 @@ void LogBuffer::clear()
     // Flush first, we don't want to miss any messages.
     flush();
 
-    DENG2_FOR_EACH(Instance::EntryList, i, d->entries)
+    DENG2_FOR_EACH(Impl::EntryList, i, d->entries)
     {
         delete *i;
     }
@@ -333,7 +333,7 @@ void LogBuffer::flush()
 
     if (!d->toBeFlushed.isEmpty())
     {
-        DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
+        DENG2_FOR_EACH(Impl::EntryList, i, d->toBeFlushed)
         {
             DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
             foreach (LogSink *sink, d->sinks)

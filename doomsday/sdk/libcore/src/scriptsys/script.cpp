@@ -32,15 +32,15 @@ DENG2_PIMPL_NOREF(Script)
     String path;
 };
 
-Script::Script() : d(new Instance)
+Script::Script() : d(new Impl)
 {}
 
-Script::Script(String const &source) : d(new Instance)
+Script::Script(String const &source) : d(new Impl)
 {
     Parser().parse(source, *this);
 }
 
-Script::Script(File const &file) : d(new Instance)
+Script::Script(File const &file) : d(new Impl)
 {
     d->path = file.path();
     Parser().parse(String::fromUtf8(Block(file)), *this);

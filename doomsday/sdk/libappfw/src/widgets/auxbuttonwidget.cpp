@@ -26,7 +26,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
     ButtonWidget *aux;
     bool inverted;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , inverted(false)
     {
@@ -134,7 +134,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
 };
 
 AuxButtonWidget::AuxButtonWidget(String const &name)
-    : ButtonWidget(name), d(new Instance(this))
+    : ButtonWidget(name), d(new Impl(this))
 {
     useNormalStyle();
 }

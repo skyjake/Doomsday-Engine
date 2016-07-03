@@ -49,7 +49,7 @@ DENG2_PIMPL(MenuWidget)
     class SubAction : public de::Action
     {
     public:
-        SubAction(MenuWidget::Instance *inst, ui::Item const &parentItem)
+        SubAction(MenuWidget::Impl *inst, ui::Item const &parentItem)
             : d(inst)
             , _parentItem(parentItem)
             , _dir(ui::Right)
@@ -107,7 +107,7 @@ DENG2_PIMPL(MenuWidget)
         }
 
     protected:
-        MenuWidget::Instance *d;
+        MenuWidget::Impl *d;
         ui::Item const &_parentItem;
         ui::Direction _dir;
         SafeWidgetPtr<PopupWidget> _widget;
@@ -119,7 +119,7 @@ DENG2_PIMPL(MenuWidget)
     class SubmenuAction : public SubAction
     {
     public:
-        SubmenuAction(MenuWidget::Instance *inst, ui::SubmenuItem const &parentItem)
+        SubmenuAction(MenuWidget::Impl *inst, ui::SubmenuItem const &parentItem)
             : SubAction(inst, parentItem)
         {
             _sub.reset(new PopupMenuWidget);
@@ -144,7 +144,7 @@ DENG2_PIMPL(MenuWidget)
     class SubwidgetAction : public SubAction
     {
     public:
-        SubwidgetAction(MenuWidget::Instance *inst, ui::SubwidgetItem const &parentItem)
+        SubwidgetAction(MenuWidget::Impl *inst, ui::SubwidgetItem const &parentItem)
             : SubAction(inst, parentItem)
             , _item(parentItem)
         {}
@@ -176,7 +176,7 @@ DENG2_PIMPL(MenuWidget)
     SizePolicy colPolicy = Fixed;
     SizePolicy rowPolicy = Fixed;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           organizer(self)
     {
@@ -190,7 +190,7 @@ DENG2_PIMPL(MenuWidget)
         self.audienceForChildRemoval()  += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Clear the data model first, so possible sub-widgets are deleted at the right time.
         // Note that we can't clear an external data model.
@@ -479,7 +479,7 @@ DENG2_PIMPL(MenuWidget)
 DENG2_AUDIENCE_METHOD(MenuWidget, ItemTriggered)
 
 MenuWidget::MenuWidget(String const &name)
-    : ScrollAreaWidget(name), d(new Instance(this))
+    : ScrollAreaWidget(name), d(new Impl(this))
 {
     setBehavior(ChildVisibilityClipping, UnsetFlags);
 }

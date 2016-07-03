@@ -339,13 +339,13 @@ DENG2_PIMPL(Image)
     Block pixels;
     ByteRefArray refPixels;
 
-    Instance(Public *i, QImage const &img = QImage())
+    Impl(Public *i, QImage const &img = QImage())
         : Base(i), format(UseQImageFormat), image(img)
     {
         size = Size(img.width(), img.height());
     }
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base     (i),
           format   (other.format),
           size     (other.size),
@@ -354,42 +354,42 @@ DENG2_PIMPL(Image)
           refPixels(other.refPixels)
     {}
 
-    Instance(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
+    Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
         : Base(i), format(imgFormat), size(imgSize), pixels(imgPixels)
     {}
 
-    Instance(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
+    Impl(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
         : Base(i), format(imgFormat), size(imgSize), refPixels(imgRefPixels)
     {}
 };
 
-Image::Image() : d(new Instance(this))
+Image::Image() : d(new Impl(this))
 {}
 
 Image::Image(Image const &other)
-    : de::ISerializable(), d(new Instance(this, *other.d))
+    : de::ISerializable(), d(new Impl(this, *other.d))
 {}
 
-Image::Image(QImage const &image) : d(new Instance(this, image))
+Image::Image(QImage const &image) : d(new Impl(this, image))
 {}
 
 Image::Image(Size const &size, Format format, IByteArray const &pixels)
-    : d(new Instance(this, size, format, pixels))
+    : d(new Impl(this, size, format, pixels))
 {}
 
 Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
-    : d(new Instance(this, size, format, refPixels))
+    : d(new Impl(this, size, format, refPixels))
 {}
 
 Image &Image::operator = (Image const &other)
 {
-    d.reset(new Instance(this, *other.d));
+    d.reset(new Impl(this, *other.d));
     return *this;
 }
 
 Image &Image::operator = (QImage const &other)
 {
-    d.reset(new Instance(this, other));
+    d.reset(new Impl(this, other));
     return *this;
 }
 

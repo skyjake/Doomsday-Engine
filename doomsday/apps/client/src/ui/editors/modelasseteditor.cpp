@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     SafeWidgetPtr<SliderWidget> offsetY;
     SafeWidgetPtr<SliderWidget> offsetZ;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         App::packageLoader().audienceForActivity() += this;
 
@@ -92,7 +92,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 .setInput(Rule::Top,  instLabel->rule().top());
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        App::packageLoader().audienceForActivity() -= this;
 //    }
@@ -605,7 +605,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
 ModelAssetEditor::ModelAssetEditor()
     : SidebarWidget(tr("Edit 3D Model"), "modelasseteditor")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->assetLabel = LabelWidget::newWithText(tr("Asset:"), &containerWidget());
 

@@ -66,7 +66,7 @@ DENG2_PIMPL(Canvas)
     QPoint wheelAngleAccum;
     int wheelDir[2];
 
-    Instance(Public *i, CanvasWindow *parentWindow)
+    Impl(Public *i, CanvasWindow *parentWindow)
         : Base(i)
         , parent(parentWindow)
         , readyNotified(false)
@@ -85,7 +85,7 @@ DENG2_PIMPL(Canvas)
 #endif
     }
 
-    ~Instance()
+    ~Impl()
     {
         glDeinit();
     }
@@ -239,7 +239,7 @@ DENG2_AUDIENCE_METHOD(Canvas, GLDraw)
 DENG2_AUDIENCE_METHOD(Canvas, FocusChange)
 
 Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
-    : QGLWidget(parent, shared), d(new Instance(this, parent))
+    : QGLWidget(parent, shared), d(new Impl(this, parent))
 {
     LOG_AS("Canvas");
     LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();

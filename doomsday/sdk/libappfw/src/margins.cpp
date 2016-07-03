@@ -43,7 +43,7 @@ DENG2_PIMPL(Margins)
     Rule const *inputs[4];
     IndirectRule *outputs[MAX_SIDES];
 
-    Instance(Public *i, DotPath const &defaultId) : Base(i)
+    Impl(Public *i, DotPath const &defaultId) : Base(i)
     {
         zap(inputs);
         zap(outputs);
@@ -54,7 +54,7 @@ DENG2_PIMPL(Margins)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -126,7 +126,7 @@ DENG2_PIMPL(Margins)
 
 DENG2_AUDIENCE_METHOD(Margins, Change)
 
-Margins::Margins(String const &defaultMargin) : d(new Instance(this, defaultMargin))
+Margins::Margins(String const &defaultMargin) : d(new Impl(this, defaultMargin))
 {}
 
 Margins &Margins::set(Direction dir, DotPath const &marginId)

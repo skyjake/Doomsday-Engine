@@ -43,13 +43,13 @@ DENG2_PIMPL(ShellUser), public LogSink
     /// Log entries to be sent are collected here.
     shell::LogEntryPacket logEntryPacket;
 
-    Instance(Public &i) : Base(i)
+    Impl(Public &i) : Base(i)
     {
         // We will send all log entries to a shell user.
         LogBuffer::get().addSink(*this);
     }
 
-    ~Instance()
+    ~Impl()
     {
         LogBuffer::get().removeSink(*this);
     }
@@ -78,7 +78,7 @@ DENG2_PIMPL(ShellUser), public LogSink
     }
 };
 
-ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Instance(*this))
+ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
 {
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
 }

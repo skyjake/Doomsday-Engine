@@ -61,7 +61,7 @@ DENG2_PIMPL(Game)
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
-    Instance(Public *i, Record const &parms)
+    Impl(Public *i, Record const &parms)
         : Base(i)
         , params(parms)
     {
@@ -78,7 +78,7 @@ DENG2_PIMPL(Game)
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));
     }
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(manifests);
     }
@@ -99,7 +99,7 @@ DENG2_PIMPL(Game)
 };
 
 Game::Game(String const &id, Record const &params)
-    : d(new Instance(this, params))
+    : d(new Impl(this, params))
 {
     d->params.set(DEF_ID, id);
     d->params.set(DEF_VARIANT_OF, params.gets(DEF_VARIANT_OF, ""));

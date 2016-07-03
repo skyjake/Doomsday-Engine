@@ -59,7 +59,7 @@ DENG2_PIMPL(BindContext)
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
     FallbackResponderFunc fallbackResponder     = nullptr;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     /**
      * Look through the context for a binding that matches either of @a matchCmd or
@@ -181,7 +181,7 @@ DENG2_AUDIENCE_METHOD(BindContext, ActiveChange)
 DENG2_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
 DENG2_AUDIENCE_METHOD(BindContext, BindingAddition)
 
-BindContext::BindContext(String const &name) : d(new Instance(this))
+BindContext::BindContext(String const &name) : d(new Impl(this))
 {
     setName(name);
 }

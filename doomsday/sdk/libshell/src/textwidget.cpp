@@ -30,10 +30,10 @@ DENG2_PIMPL_NOREF(TextWidget)
     RuleRectangle *rule;
     QList<Action *> actions;
 
-    Instance() : canvas(0), rule(new RuleRectangle)
+    Impl() : canvas(0), rule(new RuleRectangle)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete rule;
         foreach (Action *act, actions) releaseRef(act);
@@ -73,7 +73,7 @@ DENG2_PIMPL_NOREF(TextWidget)
     }
 };
 
-TextWidget::TextWidget(String const &name) : Widget(name), d(new Instance)
+TextWidget::TextWidget(String const &name) : Widget(name), d(new Impl)
 {
     setBehavior(Focusable, SetFlags);
 }

@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(Shard)
     BiasTracker biasTracker;
     duint biasLastUpdateFrame = 0;
 
-    ~Instance() { qDeleteAll(biasIllums); }
+    ~Impl() { qDeleteAll(biasIllums); }
 
     /**
      * Determines whether it is time to update bias lighting contributors.
@@ -59,7 +59,7 @@ DENG2_PIMPL_NOREF(Shard)
     }
 };
 
-Shard::Shard(dint numBiasIllums, world::SectorCluster *owner) : d(new Instance)
+Shard::Shard(dint numBiasIllums, world::SectorCluster *owner) : d(new Impl)
 {
     setCluster(owner);
     if(numBiasIllums)

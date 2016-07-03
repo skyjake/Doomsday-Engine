@@ -160,10 +160,10 @@ DENG2_PIMPL_NOREF(StringPool)
     /// List of currently unused ids in idMap.
     AvailableIds available;
 
-    Instance() : count(0)
+    Impl() : count(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         // Free all allocated memory.
         clear();
@@ -275,11 +275,11 @@ DENG2_PIMPL_NOREF(StringPool)
     }
 };
 
-StringPool::StringPool() : d(new Instance)
+StringPool::StringPool() : d(new Impl)
 {
 }
 
-StringPool::StringPool(String const *strings, uint count) : d(new Instance)
+StringPool::StringPool(String const *strings, uint count) : d(new Impl)
 {
     for (uint i = 0; strings && i < count; ++i)
     {

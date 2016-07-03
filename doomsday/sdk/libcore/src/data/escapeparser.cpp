@@ -32,7 +32,7 @@ DENG2_PIMPL_NOREF(EscapeParser)
 DENG2_AUDIENCE_METHOD(EscapeParser, PlainText)
 DENG2_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
 
-EscapeParser::EscapeParser() : d(new Instance)
+EscapeParser::EscapeParser() : d(new Impl)
 {}
 
 void EscapeParser::parse(String const &textWithEscapes)

@@ -25,14 +25,14 @@ DENG2_PIMPL(LinkFile)
 {
     SafePtr<File const> target;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , target(i) {}
 };
 
 LinkFile::LinkFile(String const &name)
     : File(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 LinkFile::~LinkFile()

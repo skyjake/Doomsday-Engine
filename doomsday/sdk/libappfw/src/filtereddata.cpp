@@ -37,7 +37,7 @@ DENG2_PIMPL(FilteredData)
     PosMapping reverseMapping;
     FilterFunc isItemAccepted;
 
-    Instance(Public *i, Data const &source)
+    Impl(Public *i, Data const &source)
         : Base(i)
         , source(source)
     {
@@ -142,7 +142,7 @@ DENG2_PIMPL(FilteredData)
 };
 
 FilteredData::FilteredData(Data const &source)
-    : d(new Instance(this, source))
+    : d(new Impl(this, source))
 {}
 
 Data &FilteredData::clear()

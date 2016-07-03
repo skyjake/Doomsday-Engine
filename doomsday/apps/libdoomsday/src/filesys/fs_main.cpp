@@ -179,14 +179,14 @@ DENG2_PIMPL(FS1)
 
     Schemes schemes;            ///< File subsets.
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , loadingForStartup(true)
         , loadedFilesCRC   (0)
         , zipFileIndex     (true/*paths are unique*/)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearLoadedFiles();
         clearOpenFiles();
@@ -455,7 +455,7 @@ DENG2_PIMPL(FS1)
     }
 };
 
-FS1::FS1() : d(new Instance(this))
+FS1::FS1() : d(new Impl(this))
 {}
 
 FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)

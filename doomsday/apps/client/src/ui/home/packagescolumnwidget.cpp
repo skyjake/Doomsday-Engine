@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     ui::ListData actions;
     LoopCallback mainCall;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         actions << new ui::SubwidgetItem(tr("..."), ui::Down, [this] () -> PopupWidget *
         {
@@ -128,7 +128,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
 PackagesColumnWidget::PackagesColumnWidget()
     : ColumnWidget("packages-column")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     header().title().setText(_E(s) "\n" _E(.) + tr("Packages"));
     header().info().setText(tr("Browse available packages and install new ones."));

@@ -264,14 +264,14 @@ DENG2_PIMPL(AutomapWidget)
     QList<MarkedPoint *> points;  ///< Player-marked points of interest.
     dint followPlayer = 0;        ///< Player being followed.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         de::zap(lists);
         de::zap(bounds);
         de::zap(viewAABB);
     }
 
-    ~Instance()
+    ~Impl()
     {
         clearPoints();
     }
@@ -667,7 +667,7 @@ DENG2_PIMPL(AutomapWidget)
 
     static int drawLineWorker(void *line, void *context)
     {
-        static_cast<Instance *>(context)->drawLine((Line *)line);
+        static_cast<Impl *>(context)->drawLine((Line *)line);
         return false;  // Continue iteration.
     }
 
@@ -695,7 +695,7 @@ DENG2_PIMPL(AutomapWidget)
         {
             AABoxd aaBox;
             self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-            Subspace_BoxIterator(&aaBox, drawLinesForSubspaceWorker, const_cast<Instance *>(this));
+            Subspace_BoxIterator(&aaBox, drawLinesForSubspaceWorker, const_cast<Impl *>(this));
         }
         else
         {
@@ -704,7 +704,7 @@ DENG2_PIMPL(AutomapWidget)
             dint const numSubspaces = P_Count(DMU_SUBSPACE);
             for(dint i = 0; i < numSubspaces; ++i)
             {
-                P_Iteratep(P_ToPtr(DMU_SUBSPACE, i), DMU_LINE, drawLineWorker, const_cast<Instance *>(this));
+                P_Iteratep(P_ToPtr(DMU_SUBSPACE, i), DMU_LINE, drawLineWorker, const_cast<Impl *>(this));
             }
         }
     }
@@ -764,7 +764,7 @@ DENG2_PIMPL(AutomapWidget)
 
     static int drawLine_polyob(Line *line, void *context)
     {
-        auto const *inst = static_cast<Instance *>(context);
+        auto const *inst = static_cast<Impl *>(context);
         DENG2_ASSERT(inst);
 
         dfloat const opacity = uiRendState->pageAlpha;
@@ -815,13 +815,13 @@ DENG2_PIMPL(AutomapWidget)
         // Draw any polyobjects in view.
         AABoxd aaBox;
         self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        Line_BoxIterator(&aaBox, LIF_POLYOBJ, drawLine_polyob, const_cast<Instance *>(this));
+        Line_BoxIterator(&aaBox, LIF_POLYOBJ, drawLine_polyob, const_cast<Impl *>(this));
     }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     static int drawLine_xg(Line *line, void *context)
     {
-        auto const *inst = static_cast<Instance *>(context);
+        auto const *inst = static_cast<Impl *>(context);
         DENG2_ASSERT(line && inst);
 
         xline_t *xline = P_ToXLine(line);
@@ -862,7 +862,7 @@ DENG2_PIMPL(AutomapWidget)
 
         AABoxd aaBox;
         self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        Line_BoxIterator(&aaBox, LIF_SECTOR, drawLine_xg, const_cast<Instance *>(this));
+        Line_BoxIterator(&aaBox, LIF_SECTOR, drawLine_xg, const_cast<Impl *>(this));
 #endif
     }
 
@@ -1249,7 +1249,7 @@ AutomapWidget::AutomapWidget(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(AutomapWidget_UpdateGeometry),
                 function_cast<DrawFunc>(AutomapWidget_Draw),
                 player)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->style = ST_AutomapStyle();
 }

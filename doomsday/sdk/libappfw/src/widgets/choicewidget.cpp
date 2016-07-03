@@ -37,10 +37,10 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
      */
     struct SelectAction : public de::Action
     {
-        ChoiceWidget::Instance *wd;
+        ChoiceWidget::Impl *wd;
         ui::Item const &selItem;
 
-        SelectAction(ChoiceWidget::Instance *inst, ui::Item const &item)
+        SelectAction(ChoiceWidget::Impl *inst, ui::Item const &item)
             : wd(inst), selItem(item) {}
 
         void trigger()
@@ -60,7 +60,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     Data::Pos selected; ///< One item is always selected.
     String noSelectionHint;
 
-    Instance(Public *i) : Base(i), selected(Data::InvalidPos)
+    Impl(Public *i) : Base(i), selected(Data::InvalidPos)
     {
         maxWidth = new IndirectRule;
 
@@ -80,7 +80,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         updateStyle();
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(maxWidth);
     }
@@ -213,7 +213,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 };
 
 ChoiceWidget::ChoiceWidget(String const &name)
-    : PopupButtonWidget(name), d(new Instance(this))
+    : PopupButtonWidget(name), d(new Impl(this))
 {
     setOpeningDirection(ui::Right);
     d->choices->setAllowDirectionFlip(false);

@@ -30,12 +30,12 @@ DENG2_PIMPL_NOREF(MobjThinkerData)
 {};
 
 MobjThinkerData::MobjThinkerData()
-    : d(new Instance)
+    : d(new Impl)
 {}
 
 MobjThinkerData::MobjThinkerData(MobjThinkerData const &other)
     : ThinkerData(other)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 Thinker::IData *MobjThinkerData::duplicate() const

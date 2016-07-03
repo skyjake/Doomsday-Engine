@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(InputDevice::Control)
     BindContext *prevBindContext = nullptr;
 };
 
-InputDevice::Control::Control(InputDevice *device) : d(new Instance)
+InputDevice::Control::Control(InputDevice *device) : d(new Impl)
 {
     setDevice(device);
 }
@@ -135,9 +135,9 @@ DENG2_PIMPL(InputDevice)
     typedef QList<InputDeviceHatControl *> Hats;
     Hats hats;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(hats);
         qDeleteAll(buttons);
@@ -149,7 +149,7 @@ DENG2_PIMPL(InputDevice)
 
 DENG2_AUDIENCE_METHOD(InputDevice, ActiveChange)
 
-InputDevice::InputDevice(String const &name) : d(new Instance(this))
+InputDevice::InputDevice(String const &name) : d(new Impl(this))
 {
     DENG2_ASSERT(!name.isEmpty());
     d->name = name;

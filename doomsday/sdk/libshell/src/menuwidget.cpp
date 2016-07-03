@@ -64,7 +64,7 @@ DENG2_PIMPL(MenuWidget)
     QList<Item> items;
     int cursor;
 
-    Instance(Public &i)
+    Impl(Public &i)
         : Base(i),
           borderAttr(TextCanvas::Char::Reverse),
           backgroundAttr(TextCanvas::Char::Reverse),
@@ -77,7 +77,7 @@ DENG2_PIMPL(MenuWidget)
         height = new ConstantRule(1);
     }
 
-    ~Instance()
+    ~Impl()
     {
         clear();
         releaseRef(width);
@@ -123,7 +123,7 @@ DENG2_PIMPL(MenuWidget)
 };
 
 MenuWidget::MenuWidget(Preset preset, String const &name)
-    : TextWidget(name), d(new Instance(*this))
+    : TextWidget(name), d(new Impl(*this))
 {
     switch (preset)
     {
@@ -150,7 +150,7 @@ int MenuWidget::itemCount() const
 
 void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 {
-    Instance::Item item;
+    Impl::Item item;
     item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.append(item);
@@ -171,7 +171,7 @@ void MenuWidget::appendSeparator()
 
 void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
 {
-    Instance::Item item;
+    Impl::Item item;
     item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.insert(pos, item);
@@ -313,7 +313,7 @@ void MenuWidget::draw()
     int y = border;
     for (int i = 0; i < d->items.size(); ++i)
     {
-        Instance::Item const &item = d->items[i];
+        Impl::Item const &item = d->items[i];
 
         // Determine style.
         TextCanvas::Char::Attribs itemAttr = (d->cursor == i && hasFocus()?

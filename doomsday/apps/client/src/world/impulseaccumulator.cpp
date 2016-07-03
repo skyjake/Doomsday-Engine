@@ -171,7 +171,7 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
 };
 
 ImpulseAccumulator::ImpulseAccumulator(int impulseId, AccumulatorType type, bool expireBeforeSharpTick)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->impulseId             = impulseId;
     d->type                  = type;

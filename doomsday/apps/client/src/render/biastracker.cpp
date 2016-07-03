@@ -78,7 +78,7 @@ DENG2_PIMPL_NOREF(BiasTracker)
     }
 };
 
-BiasTracker::BiasTracker() : d(new Instance())
+BiasTracker::BiasTracker() : d(new Impl())
 {}
 
 void BiasTracker::clearContributors()

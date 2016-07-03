@@ -44,9 +44,9 @@ DENG2_PIMPL_NOREF(ServerFinder)
     };
     QMap<Address, Found> servers;
 
-    Instance() : beacon(DEFAULT_PORT) {}
+    Impl() : beacon(DEFAULT_PORT) {}
 
-    ~Instance()
+    ~Impl()
     {
         clearServers();
     }
@@ -80,7 +80,7 @@ DENG2_PIMPL_NOREF(ServerFinder)
     }
 };
 
-ServerFinder::ServerFinder() : d(new Instance)
+ServerFinder::ServerFinder() : d(new Impl)
 {
     try
     {
@@ -150,7 +150,7 @@ void ServerFinder::found(Address host, Block block)
                 << host << block.size();
 
         // Replace or insert the information for this host.
-        Instance::Found found;
+        Impl::Found found;
         if (d->servers.contains(host))
         {
             found.message = d->servers[host].message;

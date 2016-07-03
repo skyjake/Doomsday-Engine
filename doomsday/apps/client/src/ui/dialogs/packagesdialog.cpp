@@ -114,7 +114,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             _removeButton->margins().setTopBottom("unit");
             _removeButton->setActionFn([this] ()
             {
-                PackagesDialog::Instance *d = _owner.d;
+                PackagesDialog::Impl *d = _owner.d;
                 d->removePackage(packageId());
                 d->browser->updateItems();
             });
@@ -158,7 +158,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         ButtonWidget *_removeButton;
     };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.leftArea().add(gameTitle = new LabelWidget);
         gameTitle->add(gameDataFiles = new LabelWidget);
@@ -336,7 +336,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
 PackagesDialog::PackagesDialog(String const &titleText)
     : DialogWidget("packagesdialog", WithHeading)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     if (titleText.isEmpty())
     {

@@ -34,12 +34,12 @@ DENG2_OBSERVES(Texture, Deletion)
     Texture::Flags flags;            ///< Classification flags.
     QScopedPointer<Texture> texture; ///< Associated resource (if any).
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uniqueId(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self);
     }
@@ -52,7 +52,7 @@ DENG2_OBSERVES(Texture, Deletion)
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance(this))
+    : Node(args), d(new Impl(this))
 {}
 
 Texture *TextureManifest::derive()

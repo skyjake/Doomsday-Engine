@@ -54,7 +54,7 @@ DENG2_PIMPL(Hand)
     dfloat editIntensity = 0;
     PropertyFlags applyProps = 0;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     void notifyGrabbed(Grabbable &grabbed)
@@ -147,7 +147,7 @@ DENG2_PIMPL(Hand)
     }
 };
 
-Hand::Hand(Vector3d const &origin) : d(new Instance(this))
+Hand::Hand(Vector3d const &origin) : d(new Impl(this))
 {
     d->oldOrigin = d->origin = origin;
 }

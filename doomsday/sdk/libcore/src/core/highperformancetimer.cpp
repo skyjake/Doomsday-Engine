@@ -29,7 +29,7 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer)
     QDateTime origin;
     QElapsedTimer startedAt;
 
-    Instance()
+    Impl()
     {
         origin = QDateTime::currentDateTime();
         startedAt.start();
@@ -41,7 +41,7 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer)
     }
 };
 
-HighPerformanceTimer::HighPerformanceTimer() : d(new Instance)
+HighPerformanceTimer::HighPerformanceTimer() : d(new Impl)
 {}
 
 TimeDelta HighPerformanceTimer::elapsed() const

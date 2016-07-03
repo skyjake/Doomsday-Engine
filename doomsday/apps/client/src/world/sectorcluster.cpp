@@ -134,10 +134,10 @@ DENG2_PIMPL(SectorCluster)
     bool needReverbUpdate = true;
 #endif
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         observePlane(&sector().floor(), false);
         observePlane(&sector().ceiling(), false);
@@ -970,7 +970,7 @@ DENG2_PIMPL(SectorCluster)
 };
 
 SectorCluster::SectorCluster(Subspaces const &subspaces)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->subspaces.append(subspaces);
     foreach(ConvexSubspace *subspace, subspaces)
@@ -1221,7 +1221,7 @@ dint SectorCluster::blockLightSourceZBias()
 
 void SectorCluster::applyBiasChanges(QBitArray &allChanges)
 {
-    Instance::ShardGeometryMap::const_iterator it = d->shardGeomMap.constBegin();
+    Impl::ShardGeometryMap::const_iterator it = d->shardGeomMap.constBegin();
     while(it != d->shardGeomMap.constEnd())
     {
         it.key()->biasTracker().applyChanges(allChanges);
@@ -1253,7 +1253,7 @@ static dint countIlluminationPoints(MapElement &mapElement, dint group)
 
 Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
 {
-    Instance::GeometryData *gdata = d->geomData(mapElement, geomId, true /*create*/);
+    Impl::GeometryData *gdata = d->geomData(mapElement, geomId, true /*create*/);
     if(gdata->shard.isNull())
     {
         gdata->shard.reset(new Shard(countIlluminationPoints(mapElement, geomId), this));
@@ -1263,7 +1263,7 @@ Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
 
 Shard *SectorCluster::findShard(MapElement &mapElement, dint geomId)
 {
-    if(Instance::GeometryData *gdata = d->geomData(mapElement, geomId))
+    if(Impl::GeometryData *gdata = d->geomData(mapElement, geomId))
     {
         return gdata->shard.data();
     }
@@ -1276,7 +1276,7 @@ Shard *SectorCluster::findShard(MapElement &mapElement, dint geomId)
  */
 bool SectorCluster::updateBiasContributors(Shard *shard)
 {
-    if(Instance::GeometryData *gdata = d->geomDataForShard(shard))
+    if(Impl::GeometryData *gdata = d->geomDataForShard(shard))
     {
         Map const &map = sector().map();
 

@@ -73,10 +73,10 @@ DENG2_PIMPL(Surface)
     Vector2f materialOriginSmoothedDelta;       ///< Delta between @em sharp and @em smoothed.
 #endif
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
 #ifdef __CLIENT__
         // Stop scroll interpolation for this surface.
@@ -160,7 +160,7 @@ DENG2_AUDIENCE_METHOD(Surface, TintColorChange)
 
 Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &tintColor)
     : MapElement(DMU_SURFACE, &owner)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->opacity   = opacity;
     d->tintColor = tintColor;

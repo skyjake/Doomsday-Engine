@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(BusyWidget)
     GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4      };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         progress = new ProgressWidget;
         progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);
@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(BusyWidget)
 };
 
 BusyWidget::BusyWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
 }

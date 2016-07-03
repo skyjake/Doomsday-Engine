@@ -32,7 +32,7 @@ DENG2_PIMPL_NOREF(FinaleWidget)
     animatorvector3_t scale;
     FinalePageWidget *page = nullptr;
 
-    Instance()
+    Impl()
     {
         AnimatorVector3_Init(pos, 0, 0, 0);
         Animator_Init(&angle, 0);
@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(FinaleWidget)
     }
 };
 
-FinaleWidget::FinaleWidget(de::String const &name) : d(new Instance)
+FinaleWidget::FinaleWidget(de::String const &name) : d(new Impl)
 {
     setName(name);
 }

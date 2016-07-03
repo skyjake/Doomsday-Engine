@@ -64,14 +64,14 @@ DENG2_PIMPL(Evaluator)
     /// Returned when there is no result to give.
     NoneValue noResult;
 
-    Instance(Public *i, Context &owner)
+    Impl(Public *i, Context &owner)
         : Base(i)
         , context(owner)
         , current(0)
         , names(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearNames();
         clearResults();
@@ -170,7 +170,7 @@ DENG2_PIMPL(Evaluator)
 
 namespace de {
 
-Evaluator::Evaluator(Context &owner) : d(new Instance(this, owner))
+Evaluator::Evaluator(Context &owner) : d(new Impl(this, owner))
 {}
 
 Context &Evaluator::context()
@@ -237,7 +237,7 @@ Value &Evaluator::result()
 
 void Evaluator::push(Expression const *expression, Value *scope)
 {
-    d->stack.push_back(Instance::ScopedExpression(expression, scope));
+    d->stack.push_back(Impl::ScopedExpression(expression, scope));
 }
     
 void Evaluator::pushResult(Value *value)
@@ -249,7 +249,7 @@ Value *Evaluator::popResult(Value **evaluationScope)
 {
     DENG2_ASSERT(d->results.size() > 0);
 
-    Instance::ScopedResult result = d->results.takeLast();
+    Impl::ScopedResult result = d->results.takeLast();
     /*qDebug() << "Evaluator: Popping result" << result.result->asText()
              << "in scope" << (result.scope? result.scope->asText() : "null");*/
 

@@ -675,7 +675,7 @@ DENG2_PIMPL(MapImporter)
         }
     } materials;
 
-    Instance(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
+    Impl(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
     inline dint vertexCount() const {
@@ -1160,7 +1160,7 @@ DENG2_PIMPL(MapImporter)
 };
 
 MapImporter::MapImporter(Id1MapRecognizer const &recognized)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->format = recognized.format();
     if(d->format == Id1MapRecognizer::UnknownFormat)

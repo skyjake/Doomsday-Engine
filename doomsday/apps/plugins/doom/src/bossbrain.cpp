@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(BossBrain)
     int maxTargets;
     mobj_t **targets;
 
-    Instance()
+    Impl()
         : easy(0) // Always init easy to 0.
         , targetOn(0)
         , numTargets(0)
@@ -44,13 +44,13 @@ DENG2_PIMPL_NOREF(BossBrain)
         , targets(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         Z_Free(targets);
     }
 };
 
-BossBrain::BossBrain() : d(new Instance)
+BossBrain::BossBrain() : d(new Impl)
 {}
 
 void BossBrain::clearTargets()

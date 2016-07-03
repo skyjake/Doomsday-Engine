@@ -65,11 +65,11 @@ DENG2_PIMPL(ColorBank)
         ColorData(Vector4d const &c = Vector4d()) : color(c) {}
     };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 };
 
-ColorBank::ColorBank() : InfoBank("ColorBank", DisableHotStorage), d(new Instance(this))
+ColorBank::ColorBank() : InfoBank("ColorBank", DisableHotStorage), d(new Impl(this))
 {}
 
 void ColorBank::addFromInfo(File const &file)
@@ -92,19 +92,19 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
 ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
     if (path.isEmpty()) return Colorf();
-    Vector4d clamped = data(path).as<Instance::ColorData>().color;
+    Vector4d clamped = data(path).as<Impl::ColorData>().color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));
 }
 
 Bank::ISource *ColorBank::newSourceFromInfo(String const &id)
 {
-    return new Instance::ColorSource(*this, id);
+    return new Impl::ColorSource(*this, id);
 }
 
 Bank::IData *ColorBank::loadFromSource(ISource &source)
 {
-    return new Instance::ColorData(source.as<Instance::ColorSource>().load());
+    return new Impl::ColorData(source.as<Impl::ColorSource>().load());
 }
 
 } // namespace de

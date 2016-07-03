@@ -26,10 +26,10 @@ DENG2_PIMPL_NOREF(ReadWriteLockable)
 {
     QReadWriteLock lock;
 
-    Instance() : lock(QReadWriteLock::Recursive)
+    Impl() : lock(QReadWriteLock::Recursive)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         // Make sure ongoing access has ended.
         lock.lockForWrite();
@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(ReadWriteLockable)
     }
 };
 
-ReadWriteLockable::ReadWriteLockable() : d(new Instance)
+ReadWriteLockable::ReadWriteLockable() : d(new Impl)
 {}
 
 ReadWriteLockable::~ReadWriteLockable()

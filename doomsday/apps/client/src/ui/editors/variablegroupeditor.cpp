@@ -68,13 +68,13 @@ DENG2_PIMPL(VariableGroupEditor)
     GridLayout layout;
     Rule const *firstColumnWidth;
 
-    Instance(Public *i, IOwner *owner)
+    Impl(Public *i, IOwner *owner)
         : Base(i)
         , owner(owner)
         , firstColumnWidth(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(firstColumnWidth);
     }
@@ -97,7 +97,7 @@ DENG2_PIMPL(VariableGroupEditor)
 VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
                                          String const &titleText, GuiWidget *header)
     : FoldPanelWidget(name)
-    , d(new Instance(this, owner))
+    , d(new Impl(this, owner))
 {
     d->content = new GuiWidget;
     setContent(d->content);

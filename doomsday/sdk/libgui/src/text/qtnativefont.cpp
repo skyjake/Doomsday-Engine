@@ -34,11 +34,11 @@ namespace de
 namespace de {
 
 QtNativeFont::QtNativeFont(String const &family)
-    : NativeFont(family), d(new Instance)
+    : NativeFont(family), d(new Impl)
 {}
 
 QtNativeFont::QtNativeFont(QFont const &font)
-    : NativeFont(font.family()), d(new Instance)
+    : NativeFont(font.family()), d(new Impl)
 {
     d->font = font;
     setSize(font.pointSizeF());
@@ -47,7 +47,7 @@ QtNativeFont::QtNativeFont(QFont const &font)
 }
 
 QtNativeFont::QtNativeFont(QtNativeFont const &other)
-    : NativeFont(other), d(new Instance)
+    : NativeFont(other), d(new Impl)
 {
     d->font = other.d->font;
 }

@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(GlobalShortcuts)
 {};
 
 GlobalShortcuts::GlobalShortcuts()
-    : Widget("shortcuts"), d(new Instance)
+    : Widget("shortcuts"), d(new Impl)
 {}
 
 bool GlobalShortcuts::handleEvent(Event const &event)

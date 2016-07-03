@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(AutomapStyle)
 
     automapcfg_lineinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
 
-    Instance() { de::zap(mapObjectInfo); }
+    Impl() { de::zap(mapObjectInfo); }
 
     void reset()
     {
@@ -108,7 +108,7 @@ DENG2_PIMPL_NOREF(AutomapStyle)
     }
 };
 
-AutomapStyle::AutomapStyle() : d(new Instance)
+AutomapStyle::AutomapStyle() : d(new Impl)
 {}
 
 AutomapStyle::~AutomapStyle()

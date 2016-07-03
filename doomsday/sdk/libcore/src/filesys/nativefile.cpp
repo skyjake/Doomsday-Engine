@@ -39,14 +39,14 @@ DENG2_PIMPL(NativeFile)
     /// Output file should be truncated before the next write.
     bool needTruncation;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , in(0)
         , out(0)
         , needTruncation(false)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_ASSERT(!in);
         DENG2_ASSERT(!out);
@@ -124,7 +124,7 @@ DENG2_PIMPL(NativeFile)
 };
 
 NativeFile::NativeFile(String const &name, NativePath const &nativePath)
-    : ByteArrayFile(name), d(new Instance(this))
+    : ByteArrayFile(name), d(new Impl(this))
 {
     d->nativePath = nativePath;
 }

@@ -54,9 +54,9 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         releaseLines();
     }
@@ -299,7 +299,7 @@ DENG2_PIMPL(GLTextComposer)
 
             for (int k = 1; k < lines[i].segs.size(); ++k)
             {
-                Instance::Line::Segment &seg = lines[i].segs[k];
+                Impl::Line::Segment &seg = lines[i].segs[k];
                 seg.x = lines[i].segs[k - 1].right();
             }
         }
@@ -319,7 +319,7 @@ DENG2_PIMPL(GLTextComposer)
                 DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
                 for (int k = 0; k < info.segs.size(); ++k)
                 {
-                    Instance::Line::Segment &seg = lines[i].segs[k];
+                    Impl::Line::Segment &seg = lines[i].segs[k];
                     if (info.segs[k].tabStop >= 0 && info.segs[k].tabStop < tab)
                     {
                         maxRight = de::max(maxRight, seg.right());
@@ -350,7 +350,7 @@ DENG2_PIMPL(GLTextComposer)
     }
 };
 
-GLTextComposer::GLTextComposer() : d(new Instance(this))
+GLTextComposer::GLTextComposer() : d(new Impl(this))
 {}
 
 void GLTextComposer::release()
@@ -469,7 +469,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     // Compress lines to fit into the maximum allowed width.
     for (int i = 0; i < d->lines.size(); ++i)
     {
-        Instance::Line &line = d->lines[i];
+        Impl::Line &line = d->lines[i];
         if (!d->isLineVisible(i) || line.segs.isEmpty()) continue;
 
         /*
@@ -477,7 +477,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             continue;
             */
 
-        Instance::Line::Segment &seg = line.segs.last();
+        Impl::Line::Segment &seg = line.segs.last();
         int const leeway = 3;
         if (seg.right() > d->wraps->maximumWidth() + leeway)
         {
@@ -492,7 +492,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     // Generate vertices for each line.
     for (int i = 0; i < d->wraps->height(); ++i)
     {
-        Instance::Line const &line = d->lines[i];
+        Impl::Line const &line = d->lines[i];
 
         if (d->isLineVisible(i))
         {
@@ -501,7 +501,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
             for (int k = 0; k < info.segs.size(); ++k)
             {
-                Instance::Line::Segment const &seg = line.segs[k];
+                Impl::Line::Segment const &seg = line.segs[k];
 
                 // Empty lines are skipped.
                 if (seg.id.isNone()) continue;

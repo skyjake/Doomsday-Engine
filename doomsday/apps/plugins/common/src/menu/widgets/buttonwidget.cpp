@@ -39,7 +39,7 @@ DENG2_PIMPL_NOREF(ButtonWidget)
 
 ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
     : Widget()
-    , d(new Instance)
+    , d(new Impl)
 {
     setFont(MENU_FONT2);
     setColor(MENU_COLOR1);

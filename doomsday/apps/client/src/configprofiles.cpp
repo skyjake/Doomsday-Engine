@@ -177,7 +177,7 @@ DENG2_PIMPL(ConfigProfiles)
     Profile defaults;
     String current;
 
-    Instance(Public *i) : Base(i), current(CUSTOM_PROFILE)
+    Impl(Public *i) : Base(i), current(CUSTOM_PROFILE)
     {
         DoomsdayApp::app().audienceForGameUnload() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -185,7 +185,7 @@ DENG2_PIMPL(ConfigProfiles)
         addProfile(current);
     }
 
-    ~Instance()
+    ~Impl()
     {
         //DoomsdayApp::app().audienceForGameUnload() -= this;
         //DoomsdayApp::app().audienceForGameChange() -= this;
@@ -467,14 +467,14 @@ DENG2_PIMPL(ConfigProfiles)
     }
 };
 
-ConfigProfiles::ConfigProfiles() : d(new Instance(this))
+ConfigProfiles::ConfigProfiles() : d(new Impl(this))
 {}
 
 ConfigProfiles &ConfigProfiles::define(SettingType type,
                                        String const &settingName,
                                        QVariant const &defaultValue)
 {
-    d->settings.insert(settingName, Instance::Setting(type, settingName));
+    d->settings.insert(settingName, Impl::Setting(type, settingName));
 
     QVariant def;
     if(type == ConfigVariable)
@@ -556,7 +556,7 @@ void ConfigProfiles::deleteProfile(String const &name)
 Profiles::AbstractProfile *
 ConfigProfiles::profileFromInfoBlock(de::Info::BlockElement const &block)
 {
-    std::unique_ptr<Instance::Profile> prof(new Instance::Profile);
+    std::unique_ptr<Impl::Profile> prof(new Impl::Profile);
     prof->initializeFromInfoBlock(*this, block);
     return prof.release();
 }

@@ -63,12 +63,12 @@ DENG2_PIMPL_NOREF(ImageBank)
     };
 };
 
-ImageBank::ImageBank(Flags const &flags) : InfoBank("ImageBank", flags), d(new Instance)
+ImageBank::ImageBank(Flags const &flags) : InfoBank("ImageBank", flags), d(new Impl)
 {}
 
 void ImageBank::add(DotPath const &path, String const &imageFilePath)
 {
-    Bank::add(path, new Instance::ImageSource(imageFilePath));
+    Bank::add(path, new Impl::ImageSource(imageFilePath));
 }
 
 void ImageBank::addFromInfo(File const &file)
@@ -80,23 +80,23 @@ void ImageBank::addFromInfo(File const &file)
 
 Image const &ImageBank::image(DotPath const &path) const
 {
-    return data(path).as<Instance::ImageData>().image;
+    return data(path).as<Impl::ImageData>().image;
 }
 
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::ImageSource(absolutePathInContext(def, def["path"]));
+    return new Impl::ImageSource(absolutePathInContext(def, def["path"]));
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)
 {
-    return new Instance::ImageData(source.as<Instance::ImageSource>().load());
+    return new Impl::ImageData(source.as<Impl::ImageSource>().load());
 }
 
 Bank::IData *ImageBank::newData()
 {
-    return new Instance::ImageData();
+    return new Impl::ImageData();
 }
 
 } // namespace de

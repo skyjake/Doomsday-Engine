@@ -60,7 +60,7 @@ DENG_GUI_PIMPL(TutorialWidget)
     bool taskBarInitiallyOpen;
     Untrapper untrapper;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(TutorialWidget)
      */
     Step advanceStep(Step s) const
     {
-        s = Instance::Step(s + 1);
+        s = Impl::Step(s + 1);
         validateStep(s);
         return s;
     }
@@ -424,7 +424,7 @@ DENG_GUI_PIMPL(TutorialWidget)
 };
 
 TutorialWidget::TutorialWidget()
-    : GuiWidget("tutorial"), d(new Instance(this))
+    : GuiWidget("tutorial"), d(new Impl(this))
 {
     connect(&d->flashing, SIGNAL(timeout()), this, SLOT(flashHighlight()));
 }
@@ -434,7 +434,7 @@ void TutorialWidget::start()
     // Blur the rest of the view.
     ClientWindow::main().fadeInTaskBarBlur(.5);
 
-    d->initStep(Instance::Welcome);
+    d->initStep(Impl::Welcome);
 }
 
 void TutorialWidget::stop()

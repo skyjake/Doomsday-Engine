@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     SavedSession *session; // Not owned.
     SessionStatus status;
 
-    Instance()
+    Impl()
         : userWritable(true)
         , menuWidgetId(0 /*none*/)
         , session     (0)
@@ -119,7 +119,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
 };
 
 SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWidgetId)
-    : d(new Instance())
+    : d(new Impl())
 {
     d->id           = id;
     d->userWritable = userWritable;
@@ -218,12 +218,12 @@ DENG2_PIMPL(SaveSlots)
     typedef std::pair<String, Slot *> SlotItem;
     Slots sslots;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         GameSession::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
@@ -280,7 +280,7 @@ DENG2_PIMPL(SaveSlots)
     }
 };
 
-SaveSlots::SaveSlots() : d(new Instance(this))
+SaveSlots::SaveSlots() : d(new Impl(this))
 {}
 
 void SaveSlots::add(String const &id, bool userWritable, String const &saveName, int menuWidgetId)
@@ -289,7 +289,7 @@ void SaveSlots::add(String const &id, bool userWritable, String const &saveName,
     if(d->slotById(id)) return;
 
     // Insert a new save slot.
-    d->sslots.insert(Instance::SlotItem(id, new Slot(id, userWritable, saveName, menuWidgetId)));
+    d->sslots.insert(Impl::SlotItem(id, new Slot(id, userWritable, saveName, menuWidgetId)));
 }
 
 int SaveSlots::count() const
@@ -321,7 +321,7 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
 {
     if(!description.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
+        DENG2_FOR_EACH_CONST(Impl::Slots, i, d->sslots)
         {
             if(!COMMON_GAMESESSION->savedUserDescription(i->second->saveName())
                                       .compareWithoutCase(description))
@@ -365,7 +365,7 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
 
 void SaveSlots::updateAll()
 {
-    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
+    DENG2_FOR_EACH(Impl::Slots, i, d->sslots)
     {
         i->second->updateStatus();
     }

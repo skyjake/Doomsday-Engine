@@ -38,7 +38,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     String oldName;
     std::unique_ptr<GameProfile> tempProfile;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void checkValidProfileName()
     {
@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
 
 CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     : InputDialog("create-profile")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     title()  .setText(tr("New Profile"));
     message().setText(tr("Enter a name for the new game profile. Only unique names are allowed."));

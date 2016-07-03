@@ -35,7 +35,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
     };
     QList<RichFormat> richFormats;
 
-    Instance(Size const &initialSize) : size(initialSize)
+    Impl(Size const &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
         for (duint row = 0; row < size.y; ++row)
@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         for (int i = 0; i < lines.size(); ++i)
         {
@@ -121,7 +121,7 @@ DENG2_PIMPL_NOREF(TextCanvas)
     }
 };
 
-TextCanvas::TextCanvas(Size const &size) : d(new Instance(size))
+TextCanvas::TextCanvas(Size const &size) : d(new Impl(size))
 {
     d->size = size;
 }
@@ -208,7 +208,7 @@ void TextCanvas::clearRichFormat()
 
 void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &range)
 {
-    Instance::RichFormat rf;
+    Impl::RichFormat rf;
     rf.attrib = attribs;
     rf.range = range;
     d->richFormats.append(rf);

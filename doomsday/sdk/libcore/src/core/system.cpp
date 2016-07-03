@@ -24,11 +24,11 @@ DENG2_PIMPL(System)
 {
     Flags behavior;
 
-    Instance(Public *i) : Base(*i)
+    Impl(Public *i) : Base(*i)
     {}
 };
 
-System::System(Flags const &behavior) : d(new Instance(this))
+System::System(Flags const &behavior) : d(new Impl(this))
 {
     d->behavior = behavior;
 }

@@ -71,7 +71,7 @@ DENG2_PIMPL_NOREF(Interceptor)
     vec2d_t fromV1;
     vec2d_t directionV1;
 
-    Instance(traverser_t callback, Vector2d const &from, Vector2d const &to,
+    Impl(traverser_t callback, Vector2d const &from, Vector2d const &to,
              dint flags, void *context)
         : callback(callback)
         , context (context)
@@ -328,7 +328,7 @@ DENG2_PIMPL_NOREF(Interceptor)
 
 Interceptor::Interceptor(traverser_t callback, Vector2d const &from,
     Vector2d const &to, dint flags, void *context)
-    : d(new Instance(callback, from, to, flags, context))
+    : d(new Impl(callback, from, to, flags, context))
 {}
 
 ddouble const *Interceptor::origin() const

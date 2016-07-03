@@ -34,7 +34,7 @@ DENG2_PIMPL(ClientPlayer)
     state_t const *lastPSpriteState = nullptr;
     String weaponAssetId;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , playerWeaponAnimator(i)
     {
@@ -48,7 +48,7 @@ ClientPlayer::ClientPlayer()
     : demo(nullptr)
     , recording(false)
     , recordPaused(false)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 viewdata_t &ClientPlayer::viewport()

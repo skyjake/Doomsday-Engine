@@ -31,21 +31,21 @@ DENG2_PIMPL(Link)
 {
     Protocol protocol;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 };
 
-Link::Link(String const &domain, TimeDelta const &timeout) : d(new Instance(this))
+Link::Link(String const &domain, TimeDelta const &timeout) : d(new Impl(this))
 {
     connectDomain(domain, timeout);
 }
 
-Link::Link(Address const &address) : d(new Instance(this))
+Link::Link(Address const &address) : d(new Impl(this))
 {
     connectHost(address);
 }
 
-Link::Link(Socket *openSocket) : d(new Instance(this))
+Link::Link(Socket *openSocket) : d(new Impl(this))
 {
     takeOver(openSocket);
 }

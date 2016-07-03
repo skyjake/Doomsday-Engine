@@ -37,7 +37,7 @@ DENG2_PIMPL(ThingArchive)
     mobj_t **things;
     bool excludePlayers;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , version(0)
         , size(0)
@@ -45,7 +45,7 @@ DENG2_PIMPL(ThingArchive)
         , excludePlayers(false)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clear();
     }
@@ -67,7 +67,7 @@ DENG2_PIMPL(ThingArchive)
     }
 };
 
-ThingArchive::ThingArchive(int version) : d(new Instance(this))
+ThingArchive::ThingArchive(int version) : d(new Impl(this))
 {
     d->version = version;
 }
@@ -102,10 +102,10 @@ void ThingArchive::initForLoad(uint size)
 void ThingArchive::initForSave(bool excludePlayers)
 {
     // Count the number of things we'll be writing.
-    Instance::countmobjthinkerstoarchive_params_t parm; de::zap(parm);
+    Impl::countmobjthinkerstoarchive_params_t parm; de::zap(parm);
     parm.count          = 0;
     parm.excludePlayers = excludePlayers;
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, Instance::countMobjThinkersToArchive, &parm);
+    Thinker_Iterate((thinkfunc_t) P_MobjThinker, Impl::countMobjThinkersToArchive, &parm);
 
     d->size           = parm.count;
     d->things         = (mobj_t **)M_Calloc(d->size * sizeof(*d->things));

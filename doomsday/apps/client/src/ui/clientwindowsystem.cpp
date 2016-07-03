@@ -40,7 +40,7 @@ DENG2_PIMPL(ClientWindowSystem)
         }
     };
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
     {
         self.setStyle(new ClientStyle);
@@ -59,7 +59,7 @@ DENG2_PIMPL(ClientWindowSystem)
 
 ClientWindowSystem::ClientWindowSystem()
     : WindowSystem()
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     ClientWindow::setDefaultGLFormat();
 }

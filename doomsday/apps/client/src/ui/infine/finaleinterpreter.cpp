@@ -426,13 +426,13 @@ DENG2_PIMPL(FinaleInterpreter)
     EventHandlers eventHandlers;
 #endif // __CLIENT__
 
-    Instance(Public *i, finaleid_t id) : Base(i), id(id)
+    Impl(Public *i, finaleid_t id) : Base(i), id(id)
     {
         de::zap(flags);
         de::zap(token);
     }
 
-    ~Instance()
+    ~Impl()
     {
         stop();
         releaseScript();
@@ -873,7 +873,7 @@ DENG2_PIMPL(FinaleInterpreter)
 #endif // __CLIENT__
 };
 
-FinaleInterpreter::FinaleInterpreter(finaleid_t id) : d(new Instance(this, id))
+FinaleInterpreter::FinaleInterpreter(finaleid_t id) : d(new Impl(this, id))
 {}
 
 finaleid_t FinaleInterpreter::id() const
@@ -1143,7 +1143,7 @@ int FinaleInterpreter::handleEvent(ddevent_t const &ev)
         // Any handlers for this event?
         if (IS_KEY_DOWN(&ev))
         {
-            if (Instance::EventHandler *eh = d->findEventHandler(ev))
+            if (Impl::EventHandler *eh = d->findEventHandler(ev))
             {
                 skipToMarker(eh->gotoMarker);
 
@@ -1185,12 +1185,12 @@ void FinaleInterpreter::addEventHandler(ddevent_t const &evTemplate, String cons
     // Does a handler already exist for this?
     if (d->findEventHandler(evTemplate)) return;
 
-    d->eventHandlers.append(Instance::EventHandler(&evTemplate, gotoMarker));
+    d->eventHandlers.append(Impl::EventHandler(&evTemplate, gotoMarker));
 }
 
 void FinaleInterpreter::removeEventHandler(ddevent_t const &evTemplate)
 {
-    if (Instance::EventHandler *eh = d->findEventHandler(evTemplate))
+    if (Impl::EventHandler *eh = d->findEventHandler(evTemplate))
     {
         int index = 0;
         while (&d->eventHandlers.at(index) != eh) { index++; }

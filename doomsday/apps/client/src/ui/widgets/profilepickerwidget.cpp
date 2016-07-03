@@ -36,7 +36,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     PopupButtonWidget *button;
     bool invertedPopups = false;
 
-    Instance(Public *i, ConfigProfiles& reg)
+    Impl(Public *i, ConfigProfiles& reg)
         : Base(i)
         , settings(reg)
         , button(0)
@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
 };
 
 ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, String const &description, String const &name)
-    : ChoiceWidget(name), d(new Instance(this, settings))
+    : ChoiceWidget(name), d(new Impl(this, settings))
 {
     d->description = description;
     d->populate();

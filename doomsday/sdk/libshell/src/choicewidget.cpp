@@ -30,7 +30,7 @@ DENG2_PIMPL(ChoiceWidget)
     MenuWidget *menu;
     String prompt;
 
-    Instance(Public &i) : Base(i), selection(0)
+    Impl(Public &i) : Base(i), selection(0)
     {}
 
     void updateMenu()
@@ -50,7 +50,7 @@ DENG2_PIMPL(ChoiceWidget)
 };
 
 ChoiceWidget::ChoiceWidget(String const &name)
-    : LabelWidget(name), d(new Instance(*this))
+    : LabelWidget(name), d(new Impl(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
     setAlignment(AlignLeft);

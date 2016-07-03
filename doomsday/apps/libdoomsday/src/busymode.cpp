@@ -43,7 +43,7 @@ DENG2_PIMPL(BusyMode)
     String busyError;
     Time taskStartedAt;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     int performTask(BusyTask *task)
     {
@@ -99,7 +99,7 @@ DENG2_AUDIENCE_METHOD(BusyMode, Abort)
 DENG2_AUDIENCE_METHOD(BusyMode, TaskWillStart)
 DENG2_AUDIENCE_METHOD(BusyMode, TaskComplete)
 
-BusyMode::BusyMode() : d(new Instance(this))
+BusyMode::BusyMode() : d(new Impl(this))
 {}
 
 void BusyMode::setTaskRunner(ITaskRunner *runner)

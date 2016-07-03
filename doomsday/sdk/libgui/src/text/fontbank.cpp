@@ -83,13 +83,13 @@ DENG2_PIMPL(FontBank)
 
     float fontSizeFactor;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , fontSizeFactor(1.f)
     {}
 };
 
-FontBank::FontBank() : InfoBank("FontBank", DisableHotStorage), d(new Instance(this))
+FontBank::FontBank() : InfoBank("FontBank", DisableHotStorage), d(new Impl(this))
 {}
 
 void FontBank::addFromInfo(File const &file)
@@ -101,7 +101,7 @@ void FontBank::addFromInfo(File const &file)
 
 Font const &FontBank::font(DotPath const &path) const
 {
-    return *data(path).as<Instance::FontData>().font;
+    return *data(path).as<Impl::FontData>().font;
 }
 
 void FontBank::setFontSizeFactor(float sizeFactor)
@@ -113,12 +113,12 @@ void FontBank::setFontSizeFactor(float sizeFactor)
 
 Bank::ISource *FontBank::newSourceFromInfo(String const &id)
 {
-    return new Instance::FontSource(*this, id);
+    return new Impl::FontSource(*this, id);
 }
 
 Bank::IData *FontBank::loadFromSource(ISource &source)
 {
-    return new Instance::FontData(source.as<Instance::FontSource>().load());
+    return new Impl::FontData(source.as<Impl::FontSource>().load());
 }
 
 } // namespace de

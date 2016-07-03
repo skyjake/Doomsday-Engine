@@ -43,7 +43,7 @@ DENG2_PIMPL(SliderWidget)
     float step     = 0.1f;  ///< Button step.
     bool floatMode = true;  ///< @c false= only integers are allowed.
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     int thumbPos() const
     {
@@ -64,7 +64,7 @@ DENG2_PIMPL(SliderWidget)
 
 SliderWidget::SliderWidget(float min, float max, float step, bool floatMode)
     : Widget()
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);

@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(KeyEventSource)
 
 DENG2_AUDIENCE_METHOD(KeyEventSource, KeyEvent)
 
-KeyEventSource::KeyEventSource() : d(new Instance)
+KeyEventSource::KeyEventSource() : d(new Impl)
 {}
 
 } // namespace de

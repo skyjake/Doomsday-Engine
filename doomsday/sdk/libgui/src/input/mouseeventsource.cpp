@@ -29,7 +29,7 @@ DENG2_PIMPL_NOREF(MouseEventSource)
 DENG2_AUDIENCE_METHOD(MouseEventSource, MouseStateChange)
 DENG2_AUDIENCE_METHOD(MouseEventSource, MouseEvent)
 
-MouseEventSource::MouseEventSource() : d(new Instance)
+MouseEventSource::MouseEventSource() : d(new Impl)
 {}
 
 } // namespace de

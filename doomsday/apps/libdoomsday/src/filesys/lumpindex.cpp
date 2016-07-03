@@ -66,11 +66,11 @@ DENG2_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
     String id;
     Format format;
 
-    Instance() : lastLump(-1), format(UnknownFormat) {}
+    Impl() : lastLump(-1), format(UnknownFormat) {}
 };
 
 LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
-    : d(new Instance)
+    : d(new Impl)
 {
     LOG_AS("LumpIndex::Id1MapRecognizer");
     LOG_RES_XVERBOSE("Locating data lumps...");
@@ -330,13 +330,13 @@ DENG2_PIMPL(LumpIndex)
     typedef QVector<PathHashRecord> PathHash;
     QScopedPointer<PathHash> lumpsByPath;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , pathsAreUnique         (false)
         , needPruneDuplicateLumps(false)
     {}
 
-    ~Instance() { self.clear(); }
+    ~Impl() { self.clear(); }
 
     void buildLumpsByPathIfNeeded()
     {
@@ -487,7 +487,7 @@ DENG2_PIMPL(LumpIndex)
     }
 };
 
-LumpIndex::LumpIndex(bool pathsAreUnique) : d(new Instance(this))
+LumpIndex::LumpIndex(bool pathsAreUnique) : d(new Impl(this))
 {
     d->pathsAreUnique = pathsAreUnique;
 }

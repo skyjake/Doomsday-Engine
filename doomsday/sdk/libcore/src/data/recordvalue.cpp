@@ -39,12 +39,12 @@ DENG2_PIMPL_NOREF(RecordValue)
     OwnershipFlags ownership;
     OwnershipFlags oldOwnership; // prior to serialization
 
-    Instance() : record(0) {}
+    Impl() : record(0) {}
 };
 
 RecordValue::RecordValue(Record *record, OwnershipFlags o)
     : RecordAccessor(record)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->record = record;
     d->ownership = o;
@@ -61,7 +61,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
 
 RecordValue::RecordValue(Record const &record)
     : RecordAccessor(record)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->record = const_cast<Record *>(&record);
 
@@ -71,7 +71,7 @@ RecordValue::RecordValue(Record const &record)
 
 RecordValue::RecordValue(IObject const &object)
     : RecordAccessor(object.objectNamespace())
-    , d(new Instance)
+    , d(new Impl)
 {
     d->record = const_cast<Record *>(&object.objectNamespace());
 

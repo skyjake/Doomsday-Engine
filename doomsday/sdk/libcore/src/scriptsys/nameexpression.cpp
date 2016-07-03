@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(NameExpression)
     String identifier;
     String scopeIdentifier;
 
-    Instance(String const &id      = "",
+    Impl(String const &id      = "",
              String const &scopeId = "")
         : identifier(id)
         , scopeIdentifier(scopeId)
@@ -112,12 +112,12 @@ DENG2_PIMPL_NOREF(NameExpression)
 
 namespace de {
 
-NameExpression::NameExpression() : d(new Instance)
+NameExpression::NameExpression() : d(new Impl)
 {}
 
 NameExpression::NameExpression(String const &identifier, Flags const &flags,
                                String const &scopeIdentifier)
-    : d(new Instance(identifier, scopeIdentifier))
+    : d(new Impl(identifier, scopeIdentifier))
 {
     setFlags(flags);
 }

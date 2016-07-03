@@ -31,7 +31,7 @@ DENG_GUI_PIMPL(CommandWidget)
     DocumentPopupWidget *popup; ///< Popup for autocompletions.
     bool allowReshow;   ///< Contents must still be valid.
 
-    Instance(Public *i) : Base(i), history(i), allowReshow(false)
+    Impl(Public *i) : Base(i), history(i), allowReshow(false)
     {
         // Popup for autocompletions.
         popup = new DocumentPopupWidget;
@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(CommandWidget)
 };
 
 CommandWidget::CommandWidget(String const &name)
-    : LineEditWidget(name), d(new Instance(this))
+    : LineEditWidget(name), d(new Impl(this))
 {}
 
 PopupWidget &CommandWidget::autocompletionPopup()

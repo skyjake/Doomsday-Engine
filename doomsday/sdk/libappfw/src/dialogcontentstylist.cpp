@@ -32,21 +32,21 @@ DENG2_PIMPL_NOREF(DialogContentStylist)
     bool useInfoStyle;
     bool adjustMargins;
 
-    Instance()
+    Impl()
         : useInfoStyle(false)
         , adjustMargins(true)
     {}
 };
 
-DialogContentStylist::DialogContentStylist() : d(new Instance)
+DialogContentStylist::DialogContentStylist() : d(new Impl)
 {}
 
-DialogContentStylist::DialogContentStylist(DialogWidget &dialog) : d(new Instance)
+DialogContentStylist::DialogContentStylist(DialogWidget &dialog) : d(new Impl)
 {
     setContainer(dialog.area());
 }
 
-DialogContentStylist::DialogContentStylist(GuiWidget &container) : d(new Instance)
+DialogContentStylist::DialogContentStylist(GuiWidget &container) : d(new Impl)
 {
     setContainer(container);
 }

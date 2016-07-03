@@ -45,7 +45,7 @@ DENG2_PIMPL(Resize)
 
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     GuiRootWidget &root() const
     {
@@ -164,7 +164,7 @@ DENG2_PIMPL(Resize)
 };
 
 Resize::Resize(int console)
-    : ConsoleEffect(console), d(new Instance(this))
+    : ConsoleEffect(console), d(new Impl(this))
 {}
 
 bool Resize::isActive() const

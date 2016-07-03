@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(RectWidget)
 
 RectWidget::RectWidget(patchid_t backgroundPatch)
     : Widget()
-    , d(new Instance)
+    , d(new Impl)
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);

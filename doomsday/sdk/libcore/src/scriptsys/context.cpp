@@ -88,7 +88,7 @@ DENG2_PIMPL(Context)
 
     Variable throwaway;
 
-    Instance(Public *i, Type type, Process *owner, Record *globals)
+    Impl(Public *i, Type type, Process *owner, Record *globals)
         : Base(i)
         , type(type)
         , owner(owner)
@@ -105,7 +105,7 @@ DENG2_PIMPL(Context)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (ownsNamespace)
         {
@@ -145,7 +145,7 @@ DENG2_PIMPL(Context)
 };
 
 Context::Context(Type type, Process *owner, Record *globals)
-    : d(new Instance(this, type, owner, globals))
+    : d(new Impl(this, type, owner, globals))
 {}
 
 Context::Type Context::type()
@@ -176,7 +176,7 @@ Record &Context::names()
 void Context::start(Statement const *statement,    Statement const *fallback,
                     Statement const *jumpContinue, Statement const *jumpBreak)
 {
-    d->controlFlow.push_back(Instance::ControlFlow(statement, fallback, jumpContinue, jumpBreak));
+    d->controlFlow.push_back(Impl::ControlFlow(statement, fallback, jumpContinue, jumpBreak));
 
     // When the current statement is NULL it means that the sequence of statements
     // has ended, so we shouldn't do that until there really is no more statements.
@@ -284,7 +284,7 @@ void Context::setIterationValue(Value *value)
 {
     DENG2_ASSERT(d->controlFlow.size());
 
-    Instance::ControlFlow &fl = d->flow();
+    Impl::ControlFlow &fl = d->flow();
     if (fl.iteration)
     {
         delete fl.iteration;

@@ -177,13 +177,13 @@ DENG2_PIMPL_NOREF(Wad)
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
     QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
 
-    Instance() : entries(PathTree::MultiLeaf) {}
+    Impl() : entries(PathTree::MultiLeaf) {}
 };
 
 Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
     , LumpIndex()
-    , d(new Instance)
+    , d(new Impl)
 {
     LOG_AS("Wad");
 

@@ -57,7 +57,7 @@ DENG2_PIMPL(QtRootWidget)
     QPoint origin;
     QString overlay;
 
-    Instance(Public &inst)
+    Impl(Public &inst)
         : Base(inst)
         , margin(4)
         , dpiFactor(1)
@@ -100,7 +100,7 @@ DENG2_PIMPL(QtRootWidget)
 };
 
 QtRootWidget::QtRootWidget(QWidget *parent)
-    : QWidget(parent), d(new Instance(*this))
+    : QWidget(parent), d(new Impl(*this))
 {
     setFocusPolicy(Qt::StrongFocus);
 

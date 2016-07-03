@@ -90,7 +90,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
     ServerLink::FoundMask mask = ServerLink::Any;
     HomeMenuWidget *menu;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         link().audienceForDiscoveryUpdate += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -228,7 +228,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
 MultiplayerColumnWidget::MultiplayerColumnWidget()
     : ColumnWidget("multiplayer-column")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->mode = DiscoverUsingMaster;
     d->link().discoverUsingMaster();
@@ -410,7 +410,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     ServerLink::FoundMask mask;
     IndirectRule *maxHeightRule = new IndirectRule;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , mask(ServerLink::Any)
     {
@@ -419,7 +419,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         App_Games().audienceForReadiness() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(maxHeightRule);
         link().audienceForDiscoveryUpdate -= this;
@@ -531,7 +531,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 };
 
 MPSessionMenuWidget::MPSessionMenuWidget(DiscoveryMode discovery)
-    : SessionMenuWidget("mp-session-menu"), d(new Instance(this))
+    : SessionMenuWidget("mp-session-menu"), d(new Impl(this))
 {
     d->mode = discovery;
 
@@ -553,19 +553,19 @@ MPSessionMenuWidget::MPSessionMenuWidget(DiscoveryMode discovery)
 
 Action *MPSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    return new Instance::JoinAction(item.as<Instance::ServerListItem>().info());
+    return new Impl::JoinAction(item.as<Impl::ServerListItem>().info());
 }
 
 GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    auto *sw = new Instance::ServerWidget;
+    auto *sw = new Impl::ServerWidget;
     sw->rule().setInput(Rule::Height, *d->maxHeightRule);
     return sw;
 }
 
 void MPSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)
 {
-    Instance::ServerWidget &sv = widget.as<Instance::ServerWidget>();
-    sv.updateFromItem(item.as<Instance::ServerListItem>());
+    Impl::ServerWidget &sv = widget.as<Impl::ServerWidget>();
+    sv.updateFromItem(item.as<Impl::ServerListItem>());
 }
 #endif

@@ -41,7 +41,7 @@ DENG2_PIMPL(CompositeBitmapFont)
     Glyph glyphs[MAX_CHARS];
     Glyph missingGlyph;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , def(0)
         , needGLInit(true)
@@ -54,7 +54,7 @@ DENG2_PIMPL(CompositeBitmapFont)
         self._flags |= AbstractFont::Colorize;
     }
 
-    ~Instance()
+    ~Impl()
     {
         self.glDeinit();
     }
@@ -68,7 +68,7 @@ DENG2_PIMPL(CompositeBitmapFont)
 };
 
 CompositeBitmapFont::CompositeBitmapFont(FontManifest &manifest)
-    : AbstractFont(manifest), d(new Instance(this))
+    : AbstractFont(manifest), d(new Impl(this))
 {}
 
 int CompositeBitmapFont::ascent()

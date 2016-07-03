@@ -35,7 +35,7 @@ DENG2_PIMPL_NOREF(CVarToggleWidget)
 };
 
 CVarToggleWidget::CVarToggleWidget(char const *cvarPath, String const &labelText)
-    : d(new Instance)
+    : d(new Impl)
 {
     setText(labelText);
 

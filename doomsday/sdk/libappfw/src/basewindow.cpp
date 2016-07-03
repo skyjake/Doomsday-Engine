@@ -33,7 +33,7 @@ DENG2_PIMPL(BaseWindow)
     WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
     WindowTransform *xf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , defaultXf(self)
         , xf(&defaultXf)
@@ -78,7 +78,7 @@ DENG2_PIMPL(BaseWindow)
 
 BaseWindow::BaseWindow(String const &id)
     : PersistentCanvasWindow(id)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 void BaseWindow::setTransform(WindowTransform &xf)

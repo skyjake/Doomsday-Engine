@@ -25,7 +25,7 @@ DENG2_PIMPL_NOREF(FadeToBlackWidget)
     TimeDelta span = 1;
 };
 
-FadeToBlackWidget::FadeToBlackWidget() : d(new Instance)
+FadeToBlackWidget::FadeToBlackWidget() : d(new Impl)
 {
     set(Background(Vector4f(0, 0, 0, 1)));
 }

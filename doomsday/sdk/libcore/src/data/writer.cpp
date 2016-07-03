@@ -39,10 +39,10 @@ DENG2_PIMPL_NOREF(Writer)
     IByteArray::Offset offset;
     IByteArray::Offset const fixedOffset;
 
-    Instance(ByteOrder const &order, IByteArray *dest, IByteArray::Offset off)
+    Impl(ByteOrder const &order, IByteArray *dest, IByteArray::Offset off)
         : convert(order), destination(dest), stream(0), offset(off), fixedOffset(0) {}
 
-    Instance(ByteOrder const &order, IOStream *str)
+    Impl(ByteOrder const &order, IOStream *str)
         : convert(order), destination(0), stream(str), offset(0), fixedOffset(0)
     {
         destination = dynamic_cast<IByteArray *>(str);
@@ -55,7 +55,7 @@ DENG2_PIMPL_NOREF(Writer)
         }
     }
 
-    Instance(Instance const &other, ByteOrder const &order)
+    Impl(Impl const &other, ByteOrder const &order)
         : convert    (order            ),
           destination(other.destination),
           stream     (other.stream     ),
@@ -78,27 +78,27 @@ DENG2_PIMPL_NOREF(Writer)
 };
 
 Writer::Writer(IByteArray &destination, ByteOrder const &byteOrder, IByteArray::Offset offset)
-    : d(new Instance(byteOrder, &destination, offset))
+    : d(new Impl(byteOrder, &destination, offset))
 {}
 
 Writer::Writer(IByteArray &destination, IByteArray::Offset offset)
-    : d(new Instance(littleEndianByteOrder, &destination, offset))
+    : d(new Impl(littleEndianByteOrder, &destination, offset))
 {}
 
 Writer::Writer(IOStream &stream, ByteOrder const &byteOrder)
-    : d(new Instance(byteOrder, &stream))
+    : d(new Impl(byteOrder, &stream))
 {}
 
 Writer::Writer(ByteArrayFile &destination, ByteOrder const &byteOrder, IByteArray::Offset offset)
-    : d(new Instance(byteOrder, static_cast<IByteArray *>(&destination), offset))
+    : d(new Impl(byteOrder, static_cast<IByteArray *>(&destination), offset))
 {}
 
 Writer::Writer(Writer const &other)
-    : d(new Instance(*other.d, other.d->convert))
+    : d(new Impl(*other.d, other.d->convert))
 {}
 
 Writer::Writer(Writer const &other, ByteOrder const &byteOrder)
-    : d(new Instance(*other.d, byteOrder))
+    : d(new Impl(*other.d, byteOrder))
 {}
 
 Writer &Writer::withHeader()

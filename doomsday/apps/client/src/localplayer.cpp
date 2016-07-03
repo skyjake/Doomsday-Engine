@@ -23,5 +23,5 @@ DENG2_PIMPL_NOREF(LocalPlayer)
     
 };
 
-LocalPlayer::LocalPlayer() : d(new Instance)
+LocalPlayer::LocalPlayer() : d(new Impl)
 {}

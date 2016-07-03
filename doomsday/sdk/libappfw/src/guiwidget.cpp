@@ -72,7 +72,7 @@ DENG2_PIMPL(GuiWidget)
     };
     std::unique_ptr<BlurState> blur;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , margins("gap")
         , inited(false)
@@ -94,7 +94,7 @@ DENG2_PIMPL(GuiWidget)
 #endif
     }
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(eventHandlers);
 
@@ -356,7 +356,7 @@ DENG2_PIMPL(GuiWidget)
     }
 };
 
-GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
+GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Impl(this))
 {
     d->rule.setDebugName(name);
 }
@@ -485,7 +485,7 @@ Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
 
 float GuiWidget::toDevicePixels(float logicalPixels)
 {
-    return Instance::toDevicePixels(logicalPixels);
+    return Impl::toDevicePixels(logicalPixels);
 }
 
 Rectanglef GuiWidget::normalizedRect() const

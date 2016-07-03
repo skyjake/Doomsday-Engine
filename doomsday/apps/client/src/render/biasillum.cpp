@@ -56,7 +56,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Instance() : tracker(0)
+    Impl() : tracker(0)
     {}
 
     /**
@@ -228,7 +228,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
 
 float const BiasIllum::MIN_INTENSITY = .005f;
 
-BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Instance())
+BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Impl())
 {
     setTracker(tracker);
 }

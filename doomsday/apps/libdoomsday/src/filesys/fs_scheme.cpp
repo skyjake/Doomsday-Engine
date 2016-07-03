@@ -157,7 +157,7 @@ public:
     }
 };
 
-struct FS1::Scheme::Instance
+struct FS1::Scheme::Impl
 {
     FS1::Scheme &self;
 
@@ -184,7 +184,7 @@ struct FS1::Scheme::Instance
     /// Each set is in order of greatest-importance, right to left.
     FS1::Scheme::SearchPaths searchPaths;
 
-    Instance(FS1::Scheme &d, String _name, FS1::Scheme::Flags _flags)
+    Impl(FS1::Scheme &d, String _name, FS1::Scheme::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
@@ -323,7 +323,7 @@ struct FS1::Scheme::Instance
 
 FS1::Scheme::Scheme(String symbolicName, Flags flags)
 {
-    d = new Instance(*this, symbolicName, flags);
+    d = new Impl(*this, symbolicName, flags);
 }
 
 FS1::Scheme::~Scheme()

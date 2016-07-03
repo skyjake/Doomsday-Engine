@@ -27,10 +27,10 @@ DENG2_PIMPL_NOREF(Node)
     String name;
     Node *parent;
 
-    Instance(String const &name_) : name(name_), parent(0) {}
+    Impl(String const &name_) : name(name_), parent(0) {}
 };
 
-Node::Node(String const &name) : d(new Instance(name))
+Node::Node(String const &name) : d(new Impl(name))
 {}
 
 Node::~Node()

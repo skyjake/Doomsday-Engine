@@ -77,7 +77,7 @@ DENG2_PIMPL_NOREF(LumpDirectory)
 };
 
 LumpDirectory::LumpDirectory(IByteArray const &wadData)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->read(wadData);
 }

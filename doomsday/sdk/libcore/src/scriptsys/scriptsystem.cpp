@@ -59,7 +59,7 @@ DENG2_PIMPL(ScriptSystem)
 
     QList<Path> additionalImportPaths;
 
-    Instance(Public *i) : Base(*i)
+    Impl(Public *i) : Base(*i)
     {
         initCoreModule();
         initMathModule(binder, mathModule);
@@ -88,7 +88,7 @@ DENG2_PIMPL(ScriptSystem)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(modules.values());
     }
@@ -174,7 +174,7 @@ DENG2_PIMPL(ScriptSystem)
     }
 };
 
-ScriptSystem::ScriptSystem() : d(new Instance(this))
+ScriptSystem::ScriptSystem() : d(new Impl(this))
 {
     _scriptSystem = this;
 }
@@ -206,7 +206,7 @@ void ScriptSystem::removeNativeModule(String const &name)
 
 Record &ScriptSystem::nativeModule(String const &name)
 {
-    Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
+    Impl::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
     DENG2_ASSERT(foundNative != d->nativeModules.constEnd());
     return *foundNative.value();
 }
@@ -309,14 +309,14 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     LOG_AS("ScriptSystem::importModule");
 
     // There are some special native modules.
-    Instance::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
+    Impl::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
     if (foundNative != d->nativeModules.constEnd())
     {
         return *foundNative.value();
     }
 
     // Maybe we already have this module?
-    Instance::Modules::iterator found = d->modules.find(name);
+    Impl::Modules::iterator found = d->modules.find(name);
     if (found != d->modules.end())
     {
         return found.value()->names();

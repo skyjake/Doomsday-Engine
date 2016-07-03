@@ -24,7 +24,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
 {
     PanelWidget *drawer;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.add(drawer = new PanelWidget);
         drawer->set(Background(Vector4f(0, 0, 0, .15f)));
@@ -33,7 +33,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
 
 PanelButtonWidget::PanelButtonWidget(String const &name)
     : HomeItemWidget(AnimatedHeight, name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setBehavior(Focusable);
 

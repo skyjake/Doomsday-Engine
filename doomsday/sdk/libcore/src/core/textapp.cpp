@@ -28,7 +28,7 @@ DENG2_PIMPL(TextApp)
 {
     Loop loop;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self;
 
@@ -40,7 +40,7 @@ DENG2_PIMPL(TextApp)
 TextApp::TextApp(int &argc, char **argv)
     : QCoreApplication(argc, argv),
       App(applicationFilePath(), arguments()),
-      d(new Instance(this))
+      d(new Impl(this))
 {}
 
 void TextApp::setMetadata(String const &orgName, String const &orgDomain,

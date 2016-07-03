@@ -80,7 +80,7 @@ public Font::RichFormat::IStyle
     GLUniform uMvpMatrix;
     GLUniform uColor;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , horizPolicy (Fixed)
         , vertPolicy  (Fixed)
@@ -113,7 +113,7 @@ public Font::RichFormat::IStyle
         assets += glText;
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(width);
         releaseRef(height);
@@ -577,7 +577,7 @@ public Font::RichFormat::IStyle
     }
 };
 
-LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
+LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
 {}
 
 AssetGroup &LabelWidget::assets()

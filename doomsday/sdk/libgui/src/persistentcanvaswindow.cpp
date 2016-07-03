@@ -465,7 +465,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
     typedef QList<Task> Tasks;
     Tasks queue;
 
-    Instance(Public *i, String const &windowId)
+    Impl(Public *i, String const &windowId)
         : Base(i)
         , id(windowId)
         , state(windowId)
@@ -482,7 +482,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         self.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
     }
 
-    ~Instance()
+    ~Impl()
     {
         self.saveToConfig();
     }
@@ -785,7 +785,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 DENG2_AUDIENCE_METHOD(PersistentCanvasWindow, AttributeChange)
 
 PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
-    : d(new Instance(this, id))
+    : d(new Impl(this, id))
 {
     try
     {
@@ -941,7 +941,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
 
         if (len > BREAK_CENTERING_THRESHOLD)
         {
-            d->state.setFlag(Instance::State::Centered, false);
+            d->state.setFlag(Impl::State::Centered, false);
 
             // Notify.
             DENG2_FOR_AUDIENCE2(AttributeChange, i)

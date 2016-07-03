@@ -32,7 +32,7 @@ DENG2_PIMPL_NOREF(Decoration)
 
 Decoration::Decoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
     : MapObject(origin)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->source = &source;
 }

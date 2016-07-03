@@ -310,13 +310,13 @@ DENG2_PIMPL(Map)
     ClMobjHash clMobjHash;
 #endif
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         sky.setMap(thisPublic);
         sky.setIndexInMap(0);
     }
 
-    ~Instance()
+    ~Impl()
     {
 #ifdef __CLIENT__
         self.removeAllLumobjs();
@@ -1530,7 +1530,7 @@ DENG2_PIMPL(Map)
 
 Map::Map(res::MapManifest *manifest)
     : BaseMap(manifest)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 Record const &Map::mapInfo() const
@@ -2933,7 +2933,7 @@ Generator *Map::newGenerator()
     Generator::Id id = d->findIdForNewGenerator();  // 1-based
     if(!id) return nullptr;  // Failed; too many generators?
 
-    Instance::Generators &gens = d->getGenerators();
+    Impl::Generators &gens = d->getGenerators();
 
     // If there is already a generator with that id - remove it.
     if(id > 0 && (unsigned)id <= gens.activeGens.size())
@@ -2969,7 +2969,7 @@ dint Map::generatorCount() const
 
 void Map::unlink(Generator &generator)
 {
-    Instance::Generators &gens = d->getGenerators();
+    Impl::Generators &gens = d->getGenerators();
     for(duint i = 0; i < gens.activeGens.size(); ++i)
     {
         if(gens.activeGens[i] == &generator)
@@ -2998,8 +2998,8 @@ LoopResult Map::forAllGeneratorsInSector(Sector const &sector, std::function<Loo
     {
         duint const listIndex = sector.indexInMap();
 
-        Instance::Generators &gens = d->getGenerators();
-        for(Instance::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+        Impl::Generators &gens = d->getGenerators();
+        for(Impl::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
         {
             if(auto result = func(*it->gen))
                 return result;

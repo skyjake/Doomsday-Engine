@@ -44,12 +44,12 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
 
     duint time = 0;                ///< Timestamp of the last position update.
 
-    Instance()
+    Impl()
     {
         Smoother_SetMaximumPastNowDelta(smoother = Smoother_New(), 2 * SECONDSPERTIC);
     }
 
-    ~Instance()
+    ~Impl()
     {
         Smoother_Delete(smoother);
     }
@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
 #endif
 };
 
-InputDeviceAxisControl::InputDeviceAxisControl(String const &name, Type type) : d(new Instance)
+InputDeviceAxisControl::InputDeviceAxisControl(String const &name, Type type) : d(new Impl)
 {
     setName(name);
     d->type = type;

@@ -47,7 +47,7 @@ DENG2_PIMPL(RemoteUser)
     RemoteUserState state;
     String name;
 
-    Instance(Public *i, Socket *sock)
+    Impl(Public *i, Socket *sock)
         : Base(i),
           socket(sock),
           state(Unjoined)
@@ -64,7 +64,7 @@ DENG2_PIMPL(RemoteUser)
                 << id << address << isFromLocal;
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete socket;
     }
@@ -211,7 +211,7 @@ DENG2_PIMPL(RemoteUser)
     }
 };
 
-RemoteUser::RemoteUser(Socket *socket) : d(new Instance(this, socket))
+RemoteUser::RemoteUser(Socket *socket) : d(new Impl(this, socket))
 {}
 
 RemoteUser::~RemoteUser()

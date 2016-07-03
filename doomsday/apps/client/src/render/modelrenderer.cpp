@@ -129,7 +129,7 @@ DENG2_PIMPL(ModelRenderer)
 
     Variable lightIntensityFactor;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         lightIntensityFactor.set(NumberValue(1.75));
 
@@ -760,7 +760,7 @@ DENG2_PIMPL(ModelRenderer)
     }
 };
 
-ModelRenderer::ModelRenderer() : d(new Instance(this))
+ModelRenderer::ModelRenderer() : d(new Impl(this))
 {}
 
 void ModelRenderer::glInit()
@@ -851,12 +851,12 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 
 String ModelRenderer::shaderName(GLProgram const &program) const
 {
-    return static_cast<Instance::Program const &>(program).shaderName;
+    return static_cast<Impl::Program const &>(program).shaderName;
 }
 
 Record const &ModelRenderer::shaderDefinition(GLProgram const &program) const
 {
-    return *static_cast<Instance::Program const &>(program).def;
+    return *static_cast<Impl::Program const &>(program).def;
 }
 
 int ModelRenderer::identifierFromText(String const &text,

@@ -324,7 +324,7 @@ DENG2_PIMPL(InputSystem)
 
     std::unique_ptr<ControllerPresets> gameControllerPresets;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // Initialize settings.
         settings.define(ConfigProfiles::ConfigVariable, "input.mouse.syncSensitivity")
@@ -350,7 +350,7 @@ DENG2_PIMPL(InputSystem)
         I_InitInterfaces();
     }
 
-    ~Instance()
+    ~Impl()
     {
         self.clearAllContexts();
         clearAllDevices();
@@ -933,7 +933,7 @@ DENG2_PIMPL(InputSystem)
     }
 };
 
-InputSystem::InputSystem() : d(new Instance(this))
+InputSystem::InputSystem() : d(new Impl(this))
 {
     initAllDevices();
 }

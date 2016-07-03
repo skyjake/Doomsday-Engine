@@ -50,7 +50,7 @@ static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
 
 DENG2_PIMPL(GameUIWidget)
 {
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     void draw()
@@ -113,7 +113,7 @@ DENG2_PIMPL(GameUIWidget)
     }
 };
 
-GameUIWidget::GameUIWidget() : GuiWidget("game_ui"), d(new Instance(this))
+GameUIWidget::GameUIWidget() : GuiWidget("game_ui"), d(new Impl(this))
 {}
 
 void GameUIWidget::drawContent()

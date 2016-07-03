@@ -78,7 +78,7 @@ DENG2_PIMPL(MapStateReader)
     MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , reader(0)
         , saveVersion(0)
@@ -93,7 +93,7 @@ DENG2_PIMPL(MapStateReader)
         de::zap(infile);
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete thingArchive;
         delete sideArchive;
@@ -725,7 +725,7 @@ DENG2_PIMPL(MapStateReader)
 
 MapStateReader::MapStateReader(SavedSession const &session)
     : SavedSession::MapStateReader(session)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 MapStateReader::~MapStateReader()

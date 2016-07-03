@@ -30,7 +30,7 @@ DENG2_PIMPL_NOREF(GridPopupWidget)
 };
 
 GridPopupWidget::GridPopupWidget(String const &name)
-    : PopupWidget(name), d(new Instance)
+    : PopupWidget(name), d(new Impl)
 {
     setOpeningDirection(ui::Up);
 

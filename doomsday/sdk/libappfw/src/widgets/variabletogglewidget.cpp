@@ -31,7 +31,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     NumberValue activeValue;
     NumberValue inactiveValue;
 
-    Instance(Public *i, Variable &variable)
+    Impl(Public *i, Variable &variable)
         : Base(i)
         , var(&variable)
         , activeValue(1)
@@ -79,11 +79,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
 };
 
 VariableToggleWidget::VariableToggleWidget(Variable &variable, String const &name)
-    : ToggleWidget(name), d(new Instance(this, variable))
+    : ToggleWidget(name), d(new Impl(this, variable))
 {}
 
 VariableToggleWidget::VariableToggleWidget(String const &label, Variable &variable, String const &name)
-    : ToggleWidget(name), d(new Instance(this, variable))
+    : ToggleWidget(name), d(new Impl(this, variable))
 {
     setText(label);
 }

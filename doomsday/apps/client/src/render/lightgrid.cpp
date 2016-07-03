@@ -268,8 +268,8 @@ DENG2_PIMPL(LightGrid)
 
     dint numBlocks = 0;  ///< Total number of non-null blocks.
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { clearBlocks(); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { clearBlocks(); }
 
     inline LightBlock &block(Index index)     { return *blocks[index]; }
     inline LightBlock &block(Ref const &gref) { return block(self.toIndex(gref)); }
@@ -415,7 +415,7 @@ DENG2_PIMPL(LightGrid)
 };
 
 LightGrid::LightGrid(Vector2d const &origin, Vector2d const &dimensions)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     resizeAndClear(origin, dimensions);
 }
@@ -447,7 +447,7 @@ void LightGrid::scheduleFullUpdate()
     d->updateCoverageIfNeeded();
 
     // Mark all non-null blocks.
-    foreach(Instance::LightBlock *block, d->blocks)
+    foreach(Impl::LightBlock *block, d->blocks)
     {
         block->markChanged();
         block->markChanged(true);
@@ -478,7 +478,7 @@ void LightGrid::updateIfNeeded()
     for(dint y = 0; y < d->dimensions.y; ++y)
     for(dint x = 0; x < d->dimensions.x; ++x)
     {
-        Instance::LightBlock &blockAtRef = d->block(Ref(x, y));
+        Impl::LightBlock &blockAtRef = d->block(Ref(x, y));
 
         // No contribution?
         if(!blockAtRef.flags.testFlag(Contributor))
@@ -497,7 +497,7 @@ void LightGrid::updateIfNeeded()
                x + a > d->dimensions.x - 1 || y + b > d->dimensions.y - 1)
                 continue;
 
-            Instance::LightBlock &other = d->block(Ref(x + a, y + b));
+            Impl::LightBlock &other = d->block(Ref(x + a, y + b));
             if(!other.flags.testFlag(Changed))
                 continue;
 
@@ -506,7 +506,7 @@ void LightGrid::updateIfNeeded()
     }
 
     // Clear all changed and contribution flags for all non-null blocks.
-    foreach(Instance::LightBlock *block, d->blocks)
+    foreach(Impl::LightBlock *block, d->blocks)
     {
         block->setFlags(AllFlags, UnsetFlags);
     }
@@ -514,7 +514,7 @@ void LightGrid::updateIfNeeded()
 
 void LightGrid::setPrimarySource(Index index, IBlockLightSource *newSource)
 {
-    Instance::LightBlock *block = &d->block(index);
+    Impl::LightBlock *block = &d->block(index);
 
     if(newSource == block->source)
         return;
@@ -522,7 +522,7 @@ void LightGrid::setPrimarySource(Index index, IBlockLightSource *newSource)
     if(newSource && !block->source)
     {
         // Replace the "null block" with a new light block.
-        d->blocks[index] = block = new Instance::LightBlock(newSource);
+        d->blocks[index] = block = new Impl::LightBlock(newSource);
         d->numBlocks++;
     }
     else if(!newSource && block->source)
@@ -553,7 +553,7 @@ void LightGrid::blockLightSourceChanged(IBlockLightSource *changed)
 
     d->updateCoverageIfNeeded();
 
-    Instance::Coverages::const_iterator covered = d->coverage.constFind(changed);
+    Impl::Coverages::const_iterator covered = d->coverage.constFind(changed);
     if(covered == d->coverage.constEnd()) return;
 
     if(covered->blocks.count())
@@ -607,7 +607,7 @@ dint LightGrid::numBlocks() const
 
 dsize LightGrid::blockStorageSize() const
 {
-    return sizeof(Instance::LightBlock) * d->numBlocks;
+    return sizeof(Impl::LightBlock) * d->numBlocks;
 }
 
 Vector3f const &LightGrid::rawColorRef(Index index) const

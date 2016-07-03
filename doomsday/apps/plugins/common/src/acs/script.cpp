@@ -67,10 +67,10 @@ DENG2_PIMPL_NOREF(Script)
     }
 };
 
-Script::Script() : d(new Instance)
+Script::Script() : d(new Impl)
 {}
 
-Script::Script(Module::EntryPoint const &ep) : d(new Instance)
+Script::Script(Module::EntryPoint const &ep) : d(new Impl)
 {
     setEntryPoint(ep);
 }

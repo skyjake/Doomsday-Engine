@@ -46,7 +46,7 @@ DENG2_PIMPL(Library)
     /// Queried by calling deng_LibraryType(), if one is exported in the library.
     String type;
 
-    Instance(Public *i) : Base(i), library(0), type(DEFAULT_TYPE)
+    Impl(Public *i) : Base(i), library(0), type(DEFAULT_TYPE)
     {}
 
 #ifdef DENG2_USE_DLOPEN
@@ -62,7 +62,7 @@ DENG2_PIMPL(Library)
 #endif
 };
 
-Library::Library(NativePath const &nativePath) : d(new Instance(this))
+Library::Library(NativePath const &nativePath) : d(new Impl(this))
 {
     LOG_AS("Library");
     LOG_TRACE("Loading \"%s\"") << nativePath.pretty();
@@ -143,7 +143,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
     }
     
     // Already looked up?
-    Instance::Symbols::iterator found = d->symbols.find(name);
+    Impl::Symbols::iterator found = d->symbols.find(name);
     if (found != d->symbols.end())
     {
         return found.value();

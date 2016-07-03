@@ -34,12 +34,12 @@ DENG2_PIMPL_NOREF(LabelWidget)
     bool vertExpand;
     ConstantRule *height;
 
-    Instance() : align(0), vertExpand(false)
+    Impl() : align(0), vertExpand(false)
     {
         height = new ConstantRule(0);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(height);
     }
@@ -52,7 +52,7 @@ DENG2_PIMPL_NOREF(LabelWidget)
 };
 
 LabelWidget::LabelWidget(String const &name)
-    : TextWidget(name), d(new Instance)
+    : TextWidget(name), d(new Impl)
 {}
 
 void LabelWidget::setBackground(TextCanvas::Char const &background)

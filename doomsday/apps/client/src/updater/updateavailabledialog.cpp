@@ -45,12 +45,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     Version latestVersion;
     String changeLog;
 
-    Instance(Public *d) : Base(*d)
+    Impl(Public *d) : Base(*d)
     {
         initForChecking();
     }
 
-    Instance(Public *d, Version const &latest) : Base(*d)
+    Impl(Public *d, Version const &latest) : Base(*d)
     {
         initForResult(latest);
     }
@@ -186,11 +186,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 };
 
 UpdateAvailableDialog::UpdateAvailableDialog()
-    : MessageDialog("updateavailable"), d(new Instance(this))
+    : MessageDialog("updateavailable"), d(new Impl(this))
 {}
 
 UpdateAvailableDialog::UpdateAvailableDialog(Version const &latestVersion, String changeLogUri)
-    : MessageDialog("updateavailable"), d(new Instance(this, latestVersion))
+    : MessageDialog("updateavailable"), d(new Impl(this, latestVersion))
 {
     d->changeLog = changeLogUri;
 }

@@ -50,7 +50,7 @@ DENG2_PIMPL_NOREF(Module)
     }
 };
 
-Module::Module() : d(new Instance)
+Module::Module() : d(new Impl)
 {}
 
 bool Module::recognize(File1 const &file)  // static

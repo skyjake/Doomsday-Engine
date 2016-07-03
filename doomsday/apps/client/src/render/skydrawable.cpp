@@ -376,12 +376,12 @@ DENG2_PIMPL(SkyDrawable)
     bool haveModels       = false;
     bool alwaysDrawSphere = false;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         de::zap(models);
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Stop observing Sky change notifications (if observing).
         self.configure();
@@ -605,7 +605,7 @@ DENG2_PIMPL(SkyDrawable)
     }
 };
 
-SkyDrawable::SkyDrawable(Sky const *sky) : d(new Instance(this))
+SkyDrawable::SkyDrawable(Sky const *sky) : d(new Impl(this))
 {
     configure(sky);
 }
@@ -724,17 +724,17 @@ DENG2_PIMPL_NOREF(SkyDrawable::Animator)
     LayerState layers[MAX_LAYERS];
     ModelState models[MAX_MODELS];
 
-    Instance()
+    Impl()
     {
         de::zap(layers);
         de::zap(models);
     }
 };
 
-SkyDrawable::Animator::Animator() : d(new Instance)
+SkyDrawable::Animator::Animator() : d(new Impl)
 {}
 
-SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance)
+SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Impl)
 {
     d->sky = &sky;
 }

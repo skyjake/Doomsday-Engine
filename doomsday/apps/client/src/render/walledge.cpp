@@ -60,13 +60,13 @@ DENG2_PIMPL_NOREF(WallEdge::Event)
     /// Wall edge instance which owns "this" event.
     WallEdge &owner;
 
-    Instance(WallEdge &owner) : owner(owner) {}
+    Impl(WallEdge &owner) : owner(owner) {}
 };
 
 WallEdge::Event::Event(WallEdge &owner, ddouble distance)
     : WorldEdge::Event()
     , IHPlane::IIntercept(distance)
-    , d(new Instance(owner))
+    , d(new Impl(owner))
 {}
 
 bool WallEdge::Event::operator < (Event const &other) const
@@ -122,7 +122,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3f normal;
     bool needUpdateNormal = true;
 
-    Instance(Public *i, WallSpec const &spec, HEdge &hedge, dint edge)
+    Impl(Public *i, WallSpec const &spec, HEdge &hedge, dint edge)
         : Base(i)
         , spec(spec)
         , edge(edge)
@@ -338,7 +338,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         pDirection = Vector3d(0, 0, hi - lo);
     }
 
-    ~Instance()
+    ~Impl()
     {
         clearIntercepts();
     }
@@ -694,7 +694,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
 WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, dint edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin())
-    , d(new Instance(this, spec, hedge, edge))
+    , d(new Impl(this, spec, hedge, edge))
 {}
 
 Vector3d const &WallEdge::pOrigin() const

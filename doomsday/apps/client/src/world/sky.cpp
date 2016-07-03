@@ -51,7 +51,7 @@ DENG2_PIMPL_NOREF(Sky::Layer)
     dfloat fadeOutLimit = 0;
 
     Sky &sky;
-    Instance(Sky &sky) : sky(sky) {}
+    Impl(Sky &sky) : sky(sky) {}
 
     DENG2_PIMPL_AUDIENCE(ActiveChange)
     DENG2_PIMPL_AUDIENCE(MaskedChange)
@@ -62,7 +62,7 @@ DENG2_AUDIENCE_METHOD(Sky::Layer, ActiveChange)
 DENG2_AUDIENCE_METHOD(Sky::Layer, MaskedChange)
 DENG2_AUDIENCE_METHOD(Sky::Layer, MaterialChange)
 
-Sky::Layer::Layer(Sky &sky, Material *material) : d(new Instance(sky))
+Sky::Layer::Layer(Sky &sky, Material *material) : d(new Impl(sky))
 {
     setMaterial(material);
 }
@@ -152,7 +152,7 @@ DENG2_PIMPL(Sky)
     dfloat height        = 1;
     dfloat horizonOffset = 0;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         for(dint i = 0; i < NUM_LAYERS; ++i)
         {
@@ -167,7 +167,7 @@ DENG2_PIMPL(Sky)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self);
 
@@ -318,7 +318,7 @@ DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
 Sky::Sky(defn::Sky const *definition)
     : MapElement(DMU_SKY)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     configure(definition);
 }

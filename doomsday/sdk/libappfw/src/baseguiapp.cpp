@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
     double dpiFactor = 1.0;
 
 #ifdef WIN32
-    Instance()
+    Impl()
     {
         // Use the Direct2D API to find out the desktop DPI factor.
         ID2D1Factory *d2dFactory = nullptr;
@@ -119,7 +119,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Instance)
+    : GuiApp(argc, argv), d(new Impl)
 {
     // Override the system locale (affects number/time formatting).
     QLocale::setDefault(QLocale("en_US.UTF-8"));

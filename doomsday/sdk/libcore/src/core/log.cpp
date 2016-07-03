@@ -604,20 +604,20 @@ DENG2_PIMPL_NOREF(Log)
     duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
     int interactive = 0;
 
-    Instance()
+    Impl()
         : throwawayEntry(new LogEntry) ///< A disabled LogEntry, so doesn't accept arguments.
         , currentEntryMedata(0)
     {
         sectionStack.push_back(MAIN_SECTION);
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete throwawayEntry;
     }
 };
 
-Log::Log() : d(new Instance)
+Log::Log() : d(new Impl)
 {}
 
 Log::~Log() // virtual

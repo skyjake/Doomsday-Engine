@@ -36,7 +36,7 @@ DENG_GUI_PIMPL(HeaderWidget)
     LabelWidget *info;
     PopupButtonWidget *menuButton;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.add(logoBg    = new LabelWidget);
         self.add(logo      = new LabelWidget);
@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 };
 
 HeaderWidget::HeaderWidget()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     AutoRef<Rule> logoHeight(new ConstantRule(toDevicePixels(120)));
 

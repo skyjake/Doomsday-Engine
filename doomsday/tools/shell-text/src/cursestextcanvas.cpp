@@ -24,13 +24,13 @@ DENG2_PIMPL_NOREF(CursesTextCanvas)
     Coord origin;
     de::Vector2i cursorPos;
 
-    Instance(WINDOW *window, Coord const &originInWindow)
+    Impl(WINDOW *window, Coord const &originInWindow)
         : window(window), origin(originInWindow)
     {}
 };
 
 CursesTextCanvas::CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow)
-    : TextCanvas(size), d(new Instance(window, originInWindow))
+    : TextCanvas(size), d(new Impl(window, originInWindow))
 {}
 
 void CursesTextCanvas::setCursorPosition(const de::Vector2i &pos)

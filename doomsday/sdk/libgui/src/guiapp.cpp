@@ -34,7 +34,7 @@ DENG2_PIMPL(GuiApp)
 {
     Loop loop;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self;
     }
@@ -47,7 +47,7 @@ DENG2_AUDIENCE_METHOD(GuiApp, GLContextChange)
 GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
       App(applicationFilePath(), arguments()),
-      d(new Instance(this))
+      d(new Impl(this))
 {
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);

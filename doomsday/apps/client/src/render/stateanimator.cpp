@@ -149,7 +149,7 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, AnimVar *> AnimVars;
     AnimVars animVars;
 
-    Instance(Public *i, DotPath const &id) : Base(i)
+    Impl(Public *i, DotPath const &id) : Base(i)
     {
         names.add(Record::VAR_NATIVE_SELF).set(new NativeValue(&self)).setReadOnly();
         names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
@@ -177,7 +177,7 @@ DENG2_PIMPL(StateAnimator)
         };
     }
 
-    ~Instance()
+    ~Impl()
     {
         deinitVariables();
     }
@@ -489,8 +489,8 @@ DENG2_PIMPL(StateAnimator)
 };
 
 StateAnimator::StateAnimator(DotPath const &id, Model const &model)
-    : ModelDrawable::Animator(model, Instance::Sequence::make)
-    , d(new Instance(this, id))
+    : ModelDrawable::Animator(model, Impl::Sequence::make)
+    , d(new Impl(this, id))
 {}
 
 Model const &StateAnimator::model() const
@@ -515,7 +515,7 @@ void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 
 void StateAnimator::triggerByState(String const &stateName)
 {
-    using Sequence = Instance::Sequence;
+    using Sequence = Impl::Sequence;
 
     // No animations can be triggered if none are available.
     auto const *stateAnims = &model().animations;
@@ -628,7 +628,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
 void StateAnimator::startSequence(int animationId, int priority, bool looping,
                                   String const &node)
 {
-    using Seq = Instance::Sequence;
+    using Seq = Impl::Sequence;
     d->start(Seq(animationId, node, looping? Seq::Looping : Seq::NotLooping,
                  priority));
 }
@@ -637,7 +637,7 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 
-    using Sequence = Instance::Sequence;
+    using Sequence = Impl::Sequence;
     bool retrigger = false;
 
     // Update animation variables values.
@@ -730,7 +730,7 @@ Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
     auto found = d->animVars.constFind(nodeName);
     if (found != d->animVars.constEnd())
     {
-        Instance::AnimVar const &var = *found.value();
+        Impl::AnimVar const &var = *found.value();
         return Vector4f(var.axis, var.angle);
     }
     return Vector4f();

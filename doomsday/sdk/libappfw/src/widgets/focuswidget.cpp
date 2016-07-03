@@ -31,7 +31,7 @@ DENG2_PIMPL(FocusWidget)
     Animation color { 0.f, Animation::Linear };
     Vector4f flashColors[2];
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         flashColors[0] = Style::get().colors().colorf("focus.flash.off");
         flashColors[1] = Style::get().colors().colorf("focus.flash.on");
@@ -72,7 +72,7 @@ DENG2_PIMPL(FocusWidget)
 
 FocusWidget::FocusWidget(String const &name)
     : LabelWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     hide();
     connect(&d->flashing, SIGNAL(timeout()), this, SLOT(updateFlash()));

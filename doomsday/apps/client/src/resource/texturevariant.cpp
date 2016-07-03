@@ -275,7 +275,7 @@ DENG2_PIMPL(Texture::Variant)
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Instance(Public *i, Texture &generalCase, TextureVariantSpec const &spec)
+    Impl(Public *i, Texture &generalCase, TextureVariantSpec const &spec)
         : Base(i)
         , texture(generalCase)
         , spec(spec)
@@ -286,7 +286,7 @@ DENG2_PIMPL(Texture::Variant)
         , t(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         // Release any GL texture we may have prepared.
         self.release();
@@ -294,7 +294,7 @@ DENG2_PIMPL(Texture::Variant)
 };
 
 Texture::Variant::Variant(Texture &generalCase, TextureVariantSpec const &spec)
-    : d(new Instance(this, generalCase, spec))
+    : d(new Impl(this, generalCase, spec))
 {}
 
 /**

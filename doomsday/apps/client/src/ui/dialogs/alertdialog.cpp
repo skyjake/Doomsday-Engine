@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(AlertDialog)
     typedef FIFO<AlertItem> Pending;
     Pending pending;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , clearOnDismiss(false)
         , maxCount(100)
@@ -129,7 +129,7 @@ DENG_GUI_PIMPL(AlertDialog)
         App::config(VAR_AUTOHIDE).audienceForChange() += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        App::config(VAR_AUTOHIDE).audienceForChange() -= this;
 //    }
@@ -292,7 +292,7 @@ DENG_GUI_PIMPL(AlertDialog)
     }
 };
 
-AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
+AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
 {
     // The dialog is connected to the notification icon.
     d->notification->setPopup(*this, ui::Down);

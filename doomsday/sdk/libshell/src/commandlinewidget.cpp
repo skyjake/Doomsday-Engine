@@ -31,11 +31,11 @@ DENG2_PIMPL(CommandLineWidget)
 {
     EditorHistory history;
 
-    Instance(Public *i) : Base(i), history(i) {}
+    Impl(Public *i) : Base(i), history(i) {}
 };
 
 CommandLineWidget::CommandLineWidget(String const &name)
-    : LineEditWidget(name), d(new Instance(this))
+    : LineEditWidget(name), d(new Impl(this))
 {
     setPrompt("> ");
 }

@@ -37,10 +37,10 @@ DENG2_PIMPL(Profiles)
     Profiles profiles;
     String persistentName;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clear();
     }
@@ -163,7 +163,7 @@ DENG2_AUDIENCE_METHOD(Profiles, Addition)
 DENG2_AUDIENCE_METHOD(Profiles, Removal)
 
 Profiles::Profiles()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 StringList Profiles::profiles() const
@@ -332,9 +332,9 @@ DENG2_PIMPL(Profiles::AbstractProfile)
     String name;
     bool readOnly = false;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         if (owner)
         {
@@ -344,11 +344,11 @@ DENG2_PIMPL(Profiles::AbstractProfile)
 };
 
 Profiles::AbstractProfile::AbstractProfile()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 Profiles::AbstractProfile::AbstractProfile(AbstractProfile const &profile)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->name     = profile.name();
     d->readOnly = profile.isReadOnly();

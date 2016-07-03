@@ -34,7 +34,7 @@ DENG2_PIMPL(StyledLogSinkFormatter)
     bool omitSectionIfNonDev;
     bool showMetadata;
 
-    Instance(Public *i, bool observeVars)
+    Impl(Public *i, bool observeVars)
         : Base(i)
         , observe(observeVars)
         , omitSectionIfNonDev(true)
@@ -47,7 +47,7 @@ DENG2_PIMPL(StyledLogSinkFormatter)
         }
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        if (observe)
 //        {
@@ -62,13 +62,13 @@ DENG2_PIMPL(StyledLogSinkFormatter)
 };
 
 StyledLogSinkFormatter::StyledLogSinkFormatter()
-    : d(new Instance(this, true /*observe*/))
+    : d(new Impl(this, true /*observe*/))
 {
     d->format = LogEntry::Styled | LogEntry::OmitLevel;
 }
 
 StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
-    : d(new Instance(this, false /*don't observe*/))
+    : d(new Impl(this, false /*don't observe*/))
 {
     d->format = formatFlags;
 }

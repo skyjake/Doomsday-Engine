@@ -50,14 +50,14 @@ DENG2_PIMPL_NOREF(File)
     /// File information.
     Record info;
 
-    Instance() : source(0), originFeed(0) {}
+    Impl() : source(0), originFeed(0) {}
 
     DENG2_PIMPL_AUDIENCE(Deletion)
 };
 
 DENG2_AUDIENCE_METHOD(File, Deletion)
 
-File::File(String const &fileName) : Node(fileName), d(new Instance)
+File::File(String const &fileName) : Node(fileName), d(new Impl)
 {
     d->source = this;
 

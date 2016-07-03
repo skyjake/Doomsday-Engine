@@ -63,8 +63,8 @@ DENG2_PIMPL(Sector)
     bool needRoughAreaUpdate = true;
 #endif
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { qDeleteAll(planes); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { qDeleteAll(planes); }
 
     void notifyLightLevelChanged()
     {
@@ -165,7 +165,7 @@ DENG2_PIMPL(Sector)
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));

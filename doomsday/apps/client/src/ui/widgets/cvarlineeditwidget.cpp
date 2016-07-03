@@ -35,7 +35,7 @@ DENG2_PIMPL_NOREF(CVarLineEditWidget)
 };
 
 CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
-    : d(new Instance)
+    : d(new Impl)
 {
     setSignalOnEnter(true);
     connect(this, SIGNAL(enterPressed(QString)), this, SLOT(endEditing()));

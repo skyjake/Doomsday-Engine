@@ -173,7 +173,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
 
     QVector<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
 
-    ~Instance()
+    ~Impl()
     {
         clearRangeList(&clipHead);
         clearRangeList(&occHead);
@@ -766,7 +766,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
 #endif
 };
 
-AngleClipper::AngleClipper() : d(new Instance)
+AngleClipper::AngleClipper() : d(new Impl)
 {}
 
 dint AngleClipper::isFull() const
@@ -780,7 +780,7 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
 {
     if(::devNoCulling) return true;
 
-    for(Instance::Clipper const *crange = d->clipHead; crange; crange = crange->next)
+    for(Impl::Clipper const *crange = d->clipHead; crange; crange = crange->next)
     {
         if(bang > crange->from && bang < crange->to)
             return false;
@@ -799,7 +799,7 @@ dint AngleClipper::isPointVisible(Vector3d const &point) const
     if(!isAngleVisible(angle)) return false;
 
     // Not clipped by the clipnodes. Perhaps it's occluded by an orange.
-    for(Instance::Occluder const *orange = d->occHead; orange; orange = orange->next)
+    for(Impl::Occluder const *orange = d->occHead; orange; orange = orange->next)
     {
         if(angle >= orange->from && angle <= orange->to)
         {
@@ -945,7 +945,7 @@ dint AngleClipper::checkRangeFromViewRelPoints(Vector2d const &from, Vector2d co
 #ifdef DENG2_DEBUG
 void AngleClipper::validate()
 {
-    for(Instance::Clipper *i = d->clipHead; i; i = i->next)
+    for(Impl::Clipper *i = d->clipHead; i; i = i->next)
     {
         if(i == d->clipHead)
         {

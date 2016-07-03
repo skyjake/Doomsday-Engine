@@ -51,10 +51,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
             : public ui::Item
             , DENG2_OBSERVES(Deletable, Deletion) // profile deletion
     {
-        GameColumnWidget::Instance *d;
+        GameColumnWidget::Impl *d;
         GameProfile *profile;
 
-        ProfileItem(GameColumnWidget::Instance *d, GameProfile &gameProfile)
+        ProfileItem(GameColumnWidget::Impl *d, GameProfile &gameProfile)
             : d(d)
             , profile(&gameProfile)
         {
@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     int restoredSelected = -1;
     bool gotSubheading = false;
 
-    Instance(Public *i,
+    Impl(Public *i,
              String const &gameFamily,
              SavedSessionListData const &savedItems)
         : Base(i)
@@ -482,7 +482,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                    SavedSessionListData const &savedItems)
     : ColumnWidget(gameFamily.isEmpty()? "other-column"
                                        : (gameFamily.toLower() + "-column"))
-    , d(new Instance(this, gameFamily.toLower(), savedItems))
+    , d(new Impl(this, gameFamily.toLower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +

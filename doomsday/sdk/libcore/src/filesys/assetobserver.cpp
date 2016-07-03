@@ -41,7 +41,7 @@ DENG2_PIMPL(AssetObserver)
         return link.name().mid(6);
     }
 
-    Instance(Public *i, String const &regex)
+    Impl(Public *i, String const &regex)
         : Base(i)
         , pattern(PREFIX + "\\." + regex, Qt::CaseInsensitive)
     {
@@ -78,7 +78,7 @@ DENG2_PIMPL(AssetObserver)
 DENG2_AUDIENCE_METHOD(AssetObserver, Availability)
 
 AssetObserver::AssetObserver(String const &regexPattern)
-    : d(new Instance(this, regexPattern))
+    : d(new Impl(this, regexPattern))
 {}
 
 } // namespace filesys

@@ -30,7 +30,7 @@ DENG2_PIMPL_NOREF(IdTech1Image)
 };
 
 IdTech1Image::IdTech1Image(IByteArray const &data, IByteArray const &palette, Format format)
-    : d(new Instance)
+    : d(new Impl)
 {
     Size const rawSize(320, 200);
 

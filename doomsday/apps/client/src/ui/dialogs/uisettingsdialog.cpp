@@ -39,7 +39,7 @@ DENG2_PIMPL(UISettingsDialog)
     VariableToggleWidget *showOther;
     VariableToggleWidget *showMultiplayer;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         auto &area = self.area();
 
@@ -71,7 +71,7 @@ DENG2_PIMPL(UISettingsDialog)
 
 UISettingsDialog::UISettingsDialog(String const &name)
     : DialogWidget(name, WithHeading)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     heading().setText(tr("UI Settings"));
     heading().setImage(style().images().image("home.icon"));

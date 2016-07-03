@@ -29,14 +29,14 @@ DENG2_PIMPL_NOREF(DocumentPopupWidget)
 };
 
 DocumentPopupWidget::DocumentPopupWidget(String const &name)
-    : PopupWidget(name), d(new Instance)
+    : PopupWidget(name), d(new Impl)
 {
     useInfoStyle();
     setContent(d->doc = new DocumentWidget);
 }
 
 DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String const &name)
-    : PopupWidget(name), d(new Instance)
+    : PopupWidget(name), d(new Impl)
 {
     DENG2_ASSERT(actionButton);
 

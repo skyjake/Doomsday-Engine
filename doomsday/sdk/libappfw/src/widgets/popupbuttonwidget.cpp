@@ -30,7 +30,7 @@ DENG2_PIMPL(PopupButtonWidget)
     ui::Direction direction;
     bool popupWasOpenWhenButtonWentDown = false;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void buttonStateChanged(ButtonWidget &, State state)
     {
@@ -66,7 +66,7 @@ DENG2_PIMPL(PopupButtonWidget)
 
 PopupButtonWidget::PopupButtonWidget(String const &name)
     : ButtonWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     audienceForStateChange() += d;
     audienceForPress()       += d;

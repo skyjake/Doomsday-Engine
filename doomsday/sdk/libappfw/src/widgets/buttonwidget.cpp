@@ -42,12 +42,12 @@ DENG2_OBSERVES(Action, Triggered)
     DotPath originalTextColor;
     Vector4f originalTextModColor;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         setDefaultBackground();
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(action);
     }
@@ -189,7 +189,7 @@ DENG2_AUDIENCE_METHOD(ButtonWidget, StateChange)
 DENG2_AUDIENCE_METHOD(ButtonWidget, Press)
 DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
-ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
+ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
 }

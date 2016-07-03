@@ -74,9 +74,9 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     
     DENG2_ERROR(CancelError);
 
-    Instance() : font(0), maxWidth(0), indent(0), tabStop(0) {}
+    Impl() : font(0), maxWidth(0), indent(0), tabStop(0) {}
 
-    ~Instance()
+    ~Impl()
     {
         clearLines();
     }
@@ -506,7 +506,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     }
 };
 
-FontLineWrapping::FontLineWrapping() : d(new Instance)
+FontLineWrapping::FontLineWrapping() : d(new Impl)
 {}
 
 void FontLineWrapping::setFont(Font const &font)
@@ -612,7 +612,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     if (d->lines.isEmpty())
     {
         // Make sure at least one blank line exists.
-       d->lines << new Instance::Line;
+       d->lines << new Impl::Line;
     }
 
     // Mark the final line.
@@ -620,7 +620,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
 
 #if 0
     qDebug() << "Wrapped:" << d->text;
-    foreach (Instance::Line const *ln, d->lines)
+    foreach (Impl::Line const *ln, d->lines)
     {
         qDebug() << ln->line.range.asText() << d->text.substr(ln->line.range)
                  << "indent:" << ln->info.indent << "segments:" << ln->info.segs.size();

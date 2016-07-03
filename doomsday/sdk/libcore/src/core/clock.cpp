@@ -33,7 +33,7 @@ DENG2_AUDIENCE_METHOD(Clock, TimeChange)
 
 Clock *Clock::_appClock = 0;
 
-Clock::Clock() : d(new Instance)
+Clock::Clock() : d(new Impl)
 {}
 
 Clock::~Clock()

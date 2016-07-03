@@ -598,7 +598,7 @@ DENG2_PIMPL(System)
     duint sfxLogicLastPurge = 0;
     bool sfxLogicOneSoundPerEmitter = false;  ///< set at the start of the frame
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         theAudioSystem = thisPublic;
 
@@ -608,7 +608,7 @@ DENG2_PIMPL(System)
 #endif
     }
 
-    ~Instance()
+    ~Impl()
     {
         sfxClearLogical();
 //#ifdef __CLIENT__
@@ -1202,7 +1202,7 @@ DENG2_PIMPL(System)
                 sfxStopLogical(0, emitter);
             }
 
-            auto *ls = new Instance::LogicSound;
+            auto *ls = new Impl::LogicSound;
             //ls->soundId     = soundId;
             ls->emitter     = emitter;
             ls->isRepeating = isRepeating;
@@ -1393,7 +1393,7 @@ DENG2_PIMPL(System)
     }
 };
 
-System::System() : d(new Instance(this))
+System::System() : d(new Impl(this))
 {}
 
 audio::System &System::get()
@@ -1431,7 +1431,7 @@ String System::description() const
     // Include an active playback interface itemization.
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        Instance::AudioInterface const &ifs = d->activeInterfaces[i];
+        Impl::AudioInterface const &ifs = d->activeInterfaces[i];
 
         if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
         {
@@ -1834,7 +1834,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
         auto it = d->sfxLogicHash.constFind(soundId);
         while(it != d->sfxLogicHash.constEnd() && it.key() == soundId)
         {
-            Instance::LogicSound const &lsound = *it.value();
+            Impl::LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 
@@ -1847,7 +1847,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
         auto it = d->sfxLogicHash.constBegin();
         while(it != d->sfxLogicHash.constEnd())
         {
-            Instance::LogicSound const &lsound = *it.value();
+            Impl::LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 

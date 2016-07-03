@@ -34,7 +34,7 @@ DENG2_PIMPL_NOREF(CVarSliderWidget)
     }
 };
 
-CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Instance)
+CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Impl)
 {
     d->cvar = cvarPath;
 

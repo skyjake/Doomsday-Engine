@@ -272,10 +272,10 @@
     for (IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #define DENG2_NO_ASSIGN(ClassName) \
-    private: ClassName &operator = (ClassName const &);
+    ClassName &operator = (ClassName const &) = delete;
 
 #define DENG2_NO_COPY(ClassName) \
-    private: ClassName(ClassName const &);
+    ClassName(ClassName const &) = delete;
 
 /**
  * Macro for declaring methods for convenient casting:
@@ -325,7 +325,7 @@
  * <pre>
  *    DENG2_PIMPL(MyClass)
  *    {
- *        Instance(Public &inst) : Base(inst) {
+ *        Impl(Public &inst) : Base(inst) {
  *            // constructor
  *        }
  *        // private data and methods
@@ -333,7 +333,7 @@
  * </pre>
  */
 #define DENG2_PIMPL(ClassName) \
-    struct ClassName::Instance : public de::Private<ClassName>
+    struct ClassName::Impl : public de::Private<ClassName>
 
 /**
  * Macro for starting the definition of a private implementation struct without
@@ -341,7 +341,7 @@
  * the private implementation mostly holds member variables.
  */
 #define DENG2_PIMPL_NOREF(ClassName) \
-    struct ClassName::Instance : public de::IPrivate
+    struct ClassName::Impl : public de::IPrivate
 
 /**
  * Macro for publicly declaring a pointer to the private implementation.
@@ -349,8 +349,8 @@
  * it when the PrivateAutoPtr is destroyed.
  */
 #define DENG2_PRIVATE(Var) \
-    struct Instance; \
-    de::PrivateAutoPtr<Instance> Var;
+    struct Impl; \
+    de::PrivateAutoPtr<Impl> Var;
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
@@ -363,10 +363,9 @@ namespace de {
 struct IPrivate {
     virtual ~IPrivate() {}
 #ifdef DENG2_DEBUG
-    unsigned int _privateInstVerification;
-#define DENG2_IPRIVATE_VERIFICATION 0xdeadbeef
-    IPrivate() : _privateInstVerification(DENG2_IPRIVATE_VERIFICATION) {}
-    unsigned int privateInstVerification() const { return _privateInstVerification; }
+#  define DENG2_IPRIVATE_VERIFICATION 0xdeadbeef
+    unsigned int _privateImplVerification = DENG2_IPRIVATE_VERIFICATION;
+    unsigned int privateImplVerification() const { return _privateImplVerification; }
 #endif
 };
 
@@ -375,38 +374,38 @@ struct IPrivate {
  * the additional requirement that the pointed/owned instance must be derived
  * from de::IPrivate.
  */
-template <typename InstType>
+template <typename ImplType>
 class PrivateAutoPtr
 {
     DENG2_NO_COPY  (PrivateAutoPtr)
     DENG2_NO_ASSIGN(PrivateAutoPtr)
 
 public:
-    PrivateAutoPtr(InstType *p) : ptr(p) {}
+    PrivateAutoPtr(ImplType *p) : ptr(p) {}
     ~PrivateAutoPtr() { reset(); }
 
-    InstType &operator * () const { return *ptr; }
-    InstType *operator -> () const { return ptr; }
-    void reset(InstType *p = 0) {
+    ImplType &operator * () const { return *ptr; }
+    ImplType *operator -> () const { return ptr; }
+    void reset(ImplType *p = 0) {
         IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
         if (ip)
         {
-            DENG2_ASSERT(ip->privateInstVerification() == DENG2_IPRIVATE_VERIFICATION);
+            DENG2_ASSERT(ip->privateImplVerification() == DENG2_IPRIVATE_VERIFICATION);
             delete ip;
         }
         ptr = p;
     }
-    InstType *get() const {
+    ImplType *get() const {
         return ptr;
     }
-    InstType const *getConst() const {
+    ImplType const *getConst() const {
         return ptr;
     }
-    operator InstType *() const {
+    operator ImplType *() const {
         return ptr;
     }
-    InstType *release() {
-        InstType *p = ptr;
+    ImplType *release() {
+        ImplType *p = ptr;
         ptr = 0;
         return p;
     }
@@ -418,12 +417,12 @@ public:
     }
 #ifdef DENG2_DEBUG
     bool isValid() const {
-        return ptr && reinterpret_cast<IPrivate *>(ptr)->privateInstVerification() == DENG2_IPRIVATE_VERIFICATION;
+        return ptr && reinterpret_cast<IPrivate *>(ptr)->privateImplVerification() == DENG2_IPRIVATE_VERIFICATION;
     }
 #endif
 
 private:
-    InstType *ptr;
+    ImplType *ptr;
 };
 
 /**
@@ -497,9 +496,9 @@ enum FlagOp {
 template <typename FlagsType, typename FlagsCompatibleType>
 void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOp operation) {
     switch (operation) {
-    case SetFlags:     flags |= newFlags;  break;
+    case SetFlags:     flags |=  newFlags; break;
     case UnsetFlags:   flags &= ~newFlags; break;
-    case ReplaceFlags: flags = newFlags;   break;
+    case ReplaceFlags: flags  =  newFlags; break;
     }
 }
 

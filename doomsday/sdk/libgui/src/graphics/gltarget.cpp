@@ -86,7 +86,7 @@ DENG2_OBSERVES(Asset, Deletion)
     int sampleCount;
     GLTarget const *proxy;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , fbo(0)
         , flags(DefaultFlags)
@@ -99,7 +99,7 @@ DENG2_OBSERVES(Asset, Deletion)
         zap(bufTextures);
     }
 
-    Instance(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
+    Impl(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
         : Base(i)
         , fbo(0)
         , flags(texAttachment | otherAtm)
@@ -113,7 +113,7 @@ DENG2_OBSERVES(Asset, Deletion)
         zap(bufTextures);
     }
 
-    Instance(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
+    Impl(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
         : Base(i)
         , fbo(0)
         , flags(fboFlags)
@@ -127,7 +127,7 @@ DENG2_OBSERVES(Asset, Deletion)
         zap(bufTextures);
     }
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -390,27 +390,27 @@ DENG2_OBSERVES(Asset, Deletion)
     }
 };
 
-GLTarget::GLTarget() : d(new Instance(this))
+GLTarget::GLTarget() : d(new Impl(this))
 {
     setState(Ready);
 }
 
 GLTarget::GLTarget(GLTexture &colorTarget, Flags const &otherAttachments)
-    : d(new Instance(this, Color, colorTarget, otherAttachments))
+    : d(new Impl(this, Color, colorTarget, otherAttachments))
 {
     LOG_AS("GLTarget");
     d->alloc();
 }
 
 GLTarget::GLTarget(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
-    : d(new Instance(this, attachment, texture, otherAttachments))
+    : d(new Impl(this, attachment, texture, otherAttachments))
 {
     LOG_AS("GLTarget");
     d->alloc();
 }
 
 GLTarget::GLTarget(Vector2ui const &size, Flags const &flags)
-    : d(new Instance(this, size, flags))
+    : d(new Impl(this, size, flags))
 {
     LOG_AS("GLTarget");
     d->alloc();
@@ -471,7 +471,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     }
     else
     {
-        d->attachRenderbuffer(Instance::ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
+        d->attachRenderbuffer(Impl::ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
     }
 
     // The depth attachment.
@@ -483,7 +483,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     }
     else
     {
-        d->attachRenderbuffer(Instance::DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+        d->attachRenderbuffer(Impl::DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
     }
 
     d->validate();

@@ -32,10 +32,10 @@ DENG2_PIMPL(Archive)
     /// Contents of the archive have been modified.
     bool modified;
 
-    Instance(Public &a, IByteArray const *src) : Base(a), source(src), index(0), modified(false)
+    Impl(Public &a, IByteArray const *src) : Base(a), source(src), index(0), modified(false)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete index;
     }
@@ -62,10 +62,10 @@ DENG2_PIMPL(Archive)
     }
 };
 
-Archive::Archive() : d(new Instance(*this, 0))
+Archive::Archive() : d(new Impl(*this, 0))
 {}
 
-Archive::Archive(IByteArray const &archive) : d(new Instance(*this, &archive))
+Archive::Archive(IByteArray const &archive) : d(new Impl(*this, &archive))
 {}
 
 Archive::~Archive()

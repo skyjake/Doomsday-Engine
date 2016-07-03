@@ -50,10 +50,10 @@ DENG2_PIMPL(Scheduler)
     typedef std::priority_queue<Event *, std::deque<Event *>, Event::Compare> Events;
     Events events;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         setContext(nullptr);
         clear();
@@ -85,7 +85,7 @@ DENG2_PIMPL(Scheduler)
 };
 
 Scheduler::Scheduler()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 void Scheduler::clear()
@@ -100,7 +100,7 @@ void Scheduler::setContext(Record &context)
 
 Script &Scheduler::addScript(TimeDelta at, String const &source, String const &sourcePath)
 {
-    auto *ev = new Instance::Event(at, source, sourcePath);
+    auto *ev = new Impl::Event(at, source, sourcePath);
     d->events.push(ev);
     return ev->script;
 }
@@ -130,8 +130,8 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
 
 DENG2_PIMPL_NOREF(Scheduler::Clock)
 {
-    typedef Scheduler::Instance::Event  Event;
-    typedef Scheduler::Instance::Events Events; // Events not owned
+    typedef Scheduler::Impl::Event  Event;
+    typedef Scheduler::Impl::Events Events; // Events not owned
 
     Record *context = nullptr;
     Scheduler const *scheduler = nullptr;
@@ -174,7 +174,7 @@ DENG2_PIMPL_NOREF(Scheduler::Clock)
 };
 
 Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->scheduler = &schedule;
     d->context   = context;

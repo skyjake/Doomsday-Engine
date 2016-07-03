@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(InFineSystem)
 {
     Finales finales;
 
-    ~Instance() { qDeleteAll(finales); }
+    ~Impl() { qDeleteAll(finales); }
 
     Finale *finaleForId(finaleid_t id)
     {
@@ -67,7 +67,7 @@ DENG2_PIMPL_NOREF(InFineSystem)
     }
 };
 
-InFineSystem::InFineSystem() : d(new Instance)
+InFineSystem::InFineSystem() : d(new Impl)
 {}
 
 void InFineSystem::reset()

@@ -67,7 +67,7 @@ DENG2_PIMPL(ServerApp)
     ClientServerWorld world;
     InFineSystem infineSys;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
     {
         serverAppSingleton = thisPublic;
@@ -77,7 +77,7 @@ DENG2_PIMPL(ServerApp)
         self.audienceForConsoleRegistration() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         Sys_Shutdown();
         DD_Shutdown();
@@ -133,7 +133,7 @@ DENG2_PIMPL(ServerApp)
 ServerApp::ServerApp(int &argc, char **argv)
     : TextApp(argc, argv)
     , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     novideo = true;
 

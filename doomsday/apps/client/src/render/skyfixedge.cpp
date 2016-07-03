@@ -57,14 +57,14 @@ DENG2_PIMPL_NOREF(SkyFixEdge::Event)
     SkyFixEdge &owner;
     double distance;
 
-    Instance(SkyFixEdge &owner, double distance)
+    Impl(SkyFixEdge &owner, double distance)
         : owner(owner), distance(distance)
     {}
 };
 
 SkyFixEdge::Event::Event(SkyFixEdge &owner, double distance)
     : WorldEdge::Event(),
-      d(new Instance(owner, distance))
+      d(new Impl(owner, distance))
 {}
 
 bool SkyFixEdge::Event::operator < (Event const &other) const
@@ -99,7 +99,7 @@ DENG2_PIMPL(SkyFixEdge)
 
     Vector2f materialOrigin;
 
-    Instance(Public *i, HEdge &hedge, FixType fixType, int edge,
+    Impl(Public *i, HEdge &hedge, FixType fixType, int edge,
              Vector2f const &materialOrigin)
         : Base(i),
           hedge(&hedge),
@@ -220,7 +220,7 @@ DENG2_PIMPL(SkyFixEdge)
 
 SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, hedge, fixType, edge, Vector2f(materialOffsetS, 0)))
+      d(new Impl(this, hedge, fixType, edge, Vector2f(materialOffsetS, 0)))
 {
     /// @todo Defer until necessary.
     d->prepare();

@@ -31,7 +31,7 @@ DENG2_PIMPL(Sound)
     dfloat minDistance;
     dfloat spread;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , volume(1.f)
         , pan(0.f)
@@ -61,7 +61,7 @@ DENG2_AUDIENCE_METHOD(Sound, Change)
 DENG2_AUDIENCE_METHOD(Sound, Stop)
 DENG2_AUDIENCE_METHOD(Sound, Deletion)
 
-Sound::Sound() : d(new Instance(this))
+Sound::Sound() : d(new Impl(this))
 {}
 
 Sound &Sound::setVolume(dfloat volume)

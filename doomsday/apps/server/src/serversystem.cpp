@@ -71,8 +71,8 @@ DENG2_PIMPL(ServerSystem)
     QHash<Id, RemoteUser *> users;
     ShellUsers shellUsers;
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { deinit(); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { deinit(); }
 
     bool isStarted() const
     {
@@ -229,7 +229,7 @@ DENG2_PIMPL(ServerSystem)
     }
 };
 
-ServerSystem::ServerSystem() : d(new Instance(this))
+ServerSystem::ServerSystem() : d(new Impl(this))
 {}
 
 void ServerSystem::start(duint16 port)

@@ -42,7 +42,7 @@ DENG2_PIMPL(ResourceManifest)
     /// Used for identification purposes.
     QStringList identityKeys;
 
-    /// Index (in Manifest::Instance::names) of the name used to locate
+    /// Index (in Manifest::Impl::names) of the name used to locate
     /// this resource if found. Set during resource location.
     int foundNameIndex;
 
@@ -50,7 +50,7 @@ DENG2_PIMPL(ResourceManifest)
     /// Set during resource location.
     String foundPath;
 
-    Instance(Public *i, resourceclassid_t rclass, int rflags)
+    Impl(Public *i, resourceclassid_t rclass, int rflags)
         : Base(i)
         , classId(rclass)
         , flags(rflags & ~FF_FOUND)
@@ -62,7 +62,7 @@ DENG2_PIMPL(ResourceManifest)
 };
 
 ResourceManifest::ResourceManifest(resourceclassid_t resClass, int fFlags, String *name)
-    : d(new Instance(this, resClass, fFlags))
+    : d(new Impl(this, resClass, fFlags))
 {
     if (name) addName(*name);
 }

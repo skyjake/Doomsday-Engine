@@ -39,7 +39,7 @@ DENG2_PIMPL(ScriptCommandWidget)
     Script script;
     Process process;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         App::app().audienceForStartupComplete() += this;
     }
@@ -99,7 +99,7 @@ DENG2_PIMPL(ScriptCommandWidget)
 };
 
 ScriptCommandWidget::ScriptCommandWidget(String const &name)
-    : CommandWidget(name), d(new Instance(this))
+    : CommandWidget(name), d(new Impl(this))
 {}
 
 bool ScriptCommandWidget::handleEvent(Event const &event)

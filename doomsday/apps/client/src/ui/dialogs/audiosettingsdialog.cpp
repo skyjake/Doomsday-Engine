@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarToggleWidget *soundInfo;
     GridPopupWidget *devPopup;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -94,7 +94,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 };
 
 AudioSettingsDialog::AudioSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Audio Settings"));
     heading().setImage(style().images().image("audio"));

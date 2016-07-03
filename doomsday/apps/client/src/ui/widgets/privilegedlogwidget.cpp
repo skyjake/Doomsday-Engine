@@ -29,7 +29,7 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
     LogWidget *log = nullptr;
     ButtonWidget *closeButton = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         log = new LogWidget("privlog");
         log->setLogFormatter(formatter);
@@ -46,7 +46,7 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
 };
 
 PrivilegedLogWidget::PrivilegedLogWidget()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     auto const &gap = rule("gap");
 

@@ -28,7 +28,7 @@ DENG2_OBSERVES(Variable, Change  )
 {
     Variable *var;
 
-    Instance(Public *i, Variable &variable) : Base(i), var(&variable)
+    Impl(Public *i, Variable &variable) : Base(i), var(&variable)
     {
         updateFromVariable();
 
@@ -65,7 +65,7 @@ DENG2_OBSERVES(Variable, Change  )
 };
 
 VariableLineEditWidget::VariableLineEditWidget(Variable &variable, String const &name)
-    : LineEditWidget(name), d(new Instance(this, variable))
+    : LineEditWidget(name), d(new Impl(this, variable))
 {
     connect(this, SIGNAL(editorContentChanged()),
             this, SLOT(setVariableFromWidget()));

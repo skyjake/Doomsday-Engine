@@ -42,10 +42,10 @@ DENG2_PIMPL(Widget)
     Children children;
     NamedChildren index;
 
-    Instance(Public *i, String const &n) : Base(i), name(n)
+    Impl(Public *i, String const &n) : Base(i), name(n)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clear();
     }
@@ -152,7 +152,7 @@ DENG2_AUDIENCE_METHOD(Widget, ParentChange)
 DENG2_AUDIENCE_METHOD(Widget, ChildAddition)
 DENG2_AUDIENCE_METHOD(Widget, ChildRemoval)
 
-Widget::Widget(String const &name) : d(new Instance(this, name))
+Widget::Widget(String const &name) : d(new Impl(this, name))
 {}
 
 Widget::~Widget()
@@ -329,13 +329,13 @@ void Widget::clearTree()
 
 Widget &Widget::addLast(Widget *child)
 {
-    d->add(child, Instance::Append);
+    d->add(child, Impl::Append);
     return *child;
 }
 
 Widget &Widget::addFirst(Widget *child)
 {
-    d->add(child, Instance::Prepend);
+    d->add(child, Impl::Prepend);
     return *child;
 }
 
@@ -344,7 +344,7 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
     DENG2_ASSERT(child != &otherChild);
     DENG2_ASSERT(otherChild.parent() == this);
 
-    d->add(child, Instance::InsertBefore, &otherChild);
+    d->add(child, Impl::InsertBefore, &otherChild);
     return *child;
 }
 
@@ -389,14 +389,14 @@ Widget *Widget::find(String const &name)
 {
     if (d->name == name) return this;
 
-    Instance::NamedChildren::const_iterator found = d->index.constFind(name);
+    Impl::NamedChildren::const_iterator found = d->index.constFind(name);
     if (found != d->index.constEnd())
     {
         return found.value();
     }
 
     // Descend recursively to child widgets.
-    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
+    DENG2_FOR_EACH_CONST(Impl::Children, i, d->children)
     {
         Widget *w = (*i)->find(name);
         if (w) return w;
@@ -409,7 +409,7 @@ bool Widget::isInTree(Widget const &child) const
 {
     if (this == &child) return true;
 
-    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
+    DENG2_FOR_EACH_CONST(Impl::Children, i, d->children)
     {
         if ((*i)->isInTree(child))
         {

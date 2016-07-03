@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
     sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;             ///< When the assigned sound sample was last started.
 
-    Instance() { zap(origin); }
+    Impl() { zap(origin); }
 
     Vector3d findOrigin() const
     {
@@ -85,7 +85,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
     }
 };
 
-SfxChannel::SfxChannel() : d(new Instance)
+SfxChannel::SfxChannel() : d(new Impl)
 {}
 
 SfxChannel::~SfxChannel()
@@ -326,8 +326,8 @@ DENG2_PIMPL(SfxChannels)
 {
     QList<SfxChannel *> all;
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { clearAll(); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { clearAll(); }
 
     void clearAll()
     {
@@ -347,7 +347,7 @@ DENG2_PIMPL(SfxChannels)
     }
 };
 
-SfxChannels::SfxChannels(dint count) : d(new Instance(this))
+SfxChannels::SfxChannels(dint count) : d(new Impl(this))
 {
     d->resize(count);
 }

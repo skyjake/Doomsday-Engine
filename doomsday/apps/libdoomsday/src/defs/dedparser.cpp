@@ -187,7 +187,7 @@ DENG2_PIMPL(DEDParser)
     char token[MAX_TOKEN_LEN+1];
     char unreadToken[MAX_TOKEN_LEN+1];
 
-    Instance(Public *i) : Base(i), ded(0), source(0)
+    Impl(Public *i) : Base(i), ded(0), source(0)
     {
         zap(token);
         zap(unreadToken);
@@ -3072,7 +3072,7 @@ DENG2_PIMPL(DEDParser)
     }
 };
 
-DEDParser::DEDParser(ded_t *ded) : d(new Instance(this))
+DEDParser::DEDParser(ded_t *ded) : d(new Impl(this))
 {
     d->ded = ded;
 }

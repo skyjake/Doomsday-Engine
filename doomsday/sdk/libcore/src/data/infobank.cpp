@@ -34,7 +34,7 @@ DENG2_PIMPL(InfoBank)
     Time modTime;
     String relativeToPath;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         info.audienceForNamedBlock() += this;
     }
@@ -80,7 +80,7 @@ DENG2_PIMPL(InfoBank)
 
 InfoBank::InfoBank(char const *nameForLog, Bank::Flags const &flags, String const &hotStorageLocation)
     : Bank(nameForLog, flags, hotStorageLocation)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 void InfoBank::parse(String const &source)

@@ -26,15 +26,15 @@ DENG2_PIMPL(ThinkerData)
     thinker_s *think;
     Record names;
 
-    Instance(Public *i) : Base(i), think(0) {}
+    Impl(Public *i) : Base(i), think(0) {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base(i)
         , think(other.think)
         , names(other.names)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i)
         {
@@ -47,10 +47,10 @@ DENG2_PIMPL(ThinkerData)
 
 DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 
-ThinkerData::ThinkerData() : d(new Instance(this))
+ThinkerData::ThinkerData() : d(new Impl(this))
 {}
 
-ThinkerData::ThinkerData(ThinkerData const &other) : d(new Instance(this, *other.d))
+ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
 {}
 
 void ThinkerData::setThinker(thinker_s *thinker)

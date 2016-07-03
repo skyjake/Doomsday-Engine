@@ -68,7 +68,7 @@ DENG2_PIMPL_NOREF(FinaleAnimWidget)
     animatorvector4_t edgeColor;
     animatorvector4_t otherEdgeColor;
 
-    Instance()
+    Impl()
     {
         AnimatorVector4_Init(color,          1, 1, 1, 1);
         AnimatorVector4_Init(otherColor,     0, 0, 0, 0);
@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(FinaleAnimWidget)
 
 FinaleAnimWidget::FinaleAnimWidget(String const &name)
     : FinaleWidget(name)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 FinaleAnimWidget::~FinaleAnimWidget()

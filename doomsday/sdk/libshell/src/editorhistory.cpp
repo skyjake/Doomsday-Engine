@@ -42,12 +42,12 @@ DENG2_PIMPL(EditorHistory)
     QList<Command> history;
     int historyPos;
 
-    Instance(Public *i) : Base(i), editor(0), historyPos(0)
+    Impl(Public *i) : Base(i), editor(0), historyPos(0)
     {
         history.append(Command());
     }
 
-    ~Instance() {}
+    ~Impl() {}
 
     Command &command()
     {
@@ -105,7 +105,7 @@ DENG2_PIMPL(EditorHistory)
     }
 };
 
-EditorHistory::EditorHistory(ITextEditor *editor) : d(new Instance(this))
+EditorHistory::EditorHistory(ITextEditor *editor) : d(new Impl(this))
 {
     d->editor = editor;
 }
@@ -152,7 +152,7 @@ String EditorHistory::enter()
             d->history.append(d->command());
         }
         d->history.last().original = entered;
-        d->history.append(Instance::Command());
+        d->history.append(Impl::Command());
     }
 
     // Move on.

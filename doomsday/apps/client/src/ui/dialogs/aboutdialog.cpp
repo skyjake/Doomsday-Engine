@@ -39,7 +39,7 @@ DENG2_PIMPL(AboutDialog)
     DocumentPopupWidget *glPopup;
     DocumentPopupWidget *audioPopup;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // Popup with GL info.
         glPopup = new DocumentPopupWidget;
@@ -53,7 +53,7 @@ DENG2_PIMPL(AboutDialog)
     }
 };
 
-AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
+AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
 {
     /*
      * Construct the widgets.

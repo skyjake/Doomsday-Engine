@@ -49,7 +49,7 @@ DENG2_PIMPL(ChatWidget)
 
     String text;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     static void playSentSound()
     {
@@ -113,7 +113,7 @@ ChatWidget::ChatWidget(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(ChatWidget_UpdateGeometry),
                 function_cast<DrawFunc>(ChatWidget_Draw),
                 player)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 ChatWidget::~ChatWidget()

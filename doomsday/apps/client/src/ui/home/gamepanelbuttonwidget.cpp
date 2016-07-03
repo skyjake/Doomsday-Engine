@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
 
-    Instance(Public *i, GameProfile &profile, SavedSessionListData const &allSavedItems)
+    Impl(Public *i, GameProfile &profile, SavedSessionListData const &allSavedItems)
         : Base(i)
         , gameProfile(profile)
         , savedItems(allSavedItems)
@@ -220,7 +220,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 };
 
 GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SavedSessionListData const &savedItems)
-    : d(new Instance(this, game, savedItems))
+    : d(new Impl(this, game, savedItems))
 {
     connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));
     connect(d->saves, SIGNAL(doubleClicked(de::ui::DataPos)), this, SLOT(saveDoubleClicked(de::ui::DataPos)));

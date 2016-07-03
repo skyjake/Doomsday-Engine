@@ -28,7 +28,7 @@ DENG2_PIMPL(DirectoryListDialog)
     Variable array;
     DirectoryArrayWidget *list;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         array.set(new ArrayValue);
         list = new DirectoryArrayWidget(array);
@@ -40,7 +40,7 @@ DENG2_PIMPL(DirectoryListDialog)
 
 DirectoryListDialog::DirectoryListDialog(String const &name)
     : MessageDialog(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     area().add(d->list);
 

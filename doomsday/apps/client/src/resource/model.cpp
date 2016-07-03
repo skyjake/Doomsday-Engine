@@ -152,13 +152,13 @@ DENG2_PIMPL(Model)
 
     uint modelId; ///< In the repository.
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , numVertices(0)
         , modelId(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clearAllFrames();
     }
@@ -598,7 +598,7 @@ DENG2_PIMPL(Model)
 #endif
 };
 
-Model::Model(Flags flags) : d(new Instance(this))
+Model::Model(Flags flags) : d(new Impl(this))
 {
     setFlags(flags, de::ReplaceFlags);
 }
@@ -650,8 +650,8 @@ Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
 
     // Recognized file types.
     static ModelFileType modelTypes[] = {
-        { "DMD",    ".dmd",     Instance::loadDmd },
-        { "MD2",    ".md2",     Instance::loadMd2 },
+        { "DMD",    ".dmd",     Impl::loadDmd },
+        { "MD2",    ".md2",     Impl::loadMd2 },
         { "",       "",         0 } // Terminate.
     };
 

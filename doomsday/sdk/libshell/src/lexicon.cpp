@@ -27,18 +27,18 @@ DENG2_PIMPL_NOREF(Lexicon)
     String extraChars;
     bool caseSensitive;
 
-    Instance() : caseSensitive(false) {}
+    Impl() : caseSensitive(false) {}
 };
 
-Lexicon::Lexicon() : d(new Instance)
+Lexicon::Lexicon() : d(new Impl)
 {}
 
-Lexicon::Lexicon(Lexicon const &other) : d(new Instance(*other.d))
+Lexicon::Lexicon(Lexicon const &other) : d(new Impl(*other.d))
 {}
 
 Lexicon &Lexicon::operator = (Lexicon const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Impl(*other.d));
     return *this;
 }
 

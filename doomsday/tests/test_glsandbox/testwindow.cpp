@@ -78,7 +78,7 @@ DENG2_OBSERVES(Bank, Load)
     typedef GLBufferT<Vertex3TexRgba> VertexBuf;
     typedef GLBufferT<Vertex2Tex> Vertex2Buf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           mode      (TestRenderToTexture),
           //imageBank (0),
@@ -115,7 +115,7 @@ DENG2_OBSERVES(Bank, Load)
         uModelTex = *modelAtlas;
     }
 
-    ~Instance()
+    ~Impl()
     {
         model.glDeinit();
     }
@@ -522,7 +522,7 @@ DENG2_OBSERVES(Bank, Load)
     }
 };
 
-TestWindow::TestWindow() : d(new Instance(this))
+TestWindow::TestWindow() : d(new Impl(this))
 {
     qsrand(Time().asDateTime().toTime_t());
 
@@ -553,17 +553,17 @@ void TestWindow::canvasGLDraw(Canvas &canvas)
 
 void TestWindow::testRenderToTexture()
 {
-    d->setMode(Instance::TestRenderToTexture);
+    d->setMode(Impl::TestRenderToTexture);
 }
 
 void TestWindow::testDynamicAtlas()
 {
-    d->setMode(Instance::TestDynamicAtlas);
+    d->setMode(Impl::TestDynamicAtlas);
 }
 
 void TestWindow::testModel()
 {
-    d->setMode(Instance::TestModel);
+    d->setMode(Impl::TestModel);
 }
 
 void TestWindow::loadMD2Model()

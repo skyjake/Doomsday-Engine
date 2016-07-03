@@ -30,7 +30,7 @@ DENG2_PIMPL(SavedSessionListData)
 {
     LoopCallback mainCall;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
@@ -69,7 +69,7 @@ DENG2_PIMPL(SavedSessionListData)
 };
 
 SavedSessionListData::SavedSessionListData()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->updateFromSavedIndex();
 }

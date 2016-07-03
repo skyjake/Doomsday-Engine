@@ -535,7 +535,7 @@ DENG2_PIMPL(ResourceSystem)
     Binder binder;
     Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , defaultColorPalette      (0)
         , materialManifestIdMapSize(0)
@@ -598,7 +598,7 @@ DENG2_PIMPL(ResourceSystem)
         App::packageLoader().loadFromCommandLine();
     }
 
-    ~Instance()
+    ~Impl()
     {
         convertSavegameTasks.waitForDone();
 
@@ -2253,7 +2253,7 @@ DENG2_PIMPL(ResourceSystem)
     }
 };
 
-ResourceSystem::ResourceSystem() : d(new Instance(this))
+ResourceSystem::ResourceSystem() : d(new Impl(this))
 {}
 
 void ResourceSystem::clear()

@@ -56,7 +56,7 @@ DENG2_PIMPL(LogWidget)
     bool showScrollIndicator;
     int lastMaxScroll;
 
-    Instance(Public *inst)
+    Impl(Public *inst)
         : Base(inst),
           sink(*inst),
           cacheWidth(0),
@@ -66,7 +66,7 @@ DENG2_PIMPL(LogWidget)
           lastMaxScroll(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearCache();
     }
@@ -128,7 +128,7 @@ DENG2_PIMPL(LogWidget)
     }
 };
 
-LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Instance(this))
+LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Impl(this))
 {}
 
 LogSink &LogWidget::logSink()

@@ -30,7 +30,7 @@ DENG2_PIMPL_NOREF(Refuge)
     Record names;
 };
 
-Refuge::Refuge(String const &persistentPath) : d(new Instance)
+Refuge::Refuge(String const &persistentPath) : d(new Impl)
 {
     d->persistentPath = persistentPath;
 

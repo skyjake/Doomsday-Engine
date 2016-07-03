@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(HomeWidget)
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -145,7 +145,7 @@ DENG_GUI_PIMPL(HomeWidget)
         });
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
@@ -405,7 +405,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
 HomeWidget::HomeWidget()
     : GuiWidget("home")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     // Create the columns.
     ColumnWidget *column;

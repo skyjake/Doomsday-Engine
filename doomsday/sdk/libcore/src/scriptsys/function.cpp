@@ -56,23 +56,23 @@ DENG2_PIMPL_NOREF(Function)
     /// The native entry point.
     Function::NativeEntryPoint nativeEntryPoint;
 
-    Instance() : globals(0), nativeEntryPoint(0)
+    Impl() : globals(0), nativeEntryPoint(0)
     {}
 
-    Instance(Function::Arguments const &args, Function::Defaults const &defaults)
+    Impl(Function::Arguments const &args, Function::Defaults const &defaults)
         : arguments(args), defaults(defaults), globals(0), nativeEntryPoint(0)
     {}
 };
 
-Function::Function() : d(new Instance)
+Function::Function() : d(new Impl)
 {}
 
 Function::Function(Arguments const &args, Defaults const &defaults)
-    : d(new Instance(args, defaults))
+    : d(new Impl(args, defaults))
 {}
 
 Function::Function(String const &nativeName, Arguments const &args, Defaults const &defaults)
-    : d(new Instance(args, defaults))
+    : d(new Impl(args, defaults))
 {
     try
     {

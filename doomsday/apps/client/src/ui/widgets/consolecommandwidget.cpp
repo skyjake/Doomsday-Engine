@@ -32,13 +32,13 @@ DENG_GUI_PIMPL(ConsoleCommandWidget),
 DENG2_OBSERVES(App, StartupComplete),
 DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         App::app().audienceForStartupComplete() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        App::app().audienceForStartupComplete() -= this;
 //        DoomsdayApp::app().audienceForGameChange() -= this;
@@ -61,7 +61,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 };
 
 ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
-    : CommandWidget(name), d(new Instance(this))
+    : CommandWidget(name), d(new Impl(this))
 {
     d->updateLexicon();
 }

@@ -45,7 +45,7 @@ DENG2_PIMPL(OpenDialog)
     QStringList history;
     bool edited;
 
-    Instance(Public &i) : Base(i), edited(false)
+    Impl(Public &i) : Base(i), edited(false)
     {
         // Restore the historical entries.
         QSettings st;
@@ -125,7 +125,7 @@ DENG2_PIMPL(OpenDialog)
 };
 
 OpenDialog::OpenDialog(QWidget *parent)
-    : QDialog(parent), d(new Instance(*this))
+    : QDialog(parent), d(new Impl(*this))
 {
     updateLocalList(true /* autoselect first found server */);
 

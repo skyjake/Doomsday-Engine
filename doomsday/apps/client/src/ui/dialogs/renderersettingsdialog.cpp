@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     // Developer settings.
     GridPopupWidget *devPopup;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -126,7 +126,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 };
 
 RendererSettingsDialog::RendererSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Renderer Settings"));
     heading().setImage(style().images().image("renderer"));

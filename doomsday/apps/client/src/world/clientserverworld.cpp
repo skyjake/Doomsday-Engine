@@ -312,7 +312,7 @@ DENG2_PIMPL(ClientServerWorld)
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
 #endif
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         world::initBindings(binder, worldModule);
         ScriptSystem::get().addNativeModule("World", worldModule);
@@ -772,7 +772,7 @@ DENG2_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
 
 ClientServerWorld::ClientServerWorld()
     : World()
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 Map &ClientServerWorld::map() const

@@ -58,7 +58,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ToggleWidget *deleteAfter;
     bool didApply = false;
 
-    Instance(Public *i, Mode mode) : Base(i)
+    Impl(Public *i, Mode mode) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -215,7 +215,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 };
 
 UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this, mode))
+    : DialogWidget(name, WithHeading), d(new Impl(this, mode))
 {
     heading().setText(tr("Updater Settings"));
     heading().setImage(style().images().image("updater"));

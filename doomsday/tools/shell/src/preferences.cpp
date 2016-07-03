@@ -22,7 +22,7 @@ DENG2_PIMPL(Preferences)
     QFont consoleFont;
     QLabel *fontDesc;
 
-    Instance(Public &i) : Base(i), consoleFont(defaultConsoleFont())
+    Impl(Public &i) : Base(i), consoleFont(defaultConsoleFont())
     {
 #ifndef MACOSX
         self.setWindowModality(Qt::ApplicationModal);
@@ -126,7 +126,7 @@ DENG2_PIMPL(Preferences)
 };
 
 Preferences::Preferences(QWidget *parent) :
-    QDialog(parent), d(new Instance(*this))
+    QDialog(parent), d(new Impl(*this))
 {
     connect(d->useCustomIwad, SIGNAL(toggled(bool)), this, SLOT(validate()));
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
@@ -150,7 +150,7 @@ QFont Preferences::consoleFont()
 {
     QFont font;
     font.fromString(QSettings().value("Preferences/consoleFont",
-                                      Instance::defaultConsoleFont().toString()).toString());
+                                      Impl::defaultConsoleFont().toString()).toString());
     return font;
 }
 

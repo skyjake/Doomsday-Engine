@@ -46,7 +46,7 @@ namespace de {
  */
 class DENG2_PUBLIC Path : public ISerializable, public LogEntry::Arg::Base
 {
-    struct Instance; // needs to be friended by Path::Segment
+    struct Impl; // needs to be friended by Path::Segment
 
 public:
     /// Segment index was out of bounds. @ingroup errors
@@ -136,7 +136,7 @@ public:
         bool operator < (Segment const &other) const;
 
         friend class Path;
-        friend struct Path::Instance;
+        friend struct Path::Impl;
 
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
         Q_DECLARE_FLAGS(Flags, Flag)
@@ -459,7 +459,7 @@ public:
     static Path normalize(String const &text, QChar replaceWith = '/');
 
 private:
-    Instance *d;
+    Impl *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)

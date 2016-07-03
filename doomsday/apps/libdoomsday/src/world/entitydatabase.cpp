@@ -40,10 +40,10 @@ DENG2_PIMPL(EntityDatabase)
 {
     EntitySet entitySets;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_EACH(EntitySet, setIt, entitySets)
         DENG2_FOR_EACH(Entities, entityIt, setIt->second)
@@ -82,7 +82,7 @@ DENG2_PIMPL(EntityDatabase)
     }
 };
 
-EntityDatabase::EntityDatabase() : d(new Instance(this))
+EntityDatabase::EntityDatabase() : d(new Impl(this))
 {}
 
 uint EntityDatabase::entityCount(MapEntityDef const *entityDef)

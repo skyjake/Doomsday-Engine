@@ -41,7 +41,7 @@ DENG2_PIMPL(StatusWidget)
     shell::PlayerInfoPacket::Players players;
     QMap<int, QPoint> oldPlayerPositions;
 
-    Instance(Public &i) : Base(i), link(0)
+    Impl(Public &i) : Base(i), link(0)
     {}
 
     void clear()
@@ -56,7 +56,7 @@ DENG2_PIMPL(StatusWidget)
 };
 
 StatusWidget::StatusWidget(QWidget *parent)
-    : QWidget(parent), d(new Instance(*this))
+    : QWidget(parent), d(new Impl(*this))
 {
     d->playerFont = d->smallFont = d->largeFont = font();
     d->smallFont.setPointSize(font().pointSize() * 3 / 4);
@@ -112,7 +112,7 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 
 void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
 {
-    foreach (Instance::Player const &plr, d->players)
+    foreach (Impl::Player const &plr, d->players)
     {
         d->oldPlayerPositions[plr.number] = QPoint(plr.position.x, -plr.position.y);
     }
@@ -171,7 +171,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         // Draw player markers.
         float const factor = float(d->mapBounds.width()) / float(viewSize.width());
         QFontMetrics const metrics(d->playerFont);
-        foreach (Instance::Player const &plr, d->players.values())
+        foreach (Impl::Player const &plr, d->players.values())
         {
             painter.save();
 

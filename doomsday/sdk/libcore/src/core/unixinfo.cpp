@@ -80,17 +80,17 @@ DENG2_PIMPL_NOREF(UnixInfo)
     Infos *paths;
     Infos *defaults;
 
-    Instance() : paths(0), defaults(0)
+    Impl() : paths(0), defaults(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete paths;
         delete defaults;
     }
 };
 
-UnixInfo::UnixInfo() : d(new Instance)
+UnixInfo::UnixInfo() : d(new Impl)
 {
 #ifdef UNIX
     /**

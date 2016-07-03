@@ -37,7 +37,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
     typedef BinaryTree<Partition> Node;
     Node root;
 
-    Instance(Public *i) : Base(i), margin(0), root(Partition()) {}
+    Impl(Public *i) : Base(i), margin(0), root(Partition()) {}
 
     void initTree(Node &rootNode)
     {
@@ -219,7 +219,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
     }
 };
 
-KdTreeAtlasAllocator::KdTreeAtlasAllocator() : d(new Instance(this))
+KdTreeAtlasAllocator::KdTreeAtlasAllocator() : d(new Impl(this))
 {}
 
 void KdTreeAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)

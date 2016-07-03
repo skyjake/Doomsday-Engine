@@ -315,8 +315,8 @@ DENG2_PIMPL(SfxSampleCache)
 
     dint lastPurge = 0;  ///< Time of the last purge (in game ticks).
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { removeAll(); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { removeAll(); }
 
     /**
      * Find the appropriate hash for the given @a soundId.
@@ -328,7 +328,7 @@ DENG2_PIMPL(SfxSampleCache)
 
     Hash const &hashFor(dint soundId) const
     {
-        return const_cast<Instance *>(this)->hashFor(soundId);
+        return const_cast<Impl *>(this)->hashFor(soundId);
     }
 
     /**
@@ -477,7 +477,7 @@ DENG2_PIMPL(SfxSampleCache)
 
 DENG2_AUDIENCE_METHOD(SfxSampleCache, SampleRemove)
 
-SfxSampleCache::SfxSampleCache() : d(new Instance(this))
+SfxSampleCache::SfxSampleCache() : d(new Impl(this))
 {}
 
 void SfxSampleCache::clear()
@@ -505,7 +505,7 @@ void SfxSampleCache::maybeRunPurge()
     // Also get rid of all sounds that have timed out.
     dint totalSize  = 0;
     CacheItem *next = nullptr;
-    for(Instance::Hash &hash : d->hash)
+    for(Impl::Hash &hash : d->hash)
     for(CacheItem *it = hash.first; it; it = next)
     {
         next = it->next;
@@ -530,7 +530,7 @@ void SfxSampleCache::maybeRunPurge()
          * no more stopped sounds.
          */
         lowest = 0;
-        for(Instance::Hash &hash : d->hash)
+        for(Impl::Hash &hash : d->hash)
         for(CacheItem *it = hash.first; it; it = it->next)
         {
 #ifdef __CLIENT__
@@ -560,7 +560,7 @@ void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount)
 {
     duint size  = 0;
     duint count = 0;
-    for(Instance::Hash &hash : d->hash)
+    for(Impl::Hash &hash : d->hash)
     for(CacheItem *it = hash.first; it; it = it->next)
     {
         size  += it->sample.size;

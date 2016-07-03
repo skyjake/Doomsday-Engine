@@ -53,10 +53,10 @@ DENG2_PIMPL(ClientMobjThinkerData)
     std::unique_ptr<render::StateAnimator> animator;
     Matrix4f modelMatrix;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    Instance(Public *i, Instance const &other) : Base(i)
+    Impl(Public *i, Impl const &other) : Base(i)
     {
         if(other.sync)
         {
@@ -64,7 +64,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         deinit();
     }
@@ -202,12 +202,12 @@ DENG2_PIMPL(ClientMobjThinkerData)
 };
 
 ClientMobjThinkerData::ClientMobjThinkerData()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
     : MobjThinkerData(other)
-    , d(new Instance(this, *other.d))
+    , d(new Impl(this, *other.d))
 {}
 
 void ClientMobjThinkerData::think()

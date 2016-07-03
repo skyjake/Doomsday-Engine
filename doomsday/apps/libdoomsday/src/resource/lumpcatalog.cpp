@@ -36,7 +36,7 @@ DENG2_PIMPL(LumpCatalog)
     StringList packageIds;
     QList<DataBundle const *> bundles; /// @todo Should observe for deletion. -jk
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void clear()
     {
@@ -82,7 +82,7 @@ DENG2_PIMPL(LumpCatalog)
 };
 
 LumpCatalog::LumpCatalog()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 void LumpCatalog::clear()
@@ -104,7 +104,7 @@ bool LumpCatalog::setPackages(StringList const &packageIds)
 Block LumpCatalog::read(String const &lumpName) const
 {
     Block data;
-    Instance::Found found = d->findLump(lumpName);
+    Impl::Found found = d->findLump(lumpName);
     if (found.first)
     {
         auto const &entry = found.first->lumpDirectory()->entry(found.second);

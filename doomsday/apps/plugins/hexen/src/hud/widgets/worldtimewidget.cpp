@@ -48,7 +48,7 @@ guidata_worldtime_t::guidata_worldtime_t(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(WorldTimeWidget_UpdateGeometry),
                 function_cast<DrawFunc>(WorldTimeWidget_Draw),
                 player)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 guidata_worldtime_t::~guidata_worldtime_t()

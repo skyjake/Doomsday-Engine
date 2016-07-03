@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
 {
     MaterialSurfaceMap decorated; ///< All surfaces being looked after.
 
-    ~Instance()
+    ~Impl()
     {
         for(SurfaceSet const &set : decorated)
         for(Surface *surface : set)
@@ -177,7 +177,7 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
     }
 };
 
-SurfaceDecorator::SurfaceDecorator() : d(new Instance)
+SurfaceDecorator::SurfaceDecorator() : d(new Impl)
 {}
 
 static bool prepareGeometry(Surface &surface, Vector3d &topLeft,

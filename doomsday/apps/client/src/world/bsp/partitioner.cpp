@@ -105,8 +105,8 @@ DENG2_PIMPL(Partitioner)
         }
     };
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { clear(); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { clear(); }
 
     static int clearBspElementWorker(BspTree &subtree, void *)
     {
@@ -1099,7 +1099,7 @@ DENG2_PIMPL(Partitioner)
 #endif
 };
 
-Partitioner::Partitioner(int splitCostFactor) : d(new Instance(this))
+Partitioner::Partitioner(int splitCostFactor) : d(new Impl(this))
 {
     setSplitCostFactor(splitCostFactor);
 }
@@ -1165,7 +1165,7 @@ BspTree *Partitioner::makeBspTree(QSet<Line *> const &lines, Mesh &mesh)
         }
     }
 
-    Instance::LineSegmentBlockTree blockTree(blockmapBounds(bounds));
+    Impl::LineSegmentBlockTree blockTree(blockmapBounds(bounds));
 
     d->createInitialLineSegments(blockTree);
 

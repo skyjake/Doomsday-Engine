@@ -254,11 +254,11 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
 DENG2_PIMPL_NOREF(SavedSession::MapStateReader)
 {
     SavedSession const *session; ///< Saved session being read. Not Owned.
-    Instance(SavedSession const &session) : session(&session) {}
+    Impl(SavedSession const &session) : session(&session) {}
 };
 
 SavedSession::MapStateReader::MapStateReader(SavedSession const &session)
-    : d(new Instance(session))
+    : d(new Impl(session))
 {}
 
 SavedSession::MapStateReader::~MapStateReader()
@@ -279,7 +279,7 @@ DENG2_PIMPL(SavedSession)
     Metadata metadata;  ///< Cached.
     bool needCacheMetadata;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , needCacheMetadata(true)
     {}
@@ -323,7 +323,7 @@ DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 
 SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
     : ArchiveFolder(sourceArchiveFile, name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 SavedSession::~SavedSession()

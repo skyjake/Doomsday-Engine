@@ -50,7 +50,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
     int device = IDEV_KEYBOARD;
     bool useModifiers = false;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         //self.setTextLineAlignment(ui::AlignLeft);
         self.setSizePolicy(ui::Fixed, ui::Expand);
@@ -172,7 +172,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
     }
 };
 
-InputBindingWidget::InputBindingWidget() : d(new Instance(this))
+InputBindingWidget::InputBindingWidget() : d(new Impl(this))
 {
     setBehavior(Focusable);
     auxiliary().hide();

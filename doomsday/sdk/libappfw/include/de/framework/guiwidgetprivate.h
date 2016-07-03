@@ -149,7 +149,7 @@ private:
 };
 
 #define DENG_GUI_PIMPL(ClassName) \
-    struct ClassName::Instance : public de::GuiWidgetPrivate<ClassName>
+    struct ClassName::Impl : public de::GuiWidgetPrivate<ClassName>
 
 } // namespace de
 

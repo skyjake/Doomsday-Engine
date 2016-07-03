@@ -53,7 +53,7 @@ DENG2_PIMPL(Environment)
     /// Currently loaded reflection textures.
     GLTexture reflectionTextures[2];
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
         World::get().audienceForMapChange() += this;
@@ -66,7 +66,7 @@ DENG2_PIMPL(Environment)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -188,12 +188,12 @@ DENG2_PIMPL(Environment)
 };
 
 Environment::Environment()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 GLTexture const &Environment::defaultReflection() const
 {
-    return d->reflectionTextures[Instance::Interior];
+    return d->reflectionTextures[Impl::Interior];
 }
 
 GLTexture const &Environment::reflectionInCluster(world::SectorCluster const *cluster) const
@@ -204,9 +204,9 @@ GLTexture const &Environment::reflectionInCluster(world::SectorCluster const *cl
     }
     if(cluster->hasSkyMaskedPlane())
     {
-        return d->reflectionTextures[Instance::Exterior];
+        return d->reflectionTextures[Impl::Exterior];
     }
-    return d->reflectionTextures[Instance::Interior];
+    return d->reflectionTextures[Impl::Interior];
 }
 
 }  // namespace render

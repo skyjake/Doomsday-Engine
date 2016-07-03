@@ -29,7 +29,7 @@ using namespace ui;
 
 DENG_GUI_PIMPL(KeyGrabberWidget)
 {
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     void focus()
@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(KeyGrabberWidget)
 };
 
 KeyGrabberWidget::KeyGrabberWidget(String const &name)
-    : LabelWidget(name), d(new Instance(this))
+    : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
     setTextLineAlignment(AlignLeft);

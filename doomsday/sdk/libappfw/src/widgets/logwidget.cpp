@@ -236,7 +236,7 @@ public Font::RichFormat::IStyle
     class WrappingMemoryLogSink : public MemoryLogSink
     {
     public:
-        WrappingMemoryLogSink(LogWidget::Instance *wd)
+        WrappingMemoryLogSink(LogWidget::Impl *wd)
             : d(wd)
             , _maxEntries(1000)
             , _next(0)
@@ -312,7 +312,7 @@ public Font::RichFormat::IStyle
         }
 
     private:
-        LogWidget::Instance *d;
+        LogWidget::Impl *d;
         int _maxEntries;
         int _next;
         int _width;
@@ -358,7 +358,7 @@ public Font::RichFormat::IStyle
     Matrix4f viewMatrix;
     Id scrollTex;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , sink(this)
         , cacheWidth(0)
@@ -379,7 +379,7 @@ public Font::RichFormat::IStyle
         updateStyle();
     }
 
-    ~Instance()
+    ~Impl()
     {
         LogBuffer::get().removeSink(sink);
         DENG2_ASSERT(cache.isEmpty());
@@ -798,7 +798,7 @@ nextAttempt:
 };
 
 LogWidget::LogWidget(String const &name)
-    : ScrollAreaWidget(name), d(new Instance(this))
+    : ScrollAreaWidget(name), d(new Impl(this))
 {
     setOrigin(Bottom);
     enableIndicatorDraw(true);

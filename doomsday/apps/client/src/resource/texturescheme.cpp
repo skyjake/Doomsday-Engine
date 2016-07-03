@@ -41,14 +41,14 @@ DENG2_OBSERVES(TextureManifest, Deletion)
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
-    Instance(Public *i, String symbolicName) : Base(i),
+    Impl(Public *i, String symbolicName) : Base(i),
         name(symbolicName),
         uniqueIdLut(),
         uniqueIdLutDirty(false),
         uniqueIdBase(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clear();
         DENG_ASSERT(index.isEmpty());
@@ -165,7 +165,7 @@ DENG2_OBSERVES(TextureManifest, Deletion)
     }
 };
 
-TextureScheme::TextureScheme(String symbolicName) : d(new Instance(this, symbolicName))
+TextureScheme::TextureScheme(String symbolicName) : d(new Impl(this, symbolicName))
 {}
 
 TextureScheme::~TextureScheme()

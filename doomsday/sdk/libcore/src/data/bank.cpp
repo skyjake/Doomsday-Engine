@@ -536,7 +536,7 @@ DENG2_PIMPL(Bank)
     NotifyQueue notifications;
     LoopCallback mainCall;
 
-    Instance(Public *i, char const *name, Flags const &flg)
+    Impl(Public *i, char const *name, Flags const &flg)
         : Base(i)
         , nameForLog(name)
         , flags(flg)
@@ -548,7 +548,7 @@ DENG2_PIMPL(Bank)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         destroySerialCache();
     }
@@ -721,7 +721,7 @@ DENG2_AUDIENCE_METHOD(Bank, Load)
 DENG2_AUDIENCE_METHOD(Bank, CacheLevel)
 
 Bank::Bank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
-    : d(new Instance(this, nameForLog, flags))
+    : d(new Impl(this, nameForLog, flags))
 {
     d->setSerialLocation(hotStorageLocation);
 }
@@ -805,7 +805,7 @@ void Bank::add(DotPath const &path, ISource *source)
                                  "Item '" + path.toString() + "' already exists");
     }
 
-    Instance::Data &item = d->items.insert(path);
+    Impl::Data &item = d->items.insert(path);
 
     DENG2_GUARD(item);
 
@@ -869,7 +869,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     LOG_AS(d->nameForLog);
 
     // First check if the item is already in memory.
-    Instance::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
+    Impl::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
     DENG2_GUARD(item);
 
     // Mark it used.
@@ -913,7 +913,7 @@ Bank::IData &Bank::data(DotPath const &path) const
 
 bool Bank::isLoaded(DotPath const &path) const
 {
-    Instance::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
+    Impl::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
     DENG2_GUARD(item);
     return bool(item.data);
 }

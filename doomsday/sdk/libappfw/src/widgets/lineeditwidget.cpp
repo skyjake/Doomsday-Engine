@@ -59,7 +59,7 @@ DENG_GUI_PIMPL(LineEditWidget)
     GLUniform uColor;
     GLUniform uCursorColor;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , wraps(static_cast<FontLineWrapping &>(i->lineWraps()))
         , hint(0)
@@ -81,7 +81,7 @@ DENG_GUI_PIMPL(LineEditWidget)
         self.set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(height);
     }
@@ -233,7 +233,7 @@ DENG_GUI_PIMPL(LineEditWidget)
 LineEditWidget::LineEditWidget(String const &name)
     : GuiWidget(name),
       AbstractLineEditor(new FontLineWrapping),
-      d(new Instance(this))
+      d(new Impl(this))
 {
     setBehavior(ContentClipping | Focusable);
     setAttribute(FocusHidden);

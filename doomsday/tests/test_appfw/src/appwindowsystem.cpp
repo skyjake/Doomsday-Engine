@@ -24,13 +24,13 @@ using namespace de;
 
 DENG2_PIMPL(AppWindowSystem)
 {
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.style().load(App::packageLoader().load("net.dengine.test.appfw.defaultstyle"));
     }
 };
 
-AppWindowSystem::AppWindowSystem() : d(new Instance(this))
+AppWindowSystem::AppWindowSystem() : d(new Impl(this))
 {
     setAppWindowSystem(*this);
 }

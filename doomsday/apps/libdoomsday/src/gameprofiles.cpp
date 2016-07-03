@@ -37,7 +37,7 @@ static GameProfile nullGameProfile;
 DENG2_PIMPL(GameProfiles)
 , DENG2_OBSERVES(Games, Addition)
 {
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void gameAdded(Game &game)
     {
@@ -56,7 +56,7 @@ DENG2_PIMPL(GameProfiles)
 };
 
 GameProfiles::GameProfiles()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     setPersistentName("game");
 }
@@ -114,9 +114,9 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     StringList packages;
     bool userCreated = false;
 
-    Instance() {}
+    Impl() {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : gameId     (other.gameId)
         , packages   (other.packages)
         , userCreated(other.userCreated)
@@ -124,14 +124,14 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
 };
 
 GameProfiles::Profile::Profile(String const &name)
-    : d(new Instance)
+    : d(new Impl)
 {
     setName(name);
 }
 
 GameProfiles::Profile::Profile(Profile const &other)
     : AbstractProfile(other)
-    , d(new Instance(*other.d))
+    , d(new Impl(*other.d))
 {}
 
 void GameProfiles::Profile::setGame(String const &id)

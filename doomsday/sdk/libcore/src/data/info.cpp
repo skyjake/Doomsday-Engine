@@ -70,7 +70,7 @@ DENG2_PIMPL(Info)
 
     using InfoValue = Info::Element::Value;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , rootBlock("", "", *i)
     {
@@ -676,7 +676,7 @@ DENG2_PIMPL_NOREF(Info::Element)
 };
 
 Info::Element::Element(Type type, String const &name)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->type = type;
     setName(name);
@@ -807,26 +807,26 @@ void Info::BlockElement::moveContents(BlockElement &destination)
 
 //---------------------------------------------------------------------------------------
 
-Info::Info() : d(new Instance(this))
+Info::Info() : d(new Impl(this))
 {}
 
 Info::Info(String const &source) : d(nullptr)
 {
-    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
 }
 
 Info::Info(File const &file) : d(nullptr)
 {
-    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(file);
     d.reset(inst.take());
 }
 
 Info::Info(String const &source, IIncludeFinder const &finder) : d(nullptr)
 {
-    QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
+    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->finder = &finder;
     inst->parse(source);
     d.reset(inst.take());

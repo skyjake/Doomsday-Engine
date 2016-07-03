@@ -54,7 +54,7 @@ DENG2_PIMPL(LocalServerDialog)
     FolderSelection *runtime;
     bool portChanged;
 
-    Instance(Public &i) : Base(i), portChanged(false)
+    Impl(Public &i) : Base(i), portChanged(false)
     {
 #ifdef WIN32
         self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -195,7 +195,7 @@ DENG2_PIMPL(LocalServerDialog)
 };
 
 LocalServerDialog::LocalServerDialog(QWidget *parent)
-    : QDialog(parent), d(new Instance(*this))
+    : QDialog(parent), d(new Impl(*this))
 {
     connect(d->port, SIGNAL(textChanged(QString)), this, SLOT(validate()));
     connect(d->announce, SIGNAL(stateChanged(int)), this, SLOT(validate()));

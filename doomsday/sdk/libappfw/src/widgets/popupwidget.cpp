@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(PopupWidget)
     RuleRectangle anchor;
     Rule const *marker;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // Style.
         marker = &rule("gap");
@@ -216,7 +216,7 @@ DENG_GUI_PIMPL(PopupWidget)
     }
 };
 
-PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance(this))
+PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Impl(this))
 {
     setOpeningDirection(ui::Up);
     d->updateStyle();

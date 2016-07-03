@@ -183,12 +183,12 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
     bool needRebuildOrderedSegments;  ///< @c true= the ordered segment list needs to be rebuilt.
     BspLeaf *bspLeaf;                 ///< BSP leaf attributed to the subspace (if any).
 
-    Instance()
+    Impl()
         : needRebuildOrderedSegments(false)
         , bspLeaf                   (nullptr)
     {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : de::IPrivate()
         , segments                  (other.segments)
         , orderedSegments           (other.orderedSegments)
@@ -295,27 +295,26 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
         // LOG_DEBUG("Ordered segments around %s") << point.asText();
     }
 
-private:
-    Instance &operator = (Instance const &); // no assignment
+    Impl &operator = (Impl const &) = delete; // no assignment
 };
 
 ConvexSubspaceProxy::ConvexSubspaceProxy()
-    : d(new Instance)
+    : d(new Impl)
 {}
 
 ConvexSubspaceProxy::ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments)
-    : d(new Instance)
+    : d(new Impl)
 {
     addSegments(segments);
 }
 
 ConvexSubspaceProxy::ConvexSubspaceProxy(ConvexSubspaceProxy const &other)
-    : d(new Instance(*other.d))
+    : d(new Impl(*other.d))
 {}
 
 ConvexSubspaceProxy &ConvexSubspaceProxy::operator = (ConvexSubspaceProxy const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Impl(*other.d));
     return *this;
 }
 

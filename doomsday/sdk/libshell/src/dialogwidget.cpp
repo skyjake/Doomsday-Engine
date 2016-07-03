@@ -30,7 +30,7 @@ DENG2_PIMPL_NOREF(DialogWidget)
 };
 
 DialogWidget::DialogWidget(String const &name)
-    : TextWidget(name), d(new Instance)
+    : TextWidget(name), d(new Impl)
 {
     // Dialogs are hidden until executed.
     hide();

@@ -52,8 +52,8 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
     char *text        = nullptr;
     bool animComplete = true;
 
-    Instance()  { AnimatorVector4_Init(color, 1, 1, 1, 1); }
-    ~Instance() { Z_Free(text); }
+    Impl()  { AnimatorVector4_Init(color, 1, 1, 1, 1); }
+    ~Impl() { Z_Free(text); }
 
 #ifdef __CLIENT__
     static int textLineWidth(char const *text)
@@ -82,7 +82,7 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
 
 FinaleTextWidget::FinaleTextWidget(String const &name)
     : FinaleWidget(name)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 FinaleTextWidget::~FinaleTextWidget()

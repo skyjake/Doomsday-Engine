@@ -28,11 +28,11 @@ DENG2_PIMPL_NOREF(ConsoleEffect)
     int console;
     bool inited;
 
-    Instance() : console(0), inited(false)
+    Impl() : console(0), inited(false)
     {}
 };
 
-ConsoleEffect::ConsoleEffect(int console) : d(new Instance)
+ConsoleEffect::ConsoleEffect(int console) : d(new Impl)
 {
     d->console = console;
 }

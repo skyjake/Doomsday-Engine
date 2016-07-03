@@ -118,7 +118,7 @@ DENG2_PIMPL(MaterialArchive)
     Records records;            ///< Mappings between URI and Material.
     int numFlats = 0;           ///< Used with older versions.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     inline SerialId insertRecord(Uri const &uri)
@@ -189,7 +189,7 @@ DENG2_PIMPL(MaterialArchive)
 };
 
 MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     d->useSegments = useSegments;
 

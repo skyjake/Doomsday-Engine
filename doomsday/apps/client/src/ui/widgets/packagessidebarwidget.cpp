@@ -30,7 +30,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
 {
     PackagesWidget *browser;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         GuiWidget *container = &self.containerWidget();
 
@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
 
 PackagesSidebarWidget::PackagesSidebarWidget()
     : SidebarWidget("Packages", "packages-sidebar")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     // Button for refreshing the available packages.
     auto *refreshButton = new ButtonWidget;

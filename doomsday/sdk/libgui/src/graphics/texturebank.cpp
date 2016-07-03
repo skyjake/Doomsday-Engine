@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(TextureBank::ImageSource)
     DotPath sourcePath;
 };
 
-TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Instance)
+TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Impl)
 {
     d->sourcePath = sourcePath;
 }
@@ -41,10 +41,10 @@ DENG2_PIMPL(TextureBank)
 {
     struct TextureData : public IData
     {
-        Instance *d;
+        Impl *d;
         Id id { Id::None };
 
-        TextureData(Image const &image, Instance *owner) : d(owner)
+        TextureData(Image const &image, Impl *owner) : d(owner)
         {
             id = d->atlas->alloc(image);
 
@@ -61,16 +61,16 @@ DENG2_PIMPL(TextureBank)
     IAtlas *atlas { nullptr };
     QHash<Id::Type, String> pathForAtlasId; // reverse lookup
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         // Get rid of items before the reverse lookup hash is destroyed.
         self.clear();
     }
 };
 
-TextureBank::TextureBank() : Bank("TextureBank"), d(new Instance(this))
+TextureBank::TextureBank() : Bank("TextureBank"), d(new Impl(this))
 {}
 
 void TextureBank::setAtlas(IAtlas *atlas)
@@ -85,7 +85,7 @@ IAtlas *TextureBank::atlas()
 
 Id const &TextureBank::texture(DotPath const &id)
 {
-    return data(id).as<Instance::TextureData>().id;
+    return data(id).as<Impl::TextureData>().id;
 }
 
 Path TextureBank::sourcePathForAtlasId(Id const &id) const
@@ -100,7 +100,7 @@ Path TextureBank::sourcePathForAtlasId(Id const &id) const
 
 Bank::IData *TextureBank::loadFromSource(ISource &source)
 {
-    auto *data = new Instance::TextureData(source.as<ImageSource>().load(), d);
+    auto *data = new Impl::TextureData(source.as<ImageSource>().load(), d);
     d->pathForAtlasId.insert(data->id, source.as<ImageSource>().sourcePath());
     return data;
 }

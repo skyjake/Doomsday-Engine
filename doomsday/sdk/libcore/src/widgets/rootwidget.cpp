@@ -29,14 +29,14 @@ DENG2_PIMPL_NOREF(RootWidget)
     RuleRectangle *viewRect;
     SafeWidgetPtr<Widget> focus;
 
-    Instance() : focus(0)
+    Impl() : focus(0)
     {
         viewRect = new RuleRectangle;
         viewRect->setLeftTop    (Const(0), Const(0))
                  .setRightBottom(Const(0), Const(0));
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete viewRect;
     }
@@ -52,7 +52,7 @@ DENG2_PIMPL_NOREF(RootWidget)
 
 DENG2_AUDIENCE_METHOD(RootWidget, FocusChange)
 
-RootWidget::RootWidget() : Widget(), d(new Instance)
+RootWidget::RootWidget() : Widget(), d(new Impl)
 {}
 
 RootWidget::Size RootWidget::viewSize() const

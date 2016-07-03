@@ -48,7 +48,7 @@ DENG2_PIMPL(MainWindow)
     ConstantRule *cursorX;
     ConstantRule *cursorY;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , root(&self)
         , needRootSizeUpdate(false)
@@ -63,7 +63,7 @@ DENG2_PIMPL(MainWindow)
         self.canvas().audienceForGLResize() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -198,7 +198,7 @@ DENG2_PIMPL(MainWindow)
 };
 
 MainWindow::MainWindow(String const &id)
-    : BaseWindow(id), d(new Instance(this))
+    : BaseWindow(id), d(new Impl(this))
 {
     if (App::commandLine().has("--ovr"))
     {

@@ -30,10 +30,10 @@ DENG2_PIMPL(BaseMap)
     EntityDatabase entityDatabase;
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
     }
@@ -52,7 +52,7 @@ DENG2_PIMPL(BaseMap)
 
 DENG2_AUDIENCE_METHOD(BaseMap, Deletion)
 
-BaseMap::BaseMap(res::MapManifest *manifest) : d(new Instance(this))
+BaseMap::BaseMap(res::MapManifest *manifest) : d(new Impl(this))
 {
     setManifest(manifest);
 }

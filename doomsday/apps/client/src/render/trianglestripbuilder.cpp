@@ -32,7 +32,7 @@ DENG2_PIMPL(TriangleStripBuilder)
     QScopedPointer<PositionBuffer> positions;
     QScopedPointer<TexCoordBuffer> texcoords;
 
-    Instance(Public *i, bool buildTexCoords)
+    Impl(Public *i, bool buildTexCoords)
         : Base(i),
           direction(Clockwise),
           buildTexCoords(buildTexCoords),
@@ -64,7 +64,7 @@ DENG2_PIMPL(TriangleStripBuilder)
 };
 
 TriangleStripBuilder::TriangleStripBuilder(bool buildTexCoords)
-    : d(new Instance(this, buildTexCoords))
+    : d(new Impl(this, buildTexCoords))
 {}
 
 void TriangleStripBuilder::begin(ClockDirection direction, int reserveElements)

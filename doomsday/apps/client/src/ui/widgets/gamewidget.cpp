@@ -56,7 +56,7 @@ using namespace de;
 
 DENG2_PIMPL(GameWidget)
 {
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void draw()
     {
@@ -107,7 +107,7 @@ DENG2_PIMPL(GameWidget)
 };
 
 GameWidget::GameWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
 }

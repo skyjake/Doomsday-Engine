@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(SidebarWidget)
     ButtonWidget *close;
     std::unique_ptr<SequentialLayout> layout;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , firstColumnWidth(new IndirectRule)
     {
@@ -59,7 +59,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
     }
 
-    ~Instance()
+    ~Impl()
     {
         //DoomsdayApp::app().audienceForGameChange() -= this;
         releaseRef(firstColumnWidth);
@@ -77,7 +77,7 @@ DENG_GUI_PIMPL(SidebarWidget)
 
 SidebarWidget::SidebarWidget(String const &titleText, String const &name)
     : PanelWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setSizePolicy(Fixed);
     setOpeningDirection(Left);

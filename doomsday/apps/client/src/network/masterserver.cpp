@@ -72,15 +72,15 @@ DENG2_PIMPL_NOREF(MasterWorker)
     typedef std::vector<serverinfo_t> Servers;
     Servers servers;
 
-    Instance() : network(0), currentAction(NONE) {}
+    Impl() : network(0), currentAction(NONE) {}
 
-    ~Instance()
+    ~Impl()
     {
         delete network;
     }
 };
 
-MasterWorker::MasterWorker() : d(new Instance)
+MasterWorker::MasterWorker() : d(new Impl)
 {
     d->network = new QNetworkAccessManager(this);
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));

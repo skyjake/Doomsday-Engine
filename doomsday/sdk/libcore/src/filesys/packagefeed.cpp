@@ -28,7 +28,7 @@ DENG2_PIMPL(PackageFeed)
 {
     PackageLoader &loader;
 
-    Instance(Public *i, PackageLoader &ldr)
+    Impl(Public *i, PackageLoader &ldr)
         : Base(i), loader(ldr)
     {}
 
@@ -72,7 +72,7 @@ DENG2_PIMPL(PackageFeed)
     }
 };
 
-PackageFeed::PackageFeed(PackageLoader &loader) : d(new Instance(this, loader))
+PackageFeed::PackageFeed(PackageLoader &loader) : d(new Impl(this, loader))
 {}
 
 PackageLoader &PackageFeed::loader()

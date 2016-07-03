@@ -54,7 +54,7 @@ DENG2_PIMPL_NOREF(Widget)
     QVariant userValue2;
 };
 
-Widget::Widget() : d(new Instance)
+Widget::Widget() : d(new Impl)
 {}
 
 Widget::~Widget()

@@ -63,14 +63,14 @@ DENG2_PIMPL_NOREF(BusyRunner)
     bool        busyWasIgnoringInput = false;
     bool        fadeFromBlack = false;
 
-    Instance()
+    Impl()
     {
         busy().audienceForBeginning()     += this;
         busy().audienceForEnd()           += this;
         busy().audienceForTaskWillStart() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         //busy().audienceForBeginning()     -= this;
         //busy().audienceForEnd()           -= this;
@@ -155,7 +155,7 @@ static BusyRunner &busyRunner()
     return *static_cast<BusyRunner *>(busy().taskRunner());
 }
 
-BusyRunner::BusyRunner() : d(new Instance)
+BusyRunner::BusyRunner() : d(new Impl)
 {
     busy().setTaskRunner(this);
 }

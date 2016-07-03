@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(Plugins)
     typedef QList<Hook> HookRegister;
     HookRegister hooks[NUM_HOOK_TYPES];
 
-    Instance()
+    Impl()
     {
         zap(gameExports);
         zap(hInstPlug);
@@ -212,7 +212,7 @@ DENG2_PIMPL_NOREF(Plugins)
 DENG2_AUDIENCE_METHOD(Plugins, PublishAPI)
 DENG2_AUDIENCE_METHOD(Plugins, Notification)
 
-Plugins::Plugins() : d(new Instance)
+Plugins::Plugins() : d(new Impl)
 {}
 
 void Plugins::publishAPIs(::Library *lib)

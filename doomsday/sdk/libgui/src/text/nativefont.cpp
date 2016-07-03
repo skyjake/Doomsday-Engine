@@ -33,7 +33,7 @@ namespace de
         String cachedText; // Measuring is done repeatedly
         Rectanglei cachedMeasure;
 
-        Instance(Public *i)
+        Impl(Public *i)
             : Base(i)
             , size(12.f)
             , style(Regular)
@@ -65,12 +65,12 @@ void NativeFont::defineMapping(String const &family, StyleMapping const &mapping
     families.insert(family, mapping);
 }
 
-NativeFont::NativeFont(String const &family) : d(new Instance(this))
+NativeFont::NativeFont(String const &family) : d(new Impl(this))
 {
     setFamily(family);
 }
 
-NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Instance(this))
+NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Impl(this))
 {
     *this = other;
 }

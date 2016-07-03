@@ -49,7 +49,7 @@ DENG2_PIMPL(PlayerLogWidget)
     dint pvisEntryCount = 0;  ///< Number of potentially visible entries.
     dint nextUsedEntry  = 0;  ///< Index of the next used entry to be re-used.
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     /// @return  Index of the first (i.e., earliest) entry that is potentially visible.
     dint firstPVisEntryIdx() const
@@ -134,7 +134,7 @@ PlayerLogWidget::PlayerLogWidget(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(PlayerLogWidget_UpdateGeometry),
                 function_cast<DrawFunc>(PlayerLogWidget_Draw),
                 player)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 PlayerLogWidget::~PlayerLogWidget()

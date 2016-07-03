@@ -43,7 +43,7 @@ DENG_GUI_PIMPL(GameFilterWidget)
     DialogContentStylist stylist;
     FilterMode filterMode = UserChangeable;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         stylist.setContainer(self);
 
@@ -84,7 +84,7 @@ DENG_GUI_PIMPL(GameFilterWidget)
                 .setInput(Rule::Top,   self.rule().top());
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(bgOpacityRule);
     }
@@ -116,7 +116,7 @@ DENG_GUI_PIMPL(GameFilterWidget)
 };
 
 GameFilterWidget::GameFilterWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     connect(d->tabs, SIGNAL(currentTabChanged()), this, SIGNAL(filterChanged()));
     connect(d->sortBy, SIGNAL(selectionChanged(uint)), this, SIGNAL(sortOrderChanged()));

@@ -58,7 +58,7 @@ public Font::RichFormat::IStyle
     GLUniform uScrollMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uColor           { "uColor",     GLUniform::Vec4 };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         updateStyle();
 
@@ -73,7 +73,7 @@ public Font::RichFormat::IStyle
         maxLineWidth = GuiWidget::toDevicePixels(1000);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(contentMaxWidth);
     }
@@ -262,7 +262,7 @@ public Font::RichFormat::IStyle
 
 DocumentWidget::DocumentWidget(String const &name)
     : ScrollAreaWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setWidthPolicy(ui::Expand);
     rule().setInput(Rule::Height, contentRule().height() + margins().height());

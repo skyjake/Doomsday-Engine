@@ -27,13 +27,13 @@ DENG2_PIMPL_NOREF(Player)
     Smoother *smoother = Smoother_New();
     Pinger pinger;
 
-    Instance()
+    Impl()
     {
         zap(publicData);
         zap(pinger);
     }
 
-    ~Instance()
+    ~Impl()
     {
         Smoother_Delete(smoother);
     }
@@ -45,7 +45,7 @@ Player::Player()
     , extraLight(0)
     , targetExtraLight(0)
     , viewConsole(0)
-    , d(new Instance)
+    , d(new Impl)
 {
     zap(name);
 }

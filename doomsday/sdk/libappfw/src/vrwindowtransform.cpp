@@ -34,12 +34,12 @@ DENG2_PIMPL(VRWindowTransform)
 
     GLFramebuffer unwarpedFB;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , vrCfg(DENG2_BASE_GUI_APP->vr())
     {}
 
-    ~Instance()
+    ~Impl()
     {
         vrCfg.oculusRift().deinit();
     }
@@ -282,7 +282,7 @@ DENG2_PIMPL(VRWindowTransform)
 };
 
 VRWindowTransform::VRWindowTransform(BaseWindow &window)
-    : WindowTransform(window), d(new Instance(this))
+    : WindowTransform(window), d(new Impl(this))
 {}
 
 void VRWindowTransform::glInit()

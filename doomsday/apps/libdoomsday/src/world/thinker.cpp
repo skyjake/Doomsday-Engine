@@ -31,7 +31,7 @@ DENG2_PIMPL_NOREF(Thinker)
     thinker_s *base;    // owned
     IData *data;        // owned, optional
 
-    Instance(AllocMethod alloc, dsize sizeInBytes, IData *data_)
+    Impl(AllocMethod alloc, dsize sizeInBytes, IData *data_)
         : size(max<dsize>(sizeInBytes, sizeof(thinker_s)))
         , base(0)
         , data(data_)
@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(Thinker)
         if (data) data->setThinker(base);
     }
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : size(other.size)
         , base(reinterpret_cast<thinker_s *>(other.base->_flags & THINKF_STD_MALLOC?
                                                  M_MemDup(other.base, size) :
@@ -60,13 +60,13 @@ DENG2_PIMPL_NOREF(Thinker)
         if (data) data->setThinker(base);
     }
 
-    Instance(thinker_s *podThinkerToTake, dsize sizeInBytes)
+    Impl(thinker_s *podThinkerToTake, dsize sizeInBytes)
         : size(sizeInBytes)
         , base(podThinkerToTake)
         , data(reinterpret_cast<IData *>(podThinkerToTake->d)) // also take ownership of the private data
     {}
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -116,7 +116,7 @@ DENG2_PIMPL_NOREF(Thinker)
     , id      (*this, offsetof(thinker_s, id      ))
 
 Thinker::Thinker(dsize sizeInBytes, IData *data)
-    : d(new Instance(AllocateStandard, sizeInBytes, data))
+    : d(new Impl(AllocateStandard, sizeInBytes, data))
     , STRUCT_MEMBER_ACCESSORS()
 {
     // Default to no public thinker callback.
@@ -124,7 +124,7 @@ Thinker::Thinker(dsize sizeInBytes, IData *data)
 }
 
 Thinker::Thinker(AllocMethod alloc, dsize sizeInBytes, Thinker::IData *data)
-    : d(new Instance(alloc, sizeInBytes, data))
+    : d(new Impl(alloc, sizeInBytes, data))
     , STRUCT_MEMBER_ACCESSORS()
 {
     // Default to no public thinker callback.
@@ -132,12 +132,12 @@ Thinker::Thinker(AllocMethod alloc, dsize sizeInBytes, Thinker::IData *data)
 }
 
 Thinker::Thinker(Thinker const &other)
-    : d(new Instance(*other.d))
+    : d(new Impl(*other.d))
     , STRUCT_MEMBER_ACCESSORS()
 {}
 
 Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod alloc)
-    : d(new Instance(alloc, sizeInBytes, 0))
+    : d(new Impl(alloc, sizeInBytes, 0))
     , STRUCT_MEMBER_ACCESSORS()
 {
     DENG2_ASSERT(d->size == sizeInBytes);
@@ -154,13 +154,13 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
 }
 
 Thinker::Thinker(thinker_s *podThinkerToTake, de::dsize sizeInBytes)
-    : d(new Instance(podThinkerToTake, sizeInBytes))
+    : d(new Impl(podThinkerToTake, sizeInBytes))
     , STRUCT_MEMBER_ACCESSORS()
 {}
 
 Thinker &Thinker::operator = (Thinker const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Impl(*other.d));
     return *this;
 }
 
@@ -174,7 +174,7 @@ void Thinker::zap()
     delete d->data;
     d->data = 0;
 
-    Instance::clearBaseToZero(d->base, d->size);
+    Impl::clearBaseToZero(d->base, d->size);
 }
 
 bool Thinker::isDisabled() const
@@ -248,7 +248,7 @@ void Thinker::release(thinker_s &thinkerBase)
 void Thinker::zap(thinker_s &thinkerBase, dsize sizeInBytes)
 {
     delete reinterpret_cast<IData *>(thinkerBase.d);
-    Instance::clearBaseToZero(&thinkerBase, sizeInBytes);
+    Impl::clearBaseToZero(&thinkerBase, sizeInBytes);
 }
 
 void Thinker::setData(Thinker::IData *data)

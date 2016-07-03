@@ -77,7 +77,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
     GrabEdge grabHover = NotGrabbed;
     GrabEdge grabbed = NotGrabbed;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         horizShift = new AnimationRule(0);
         width      = new AnimationRule(rule("console.width").valuei());
@@ -89,7 +89,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         //DoomsdayApp::app().audienceForGameChange() -= this;
         //App::config("console.script").audienceForChange() -= this;
@@ -242,9 +242,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
     struct RightClick : public GuiWidget::IEventHandler
     {
-        Instance *d;
+        Impl *d;
 
-        RightClick(Instance *inst) : d(inst) {}
+        RightClick(Impl *i) : d(i) {}
 
         bool handleEvent(GuiWidget &widget, Event const &event)
         {
@@ -287,7 +287,7 @@ static PopupWidget *consoleShortcutPopup()
     return pop;
 }
 
-ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
+ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
 {
     d->buttons = new GuiWidget;
     add(d->buttons);
@@ -307,7 +307,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     // Button for opening the console prompt menu.
     d->promptButton = new PopupButtonWidget;
-    d->promptButton->addEventHandler(new Instance::RightClick(d));
+    d->promptButton->addEventHandler(new Impl::RightClick(d));
 
     d->promptButton->rule()
             .setInput(Rule::Width,  d->promptButton->rule().height())
@@ -478,7 +478,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
     }
 
     // Dragging an edge resizes the widget.
-    if (d->grabHover != Instance::NotGrabbed && event.type() == Event::MouseButton)
+    if (d->grabHover != Impl::NotGrabbed && event.type() == Event::MouseButton)
     {
         switch (handleMouseClick(event))
         {
@@ -488,7 +488,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
         case MouseClickAborted:
         case MouseClickFinished:
-            d->grabbed = Instance::NotGrabbed;
+            d->grabbed = Impl::NotGrabbed;
             return true;
 
         default:

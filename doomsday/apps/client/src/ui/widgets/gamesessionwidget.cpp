@@ -41,7 +41,7 @@ DENG2_PIMPL(GameSessionWidget)
     PopupMenuWidget *menu = nullptr;
     ButtonWidget *actionButton = nullptr;
 
-    Instance(Public *i, PopupStyle ps, ui::Direction popupOpeningDirection)
+    Impl(Public *i, PopupStyle ps, ui::Direction popupOpeningDirection)
         : Base(i)
         , popupStyle(ps)
     {
@@ -90,7 +90,7 @@ DENG2_PIMPL(GameSessionWidget)
         DoomsdayApp::app().audienceForGameUnload() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         //DoomsdayApp::app().audienceForGameUnload() -= this;
 
@@ -107,7 +107,7 @@ DENG2_PIMPL(GameSessionWidget)
 
 GameSessionWidget::GameSessionWidget(PopupStyle ps,
                                      ui::Direction popupOpeningDirection)
-    : d(new Instance(this, ps, popupOpeningDirection))
+    : d(new Impl(this, ps, popupOpeningDirection))
 {
     Font const &font = style().fonts().font("default");
     rule().setInput(Rule::Height, OperatorRule::maximum(font.lineSpacing() * 3 +

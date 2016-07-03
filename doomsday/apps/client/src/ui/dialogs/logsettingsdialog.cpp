@@ -62,7 +62,7 @@ DENG2_PIMPL(LogSettingsDialog)
     };
     DomainWidgets domWidgets[NUM_DOMAINS];
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         try
         {
@@ -112,7 +112,7 @@ DENG2_PIMPL(LogSettingsDialog)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         deinit();
         releaseRef(columnWidth);
@@ -216,7 +216,7 @@ DENG2_PIMPL(LogSettingsDialog)
 };
 
 LogSettingsDialog::LogSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Log Filter & Alerts"));
     heading().setImage(style().images().image("log"));

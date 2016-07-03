@@ -45,17 +45,17 @@ DENG2_PIMPL_NOREF(Beacon)
     Time discoveryEndsAt;
     QMap<Address, Block> found;
 
-    Instance() : socket(0), timer(0)
+    Impl() : socket(0), timer(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete socket;
         delete timer;
     }
 };
 
-Beacon::Beacon(duint16 port) : d(new Instance)
+Beacon::Beacon(duint16 port) : d(new Impl)
 {
     d->port = port;
 }

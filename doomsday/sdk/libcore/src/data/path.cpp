@@ -90,11 +90,11 @@ String Path::Segment::toString() const
     return range.string()->mid(range.position(), range.size());
 }
 
-struct Path::Instance
+struct Path::Impl
 {
     String path;
 
-    /// The character in Instance::path that acts as the segment separator.
+    /// The character in Impl::path that acts as the segment separator.
     QChar separator;
 
     /**
@@ -126,13 +126,13 @@ struct Path::Instance
      */
     QList<Path::Segment *> extraSegments;
 
-    Instance() : separator('/'), segmentCount(0)
+    Impl() : separator('/'), segmentCount(0)
     {}
 
-    Instance(String const &p, QChar sep) : path(p), separator(sep), segmentCount(0)
+    Impl(String const &p, QChar sep) : path(p), separator(sep), segmentCount(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearSegments();
     }
@@ -241,34 +241,33 @@ struct Path::Instance
         DENG2_ASSERT(segmentCount > 0);
     }
 
-private:
-    Instance &operator = (Instance const &); // no assignment
-    Instance(Instance const &); // no copying
+    Impl &operator = (Impl const &) = delete; // no assignment
+    Impl(Impl const &) = delete; // no copying
 };
 
-Path::Path() : d(new Instance)
+Path::Path() : d(new Impl)
 {}
 
 Path::Path(String const &path, QChar sep)
-    : LogEntry::Arg::Base(), d(new Instance(path, sep))
+    : LogEntry::Arg::Base(), d(new Impl(path, sep))
 {}
 
 Path::Path(QString const &str)
-    : LogEntry::Arg::Base(), d(new Instance(str, '/'))
+    : LogEntry::Arg::Base(), d(new Impl(str, '/'))
 {}
 
 Path::Path(char const *nullTerminatedCStr, char sep)
-    : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), sep))
+    : LogEntry::Arg::Base(), d(new Impl(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
 
 Path::Path(char const *nullTerminatedCStr)
-    : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), '/'))
+    : LogEntry::Arg::Base(), d(new Impl(QString::fromUtf8(nullTerminatedCStr), '/'))
 {
 }
 
 Path::Path(Path const &other)
     : ISerializable(), LogEntry::Arg::Base(),
-      d(new Instance(other.d->path, other.d->separator))
+      d(new Impl(other.d->path, other.d->separator))
 {}
 
 Path::~Path()

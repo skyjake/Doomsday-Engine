@@ -41,7 +41,7 @@ DENG2_PIMPL_NOREF(GroupWidget)
 
 GroupWidget::GroupWidget(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(GroupWidget_UpdateGeometry), nullptr, player)
-    , d(new Instance)
+    , d(new Impl)
 {
     setPlayer(player);
 }

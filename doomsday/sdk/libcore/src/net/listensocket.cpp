@@ -35,13 +35,13 @@ DENG2_PIMPL_NOREF(ListenSocket)
     /// Incoming connections.
     QList<QTcpSocket *> incoming;
 
-    Instance() : socket(0), port(0) {}
-    ~Instance() {
+    Impl() : socket(0), port(0) {}
+    ~Impl() {
         delete socket;
     }
 };
 
-ListenSocket::ListenSocket(duint16 port) : d(new Instance)
+ListenSocket::ListenSocket(duint16 port) : d(new Impl)
 {
     LOG_AS("ListenSocket");
 

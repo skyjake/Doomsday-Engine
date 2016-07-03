@@ -48,14 +48,14 @@ DENG2_PIMPL(MapStateWriter)
     MaterialArchive *materialArchive;
     Writer *writer; // Not owned.
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , thingArchive(0)
         , materialArchive(0)
         , writer(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         MaterialArchive_Delete(materialArchive);
         delete thingArchive;
@@ -296,7 +296,7 @@ DENG2_PIMPL(MapStateWriter)
     }
 };
 
-MapStateWriter::MapStateWriter() : d(new Instance(this))
+MapStateWriter::MapStateWriter() : d(new Impl(this))
 {}
 
 void MapStateWriter::write(Writer *writer, bool excludePlayers)

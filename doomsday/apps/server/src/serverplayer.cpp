@@ -25,7 +25,7 @@ DENG2_PIMPL_NOREF(ServerPlayer)
     /// Each client has their own pool for deltas.
     pool_t deltaPool;
 
-    Instance()
+    Impl()
     {
         zap(deltaPool);
     }
@@ -39,7 +39,7 @@ ServerPlayer::ServerPlayer()
     , lastTransmit(0)
     , fov(90)
     , ready(false)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 bool ServerPlayer::isConnected() const

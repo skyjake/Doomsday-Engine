@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(Material::Decoration)
 };
 
 Material::Decoration::Decoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->patternSkip   = patternSkip;
     d->patternOffset = patternOffset;
@@ -194,9 +194,9 @@ DENG2_PIMPL(Material)
     QList<MaterialAnimator *> animators;
 #endif
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
 #ifdef __CLIENT__
         self.clearAllAnimators();
@@ -315,7 +315,7 @@ DENG2_AUDIENCE_METHOD(Material, DimensionsChange)
 
 Material::Material(MaterialManifest &manifest)
     : MapElement(DMU_MATERIAL)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->manifest = &manifest;
 }

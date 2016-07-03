@@ -36,7 +36,7 @@ DENG2_PIMPL(CVarTextualSliderWidget)
     String nthSuffix;
     String emptyText;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     inline bool valueIsOne(float value)
     {
@@ -125,7 +125,7 @@ DENG2_PIMPL(CVarTextualSliderWidget)
 CVarTextualSliderWidget::CVarTextualSliderWidget(char const *cvarPath, float min, float max,
                                                  float step, bool floatMode)
     : CVarSliderWidget(cvarPath, min, max, step, floatMode)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setColor(MENU_COLOR3);
 }

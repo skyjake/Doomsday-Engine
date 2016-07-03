@@ -126,7 +126,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
     acs::System acscriptSys;  ///< The One acs::System instance.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         DENG2_ASSERT(singleton == nullptr);
         singleton = thisPublic;
@@ -835,7 +835,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif // __JHEXEN__
 };
 
-GameSession::GameSession() : d(new Instance(this))
+GameSession::GameSession() : d(new Impl(this))
 {}
 
 GameSession::~GameSession()
@@ -1151,7 +1151,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
     // of calling @ref P_SetupMap() and we need to restore them after).
-    Instance::playerbackup_t playerBackup[MAXPLAYERS];
+    Impl::playerbackup_t playerBackup[MAXPLAYERS];
     d->backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).

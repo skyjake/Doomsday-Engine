@@ -215,7 +215,7 @@ DENG2_PIMPL(ClientApp)
 
     LogWarningAlarm logAlarm;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , menuBar    (0)
         , inputSys   (0)
@@ -237,7 +237,7 @@ DENG2_PIMPL(ClientApp)
         self.games().audienceForProgress() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         try
         {
@@ -474,7 +474,7 @@ DENG2_PIMPL(ClientApp)
 ClientApp::ClientApp(int &argc, char **argv)
     : BaseGuiApp(argc, argv)
     , DoomsdayApp([] () -> Player * { return new ClientPlayer; })
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     novideo = false;
 

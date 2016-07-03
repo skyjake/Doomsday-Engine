@@ -45,7 +45,7 @@ DENG2_PIMPL(BiasSource)
     duint lastUpdateTime;       ///< In milliseconds. Use @c 0 to force an update.
     bool changed;               ///< Set to @c true to force re-evaluation.
 
-    Instance(Public *i, Vector3d const &origin, dfloat intensity,
+    Impl(Public *i, Vector3d const &origin, dfloat intensity,
              Vector3f const &color, dfloat minLight, dfloat maxLight)
         : Base(i)
         , origin          (origin)
@@ -59,7 +59,7 @@ DENG2_PIMPL(BiasSource)
         , changed         (true)
     {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base(i)
         , origin          (other.origin)
         , bspLeaf         (other.bspLeaf)
@@ -131,13 +131,13 @@ BiasSource::BiasSource(Vector3d const &origin, dfloat intensity, Vector3f const 
     dfloat minLight, dfloat maxLight)
     : Grabbable()
     , ISerializable()
-    , d(new Instance(this, origin, intensity, color, minLight, maxLight))
+    , d(new Impl(this, origin, intensity, color, minLight, maxLight))
 {}
 
 BiasSource::BiasSource(BiasSource const &other)
     : Grabbable() /*grabbable state is not copied*/
     , ISerializable()
-    , d(new Instance(this, *other.d))
+    , d(new Impl(this, *other.d))
 {}
 
 BiasSource BiasSource::fromDef(ded_light_t const &def) //static

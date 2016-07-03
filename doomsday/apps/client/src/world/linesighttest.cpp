@@ -70,7 +70,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
         }
     } ray;
 
-    Instance(Vector3d const &from, Vector3d const to, dfloat bottomSlope, dfloat topSlope)
+    Impl(Vector3d const &from, Vector3d const to, dfloat bottomSlope, dfloat topSlope)
         : from       (from)
         , to         (to)
         , bottomSlope(bottomSlope)
@@ -320,7 +320,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
 LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to, dfloat bottomSlope,
     dfloat topSlope, dint flags)
-    : d(new Instance(from, to, bottomSlope, topSlope))
+    : d(new Impl(from, to, bottomSlope, topSlope))
 {
     d->flags = flags;
 }

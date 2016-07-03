@@ -42,7 +42,7 @@ DENG2_PIMPL(VRConfig)
 
     float dominantEye; ///< Kludge for aim-down-weapon-sight modes
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , mode(Mono)
         , screenDistance(20.f)
@@ -63,7 +63,7 @@ DENG2_PIMPL(VRConfig)
     }
 };
 
-VRConfig::VRConfig() : d(new Instance(this))
+VRConfig::VRConfig() : d(new Impl(this))
 {}
 
 void VRConfig::setMode(StereoMode newMode)

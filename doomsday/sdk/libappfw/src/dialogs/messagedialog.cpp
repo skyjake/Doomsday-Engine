@@ -30,7 +30,7 @@ DENG_GUI_PIMPL(MessageDialog)
     LabelWidget *message;
     DialogContentStylist buttonStylist;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -80,7 +80,7 @@ DENG_GUI_PIMPL(MessageDialog)
 
 MessageDialog::MessageDialog(String const &name)
     : DialogWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 void MessageDialog::useInfoStyle()

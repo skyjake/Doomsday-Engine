@@ -62,7 +62,7 @@ DENG2_PIMPL_NOREF(guidata_face_t)
     bool oldWeaponsOwned[NUM_WEAPON_TYPES];
     dint lastAttackDown = 0;
 
-    Instance() { de::zap(oldWeaponsOwned); }
+    Impl() { de::zap(oldWeaponsOwned); }
 
     dint painOffset(dint player) const
     {
@@ -77,7 +77,7 @@ guidata_face_t::guidata_face_t(void (*updateGeometry) (HudWidget *wi),
     : HudWidget(updateGeometry,
                 drawer,
                 player)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 guidata_face_t::~guidata_face_t()

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Font"
@@ -63,11 +63,11 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
     QList<Format> stack;
     int plainPos;
 
-    Instance() : style(0) {}
+    Impl() : style(0) {}
 
-    Instance(IStyle const &style) : style(&style) {}
+    Impl(IStyle const &style) : style(&style) {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : de::IPrivate()
         , de::EscapeParser::IPlainTextObserver()
         , de::EscapeParser::IEscapeSequenceObserver()
@@ -82,7 +82,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
         plainPos += range.size();
 
         // Append a formatted range using the stack's current format.
-        ranges << Instance::FormatRange(plainRange, stack.last());
+        ranges << Impl::FormatRange(plainRange, stack.last());
 
         // Properties that span a single range only.
         stack.last().markIndent = stack.last().resetIndent = false;
@@ -91,7 +91,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
     void handleEscapeSequence(Rangei const &range)
     {
         // Save the previous format on the stack.
-        stack << Instance::Format(stack.last());
+        stack << Impl::Format(stack.last());
 
         String const code = esc.originalText().substr(range);
 
@@ -204,18 +204,18 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
     }
 };
 
-Font::RichFormat::RichFormat() : d(new RichFormat::Instance)
+Font::RichFormat::RichFormat() : d(new RichFormat::Impl)
 {}
 
-Font::RichFormat::RichFormat(IStyle const &style) : d(new RichFormat::Instance(style))
+Font::RichFormat::RichFormat(IStyle const &style) : d(new RichFormat::Impl(style))
 {}
 
-Font::RichFormat::RichFormat(RichFormat const &other) : d(new RichFormat::Instance(*other.d))
+Font::RichFormat::RichFormat(RichFormat const &other) : d(new RichFormat::Impl(*other.d))
 {}
 
 Font::RichFormat &Font::RichFormat::operator = (RichFormat const &other)
 {
-    d.reset(new RichFormat::Instance(*other.d));
+    d.reset(new RichFormat::Impl(*other.d));
     return *this;
 }
 
@@ -224,7 +224,7 @@ void Font::RichFormat::clear()
     d->ranges.clear();
     d->tabs.clear();
     d->stack.clear();
-    d->stack << Instance::Format();
+    d->stack << Impl::Format();
     d->plainPos = 0;
 }
 
@@ -245,7 +245,7 @@ Font::RichFormat::IStyle const &Font::RichFormat::style() const
 
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
-    Instance::FormatRange all;
+    Impl::FormatRange all;
     all.range = Rangei(0, plainText.size());
     RichFormat form;
     form.d->ranges << all;
@@ -264,7 +264,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
 #if 0
     qDebug() << "Styled text:" << styledText;
     qDebug() << "plain:" << d->esc.plainText();
-    foreach (Instance::FormatRange const &r, d->ranges)
+    foreach (Impl::FormatRange const &r, d->ranges)
     {
         qDebug() << r.range.asText()
                  << d->esc.plainText().substr(r.range)
@@ -379,7 +379,7 @@ void Font::RichFormat::Ref::updateIndices()
 {
     _indices = Rangei(0, 0);
 
-    Instance::Ranges const &ranges = format().d->ranges;
+    Impl::Ranges const &ranges = format().d->ranges;
 
     int i = 0;
     for (; i < ranges.size(); ++i)

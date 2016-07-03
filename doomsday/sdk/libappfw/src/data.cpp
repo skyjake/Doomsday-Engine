@@ -38,7 +38,7 @@ DENG2_AUDIENCE_METHOD(Data, Addition)
 DENG2_AUDIENCE_METHOD(Data, Removal)
 DENG2_AUDIENCE_METHOD(Data, OrderChange)
 
-Data::Data() : d(new Instance)
+Data::Data() : d(new Impl)
 {}
 
 void Data::sort(SortMethod method)

@@ -58,12 +58,12 @@ DENG2_PIMPL(Plane)
     ClPlaneMover *mover = nullptr;     ///< The current mover.
 #endif
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , surface(dynamic_cast<MapElement &>(*i))
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self);
 
@@ -163,7 +163,7 @@ DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 
 Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->setHeight(height);
     setNormal(normal);

@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(ArchiveEntryFile)
 
 ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath)
     : ByteArrayFile(name)
-    , d(new Instance)
+    , d(new Impl)
 {
     d->archive   = &archive;
     d->entryPath = entryPath;

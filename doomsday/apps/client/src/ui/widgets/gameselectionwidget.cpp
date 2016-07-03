@@ -63,7 +63,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         int numCols;
 
         SubsetWidget(String const &widgetName, Type selType,
-                     String const &headingText, GameSelectionWidget::Instance *owner)
+                     String const &headingText, GameSelectionWidget::Impl *owner)
             : FoldPanelWidget(widgetName)
             , titleText(headingText)
             , type(selType)
@@ -192,7 +192,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     QList<SubsetWidget *> subsets; // not owned
     bool doAction;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
         , doAction(false)
@@ -227,7 +227,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         foreach (SubsetWidget *sub, subsets) sub->menu->setFilter(0);
 
@@ -336,7 +336,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 };
 
 GameSelectionWidget::GameSelectionWidget(String const &name)
-    : ScrollAreaWidget(name), d(new Instance(this))
+    : ScrollAreaWidget(name), d(new Impl(this))
 {
     enableIndicatorDraw(true);
     setScrollBarColor("accent");
@@ -367,7 +367,7 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
                                         DotPath const &hoverColorId,
                                         ButtonWidget::HoverColorMode mode)
 {
-    foreach (Instance::SubsetWidget *s, d->subsets)
+    foreach (Impl::SubsetWidget *s, d->subsets)
     {
         s->setTitleColor(colorId, hoverColorId, mode);
     }
@@ -375,7 +375,7 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
 
 void GameSelectionWidget::setTitleFont(DotPath const &fontId)
 {
-    foreach (Instance::SubsetWidget *s, d->subsets)
+    foreach (Impl::SubsetWidget *s, d->subsets)
     {
         s->title().setFont(fontId);
     }
@@ -399,7 +399,7 @@ void GameSelectionWidget::enableActionOnSelection(bool doAction)
 Action *GameSelectionWidget::makeAction(ui::Item const &item) const
 {
     // Find the session menu that owns this item.
-    foreach (Instance::SubsetWidget *sub, d->subsets)
+    foreach (Impl::SubsetWidget *sub, d->subsets)
     {
         ui::DataPos const pos = sub->menu->items().find(item);
         if (pos != ui::Data::InvalidPos)
@@ -426,7 +426,7 @@ void GameSelectionWidget::update()
 void GameSelectionWidget::operator >> (PersistentState &toState) const
 {
     Record &st = toState.objectNamespace();
-    foreach (Instance::SubsetWidget *s, d->subsets)
+    foreach (Impl::SubsetWidget *s, d->subsets)
     {
         // Save the fold open/closed state.
         st.set(name() + "." + s->name() + ".open", s->isOpen());
@@ -436,7 +436,7 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
 void GameSelectionWidget::operator << (PersistentState const &fromState)
 {
     Record const &st = fromState.objectNamespace();
-    foreach (Instance::SubsetWidget *s, d->subsets)
+    foreach (Impl::SubsetWidget *s, d->subsets)
     {
         // Restore the fold open/closed state.
         if (st[name() + "." + s->name() + ".open"].value().isTrue())

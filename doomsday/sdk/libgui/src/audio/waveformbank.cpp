@@ -58,12 +58,12 @@ DENG2_PIMPL_NOREF(WaveformBank)
     };
 };
 
-WaveformBank::WaveformBank(Flags const &flags) : InfoBank("WaveformBank", flags), d(new Instance)
+WaveformBank::WaveformBank(Flags const &flags) : InfoBank("WaveformBank", flags), d(new Impl)
 {}
 
 void WaveformBank::add(DotPath const &id, String const &waveformFilePath)
 {
-    Bank::add(id, new Instance::Source(waveformFilePath));
+    Bank::add(id, new Impl::Source(waveformFilePath));
 }
 
 void WaveformBank::addFromInfo(File const &file)
@@ -75,23 +75,23 @@ void WaveformBank::addFromInfo(File const &file)
 
 Waveform const &WaveformBank::waveform(DotPath const &id) const
 {
-    return *data(id).as<Instance::Data>().waveform;
+    return *data(id).as<Impl::Data>().waveform;
 }
 
 Bank::ISource *WaveformBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::Source(absolutePathInContext(def, def["path"]));
+    return new Impl::Source(absolutePathInContext(def, def["path"]));
 }
 
 Bank::IData *WaveformBank::loadFromSource(ISource &source)
 {
-    return new Instance::Data(source.as<Instance::Source>().load());
+    return new Impl::Data(source.as<Impl::Source>().load());
 }
 
 Bank::IData *WaveformBank::newData()
 {
-    return new Instance::Data();
+    return new Impl::Data();
 }
 
 } // namespace de

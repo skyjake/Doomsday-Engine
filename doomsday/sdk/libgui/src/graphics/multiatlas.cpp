@@ -32,12 +32,12 @@ DENG2_PIMPL(MultiAtlas)
     IAtlasFactory &factory;
     QList<Atlas *> atlases;
 
-    Instance(Public *i, IAtlasFactory &factory)
+    Impl(Public *i, IAtlasFactory &factory)
         : Base(i)
         , factory(factory)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         // Delete all the atlases.
         release();
@@ -113,7 +113,7 @@ DENG2_PIMPL(MultiAtlas)
 };
 
 MultiAtlas::MultiAtlas(IAtlasFactory &factory)
-    : d(new Instance(this, factory))
+    : d(new Impl(this, factory))
 {}
 
 void MultiAtlas::clear()
@@ -136,14 +136,14 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
     Atlas *atlas = nullptr; ///< Committed atlas.
     QSet<Id::Type> allocated; // committed to the atlas
 
-    Instance(AllocGroup *i, MultiAtlas &owner)
+    Impl(AllocGroup *i, MultiAtlas &owner)
         : self(i)
         , owner(&owner)
     {
         this->owner->d->audienceForDeletion += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (owner)
         {
@@ -193,7 +193,7 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
 };
 
 MultiAtlas::AllocGroup::AllocGroup(MultiAtlas &multiAtlas)
-    : d(new Instance(this, multiAtlas))
+    : d(new Impl(this, multiAtlas))
 {}
 
 Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)

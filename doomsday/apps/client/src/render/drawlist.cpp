@@ -248,8 +248,8 @@ DENG2_PIMPL(DrawList)
     duint8 *cursor = nullptr;  ///< Data pointer for reading/writing.
     Element *last  = nullptr;  ///< Last element (if any).
 
-    Instance(Public *i, Spec const &spec) : Base(i), spec(spec) {}
-    ~Instance() { clearAllData(); }
+    Impl(Public *i, Spec const &spec) : Base(i), spec(spec) {}
+    ~Impl() { clearAllData(); }
 
     void clearAllData()
     {
@@ -726,7 +726,7 @@ DENG2_PIMPL(DrawList)
     }
 };
 
-DrawList::DrawList(Spec const &spec) : d(new Instance(this, spec))
+DrawList::DrawList(Spec const &spec) : d(new Impl(this, spec))
 {}
 
 bool DrawList::isEmpty() const
@@ -748,7 +748,7 @@ DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, DrawList
     if(indices.isEmpty()) return *this;  // Huh?
 
     // This becomes the new last element.
-    d->last = (Instance::Element *) d->allocateData(sizeof(Instance::Element));
+    d->last = (Impl::Element *) d->allocateData(sizeof(Impl::Element));
     d->last->size = 0;
 
     // Vertex buffer element indices for the primitive are stored in the list.
@@ -770,7 +770,7 @@ DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, DrawList
     *(duint *) d->cursor = 0;
 
     // Configure the GL state to be applied when this primitive is drawn later.
-    Instance::Element &elem = *d->last;
+    Impl::Element &elem = *d->last;
     elem.data.blendMode  = blendMode;
     elem.data.modTexture = modTexture;
     elem.data.modColor   = modColor;
@@ -825,7 +825,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     }
 
     bool skip = false;
-    for(Instance::Element *elem = d->first(); elem; elem = elem->next())
+    for(Impl::Element *elem = d->first(); elem; elem = elem->next())
     {
         // Check for skip conditions.
         if(!bypass)

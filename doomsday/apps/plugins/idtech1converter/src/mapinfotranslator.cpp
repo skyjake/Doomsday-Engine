@@ -1506,7 +1506,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
     }
 };
 
-MapInfoTranslator::MapInfoTranslator() : d(new Instance)
+MapInfoTranslator::MapInfoTranslator() : d(new Impl)
 {}
 
 void MapInfoTranslator::reset()

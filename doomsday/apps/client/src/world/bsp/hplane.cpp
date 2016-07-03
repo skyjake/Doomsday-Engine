@@ -109,7 +109,7 @@ DENG2_PIMPL(HPlane)
     Intercepts intercepts;                   ///< Points along the half-plane.
     bool needSortIntercepts = false;         ///< @c true= @var intercepts requires sorting.
 
-    Instance(Public *i, Partition const &partition)
+    Impl(Public *i, Partition const &partition)
         : Base(i)
         , partition  (partition)
         , length     (partition.direction.length())
@@ -170,7 +170,7 @@ DENG2_PIMPL(HPlane)
     }
 };
 
-HPlane::HPlane(Partition const &partition) : d(new Instance(this, partition))
+HPlane::HPlane(Partition const &partition) : d(new Impl(this, partition))
 {}
 
 void HPlane::clearIntercepts()

@@ -173,7 +173,7 @@ DENG2_PIMPL(ColorPalette)
 
     Id id;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         LOG_RES_VERBOSE("New color palette %s") << id;
     }
@@ -235,11 +235,11 @@ DENG2_PIMPL(ColorPalette)
     }
 };
 
-ColorPalette::ColorPalette() : d(new Instance(this))
+ColorPalette::ColorPalette() : d(new Impl(this))
 {}
 
 ColorPalette::ColorPalette(ColorTable const &colors)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     replaceColorTable(colors);
 }

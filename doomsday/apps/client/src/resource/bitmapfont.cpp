@@ -68,7 +68,7 @@ DENG2_PIMPL(BitmapFont)
     Glyph glyphs[MAX_CHARS];
     Glyph missingGlyph;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , texGLName(0)
         , needGLInit(true)
@@ -77,7 +77,7 @@ DENG2_PIMPL(BitmapFont)
         , descent(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.glDeinit();
     }
@@ -241,7 +241,7 @@ DENG2_PIMPL(BitmapFont)
 };
 
 BitmapFont::BitmapFont(FontManifest &manifest)
-    : AbstractFont(manifest), d(new Instance(this))
+    : AbstractFont(manifest), d(new Impl(this))
 {}
 
 BitmapFont *BitmapFont::fromFile(FontManifest &manifest, String resourcePath) // static

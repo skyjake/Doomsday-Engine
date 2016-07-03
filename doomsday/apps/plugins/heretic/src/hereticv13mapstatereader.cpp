@@ -663,12 +663,12 @@ DENG2_PIMPL(HereticV13MapStateReader)
 {
     reader_s *reader;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , reader(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         Reader_Delete(reader);
     }
@@ -811,7 +811,7 @@ DENG2_PIMPL(HereticV13MapStateReader)
 
 HereticV13MapStateReader::HereticV13MapStateReader(SavedSession const &session)
     : SavedSession::MapStateReader(session)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {}
 
 HereticV13MapStateReader::~HereticV13MapStateReader()

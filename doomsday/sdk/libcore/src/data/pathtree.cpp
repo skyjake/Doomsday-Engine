@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Error"
@@ -29,7 +29,7 @@ namespace de {
 
 Path::hash_type const PathTree::no_hash = Path::hash_range;
 
-struct PathTree::Instance
+struct PathTree::Impl
 {
     PathTree &self;
 
@@ -50,12 +50,12 @@ struct PathTree::Instance
     /// Path node hashes (leaves and branches).
     PathTree::NodeHash hash;
 
-    Instance(PathTree &d, int _flags)
+    Impl(PathTree &d, int _flags)
         : self(d), flags(_flags), size(0), numNodesOwned(0),
           rootNode(PathTree::NodeArgs(d, PathTree::Branch, 0))
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clear();
     }
@@ -226,7 +226,7 @@ struct PathTree::Instance
 
 PathTree::PathTree(Flags flags)
 {
-    d = new Instance(*this, flags);
+    d = new Impl(*this, flags);
 }
 
 PathTree::~PathTree()

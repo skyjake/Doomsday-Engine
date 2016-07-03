@@ -62,7 +62,7 @@ guidata_keyslot_t::guidata_keyslot_t(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(KeySlotWidget_UpdateGeometry),
                 function_cast<DrawFunc>(KeySlotWidget_Draw),
                 player)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 guidata_keyslot_t::~guidata_keyslot_t()

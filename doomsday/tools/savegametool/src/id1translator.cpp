@@ -41,14 +41,14 @@ DENG2_PIMPL(Id1Translator)
     File const *saveFilePtr;
     dint32 saveVersion;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , id         (DoomV9)
         , saveFilePtr(0)
         , saveVersion(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         closeFile();
     }
@@ -186,7 +186,7 @@ DENG2_PIMPL(Id1Translator)
 
 Id1Translator::Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys)
     : PackageFormatter(knownExtensions, baseGameIdKeys)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->id = id;
 }

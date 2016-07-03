@@ -57,7 +57,7 @@ DENG2_PIMPL_NOREF(LightningAnimator)
     AmbientLightLevels sectorLightLevels;  ///< For each sector (if enabled).
 };
 
-LightningAnimator::LightningAnimator() : d(new Instance)
+LightningAnimator::LightningAnimator() : d(new Impl)
 {}
 
 bool LightningAnimator::enabled() const

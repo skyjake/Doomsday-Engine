@@ -30,7 +30,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
     ui::Item const *interacted = nullptr;
     ui::Item const *interactedAction = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.organizer().audienceForWidgetCreation() += this;
     }
@@ -69,7 +69,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
 HomeMenuWidget::HomeMenuWidget(String const &name)
     : MenuWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     enableScrolling(false);
     enablePageKeys(false);

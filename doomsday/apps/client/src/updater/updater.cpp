@@ -178,7 +178,7 @@ DENG2_PIMPL(Updater)
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         network = new QNetworkAccessManager(thisPublic);
 
@@ -537,7 +537,7 @@ DENG2_PIMPL(Updater)
     }
 };
 
-Updater::Updater() : d(new Instance(this))
+Updater::Updater() : d(new Impl(this))
 {
     connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 

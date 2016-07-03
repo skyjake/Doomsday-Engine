@@ -98,7 +98,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
     GuiWidget *container = nullptr; ///< Held here while not part of the widget tree.
     DialogContentStylist stylist;
 
-    ~Instance()
+    ~Impl()
     {
         stylist.clear(); // References the container.
 
@@ -107,7 +107,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
     }
 };
 
-FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Instance)
+FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Impl)
 {}
 
 ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
@@ -126,7 +126,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setOpacity(.8f);
 
     // Fold indicator.
-    d->title->setOverlayImage(new Instance::FoldImage(*this), ui::AlignRight);
+    d->title->setOverlayImage(new Impl::FoldImage(*this), ui::AlignRight);
 
     return d->title;
 }

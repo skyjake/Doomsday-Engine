@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
 };
 
 CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
-    : d(new Instance)
+    : d(new Impl)
 {
     add(d->menu = new PopupMenuWidget);
     d->menu->setAnchorAndOpeningDirection(rule(), ui::Up);

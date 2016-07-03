@@ -107,7 +107,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
     ToggleState state;
     ToggleProceduralImage *procImage; // not owned
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           state(Inactive),
           procImage(new ToggleProceduralImage(self))
@@ -130,7 +130,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
 DENG2_AUDIENCE_METHOD(ToggleWidget, Toggle)
 
-ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Instance(this))
+ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Impl(this))
 {
     setTextAlignment(ui::AlignRight);
     setTextLineAlignment(ui::AlignLeft);

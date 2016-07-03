@@ -50,7 +50,7 @@ DENG2_PIMPL_NOREF(ShadowEdge)
     dfloat openness = 0;
 };
 
-ShadowEdge::ShadowEdge() : d(new Instance)
+ShadowEdge::ShadowEdge() : d(new Impl)
 {}
 
 void ShadowEdge::init(HEdge const &leftMostHEdge, dint edge)

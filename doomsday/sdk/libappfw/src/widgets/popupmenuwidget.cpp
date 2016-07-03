@@ -97,7 +97,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     IndirectRule *maxItemWidth;
     SafeWidgetPtr<PopupWidget> parentPopup;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , hover(0)
         , oldScrollY(0)
@@ -108,7 +108,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(maxItemWidth);
         releaseRef(widestItem);
@@ -406,7 +406,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 };
 
 PopupMenuWidget::PopupMenuWidget(String const &name)
-    : PopupWidget(name), d(new Instance(this))
+    : PopupWidget(name), d(new Impl(this))
 {
     setContent(new MenuWidget(name.isEmpty()? "" : name + "-content"));
 

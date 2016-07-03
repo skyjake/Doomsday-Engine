@@ -57,7 +57,7 @@ DENG2_PIMPL_NOREF(HeightMap)
     }
 };
 
-HeightMap::HeightMap() : d(new Instance)
+HeightMap::HeightMap() : d(new Impl)
 {}
 
 void HeightMap::setMapSize(Vector2f const &worldSize, float heightRange)

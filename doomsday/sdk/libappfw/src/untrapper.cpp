@@ -25,7 +25,7 @@ DENG2_PIMPL(Untrapper)
     CanvasWindow &window;
     bool wasTrapped;
 
-    Instance(Public *i, CanvasWindow &w) : Base(i), window(w)
+    Impl(Public *i, CanvasWindow &w) : Base(i), window(w)
     {
         wasTrapped = window.canvas().isMouseTrapped();
         if (wasTrapped)
@@ -34,7 +34,7 @@ DENG2_PIMPL(Untrapper)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (wasTrapped)
         {
@@ -43,7 +43,7 @@ DENG2_PIMPL(Untrapper)
     }
 };
 
-Untrapper::Untrapper(CanvasWindow &window) : d(new Instance(this, window))
+Untrapper::Untrapper(CanvasWindow &window) : d(new Impl(this, window))
 {}
 
 } // namespace de

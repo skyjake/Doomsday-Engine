@@ -628,7 +628,7 @@ DENG2_PIMPL(ModelDrawable)
 
     mutable GLUniform uBoneMatrices { "uBoneMatrices", GLUniform::Mat4Array, MAX_BONES };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // Use FS2 for file access.
         importer.SetIOHandler(importerIoSystem = new ImpIOSystem);
@@ -637,7 +637,7 @@ DENG2_PIMPL(ModelDrawable)
         ImpLogger::registerLogger();
     }
 
-    ~Instance()
+    ~Impl()
     {
         glDeinit();
     }
@@ -1445,7 +1445,7 @@ String ModelDrawable::textureMapToText(TextureMap map) // static
     return "unknown";
 }
 
-ModelDrawable::ModelDrawable() : d(new Instance(this))
+ModelDrawable::ModelDrawable() : d(new Impl(this))
 {
     *this += d->modelAsset;
 }
@@ -1478,7 +1478,7 @@ void ModelDrawable::clear()
 
 int ModelDrawable::animationIdForName(String const &name) const
 {
-    Instance::AnimLookup::const_iterator found = d->animNameToIndex.constFind(name);
+    Impl::AnimLookup::const_iterator found = d->animNameToIndex.constFind(name);
     if (found != d->animNameToIndex.constEnd())
     {
         return found.value();
@@ -1700,13 +1700,13 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
     QList<OngoingSequence *> anims;
     Flags flags = DefaultFlags;
 
-    Instance(Constructor ctr, ModelDrawable const *mdl = 0)
+    Impl(Constructor ctr, ModelDrawable const *mdl = 0)
         : constructor(ctr)
     {
         setModel(mdl);
     }
 
-    ~Instance()
+    ~Impl()
     {
         setModel(nullptr);
         qDeleteAll(anims);
@@ -1786,11 +1786,11 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 };
 
 ModelDrawable::Animator::Animator(Constructor constructor)
-    : d(new Instance(constructor))
+    : d(new Impl(constructor))
 {}
 
 ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constructor)
-    : d(new Instance(constructor, &model))
+    : d(new Impl(constructor, &model))
 {}
 
 void ModelDrawable::Animator::setModel(ModelDrawable const &model)

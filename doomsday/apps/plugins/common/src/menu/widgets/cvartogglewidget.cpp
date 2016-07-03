@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(CVarToggleWidget)
 CVarToggleWidget::CVarToggleWidget(char const *cvarPath, int cvarValueMask,
                                    String const &downText, String const &upText)
     : ButtonWidget()
-    , d(new Instance)
+    , d(new Impl)
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR3);

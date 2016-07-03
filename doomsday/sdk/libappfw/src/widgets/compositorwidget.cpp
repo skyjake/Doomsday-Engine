@@ -39,7 +39,7 @@ DENG_GUI_PIMPL(CompositorWidget)
     GLUniform uMvpMatrix;
     GLUniform uTex;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           nextBufIndex(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(CompositorWidget)
 };
 
 CompositorWidget::CompositorWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {}
 
 GLTexture &CompositorWidget::composite() const
@@ -142,7 +142,7 @@ void CompositorWidget::preDrawChildren()
 
     //qDebug() << "entering compositor" << d->nextBufIndex;
 
-    Instance::Buffer *buf = d->beginBufferUse();
+    Impl::Buffer *buf = d->beginBufferUse();
     DENG2_ASSERT(!buf->offscreen.isNull());
 
     GLState::push()
@@ -186,7 +186,7 @@ void CompositorWidget::drawComposite()
 
     DENG2_ASSERT(d->nextBufIndex > 0);
 
-    Instance::Buffer *buf = d->buffers[d->nextBufIndex - 1];
+    Impl::Buffer *buf = d->buffers[d->nextBufIndex - 1];
 
     GLState::push()
             .setAlphaTest(false)

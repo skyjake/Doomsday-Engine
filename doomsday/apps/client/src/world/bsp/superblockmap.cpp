@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(LineSegmentBlock)
     int partCount = 0;  ///< Running total of partition-line segments at/under this node.
 };
 
-LineSegmentBlock::LineSegmentBlock(AABox const &bounds) : d(new Instance)
+LineSegmentBlock::LineSegmentBlock(AABox const &bounds) : d(new Impl)
 {
     d->bounds = bounds;
 }

@@ -79,7 +79,7 @@ DENG2_PIMPL(LinkWindow)
     QAction *disconnectAction;
 #endif      
 
-    Instance(Public &i)
+    Impl(Public &i)
         : Base(i),
           link(0),
           tools(0),
@@ -96,7 +96,7 @@ DENG2_PIMPL(LinkWindow)
         logBuffer.setAutoFlushInterval(0.1);
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Make sure the local sink is removed.
         LogBuffer::get().removeSink(console->log().logSink());
@@ -205,7 +205,7 @@ DENG2_PIMPL(LinkWindow)
 };
 
 LinkWindow::LinkWindow(QWidget *parent)
-    : QMainWindow(parent), d(new Instance(*this))
+    : QMainWindow(parent), d(new Impl(*this))
 {    
     setUnifiedTitleAndToolBarOnMac(true);
 #ifndef MACOSX

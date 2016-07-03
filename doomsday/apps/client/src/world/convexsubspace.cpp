@@ -80,8 +80,8 @@ DENG2_PIMPL(ConvexSubspace)
 
     dint validCount = 0;                   ///< Used to prevent repeated processing.
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { qDeleteAll(extraMeshes); }
+    Impl(Public *i) : Base(i) {}
+    ~Impl() { qDeleteAll(extraMeshes); }
 
 #ifdef __CLIENT__
 
@@ -165,7 +165,7 @@ DENG2_PIMPL(ConvexSubspace)
 
 ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
     : MapElement(DMU_SUBSPACE)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->poly = &convexPolygon;
 #ifdef __CLIENT__

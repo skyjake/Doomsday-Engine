@@ -34,11 +34,11 @@ DENG2_PIMPL_NOREF(ScopeStatement)
     Compound compound;
 };
 
-ScopeStatement::ScopeStatement() : d(new Instance)
+ScopeStatement::ScopeStatement() : d(new Impl)
 {}
 
 ScopeStatement::ScopeStatement(Expression *identifier, Expression *superRecords)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->identifier.reset(identifier);
     d->superRecords.reset(superRecords);

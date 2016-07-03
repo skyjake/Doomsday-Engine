@@ -71,10 +71,10 @@ DENG2_PIMPL(DataBundle)
     std::unique_ptr<res::LumpDirectory> lumpDir;
     SafePtr<LinkFile> pkgLink;
 
-    Instance(Public *i, Format fmt) : Base(i), format(fmt)
+    Impl(Public *i, Format fmt) : Base(i), format(fmt)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         delete pkgLink.get();
     }
@@ -679,7 +679,7 @@ DENG2_PIMPL(DataBundle)
 };
 
 DataBundle::DataBundle(Format format, File &source)
-    : d(new Instance(this, format))
+    : d(new Impl(this, format))
 {
     d->source.reset(&source);
 }

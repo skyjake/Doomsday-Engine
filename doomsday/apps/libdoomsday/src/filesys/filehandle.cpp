@@ -34,7 +34,7 @@
 
 namespace de {
 
-struct FileHandle::Instance
+struct FileHandle::Impl
 {
     /// The referenced file (if any).
     File1 *file;
@@ -56,7 +56,7 @@ struct FileHandle::Instance
     uint8_t *data;
     uint8_t *pos;
 
-    Instance() : file(0), list(0), baseOffset(0), hndl(0), size(0), data(0), pos(0)
+    Impl() : file(0), list(0), baseOffset(0), hndl(0), size(0), data(0), pos(0)
     {
         flags.eof  = false;
         flags.open = false;
@@ -72,7 +72,7 @@ static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
 
 FileHandle::FileHandle()
 {
-    d = new Instance();
+    d = new Impl();
 }
 
 FileHandle::~FileHandle()

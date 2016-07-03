@@ -31,7 +31,7 @@ DENG_GUI_PIMPL(GamesDialog)
     Mode mode;
     GameSelectionWidget *gameSel; //MenuWidget *list;
 
-    Instance(Public *i, Mode m)
+    Impl(Public *i, Mode m)
         : Base(i)
         , mode(m)
     {
@@ -46,7 +46,7 @@ DENG_GUI_PIMPL(GamesDialog)
 
 GamesDialog::GamesDialog(Mode mode, String const &name)
     : DialogWidget(name/*, WithHeading*/)
-    , d(new Instance(this, mode))
+    , d(new Impl(this, mode))
 {
     connect(d->gameSel, SIGNAL(gameSessionSelected(de::ui::Item const *)), this, SLOT(selectSession(de::ui::Item const *)));
 

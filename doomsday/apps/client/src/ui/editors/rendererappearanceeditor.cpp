@@ -58,7 +58,7 @@ public VariableGroupEditor::IOwner
     Group *objectGroup;
     Group *partGroup;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , settings(ClientApp::renderSystem().appearanceSettings())
     {
@@ -370,7 +370,7 @@ public VariableGroupEditor::IOwner
         partGroup->commit();
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        settings.audienceForProfileChange -= this;
 //    }
@@ -462,7 +462,7 @@ public VariableGroupEditor::IOwner
 
 RendererAppearanceEditor::RendererAppearanceEditor()
     : SidebarWidget(tr("Renderer Appearance"), "rendererappearanceeditor")
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->profile->setOpeningDirection(Down);
 

@@ -35,7 +35,7 @@ DENG2_PIMPL(Resources)
     NativePath nativeSavePath;
     MapManifests mapManifests;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , nativeSavePath(App::app().nativeHomePath() / "savegames") // default
     {
@@ -58,7 +58,7 @@ DENG2_PIMPL(Resources)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         self.clearMapManifests();
         qDeleteAll(resClasses);
@@ -67,7 +67,7 @@ DENG2_PIMPL(Resources)
     }
 };
 
-Resources::Resources() : d(new Instance(this))
+Resources::Resources() : d(new Impl(this))
 {}
 
 void Resources::timeChanged(Clock const &)

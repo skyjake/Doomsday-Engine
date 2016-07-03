@@ -139,13 +139,13 @@ DENG2_PIMPL(GLState)
     BitField props;
     GLTarget *target;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , props(glStateProperties)
         , target(0)
     {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base(i)
         , props(other.props)
         , target(other.target)
@@ -370,7 +370,7 @@ DENG2_PIMPL(GLState)
     }
 };
 
-GLState::GLState() : d(new Instance(this))
+GLState::GLState() : d(new Impl(this))
 {
     setCull      (gl::None);
     setDepthTest (false);
@@ -386,12 +386,12 @@ GLState::GLState() : d(new Instance(this))
     setDefaultTarget();
 }
 
-GLState::GLState(GLState const &other) : d(new Instance(this, *other.d))
+GLState::GLState(GLState const &other) : d(new Impl(this, *other.d))
 {}
 
 GLState &GLState::operator = (GLState const &other)
 {
-    d.reset(new Instance(this, *other.d));
+    d.reset(new Impl(this, *other.d));
     return *this;
 }
 

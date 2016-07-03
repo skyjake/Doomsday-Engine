@@ -63,12 +63,12 @@ DENG2_PIMPL_NOREF(ListWidget)
     int first     = 0;  ///< First visible item.
     int numvis    = 0;
 
-    ~Instance() { qDeleteAll(items); }
+    ~Impl() { qDeleteAll(items); }
 };
 
 ListWidget::ListWidget()
     : Widget()
-    , d(new Instance)
+    , d(new Impl)
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);

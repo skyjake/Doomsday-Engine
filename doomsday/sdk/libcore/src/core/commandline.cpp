@@ -58,12 +58,12 @@ DENG2_PIMPL(CommandLine)
     typedef std::map<std::string, ArgumentStrings> Aliases;
     Aliases aliases;
 
-    Instance(Public &i) : Base(i)
+    Impl(Public &i) : Base(i)
     {
         initialDir = QDir::current();
     }
 
-    ~Instance()
+    ~Impl()
     {
         clear();
     }
@@ -123,10 +123,10 @@ DENG2_PIMPL(CommandLine)
     }
 };
 
-CommandLine::CommandLine() : d(new Instance(*this))
+CommandLine::CommandLine() : d(new Impl(*this))
 {}
 
-CommandLine::CommandLine(QStringList const &args) : d(new Instance(*this))
+CommandLine::CommandLine(QStringList const &args) : d(new Impl(*this))
 {
     for (int i = 0; i < args.size(); ++i)
     {
@@ -142,9 +142,9 @@ CommandLine::CommandLine(QStringList const &args) : d(new Instance(*this))
     }
 }
 
-CommandLine::CommandLine(CommandLine const &other) : d(new Instance(*this))
+CommandLine::CommandLine(CommandLine const &other) : d(new Impl(*this))
 {
-    DENG2_FOR_EACH_CONST(Instance::Arguments, i, other.d->arguments)
+    DENG2_FOR_EACH_CONST(Impl::Arguments, i, other.d->arguments)
     {
         d->appendArg(*i);
     }
@@ -183,7 +183,7 @@ void CommandLine::remove(duint pos)
 CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams) const
 {
     // Do a search for arg.
-    Instance::Arguments::const_iterator i = d->arguments.begin();
+    Impl::Arguments::const_iterator i = d->arguments.begin();
     for (; i != d->arguments.end() && !matches(arg, *i); ++i) {}
 
     if (i == d->arguments.end())
@@ -195,7 +195,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     // It was found, check for the number of non-option parameters.
     ArgWithParams found;
     found.arg = arg;
-    Instance::Arguments::const_iterator k = i;
+    Impl::Arguments::const_iterator k = i;
     while (numParams-- > 0)
     {
         if (++k == d->arguments.end() || isOption(*k))
@@ -225,7 +225,7 @@ dint CommandLine::has(String const &arg) const
 {
     dint howMany = 0;
 
-    DENG2_FOR_EACH_CONST(Instance::Arguments, i, d->arguments)
+    DENG2_FOR_EACH_CONST(Impl::Arguments, i, d->arguments)
     {
         if (matches(arg, *i))
         {
@@ -409,10 +409,10 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
         return true;
     }
 
-    Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
+    Impl::Aliases::const_iterator found = d->aliases.find(full.toStdString());
     if (found != d->aliases.end())
     {
-        DENG2_FOR_EACH_CONST(Instance::ArgumentStrings, i, found->second)
+        DENG2_FOR_EACH_CONST(Impl::ArgumentStrings, i, found->second)
         {
             if (!i->compareWithoutCase(fullOrAlias))
             {

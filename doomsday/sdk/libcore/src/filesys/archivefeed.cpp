@@ -48,7 +48,7 @@ DENG2_PIMPL(ArchiveFeed)
 
     bool allowWrite;
 
-    Instance(Public *feed, File &f)
+    Impl(Public *feed, File &f)
         : Base(feed)
         , file(&f)
         , arch(0)
@@ -76,7 +76,7 @@ DENG2_PIMPL(ArchiveFeed)
         file->audienceForDeletion() += this;
     }
 
-    Instance(Public *feed, ArchiveFeed &parentFeed, String const &path)
+    Impl(Public *feed, ArchiveFeed &parentFeed, String const &path)
         : Base(feed)
         , file(parentFeed.d->file)
         , arch(0)
@@ -87,7 +87,7 @@ DENG2_PIMPL(ArchiveFeed)
         file->audienceForDeletion() += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (arch)
         {
@@ -201,11 +201,11 @@ DENG2_PIMPL(ArchiveFeed)
 };
 
 ArchiveFeed::ArchiveFeed(File &archiveFile)
-    : d(new Instance(this, archiveFile))
+    : d(new Impl(this, archiveFile))
 {}
 
 ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath)
-    : d(new Instance(this, parentFeed, basePath))
+    : d(new Impl(this, parentFeed, basePath))
 {}
 
 ArchiveFeed::~ArchiveFeed()

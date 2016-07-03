@@ -36,22 +36,22 @@ DENG2_PIMPL_NOREF(Rule)
     /// The value is valid.
     bool isValid;
 
-    Instance() : value(0), isValid(false)
+    Impl() : value(0), isValid(false)
     {}
 
-    Instance(float initialValue) : value(initialValue), isValid(true)
+    Impl(float initialValue) : value(initialValue), isValid(true)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_ASSERT(dependencies.empty());
     }
 };
 
-Rule::Rule() : d(new Instance)
+Rule::Rule() : d(new Impl)
 {}
 
-Rule::Rule(float initialValue) : d(new Instance(initialValue))
+Rule::Rule(float initialValue) : d(new Impl(initialValue))
 {}
 
 Rule::~Rule()

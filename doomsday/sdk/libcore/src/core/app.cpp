@@ -102,7 +102,7 @@ DENG2_PIMPL(App)
     /// Optional sink for warnings and errors (set with "-errors").
     QScopedPointer<FileLogSink> errorSink;
 
-    Instance(Public *a, QStringList args)
+    Impl(Public *a, QStringList args)
         : Base(a)
         , appName("Doomsday Engine")
         , cmdLine(args)
@@ -136,7 +136,7 @@ DENG2_PIMPL(App)
         scriptSys.addNativeModule("App", appModule);
     }
 
-    ~Instance()
+    ~Impl()
     {
         if (!errorSink.isNull())
         {
@@ -314,7 +314,7 @@ DENG2_PIMPL(App)
 DENG2_AUDIENCE_METHOD(App, StartupComplete)
 
 App::App(NativePath const &appFilePath, QStringList args)
-    : d(new Instance(this, args))
+    : d(new Impl(this, args))
 {
     d->unixInfo.reset(new UnixInfo);
 

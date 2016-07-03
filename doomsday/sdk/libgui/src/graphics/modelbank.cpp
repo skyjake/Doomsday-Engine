@@ -46,7 +46,7 @@ DENG2_PIMPL(ModelBank)
         }
     };
 
-    Instance(Public *i, Constructor c)
+    Impl(Public *i, Constructor c)
         : Base(i)
         , modelConstructor(c? c : [] () { return new ModelDrawable; })
     {}
@@ -54,39 +54,39 @@ DENG2_PIMPL(ModelBank)
 
 ModelBank::ModelBank(Constructor modelConstructor)
     : Bank("ModelBank", BackgroundThread)
-    , d(new Instance(this, modelConstructor))
+    , d(new Impl(this, modelConstructor))
 {}
 
 void ModelBank::add(DotPath const &id, String const &sourcePath)
 {
-    return Bank::add(id, new Instance::Source(sourcePath));
+    return Bank::add(id, new Impl::Source(sourcePath));
 }
 
 ModelDrawable &ModelBank::model(DotPath const &id)
 {
-    return *data(id).as<Instance::Data>().model;
+    return *data(id).as<Impl::Data>().model;
 }
 
 void ModelBank::setUserData(DotPath const &id, IUserData *anim)
 {
-    data(id).as<Instance::Data>().userData.reset(anim);
+    data(id).as<Impl::Data>().userData.reset(anim);
 }
 
 ModelBank::IUserData const *ModelBank::userData(DotPath const &id) const
 {
-    return data(id).as<Instance::Data>().userData.get();
+    return data(id).as<Impl::Data>().userData.get();
 }
 
 ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id) const
 {
-    auto &item = data(id).as<Instance::Data>();
+    auto &item = data(id).as<Impl::Data>();
     return ModelWithData(item.model.get(), item.userData.get());
 }
 
 Bank::IData *ModelBank::loadFromSource(ISource &source)
 {
-    return new Instance::Data(d->modelConstructor(),
-                              source.as<Instance::Source>().path);
+    return new Impl::Data(d->modelConstructor(),
+                              source.as<Impl::Source>().path);
 }
 
 } // namespace de

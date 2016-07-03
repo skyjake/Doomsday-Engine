@@ -25,9 +25,9 @@ DENG2_PIMPL(RelayWidget)
 {
     GuiWidget *target = nullptr;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         setTarget(nullptr);
     }
@@ -57,7 +57,7 @@ DENG2_PIMPL(RelayWidget)
 DENG2_AUDIENCE_METHOD(RelayWidget, Target)
 
 RelayWidget::RelayWidget(GuiWidget *target, String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     d->setTarget(target);
 }

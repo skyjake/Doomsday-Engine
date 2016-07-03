@@ -51,7 +51,7 @@ DENG2_PIMPL(RuleRectangle)
     Rule *_midX = nullptr;
     Rule *_midY = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         zap(inputRules);
 
@@ -64,7 +64,7 @@ DENG2_PIMPL(RuleRectangle)
         debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(_midX);
         releaseRef(_midY);
@@ -244,37 +244,37 @@ DENG2_PIMPL(RuleRectangle)
     }
 };
 
-RuleRectangle::RuleRectangle() : d(new Instance(this))
+RuleRectangle::RuleRectangle() : d(new Impl(this))
 {}
 
 Rule const &RuleRectangle::left() const
 {
-    return *d->outputRules[Instance::OutLeft];
+    return *d->outputRules[Impl::OutLeft];
 }
 
 Rule const &RuleRectangle::top() const
 {
-    return *d->outputRules[Instance::OutTop];
+    return *d->outputRules[Impl::OutTop];
 }
 
 Rule const &RuleRectangle::right() const
 {
-    return *d->outputRules[Instance::OutRight];
+    return *d->outputRules[Impl::OutRight];
 }
 
 Rule const &RuleRectangle::bottom() const
 {
-    return *d->outputRules[Instance::OutBottom];
+    return *d->outputRules[Impl::OutBottom];
 }
 
 Rule const &RuleRectangle::width() const
 {
-    return *d->outputRules[Instance::OutWidth];
+    return *d->outputRules[Impl::OutWidth];
 }
 
 Rule const &RuleRectangle::height() const
 {
-    return *d->outputRules[Instance::OutHeight];
+    return *d->outputRules[Impl::OutHeight];
 }
 
 Rule const &RuleRectangle::midX() const

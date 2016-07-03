@@ -46,7 +46,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     ButtonWidget *riftSetup;
     ButtonWidget *desktopSetup;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , riftReset(0)
         , riftSetup(0)
@@ -113,7 +113,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 };
 
 VRSettingsDialog::VRSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("3D & VR Settings"));
     heading().setImage(style().images().image("vr"));

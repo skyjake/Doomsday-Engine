@@ -29,7 +29,7 @@ DENG2_PIMPL(FolderSelection)
     QLineEdit *edit;
     QPushButton *button;
 
-    Instance(Public &i, QString extraLabel) : Base(i),
+    Impl(Public &i, QString extraLabel) : Base(i),
         edit(0),
         button(0)
     {
@@ -66,14 +66,14 @@ DENG2_PIMPL(FolderSelection)
 };
 
 FolderSelection::FolderSelection(QString const &prompt, QWidget *parent)
-    : QWidget(parent), d(new Instance(*this, ""))
+    : QWidget(parent), d(new Impl(*this, ""))
 {
     d->prompt = prompt;
     connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
 }
 
 FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent)
-    : QWidget(parent), d(new Instance(*this, extraLabel))
+    : QWidget(parent), d(new Impl(*this, extraLabel))
 {
     d->prompt = prompt;
     connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));

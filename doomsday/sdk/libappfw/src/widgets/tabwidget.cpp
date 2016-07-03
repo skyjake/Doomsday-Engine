@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(TabWidget)
     AnimationRule *selLeft = nullptr;
     AnimationRule *selWidth = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self.add(buttons = new MenuWidget);
         buttons->enableScrolling(false);
@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(TabWidget)
         self.add(selected = new LabelWidget);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(selLeft);
         releaseRef(selWidth);
@@ -152,7 +152,7 @@ DENG_GUI_PIMPL(TabWidget)
 };
 
 TabWidget::TabWidget(String const &name)
-    : GuiWidget(name), d(new Instance(this))
+    : GuiWidget(name), d(new Impl(this))
 {
     rule().setInput(Rule::Height, d->buttons->rule().height());
 }

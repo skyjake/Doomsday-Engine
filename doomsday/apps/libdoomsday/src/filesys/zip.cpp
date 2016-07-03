@@ -321,7 +321,7 @@ DENG2_PIMPL(Zip)
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
     QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     /**
@@ -363,7 +363,7 @@ DENG2_PIMPL(Zip)
 Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
     , LumpIndex(true/*paths are unique*/)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     // Scan the end of the file for the central directory end record.
     /// @note: This gets awfully slow if the comment is long.

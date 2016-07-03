@@ -49,7 +49,7 @@ DENG2_PIMPL(CanvasWindow)
     unsigned int frameCount;
     float fps;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i),
           canvas(0),
           recreated(0),
@@ -59,7 +59,7 @@ DENG2_PIMPL(CanvasWindow)
           fps(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         if (thisPublic == mainWindow)
         {
@@ -134,7 +134,7 @@ DENG2_PIMPL(CanvasWindow)
 };
 
 CanvasWindow::CanvasWindow()
-    : QMainWindow(0), d(new Instance(this))
+    : QMainWindow(0), d(new Impl(this))
 {
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // takes ownership

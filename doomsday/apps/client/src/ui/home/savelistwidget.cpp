@@ -34,9 +34,9 @@ DENG_GUI_PIMPL(SaveListWidget)
      */
     struct DoubleClickHandler : public GuiWidget::IEventHandler
     {
-        SaveListWidget::Instance *d;
+        SaveListWidget::Impl *d;
 
-        DoubleClickHandler(SaveListWidget::Instance *d) : d(d) {}
+        DoubleClickHandler(SaveListWidget::Impl *d) : d(d) {}
 
         bool handleEvent(GuiWidget &button, Event const &event)
         {
@@ -57,7 +57,7 @@ DENG_GUI_PIMPL(SaveListWidget)
     GamePanelButtonWidget &owner;
     ui::DataPos selected = ui::Data::InvalidPos;
 
-    Instance(Public *i, GamePanelButtonWidget &owner) : Base(i), owner(owner)
+    Impl(Public *i, GamePanelButtonWidget &owner) : Base(i), owner(owner)
     {
         self.organizer().audienceForWidgetUpdate() += this;
     }
@@ -125,7 +125,7 @@ DENG_GUI_PIMPL(SaveListWidget)
 };
 
 SaveListWidget::SaveListWidget(GamePanelButtonWidget &owner)
-    : d(new Instance(this, owner))
+    : d(new Impl(this, owner))
 {
     setGridSize(1, ui::Filled, 0, ui::Expand);
     enableScrolling(false);

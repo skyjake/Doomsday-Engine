@@ -31,7 +31,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
     GameProfile const *profile = nullptr;
     std::function<void (PackagesDialog &)> setupFunc;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {}
 
     void updateLabel()
@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 };
 
 PackagesButtonWidget::PackagesButtonWidget()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     setOverrideImageSize(style().fonts().font("default").height().value());
     setSizePolicy(ui::Expand, ui::Expand);

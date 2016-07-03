@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(Action)
 
 DENG2_AUDIENCE_METHOD(Action, Triggered)
 
-Action::Action() : d(new Instance)
+Action::Action() : d(new Impl)
 {}
 
 Action::~Action()

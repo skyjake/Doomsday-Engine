@@ -46,13 +46,13 @@ DENG2_PIMPL(Process)
     /// Time when execution was started at depth 1.
     Time startedAt;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , state(Stopped)
         , workingPath("/")
     {}
 
-    ~Instance()
+    ~Impl()
     {
         clearStack();
     }
@@ -149,7 +149,7 @@ DENG2_PIMPL(Process)
 /// If execution continues for longer than this, a HangError is thrown.
 static TimeDelta const MAX_EXECUTION_TIME = 10;
 
-Process::Process(Record *externalGlobalNamespace) : d(new Instance(this))
+Process::Process(Record *externalGlobalNamespace) : d(new Impl(this))
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
@@ -157,7 +157,7 @@ Process::Process(Record *externalGlobalNamespace) : d(new Instance(this))
     pushContext(new Context(Context::BaseProcess, this, externalGlobalNamespace));
 }
 
-Process::Process(Script const &script) : d(new Instance(this))
+Process::Process(Script const &script) : d(new Impl(this))
 {
     clear();
 
@@ -205,7 +205,7 @@ void Process::stop()
 
     // Clear the context stack, apart from the bottommost context, which
     // represents the process itself.
-    DENG2_FOR_EACH_REVERSE(Instance::ContextStack, i, d->stack)
+    DENG2_FOR_EACH_REVERSE(Impl::ContextStack, i, d->stack)
     {
         if (*i != d->stack[0])
         {
@@ -416,7 +416,7 @@ void Process::namespaces(Namespaces &spaces) const
 
     bool gotFunction = false;
 
-    DENG2_FOR_EACH_CONST_REVERSE(Instance::ContextStack, i, d->stack)
+    DENG2_FOR_EACH_CONST_REVERSE(Impl::ContextStack, i, d->stack)
     {
         Context &context = **i;
         if (context.type() == Context::FunctionCall)

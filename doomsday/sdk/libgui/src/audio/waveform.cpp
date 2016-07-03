@@ -77,7 +77,7 @@ DENG2_PIMPL(Waveform)
     dsize sampleCount;
     duint sampleRate;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , format(audio::PCMLittleEndian)
         , source(0)
@@ -87,7 +87,7 @@ DENG2_PIMPL(Waveform)
         , sampleRate   (0.0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         setSource(0);
     }
@@ -198,7 +198,7 @@ DENG2_PIMPL(Waveform)
     }
 };
 
-Waveform::Waveform() : d(new Instance(this))
+Waveform::Waveform() : d(new Impl(this))
 {}
 
 void Waveform::clear()

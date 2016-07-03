@@ -116,7 +116,7 @@ DENG2_PIMPL_NOREF(PlayerInfoPacket)
 };
 
 PlayerInfoPacket::PlayerInfoPacket()
-    : Packet(PLAYER_INFO_PACKET_TYPE), d(new Instance)
+    : Packet(PLAYER_INFO_PACKET_TYPE), d(new Impl)
 {}
 
 void PlayerInfoPacket::add(Player const &player)
@@ -182,7 +182,7 @@ DENG2_PIMPL_NOREF(MapOutlinePacket)
 };
 
 MapOutlinePacket::MapOutlinePacket()
-    : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Instance)
+    : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Impl)
 {}
 
 void MapOutlinePacket::clear()

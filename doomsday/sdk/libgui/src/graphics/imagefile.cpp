@@ -33,9 +33,9 @@ DENG2_PIMPL(ImageFile)
     QHash<BuiltInFilter, ImageFile *> filtered; // owned
     String filterParameter;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(filtered.values());
     }
@@ -81,14 +81,14 @@ DENG2_PIMPL(ImageFile)
 
 ImageFile::ImageFile(File *source)
     : File(source->name())
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setSource(source);
 }
 
 ImageFile::ImageFile(BuiltInFilter filterType, ImageFile &filterSource)
-    : File(Instance::filterTypeToText(filterType))
-    , d(new Instance(this))
+    : File(Impl::filterTypeToText(filterType))
+    , d(new Impl(this))
 {
     d->filter = filterType;
     setParent(&filterSource);

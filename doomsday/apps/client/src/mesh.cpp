@@ -67,7 +67,7 @@ DENG2_PIMPL_NOREF(Mesh)
     Faces faces;      ///< All faces in the mesh.
 };
 
-Mesh::Mesh() : d(new Instance)
+Mesh::Mesh() : d(new Impl)
 {}
 
 Mesh::~Mesh()

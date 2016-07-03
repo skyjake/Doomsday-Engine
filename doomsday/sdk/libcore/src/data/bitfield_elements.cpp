@@ -42,12 +42,12 @@ DENG2_PIMPL(BitField::Elements)
      */
     QList<Ids> lookup;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , totalBits(0)
     {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base     (i)
         , elements (other.elements)
         , totalBits(other.totalBits)
@@ -61,11 +61,11 @@ DENG2_PIMPL(BitField::Elements)
     }
 };
 
-BitField::Elements::Elements() : d(new Instance(this))
+BitField::Elements::Elements() : d(new Impl(this))
 {}
 
 BitField::Elements::Elements(Spec const *elements, dsize count)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     add(elements, count);
 }
@@ -81,7 +81,7 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
 {
     DENG2_ASSERT(numBits >= 1);
 
-    Instance::Element elem;
+    Impl::Element elem;
     elem.numBits  = numBits;
     elem.firstBit = d->totalBits;
     d->elements.insert(id, elem);
@@ -129,7 +129,7 @@ BitField::Spec BitField::Elements::at(int index) const
     DENG2_ASSERT(index >= 0);
     DENG2_ASSERT(index < size());
 
-    Instance::Element elem = d->elements.values()[index];
+    Impl::Element elem = d->elements.values()[index];
     Spec spec;
     spec.id = d->elements.keys()[index];
     spec.numBits = elem.numBits;
@@ -138,7 +138,7 @@ BitField::Spec BitField::Elements::at(int index) const
 
 void BitField::Elements::elementLayout(Id const &id, int &firstBit, int &numBits) const
 {
-    Instance::Element const &elem = d->element(id);
+    Impl::Element const &elem = d->element(id);
     firstBit = elem.firstBit;
     numBits  = elem.numBits;
 }

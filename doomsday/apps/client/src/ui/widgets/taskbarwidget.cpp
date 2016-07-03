@@ -124,7 +124,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     GLUniform uColor;
     Matrix4f projMatrix;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , layoutMode(NormalLayout)
         , opened(true)
@@ -150,7 +150,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         updateStyle();
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(vertShift);
     }
@@ -356,7 +356,7 @@ static PopupWidget *makeIWADFolders()
     return dlg;
 }
 
-TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
+TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
 #if 0
     // GameWidget is presently too inefficient with blurring.

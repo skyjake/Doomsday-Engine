@@ -103,7 +103,7 @@ DENG_GUI_PIMPL(DialogWidget)
     DialogContentStylist stylist;
     IndirectRule *minWidth;
 
-    Instance(Public *i, Flags const &dialogFlags)
+    Impl(Public *i, Flags const &dialogFlags)
         : Base(i)
         , modality(Modal)
         , flags(dialogFlags)
@@ -220,7 +220,7 @@ DENG_GUI_PIMPL(DialogWidget)
         self.setContent(container);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(minWidth);
         releaseRef(acceptAction);
@@ -441,7 +441,7 @@ DENG_GUI_PIMPL(DialogWidget)
 };
 
 DialogWidget::DialogWidget(String const &name, Flags const &flags)
-    : PopupWidget(name), d(new Instance(this, flags))
+    : PopupWidget(name), d(new Impl(this, flags))
 {
     d->stylist.setContainer(area());
     setOpeningDirection(ui::NoDirection);

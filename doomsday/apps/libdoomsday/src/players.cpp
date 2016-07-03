@@ -25,12 +25,12 @@ DENG2_PIMPL_NOREF(Players)
 {
     Player *players[DDMAXPLAYERS];
 
-    Instance()
+    Impl()
     {
         zap(players);
     }
 
-    ~Instance()
+    ~Impl()
     {
         for (auto *plr : players)
         {
@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(Players)
     }
 };
 
-Players::Players(Constructor playerConstructor) : d(new Instance)
+Players::Players(Constructor playerConstructor) : d(new Impl)
 {
     for (auto &plr : d->players)
     {

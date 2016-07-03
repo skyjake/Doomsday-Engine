@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(Config)
     /// Previous installed version (__version__ in the read persistent Config).
     Version oldVersion;
 
-    Instance(Path const &path)
+    Impl(Path const &path)
         : configPath(path)
         , refuge("modules/Config")
         , config(&refuge.objectNamespace())
@@ -74,7 +74,7 @@ DENG2_PIMPL_NOREF(Config)
     }
 };
 
-Config::Config(Path const &path) : RecordAccessor(0), d(new Instance(path))
+Config::Config(Path const &path) : RecordAccessor(0), d(new Impl(path))
 {
     setAccessedRecord(objectNamespace());
 }

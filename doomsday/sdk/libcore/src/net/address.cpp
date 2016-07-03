@@ -29,13 +29,13 @@ DENG2_PIMPL_NOREF(Address)
     QHostAddress host;
     duint16 port;
 
-    Instance() : port(0) {}
+    Impl() : port(0) {}
 };
 
-Address::Address() : d(new Instance)
+Address::Address() : d(new Impl)
 {}
 
-Address::Address(char const *address, duint16 port) : d(new Instance)
+Address::Address(char const *address, duint16 port) : d(new Impl)
 {
     d->port = port;
 
@@ -49,13 +49,13 @@ Address::Address(char const *address, duint16 port) : d(new Instance)
     }
 }
 
-Address::Address(QHostAddress const &host, duint16 port) : d(new Instance)
+Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
 {
     d->host = host;
     d->port = port;
 }
 
-Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Instance)
+Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Impl)
 {
     d->host = other.d->host;
     d->port = other.d->port;

@@ -38,12 +38,12 @@ DENG2_PIMPL(HexLex)
     bool alreadyGot          = false;
     bool multiline           = false;    ///< @c true= current token spans multiple lines.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         Str_InitStd(&token);
     }
 
-    ~Instance()
+    ~Impl()
     {
         Str_Free(&token);
     }
@@ -67,7 +67,7 @@ DENG2_PIMPL(HexLex)
 };
 
 HexLex::HexLex(ddstring_s const *script, String const &sourcePath)
-    : d(new Instance(this))
+    : d(new Impl(this))
 {
     setSourcePath(sourcePath);
     if(script)

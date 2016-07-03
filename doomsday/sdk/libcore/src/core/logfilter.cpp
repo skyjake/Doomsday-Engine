@@ -83,7 +83,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     Filter filterByContext[NUM_FILTERS];
 
-    Instance()
+    Impl()
     {
         for (int i = 0; i < NUM_FILTERS; ++i)
         {
@@ -182,7 +182,7 @@ DENG2_PIMPL_NOREF(LogFilter)
                     << er.asText() << rec.asText();
 
             LOG_WARNING("Log filter reset to defaults");
-            *this = Instance(); // Reset.
+            *this = Impl(); // Reset.
         }
     }
 
@@ -200,7 +200,7 @@ DENG2_PIMPL_NOREF(LogFilter)
     }
 };
 
-LogFilter::LogFilter() : d(new Instance)
+LogFilter::LogFilter() : d(new Impl)
 {}
 
 bool LogFilter::isLogEntryAllowed(duint32 metadata) const

@@ -35,10 +35,10 @@ DENG2_PIMPL_NOREF(LocalServer)
     String name;
     NativePath userDir;
 
-    Instance() : link(0), port(0) {}
+    Impl() : link(0), port(0) {}
 };
 
-LocalServer::LocalServer() : d(new Instance)
+LocalServer::LocalServer() : d(new Impl)
 {}
 
 void LocalServer::setName(String const &name)

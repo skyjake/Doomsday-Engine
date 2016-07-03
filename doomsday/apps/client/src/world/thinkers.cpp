@@ -127,12 +127,12 @@ DENG2_PIMPL(Thinkers)
 
     bool inited = false;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         clearMobjIds();
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Make sure the private instances of thinkers are released.
         releaseAllThinkers();
@@ -189,7 +189,7 @@ DENG2_PIMPL(Thinkers)
     }
 };
 
-Thinkers::Thinkers() : d(new Instance(this))
+Thinkers::Thinkers() : d(new Impl(this))
 {}
 
 bool Thinkers::isUsedMobjId(thid_t id)

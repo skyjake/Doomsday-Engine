@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(PanelWidget)
     Drawable drawable;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         openingRule = new AnimationRule(0);
         openingRule->setBehavior(AnimationRule::RestartWhenTargetChanges);
@@ -58,7 +58,7 @@ DENG_GUI_PIMPL(PanelWidget)
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(openingRule);
     }
@@ -216,7 +216,7 @@ DENG_GUI_PIMPL(PanelWidget)
 DENG2_AUDIENCE_METHOD(PanelWidget, AboutToOpen)
 DENG2_AUDIENCE_METHOD(PanelWidget, Close)
 
-PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
+PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
 {
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping);

@@ -26,7 +26,7 @@ DENG2_PIMPL_NOREF(NativeValue)
     Object *object = nullptr;
     Record const *memberScope = nullptr;
 
-    ~Instance()
+    ~Impl()
     {
         setObject(nullptr);
     }
@@ -47,7 +47,7 @@ DENG2_PIMPL_NOREF(NativeValue)
 };
 
 NativeValue::NativeValue(Object *object, Record const *memberScope)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->memberScope = memberScope;
     d->setObject(object);

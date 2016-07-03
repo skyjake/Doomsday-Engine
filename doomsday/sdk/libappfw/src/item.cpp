@@ -28,7 +28,7 @@ DENG2_PIMPL_NOREF(Item)
     String label;
     QVariant data;
 
-    Instance(Semantics sem, String const &text = "", QVariant var = QVariant())
+    Impl(Semantics sem, String const &text = "", QVariant var = QVariant())
         : context(0)
         , semantics(sem)
         , label(text)
@@ -40,11 +40,11 @@ DENG2_PIMPL_NOREF(Item)
 DENG2_AUDIENCE_METHOD(Item, Change)
 
 Item::Item(Semantics semantics)
-    : d(new Instance(semantics))
+    : d(new Impl(semantics))
 {}
 
 Item::Item(Semantics semantics, String const &label)
-    : d(new Instance(semantics, label))
+    : d(new Impl(semantics, label))
 {}
 
 Item::~Item()

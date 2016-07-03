@@ -36,7 +36,7 @@ DENG2_PIMPL(Finale)
     finaleid_t id;
     FinaleInterpreter interpreter;
 
-    Instance(Public *i, int flags, finaleid_t id)
+    Impl(Public *i, int flags, finaleid_t id)
         : Base(i)
         , active     (false)
         , flags      (flags)
@@ -44,7 +44,7 @@ DENG2_PIMPL(Finale)
         , interpreter(id)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self);
     }
@@ -73,7 +73,7 @@ DENG2_PIMPL(Finale)
 DENG2_AUDIENCE_METHOD(Finale, Deletion)
 
 Finale::Finale(int flags, finaleid_t id, String const &script)
-    : d(new Instance(this, flags, id))
+    : d(new Impl(this, flags, id))
 {
     d->loadScript(script);
 }

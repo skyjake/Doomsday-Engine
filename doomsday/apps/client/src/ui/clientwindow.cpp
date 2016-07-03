@@ -118,7 +118,7 @@ DENG2_PIMPL(ClientWindow)
     /// @todo Switch dynamically between VR and plain.
     VRWindowTransform contentXf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , root(thisPublic)
         , cursorX(new ConstantRule(0))
@@ -143,7 +143,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
 //        foreach (String s, configVariableNames())
 //        {
@@ -809,7 +809,7 @@ DENG2_PIMPL(ClientWindow)
 
 ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     canvas().audienceForGLResize() += d;
     canvas().audienceForGLInit() += d;
@@ -1046,7 +1046,7 @@ bool ClientWindow::prepareForDraw()
     // Offscreen composition is only needed in Oculus Rift mode.
     d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
 
-    if (d->performDeferredTasks() == Instance::AbortFrame)
+    if (d->performDeferredTasks() == Impl::AbortFrame)
     {
         // Shouldn't draw right now.
         return false;

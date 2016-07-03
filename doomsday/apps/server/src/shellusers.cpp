@@ -30,19 +30,19 @@ DENG2_PIMPL_NOREF(ShellUsers)
     QSet<ShellUser *> users;
     QTimer *infoTimer;
 
-    Instance()
+    Impl()
     {
         infoTimer = new QTimer;
         infoTimer->setInterval(PLAYER_INFO_INTERVAL);
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete infoTimer;
     }
 };
 
-ShellUsers::ShellUsers() : d(new Instance)
+ShellUsers::ShellUsers() : d(new Impl)
 {
     // Player information is sent periodically to all shell users.
     connect(d->infoTimer, SIGNAL(timeout()), this, SLOT(sendPlayerInfoToAll()));

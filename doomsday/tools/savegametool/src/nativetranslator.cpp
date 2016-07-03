@@ -142,14 +142,14 @@ DENG2_PIMPL(NativeTranslator)
     dint32 saveVersion;
     LZFILE *saveFilePtr;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , id         (Doom)
         , saveVersion(0)
         , saveFilePtr(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         closeFile();
     }
@@ -294,7 +294,7 @@ DENG2_PIMPL(NativeTranslator)
 
         while (!lzEOF(saveFile()))
         {
-            dsize bytesRead = lzRead(readBuf, BLOCKSIZE, const_cast<Instance *>(this)->saveFile());
+            dsize bytesRead = lzRead(readBuf, BLOCKSIZE, const_cast<Impl *>(this)->saveFile());
             if (!buffer)
             {
                 buffer = new Block;
@@ -569,7 +569,7 @@ DENG2_PIMPL(NativeTranslator)
 NativeTranslator::NativeTranslator(FormatId formatId, QStringList knownExtensions,
                                    QStringList baseGameIdKeys)
     : PackageFormatter(knownExtensions, baseGameIdKeys)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     d->id = formatId;
 }

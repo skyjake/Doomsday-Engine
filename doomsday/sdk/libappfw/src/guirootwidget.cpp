@@ -122,7 +122,7 @@ DENG2_PIMPL(GuiRootWidget)
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
 
-    Instance(Public *i, CanvasWindow *win)
+    Impl(Public *i, CanvasWindow *win)
         : Base(i)
         , window(win)
         , atlas(0)
@@ -136,7 +136,7 @@ DENG2_PIMPL(GuiRootWidget)
         self.add(focusIndicator);
     }
 
-    ~Instance()
+    ~Impl()
     {
         GuiWidget::recycleTrashedWidgets();
 
@@ -215,7 +215,7 @@ DENG2_PIMPL(GuiRootWidget)
 };
 
 GuiRootWidget::GuiRootWidget(CanvasWindow *window)
-    : d(new Instance(this, window))
+    : d(new Impl(this, window))
 {}
 
 void GuiRootWidget::setWindow(CanvasWindow *window)

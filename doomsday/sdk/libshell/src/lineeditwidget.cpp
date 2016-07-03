@@ -35,7 +35,7 @@ DENG2_PIMPL(LineEditWidget)
     bool signalOnEnter;
     ConstantRule *height; ///< As rows.
 
-    Instance(Public &i)
+    Impl(Public &i)
         : Base(i),
           signalOnEnter(true)
     {
@@ -43,7 +43,7 @@ DENG2_PIMPL(LineEditWidget)
         height = new ConstantRule(1);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(height);
     }
@@ -52,7 +52,7 @@ DENG2_PIMPL(LineEditWidget)
 LineEditWidget::LineEditWidget(de::String const &name)
     : TextWidget(name),
       AbstractLineEditor(new MonospaceLineWrapping),
-      d(new Instance(*this))
+      d(new Impl(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
 

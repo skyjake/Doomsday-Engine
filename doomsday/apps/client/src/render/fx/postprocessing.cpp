@@ -53,7 +53,7 @@ DENG2_PIMPL(PostProcessing)
 
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uFrame    ("uTex",       GLUniform::Sampler2D)
@@ -212,7 +212,7 @@ DENG2_PIMPL(PostProcessing)
 };
 
 PostProcessing::PostProcessing(int console)
-    : ConsoleEffect(console), d(new Instance(this))
+    : ConsoleEffect(console), d(new Impl(this))
 {}
 
 bool PostProcessing::isActive() const
@@ -222,12 +222,12 @@ bool PostProcessing::isActive() const
 
 void PostProcessing::fadeInShader(String const &fxPostShader, TimeDelta const &span)
 {
-    d->queue.append(Instance::QueueEntry(fxPostShader, 1, span));
+    d->queue.append(Impl::QueueEntry(fxPostShader, 1, span));
 }
 
 void PostProcessing::fadeOut(TimeDelta const &span)
 {
-    d->queue.append(Instance::QueueEntry("", 0, span));
+    d->queue.append(Impl::QueueEntry("", 0, span));
 }
 
 void PostProcessing::setOpacity(float opacity)

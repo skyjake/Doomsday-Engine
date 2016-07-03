@@ -37,7 +37,7 @@ DENG2_PIMPL(Loop)
     bool running;
     QTimer *timer;
 
-    Instance(Public *i) : Base(i), interval(0), running(false)
+    Impl(Public *i) : Base(i), interval(0), running(false)
     {
         DENG2_ASSERT(!loopSingleton);
         loopSingleton = i;
@@ -46,7 +46,7 @@ DENG2_PIMPL(Loop)
         QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
     }
 
-    ~Instance()
+    ~Impl()
     {
         loopSingleton = 0;
     }
@@ -56,7 +56,7 @@ DENG2_PIMPL(Loop)
 
 DENG2_AUDIENCE_METHOD(Loop, Iteration)
 
-Loop::Loop() : d(new Instance(this))
+Loop::Loop() : d(new Impl(this))
 {}
 
 void Loop::setRate(int freqHz)

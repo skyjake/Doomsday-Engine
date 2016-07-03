@@ -34,7 +34,7 @@ DENG2_PIMPL_NOREF(MapObject)
     Vector3d origin;             ///< Position in map space.
 };
 
-MapObject::MapObject(Vector3d const &origin) : d(new Instance)
+MapObject::MapObject(Vector3d const &origin) : d(new Impl)
 {
     d->origin = origin;
 }

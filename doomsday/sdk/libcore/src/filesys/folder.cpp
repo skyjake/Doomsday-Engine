@@ -55,7 +55,7 @@ DENG2_PIMPL(Folder), public Lockable
     /// Feeds provide content for the folder.
     Feeds feeds;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void add(File *file)
     {
@@ -78,7 +78,7 @@ DENG2_PIMPL(Folder), public Lockable
     }
 };
 
-Folder::Folder(String const &name) : File(name), d(new Instance(this))
+Folder::Folder(String const &name) : File(name), d(new Impl(this))
 {
     setStatus(Status::FOLDER);
 

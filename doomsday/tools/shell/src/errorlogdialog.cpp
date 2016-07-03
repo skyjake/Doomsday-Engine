@@ -12,7 +12,7 @@ DENG2_PIMPL(ErrorLogDialog)
     QLabel *msg;
     QTextEdit *text;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         QVBoxLayout *layout = new QVBoxLayout;
 
@@ -37,7 +37,7 @@ DENG2_PIMPL(ErrorLogDialog)
 };
 
 ErrorLogDialog::ErrorLogDialog(QWidget *parent) : QDialog(parent),
-    d(new Instance(this))
+    d(new Impl(this))
 {
     setWindowTitle(tr("Error Log"));
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);

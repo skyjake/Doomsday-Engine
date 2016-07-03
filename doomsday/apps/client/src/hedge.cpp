@@ -39,7 +39,7 @@ DENG2_PIMPL_NOREF(HEdge)
     }
 };
 
-HEdge::HEdge(Mesh &mesh, Vertex *vertex) : MeshElement(mesh), d(new Instance)
+HEdge::HEdge(Mesh &mesh, Vertex *vertex) : MeshElement(mesh), d(new Impl)
 {
     setVertex(vertex);
 }

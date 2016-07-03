@@ -58,13 +58,13 @@ DENG2_PIMPL(Texture)
     /// Image analysis data, used for various purposes according to context.
     Analyses analyses;
 
-    Instance(Public *i, TextureManifest &_manifest)
+    Impl(Public *i, TextureManifest &_manifest)
         : Base(i)
         , manifest(_manifest)
         , userData(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clearAnalyses();
 #ifdef __CLIENT__
@@ -79,7 +79,7 @@ DENG2_PIMPL(Texture)
     }
 };
 
-Texture::Texture(TextureManifest &manifest) : d(new Instance(this, manifest))
+Texture::Texture(TextureManifest &manifest) : d(new Impl(this, manifest))
 {
     setFlags(manifest.flags());
     setDimensions(manifest.logicalDimensions());

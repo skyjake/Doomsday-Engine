@@ -43,12 +43,12 @@ DENG2_PIMPL(Font)
     ConstantRule *lineSpacingRule;
     int ascent;
 
-    Instance(Public *i) : Base(i), ascent(0)
+    Impl(Public *i) : Base(i), ascent(0)
     {
         createRules();
     }
 
-    Instance(Public *i, PlatformFont const &qfont) : Base(i), font(qfont)
+    Impl(Public *i, PlatformFont const &qfont) : Base(i), font(qfont)
     {
 #if 0
         // Development aid: list all available fonts and styles.
@@ -64,7 +64,7 @@ DENG2_PIMPL(Font)
         updateMetrics();
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(heightRule);
         releaseRef(ascentRule);
@@ -161,13 +161,13 @@ DENG2_PIMPL(Font)
     }
 };
 
-Font::Font() : d(new Instance(this))
+Font::Font() : d(new Impl(this))
 {}
 
-Font::Font(Font const &other) : d(new Instance(this, other.d->font))
+Font::Font(Font const &other) : d(new Impl(this, other.d->font))
 {}
 
-Font::Font(QFont const &font) : d(new Instance(this, font))
+Font::Font(QFont const &font) : d(new Impl(this, font))
 {}
 
 Rectanglei Font::measure(String const &textLine) const

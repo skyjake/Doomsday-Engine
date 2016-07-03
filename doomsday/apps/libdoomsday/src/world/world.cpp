@@ -32,12 +32,12 @@ DENG2_PIMPL(World)
 {
     BaseMap *map = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         theWorld = thisPublic;
     }
 
-    ~Instance()
+    ~Impl()
     {
         theWorld = nullptr;
     }
@@ -47,7 +47,7 @@ DENG2_PIMPL(World)
 
 DENG2_AUDIENCE_METHOD(World, MapChange)
 
-World::World() : d(new Instance(this))
+World::World() : d(new Impl(this))
 {}
 
 void World::reset()

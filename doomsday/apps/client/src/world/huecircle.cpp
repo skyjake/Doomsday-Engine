@@ -30,10 +30,10 @@ using namespace de;
 DENG2_PIMPL_NOREF(HueCircle)
 {
     Vector3f frontVec, sideVec, upVec;
-    Instance() {}
+    Impl() {}
 };
 
-HueCircle::HueCircle() : d(new Instance())
+HueCircle::HueCircle() : d(new Impl())
 {}
 
 Vector3d HueCircle::origin(Vector3d const &viewOrigin, double distance) const

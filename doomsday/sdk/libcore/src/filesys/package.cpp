@@ -63,7 +63,7 @@ DENG2_PIMPL(Package)
 {
     File const *file;
 
-    Instance(Public *i, File const *f)
+    Impl(Public *i, File const *f)
         : Base(i)
         , file(f)
     {
@@ -109,7 +109,7 @@ DENG2_PIMPL(Package)
     }
 };
 
-Package::Package(File const &file) : d(new Instance(this, &file))
+Package::Package(File const &file) : d(new Impl(this, &file))
 {}
 
 Package::~Package()

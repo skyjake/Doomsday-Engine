@@ -41,7 +41,7 @@ DENG2_PIMPL(Atlas)
     Time fullReportedAt;
 
     // Minimum backing size is 1x1 pixels.
-    Instance(Public *i, Flags const &flg, Size const &size)
+    Impl(Public *i, Flags const &flg, Size const &size)
         : Base(i)
         , flags(flg)
         , totalSize(size.max(Size(1, 1)))
@@ -57,7 +57,7 @@ DENG2_PIMPL(Atlas)
         }
     }
 
-    ~Instance()
+    ~Impl()
     {
         allocator.reset();
         self.cancelDeferred();
@@ -289,7 +289,7 @@ DENG2_AUDIENCE_METHOD(Atlas, Reposition)
 DENG2_AUDIENCE_METHOD(Atlas, OutOfSpace)
 
 Atlas::Atlas(Flags const &flags, Size const &totalSize)
-    : d(new Instance(this, flags, totalSize))
+    : d(new Impl(this, flags, totalSize))
 {}
 
 Atlas::Flags Atlas::flags() const

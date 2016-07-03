@@ -29,7 +29,7 @@ DENG2_PIMPL(TestApp)
     QScopedPointer<AppWindowSystem> winSys;
     ImageBank images;
 
-    Instance(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i) {}
 
     void loadAllShaders()
     {
@@ -45,7 +45,7 @@ DENG2_PIMPL(TestApp)
 };
 
 TestApp::TestApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Instance(this))
+    : BaseGuiApp(argc, argv), d(new Impl(this))
 {
     setMetadata("Deng Team", "dengine.net", "Application Framework Test", "1.0");
     setUnixHomeFolderName(".test_appfw");

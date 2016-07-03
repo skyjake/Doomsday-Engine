@@ -245,8 +245,8 @@ public:
 #endif
 
     private:
-        struct Instance;
-        Instance *d;
+        struct Impl;
+        Impl *d;
     };
 
     /// File system subspace schemes.

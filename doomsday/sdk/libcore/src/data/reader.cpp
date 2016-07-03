@@ -49,13 +49,13 @@ DENG2_PIMPL_NOREF(Reader)
     bool marking;       ///< @c true, if marking is occurring (mark() called).
     Block markedData;   ///< All read data since the mark was set.
 
-    Instance(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
+    Impl(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
         : convert(order), version(DENG2_PROTOCOL_LATEST),
           source(src), offset(off), markOffset(off),
           stream(0), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
-    Instance(ByteOrder const &order, IIStream *str)
+    Impl(ByteOrder const &order, IIStream *str)
         : convert(order), version(DENG2_PROTOCOL_LATEST),
           source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(Reader)
         upgradeToByteArray();
     }
 
-    Instance(ByteOrder const &order, IIStream const *str)
+    Impl(ByteOrder const &order, IIStream const *str)
         : convert(order), version(DENG2_PROTOCOL_LATEST),
           source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
@@ -201,19 +201,19 @@ DENG2_PIMPL_NOREF(Reader)
     }
 };
 
-Reader::Reader(Reader const &other) : d(new Instance(*other.d))
+Reader::Reader(Reader const &other) : d(new Impl(*other.d))
 {}
 
 Reader::Reader(IByteArray const &source, ByteOrder const &byteOrder, IByteArray::Offset offset)
-    : d(new Instance(byteOrder, &source, offset))
+    : d(new Impl(byteOrder, &source, offset))
 {}
 
 Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
-    : d(new Instance(byteOrder, &stream))
+    : d(new Impl(byteOrder, &stream))
 {}
 
 Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
-    : d(new Instance(byteOrder, &stream))
+    : d(new Impl(byteOrder, &stream))
 {}
 
 Reader &Reader::withHeader()

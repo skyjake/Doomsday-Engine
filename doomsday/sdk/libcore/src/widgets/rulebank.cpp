@@ -49,18 +49,18 @@ DENG2_PIMPL(RuleBank)
 
     ConstantRule *zero;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         zero = new ConstantRule(0);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(zero);
     }
 };
 
-RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Instance(this))
+RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Impl(this))
 {}
 
 void RuleBank::addFromInfo(File const &file)
@@ -73,17 +73,17 @@ void RuleBank::addFromInfo(File const &file)
 Rule const &RuleBank::rule(DotPath const &path) const
 {
     if (path.isEmpty()) return *d->zero;
-    return *static_cast<Instance::RuleData &>(data(path)).rule;
+    return *static_cast<Impl::RuleData &>(data(path)).rule;
 }
 
 Bank::ISource *RuleBank::newSourceFromInfo(String const &id)
 {
-    return new Instance::RuleSource(*this, id);
+    return new Impl::RuleSource(*this, id);
 }
 
 Bank::IData *RuleBank::loadFromSource(ISource &source)
 {
-    return new Instance::RuleData(static_cast<Instance::RuleSource &>(source).load());
+    return new Impl::RuleData(static_cast<Impl::RuleSource &>(source).load());
 }
 
 } // namespace de

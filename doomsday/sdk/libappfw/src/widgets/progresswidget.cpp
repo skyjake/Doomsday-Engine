@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
     int framesWhileAnimDone = 0; ///< # of frames drawn while animation was already done.
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         updateStyle();
     }
@@ -167,7 +167,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
 ProgressWidget::ProgressWidget(String const &name)
     : LabelWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setTextGap("progress.textgap");
     setSizePolicy(ui::Filled, ui::Filled);

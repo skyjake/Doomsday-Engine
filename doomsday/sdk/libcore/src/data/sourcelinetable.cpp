@@ -39,9 +39,9 @@ DENG2_PIMPL_NOREF(SourceLineTable)
     QHash<duint, IdNode const *> lookup; // reverse lookup
 };
 
-SourceLineTable::LineId SourceLineTable::Instance::IdNode::counter = 0;
+SourceLineTable::LineId SourceLineTable::Impl::IdNode::counter = 0;
 
-SourceLineTable::SourceLineTable() : d(new Instance)
+SourceLineTable::SourceLineTable() : d(new Impl)
 {}
 
 SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNumber)

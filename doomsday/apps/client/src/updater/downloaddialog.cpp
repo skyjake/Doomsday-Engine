@@ -67,7 +67,7 @@ DENG2_PIMPL(DownloadDialog)
     String location;
     String errorMessage;
 
-    Instance(Public *d, String downloadUri, String fallbackUri)
+    Impl(Public *d, String downloadUri, String fallbackUri)
         : Base(d), state(Connecting), uri(downloadUri), uri2(fallbackUri), reply(0),
           receivedBytes(0), totalBytes(0)
     {
@@ -158,7 +158,7 @@ DENG2_PIMPL(DownloadDialog)
 };
 
 DownloadDialog::DownloadDialog(String downloadUri, String fallbackUri)
-    : DialogWidget("download"), d(new Instance(this, downloadUri, fallbackUri))
+    : DialogWidget("download"), d(new Impl(this, downloadUri, fallbackUri))
 {}
 
 DownloadDialog::~DownloadDialog()
@@ -174,12 +174,12 @@ String DownloadDialog::downloadedFilePath() const
 
 bool DownloadDialog::isReadyToInstall() const
 {
-    return d->state == Instance::Finished;
+    return d->state == Impl::Finished;
 }
 
 bool DownloadDialog::isFailed() const
 {
-    return d->state == Instance::Error;
+    return d->state == Impl::Error;
 }
 
 void DownloadDialog::finished(QNetworkReply *reply)
@@ -193,7 +193,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
     {
         LOG_WARNING("Failed: ") << reply->errorString();
 
-        d->state = Instance::Error;
+        d->state = Impl::Error;
         d->errorMessage = reply->errorString();
         d->updateProgress();
         downloadInProgress = 0;
@@ -211,7 +211,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
         return;
     }
 
-    if (d->state == Instance::MaybeRedirected)
+    if (d->state == Impl::MaybeRedirected)
     {
         // This does not look like a binary file... Let's see if we can parse the page.
         QString html = QString::fromUtf8(reply->readAll());
@@ -271,7 +271,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
                                     new SignalAction(this, SLOT(cancel())))
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install Update"));
 
-    d->state = Instance::Finished;
+    d->state = Impl::Finished;
     d->progress->setRotationSpeed(0);
     d->updateProgress();
 
@@ -285,7 +285,7 @@ void DownloadDialog::cancel()
 {
     LOG_NOTE("Download cancelled due to user request");
 
-    d->state = Instance::Error;
+    d->state = Impl::Error;
     d->progress->setRotationSpeed(0);
 
     if (d->reply)
@@ -304,7 +304,7 @@ void DownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
 
-    if (d->state == Instance::Downloading && total > 0)
+    if (d->state == Impl::Downloading && total > 0)
     {
         d->totalBytes = total;
         d->receivedBytes = received;
@@ -331,12 +331,12 @@ void DownloadDialog::replyMetaDataChanged()
     else if (contentType.startsWith("text/html"))
     {
         // Looks like a redirection page.
-        d->state = Instance::MaybeRedirected;
+        d->state = Impl::MaybeRedirected;
     }
     else
     {
         LOG_DEBUG("Receiving content of type '%s'") << contentType;
-        d->state = Instance::Downloading;
+        d->state = Impl::Downloading;
     }
 }
 

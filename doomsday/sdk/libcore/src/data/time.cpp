@@ -126,17 +126,17 @@ DENG2_PIMPL_NOREF(Time)
     QDateTime dateTime;
     Delta highPerfElapsed;
 
-    Instance()
+    Impl()
         : flags(DateTime | HighPerformance)
         , dateTime(QDateTime::currentDateTime())
         , highPerfElapsed(highPerfTimer.elapsed())
     {}
 
-    Instance(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
+    Impl(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
 
-    Instance(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
+    Impl(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
 
-    Instance(Instance const &other)
+    Impl(Impl const &other)
         : de::IPrivate()
         , flags(other.flags)
         , dateTime(other.dateTime)
@@ -157,7 +157,7 @@ DENG2_PIMPL_NOREF(Time)
         return flags.testFlag(HighPerformance);
     }
 
-    bool isLessThan(Instance const &other) const
+    bool isLessThan(Impl const &other) const
     {
         if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
         {
@@ -176,7 +176,7 @@ DENG2_PIMPL_NOREF(Time)
         return false;
     }
 
-    bool isEqualTo(Instance const &other) const
+    bool isEqualTo(Impl const &other) const
     {
         if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
         {
@@ -206,7 +206,7 @@ DENG2_PIMPL_NOREF(Time)
         }
     }
 
-    Delta delta(Instance const &earlier) const
+    Delta delta(Impl const &earlier) const
     {
         if (flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
         {
@@ -225,17 +225,17 @@ DENG2_PIMPL_NOREF(Time)
     }
 };
 
-Time::Time() : d(new Instance)
+Time::Time() : d(new Impl)
 {}
 
-Time::Time(Time const &other) : ISerializable(), d(new Instance(*other.d))
+Time::Time(Time const &other) : ISerializable(), d(new Impl(*other.d))
 {}
 
-Time::Time(QDateTime const &t) : ISerializable(), d(new Instance(t))
+Time::Time(QDateTime const &t) : ISerializable(), d(new Impl(t))
 {}
 
 Time::Time(TimeDelta const &highPerformanceDelta)
-    : ISerializable(), d(new Instance(highPerformanceDelta))
+    : ISerializable(), d(new Impl(highPerformanceDelta))
 {}
 
 Time Time::invalidTime()
@@ -245,7 +245,7 @@ Time Time::invalidTime()
 
 Time &Time::operator = (Time const &other)
 {
-    d.reset(new Instance(*other.d));
+    d.reset(new Impl(*other.d));
     return *this;
 }
 
@@ -315,11 +315,11 @@ String Time::asText(Format format) const
                  format == SecondsSinceStart)
         {
             TimeDelta elapsed;
-            if (d->flags.testFlag(Instance::HighPerformance))
+            if (d->flags.testFlag(Impl::HighPerformance))
             {
                 elapsed = d->highPerfElapsed;
             }
-            else if (d->flags.testFlag(Instance::DateTime))
+            else if (d->flags.testFlag(Impl::DateTime))
             {
                 elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
             }
@@ -346,7 +346,7 @@ String Time::asText(Format format) const
             return QString("#%1 ").arg(asBuildNumber(), -4) + d->dateTime.toString("hh:mm:ss.zzz");
         }
     }
-    if (d->flags.testFlag(Instance::HighPerformance))
+    if (d->flags.testFlag(Impl::HighPerformance))
     {
         return QString("+%1 sec").arg(d->highPerfElapsed, 0, 'f', 3);
     }
@@ -405,10 +405,10 @@ QDateTime &de::Time::asDateTime()
 
 QDateTime const &de::Time::asDateTime() const
 {
-    if (!d->hasDateTime() && d->flags.testFlag(Instance::HighPerformance))
+    if (!d->hasDateTime() && d->flags.testFlag(Impl::HighPerformance))
     {
         d->dateTime = (highPerfTimer.startedAt() + d->highPerfElapsed).asDateTime();
-        d->flags |= Instance::DateTime;
+        d->flags |= Impl::DateTime;
     }
     return d->dateTime;
 }
@@ -425,11 +425,11 @@ static duint8 const HAS_HIGH_PERF = 0x02;
 
 void Time::operator >> (Writer &to) const
 {
-    duint8 flags = (d->flags & Instance::DateTime?        HAS_DATETIME  : 0) |
-                   (d->flags & Instance::HighPerformance? HAS_HIGH_PERF : 0);
+    duint8 flags = (d->flags & Impl::DateTime?        HAS_DATETIME  : 0) |
+                   (d->flags & Impl::HighPerformance? HAS_HIGH_PERF : 0);
     to << flags;
 
-    if (d->flags.testFlag(Instance::DateTime))
+    if (d->flags.testFlag(Impl::DateTime))
     {
         Block bytes;
         QDataStream s(&bytes, QIODevice::WriteOnly);
@@ -438,7 +438,7 @@ void Time::operator >> (Writer &to) const
         to << bytes;
     }
 
-    if (d->flags.testFlag(Instance::HighPerformance))
+    if (d->flags.testFlag(Impl::HighPerformance))
     {
         to << d->highPerfElapsed;
     }
@@ -460,7 +460,7 @@ void Time::operator << (Reader &from)
 
         if (flags & HAS_DATETIME)
         {
-            d->flags |= Instance::DateTime;
+            d->flags |= Impl::DateTime;
 
             Block bytes;
             from >> bytes;
@@ -471,7 +471,7 @@ void Time::operator << (Reader &from)
 
         if (flags & HAS_HIGH_PERF)
         {
-            d->flags |= Instance::HighPerformance;
+            d->flags |= Impl::HighPerformance;
 
             from >> d->highPerfElapsed;
         }
@@ -484,7 +484,7 @@ void Time::operator << (Reader &from)
             {
                 // Current high-performance timer was started after this time;
                 // we can't represent the time as high performance delta.
-                d->flags &= ~Instance::HighPerformance;
+                d->flags &= ~Impl::HighPerformance;
             }
             else
             {
@@ -500,7 +500,7 @@ void Time::operator << (Reader &from)
         QDataStream s(bytes);
         s.setVersion(QDataStream::Qt_4_8);
         s >> d->dateTime;
-        d->flags = Instance::DateTime;
+        d->flags = Impl::DateTime;
     }
 }
 

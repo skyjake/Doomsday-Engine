@@ -53,7 +53,7 @@ DENG2_PIMPL(AbstractLineEditor)
     bool suggesting;
     bool completionNotified;
 
-    Instance(Public *i, ILineWrapping *lineWraps)
+    Impl(Public *i, ILineWrapping *lineWraps)
         : Base(i),
           cursor(0),
           echoMode(NormalEchoMode),
@@ -460,7 +460,7 @@ DENG2_PIMPL(AbstractLineEditor)
     }
 };
 
-AbstractLineEditor::AbstractLineEditor(ILineWrapping *lineWraps) : d(new Instance(this, lineWraps))
+AbstractLineEditor::AbstractLineEditor(ILineWrapping *lineWraps) : d(new Impl(this, lineWraps))
 {}
 
 ILineWrapping const &AbstractLineEditor::lineWraps() const

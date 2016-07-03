@@ -47,12 +47,12 @@ DENG2_PIMPL(Drawable)
     BufferConfigs configs;
     GLProgram defaultProgram;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         self += defaultProgram;
     }
 
-    ~Instance()
+    ~Impl()
     {
         clear();
     }
@@ -135,7 +135,7 @@ DENG2_PIMPL(Drawable)
     }
 };
 
-Drawable::Drawable() : d(new Instance(this))
+Drawable::Drawable() : d(new Impl(this))
 {}
 
 void Drawable::clear()
@@ -478,7 +478,7 @@ void Drawable::draw() const
     // Make sure the GL state on the top of the stack is in effect.
     GLState::current().apply();
 
-    DENG2_FOR_EACH_CONST(Instance::Buffers, i, d->buffers)
+    DENG2_FOR_EACH_CONST(Impl::Buffers, i, d->buffers)
     {
         Id const id = i.key();
 

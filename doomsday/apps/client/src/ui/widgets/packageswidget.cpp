@@ -325,7 +325,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         MenuWidget *_actions;
     };
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         defaultActionItems << new ui::VariantActionItem(tr("Load"), tr("Unload"), new CallbackAction([this] ()
         {
@@ -432,7 +432,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         showProgressIndicator(true);
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(searchMinY);
 
@@ -600,7 +600,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
 PackagesWidget::PackagesWidget(String const &name)
     : GuiWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
 
@@ -688,7 +688,7 @@ String PackagesWidget::actionPackage() const
 {
     if (d->menu->interactedItem())
     {
-        return d->menu->interactedItem()->as<Instance::PackageItem>().data().toString();
+        return d->menu->interactedItem()->as<Impl::PackageItem>().data().toString();
     }
     return String();
 }

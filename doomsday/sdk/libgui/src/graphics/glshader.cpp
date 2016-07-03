@@ -31,10 +31,10 @@ DENG2_PIMPL(GLShader)
     Type type;
     Block compiledSource;
 
-    Instance(Public *i) : Base(i), name(0), type(Vertex)
+    Impl(Public *i) : Base(i), name(0), type(Vertex)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -72,10 +72,10 @@ DENG2_PIMPL(GLShader)
     }
 };
 
-GLShader::GLShader() : d(new Instance(this))
+GLShader::GLShader() : d(new Impl(this))
 {}
 
-GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Instance(this))
+GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Impl(this))
 {
     try
     {

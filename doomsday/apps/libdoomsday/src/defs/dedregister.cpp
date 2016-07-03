@@ -45,7 +45,7 @@ DENG2_PIMPL(DEDRegister)
     Keys keys;
     QMap<Variable *, Record *> parents;
 
-    Instance(Public *i, Record &rec) : Base(i), names(&rec)
+    Impl(Public *i, Record &rec) : Base(i), names(&rec)
     {
         names->audienceForDeletion() += this;
 
@@ -272,7 +272,7 @@ DENG2_PIMPL(DEDRegister)
     }
 };
 
-DEDRegister::DEDRegister(Record &names) : d(new Instance(this, names))
+DEDRegister::DEDRegister(Record &names) : d(new Impl(this, names))
 {}
 
 void DEDRegister::addLookupKey(String const &variableName, LookupFlags const &flags)
@@ -302,7 +302,7 @@ Record &DEDRegister::copy(int fromIndex, Record &to)
 
     // By default lookup keys are not copied, as they are used as identifiers and
     // therefore duplicates should not occur.
-    DENG2_FOR_EACH_CONST(Instance::Keys, i, d->keys)
+    DENG2_FOR_EACH_CONST(Impl::Keys, i, d->keys)
     {
         if (i.value().flags.testFlag(AllowCopy)) continue;
         omitted << i.key();

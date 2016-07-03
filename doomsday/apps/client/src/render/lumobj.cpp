@@ -55,11 +55,10 @@ DENG2_PIMPL_NOREF(Lumobj)
     Texture *downTex = nullptr;
     Texture *upTex   = nullptr;
 
-    Instance() {}
+    Impl() {}
 
-    Instance(Instance const &other)
-        : de::IPrivate()
-        , source     (other.source)
+    Impl(Impl const &other)
+        : source     (other.source)
         , sourceMobj (other.sourceMobj)
         , maxDistance(other.maxDistance)
         , color      (other.color)
@@ -74,14 +73,14 @@ DENG2_PIMPL_NOREF(Lumobj)
 };
 
 Lumobj::Lumobj(Vector3d const &origin, ddouble radius, Vector3f const &color)
-    : MapObject(origin), d(new Instance())
+    : MapObject(origin), d(new Impl())
 {
     setRadius(radius);
     setColor(color);
 }
 
 Lumobj::Lumobj(Lumobj const &other)
-    : MapObject(other.origin()), d(new Instance(*other.d))
+    : MapObject(other.origin()), d(new Impl(*other.d))
 {}
 
 void Lumobj::setSource(Source const *newSource)

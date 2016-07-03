@@ -63,7 +63,7 @@ namespace de {
  */
 class DENG2_PUBLIC PathTree : public Lockable
 {
-    struct Instance; // needs to be friended by Node
+    struct Impl; // needs to be friended by Node
 
 public:
     class Node; // forward declaration
@@ -236,7 +236,7 @@ public:
         Path path(QChar sep = '/') const;
 
         friend class PathTree;
-        friend struct PathTree::Instance;
+        friend struct PathTree::Impl;
 
     protected:
         SegmentId segmentId() const;
@@ -419,7 +419,7 @@ protected:
     virtual Node *newNode(NodeArgs const &args);
 
 private:
-    Instance *d;
+    Impl *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)

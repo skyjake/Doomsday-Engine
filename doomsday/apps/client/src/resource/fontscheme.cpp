@@ -36,13 +36,13 @@ DENG2_OBSERVES(FontManifest, Deletion)
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , uniqueIdLutDirty(false)
         , uniqueIdBase(0)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clear();
         DENG2_ASSERT(index.isEmpty()); // sanity check.
@@ -162,7 +162,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
     }
 };
 
-FontScheme::FontScheme(String symbolicName) : d(new Instance(this))
+FontScheme::FontScheme(String symbolicName) : d(new Impl(this))
 {
     d->name = symbolicName;
 }

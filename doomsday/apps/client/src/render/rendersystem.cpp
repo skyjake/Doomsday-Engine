@@ -213,7 +213,7 @@ DENG2_PIMPL(RenderSystem)
         }
     } vlights;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         LOG_AS("RenderSystem");
 
@@ -339,7 +339,7 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
 
-    //~Instance()
+    //~Impl()
     //{
         //App::packageLoader().audienceForLoad()   -= this;
         //App::packageLoader().audienceForUnload() -= this;
@@ -396,7 +396,7 @@ DENG2_PIMPL(RenderSystem)
     }
 };
 
-RenderSystem::RenderSystem() : d(new Instance(this))
+RenderSystem::RenderSystem() : d(new Impl(this))
 {}
 
 void RenderSystem::glInit()

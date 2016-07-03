@@ -105,7 +105,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     DotPath selectedTextColor { "text" };
     QTimer buttonHideTimer;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         labelRightMargin    = new AnimationRule(0);
 
@@ -137,7 +137,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         });
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(labelRightMargin);
         releaseRef(labelMinRightMargin);
@@ -198,10 +198,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
 HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     : GuiWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     setBehavior(Focusable | ContentClipping);
-    addEventHandler(new Instance::ClickHandler(*this));
+    addEventHandler(new Impl::ClickHandler(*this));
 
     Rule const &iconSize = d->label->margins().height() +
                            style().fonts().font("default").height() +

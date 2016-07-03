@@ -30,7 +30,7 @@ DENG2_PIMPL_NOREF(MaterialManifest)
     materialid_t id = 0;                 ///< Globally unique identifier.
     std::unique_ptr<Material> material;  ///< Associated resource (if any).
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        if(material) material->audienceForDeletion() -= this;
 //    }
@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(MaterialManifest)
 
 MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 MaterialManifest::~MaterialManifest()

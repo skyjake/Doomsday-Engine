@@ -50,7 +50,7 @@ DENG2_PIMPL(ScriptedInfo)
     Process process;               ///< Execution context.
     String currentNamespace;
 
-    Instance(Public *i, Record *globalNamespace)
+    Impl(Public *i, Record *globalNamespace)
         : Base(i)
         , process(globalNamespace)
     {
@@ -522,7 +522,7 @@ DENG2_PIMPL(ScriptedInfo)
 DENG2_AUDIENCE_METHOD(ScriptedInfo, NamedBlock)
 
 ScriptedInfo::ScriptedInfo(Record *globalNamespace)
-    : d(new Instance(this, globalNamespace))
+    : d(new Impl(this, globalNamespace))
 {}
 
 void ScriptedInfo::clear()
@@ -656,7 +656,7 @@ bool ScriptedInfo::isFalse(Value const &value) // static
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Record const &root) // static
 {
     Paths found;
-    Instance::findBlocks(blockType, found, root);
+    Impl::findBlocks(blockType, found, root);
     return found;
 }
 

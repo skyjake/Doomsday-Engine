@@ -34,14 +34,14 @@ DENG2_PIMPL_NOREF(ResourceClass)
     /// Recognized file types (in order of importance, left to right; owned).
     FileTypes fileTypes;
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(fileTypes);
     }
 };
 
 ResourceClass::ResourceClass(String name, String defaultScheme)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->name = name;
     d->defaultScheme = defaultScheme;

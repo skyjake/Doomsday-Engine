@@ -83,7 +83,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     }
 };
 
-LineSegment::Side::Side(LineSegment &line) : d(new Instance)
+LineSegment::Side::Side(LineSegment &line) : d(new Impl)
 {
     d->line = &line;
 }
@@ -339,7 +339,7 @@ DENG2_PIMPL(LineSegment)
     LineSegment::Side front;
     LineSegment::Side back;
 
-    Instance(Public *i, Vertex &from_, Vertex &to_)
+    Impl(Public *i, Vertex &from_, Vertex &to_)
         : Base (i)
         , from (&from_)
         , to   (&to_)
@@ -350,7 +350,7 @@ DENG2_PIMPL(LineSegment)
         to->audienceForOriginChange   += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        from->audienceForOriginChange -= this;
 //        to->audienceForOriginChange   -= this;
@@ -381,7 +381,7 @@ DENG2_PIMPL(LineSegment)
     }
 };
 
-LineSegment::LineSegment(Vertex &from, Vertex &to) : d(new Instance(this, from, to))
+LineSegment::LineSegment(Vertex &from, Vertex &to) : d(new Impl(this, from, to))
 {
     d->front.updateCache();
     d->back.updateCache();

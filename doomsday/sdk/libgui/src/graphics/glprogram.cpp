@@ -62,7 +62,7 @@ DENG2_PIMPL(GLProgram)
     bool inUse;
     bool needRebuild;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , texturesChanged(false)
         , name(0)
@@ -70,7 +70,7 @@ DENG2_PIMPL(GLProgram)
         , needRebuild(false)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -375,7 +375,7 @@ DENG2_PIMPL(GLProgram)
     }
 };
 
-GLProgram::GLProgram() : d(new Instance(this))
+GLProgram::GLProgram() : d(new Impl(this))
 {}
 
 void GLProgram::clear()

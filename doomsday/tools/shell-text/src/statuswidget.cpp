@@ -31,14 +31,14 @@ DENG2_PIMPL(StatusWidget)
     String rules;
     String mapId;
 
-    Instance(Public &i) : Base(i), link(0)
+    Impl(Public &i) : Base(i), link(0)
     {
         updateTimer = new QTimer(&self);
     }
 };
 
 StatusWidget::StatusWidget(String const &name)
-    : TextWidget(name), d(new Instance(*this))
+    : TextWidget(name), d(new Impl(*this))
 {
     connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 }

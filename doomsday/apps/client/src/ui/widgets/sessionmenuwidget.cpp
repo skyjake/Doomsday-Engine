@@ -28,7 +28,7 @@ DENG_GUI_PIMPL(SessionMenuWidget)
 {
     GameFilterWidget *filter;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , filter(0)
     {}
@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(SessionMenuWidget)
 };
 
 SessionMenuWidget::SessionMenuWidget(String const &name)
-    : MenuWidget(name), d(new Instance(this))
+    : MenuWidget(name), d(new Impl(this))
 {
     enableScrolling(false);
     setGridSize(1, ui::Filled, 0, ui::Expand);
@@ -127,7 +127,7 @@ DENG2_PIMPL_NOREF(SessionMenuWidget::SessionItem)
 };
 
 SessionMenuWidget::SessionItem::SessionItem(SessionMenuWidget &owner)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->owner = &owner;
 }

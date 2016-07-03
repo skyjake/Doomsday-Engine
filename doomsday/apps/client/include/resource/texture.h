@@ -42,7 +42,7 @@ class TextureManifest;
  */
 class Texture
 {
-    struct Instance; // Needs to be friended by Variant.
+    struct Impl; // Needs to be friended by Variant.
 
 public:
     DENG2_DEFINE_AUDIENCE(Deletion, void textureBeingDeleted(Texture const &texture))
@@ -199,7 +199,7 @@ public:
         void glCoords(float *s, float *t) const;
 
         friend class Texture;
-        friend struct Texture::Instance;
+        friend struct Texture::Impl;
 
     private:
         DENG2_PRIVATE(d)
@@ -423,7 +423,7 @@ public:
     static void consoleRegister();
 
 private:
-    Instance *d;
+    Impl *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Texture::Flags)

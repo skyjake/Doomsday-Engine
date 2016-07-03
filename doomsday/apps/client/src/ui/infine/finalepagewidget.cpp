@@ -61,7 +61,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
         }
     } bg;
 
-    Instance()
+    Impl()
     {
         de::zap(flags);
         flags.showBackground = true; /// Draw background by default.
@@ -75,7 +75,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
         de::zap(preFont);
     }
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(children);
         DENG2_ASSERT(children.isEmpty());
@@ -88,7 +88,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
     }
 };
 
-FinalePageWidget::FinalePageWidget() : d(new Instance)
+FinalePageWidget::FinalePageWidget() : d(new Impl)
 {}
 
 FinalePageWidget::~FinalePageWidget()

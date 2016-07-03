@@ -85,7 +85,7 @@ DENG2_PIMPL(CursesApp)
 
     TextRootWidget *rootWidget;
 
-    Instance(Public &i) : Base(i), unicodeContinuation(0), rootWidget(0)
+    Impl(Public &i) : Base(i), unicodeContinuation(0), rootWidget(0)
     {
         logBuffer.enableStandardOutput(false);
         logBuffer.setAutoFlushInterval(0.1);
@@ -101,7 +101,7 @@ DENG2_PIMPL(CursesApp)
         rootWidget->draw();
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete rootWidget;
 
@@ -399,7 +399,7 @@ DENG2_PIMPL(CursesApp)
 };
 
 CursesApp::CursesApp(int &argc, char **argv)
-    : QCoreApplication(argc, argv), d(new Instance(*this))
+    : QCoreApplication(argc, argv), d(new Impl(*this))
 {}
 
 bool CursesApp::notify(QObject *receiver, QEvent *event)

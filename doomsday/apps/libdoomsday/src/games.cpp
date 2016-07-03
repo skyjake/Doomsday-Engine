@@ -68,7 +68,7 @@ DENG2_PIMPL(Games)
 
     GameAdditionScriptAudience scriptAudienceForGameAddition;
 
-    Instance(Public *i) : Base(i), games(), nullGame(0)
+    Impl(Public *i) : Base(i), games(), nullGame(0)
     {
         /*
          * One-time creation and initialization of the special "null-game"
@@ -82,7 +82,7 @@ DENG2_PIMPL(Games)
         audienceForAddition += scriptAudienceForGameAddition;
     }
 
-    ~Instance()
+    ~Impl()
     {
         clear();
         delete nullGame;
@@ -139,7 +139,7 @@ DENG2_AUDIENCE_METHOD(Games, Addition)
 DENG2_AUDIENCE_METHOD(Games, Readiness)
 DENG2_AUDIENCE_METHOD(Games, Progress)
 
-Games::Games() : d(new Instance(this))
+Games::Games() : d(new Impl(this))
 {}
 
 Game &Games::nullGame() const

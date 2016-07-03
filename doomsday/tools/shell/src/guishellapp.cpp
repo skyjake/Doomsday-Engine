@@ -48,9 +48,9 @@ DENG2_PIMPL_NOREF(GuiShellApp)
 
     Preferences *prefs;
 
-    Instance() : prefs(0) {}
+    Impl() : prefs(0) {}
 
-    ~Instance()
+    ~Impl()
     {
         foreach (LinkWindow *win, windows)
         {
@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(GuiShellApp)
 };
 
 GuiShellApp::GuiShellApp(int &argc, char **argv)
-    : QtGuiApp(argc, argv), d(new Instance)
+    : QtGuiApp(argc, argv), d(new Impl)
 {
     // Metadata.
     setOrganizationDomain ("dengine.net");

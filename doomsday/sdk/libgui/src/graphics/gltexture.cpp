@@ -51,7 +51,7 @@ DENG2_PIMPL(GLTexture)
     dfloat maxLevel;
     TextureFlags flags;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , format(Image::Unknown)
         , name(0)
@@ -63,7 +63,7 @@ DENG2_PIMPL(GLTexture)
         , flags(ParamsChanged)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -233,10 +233,10 @@ DENG2_PIMPL(GLTexture)
     }
 };
 
-GLTexture::GLTexture() : d(new Instance(this))
+GLTexture::GLTexture() : d(new Impl(this))
 {}
 
-GLTexture::GLTexture(GLuint existingTexture, Size const &size) : d(new Instance(this))
+GLTexture::GLTexture(GLuint existingTexture, Size const &size) : d(new Impl(this))
 {
     d->size = size;
     d->name = existingTexture;

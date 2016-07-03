@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(GLInfo)
     Extensions ext;
     Limits lim;
 
-    Instance()
+    Impl()
         : inited(false)
     {
         zap(ext);
@@ -183,7 +183,7 @@ DENG2_PIMPL_NOREF(GLInfo)
     }
 };
 
-GLInfo::GLInfo() : d(new Instance)
+GLInfo::GLInfo() : d(new Impl)
 {}
 
 void GLInfo::glInit()

@@ -156,7 +156,7 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     Transformation xform;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , font(0)
         , ascent(0)
@@ -167,7 +167,7 @@ DENG2_PIMPL(CoreTextNativeFont)
         , xform(NoTransform)
     {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base(i)
         , font(other.font)
         , ascent(other.ascent)
@@ -178,7 +178,7 @@ DENG2_PIMPL(CoreTextNativeFont)
         , xform(other.xform)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         release();
     }
@@ -256,23 +256,23 @@ DENG2_PIMPL(CoreTextNativeFont)
 namespace de {
 
 CoreTextNativeFont::CoreTextNativeFont(String const &family)
-    : NativeFont(family), d(new Instance(this))
+    : NativeFont(family), d(new Impl(this))
 {}
 
 CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
-    : NativeFont(font.family()), d(new Instance(this))
+    : NativeFont(font.family()), d(new Impl(this))
 {
     setSize  (font.pointSizeF());
     setWeight(font.weight());
     setStyle (font.italic()? Italic : Regular);
 
-    d->xform = (font.capitalization() == QFont::AllUppercase? Instance::Uppercase :
-                font.capitalization() == QFont::AllLowercase? Instance::Lowercase :
-                                                              Instance::NoTransform);
+    d->xform = (font.capitalization() == QFont::AllUppercase? Impl::Uppercase :
+                font.capitalization() == QFont::AllLowercase? Impl::Lowercase :
+                                                              Impl::NoTransform);
 }
 
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
-    : NativeFont(other), d(new Instance(this, *other.d))
+    : NativeFont(other), d(new Impl(this, *other.d))
 {
     // If the other is ready, this will be too.
     setState(other.state());
@@ -281,7 +281,7 @@ CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
 CoreTextNativeFont &CoreTextNativeFont::operator = (CoreTextNativeFont const &other)
 {
     NativeFont::operator = (other);
-    d.reset(new Instance(this, *other.d));
+    d.reset(new Impl(this, *other.d));
     // If the other is ready, this will be too.
     setState(other.state());
     return *this;

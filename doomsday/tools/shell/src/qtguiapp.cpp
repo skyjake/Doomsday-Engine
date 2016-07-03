@@ -30,7 +30,7 @@ DENG2_PIMPL(QtGuiApp)
     LogBuffer logBuffer;
     Clock clock;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         LogBuffer::setAppBuffer(logBuffer);
         Clock::setAppClock(&clock);
@@ -39,7 +39,7 @@ DENG2_PIMPL(QtGuiApp)
         logBuffer.setAutoFlushInterval(0.1);
     }
 
-    ~Instance()
+    ~Impl()
     {
         Clock::setAppClock(0);
         Animation::setClock(0);
@@ -47,7 +47,7 @@ DENG2_PIMPL(QtGuiApp)
 };
 
 QtGuiApp::QtGuiApp(int &argc, char **argv)
-    : QApplication(argc, argv), d(new Instance(this))
+    : QApplication(argc, argv), d(new Impl(this))
 {}
 
 bool QtGuiApp::notify(QObject *receiver, QEvent *event)

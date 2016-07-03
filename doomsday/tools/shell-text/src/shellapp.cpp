@@ -48,7 +48,7 @@ DENG2_PIMPL(ShellApp)
     Link *link;
     ServerFinder finder;
 
-    Instance(Public &i) : Base(i), link(0)
+    Impl(Public &i) : Base(i), link(0)
     {
         RootWidget &root = self.rootWidget();
 
@@ -124,14 +124,14 @@ DENG2_PIMPL(ShellApp)
         QObject::connect(&finder, SIGNAL(updated()), &self, SLOT(updateMenuWithFoundServers()));
     }
 
-    ~Instance()
+    ~Impl()
     {
         delete link;
     }
 };
 
 ShellApp::ShellApp(int &argc, char **argv)
-    : CursesApp(argc, argv), d(new Instance(*this))
+    : CursesApp(argc, argv), d(new Impl(*this))
 {
     // Metadata.
     setOrganizationDomain ("dengine.net");

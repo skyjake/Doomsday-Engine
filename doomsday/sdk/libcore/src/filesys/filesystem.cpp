@@ -51,7 +51,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     /// The root folder of the entire file system.
     Folder root;
 
-    ~Instance()
+    ~Impl()
     {
         qDeleteAll(typeIndex.values());
         typeIndex.clear();
@@ -68,7 +68,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     }
 };
 
-FileSystem::FileSystem() : d(new Instance)
+FileSystem::FileSystem() : d(new Impl)
 {}
 
 void FileSystem::addInterpreter(filesys::IInterpreter const &interpreter)
@@ -330,7 +330,7 @@ void FileSystem::printIndex()
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
     d->index.print();
 
-    DENG2_FOR_EACH_CONST(Instance::TypeIndex, i, d->typeIndex)
+    DENG2_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex)
     {
         LOG_DEBUG("Index for type '%s' has %i entries") << i.key() << i.value()->size();
 

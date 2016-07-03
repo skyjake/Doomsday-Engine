@@ -26,7 +26,7 @@ DENG2_PIMPL_NOREF(InputDialog)
 };
 
 InputDialog::InputDialog(String const &name)
-    : MessageDialog(name), d(new Instance)
+    : MessageDialog(name), d(new Impl)
 {
     // Create the editor.
     area().add(d->editor = new LineEditWidget);

@@ -36,7 +36,7 @@ DENG2_PIMPL(Style)
     ColorBank colors;
     ImageBank images;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // The Style is available as a native module.
         App::scriptSystem().addNativeModule("Style", module);
@@ -72,7 +72,7 @@ DENG2_PIMPL(Style)
     }
 };
 
-Style::Style() : d(new Instance(this))
+Style::Style() : d(new Impl(this))
 {}
 
 Style::~Style()

@@ -37,7 +37,7 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
 {
     QTimer timer;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         timer.setInterval(1000);
 
@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
         link().audienceForLeave += this;
     }
 
-//    ~Instance()
+//    ~Impl()
 //    {
 //        link().audienceForJoin -= this;
 //        link().audienceForLeave -= this;
@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
 };
 
 MultiplayerMenuWidget::MultiplayerMenuWidget()
-    : PopupMenuWidget("multiplayer-menu"), d(new Instance(this))
+    : PopupMenuWidget("multiplayer-menu"), d(new Impl(this))
 {
     connect(&d->timer, SIGNAL(timeout()), this, SLOT(updateElapsedTime()));
 

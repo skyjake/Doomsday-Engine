@@ -40,7 +40,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
     std::unique_ptr<StateAnimator> animator;
     AnimationVector2 angleOffset { Animation::Linear };
 
-    Instance(ClientPlayer *plr)
+    Impl(ClientPlayer *plr)
         : player(plr)
     {}
 
@@ -80,7 +80,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 };
 
 PlayerWeaponAnimator::PlayerWeaponAnimator(ClientPlayer *plr)
-    : d(new Instance(plr))
+    : d(new Impl(plr))
 {}
 
 void PlayerWeaponAnimator::setAsset(String const &identifier)

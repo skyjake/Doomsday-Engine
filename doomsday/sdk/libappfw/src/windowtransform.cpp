@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(WindowTransform)
 };
 
 WindowTransform::WindowTransform(BaseWindow &window)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->win = &window;
 }

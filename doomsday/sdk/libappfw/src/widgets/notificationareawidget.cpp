@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
     QTimer dismissTimer;
     QList<GuiWidget *> pendingDismiss;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         shift = new AnimationRule(0);
     }
 
-    ~Instance()
+    ~Impl()
     {
         foreach (GuiWidget *w, shown.keys())
         {
@@ -148,7 +148,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
 NotificationAreaWidget::NotificationAreaWidget(String const &name)
     : GuiWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     // Initially the widget is empty.
     rule().setSize(Const(0), Const(0));

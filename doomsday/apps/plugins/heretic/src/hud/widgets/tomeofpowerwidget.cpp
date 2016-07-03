@@ -53,7 +53,7 @@ guidata_tomeofpower_t::guidata_tomeofpower_t(dint player)
     : HudWidget(function_cast<UpdateGeometryFunc>(TomeWidget_UpdateGeometry),
                 function_cast<DrawFunc>(TomeWidget_Draw),
                 player)
-    , d(new Instance)
+    , d(new Impl)
 {}
 
 guidata_tomeofpower_t::~guidata_tomeofpower_t()

@@ -42,7 +42,7 @@ DENG2_PIMPL(AudioDriver)
     audiointerface_music_t iMusic;
     audiointerface_cd_t    iCd;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         zap(iBase);
         zap(iSfx);
@@ -163,7 +163,7 @@ DENG2_PIMPL(AudioDriver)
     }
 };
 
-AudioDriver::AudioDriver() : d(new Instance(this))
+AudioDriver::AudioDriver() : d(new Impl(this))
 {}
 
 String AudioDriver::name() const
@@ -218,7 +218,7 @@ void AudioDriver::load(String const &identifier)
 #endif
 
     // Perhaps a plugin audio driver?
-    LibraryFile *plugin = Instance::tryFindAudioPlugin(identifier);
+    LibraryFile *plugin = Impl::tryFindAudioPlugin(identifier);
     if(!plugin)
     {
         /// @throw LoadError  Unknown driver specified.

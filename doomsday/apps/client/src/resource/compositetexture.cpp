@@ -81,12 +81,12 @@ DENG2_PIMPL_NOREF(CompositeTexture)
     int origIndex;               ///< Determined by the original game logic.
     Components components;       ///< Images to be composited.
 
-    Instance() : origIndex(-1) {}
+    Impl() : origIndex(-1) {}
 };
 
 CompositeTexture::CompositeTexture(String const &percentEncodedName,
     Vector2ui const &logicalDimensions, Flags flags)
-    : d(new Instance)
+    : d(new Impl)
 {
     d->name              = percentEncodedName;
     d->flags             = flags;

@@ -27,10 +27,10 @@ DENG2_PIMPL(BitField)
     Elements const *elements;
     Block packed;
 
-    Instance(Public *i) : Base(i), elements(0)
+    Impl(Public *i) : Base(i), elements(0)
     {}
 
-    Instance(Public *i, Instance const &other)
+    Impl(Public *i, Impl const &other)
         : Base     (i)
         , elements (other.elements)
         , packed   (other.packed)
@@ -103,7 +103,7 @@ DENG2_PIMPL(BitField)
         return value;
     }
 
-    Ids delta(Instance const &other) const
+    Ids delta(Impl const &other) const
     {
         DENG2_ASSERT(elements != 0);
         DENG2_ASSERT(other.elements != 0);
@@ -144,18 +144,18 @@ DENG2_PIMPL(BitField)
     }
 };
 
-BitField::BitField() : d(new Instance(this))
+BitField::BitField() : d(new Impl(this))
 {}
 
-BitField::BitField(Elements const &elements) : d(new Instance(this))
+BitField::BitField(Elements const &elements) : d(new Impl(this))
 {
     setElements(elements);
 }
 
-BitField::BitField(BitField const &other) : d(new Instance(this, *other.d))
+BitField::BitField(BitField const &other) : d(new Impl(this, *other.d))
 {}
 
-BitField::BitField(Block const &data) : d(new Instance(this))
+BitField::BitField(Block const &data) : d(new Impl(this))
 {
     d->packed = data;
 }

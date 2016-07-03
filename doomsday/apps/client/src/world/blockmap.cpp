@@ -206,7 +206,7 @@ DENG2_PIMPL(Blockmap)
 
     Nodes nodes;      ///< Quadtree nodes. The first being the root.
 
-    Instance(Public *i, AABoxd const &bounds, duint cellSize)
+    Impl(Public *i, AABoxd const &bounds, duint cellSize)
         : Base(i)
         , bounds    (bounds)
         , cellSize  (cellSize)
@@ -392,7 +392,7 @@ DENG2_PIMPL(Blockmap)
 };
 
 Blockmap::Blockmap(AABoxd const &bounds, duint cellSize)
-    : d(new Instance(this, bounds, cellSize))
+    : d(new Impl(this, bounds, cellSize))
 {}
 
 Blockmap::~Blockmap()
@@ -514,7 +514,7 @@ bool Blockmap::unlink(AABoxd const &region, void *elem)
 
 void Blockmap::unlinkAll()
 {
-    for(Instance::Node const &node : d->nodes)
+    for(Impl::Node const &node : d->nodes)
     {
         // Only leafs with user data.
         if(!node.isLeaf()) continue;
@@ -733,7 +733,7 @@ void Blockmap::drawDebugVisual() const
      * Draw the Quadtree.
      */
     glColor4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
-    foreach(Instance::Node const &node, d->nodes)
+    foreach(Impl::Node const &node, d->nodes)
     {
         // Only leafs with user data.
         if(!node.isLeaf()) continue;

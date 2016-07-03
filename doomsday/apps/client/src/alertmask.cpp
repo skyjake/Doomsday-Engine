@@ -28,7 +28,7 @@ DENG2_PIMPL_NOREF(AlertMask)
 {
     duint32 mask[LogEntry::HighestLogLevel + 1];
 
-    Instance()
+    Impl()
     {
         zap(mask);
 
@@ -62,7 +62,7 @@ DENG2_PIMPL_NOREF(AlertMask)
     }
 };
 
-AlertMask::AlertMask() : d(new Instance)
+AlertMask::AlertMask() : d(new Impl)
 {}
 
 void AlertMask::init()

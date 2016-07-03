@@ -32,11 +32,11 @@ DENG2_PIMPL(MaterialScheme)
     /// Mappings from paths to manifests.
     MaterialScheme::Index index;
 
-    Instance(Public *i, String symbolicName) : Base(i),
+    Impl(Public *i, String symbolicName) : Base(i),
         name(symbolicName)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         self.clear();
         DENG2_ASSERT(index.isEmpty());
@@ -44,7 +44,7 @@ DENG2_PIMPL(MaterialScheme)
 };
 
 MaterialScheme::MaterialScheme(String symbolicName)
-    : d(new Instance(this, symbolicName))
+    : d(new Impl(this, symbolicName))
 {}
 
 void MaterialScheme::clear()

@@ -46,7 +46,7 @@ DENG2_PIMPL(Bundles)
     QHash<DataBundle::Format, BlockElements> formatEntries;
     TaskPool tasks;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         // Observe new data files.
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForAddition() += this;
@@ -55,7 +55,7 @@ DENG2_PIMPL(Bundles)
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
 
-    ~Instance()
+    ~Impl()
     {
         // Ongoing identification tasks should first finish.
         {
@@ -172,7 +172,7 @@ DENG2_PIMPL(Bundles)
 DENG2_AUDIENCE_METHOD(Bundles, Identify)
 
 Bundles::Bundles()
-    : d(new Instance(this))
+    : d(new Impl(this))
 {}
 
 de::Info const &Bundles::identityRegistry() const

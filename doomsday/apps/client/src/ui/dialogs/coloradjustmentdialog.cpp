@@ -31,7 +31,7 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
     CVarSliderWidget *contrast;
     CVarSliderWidget *brightness;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -66,7 +66,7 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
 };
 
 ColorAdjustmentDialog::ColorAdjustmentDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+    : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Color Adjustments"));
     buttons()

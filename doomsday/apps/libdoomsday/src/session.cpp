@@ -60,7 +60,7 @@ DENG2_PIMPL(Session::SavedIndex), public Lockable
     All entries;
     bool availabilityUpdateDisabled;
 
-    Instance(Public *i) : Base(i), availabilityUpdateDisabled(false) {}
+    Impl(Public *i) : Base(i), availabilityUpdateDisabled(false) {}
 
     void notifyAvailabilityUpdate()
     {
@@ -73,7 +73,7 @@ DENG2_PIMPL(Session::SavedIndex), public Lockable
 
 DENG2_AUDIENCE_METHOD(Session::SavedIndex, AvailabilityUpdate)
 
-Session::SavedIndex::SavedIndex() : d(new Instance(this))
+Session::SavedIndex::SavedIndex() : d(new Impl(this))
 {}
 
 void Session::SavedIndex::clear()

@@ -35,11 +35,11 @@ DENG2_PIMPL_NOREF(MapElement)
     dint indexInMap     = NoIndex;
     dint indexInArchive = NoIndex;
 
-    Instance(dint type) : type(type) {}
+    Impl(dint type) : type(type) {}
 };
 
 MapElement::MapElement(dint type, MapElement *parent)
-    : d(new Instance(type))
+    : d(new Impl(type))
 {
     setParent(parent);
 }

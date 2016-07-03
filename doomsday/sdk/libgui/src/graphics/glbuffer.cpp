@@ -129,13 +129,13 @@ DENG2_PIMPL(GLBuffer)
     Primitive prim;
     AttribSpecs specs;
 
-    Instance(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
+    Impl(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
     {
         specs.first = 0;
         specs.second = 0;
     }
 
-    ~Instance()
+    ~Impl()
     {
         release();
         releaseIndices();
@@ -269,7 +269,7 @@ DENG2_PIMPL(GLBuffer)
     }
 };
 
-GLBuffer::GLBuffer() : d(new Instance(this))
+GLBuffer::GLBuffer() : d(new Impl(this))
 {}
 
 void GLBuffer::clear()
@@ -299,7 +299,7 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
         if (dataSize && count)
         {
             glBindBuffer(GL_ARRAY_BUFFER, d->name);
-            glBufferData(GL_ARRAY_BUFFER, dataSize, data, Instance::glUsage(usage));
+            glBufferData(GL_ARRAY_BUFFER, dataSize, data, Impl::glUsage(usage));
             glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
@@ -326,7 +326,7 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
         d->allocIndices();
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(Index), indices, Instance::glUsage(usage));
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(Index), indices, Impl::glUsage(usage));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
@@ -356,7 +356,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
-            glDrawElements(Instance::glPrimitive(d->prim),
+            glDrawElements(Impl::glPrimitive(d->prim),
                            range.size(), GL_UNSIGNED_SHORT,
                            (void const *) dintptr(range.start * 2));
             LIBGUI_ASSERT_GL_OK();
@@ -367,7 +367,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     {
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
-            glDrawArrays(Instance::glPrimitive(d->prim), range.start, range.size());
+            glDrawArrays(Impl::glPrimitive(d->prim), range.start, range.size());
             LIBGUI_ASSERT_GL_OK();
         }
     }
@@ -404,7 +404,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         DENG2_ASSERT(count >= 0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        glDrawElementsInstancedARB(Instance::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
+        glDrawElementsInstancedARB(Impl::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
                                    (void const *) dintptr(first * 2),
                                    instanceAttribs.count());
         LIBGUI_ASSERT_GL_OK();
@@ -417,7 +417,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
         DENG2_ASSERT(count >= 0);
 
-        glDrawArraysInstancedARB(Instance::glPrimitive(d->prim), first, count,
+        glDrawArraysInstancedARB(Impl::glPrimitive(d->prim), first, count,
                                  instanceAttribs.count());
         LIBGUI_ASSERT_GL_OK();
     }

@@ -86,7 +86,7 @@ DENG_GUI_PIMPL(ColumnWidget)
     HeaderWidget *header;
     Rule const *maxContentWidth = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
         back = new LabelWidget;
         back->margins().setZero();
@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(ColumnWidget)
                 .setInput(Rule::Width, scrollArea->contentRule().width());
     }
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(maxContentWidth);
     }
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(ColumnWidget)
 
 ColumnWidget::ColumnWidget(String const &name)
     : GuiWidget(name)
-    , d(new Instance(this))
+    , d(new Impl(this))
 {
     changeRef(d->maxContentWidth, Const(toDevicePixels(400))/*rule().width() - rule("gap") * 2*/);
 
@@ -133,7 +133,7 @@ ColumnWidget::ColumnWidget(String const &name)
 
 void ColumnWidget::setBackgroundImage(DotPath const &imageId)
 {
-    auto *img = new Instance::BackgroundImage(imageId, *this);
+    auto *img = new Impl::BackgroundImage(imageId, *this);
     img->setColor(Vector4f(.5f, .5f, .5f, 1.f));
     d->back->setImage(img);
 }
@@ -171,7 +171,7 @@ void ColumnWidget::setHighlighted(bool highlighted)
     {
         d->highlighted = highlighted;
 
-        auto &img = d->back->image()->as<Instance::BackgroundImage>();
+        auto &img = d->back->image()->as<Impl::BackgroundImage>();
         img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
     }
 }

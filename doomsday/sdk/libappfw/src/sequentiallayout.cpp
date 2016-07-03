@@ -33,7 +33,7 @@ DENG2_PIMPL(SequentialLayout)
     Rule const *totalWidth;
     Rule const *totalHeight;
 
-    Instance(Public *i, Rule const &x, Rule const &y, ui::Direction direc)
+    Impl(Public *i, Rule const &x, Rule const &y, ui::Direction direc)
         : Base(i),
           dir(direc),
           initialX(holdRef(x)),
@@ -46,7 +46,7 @@ DENG2_PIMPL(SequentialLayout)
           totalHeight(new ConstantRule(0))
     {}
 
-    ~Instance()
+    ~Impl()
     {
         releaseRef(initialX);
         releaseRef(initialY);
@@ -169,7 +169,7 @@ DENG2_PIMPL(SequentialLayout)
 };
 
 SequentialLayout::SequentialLayout(Rule const &startX, Rule const &startY, ui::Direction direction)
-    : d(new Instance(this, startX, startY, direction))
+    : d(new Impl(this, startX, startY, direction))
 {}
 
 void SequentialLayout::clear()

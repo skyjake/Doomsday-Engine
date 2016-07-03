@@ -248,7 +248,7 @@ DENG2_PIMPL(LensFlares)
     GLUniform uAtlas;
     GLUniform uDepthBuf;
 
-    Instance(Public *i)
+    Impl(Public *i)
         : Base(i)
         , res(0)
         , buffer(0)
@@ -260,7 +260,7 @@ DENG2_PIMPL(LensFlares)
         , uDepthBuf  ("uDepthBuf",   GLUniform::Sampler2D)
     {}
 
-    ~Instance()
+    ~Impl()
     {
         DENG2_ASSERT(res == 0); // should have been deinited
         releaseRef(res);
@@ -457,7 +457,7 @@ DENG2_PIMPL(LensFlares)
     }
 };
 
-LensFlares::LensFlares(int console) : ConsoleEffect(console), d(new Instance(this))
+LensFlares::LensFlares(int console) : ConsoleEffect(console), d(new Impl(this))
 {}
 
 void LensFlares::clearLights()

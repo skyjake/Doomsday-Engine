@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
     typedef QMap<Char, QImage> Cache;
     Cache cache;
 
-    Instance() : blinkVisible(true)
+    Impl() : blinkVisible(true)
     {
 #ifdef DENG2_QT_5_1_OR_NEWER
         dpiFactor = qApp->devicePixelRatio();
@@ -113,7 +113,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
     }
 };
 
-QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size) : d(new Instance)
+QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size) : d(new Impl)
 {
     d->dims = size;
     d->createBackbuffer();

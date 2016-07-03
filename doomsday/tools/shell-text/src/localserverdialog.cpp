@@ -34,7 +34,7 @@ DENG2_PIMPL_NOREF(LocalServerDialog)
     LineEditWidget *port;
 };
 
-LocalServerDialog::LocalServerDialog() : d(new Instance)
+LocalServerDialog::LocalServerDialog() : d(new Impl)
 {
     d->choice = new ChoiceWidget("gameMode");
     d->port = new LineEditWidget("serverPort");
