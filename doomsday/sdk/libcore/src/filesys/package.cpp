@@ -32,6 +32,7 @@ namespace de {
 String const Package::VAR_PACKAGE      ("package");
 String const Package::VAR_PACKAGE_ID   ("package.ID");
 String const Package::VAR_PACKAGE_ALIAS("package.alias");
+String const Package::VAR_PACKAGE_TITLE("package.title");
 String const Package::VAR_TITLE        ("title");
 
 static String const PACKAGE_ORDER      ("package.__order__");
@@ -361,16 +362,7 @@ StringList Package::requires(File const &packageFile)
 
 void Package::addRequiredPackage(File &packageFile, String const &id)
 {
-    Record &names = packageFile.objectNamespace();
-
-    if (!names.has(PACKAGE_REQUIRES))
-    {
-        names.addArray(PACKAGE_REQUIRES, new ArrayValue({ new TextValue(id) }));
-    }
-    else
-    {
-        names[PACKAGE_REQUIRES].value<ArrayValue>().add(new TextValue(id));
-    }
+    packageFile.objectNamespace().appendToArray(PACKAGE_REQUIRES, new TextValue(id));
 }
 
 static String stripAfterFirstUnderscore(String str)

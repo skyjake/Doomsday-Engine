@@ -27,6 +27,7 @@
 #include "de/Config"
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
+#include "de/EscapeParser"
 #include "de/FileLogSink"
 #include "de/LibraryFile"
 #include "de/Log"
@@ -409,7 +410,10 @@ void App::handleUncaughtException(String message)
 {
     LOG_CRITICAL(message);
 
-    if (d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
+    EscapeParser esc;
+    esc.parse(message);
+
+    if (d->terminateFunc) d->terminateFunc(esc.plainText().toUtf8());
 }
 
 bool App::processEvent(Event const &ev)

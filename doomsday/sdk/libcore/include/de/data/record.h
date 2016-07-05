@@ -383,6 +383,8 @@ public:
 
     Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
 
+    Variable &appendToArray(String const &name, Value *value);
+
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed
      * using the member notation: <code>subrecord-name.variable-name</code>

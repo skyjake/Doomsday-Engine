@@ -574,6 +574,19 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
     return (*this)[name];
 }
 
+Variable &Record::appendToArray(String const &name, Value *value)
+{
+    if (!has(name))
+    {
+        return addArray(name, new ArrayValue({ value }));
+    }
+
+    Variable &var = (*this)[name];
+    DENG2_ASSERT(var.value().is<ArrayValue>());
+    var.value<ArrayValue>().add(value);
+    return var;
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
