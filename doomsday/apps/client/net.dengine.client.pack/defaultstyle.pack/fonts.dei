@@ -56,9 +56,9 @@ group {
             ['regular', 25]: 'SFUIDisplay-Light',
             ['regular', 50]: 'SFUIDisplay-Regular',
             ['regular', 75]: 'SFUIDisplay-Bold',
-            ['italic',  25]: 'SFUIDisplay-LightItalic',
-            ['italic',  50]: 'SFUIDisplay-Italic',
-            ['italic',  75]: 'SFUIDisplay-BoldItalic'
+            ['italic',  25]: 'SFUIText-LightItalic',    # Only non-italic available.
+            ['italic',  50]: 'SFUIText-Italic',
+            ['italic',  75]: 'SFUIText-BoldItalic'
         })
         App.addFontMapping("Menlo", {
             ['regular', 25]: 'Menlo-Regular',
@@ -167,4 +167,3 @@ slider {
 log {
     font normal inherits default {}
 }
-
