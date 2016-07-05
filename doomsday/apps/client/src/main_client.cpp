@@ -48,6 +48,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QTranslator>
+#include <de/EscapeParser>
 
 /**
  * Application entry point.
@@ -77,8 +78,10 @@ int main(int argc, char** argv)
         }
         catch(de::Error const &er)
         {
-            qWarning() << "App init failed:\n" << er.asText();
-            QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
+            de::EscapeParser msg;
+            msg.parse(er.asText());
+            qWarning() << "App init failed:\n" << msg.plainText();
+            QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + msg.plainText());
             return -1;
         }
     }
