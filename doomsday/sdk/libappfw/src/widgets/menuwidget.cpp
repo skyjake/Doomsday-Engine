@@ -172,6 +172,7 @@ DENG2_PIMPL(MenuWidget)
     Data const *items = nullptr;
     ChildWidgetOrganizer organizer;
     QSet<PanelWidget *> openSubs;
+    IndirectRule *outContentHeight;
 
     SizePolicy colPolicy = Fixed;
     SizePolicy rowPolicy = Fixed;
@@ -180,6 +181,8 @@ DENG2_PIMPL(MenuWidget)
         : Base(i),
           organizer(self)
     {
+        outContentHeight = new IndirectRule;
+
         // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
 
@@ -192,6 +195,8 @@ DENG2_PIMPL(MenuWidget)
 
     ~Impl()
     {
+        releaseRef(outContentHeight);
+
         // Clear the data model first, so possible sub-widgets are deleted at the right time.
         // Note that we can't clear an external data model.
         defaultItems.clear();
@@ -202,8 +207,8 @@ DENG2_PIMPL(MenuWidget)
         if (items)
         {
             // Get rid of the old context.
-            items->audienceForAddition() -= this;
-            items->audienceForRemoval() -= this;
+            items->audienceForAddition()    -= this;
+            items->audienceForRemoval()     -= this;
             items->audienceForOrderChange() -= this;
             organizer.unsetContext();
         }
@@ -211,8 +216,8 @@ DENG2_PIMPL(MenuWidget)
         items = ctx;
 
         // Take new context into use.
-        items->audienceForAddition() += this;
-        items->audienceForRemoval() += this;
+        items->audienceForAddition()    += this;
+        items->audienceForRemoval()     += this;
         items->audienceForOrderChange() += this;
         organizer.setContext(*items); // recreates widgets
     }
@@ -556,8 +561,9 @@ bool MenuWidget::isWidgetPartOfMenu(Widget const &widget) const
 void MenuWidget::updateLayout()
 {
     d->relayout();
+    d->outContentHeight->setSource(d->contentHeight());
 
-    setContentSize(d->layout.width(), d->contentHeight());
+    setContentSize(d->layout.width(), *d->outContentHeight);
 
     // Expanding policy causes the size of the menu widget to change.
     if (d->colPolicy == Expand)
@@ -566,7 +572,7 @@ void MenuWidget::updateLayout()
     }
     if (d->rowPolicy == Expand)
     {
-        rule().setInput(Rule::Height, d->contentHeight() + margins().height());
+        rule().setInput(Rule::Height, *d->outContentHeight + margins().height());
     }
 
     d->needLayout = false;
@@ -580,6 +586,11 @@ GridLayout const &MenuWidget::layout() const
 GridLayout &MenuWidget::layout()
 {
     return d->layout;
+}
+
+Rule const &MenuWidget::contentHeight() const
+{
+    return *d->outContentHeight;
 }
 
 ChildWidgetOrganizer &MenuWidget::organizer()

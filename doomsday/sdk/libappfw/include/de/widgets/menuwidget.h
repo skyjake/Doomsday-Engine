@@ -170,6 +170,8 @@ public:
 
     GridLayout &layout();
 
+    Rule const &contentHeight() const;
+
     // Events.
     void update();
     bool handleEvent(Event const &event);

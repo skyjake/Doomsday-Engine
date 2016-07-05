@@ -55,6 +55,11 @@ Item::Semantics Item::semantics() const
     return d->semantics;
 }
 
+bool Item::isSeparator() const
+{
+    return d->semantics.testFlag(Separator);
+}
+
 void Item::setLabel(String const &label)
 {
     d->label = label;

@@ -975,6 +975,11 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
     return changed;
 }
 
+bool GuiWidget::hasBeenUpdated() const
+{
+    return !d->firstUpdateAfterCreation;
+}
+
 void GuiWidget::updateStyle()
 {}
 

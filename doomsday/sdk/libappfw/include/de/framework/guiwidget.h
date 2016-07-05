@@ -516,6 +516,15 @@ protected:
     bool hasChangedPlace(Rectanglei &currentPlace);
 
     /**
+     * Determines whether update() has been called at least once on the widget.
+     * Before this the widget has not been seen on screen, so it can be manipulated
+     * without visible artifacts.
+     *
+     * @return @c true, if the wdiget has been updated.
+     */
+    bool hasBeenUpdated() const;
+
+    /**
      * Called during GuiWidget::update() whenever the style of the widget has
      * been marked as changed.
      */

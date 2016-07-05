@@ -75,6 +75,8 @@ public:
 
     Semantics semantics() const;
 
+    bool isSeparator() const;
+
     void setLabel(String const &label);
 
     String label() const;

@@ -375,6 +375,21 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         return averageItemHeight;
     }
 
+    float bestEstimateOfWidgetHeight(GuiWidget &w) const
+    {
+        float height = w.rule().height().value();
+        if (fequal(height, 0.f))
+        {
+            // Actual height is not yet known, so use the average.
+            height = w.estimatedHeight();
+        }
+        if (fequal(height, 0.f))
+        {
+            height = averageItemHeight;
+        }
+        return height;
+    }
+
     void updateVirtualization()
     {
         if (!virtualEnabled || !virtualMin || !virtualMax || !virtualTop ||
@@ -436,11 +451,10 @@ DENG2_PIMPL(ChildWidgetOrganizer)
                  pos >= virtualPvs.start && pos < int(dataItems->size());
                  --pos)
             {
-                float height = averageItemHeight;
-                if (GuiWidget *w = addItemWidget(pos, AlwaysPrepend))
-                {
-                    height = w->estimatedHeight();
-                }
+                GuiWidget *w = addItemWidget(pos, AlwaysPrepend);
+                DENG2_ASSERT(w != nullptr);
+
+                float height = bestEstimateOfWidgetHeight(*w);
                 // Reduce strut length to make room for new items.
                 virtualStrut->set(de::max(0.f, virtualStrut->value() - height));
             }
@@ -452,12 +466,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
             // Remove excess widgets from the top and extend the strut accordingly.
             while (virtualPvs.start < estimated.start)
             {
-                float height = firstChild()->rule().height().value();
-                if (fequal(height, 0.f))
-                {
-                    // Actual height is not yet known, so use the average.
-                    height = firstChild()->estimatedHeight();
-                }
+                float height = bestEstimateOfWidgetHeight(*firstChild());
                 removeItemWidget(virtualPvs.start++);
                 virtualStrut->set(virtualStrut->value() + height);
             }

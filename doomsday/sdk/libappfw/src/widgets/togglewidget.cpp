@@ -31,8 +31,9 @@ DENG2_PIMPL(ToggleWidget),
 DENG2_OBSERVES(ButtonWidget, Press)
 {
     /// Draws the animated I/O toggle indicator.
-    struct ToggleProceduralImage : public ProceduralImage
+    class ToggleProceduralImage : public ProceduralImage
     {
+    public:
         ToggleProceduralImage(GuiWidget &owner)
             : _owner(owner),
               _pos(0, Animation::EaseBoth),
@@ -45,10 +46,15 @@ DENG2_OBSERVES(ButtonWidget, Press)
         Style const &style() const { return _owner.style(); }
         Atlas &atlas() const { return _owner.root().atlas(); }
 
-        void setState(ToggleState st)
+        void setState(ToggleState st, bool animate)
         {
-            _pos.setValue(st == Active? 1 : 0, SWITCH_ANIM_SPAN);
+            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeDelta());
             _animating = true;
+        }
+
+        void finishAnimation()
+        {
+            _pos.finish();
         }
 
         bool update()
@@ -106,6 +112,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
     ToggleState state;
     ToggleProceduralImage *procImage; // not owned
+    bool hasBeenUpdated = false;
 
     Impl(Public *i)
         : Base(i),
@@ -141,7 +148,7 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
     if (d->state != state)
     {
         d->state = state;
-        d->procImage->setState(state);
+        d->procImage->setState(state, hasBeenUpdated());
 
         if (notify)
         {
@@ -154,6 +161,11 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
 ToggleWidget::ToggleState ToggleWidget::toggleState() const
 {
     return d->state;
+}
+
+void ToggleWidget::finishAnimation()
+{
+    d->procImage->finishAnimation();
 }
 
 } // namespace de

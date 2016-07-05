@@ -60,6 +60,11 @@ public:
     bool isActive() const   { return toggleState() == Active;   }
     bool isInactive() const { return toggleState() == Inactive; }
 
+    /**
+     * Completes an ongoing state change animation.
+     */
+    void finishAnimation();
+
 signals:
     void stateChanged(ToggleWidget::ToggleState active);
     void stateChangedByUser(ToggleWidget::ToggleState active);
