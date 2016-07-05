@@ -332,6 +332,11 @@ Record &Package::initializeMetadata(File &packageFile, String const &id)
     return metadata;
 }
 
+Record const &Package::metadata(File const &packageFile)
+{
+    return packageFile.objectNamespace().subrecord(VAR_PACKAGE);
+}
+
 QStringList Package::tags(File const &packageFile)
 {
     return tags(packageFile.objectNamespace().gets(PACKAGE_TAGS));

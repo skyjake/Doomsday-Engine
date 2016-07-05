@@ -71,12 +71,12 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
 
         DictionaryValue &conf()
         {
-            return Config::get()["resource.selectedPackages"].value<DictionaryValue>();
+            return Config::get()["fs.selectedPackages"].value<DictionaryValue>();
         }
 
         DictionaryValue const &conf() const
         {
-            return Config::get()["resource.selectedPackages"].value<DictionaryValue>();
+            return Config::get()["fs.selectedPackages"].value<DictionaryValue>();
         }
 
         bool isSelected() const

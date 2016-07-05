@@ -17,15 +17,18 @@
  */
 
 #include "de/PackageLoader"
-#include "de/FS"
+
 #include "de/App"
 #include "de/CommandLine"
-#include "de/Version"
+#include "de/Config"
+#include "de/DictionaryValue"
+#include "de/FS"
 #include "de/Info"
-#include "de/Log"
-#include "de/Parser"
 #include "de/LinkFile"
+#include "de/Log"
 #include "de/PackageFeed"
+#include "de/Parser"
+#include "de/Version"
 
 #include <QMap>
 #include <QRegExp>
@@ -208,6 +211,13 @@ DENG2_PIMPL(PackageLoader)
         // exception is any are missing.
         loadRequirements(source);
 
+        // Optional content can be loaded once Config is available so the user's
+        // preferences are known.
+        if (App::configExists())
+        {
+            loadOptionalContent(source);
+        }
+
         Package *pkg = new Package(source);
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
@@ -284,6 +294,50 @@ DENG2_PIMPL(PackageLoader)
             if (!self.isLoaded(reqId))
             {
                 self.load(reqId);
+            }
+        }
+    }
+
+    void loadOptionalContent(File const &packageFile)
+    {
+        // Packages enabled/disabled for use.
+        DictionaryValue const &selPkgs = Config::get()["fs.selectedPackages"]
+                                         .value<DictionaryValue>();
+
+        Record const &meta = Package::metadata(packageFile);
+
+        // Helper function to determine if a particular pacakge is marked for loading.
+        auto isPackageSelected = [meta, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
+            TextValue const key(meta.gets("ID"));
+            if (selPkgs.contains(key)) {
+                auto const &sels = selPkgs.element(key).as<DictionaryValue>();
+                if (sels.contains(id)) {
+                    return sels.element(id).isTrue();
+                }
+            }
+            return byDefault;
+        };
+
+        if (meta.has("recommends"))
+        {
+            for (auto const *id : meta.geta("recommends").elements())
+            {
+                String const pkgId = id->asText();
+                if (isPackageSelected(pkgId, true) && !self.isLoaded(pkgId))
+                {
+                    self.load(pkgId);
+                }
+            }
+        }
+        if (meta.has("extras"))
+        {
+            for (auto const *id : meta.geta("extras").elements())
+            {
+                String const pkgId = id->asText();
+                if (isPackageSelected(pkgId, false) && !self.isLoaded(pkgId))
+                {
+                    self.load(pkgId);
+                }
             }
         }
     }

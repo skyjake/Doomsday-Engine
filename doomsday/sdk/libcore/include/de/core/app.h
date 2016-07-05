@@ -318,6 +318,8 @@ public:
      */
     static ScriptSystem &scriptSystem();
 
+    static bool configExists();
+
     /**
      * Returns the configuration.
      */

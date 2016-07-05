@@ -771,6 +771,11 @@ ScriptSystem &App::scriptSystem()
     return DENG2_APP->d->scriptSys;
 }
 
+bool App::configExists()
+{
+    return DENG2_APP->d->config != nullptr;
+}
+
 Folder &App::rootFolder()
 {
     return fileSystem().root();

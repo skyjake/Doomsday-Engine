@@ -169,6 +169,8 @@ public:
 
     static Record &initializeMetadata(File &packageFile, String const &id = String());
 
+    static Record const &metadata(File const &packageFile);
+
     static QStringList tags(File const &packageFile);
 
     static bool matchTags(File const &packageFile, String const &tagRegExp);
