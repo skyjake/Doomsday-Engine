@@ -44,6 +44,10 @@ static String const VAR_AUTHOR      ("author");
 static String const VAR_TAGS        ("tags");
 static String const VAR_DATA_FILES  ("dataFiles");
 static String const VAR_BUNDLE_SCORE("bundleScore");
+static String const VAR_REQUIRES    ("requires");
+static String const VAR_RECOMMENDS  ("recommends");
+static String const VAR_EXTRAS      ("extras");
+static String const VAR_CATEGORY    ("category");
 
 namespace internal
 {
@@ -61,7 +65,7 @@ namespace internal
     };
 }
 
-DENG2_PIMPL(DataBundle)
+DENG2_PIMPL(DataBundle), public Lockable
 {
     bool ignored = false;
     SafePtr<File> source;
@@ -76,6 +80,7 @@ DENG2_PIMPL(DataBundle)
 
     ~Impl()
     {
+        DENG2_GUARD(this);
         delete pkgLink.get();
     }
 
@@ -134,6 +139,8 @@ DENG2_PIMPL(DataBundle)
      */
     bool identify()
     {
+        DENG2_GUARD(this);
+
         // It is sufficient to identify each bundle only once.
         if (ignored || !packageId.isEmpty()) return false;
 
@@ -187,6 +194,11 @@ DENG2_PIMPL(DataBundle)
         else
         {
             meta.addArray(VAR_DATA_FILES);
+
+            // Collections have a number of subsets.
+            meta.addArray(VAR_REQUIRES);
+            meta.addArray(VAR_RECOMMENDS);
+            meta.addArray(VAR_EXTRAS);
         }
 
         if (isAutoLoaded())
@@ -383,12 +395,19 @@ DENG2_PIMPL(DataBundle)
                 container->isLinkedAsPackage() &&
                 container->format() == Collection)
             {
-                if (isAutoLoaded()) /*||
-                    Package::matchTags(container->d->pkgLink, "\\b(hidden|core|gamedata)\\b"))*/
+                //File &containerFile = *container->d->pkgLink;
+
+                String subset = VAR_RECOMMENDS;
+                String parentFolder = dataFilePath.fileNamePath().fileName();
+                if (!parentFolder.compareWithoutCase(QStringLiteral("Extra")))
                 {
-                    // Autoloaded data files are hidden.
-                    metadata.appendUniqueWord(VAR_TAGS, "hidden");
+                    subset = VAR_EXTRAS;
                 }
+                else if (!parentFolder.compareWithoutCase(QStringLiteral("Required")))
+                {
+                    subset = VAR_REQUIRES;
+                }
+                container->packageMetadata().appendToArray(subset, new TextValue(versionedPackageId));
 
                 /*
                 qDebug() << container->d->versionedPackageId
@@ -399,7 +418,7 @@ DENG2_PIMPL(DataBundle)
                          << "from" << dataFilePath;
                          */
 
-                Package::addRequiredPackage(*container->d->pkgLink, versionedPackageId);
+                //Package::addRequiredPackage(containerFile, versionedPackageId);
             }
             return true;
         }
@@ -491,7 +510,6 @@ DENG2_PIMPL(DataBundle)
             if (!component.compareWithoutCase("game-jdoom"))
             {
                 meta.appendUniqueWord(VAR_TAGS, "doom");
-                meta.appendUniqueWord(VAR_TAGS, "doom2");
             }
             else if (!component.compareWithoutCase("game-jheretic"))
             {
@@ -501,6 +519,13 @@ DENG2_PIMPL(DataBundle)
             {
                 meta.appendUniqueWord(VAR_TAGS, "hexen");
             }
+        }
+
+        String category = rootBlock.keyValue("category");
+        if (!category.isEmpty())
+        {
+            meta.appendUniqueWord(VAR_TAGS, category);
+            meta.set(VAR_CATEGORY, category);
         }
 
         if (Info::BlockElement const *english = rootBlock.findAs<Info::BlockElement>("english"))
@@ -762,16 +787,26 @@ Record const &DataBundle::objectNamespace() const
     return asFile().objectNamespace().subrecord(QStringLiteral("package"));
 }
 
-DataBundle::Format DataBundle::packageBundleFormat(String const &packageId)
+DataBundle::Format DataBundle::packageBundleFormat(String const &packageId) // static
+{
+    if (auto const *bundle = bundleForPackage(packageId))
+    {
+        Guard g(bundle->d);
+        return bundle->format();
+    }
+    return Unknown;
+}
+
+DataBundle const *DataBundle::bundleForPackage(String const &packageId) // static
 {
     if (File const *file = PackageLoader::get().select(packageId))
     {
         if (auto const *bundle = file->target().maybeAs<DataBundle>())
         {
-            return bundle->format();
+            return bundle;
         }
     }
-    return Unknown;
+    return nullptr;
 }
 
 void DataBundle::setFormat(Format format)

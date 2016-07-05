@@ -21,6 +21,8 @@
 #include "doomsday/filesys/datafolder.h"
 
 #include <de/App>
+#include <de/Config>
+#include <de/DictionaryValue>
 #include <de/PackageLoader>
 #include <de/LinkFile>
 #include <de/Loop>
@@ -191,10 +193,14 @@ void Bundles::identify()
 {
     d->tasks.start([this] ()
     {
-        bool const identified = d->identifyAddedDataBundles();
-        DENG2_FOR_AUDIENCE2(Identify, i)
+        d->identifyAddedDataBundles();
+
+        if (isEverythingIdentified())
         {
-            i->dataBundlesIdentified(identified);
+            DENG2_FOR_AUDIENCE2(Identify, i)
+            {
+                i->dataBundlesIdentified();
+            }
         }
     });
 }
@@ -346,14 +352,60 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 
 QList<DataBundle const *> Bundles::loaded() const
 {
+    auto &loader = PackageLoader::get();
     QList<DataBundle const *> loadedBundles;
 
+    // Collection contents enabled/disabled for use.
+    DictionaryValue const &selPkgs = Config::get()["resource.selectedPackages"].value<DictionaryValue>();
+
     // Check all the loaded packages to see which ones are data bundles.
-    for (auto *f : App::packageLoader().loadedPackagesAsFilesInPackageOrder())
+    for (auto *f : loader.loadedPackagesAsFilesInPackageOrder())
     {
         if (DataBundle const *bundle = f->maybeAs<DataBundle>())
         {
-            loadedBundles << bundle;
+            if (bundle->format() == DataBundle::Collection)
+            {
+                // Instead of adding the collection, check which contained packages are
+                // selected for loading.
+
+                auto isSelected = [bundle, &selPkgs] (TextValue const &id, bool byDefault) -> bool
+                {
+                    TextValue const key(bundle->packageId());
+                    if (selPkgs.contains(key)) {
+                        auto const &sels = selPkgs.element(key).as<DictionaryValue>();
+                        if (sels.contains(id)) {
+                            return sels.element(id).isTrue();
+                        }
+                    }
+                    return byDefault;
+                };
+
+                auto addToLoaded = [&loadedBundles] (String const &id)
+                {
+                    if (DataBundle const *b = DataBundle::bundleForPackage(id)) {
+                        loadedBundles << b;
+                    }
+                };
+
+                Record const &meta = bundle->packageMetadata();
+                for (auto const *id : meta.geta("requires").elements())
+                {
+                    addToLoaded(id->asText());
+                }
+                for (auto const *id : meta.geta("recommends").elements())
+                {
+                    if (isSelected(id->asText(), true)) addToLoaded(id->asText());
+                }
+                for (auto const *id : meta.geta("extras").elements())
+                {
+                    if (isSelected(id->asText(), false)) addToLoaded(id->asText());
+                }
+            }
+            else
+            {
+                // Non-collection data files are loaded as-is.
+                loadedBundles << bundle;
+            }
         }
     }
 

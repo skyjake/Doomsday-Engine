@@ -40,8 +40,8 @@ class LIBDOOMSDAY_PUBLIC Bundles
 public:
     typedef QList<de::Info::BlockElement const *> BlockElements;
 
-    /// Notified when a data bundle refresh/identification has been made.
-    DENG2_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified(bool wereIdentified))
+    /// Notified when a data bundle refresh/identification has been completed.
+    DENG2_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())
 
     DENG2_ERROR(InvalidError);
 

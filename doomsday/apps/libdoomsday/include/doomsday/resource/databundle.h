@@ -136,6 +136,8 @@ public:
      */
     static Format packageBundleFormat(de::String const &packageId);
 
+    static DataBundle const *bundleForPackage(de::String const &packageId);
+
 protected:
     void setFormat(Format format);
 

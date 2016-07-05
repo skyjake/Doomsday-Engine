@@ -122,7 +122,7 @@ DENG2_PIMPL(Games)
         return nullptr;
     }
 
-    void dataBundlesIdentified(bool)
+    void dataBundlesIdentified()
     {
         if (!mainCall)
         {
