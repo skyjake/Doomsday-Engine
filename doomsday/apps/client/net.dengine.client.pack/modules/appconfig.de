@@ -97,6 +97,7 @@ def setDefaults(d)
     record d.resource
     d.resource.iwadFolder = ''
     d.resource.packageFolder = ''
+    d.resource.selectedPackages = {}
     
     # Renderer settings.
     record d.render

@@ -289,7 +289,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
                        b.as<ProfileItem>().game().releaseDate().year();
             if (!year)
             {
-                // ...or identifier.
+                // Playable profiles first.
+                if (prof1.isPlayable() && !prof2.isPlayable()) return true;
+                if (!prof1.isPlayable() && prof2.isPlayable()) return false;
+
+                // Finally, based on identifier.
                 return prof1.game().compareWithoutCase(prof2.game()) < 0;
             }
             return year < 0;

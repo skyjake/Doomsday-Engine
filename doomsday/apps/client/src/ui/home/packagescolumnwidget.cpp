@@ -69,17 +69,20 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
             auto *popMenu = new PopupMenuWidget;
             popMenu->setColorTheme(Inverted);
-            popMenu->items()
-                    << new ui::SubwidgetItem(tr("Info"), ui::Down,
-                                             [this, packageId] () -> PopupWidget * {
-                                                 return new PackagePopupWidget(packageId);
-                                             });
+            popMenu->items() << new ui::SubwidgetItem(tr("Info"), ui::Down,
+                [this, packageId] () -> PopupWidget * {
+                    return new PackagePopupWidget(packageId);
+                });
+
             if (DataBundle::packageBundleFormat(packageId) == DataBundle::Collection)
             {
-                popMenu->items()
-                    << new ui::ActionItem(style().images().image("gear"),
-                                          tr("Select Packages"));
+                auto openOpts = [this] () {
+                    packages->openContentOptions(*packages->actionItem());
+                };
+                popMenu->items() << new ui::ActionItem(style().images().image("gear"),
+                                                       tr("Select Packages"), new CallbackAction(openOpts));
             }
+
             popMenu->items()
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
@@ -90,6 +93,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
         ScrollAreaWidget &area = self.scrollArea();
         area.add(packages = new PackagesWidget("home-packages"));
+        //packages->setMaximumPanelHeight(self.rule().height() - self.margins().height() - rule("gap")*3);
         packages->setActionItems(actions);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())

@@ -19,7 +19,9 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/panelbuttonwidget.h"
 #include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packagecontentoptionswidget.h"
 #include "clientapp.h"
 
 #include <de/CallbackAction>
@@ -117,6 +119,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::FilteredData filteredPackages { allPackages };
     ui::ListData defaultActionItems;
     ui::Data const *actionItems = &defaultActionItems;
+    //IndirectRule *maxPanelHeight;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
 
@@ -318,13 +321,73 @@ DENG_GUI_PIMPL(PackagesWidget)
             return estimate;
         }
 
+        void openContentOptions()
+        {
+            DENG2_ASSERT(_item->file->target().maybeAs<DataBundle>());
+            DENG2_ASSERT(_item->file->target().maybeAs<DataBundle>()->format() == DataBundle::Collection);
+
+            if (!_optionsPopup)
+            {
+                _optionsPopup.reset(new PopupWidget);
+                _optionsPopup->setDeleteAfterDismissed(true);
+                _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
+
+                //_panelScroll = new ScrollAreaWidget;
+                //_panelScroll->enableIndicatorDraw(true);
+
+                auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
+
+                // Add a close button.
+                auto *close = new ButtonWidget;
+                close->setSizePolicy(ui::Expand, ui::Expand);
+                close->margins().set("dialog.gap");
+                close->setStyleImage("close.ringless", "small");
+                //close->setImageColor(style().colors().colorf("altaccent"));
+                close->setActionFn([this] ()
+                {
+                    root().setFocus(this);
+                    _optionsPopup->close();
+                });
+                close->setBackgroundColor("transparent");
+                close->rule()
+                        .setInput(Rule::Right, opts->rule().right() - opts->margins().right())
+                        .setInput(Rule::Top,   opts->rule().top()   + opts->margins().top());
+
+                // Embed the options inside a scroll area so longer contents can be
+                // scrolled.
+                //_panelScroll->add(opts);
+                opts->add(close);
+                //_panelScroll->setContentSize(opts->rule().width(), opts->rule().height());
+                opts->rule().setInput(Rule::Width, rule().width());
+                            //.setInput(Rule::Top,   opts->contentRule().top())
+                            //.setInput(Rule::Left,  opts->contentRule().left());
+                /*_panelScroll->rule()
+                        .setInput(Rule::Width, rule().width())
+                        .setInput(Rule::Height,
+                                  OperatorRule::minimum(root().viewHeight(),
+                                                        opts->rule().height()));*/
+
+                _optionsPopup->setContent(opts);//Scroll);
+                add(_optionsPopup);
+                _optionsPopup->open();
+            }
+        }
+
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;
         QList<ButtonWidget *> _tags;
-        MenuWidget *_actions;
+        MenuWidget *_actions = nullptr;
+        SafeWidgetPtr<PopupWidget> _optionsPopup;
+        //ScrollAreaWidget *_panelScroll = nullptr;
     };
 
+//- PackagesWidget::Pimpl Methods -------------------------------------------------------
+
+    /**
+     * Initializes the PackagesWidget private implementation.
+     * @param i  Public instance.
+     */
     Impl(Public *i) : Base(i)
     {
         defaultActionItems << new ui::VariantActionItem(tr("Load"), tr("Unload"), new CallbackAction([this] ()
@@ -352,6 +415,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
             menu->interactedItem()->notifyChange();
         }));
+
+        //maxPanelHeight = new IndirectRule;
+        //maxPanelHeight->setSource(self.rule().height());
 
         self.add(menu = new HomeMenuWidget);
         self.add(search = new LineEditWidget);
@@ -396,9 +462,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
 
             return filterTerms.isEmpty() ||
-                   checkTerms(item.data().toString()) || // ID
-                   checkTerms(item.info->gets(VAR_TITLE)) ||
-                   checkTerms(item.info->gets(VAR_TAGS));
+                   checkTerms({ item.data().toString(), // ID
+                                item.info->gets(VAR_TITLE),
+                                item.info->gets(VAR_TAGS) });
         });
         menu->setItems(filteredPackages);
         menu->setBehavior(ChildVisibilityClipping);
@@ -434,6 +500,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     ~Impl()
     {
+        //releaseRef(maxPanelHeight);
         releaseRef(searchMinY);
 
         // Private instance deleted before child widgets.
@@ -460,6 +527,10 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void populate()
     {
+        qDebug() << "Populating" << &self;
+
+        showProgressIndicator(false);
+
         StringList packages = App::packageLoader().findAllPackages();
 
         // Remove from the list those packages that are no longer listed.
@@ -495,7 +566,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
 
         allPackages.sort();
-        showProgressIndicator(false);
 
         emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
     }
@@ -540,7 +610,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         showHidden = filterTerms.contains(TAG_HIDDEN);
         if (showHidden) filterTerms.removeAll(TAG_HIDDEN);
 
-        //menu->organizer().refilter();
         filteredPackages.refilter();
 
         emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
@@ -555,7 +624,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void dataBundlesIdentified(bool) override
+    void dataBundlesIdentified() override
     {
         // After bundles have been refreshed, make sure the list items are up to date.
         if (!mainCall)
@@ -573,14 +642,29 @@ DENG_GUI_PIMPL(PackagesWidget)
         showProgressIndicator(true);
     }
 
-    bool checkTerms(String const &text) const
+    /**
+     * Checks whether the filter terms can be found in the provided text strings.
+     * All terms must be found in at least one string, but all terms need not be found in
+     * every provided string.
+     *
+     * @param texts  Text strings.
+     *
+     * @return @c true, if all filter terms found.
+     */
+    bool checkTerms(StringList texts) const
     {
         for (QString const &filterTerm : filterTerms)
         {
-            if (!text.contains(filterTerm, Qt::CaseInsensitive))
+            bool found = false;
+            for (String const &text : texts)
             {
-                return false;
+                if (text.contains(filterTerm, Qt::CaseInsensitive))
+                {
+                    found = true;
+                    break;
+                }
             }
+            if (!found) return false;
         }
         return true;
     }
@@ -623,6 +707,11 @@ void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
     d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top()));
     changeRef(d->searchMinY, minY);
 }
+
+/*void PackagesWidget::setMaximumPanelHeight(Rule const &maxHeight)
+{
+    //d->maxPanelHeight->setSource(maxHeight - d->search->rule().height() - rule("gap"));
+}*/
 
 void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
 {
@@ -734,6 +823,17 @@ LineEditWidget &PackagesWidget::searchTermsEditor()
     return *d->search;
 }
 
+void PackagesWidget::openContentOptions(ui::Item const &item)
+{
+    if (auto *widget = d->menu->organizer().itemWidget(item))
+    {
+        if (auto *itemWidget = widget->maybeAs<Impl::PackageListItemWidget>())
+        {
+            itemWidget->openContentOptions();
+        }
+    }
+}
+
 void PackagesWidget::initialize()
 {
     GuiWidget::initialize();
@@ -763,6 +863,11 @@ void PackagesWidget::update()
         // Update search field background opacity.
         d->search->setUnfocusedBackgroundOpacity(d->searchBackgroundOpacity);
     }
+
+//    if (d->menu->isHidden() && DoomsdayApp::bundles().isEverythingIdentified())
+//    {
+//        d->populate();
+//    }
 }
 
 void PackagesWidget::operator >> (PersistentState &toState) const

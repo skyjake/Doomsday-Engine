@@ -51,6 +51,8 @@ public:
 
     void setFilterEditorMinimumY(de::Rule const &minY);
 
+    //void setMaximumPanelHeight(de::Rule const &maxHeight);
+
     void setPackageStatus(IPackageStatus const &packageStatus);
 
     /**
@@ -93,6 +95,8 @@ public:
     void scrollToPackage(de::String const &packageId) const;
 
     de::LineEditWidget &searchTermsEditor();
+
+    void openContentOptions(de::ui::Item const &item);
 
     // Events.
     void initialize();
