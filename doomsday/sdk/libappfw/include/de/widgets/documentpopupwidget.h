@@ -38,8 +38,6 @@ public:
     DocumentPopupWidget(String const &name = String());
     DocumentPopupWidget(ButtonWidget *actionButton, String const &name = String());
 
-    void enableCloseButton(bool enable);
-
     void setPreferredHeight(Rule const &preferredHeight);
     void setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight);
 
@@ -47,9 +45,6 @@ public:
     DocumentWidget const &document() const;
 
     ButtonWidget *button();
-
-protected:
-    virtual void preparePanelForOpening() override;
 
 private:
     DENG2_PRIVATE(d)

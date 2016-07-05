@@ -20,6 +20,7 @@
 #define LIBAPPFW_POPUPWIDGET_H
 
 #include "../PanelWidget"
+#include "../ButtonWidget"
 #include "../ui/defs.h"
 #include <de/RuleRectangle>
 
@@ -99,6 +100,16 @@ public:
     Background infoStyleBackground() const;
 
     void setColorTheme(ColorTheme theme);
+
+    void enableCloseButton(bool enable);
+
+    /**
+     * Returns the close button of the popup.
+     *
+     * By default no close button is created. Calling this will cause the button to
+     * be created.
+     */
+    ButtonWidget &closeButton();
 
     // Events.
     bool handleEvent(Event const &event);

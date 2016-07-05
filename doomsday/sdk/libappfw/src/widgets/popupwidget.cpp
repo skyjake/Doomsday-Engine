@@ -41,6 +41,7 @@ DENG_GUI_PIMPL(PopupWidget)
     SafeWidgetPtr<Widget> realParent;
     RuleRectangle anchor;
     Rule const *marker;
+    ButtonWidget *close = nullptr;
 
     Impl(Public *i) : Base(i)
     {
@@ -316,7 +317,37 @@ bool PopupWidget::isUsingInfoStyle()
 void PopupWidget::setColorTheme(ColorTheme theme)
 {
     d->colorTheme = theme;
+    if (d->close) d->close->setColorTheme(theme);
     d->updateStyle();
+}
+
+void PopupWidget::enableCloseButton(bool enable)
+{
+    if (enable && !d->close)
+    {
+        d->close = new ButtonWidget;
+        d->close->setColorTheme(d->colorTheme);
+        d->close->setStyleImage("close.ringless", "small");
+        d->close->margins().set("dialog.gap").setTopBottom("unit");
+        d->close->setImageColor(d->close->textColorf());
+        d->close->setSizePolicy(ui::Expand, ui::Expand);
+        d->close->setActionFn([this] () { close(); });
+        d->close->rule()
+                .setInput(Rule::Top,   rule().top()   + margins().top())
+                .setInput(Rule::Right, rule().right() - margins().right());
+        add(d->close);
+    }
+    else if (!enable && d->close)
+    {
+        delete d->close;
+        d->close = nullptr;
+    }
+}
+
+ButtonWidget &PopupWidget::closeButton()
+{
+    enableCloseButton(true);
+    return *d->close;
 }
 
 GuiWidget::Background PopupWidget::infoStyleBackground() const
@@ -442,6 +473,11 @@ void PopupWidget::preparePanelForOpening()
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
     d->updateLayout();
+
+    if (d->close)
+    {
+        root().setFocus(d->close);
+    }
 }
 
 void PopupWidget::panelDismissed()
