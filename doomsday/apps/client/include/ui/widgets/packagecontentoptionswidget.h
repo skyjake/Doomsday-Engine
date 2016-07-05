@@ -28,7 +28,7 @@ class PackageContentOptionsWidget : public de::GuiWidget
 {
 public:
     PackageContentOptionsWidget(de::String const &packageId,
-                                de::Rule const &maxHeight,
+                                de::Rule   const &maxHeight,
                                 de::String const &name = de::String());
 
 private:

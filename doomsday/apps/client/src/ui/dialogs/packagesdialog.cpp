@@ -216,7 +216,26 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Action for showing information about the package.
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
-            return new PackagePopupWidget(browser->actionPackage());
+            String const id = browser->actionPackage();
+            if (Package::hasOptionalContent(id))
+            {
+                auto *menu = new PopupMenuWidget;
+                menu->setColorTheme(Inverted);
+                menu->items()
+                    << new ui::SubwidgetItem(tr("Info"), ui::Up,
+                        [this] () -> PopupWidget * {
+                            return new PackagePopupWidget(browser->actionPackage());
+                        })
+                    << new ui::ActionItem(style().images().image("gear"), tr("Select Packages"),
+                        new CallbackAction([this] () {
+                            browser->openContentOptions(*browser->actionItem());
+                        }));
+                return menu;
+            }
+            else
+            {
+                return new PackagePopupWidget(id);
+            }
         });
 
         // Action for (de)selecting the package.
@@ -283,7 +302,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                 {
                     // Only list here the game data files; Doomsday's PK3s are always
                     // there so listing them is not very helpful.
-                    if (Package::tags(*file).contains(QStringLiteral("gamedata")))
+                    if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
                     {
                         // Resolve indirection (symbolic links and interpretations) to
                         // describe the actual source file of the package.

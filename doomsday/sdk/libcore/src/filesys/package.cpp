@@ -38,6 +38,8 @@ String const Package::VAR_TITLE        ("title");
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 static String const PACKAGE_REQUIRES   ("package.requires");
+static String const PACKAGE_RECOMMENDS ("package.recommends");
+static String const PACKAGE_EXTRAS     ("package.extras");
 static String const PACKAGE_TAGS       ("package.tags");
 
 static String const VAR_ID  ("ID");
@@ -368,6 +370,21 @@ StringList Package::requires(File const &packageFile)
 void Package::addRequiredPackage(File &packageFile, String const &id)
 {
     packageFile.objectNamespace().appendToArray(PACKAGE_REQUIRES, new TextValue(id));
+}
+
+bool Package::hasOptionalContent(String const &packageId)
+{
+    if (File const *file = PackageLoader::get().select(packageId))
+    {
+        return hasOptionalContent(*file);
+    }
+    return false;
+}
+
+bool Package::hasOptionalContent(File const &packageFile)
+{
+    Record const &meta = packageFile.objectNamespace();
+    return meta.has(PACKAGE_RECOMMENDS) || meta.has(PACKAGE_EXTRAS);
 }
 
 static String stripAfterFirstUnderscore(String str)

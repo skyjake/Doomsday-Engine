@@ -21,11 +21,12 @@
 #include "ui/widgets/packagepopupwidget.h"
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/PopupMenuWidget>
 #include <de/CallbackAction>
 #include <de/Config>
 #include <de/DirectoryListDialog>
 #include <de/Loop>
+#include <de/Package>
+#include <de/PopupMenuWidget>
 #include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
 
@@ -74,7 +75,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
                     return new PackagePopupWidget(packageId);
                 });
 
-            if (DataBundle::packageBundleFormat(packageId) == DataBundle::Collection)
+            if (Package::hasOptionalContent(packageId))
             {
                 auto openOpts = [this] () {
                     packages->openContentOptions(*packages->actionItem());

@@ -328,7 +328,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
 };
 
 PackageContentOptionsWidget::PackageContentOptionsWidget(String const &packageId,
-                                                         Rule const &maxHeight,
+                                                         Rule   const &maxHeight,
                                                          String const &name)
     : GuiWidget(name)
     , d(new Impl(this, packageId, maxHeight))

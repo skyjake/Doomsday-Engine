@@ -181,6 +181,10 @@ public:
 
     static void addRequiredPackage(File &packageFile, String const &id);
 
+    static bool hasOptionalContent(String const &packageId);
+
+    static bool hasOptionalContent(File const &packageFile);
+
     /**
      * Splits a string containing a package identifier and version. The
      * expected format of the string is `{packageId}_{version}`.

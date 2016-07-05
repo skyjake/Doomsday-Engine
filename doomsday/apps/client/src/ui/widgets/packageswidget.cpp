@@ -323,51 +323,22 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void openContentOptions()
         {
-            DENG2_ASSERT(_item->file->target().maybeAs<DataBundle>());
-            DENG2_ASSERT(_item->file->target().maybeAs<DataBundle>()->format() == DataBundle::Collection);
+            DENG2_ASSERT(Package::hasOptionalContent(*_item->file));
 
             if (!_optionsPopup)
             {
                 _optionsPopup.reset(new PopupWidget);
                 _optionsPopup->setDeleteAfterDismissed(true);
                 _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
-
-                //_panelScroll = new ScrollAreaWidget;
-                //_panelScroll->enableIndicatorDraw(true);
-
-                auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
-
-                // Add a close button.
-                auto *close = new ButtonWidget;
-                close->setSizePolicy(ui::Expand, ui::Expand);
-                close->margins().set("dialog.gap");
-                close->setStyleImage("close.ringless", "small");
-                //close->setImageColor(style().colors().colorf("altaccent"));
-                close->setActionFn([this] ()
+                _optionsPopup->closeButton().setActionFn([this] ()
                 {
                     root().setFocus(this);
                     _optionsPopup->close();
                 });
-                close->setBackgroundColor("transparent");
-                close->rule()
-                        .setInput(Rule::Right, opts->rule().right() - opts->margins().right())
-                        .setInput(Rule::Top,   opts->rule().top()   + opts->margins().top());
 
-                // Embed the options inside a scroll area so longer contents can be
-                // scrolled.
-                //_panelScroll->add(opts);
-                opts->add(close);
-                //_panelScroll->setContentSize(opts->rule().width(), opts->rule().height());
+                auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
                 opts->rule().setInput(Rule::Width, rule().width());
-                            //.setInput(Rule::Top,   opts->contentRule().top())
-                            //.setInput(Rule::Left,  opts->contentRule().left());
-                /*_panelScroll->rule()
-                        .setInput(Rule::Width, rule().width())
-                        .setInput(Rule::Height,
-                                  OperatorRule::minimum(root().viewHeight(),
-                                                        opts->rule().height()));*/
-
-                _optionsPopup->setContent(opts);//Scroll);
+                _optionsPopup->setContent(opts);
                 add(_optionsPopup);
                 _optionsPopup->open();
             }
