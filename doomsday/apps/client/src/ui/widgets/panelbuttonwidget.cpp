@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/panelbuttonwidget.h"
+#include "ui/widgets/panelbuttonwidget.h"
 
 using namespace de;
 
@@ -31,8 +31,8 @@ DENG_GUI_PIMPL(PanelButtonWidget)
     }
 };
 
-PanelButtonWidget::PanelButtonWidget(String const &name)
-    : HomeItemWidget(AnimatedHeight, name)
+PanelButtonWidget::PanelButtonWidget(Flags flags, String const &name)
+    : HomeItemWidget(flags, name)
     , d(new Impl(this))
 {
     setBehavior(Focusable);
@@ -41,8 +41,15 @@ PanelButtonWidget::PanelButtonWidget(String const &name)
             .setInput(Rule::Top,  icon().rule().bottom())
             .setInput(Rule::Left, rule().left());
 
-    rule().setInput(Rule::Height, new AnimationRule(label().rule().height() +
-                                                    d->drawer->rule().height(), 0.3));
+    if (flags & AnimatedHeight)
+    {
+        rule().setInput(Rule::Height, new AnimationRule(label().rule().height() +
+                                                        d->drawer->rule().height(), 0.3));
+    }
+    else
+    {
+        rule().setInput(Rule::Height, label().rule().height() + d->drawer->rule().height());
+    }
 }
 
 PanelWidget &PanelButtonWidget::panel()

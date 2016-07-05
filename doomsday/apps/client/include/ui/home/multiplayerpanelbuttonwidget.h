@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
 #define DENG_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
 
-#include "panelbuttonwidget.h"
+#include "../widgets/panelbuttonwidget.h"
 
 struct serverinfo_s;
 

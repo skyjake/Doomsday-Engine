@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HOME_GAMEPANELBUTTONWIDGET_H
 #define DENG_CLIENT_UI_HOME_GAMEPANELBUTTONWIDGET_H
 
-#include "panelbuttonwidget.h"
+#include "../widgets/panelbuttonwidget.h"
 
 #include <doomsday/gameprofiles.h>
 
