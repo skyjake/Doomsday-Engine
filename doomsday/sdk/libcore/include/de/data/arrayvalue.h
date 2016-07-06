@@ -208,6 +208,8 @@ public:
     Value const &element(dint index) const;
     Value const &operator [] (dint index) const;
 
+    String asTextUsingInfoSyntax() const;
+
 private:
     Elements::iterator indexToIterator(dint index);
     Elements::const_iterator indexToIterator(dint index) const;

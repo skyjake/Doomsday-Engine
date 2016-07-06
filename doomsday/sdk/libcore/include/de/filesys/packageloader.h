@@ -115,7 +115,15 @@ public:
 
     FileSystem::FoundFiles loadedPackagesAsFilesInPackageOrder() const;
 
-    StringList loadedPackagesInOrder() const;
+    enum IdentifierType { NonVersioned, Versioned };
+
+    /**
+     * Returns a list of the currently loaded package IDs. The identifiers include
+     * version suffixes so that the packages can be unambigously located.
+     *
+     * @return Versioned package IDs.
+     */
+    StringList loadedPackagesInOrder(IdentifierType type = Versioned) const;
 
     /**
      * Retrieves a specific loaded package. The package must already be loaded

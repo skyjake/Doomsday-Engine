@@ -469,13 +469,23 @@ FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
     return sorted;
 }
 
-StringList PackageLoader::loadedPackagesInOrder() const
+StringList PackageLoader::loadedPackagesInOrder(IdentifierType idType) const
 {
     QList<Package *> pkgs = d->loadedInOrder();
     StringList ids;
     for (auto p : pkgs)
     {
-        ids << p->identifier();
+        Record const &meta = Package::metadata(p->file());
+        Version const pkgVersion(meta.gets("version"));
+        if (idType == Versioned && pkgVersion.isValid()) // nonzero
+        {
+            ids << String("%1_%2").arg(meta.gets("ID")).arg(meta.gets("version"));
+        }
+        else
+        {
+            // Unspecified version.
+            ids << meta.gets("ID");
+        }
     }
     return ids;
 }

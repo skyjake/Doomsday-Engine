@@ -386,6 +386,24 @@ Value const &ArrayValue::operator [] (dint index) const
     return element(index);
 }
 
+String ArrayValue::asTextUsingInfoSyntax() const
+{
+    StringList values;
+    for (Value const *value : elements())
+    {
+        String text = value->asText();
+        text.replace("\"", "''");
+        values << String("\"%1\"").arg(text);
+    }
+    QString out;
+    QTextStream os(&out);
+    os.setCodec("UTF-8");
+    os << "<"
+       << String::join(values, ", ")
+       << ">";
+    return out;
+}
+
 Value::Text ArrayValue::typeId() const
 {
     return "Array";
