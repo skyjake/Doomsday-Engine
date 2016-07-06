@@ -197,6 +197,18 @@ public:
 
 public:
     /**
+     * Determines if informatino about a package should be included in savegame files.
+     * Packages that alter gameplay or game objects must be included, while purely visual
+     * content does not.
+     *
+     * @param packageId  Package identifier.
+     *
+     * @return @c true, if the package must be included in the list of packages in
+     * savegame metadata. @c false, if it is omitted.
+     */
+    static bool isIncludedInSavegames(de::String const &packageId);
+
+    /**
      * Utility for composing the full path of a state data file in the saved session.
      *
      * @param path  Path to and symbolic name of the state data.

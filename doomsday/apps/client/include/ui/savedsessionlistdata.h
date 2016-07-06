@@ -42,6 +42,7 @@ public:
         de::String gameId() const;
         de::String savePath() const;
         de::String name() const;
+        de::StringList loadedPackages() const;
 
         void fileBeingDeleted(de::File const &);
     };

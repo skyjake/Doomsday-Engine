@@ -658,7 +658,7 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     if (!newGame.isNull())
     {
         // Remember what was loaded beforehand.
-        d->preGamePackages = PackageLoader::get().loadedPackagesInOrder();
+        d->preGamePackages = PackageLoader::get().loadedPackagesInOrder(PackageLoader::NonVersioned);
     }
 
     profile.loadPackages();

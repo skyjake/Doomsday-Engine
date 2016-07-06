@@ -18,6 +18,7 @@
 
 #include "doomsday/savedsession.h"
 #include "doomsday/Session"
+#include "doomsday/DataBundle"
 
 #include <de/App>
 #include <de/ArrayValue>
@@ -133,11 +134,28 @@ void SavedSession::Metadata::parse(String const &source)
             }
         }
 
+        if (info.root().contains("packages"))
+        {
+            Info::ListElement const &list = info.root().find("packages")->as<Info::ListElement>();
+            auto *pkgs = new ArrayValue;
+            for (auto const &value : list.values())
+            {
+                *pkgs << new TextValue(value.text);
+            }
+            set("packages", pkgs);
+        }
+        else
+        {
+            set("packages", new ArrayValue);
+        }
+
         // Ensure we have a valid description.
         if (gets("userDescription").isEmpty())
         {
             set("userDescription", "UNNAMED");
         }
+
+        //qDebug() << "Parsed save metadata:\n" << asText();
     }
     catch (Error const &er)
     {
@@ -198,6 +216,10 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     os.setCodec("UTF-8");
 
     if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
+    if (has("packages"))
+    {
+        os << "\npackages " << geta("packages").asTextUsingInfoSyntax();
+    }
     if (has("episode"))         os << "\nepisode: "         << gets("episode");
     if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
     if (has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
@@ -215,15 +237,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     }
     if (has("visitedMaps"))
     {
-        os << "\nvisitedMaps <";
-        ArrayValue const &visitedMapsArray = geta("visitedMaps");
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, visitedMapsArray.elements())
-        {
-            Value const *value = *i;
-            if (i != visitedMapsArray.elements().begin()) os << ", ";
-            os << "\"" << String(value->as<TextValue>()) << "\"";
-        }
-        os << ">";
+        os << "\nvisitedMaps " << geta("visitedMaps").asTextUsingInfoSyntax();
     }
     if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
@@ -242,7 +256,7 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
                 valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
             }
             os << "\n    " << BLOCK_GAMERULE << " \"" << i.key() << "\""
-               << " { value= " << valueAsText << " }";
+               << " { value = " << valueAsText << " }";
         }
 
         os << "\n}";
@@ -385,6 +399,20 @@ String SavedSession::stateFilePath(String const &path) //static
     return "";
 }
 
+bool SavedSession::isIncludedInSavegames(String const &packageId) // static
+{
+    /**
+     * @todo The rules here could be more sophisticated when it comes to checking what
+     * exactly does a data bundle contain. Also, packages should be checked for any
+     * gameplay-affecting assets. (2016-07-06: Currently there are none.)
+     */
+    if (DataBundle::bundleForPackage(packageId))
+    {
+        return true;
+    }
+    return false;
+}
+
 File *SavedSession::Interpreter::interpretFile(File *sourceData) const
 {
     try
@@ -415,3 +443,4 @@ File *SavedSession::Interpreter::interpretFile(File *sourceData) const
     }
     return nullptr;
 }
+

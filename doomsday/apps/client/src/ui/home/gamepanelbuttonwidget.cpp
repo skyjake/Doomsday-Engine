@@ -59,12 +59,31 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         // Only show the savegames relevant for this game.
         savedItems.setFilter([this] (ui::Item const &it)
         {
-            // User-created profiles currently have no saves associated with them.
-            if (gameProfile.isUserCreated()) return false;
-
             // Only saved sessions for this game are to be included.
             auto const &item = it.as<SavedSessionListData::SaveItem>();
-            return item.gameId() == gameProfile.game();
+            if (item.gameId() != gameProfile.game())
+            {
+                return false;
+            }
+
+            StringList const savePacks = item.loadedPackages();
+
+            // Fallback for older saves without package metadata.
+            if (savePacks.isEmpty())
+            {
+                // Show under the built-in profile.
+                return !gameProfile.isUserCreated();
+            }
+
+            // Check if the packages used in the savegame are in conflict with the
+            // profile's packages.
+            if (!gameProfile.isCompatibleWithPackages(savePacks))
+            {
+                return false;
+            }
+
+            // Yep, seems fine.
+            return true;
         });
 
         packagesButton = new PackagesButtonWidget;

@@ -19,6 +19,7 @@
 #include "doomsday/GameProfiles"
 #include "doomsday/Games"
 #include "doomsday/DoomsdayApp"
+#include "doomsday/SavedSession"
 
 #include <de/App>
 #include <de/PackageLoader>
@@ -167,6 +168,37 @@ bool GameProfiles::Profile::isUserCreated() const
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
     return DoomsdayApp::games()[d->gameId].requiredPackages() + d->packages;
+}
+
+StringList GameProfiles::Profile::packagesIncludedInSavegames() const
+{
+    StringList ids = allRequiredPackages();
+    QMutableListIterator<String> iter(ids);
+    while (iter.hasNext())
+    {
+        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        {
+            iter.remove();
+        }
+    }
+    return ids;
+}
+
+bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const
+{
+    StringList packs = packagesIncludedInSavegames();
+    if (packs.size() != ids.size()) return false;
+
+    // The package lists must match order and IDs, but currently we ignore the
+    // versions.
+    for (int i = 0; i < packs.size(); ++i)
+    {
+        if (Package::split(packs.at(i)).first != Package::split(ids.at(i)).first)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool GameProfiles::Profile::isPlayable() const

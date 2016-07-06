@@ -54,6 +54,10 @@ public:
          */
         de::StringList allRequiredPackages() const;
 
+        de::StringList packagesIncludedInSavegames() const;
+
+        bool isCompatibleWithPackages(de::StringList const &ids) const;
+
         bool isPlayable() const;
 
         void loadPackages() const;
