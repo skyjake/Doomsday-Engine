@@ -186,19 +186,7 @@ StringList GameProfiles::Profile::packagesIncludedInSavegames() const
 
 bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const
 {
-    StringList packs = packagesIncludedInSavegames();
-    if (packs.size() != ids.size()) return false;
-
-    // The package lists must match order and IDs, but currently we ignore the
-    // versions.
-    for (int i = 0; i < packs.size(); ++i)
-    {
-        if (Package::split(packs.at(i)).first != Package::split(ids.at(i)).first)
-        {
-            return false;
-        }
-    }
-    return true;
+    return GameProfiles::arePackageListsCompatible(packagesIncludedInSavegames(), ids);
 }
 
 bool GameProfiles::Profile::isPlayable() const
@@ -247,4 +235,20 @@ String GameProfiles::Profile::toInfoSource() const
        << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False");
 
     return info;
+}
+
+bool GameProfiles::arePackageListsCompatible(StringList const &list1, StringList const &list2) // static
+{
+    if (list1.size() != list2.size()) return false;
+
+    // The package lists must match order and IDs, but currently we ignore the
+    // versions.
+    for (int i = 0; i < list1.size(); ++i)
+    {
+        if (!Package::equals(list1.at(i), list2.at(i)))
+        {
+            return false;
+        }
+    }
+    return true;
 }

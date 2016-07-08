@@ -25,6 +25,7 @@
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/Games"
 
+#include <de/charsymbols.h>
 #include <de/App>
 #include <de/ArchiveFeed>
 #include <de/Info>
@@ -154,7 +155,8 @@ DENG2_PIMPL(DataBundle), public Lockable
             {
                 throw FormatError("DataBundle::identify",
                                   dynamic_cast<File *>(thisPublic)->description() +
-                                  ": WAD file lump directory not found");
+                                  ": file contents may be corrupted " DENG2_CHAR_MDASH
+                                  " WAD lump directory was not found");
             }
 
             // Determine the WAD type, if unspecified.
@@ -915,4 +917,21 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     }
     // Was not interpreted.
     return nullptr;
+}
+
+QList<DataBundle const *> DataBundle::loadedBundles() // static
+{
+    QList<DataBundle const *> loaded;
+
+    // Check all the loaded packages to see which ones are data bundles.
+    for (auto *f : PackageLoader::get().loadedPackagesAsFilesInPackageOrder())
+    {
+        if (DataBundle const *bundle = f->maybeAs<DataBundle>())
+        {
+            // Non-collection data files are loaded as-is.
+            loaded << bundle;
+        }
+    }
+
+    return loaded;
 }

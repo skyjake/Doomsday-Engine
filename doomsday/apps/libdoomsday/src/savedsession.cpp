@@ -406,9 +406,11 @@ bool SavedSession::isIncludedInSavegames(String const &packageId) // static
      * exactly does a data bundle contain. Also, packages should be checked for any
      * gameplay-affecting assets. (2016-07-06: Currently there are none.)
      */
-    if (DataBundle::bundleForPackage(packageId))
+    if (auto const *bundle = DataBundle::bundleForPackage(packageId))
     {
-        return true;
+        // Collections can be configured, so we need to list the actual files in use
+        // rather than just the collection itself.
+        return bundle->format() != DataBundle::Collection;
     }
     return false;
 }

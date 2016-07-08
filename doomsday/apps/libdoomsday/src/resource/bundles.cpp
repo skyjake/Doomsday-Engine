@@ -350,22 +350,4 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
     return match;
 }
 
-QList<DataBundle const *> Bundles::loaded() const
-{
-    auto &loader = PackageLoader::get();
-    QList<DataBundle const *> loadedBundles;
-
-    // Check all the loaded packages to see which ones are data bundles.
-    for (auto *f : loader.loadedPackagesAsFilesInPackageOrder())
-    {
-        if (DataBundle const *bundle = f->maybeAs<DataBundle>())
-        {
-            // Non-collection data files are loaded as-is.
-            loadedBundles << bundle;
-        }
-    }
-
-    return loadedBundles;
-}
-
 } // namespace res

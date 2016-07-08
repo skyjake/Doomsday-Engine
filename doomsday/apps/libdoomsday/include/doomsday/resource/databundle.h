@@ -138,6 +138,15 @@ public:
 
     static DataBundle const *bundleForPackage(de::String const &packageId);
 
+    /**
+     * Compiles a list of all data bundles that have been loaded via
+     * PackageLoader. The order of the list reflects the order in which
+     * PackageLoader::load() was called on the packges.
+     *
+     * @return List of bundles.
+     */
+    static QList<DataBundle const *> loadedBundles();
+
 protected:
     void setFormat(Format format);
 

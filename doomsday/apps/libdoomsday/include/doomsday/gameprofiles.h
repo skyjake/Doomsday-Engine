@@ -92,6 +92,9 @@ public:
 
     static Profile const &null();
 
+    static bool arePackageListsCompatible(de::StringList const &list1,
+                                          de::StringList const &list2);
+
 protected:
     AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);
 

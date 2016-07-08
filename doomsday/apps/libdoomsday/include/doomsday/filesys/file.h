@@ -36,6 +36,8 @@
 #include <de/str.h>
 #include "dd_share.h"
 
+class DataBundle;
+
 namespace de {
 
 /**
@@ -218,6 +220,8 @@ public:
     virtual File1 &clearCache(bool *retCleared = 0);
 
 public:
+    enum LoadFileMode { LoadAsVanillaFile, LoadAsCustomFile };
+
     /**
      * Attempt to load the (logical) resource indicated by the @a search term.
      *
@@ -227,7 +231,20 @@ public:
      *
      * @return  @c true if the referenced resource was loaded.
      */
-    static File1 *tryLoad(Uri const &search, size_t baseOffset = 0);
+    static File1 *tryLoad(LoadFileMode loadMode, Uri const &path, size_t baseOffset = 0);
+
+    static File1 *tryLoad(DataBundle const &bundle);
+
+    /**
+     * Attempt to unload the (logical) resource indicated by the @a search term.
+     *
+     * @param path  Path to the resource to unload.
+     *
+     * @return  @c true if the referenced resource was loaded and successfully unloaded.
+     */
+    static bool tryUnload(Uri const &path);
+
+    static bool tryUnload(DataBundle const &bundle);
 
 protected:
     /// File stream handle.

@@ -116,6 +116,25 @@ public:
     std::string const &doomsdayBasePath() const;
     //std::string const &doomsdayRuntimePath() const;
 
+    /**
+     * Checks if the currently loaded packages are compatible with the provided list.
+     * If the user does not cancel, and the correct packages can be loaded, calls the
+     * provided callback.
+     *
+     * The method may return immediately, if the user is shown an interactive message
+     * explaning the situation and/or needed tasks.
+     *
+     * @param packageIds    List of package identifiers.
+     * @param userMessageIfIncompatible  Message to show to the user explaining what is
+     *                      using the incompatible packages.
+     * @param finalizeFunc  Callback after the loaded packages have been checked to be
+     *                      compatible. Will not be called if the operation is cancelled.
+     */
+    virtual void checkPackageCompatibility(
+            de::StringList const &packageIds,
+            de::String const &userMessageIfIncompatible,
+            std::function<void ()> finalizeFunc) = 0;
+
 public:
     static DoomsdayApp &app();
     static res::Bundles &bundles();
@@ -143,6 +162,8 @@ public:
     static GameProfile const *currentGameProfile();
 
     static bool isGameLoaded();
+
+    static de::StringList loadedPackagesIncludedInSavegames();
 
 protected:
     /**

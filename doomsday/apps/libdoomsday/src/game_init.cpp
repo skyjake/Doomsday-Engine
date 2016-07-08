@@ -50,10 +50,11 @@ static void updateProgress(int progress)
 
 int beginGameChangeBusyWorker(void *context)
 {
-    DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
+    DoomsdayApp::GameChangeParameters const *parms = reinterpret_cast<
+            DoomsdayApp::GameChangeParameters *>(context);
 
     P_InitMapEntityDefs();
-    if (parms.initiatedBusyMode)
+    if (parms->initiatedBusyMode)
     {
         updateProgress(200);
     }
@@ -85,10 +86,126 @@ static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset = 0)
     return nullptr;
 }
 
-File1 *de::File1::tryLoad(Uri const &search, size_t baseOffset)
+namespace de {
+
+// Helper function for accessing files via the legacy FS1.
+static void forNativeDataFiles(DataBundle const &bundle, std::function<void (String const &)> func)
 {
-    return tryLoadFile(search, baseOffset);
+    DENG2_ASSERT(bundle.isLinkedAsPackage()); // couldn't be accessed otherwise
+
+    switch (bundle.format())
+    {
+    case DataBundle::Iwad:
+    case DataBundle::Pwad:
+    case DataBundle::Lump:
+    case DataBundle::Pk3:
+    {
+        Record const &meta = bundle.packageMetadata();
+        for (auto const *v : meta.geta("dataFiles").elements())
+        {
+            if (File const *dataFile = App::rootFolder().tryLocate<File const>(v->asText()))
+            {
+                if (dataFile->source()->is<NativeFile>())
+                {
+                    func(v->asText());
+                }
+                else
+                {
+                    LOG_RES_WARNING("%s: cannot access data file within another file")
+                            << dataFile->description();
+                }
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
 }
+
+File1 *File1::tryLoad(LoadFileMode loadMode, Uri const &search, size_t baseOffset) // static
+{
+    File1 *file = tryLoadFile(search, baseOffset);
+    if (file)
+    {
+        file->setCustom(loadMode == LoadAsCustomFile);
+    }
+    return file;
+}
+
+bool File1::tryUnload(Uri const &search) // static
+{
+    try
+    {
+        File1 &file = App_FileSystem().find(search);
+        de::Uri foundFileUri = file.composeUri();
+        NativePath nativePath(foundFileUri.asText());
+
+        // Do not attempt to unload a resource required by the current game.
+        if (DoomsdayApp::game().isRequiredFile(file))
+        {
+            LOG_RES_NOTE("\"%s\" is required by the current game."
+                         " Required game files cannot be unloaded in isolation.")
+                    << nativePath.pretty();
+            return false;
+        }
+
+        LOG_RES_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
+
+        App_FileSystem().deindex(file);
+        delete &file;
+
+        return true;
+    }
+    catch (FS1::NotFoundError const &er)
+    {
+        LOG_RES_MSG("Cannot unload file: %s") << er.asText();
+        return false;
+    }
+}
+
+File1 *File1::tryLoad(DataBundle const &bundle)
+{
+    // If the bundle has been identified based on the known criteria, treat it as
+    // one of the vanilla files.
+    LoadFileMode loadMode = bundle.packageMetadata().geti("bundleScore", 0) > 0? File1::LoadAsVanillaFile
+                                                                               : File1::LoadAsCustomFile;
+    LOG_RES_NOTE("Loading %s (as %s)")
+            << bundle.description()
+            << (loadMode == LoadAsVanillaFile? "vanilla" : "custom");
+
+    File1 *result = nullptr;
+    forNativeDataFiles(bundle, [&result, loadMode] (String const &path)
+    {
+        NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
+        if (File1 *file = tryLoad(loadMode, de::Uri::fromNativePath(dataFile.nativePath())))
+        {
+            result = file; // note: multiple files may actually be loaded
+            LOG_RES_VERBOSE("%s: ok") << dataFile.nativePath();
+        }
+        else
+        {
+            LOG_RES_WARNING("%s: could not load file") << dataFile.nativePath();
+        }
+    });
+    return result;
+}
+
+bool File1::tryUnload(DataBundle const &bundle)
+{
+    LOG_RES_NOTE("Unloading %s") << bundle.description();
+
+    bool unloaded = false;
+    forNativeDataFiles(bundle, [&unloaded] (String const &path)
+    {
+        NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
+        unloaded = tryUnload(de::Uri::fromNativePath(dataFile.nativePath()));
+    });
+    return unloaded;
+}
+
+} // namespace de
 
 static void loadResource(ResourceManifest &manifest)
 {
@@ -173,105 +290,10 @@ int loadGameStartupResourcesBusyWorker(void *context)
     }
 
     // Load data files.
-    for (DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    for (DataBundle const *bundle : DataBundle::loadedBundles())
     {
-        DENG2_ASSERT(bundle->isLinkedAsPackage()); // couldn't be loaded otherwise
-
-        switch (bundle->format())
-        {
-        case DataBundle::Iwad:
-        case DataBundle::Pwad:
-        case DataBundle::Lump:
-        case DataBundle::Pk3:
-        {
-            LOG_RES_NOTE("Loading %s") << bundle->description();
-
-            Record const &meta = bundle->packageMetadata();
-            for (auto const *v : meta.geta("dataFiles").elements())
-            {
-                File const *dataFile = App::rootFolder().tryLocate<File const>(v->asText());
-                if (!dataFile) continue;
-
-                if (NativeFile const *nativeFile = dataFile->source()->maybeAs<NativeFile>())
-                {
-                    if (File1 *file = File1::tryLoad(de::Uri::fromNativePath(nativeFile->nativePath())))
-                    {
-                        file->setCustom(false);
-                        LOG_RES_VERBOSE("%s: ok") << nativeFile->nativePath();
-                    }
-                    else
-                    {
-                        LOG_RES_WARNING("%s: could not load file") << nativeFile->nativePath();
-                    }
-                }
-                else
-                {
-                    LOG_RES_WARNING("%s: cannot load data file from within another file")
-                            << dataFile->description();
-                }
-            }
-            break;
-        }
-
-        default:
-            break;
-        }
+        File1::tryLoad(*bundle);
     }
-
-#if 0
-    QList<Package *> loaded = App::packageLoader().loadedPackages().values();
-    qSort(loaded.begin(), loaded.end(), [] (Package const *a, Package const *b) {
-        return a->order() < b->order();
-    });
-
-    for (Package const *pkg : loaded)
-    {
-        qDebug() << pkg->identifier() << pkg->order();
-
-        Record const &meta = pkg->objectNamespace();
-        //String const PACKAGE_DATA_FILES("package.dataFiles");
-        String const PACKAGE_PATH      ("package.path");
-
-        // Only data bundle packages are loaded via the legacy FS1.
-        if (meta.has(QStringLiteral("package.bundleScore")))
-        {
-            //for (Value const *path : meta.geta(PACKAGE_DATA_FILES).elements())
-            {
-                if (File const *file = App::rootFolder().tryLocate<File const>(meta.gets(PACKAGE_PATH)))
-                {
-                    // We are interested in the uninterpreted representation so
-                    // FS1 can do its own handling.
-                    File const *srcFile = file->source();
-
-                    qDebug() << "Trying to FS1-load" << srcFile->description();
-
-                    if (NativeFile const *nativeFile = srcFile->maybeAs<NativeFile>())
-                    {
-                        qDebug() << "FS1-loading as native file" << nativeFile->nativePath();
-                        if (File1 *file1 = File1::tryLoad(de::Uri::fromNativePath(nativeFile->nativePath())))
-                        {
-                            file1->setCustom(false);
-                            LOG_RES_VERBOSE("%s: ok") << nativeFile->nativePath();
-                        }
-                        else
-                        {
-                            LOG_RES_WARNING("%s: could not load file") << nativeFile->nativePath();
-                        }
-                    }
-                    /*else if (ArchiveEntryFile const *archFile = srcFile->maybeAs<ArchiveEntryFile>())
-                    {
-                        ArchiveFeed const *feed = static_cast<ArchiveFeed *>(file->originFeed());
-
-                        qDebug() << "FS1-loading as entry file" << archFile->entryPath()
-                                 << "from" << feed->archiveSourceFile().description();
-
-
-                    }*/
-                }
-            }
-        }
-    }
-#endif
 
     /**
      * Open all the files, load headers, count lumps, etc, etc...

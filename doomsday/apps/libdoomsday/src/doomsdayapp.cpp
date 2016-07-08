@@ -543,6 +543,20 @@ bool DoomsdayApp::isGameLoaded()
     return App::appExists() && !DoomsdayApp::game().isNull();
 }
 
+StringList DoomsdayApp::loadedPackagesIncludedInSavegames() // static
+{
+    StringList ids = PackageLoader::get().loadedPackagesInOrder();
+    QMutableListIterator<String> iter(ids);
+    while (iter.hasNext())
+    {
+        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        {
+            iter.remove();
+        }
+    }
+    return ids;
+}
+
 void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
 {
     auto &gx = plugins().gameExports();
