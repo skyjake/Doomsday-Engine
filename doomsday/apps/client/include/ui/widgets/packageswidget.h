@@ -36,6 +36,9 @@ class PackagesWidget : public de::GuiWidget, public de::IPersistent
     Q_OBJECT
 
 public:
+    /// Specified manual package is not available. @ingroup errors
+    DENG2_ERROR(UnavailableError);
+
     /// Determines whether an item should be shown as highlighted or not.
     class IPackageStatus
     {
@@ -46,6 +49,9 @@ public:
 
 public:
     PackagesWidget(de::String const &name = de::String());
+
+    PackagesWidget(de::StringList const &manualPackageIds,
+                   de::String const &name = de::String());
 
     de::ProgressWidget &progress();
 
@@ -72,6 +78,7 @@ public:
 
     void populate();
     void updateItems();
+    de::dsize itemCount() const;
 
     /**
      * Finds the item for a package, if it is currently listed.

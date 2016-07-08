@@ -32,6 +32,7 @@
 #include <de/CommandLine>
 #include <de/NativePath>
 #include <de/RecordValue>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/defs/episode.h>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/busymode.h>
@@ -190,22 +191,46 @@ bool G_SetGameActionLoadSession(String slotId)
     // caller with instant feedback. Naturally this is no guarantee that the game-save will
     // be accessible come load time.
 
-    try
+    auto scheduleLoad = [slotId] ()
     {
         if(G_SaveSlots()[slotId].isLoadable())
         {
             // Everything appears to be in order - schedule the game-save load!
             gaLoadSessionSlot = slotId;
             G_SetGameAction(GA_LOADSESSION);
-            return true;
         }
+        else
+        {
+            LOG_RES_ERROR("Cannot load from save slot '%s': not in use") << slotId;
+        }
+    };
 
-        LOG_RES_ERROR("Cannot load from save slot '%s': not in use") << slotId;
+    try
+    {
+        auto const &slot = G_SaveSlots()[slotId];
+        SavedSession const &save = App::rootFolder().locate<SavedSession const>(slot.savePath());
+        Record const &meta = save.metadata();
+
+        if (meta.has("packages"))
+        {
+            DoomsdayApp::app().checkPackageCompatibility(
+                meta.getStringList("packages"),
+                String::format("The savegame " _E(b) "%s" _E(.) " was created with "
+                               "add-ons that are different than the ones currently in use.",
+                               meta.gets("userDescription").toUtf8().constData()),
+                scheduleLoad);
+        }
+        else
+        {
+            scheduleLoad();
+        }
     }
-    catch(SaveSlots::MissingSlotError const &)
-    {}
-
-    return false;
+    catch(SaveSlots::MissingSlotError const &er)
+    {
+        LOG_RES_WARNING("Save slot '%s' not found: %s") << slotId << er.asText();
+        return false;
+    }
+    return true;
 }
 
 void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)

@@ -140,7 +140,7 @@ static void readPatchLumps(LumpIndex const &lumpIndex)
 static void readPatchFiles()
 {
     // Patches may be loaded as data bundles.
-    for (DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    for (DataBundle const *bundle : DataBundle::loadedBundles())
     {
         if (bundle->format() == DataBundle::Dehacked)
         {

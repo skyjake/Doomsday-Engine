@@ -32,6 +32,7 @@
 #include <de/c_wrapper.h>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
+#include <de/CallbackAction>
 #include <de/CommandLine>
 #include <de/DictionaryValue>
 #include <de/DisplayMode>
@@ -73,6 +74,7 @@
 #include "ui/progress.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
+#include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/styledlogsinkformatter.h"
 #include "render/rend_particle.h"
 #include "render/r_draw.h"
@@ -633,6 +635,39 @@ void ClientApp::postFrame()
     // finished and shown a frame and there might be free time before we have to
     // begin drawing the next frame.
     Garbage_Recycle();
+}
+
+void ClientApp::checkPackageCompatibility(StringList const &packageIds,
+                                          String const &userMessageIfIncompatible,
+                                          std::function<void ()> finalizeFunc)
+{
+    if (packageIds.isEmpty() || // Metadata did not specify packages.
+        GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesIncludedInSavegames()))
+    {
+        finalizeFunc();
+    }
+    else
+    {
+        auto *dlg = new PackageCompatibilityDialog;
+        dlg->setMessage(userMessageIfIncompatible);
+        dlg->setWantedPackages(packageIds);
+        dlg->setAcceptanceAction(new CallbackAction(finalizeFunc));
+
+        if (!dlg->isCompatible())
+        {
+            // Run the dialog's event loop in a separate timer callback so it doesn't
+            // interfere with the app's event loop.
+            Loop::timer(.01, [this, dlg] ()
+            {
+                dlg->setDeleteAfterDismissed(true);
+                dlg->exec(ClientWindow::main().root());
+            });
+        }
+        else
+        {
+            delete dlg;
+        }
+    }
 }
 
 void ClientApp::alert(String const &msg, LogEntry::Level level)

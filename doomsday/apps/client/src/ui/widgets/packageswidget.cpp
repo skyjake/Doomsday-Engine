@@ -114,6 +114,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ProgressWidget *refreshProgress;
 
     // Packages list:
+    StringList manualPackagePaths; // if empty, all available packages used
     HomeMenuWidget *menu;
     ui::ListDataT<PackageItem> allPackages;
     ui::FilteredData filteredPackages { allPackages };
@@ -467,6 +468,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // By default, only the progress indicator is shown.
         showProgressIndicator(true);
+
+        self.rule().setInput(Rule::Height, search->rule().height() + menu->rule().height());
     }
 
     ~Impl()
@@ -496,13 +499,33 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
+    void setManualPackages(StringList const &ids)
+    {
+        auto &loader = PackageLoader::get();
+
+        for (String id : ids)
+        {
+            if (File const *file = loader.select(id))
+            {
+                manualPackagePaths << file->path();
+            }
+            else
+            {
+                throw UnavailableError("PackagesWidget::setManualPackages",
+                                       "Package \"" + id + "\" not found");
+            }
+        }
+    }
+
     void populate()
     {
         qDebug() << "Populating" << &self;
 
         showProgressIndicator(false);
 
-        StringList packages = App::packageLoader().findAllPackages();
+        StringList packages =
+                (manualPackagePaths.isEmpty()? App::packageLoader().findAllPackages()
+                                             : manualPackagePaths);
 
         // Remove from the list those packages that are no longer listed.
         for (ui::DataPos i = 0; i < allPackages.size(); ++i)
@@ -657,8 +680,6 @@ PackagesWidget::PackagesWidget(String const &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
-    rule().setInput(Rule::Height, d->search->rule().height() + d->menu->rule().height());
-
     auto &bundles = DoomsdayApp::bundles();
     bundles.audienceForIdentify() += d;
 
@@ -666,6 +687,14 @@ PackagesWidget::PackagesWidget(String const &name)
     {
         populate();
     }
+}
+
+PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const &name)
+    : GuiWidget(name)
+    , d(new Impl(this))
+{
+    d->setManualPackages(manualPackageIds);
+    populate();
 }
 
 ProgressWidget &PackagesWidget::progress()
@@ -732,6 +761,11 @@ void PackagesWidget::populate()
 void PackagesWidget::updateItems()
 {
     d->updateItems();
+}
+
+dsize PackagesWidget::itemCount() const
+{
+    return d->allPackages.size();
 }
 
 ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const

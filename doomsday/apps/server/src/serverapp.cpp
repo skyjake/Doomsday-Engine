@@ -221,6 +221,20 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
+void ServerApp::checkPackageCompatibility(StringList const &packageIds,
+                                          String const &userMessageIfIncompatible,
+                                          std::function<void ()> finalizeFunc)
+{
+    if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesIncludedInSavegames()))
+    {
+        finalizeFunc();
+    }
+    else
+    {
+        LOG_RES_ERROR("%s") << userMessageIfIncompatible;
+    }
+}
+
 void ServerApp::unloadGame(GameProfile const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);

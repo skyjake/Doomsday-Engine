@@ -140,19 +140,15 @@ String SavedSessionListData::SaveItem::name() const
 
 StringList SavedSessionListData::SaveItem::loadedPackages() const
 {
-    StringList ids;
     if (session)
     {
         Record const &meta = session->metadata();
         if (meta.has("packages"))
         {
-            for (Value const *pkg : meta.geta("packages").elements())
-            {
-                ids << pkg->asText();
-            }
+            return meta.getStringList("packages");
         }
     }
-    return ids;
+    return StringList();
 }
 
 void SavedSessionListData::SaveItem::fileBeingDeleted(File const &)

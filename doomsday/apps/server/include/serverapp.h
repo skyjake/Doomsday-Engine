@@ -44,6 +44,11 @@ public:
      */
     void initialize();
 
+    void checkPackageCompatibility(
+            de::StringList const &packageIds,
+            de::String const &userMessageIfIncompatible,
+            std::function<void ()> finalizeFunc) override;
+
 protected:
     void unloadGame(GameProfile const &upcomingGame) override;
 

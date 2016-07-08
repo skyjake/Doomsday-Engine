@@ -55,6 +55,11 @@ public:
     void preFrame();
     void postFrame();
 
+    void checkPackageCompatibility(
+            de::StringList const &packageIds,
+            de::String const &userMessageIfIncompatible,
+            std::function<void ()> finalizeFunc) override;
+
     /**
      * Reports a new alert to the user.
      *

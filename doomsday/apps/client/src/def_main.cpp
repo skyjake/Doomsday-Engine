@@ -604,7 +604,7 @@ static void readAllDefinitions()
     }
 
     // Definitions from loaded data bundles.
-    for (DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    for (DataBundle const *bundle : DataBundle::loadedBundles())
     {
         if (bundle->format() == DataBundle::Ded)
         {

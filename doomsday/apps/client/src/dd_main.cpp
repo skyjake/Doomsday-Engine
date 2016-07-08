@@ -1296,8 +1296,8 @@ static dint DD_StartupWorker(void * /*context*/)
         // The returned file is a symlink to the actual data file.
         // Since we're loading with FS1, we need to look up the native path.
         // The data file is an interpreter in /local/wads, whose source is the native file.
-        File1::tryLoad(de::Uri::fromNativePath(basePack->source()->
-                                               as<NativeFile>().nativePath()));
+        File1::tryLoad(File1::LoadAsVanillaFile,
+                       de::Uri::fromNativePath(basePack->source()->as<NativeFile>().nativePath()));
     }
 
     // No more files or packages will be loaded in "startup mode" after this point.
@@ -1937,7 +1937,7 @@ D_CMD(Load)
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (File1::tryLoad(de::Uri(foundPath, RC_NULL)))
+            if (File1::tryLoad(File1::LoadAsCustomFile, de::Uri(foundPath, RC_NULL)))
             {
                 didLoadResource = true;
             }
@@ -1952,40 +1952,6 @@ D_CMD(Load)
     }
 
     return didLoadGame || didLoadResource;
-}
-
-/**
- * Attempt to unload the (logical) resource indicated by the @a search term.
- *
- * @return  @c true if the referenced resource was loaded and successfully unloaded.
- */
-static bool tryUnloadFile(de::Uri const &search)
-{
-    try
-    {
-        File1 &file = App_FileSystem().find(search);
-        de::Uri foundFileUri = file.composeUri();
-        NativePath nativePath(foundFileUri.asText());
-
-        // Do not attempt to unload a resource required by the current game.
-        if (App_CurrentGame().isRequiredFile(file))
-        {
-            LOG_RES_NOTE("\"%s\" is required by the current game."
-                         " Required game files cannot be unloaded in isolation.")
-                    << nativePath.pretty();
-            return false;
-        }
-
-        LOG_RES_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
-
-        App_FileSystem().deindex(file);
-        delete &file;
-
-        return true;
-    }
-    catch (FS1::NotFoundError const&)
-    {} // Ignore.
-    return false;
 }
 
 D_CMD(Unload)
@@ -2048,7 +2014,7 @@ D_CMD(Unload)
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (tryUnloadFile(de::Uri(foundPath, RC_NULL)))
+            if (File1::tryUnload(de::Uri(foundPath, RC_NULL)))
             {
                 didUnloadFiles = true;
             }
