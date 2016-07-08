@@ -195,6 +195,8 @@ public:
      */
     static std::pair<String, Version> split(String const &identifier_version);
 
+    static bool equals(String const &id1, String const &id2);
+
     static String identifierForFile(File const &file);
 
     /**

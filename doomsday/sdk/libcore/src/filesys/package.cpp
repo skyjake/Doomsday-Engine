@@ -415,6 +415,11 @@ std::pair<String, Version> Package::split(String const &identifier_version)
     return idVer;
 }
 
+bool Package::equals(String const &id1, String const &id2)
+{
+    return split(id1).first == split(id2).first;
+}
+
 String Package::identifierForFile(File const &file)
 {
     // Form the prefix if there are enclosing packs as parents.
