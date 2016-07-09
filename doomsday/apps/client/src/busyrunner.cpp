@@ -279,8 +279,8 @@ void BusyMode_FreezeGameForBusyMode(void)
 {
     // This is only possible from the main thread.
     if (ClientWindow::mainExists() &&
-       DoomsdayApp::app().busyMode().taskRunner() &&
-       de::App::inMainThread())
+        DoomsdayApp::app().busyMode().taskRunner() &&
+        de::App::inMainThread())
     {
         ClientWindow::main().busy().renderTransitionFrame();
     }

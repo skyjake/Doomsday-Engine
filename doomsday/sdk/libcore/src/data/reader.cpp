@@ -267,7 +267,7 @@ Reader &Reader::operator >> (dint16 &word)
 Reader &Reader::operator >> (duint16 &word)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&word), 2);
-    d->convert.foreignToNative(word, word);
+    d->convert.networkToHost(word, word);
     return *this;
 }
 
@@ -279,7 +279,7 @@ Reader &Reader::operator >> (dint32 &dword)
 Reader &Reader::operator >> (duint32 &dword)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&dword), 4);
-    d->convert.foreignToNative(dword, dword);
+    d->convert.networkToHost(dword, dword);
     return *this;
 }
 
@@ -291,7 +291,7 @@ Reader &Reader::operator >> (dint64 &qword)
 Reader &Reader::operator >> (duint64 &qword)
 {
     d->readBytes(reinterpret_cast<IByteArray::Byte *>(&qword), 8);
-    d->convert.foreignToNative(qword, qword);
+    d->convert.networkToHost(qword, qword);
     return *this;
 }
 

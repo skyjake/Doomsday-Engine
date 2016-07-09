@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_BYTEORDER_H
@@ -35,80 +35,80 @@ public:
     virtual ~ByteOrder() {}
 
     /**
-     * Converts a 16-bit unsigned integer from foreign byte order to the native one.
+     * Converts a 16-bit unsigned integer from network byte order to the host order.
      *
-     * @param foreignValue  Value in foreign byte order.
-     * @param nativeValue   Value in the host's native byte order.
+     * @param networkValue  Value in network byte order.
+     * @param hostValue     Value in the host's host byte order.
      */
-    virtual void foreignToNative(duint16 const &foreignValue, duint16 &nativeValue) const = 0;
+    virtual void networkToHost(duint16 const &networkValue, duint16 &hostValue) const = 0;
 
     /**
-     * Converts a 32-bit unsigned integer from foreign byte order to the native one.
+     * Converts a 32-bit unsigned integer from network byte order to the host order.
      *
-     * @param foreignValue  Value in foreign byte order.
-     * @param nativeValue   Value in the host's native byte order.
+     * @param networkValue  Value in network byte order.
+     * @param hostValue     Value in the host's host byte order.
      */
-    virtual void foreignToNative(duint32 const &foreignValue, duint32 &nativeValue) const = 0;
+    virtual void networkToHost(duint32 const &networkValue, duint32 &hostValue) const = 0;
 
     /**
-     * Converts a 64-bit unsigned integer from foreign byte order to the native one.
+     * Converts a 64-bit unsigned integer from network byte order to the host order.
      *
-     * @param foreignValue  Value in foreign byte order.
-     * @param nativeValue   Value in the host's native byte order.
+     * @param networkValue  Value in network byte order.
+     * @param hostValue     Value in the host's host byte order.
      */
-    virtual void foreignToNative(duint64 const &foreignValue, duint64 &nativeValue) const = 0;
+    virtual void networkToHost(duint64 const &networkValue, duint64 &hostValue) const = 0;
 
     /**
-     * Converts a 16-bit unsigned integer from native byte order to the foreign one.
+     * Converts a 16-bit unsigned integer from host byte order to the network order.
      *
-     * @param nativeValue   Value in the host's native byte order.
-     * @param foreignValue  Value in foreign byte order is written here.
+     * @param hostValue     Value in the host's host byte order.
+     * @param networkValue  Value in network byte order is written here.
      */
-    virtual void nativeToForeign(duint16 const &nativeValue, duint16 &foreignValue) const = 0;
+    virtual void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const = 0;
 
     /**
-     * Converts a 32-bit unsigned integer from native byte order to the foreign one.
+     * Converts a 32-bit unsigned integer from host byte order to the network order.
      *
-     * @param nativeValue   Value in the host's native byte order.
-     * @param foreignValue  Value in foreign byte order is written here.
+     * @param hostValue     Value in the host's host byte order.
+     * @param networkValue  Value in network byte order is written here.
      */
-    virtual void nativeToForeign(duint32 const &nativeValue, duint32 &foreignValue) const = 0;
+    virtual void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const = 0;
 
     /**
-     * Converts a 64-bit unsigned integer from native byte order to the foreign one.
+     * Converts a 64-bit unsigned integer from host byte order to the network order.
      *
-     * @param nativeValue   Value in the host's native byte order.
-     * @param foreignValue  Value in foreign byte order is written here.
+     * @param hostValue     Value in the host's host byte order.
+     * @param networkValue  Value in network byte order is written here.
      */
-    virtual void nativeToForeign(duint64 const &nativeValue, duint64 &foreignValue) const = 0;
+    virtual void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const = 0;
 
     // The signed variants.
-    void nativeToForeign(dint16 const &nativeValue, dint16 &foreignValue) const;
-    void nativeToForeign(dint32 const &nativeValue, dint32 &foreignValue) const;
-    void nativeToForeign(dint64 const &nativeValue, dint64 &foreignValue) const;
-    void foreignToNative(dint16 const &foreignValue, dint16 &nativeValue) const;
-    void foreignToNative(dint32 const &foreignValue, dint32 &nativeValue) const;
-    void foreignToNative(dint64 const &foreignValue, dint64 &nativeValue) const;
+    void hostToNetwork(dint16 const &hostValue, dint16 &networkValue) const;
+    void hostToNetwork(dint32 const &hostValue, dint32 &networkValue) const;
+    void hostToNetwork(dint64 const &hostValue, dint64 &networkValue) const;
+    void networkToHost(dint16 const &networkValue, dint16 &hostValue) const;
+    void networkToHost(dint32 const &networkValue, dint32 &hostValue) const;
+    void networkToHost(dint64 const &networkValue, dint64 &hostValue) const;
 
     // Floating point.
-    void nativeToForeign(dfloat const &nativeValue, dfloat &foreignValue) const;
-    void nativeToForeign(ddouble const &nativeValue, ddouble &foreignValue) const;
-    void foreignToNative(dfloat const &foreignValue, dfloat &nativeValue) const;
-    void foreignToNative(ddouble const &foreignValue, ddouble &nativeValue) const;
+    void hostToNetwork(dfloat const &hostValue, dfloat &networkValue) const;
+    void hostToNetwork(ddouble const &hostValue, ddouble &networkValue) const;
+    void networkToHost(dfloat const &networkValue, dfloat &hostValue) const;
+    void networkToHost(ddouble const &networkValue, ddouble &hostValue) const;
 
     // Convenience.
     template <typename T>
-    T toForeign(T const &nativeValue) const {
-        T foreignValue;
-        nativeToForeign(nativeValue, foreignValue);
-        return foreignValue;
+    T toNetwork(T const &hostValue) const {
+        T networkValue;
+        hostToNetwork(hostValue, networkValue);
+        return networkValue;
     }
 
     template <typename T>
-    T toNative(T const &foreignValue) const {
-        T nativeValue;
-        foreignToNative(foreignValue, nativeValue);
-        return nativeValue;
+    T toHost(T const &networkValue) const {
+        T hostValue;
+        networkToHost(networkValue, hostValue);
+        return hostValue;
     }
 };
 
@@ -120,15 +120,15 @@ public:
 class DENG2_PUBLIC BigEndianByteOrder : public ByteOrder
 {
 public:
-    using ByteOrder::foreignToNative;
-    using ByteOrder::nativeToForeign;
+    using ByteOrder::networkToHost;
+    using ByteOrder::hostToNetwork;
 
-    void foreignToNative(duint16 const &foreignValue, duint16 &nativeValue) const;
-    void foreignToNative(duint32 const &foreignValue, duint32 &nativeValue) const;
-    void foreignToNative(duint64 const &foreignValue, duint64 &nativeValue) const;
-    void nativeToForeign(duint16 const &nativeValue, duint16 &foreignValue) const;
-    void nativeToForeign(duint32 const &nativeValue, duint32 &foreignValue) const;
-    void nativeToForeign(duint64 const &nativeValue, duint64 &foreignValue) const;
+    void networkToHost(duint16 const &networkValue, duint16 &hostValue) const;
+    void networkToHost(duint32 const &networkValue, duint32 &hostValue) const;
+    void networkToHost(duint64 const &networkValue, duint64 &hostValue) const;
+    void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const;
+    void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const;
+    void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const;
 };
 
 /// Network byte order is big endian.
@@ -142,20 +142,20 @@ typedef BigEndianByteOrder NetworkByteOrder;
 class DENG2_PUBLIC LittleEndianByteOrder : public ByteOrder
 {
 public:
-    using ByteOrder::foreignToNative;
-    using ByteOrder::nativeToForeign;
+    using ByteOrder::networkToHost;
+    using ByteOrder::hostToNetwork;
 
-    void foreignToNative(duint16 const &foreignValue, duint16 &nativeValue) const;
-    void foreignToNative(duint32 const &foreignValue, duint32 &nativeValue) const;
-    void foreignToNative(duint64 const &foreignValue, duint64 &nativeValue) const;
-    void nativeToForeign(duint16 const &nativeValue, duint16 &foreignValue) const;
-    void nativeToForeign(duint32 const &nativeValue, duint32 &foreignValue) const;
-    void nativeToForeign(duint64 const &nativeValue, duint64 &foreignValue) const;
+    void networkToHost(duint16 const &networkValue, duint16 &hostValue) const;
+    void networkToHost(duint32 const &networkValue, duint32 &hostValue) const;
+    void networkToHost(duint64 const &networkValue, duint64 &hostValue) const;
+    void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const;
+    void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const;
+    void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const;
 };
 
 // Swaps the bytes of a 16-bit unsigned integer.
 inline duint16 swap16(duint16 const &n) {
-    return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+    return duint16((n & 0xff) << 8) | duint16((n & 0xff00) >> 8);
 }
 
 /// Swaps the bytes of a 32-bit unsigned integer.

@@ -80,23 +80,23 @@ static bool readMd2Header(FileHandle &file, md2_header_t &hdr)
     size_t readBytes = file.read((uint8_t *)&hdr, sizeof(md2_header_t));
     if(readBytes < sizeof(md2_header_t)) return false;
 
-    hdr.magic            = littleEndianByteOrder.toNative(hdr.magic);
-    hdr.version          = littleEndianByteOrder.toNative(hdr.version);
-    hdr.skinWidth        = littleEndianByteOrder.toNative(hdr.skinWidth);
-    hdr.skinHeight       = littleEndianByteOrder.toNative(hdr.skinHeight);
-    hdr.frameSize        = littleEndianByteOrder.toNative(hdr.frameSize);
-    hdr.numSkins         = littleEndianByteOrder.toNative(hdr.numSkins);
-    hdr.numVertices      = littleEndianByteOrder.toNative(hdr.numVertices);
-    hdr.numTexCoords     = littleEndianByteOrder.toNative(hdr.numTexCoords);
-    hdr.numTriangles     = littleEndianByteOrder.toNative(hdr.numTriangles);
-    hdr.numGlCommands    = littleEndianByteOrder.toNative(hdr.numGlCommands);
-    hdr.numFrames        = littleEndianByteOrder.toNative(hdr.numFrames);
-    hdr.offsetSkins      = littleEndianByteOrder.toNative(hdr.offsetSkins);
-    hdr.offsetTexCoords  = littleEndianByteOrder.toNative(hdr.offsetTexCoords);
-    hdr.offsetTriangles  = littleEndianByteOrder.toNative(hdr.offsetTriangles);
-    hdr.offsetFrames     = littleEndianByteOrder.toNative(hdr.offsetFrames);
-    hdr.offsetGlCommands = littleEndianByteOrder.toNative(hdr.offsetGlCommands);
-    hdr.offsetEnd        = littleEndianByteOrder.toNative(hdr.offsetEnd);
+    hdr.magic            = littleEndianByteOrder.toHost(hdr.magic);
+    hdr.version          = littleEndianByteOrder.toHost(hdr.version);
+    hdr.skinWidth        = littleEndianByteOrder.toHost(hdr.skinWidth);
+    hdr.skinHeight       = littleEndianByteOrder.toHost(hdr.skinHeight);
+    hdr.frameSize        = littleEndianByteOrder.toHost(hdr.frameSize);
+    hdr.numSkins         = littleEndianByteOrder.toHost(hdr.numSkins);
+    hdr.numVertices      = littleEndianByteOrder.toHost(hdr.numVertices);
+    hdr.numTexCoords     = littleEndianByteOrder.toHost(hdr.numTexCoords);
+    hdr.numTriangles     = littleEndianByteOrder.toHost(hdr.numTriangles);
+    hdr.numGlCommands    = littleEndianByteOrder.toHost(hdr.numGlCommands);
+    hdr.numFrames        = littleEndianByteOrder.toHost(hdr.numFrames);
+    hdr.offsetSkins      = littleEndianByteOrder.toHost(hdr.offsetSkins);
+    hdr.offsetTexCoords  = littleEndianByteOrder.toHost(hdr.offsetTexCoords);
+    hdr.offsetTriangles  = littleEndianByteOrder.toHost(hdr.offsetTriangles);
+    hdr.offsetFrames     = littleEndianByteOrder.toHost(hdr.offsetFrames);
+    hdr.offsetGlCommands = littleEndianByteOrder.toHost(hdr.offsetGlCommands);
+    hdr.offsetEnd        = littleEndianByteOrder.toHost(hdr.offsetEnd);
     return true;
 }
 
@@ -117,9 +117,9 @@ static bool readHeaderDmd(FileHandle &file, dmd_header_t &hdr)
     size_t readBytes = file.read((uint8_t *)&hdr, sizeof(dmd_header_t));
     if(readBytes < sizeof(dmd_header_t)) return false;
 
-    hdr.magic   = littleEndianByteOrder.toNative(hdr.magic);
-    hdr.version = littleEndianByteOrder.toNative(hdr.version);
-    hdr.flags   = littleEndianByteOrder.toNative(hdr.flags);
+    hdr.magic   = littleEndianByteOrder.toHost(hdr.magic);
+    hdr.version = littleEndianByteOrder.toHost(hdr.version);
+    hdr.flags   = littleEndianByteOrder.toHost(hdr.flags);
     return true;
 }
 

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/data/byteorder.h"
@@ -26,175 +26,175 @@ using de::LittleEndianByteOrder;
 DENG2_PUBLIC BigEndianByteOrder de::bigEndianByteOrder;
 DENG2_PUBLIC LittleEndianByteOrder de::littleEndianByteOrder;
 
-void ByteOrder::nativeToForeign(de::dint16 const &nativeValue, de::dint16 &foreignValue) const
+void ByteOrder::hostToNetwork(de::dint16 const &hostValue, de::dint16 &networkValue) const
 {
-    nativeToForeign(reinterpret_cast<de::duint16 const &>(nativeValue),
-                    reinterpret_cast<      de::duint16 &>(foreignValue));
+    hostToNetwork(reinterpret_cast<de::duint16 const &>(hostValue),
+                  reinterpret_cast<      de::duint16 &>(networkValue));
 }
 
-void ByteOrder::nativeToForeign(de::dint32 const &nativeValue, de::dint32 &foreignValue) const
+void ByteOrder::hostToNetwork(de::dint32 const &hostValue, de::dint32 &networkValue) const
 {
-    nativeToForeign(reinterpret_cast<de::duint32 const &>(nativeValue),
-                    reinterpret_cast<      de::duint32 &>(foreignValue));
+    hostToNetwork(reinterpret_cast<de::duint32 const &>(hostValue),
+                  reinterpret_cast<      de::duint32 &>(networkValue));
 }
 
-void ByteOrder::nativeToForeign(de::dint64 const &nativeValue, de::dint64 &foreignValue) const
+void ByteOrder::hostToNetwork(de::dint64 const &hostValue, de::dint64 &networkValue) const
 {
-    nativeToForeign(reinterpret_cast<de::duint64 const &>(nativeValue),
-                    reinterpret_cast<      de::duint64 &>(foreignValue));
+    hostToNetwork(reinterpret_cast<de::duint64 const &>(hostValue),
+                  reinterpret_cast<      de::duint64 &>(networkValue));
 }
 
-void ByteOrder::foreignToNative(de::dint16 const &foreignValue, de::dint16 &nativeValue) const
+void ByteOrder::networkToHost(de::dint16 const &networkValue, de::dint16 &hostValue) const
 {
-    foreignToNative(reinterpret_cast<de::duint16 const &>(foreignValue),
-                    reinterpret_cast<      de::duint16 &>(nativeValue));
+    networkToHost(reinterpret_cast<de::duint16 const &>(networkValue),
+                  reinterpret_cast<      de::duint16 &>(hostValue));
 }
 
-void ByteOrder::foreignToNative(de::dint32 const &foreignValue, de::dint32 &nativeValue) const
+void ByteOrder::networkToHost(de::dint32 const &networkValue, de::dint32 &hostValue) const
 {
-    foreignToNative(reinterpret_cast<de::duint32 const &>(foreignValue),
-                    reinterpret_cast<      de::duint32 &>(nativeValue));
+    networkToHost(reinterpret_cast<de::duint32 const &>(networkValue),
+                  reinterpret_cast<      de::duint32 &>(hostValue));
 }
 
-void ByteOrder::foreignToNative(de::dint64 const &foreignValue, de::dint64 &nativeValue) const
+void ByteOrder::networkToHost(de::dint64 const &networkValue, de::dint64 &hostValue) const
 {
-    foreignToNative(reinterpret_cast<de::duint64 const &>(foreignValue),
-                    reinterpret_cast<      de::duint64 &>(nativeValue));
+    networkToHost(reinterpret_cast<de::duint64 const &>(networkValue),
+                  reinterpret_cast<      de::duint64 &>(hostValue));
 }
 
-void ByteOrder::nativeToForeign(de::dfloat const &nativeValue, de::dfloat &foreignValue) const
+void ByteOrder::hostToNetwork(de::dfloat const &hostValue, de::dfloat &networkValue) const
 {
     DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
-    nativeToForeign(reinterpret_cast<de::duint32 const &>(nativeValue),
-                    reinterpret_cast<      de::duint32 &>(foreignValue));
+    hostToNetwork(reinterpret_cast<de::duint32 const &>(hostValue),
+                  reinterpret_cast<      de::duint32 &>(networkValue));
 }
 
-void ByteOrder::nativeToForeign(de::ddouble const &nativeValue, de::ddouble &foreignValue) const
+void ByteOrder::hostToNetwork(de::ddouble const &hostValue, de::ddouble &networkValue) const
 {
     DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
-    nativeToForeign(reinterpret_cast<de::duint64 const &>(nativeValue),
-                    reinterpret_cast<      de::duint64 &>(foreignValue));
+    hostToNetwork(reinterpret_cast<de::duint64 const &>(hostValue),
+                  reinterpret_cast<      de::duint64 &>(networkValue));
 }
 
-void ByteOrder::foreignToNative(de::dfloat const &foreignValue, de::dfloat &nativeValue) const
+void ByteOrder::networkToHost(de::dfloat const &networkValue, de::dfloat &hostValue) const
 {
     DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
-    foreignToNative(reinterpret_cast<de::duint32 const &>(foreignValue),
-                    reinterpret_cast<      de::duint32 &>(nativeValue));
+    networkToHost(reinterpret_cast<de::duint32 const &>(networkValue),
+                  reinterpret_cast<      de::duint32 &>(hostValue));
 }
 
-void ByteOrder::foreignToNative(de::ddouble const &foreignValue, de::ddouble &nativeValue) const
+void ByteOrder::networkToHost(de::ddouble const &networkValue, de::ddouble &hostValue) const
 {
     DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
-    foreignToNative(reinterpret_cast<de::duint64 const &>(foreignValue),
-                    reinterpret_cast<      de::duint64 &>(nativeValue));
+    networkToHost(reinterpret_cast<de::duint64 const &>(networkValue),
+                  reinterpret_cast<      de::duint64 &>(hostValue));
 }
 
-void BigEndianByteOrder::foreignToNative(de::duint16 const &foreignValue, de::duint16 &nativeValue) const
+void BigEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::duint16 &hostValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifdef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap16(foreignValue);
+    hostValue = swap16(networkValue);
 #endif
 }
 
-void BigEndianByteOrder::foreignToNative(de::duint32 const &foreignValue, de::duint32 &nativeValue) const
+void BigEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::duint32 &hostValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifdef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap32(foreignValue);
+    hostValue = swap32(networkValue);
 #endif
 }
 
-void BigEndianByteOrder::foreignToNative(de::duint64 const &foreignValue, de::duint64 &nativeValue) const
+void BigEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::duint64 &hostValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifdef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap64(foreignValue);
+    hostValue = swap64(networkValue);
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(de::duint16 const &nativeValue, de::duint16 &foreignValue) const
+void BigEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duint16 &networkValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifdef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap16(nativeValue);
+    networkValue = swap16(hostValue);
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(de::duint32 const &nativeValue, de::duint32 &foreignValue) const
+void BigEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duint32 &networkValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifdef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap32(nativeValue);
+    networkValue = swap32(hostValue);
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(de::duint64 const &nativeValue, de::duint64 &foreignValue) const
+void BigEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duint64 &networkValue) const
 {
-#ifdef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifdef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap64(nativeValue);
+    networkValue = swap64(hostValue);
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(de::duint16 const &foreignValue, de::duint16 &nativeValue) const
+void LittleEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::duint16 &hostValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifndef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap16(foreignValue);
+    hostValue = swap16(networkValue);
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(de::duint32 const &foreignValue, de::duint32 &nativeValue) const
+void LittleEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::duint32 &hostValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifndef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap32(foreignValue);
+    hostValue = swap32(networkValue);
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(de::duint64 const &foreignValue, de::duint64 &nativeValue) const
+void LittleEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::duint64 &hostValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    nativeValue = foreignValue;
+#ifndef __BIG_ENDIAN__
+    hostValue = networkValue;
 #else
-    nativeValue = swap64(foreignValue);
+    hostValue = swap64(networkValue);
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(de::duint16 const &nativeValue, de::duint16 &foreignValue) const
+void LittleEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duint16 &networkValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifndef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap16(nativeValue);
+    networkValue = swap16(hostValue);
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(de::duint32 const &nativeValue, de::duint32 &foreignValue) const
+void LittleEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duint32 &networkValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifndef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap32(nativeValue);
+    networkValue = swap32(hostValue);
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(de::duint64 const &nativeValue, de::duint64 &foreignValue) const
+void LittleEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duint64 &networkValue) const
 {
-#ifndef __BIG_ENDIAN__ 
-    foreignValue = nativeValue;
+#ifndef __BIG_ENDIAN__
+    networkValue = hostValue;
 #else
-    foreignValue = swap64(nativeValue);
+    networkValue = swap64(hostValue);
 #endif
 }
 
@@ -203,7 +203,7 @@ de::duint64 de::swap64(de::duint64 const &n)
     de::duint64 result;
     dbyte const *in = reinterpret_cast<dbyte const *>(&n);
     dbyte *out = reinterpret_cast<dbyte *>(&result);
-    
+
     out[0] = in[7];
     out[1] = in[6];
     out[2] = in[5];
@@ -212,6 +212,6 @@ de::duint64 de::swap64(de::duint64 const &n)
     out[5] = in[2];
     out[6] = in[1];
     out[7] = in[0];
-    
+
     return result;
 }

@@ -136,17 +136,17 @@ static bool readArchiveHeader(FileHandle &file, localfileheader_t &hdr)
     file.seek(initPos, SeekSet);
     if (!(readBytes < sizeof(localfileheader_t)))
     {
-        hdr.signature       = littleEndianByteOrder.toNative(hdr.signature);
-        hdr.requiredVersion = littleEndianByteOrder.toNative(hdr.requiredVersion);
-        hdr.flags           = littleEndianByteOrder.toNative(hdr.flags);
-        hdr.compression     = littleEndianByteOrder.toNative(hdr.compression);
-        hdr.lastModTime     = littleEndianByteOrder.toNative(hdr.lastModTime);
-        hdr.lastModDate     = littleEndianByteOrder.toNative(hdr.lastModDate);
-        hdr.crc32           = littleEndianByteOrder.toNative(hdr.crc32);
-        hdr.compressedSize  = littleEndianByteOrder.toNative(hdr.compressedSize);
-        hdr.size            = littleEndianByteOrder.toNative(hdr.size);
-        hdr.fileNameSize    = littleEndianByteOrder.toNative(hdr.fileNameSize);
-        hdr.extraFieldSize  = littleEndianByteOrder.toNative(hdr.extraFieldSize);
+        hdr.signature       = littleEndianByteOrder.toHost(hdr.signature);
+        hdr.requiredVersion = littleEndianByteOrder.toHost(hdr.requiredVersion);
+        hdr.flags           = littleEndianByteOrder.toHost(hdr.flags);
+        hdr.compression     = littleEndianByteOrder.toHost(hdr.compression);
+        hdr.lastModTime     = littleEndianByteOrder.toHost(hdr.lastModTime);
+        hdr.lastModDate     = littleEndianByteOrder.toHost(hdr.lastModDate);
+        hdr.crc32           = littleEndianByteOrder.toHost(hdr.crc32);
+        hdr.compressedSize  = littleEndianByteOrder.toHost(hdr.compressedSize);
+        hdr.size            = littleEndianByteOrder.toHost(hdr.size);
+        hdr.fileNameSize    = littleEndianByteOrder.toHost(hdr.fileNameSize);
+        hdr.extraFieldSize  = littleEndianByteOrder.toHost(hdr.extraFieldSize);
         return true;
     }
     return false;
@@ -168,13 +168,13 @@ static bool readCentralEnd(FileHandle &file, centralend_t &end)
     size_t readBytes = file.read((uint8_t *)&end, sizeof(centralend_t));
     if (!(readBytes < sizeof(centralend_t)))
     {
-        end.disk            = littleEndianByteOrder.toNative(end.disk);
-        end.centralStartDisk= littleEndianByteOrder.toNative(end.centralStartDisk);
-        end.diskEntryCount  = littleEndianByteOrder.toNative(end.diskEntryCount);
-        end.totalEntryCount = littleEndianByteOrder.toNative(end.totalEntryCount);
-        end.size            = littleEndianByteOrder.toNative(end.size);
-        end.offset          = littleEndianByteOrder.toNative(end.offset);
-        end.commentSize     = littleEndianByteOrder.toNative(end.commentSize);
+        end.disk            = littleEndianByteOrder.toHost(end.disk);
+        end.centralStartDisk= littleEndianByteOrder.toHost(end.centralStartDisk);
+        end.diskEntryCount  = littleEndianByteOrder.toHost(end.diskEntryCount);
+        end.totalEntryCount = littleEndianByteOrder.toHost(end.totalEntryCount);
+        end.size            = littleEndianByteOrder.toHost(end.size);
+        end.offset          = littleEndianByteOrder.toHost(end.offset);
+        end.commentSize     = littleEndianByteOrder.toHost(end.commentSize);
         return true;
     }
     return false;
@@ -378,7 +378,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
 
             // Is this the signature?
             handle_->read((uint8_t *)&signature, sizeof(signature));
-            if (littleEndianByteOrder.toNative(signature) == SIG_END_OF_CENTRAL_DIR)
+            if (littleEndianByteOrder.toHost(signature) == SIG_END_OF_CENTRAL_DIR)
             {
                 foundCentralDirectory = true; // Yes, this is it.
             }

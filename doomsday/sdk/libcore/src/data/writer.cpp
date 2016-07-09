@@ -138,7 +138,7 @@ Writer &Writer::operator << (dint16 const &word)
 Writer &Writer::operator << (duint16 const &word)
 {
     duint16 netWord;
-    d->convert.nativeToForeign(word, netWord);
+    d->convert.hostToNetwork(word, netWord);
     d->write(reinterpret_cast<IByteArray::Byte *>(&netWord), 2);
     return *this;
 }
@@ -151,7 +151,7 @@ Writer &Writer::operator << (dint32 const &dword)
 Writer &Writer::operator << (duint32 const &dword)
 {
     duint32 netDword;
-    d->convert.nativeToForeign(dword, netDword);
+    d->convert.hostToNetwork(dword, netDword);
     d->write(reinterpret_cast<IByteArray::Byte *>(&netDword), 4);
     return *this;
 }
@@ -164,7 +164,7 @@ Writer &Writer::operator << (dint64 const &qword)
 Writer &Writer::operator << (duint64 const &qword)
 {
     duint64 netQword;
-    d->convert.nativeToForeign(qword, netQword);
+    d->convert.hostToNetwork(qword, netQword);
     d->write(reinterpret_cast<IByteArray::Byte *>(&netQword), 8);
     return *this;
 }

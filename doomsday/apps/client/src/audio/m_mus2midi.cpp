@@ -278,7 +278,7 @@ Block M_Mus2Midi(Block const &musData)
         << duint8(0x40);
 
     header = reinterpret_cast<struct mus_header const *>(musData.dataConst());
-    readPos = musData.dataConst() + littleEndianByteOrder.toNative(header->scoreStart);
+    readPos = musData.dataConst() + littleEndianByteOrder.toHost(header->scoreStart);
     readTime = 0;
 
     // Init channel volumes.
