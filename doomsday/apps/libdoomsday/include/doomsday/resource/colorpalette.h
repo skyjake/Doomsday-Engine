@@ -71,6 +71,8 @@ public:
     /// Notified whenever the color table changes.
     DENG2_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
 
+    typedef de::duint Id;
+
     /// Palette index translation mapping table.
     typedef QVector<int> Translation;
 

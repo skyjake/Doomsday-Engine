@@ -39,6 +39,7 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/resource/colorpalettes.h>
 #include "clientapp.h"
 #include "sys_system.h"  // novideo
 
@@ -1118,7 +1119,7 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
         exit(1); // Unreachable.
     }
 
-    res::ColorPalette *palette = (informat <= 2? &resSys().colorPalette(paletteId) : nullptr);
+    res::ColorPalette *palette = (informat <= 2? &resSys().colorPalettes().colorPalette(paletteId) : nullptr);
 
     auto *out = (duint8 *) M_Malloc(outformat * width * height);
 
@@ -1163,7 +1164,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
 
     static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
-    res::ColorPalette *palette = (pixelSize == 1? &resSys().colorPalette(paletteId) : nullptr);
+    res::ColorPalette *palette = (pixelSize == 1? &resSys().colorPalettes().colorPalette(paletteId) : nullptr);
 
     // Apply the defaults.
     // Default to the center of the texture.

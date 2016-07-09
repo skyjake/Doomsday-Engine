@@ -26,7 +26,11 @@
 #include <de/System>
 #include <de/Info>
 
-namespace res { class MapManifests; }
+namespace res
+{
+    class MapManifests;
+    class ColorPalettes;
+}
 
 /**
  * Base class for the resource management subsystem.
@@ -36,6 +40,9 @@ namespace res { class MapManifests; }
 class LIBDOOMSDAY_PUBLIC Resources : public de::System
 {
 public:
+    /// The referenced resource was not found. @ingroup errors
+    DENG2_ERROR(MissingResourceError);
+
     /// An unknown resource class identifier was specified. @ingroup errors
     DENG2_ERROR(UnknownResourceClassError);
 
@@ -75,6 +82,9 @@ public:
 
     res::MapManifests &       mapManifests();
     res::MapManifests const & mapManifests() const;
+
+    res::ColorPalettes &       colorPalettes();
+    res::ColorPalettes const & colorPalettes() const;
 
 private:
     DENG2_PRIVATE(d)

@@ -57,6 +57,7 @@
 #include <doomsday/resource/patch.h>
 #include <doomsday/resource/patchname.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/resource/colorpalettes.h>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -442,14 +443,6 @@ DENG2_PIMPL(ResourceSystem)
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
 
-    typedef QMap<colorpaletteid_t, res::ColorPalette *> ColorPalettes;
-    ColorPalettes colorPalettes;
-
-    typedef QMap<String, res::ColorPalette *> ColorPaletteNames;
-    ColorPaletteNames colorPaletteNames;
-
-    colorpaletteid_t defaultColorPalette;
-
     /// System subspace schemes containing the textures.
     TextureSchemes textureSchemes;
     QList<TextureScheme *> textureSchemeCreationOrder;
@@ -538,7 +531,6 @@ DENG2_PIMPL(ResourceSystem)
 
     Impl(Public *i)
         : Base(i)
-        , defaultColorPalette      (0)
         , materialManifestIdMapSize(0)
         , materialManifestIdMap    (0)
 #ifdef __CLIENT__
@@ -633,7 +625,6 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         clearModels();
 #endif
-        self.clearAllColorPalettes();
     }
 
     inline de::FS1 &fileSys()
@@ -2266,7 +2257,6 @@ void ResourceSystem::clear()
 #endif
     clearAllRuntimeResources();
     clearAllAnimGroups();
-    clearAllColorPalettes();
 }
 
 void ResourceSystem::clearAllResources()
@@ -2289,6 +2279,16 @@ void ResourceSystem::clearAllSystemResources()
     d->clearSystemFonts();
 #endif
     d->clearSystemTextures();
+}
+
+void ResourceSystem::addColorPalette(res::ColorPalette &newPalette, String const &name)
+{
+    colorPalettes().addColorPalette(newPalette, name);
+
+#ifdef __CLIENT__
+    // Observe changes to the color table so we can schedule texture updates.
+    newPalette.audienceForColorTableChange += d;
+#endif
 }
 
 dint ResourceSystem::spriteCount()
@@ -3591,93 +3591,6 @@ void ResourceSystem::initSprites()
     spriteDefs.clear();
 
     LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
-}
-
-void ResourceSystem::clearAllColorPalettes()
-{
-    d->colorPaletteNames.clear();
-
-    qDeleteAll(d->colorPalettes);
-    d->colorPalettes.clear();
-
-    d->defaultColorPalette = 0;
-}
-
-dint ResourceSystem::colorPaletteCount() const
-{
-    return d->colorPalettes.count();
-}
-
-res::ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
-{
-    // Choose the default palette?
-    if(!id)
-    {
-        id = d->defaultColorPalette;
-    }
-
-    auto found = d->colorPalettes.find(id);
-    if(found != d->colorPalettes.end()) return *found.value();
-    /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::colorPalette", "Invalid id " + String::number(id));
-}
-
-String ResourceSystem::colorPaletteName(res::ColorPalette &palette) const
-{
-    QList<String> const names = d->colorPaletteNames.keys(&palette);
-    if(!names.isEmpty())
-    {
-        return names.first();
-    }
-    return String();
-}
-
-bool ResourceSystem::hasColorPalette(String name) const
-{
-    return d->colorPaletteNames.contains(name);
-}
-
-res::ColorPalette &ResourceSystem::colorPalette(String name) const
-{
-    auto found = d->colorPaletteNames.find(name);
-    if(found != d->colorPaletteNames.end()) return *found.value();
-    /// @throw MissingResourceError An unknown name was specified.
-    throw MissingResourceError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
-}
-
-void ResourceSystem::addColorPalette(res::ColorPalette &newPalette, String const &name)
-{
-    // Do we already own this palette?
-    if(d->colorPalettes.contains(newPalette.id()))
-        return;
-
-    d->colorPalettes.insert(newPalette.id(), &newPalette);
-
-#ifdef __CLIENT__
-    // Observe changes to the color table so we can schedule texture updates.
-    newPalette.audienceForColorTableChange += d;
-#endif
-
-    if(!name.isEmpty())
-    {
-        d->colorPaletteNames.insert(name, &newPalette);
-    }
-
-    // If this is the first palette automatically set it as the default.
-    if(d->colorPalettes.count() == 1)
-    {
-        d->defaultColorPalette = newPalette.id();
-    }
-}
-
-colorpaletteid_t ResourceSystem::defaultColorPalette() const
-{
-    return d->defaultColorPalette;
-}
-
-void ResourceSystem::setDefaultColorPalette(res::ColorPalette *newDefaultPalette)
-{
-    d->defaultColorPalette = newDefaultPalette ? newDefaultPalette->id().asUInt32() : 0;
 }
 
 #ifdef __CLIENT__

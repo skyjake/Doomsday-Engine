@@ -22,6 +22,7 @@
 #include "gl/texturecontent.h"
 
 #include <cstring>
+#include <doomsday/resource/colorpalettes.h>
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/GLInfo>
@@ -182,7 +183,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         if(monochrome && !scaleSharp)
         {
             GL_DeSaturatePalettedImage(image.pixels,
-                                       App_ResourceSystem().colorPalette(image.paletteId),
+                                       App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
                                        image.size.x, image.size.y);
         }
 

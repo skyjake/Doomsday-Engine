@@ -27,6 +27,8 @@
 #  include "render/r_main.h" // texGammaLut
 #endif
 
+#include <doomsday/resource/colorpalettes.h>
+
 using namespace de;
 
 #undef Textures_UniqueId2
@@ -111,9 +113,9 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
             res::ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         // Replacing an existing palette?
-        if(App_ResourceSystem().hasColorPalette(name))
+        if(App_ResourceSystem().colorPalettes().hasColorPalette(name))
         {
-            res::ColorPalette &palette = App_ResourceSystem().colorPalette(name);
+            res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(name);
             palette.replaceColorTable(colors);
             return palette.id();
         }
@@ -142,7 +144,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
 
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
+        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(paletteId);
 
         // Convert the mapping table.
         int const colorCount  = palette.colorCount();
@@ -177,7 +179,7 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
     LOG_AS("R_GetColorPaletteNumForName");
     try
     {
-        return App_ResourceSystem().colorPalette(name).id();
+        return App_ResourceSystem().colorPalettes().colorPalette(name).id();
     }
     catch(ResourceSystem::MissingResourceError const &er)
     {
@@ -193,8 +195,8 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
     LOG_AS("R_GetColorPaletteNameForNum");
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalette(id);
-        return App_ResourceSystem().colorPaletteName(palette).toUtf8().constData();
+        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(id);
+        return App_ResourceSystem().colorPalettes().colorPaletteName(palette).toUtf8().constData();
     }
     catch(ResourceSystem::MissingResourceError const &er)
     {
@@ -221,7 +223,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 
     try
     {
-        Vector3ub palColor = App_ResourceSystem().colorPalette(paletteId)[colorIdx];
+        Vector3ub palColor = App_ResourceSystem().colorPalettes().colorPalette(paletteId)[colorIdx];
         rgb[0] = palColor.x;
         rgb[1] = palColor.y;
         rgb[2] = palColor.z;
@@ -256,7 +258,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
 
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
+        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(paletteId);
         if(applyTexGamma)
         {
             Vector3ub palColor = palette[colorIdx];

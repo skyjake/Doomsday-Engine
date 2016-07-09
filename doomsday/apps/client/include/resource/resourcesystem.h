@@ -90,9 +90,6 @@ public:
     /// An unknown resource scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
-    /// The referenced resource was not found. @ingroup errors
-    DENG2_ERROR(MissingResourceError);
-
     /// An unknown material group was referenced. @ingroup errors
     DENG2_ERROR(UnknownMaterialGroupError);
 
@@ -133,6 +130,8 @@ public:
     void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();
+
+    void addColorPalette(res::ColorPalette &newPalette, de::String const &name);
 
     /**
      * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
@@ -738,58 +737,6 @@ public:
     de::AnimGroup *animGroup(de::dint uniqueId);
 
     de::AnimGroup *animGroupForTexture(de::TextureManifest const &textureManifest);
-
-    /**
-     * Returns the total number of color palettes.
-     */
-    de::dint colorPaletteCount() const;
-
-    /**
-     * Destroys all the color palettes.
-     */
-    void clearAllColorPalettes();
-
-    /**
-     * Returns the ColorPalette associated with unique @a id.
-     */
-    res::ColorPalette &colorPalette(colorpaletteid_t id) const;
-
-    /**
-     * Returns the symbolic name of the specified color @a palette. A zero-length
-     * string is returned if no name is associated.
-     */
-    de::String colorPaletteName(res::ColorPalette &palette) const;
-
-    /**
-     * Returns @c true iff a ColorPalette with the specified @a name is present.
-     */
-    bool hasColorPalette(de::String name) const;
-
-    /**
-     * Returns the ColorPalette associated with @a name.
-     *
-     * @see hasColorPalette()
-     */
-    res::ColorPalette &colorPalette(de::String name) const;
-
-    /**
-     * @param newPalette  Color palette to add. Ownership of the palette is given
-     *                    to the resource system.
-     * @param name        Symbolic name of the color palette.
-     */
-    void addColorPalette(res::ColorPalette &newPalette, de::String const &name = de::String());
-
-    /**
-     * Returns the unique identifier of the current default color palette.
-     */
-    colorpaletteid_t defaultColorPalette() const;
-
-    /**
-     * Change the default color palette.
-     *
-     * @param newDefaultPalette  The color palette to make default.
-     */
-    void setDefaultColorPalette(res::ColorPalette *newDefaultPalette);
 
 #ifdef __CLIENT__
 

@@ -18,6 +18,7 @@
 
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/mapmanifests.h"
+#include "doomsday/resource/colorpalettes.h"
 #include "doomsday/filesys/fs_main.h"
 
 #include <de/App>
@@ -34,6 +35,7 @@ DENG2_PIMPL(Resources)
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
     NativePath nativeSavePath;
+    res::ColorPalettes colorPalettes;
     res::MapManifests mapManifests;
 
     Impl(Public *i)
@@ -76,7 +78,9 @@ void Resources::timeChanged(Clock const &)
 }
 
 void Resources::clear()
-{}
+{
+    d->colorPalettes.clearAllColorPalettes();
+}
 
 Resources &Resources::get()
 {
@@ -121,6 +125,16 @@ res::MapManifests &Resources::mapManifests()
 res::MapManifests const &Resources::mapManifests() const
 {
     return d->mapManifests;
+}
+
+res::ColorPalettes &Resources::colorPalettes()
+{
+    return d->colorPalettes;
+}
+
+const res::ColorPalettes &Resources::colorPalettes() const
+{
+    return d->colorPalettes;
 }
 
 ResourceClass &App_ResourceClass(String className)

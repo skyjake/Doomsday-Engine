@@ -22,6 +22,7 @@
 #include "resource/image.h"
 
 #include <doomsday/resource/patch.h>
+#include <doomsday/resource/colorpalettes.h>
 
 #include <de/memory.h>
 #include <de/Log>
@@ -580,7 +581,7 @@ static String toTranslationId(int tclass, int tmap)
 static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palId,
     int tclass = 0, int tmap = 0)
 {
-    res::ColorPalette &palette = App_ResourceSystem().colorPalette(palId);
+    res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(palId);
     if(res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
         return res::Patch::load(data, *xlat, res::Patch::ClipToLogicalDimensions);
@@ -609,7 +610,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
     {
         try
         {
-            colorpaletteid_t colorPaletteId = App_ResourceSystem().defaultColorPalette();
+            colorpaletteid_t colorPaletteId = App_ResourceSystem().colorPalettes().defaultColorPalette();
 
             Block patchImg = loadAndTranslatePatch(fileData, colorPaletteId, tclass, tmap);
             PatchMetadata info = Patch::loadMetadata(fileData);
@@ -652,7 +653,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     Image_Init(image);
     image.pixelSize = 1;
     image.size      = Vector2ui(tex.width(), tex.height());
-    image.paletteId = App_ResourceSystem().defaultColorPalette();
+    image.paletteId = App_ResourceSystem().colorPalettes().defaultColorPalette();
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
@@ -714,7 +715,7 @@ static Source loadFlat(image_t &image, FileHandle &hndl)
     /// @todo not all flats are 64x64!
     image.size      = Vector2ui(64, 64);
     image.pixelSize = 1;
-    image.paletteId = App_ResourceSystem().defaultColorPalette();
+    image.paletteId = App_ResourceSystem().colorPalettes().defaultColorPalette();
 
     File1 &file   = hndl.file();
     size_t fileLength = hndl.length();
