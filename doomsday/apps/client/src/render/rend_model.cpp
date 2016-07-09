@@ -1,4 +1,4 @@
-/** @file rend_model.cpp  3D Model Rendering.
+/** @file rend_model.cpp  3D Model Rendering (frame models).
  *
  * @note Light vectors and triangle normals are in an entirely independent,
  *       right-handed coordinate system.
@@ -98,7 +98,7 @@ static Vector2f *modelTexCoords;
 
 // Global variables for ease of use. (Egads!)
 static Vector3f modelCenter;
-static ModelDetailLevel *activeLod;
+static FrameModelLOD *activeLod;
 
 static uint vertexBufferMax; ///< Maximum number of vertices we'll be required to render per submodel.
 static uint vertexBufferSize; ///< Current number of vertices supported by the render buffer.
@@ -346,7 +346,7 @@ static void drawArrayElement(int index)
 /**
  * Return a pointer to the visible model frame.
  */
-static ModelFrame &visibleModelFrame(ModelDef &modef, int subnumber, int mobjId)
+static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, int mobjId)
 {
     if(subnumber >= int(modef.subCount()))
     {
@@ -368,7 +368,7 @@ static ModelFrame &visibleModelFrame(ModelDef &modef, int subnumber, int mobjId)
 /**
  * Render a set of 3D model primitives using the given data.
  */
-static void drawPrimitives(rendcmd_t mode, Model::Primitives const &primitives,
+static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primitives,
     Vector3f *posCoords, Vector4ub *colorCoords, Vector2f *texCoords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -397,12 +397,12 @@ static void drawPrimitives(rendcmd_t mode, Model::Primitives const &primitives,
         break;
     }
 
-    foreach(Model::Primitive const &prim, primitives)
+    foreach(FrameModel::Primitive const &prim, primitives)
     {
         // The type of primitive depends on the sign.
         glBegin(prim.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
 
-        foreach(Model::Primitive::Element const &elem, prim.elements)
+        foreach(FrameModel::Primitive::Element const &elem, prim.elements)
         {
             if(mode != RC_OTHER_COORDS)
             {
@@ -420,15 +420,15 @@ static void drawPrimitives(rendcmd_t mode, Model::Primitives const &primitives,
 /**
  * Interpolate linearly between two sets of vertices.
  */
-static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
-    ModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
+static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from,
+    FrameModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
 {
     DENG2_ASSERT(&from.model == &to.model); // sanity check.
     DENG2_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
     DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
 
-    ModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
-    ModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
+    FrameModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
+    FrameModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
 
     if(&from == &to || de::fequal(inter, 0))
     {
@@ -586,7 +586,7 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
     }
 }
 
-static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
+static int chooseSelSkin(FrameModelDef &mf, int submodel, int selector)
 {
     if(mf.def.hasSub(submodel))
     {
@@ -606,7 +606,7 @@ static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
     return 0;
 }
 
-static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap)
+static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int tmap)
 {
     if(submodel >= int(mf.subCount()))
     {
@@ -614,7 +614,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     }
 
     SubmodelDef &smf = mf.subModelDef(submodel);
-    Model &mdl = App_ResourceSystem().model(smf.modelId);
+    FrameModel &mdl = App_ResourceSystem().model(smf.modelId);
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
@@ -665,10 +665,10 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 {
     drawmodelparams_t const &parm = *VS_MODEL(&spr);
     int const zSign = (spr.pose.mirrored? -1 : 1);
-    ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
+    FrameModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
-    Model &mdl = App_ResourceSystem().model(smf.modelId);
+    FrameModel &mdl = App_ResourceSystem().model(smf.modelId);
 
     // Do not bother with infinitely small models...
     if(mf->scale == Vector3f(0, 0, 0))
@@ -707,8 +707,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         inter = (parm.inter - mf->interMark) / (endPos - mf->interMark);
     }
 
-    ModelFrame *frame = &visibleModelFrame(*mf, number, parm.id);
-    ModelFrame *nextFrame = 0;
+    FrameModelFrame *frame = &visibleModelFrame(*mf, number, parm.id);
+    FrameModelFrame *nextFrame = 0;
     // Do we have a sky/particle model here?
     if(parm.alwaysInterpolate)
     {
@@ -932,7 +932,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         skinTexture = 0;
         if(Texture *tex = mdl.skin(useSkin).texture)
         {
-            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl.flags().testFlag(Model::NoTextureCompression)));
+            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl.flags().testFlag(FrameModel::NoTextureCompression)));
         }
     }
 
@@ -950,7 +950,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
     glEnable(GL_TEXTURE_2D);
 
-    Model::Primitives const &primitives =
+    FrameModel::Primitives const &primitives =
         activeLod? activeLod->primitives : mdl.primitives();
 
     // Render using multiple passes?

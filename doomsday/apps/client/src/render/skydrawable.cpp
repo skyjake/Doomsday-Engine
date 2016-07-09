@@ -20,28 +20,24 @@
 
 #include "render/skydrawable.h"
 
-#include <cmath>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/Log>
-#include <doomsday/console/var.h>
-#include <doomsday/console/exec.h>
-
 #include "clientapp.h"
 #include "client/cl_def.h" // clientPaused
-
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-
 #include "MaterialVariantSpec"
-#include "ModelDef"
-
+#include "resource/framemodeldef.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
-
 #include "Texture"
 #include "world/sky.h"
+
+#include <doomsday/console/var.h>
+#include <doomsday/console/exec.h>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <de/Log>
+#include <cmath>
 
 #define MAX_LAYERS  2
 #define MAX_MODELS  32
@@ -370,7 +366,7 @@ DENG2_PIMPL(SkyDrawable)
 
     struct ModelData
     {
-        ModelDef *modef = nullptr;
+        FrameModelDef *modef = nullptr;
     };
     ModelData models[MAX_MODELS];
     bool haveModels       = false;
@@ -478,7 +474,7 @@ DENG2_PIMPL(SkyDrawable)
             ModelData const &mdata = models[i];
 
             // Is this model in use?
-            ModelDef *modef = mdata.modef;
+            FrameModelDef *modef = mdata.modef;
             if(!modef) continue;
 
             // If the associated layer is not active then the model won't be drawn.
@@ -543,7 +539,7 @@ DENG2_PIMPL(SkyDrawable)
 
             try
             {
-                if(ModelDef *modef = &resSys().modelDef(skyModelDef.gets("id")))
+                if(FrameModelDef *modef = &resSys().modelDef(skyModelDef.gets("id")))
                 {
                     if(modef->subCount())
                     {
@@ -659,14 +655,14 @@ void SkyDrawable::cacheAssets()
     for(int i = 0; i < MAX_MODELS; ++i)
     {
         // Is this model in use?
-        if(ModelDef *modef = d->models[i].modef)
+        if(FrameModelDef *modef = d->models[i].modef)
         {
             resSys().cache(modef);
         }
     }
 }
 
-ModelDef *SkyDrawable::modelDef(int modelIndex) const
+FrameModelDef *SkyDrawable::modelDef(int modelIndex) const
 {
     if(modelIndex >= 0 && modelIndex < MAX_MODELS)
     {
@@ -758,7 +754,7 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
         ModelState &mstate = model(i);
 
         // Is this model in use?
-        if(ModelDef const *modef = d->sky->modelDef(i))
+        if(FrameModelDef const *modef = d->sky->modelDef(i))
         {
             Record const &skyModelDef = skyDef.model(i);
 
@@ -834,7 +830,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     for(int i = 0; i < MAX_MODELS; ++i)
     {
         // Is this model in use?
-        ModelDef const *modef = sky().modelDef(i);
+        FrameModelDef const *modef = sky().modelDef(i);
         if(!modef) continue;
 
         Record const &skyModelDef = skyDef.model(i);

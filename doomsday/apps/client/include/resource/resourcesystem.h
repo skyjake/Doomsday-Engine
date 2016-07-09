@@ -42,8 +42,8 @@
 #  include "CompositeBitmapFont"
 #  include "FontScheme"
 #  include "MaterialVariantSpec"
-#  include "Model"
-#  include "ModelDef"
+#  include "resource/framemodel.h"
+#  include "resource/framemodeldef.h"
 #endif
 
 #include "Material"
@@ -570,7 +570,7 @@ public:
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
      */
-    de::dint indexOf(ModelDef const *modelDef);
+    de::dint indexOf(FrameModelDef const *modelDef);
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
@@ -578,7 +578,7 @@ public:
      *
      * @return  The associated model resource.
      */
-    Model &model(modelid_t id);
+    FrameModel &model(modelid_t id);
 
     /**
      * Determines if a model definition exists with the given @a id. O(n)
@@ -596,7 +596,7 @@ public:
      *
      * @see modelDefCount()
      */
-    ModelDef &modelDef(de::dint index);
+    FrameModelDef &modelDef(de::dint index);
 
     /**
      * Lookup a model definition by it's unique @a id. O(n)
@@ -605,7 +605,7 @@ public:
      *
      * @see hasModelDef()
      */
-    ModelDef &modelDef(de::String id);
+    FrameModelDef &modelDef(de::String id);
 
     /**
      * Lookup a model definition for the specified mobj @a stateIndex.
@@ -617,7 +617,7 @@ public:
      *
      * @return  Found model definition; otherwise @c nullptr.
      */
-    ModelDef *modelDefForState(de::dint stateIndex, de::dint select = 0);
+    FrameModelDef *modelDefForState(de::dint stateIndex, de::dint select = 0);
 
     /**
      * Returns the total number of model definitions in the system.
@@ -627,7 +627,7 @@ public:
     de::dint modelDefCount() const;
 
     /// @todo Refactor away. Used for animating particle/sky models.
-    void setModelDefFrame(ModelDef &modelDef, de::dint frame);
+    void setModelDefFrame(FrameModelDef &modelDef, de::dint frame);
 
     /**
      * Release all GL-textures in all schemes.
@@ -812,7 +812,7 @@ public:
     /**
      * Cache all resources needed to visualize models using the given @a modelDef.
      */
-    void cache(ModelDef *modelDef);
+    void cache(FrameModelDef *modelDef);
 
     /**
      * Precache resources from the set associated with the specified @a spriteId.

@@ -1,4 +1,4 @@
-/** @file rend_model.h  Model renderer (v2.1).
+/** @file rend_model.h  Model renderer (v2.1, frame models).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -21,9 +21,10 @@
 #ifndef CLIENT_RENDER_MODEL_H
 #define CLIENT_RENDER_MODEL_H
 
-#include "ModelDef"
-#include "rend_main.h"
+#include "resource/framemodeldef.h"
 #include "render/modelrenderer.h"
+#include "rend_main.h"
+
 #include <de/Vector>
 #include <de/ModelBank>
 #include <de/ModelDrawable>
@@ -42,8 +43,8 @@ struct vissprite_t;
 struct drawmodelparams_t
 {
     // Animation, frame interpolation:
-    ModelDef *mf;
-    ModelDef *nextMF;
+    FrameModelDef *mf;
+    FrameModelDef *nextMF;
     de::dfloat inter;
     dd_bool alwaysInterpolate;
     de::dint id;                ///< For a unique skin offset.

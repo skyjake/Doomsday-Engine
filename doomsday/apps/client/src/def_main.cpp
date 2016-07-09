@@ -1621,13 +1621,13 @@ void Def_PostInit()
             st->model = -1;
             try
             {
-                ModelDef &modef = resSys().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                FrameModelDef &modef = resSys().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
                 if (modef.subModelId(0) == NOMODELID)
                 {
                     continue;
                 }
 
-                Model &mdl = resSys().model(modef.subModelId(0));
+                FrameModel &mdl = resSys().model(modef.subModelId(0));
 
                 st->model = resSys().indexOf(&modef);
                 st->frame = mdl.frameNumber(st->frameName);

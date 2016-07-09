@@ -289,7 +289,7 @@ void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)
     void *existingData = analysisDataPointer(analysisId);
     if(existingData)
     {
-#if _DEBUG
+#ifdef DENG2_DEBUG
         if(newData)
         {
             LOGDEV_RES_VERBOSE("Image analysis (id:%i) already present for \"%s\", will be replaed")

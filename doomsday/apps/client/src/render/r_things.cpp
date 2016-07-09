@@ -189,7 +189,7 @@ void R_ProjectSprite(mobj_t &mob)
     coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
-    ModelDef *mf = nullptr, *nextmf = nullptr;
+    FrameModelDef *mf = nullptr, *nextmf = nullptr;
     dfloat interp = 0;
 
     render::StateAnimator const *animator = nullptr; // GL2 model present?

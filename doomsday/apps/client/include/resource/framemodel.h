@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RESOURCE_MODEL_H
-#define DENG_RESOURCE_MODEL_H
+#ifndef DENG_RESOURCE_FRAMEMODEL_H
+#define DENG_RESOURCE_FRAMEMODEL_H
 
 #include <doomsday/filesys/filehandle.h>
 #include "Texture"
@@ -35,13 +35,12 @@ typedef uint modelid_t;
 #define NOMODELID 0
 
 /**
- * 3D model resource.
+ * 3D model resource used in Doomsday 1.x. FrameModel uses frame-based animation
+ * where each frame of the animation is represented by an entire set of vertex positions.
  *
  * @ingroup resource
- *
- * @todo Implement an API for building models programmatically.
  */
-class Model
+class FrameModel
 {
 public:
     /// Referenced frame is missing. @ingroup errors
@@ -66,7 +65,7 @@ public:
      */
     struct Frame
     {
-        Model &model;
+        FrameModel &model;
         struct Vertex {
             de::Vector3f pos;
             de::Vector3f norm;
@@ -77,7 +76,7 @@ public:
         de::Vector3f max;
         de::String name;
 
-        Frame(Model &model, de::String const &name = de::String())
+        Frame(FrameModel &model, de::String const &name = de::String())
             : model(model), name(name)
         {}
 
@@ -124,11 +123,11 @@ public:
      */
     struct DetailLevel
     {
-        Model &model;
+        FrameModel &model;
         int level;
         Primitives primitives;
 
-        DetailLevel(Model &model, int level)
+        DetailLevel(FrameModel &model, int level)
             : model(model), level(level)
         {}
 
@@ -144,7 +143,7 @@ public:
     /**
      * Construct a new 3D model.
      */
-    Model(Flags flags = 0);
+    FrameModel(Flags flags = 0);
 
     /**
      * Determines whether the specified @a file appears to be in a recognised
@@ -158,9 +157,9 @@ public:
      * @param file         Handle for the model file to load from.
      * @param aspectScale  Optionally apply y-aspect scaling.
      *
-     * @return  The new Model (if any). Ownership is given to the caller.
+     * @return  The new FrameModel (if any). Ownership is given to the caller.
      */
-    static Model *loadFromFile(de::FileHandle &file, float aspectScale = 1);
+    static FrameModel *loadFromFile(de::FileHandle &file, float aspectScale = 1);
 
     /**
      * Returns the unique identifier associated with the model.
@@ -307,10 +306,10 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(FrameModel::Flags)
 
-typedef Model::DetailLevel ModelDetailLevel;
-typedef Model::Frame ModelFrame;
-typedef Model::Skin ModelSkin;
+typedef FrameModel::DetailLevel FrameModelLOD;
+typedef FrameModel::Frame FrameModelFrame;
+typedef FrameModel::Skin FrameModelSkin;
 
-#endif // DENG_RESOURCE_MODEL_H
+#endif // DENG_RESOURCE_FRAMEMODEL_H

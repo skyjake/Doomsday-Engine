@@ -776,7 +776,7 @@ static void setupPlayerSprites()
         if(!spr->psp->statePtr) continue;
 
         // First, determine whether this is a model or a sprite.
-        ModelDef *mf = nullptr, *nextmf = nullptr;
+        FrameModelDef *mf = nullptr, *nextmf = nullptr;
         dfloat inter = 0;
         if(useModels)
         {

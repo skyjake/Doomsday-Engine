@@ -54,7 +54,7 @@ DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
 #ifdef __CLIENT__
-    if(ModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
+    if(FrameModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
     {
         resSys().cache(modelDef);
     }

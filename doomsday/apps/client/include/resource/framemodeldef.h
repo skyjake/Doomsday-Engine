@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MODELDEF_H
-#define DENG_RESOURCE_MODELDEF_H
+#ifndef DENG_RESOURCE_FRAMEMODELDEF_H
+#define DENG_RESOURCE_FRAMEMODELDEF_H
 
 #include <vector>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/model.h>
 
-#include "resource/model.h"
+#include "framemodel.h"
 
 /**
  * @defgroup modelFrameFlags Model frame flags
@@ -110,7 +110,7 @@ struct SubmodelDef
 
 #define MODELDEF_ID_MAXLEN      32
 
-struct ModelDef
+struct FrameModelDef
 {
     char id[MODELDEF_ID_MAXLEN + 1];
 
@@ -138,16 +138,16 @@ struct ModelDef
     defn::Model def;
 
     /// Points to next inter-frame, or NULL.
-    ModelDef *interNext = nullptr;
+    FrameModelDef *interNext = nullptr;
 
     /// Points to next selector, or NULL (only for "base" modeldefs).
-    ModelDef *selectNext = nullptr;
+    FrameModelDef *selectNext = nullptr;
 
     /// Submodels.
     typedef std::vector<SubmodelDef> Subs;
     Subs _sub;
 
-    ModelDef(char const *modelDefId = "")
+    FrameModelDef(char const *modelDefId = "")
     {
         de::zap(id);
         de::zap(interRange);
@@ -218,4 +218,4 @@ struct ModelDef
     }
 };
 
-#endif // DENG_RESOURCE_MODELDEF_H
+#endif // DENG_RESOURCE_FRAMEMODELDEF_H

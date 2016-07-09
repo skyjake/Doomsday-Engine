@@ -274,7 +274,7 @@ dint Generator::newParticle()
 #ifdef __CLIENT__
     // Check for model-only generators.
     dfloat inter = -1;
-    ModelDef *mf = 0, *nextmf = 0;
+    FrameModelDef *mf = 0, *nextmf = 0;
     if(source)
     {
         mf = Mobj_ModelDef(*source, &nextmf, &inter);

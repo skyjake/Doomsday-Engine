@@ -666,7 +666,7 @@ Record *Mobj_SpritePtr(mobj_t const &mob)
     return resSys().spritePtr(mob.sprite, mob.frame);
 }
 
-ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInter)
+FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, float *retInter)
 {
     // By default there are no models.
     if(retNextModef) *retNextModef = 0;
@@ -676,7 +676,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
     if(!mo.state) return 0;
 
     state_t &st = *mo.state;
-    ModelDef *modef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+    FrameModelDef *modef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if(!modef) return 0; // No model available.
 
     float interp = -1;
@@ -761,7 +761,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        ModelDef *mdit = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                        FrameModelDef *mdit = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if(mdit && mdit->interNext)
                         {
                             forever
@@ -891,7 +891,7 @@ coord_t Mobj_ShadowRadius(mobj_t const &mobj)
 {
     if(useModels)
     {
-        if(ModelDef *modef = Mobj_ModelDef(mobj))
+        if(FrameModelDef *modef = Mobj_ModelDef(mobj))
         {
             if(modef->shadowRadius > 0)
             {
@@ -910,7 +910,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mob)
     // Is a model in effect?
     if(useModels)
     {
-        if(ModelDef *modef = Mobj_ModelDef(mob))
+        if(FrameModelDef *modef = Mobj_ModelDef(mob))
         {
             return modef->visualRadius;
         }

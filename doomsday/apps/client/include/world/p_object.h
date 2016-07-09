@@ -36,7 +36,7 @@
 #include "api_map.h"
 #include "dd_def.h"
 #ifdef __CLIENT__
-#  include "ModelDef"
+#  include "resource/framemodeldef.h"
 #endif
 
 namespace world {
@@ -203,7 +203,7 @@ de::Record *Mobj_SpritePtr(mobj_t const &mob);
  *
  * @return  Active model definition for the current frame (if any).
  */
-ModelDef *Mobj_ModelDef(mobj_t const &mob, ModelDef **nextModef = nullptr,
+FrameModelDef *Mobj_ModelDef(mobj_t const &mob, FrameModelDef **nextModef = nullptr,
                         de::dfloat *interp = nullptr);
 
 /**

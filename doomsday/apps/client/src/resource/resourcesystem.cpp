@@ -481,12 +481,12 @@ DENG2_PIMPL(ResourceSystem)
     uint fontManifestIdMapSize;
     FontManifest **fontManifestIdMap;  ///< Index with fontid_t-1
 
-    typedef QVector<ModelDef> ModelDefs;
+    typedef QVector<FrameModelDef> ModelDefs;
     ModelDefs modefs;
     QVector<int> stateModefs;          ///< Index to the modefs array.
 
     typedef StringPool ModelRepository;
-    ModelRepository *modelRepository;  ///< Owns Model instances.
+    ModelRepository *modelRepository;  ///< Owns FrameModel instances.
 
     /// A list of specifications for material variants.
     typedef QList<MaterialVariantSpec *> MaterialSpecs;
@@ -1060,22 +1060,22 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    void queueCacheTasksForModel(ModelDef &modelDef)
+    void queueCacheTasksForModel(FrameModelDef &modelDef)
     {
         if(!useModels) return;
 
         for(duint sub = 0; sub < modelDef.subCount(); ++sub)
         {
             SubmodelDef &subdef = modelDef.subModelDef(sub);
-            Model *mdl = modelForId(subdef.modelId);
+            FrameModel *mdl = modelForId(subdef.modelId);
             if(!mdl) continue;
 
             // Load all skins.
-            for(ModelSkin const &skin : mdl->skins())
+            for(FrameModelSkin const &skin : mdl->skins())
             {
                 if(Texture *tex = skin.texture)
                 {
-                    tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
+                    tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(FrameModel::NoTextureCompression)));
                 }
             }
 
@@ -1491,10 +1491,10 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    Model *modelForId(modelid_t id)
+    FrameModel *modelForId(modelid_t id)
     {
         DENG2_ASSERT(modelRepository);
-        return reinterpret_cast<Model *>(modelRepository->userPointer(id));
+        return reinterpret_cast<FrameModel *>(modelRepository->userPointer(id));
     }
 
     inline String const &findModelPath(modelid_t id)
@@ -1505,7 +1505,7 @@ DENG2_PIMPL(ResourceSystem)
     /**
      * Create a new modeldef or find an existing one. This is for ID'd models.
      */
-    ModelDef *getModelDefWithId(String id)
+    FrameModelDef *getModelDefWithId(String id)
     {
         if(id.isEmpty()) return nullptr;
 
@@ -1516,7 +1516,7 @@ DENG2_PIMPL(ResourceSystem)
         }
 
         // Get a new entry.
-        modefs.append(ModelDef(id.toUtf8().constData()));
+        modefs.append(FrameModelDef(id.toUtf8().constData()));
         return &modefs.last();
     }
 
@@ -1524,7 +1524,7 @@ DENG2_PIMPL(ResourceSystem)
      * Create a new modeldef or find an existing one. There can be only one model
      * definition associated with a state/intermark pair.
      */
-    ModelDef *getModelDef(dint state, dfloat interMark, dint select)
+    FrameModelDef *getModelDef(dint state, dfloat interMark, dint select)
     {
         // Is this a valid state?
         if(state < 0 || state >= runtimeDefs.states.size())
@@ -1533,7 +1533,7 @@ DENG2_PIMPL(ResourceSystem)
         }
 
         // First try to find an existing modef.
-        for(ModelDef const &modef : modefs)
+        for(FrameModelDef const &modef : modefs)
         {
             if(modef.state == &runtimeDefs.states[state] &&
                fequal(modef.interMark, interMark) && modef.select == select)
@@ -1543,8 +1543,8 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
 
-        modefs.append(ModelDef());
-        ModelDef *md = &modefs.last();
+        modefs.append(FrameModelDef());
+        FrameModelDef *md = &modefs.last();
 
         // Set initial data.
         md->state     = &runtimeDefs.states[state];
@@ -1579,7 +1579,7 @@ DENG2_PIMPL(ResourceSystem)
     /**
      * Allocate room for a new skin file name.
      */
-    short defineSkinAndAddToModelIndex(Model &mdl, Path const &skinPath)
+    short defineSkinAndAddToModelIndex(FrameModel &mdl, Path const &skinPath)
     {
         if(Texture *tex = self.defineTexture("ModelSkins", de::Uri(skinPath)))
         {
@@ -1598,14 +1598,14 @@ DENG2_PIMPL(ResourceSystem)
         return -1;
     }
 
-    void defineAllSkins(Model &mdl)
+    void defineAllSkins(FrameModel &mdl)
     {
         String const &modelFilePath = findModelPath(mdl.modelId());
 
         dint numFoundSkins = 0;
         for(dint i = 0; i < mdl.skinCount(); ++i)
         {
-            ModelSkin &skin = mdl.skin(i);
+            FrameModelSkin &skin = mdl.skin(i);
             try
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
@@ -1654,7 +1654,7 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef DENG2_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
         dint skinIdx = 0;
-        for(ModelSkin const &skin : mdl.skins())
+        for(FrameModelSkin const &skin : mdl.skins())
         {
             TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
             LOGDEV_RES_XVERBOSE("  %i: %s %s")
@@ -1669,7 +1669,7 @@ DENG2_PIMPL(ResourceSystem)
      * Scales the given model so that it'll be 'destHeight' units tall. Measurements
      * are based on submodel zero. Scale is applied uniformly.
      */
-    void scaleModel(ModelDef &mf, dfloat destHeight, dfloat offset)
+    void scaleModel(FrameModelDef &mf, dfloat destHeight, dfloat offset)
     {
         if(!mf.subCount()) return;
 
@@ -1689,7 +1689,7 @@ DENG2_PIMPL(ResourceSystem)
         mf.offset.y = -bottom * scale + offset;
     }
 
-    void scaleModelToSprite(ModelDef &mf, Record *spriteRec)
+    void scaleModelToSprite(FrameModelDef &mf, Record *spriteRec)
     {
         if(!spriteRec) return;
 
@@ -1708,7 +1708,7 @@ DENG2_PIMPL(ResourceSystem)
         scaleModel(mf, matAnimator.dimensions().y, off);
     }
 
-    dfloat calcModelVisualRadius(ModelDef *def)
+    dfloat calcModelVisualRadius(FrameModelDef *def)
     {
         if(!def || !def->subModelId(0)) return 0;
 
@@ -1750,7 +1750,7 @@ DENG2_PIMPL(ResourceSystem)
         dint const statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
-        ModelDef *modef = getModelDefWithId(def.gets("id"));
+        FrameModelDef *modef = getModelDefWithId(def.gets("id"));
         if(!modef)
         {
             // No, normal State-model.
@@ -1798,13 +1798,13 @@ DENG2_PIMPL(ResourceSystem)
 
                 // Have we already loaded this?
                 modelid_t modelId = modelRepository->intern(foundPath);
-                Model *mdl = modelForId(modelId);
+                FrameModel *mdl = modelForId(modelId);
                 if(!mdl)
                 {
                     // Attempt to load it in now.
                     QScopedPointer<FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
-                    mdl = Model::loadFromFile(*hndl, modelAspectMod);
+                    mdl = FrameModel::loadFromFile(*hndl, modelAspectMod);
 
                     // We're done with the file.
                     fileSys().releaseFile(hndl->file());
@@ -1928,7 +1928,7 @@ DENG2_PIMPL(ResourceSystem)
                 if(sub->testFlag(MFF_NO_TEXCOMP))
                 {
                     // All skins of this model will no longer use compression.
-                    mdl->setFlags(Model::NoTextureCompression);
+                    mdl->setFlags(FrameModel::NoTextureCompression);
                 }
             }
             catch(FS1::NotFoundError const &)
@@ -1973,7 +1973,7 @@ DENG2_PIMPL(ResourceSystem)
             else
             {
                 // Must check intermark; smallest wins!
-                ModelDef *other = self.modelDefForState(stateNum);
+                FrameModelDef *other = self.modelDefForState(stateNum);
 
                 if((modef->interMark <= other->interMark && // Should never be ==
                     modef->select == other->select) || modef->select < other->select) // Smallest selector?
@@ -2007,7 +2007,7 @@ DENG2_PIMPL(ResourceSystem)
 
         modelRepository->forAll([this] (StringPool::Id id)
         {
-            if(auto *model = reinterpret_cast<Model *>(modelRepository->userPointer(id)))
+            if(auto *model = reinterpret_cast<FrameModel *>(modelRepository->userPointer(id)))
             {
                 modelRepository->setUserPointer(id, nullptr);
                 delete model;
@@ -3153,9 +3153,9 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
     }
 }
 
-Model &ResourceSystem::model(modelid_t id)
+FrameModel &ResourceSystem::model(modelid_t id)
 {
-    if(Model *model = d->modelForId(id)) return *model;
+    if(FrameModel *model = d->modelForId(id)) return *model;
     /// @throw MissingResourceError An unknown/invalid id was specified.
     throw MissingResourceError("ResourceSystem::model", "Invalid id " + String::number(id));
 }
@@ -3164,7 +3164,7 @@ bool ResourceSystem::hasModelDef(String id) const
 {
     if(!id.isEmpty())
     {
-        for(ModelDef const &modef : d->modefs)
+        for(FrameModelDef const &modef : d->modefs)
         {
             if(!id.compareWithoutCase(modef.id))
             {
@@ -3175,22 +3175,22 @@ bool ResourceSystem::hasModelDef(String id) const
     return false;
 }
 
-ModelDef &ResourceSystem::modelDef(dint index)
+FrameModelDef &ResourceSystem::modelDef(dint index)
 {
     if(index >= 0 && index < modelDefCount()) return d->modefs[index];
     /// @throw MissingModelDefError An unknown model definition was referenced.
     throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
-ModelDef &ResourceSystem::modelDef(String id)
+FrameModelDef &ResourceSystem::modelDef(String id)
 {
     if(!id.isEmpty())
     {
-        for(ModelDef const &modef : d->modefs)
+        for(FrameModelDef const &modef : d->modefs)
         {
             if(!id.compareWithoutCase(modef.id))
             {
-                return const_cast<ModelDef &>(modef);
+                return const_cast<FrameModelDef &>(modef);
             }
         }
     }
@@ -3198,7 +3198,7 @@ ModelDef &ResourceSystem::modelDef(String id)
     throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id '" + id + "'");
 }
 
-ModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
+FrameModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
 {
     if(stateIndex < 0 || stateIndex >= defs.states.size())
         return nullptr;
@@ -3210,12 +3210,12 @@ ModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
     DENG2_ASSERT(d->stateModefs[stateIndex] >= 0);
     DENG2_ASSERT(d->stateModefs[stateIndex] < d->modefs.count());
 
-    ModelDef *def = &d->modefs[d->stateModefs[stateIndex]];
+    FrameModelDef *def = &d->modefs[d->stateModefs[stateIndex]];
     if(select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
         dint const mosel = (select & DDMOBJ_SELECTOR_MASK);
-        for(ModelDef *it = def; it; it = it->selectNext)
+        for(FrameModelDef *it = def; it; it = it->selectNext)
         {
             if(it->select == mosel)
             {
@@ -3280,14 +3280,14 @@ void ResourceSystem::initModels()
     // For each modeldef we will find the "next" def.
     for(dint i = d->modefs.count() - 1; i >= 0; --i)
     {
-        ModelDef *me = &d->modefs[i];
+        FrameModelDef *me = &d->modefs[i];
 
         dfloat minmark = 2; // max = 1, so this is "out of bounds".
 
-        ModelDef *closest = 0;
+        FrameModelDef *closest = 0;
         for(dint k = d->modefs.count() - 1; k >= 0; --k)
         {
-            ModelDef *other = &d->modefs[k];
+            FrameModelDef *other = &d->modefs[k];
 
             /// @todo Need an index by state. -jk
             if(other->state != me->state) continue;
@@ -3308,16 +3308,16 @@ void ResourceSystem::initModels()
     // Create selectlinks.
     for(dint i = d->modefs.count() - 1; i >= 0; --i)
     {
-        ModelDef *me = &d->modefs[i];
+        FrameModelDef *me = &d->modefs[i];
 
         dint minsel = DDMAXINT;
 
-        ModelDef *closest = 0;
+        FrameModelDef *closest = 0;
 
         // Start scanning from the next definition.
         for(dint k = d->modefs.count() - 1; k >= 0; --k)
         {
-            ModelDef *other = &d->modefs[k];
+            FrameModelDef *other = &d->modefs[k];
 
             // Same state and a bigger order are the requirements.
             if(other->state == me->state &&
@@ -3336,13 +3336,13 @@ void ResourceSystem::initModels()
     LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
-dint ResourceSystem::indexOf(ModelDef const *modelDef)
+dint ResourceSystem::indexOf(FrameModelDef const *modelDef)
 {
     dint index = dint(modelDef - &d->modefs[0]);
     return (index >= 0 && index < d->modefs.count() ? index : -1);
 }
 
-void ResourceSystem::setModelDefFrame(ModelDef &modef, dint frame)
+void ResourceSystem::setModelDefFrame(FrameModelDef &modef, dint frame)
 {
     for(duint i = 0; i < modef.subCount(); ++i)
     {
@@ -3703,7 +3703,7 @@ void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec
     d->queueCacheTasksForSprite(spriteId, spec);
 }
 
-void ResourceSystem::cache(ModelDef *modelDef)
+void ResourceSystem::cache(FrameModelDef *modelDef)
 {
     if(!modelDef) return;
     d->queueCacheTasksForModel(*modelDef);
@@ -3816,7 +3816,7 @@ void ResourceSystem::cacheForCurrentMap()
             // Check through all the model definitions.
             for(dint i = 0; i < modelDefCount(); ++i)
             {
-                ModelDef &modef = modelDef(i);
+                FrameModelDef &modef = modelDef(i);
 
                 if(!modef.state) continue;
                 if(mob.type < 0 || mob.type >= runtimeDefs.mobjInfo.size()) continue; // Hmm?

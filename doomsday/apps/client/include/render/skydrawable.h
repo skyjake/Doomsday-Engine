@@ -27,7 +27,7 @@
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
 #include "MaterialVariantSpec"
-#include "ModelDef"
+#include "resource/framemodeldef.h"
 #include "world/sky.h"
 
 /**
@@ -145,7 +145,7 @@ public:
      *
      * @param modelIndex  Unique index of the model.
      */
-    ModelDef *modelDef(de::dint modelIndex) const;
+    FrameModelDef *modelDef(de::dint modelIndex) const;
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);

@@ -93,7 +93,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
 }
 
 void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    ModelDef *mf, ModelDef *nextMF, dfloat inter,
+    FrameModelDef *mf, FrameModelDef *nextMF, dfloat inter,
     dint id, dint selector, world::BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
 {

@@ -144,7 +144,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
     bool floorAdjust, bool fitTop, bool fitBottom);
 
 void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    ModelDef *mf, ModelDef *nextMF, de::dfloat inter,
+    FrameModelDef *mf, FrameModelDef *nextMF, de::dfloat inter,
     de::dint id, de::dint selector, world::BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
     bool fullBright, bool alwaysInterpolate);
 
@@ -185,8 +185,8 @@ struct vispsprite_t
             de::ddouble visOff[3];        ///< Last-minute offset to coords.
             dd_bool floorAdjust;          ///< Allow moving sprite to match visible floor.
 
-            ModelDef *mf;
-            ModelDef *nextMF;
+            FrameModelDef *mf;
+            FrameModelDef *nextMF;
             de::dfloat yaw;
             de::dfloat pitch;
             de::dfloat pitchAngleOffset;

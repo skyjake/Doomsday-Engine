@@ -137,7 +137,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/api_material.cpp
     ${src}/src/resource/api_resource.cpp
     ${src}/src/resource/compositetexture.cpp
-    ${src}/src/resource/hq2x.cpp
     ${src}/src/resource/image.cpp
     ${src}/src/resource/material.cpp
     ${src}/src/resource/materialarchive.cpp

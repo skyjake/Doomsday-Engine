@@ -31,7 +31,7 @@
 #include <doomsday/defs/sky.h>
 #include "MapElement"
 #include "Material"
-#include "ModelDef"
+#include "resource/framemodeldef.h"
 
 #define DEFAULT_SKY_SPHERE_MATERIAL ( "Textures:SKY1" )
 

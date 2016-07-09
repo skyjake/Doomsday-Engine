@@ -20,7 +20,7 @@
  */
 
 #include "de_platform.h"
-#include "resource/model.h"
+#include "resource/framemodel.h"
 
 #include "Texture"
 #include "TextureManifest"
@@ -31,18 +31,18 @@
 
 using namespace de;
 
-bool Model::DetailLevel::hasVertex(int number) const
+bool FrameModel::DetailLevel::hasVertex(int number) const
 {
     return model.lodVertexUsage().testBit(number * model.lodCount() + level);
 }
 
-void Model::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
+void FrameModel::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
 {
     retMin = min;
     retMax = max;
 }
 
-float Model::Frame::horizontalRange(float *top, float *bottom) const
+float FrameModel::Frame::horizontalRange(float *top, float *bottom) const
 {
     *top    = max.y;
     *bottom = min.y;
@@ -140,7 +140,7 @@ static float avertexnormals[NUMVERTEXNORMALS][3] = {
 /**
  * @todo reimplement file loading using de::Reader.
  */
-DENG2_PIMPL(Model)
+DENG2_PIMPL(FrameModel)
 {
     Flags flags;
     Skins skins;
@@ -187,14 +187,14 @@ DENG2_PIMPL(Model)
     /**
      * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
      */
-    static Model *loadMd2(FileHandle &file, float aspectScale)
+    static FrameModel *loadMd2(FileHandle &file, float aspectScale)
     {
         // Determine whether this appears to be a MD2 model.
         md2_header_t hdr;
         if(!readMd2Header(file, hdr)) return 0;
         if(hdr.magic != MD2_MAGIC) return 0;
 
-        Model *mdl = new Model;
+        FrameModel *mdl = new FrameModel;
 
         mdl->d->numVertices = hdr.numVertices;
 
@@ -207,15 +207,15 @@ DENG2_PIMPL(Model)
             Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
-            ModelFrame *frame = new ModelFrame(*mdl, frameName);
+            FrameModelFrame *frame = new FrameModelFrame(*mdl, frameName);
             frame->vertices.reserve(hdr.numVertices);
 
             // Scale and translate each vertex.
             md2_triangleVertex_t const *pVtx = pfr->vertices;
             for(int k = 0; k < hdr.numVertices; ++k, pVtx++)
             {
-                frame->vertices.append(ModelFrame::Vertex());
-                ModelFrame::Vertex &vtx = frame->vertices.last();
+                frame->vertices.append(FrameModelFrame::Vertex());
+                FrameModelFrame::Vertex &vtx = frame->vertices.last();
 
                 vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
@@ -238,16 +238,16 @@ DENG2_PIMPL(Model)
         }
         M_Free(frameData);
 
-        mdl->d->lods.append(new ModelDetailLevel(*mdl, 0));
-        ModelDetailLevel &lod0 = *mdl->d->lods.last();
+        mdl->d->lods.append(new FrameModelLOD(*mdl, 0));
+        FrameModelLOD &lod0 = *mdl->d->lods.last();
 
         uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
         for(uint8_t const *pos = commandData; *pos;)
         {
             int count = DD_LONG( *(int *) pos ); pos += 4;
 
-            lod0.primitives.append(Model::Primitive());
-            Model::Primitive &prim = lod0.primitives.last();
+            lod0.primitives.append(FrameModel::Primitive());
+            FrameModel::Primitive &prim = lod0.primitives.last();
 
             // The type of primitive depends on the sign.
             prim.triFan = (count < 0);
@@ -261,8 +261,8 @@ DENG2_PIMPL(Model)
             {
                 md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
 
-                prim.elements.append(Model::Primitive::Element());
-                Model::Primitive::Element &elem = prim.elements.last();
+                prim.elements.append(FrameModel::Primitive::Element());
+                FrameModel::Primitive::Element &elem = prim.elements.last();
                 elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                 elem.index    = DD_LONG(v->index);
             }
@@ -353,7 +353,7 @@ DENG2_PIMPL(Model)
     /**
      * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
      */
-    static Model *loadDmd(FileHandle &file, float aspectScale)
+    static FrameModel *loadDmd(FileHandle &file, float aspectScale)
     {
         // Determine whether this appears to be a DMD model.
         dmd_header_t hdr;
@@ -396,7 +396,7 @@ DENG2_PIMPL(Model)
             file.read((uint8_t *)&chunk, sizeof(chunk));
         }
 
-        Model *mdl = new Model;
+        FrameModel *mdl = new FrameModel;
 
         mdl->d->numVertices = info.numVertices;
 
@@ -598,7 +598,7 @@ DENG2_PIMPL(Model)
 #endif
 };
 
-Model::Model(Flags flags) : d(new Impl(this))
+FrameModel::FrameModel(Flags flags) : d(new Impl(this))
 {
     setFlags(flags, de::ReplaceFlags);
 }
@@ -627,9 +627,9 @@ static bool recogniseMd2(FileHandle &file)
     return result;
 }
 
-bool Model::recognise(FileHandle &hndl) //static
+bool FrameModel::recognise(FileHandle &hndl) //static
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
 
     if(recogniseDmd(hndl)) return true;
     if(recogniseMd2(hndl)) return true;
@@ -641,12 +641,12 @@ struct ModelFileType
     String name; ///< Symbolic name of the resource type.
     String ext;  ///< Known file extension.
 
-    Model *(*loadFunc)(FileHandle &hndl, float aspectScale);
+    FrameModel *(*loadFunc)(FileHandle &hndl, float aspectScale);
 };
 
-Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
+FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //static
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
 
     // Recognized file types.
     static ModelFileType modelTypes[] = {
@@ -667,7 +667,7 @@ Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
             if(!rtype.ext.compareWithoutCase(ext))
             {
                 rtypeGuess = &rtype;
-                if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
+                if(FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
                 {
                     LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
                     return mdl;
@@ -685,7 +685,7 @@ Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
         // Already tried this?
         if(&rtype == rtypeGuess) continue;
 
-        if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
+        if(FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
         {
             LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
             return mdl;
@@ -695,28 +695,28 @@ Model *Model::loadFromFile(FileHandle &hndl, float aspectScale) //static
     return 0;
 }
 
-uint Model::modelId() const
+uint FrameModel::modelId() const
 {
     return d->modelId;
 }
 
-void Model::setModelId(uint newModelId)
+void FrameModel::setModelId(uint newModelId)
 {
     d->modelId = newModelId;
 }
 
-Model::Flags Model::flags() const
+FrameModel::Flags FrameModel::flags() const
 {
     return d->flags;
 }
 
-void Model::setFlags(Model::Flags flagsToChange, FlagOp operation)
+void FrameModel::setFlags(FrameModel::Flags flagsToChange, FlagOp operation)
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-int Model::frameNumber(String name) const
+int FrameModel::frameNumber(String name) const
 {
     if(!name.isEmpty())
     {
@@ -730,29 +730,29 @@ int Model::frameNumber(String name) const
     return -1; // Not found.
 }
 
-Model::Frame &Model::frame(int number) const
+FrameModel::Frame &FrameModel::frame(int number) const
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     if(hasFrame(number))
     {
         return *d->frames.at(number);
     }
-    throw MissingFrameError("Model::frame", "Invalid frame number " + String::number(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
+    throw MissingFrameError("FrameModel::frame", "Invalid frame number " + String::number(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
 }
 
-Model::Frames const &Model::frames() const
+FrameModel::Frames const &FrameModel::frames() const
 {
     return d->frames;
 }
 
-void Model::clearAllFrames()
+void FrameModel::clearAllFrames()
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     qDeleteAll(d->frames);
     d->frames.clear();
 }
 
-int Model::skinNumber(String name) const
+int FrameModel::skinNumber(String name) const
 {
     if(!name.isEmpty())
     {
@@ -767,62 +767,62 @@ int Model::skinNumber(String name) const
     return -1; // Not found.
 }
 
-Model::Skin &Model::skin(int number) const
+FrameModel::Skin &FrameModel::skin(int number) const
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     if(hasSkin(number))
     {
         return const_cast<Skin &>(d->skins.at(number));
     }
-    throw MissingSkinError("Model::skin", "Invalid skin number " + String::number(number) + ", valid range is " + Rangei(0, d->skins.count()).asText());
+    throw MissingSkinError("FrameModel::skin", "Invalid skin number " + String::number(number) + ", valid range is " + Rangei(0, d->skins.count()).asText());
 }
 
-Model::Skin &Model::newSkin(String name)
+FrameModel::Skin &FrameModel::newSkin(String name)
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     // Allow duplicates so that skin indices remain unchanged for selection by index.
-    d->skins.append(ModelSkin(name));
+    d->skins.append(FrameModelSkin(name));
     return d->skins.last();
 }
 
-Model::Skins const &Model::skins() const
+FrameModel::Skins const &FrameModel::skins() const
 {
     return d->skins;
 }
 
-void Model::clearAllSkins()
+void FrameModel::clearAllSkins()
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     d->skins.clear();
 }
 
-Model::DetailLevel &Model::lod(int level) const
+FrameModel::DetailLevel &FrameModel::lod(int level) const
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     if(hasLod(level))
     {
         return *d->lods.at(level);
     }
-    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
+    throw MissingDetailLevelError("FrameModel::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
 }
 
-Model::DetailLevels const &Model::lods() const
+FrameModel::DetailLevels const &FrameModel::lods() const
 {
     return d->lods;
 }
 
-Model::Primitives const &Model::primitives() const
+FrameModel::Primitives const &FrameModel::primitives() const
 {
-    LOG_AS("Model");
+    LOG_AS("FrameModel");
     return lod(0).primitives;
 }
 
-int Model::vertexCount() const
+int FrameModel::vertexCount() const
 {
     return d->numVertices;
 }
 
-QBitArray const &Model::lodVertexUsage() const
+QBitArray const &FrameModel::lodVertexUsage() const
 {
     return d->lodVertexUsage;
 }
