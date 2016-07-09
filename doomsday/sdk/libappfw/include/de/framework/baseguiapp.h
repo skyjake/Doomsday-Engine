@@ -66,11 +66,11 @@ public:
     void endNativeUIMode();
 
 public:
-    static BaseGuiApp &app();
-    static PersistentState &persistentUIState();
-    static GLShaderBank &shaders();
-    static WaveformBank &waveforms();
-    static VRConfig &vr();
+    static BaseGuiApp &         app();
+    static PersistentState &    persistentUIState();
+    static GLShaderBank &       shaders();
+    static WaveformBank &       waveforms();
+    static VRConfig &           vr();
 
 private:
     DENG2_PRIVATE(d)

@@ -69,21 +69,21 @@ public:
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
 public:
-    static ClientApp &app();
-    static BusyRunner &busyRunner();
-    static Updater &updater();
-    static ConfigProfiles &logSettings();
-    static ConfigProfiles &networkSettings();
-    static ConfigProfiles &audioSettings();    ///< @todo Belongs in AudioSystem.
-    static ConfigProfiles &uiSettings();
-    static ServerLink &serverLink();
-    static InFineSystem &infineSystem();
-    static InputSystem &inputSystem();
-    static ClientWindowSystem &windowSystem();
-    static ::audio::System &audioSystem();
-    static RenderSystem &renderSystem();
-    static ResourceSystem &resourceSystem();
-    static ClientServerWorld &world();
+    static ClientApp &          app();
+    static BusyRunner &         busyRunner();
+    static Updater &            updater();
+    static ConfigProfiles &     logSettings();
+    static ConfigProfiles &     networkSettings();
+    static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles &     uiSettings();
+    static ServerLink &         serverLink();
+    static InFineSystem &       infineSystem();
+    static InputSystem &        inputSystem();
+    static ClientWindowSystem & windowSystem();
+    static ::audio::System &    audioSystem();
+    static RenderSystem &       renderSystem();
+    static ResourceSystem &     resourceSystem();
+    static ClientServerWorld &  world();
 
     static bool hasInputSystem();
     static bool hasRenderSystem();
