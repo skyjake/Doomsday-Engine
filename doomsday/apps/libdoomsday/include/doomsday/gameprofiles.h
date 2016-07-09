@@ -32,7 +32,8 @@ class LIBDOOMSDAY_PUBLIC GameProfiles : public de::Profiles
 {
 public:
     /**
-     * Game profile.
+     * Game profile. Identifies a specific Game and a set of packages to be loaded.
+     * Profiles are serialized as plain text in "/home/configs/game.dei".
      */
     class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile
     {
@@ -61,10 +62,11 @@ public:
         bool isPlayable() const;
 
         void loadPackages() const;
+
         void unloadPackages() const;
 
-        virtual bool resetToDefaults();
-        virtual de::String toInfoSource() const;
+        virtual bool resetToDefaults() override;
+        virtual de::String toInfoSource() const override;
 
     private:
         DENG2_PRIVATE(d)

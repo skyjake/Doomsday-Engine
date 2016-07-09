@@ -45,9 +45,9 @@
 #include <de/App>
 #include <de/Log>
 
+#include "doomsday/DoomsdayApp"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
-#include "doomsday/paths.h"
 
 static void setPathFromPathDir(directory_t* dir, const char* path);
 
@@ -168,7 +168,7 @@ static void prependBasePath(char* newPath, const char* path, size_t maxLen)
     if (!Dir_IsAbsolutePath(path))
     {
         filename_t buf;
-        dd_snprintf(buf, maxLen, "%s%s", DD_BasePath(), path);
+        dd_snprintf(buf, maxLen, "%s%s", DoomsdayApp::app().doomsdayBasePath().c_str(), path);
         memcpy(newPath, buf, maxLen);
         return;
     }

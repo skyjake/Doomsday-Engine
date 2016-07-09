@@ -403,7 +403,7 @@ bool SavedSession::isIncludedInSavegames(String const &packageId) // static
 {
     /**
      * @todo The rules here could be more sophisticated when it comes to checking what
-     * exactly does a data bundle contain. Also, packages should be checked for any
+     * exactly do the data bundles contain. Also, packages should be checked for any
      * gameplay-affecting assets. (2016-07-06: Currently there are none.)
      */
     if (auto const *bundle = DataBundle::bundleForPackage(packageId))

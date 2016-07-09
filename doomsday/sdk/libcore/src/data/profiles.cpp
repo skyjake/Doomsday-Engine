@@ -166,6 +166,9 @@ Profiles::Profiles()
     : d(new Impl(this))
 {}
 
+Profiles::~Profiles()
+{}
+
 StringList Profiles::profiles() const
 {
     StringList names;

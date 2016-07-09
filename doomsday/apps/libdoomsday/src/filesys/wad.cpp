@@ -22,8 +22,8 @@
 
 #include "doomsday/filesys/wad.h"
 
+#include "doomsday/DoomsdayApp"
 #include "doomsday/filesys/lumpcache.h"
-#include "doomsday/paths.h"
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/Log>
@@ -203,7 +203,7 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
         lump << *handle_;
 
         // Determine the name for this lump in the VFS.
-        String absPath = String(DD_BasePath()) / lump.nameNormalized();
+        String absPath = String::fromStdString(DoomsdayApp::app().doomsdayBasePath()) / lump.nameNormalized();
 
         // Make an index entry for this lump.
         Entry &entry = d->entries.insert(absPath);

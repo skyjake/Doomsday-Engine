@@ -27,13 +27,11 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
-#include <doomsday/paths.h>
 #include <doomsday/library.h>
 #include <de/c_wrapper.h>
 #include <de/App>
 
 #include "de_base.h"
-
 #include "dd_uinit.h"
 
 #ifdef __CLIENT__

@@ -70,30 +70,24 @@ public:
     ResourceClass &resClass(resourceclassid_t id);
 
     /**
-     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
-     * path for the Packages scheme.
-     */
-    void updateOverrideIWADPathFromConfig();
-
-    /**
      * Returns the native path of the root of the saved session repository.
      */
     de::NativePath nativeSavePath() const;
 
-public:  // Resource manifests: ------------------------------------------------------
-
-    /**
-     * Note that the existence of a manifest does not automatically mean the associated
-     * resource data is actually loadable.
-     */
+//- Resource Manifests ------------------------------------------------------------------
 
     /**
      * Locate the map resource manifest associated with the given, unique @a mapUri.
+     *
+     * Note that the existence of a resource manifest does not automatically mean the
+     * associated resource data is actually loadable.
      */
     res::MapManifest &findMapManifest(de::Uri const &mapUri) const;
 
     /**
      * Lookup the map resource manifest associated with the given, unique @a mapUri.
+     * Note that the existence of a resource manifest does not automatically mean the
+     * associated resource data is actually loadable.
      *
      * @return  MapManifest associated with @a mapUri if found; otherwise @c nullptr.
      */

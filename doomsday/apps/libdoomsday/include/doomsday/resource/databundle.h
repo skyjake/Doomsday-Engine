@@ -27,9 +27,9 @@
 /**
  * Abstract base class for classic data files: PK3, WAD, LMP, DED, DEH.
  *
- * Specialized libcore Files representing loadable data files should be derived
- * from DataBundle. The class provides general functionality suitable for
- * dealing with all types of data files.
+ * DataBundle should be used as the base class for specialized libcore Files representing
+ * loadable data files. The class provides general functionality suitable for dealing
+ * with all types of data files.
  *
  * Generates Doomsday 2 compatible metadata for data files, allowing them to
  * be treated as packages at runtime.

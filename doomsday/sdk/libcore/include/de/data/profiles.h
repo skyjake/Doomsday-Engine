@@ -106,6 +106,8 @@ public:
 public:
     Profiles();
 
+    virtual ~Profiles();
+
     /**
      * Sets the name this register will use for storing profiles persistently.
      * By default the register has no persistent name and thus will not be

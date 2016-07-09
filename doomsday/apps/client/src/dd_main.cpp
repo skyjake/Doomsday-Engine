@@ -67,7 +67,6 @@
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
-#include <doomsday/paths.h>
 #include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
 

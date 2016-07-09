@@ -391,6 +391,10 @@ inline String operator / (char const *utf8CStr, String const &str) {
     return String(utf8CStr) / str;
 }
 
+inline String operator / (QString const &qs, String const &str) {
+    return String(qs) / str;
+}
+
 } // namespace de
 
 #endif // LIBDENG2_STRING_H

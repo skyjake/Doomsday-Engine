@@ -40,11 +40,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "doomsday/DoomsdayApp"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/lumpindex.h"
-#include "doomsday/paths.h"
 
 #include <de/Log>
 #include <de/NativeFile>
@@ -276,7 +276,7 @@ static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
     DENG_ASSERT(dst != 0 && absPath != 0);
 
     ddstring_t basePath;
-    Str_InitStatic(&basePath, DD_BasePath());
+    Str_InitStatic(&basePath, DoomsdayApp::app().doomsdayBasePath().c_str());
 
     if (F_IsRelativeToBase(Str_Text(absPath), Str_Text(&basePath)))
     {
@@ -329,14 +329,14 @@ dd_bool F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
         if (mustCopy)
         {
             ddstring_t buf;
-            Str_Init(&buf); Str_Set(&buf, DD_BasePath());
+            Str_Init(&buf); Str_Set(&buf, DoomsdayApp::app().doomsdayBasePath().c_str());
             Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
             Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
 
-        Str_Set(dst, DD_BasePath());
+        Str_Set(dst, DoomsdayApp::app().doomsdayBasePath().c_str());
         Str_PartAppend(dst, Str_Text(src), 1, Str_Length(src)-1);
         return true;
     }
@@ -440,7 +440,7 @@ const char* F_PrettyPath(const char* path)
     }
 
     // If within our the base directory cut out the base path.
-    if (F_IsRelativeToBase(path, DD_BasePath()))
+    if (F_IsRelativeToBase(path, DoomsdayApp::app().doomsdayBasePath().c_str()))
     {
         if (!buf)
         {

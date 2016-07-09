@@ -279,6 +279,8 @@ public:
 
     Path operator / (char const *otherNullTerminatedUtf8) const;
 
+    Path operator / (String const &other) const;
+
     /**
      * Convert this path to a text string.
      */

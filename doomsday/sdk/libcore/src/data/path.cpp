@@ -393,6 +393,11 @@ Path Path::operator / (char const *otherNullTerminatedUtf8) const
     return *this / Path(otherNullTerminatedUtf8, '/');
 }
 
+Path Path::operator / (String const &other) const
+{
+    return *this / Path(other);
+}
+
 String Path::toString() const
 {
     return d->path;

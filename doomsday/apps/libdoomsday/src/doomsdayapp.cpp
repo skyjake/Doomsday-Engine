@@ -29,7 +29,6 @@
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/virtualmappings.h"
-#include "doomsday/paths.h"
 #include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
@@ -323,7 +322,7 @@ DENG2_PIMPL(DoomsdayApp)
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
         // libcore has determined the native base path, so let FS1 know about it.
-        DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
+        self.setDoomsdayBasePath(DENG2_APP->nativeBasePath());
     }
 #endif // UNIX
 
@@ -333,14 +332,14 @@ DENG2_PIMPL(DoomsdayApp)
         // Use a custom base directory?
         if (CommandLine_CheckWith("-basedir", 1))
         {
-            DD_SetBasePath(CommandLine_Next());
+            self.setDoomsdayBasePath(CommandLine_Next());
         }
         else
         {
             // The default base directory is one level up from the bin dir.
             String binDir = App::executablePath().fileNamePath().withSeparators('/');
             String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
-            DD_SetBasePath(baseDir.toUtf8().constData());
+            self.setDoomsdayBasePath(baseDir);
         }
     }
 #endif // WIN32
@@ -370,6 +369,9 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     App::fileSystem().addInterpreter(intrpSavedSession);
     App::fileSystem().addInterpreter(intrpDataBundle);
 }
+
+DoomsdayApp::~DoomsdayApp()
+{}
 
 void DoomsdayApp::initialize()
 {
@@ -496,7 +498,7 @@ std::string const &DoomsdayApp::doomsdayBasePath() const
 
 void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
 {
-    /// @todo Unfortunately Dir/fs_util assumes fixed-size strings, so we
+    /// @todo Unfortunately the legacy Dir/fs_util assumes fixed-size strings, so we
     /// can't take advantage of std::string. -jk
     filename_t temp;
     strncpy(temp, path.toUtf8(), FILENAME_T_MAXLEN);

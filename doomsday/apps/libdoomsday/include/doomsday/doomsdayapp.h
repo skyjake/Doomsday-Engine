@@ -65,6 +65,8 @@ public:
 public:
     DoomsdayApp(Players::Constructor playerConstructor);
 
+    virtual ~DoomsdayApp();
+
     void determineGlobalPaths();
 
     /**
@@ -136,14 +138,15 @@ public:
             std::function<void ()> finalizeFunc) = 0;
 
 public:
-    static DoomsdayApp &app();
-    static res::Bundles &bundles();
-    static Plugins &plugins();
-    static Games &games();
-    static GameProfiles &gameProfiles();
-    static Players &players();
-    static BusyMode &busyMode();
-    static de::NativePath steamBasePath();
+    static DoomsdayApp &    app();
+    static res::Bundles &   bundles();
+    static Plugins &        plugins();
+    static Games &          games();
+    static GameProfiles &   gameProfiles();
+    static Players &        players();
+    static BusyMode &       busyMode();
+
+    static de::NativePath   steamBasePath();
 
     /**
      * Sets the currently active game. DoomsdayApp does not take ownership of
@@ -163,6 +166,12 @@ public:
 
     static bool isGameLoaded();
 
+    /**
+     * Composes a list of all the packages that should be identified in savegame
+     * metadata.
+     *
+     * @return List of package identifiers, in load order.
+     */
     static de::StringList loadedPackagesIncludedInSavegames();
 
 protected:
