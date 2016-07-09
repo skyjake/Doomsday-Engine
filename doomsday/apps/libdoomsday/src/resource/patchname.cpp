@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
+#include "doomsday/resource/patchname.h"
+#include "doomsday/filesys/fs_main.h"
+
 #include <de/IReadable>
 #include <de/Reader>
 #include <de/String>
-#include <doomsday/filesys/fs_main.h>
-
-#include "resource/patchname.h"
 
 namespace de {
 

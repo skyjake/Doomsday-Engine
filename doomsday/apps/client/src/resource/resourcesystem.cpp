@@ -55,6 +55,7 @@
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/resource/patch.h>
+#include <doomsday/resource/patchname.h>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -68,7 +69,6 @@
 #include "dd_def.h"
 
 #include "resource/compositetexture.h"
-#include "resource/patchname.h"
 
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"

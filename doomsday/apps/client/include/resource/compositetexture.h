@@ -21,6 +21,8 @@
 #ifndef DENG_RESOURCE_COMPOSITETEXTURE_H
 #define DENG_RESOURCE_COMPOSITETEXTURE_H
 
+#include <doomsday/resource/patchname.h>
+
 #include <QList>
 #include <QMultiMap>
 
@@ -29,7 +31,6 @@
 #include <de/Vector>
 
 #include "dd_types.h" // For lumpnum_t
-#include "patchname.h"
 
 namespace de {
 

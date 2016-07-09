@@ -27,58 +27,6 @@
 /// @addtogroup resource
 ///@{
 
-#if 0
-
-/**
- * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
- *
- * @param file          Handle to the open file to be written to.
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return  Non-zero iff successful.
- */
-int TGA_Save24_rgb565(FILE *file, int w, int h, uint16_t const *buf);
-
-/**
- * Save the rgb888 buffer as Targa 24.
- *
- * @param file          Handle to the open file to be written to.
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return  Non-zero iff successful.
- */
-int TGA_Save24_rgb888(FILE *file, int w, int h, uint8_t const *buf);
-
-/**
- * Save the rgb8888 buffer as Targa 24.
- *
- * @param file          Handle to the open file to be written to.
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return  Non-zero iff successful.
- */
-int TGA_Save24_rgba8888(FILE *file, int w, int h, uint8_t const *buf);
-
-/**
- * Save the rgb888 buffer as Targa 16.
- *
- * @param file          Handle to the open file to be written to.
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return  Non-zero iff successful.
- */
-int TGA_Save16_rgb888(FILE *file, int w, int h, uint8_t const *buf);
-
-#endif
-
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).
  *

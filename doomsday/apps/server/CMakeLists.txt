@@ -62,8 +62,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/materialscheme.h
     ${src}/include/resource/materialshinelayer.h
     ${src}/include/resource/materialtexturelayer.h
-    ${src}/include/resource/patchname.h
-    ${src}/include/resource/rawtexture.h
     ${src}/include/resource/resourcesystem.h
     ${src}/include/resource/texture.h
     ${src}/include/resource/texturemanifest.h
@@ -148,7 +146,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/materialscheme.cpp
     ${src}/src/resource/materialshinelayer.cpp
     ${src}/src/resource/materialtexturelayer.cpp
-    ${src}/src/resource/patchname.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp
     ${src}/src/resource/texture.cpp

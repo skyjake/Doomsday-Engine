@@ -180,8 +180,8 @@ DENG2_PIMPL(ClientApp)
                 // Don't raise alerts if the console history is open; the
                 // warning/error will be shown there.
                 if (ClientWindow::mainExists() &&
-                   ClientWindow::main().taskBar().isOpen() &&
-                   ClientWindow::main().taskBar().console().isLogOpen())
+                    ClientWindow::main().taskBar().isOpen() &&
+                    ClientWindow::main().taskBar().console().isLogOpen())
                 {
                     return *this;
                 }
@@ -255,10 +255,6 @@ DENG2_PIMPL(ClientApp)
             qWarning() << "Exception during ~ClientApp:" << er.asText();
             DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
         }
-
-        //self.audienceForGameChange() -= this;
-        //self.audienceForGameUnload() -= this;
-        //self.audienceForConsoleRegistration() -= this;
 
         updater.reset();
         //delete infineSys;

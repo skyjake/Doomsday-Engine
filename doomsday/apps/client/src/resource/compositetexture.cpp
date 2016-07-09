@@ -29,7 +29,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/resource/patch.h>
-#include "resource/patchname.h"
+#include <doomsday/resource/patchname.h>
 
 namespace de {
 namespace internal {
