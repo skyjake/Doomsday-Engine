@@ -52,7 +52,6 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/privilegedlogwidget.h"
 #include "ui/home/homewidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"

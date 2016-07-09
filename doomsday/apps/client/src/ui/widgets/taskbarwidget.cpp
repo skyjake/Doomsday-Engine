@@ -31,7 +31,6 @@
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/uisettingsdialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
-#include "ui/dialogs/gamesdialog.h"
 #include "ui/dialogs/packagesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
@@ -779,9 +778,9 @@ void TaskBarWidget::showUpdaterSettings()
 
 void TaskBarWidget::switchGame()
 {
-    GamesDialog *games = new GamesDialog(GamesDialog::ShowSingleplayerOnly);
+    /*GamesDialog *games = new GamesDialog(GamesDialog::ShowSingleplayerOnly);
     games->setDeleteAfterDismissed(true);
-    games->exec(root());
+    games->exec(root());*/
 }
 
 void TaskBarWidget::showMultiplayer()

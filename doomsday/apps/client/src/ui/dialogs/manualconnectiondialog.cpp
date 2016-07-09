@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/manualconnectiondialog.h"
-#include "ui/widgets/mpsessionmenuwidget.h"
+//#include "ui/widgets/mpsessionmenuwidget.h"
 #include "clientapp.h"
 
 #include <de/SignalAction>
@@ -31,7 +31,7 @@ DENG2_PIMPL(ManualConnectionDialog)
 {
     String usedAddress;
     FoldPanelWidget *fold;
-    MPSessionMenuWidget *games;
+    //MPSessionMenuWidget *games; // TODO: refactor to use menu from MultiplayerColumnWidget
     ProgressWidget *progress;
     bool querying;
     bool joinWhenEnterPressed;
@@ -45,11 +45,6 @@ DENG2_PIMPL(ManualConnectionDialog)
     {
         ClientApp::serverLink().audienceForDiscoveryUpdate += this;
     }
-
-//    ~Impl()
-//    {
-//        ClientApp::serverLink().audienceForDiscoveryUpdate -= this;
-//    }
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {
@@ -98,13 +93,13 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
 
     // The found games are shown inside a fold panel.
     d->fold  = new FoldPanelWidget;
-    d->games = new MPSessionMenuWidget(MPSessionMenuWidget::DirectDiscoveryOnly);
+/*    d->games = new MPSessionMenuWidget(MPSessionMenuWidget::DirectDiscoveryOnly);
     connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
             this,     SIGNAL(selected(de::ui::Item const *)));
     connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
             this,     SLOT  (serverSelected(de::ui::Item const *)));
     d->games->rule().setInput(Rule::Width, rule().width() - margins().width());
-    d->fold->setContent(d->games);
+    d->fold->setContent(d->games);*/
     area().add(d->fold);
 
     title().setText(tr("Connect to Server"));
@@ -137,9 +132,10 @@ void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
     d->autoJoin = joinWhenSelected;
 }
 
-Action *ManualConnectionDialog::makeAction(const ui::Item &item)
+Action *ManualConnectionDialog::makeAction(ui::Item const &item)
 {
-    return d->games->makeAction(item);
+    //return d->games->makeAction(item);
+    return nullptr;
 }
 
 void ManualConnectionDialog::operator >> (PersistentState &toState) const
@@ -167,8 +163,8 @@ void ManualConnectionDialog::queryOrConnect()
         // Automatically connect if there is a single choice.
         if (d->joinWhenEnterPressed)
         {
-            emit selected(&d->games->items().at(0));
-            serverSelected(&d->games->items().at(0));
+            //emit selected(&d->games->items().at(0));
+            //serverSelected(&d->games->items().at(0));
             return;
         }
 
