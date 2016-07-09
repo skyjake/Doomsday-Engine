@@ -56,6 +56,7 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/resource/patch.h>
 #include <doomsday/resource/patchname.h>
+#include <doomsday/resource/mapmanifests.h>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -3956,8 +3957,9 @@ static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTre
  */
 static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    Resources::MapManifests::FoundNodes found;
-    App_ResourceSystem().allMapManifests().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    res::MapManifests::Tree::FoundNodes found;
+    App_ResourceSystem().mapManifests().allMapManifests()
+            .findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
     if(found.isEmpty()) return 0;
 
     //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);

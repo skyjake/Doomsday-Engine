@@ -29,7 +29,7 @@
 #include <cstring>
 #include <de/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/mapmanifest.h>
+#include <doomsday/resource/mapmanifests.h>
 #include <doomsday/EntityDatabase>
 
 #include "network/net_main.h"
@@ -1476,14 +1476,14 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    return App_ResourceSystem().tryFindMapManifest(de::Uri(uriCString, RC_NULL)) != nullptr;
+    return App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)) != nullptr;
 }
 
 #undef P_MapIsCustom
 DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    if(res::MapManifest const *mapDef = App_ResourceSystem().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
+    if(res::MapManifest const *mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1494,7 +1494,7 @@ DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
-    if(res::MapManifest const *mapDef = App_ResourceSystem().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
+    if(res::MapManifest const *mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());
     }

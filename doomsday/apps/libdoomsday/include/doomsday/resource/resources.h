@@ -21,11 +21,12 @@
 #define LIBDOOMSDAY_RESOURCES_H
 
 #include "resourceclass.h"
-#include "mapmanifest.h"
 #include <de/NativePath>
 #include <de/PathTree>
 #include <de/System>
 #include <de/Info>
+
+namespace res { class MapManifests; }
 
 /**
  * Base class for the resource management subsystem.
@@ -42,8 +43,6 @@ public:
     DENG2_ERROR(MissingResourceManifestError);
 
     static Resources &get();
-
-    typedef de::PathTreeT<res::MapManifest> MapManifests;
 
 public:
     Resources();
@@ -74,34 +73,8 @@ public:
      */
     de::NativePath nativeSavePath() const;
 
-//- Resource Manifests ------------------------------------------------------------------
-
-    /**
-     * Locate the map resource manifest associated with the given, unique @a mapUri.
-     *
-     * Note that the existence of a resource manifest does not automatically mean the
-     * associated resource data is actually loadable.
-     */
-    res::MapManifest &findMapManifest(de::Uri const &mapUri) const;
-
-    /**
-     * Lookup the map resource manifest associated with the given, unique @a mapUri.
-     * Note that the existence of a resource manifest does not automatically mean the
-     * associated resource data is actually loadable.
-     *
-     * @return  MapManifest associated with @a mapUri if found; otherwise @c nullptr.
-     */
-    res::MapManifest *tryFindMapManifest(de::Uri const &mapUri) const;
-
-    /**
-     * Returns the total number of map resource manifests in the system.
-     */
-    de::dint mapManifestCount() const;
-
-    /// @todo make private.
-    void initMapManifests();
-    void clearMapManifests();
-    MapManifests const &allMapManifests() const;
+    res::MapManifests &       mapManifests();
+    res::MapManifests const & mapManifests() const;
 
 private:
     DENG2_PRIVATE(d)

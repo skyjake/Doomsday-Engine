@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/resource/resources.h"
+#include "doomsday/resource/mapmanifests.h"
 #include "doomsday/filesys/fs_main.h"
 
 #include <de/App>
@@ -33,7 +34,7 @@ DENG2_PIMPL(Resources)
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
     NativePath nativeSavePath;
-    MapManifests mapManifests;
+    res::MapManifests mapManifests;
 
     Impl(Public *i)
         : Base(i)
@@ -60,7 +61,6 @@ DENG2_PIMPL(Resources)
 
     ~Impl()
     {
-        self.clearMapManifests();
         qDeleteAll(resClasses);
 
         theResources = nullptr;
@@ -113,63 +113,12 @@ NativePath Resources::nativeSavePath() const
     return d->nativeSavePath;
 }
 
-res::MapManifest &Resources::findMapManifest(de::Uri const &mapUri) const
+res::MapManifests &Resources::mapManifests()
 {
-    // Only one resource scheme is known for maps.
-    if (!mapUri.scheme().compareWithoutCase("Maps"))
-    {
-       if (res::MapManifest *found = d->mapManifests.tryFind(
-                   mapUri.path(), PathTree::MatchFull | PathTree::NoBranch))
-           return *found;
-    }
-    /// @throw MissingResourceManifestError  An unknown map URI was specified.
-    throw MissingResourceManifestError("Resources::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
+    return d->mapManifests;
 }
 
-res::MapManifest *Resources::tryFindMapManifest(de::Uri const &mapUri) const
-{
-    // Only one resource scheme is known for maps.
-    if (mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
-    return d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch);
-}
-
-dint Resources::mapManifestCount() const
-{
-    return d->mapManifests.count();
-}
-
-void Resources::initMapManifests()
-{
-    clearMapManifests();
-
-    // Locate all the maps using the central lump index:
-    /// @todo Locate new maps each time a package is loaded rather than rely on
-    /// the central lump index.
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-    lumpnum_t lastLump = -1;
-    while (lastLump < lumpIndex.size())
-    {
-        std::unique_ptr<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
-        lastLump = recognizer->lastLump();
-        if (recognizer->format() != Id1MapRecognizer::UnknownFormat)
-        {
-            File1 *sourceFile  = recognizer->sourceFile();
-            String const mapId = recognizer->id();
-
-            res::MapManifest &manifest = d->mapManifests.insert(mapId);
-            manifest.set("id", mapId);
-            manifest.setSourceFile(sourceFile)
-                    .setRecognizer(recognizer.release());
-        }
-    }
-}
-
-void Resources::clearMapManifests()
-{
-    d->mapManifests.clear();
-}
-
-Resources::MapManifests const &Resources::allMapManifests() const
+res::MapManifests const &Resources::mapManifests() const
 {
     return d->mapManifests;
 }

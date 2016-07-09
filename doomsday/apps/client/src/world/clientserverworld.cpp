@@ -36,6 +36,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
+#include <doomsday/resource/mapmanifests.h>
 
 #include "dd_main.h"
 #include "dd_def.h"
@@ -791,7 +792,7 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 
     if(!mapUri.path().isEmpty())
     {
-        mapDef = resSys().tryFindMapManifest(mapUri);
+        mapDef = resSys().mapManifests().tryFindMapManifest(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.

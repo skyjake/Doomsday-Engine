@@ -66,6 +66,7 @@
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/resource/mapmanifests.h>
 #include <doomsday/help.h>
 #include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
@@ -703,7 +704,7 @@ int DD_ActivateGameWorker(void *context)
     resSys.initTextures();
     resSys.textureScheme("Lightmaps").clear();
     resSys.textureScheme("Flaremaps").clear();
-    resSys.initMapManifests();
+    resSys.mapManifests().initMapManifests();
 
     if (parms.initiatedBusyMode)
     {
@@ -1178,7 +1179,7 @@ static void initialize()
         App_ResourceSystem().initTextures();
         App_ResourceSystem().textureScheme("Lightmaps").clear();
         App_ResourceSystem().textureScheme("Flaremaps").clear();
-        App_ResourceSystem().initMapManifests();
+        App_ResourceSystem().mapManifests().initMapManifests();
 
         Def_Read();
 
@@ -1460,7 +1461,7 @@ void DD_UpdateEngineState()
     App_FileSystem().resetAllSchemes();
 
     App_ResourceSystem().initTextures();
-    App_ResourceSystem().initMapManifests();
+    App_ResourceSystem().mapManifests().initMapManifests();
 
     if (App_GameLoaded() && gx.UpdateState)
     {
