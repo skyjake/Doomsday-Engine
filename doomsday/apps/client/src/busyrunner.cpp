@@ -72,10 +72,6 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
     ~Impl()
     {
-        //busy().audienceForBeginning()     -= this;
-        //busy().audienceForEnd()           -= this;
-        //busy().audienceForTaskWillStart() -= this;
-
         busy().setTaskRunner(nullptr);
     }
 

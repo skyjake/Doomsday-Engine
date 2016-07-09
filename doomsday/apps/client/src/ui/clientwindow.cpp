@@ -74,7 +74,6 @@ static ClientWindow *mainWindow = nullptr; // The main window, set after fully c
 
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(App,      StartupComplete)
-//, DENG2_OBSERVES(Games,    Readiness)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
 , DENG2_OBSERVES(Canvas,   FocusChange)
@@ -98,9 +97,6 @@ DENG2_PIMPL(ClientWindow)
     NotificationAreaWidget *notifications = nullptr;
     AlertDialog *alerts = nullptr;
     ColorAdjustmentDialog *colorAdjust = nullptr;
-    //LabelWidget *background = nullptr;
-    //GuiWidget *iwadNotice = nullptr;
-    //GameSelectionWidget *gameSelMenu = nullptr;
     HomeWidget *home = nullptr;
     SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
@@ -132,7 +128,6 @@ DENG2_PIMPL(ClientWindow)
 
         DoomsdayApp::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
-        //App_Games().audienceForReadiness() += this;
 
         // Listen to input.
         self.canvas().audienceForMouseStateChange() += this;
@@ -145,18 +140,6 @@ DENG2_PIMPL(ClientWindow)
 
     ~Impl()
     {
-//        foreach (String s, configVariableNames())
-//        {
-//            App::config(s).audienceForChange() -= this;
-//        }
-
-        //DoomsdayApp::app().audienceForGameChange() -= this;
-        //App::app().audienceForStartupComplete() -= this;
-        //App_Games().audienceForReadiness() -= this;
-
-        //self.canvas().audienceForFocusChange() -= this;
-        //self.canvas().audienceForMouseStateChange() -= this;
-
         releaseRef(cursorX);
         releaseRef(cursorY);
 
@@ -289,37 +272,6 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-#if 0
-    void gameReadinessUpdated()
-    {
-        DENG2_ASSERT(!App_GameLoaded());
-        showGameSelectionMenu(true);
-    }
-
-    void showGameSelectionMenu(bool show)
-    {
-        bool gotPlayable = App_Games().numPlayable() > 0;
-
-        if (show && gotPlayable)
-        {
-            gameSelMenu->show();
-            iwadNotice->hide();
-        }
-        else if (show && !gotPlayable)
-        {
-            gameSelMenu->hide();
-            iwadNotice->show();
-        }
-        else if (!show)
-        {
-            gameSelMenu->hide();
-            iwadNotice->hide();
-        }
-
-        gameSelMenu->hide(); // devel
-    }
-#endif
-
     void currentGameChanged(Game const &/*newGame*/)
     {
         // Check with Style if blurring is allowed.
@@ -366,7 +318,7 @@ DENG2_PIMPL(ClientWindow)
             busy->enable();
             break;
 
-        default:
+        case Normal:
             //busy->hide();
             // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
@@ -650,9 +602,7 @@ DENG2_PIMPL(ClientWindow)
 
         // All the children of the compositor need to be relocated.
         container().remove(*gameUI);
-        //container().remove(*gameSelMenu);
         container().remove(*home);
-        //container().remove(*iwadNotice);
         if (sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBarBlur);
