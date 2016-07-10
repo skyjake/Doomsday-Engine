@@ -21,10 +21,12 @@
 #define CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
 
 #include "abstractfont.h"
-#include "Texture"
+#include "resource/clienttexture.h"
 #include <de/Rectangle>
 #include <de/String>
 #include <de/Vector>
+
+struct ded_compositefont_s;
 
 /**
  * Composite bitmap font.
@@ -38,7 +40,7 @@ public:
     {
         de::Rectanglei geometry;
         patchid_t patch;
-        de::TextureVariant *tex;
+        TextureVariant *tex;
         uint8_t border;
         bool haveSourceImage;
     };
@@ -46,10 +48,10 @@ public:
 public:
     CompositeBitmapFont(de::FontManifest &manifest);
 
-    static CompositeBitmapFont *fromDef(de::FontManifest &manifest, ded_compositefont_t const &def);
+    static CompositeBitmapFont *fromDef(de::FontManifest &manifest, struct ded_compositefont_s const &def);
 
-    ded_compositefont_t *definition() const;
-    void setDefinition(ded_compositefont_t *newDef);
+    struct ded_compositefont_s *definition() const;
+    void setDefinition(struct ded_compositefont_s *newDef);
 
     /**
      * Update the font according to the supplied definition. To be called after
@@ -59,7 +61,7 @@ public:
      *
      * @todo Should observe engine reset.
      */
-    void rebuildFromDef(ded_compositefont_t const &def);
+    void rebuildFromDef(struct ded_compositefont_s const &def);
 
     int ascent();
     int descent();
@@ -73,7 +75,7 @@ public:
 
     patchid_t glyphPatch(uchar ch);
     void glyphSetPatch(uchar ch, de::String encodedPatchName);
-    de::TextureVariant *glyphTexture(uchar ch);
+    TextureVariant *glyphTexture(uchar ch);
     uint glyphTextureBorder(uchar ch);
 
 private:

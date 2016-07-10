@@ -28,6 +28,7 @@
 #endif
 
 #include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/Textures>
 
 using namespace de;
 
@@ -40,7 +41,7 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 
     try
     {
-        return App_ResourceSystem().textureManifest(uri).uniqueId();
+        return res::Textures::get().textureManifest(uri).uniqueId();
     }
     catch(Resources::MissingResourceManifestError const &)
     {
@@ -77,7 +78,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
     {
         if(AnimGroup *group = App_ResourceSystem().animGroup(groupId))
         {
-            group->newFrame(App_ResourceSystem().textureManifest(textureUri), tics, randomTics);
+            group->newFrame(res::Textures::get().textureManifest(textureUri), tics, randomTics);
         }
         else
         {
@@ -287,10 +288,10 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
     LOG_AS("R_ComposePatchPath");
     try
     {
-        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
+        res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches").findByUniqueId(id);
         return AutoStr_FromTextStd(manifest.path().toUtf8().constData());
     }
-    catch(TextureScheme::NotFoundError const &er)
+    catch(res::TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -303,10 +304,10 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
-        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
+        res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches").findByUniqueId(id);
         return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
     }
-    catch(TextureScheme::NotFoundError const &er)
+    catch(res::TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -331,20 +332,20 @@ DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 
     try
     {
-        Texture &tex = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id).texture();
+        res::Texture &tex = res::Textures::get().textureScheme("Patches").findByUniqueId(id).texture();
 
 #ifdef __CLIENT__
         // Ensure we have up to date information about this patch.
         TextureVariantSpec const &texSpec =
-            Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                    | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-        tex.prepareVariant(texSpec);
+            Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                    | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+        static_cast<ClientTexture &>(tex).prepareVariant(texSpec);
 #endif
 
         info->id = id;
-        info->flags.isCustom = tex.isFlagged(Texture::Custom);
+        info->flags.isCustom = tex.isFlagged(res::Texture::Custom);
 
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(res::Texture::AverageAlphaAnalysis));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
         info->geometry.size.width  = tex.width();
@@ -354,16 +355,16 @@ DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->geometry.origin.y = tex.origin().y;
 
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (tex.isFlagged(Texture::UpscaleAndSharpen)? -1 : 0);
+        info->extraOffset[0] = info->extraOffset[1] = (tex.isFlagged(res::Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
-    catch(TextureManifest::MissingTextureError const &er)
+    catch(res::TextureManifest::MissingTextureError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring");
     }
-    catch(TextureScheme::NotFoundError const &er)
+    catch(res::TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring");

@@ -28,10 +28,10 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
+#include "ClientTexture"
 #include "Material"
 #include "MaterialContext"
 #include "MaterialVariantSpec"
-#include "Texture"
 #include "gl/gltextureunit.h"
 
 /**
@@ -93,9 +93,9 @@ public:
         de::Vector3f color() const;
         void lightLevels(float &min, float &max) const;
 
-        de::Texture *tex() const;
-        de::Texture *ceilTex() const;
-        de::Texture *floorTex() const;
+        ClientTexture *tex() const;
+        ClientTexture *ceilTex() const;
+        ClientTexture *floorTex() const;
 
         float flareSize() const;
         DGLuint flareTex() const;

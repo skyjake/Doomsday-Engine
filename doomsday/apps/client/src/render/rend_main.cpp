@@ -34,6 +34,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/res/TextureManifest>
 #include <doomsday/BspNode>
 
 #include "clientapp.h"
@@ -44,8 +45,7 @@
 #include "r_util.h"
 
 #include "MaterialVariantSpec"
-#include "Texture"
-#include "TextureManifest"
+#include "ClientTexture"
 
 #include "Face"
 #include "world/map.h"
@@ -2031,7 +2031,7 @@ static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
     return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
 }
 
-static DGLuint prepareLightmap(Texture *tex = nullptr)
+static DGLuint prepareLightmap(ClientTexture *tex = nullptr)
 {
     if(tex)
     {
@@ -3766,7 +3766,7 @@ Lumobj *Rend_MakeLumobj(Record const &spriteRec)
     TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     if(!texture) return nullptr;  // Unloadable texture?
 
-    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(Texture::BrightPointAnalysis);
+    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
     if(!pl)
     {
         LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")

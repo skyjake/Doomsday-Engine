@@ -483,6 +483,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
     setUnixHomeFolderName(".doomsday");
 
+    // Callbacks.
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).

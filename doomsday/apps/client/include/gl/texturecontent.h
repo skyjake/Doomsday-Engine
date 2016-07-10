@@ -23,7 +23,7 @@
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
-#include "TextureManifest"
+#include <doomsday/res/TextureManifest>
 
 /**
  * @defgroup textureContentFlags  Texture Content Flags
@@ -81,9 +81,11 @@ void GL_DestroyTextureContent(texturecontent_t *content);
  * @param textureManifest  Manifest for the logical texture being prepared.
  *                      (for informational purposes, i.e., logging)
  */
-void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
-    image_t &image, TextureVariantSpec const &spec,
-    de::TextureManifest const &textureManifest);
+void GL_PrepareTextureContent(texturecontent_t &c,
+                              GLuint glTexName,
+                              image_t &image,
+                              TextureVariantSpec const &spec,
+                              res::TextureManifest const &textureManifest);
 
 /**
  * @param method  GL upload method. By default the upload is deferred.

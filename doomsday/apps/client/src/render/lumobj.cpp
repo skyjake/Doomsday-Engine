@@ -51,9 +51,9 @@ DENG2_PIMPL_NOREF(Lumobj)
     DGLuint flareTex = 0;                ///< Custom flare texture (@todo should be Texture ptr).
 
     /// Custom lightmaps (if any, not owned):
-    Texture *sideTex = nullptr;
-    Texture *downTex = nullptr;
-    Texture *upTex   = nullptr;
+    ClientTexture *sideTex = nullptr;
+    ClientTexture *downTex = nullptr;
+    ClientTexture *upTex   = nullptr;
 
     Impl() {}
 
@@ -160,7 +160,7 @@ Lumobj &Lumobj::setMaxDistance(ddouble newMaxDistance)
     return *this;
 }
 
-Texture *Lumobj::lightmap(LightmapSemantic semantic) const
+ClientTexture *Lumobj::lightmap(LightmapSemantic semantic) const
 {
     switch(semantic)
     {
@@ -172,7 +172,7 @@ Texture *Lumobj::lightmap(LightmapSemantic semantic) const
     return d->sideTex;
 }
 
-Lumobj &Lumobj::setLightmap(LightmapSemantic semantic, Texture *newTexture)
+Lumobj &Lumobj::setLightmap(LightmapSemantic semantic, ClientTexture *newTexture)
 {
     switch(semantic)
     {

@@ -1030,7 +1030,7 @@ void FindAverageColorIdx(uint8_t const *data, int w, int h, res::ColorPalette co
 }
 
 void FindAverageAlpha(const uint8_t* pixels, int width, int height,
-    int pixelSize, float* alpha, float* coverage)
+                      int pixelSize, float* alpha, float* coverage)
 {
     long i, numPels, avg = 0, alphaCount = 0;
     const uint8_t* src;
@@ -1047,7 +1047,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
 
     if(pixelSize != 3 && pixelSize != 4)
     {
-#if _DEBUG
+#ifdef DENG_DEBUG
         App_Error("FindAverageAlpha: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
 #endif
         // Assume opaque.

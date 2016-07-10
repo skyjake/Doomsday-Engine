@@ -19,6 +19,7 @@
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/mapmanifests.h"
 #include "doomsday/resource/colorpalettes.h"
+#include "doomsday/resource/textures.h"
 #include "doomsday/filesys/fs_main.h"
 
 #include <de/App>
@@ -32,11 +33,13 @@ static Resources *theResources = nullptr;
 DENG2_PIMPL(Resources)
 {
     typedef QList<ResourceClass *> ResourceClasses;
-    ResourceClasses resClasses;
-    NullResourceClass nullResourceClass;
-    NativePath nativeSavePath;
-    res::ColorPalettes colorPalettes;
-    res::MapManifests mapManifests;
+
+    ResourceClasses     resClasses;
+    NullResourceClass   nullResourceClass;
+    NativePath          nativeSavePath;
+    res::ColorPalettes  colorPalettes;
+    res::MapManifests   mapManifests;
+    res::Textures       textures;
 
     Impl(Public *i)
         : Base(i)
@@ -64,6 +67,7 @@ DENG2_PIMPL(Resources)
     ~Impl()
     {
         qDeleteAll(resClasses);
+        textures.clear();
 
         theResources = nullptr;
     }
@@ -135,6 +139,16 @@ res::ColorPalettes &Resources::colorPalettes()
 const res::ColorPalettes &Resources::colorPalettes() const
 {
     return d->colorPalettes;
+}
+
+res::Textures &Resources::textures()
+{
+    return d->textures;
+}
+
+res::Textures const &Resources::textures() const
+{
+    return d->textures;
 }
 
 ResourceClass &App_ResourceClass(String className)

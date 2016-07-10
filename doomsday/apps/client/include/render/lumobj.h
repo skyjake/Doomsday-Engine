@@ -26,7 +26,7 @@
 #include <de/Vector>
 
 #include "MapObject"
-#include "Texture"
+#include "ClientTexture"
 
 /**
  * Luminous object. @ingroup render
@@ -194,7 +194,7 @@ public:
      *
      * @see setLightmap()
      */
-    de::Texture *lightmap(LightmapSemantic semantic) const;
+    ClientTexture *lightmap(LightmapSemantic semantic) const;
 
     /**
      * Change an attributed lightmap to the texture specified.
@@ -204,7 +204,7 @@ public:
      *
      * @see lightmap()
      */
-    Lumobj &setLightmap(LightmapSemantic semantic, de::Texture *newTexture);
+    Lumobj &setLightmap(LightmapSemantic semantic, ClientTexture *newTexture);
 
     /**
      * Returns the current flare size of the lumobj.

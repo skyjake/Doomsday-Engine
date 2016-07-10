@@ -33,7 +33,7 @@
 #include "render/vissprite.h"
 
 #include "MaterialVariantSpec"
-#include "Texture"
+#include "ClientTexture"
 
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 

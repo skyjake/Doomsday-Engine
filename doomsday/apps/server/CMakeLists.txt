@@ -53,7 +53,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/network/net_msg.h
     ${src}/include/r_util.h
     ${src}/include/resource/animgroup.h
-    ${src}/include/resource/compositetexture.h
     ${src}/include/resource/image.h
     ${src}/include/resource/material.h
     ${src}/include/resource/materialarchive.h
@@ -63,9 +62,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/materialshinelayer.h
     ${src}/include/resource/materialtexturelayer.h
     ${src}/include/resource/resourcesystem.h
-    ${src}/include/resource/texture.h
-    ${src}/include/resource/texturemanifest.h
-    ${src}/include/resource/texturescheme.h
     ${src}/include/sys_system.h
     ${src}/include/tab_anorms.h
     ${src}/include/ui/busyvisual.h
@@ -136,7 +132,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/animgroup.cpp
     ${src}/src/resource/api_material.cpp
     ${src}/src/resource/api_resource.cpp
-    ${src}/src/resource/compositetexture.cpp
     ${src}/src/resource/image.cpp
     ${src}/src/resource/material.cpp
     ${src}/src/resource/materialarchive.cpp
@@ -147,9 +142,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/materialtexturelayer.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp
-    ${src}/src/resource/texture.cpp
-    ${src}/src/resource/texturemanifest.cpp
-    ${src}/src/resource/texturescheme.cpp
     ${src}/src/resource/tga.cpp
     ${src}/src/sys_system.cpp
     ${src}/src/tab_tables.c

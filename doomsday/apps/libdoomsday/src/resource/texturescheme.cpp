@@ -17,17 +17,18 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "resource/texturescheme.h"
+#include "doomsday/resource/texturescheme.h"
+#include "doomsday/resource/texturemanifest.h"
 
-#include "dd_main.h" // App_ResourceSystem()
-#include "TextureManifest"
+#include <de/types.h>
 
 using namespace de;
 
-DENG2_PIMPL(TextureScheme),
-DENG2_OBSERVES(TextureManifest, UniqueIdChange),
-DENG2_OBSERVES(TextureManifest, Deletion)
+namespace res {
+
+DENG2_PIMPL(TextureScheme)
+, DENG2_OBSERVES(TextureManifest, UniqueIdChange)
+, DENG2_OBSERVES(TextureManifest, Deletion)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -61,18 +62,18 @@ DENG2_OBSERVES(TextureManifest, Deletion)
 
     void findUniqueIdRange(int *minId, int *maxId)
     {
-        if(!minId && !maxId) return;
+        if (!minId && !maxId) return;
 
-        if(minId) *minId = DDMAXINT;
-        if(maxId) *maxId = DDMININT;
+        if (minId) *minId = DDMAXINT;
+        if (maxId) *maxId = DDMININT;
 
         PathTreeIterator<Index> iter(index.leafNodes());
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
             int const uniqueId = manifest.uniqueId();
-            if(minId && uniqueId < *minId) *minId = uniqueId;
-            if(maxId && uniqueId > *maxId) *maxId = uniqueId;
+            if (minId && uniqueId < *minId) *minId = uniqueId;
+            if (maxId && uniqueId > *maxId) *maxId = uniqueId;
         }
     }
 
@@ -88,7 +89,7 @@ DENG2_OBSERVES(TextureManifest, Deletion)
     void unlinkInUniqueIdLut(TextureManifest &manifest)
     {
         // If the lut is already considered 'dirty' do not unlink.
-        if(!uniqueIdLutDirty)
+        if (!uniqueIdLutDirty)
         {
             int uniqueId = manifest.uniqueId();
             DENG_ASSERT(uniqueIdInLutRange(uniqueId));
@@ -107,14 +108,14 @@ DENG2_OBSERVES(TextureManifest, Deletion)
     void rebuildUniqueIdLut()
     {
         // Is a rebuild necessary?
-        if(!uniqueIdLutDirty) return;
+        if (!uniqueIdLutDirty) return;
 
         // Determine the size of the LUT.
         int minId, maxId;
         findUniqueIdRange(&minId, &maxId);
 
         int lutSize = 0;
-        if(minId > maxId) // None found?
+        if (minId > maxId) // None found?
         {
             uniqueIdBase = 0;
         }
@@ -125,24 +126,22 @@ DENG2_OBSERVES(TextureManifest, Deletion)
         }
 
         // Fill the LUT with initial values.
-#ifdef DENG2_QT_4_7_OR_NEWER
         uniqueIdLut.reserve(lutSize);
-#endif
         int i = 0;
-        for(; i < uniqueIdLut.size(); ++i)
+        for (; i < uniqueIdLut.size(); ++i)
         {
             uniqueIdLut[i] = 0;
         }
-        for(; i < lutSize; ++i)
+        for (; i < lutSize; ++i)
         {
             uniqueIdLut.push_back(0);
         }
 
-        if(lutSize)
+        if (lutSize)
         {
             // Populate the LUT.
             PathTreeIterator<Index> iter(index.leafNodes());
-            while(iter.hasNext())
+            while (iter.hasNext())
             {
                 linkInUniqueIdLut(iter.next());
             }
@@ -176,7 +175,7 @@ TextureScheme::~TextureScheme()
 void TextureScheme::clear()
 {
     /*PathTreeIterator<Index> iter(d->index.leafNodes());
-    while(iter.hasNext())
+    while (iter.hasNext())
     {
         d->deindex(iter.next());
     }*/
@@ -195,7 +194,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
 {
     LOG_AS("TextureScheme::declare");
 
-    if(path.isEmpty())
+    if (path.isEmpty())
     {
         /// @throw InvalidPathError An empty path was specified.
         throw InvalidPathError("TextureScheme::declare", "Missing/zero-length path was supplied");
@@ -205,7 +204,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
     Manifest *newManifest = &d->index.insert(path);
     DENG2_ASSERT(newManifest);
 
-    if(d->index.size() != sizeBefore)
+    if (d->index.size() != sizeBefore)
     {
         // We'll need to rebuild the unique id LUT after this (deferred for perf).
         d->uniqueIdLutDirty = true;
@@ -225,34 +224,33 @@ TextureManifest &TextureScheme::declare(Path const &path,
      */
     bool mustRelease = false;
 
+    newManifest->setScheme(*this);
     newManifest->setFlags(flags);
     newManifest->setOrigin(origin);
 
-    if(newManifest->setLogicalDimensions(dimensions))
+    if (newManifest->setLogicalDimensions(dimensions))
     {
         mustRelease = true;
     }
 
     // We don't care whether these identfiers are truely unique. Our only
     // responsibility is to release textures when they change.
-    if(newManifest->setUniqueId(uniqueId))
+    if (newManifest->setUniqueId(uniqueId))
     {
         mustRelease = true;
     }
 
-    if(resourceUri && newManifest->setResourceUri(*resourceUri))
+    if (resourceUri && newManifest->setResourceUri(*resourceUri))
     {
         // The mapped resource is being replaced, so release any existing Texture.
         /// @todo Only release if this Texture is bound to only this binding.
         mustRelease = true;
     }
 
-    if(mustRelease && newManifest->hasTexture())
+    if (mustRelease && newManifest->hasTexture())
     {
-#ifdef __CLIENT__
         /// @todo Update any Materials (and thus Surfaces) which reference this.
-        newManifest->texture().releaseGLTextures();
-#endif
+        newManifest->texture().release();
     }
 
     return *newManifest;
@@ -265,12 +263,13 @@ bool TextureScheme::has(Path const &path) const
 
 TextureManifest const &TextureScheme::find(Path const &path) const
 {
-    if(has(path))
+    if (has(path))
     {
         return d->index.find(path, Index::NoBranch | Index::MatchFull);
     }
     /// @throw NotFoundError Failed to locate a matching manifest.
-    throw NotFoundError("TextureScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
+    throw NotFoundError("TextureScheme::find", "Failed to locate a manifest matching \"" +
+                        path.asText() + "\"");
 }
 
 TextureManifest &TextureScheme::find(Path const &path)
@@ -281,15 +280,15 @@ TextureManifest &TextureScheme::find(Path const &path)
 
 TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) const
 {
-    if(!uri.isEmpty())
+    if (!uri.isEmpty())
     {
         PathTreeIterator<Index> iter(d->index.leafNodes());
-        while(iter.hasNext())
+        while (iter.hasNext())
         {
             TextureManifest &manifest = iter.next();
-            if(manifest.hasResourceUri())
+            if (manifest.hasResourceUri())
             {
-                if(manifest.resourceUri() == uri)
+                if (manifest.resourceUri() == uri)
                 {
                     return manifest;
                 }
@@ -297,7 +296,8 @@ TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) cons
         }
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("TextureScheme::findByResourceUri", "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
+    throw NotFoundError("TextureScheme::findByResourceUri",
+                        "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
 }
 
 TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)
@@ -310,13 +310,14 @@ TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
 {
     d->rebuildUniqueIdLut();
 
-    if(d->uniqueIdInLutRange(uniqueId))
+    if (d->uniqueIdInLutRange(uniqueId))
     {
         TextureManifest *manifest = d->uniqueIdLut[uniqueId - d->uniqueIdBase];
-        if(manifest) return *manifest;
+        if (manifest) return *manifest;
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("TextureScheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+    throw NotFoundError("TextureScheme::findByUniqueId",
+                        "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
 }
 
 TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
@@ -329,3 +330,5 @@ TextureScheme::Index const &TextureScheme::index() const
 {
     return d->index;
 }
+
+} // namespace res

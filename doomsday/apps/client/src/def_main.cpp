@@ -45,8 +45,9 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
-#include <doomsday/resource/bundles.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/res/Bundles>
+#include <doomsday/res/Textures>
 #include <doomsday/world/xg.h>
 
 #include "dd_main.h"
@@ -659,7 +660,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
 
-    resSys().defineTexture("Flaremaps", resourceUri);
+    resSys().textures().defineTexture("Flaremaps", resourceUri);
 }
 
 static void defineLightmap(de::Uri const &resourceUri)
@@ -669,10 +670,10 @@ static void defineLightmap(de::Uri const &resourceUri)
     // Reference to none?
     if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
 
-    resSys().defineTexture("Lightmaps", resourceUri);
+    resSys().textures().defineTexture("Lightmaps", resourceUri);
 }
 
-static void generateMaterialDefForTexture(TextureManifest const &manifest)
+static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
 {
     LOG_AS("generateMaterialDefForTexture");
 
@@ -684,9 +685,9 @@ static void generateMaterialDefForTexture(TextureManifest const &manifest)
 
     if (manifest.hasTexture())
     {
-        Texture &tex = manifest.texture();
+        res::Texture &tex = manifest.texture();
         mat.set("dimensions", new ArrayValue(tex.dimensions()));
-        mat.set("flags", dint(tex.isFlagged(Texture::NoDraw) ? MATF_NO_DRAW : 0));
+        mat.set("flags", dint(tex.isFlagged(res::Texture::NoDraw) ? MATF_NO_DRAW : 0));
     }
     else
     {
@@ -727,8 +728,8 @@ static void generateMaterialDefForTexture(TextureManifest const &manifest)
         startFrame++;
         for (dint i = 0; i < anim->frameCount() - 1; ++i)
         {
-            AnimGroupFrame const &animFrame      = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
-            TextureManifest const &frameManifest = animFrame.textureManifest();
+            AnimGroupFrame const &animFrame           = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
+            res::TextureManifest const &frameManifest = animFrame.textureManifest();
 
             Record &st = layerDef.addStage();
             st.set("texture", frameManifest.composeUrn().compose());
@@ -741,15 +742,15 @@ static void generateMaterialDefForTexture(TextureManifest const &manifest)
     }
 }
 
-static void generateMaterialDefsForAllTexturesInScheme(TextureScheme &scheme)
+static void generateMaterialDefsForAllTexturesInScheme(res::TextureScheme &scheme)
 {
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    PathTreeIterator<res::TextureScheme::Index> iter(scheme.index().leafNodes());
     while (iter.hasNext()) generateMaterialDefForTexture(iter.next());
 }
 
 static inline void generateMaterialDefsForAllTexturesInScheme(String const &schemeName)
 {
-    generateMaterialDefsForAllTexturesInScheme(resSys().textureScheme(schemeName));
+    generateMaterialDefsForAllTexturesInScheme(resSys().textures().textureScheme(schemeName));
 }
 
 static void generateMaterialDefs()
@@ -765,7 +766,7 @@ static void generateMaterialDefs()
  * Returns @c true iff @a decorDef is compatible with the specified context.
  */
 static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textureUri,
-    bool materialIsCustom)
+                                   bool materialIsCustom)
 {
     if (de::Uri(decorDef.gets("texture"), RC_NULL) != textureUri)
         return false;
@@ -825,7 +826,7 @@ static void redecorateMaterial(Material &material, Record const &def)
             MaterialTextureLayer::AnimationStage const &stage = layer0.stage(i);
             try
             {
-                TextureManifest &texManifest = resSys().textureManifest(de::Uri(stage.gets("texture"), RC_NULL));
+                res::TextureManifest &texManifest = res::Textures::get().textureManifest(de::Uri(stage.gets("texture"), RC_NULL));
                 de::Uri const texUri = texManifest.composeUri();
                 for (auto const &pair : decorationsByTexture)
                 {
@@ -1016,7 +1017,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                     // Add a new stage.
                     try
                     {
-                        TextureManifest &texture = resSys().textureScheme("Details").findByResourceUri(*detailDef->stage.texture);
+                        res::TextureManifest &texture = resSys().textures().textureScheme("Details").findByResourceUri(*detailDef->stage.texture);
                         dlayer->addStage(MaterialDetailLayer::AnimationStage(texture.composeUri(), stage.tics, stage.variance,
                                                                              detailDef->stage.scale, detailDef->stage.strength,
                                                                              detailDef->stage.maxDistance));
@@ -1058,15 +1059,15 @@ static void configureMaterial(Material &mat, Record const &definition)
                     // Add a new stage.
                     try
                     {
-                        TextureManifest &texture = resSys().textureScheme("Reflections")
+                        res::TextureManifest &texture = resSys().textures().textureScheme("Reflections")
                                                                .findByResourceUri(*shineDef->stage.texture);
 
-                        TextureManifest *maskTexture = nullptr;
+                        res::TextureManifest *maskTexture = nullptr;
                         if (shineDef->stage.maskTexture)
                         {
                             try
                             {
-                                maskTexture = &resSys().textureScheme("Masks")
+                                maskTexture = &resSys().textures().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
                             }
                             catch (Resources::MissingResourceManifestError const &)
@@ -1125,8 +1126,8 @@ static void interpretMaterialDef(Record const &definition)
                 de::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
                 try
                 {
-                    TextureManifest &texManifest = resSys().textureManifest(textureUri);
-                    if (texManifest.hasTexture() && texManifest.texture().isFlagged(Texture::Custom))
+                    res::TextureManifest &texManifest = resSys().textures().textureManifest(textureUri);
+                    if (texManifest.hasTexture() && texManifest.texture().isFlagged(res::Texture::Custom))
                     {
                         manifest->setFlags(MaterialManifest::Custom);
                     }
@@ -1316,7 +1317,7 @@ void Def_Read()
     }
 
     // Detail textures (Define textures).
-    resSys().textureScheme("Details").clear();
+    res::Textures::get().textureScheme("Details").clear();
     for (dint i = 0; i < ::defs.details.size(); ++i)
     {
         ded_detailtexture_t *dtl = &::defs.details[i];
@@ -1327,12 +1328,12 @@ void Def_Read()
 
         if (!dtl->stage.texture) continue;
 
-        resSys().defineTexture("Details", *dtl->stage.texture);
+        res::Textures::get().defineTexture("Details", *dtl->stage.texture);
     }
 
     // Surface reflections (Define textures).
-    resSys().textureScheme("Reflections").clear();
-    resSys().textureScheme("Masks").clear();
+    res::Textures::get().textureScheme("Reflections").clear();
+    res::Textures::get().textureScheme("Masks").clear();
     for (dint i = 0; i < ::defs.reflections.size(); ++i)
     {
         ded_reflection_t *ref = &::defs.reflections[i];
@@ -1342,11 +1343,11 @@ void Def_Read()
 
         if (ref->stage.texture)
         {
-            resSys().defineTexture("Reflections", *ref->stage.texture);
+            res::Textures::get().defineTexture("Reflections", *ref->stage.texture);
         }
         if (ref->stage.maskTexture)
         {
-            resSys().defineTexture("Masks", *ref->stage.maskTexture,
+            res::Textures::get().defineTexture("Masks", *ref->stage.maskTexture,
                             Vector2ui(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }

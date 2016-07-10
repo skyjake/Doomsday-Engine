@@ -24,6 +24,8 @@
 #  include <QList>
 #endif
 #include <QtAlgorithms>
+#include <doomsday/res/TextureManifest>
+#include <doomsday/res/Textures>
 #include <de/vector1.h>
 #include <de/Log>
 #include "dd_loop.h" // frameTimePos
@@ -34,7 +36,6 @@
 #endif
 
 #include "MaterialManifest"
-#include "TextureManifest"
 
 #include "world/clientserverworld.h" // ddMapSetup
 #include "world/map.h"
@@ -449,7 +450,7 @@ dfloat Surface::glow(Vector3f &color) const
     matAnimator.prepare();
 
     TextureVariant *texture       = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
     if(!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
 
     color = Vector3f(avgColorAmplified->color.rgb);

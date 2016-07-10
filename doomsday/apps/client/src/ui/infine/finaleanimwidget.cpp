@@ -19,6 +19,7 @@
  */
 
 #include <de/vector1.h>
+#include <doomsday/res/Textures>
 #include "ui/infine/finaleanimwidget.h"
 
 #include "dd_main.h"   // App_ResourceSystem()
@@ -287,15 +288,15 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             break;
 
         case FinaleAnimWidget::Frame::PFT_PATCH: {
-            TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches")
+            res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches")
                                             .findByUniqueId(f->texRef.patch);
             if (manifest.hasTexture())
             {
-                Texture &tex = manifest.texture();
+                res::Texture &tex = manifest.texture();
                 TextureVariantSpec const &texSpec =
-                    Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                            | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
-                GL_BindTexture(tex.prepareVariant(texSpec));
+                    Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                            | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+                GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 

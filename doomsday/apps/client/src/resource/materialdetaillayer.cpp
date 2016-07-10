@@ -18,8 +18,10 @@
  */
 
 #include "resource/materialdetaillayer.h"
-#include "TextureScheme"
 #include "dd_main.h"
+
+#include <doomsday/res/TextureScheme>
+#include <doomsday/res/Textures>
 
 using namespace de;
 
@@ -29,12 +31,12 @@ static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
     {
         if(def.texture)
         {
-            return App_ResourceSystem().textureScheme("Details")
+            return res::Textures::get().textureScheme("Details")
                        .findByResourceUri(*def.texture)
                            .composeUri();
         }
     }
-    catch(TextureScheme::NotFoundError const &)
+    catch(res::TextureScheme::NotFoundError const &)
     {} // Ignore this error.
     return de::Uri();
 }

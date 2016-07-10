@@ -21,9 +21,9 @@
 
 #include "de_platform.h"
 #include "resource/framemodel.h"
+#include "ClientTexture"
 
-#include "Texture"
-#include "TextureManifest"
+#include <doomsday/res/TextureManifest>
 #include <doomsday/filesys/file.h>
 #include <de/Range>
 #include <de/memory.h>

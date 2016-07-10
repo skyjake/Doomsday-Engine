@@ -1,7 +1,7 @@
 /** @file compositetexture.h  Composite Texture.
  *
- * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,10 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_COMPOSITETEXTURE_H
-#define DENG_RESOURCE_COMPOSITETEXTURE_H
+#ifndef LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H
+#define LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H
 
-#include <doomsday/resource/patchname.h>
+#include "patchname.h"
 
 #include <QList>
 #include <QMultiMap>
@@ -32,7 +32,7 @@
 
 #include "dd_types.h" // For lumpnum_t
 
-namespace de {
+namespace res {
 
 /**
  * A logical texture composite of one or more @em component images.
@@ -42,7 +42,7 @@ namespace de {
  *
  * @ingroup resource
  */
-class CompositeTexture
+class LIBDOOMSDAY_PUBLIC Composite
 {
 public:
     /**
@@ -64,35 +64,33 @@ public:
     /**
      * Component image.
      */
-    struct Component
+    struct LIBDOOMSDAY_PUBLIC Component
     {
-    protected:
-        explicit Component(Vector2i const &origin = Vector2i());
-
     public:
+        explicit Component(de::Vector2i const &origin = de::Vector2i());
+
+        void setOrigin(de::Vector2i const &origin);
+
         /// Origin of the top left corner of the component (in texture space units).
-        Vector2i const &origin() const;
+        de::Vector2i const &origin() const;
 
         bool operator == (Component const &other) const;
-
-        inline bool operator != (Component const &other) const {
-            return !(*this == other);
-        }
+        bool operator != (Component const &other) const;
 
         /// X-axis origin of the top left corner of the component (in texture space units).
-        inline int xOrigin() const { return origin().x; }
+        inline int xOrigin() const { return int(origin().x); }
 
         /// Y-axis origin of the top left corner of the component (in texture space units).
-        inline int yOrigin() const { return origin().y; }
+        inline int yOrigin() const { return int(origin().y); }
 
         /// Returns the number of the lump (file) containing the associated
         /// image; otherwise @c -1 (not found).
         lumpnum_t lumpNum() const;
 
-        friend class CompositeTexture;
+        void setLumpNum(lumpnum_t num);
 
     private:
-        Vector2i _origin;    ///< Top left corner in the texture coordinate space.
+        de::Vector2i _origin;    ///< Top left corner in the texture coordinate space.
         lumpnum_t _lumpNum;  ///< Index of the lump containing the associated image.
     };
     typedef QList<Component> Components;
@@ -101,9 +99,9 @@ public:
     /**
      * Construct a default composite texture.
      */
-    explicit CompositeTexture(String const &percentEncodedName = "",
-                              de::Vector2ui const &logicalDimensions = de::Vector2ui(),
-                              Flags flags = 0);
+    explicit Composite(de::String const &percentEncodedName = "",
+                       de::Vector2ui const &logicalDimensions = de::Vector2ui(),
+                       Flags flags = 0);
 
     /**
      * Construct a composite texture by deserializing an archived id-tech 1
@@ -117,43 +115,44 @@ public:
      *
      * @return  The deserialized composite texture. Caller gets ownership.
      */
-    static CompositeTexture *constructFrom(Reader &reader, QList<PatchName> patchNames,
-                                           ArchiveFormat format = DoomFormat);
+    static Composite *constructFrom(de::Reader &reader,
+                                    QList<PatchName> patchNames,
+                                    ArchiveFormat format = DoomFormat);
 
     /**
      * Compare two composite texture definitions for equality.
      *
      * @return @c true if the definitions are equal.
      */
-    bool operator == (CompositeTexture const &other) const;
+    bool operator == (Composite const &other) const;
 
-    inline bool operator != (CompositeTexture const &other) const {
+    inline bool operator != (Composite const &other) const {
         return !(*this == other);
     }
 
     /// Returns the percent-endcoded symbolic name of the texture.
-    String percentEncodedName() const;
+    de::String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the texture.
-    String const &percentEncodedNameRef() const;
+    de::String const &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    Vector2ui const &logicalDimensions() const;
+    de::Vector2ui const &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
-    inline int logicalWidth() const { return logicalDimensions().x; }
+    inline int logicalWidth() const { return int(logicalDimensions().x); }
 
     /// Returns the logical height of the texture (in map space units).
-    inline int logicalHeight() const { return logicalDimensions().y; }
+    inline int logicalHeight() const { return int(logicalDimensions().y); }
 
     /// Returns the pixel dimensions of the texture.
-    Vector2ui const &dimensions() const;
+    de::Vector2ui const &dimensions() const;
 
     /// Returns the pixel width of the texture.
-    inline int width() const { return dimensions().x; }
+    inline int width() const { return int(dimensions().x); }
 
     /// Returns the pixel height of the texture.
-    inline int height() const { return dimensions().y; }
+    inline int height() const { return int(dimensions().y); }
 
     /// Returns the associated "original index" for the texture.
     int origIndex() const;
@@ -191,10 +190,10 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(CompositeTexture::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Composite::Flags)
 
-typedef CompositeTexture::Component CompositeTextureComponent;
+typedef Composite::Component CompositeComponent;
 
-} // namespace de
+} // namespace res
 
-#endif // DENG_RESOURCE_COMPOSITETEXTURE_H
+#endif // LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H

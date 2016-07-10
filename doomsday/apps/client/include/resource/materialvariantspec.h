@@ -25,7 +25,7 @@
 #endif
 
 #include "MaterialContext"
-#include "Texture" // TextureVariantSpec
+#include "ClientTexture" // TextureVariantSpec
 
 namespace de {
 

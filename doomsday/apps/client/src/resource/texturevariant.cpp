@@ -19,7 +19,6 @@
  */
 
 #include "de_base.h"
-#include "resource/texture.h"
 
 #include "r_util.h"
 
@@ -33,6 +32,7 @@
 #include "render/rend_main.h" // misc global vars awaiting new home
 
 #include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/Texture>
 #include <de/Log>
 #include <de/mathutil.h> // M_CeilPow
 
@@ -146,11 +146,11 @@ bool detailvariantspecification_t::operator == (detailvariantspecification_t con
 
 bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
 {
-    if(this == &other) return true;
+    if(this == &other) return true; // trivial
     if(type != other.type) return false;
     switch(type)
     {
-    case TST_GENERAL: return variant == other.variant;
+    case TST_GENERAL: return variant       == other.variant;
     case TST_DETAIL:  return detailVariant == other.detailVariant;
     }
     DENG2_ASSERT(false);
@@ -261,10 +261,10 @@ String TextureVariantSpec::asText() const
     return text;
 }
 
-DENG2_PIMPL(Texture::Variant)
+DENG2_PIMPL(ClientTexture::Variant)
 {
-    Texture &texture; /// The base for which "this" is a context derivative.
-    TextureVariantSpec const &spec; /// Usage context specification.
+    ClientTexture &texture; /// The base for which "this" is a context derivative.
+    TextureVariantSpec spec; /// Usage context specification.
     Flags flags;
 
     res::Source texSource; ///< Logical source of the image.
@@ -276,7 +276,7 @@ DENG2_PIMPL(Texture::Variant)
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Impl(Public *i, Texture &generalCase, TextureVariantSpec const &spec)
+    Impl(Public *i, ClientTexture &generalCase, TextureVariantSpec const &spec)
         : Base(i)
         , texture(generalCase)
         , spec(spec)
@@ -294,7 +294,7 @@ DENG2_PIMPL(Texture::Variant)
     }
 };
 
-Texture::Variant::Variant(Texture &generalCase, TextureVariantSpec const &spec)
+ClientTexture::Variant::Variant(ClientTexture &generalCase, TextureVariantSpec const &spec)
     : d(new Impl(this, generalCase, spec))
 {}
 
@@ -308,18 +308,18 @@ Texture::Variant::Variant(Texture &generalCase, TextureVariantSpec const &spec)
  * @param forceUpdate   Force an update of the recorded analysis data.
  */
 static void performImageAnalyses(image_t const &image,
-    texturevariantusagecontext_t context, Texture &tex, bool forceUpdate)
+    texturevariantusagecontext_t context, ClientTexture &tex, bool forceUpdate)
 {
     // Do we need color palette info?
     if(image.paletteId != 0)
     {
-        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(Texture::ColorPaletteAnalysis));
+        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(tex.analysisDataPointer(ClientTexture::ColorPaletteAnalysis));
         bool firstInit = (!cp);
 
         if(firstInit)
         {
             cp = (colorpalette_analysis_t *) M_Malloc(sizeof(*cp));
-            tex.setAnalysisDataPointer(Texture::ColorPaletteAnalysis, cp);
+            tex.setAnalysisDataPointer(ClientTexture::ColorPaletteAnalysis, cp);
         }
 
         if(firstInit || forceUpdate)
@@ -329,13 +329,13 @@ static void performImageAnalyses(image_t const &image,
     // Calculate a point light source for Dynlight and/or Halo?
     if(context == TC_SPRITE_DIFFUSE)
     {
-        pointlight_analysis_t *pl = reinterpret_cast<pointlight_analysis_t*>(tex.analysisDataPointer(Texture::BrightPointAnalysis));
+        pointlight_analysis_t *pl = reinterpret_cast<pointlight_analysis_t*>(tex.analysisDataPointer(ClientTexture::BrightPointAnalysis));
         bool firstInit = (!pl);
 
         if(firstInit)
         {
             pl = (pointlight_analysis_t *) M_Malloc(sizeof *pl);
-            tex.setAnalysisDataPointer(Texture::BrightPointAnalysis, pl);
+            tex.setAnalysisDataPointer(ClientTexture::BrightPointAnalysis, pl);
         }
 
         if(firstInit || forceUpdate)
@@ -349,13 +349,13 @@ static void performImageAnalyses(image_t const &image,
     // Average alpha?
     if(context == TC_SPRITE_DIFFUSE || context == TC_UI)
     {
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t*>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t*>(tex.analysisDataPointer(ClientTexture::AverageAlphaAnalysis));
         bool firstInit = (!aa);
 
         if(firstInit)
         {
             aa = (averagealpha_analysis_t *) M_Malloc(sizeof(*aa));
-            tex.setAnalysisDataPointer(Texture::AverageAlphaAnalysis, aa);
+            tex.setAnalysisDataPointer(ClientTexture::AverageAlphaAnalysis, aa);
         }
 
         if(firstInit || forceUpdate)
@@ -385,13 +385,13 @@ static void performImageAnalyses(image_t const &image,
     // Average color for sky ambient color?
     if(context == TC_SKYSPHERE_DIFFUSE)
     {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(ClientTexture::AverageColorAnalysis));
         bool firstInit = (!ac);
 
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageColorAnalysis, ac);
+            tex.setAnalysisDataPointer(ClientTexture::AverageColorAnalysis, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -413,13 +413,13 @@ static void performImageAnalyses(image_t const &image,
     // Amplified average color for plane glow?
     if(context == TC_MAPSURFACE_DIFFUSE)
     {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
         bool firstInit = (!ac);
 
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageColorAmplifiedAnalysis, ac);
+            tex.setAnalysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -447,13 +447,13 @@ static void performImageAnalyses(image_t const &image,
     // Average top line color for sky sphere fadeout?
     if(context == TC_SKYSPHERE_DIFFUSE)
     {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
         bool firstInit = (!ac);
 
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageTopColorAnalysis, ac);
+            tex.setAnalysisDataPointer(ClientTexture::AverageTopColorAnalysis, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -475,13 +475,13 @@ static void performImageAnalyses(image_t const &image,
     // Average bottom line color for sky sphere fadeout?
     if(context == TC_SKYSPHERE_DIFFUSE)
     {
-        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
+        averagecolor_analysis_t *ac = reinterpret_cast<averagecolor_analysis_t *>(tex.analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
         bool firstInit = (!ac);
 
         if(firstInit)
         {
             ac = (averagecolor_analysis_t *) M_Malloc(sizeof(*ac));
-            tex.setAnalysisDataPointer(Texture::AverageBottomColorAnalysis, ac);
+            tex.setAnalysisDataPointer(ClientTexture::AverageBottomColorAnalysis, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -502,7 +502,7 @@ static void performImageAnalyses(image_t const &image,
     }
 }
 
-uint Texture::Variant::prepare()
+uint ClientTexture::Variant::prepare()
 {
     LOG_AS("TextureVariant::prepare");
 
@@ -588,7 +588,7 @@ uint Texture::Variant::prepare()
     return d->glTexName;
 }
 
-void Texture::Variant::release()
+void ClientTexture::Variant::release()
 {
     if(!isPrepared()) return;
 
@@ -596,40 +596,40 @@ void Texture::Variant::release()
     d->glTexName = 0;
 }
 
-Texture &Texture::Variant::base() const
+ClientTexture &ClientTexture::Variant::base() const
 {
     return d->texture;
 }
 
-TextureVariantSpec const &Texture::Variant::spec() const
+TextureVariantSpec const &ClientTexture::Variant::spec() const
 {
     return d->spec;
 }
 
-res::Source Texture::Variant::source() const
+res::Source ClientTexture::Variant::source() const
 {
     return d->texSource;
 }
 
-String Texture::Variant::sourceDescription() const
+String ClientTexture::Variant::sourceDescription() const
 {
     if(d->texSource == res::Original) return "original";
     if(d->texSource == res::External) return "external";
     return "none";
 }
 
-Texture::Variant::Flags Texture::Variant::flags() const
+ClientTexture::Variant::Flags ClientTexture::Variant::flags() const
 {
     return d->flags;
 }
 
-void Texture::Variant::glCoords(float *outS, float *outT) const
+void ClientTexture::Variant::glCoords(float *outS, float *outT) const
 {
     if(outS) *outS = d->s;
     if(outT) *outT = d->t;
 }
 
-uint Texture::Variant::glName() const
+uint ClientTexture::Variant::glName() const
 {
     return d->glTexName;
 }

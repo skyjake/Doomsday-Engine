@@ -28,6 +28,7 @@
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <doomsday/res/Textures>
 #include <doomsday/filesys/fs_main.h>
 
 #include "clientapp.h"
@@ -262,9 +263,9 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if(Texture *tex = App_ResourceSystem().texture("Flaremaps", resourceUri))
+    if(auto *tex = res::Textures::get().texture("Flaremaps", resourceUri))
     {
-        if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
+        if(TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }

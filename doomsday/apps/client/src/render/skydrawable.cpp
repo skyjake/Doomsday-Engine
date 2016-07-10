@@ -29,8 +29,8 @@
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
-#include "Texture"
 #include "world/sky.h"
+#include "ClientTexture"
 
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
@@ -128,10 +128,10 @@ struct Hemisphere
             // Ensure we've up to date info about the material.
             matAnimator.prepare();
 
-            Texture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
+            ClientTexture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
-                    (pTex.analysisDataPointer((hemisphere == UpperHemisphere? Texture::AverageTopColorAnalysis
-                                                                            : Texture::AverageBottomColorAnalysis)));
+                    (pTex.analysisDataPointer((hemisphere == UpperHemisphere? res::Texture::AverageTopColorAnalysis
+                                                                            : res::Texture::AverageBottomColorAnalysis)));
             if(!avgColor)
             {
                 de::Uri const pTexUri = pTex.manifest().composeUri();

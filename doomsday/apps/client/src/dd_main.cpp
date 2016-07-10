@@ -67,6 +67,7 @@
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/res/Textures>
 #include <doomsday/help.h>
 #include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
@@ -702,8 +703,8 @@ int DD_ActivateGameWorker(void *context)
 
     // Some resources types are located prior to initializing the game.
     resSys.initTextures();
-    resSys.textureScheme("Lightmaps").clear();
-    resSys.textureScheme("Flaremaps").clear();
+    res::Textures::get().textureScheme("Lightmaps").clear();
+    res::Textures::get().textureScheme("Flaremaps").clear();
     resSys.mapManifests().initMapManifests();
 
     if (parms.initiatedBusyMode)
@@ -1177,8 +1178,8 @@ static void initialize()
         App_FileSystem().resetAllSchemes();
 
         App_ResourceSystem().initTextures();
-        App_ResourceSystem().textureScheme("Lightmaps").clear();
-        App_ResourceSystem().textureScheme("Flaremaps").clear();
+        res::Textures::get().textureScheme("Lightmaps").clear();
+        res::Textures::get().textureScheme("Flaremaps").clear();
         App_ResourceSystem().mapManifests().initMapManifests();
 
         Def_Read();

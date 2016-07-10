@@ -169,7 +169,7 @@ public:
     TextureVariantSpec(TextureVariantSpec const &other);
 
     bool operator == (TextureVariantSpec const &other) const;
-
+    
     inline bool operator != (TextureVariantSpec const &other) const {
         return !(*this == other);
     }

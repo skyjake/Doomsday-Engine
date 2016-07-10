@@ -17,17 +17,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_TEXTUREMANIFEST_H
-#define DENG_RESOURCE_TEXTUREMANIFEST_H
+#ifndef LIBDOOMSDAY_RESOURCE_TEXTUREMANIFEST_H
+#define LIBDOOMSDAY_RESOURCE_TEXTUREMANIFEST_H
 
-#include "Texture"
-#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Vector>
 
-namespace de {
+#include "../uri.h"
+#include "texture.h"
+
+namespace res {
 
 class TextureScheme;
 
@@ -40,7 +41,7 @@ class TextureScheme;
  * @see TextureScheme, Texture
  * @ingroup resource
  */
-class TextureManifest : public PathTree::Node
+class LIBDOOMSDAY_PUBLIC TextureManifest : public de::PathTree::Node
 {
 public:
     /// Required texture instance is missing. @ingroup errors
@@ -49,12 +50,16 @@ public:
     /// Required resource URI is not defined. @ingroup errors
     DENG2_ERROR(MissingResourceUriError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted(TextureManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted   (TextureManifest const &manifest))
     DENG2_DEFINE_AUDIENCE(UniqueIdChange, void textureManifestUniqueIdChanged(TextureManifest &manifest))
-    DENG2_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived(TextureManifest &manifest, Texture &texture))
+    DENG2_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived (TextureManifest &manifest, Texture &texture))
+
+    typedef std::function<Texture * (TextureManifest &)> TextureConstructor;
 
 public:
-    TextureManifest(PathTree::NodeArgs const &args);
+    static void setTextureConstructor(TextureConstructor constructor);
+
+    TextureManifest(de::PathTree::NodeArgs const &args);
 
     /**
      * Derive a new logical Texture instance by interpreting the manifest.
@@ -62,6 +67,8 @@ public:
      * is assigned to the manifest (ownership is assumed).
      */
     Texture *derive();
+    
+    void setScheme(TextureScheme &ownerScheme);    
 
     /**
      * Returns the owning scheme of the manifest.
@@ -69,7 +76,7 @@ public:
     TextureScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    String const &schemeName() const;
+    de::String const &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.
@@ -80,9 +87,9 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the TextureManifest.
      */
-    inline Uri composeUri(QChar sep = '/') const
+    inline de::Uri composeUri(QChar sep = '/') const
     {
-        return Uri(schemeName(), path(sep));
+        return de::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -97,9 +104,9 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    inline Uri composeUrn() const
+    inline de::Uri composeUrn() const
     {
-        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+        return de::Uri("urn", de::String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
     }
 
     /**
@@ -107,14 +114,14 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns a textual description of the source of the manifest.
      *
      * @return Human-friendly description of the source of the manifest.
      */
-    String sourceDescription() const;
+    de::String sourceDescription() const;
 
     /**
      * Returns @c true if a URI to an associated resource is defined.
@@ -124,7 +131,7 @@ public:
     /**
      * Returns the URI to the associated resource.
      */
-    Uri resourceUri() const;
+    de::Uri resourceUri() const;
 
     /**
      * Change the resource URI associated with the manifest.
@@ -132,7 +139,7 @@ public:
      * @return  @c true iff @a newUri differed to the existing URI, which
      *          was subsequently changed.
      */
-    bool setResourceUri(Uri const &newUri);
+    bool setResourceUri(de::Uri const &newUri);
 
     /**
      * Returns the scheme-unique identifier for the manifest.
@@ -150,7 +157,7 @@ public:
     /**
      * Returns the logical dimensions property of the manifest.
      */
-    Vector2ui const &logicalDimensions() const;
+    de::Vector2ui const &logicalDimensions() const;
 
     /**
      * Change the logical dimensions property of the manifest.
@@ -159,19 +166,19 @@ public:
      * which case their value will be inherited from the pixel dimensions of
      * the image at load time.
      */
-    bool setLogicalDimensions(Vector2ui const &newDimensions);
+    bool setLogicalDimensions(de::Vector2ui const &newDimensions);
 
     /**
      * Returns the world origin offset property of the manifest.
      */
-    Vector2i const &origin() const;
+    de::Vector2i const &origin() const;
 
     /**
      * Change the world origin offest property of the manifest.
      *
      * @param newOrigin  New origin offset.
      */
-    void setOrigin(Vector2i const &newOrigin);
+    void setOrigin(de::Vector2i const &newOrigin);
 
     /**
      * Returns the texture flags property of the manifest.
@@ -184,7 +191,7 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Texture::Flags flagsToChange, FlagOp operation = de::SetFlags);
+    void setFlags(Texture::Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true if a Texture is presently associated with the manifest.
@@ -218,15 +225,13 @@ public:
 
     /**
      * Clear the logical Texture associated with the manifest.
-     *
-     * Same as @c setTexture(0)
      */
-    inline void clearTexture() { setTexture(0); }
+    inline void clearTexture() { setTexture(nullptr); }
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
-#endif // DENG_RESOURCE_TEXTUREMANIFEST_H
+#endif // LIBDOOMSDAY_RESOURCE_TEXTUREMANIFEST_H

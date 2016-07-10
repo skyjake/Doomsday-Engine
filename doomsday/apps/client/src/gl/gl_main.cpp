@@ -53,7 +53,7 @@
 #include "resource/hq2x.h"
 #include "MaterialAnimator"
 #include "MaterialVariantSpec"
-#include "Texture"
+#include "ClientTexture"
 
 #include "api_render.h"
 #include "render/rend_main.h"

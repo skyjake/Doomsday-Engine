@@ -22,6 +22,8 @@
 #include "de_base.h"
 #include "api_material.h"
 
+#include <doomsday/res/Textures>
+
 using namespace de;
 
 #undef DD_MaterialForTextureUri
@@ -31,7 +33,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 
     try
     {
-        de::Uri uri = App_ResourceSystem().textureManifest(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
+        de::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return &App_ResourceSystem().material(uri);
     }

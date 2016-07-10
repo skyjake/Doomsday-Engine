@@ -23,7 +23,7 @@
 #ifndef DENG_CLIENT_RENDER_MISC_H
 #define DENG_CLIENT_RENDER_MISC_H
 
-#include "Texture"
+#include "ClientTexture"
 #include "TextureVariantSpec"
 #include <de/GLTexture>
 
@@ -38,10 +38,10 @@ void R_DrawViewBorder();
 TextureVariantSpec const &Rend_PatchTextureSpec(int flags = 0,
     de::gl::Wrapping wrapS = de::gl::ClampToEdge, de::gl::Wrapping wrapT = de::gl::ClampToEdge);
 
-void R_DrawPatch(de::Texture &texture, int x, int y);
-void R_DrawPatch(de::Texture &texture, int x, int y, int w, int h, bool useOffsets = true);
+void R_DrawPatch(ClientTexture &texture, int x, int y);
+void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOffsets = true);
 
-void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h,
+void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
     de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
 #endif // DENG_CLIENT_RENDER_MISC_H

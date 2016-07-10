@@ -21,7 +21,7 @@
 #ifndef DENG_CLIENT_GLTEXTUREUNIT_H
 #define DENG_CLIENT_GLTEXTUREUNIT_H
 
-#include "Texture"
+#include "ClientTexture"
 #include <de/GLTexture>
 #include <de/Vector>
 

@@ -1,8 +1,8 @@
 /**
  * @file patchname.h PatchName
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_PATCHNAME_H
-#define LIBDENG_RESOURCE_PATCHNAME_H
+#ifndef LIBDOOMSDAY_RESOURCE_PATCHNAME_H
+#define LIBDOOMSDAY_RESOURCE_PATCHNAME_H
 
 #include "dd_types.h" // For lumpnum_t
 
@@ -28,35 +28,34 @@
 #include <de/Reader>
 #include <de/String>
 
-namespace de {
+namespace res {
 
 /**
  * @ingroup resource
  */
-class PatchName : public IReadable
+class PatchName : public de::IReadable
 {
 public:
-    explicit PatchName(String percentEncodedName = "", lumpnum_t _lumpNum = -2);
+    explicit PatchName(de::String percentEncodedName = "", lumpnum_t lumpNum = -2);
 
     /// Returns the percent-endcoded symbolic name of the patch.
-    String percentEncodedName() const;
+    de::String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the patch.
-    String const &percentEncodedNameRef() const;
+    de::String const &percentEncodedNameRef() const;
 
     /// Returns the lump number of the associated patch.
     /// @pre The global patchNames data is available.
     lumpnum_t lumpNum();
 
     /// Implements IReadable.
-    void operator << (Reader &from);
+    void operator << (de::Reader &from);
 
 private:
-    String name;
-
-    lumpnum_t lumpNum_;
+    de::String _name;
+    lumpnum_t _lumpNum;
 };
 
-} // namespace de
+} // namespace res
 
-#endif /* LIBDENG_RESOURCE_PATCHNAME_H */
+#endif /* LIBDOOMSDAY_RESOURCE_PATCHNAME_H */

@@ -35,7 +35,7 @@
 
 #include "gl/gltextureunit.h"
 #include "render/viewports.h"
-#include "Texture"
+#include "ClientTexture"
 #include <de/Matrix>
 
 struct ColorRawf_s;
@@ -227,7 +227,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping 
  *
  * @param tex  Texture::Variant object which represents the GL texture to be bound.
  */
-void GL_BindTexture(de::Texture::Variant *tex);
+void GL_BindTexture(ClientTexture::Variant *tex);
 
 void GL_BindTextureUnmanaged(GLuint texname, de::gl::Wrapping wrapS = de::gl::Repeat,
     de::gl::Wrapping wrapT = de::gl::Repeat, de::gl::Filter = de::gl::Linear);

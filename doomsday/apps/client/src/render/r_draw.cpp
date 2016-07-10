@@ -19,6 +19,7 @@
  */
 
 #include <de/concurrency.h>
+#include <doomsday/res/Textures>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -78,11 +79,11 @@ static void loadViewBorderPatches()
     borderSize = info.geometry.size.height;
 }
 
-static Texture &borderTexture(int borderComp)
+static ClientTexture &borderTexture(int borderComp)
 {
-    TextureScheme &patches = resSys().textureScheme("Patches");
+    res::TextureScheme &patches = res::Textures::get().textureScheme("Patches");
     DENG2_ASSERT(borderComp >= 0 && borderComp < 9);
-    return patches.findByUniqueId(borderPatches[borderComp]).texture();
+    return static_cast<ClientTexture &>(patches.findByUniqueId(borderPatches[borderComp]).texture());
 }
 
 #undef R_SetBorderGfx
@@ -162,7 +163,7 @@ TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
 }
 
-void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
+void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOffsets)
 {
     if(texture.manifest().schemeName().compareWithoutCase("Patches"))
     {
@@ -172,8 +173,8 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
     }
 
     TextureVariantSpec const &texSpec =
-        Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+        Rend_PatchTextureSpec(0 | (texture.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (texture.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
     GL_BindTexture(texture.prepareVariant(texSpec));
 
     if(useOffsets)
@@ -185,17 +186,17 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
     GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch(Texture &tex, int x, int y)
+void R_DrawPatch(ClientTexture &tex, int x, int y)
 {
     R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h,
+void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
     gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     TextureVariantSpec const &spec =
-        Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+        Rend_PatchTextureSpec(0 | (texture.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                | (texture.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                               wrapS, wrapT);
 
     GL_BindTexture(texture.prepareVariant(spec));

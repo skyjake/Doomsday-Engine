@@ -26,12 +26,12 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
+#include <doomsday/res/Texture>
 #include "audio/s_environ.h"
 #include "MapElement"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
-#include "Texture"
 
 class MaterialManifest;
 #ifdef __CLIENT__
@@ -62,6 +62,7 @@ public:
      * Construct a new Material and attribute it with the given resource @a manifest.
      */
     Material(MaterialManifest &manifest);
+
     ~Material();
 
     /**

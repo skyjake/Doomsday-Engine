@@ -132,7 +132,7 @@ void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
     d->autoJoin = joinWhenSelected;
 }
 
-Action *ManualConnectionDialog::makeAction(ui::Item const &item)
+Action *ManualConnectionDialog::makeAction(ui::Item const &/*item*/)
 {
     //return d->games->makeAction(item);
     return nullptr;

@@ -37,7 +37,7 @@
 #include "m_misc.h"
 
 #ifdef __CLIENT__
-#  include "resource/compositetexture.h"
+#  include <doomsday/res/Composite>
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
 
@@ -657,10 +657,10 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
-    CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
-    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
+    res::Composite const &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
+    DENG2_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
     {
-        File1 &file       = App_FileSystem().lump(i->lumpNum());
+        File1 &file           = App_FileSystem().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
@@ -769,8 +769,8 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
     return Original;
 }
 
-Source GL_LoadSourceImage(image_t &image, Texture const &tex,
-    TextureVariantSpec const &spec)
+Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
+                          TextureVariantSpec const &spec)
 {
     de::FS1 &fileSys = App_FileSystem();
 

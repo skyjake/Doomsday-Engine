@@ -30,6 +30,7 @@ namespace res
 {
     class MapManifests;
     class ColorPalettes;
+    class Textures;
 }
 
 /**
@@ -40,6 +41,9 @@ namespace res
 class LIBDOOMSDAY_PUBLIC Resources : public de::System
 {
 public:
+    /// An unknown resource scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
     /// The referenced resource was not found. @ingroup errors
     DENG2_ERROR(MissingResourceError);
 
@@ -85,6 +89,9 @@ public:
 
     res::ColorPalettes &       colorPalettes();
     res::ColorPalettes const & colorPalettes() const;
+
+    res::Textures &       textures();
+    res::Textures const & textures() const;
 
 private:
     DENG2_PRIVATE(d)

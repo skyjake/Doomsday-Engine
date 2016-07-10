@@ -18,20 +18,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_TEXTURE_H
-#define DENG_RESOURCE_TEXTURE_H
+#ifndef LIBDOOMSDAY_RESOURCE_TEXTURE_H
+#define LIBDOOMSDAY_RESOURCE_TEXTURE_H
 
-#ifdef __CLIENT__
-#  include "resource/image.h" // res::Source
-#  include "TextureVariantSpec"
-#endif
+#include "../libdoomsday.h"
+
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
 
-namespace de {
+namespace res {
 
 class TextureManifest;
 
@@ -40,13 +38,11 @@ class TextureManifest;
  *
  * @ingroup resource
  */
-class Texture
+class LIBDOOMSDAY_PUBLIC Texture
 {
-    struct Impl; // Needs to be friended by Variant.
-
 public:
-    DENG2_DEFINE_AUDIENCE(Deletion, void textureBeingDeleted(Texture const &texture))
-    DENG2_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged(Texture const &texture))
+    DENG2_DEFINE_AUDIENCE(Deletion,         void textureBeingDeleted      (Texture const &))
+    DENG2_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged (Texture const &))
 
     /**
      * Classification/processing flags.
@@ -94,144 +90,13 @@ public:
         AverageBottomColorAnalysis
     };
 
-#ifdef __CLIENT__
-
-    /**
-     * Context-specialized variant. Encapsulates all context variant values
-     * and logics pertaining to a specialized version of the @em superior
-     * Texture instance.
-     *
-     * @see TextureVariantSpec
-     */
-    class Variant
-    {
-    public:
-        enum Flag
-        {
-            /// Texture contains alpha.
-            /// @todo Does not belong here (is actually a source image analysis).
-            Masked = 0x1
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
-
-    private:
-        /**
-         * @param texture  Base Texture from which the draw-context variant is derived.
-         * @param spec     Draw-context variant specification.
-         */
-        Variant(Texture &texture, TextureVariantSpec const &spec);
-
-    public:
-        /**
-         * Returns the base Texture for the draw-context variant.
-         */
-        Texture &base() const;
-
-        /// Returns @c true if the variant is "prepared".
-        inline bool isPrepared() const { return glName() != 0; }
-
-        /// Returns @c true if the variant is flagged as "masked".
-        inline bool isMasked() const { return isFlagged(Masked); }
-
-        /**
-         * Prepare the texture variant for render.
-         *
-         * @note If a cache miss occurs texture content data may need to be
-         * (re-)uploaded to GL. However, the actual upload will be deferred
-         * if possible. This has the side effect that although the variant
-         * is considered "prepared", attempts to render using the associated
-         * GL texture will result in "uninitialized" white texels being used
-         * instead.
-         *
-         * @return  GL-name of the uploaded texture.
-         */
-        uint prepare();
-
-        /**
-         * Release any uploaded GL-texture and clear the associated GL-name
-         * for the variant.
-         */
-        void release();
-
-        /**
-         * Returns the specification used to derive the variant.
-         */
-        TextureVariantSpec const &spec() const;
-
-        /**
-         * Returns the source of the image used to prepare the uploaded GL-texture
-         * for the variant.
-         */
-        res::Source source() const;
-
-        /**
-         * Returns a textual description of the source of the variant.
-         *
-         * @return Human-friendly description of the source of the variant.
-         */
-        String sourceDescription() const;
-
-        /**
-         * Returns the flags for the variant.
-         */
-        Flags flags() const;
-
-        /**
-         * Returns @c true if the variant is flagged @a flagsToTest.
-         */
-        inline bool isFlagged(Flags flagsToTest) const
-        {
-            return (flags() & flagsToTest) != 0;
-        }
-
-        /**
-         * Returns the GL-name of the uploaded texture content for the variant;
-         * otherwise @c 0 (not uploaded).
-         */
-        uint glName() const;
-
-        /**
-         * Returns the prepared GL-texture coordinates for the variant.
-         *
-         * @param s  S axis coordinate.
-         * @param t  T axis coordinate.
-         */
-        void glCoords(float *s, float *t) const;
-
-        friend class Texture;
-        friend struct Texture::Impl;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-
-    /// A list of variants.
-    typedef QList<Variant *> Variants;
-
-    /**
-     * Logics for selecting a texture variant instance from the candidates.
-     *
-     * @see chooseVariant()
-     */
-    enum ChooseVariantMethod
-    {
-        /// The variant specification of the candidate must match exactly.
-        MatchSpec,
-
-        /// The variant specification of the candidate must match however
-        /// certain properties may vary (e.g., quality arguments) if it means
-        /// we can avoid creating a new variant.
-        FuzzyMatchSpec
-    };
-
-#endif // __CLIENT__
-
 public:
     /**
      * @param manifest  Manifest derived to yield the texture.
      */
     Texture(TextureManifest &manifest);
-    ~Texture();
+
+    virtual ~Texture();
 
     /**
      * Returns the TextureManifest derived to yield the texture.
@@ -243,14 +108,14 @@ public:
      *
      * @return Human-friendly description/overview of the texture.
      */
-    String description() const;
+    virtual de::String description() const;
 
     /**
      * Returns the world dimensions of the texture, in map coordinate space
      * units. The DimensionsChange audience is notified whenever dimensions
      * are changed.
      */
-    Vector2ui const &dimensions() const;
+    de::Vector2ui const &dimensions() const;
 
     /**
      * Convenient accessor method for returning the X axis size (width) of
@@ -258,7 +123,7 @@ public:
      *
      * @see dimensions()
      */
-    inline int width() const { return dimensions().x; }
+    inline int width() const { return int(dimensions().x); }
 
     /**
      * Convenient accessor method for returning the X axis size (height) of
@@ -266,7 +131,7 @@ public:
      *
      * @see dimensions()
      */
-    inline int height() const { return dimensions().y; }
+    inline int height() const { return int(dimensions().y); }
 
     /**
      * Change the world dimensions of the texture.
@@ -274,7 +139,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(Vector2ui const &newDimensions);
+    void setDimensions(de::Vector2ui const &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -282,7 +147,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setWidth(duint newWidth);
+    void setWidth(de::duint newWidth);
 
     /**
      * Change the world height of the texture.
@@ -290,18 +155,18 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setHeight(duint newHeight);
+    void setHeight(de::duint newHeight);
 
     /**
      * Returns the world origin offset of texture in map coordinate space units.
      */
-    Vector2i const &origin() const;
+    de::Vector2i const &origin() const;
 
     /**
      * Change the world origin offset of the texture.
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(Vector2i const &newOrigin);
+    void setOrigin(de::Vector2i const &newOrigin);
 
     /**
      * Returns @c true if the texture is flagged @a flagsToTest.
@@ -321,60 +186,12 @@ public:
      */
     void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
-#ifdef __CLIENT__
-
-    /**
-     * Destroys all derived variants for the texture.
-     */
-    void clearVariants();
-
-    /**
-     * Choose/create a variant of the texture which fulfills @a spec.
-     *
-     * @param method    Method of selection.
-     * @param spec      Texture specialization specification.
-     * @param canCreate @c true= Create a new variant if no suitable one exists.
-     *
-     * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
-     */
-    Variant *chooseVariant(ChooseVariantMethod method,
-        TextureVariantSpec const &spec, bool canCreate = false);
-
-    /**
-     * Choose/create a variant of the texture which fulfills @a spec and then
-     * immediately prepare it for render.
-     *
-     * @note A convenient shorthand of the call tree:
-     * <pre>
-     *    chooseVariant(MatchSpec, @a spec, true)->prepareVariant();
-     * </pre>
-     *
-     * @param spec      Specification for the derivation of the texture.
-     *
-     * @return  The prepared texture variant if successful; otherwise @c 0.
-     *
-     * @see chooseVariant()
-     */
-    Variant *prepareVariant(TextureVariantSpec const &spec);
-
-    /**
-     * Provides access to the list of variant instances for efficent traversal.
-     */
-    Variants const &variants() const;
-
-    /**
-     * Returns the number of variants for the texture.
-     */
-    uint variantCount() const;
-
     /**
      * Release prepared GL-textures for identified variants.
      *
      * @param spec  If non-zero release only for variants derived with this spec.
      */
-    void releaseGLTextures(TextureVariantSpec *spec = 0);
-
-#endif // __CLIENT__
+    virtual void release();
 
     /**
      * Destroys all analyses for the texture.
@@ -423,16 +240,11 @@ public:
     static void consoleRegister();
 
 private:
-    Impl *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Texture::Flags)
 
-#ifdef __CLIENT__
-// Alias.
-typedef Texture::Variant TextureVariant;
-#endif
+} // namespace res
 
-} // namespace de
-
-#endif // DENG_RESOURCE_TEXTURE_H
+#endif // LIBDOOMSDAY_RESOURCE_TEXTURE_H

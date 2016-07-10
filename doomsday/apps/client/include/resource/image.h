@@ -31,9 +31,7 @@
 
 /// @todo Should not depend on texture-level stuff here.
 class TextureVariantSpec;
-namespace de {
-class Texture;
-}
+class ClientTexture;
 
 namespace res
 {
@@ -67,19 +65,19 @@ struct image_t
     typedef de::Vector2ui Size;
 
     /// @ref imageFlags
-    int flags;
+    int flags = 0;
 
     /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
-    uint paletteId;
+    uint paletteId = 0;
 
     /// Size of the image in pixels.
     Size size;
 
     /// Bytes per pixel in the data buffer.
-    int pixelSize;
+    int pixelSize = 0;
 
     /// Pixel color/palette (+alpha) data buffer.
-    uint8_t *pixels;
+    uint8_t *pixels = nullptr;
 };
 
 /**
@@ -140,7 +138,7 @@ uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
 res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
 
 /// @todo Move into image_t
-res::Source GL_LoadSourceImage(image_t &image, de::Texture const &tex,
-    TextureVariantSpec const &spec);
+res::Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
+                               TextureVariantSpec const &spec);
 
 #endif // DENG_RESOURCE_IMAGE_H

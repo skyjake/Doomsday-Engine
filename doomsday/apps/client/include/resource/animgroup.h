@@ -22,7 +22,7 @@
 #define DENG_RESOURCE_ANIMATIONGROUP_H
 
 #include "dd_types.h"
-#include "TextureManifest"
+#include <doomsday/res/TextureManifest>
 #include <QList>
 
 namespace de {
@@ -44,7 +44,7 @@ public:
         /**
          * Returns the texture manifest for the frame.
          */
-        TextureManifest &textureManifest() const;
+        res::TextureManifest &textureManifest() const;
 
         /**
          * Returns the duration of the frame in tics.
@@ -59,9 +59,9 @@ public:
         friend class AnimGroup;
 
     private:
-        Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics);
+        Frame(res::TextureManifest &textureManifest, ushort tics, ushort randomTics);
 
-        TextureManifest *_textureManifest;
+        res::TextureManifest *_textureManifest;
         ushort _tics;
         ushort _randomTics;
     };
@@ -93,7 +93,7 @@ public:
      *
      * @see frames()
      */
-    bool hasFrameFor(TextureManifest const &textureManifest) const;
+    bool hasFrameFor(res::TextureManifest const &textureManifest) const;
 
     /**
      * Append a new frame to the animation.
@@ -104,7 +104,7 @@ public:
      *
      * @return  The new frame.
      */
-    Frame &newFrame(TextureManifest &textureManifest, ushort tics,
+    Frame &newFrame(res::TextureManifest &textureManifest, ushort tics,
                     ushort randomTics = 0);
 
     /**

@@ -75,7 +75,7 @@ struct SubmodelDef
     char skinRange;
     de::Vector3f offset;
     byte alpha;
-    de::Texture *shinySkin;
+    res::Texture *shinySkin;
     blendmode_t blendMode;
 
     SubmodelDef()

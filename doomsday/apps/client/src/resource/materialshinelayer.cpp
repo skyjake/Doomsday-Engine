@@ -19,7 +19,8 @@
 
 #include "resource/materialshinelayer.h"
 #include "dd_main.h"
-#include "TextureScheme"
+#include <doomsday/res/TextureScheme>
+#include <doomsday/res/Textures>
 
 using namespace de;
 
@@ -29,12 +30,12 @@ static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findM
     {
         try
         {
-            return App_ResourceSystem()
+            return res::Textures::get()
                        .textureScheme(findMask? "Masks" : "Reflections")
                            .findByResourceUri(*resourceUri)
                                .composeUri();
         }
-        catch(TextureScheme::NotFoundError const &)
+        catch(res::TextureScheme::NotFoundError const &)
         {} // Ignore this error.
     }
     return de::Uri();

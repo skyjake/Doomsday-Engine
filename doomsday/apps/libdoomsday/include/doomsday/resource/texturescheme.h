@@ -17,16 +17,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_TEXTURESCHEME_H
-#define DENG_RESOURCE_TEXTURESCHEME_H
+#ifndef LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H
+#define LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H
 
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Error>
-#include <doomsday/uri.h>
-#include "TextureManifest"
 
-namespace de {
+#include "../uri.h"
+#include "texturemanifest.h"
+
+namespace res {
 
 /**
  * Texture collection subspace.
@@ -34,9 +35,9 @@ namespace de {
  * @see Textures
  * @ingroup resource
  */
-class TextureScheme
+class LIBDOOMSDAY_PUBLIC TextureScheme
 {
-    typedef class TextureManifest Manifest;
+    using Manifest = TextureManifest;
 
 public:
     /// The requested manifest could not be found in the index.
@@ -51,7 +52,7 @@ public:
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
-    typedef PathTreeT<Manifest> Index;
+    typedef de::PathTreeT<Manifest> Index;
 
 public:
     /**
@@ -60,13 +61,14 @@ public:
      * @param symbolicName  Symbolic name of the new subspace scheme. Must
      *                      have at least @ref min_name_length characters.
      */
-    explicit TextureScheme(String symbolicName);
+    explicit TextureScheme(de::String symbolicName);
+
     ~TextureScheme();
 
     /**
      * Returns the symbolic name of the scheme.
      */
-    String const &name() const;
+    de::String const &name() const;
 
     /**
      * Returns the total number of manifests in the scheme.
@@ -97,25 +99,29 @@ public:
      *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(Path const &path, Texture::Flags flags, Vector2ui const &dimensions,
-        Vector2i const &origin, int uniqueId, de::Uri const *resourceUri);
+    Manifest &declare(de::Path const &path,
+                      Texture::Flags flags,
+                      de::Vector2ui const &dimensions,
+                      de::Vector2i const &origin,
+                      int uniqueId,
+                      de::Uri const *resourceUri);
 
     /**
      * Returns @c true if a manifest exists on the given @a path.
      */
-    bool has(Path const &path) const;
+    bool has(de::Path const &path) const;
 
     /**
      * Lookup a Manifest in the scheme with a matching @a path.
      */
-    Manifest       &find(Path const &path);
-    Manifest const &find(Path const &path) const;
+    Manifest       &find(de::Path const &path);
+    Manifest const &find(de::Path const &path) const;
 
     /**
      * Lookup a Manifest in the scheme with an associated resource URI matching @a uri.
      */
-    Manifest       &findByResourceUri(Uri const &uri);
-    Manifest const &findByResourceUri(Uri const &uri) const;
+    Manifest       &findByResourceUri(de::Uri const &uri);
+    Manifest const &findByResourceUri(de::Uri const &uri) const;
 
     /**
      * Lookup a Manifest in the scheme with an associated identifier matching @a uniqueId.
@@ -132,6 +138,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
-#endif  // DENG_RESOURCE_TEXTURESCHEME_H
+#endif  // LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H

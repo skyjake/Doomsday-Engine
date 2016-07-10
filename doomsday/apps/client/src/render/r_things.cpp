@@ -493,7 +493,7 @@ void R_ProjectSprite(mobj_t &mob)
                 return;
             }
 
-            auto const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(Texture::BrightPointAnalysis);
+            auto const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
             DENG2_ASSERT(pl);
 
             Lumobj const &lob = cluster.sector().map().lumobj(mob.lumIdx);

@@ -21,6 +21,7 @@
 
 #include <array>
 #include <de/Log>
+#include <doomsday/res/Textures>
 #include "clientapp.h"
 #include "client/cl_def.h"      // playback / clientPaused
 #include "MaterialVariantSpec"
@@ -53,7 +54,7 @@ static inline ResourceSystem &resSys()
  *
  * @return  @c 0= Use the automatic selection logic.
  */
-static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
+static DGLuint prepareFlaremap(ClientTexture *texture, int oldIdx)
 {
     if(texture)
     {
@@ -88,9 +89,9 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     float flareSize      = 0;  ///< Halo radius (zero = no halo).
     DGLuint flareTex     = 0;
 
-    Texture *tex         = nullptr;
-    Texture *ceilTex     = nullptr;
-    Texture *floorTex    = nullptr;
+    ClientTexture *tex      = nullptr;
+    ClientTexture *ceilTex  = nullptr;
+    ClientTexture *floorTex = nullptr;
 
     Impl() { de::zap(lightLevels); }
 
@@ -153,17 +154,17 @@ DGLuint MaterialAnimator::Decoration::flareTex() const
     return d->flareTex;
 }
 
-Texture *MaterialAnimator::Decoration::tex() const
+ClientTexture *MaterialAnimator::Decoration::tex() const
 {
     return d->tex;
 }
 
-Texture *MaterialAnimator::Decoration::ceilTex() const
+ClientTexture *MaterialAnimator::Decoration::ceilTex() const
 {
     return d->ceilTex;
 }
 
-Texture *MaterialAnimator::Decoration::floorTex() const
+ClientTexture *MaterialAnimator::Decoration::floorTex() const
 {
     return d->floorTex;
 }
@@ -251,14 +252,14 @@ void MaterialAnimator::Decoration::reset()
  *
  * @todo optimize: Perform this lookup once (when assets are cached).
  */
-static Texture *findTextureForAnimationStage(MaterialTextureLayer::AnimationStage const &stage,
-                                             String const &propertyName = "texture")
+static ClientTexture *findTextureForAnimationStage(MaterialTextureLayer::AnimationStage const &stage,
+                                                   String const &propertyName = "texture")
 {
     try
     {
-        return &resSys().texture(de::Uri(stage.gets(propertyName, ""), RC_NULL));
+        return static_cast<ClientTexture *>(&res::Textures::get().texture(de::Uri(stage.gets(propertyName, ""), RC_NULL)));
     }
-    catch(TextureManifest::MissingTextureError &)
+    catch(res::TextureManifest::MissingTextureError &)
     {}
     catch(Resources::MissingResourceManifestError &)
     {}
@@ -404,7 +405,7 @@ DENG2_PIMPL(MaterialAnimator)
                     MaterialTextureLayer::AnimationStage const &stage = detailLayer->stage(ls.stage);
                     MaterialTextureLayer::AnimationStage const &next  = detailLayer->stage(ls.stage + 1);
 
-                    if(Texture *tex = findTextureForAnimationStage(stage))
+                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         float const contrast = de::clamp(0.f, stage.getf("strength"), 1.f) * ::detailFactor /*Global strength multiplier*/;
                         snapshot->textures[TU_DETAIL] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
@@ -412,7 +413,7 @@ DENG2_PIMPL(MaterialAnimator)
                     // Smooth Texture Animation?
                     if(::smoothTexAnim && &stage != &next)
                     {
-                        if(Texture *tex = findTextureForAnimationStage(next))
+                        if(ClientTexture *tex = findTextureForAnimationStage(next))
                         {
                             float const contrast = de::clamp(0.f, next.getf("strength"), 1.f) * ::detailFactor /*Global strength multiplier*/;
                             snapshot->textures[TU_DETAIL_INTER] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
@@ -424,12 +425,12 @@ DENG2_PIMPL(MaterialAnimator)
                     MaterialTextureLayer::AnimationStage const &stage = layer.as<MaterialTextureLayer>().stage(ls.stage);
                     //MaterialTextureLayer::AnimationStage const &next  = layer.stage(l.stage + 1);
 
-                    if(Texture *tex = findTextureForAnimationStage(stage))
+                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         snapshot->textures[TU_SHINE] = tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
 
                         // We are only interested in a mask if we have a shiny texture.
-                        if(Texture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
+                        if(ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
                         {
                             snapshot->textures[TU_SHINE_MASK] = maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                         }
@@ -440,14 +441,14 @@ DENG2_PIMPL(MaterialAnimator)
                     MaterialTextureLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
                     MaterialTextureLayer::AnimationStage const &next  = texLayer->stage(ls.stage + 1);
 
-                    if(Texture *tex = findTextureForAnimationStage(stage))
+                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         snapshot->textures[TU_LAYER0 + texLayerIndex] = tex->prepareVariant(*spec->primarySpec);
                     }
                     // Smooth Texture Animation?
                     if(::smoothTexAnim && &stage != &next)
                     {
-                        if(Texture *tex = findTextureForAnimationStage(next))
+                        if(ClientTexture *tex = findTextureForAnimationStage(next))
                         {
                             snapshot->textures[TU_LAYER0_INTER + texLayerIndex] = tex->prepareVariant(*spec->primarySpec);
                         }
@@ -729,7 +730,7 @@ void MaterialAnimator::cacheAssets()
             {
                 MaterialTextureLayer::AnimationStage &stage = layer->stage(k);
 
-                if(Texture *tex = findTextureForAnimationStage(stage))
+                if(ClientTexture *tex = findTextureForAnimationStage(stage))
                 {
                     if(layer->is<MaterialDetailLayer>())
                     {
@@ -739,7 +740,7 @@ void MaterialAnimator::cacheAssets()
                     else if(layer->is<MaterialShineLayer>())
                     {
                         tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                        if(Texture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
+                        if(ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
                         {
                             maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                         }

@@ -23,6 +23,7 @@
 #include <QtAlgorithms>
 #include <de/Log>
 #include <doomsday/console/cmd.h>
+#include <doomsday/res/Textures>
 
 #include "dd_main.h"
 #include "MaterialManifest"
@@ -175,8 +176,8 @@ String Material::Decoration::description() const
 // ------------------------------------------------------------------------------------
 
 DENG2_PIMPL(Material)
-, DENG2_OBSERVES(Texture, Deletion)
-, DENG2_OBSERVES(Texture, DimensionsChange)
+, DENG2_OBSERVES(res::Texture, Deletion)
+, DENG2_OBSERVES(res::Texture, DimensionsChange)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
@@ -228,7 +229,7 @@ DENG2_PIMPL(Material)
      * Determines which texture we would be interested in obtaining our world dimensions
      * from if our own dimensions are undefined.
      */
-    Texture *inheritDimensionsTexture() const
+    res::Texture *inheritDimensionsTexture() const
     {
         if(auto const *texLayer = firstTextureLayer())
         {
@@ -236,9 +237,9 @@ DENG2_PIMPL(Material)
             {
                 try
                 {
-                    return &App_ResourceSystem().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
+                    return &res::Textures::get().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
                 }
-                catch(TextureManifest::MissingTextureError &)
+                catch(res::TextureManifest::MissingTextureError &)
                 {}
                 catch(Resources::MissingResourceManifestError &)
                 {}
@@ -256,7 +257,7 @@ DENG2_PIMPL(Material)
         // Both dimensions must still be undefined.
         if(haveValidDimensions()) return;
 
-        Texture *inheritanceTexture = inheritDimensionsTexture();
+        res::Texture *inheritanceTexture = inheritDimensionsTexture();
         if(!inheritanceTexture) return;
 
         inheritanceTexture->audienceForDimensionsChange -= this;
@@ -265,14 +266,14 @@ DENG2_PIMPL(Material)
     }
 
     // Observes Texture DimensionsChange.
-    void textureDimensionsChanged(Texture const &texture)
+    void textureDimensionsChanged(res::Texture const &texture)
     {
         DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
         self.setDimensions(texture.dimensions());
     }
 
     // Observes Texture Deletion.
-    void textureBeingDeleted(Texture const &texture)
+    void textureBeingDeleted(res::Texture const &texture)
     {
         // If here it means the texture we were planning to inherit dimensions from is
         // being deleted and therefore we won't be able to.
@@ -428,7 +429,7 @@ void Material::addLayerAt(Layer *layer, int position)
 
     if(!d->haveValidDimensions())
     {
-        if(Texture *tex = d->inheritDimensionsTexture())
+        if(res::Texture *tex = d->inheritDimensionsTexture())
         {
             tex->audienceForDeletion         += d;
             tex->audienceForDimensionsChange += d;

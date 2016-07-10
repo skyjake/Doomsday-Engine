@@ -21,6 +21,8 @@
 #include "clientapp.h"
 #include "resource/compositebitmapfont.h"
 
+#include <doomsday/res/Textures>
+
 #include "api_resource.h" // R_GetPatchInfo
 #include "dd_main.h" // App_ResourceSystem(), isDedicated
 #include "sys_system.h" // novideo
@@ -146,8 +148,6 @@ void CompositeBitmapFont::glInit()
 
     glDeinit();
 
-    ResourceSystem &resSys = App_ResourceSystem();
-
     int foundGlyphs = 0;
     Vector2ui avgSize;
     for(int i = 0; i < MAX_CHARS; ++i)
@@ -160,9 +160,9 @@ void CompositeBitmapFont::glInit()
 
         try
         {
-            Texture &tex = resSys.textureScheme("Patches").findByUniqueId(patch).texture();
+            res::Texture &tex = res::Textures::get().textureScheme("Patches").findByUniqueId(patch).texture();
 
-            ch->tex      = tex.prepareVariant(glyphTextureSpec());
+            ch->tex      = static_cast<ClientTexture &>(tex).prepareVariant(glyphTextureSpec());
             ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVector2ui());
 
             ch->border   = 0;
@@ -175,12 +175,12 @@ void CompositeBitmapFont::glInit()
             avgSize += ch->geometry.size();
             ++foundGlyphs;
         }
-        catch(TextureManifest::MissingTextureError const &er)
+        catch(res::TextureManifest::MissingTextureError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
-        catch(TextureScheme::NotFoundError const &er)
+        catch(res::TextureScheme::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");

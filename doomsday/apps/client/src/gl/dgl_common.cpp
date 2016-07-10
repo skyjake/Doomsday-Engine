@@ -27,6 +27,7 @@
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <doomsday/res/Textures>
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
@@ -609,7 +610,7 @@ int DGL_Enable(int cap)
     case DGL_POINT_SMOOTH:
         glEnable(GL_POINT_SMOOTH);
         break;
-            
+
     default:
         DENG_ASSERT(!"DGL_Enable: Invalid cap");
         return 0;
@@ -647,7 +648,7 @@ void DGL_Disable(int cap)
     case DGL_POINT_SMOOTH:
         glDisable(GL_POINT_SMOOTH);
         break;
-            
+
     default:
         DENG_ASSERT(!"DGL_Disable: Invalid cap");
         break;
@@ -754,17 +755,17 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     try
     {
-        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
+        res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches").findByUniqueId(id);
         if(!manifest.hasTexture()) return;
 
-        Texture &tex = manifest.texture();
+        res::Texture &tex = manifest.texture();
         TextureVariantSpec const &texSpec =
-            Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                    | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
+            Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                    | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                                   DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
-        GL_BindTexture(tex.prepareVariant(texSpec));
+        GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
     }
-    catch(TextureScheme::NotFoundError const &er)
+    catch(res::TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING("Cannot use patch ID %i: %s") << id << er.asText();

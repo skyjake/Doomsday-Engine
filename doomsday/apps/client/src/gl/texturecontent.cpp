@@ -309,9 +309,11 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
     return DGL_LUMINANCE;
 }
 
-void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
-    image_t &image, TextureVariantSpec const &spec,
-    TextureManifest const &textureManifest)
+void GL_PrepareTextureContent(texturecontent_t &c,
+                              GLuint glTexName,
+                              image_t &image,
+                              TextureVariantSpec const &spec,
+                              res::TextureManifest const &textureManifest)
 {
     DENG_ASSERT(glTexName != 0);
     DENG_ASSERT(image.pixels != 0);

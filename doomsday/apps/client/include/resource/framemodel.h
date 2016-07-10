@@ -21,7 +21,9 @@
 #define DENG_RESOURCE_FRAMEMODEL_H
 
 #include <doomsday/filesys/filehandle.h>
-#include "Texture"
+#ifdef __CLIENT__
+#  include "ClientTexture"
+#endif
 #include <de/Error>
 #include <de/String>
 #include <de/Vector>
@@ -92,9 +94,9 @@ public:
     struct Skin
     {
         de::String name;
-        de::Texture *texture; // Not owned.
+        res::Texture *texture; // Not owned.
 
-        Skin(de::String const &name = de::String(), de::Texture *texture = 0)
+        Skin(de::String const &name = de::String(), res::Texture *texture = 0)
             : name(name), texture(texture)
         {}
     };

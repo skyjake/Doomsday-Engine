@@ -31,6 +31,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/res/Textures>
 #include <doomsday/world/mobjthinkerdata.h>
 
 #include "def_main.h"
@@ -437,10 +438,10 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
     return 0;
 }
 
-static inline Texture *lightmap(de::Uri const *textureUri)
+static inline ClientTexture *lightmap(de::Uri const *textureUri)
 {
     if(!textureUri) return nullptr;
-    return App_ResourceSystem().texture("Lightmaps", *textureUri);
+    return static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", *textureUri));
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mo)
@@ -635,7 +636,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
 
                     if(TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
                     {
-                        auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                        auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
                         DENG2_ASSERT(aa);
 
                         // We use an average which factors in the coverage ratio of

@@ -17,23 +17,27 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "resource/texturemanifest.h"
-
-#include "dd_main.h" // App_ResourceSystem()
+#include "doomsday/resource/texturemanifest.h"
+#include "doomsday/resource/textures.h"
+#include "doomsday/resource/resources.h"
 
 using namespace de;
 
-DENG2_PIMPL(TextureManifest),
-DENG2_OBSERVES(Texture, Deletion)
+namespace res {
+
+static TextureManifest::TextureConstructor textureConstructor;
+
+DENG2_PIMPL(TextureManifest)
+, DENG2_OBSERVES(Texture, Deletion)
 {
     int uniqueId;                    ///< Scheme-unique identifier (user defined).
     Uri resourceUri;                 ///< Image resource path, to be loaded.
     Vector2ui logicalDimensions;     ///< Dimensions in map space.
     Vector2i origin;                 ///< Origin offset in map space.
     Texture::Flags flags;            ///< Classification flags.
-    QScopedPointer<Texture> texture; ///< Associated resource (if any).
-
+    std::unique_ptr<Texture> texture;///< Associated resource (if any).
+    TextureScheme *ownerScheme = nullptr;
+    
     Impl(Public *i)
         : Base(i)
         , uniqueId(0)
@@ -41,27 +45,31 @@ DENG2_OBSERVES(Texture, Deletion)
 
     ~Impl()
     {
+        if (texture) texture->audienceForDeletion -= this;
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self);
     }
 
     // Observes Texture Deletion.
     void textureBeingDeleted(Texture const & /*texture*/)
     {
-        texture.reset();
+        texture.release();
     }
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Impl(this))
+    : Node(args)
+    , d(new Impl(this))
 {}
 
 Texture *TextureManifest::derive()
 {
     LOG_AS("TextureManifest::derive");
-    if(!hasTexture())
+    if (!hasTexture())
     {
+        DENG2_ASSERT(textureConstructor != nullptr);
+
         // Instantiate and associate the new texture with this.
-        setTexture(new Texture(*this));
+        setTexture(textureConstructor(*this));
 
         // Notify interested parties that a new texture was derived from the manifest.
         DENG2_FOR_AUDIENCE(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
@@ -78,19 +86,16 @@ Texture *TextureManifest::derive()
     return &texture();
 }
 
+void TextureManifest::setScheme(TextureScheme &ownerScheme)
+{
+    // Note: this pointer will only become invalid if the scheme is deleted, but in
+    // that case this manifest will be deleted first anyway.
+    d->ownerScheme = &ownerScheme;
+}
+    
 TextureScheme &TextureManifest::scheme() const
 {
-    LOG_AS("TextureManifest::scheme");
-    /// @todo Optimize: TextureManifest should contain a link to the owning TextureScheme.
-    foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
-    {
-        if(&scheme->index() == &tree())
-        {
-            return *scheme;
-        }
-    }
-    /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
-    throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
+    return *d->ownerScheme;
 }
 
 String const &TextureManifest::schemeName() const
@@ -113,8 +118,8 @@ String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFl
 
 String TextureManifest::sourceDescription() const
 {
-    if(!hasTexture()) return "unknown";
-    if(texture().isFlagged(Texture::Custom)) return "add-on";
+    if (!hasTexture()) return "unknown";
+    if (texture().isFlagged(Texture::Custom)) return "add-on";
     return "game";
 }
 
@@ -125,7 +130,7 @@ bool TextureManifest::hasResourceUri() const
 
 de::Uri TextureManifest::resourceUri() const
 {
-    if(hasResourceUri())
+    if (hasResourceUri())
     {
         return d->resourceUri;
     }
@@ -136,7 +141,7 @@ de::Uri TextureManifest::resourceUri() const
 bool TextureManifest::setResourceUri(de::Uri const &newUri)
 {
     // Avoid resolving; compare as text.
-    if(d->resourceUri.asText() != newUri.asText())
+    if (d->resourceUri.asText() != newUri.asText())
     {
         d->resourceUri = newUri;
         return true;
@@ -151,7 +156,7 @@ int TextureManifest::uniqueId() const
 
 bool TextureManifest::setUniqueId(int newUniqueId)
 {
-    if(d->uniqueId == newUniqueId) return false;
+    if (d->uniqueId == newUniqueId) return false;
 
     d->uniqueId = newUniqueId;
 
@@ -178,7 +183,7 @@ Vector2ui const &TextureManifest::logicalDimensions() const
 
 bool TextureManifest::setLogicalDimensions(Vector2ui const &newDimensions)
 {
-    if(d->logicalDimensions == newDimensions) return false;
+    if (d->logicalDimensions == newDimensions) return false;
     d->logicalDimensions = newDimensions;
     return true;
 }
@@ -190,7 +195,7 @@ Vector2i const &TextureManifest::origin() const
 
 void TextureManifest::setOrigin(Vector2i const &newOrigin)
 {
-    if(d->origin != newOrigin)
+    if (d->origin != newOrigin)
     {
         d->origin = newOrigin;
     }
@@ -198,12 +203,12 @@ void TextureManifest::setOrigin(Vector2i const &newOrigin)
 
 bool TextureManifest::hasTexture() const
 {
-    return !d->texture.isNull();
+    return bool(d->texture);
 }
 
 Texture &TextureManifest::texture() const
 {
-    if(hasTexture())
+    if (hasTexture())
     {
         return *d->texture;
     }
@@ -213,9 +218,9 @@ Texture &TextureManifest::texture() const
 
 void TextureManifest::setTexture(Texture *newTexture)
 {
-    if(d->texture.data() != newTexture)
+    if (d->texture.get() != newTexture)
     {
-        if(Texture *curTexture = d->texture.data())
+        if (Texture *curTexture = d->texture.get())
         {
             // Cancel notifications about the existing texture.
             curTexture->audienceForDeletion -= d;
@@ -223,10 +228,17 @@ void TextureManifest::setTexture(Texture *newTexture)
 
         d->texture.reset(newTexture);
 
-        if(Texture *curTexture = d->texture.data())
+        if (Texture *curTexture = d->texture.get())
         {
             // We want notification when the new texture is about to be deleted.
             curTexture->audienceForDeletion += d;
         }
     }
 }
+
+void TextureManifest::setTextureConstructor(TextureConstructor constructor)
+{
+    textureConstructor = constructor;
+}
+
+} // namespace res

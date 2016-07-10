@@ -37,7 +37,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "MaterialVariantSpec"
-#include "Texture"
+#include "ClientTexture"
 
 #include <doomsday/console/var.h>
 #include <de/Log>
@@ -850,7 +850,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         // Ensure we've prepared the shiny skin.
         if(shininess > 0)
         {
-            if(Texture *tex = mf->subModelDef(number).shinySkin)
+            if(ClientTexture *tex = static_cast<ClientTexture *>(mf->subModelDef(number).shinySkin))
             {
                 shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
             }
@@ -930,7 +930,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     else
     {
         skinTexture = 0;
-        if(Texture *tex = mdl.skin(useSkin).texture)
+        if(ClientTexture *tex = static_cast<ClientTexture *>(mdl.skin(useSkin).texture))
         {
             skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl.flags().testFlag(FrameModel::NoTextureCompression)));
         }

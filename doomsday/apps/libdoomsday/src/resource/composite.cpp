@@ -18,20 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "resource/compositetexture.h"
+#include "doomsday/resource/composite.h"
+#include "doomsday/filesys/fs_main.h"
+#include "doomsday/filesys/lumpindex.h"
+#include "doomsday/resource/patch.h"
+#include "doomsday/resource/patchname.h"
 
 #include <QList>
 #include <QRect>
 #include <de/ByteRefArray>
 #include <de/String>
 #include <de/Reader>
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/filesys/lumpindex.h>
-#include <doomsday/resource/patch.h>
-#include <doomsday/resource/patchname.h>
 
-namespace de {
+using namespace de;
+
 namespace internal {
 
     static String readAndPercentEncodeRawName(de::Reader &from)
@@ -48,31 +48,46 @@ namespace internal {
 
 } // namespace internal
 
-using namespace internal;
+namespace res {
 
-CompositeTexture::Component::Component(Vector2i const &origin)
+Composite::Component::Component(Vector2i const &origin)
     : _origin (origin)
     , _lumpNum(-1)
 {}
 
-bool CompositeTexture::Component::operator == (Component const &other) const
+void Composite::Component::setOrigin(const Vector2i &origin)
+{
+    _origin = origin;
+}
+
+bool Composite::Component::operator == (Component const &other) const
 {
     if(lumpNum() != other.lumpNum()) return false;
     if(origin()  != other.origin())  return false;
     return true;
 }
 
-Vector2i const &CompositeTexture::Component::origin() const
+bool Composite::Component::operator != (Component const &other) const
+{
+    return !(*this == other);
+}
+
+Vector2i const &Composite::Component::origin() const
 {
     return _origin;
 }
 
-lumpnum_t CompositeTexture::Component::lumpNum() const
+lumpnum_t Composite::Component::lumpNum() const
 {
     return _lumpNum;
 }
 
-DENG2_PIMPL_NOREF(CompositeTexture)
+void Composite::Component::setLumpNum(lumpnum_t num)
+{
+    _lumpNum = num;
+}
+
+DENG2_PIMPL_NOREF(Composite)
 {
     String name;                 ///< Symbolic, percent encoded.
     Flags flags;                 ///< Usage traits.
@@ -84,7 +99,7 @@ DENG2_PIMPL_NOREF(CompositeTexture)
     Impl() : origIndex(-1) {}
 };
 
-CompositeTexture::CompositeTexture(String const &percentEncodedName,
+Composite::Composite(String const &percentEncodedName,
     Vector2ui const &logicalDimensions, Flags flags)
     : d(new Impl)
 {
@@ -93,7 +108,7 @@ CompositeTexture::CompositeTexture(String const &percentEncodedName,
     d->logicalDimensions = logicalDimensions;
 }
 
-bool CompositeTexture::operator == (CompositeTexture const &other) const
+bool Composite::operator == (Composite const &other) const
 {
     if(dimensions()        != other.dimensions())        return false;
     if(logicalDimensions() != other.logicalDimensions()) return false;
@@ -108,58 +123,59 @@ bool CompositeTexture::operator == (CompositeTexture const &other) const
     return true;
 }
 
-String CompositeTexture::percentEncodedName() const
+String Composite::percentEncodedName() const
 {
     return d->name;
 }
 
-String const &CompositeTexture::percentEncodedNameRef() const
+String const &Composite::percentEncodedNameRef() const
 {
     return d->name;
 }
 
-Vector2ui const &CompositeTexture::logicalDimensions() const
+Vector2ui const &Composite::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-Vector2ui const &CompositeTexture::dimensions() const
+Vector2ui const &Composite::dimensions() const
 {
     return d->dimensions;
 }
 
-CompositeTexture::Components const &CompositeTexture::components() const
+Composite::Components const &Composite::components() const
 {
     return d->components;
 }
 
-CompositeTexture::Flags CompositeTexture::flags() const
+Composite::Flags Composite::flags() const
 {
     return d->flags;
 }
 
-void CompositeTexture::setFlags(CompositeTexture::Flags flagsToChange, FlagOp operation)
+void Composite::setFlags(Composite::Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-int CompositeTexture::origIndex() const
+int Composite::origIndex() const
 {
     return d->origIndex;
 }
 
-void CompositeTexture::setOrigIndex(int newIndex)
+void Composite::setOrigIndex(int newIndex)
 {
     d->origIndex = newIndex;
 }
 
-CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
-    QList<PatchName> patchNames, ArchiveFormat format)
+Composite *Composite::constructFrom(de::Reader &reader,
+                                    QList<PatchName> patchNames,
+                                    ArchiveFormat format)
 {
-    CompositeTexture *pctex = new CompositeTexture;
+    Composite *pctex = new Composite;
 
     // First is the raw name.
-    pctex->d->name = readAndPercentEncodeRawName(reader);
+    pctex->d->name = internal::readAndPercentEncodeRawName(reader);
 
     // Next is some unused junk from a previous format version.
     dint16 unused16;
@@ -202,7 +218,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
         dint16 origin16[2];
         reader >> origin16[0] >> origin16[1];
-        comp._origin = Vector2i(origin16[0], origin16[1]);
+        comp.setOrigin(Vector2i(origin16[0], origin16[1]));
 
         dint16 pnamesIndex;
         reader >> pnamesIndex;
@@ -214,7 +230,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
         }
         else
         {
-            comp._lumpNum = patchNames[pnamesIndex].lumpNum();
+            comp.setLumpNum(patchNames[pnamesIndex].lumpNum());
 
             if(comp.lumpNum() >= 0)
             {
@@ -280,4 +296,4 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
     return pctex;
 }
 
-} // namespace de
+} // namespace res

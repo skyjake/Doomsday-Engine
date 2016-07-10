@@ -26,13 +26,13 @@
 
 using namespace de;
 
-AnimGroup::Frame::Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics)
+AnimGroup::Frame::Frame(res::TextureManifest &textureManifest, ushort tics, ushort randomTics)
     : _textureManifest(&textureManifest)
     , _tics(tics)
     , _randomTics(randomTics)
 {}
 
-TextureManifest &AnimGroup::Frame::textureManifest() const
+res::TextureManifest &AnimGroup::Frame::textureManifest() const
 {
     return *_textureManifest;
 }
@@ -87,7 +87,7 @@ int AnimGroup::flags() const
     return d->flags;
 }
 
-bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
+bool AnimGroup::hasFrameFor(res::TextureManifest const &textureManifest) const
 {
     foreach(Frame *frame, d->frames)
     {
@@ -97,8 +97,8 @@ bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
     return false;
 }
 
-AnimGroup::Frame &AnimGroup::newFrame(TextureManifest &textureManifest,
-    ushort tics, ushort randomTics)
+AnimGroup::Frame &AnimGroup::newFrame(res::TextureManifest &textureManifest,
+                                      ushort tics, ushort randomTics)
 {
     d->frames.append(new Frame(textureManifest, tics, randomTics));
     return *d->frames.last();

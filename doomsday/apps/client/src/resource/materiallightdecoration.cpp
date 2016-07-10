@@ -20,19 +20,15 @@
 #include "resource/materiallightdecoration.h"
 
 #include <doomsday/defs/material.h>
+#include <doomsday/res/Textures>
 #include "clientapp.h"
 
 using namespace de;
 
-static inline ResourceSystem &resSys()
-{
-    return ClientApp::resourceSystem();
-}
-
 MaterialLightDecoration::AnimationStage::AnimationStage(int tics, float variance,
     Vector2f const &origin, float elevation, Vector3f const &color, float radius,
-    float haloRadius, LightRange const &lightLevels, Texture *ceilingTexture,
-    Texture *floorTexture, Texture *texture, Texture *flareTexture, int sysFlareIdx)
+    float haloRadius, LightRange const &lightLevels, ClientTexture *ceilingTexture,
+    ClientTexture *floorTexture, ClientTexture *texture, ClientTexture *flareTexture, int sysFlareIdx)
     : Stage(tics, variance)
     , origin     (origin)
     , elevation  (elevation)
@@ -65,12 +61,12 @@ MaterialLightDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 MaterialLightDecoration::AnimationStage *
 MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
 {
-    Texture *lightmapUp   = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapUp"  ), RC_NULL));
-    Texture *lightmapDown = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapDown"), RC_NULL));
-    Texture *lightmapSide = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapSide"), RC_NULL));
+    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", de::Uri(stageDef.gets("lightmapUp"  ), RC_NULL)));
+    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", de::Uri(stageDef.gets("lightmapDown"), RC_NULL)));
+    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", de::Uri(stageDef.gets("lightmapSide"), RC_NULL)));
 
     int haloTextureIndex  = stageDef.geti("haloTextureIndex");
-    Texture *haloTexture  = nullptr;
+    ClientTexture *haloTexture  = nullptr;
     de::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
     if(!haloTextureUri.isEmpty())
     {
@@ -82,7 +78,7 @@ MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
         }
         else
         {
-            haloTexture = resSys().texture("Flaremaps", haloTextureUri);
+            haloTexture = static_cast<ClientTexture *>(res::Textures::get().texture("Flaremaps", haloTextureUri));
         }
     }
 

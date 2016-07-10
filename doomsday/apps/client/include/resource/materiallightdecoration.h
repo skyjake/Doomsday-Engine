@@ -49,19 +49,19 @@ public:
         float haloRadius;        ///< Halo radius (zero = no halo).
         LightRange lightLevels;  ///< Fade by sector lightlevel.
 
-        de::Texture *tex;
-        de::Texture *floorTex;
-        de::Texture *ceilTex;
+        ClientTexture *tex;
+        ClientTexture *floorTex;
+        ClientTexture *ceilTex;
 
-        de::Texture *flareTex;
+        ClientTexture *flareTex;
         int sysFlareIdx;         ///< @todo Remove me
 
     public:
         AnimationStage(int tics, float variance, de::Vector2f const &origin, float elevation,
                        de::Vector3f const &color, float radius, float haloRadius,
-                       LightRange const &lightLevels, de::Texture *ceilingTexture,
-                       de::Texture *floorTexture, de::Texture *texture,
-                       de::Texture *flareTexture, int sysFlareIdx = -1);
+                       LightRange const &lightLevels, ClientTexture *ceilingTexture,
+                       ClientTexture *floorTexture, ClientTexture *texture,
+                       ClientTexture *flareTexture, int sysFlareIdx = -1);
         AnimationStage(AnimationStage const &other);
         virtual ~AnimationStage() {}
 

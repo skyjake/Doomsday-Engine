@@ -1,7 +1,7 @@
 /** @file patchname.cpp PatchName
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,23 +25,26 @@
 #include <de/Reader>
 #include <de/String>
 
-namespace de {
+using namespace de;
 
-PatchName::PatchName(String percentEncodedName, lumpnum_t _lumpNum)
-    : name(percentEncodedName), lumpNum_(_lumpNum)
+namespace res {
+
+PatchName::PatchName(String percentEncodedName, lumpnum_t lumpNum)
+    : _name(percentEncodedName)
+    , _lumpNum(lumpNum)
 {}
 
 lumpnum_t PatchName::lumpNum()
 {
     // Have we already searched for this lump?
-    if(lumpNum_ == -2)
+    if(_lumpNum == -2)
     {
         // Mark as not found.
-        lumpNum_ = -1;
+        _lumpNum = -1;
         // Perform the search.
         try
         {
-            lumpNum_ = App_FileSystem().lumpNumForName(name);
+            _lumpNum = App_FileSystem().lumpNumForName(_name);
         }
         catch(FS1::NotFoundError const &er)
         {
@@ -49,10 +52,10 @@ lumpnum_t PatchName::lumpNum()
             LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
     }
-    return lumpNum_;
+    return _lumpNum;
 }
 
-void PatchName::operator << (Reader &from)
+void PatchName::operator << (de::Reader &from)
 {
     // The raw ASCII name is not necessarily terminated.
     char asciiName[9];
@@ -61,18 +64,20 @@ void PatchName::operator << (Reader &from)
 
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
-    name = QString(QByteArray(asciiName).toPercentEncoding());
+    _name = QString(QByteArray(asciiName).toPercentEncoding());
 
     // The cached found lump number is no longer valid.
-    lumpNum_ = -2;
+    _lumpNum = -2;
 }
 
-String PatchName::percentEncodedName() const {
-    return name;
+String PatchName::percentEncodedName() const
+{
+    return _name;
 }
 
-String const &PatchName::percentEncodedNameRef() const {
-    return name;
+String const &PatchName::percentEncodedNameRef() const
+{
+    return _name;
 }
 
-} // namespace de
+} // namespace res

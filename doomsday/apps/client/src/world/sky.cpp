@@ -23,6 +23,7 @@
 #include <cmath>
 #include <QtAlgorithms>
 #include <de/Log>
+#include <doomsday/res/TextureManifest>
 #include "dd_main.h"
 
 #ifdef __CLIENT__
@@ -31,9 +32,7 @@
 #  include "render/rend_main.h"    // rendSkyLightAuto
 #  include "render/skydrawable.h"  // SkyDrawable::layerMaterialSpec
 #  include "MaterialAnimator"
-
-#  include "Texture"
-#  include "TextureManifest"
+#  include "ClientTexture"
 #endif
 
 #define NUM_LAYERS  2
@@ -252,17 +251,17 @@ DENG2_PIMPL(Sky)
 
             if(TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                auto const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageColorAnalysis));
+                auto const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageColorAnalysis));
                 if(!avgColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageColorAnalysis");
 
                 if(i == firstActiveLayer)
                 {
-                    auto const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageTopColorAnalysis));
+                    auto const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
 
                     topCapColor = Vector3f(avgLineColor->color.rgb);
 
-                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageBottomColorAnalysis));
+                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" +  tex->base().manifest().composeUri().asText() + "\" has no AverageBottomColorAnalysis");
 
                     bottomCapColor = Vector3f(avgLineColor->color.rgb);
