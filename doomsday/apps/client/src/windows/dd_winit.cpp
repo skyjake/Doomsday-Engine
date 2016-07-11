@@ -33,7 +33,6 @@
 #include <tchar.h>
 
 #include <QDir>
-#include <doomsday/paths.h>
 #include <de/App>
 #ifdef __CLIENT__
 #  include <de/DisplayMode>

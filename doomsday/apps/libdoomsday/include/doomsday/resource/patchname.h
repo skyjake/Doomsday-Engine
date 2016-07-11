@@ -33,7 +33,7 @@ namespace res {
 /**
  * @ingroup resource
  */
-class PatchName : public de::IReadable
+class LIBDOOMSDAY_PUBLIC PatchName : public de::IReadable
 {
 public:
     explicit PatchName(de::String percentEncodedName = "", lumpnum_t lumpNum = -2);

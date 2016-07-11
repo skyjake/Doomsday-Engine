@@ -146,7 +146,7 @@ public:
      * according to the order in which they should be drawn, from the bottom-most to
      * the top-most layer.
      */
-    class Layer
+    class LIBDOOMSDAY_PUBLIC Layer
     {
     public:
         /// The referenced stage does not exist. @ingroup errors

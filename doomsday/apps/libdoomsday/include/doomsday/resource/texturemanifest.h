@@ -24,6 +24,7 @@
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Vector>
+#include <functional>
 
 #include "../uri.h"
 #include "texture.h"

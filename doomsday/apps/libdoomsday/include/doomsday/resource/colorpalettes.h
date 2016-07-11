@@ -24,7 +24,7 @@
 
 namespace res {
 
-class ColorPalettes
+class LIBDOOMSDAY_PUBLIC ColorPalettes
 {
 public:
     ColorPalettes();

@@ -37,7 +37,7 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public TextureMaterialLayer::AnimationStage
+    class LIBDOOMSDAY_PUBLIC AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
         AnimationStage(de::Uri const &texture, int tics, float variance,

@@ -38,7 +38,7 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public de::Record, public Stage
+    class LIBDOOMSDAY_PUBLIC AnimationStage : public de::Record, public Stage
     {
     public:
         AnimationStage(de::Uri const &texture, int tics,
