@@ -155,7 +155,8 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     // Perhaps a middle material completely covers the opening?
     if(side.middle().hasMaterial())
     {
-        MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+        MaterialAnimator &matAnimator = static_cast<ClientMaterial &>(side.middle().material())
+                .getAnimator(Rend_MapSurfaceMaterialSpec());
 
         // Ensure we have up to date info about the material.
         matAnimator.prepare();
@@ -238,7 +239,8 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(side.isFlagged(SDF_MIDDLE_STRETCH))
         return true;
 
-    MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = side.middle().material()
+            .as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
     // Ensure we have up to date info about the material.
     matAnimator.prepare();
@@ -276,7 +278,7 @@ Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirec
 
     if(other == &line) return nullptr;
 
-    if(diff) 
+    if(diff)
     {
         *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
     }

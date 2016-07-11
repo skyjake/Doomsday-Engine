@@ -29,8 +29,8 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 
-#include "MapElement"
 #include "Line"
 #include "Plane"
 
@@ -272,8 +272,8 @@ public:
     static void consoleRegister();
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

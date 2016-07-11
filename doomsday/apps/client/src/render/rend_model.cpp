@@ -38,8 +38,10 @@
 #include "gl/gl_texmanager.h"
 #include "MaterialVariantSpec"
 #include "ClientTexture"
+#include "ClientMaterial"
 
 #include <doomsday/console/var.h>
+#include <doomsday/world/Materials>
 #include <de/Log>
 #include <de/ArrayValue>
 #include <de/binangle.h>
@@ -111,9 +113,9 @@ static inline RenderSystem &rendSys()
     return ClientApp::renderSystem();
 }
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 /*static void modelAspectModChanged()
@@ -919,8 +921,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("gray")))
-                                                    .getAnimator(modelSkinMaterialSpec());
+        MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", Path("gray")))
+                .as<ClientMaterial>().getAnimator(modelSkinMaterialSpec());
 
         // Ensure we've up to date info about the material.
         matAnimator.prepare();

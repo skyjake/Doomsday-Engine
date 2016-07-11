@@ -21,21 +21,19 @@
 #include "de_base.h"
 #include "render/billboard.h"
 
-#include <de/vector1.h>
-#include <de/concurrency.h>
-#include <doomsday/console/var.h>
 #include "clientapp.h"
-
+#include "ClientTexture"
 #include "gl/gl_main.h"
-
+#include "MaterialVariantSpec"
 #include "r_util.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
-
-#include "MaterialVariantSpec"
-#include "ClientTexture"
-
 #include "world/p_players.h"  // viewPlayer, ddPlayers
+
+#include <de/vector1.h>
+#include <de/concurrency.h>
+#include <doomsday/console/var.h>
+#include <doomsday/world/Materials>
 
 using namespace de;
 
@@ -55,11 +53,6 @@ dbyte devNoSprites;
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
-}
-
-static inline ResourceSystem &resSys()
-{
-    return ClientApp::resourceSystem();
 }
 
 static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
@@ -300,8 +293,8 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return resSys().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 1, -2, 0, false, true, true, false);
+    return App_ResourceSystem().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             1, -2, 0, false, true, true, false);
 }
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms)
@@ -317,8 +310,8 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     else if(::renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("gray")))
-                                                    .getAnimator(PSprite_MaterialSpec());
+        MaterialAnimator &matAnimator = static_cast<ClientMaterial &>(world::Materials::get().material(de::Uri("System", Path("gray"))))
+                .getAnimator(PSprite_MaterialSpec());
 
         // Ensure we have up to date info about the material.
         matAnimator.prepare();
@@ -397,8 +390,8 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
 {
-    return resSys().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 1, -2, -1, true, true, true, false);
+    return App_ResourceSystem().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             1, -2, -1, true, true, true, false);
 }
 
 void Rend_DrawSprite(vissprite_t const &spr)
@@ -432,8 +425,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        Material &debugMaterial       = resSys().material(de::Uri("System", Path("gray")));
-        MaterialAnimator &matAnimator = debugMaterial.getAnimator(Rend_SpriteMaterialSpec());
+        world::Material &debugMaterial = world::Materials::get().material(de::Uri("System", Path("gray")));
+        MaterialAnimator &matAnimator  = debugMaterial.as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
 
         // Ensure we have up to date info about the material.
         matAnimator.prepare();

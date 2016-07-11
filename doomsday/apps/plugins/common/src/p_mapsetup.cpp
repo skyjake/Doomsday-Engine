@@ -936,7 +936,7 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     // visible due to texture repeating and interpolation.
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
-        Material *mat = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
+        world_Material *mat = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Textures:NUKE24"));
 
         for(int i = 0; i < numlines; ++i)
         {
@@ -947,8 +947,8 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
                 Side *side = (Side *)P_GetPtrp(line, k == 0? DMU_FRONT : DMU_BACK);
                 if(!side) continue;
 
-                Material *bottomMat = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
-                Material *midMat    = (Material *)P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
+                world_Material *bottomMat = (world_Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+                world_Material *midMat    = (world_Material *)P_GetPtrp(side, DMU_MIDDLE_MATERIAL);
 
                 if(bottomMat == mat && !midMat)
                 {

@@ -150,7 +150,7 @@ DENG2_PIMPL(ClientApp)
     InputSystem *inputSys;
     ::audio::System *audioSys;
     RenderSystem *rendSys;
-    ResourceSystem *resourceSys;
+    ClientResources *resourceSys;
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
@@ -579,7 +579,7 @@ void ClientApp::initialize()
     d->setupAppMenu();
 
     // Create the resource system.
-    d->resourceSys = new ResourceSystem;
+    d->resourceSys = new ClientResources;
     addSystem(*d->resourceSys);
 
     plugins().loadAll();
@@ -769,7 +769,7 @@ bool ClientApp::hasAudioSystem()
     return ClientApp::app().d->audioSys != nullptr;
 }
 
-ResourceSystem &ClientApp::resourceSystem()
+ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->resourceSys != 0);

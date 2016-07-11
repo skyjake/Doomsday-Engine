@@ -25,8 +25,8 @@
 #include <functional>
 #include <de/Error>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 #include "Mesh"
-#include "MapElement"
 #include "Line"
 #include "SectorCluster"
 

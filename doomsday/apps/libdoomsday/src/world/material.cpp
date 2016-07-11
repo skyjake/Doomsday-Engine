@@ -1,4 +1,4 @@
-/** @file material.cpp  Logical material resource.
+/** @file material.cpp  World material.
  *
  * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
@@ -17,23 +17,19 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/material.h"
+#include "doomsday/world/material.h"
+#include "doomsday/console/cmd.h"
+#include "doomsday/res/Textures"
+#include "doomsday/resource/resources.h"
+#include "doomsday/world/materials.h"
+#include "doomsday/world/materialmanifest.h"
+#include "doomsday/world/texturemateriallayer.h"
+#include "doomsday/world/detailtexturemateriallayer.h"
+#include "doomsday/world/shinetexturemateriallayer.h"
 
 #include <QFlag>
 #include <QtAlgorithms>
 #include <de/Log>
-#include <doomsday/console/cmd.h>
-#include <doomsday/res/Textures>
-
-#include "dd_main.h"
-#include "MaterialManifest"
-#ifdef __CLIENT__
-#  include "MaterialAnimator"
-#endif
-
-#include "resource/materialdetaillayer.h"
-#include "resource/materialtexturelayer.h"
-#include "resource/materialshinelayer.h"
 
 namespace internal
 {
@@ -46,11 +42,15 @@ namespace internal
         Valid        = 0x8,           ///< Marked as @em valid.
         DefaultFlags = Valid
     };
+
     Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
 }
+
 using namespace internal;
 using namespace de;
+
+namespace world {
 
 int Material::Layer::stageCount() const
 {
@@ -64,7 +64,7 @@ Material::Layer::~Layer()
 
 Material::Layer::Stage &Material::Layer::stage(int index) const
 {
-    if(stageCount())
+    if (stageCount())
     {
         index = de::wrap(index, 0, _stages.count());
         return *_stages[index];
@@ -82,96 +82,12 @@ String Material::Layer::description() const
 {
     int const numStages = stageCount();
     String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
-    for(int i = 0; i < numStages; ++i)
+    for (int i = 0; i < numStages; ++i)
     {
         str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
     }
     return str;
 }
-
-// ------------------------------------------------------------------------------------
-
-#ifdef __CLIENT__
-
-DENG2_PIMPL_NOREF(Material::Decoration)
-{
-    Material *material = nullptr;  ///< Owning Material.
-    Vector2i patternSkip;          ///< Pattern skip intervals.
-    Vector2i patternOffset;        ///< Pattern skip interval offsets.
-};
-
-Material::Decoration::Decoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
-    : d(new Impl)
-{
-    d->patternSkip   = patternSkip;
-    d->patternOffset = patternOffset;
-}
-
-Material::Decoration::~Decoration()
-{
-    qDeleteAll(_stages);
-}
-
-Material &Material::Decoration::material()
-{
-    DENG2_ASSERT(d->material);
-    return *d->material;
-}
-
-Material const &Material::Decoration::material() const
-{
-    DENG2_ASSERT(d->material);
-    return *d->material;
-}
-
-void Material::Decoration::setMaterial(Material *newOwner)
-{
-    d->material = newOwner;
-}
-
-Vector2i const &Material::Decoration::patternSkip() const
-{
-    return d->patternSkip;
-}
-
-Vector2i const &Material::Decoration::patternOffset() const
-{
-    return d->patternOffset;
-}
-
-int Material::Decoration::stageCount() const
-{
-    return _stages.count();
-}
-
-Material::Decoration::Stage &Material::Decoration::stage(int index) const
-{
-    if(stageCount())
-    {
-        index = de::wrap(index, 0, _stages.count());
-        return *_stages[index];
-    }
-    /// @throw MissingStageError  No stages are defined.
-    throw MissingStageError("Material::Decoration::stage", "Decoration has no stages");
-}
-
-String Material::Decoration::describe() const
-{
-    return "abstract Decoration";
-}
-
-String Material::Decoration::description() const
-{
-    int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
-    for(int i = 0; i < numStages; ++i)
-    {
-        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
-    }
-    return str;
-}
-
-#endif  // __CLIENT__
 
 // ------------------------------------------------------------------------------------
 
@@ -182,27 +98,14 @@ DENG2_PIMPL(Material)
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
     MaterialFlags flags = DefaultFlags;
-    AudioEnvironmentId audioEnvironment { AE_NONE };
 
     /// Layers (owned), from bottom-most to top-most draw order.
     QList<Layer *> layers;
-
-#ifdef __CLIENT__
-    /// Decorations (owned), to be projected into the world (relative to a Surface).
-    QList<Decoration *> decorations;
-
-    /// Set of draw-context animators (owned).
-    QList<MaterialAnimator *> animators;
-#endif
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-#ifdef __CLIENT__
-        self.clearAllAnimators();
-        self.clearAllDecorations();
-#endif
         self.clearAllLayers();
     }
 
@@ -210,14 +113,14 @@ DENG2_PIMPL(Material)
         return dimensions.x > 0 && dimensions.y > 0;
     }
 
-    MaterialTextureLayer *firstTextureLayer() const
+    TextureMaterialLayer *firstTextureLayer() const
     {
-        for(Layer *layer : layers)
+        for (Layer *layer : layers)
         {
-            if(layer->is<MaterialDetailLayer>()) continue;
-            if(layer->is<MaterialShineLayer>())  continue;
+            if (layer->is<DetailTextureMaterialLayer>()) continue;
+            if (layer->is<ShineTextureMaterialLayer>())  continue;
 
-            if(auto *texLayer = layer->maybeAs<MaterialTextureLayer>())
+            if (auto *texLayer = layer->maybeAs<TextureMaterialLayer>())
             {
                 return texLayer;
             }
@@ -231,17 +134,17 @@ DENG2_PIMPL(Material)
      */
     res::Texture *inheritDimensionsTexture() const
     {
-        if(auto const *texLayer = firstTextureLayer())
+        if (auto const *texLayer = firstTextureLayer())
         {
-            if(texLayer->stageCount() >= 1)
+            if (texLayer->stageCount() >= 1)
             {
                 try
                 {
                     return &res::Textures::get().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
                 }
-                catch(res::TextureManifest::MissingTextureError &)
+                catch (res::TextureManifest::MissingTextureError &)
                 {}
-                catch(Resources::MissingResourceManifestError &)
+                catch (Resources::MissingResourceManifestError &)
                 {}
             }
         }
@@ -255,10 +158,10 @@ DENG2_PIMPL(Material)
     void maybeCancelTextureDimensionsChangeNotification()
     {
         // Both dimensions must still be undefined.
-        if(haveValidDimensions()) return;
+        if (haveValidDimensions()) return;
 
         res::Texture *inheritanceTexture = inheritDimensionsTexture();
-        if(!inheritanceTexture) return;
+        if (!inheritanceTexture) return;
 
         inheritanceTexture->audienceForDimensionsChange -= this;
         // Thusly, we are no longer interested in deletion notification either.
@@ -288,24 +191,6 @@ DENG2_PIMPL(Material)
         DENG2_UNUSED(texture);
 #endif
     }
-
-#ifdef __CLIENT__
-    MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
-    {
-        for(MaterialAnimator const *animator : animators)
-        {
-            if(animator->variantSpec().compare(spec))
-            {
-                return const_cast<MaterialAnimator *>(animator);  // This will do fine.
-            }
-        }
-
-        if(!canCreate) return nullptr;
-
-        animators.append(new MaterialAnimator(self, spec));
-        return animators.back();
-    }
-#endif // __CLIENT__
 
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(DimensionsChange)
@@ -341,7 +226,7 @@ Vector2ui const &Material::dimensions() const
 
 void Material::setDimensions(Vector2ui const &newDimensions)
 {
-    if(d->dimensions != newDimensions)
+    if (d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
         d->maybeCancelTextureDimensionsChangeNotification();
@@ -378,30 +263,20 @@ bool Material::isValid() const
 
 void Material::markDontDraw(bool yes)
 {
-    if(yes)  d->flags |=  DontDraw;
+    if (yes) d->flags |=  DontDraw;
     else     d->flags &= ~DontDraw;
 }
 
 void Material::markSkyMasked(bool yes)
 {
-    if(yes)  d->flags |=  SkyMasked;
+    if (yes) d->flags |=  SkyMasked;
     else     d->flags &= ~SkyMasked;
 }
 
 void Material::markValid(bool yes)
 {
-    if(yes)  d->flags |=  Valid;
+    if (yes) d->flags |=  Valid;
     else     d->flags &= ~Valid;
-}
-
-AudioEnvironmentId Material::audioEnvironment() const
-{
-    return (isDrawable()? d->audioEnvironment : AE_NONE);
-}
-
-void Material::setAudioEnvironment(AudioEnvironmentId newEnvironment)
-{
-    d->audioEnvironment = newEnvironment;
 }
 
 void Material::clearAllLayers()
@@ -418,8 +293,8 @@ int Material::layerCount() const
 
 void Material::addLayerAt(Layer *layer, int position)
 {
-    if(!layer) return;
-    if(d->layers.contains(layer)) return;
+    if (!layer) return;
+    if (d->layers.contains(layer)) return;
 
     position = de::clamp(0, position, layerCount());
 
@@ -427,9 +302,9 @@ void Material::addLayerAt(Layer *layer, int position)
 
     d->layers.insert(position, layer);
 
-    if(!d->haveValidDimensions())
+    if (!d->haveValidDimensions())
     {
-        if(res::Texture *tex = d->inheritDimensionsTexture())
+        if (res::Texture *tex = d->inheritDimensionsTexture())
         {
             tex->audienceForDeletion         += d;
             tex->audienceForDimensionsChange += d;
@@ -439,77 +314,16 @@ void Material::addLayerAt(Layer *layer, int position)
 
 Material::Layer &Material::layer(int index) const
 {
-    if(index >= 0 && index < layerCount()) return *d->layers[index];
+    if (index >= 0 && index < layerCount()) return *d->layers[index];
     /// @throw Material::MissingLayerError  Invalid layer reference.
     throw MissingLayerError("Material::layer", "Unknown layer #" + String::number(index));
 }
 
 Material::Layer *Material::layerPtr(int index) const
 {
-    if(index >= 0 && index < layerCount()) return d->layers[index];
+    if (index >= 0 && index < layerCount()) return d->layers[index];
     return nullptr;
 }
-
-#ifdef __CLIENT__
-
-int Material::decorationCount() const
-{
-    return d->decorations.count();
-}
-
-LoopResult Material::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
-{
-    for(Decoration *decor : d->decorations)
-    {
-        if(auto result = func(*decor)) return result;
-    }
-    return LoopContinue;
-}
-
-/// @todo Update client side MaterialAnimators?
-void Material::addDecoration(Decoration *decor)
-{
-    if(!decor || d->decorations.contains(decor)) return;
-
-    decor->setMaterial(this);
-    d->decorations.append(decor);
-}
-
-void Material::clearAllDecorations()
-{
-    qDeleteAll(d->decorations); d->decorations.clear();
-}
-
-int Material::animatorCount() const
-{
-    return d->animators.count();
-}
-
-bool Material::hasAnimator(MaterialVariantSpec const &spec)
-{
-    return d->findAnimator(spec) != nullptr;
-}
-
-MaterialAnimator &Material::getAnimator(MaterialVariantSpec const &spec)
-{
-    return *d->findAnimator(spec, true/*create*/);
-}
-
-LoopResult Material::forAllAnimators(std::function<LoopResult (MaterialAnimator &)> func) const
-{
-    for(MaterialAnimator *animator : d->animators)
-    {
-        if(auto result = func(*animator)) return result;
-    }
-    return LoopContinue;
-}
-
-void Material::clearAllAnimators()
-{
-    qDeleteAll(d->animators); d->animators.clear();
-}
-
-#endif  // __CLIENT__
 
 String Material::describe() const
 {
@@ -520,35 +334,21 @@ String Material::description() const
 {
     String str = String(_E(l) "Dimensions: ") + _E(.) + (d->haveValidDimensions()? dimensions().asText() : "unknown (not yet prepared)")
                + _E(l) + " Source: "     + _E(.) + manifest().sourceDescription()
-#ifdef __CLIENT__
-               + _E(b) + " x"  + String::number(animatorCount()) + _E(.)
-#endif
                + _E(l) + "\nDrawable: "  + _E(.) + DENG2_BOOL_YESNO(isDrawable())
-#ifdef __CLIENT__
-               + _E(l) + " EnvClass: \"" + _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\""
-#endif
                + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
 
     // Add the layer config:
-    for(Layer const *layer : d->layers)
+    for (Layer const *layer : d->layers)
     {
         str += "\n" + layer->description();
     }
-
-#ifdef __CLIENT__
-    // Add the decoration config:
-    for(Decoration const *decor : d->decorations)
-    {
-        str += "\n" + decor->description();
-    }
-#endif
 
     return str;
 }
 
 int Material::property(DmuArgs &args) const
 {
-    switch(args.prop)
+    switch (args.prop)
     {
     case DMU_FLAGS: {
         short f = d->flags;
@@ -574,11 +374,10 @@ int Material::property(DmuArgs &args) const
 D_CMD(InspectMaterial)
 {
     DENG2_UNUSED(src);
-    ResourceSystem &resSys = App_ResourceSystem();
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
-    if(!search.scheme().isEmpty() &&
-       !resSys.knownMaterialScheme(search.scheme()))
+    if (!search.scheme().isEmpty() &&
+        !world::Materials::get().isKnownMaterialScheme(search.scheme()))
     {
         LOG_SCR_WARNING("Unknown scheme \"%s\"") << search.scheme();
         return false;
@@ -586,8 +385,8 @@ D_CMD(InspectMaterial)
 
     try
     {
-        MaterialManifest &manifest = resSys.materialManifest(search);
-        if(Material *material = manifest.materialPtr())
+        MaterialManifest &manifest = world::Materials::get().materialManifest(search);
+        if (Material *material = manifest.materialPtr())
         {
             LOG_SCR_MSG(_E(D)_E(b) "%s\n" _E(.)_E(.)) << material->describe() << material->description();
         }
@@ -597,7 +396,7 @@ D_CMD(InspectMaterial)
         }
         return true;
     }
-    catch(Resources::MissingResourceManifestError const &er)
+    catch (Resources::MissingResourceManifestError const &er)
     {
         LOG_SCR_WARNING("%s") << er.asText();
     }
@@ -609,3 +408,5 @@ void Material::consoleRegister() // static
     C_CMD("inspectmaterial",    "ss",   InspectMaterial)
     C_CMD("inspectmaterial",    "s",    InspectMaterial)
 }
+
+} // namespace world

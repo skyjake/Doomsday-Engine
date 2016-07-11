@@ -18,11 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "resource/materialarchive.h"
+#include "doomsday/world/materialarchive.h"
+#include "doomsday/world/materials.h"
+#include "doomsday/world/MaterialManifest"
+#include "doomsday/resource/resources.h"
+#include "doomsday/uri.h"
 
-#include <doomsday/uri.h>
 #include <de/StringPool>
+#include <de/reader.h>
+#include <de/writer.h>
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION     4
@@ -32,7 +36,9 @@
 // Used to denote unknown Material references in records. Written to disk.
 #define UNKNOWN_MATERIALNAME        "DD_BADTX"
 
-namespace de {
+using namespace de;
+
+namespace world {
 
 static String readArchivedPath(reader_s &reader)
 {
@@ -41,21 +47,21 @@ static String readArchivedPath(reader_s &reader)
     return QString(QByteArray(_path, qstrlen(_path)).toPercentEncoding());
 }
 
-static void readArchivedUri(Uri &uri, int version, reader_s &reader)
+static void readArchivedUri(de::Uri &uri, int version, reader_s &reader)
 {
-    if(version >= 4)
+    if (version >= 4)
     {
         // A serialized, percent encoded URI.
-        Uri_Read(reinterpret_cast<uri_s *>(&uri), &reader);
+        uri.readUri(&reader);
     }
-    else if(version == 3)
+    else if (version == 3)
     {
         // A percent encoded textual URI.
         ddstring_t *_uri = Str_NewFromReader(&reader);
         uri.setUri(Str_Text(_uri), RC_NULL);
         Str_Delete(_uri);
     }
-    else if(version == 2)
+    else if (version == 2)
     {
         // An unencoded textual URI.
         ddstring_t *_uri = Str_NewFromReader(&reader);
@@ -69,7 +75,7 @@ static void readArchivedUri(Uri &uri, int version, reader_s &reader)
 
         // Plus a legacy scheme id.
         int oldSchemeId = Reader_ReadByte(&reader);
-        switch(oldSchemeId)
+        switch (oldSchemeId)
         {
         case 0: uri.setScheme("Textures"); break;
         case 1: uri.setScheme("Flats");    break;
@@ -92,14 +98,14 @@ typedef StringPool::Id SerialId;
 static Material *findRecordMaterial(Records &records, SerialId id)
 {
     // Time to lookup the material for the record's URI?
-    if(!records.userValue(id))
+    if (!records.userValue(id))
     {
         Material *material = nullptr;
         try
         {
-            material = &App_ResourceSystem().material(Uri(records.stringRef(id), RC_NULL));
+            material = &world::Materials::get().material(de::Uri(records.stringRef(id), RC_NULL));
         }
-        catch(Resources::MissingResourceManifestError const &)
+        catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
 
         records.setUserPointer(id, material);
@@ -107,7 +113,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         return material;
     }
 
-    return (Material *) records.userPointer(id);
+    return reinterpret_cast<Material *>(records.userPointer(id));
 }
 
 DENG2_PIMPL(MaterialArchive)
@@ -121,23 +127,23 @@ DENG2_PIMPL(MaterialArchive)
     Impl(Public *i) : Base(i)
     {}
 
-    inline SerialId insertRecord(Uri const &uri)
+    inline SerialId insertRecord(de::Uri const &uri)
     {
         return records.intern(uri.compose());
     }
 
     void beginSegment(int seg, writer_s &writer)
     {
-        if(!useSegments) return;
+        if (!useSegments) return;
         Writer_WriteUInt32(&writer, seg);
     }
 
     void assertSegment(int seg, reader_s &reader)
     {
-        if(!useSegments) return;
+        if (!useSegments) return;
 
         int i = Reader_ReadUInt32(&reader);
-        if(i != seg)
+        if (i != seg)
         {
             throw MaterialArchive::ReadError("MaterialArchive::assertSegment",
                                              QString("Expected ASEG_MATERIAL_ARCHIVE (%1), but got %2")
@@ -165,8 +171,8 @@ DENG2_PIMPL(MaterialArchive)
         int num = Reader_ReadUInt16(&reader);
 
         // Read the group records.
-        Uri uri;
-        for(int i = 0; i < num; ++i)
+        de::Uri uri;
+        for (int i = 0; i < num; ++i)
         {
             readArchivedUri(uri, version, reader);
             insertRecord(uri);
@@ -179,11 +185,11 @@ DENG2_PIMPL(MaterialArchive)
         Writer_WriteUInt16(&writer, records.size());
 
         // Write the group records.
-        Uri uri;
-        for(int i = 1; i < int(records.size()) + 1; ++i)
+        de::Uri uri;
+        for (int i = 1; i < int(records.size()) + 1; ++i)
         {
             uri.setUri(records.stringRef(i), RC_NULL);
-            Uri_Write(reinterpret_cast<uri_s const *>(&uri), &writer);
+            uri.writeUri(&writer);
         }
     }
 };
@@ -193,29 +199,38 @@ MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
 {
     d->useSegments = useSegments;
 
-    if(recordSymbolicMaterials)
+    if (recordSymbolicMaterials)
     {
         // The first material is the special "unknown material".
         d->insertRecord(de::Uri(UNKNOWN_MATERIALNAME, RC_NULL));
     }
 }
 
+void MaterialArchive::addWorldMaterials()
+{
+    world::Materials::get().forAllMaterials([this] (Material &material)
+    {
+        addRecord(material);
+        return de::LoopContinue;
+    });
+}
+
 materialarchive_serialid_t MaterialArchive::findUniqueSerialId(Material *material) const
 {
     materialarchive_serialid_t serialId = 0;  // Invalid.
-    if(material)
+    if (material)
     {
         // Is there already an Id for this Material?
         LoopResult found = d->records.forAll([this, &material, &serialId] (SerialId id)
         {
-            if(findRecordMaterial(d->records, id) == material)
+            if (findRecordMaterial(d->records, id) == material)
             {
                 serialId = id;
                 return LoopAbort;
             }
             return LoopContinue;
         });
-        if(!found)
+        if (!found)
         {
             // Assign a new Id.
             serialId = d->records.size() + 1;
@@ -224,22 +239,22 @@ materialarchive_serialid_t MaterialArchive::findUniqueSerialId(Material *materia
     return serialId;
 }
 
-Material *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
+world::Material *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const
 {
-    if(serialId <= 0 || serialId > d->records.size() + 1) return 0; // Invalid.
+    if (serialId <= 0 || serialId > d->records.size() + 1) return 0; // Invalid.
 
     // A group offset?
-    if(d->version < 1 && group == 1)
+    if (d->version < 1 && group == 1)
     {
         // Group 1 = walls (skip over the flats).
         serialId += d->numFlats;
     }
 
-    if(d->version <= 1)
+    if (d->version <= 1)
     {
         // The special case "unknown" material?
-        Uri uri(d->records.stringRef(serialId), RC_NULL);
-        if(!uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
+        de::Uri uri(d->records.stringRef(serialId), RC_NULL);
+        if (!uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
             return 0;
     }
 
@@ -271,12 +286,12 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
 
     d->readHeader(reader);
     // Are we interpreting a specific version?
-    if(forcedVersion >= 0)
+    if (forcedVersion >= 0)
     {
         d->version = forcedVersion;
     }
 
-    if(d->version >= 1)
+    if (d->version >= 1)
     {
         d->readGroup(reader);
         return;
@@ -287,9 +302,9 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     // on walls.
     {
         // Group 0 (floors)
-        Uri uri("Flats", "");
+        de::Uri uri("Flats", "");
         d->numFlats = Reader_ReadUInt16(&reader);
-        for(int i = 0; i < d->numFlats; ++i)
+        for (int i = 0; i < d->numFlats; ++i)
         {
             uri.setPath(readArchivedPath(reader));
             d->insertRecord(uri);
@@ -297,9 +312,9 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     }
     {
         // Group 1 (walls)
-        Uri uri("Textures", "");
+        de::Uri uri("Textures", "");
         int num = Reader_ReadUInt16(&reader);
-        for(int i = 0; i < num; ++i)
+        for (int i = 0; i < num; ++i)
         {
             uri.setPath(readArchivedPath(reader));
             d->insertRecord(uri);
@@ -307,8 +322,9 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     }
 }
 
-} // namespace de
+} // namespace world
 
+#if 0
 /*
  * C Wrapper API:
  */
@@ -334,7 +350,7 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
 #undef MaterialArchive_New
 MaterialArchive *MaterialArchive_New(int useSegments)
 {
-    auto *archive = new de::MaterialArchive(useSegments);
+    auto *archive = new world::MaterialArchive(useSegments);
 
     // Populate the archive using the application's global/main Material collection.
     App_ResourceSystem().forAllMaterials([&archive] (Material &material)
@@ -349,13 +365,13 @@ MaterialArchive *MaterialArchive_New(int useSegments)
 #undef MaterialArchive_NewEmpty
 MaterialArchive *MaterialArchive_NewEmpty(int useSegments)
 {
-    return reinterpret_cast<MaterialArchive *>(new de::MaterialArchive(useSegments, false /*don't populate*/));
+    return reinterpret_cast<MaterialArchive *>(new world::MaterialArchive(useSegments, false /*don't populate*/));
 }
 
 #undef MaterialArchive_Delete
 void MaterialArchive_Delete(MaterialArchive *arc)
 {
-    if(arc)
+    if (arc)
     {
         SELF(arc);
         delete self;
@@ -396,16 +412,4 @@ void MaterialArchive_Read(MaterialArchive *arc, Reader *reader, int forcedVersio
     SELF(arc);
     self->read(*reader, forcedVersion);
 }
-
-DENG_DECLARE_API(MaterialArchive) =
-{
-    { DE_API_MATERIAL_ARCHIVE },
-    MaterialArchive_New,
-    MaterialArchive_NewEmpty,
-    MaterialArchive_Delete,
-    MaterialArchive_FindUniqueSerialId,
-    MaterialArchive_Find,
-    MaterialArchive_Count,
-    MaterialArchive_Write,
-    MaterialArchive_Read
-};
+#endif

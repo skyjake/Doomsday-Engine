@@ -67,7 +67,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
 
 void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     dfloat /*secFloor*/, dfloat /*secCeil*/, dfloat /*floorClip*/, dfloat /*top*/,
-    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
+    ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     dint tClass, dint tMap, world::BspLeaf *bspLeafAtOrigin,
     bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/)
 {

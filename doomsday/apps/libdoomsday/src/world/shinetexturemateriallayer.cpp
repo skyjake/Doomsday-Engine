@@ -17,12 +17,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/materialshinelayer.h"
-#include "dd_main.h"
-#include <doomsday/res/TextureScheme>
-#include <doomsday/res/Textures>
+#include "doomsday/world/shinetexturemateriallayer.h"
+#include "doomsday/res/TextureScheme"
+#include "doomsday/res/Textures"
 
 using namespace de;
+
+namespace world {
 
 static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
 {
@@ -41,30 +42,30 @@ static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findM
     return de::Uri();
 }
 
-MaterialShineLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+ShineTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, de::Uri const &maskTexture, blendmode_t blendMode, float opacity,
     Vector3f const &minColor, Vector2f const &maskDimensions)
-    : MaterialTextureLayer::AnimationStage(texture, tics, variance, 0, 0, Vector2f(0, 0),
+    : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vector2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
 {
     set("minColor", new ArrayValue(minColor));
 }
 
-MaterialShineLayer::AnimationStage::AnimationStage(AnimationStage const &other)
-    : MaterialTextureLayer::AnimationStage(other)
+ShineTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+    : TextureMaterialLayer::AnimationStage(other)
 {}
 
-MaterialShineLayer::AnimationStage::~AnimationStage()
+ShineTextureMaterialLayer::AnimationStage::~AnimationStage()
 {}
 
-void MaterialShineLayer::AnimationStage::resetToDefaults()
+void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
-    MaterialTextureLayer::AnimationStage::resetToDefaults();
+    TextureMaterialLayer::AnimationStage::resetToDefaults();
     addArray("minColor", new ArrayValue(Vector3f(0, 0, 0)));
 }
 
-MaterialShineLayer::AnimationStage *
-MaterialShineLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
+ShineTextureMaterialLayer::AnimationStage *
+ShineTextureMaterialLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
 {
     de::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
     de::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
@@ -76,28 +77,30 @@ MaterialShineLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
 
 // ------------------------------------------------------------------------------------
 
-MaterialShineLayer::MaterialShineLayer()
-    : MaterialTextureLayer()
+ShineTextureMaterialLayer::ShineTextureMaterialLayer()
+    : TextureMaterialLayer()
 {}
 
-MaterialShineLayer::~MaterialShineLayer()
+ShineTextureMaterialLayer::~ShineTextureMaterialLayer()
 {}
 
-MaterialShineLayer *MaterialShineLayer::fromDef(ded_reflection_t const &layerDef)
+ShineTextureMaterialLayer *ShineTextureMaterialLayer::fromDef(ded_reflection_t const &layerDef)
 {
-    auto *layer = new MaterialShineLayer();
+    auto *layer = new ShineTextureMaterialLayer();
     // Only the one stage.
     layer->_stages.append(AnimationStage::fromDef(layerDef.stage));
     return layer;
 }
 
-int MaterialShineLayer::addStage(MaterialShineLayer::AnimationStage const &stageToCopy)
+int ShineTextureMaterialLayer::addStage(ShineTextureMaterialLayer::AnimationStage const &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
 }
 
-String MaterialShineLayer::describe() const
+String ShineTextureMaterialLayer::describe() const
 {
     return "Shine layer";
 }
+
+} // namespace world

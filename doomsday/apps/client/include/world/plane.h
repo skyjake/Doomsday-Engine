@@ -26,12 +26,12 @@
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 
 #include "dd_share.h"  // SoundEmitter
 #ifdef __CLIENT__
 #  include "def_main.h"  // ded_ptcgen_t
 #endif
-#include "MapElement"
 
 class Sector;
 class Surface;
@@ -243,8 +243,8 @@ public:
 #endif  // __CLIENT__
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

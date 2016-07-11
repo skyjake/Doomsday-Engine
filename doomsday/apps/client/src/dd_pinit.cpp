@@ -34,6 +34,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/world/MaterialArchive>
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
@@ -50,7 +51,6 @@
 #include "api_fontrender.h"
 #include "api_mapedit.h"
 #include "api_material.h"
-#include "api_materialarchive.h"
 #include "api_render.h"
 #include "api_resource.h"
 #include "api_sound.h"
@@ -118,7 +118,6 @@ void DD_PublishAPIs(::Library *lib)
         PUBLISH(_api_Map);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);
-        PUBLISH(_api_MaterialArchive);
         PUBLISH(_api_Player);
         PUBLISH(_api_R);
         PUBLISH(_api_S);

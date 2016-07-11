@@ -22,6 +22,7 @@
 
 #ifdef __CLIENT__
 #  include "MaterialAnimator"
+#  include <doomsday/world/Materials>
 #endif
 
 using namespace de;
@@ -33,9 +34,9 @@ void P_Ticker(timespan_t elapsed)
     /// @todo Each context animator should be driven by a more relevant ticker, rather
     /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
     /// context should be driven separately).
-    App_ResourceSystem().forAllMaterials([&elapsed] (Material &material)
+    world::Materials::get().forAllMaterials([&elapsed] (world::Material &material)
     {
-        return material.forAllAnimators([&elapsed] (MaterialAnimator &animator)
+        return material.as<ClientMaterial>().forAllAnimators([&elapsed] (MaterialAnimator &animator)
         {
             animator.animate(elapsed);
             return LoopContinue;

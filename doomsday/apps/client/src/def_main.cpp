@@ -48,6 +48,8 @@
 #include <doomsday/resource/manifest.h>
 #include <doomsday/res/Bundles>
 #include <doomsday/res/Textures>
+#include <doomsday/world/Materials>
+#include <doomsday/world/MaterialManifest>
 #include <doomsday/world/xg.h>
 
 #include "dd_main.h"
@@ -61,11 +63,11 @@
 #  include "render/rend_particle.h"
 #endif
 
-#include "resource/materialdetaillayer.h"
-#include "resource/materialshinelayer.h"
-#include "resource/materialtexturelayer.h"
+#include <doomsday/world/detailtexturemateriallayer.h>
+#include <doomsday/world/shinetexturemateriallayer.h>
+#include <doomsday/world/texturemateriallayer.h>
 #ifdef __CLIENT__
-#  include "resource/materiallightdecoration.h"
+#  include "resource/lightmaterialdecoration.h"
 #endif
 
 using namespace de;
@@ -85,7 +87,7 @@ static inline FS1 &fileSys()
     return App_FileSystem();
 }
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
     return App_ResourceSystem();
 }
@@ -785,7 +787,7 @@ static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textur
  * @param material  The material being (re)decorated.
  * @param def       Definition to apply.
  */
-static void redecorateMaterial(Material &material, Record const &def)
+static void redecorateMaterial(ClientMaterial &material, Record const &def)
 {
     defn::Material matDef(def);
 
@@ -806,7 +808,7 @@ static void redecorateMaterial(Material &material, Record const &def)
             defineFlaremap(de::Uri(st.gets("haloTexture"), RC_NULL));
         }
 
-        material.addDecoration(MaterialLightDecoration::fromDef(decorDef.def()));
+        material.addDecoration(LightMaterialDecoration::fromDef(decorDef.def()));
     }
 
     if (material.hasDecorations())
@@ -817,13 +819,13 @@ static void redecorateMaterial(Material &material, Record const &def)
     {
         // The animation configuration of layer0 determines decoration animation.
         auto const &decorationsByTexture = defs.decorations.lookup("texture").elements();
-        auto const &layer0               = material.layer(0).as<MaterialTextureLayer>();
+        auto const &layer0               = material.layer(0).as<world::TextureMaterialLayer>();
 
         bool haveDecorations = false;
         QVector<Record const *> stageDecorations(layer0.stageCount());
         for (dint i = 0; i < layer0.stageCount(); ++i)
         {
-            MaterialTextureLayer::AnimationStage const &stage = layer0.stage(i);
+            world::TextureMaterialLayer::AnimationStage const &stage = layer0.stage(i);
             try
             {
                 res::TextureManifest &texManifest = res::Textures::get().textureManifest(de::Uri(stage.gets("texture"), RC_NULL));
@@ -855,19 +857,19 @@ static void redecorateMaterial(Material &material, Record const &def)
                 defn::MaterialDecoration decorDef(mainDef.light(k));
                 DENG2_ASSERT(decorDef.stageCount() == 1); // sanity check.
 
-                std::unique_ptr<MaterialLightDecoration> decor(
-                        new MaterialLightDecoration(Vector2i(decorDef.geta("patternSkip")),
+                std::unique_ptr<LightMaterialDecoration> decor(
+                        new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
                                                     Vector2i(decorDef.geta("patternOffset")),
                                                     false /*don't use interpolation*/));
 
-                std::unique_ptr<MaterialLightDecoration::AnimationStage> definedDecorStage(
-                        MaterialLightDecoration::AnimationStage::fromDef(decorDef.stage(0)));
+                std::unique_ptr<LightMaterialDecoration::AnimationStage> definedDecorStage(
+                        LightMaterialDecoration::AnimationStage::fromDef(decorDef.stage(0)));
 
                 definedDecorStage->tics = layer0.stage(i).tics;
 
                 for (dint m = 0; m < i; ++m)
                 {
-                    MaterialLightDecoration::AnimationStage preStage(*definedDecorStage);
+                    LightMaterialDecoration::AnimationStage preStage(*definedDecorStage);
                     preStage.tics  = layer0.stage(m).tics;
                     preStage.color = Vector3f();
                     decor->addStage(preStage);  // makes a copy.
@@ -877,7 +879,7 @@ static void redecorateMaterial(Material &material, Record const &def)
 
                 for (dint m = i + 1; m < layer0.stageCount(); ++m)
                 {
-                    MaterialLightDecoration::AnimationStage postStage(*definedDecorStage);
+                    LightMaterialDecoration::AnimationStage postStage(*definedDecorStage);
                     postStage.tics  = layer0.stage(m).tics;
                     postStage.color = Vector3f();
                     decor->addStage(postStage);
@@ -924,7 +926,7 @@ static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
     return nullptr;  // Not found.
 }
 
-static void configureMaterial(Material &mat, Record const &definition)
+static void configureMaterial(world::Material &mat, Record const &definition)
 {
     defn::Material matDef(definition);
     de::Uri const materialUri(matDef.gets("id"), RC_NULL);
@@ -935,20 +937,20 @@ static void configureMaterial(Material &mat, Record const &definition)
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
 
 #ifdef __CLIENT__
-    mat.setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
+    static_cast<ClientMaterial &>(mat).setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
 #endif
 
     // Reconfigure the layers.
     mat.clearAllLayers();
     for (dint i = 0; i < matDef.layerCount(); ++i)
     {
-        mat.addLayerAt(MaterialTextureLayer::fromDef(matDef.layer(i)), mat.layerCount());
+        mat.addLayerAt(world::TextureMaterialLayer::fromDef(matDef.layer(i)), mat.layerCount());
     }
 
     if (mat.layerCount() && mat.layer(0).stageCount())
     {
-        auto &layer0 = mat.layer(0).as<MaterialTextureLayer>();
-        MaterialTextureLayer::AnimationStage &stage0 = layer0.stage(0);
+        auto &layer0 = mat.layer(0).as<world::TextureMaterialLayer>();
+        world::TextureMaterialLayer::AnimationStage &stage0 = layer0.stage(0);
 
         if (!stage0.gets("texture").isEmpty())
         {
@@ -989,17 +991,17 @@ static void configureMaterial(Material &mat, Record const &definition)
                             dint const tics       = gm.tics;
                             dfloat const variance = de::max(gm.randomTics, 0) / dfloat( gm.tics );
 
-                            layer0.addStage(MaterialTextureLayer::AnimationStage(*gm.material, tics, variance));
+                            layer0.addStage(world::TextureMaterialLayer::AnimationStage(*gm.material, tics, variance));
                         }
                     }
                 }
             }
 
             // Are there Detail definitions we need to produce a layer for?
-            MaterialDetailLayer *dlayer = nullptr;
+            world::DetailTextureMaterialLayer *dlayer = nullptr;
             for (dint i = 0; i < layer0.stageCount(); ++i)
             {
-                MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
+                world::TextureMaterialLayer::AnimationStage &stage = layer0.stage(i);
                 ded_detailtexture_t const *detailDef =
                     tryFindDetailTexture(de::Uri(stage.gets("texture"), RC_NULL),
                                          /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
@@ -1010,23 +1012,25 @@ static void configureMaterial(Material &mat, Record const &definition)
                 if (!dlayer)
                 {
                     // Add a new detail layer.
-                    mat.addLayerAt(dlayer = MaterialDetailLayer::fromDef(*detailDef), 0);
+                    mat.addLayerAt(dlayer = world::DetailTextureMaterialLayer::fromDef(*detailDef), 0);
                 }
                 else
                 {
                     // Add a new stage.
                     try
                     {
-                        res::TextureManifest &texture = resSys().textures().textureScheme("Details").findByResourceUri(*detailDef->stage.texture);
-                        dlayer->addStage(MaterialDetailLayer::AnimationStage(texture.composeUri(), stage.tics, stage.variance,
-                                                                             detailDef->stage.scale, detailDef->stage.strength,
-                                                                             detailDef->stage.maxDistance));
+                        res::TextureManifest &texture = resSys().textures().textureScheme("Details")
+                                .findByResourceUri(*detailDef->stage.texture);
+                        dlayer->addStage(world::DetailTextureMaterialLayer::AnimationStage
+                                         (texture.composeUri(), stage.tics, stage.variance,
+                                          detailDef->stage.scale, detailDef->stage.strength,
+                                          detailDef->stage.maxDistance));
 
                         if (dlayer->stageCount() == 2)
                         {
                             // Update the first stage with timing info.
-                            MaterialTextureLayer::AnimationStage const &stage0 = layer0.stage(0);
-                            MaterialTextureLayer::AnimationStage &dstage0      = dlayer->stage(0);
+                            world::TextureMaterialLayer::AnimationStage const &stage0 = layer0.stage(0);
+                            world::TextureMaterialLayer::AnimationStage &dstage0      = dlayer->stage(0);
 
                             dstage0.tics     = stage0.tics;
                             dstage0.variance = stage0.variance;
@@ -1038,10 +1042,10 @@ static void configureMaterial(Material &mat, Record const &definition)
             }
 
             // Are there Reflection definition we need to produce a layer for?
-            MaterialShineLayer *slayer = nullptr;
+            world::ShineTextureMaterialLayer *slayer = nullptr;
             for (dint i = 0; i < layer0.stageCount(); ++i)
             {
-                MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
+                world::TextureMaterialLayer::AnimationStage &stage = layer0.stage(i);
                 ded_reflection_t const *shineDef =
                     tryFindReflection(de::Uri(stage.gets("texture"), RC_NULL),
                                       /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
@@ -1052,7 +1056,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                 if (!slayer)
                 {
                     // Add a new shine layer.
-                    mat.addLayerAt(slayer = MaterialShineLayer::fromDef(*shineDef), mat.layerCount());
+                    mat.addLayerAt(slayer = world::ShineTextureMaterialLayer::fromDef(*shineDef), mat.layerCount());
                 }
                 else
                 {
@@ -1074,17 +1078,18 @@ static void configureMaterial(Material &mat, Record const &definition)
                             {}  // Ignore this error.
                         }
 
-                        slayer->addStage(MaterialShineLayer::AnimationStage(texture.composeUri(), stage.tics, stage.variance,
-                                                                            maskTexture->composeUri(), shineDef->stage.blendMode,
-                                                                            shineDef->stage.shininess,
-                                                                            Vector3f(shineDef->stage.minColor),
-                                                                            Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+                        slayer->addStage(world::ShineTextureMaterialLayer::AnimationStage
+                                         (texture.composeUri(), stage.tics, stage.variance,
+                                          maskTexture->composeUri(), shineDef->stage.blendMode,
+                                          shineDef->stage.shininess,
+                                          Vector3f(shineDef->stage.minColor),
+                                          Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
 
                         if (slayer->stageCount() == 2)
                         {
                             // Update the first stage with timing info.
-                            MaterialTextureLayer::AnimationStage const &stage0 = layer0.stage(0);
-                            MaterialTextureLayer::AnimationStage &sstage0      = slayer->stage(0);
+                            world::TextureMaterialLayer::AnimationStage const &stage0 = layer0.stage(0);
+                            world::TextureMaterialLayer::AnimationStage &sstage0      = slayer->stage(0);
 
                             sstage0.tics     = stage0.tics;
                             sstage0.variance = stage0.variance;
@@ -1098,7 +1103,7 @@ static void configureMaterial(Material &mat, Record const &definition)
     }
 
 #ifdef __CLIENT__
-    redecorateMaterial(mat, definition);
+    redecorateMaterial(static_cast<ClientMaterial &>(mat), definition);
 #endif
 
     // At this point we know the material is usable.
@@ -1113,11 +1118,11 @@ static void interpretMaterialDef(Record const &definition)
     try
     {
         // Create/retrieve a manifest for the would-be material.
-        MaterialManifest *manifest = &resSys().declareMaterial(materialUri);
+        world::MaterialManifest *manifest = &world::Materials::get().declareMaterial(materialUri);
 
         // Update manifest classification:
-        manifest->setFlags(MaterialManifest::AutoGenerated, matDef.getb("autoGenerated")? SetFlags : UnsetFlags);
-        manifest->setFlags(MaterialManifest::Custom, UnsetFlags);
+        manifest->setFlags(world::MaterialManifest::AutoGenerated, matDef.getb("autoGenerated")? SetFlags : UnsetFlags);
+        manifest->setFlags(world::MaterialManifest::Custom, UnsetFlags);
         if (matDef.layerCount())
         {
             defn::MaterialLayer layerDef(matDef.layer(0));
@@ -1129,7 +1134,7 @@ static void interpretMaterialDef(Record const &definition)
                     res::TextureManifest &texManifest = resSys().textures().textureManifest(textureUri);
                     if (texManifest.hasTexture() && texManifest.texture().isFlagged(res::Texture::Custom))
                     {
-                        manifest->setFlags(MaterialManifest::Custom);
+                        manifest->setFlags(world::MaterialManifest::Custom);
                     }
                 }
                 catch (Resources::MissingResourceManifestError const &er)
@@ -1147,12 +1152,12 @@ static void interpretMaterialDef(Record const &definition)
         /// @todo Defer until necessary.
         configureMaterial(*manifest->derive(), definition);
     }
-    catch (ResourceSystem::UnknownSchemeError const &er)
+    catch (ClientResources::UnknownSchemeError const &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
             << materialUri << er.asText();
     }
-    catch (MaterialScheme::InvalidPathError const &er)
+    catch (world::MaterialScheme::InvalidPathError const &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
             << materialUri << er.asText();
@@ -1161,7 +1166,7 @@ static void interpretMaterialDef(Record const &definition)
 
 static void invalidateAllMaterials()
 {
-    resSys().forAllMaterials([] (Material &material)
+    world::Materials::get().forAllMaterials([] (world::Material &material)
     {
         material.markValid(false);
         return LoopContinue;
@@ -1560,7 +1565,7 @@ void Def_Read()
 
 static void initMaterialGroup(ded_group_t &def)
 {
-    ResourceSystem::MaterialManifestGroup *group = nullptr;
+    world::Materials::MaterialManifestGroup *group = nullptr;
     for (dint i = 0; i < def.members.size(); ++i)
     {
         ded_group_member_t *gm = &def.members[i];
@@ -1568,14 +1573,14 @@ static void initMaterialGroup(ded_group_t &def)
 
         try
         {
-            MaterialManifest &manifest = resSys().materialManifest(*gm->material);
+            world::MaterialManifest &manifest = world::Materials::get().materialManifest(*gm->material);
 
             if (def.flags & AGF_PRECACHE) // A precache group.
             {
                 // Only create the group once the first material has been found.
                 if (!group)
                 {
-                    group = &resSys().newMaterialGroup();
+                    group = &world::Materials::get().newMaterialGroup();
                 }
 
                 group->insert(&manifest);
@@ -1643,7 +1648,7 @@ void Def_PostInit()
                     st->endFrame = -1;
                 }
             }
-            catch (ResourceSystem::MissingModelDefError const &)
+            catch (ClientResources::MissingModelDefError const &)
             {}  // Ignore this error.
         }
     }
@@ -1662,7 +1667,7 @@ void Def_PostInit()
     }
 
     // Material groups (e.g., for precaching).
-    resSys().clearAllMaterialGroups();
+    world::Materials::get().clearAllMaterialGroups();
     for (dint i = 0; i < ::defs.groups.size(); ++i)
     {
         initMaterialGroup(::defs.groups[i]);
@@ -1745,7 +1750,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     {
         try
         {
-            l->actMaterial = resSys().materialManifest(*def->actMaterial).id();
+            l->actMaterial = world::Materials::get().materialManifest(*def->actMaterial).id();
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
@@ -1755,7 +1760,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     {
         try
         {
-            l->deactMaterial = resSys().materialManifest(*def->deactMaterial).id();
+            l->deactMaterial = world::Materials::get().materialManifest(*def->deactMaterial).id();
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
@@ -1794,7 +1799,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 {
                     try
                     {
-                        l->iparm[k] = resSys().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
+                        l->iparm[k] = world::Materials::get().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
                     catch (Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.

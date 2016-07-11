@@ -29,8 +29,7 @@
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
-#include "MapElement"
-#include "Material"
+#include <doomsday/world/Material>
 #include "resource/framemodeldef.h"
 
 #define DEFAULT_SKY_SPHERE_MATERIAL ( "Textures:SKY1" )
@@ -244,8 +243,8 @@ public:
 #endif  // __CLIENT__
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

@@ -769,7 +769,7 @@ static void initShowStats()
 static void drawStats()
 {
     // Draw the background.
-    DGL_SetMaterialUI((Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
+    DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);

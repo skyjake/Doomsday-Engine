@@ -25,6 +25,7 @@
 #include <de/Log>
 #include <doomsday/console/exec.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/world/Materials>
 
 #include "dd_main.h"  // App_ResourceSystem
 #include "def_main.h"
@@ -35,14 +36,15 @@
 #include "render/billboard.h"  // Rend_SpriteMaterialSpec
 #include "render/rend_model.h"
 
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
+
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
 
 using namespace de;
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
     return App_ResourceSystem();
 }
@@ -114,8 +116,8 @@ DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 #ifdef __CLIENT__
 static inline MaterialVariantSpec const &pspriteMaterialSpec()
 {
-    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 0, 1, -1, false, true, true, false);
+    return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             0, 1, -1, false, true, true, false);
 }
 #endif
 
@@ -144,14 +146,15 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
     }
 
     Record const &spriteView = sprite.view(0);
-    info->material = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
+    info->material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
     info->flip     = spriteView.getb("mirrorX");
 
     if(::novideo) return true;  // We can't prepare the material.
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
-    MaterialAnimator &matAnimator = info->material->getAnimator(pspriteMaterialSpec());
+    MaterialAnimator &matAnimator = reinterpret_cast<world::Material *>(info->material)->as<ClientMaterial>()
+            .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
     Vector2ui const &matDimensions = matAnimator.dimensions();

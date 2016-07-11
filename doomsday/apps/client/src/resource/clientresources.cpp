@@ -1,4 +1,4 @@
-/** @file resourcesystem.cpp  Resource subsystem.
+/** @file clientresources.cpp  Client-side resource subsystem.
  *
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 
 #include <QHash>
 #include <QVector>
@@ -61,6 +61,8 @@
 #include <doomsday/res/Composite>
 #include <doomsday/res/TextureManifest>
 #include <doomsday/res/Textures>
+#include <doomsday/world/Material>
+#include <doomsday/world/materials.h>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -413,17 +415,13 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
     return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
 }
 
-DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(Loop,             Iteration)        // post savegame conversion FS population
-, DENG2_OBSERVES(Games,            Addition)         // savegames folder setup
-, DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
-, DENG2_OBSERVES(MaterialManifest, MaterialDerived)
-, DENG2_OBSERVES(MaterialManifest, Deletion)
-, DENG2_OBSERVES(Material,         Deletion)
+DENG2_PIMPL(ClientResources)
+, DENG2_OBSERVES(Loop,              Iteration)        // post savegame conversion FS population
+, DENG2_OBSERVES(Games,             Addition)         // savegames folder setup
 #ifdef __CLIENT__
-, DENG2_OBSERVES(FontScheme,       ManifestDefined)
-, DENG2_OBSERVES(FontManifest,     Deletion)
-, DENG2_OBSERVES(AbstractFont,     Deletion)
+, DENG2_OBSERVES(FontScheme,        ManifestDefined)
+, DENG2_OBSERVES(FontManifest,      Deletion)
+, DENG2_OBSERVES(AbstractFont,      Deletion)
 , DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
 #endif
 {
@@ -432,18 +430,6 @@ DENG2_PIMPL(ResourceSystem)
 
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
-
-    /// System subspace schemes containing the manifests/resources.
-    QMap<String, MaterialScheme *> materialSchemes;
-    QList<MaterialScheme *> materialSchemeCreationOrder;
-
-    QList<Material *> materials;       ///< From all schemes.
-    int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
-
-    MaterialManifestGroups materialGroups;
-
-    uint materialManifestIdMapSize;
-    MaterialManifest **materialManifestIdMap;  ///< Index with materialid_t-1
 
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
@@ -482,10 +468,10 @@ DENG2_PIMPL(ResourceSystem)
      */
     struct MaterialCacheTask : public CacheTask
     {
-        Material *material;
+        ClientMaterial *material;
         MaterialVariantSpec const *spec; /// Interned context specification.
 
-        MaterialCacheTask(Material &resource, MaterialVariantSpec const &contextSpec)
+        MaterialCacheTask(ClientMaterial &resource, MaterialVariantSpec const &contextSpec)
             : CacheTask()
             , material(&resource)
             , spec(&contextSpec)
@@ -512,8 +498,6 @@ DENG2_PIMPL(ResourceSystem)
 
     Impl(Public *i)
         : Base(i)
-        , materialManifestIdMapSize(0)
-        , materialManifestIdMap    (0)
 #ifdef __CLIENT__
         , fontManifestCount        (0)
         , fontManifestIdMapSize    (0)
@@ -530,15 +514,9 @@ DENG2_PIMPL(ResourceSystem)
             return new res::Texture(m);
         });
 #endif
-        de::Uri::setResolverFunc(ResourceSystem::resolveSymbol);
+        de::Uri::setResolverFunc(ClientResources::resolveSymbol);
 
         LOG_AS("ResourceSystem");
-
-        /// @note Order here defines the ambigious-URI search order.
-        createMaterialScheme("Sprites");
-        createMaterialScheme("Textures");
-        createMaterialScheme("Flats");
-        createMaterialScheme("System");
 
 #ifdef __CLIENT__
         /// @note Order here defines the ambigious-URI search order.
@@ -577,18 +555,13 @@ DENG2_PIMPL(ResourceSystem)
         clearFontManifests();
         self.clearAllRawTextures();
         self.purgeCacheQueue();
-#endif
 
-        self.clearAllMaterialGroups();
-        self.clearAllMaterialSchemes();
-        clearMaterialManifests();
-
-#ifdef __CLIENT__
         clearAllTextureSpecs();
         clearMaterialSpecs();
 #endif
 
         sprites.clear();
+
 #ifdef __CLIENT__
         clearModels();
 #endif
@@ -602,34 +575,6 @@ DENG2_PIMPL(ResourceSystem)
         LOG_AS("ResourceSystem");
         // Make the /home/savegames/<gameId> subfolder in the local FS if it does not yet exist.
         App::fileSystem().makeFolder(String("/home/savegames") / game.id());
-    }
-
-    void clearMaterialManifests()
-    {
-        qDeleteAll(materialSchemes);
-        materialSchemes.clear();
-        materialSchemeCreationOrder.clear();
-
-        // Clear the manifest index/map.
-        if (materialManifestIdMap)
-        {
-            M_Free(materialManifestIdMap); materialManifestIdMap = 0;
-            materialManifestIdMapSize = 0;
-        }
-        materialManifestCount = 0;
-    }
-
-    void createMaterialScheme(String name)
-    {
-        DENG2_ASSERT(name.length() >= MaterialScheme::min_name_length);
-
-        // Create a new scheme.
-        MaterialScheme *newScheme = new MaterialScheme(name);
-        materialSchemes.insert(name.toLower(), newScheme);
-        materialSchemeCreationOrder.append(newScheme);
-
-        // We want notification when a new manifest is defined in this scheme.
-        newScheme->audienceForManifestDefined += this;
     }
 
 #ifdef __CLIENT__
@@ -677,7 +622,7 @@ DENG2_PIMPL(ResourceSystem)
     {
         if (SpriteSet *frames = tryFindSpriteSet(id)) return *frames;
         /// @throw MissingResourceError An unknown/invalid id was specified.
-        throw MissingResourceError("ResourceSystem::findSpriteSet", "Unknown sprite id " + String::number(id));
+        throw MissingResourceError("ClientResources::findSpriteSet", "Unknown sprite id " + String::number(id));
     }
 
     SpriteSet &addSpriteSet(spritenum_t id, QMap<dint, Record> const &frames)
@@ -934,8 +879,9 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    void queueCacheTasksForMaterial(Material &material, MaterialVariantSpec const &contextSpec,
-        bool cacheGroups = true)
+    void queueCacheTasksForMaterial(ClientMaterial &material,
+                                    MaterialVariantSpec const &contextSpec,
+                                    bool cacheGroups = true)
     {
         // Already in the queue?
         bool alreadyQueued = false;
@@ -962,22 +908,23 @@ DENG2_PIMPL(ResourceSystem)
         // for all other materials within the same group(s). Although we could
         // use a flag in the task and have it find the groups come prepare time,
         // this way we can be sure there are no overlapping tasks.
-        foreach (MaterialManifestGroup *group, materialGroups)
+        foreach (world::Materials::MaterialManifestGroup *group,
+                 world::Materials::get().allMaterialGroups())
         {
             if (!group->contains(&material.manifest()))
             {
                 continue;
             }
 
-            foreach (MaterialManifest *manifest, *group)
+            foreach (world::MaterialManifest *manifest, *group)
             {
                 if (!manifest->hasMaterial()) continue;
 
                 // Have we already enqueued this material?
                 if (&manifest->material() == &material) continue;
 
-                queueCacheTasksForMaterial(manifest->material(), contextSpec,
-                                           false /* do not cache groups */);
+                queueCacheTasksForMaterial(manifest->material().as<ClientMaterial>(),
+                                           contextSpec, false /* do not cache groups */);
             }
         }
     }
@@ -991,9 +938,10 @@ DENG2_PIMPL(ResourceSystem)
             for (Value const *val : sprite.geta("views").elements())
             {
                 Record const &spriteView = val->as<RecordValue>().dereference();
-                if (Material *material = self.materialPtr(de::Uri(spriteView.gets("material"), RC_NULL)))
+                if (world::Material *material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL)))
                 {
-                    queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
+                    queueCacheTasksForMaterial(material->as<ClientMaterial>(),
+                                               contextSpec, cacheGroups);
                 }
             }
         }
@@ -1179,7 +1127,7 @@ DENG2_PIMPL(ResourceSystem)
         Time begunAt;
 
         LOG_RES_VERBOSE("Initializing composite textures...");
-        
+
         //self.textures().textureScheme("Textures").clear();
 
         // Load texture definitions from TEXTURE1/2 lumps.
@@ -1246,7 +1194,7 @@ DENG2_PIMPL(ResourceSystem)
         Time begunAt;
 
         LOG_RES_VERBOSE("Initializing Flat textures...");
-        
+
         //self.textures().textureScheme("Flats").clear();
 
         LumpIndex const &index = fileSys().nameIndex();
@@ -1322,7 +1270,7 @@ DENG2_PIMPL(ResourceSystem)
         LOG_RES_VERBOSE("Initializing Sprite textures...");
 
         //self.textures().textureScheme("Sprites").clear();
-        
+
         dint uniqueId = 1/*1-based index*/;
 
         /// @todo fixme: Order here does not respect id Tech 1 logic.
@@ -1641,10 +1589,10 @@ DENG2_PIMPL(ResourceSystem)
         defn::Sprite sprite(*spriteRec);
         if (!sprite.hasView(0)) return;
 
-        Material *mat = self.materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+        world::Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
         if (!mat) return;
 
-        MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+        MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
         matAnimator.prepare();  // Ensure we have up-to-date info.
 
         ClientTexture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
@@ -1962,61 +1910,6 @@ DENG2_PIMPL(ResourceSystem)
     }
 #endif
 
-    /// Observes MaterialScheme ManifestDefined.
-    void materialSchemeManifestDefined(MaterialScheme & /*scheme*/, MaterialManifest &manifest)
-    {
-        /// Number of elements to block-allocate in the material index to material manifest map.
-        int const MANIFESTIDMAP_BLOCK_ALLOC = 32;
-
-        // We want notification when the manifest is derived to produce a material.
-        manifest.audienceForMaterialDerived += this;
-
-        // We want notification when the manifest is about to be deleted.
-        manifest.audienceForDeletion += this;
-
-        // Acquire a new unique identifier for the manifest.
-        materialid_t const id = ++materialManifestCount; // 1-based.
-        manifest.setId(id);
-
-        // Add the new manifest to the id index/map.
-        if (materialManifestCount > (int)materialManifestIdMapSize)
-        {
-            // Allocate more memory.
-            materialManifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
-            materialManifestIdMap = (MaterialManifest **) M_Realloc(materialManifestIdMap, sizeof(*materialManifestIdMap) * materialManifestIdMapSize);
-        }
-        materialManifestIdMap[materialManifestCount - 1] = &manifest;
-    }
-
-    /// Observes MaterialManifest MaterialDerived.
-    void materialManifestMaterialDerived(MaterialManifest & /*manifest*/, Material &material)
-    {
-        // Include this new material in the scheme-agnostic list of instances.
-        materials.append(&material);
-
-        // We want notification when the material is about to be deleted.
-        material.audienceForDeletion() += this;
-    }
-
-    /// Observes MaterialManifest Deletion.
-    void materialManifestBeingDeleted(MaterialManifest const &manifest)
-    {
-        foreach (MaterialManifestGroup *group, materialGroups)
-        {
-            group->remove(const_cast<MaterialManifest *>(&manifest));
-        }
-        materialManifestIdMap[manifest.id() - 1 /*1-based*/] = 0;
-
-        // There will soon be one fewer manifest in the system.
-        materialManifestCount -= 1;
-    }
-
-    /// Observes Material Deletion.
-    void materialBeingDeleted(Material const &material)
-    {
-        materials.removeOne(const_cast<Material *>(&material));
-    }
-
 #ifdef __CLIENT__
     /// Observes FontScheme ManifestDefined.
     void fontSchemeManifestDefined(FontScheme & /*scheme*/, FontManifest &manifest)
@@ -2175,10 +2068,10 @@ DENG2_PIMPL(ResourceSystem)
     }
 };
 
-ResourceSystem::ResourceSystem() : d(new Impl(this))
+ClientResources::ClientResources() : d(new Impl(this))
 {}
 
-void ResourceSystem::clear()
+void ClientResources::clear()
 {
     Resources::clear();
 
@@ -2189,13 +2082,13 @@ void ResourceSystem::clear()
     clearAllAnimGroups();
 }
 
-void ResourceSystem::clearAllResources()
+void ClientResources::clearAllResources()
 {
     clearAllRuntimeResources();
     clearAllSystemResources();
 }
 
-void ResourceSystem::clearAllRuntimeResources()
+void ClientResources::clearAllRuntimeResources()
 {
 #ifdef __CLIENT__
     d->clearRuntimeFonts();
@@ -2203,7 +2096,7 @@ void ResourceSystem::clearAllRuntimeResources()
     d->clearRuntimeTextures();
 }
 
-void ResourceSystem::clearAllSystemResources()
+void ClientResources::clearAllSystemResources()
 {
 #ifdef __CLIENT__
     d->clearSystemFonts();
@@ -2211,7 +2104,7 @@ void ResourceSystem::clearAllSystemResources()
     d->clearSystemTextures();
 }
 
-void ResourceSystem::addColorPalette(res::ColorPalette &newPalette, String const &name)
+void ClientResources::addColorPalette(res::ColorPalette &newPalette, String const &name)
 {
     colorPalettes().addColorPalette(newPalette, name);
 
@@ -2221,12 +2114,12 @@ void ResourceSystem::addColorPalette(res::ColorPalette &newPalette, String const
 #endif
 }
 
-dint ResourceSystem::spriteCount()
+dint ClientResources::spriteCount()
 {
     return d->sprites.count();
 }
 
-bool ResourceSystem::hasSprite(spritenum_t id, dint frame)
+bool ClientResources::hasSprite(spritenum_t id, dint frame)
 {
     if (SpriteSet const *frames = d->tryFindSpriteSet(id))
     {
@@ -2235,26 +2128,26 @@ bool ResourceSystem::hasSprite(spritenum_t id, dint frame)
     return false;
 }
 
-Record &ResourceSystem::sprite(spritenum_t id, dint frame)
+Record &ClientResources::sprite(spritenum_t id, dint frame)
 {
     return d->findSpriteSet(id).find(frame).value();
 }
 
-ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t id)
+ClientResources::SpriteSet const &ClientResources::spriteSet(spritenum_t id)
 {
     return d->findSpriteSet(id);
 }
 
-void ResourceSystem::initTextures()
+void ClientResources::initTextures()
 {
     LOG_AS("ResourceSystem");
-    
+
     d->initCompositeTextures();
     d->initFlatTextures();
     d->initSpriteTextures();
 }
 
-void ResourceSystem::initSystemTextures()
+void ClientResources::initSystemTextures()
 {
     LOG_AS("ResourceSystem");
 
@@ -2290,9 +2183,9 @@ void ResourceSystem::initSystemTextures()
     d->deriveAllTexturesInScheme("System");
 }
 
-patchid_t ResourceSystem::declarePatch(String encodedName)
+patchid_t ClientResources::declarePatch(String encodedName)
 {
-    LOG_AS("ResourceSystem::declarePatch");
+    LOG_AS("ClientResources::declarePatch");
 
     if (encodedName.isEmpty())
         return 0;
@@ -2367,9 +2260,9 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     return 0;
 }
 
-rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
+rawtex_t *ClientResources::rawTexture(lumpnum_t lumpNum)
 {
-    LOG_AS("ResourceSystem::rawTexture");
+    LOG_AS("ClientResources::rawTexture");
     if (-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0")
@@ -2381,9 +2274,9 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
     return (found != d->rawTexHash.end() ? found.value() : nullptr);
 }
 
-rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
+rawtex_t *ClientResources::declareRawTexture(lumpnum_t lumpNum)
 {
-    LOG_AS("ResourceSystem::rawTexture");
+    LOG_AS("ClientResources::rawTexture");
     if (-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
@@ -2403,163 +2296,20 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     return raw;
 }
 
-QList<rawtex_t *> ResourceSystem::collectRawTextures() const
+QList<rawtex_t *> ClientResources::collectRawTextures() const
 {
     return d->rawTexHash.values();
 }
 
-void ResourceSystem::clearAllRawTextures()
+void ClientResources::clearAllRawTextures()
 {
     qDeleteAll(d->rawTexHash);
     d->rawTexHash.clear();
 }
 
-MaterialScheme &ResourceSystem::materialScheme(String name) const
-{
-    LOG_AS("ResourceSystem::materialScheme");
-    if (!name.isEmpty())
-    {
-        auto found = d->materialSchemes.find(name.toLower());
-        if (found != d->materialSchemes.end()) return **found;
-    }
-    /// @throw UnknownSchemeError An unknown scheme was referenced.
-    throw UnknownSchemeError("ResourceSystem::materialScheme", "No scheme found matching '" + name + "'");
-}
-
-bool ResourceSystem::knownMaterialScheme(String name) const
-{
-    if (!name.isEmpty())
-    {
-        return d->materialSchemes.contains(name.toLower());
-    }
-    return false;
-}
-
-int ResourceSystem::materialSchemeCount() const
-{
-    return d->materialSchemes.count();
-}
-
-LoopResult ResourceSystem::forAllMaterialSchemes(std::function<LoopResult (MaterialScheme &)> func) const
-{
-    for (MaterialScheme *scheme : d->materialSchemes)
-    {
-        if (auto result = func(*scheme)) return result;
-    }
-    return LoopContinue;
-}
-
-MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
-{
-    duint32 idx = id - 1; // 1-based index.
-    if (idx < (duint32)d->materialManifestCount)
-    {
-        if (d->materialManifestIdMap[idx])
-        {
-            return *d->materialManifestIdMap[idx];
-        }
-        // Internal bookeeping error.
-        DENG2_ASSERT(false);
-    }
-    /// @throw InvalidMaterialIdError The specified material id is invalid.
-    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangei(1, d->materialManifestCount + 1).asText());
-}
-
-Material *ResourceSystem::materialPtr(de::Uri const &path)
-{
-    if (auto *manifest = materialManifestPtr(path)) return manifest->materialPtr();
-    return nullptr;
-}
-
-bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
-{
-    return materialManifestPtr(path) != nullptr;
-}
-
-MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
-{
-    if (auto *mm = materialManifestPtr(uri))
-    {
-        return *mm;
-    }
-    /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
-    throw MissingResourceManifestError("ResourceSystem::materialManifest",
-                                       "Failed to locate a manifest matching \"" + uri.asText() + "\"");
-}
-
-MaterialManifest *ResourceSystem::materialManifestPtr(de::Uri const &uri) const
-{
-    LOG_AS("ResourceSystem::materialManifestPtr");
-
-    // Does the user want a manifest in a specific scheme?
-    if (!uri.scheme().isEmpty())
-    {
-        MaterialScheme &specifiedScheme = materialScheme(uri.scheme());
-        if (specifiedScheme.has(uri.path()))
-        {
-            return &specifiedScheme.find(uri.path());
-        }
-    }
-    else
-    {
-        // No, check each scheme in priority order.
-        foreach (MaterialScheme *scheme, d->materialSchemeCreationOrder)
-        {
-            if (scheme->has(uri.path()))
-            {
-                return &scheme->find(uri.path());
-            }
-        }
-    }
-    return nullptr;
-}
-
-dint ResourceSystem::materialCount() const
-{
-    return d->materials.count();
-}
-
-LoopResult ResourceSystem::forAllMaterials(std::function<LoopResult (Material &)> func) const
-{
-    for (Material *mat : d->materials)
-    {
-        if (auto result = func(*mat)) return result;
-    }
-    return LoopContinue;
-}
-
-ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
-{
-    // Allocating one by one is inefficient, but it doesn't really matter.
-    d->materialGroups.append(new MaterialManifestGroup());
-    return *d->materialGroups.back();
-}
-
-ResourceSystem::MaterialManifestGroup &ResourceSystem::materialGroup(dint groupIdx) const
-{
-    groupIdx -= 1; // 1-based index.
-    if (groupIdx >= 0 && groupIdx < d->materialGroups.count())
-    {
-        return *d->materialGroups[groupIdx];
-    }
-    /// @throw UnknownMaterialGroupError An unknown material group was referenced.
-    throw UnknownMaterialGroupError("ResourceSystem::materialGroup", "Invalid group #" + String::number(groupIdx+1) + ", valid range " + Rangeui(1, d->materialGroups.count() + 1).asText());
-}
-
-ResourceSystem::MaterialManifestGroups const &ResourceSystem::allMaterialGroups() const
-{
-    return d->materialGroups;
-}
-
-void ResourceSystem::clearAllMaterialGroups()
-{
-    qDeleteAll(d->materialGroups);
-    d->materialGroups.clear();
-}
-
 #ifdef __CLIENT__
 
-void ResourceSystem::releaseAllSystemGLTextures()
+void ClientResources::releaseAllSystemGLTextures()
 {
     if (::novideo) return;
 
@@ -2580,7 +2330,7 @@ void ResourceSystem::releaseAllSystemGLTextures()
     pruneUnusedTextureSpecs();
 }
 
-void ResourceSystem::releaseAllRuntimeGLTextures()
+void ClientResources::releaseAllRuntimeGLTextures()
 {
     if (::novideo) return;
 
@@ -2611,13 +2361,13 @@ void ResourceSystem::releaseAllRuntimeGLTextures()
     pruneUnusedTextureSpecs();
 }
 
-void ResourceSystem::releaseAllGLTextures()
+void ClientResources::releaseAllGLTextures()
 {
     releaseAllRuntimeGLTextures();
     releaseAllSystemGLTextures();
 }
 
-void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
+void ClientResources::releaseGLTexturesByScheme(String schemeName)
 {
     if (schemeName.isEmpty()) return;
 
@@ -2632,12 +2382,12 @@ void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
     }
 }
 
-void ResourceSystem::clearAllTextureSpecs()
+void ClientResources::clearAllTextureSpecs()
 {
     d->clearAllTextureSpecs();
 }
 
-void ResourceSystem::pruneUnusedTextureSpecs()
+void ClientResources::pruneUnusedTextureSpecs()
 {
     if (Sys_IsShuttingDown()) return;
 
@@ -2649,7 +2399,7 @@ void ResourceSystem::pruneUnusedTextureSpecs()
         << numPruned << (numPruned == 1? "specification" : "specifications");
 }
 
-TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
+TextureVariantSpec const &ClientResources::textureSpec(texturevariantusagecontext_t tc,
     dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT, dint minFilter,
     dint magFilter, dint anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
     dd_bool noStretch, dd_bool toAlpha)
@@ -2671,24 +2421,24 @@ TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext
     return *tvs;
 }
 
-TextureVariantSpec &ResourceSystem::detailTextureSpec(dfloat contrast)
+TextureVariantSpec &ClientResources::detailTextureSpec(dfloat contrast)
 {
     return *d->detailTextureSpec(contrast);
 }
 
-FontScheme &ResourceSystem::fontScheme(String name) const
+FontScheme &ClientResources::fontScheme(String name) const
 {
-    LOG_AS("ResourceSystem::fontScheme");
+    LOG_AS("ClientResources::fontScheme");
     if (!name.isEmpty())
     {
         FontSchemes::iterator found = d->fontSchemes.find(name.toLower());
         if (found != d->fontSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
-    throw UnknownSchemeError("ResourceSystem::fontScheme", "No scheme found matching '" + name + "'");
+    throw UnknownSchemeError("ClientResources::fontScheme", "No scheme found matching '" + name + "'");
 }
 
-bool ResourceSystem::knownFontScheme(String name) const
+bool ClientResources::knownFontScheme(String name) const
 {
     if (!name.isEmpty())
     {
@@ -2697,12 +2447,12 @@ bool ResourceSystem::knownFontScheme(String name) const
     return false;
 }
 
-ResourceSystem::FontSchemes const &ResourceSystem::allFontSchemes() const
+ClientResources::FontSchemes const &ClientResources::allFontSchemes() const
 {
     return d->fontSchemes;
 }
 
-bool ResourceSystem::hasFont(de::Uri const &path) const
+bool ClientResources::hasFont(de::Uri const &path) const
 {
     try
     {
@@ -2714,9 +2464,9 @@ bool ResourceSystem::hasFont(de::Uri const &path) const
     return false;
 }
 
-FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
+FontManifest &ClientResources::fontManifest(de::Uri const &uri) const
 {
-    LOG_AS("ResourceSystem::findFont");
+    LOG_AS("ClientResources::findFont");
 
     // Perform the search.
     // Is this a URN? (of the form "urn:schemename:uniqueid")
@@ -2768,10 +2518,10 @@ FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
     }
 
     /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
-    throw MissingResourceManifestError("ResourceSystem::findFont", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    throw MissingResourceManifestError("ClientResources::findFont", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
+FontManifest &ClientResources::toFontManifest(fontid_t id) const
 {
     if (id > 0 && id <= d->fontManifestCount)
     {
@@ -2784,17 +2534,17 @@ FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
-    throw UnknownFontIdError("ResourceSystem::toFontManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->fontManifestCount + 1));
+    throw UnknownFontIdError("ClientResources::toFontManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->fontManifestCount + 1));
 }
 
-ResourceSystem::AllFonts const &ResourceSystem::allFonts() const
+ClientResources::AllFonts const &ClientResources::allFonts() const
 {
     return d->fonts;
 }
 
-AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
+AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
 {
-    LOG_AS("ResourceSystem::newFontFromDef");
+    LOG_AS("ClientResources::newFontFromDef");
 
     if (!def.uri) return nullptr;
     de::Uri const &uri = *def.uri;
@@ -2847,9 +2597,9 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
     return nullptr;
 }
 
-AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePath)
+AbstractFont *ClientResources::newFontFromFile(de::Uri const &uri, String filePath)
 {
-    LOG_AS("ResourceSystem::newFontFromFile");
+    LOG_AS("ClientResources::newFontFromFile");
 
     if (!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
     {
@@ -2906,7 +2656,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
     return nullptr;
 }
 
-void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
+void ClientResources::releaseFontGLTexturesByScheme(String schemeName)
 {
     if (schemeName.isEmpty()) return;
 
@@ -2921,14 +2671,14 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
     }
 }
 
-FrameModel &ResourceSystem::model(modelid_t id)
+FrameModel &ClientResources::model(modelid_t id)
 {
     if (FrameModel *model = d->modelForId(id)) return *model;
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::model", "Invalid id " + String::number(id));
+    throw MissingResourceError("ClientResources::model", "Invalid id " + String::number(id));
 }
 
-bool ResourceSystem::hasModelDef(String id) const
+bool ClientResources::hasModelDef(String id) const
 {
     if (!id.isEmpty())
     {
@@ -2943,14 +2693,14 @@ bool ResourceSystem::hasModelDef(String id) const
     return false;
 }
 
-FrameModelDef &ResourceSystem::modelDef(dint index)
+FrameModelDef &ClientResources::modelDef(dint index)
 {
     if (index >= 0 && index < modelDefCount()) return d->modefs[index];
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+    throw MissingModelDefError("ClientResources::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
-FrameModelDef &ResourceSystem::modelDef(String id)
+FrameModelDef &ClientResources::modelDef(String id)
 {
     if (!id.isEmpty())
     {
@@ -2963,10 +2713,10 @@ FrameModelDef &ResourceSystem::modelDef(String id)
         }
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id '" + id + "'");
+    throw MissingModelDefError("ClientResources::modelDef", "Invalid id '" + id + "'");
 }
 
-FrameModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
+FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
 {
     if (stateIndex < 0 || stateIndex >= defs.states.size())
         return nullptr;
@@ -2995,12 +2745,12 @@ FrameModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
     return def;
 }
 
-dint ResourceSystem::modelDefCount() const
+dint ClientResources::modelDefCount() const
 {
     return d->modefs.count();
 }
 
-void ResourceSystem::initModels()
+void ClientResources::initModels()
 {
     LOG_AS("ResourceSystem");
 
@@ -3104,13 +2854,13 @@ void ResourceSystem::initModels()
     LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
-dint ResourceSystem::indexOf(FrameModelDef const *modelDef)
+dint ClientResources::indexOf(FrameModelDef const *modelDef)
 {
     dint index = dint(modelDef - &d->modefs[0]);
     return (index >= 0 && index < d->modefs.count() ? index : -1);
 }
 
-void ResourceSystem::setModelDefFrame(FrameModelDef &modef, dint frame)
+void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
 {
     for (duint i = 0; i < modef.subCount(); ++i)
     {
@@ -3124,18 +2874,18 @@ void ResourceSystem::setModelDefFrame(FrameModelDef &modef, dint frame)
 
 #endif // __CLIENT__
 
-void ResourceSystem::clearAllAnimGroups()
+void ClientResources::clearAllAnimGroups()
 {
     qDeleteAll(d->animGroups);
     d->animGroups.clear();
 }
 
-dint ResourceSystem::animGroupCount()
+dint ClientResources::animGroupCount()
 {
     return d->animGroups.count();
 }
 
-AnimGroup &ResourceSystem::newAnimGroup(dint flags)
+AnimGroup &ClientResources::newAnimGroup(dint flags)
 {
     LOG_AS("ResourceSystem");
     dint const uniqueId = d->animGroups.count() + 1; // 1-based.
@@ -3144,9 +2894,9 @@ AnimGroup &ResourceSystem::newAnimGroup(dint flags)
     return *d->animGroups.last();
 }
 
-AnimGroup *ResourceSystem::animGroup(dint uniqueId)
+AnimGroup *ClientResources::animGroup(dint uniqueId)
 {
-    LOG_AS("ResourceSystem::animGroup");
+    LOG_AS("ClientResources::animGroup");
     if (uniqueId > 0 && uniqueId <= d->animGroups.count())
     {
         return d->animGroups.at(uniqueId - 1);
@@ -3155,7 +2905,7 @@ AnimGroup *ResourceSystem::animGroup(dint uniqueId)
     return nullptr;
 }
 
-AnimGroup *ResourceSystem::animGroupForTexture(res::TextureManifest const &textureManifest)
+AnimGroup *ClientResources::animGroupForTexture(res::TextureManifest const &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.
@@ -3328,7 +3078,7 @@ static QMap<dint, Record> buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
     return frames;
 }
 
-void ResourceSystem::initSprites()
+void ClientResources::initSprites()
 {
     LOG_AS("ResourceSystem");
     LOG_RES_VERBOSE("Building sprites...");
@@ -3362,35 +3112,35 @@ void ResourceSystem::initSprites()
 
 #ifdef __CLIENT__
 
-void ResourceSystem::purgeCacheQueue()
+void ClientResources::purgeCacheQueue()
 {
     qDeleteAll(d->cacheQueue);
     d->cacheQueue.clear();
 }
 
-void ResourceSystem::processCacheQueue()
+void ClientResources::processCacheQueue()
 {
     d->processCacheQueue();
 }
 
-void ResourceSystem::cache(Material &material, MaterialVariantSpec const &spec,
-    bool cacheGroups)
+void ClientResources::cache(ClientMaterial &material, MaterialVariantSpec const &spec,
+                            bool cacheGroups)
 {
     d->queueCacheTasksForMaterial(material, spec, cacheGroups);
 }
 
-void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
+void ClientResources::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
 {
     d->queueCacheTasksForSprite(spriteId, spec);
 }
 
-void ResourceSystem::cache(FrameModelDef *modelDef)
+void ClientResources::cache(FrameModelDef *modelDef)
 {
     if (!modelDef) return;
     d->queueCacheTasksForModel(*modelDef);
 }
 
-MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contextId,
+MaterialVariantSpec const &ClientResources::materialSpec(MaterialContextId contextId,
     dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT,
     dint minFilter, dint magFilter, dint anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
@@ -3400,7 +3150,7 @@ MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contex
                                         mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-void ResourceSystem::cacheForCurrentMap()
+void ClientResources::cacheForCurrentMap()
 {
     // Don't precache when playing a demo (why not? -ds).
     if (playback) return;
@@ -3419,13 +3169,13 @@ void ResourceSystem::cacheForCurrentMap()
                 if (!side.hasSections()) continue;
 
                 if (side.middle().hasMaterial())
-                    cache(side.middle().material(), spec);
+                    cache(side.middle().material().as<ClientMaterial>(), spec);
 
                 if (side.top().hasMaterial())
-                    cache(side.top().material(), spec);
+                    cache(side.top().material().as<ClientMaterial>(), spec);
 
                 if (side.bottom().hasMaterial())
-                    cache(side.bottom().material(), spec);
+                    cache(side.bottom().material().as<ClientMaterial>(), spec);
             }
             return LoopContinue;
         });
@@ -3439,7 +3189,7 @@ void ResourceSystem::cacheForCurrentMap()
                 {
                     if (plane.surface().hasMaterial())
                     {
-                        cache(plane.surface().material(), spec);
+                        cache(plane.surface().material().as<ClientMaterial>(), spec);
                     }
                     return LoopContinue;
                 });
@@ -3512,7 +3262,7 @@ void ResourceSystem::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &sourcePath)
+bool ClientResources::convertLegacySavegames(String const &gameId, String const &sourcePath)
 {
     // A converter plugin is required.
     if (!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
@@ -3557,9 +3307,9 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
     return didSchedule;
 }
 
-String ResourceSystem::tryFindMusicFile(Record const &definition)
+String ClientResources::tryFindMusicFile(Record const &definition)
 {
-    LOG_AS("ResourceSystem::tryFindMusicFile");
+    LOG_AS("ClientResources::tryFindMusicFile");
 
     defn::Music const music(definition);
 
@@ -3675,17 +3425,17 @@ static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags compos
  * @param like      Material path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
+static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
     de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    MaterialScheme::Index::FoundNodes found;
+    world::MaterialScheme::Index::FoundNodes found;
     if (scheme) // Consider resources in the specified scheme only.
     {
         scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
     }
     else // Consider resources in any scheme.
     {
-        App_ResourceSystem().forAllMaterialSchemes([&found, &like] (MaterialScheme &scheme)
+        world::Materials::get().forAllMaterialSchemes([&found, &like] (world::MaterialScheme &scheme)
         {
             scheme.index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
             return LoopContinue;
@@ -3704,10 +3454,10 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MaterialManifest>);
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<world::MaterialManifest>);
     int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
-    foreach (MaterialManifest *manifest, found)
+    foreach (world::MaterialManifest *manifest, found)
     {
         String info = String("%1: %2%3" _E(.))
                         .arg(idx, numFoundDigits)
@@ -3728,7 +3478,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
 static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
+                              de::Uri::ComposeAsTextFlags composeUriFlags)
 {
     res::TextureScheme::Index::FoundNodes found;
     if (scheme)  // Consider resources in the specified scheme only.
@@ -3839,16 +3589,16 @@ static void printMaterialIndex(de::Uri const &search,
         LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
-    else if (App_ResourceSystem().knownMaterialScheme(search.scheme()))
+    else if (world::Materials::get().isKnownMaterialScheme(search.scheme()))
     {
-        printTotal = printMaterialIndex2(&App_ResourceSystem().materialScheme(search.scheme()),
+        printTotal = printMaterialIndex2(&world::Materials::get().materialScheme(search.scheme()),
                                          search.path(), flags | de::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     else
     {
         // Collect and sort results in each scheme separately.
-        App_ResourceSystem().forAllMaterialSchemes([&search, &flags, &printTotal] (MaterialScheme &scheme)
+        world::Materials::get().forAllMaterialSchemes([&search, &flags, &printTotal] (world::MaterialScheme &scheme)
         {
             int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
             if (numPrinted)
@@ -3946,7 +3696,7 @@ static void printFontIndex(de::Uri const &search,
 
 static bool isKnownMaterialSchemeCallback(String name)
 {
-    return App_ResourceSystem().knownMaterialScheme(name);
+    return world::Materials::get().isKnownMaterialScheme(name);
 }
 
 static bool isKnownTextureSchemeCallback(String name)
@@ -3994,7 +3744,7 @@ D_CMD(ListMaterials)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
 
     if (!search.scheme().isEmpty() &&
-       !App_ResourceSystem().knownMaterialScheme(search.scheme()))
+        !world::Materials::get().isKnownMaterialScheme(search.scheme()))
     {
         LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
@@ -4045,9 +3795,9 @@ D_CMD(PrintMaterialStats)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_MSG(_E(b) "Material Statistics:");
-    App_ResourceSystem().forAllMaterialSchemes([] (MaterialScheme &scheme)
+    world::Materials::get().forAllMaterialSchemes([] (world::MaterialScheme &scheme)
     {
-        MaterialScheme::Index const &index = scheme.index();
+        world::MaterialScheme::Index const &index = scheme.index();
 
         uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
@@ -4124,7 +3874,7 @@ D_CMD(InspectSavegame)
     return false;
 }
 
-void ResourceSystem::consoleRegister() // static
+void ClientResources::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
     C_CMD("listtextures",   "s",    ListTextures)
@@ -4153,11 +3903,11 @@ void ResourceSystem::consoleRegister() // static
     C_CMD("listmaps",       "s",    ListMaps)
     C_CMD("listmaps",       "",     ListMaps)
 
-    res::Texture::consoleRegister();
-    Material::consoleRegister();
+    res  ::Texture ::consoleRegister();
+    world::Material::consoleRegister();
 }
 
-String ResourceSystem::resolveSymbol(String const &symbol) // static
+String ClientResources::resolveSymbol(String const &symbol) // static
 {
     if (!symbol.compare("App.DataPath", Qt::CaseInsensitive))
     {
@@ -4172,7 +3922,7 @@ String ResourceSystem::resolveSymbol(String const &symbol) // static
         if (!App_GameLoaded())
         {
             /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+            throw de::Uri::ResolveSymbolError("ClientResources::resolveSymbol",
                     "Symbol 'Game' did not resolve (no game loaded)");
         }
         return App_CurrentGame().id();
@@ -4182,7 +3932,7 @@ String ResourceSystem::resolveSymbol(String const &symbol) // static
         if (!App_GameLoaded() || !gx.GetVariable)
         {
             /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+            throw de::Uri::ResolveSymbolError("ClientResources::resolveSymbol",
                     "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
         }
         return String((char *)gx.GetVariable(DD_PLUGIN_NAME));
@@ -4190,16 +3940,7 @@ String ResourceSystem::resolveSymbol(String const &symbol) // static
     else
     {
         /// @throw UnknownSymbolError  An unknown symbol was encountered.
-        throw de::Uri::UnknownSymbolError("ResourceSystem::resolveSymbol",
+        throw de::Uri::UnknownSymbolError("ClientResources::resolveSymbol",
                                           "Symbol '" + symbol + "' is unknown");
     }
-}
-
-void ResourceSystem::clearAllMaterialSchemes()
-{
-    forAllMaterialSchemes([] (MaterialScheme &scheme) {
-        scheme.clear();
-        return LoopContinue;
-    });
-    DENG2_ASSERT(materialCount() == 0); // sanity check
 }

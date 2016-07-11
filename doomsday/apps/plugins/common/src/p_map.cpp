@@ -48,7 +48,7 @@ dd_bool tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilin
 coord_t tmFloorZ;
 coord_t tmCeilingZ;
 #if __JHEXEN__
-static Material *tmFloorMaterial;
+static world_Material *tmFloorMaterial;
 #endif
 dd_bool tmFellDown; // $dropoff_fix
 static coord_t tm[3];
@@ -1122,7 +1122,7 @@ dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
     tmFloorZ        = tmDropoffZ = P_GetDoublep(newSector, DMU_FLOOR_HEIGHT);
     tmCeilingZ      = P_GetDoublep(newSector, DMU_CEILING_HEIGHT);
 #if __JHEXEN__
-    tmFloorMaterial = (Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
+    tmFloorMaterial = (world_Material *)P_GetPtrp(newSector, DMU_FLOOR_MATERIAL);
 #else
     tmBlockingLine  = 0;
     tmUnstuck       = Mobj_IsPlayer(thing) && !Mobj_IsVoodooDoll(thing);

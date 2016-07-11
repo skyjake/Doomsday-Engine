@@ -26,6 +26,7 @@
 #include <QtAlgorithms>
 #include <doomsday/res/TextureManifest>
 #include <doomsday/res/Textures>
+#include <doomsday/world/MaterialManifest>
 #include <de/vector1.h>
 #include <de/Log>
 #include "dd_loop.h" // frameTimePos
@@ -34,8 +35,6 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #endif
-
-#include "MaterialManifest"
 
 #include "world/clientserverworld.h" // ddMapSetup
 #include "world/map.h"
@@ -444,7 +443,7 @@ dfloat Surface::glow(Vector3f &color) const
         return 0;
     }
 
-    MaterialAnimator &matAnimator = d->material->getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = d->material->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

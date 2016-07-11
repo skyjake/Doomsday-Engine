@@ -30,11 +30,10 @@
 #include <de/Log>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/world/MaterialArchive>
 
 #include "dd_main.h"
 #include "def_main.h"
-
-#include "api_materialarchive.h"
 
 #include "network/net_main.h"
 #include "network/net_buf.h"
@@ -67,7 +66,7 @@ char *netPassword = (char *) "";  ///< Remote login password.
 // This is the limit when accepting new clients.
 dint svMaxPlayers = DDMAXPLAYERS;
 
-static MaterialArchive *materialDict;
+static world::MaterialArchive *materialDict;
 
 /**
  * @defgroup pathToStringFlags  Path To String Flags
@@ -816,7 +815,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
 
     // Include the list of material Ids.
     Msg_Begin(PSV_MATERIAL_ARCHIVE);
-    MaterialArchive_Write(materialDict, msgWriter);
+    materialDict->write(*msgWriter);
     Msg_End();
     Net_SendBuffer(plrNum, 0);
 
@@ -909,25 +908,26 @@ void Sv_StartNetGame(void)
     allowSending = true;
 
     // Prepare the material dictionary we'll be using with clients.
-    materialDict = MaterialArchive_New(false);
+    materialDict = new world::MaterialArchive(false);
+    materialDict->addWorldMaterials();
 
     LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials")
-            << MaterialArchive_Count(materialDict);
+            << materialDict->count();
 }
 
 void Sv_StopNetGame(void)
 {
     if (materialDict)
     {
-        MaterialArchive_Delete(materialDict);
+        delete materialDict;
         materialDict = 0;
     }
 }
 
-unsigned int Sv_IdForMaterial(Material* mat)
+unsigned int Sv_IdForMaterial(world::Material *mat)
 {
-    assert(materialDict);
-    return MaterialArchive_FindUniqueSerialId(materialDict, mat);
+    DENG_ASSERT(materialDict);
+    return materialDict->findUniqueSerialId(mat);
 }
 
 void Sv_SendText(int to, int con_flags, const char* text)
@@ -963,9 +963,9 @@ void Sv_Kick(int who)
  */
 void Sv_SendPlayerFixes(int plrNum)
 {
-    int                 fixes = 0;
-    player_t           *plr = DD_Player(plrNum);
-    ddplayer_t         *ddpl = &plr->publicData();
+    int         fixes = 0;
+    player_t   *plr = DD_Player(plrNum);
+    ddplayer_t *ddpl = &plr->publicData();
 
     if (!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
     {

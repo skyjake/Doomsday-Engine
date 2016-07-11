@@ -745,9 +745,11 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
 }
 
 #undef DGL_SetMaterialUI
-void DGL_SetMaterialUI(Material *mat, DGLint wrapS, DGLint wrapT)
+void DGL_SetMaterialUI(world_Material *mat, DGLint wrapS, DGLint wrapT)
 {
-    GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
+    GL_SetMaterialUI2(reinterpret_cast<world::Material *>(mat),
+                      DGL_ToGLWrapCap(wrapS),
+                      DGL_ToGLWrapCap(wrapT));
 }
 
 #undef DGL_SetPatch
@@ -773,15 +775,15 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 }
 
 #undef DGL_SetPSprite
-void DGL_SetPSprite(Material *mat)
+void DGL_SetPSprite(world_Material *mat)
 {
-    GL_SetPSprite(mat, 0, 0);
+    GL_SetPSprite(reinterpret_cast<world::Material *>(mat), 0, 0);
 }
 
 #undef DGL_SetPSprite2
-void DGL_SetPSprite2(Material *mat, int tclass, int tmap)
+void DGL_SetPSprite2(world_Material *mat, int tclass, int tmap)
 {
-    GL_SetPSprite(mat, tclass, tmap);
+    GL_SetPSprite(reinterpret_cast<world::Material *>(mat), tclass, tmap);
 }
 
 #undef DGL_SetRawImage

@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/materiallightdecoration.h"
+#include "resource/lightmaterialdecoration.h"
 
 #include <doomsday/defs/material.h>
 #include <doomsday/res/Textures>
@@ -25,7 +25,7 @@
 
 using namespace de;
 
-MaterialLightDecoration::AnimationStage::AnimationStage(int tics, float variance,
+LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance,
     Vector2f const &origin, float elevation, Vector3f const &color, float radius,
     float haloRadius, LightRange const &lightLevels, ClientTexture *ceilingTexture,
     ClientTexture *floorTexture, ClientTexture *texture, ClientTexture *flareTexture, int sysFlareIdx)
@@ -43,7 +43,7 @@ MaterialLightDecoration::AnimationStage::AnimationStage(int tics, float variance
     , sysFlareIdx(sysFlareIdx)
 {}
 
-MaterialLightDecoration::AnimationStage::AnimationStage(AnimationStage const &other)
+LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &other)
     : Stage(other)
     , origin     (other.origin)
     , elevation  (other.elevation)
@@ -58,8 +58,8 @@ MaterialLightDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
     , sysFlareIdx(other.sysFlareIdx)
 {}
 
-MaterialLightDecoration::AnimationStage *
-MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
+LightMaterialDecoration::AnimationStage *
+LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
 {
     ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", de::Uri(stageDef.gets("lightmapUp"  ), RC_NULL)));
     ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", de::Uri(stageDef.gets("lightmapDown"), RC_NULL)));
@@ -91,7 +91,7 @@ MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
                               haloTexture, haloTextureIndex);
 }
 
-String MaterialLightDecoration::AnimationStage::description() const
+String LightMaterialDecoration::AnimationStage::description() const
 {
     return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
                 + _E(l) " Origin: "      _E(.) + origin.asText()
@@ -104,20 +104,20 @@ String MaterialLightDecoration::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-MaterialLightDecoration::MaterialLightDecoration(Vector2i const &patternSkip,
+LightMaterialDecoration::LightMaterialDecoration(Vector2i const &patternSkip,
     Vector2i const &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
     , _useInterpolation(useInterpolation)
 {}
 
-MaterialLightDecoration::~MaterialLightDecoration()
+LightMaterialDecoration::~LightMaterialDecoration()
 {}
 
-MaterialLightDecoration *MaterialLightDecoration::fromDef(Record const &definition)
+LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definition)
 {
     defn::MaterialDecoration decorDef(definition);
 
-    auto *decor = new MaterialLightDecoration(Vector2i(decorDef.geta("patternSkip")),
+    auto *decor = new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
                                               Vector2i(decorDef.geta("patternOffset")));
     for(int i = 0; i < decorDef.stageCount(); ++i)
     {
@@ -126,23 +126,23 @@ MaterialLightDecoration *MaterialLightDecoration::fromDef(Record const &definiti
     return decor;
 }
 
-int MaterialLightDecoration::addStage(AnimationStage const &stageToCopy)
+int LightMaterialDecoration::addStage(AnimationStage const &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
 }
 
-MaterialLightDecoration::AnimationStage &MaterialLightDecoration::stage(int index) const
+LightMaterialDecoration::AnimationStage &LightMaterialDecoration::stage(int index) const
 {
     return static_cast<AnimationStage &>(Decoration::stage(index));
 }
 
-String MaterialLightDecoration::describe() const
+String LightMaterialDecoration::describe() const
 {
     return "Light decoration";
 }
 
-bool MaterialLightDecoration::useInterpolation() const
+bool LightMaterialDecoration::useInterpolation() const
 {
     return _useInterpolation;
 }

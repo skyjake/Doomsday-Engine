@@ -25,7 +25,7 @@
 #include <de/Error>
 #include "finalewidget.h"
 
-class Material;
+namespace world { class Material; }
 
 /**
  * Finale page widget (layer).
@@ -91,10 +91,10 @@ public:
     FinalePageWidget &setOffsetZ(float newOffsetZ, int steps = 0);
 
     /// Current background Material.
-    Material *backgroundMaterial() const;
+    world::Material *backgroundMaterial() const;
 
     /// Sets the background Material.
-    FinalePageWidget &setBackgroundMaterial(Material *newMaterial);
+    FinalePageWidget &setBackgroundMaterial(world::Material *newMaterial);
 
     /// Sets the background top color.
     FinalePageWidget &setBackgroundTopColor(de::Vector3f const &newColor, int steps = 0);

@@ -47,7 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    Material*     material;
+    world_Material *material;
     uint            terrainNum;
 } materialterraintype_t;
 
@@ -110,7 +110,7 @@ static uint findTerrainTypeNumForName(const char* name)
     return 0;
 }
 
-static materialterraintype_t* findMaterialTerrainType(Material* mat)
+static materialterraintype_t* findMaterialTerrainType(world_Material *mat)
 {
     if(mat)
     {
@@ -122,7 +122,7 @@ static materialterraintype_t* findMaterialTerrainType(Material* mat)
     return 0;
 }
 
-static __inline terraintype_t* findTerrainTypeForMaterial(Material* mat)
+static __inline terraintype_t* findTerrainTypeForMaterial(world_Material *mat)
 {
     materialterraintype_t* mtt;
     if((mtt = findMaterialTerrainType(mat)))
@@ -130,7 +130,7 @@ static __inline terraintype_t* findTerrainTypeForMaterial(Material* mat)
     return 0;
 }
 
-static materialterraintype_t* getMaterialTerrainType(Material* mat, uint idx)
+static materialterraintype_t* getMaterialTerrainType(world_Material *mat, uint idx)
 {
 #define BATCH_SIZE       8
 
@@ -200,7 +200,7 @@ void P_InitTerrainTypes(void)
 
     for(i = 0; defs[i].materialUri; ++i)
     {
-        Material* mat;
+        world_Material *mat;
         uint idx = findTerrainTypeNumForName(defs[i].ttName);
         if(!idx) continue;
 
@@ -232,7 +232,7 @@ void P_ShutdownTerrainTypes(void)
  *
  * @param num           The material to check.
  */
-const terraintype_t* P_TerrainTypeForMaterial(Material* mat)
+const terraintype_t* P_TerrainTypeForMaterial(world_Material *mat)
 {
     { const terraintype_t* tt;
     if((tt = findTerrainTypeForMaterial(mat)))

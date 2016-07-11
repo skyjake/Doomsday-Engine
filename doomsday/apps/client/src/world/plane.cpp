@@ -407,7 +407,8 @@ bool Plane::castsShadow() const
 {
     if(surface().hasMaterial())
     {
-        MaterialAnimator &matAnimator = surface().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+        MaterialAnimator &matAnimator = surface().material().as<ClientMaterial>()
+                .getAnimator(Rend_MapSurfaceMaterialSpec());
 
         // Ensure we have up to date info about the material.
         matAnimator.prepare();

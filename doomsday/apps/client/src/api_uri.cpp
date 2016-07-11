@@ -1,4 +1,4 @@
-/** @file api_uri.cpp Universal Resource Identifier (public C wrapper). 
+/** @file api_uri.cpp Universal Resource Identifier (public C wrapper).
  * @ingroup base
  *
  * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
@@ -38,21 +38,16 @@
     DENG2_ASSERT(inst); \
     de::Uri const* self = TOINTERNAL_CONST(inst)
 
-static void writeUri(const Uri* uri, Writer* writer, int omitComponents = 0)
+static void readUri(Uri *uri, Reader *reader, de::String defaultScheme = "")
+{
+    SELF(uri);
+    self->readUri(reader, defaultScheme);
+}
+
+static void writeUri(Uri const *uri, Writer *writer, int omitComponents = 0)
 {
     SELF_CONST(uri);
-
-    if(omitComponents & UCF_SCHEME)
-    {
-        ddstring_t emptyString;
-        Str_InitStatic(&emptyString, "");
-        Str_Write(&emptyString, writer);
-    }
-    else
-    {
-        Str_Write(DualString(self->scheme()).toStrUtf8(), writer);
-    }
-    Str_Write(DualString(self->path()).toStrUtf8(), writer);
+    self->writeUri(writer, omitComponents);
 }
 
 #undef Uri_Clear
@@ -74,27 +69,6 @@ Uri* Uri_SetPath(Uri* uri, char const* path)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setPath(path));
-}
-
-static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
-{
-    Uri_Clear(uri);
-
-    ddstring_t scheme;
-    Str_InitStd(&scheme);
-    Str_Read(&scheme, reader);
-
-    ddstring_t path;
-    Str_InitStd(&path);
-    Str_Read(&path, reader);
-
-    if(Str_IsEmpty(&scheme) && !defaultScheme.isEmpty())
-    {
-        Str_Set(&scheme, defaultScheme.toUtf8().constData());
-    }
-
-    Uri_SetScheme(uri, Str_Text(&scheme));
-    Uri_SetPath  (uri, Str_Text(&path  ));
 }
 
 #undef Uri_NewWithPath3

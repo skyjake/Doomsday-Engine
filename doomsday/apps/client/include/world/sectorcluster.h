@@ -26,18 +26,15 @@
 #include <de/aabox.h>
 #include <de/Observers>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 
 #include "HEdge"
-
-#ifdef __CLIENT__
-#  include "world/audioenvironment.h"
-#endif
-#include "MapElement"
 #include "Line"
 #include "Plane"
 #include "Sector"
 
 #ifdef __CLIENT__
+#  include "world/audioenvironment.h"
 #  include "render/lightgrid.h"
 #endif
 

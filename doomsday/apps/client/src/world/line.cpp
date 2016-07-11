@@ -24,6 +24,9 @@
 #include <QMap>
 #include <QtAlgorithms>
 #include <doomsday/console/cmd.h>
+#include <doomsday/world/Materials>
+#include <doomsday/world/detailtexturemateriallayer.h>
+#include <doomsday/world/shinetexturemateriallayer.h>
 
 #include "dd_main.h"  // App_Materials(), verbose
 #include "m_misc.h"
@@ -41,9 +44,6 @@
 
 #ifdef __CLIENT__
 #  include "world/lineowner.h"
-#  include "resource/materialdetaillayer.h"
-#  include "resource/materialshinelayer.h"
-
 #  include "render/r_main.h"  // levelFullBright
 #  include "render/rend_fakeradio.h"
 #endif
@@ -620,7 +620,7 @@ static bool materialHasAnimatedTextureLayers(Material const &mat)
     for(dint i = 0; i < mat.layerCount(); ++i)
     {
         MaterialLayer const &layer = mat.layer(i);
-        if(!layer.is<MaterialDetailLayer>() && !layer.is<MaterialShineLayer>())
+        if(!layer.is<DetailTextureMaterialLayer>() && !layer.is<ShineTextureMaterialLayer>())
         {
             if(layer.isAnimated()) return true;
         }
@@ -726,7 +726,7 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return &App_ResourceSystem().material(de::Uri("System", Path("missing")));
+    return &world::Materials::get().material(de::Uri("System", Path("missing")));
 }
 
 static void addMissingMaterial(LineSide &side, dint section)

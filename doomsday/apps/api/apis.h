@@ -130,7 +130,8 @@ enum {
     DE_API_MATERIALS            = DE_API_MATERIALS_v1,
 
     DE_API_MATERIAL_ARCHIVE_v1  = 1400,    // 1.10
-    DE_API_MATERIAL_ARCHIVE     = DE_API_MATERIAL_ARCHIVE_v1,
+    DE_API_MATERIAL_ARCHIVE_REMOVED
+                                = 1401,    // 2.0 (API removed)
 
     DE_API_PLAYER_v1            = 1500,    // 1.10
     DE_API_PLAYER_v2            = 1501,    // 1.13

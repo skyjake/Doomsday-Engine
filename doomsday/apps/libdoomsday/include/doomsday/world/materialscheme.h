@@ -17,16 +17,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MATERIALSCHEME_H
-#define DENG_RESOURCE_MATERIALSCHEME_H
+#ifndef LIBDOOMSDAY_WORLD_MATERIALSCHEME_H
+#define LIBDOOMSDAY_WORLD_MATERIALSCHEME_H
 
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
-#include <doomsday/uri.h>
+#include "../uri.h"
 #include "MaterialManifest"
 
-namespace de {
+namespace world {
 
 /**
  * Material collection subspace.
@@ -34,7 +34,7 @@ namespace de {
  * @see Material
  * @ingroup resource
  */
-class MaterialScheme
+class LIBDOOMSDAY_PUBLIC MaterialScheme
 {
     typedef class MaterialManifest Manifest;
 
@@ -51,7 +51,7 @@ public:
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
-    typedef PathTreeT<Manifest> Index;
+    typedef de::PathTreeT<Manifest> Index;
 
 public:
     /**
@@ -60,10 +60,10 @@ public:
      * @param symbolicName  Symbolic name of the new subspace scheme. Must
      *                      have at least @ref min_name_length characters.
      */
-    explicit MaterialScheme(String symbolicName);
+    explicit MaterialScheme(de::String symbolicName);
 
     /// @return  Symbolic name of this scheme (e.g., "Flats").
-    String const &name() const;
+    de::String const &name() const;
 
     /// @return  Total number of manifests in the scheme.
     inline int size() const { return index().size(); }
@@ -84,23 +84,23 @@ public:
      * @param path  Virtual path for the resultant manifest.
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(Path const &path);
+    Manifest &declare(de::Path const &path);
 
     /**
      * Determines if a manifest exists on the given @a path.
      * @return @c true if a manifest exists; otherwise @a false.
      */
-    bool has(Path const &path) const;
+    bool has(de::Path const &path) const;
 
     /**
      * Search the scheme for a manifest matching @a path.
      *
      * @return  Found manifest.
      */
-    Manifest const &find(Path const &path) const;
+    Manifest const &find(de::Path const &path) const;
 
     /// @copydoc find()
-    Manifest &find(Path const &path);
+    Manifest &find(de::Path const &path);
 
     /**
      * Provides access to the manifest index for efficient traversal.
@@ -111,6 +111,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace world
 
-#endif // DENG_RESOURCE_MATERIALSCHEME_H
+#endif // LIBDOOMSDAY_WORLD_MATERIALSCHEME_H

@@ -32,6 +32,7 @@
 #include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
+#include "doomsday/world/materials.h"
 #include "doomsday/Session"
 #include "doomsday/SavedSession"
 
@@ -616,7 +617,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
     }
 
     /// @todo The entire material collection should not be destroyed during a reload.
-    Resources::get().clearAllMaterialSchemes();
+    world::Materials::get().clearAllMaterialSchemes();
 }
 
 void DoomsdayApp::reset()

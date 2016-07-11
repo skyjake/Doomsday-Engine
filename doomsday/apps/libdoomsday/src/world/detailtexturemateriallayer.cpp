@@ -17,13 +17,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/materialdetaillayer.h"
-#include "dd_main.h"
+#include "doomsday/world/detailtexturemateriallayer.h"
 
 #include <doomsday/res/TextureScheme>
 #include <doomsday/res/Textures>
 
 using namespace de;
+
+namespace world {
 
 static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
 {
@@ -41,32 +42,32 @@ static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
     return de::Uri();
 }
 
-MaterialDetailLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+DetailTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, float scale, float strength, float maxDistance)
-    : MaterialTextureLayer::AnimationStage(texture, tics, variance)
+    : TextureMaterialLayer::AnimationStage(texture, tics, variance)
 {
     set("scale", scale);
     set("strength", strength);
     set("maxDistance", maxDistance);
 }
 
-MaterialDetailLayer::AnimationStage::AnimationStage(AnimationStage const &other)
-    : MaterialTextureLayer::AnimationStage(other)
+DetailTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+    : TextureMaterialLayer::AnimationStage(other)
 {}
 
-MaterialDetailLayer::AnimationStage::~AnimationStage()
+DetailTextureMaterialLayer::AnimationStage::~AnimationStage()
 {}
 
-void MaterialDetailLayer::AnimationStage::resetToDefaults()
+void DetailTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
-    MaterialTextureLayer::AnimationStage::resetToDefaults();
+    TextureMaterialLayer::AnimationStage::resetToDefaults();
     addNumber("scale", 1);
     addNumber("strength", 1);
     addNumber("maxDistance", 0);
 }
 
-MaterialDetailLayer::AnimationStage *
-MaterialDetailLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
+DetailTextureMaterialLayer::AnimationStage *
+DetailTextureMaterialLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
 {
     de::Uri const texture = findTextureForDetailStage(def);
     return new AnimationStage(texture, def.tics, def.variance,
@@ -75,21 +76,23 @@ MaterialDetailLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
 
 // ------------------------------------------------------------------------------------
 
-MaterialDetailLayer *MaterialDetailLayer::fromDef(ded_detailtexture_t const &layerDef)
+DetailTextureMaterialLayer *DetailTextureMaterialLayer::fromDef(ded_detailtexture_t const &layerDef)
 {
-    auto *layer = new MaterialDetailLayer();
+    auto *layer = new DetailTextureMaterialLayer();
     // Only the one stage.
     layer->_stages.append(AnimationStage::fromDef(layerDef.stage));
     return layer;
 }
 
-int MaterialDetailLayer::addStage(MaterialDetailLayer::AnimationStage const &stageToCopy)
+int DetailTextureMaterialLayer::addStage(DetailTextureMaterialLayer::AnimationStage const &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
 }
 
-String MaterialDetailLayer::describe() const
+String DetailTextureMaterialLayer::describe() const
 {
     return "Detail layer";
 }
+
+} // namespace world

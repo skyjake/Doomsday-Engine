@@ -35,18 +35,16 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/res/TextureManifest>
+#include <doomsday/world/Materials>
 #include <doomsday/BspNode>
 
 #include "clientapp.h"
 #include "sys_system.h"
 #include "api_fontrender.h"
-
 #include "edit_bias.h"         /// @todo remove me
 #include "r_util.h"
-
 #include "MaterialVariantSpec"
 #include "ClientTexture"
-
 #include "Face"
 #include "world/map.h"
 #include "world/blockmap.h"
@@ -314,9 +312,9 @@ static inline RenderSystem &rendSys()
     return ClientApp::renderSystem();
 }
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 static void reportWallDrawn(Line &line)
@@ -635,7 +633,7 @@ coord_t Rend_PlaneGlowHeight(dfloat intensity)
     return de::clamp<ddouble>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
 }
 
-Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
+ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 {
     switch(renderTextures)
     {
@@ -644,11 +642,11 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
         if(!(devNoTexFix && surface.hasFixMaterial()))
         {
             if(surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
-                return surface.materialPtr();
+                return static_cast<ClientMaterial *>(surface.materialPtr());
         }
 
         // Use special "missing" material.
-        return &resSys().material(de::Uri("System", Path("missing")));
+        return &world::Materials::get().material(de::Uri("System", Path("missing"))).as<ClientMaterial>();
 
     case 2:  // Lighting debug mode.
         if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
@@ -656,7 +654,7 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
             {
                 // Use the special "gray" material.
-                return &resSys().material(de::Uri("System", Path("gray")));
+                return &world::Materials::get().material(de::Uri("System", Path("gray"))).as<ClientMaterial>();
             }
         }
         break;
@@ -2570,7 +2568,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
         return;
 
     // Determine which Material to use (a drawable material is required).
-    Material *material = Rend_ChooseMapSurfaceMaterial(surface);
+    ClientMaterial *material = Rend_ChooseMapSurfaceMaterial(surface);
     if(!material || !material->isDrawable())
         return;
 
@@ -2621,11 +2619,11 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
             }
             else
             {
-                Material *actualMaterial =
+                world::Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &resSys().material(de::Uri("System", Path("missing")));
+                                         : &world::Materials::get().material(de::Uri("System", Path("missing")));
 
-                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
+                parm.glowing = actualMaterial->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= ::glowFactor;
@@ -2746,7 +2744,7 @@ static void writeSubspacePlane(Plane &plane)
     if(opacity < .001f) return;
 
     // Determine which Material to use (a drawable material is required).
-    Material *material = Rend_ChooseMapSurfaceMaterial(surface);
+    ClientMaterial *material = Rend_ChooseMapSurfaceMaterial(surface);
     if(!material || !material->isDrawable())
         return;
 
@@ -2828,11 +2826,11 @@ static void writeSubspacePlane(Plane &plane)
             }
             else
             {
-                Material *actualMaterial =
+                world::Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &resSys().material(de::Uri("System", Path("missing")));
+                                         : &world::Materials::get().material(de::Uri("System", Path("missing")));
 
-                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
+                parm.glowing = actualMaterial->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= ::glowFactor;
@@ -2901,7 +2899,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
         if(renderTextures != 2)
         {
             DENG2_ASSERT(material);
-            MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+            MaterialAnimator &matAnimator = material->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
             // Ensure we've up to date info about the material.
             matAnimator.prepare();
@@ -3567,7 +3565,7 @@ static void projectSubspaceSprites()
                     defn::Sprite sprite(*spriteRec);
                     if(sprite.hasView(0))
                     {
-                        if(Material *material = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
+                        if(world::Material *material = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
                         {
                             if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
                                && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
@@ -3737,9 +3735,9 @@ ddouble Rend_VisualRadius(Record const &spriteRec)
     defn::Sprite sprite(spriteRec);
     if(sprite.hasView(0))
     {
-        if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
+        if(world::Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
         {
-            MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
             matAnimator.prepare();  // Ensure we've up to date info.
             return matAnimator.dimensions().x / 2;
         }
@@ -3757,10 +3755,10 @@ Lumobj *Rend_MakeLumobj(Record const &spriteRec)
     /// @todo We could do better here...
     if(!sprite.hasView(0)) return nullptr;
 
-    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+    world::Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
     if(!mat) return nullptr;
 
-    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
     TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
@@ -5225,8 +5223,8 @@ static void drawMobjBoundingBoxes(Map &map)
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
 
-    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("bbox")))
-                                                .getAnimator(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", Path("bbox")))
+            .as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

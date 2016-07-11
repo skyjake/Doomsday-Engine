@@ -1,4 +1,4 @@
-/** @file materialtexturelayer.h  Logical material, texture layer.
+/** @file texturemateriallayer.h  Logical material, texture layer.
  *
  * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -17,20 +17,22 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALTEXTURELAYER_H
-#define CLIENT_RESOURCE_MATERIALTEXTURELAYER_H
+#ifndef LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H
+#define LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H
 
 #include <de/String>
 #include <de/Record>
-#include <doomsday/defs/dedtypes.h>
+#include "../defs/dedtypes.h"
 #include "Material"
+
+namespace world {
 
 /**
  * Specialized MaterialLayer for describing an animated texture layer.
  *
  * @ingroup resource
  */
-class MaterialTextureLayer : public MaterialLayer
+class LIBDOOMSDAY_PUBLIC TextureMaterialLayer : public MaterialLayer
 {
 public:
     /**
@@ -62,12 +64,12 @@ public:
     };
 
 public:
-    virtual ~MaterialTextureLayer() {}
+    virtual ~TextureMaterialLayer() {}
 
     /**
      * Construct a new TextureLayer from the given @a layerDef.
      */
-    static MaterialTextureLayer *fromDef(de::Record const &layerDef);
+    static TextureMaterialLayer *fromDef(de::Record const &layerDef);
 
     /**
      * Returns @c true if glow is enabled for one or more animation stages.
@@ -93,4 +95,6 @@ public:
     de::String describe() const;
 };
 
-#endif  // CLIENT_RESOURCE_MATERIALTEXTURELAYER_H
+} // namespace world
+
+#endif  // LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H

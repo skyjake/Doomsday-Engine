@@ -162,7 +162,7 @@ void P_MobjMoveXY(mobj_t *mo)
                 if(tmCeilingLine &&
                    (backSec = P_GetPtrp(tmCeilingLine, DMU_BACK_SECTOR)))
                 {
-                    Material* mat = P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
+                    world_Material* mat = P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] > P_GetDoublep(backSec, DMU_CEILING_HEIGHT))
@@ -175,7 +175,7 @@ void P_MobjMoveXY(mobj_t *mo)
                 if(tmFloorLine &&
                    (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
-                    Material* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
+                    world_Material* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->origin[VZ] < P_GetDoublep(backSec, DMU_FLOOR_HEIGHT))

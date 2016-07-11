@@ -72,6 +72,7 @@
 #include <doomsday/defs/sky.h>
 #include <doomsday/EntityDatabase>
 #include <doomsday/BspNode>
+#include <doomsday/world/Materials>
 
 #include <de/Rectangle>
 
@@ -1384,7 +1385,7 @@ DENG2_PIMPL(Map)
             {
                 try
                 {
-                    Material *defMat = &App_ResourceSystem().material(*def->material);
+                    world::Material &defMat = world::Materials::get().material(*def->material);
 
                     Material *mat = gen->plane->surface().materialPtr();
                     if(def->flags & Generator::SpawnFloor)
@@ -1393,7 +1394,7 @@ DENG2_PIMPL(Map)
                         mat = gen->plane->sector().ceilingSurface().materialPtr();
 
                     // Is this suitable?
-                    if(mat == defMat)
+                    if(mat == &defMat)
                     {
                         return i + 1; // 1-based index.
                     }

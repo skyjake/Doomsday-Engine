@@ -1,4 +1,4 @@
-/** @file materialtexturelayer.cpp   Logical material, texture layer.
+/** @file texturemateriallayer.cpp   Logical material, texture layer.
  *
  * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
@@ -17,15 +17,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/materialtexturelayer.h"
-
-#include <doomsday/defs/material.h>
-#include "dd_main.h"
-#include "r_util.h" // R_NameForBlendMode
+#include "doomsday/world/texturemateriallayer.h"
+#include "doomsday/defs/material.h"
 
 using namespace de;
 
-MaterialTextureLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+namespace world {
+
+TextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin,
     de::Uri const &maskTexture, Vector2f const &maskDimensions, blendmode_t blendMode, float opacity)
     : Record()
@@ -44,15 +43,15 @@ MaterialTextureLayer::AnimationStage::AnimationStage(de::Uri const &texture, int
     set("glowStrengthVariance", glowStrengthVariance);
 }
 
-MaterialTextureLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+TextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : Record(other)
     , Stage(other)
 {}
 
-MaterialTextureLayer::AnimationStage::~AnimationStage()
+TextureMaterialLayer::AnimationStage::~AnimationStage()
 {}
 
-void MaterialTextureLayer::AnimationStage::resetToDefaults()
+void TextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     addArray ("origin", new ArrayValue(Vector2f(0, 0)));
     addText  ("texture", "");
@@ -64,8 +63,8 @@ void MaterialTextureLayer::AnimationStage::resetToDefaults()
     addNumber("glowStrengthVariance", 0);
 }
 
-MaterialTextureLayer::AnimationStage *
-MaterialTextureLayer::AnimationStage::fromDef(Record const &stageDef)
+TextureMaterialLayer::AnimationStage *
+TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
 {
     return new AnimationStage(de::Uri(stageDef.gets("texture"), RC_NULL),
                               stageDef.geti("tics"), stageDef.getf("variance"),
@@ -74,7 +73,7 @@ MaterialTextureLayer::AnimationStage::fromDef(Record const &stageDef)
                               Vector2f(stageDef.geta("texOrigin")));
 }
 
-String MaterialTextureLayer::AnimationStage::description() const
+String TextureMaterialLayer::AnimationStage::description() const
 {
     /// @todo Record::asText() formatting is not intended for end users.
     return asText();
@@ -82,10 +81,10 @@ String MaterialTextureLayer::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-MaterialTextureLayer *MaterialTextureLayer::fromDef(Record const &definition)
+TextureMaterialLayer *TextureMaterialLayer::fromDef(Record const &definition)
 {
     defn::MaterialLayer layerDef(definition);
-    auto *layer = new MaterialTextureLayer();
+    auto *layer = new TextureMaterialLayer();
     for(int i = 0; i < layerDef.stageCount(); ++i)
     {
         layer->_stages.append(AnimationStage::fromDef(layerDef.stage(i)));
@@ -93,18 +92,18 @@ MaterialTextureLayer *MaterialTextureLayer::fromDef(Record const &definition)
     return layer;
 }
 
-int MaterialTextureLayer::addStage(MaterialTextureLayer::AnimationStage const &stageToCopy)
+int TextureMaterialLayer::addStage(TextureMaterialLayer::AnimationStage const &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
 }
 
-MaterialTextureLayer::AnimationStage &MaterialTextureLayer::stage(int index) const
+TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index) const
 {
     return static_cast<AnimationStage &>(Layer::stage(index));
 }
 
-bool MaterialTextureLayer::hasGlow() const
+bool TextureMaterialLayer::hasGlow() const
 {
     for(int i = 0; i < stageCount(); ++i)
     {
@@ -114,7 +113,9 @@ bool MaterialTextureLayer::hasGlow() const
     return false;
 }
 
-String MaterialTextureLayer::describe() const
+String TextureMaterialLayer::describe() const
 {
     return "Texture layer";
 }
+
+} // namespace world

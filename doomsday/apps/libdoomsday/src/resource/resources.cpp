@@ -160,6 +160,3 @@ ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
     return Resources::get().resClass(classId);
 }
-
-void Resources::clearAllMaterialSchemes()
-{}

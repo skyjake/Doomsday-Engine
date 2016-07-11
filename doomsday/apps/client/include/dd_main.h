@@ -30,7 +30,7 @@
 #include <doomsday/Games>
 
 #include "audio/system.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 #include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
@@ -62,7 +62,7 @@ audio::System &App_AudioSystem();
 InFineSystem &App_InFineSystem();
 
 /// Returns the application's global ResourceSystem.
-ResourceSystem &App_ResourceSystem();
+ClientResources &App_ResourceSystem();
 
 /// Returns the application's global WorldSystem.
 ClientServerWorld &App_World();

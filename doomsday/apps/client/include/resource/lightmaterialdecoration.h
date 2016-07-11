@@ -21,19 +21,20 @@
 #define CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H
 
 #ifndef __CLIENT__
-#  error "MaterialLightDecoration only exists in the Client"
+#  error "LightMaterialDecoration only exists in the Client"
 #endif
 
 #include <de/String>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/dedtypes.h>
-#include "Material"
 #include "r_util.h"  // LightRange
+#include "ClientTexture"
+#include "ClientMaterial"
 
 /**
  * @ingroup resource
  */
-class MaterialLightDecoration : public Material::Decoration
+class LightMaterialDecoration : public ClientMaterial::Decoration
 {
 public:
     /**
@@ -74,15 +75,15 @@ public:
     };
 
 public:
-    MaterialLightDecoration(de::Vector2i const &patternSkip   = de::Vector2i(),
+    LightMaterialDecoration(de::Vector2i const &patternSkip   = de::Vector2i(),
                             de::Vector2i const &patternOffset = de::Vector2i(),
                             bool useInterpolation             = true);
-    virtual ~MaterialLightDecoration();
+    virtual ~LightMaterialDecoration();
 
     /**
      * Construct a new material decoration from the specified definition.
      */
-    static MaterialLightDecoration *fromDef(de::Record const &decorationDef);
+    static LightMaterialDecoration *fromDef(de::Record const &decorationDef);
 
     de::String describe() const;
 

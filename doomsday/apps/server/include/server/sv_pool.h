@@ -124,7 +124,7 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
-    Material*       material;
+    world::Material *material;
     float           rgba[4]; // Surface color tint and alpha
     int             blendMode;
 } dt_surface_t;

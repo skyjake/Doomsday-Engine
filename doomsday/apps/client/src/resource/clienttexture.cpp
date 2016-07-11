@@ -19,11 +19,7 @@
  */
 
 #include "resource/clienttexture.h"
-
-//#include "de_platform.h"
-//#include "dd_main.h" // App_ResourceSystem()
-
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/res/TextureManifest>

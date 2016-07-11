@@ -24,6 +24,7 @@
 #include "g_common.h"
 #ifdef __cplusplus
 #  include <de/Vector>
+#  include <doomsday/world/Material>
 #endif
 
 #ifdef __cplusplus
@@ -139,7 +140,7 @@ typedef struct xgplanemover_s {
     float speed;
     float crushSpeed; // Speed to use when crushing.
 
-    Material *setMaterial; // Set material when move done.
+    world_Material *setMaterial; // Set material when move done.
     int setSectorType; // Sector type to set when move done
     // (-1 if no change).
     int startSound; // Played after waiting.
@@ -201,7 +202,7 @@ D_CMD(MovePlane);
 #ifdef __cplusplus
 } // extern "C"
 
-void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, Material &newMaterial);
+void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, world_Material &newMaterial);
 
 void XS_ChangePlaneTintColor(Sector &sector, bool ceiling, de::Vector3f const &newTintColor, bool isDelta = false);
 

@@ -162,7 +162,7 @@ void ColorEditWidget::draw() const
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_SetMaterialUI((Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])), DGL_REPEAT, DGL_REPEAT);
+    DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])), DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectf2Tiled(x, y, w, h, 64, 64);
 
     // Top

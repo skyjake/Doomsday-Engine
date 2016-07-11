@@ -24,7 +24,8 @@
 #define DOOMSDAY_GL_H
 
 #include <de/rect.h>
-#include "dd_share.h"
+#include "api_map.h"
+#include "dd_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -271,10 +272,10 @@ DENG_API_TYPEDEF(GL)
     void (*DeleteLists)(DGLuint list, int range);
 
     void (*SetNoMaterial)(void);
-    void (*SetMaterialUI)(Material *mat, DGLint wrapS, DGLint wrapT);
+    void (*SetMaterialUI)(world_Material *mat, DGLint wrapS, DGLint wrapT);
     void (*SetPatch)(patchid_t id, DGLint wrapS, DGLint wrapT);
-    void (*SetPSprite)(Material *mat);
-    void (*SetPSprite2)(Material *mat, int tclass, int tmap);
+    void (*SetPSprite)(world_Material *mat);
+    void (*SetPSprite2)(world_Material *mat, int tclass, int tmap);
     void (*SetRawImage)(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT);
 
     void (*BlendOp)(int op);

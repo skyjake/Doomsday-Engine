@@ -535,7 +535,7 @@ namespace internal
         AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
-        Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        world_Material *mat = (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
 
         int tag = interp.locals.pop();
@@ -562,7 +562,7 @@ namespace internal
         AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(DD_LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
-        Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        world_Material *mat = (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
 
         if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
@@ -585,7 +585,7 @@ namespace internal
         AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
-        Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        world_Material *mat = (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
 
         int tag = interp.locals.pop();
@@ -612,7 +612,7 @@ namespace internal
         AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(DD_LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
-        Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        world_Material *mat = (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
 
         if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
@@ -933,7 +933,7 @@ namespace internal
         AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
-        Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        world_Material *mat = (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
 
         int position = interp.locals.pop();

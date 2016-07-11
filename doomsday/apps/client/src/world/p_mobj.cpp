@@ -33,21 +33,16 @@
 #include <doomsday/defs/sprite.h>
 #include <doomsday/res/Textures>
 #include <doomsday/world/mobjthinkerdata.h>
+#include <doomsday/world/Materials>
 
 #include "def_main.h"
-
 #include "api_sound.h"
+#include "network/net_main.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
-
 #  include "gl/gl_tex.h"
-#endif
-
-#include "network/net_main.h"
-#ifdef __CLIENT__
 #  include "network/net_demo.h"
-
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
@@ -62,6 +57,7 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
+
 #ifdef __CLIENT__
 #  include "Generator"
 #  include "Lumobj"
@@ -83,7 +79,7 @@ dint useSRVOAngle = 1;
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
     return App_ResourceSystem();
 }
@@ -481,7 +477,8 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     if(!sprite.hasView(0)) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
-    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL));
+    ClientMaterial *mat = &world::Materials::get().materialPtr(
+                de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL))->as<ClientMaterial>();
     if(!mat) return;
     MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
     matAnimator.prepare();  // Ensure we have up-to-date info.
@@ -629,9 +626,9 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
             defn::Sprite sprite(*spriteRec);
             if(sprite.hasView(0))  // Always use the front view for lighting.
             {
-                if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL)))
+                if(Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL)))
                 {
-                    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+                    MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
                     matAnimator.prepare();  // Ensure we have up-to-date info.
 
                     if(TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)

@@ -24,15 +24,13 @@
 #include <de/GLState>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
+#include <doomsday/world/Materials>
+
 #include "clientapp.h"
-
 #include "api_fontrender.h"
-
 #include "gl/gl_main.h"
 #include "gl/texturecontent.h"
-
 #include "resource/image.h"
-
 #include "render/rend_main.h"
 #include "render/rend_font.h"
 #include "MaterialAnimator"
@@ -58,9 +56,9 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_HELP */      { .4f, .4f, .52f }
 };
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 void UI_Register(void)
@@ -247,8 +245,8 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
     if (!bottomColor)
         bottomColor = topColor;
 
-    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", (filled? Path("ui/boxfill") : Path("ui/boxcorner"))))
-                                                .getAnimator(UI_MaterialSpec());
+    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", (filled? Path("ui/boxfill") : Path("ui/boxcorner"))))
+            .as<ClientMaterial>().getAnimator(UI_MaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

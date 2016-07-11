@@ -22,7 +22,7 @@
 #define DENG_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
-#include "Material"
+#include "ClientMaterial"
 #include "MaterialAnimator"
 #include "MaterialVariantSpec"
 
@@ -67,7 +67,7 @@ struct rendpspriteparams_t
     de::dfloat width;
     de::dfloat height;
 
-    Material *mat;
+    ClientMaterial *mat;
     de::dfloat texOffset[2];
     dd_bool texFlip[2];          ///< [X, Y] Flip along the specified axis.
 

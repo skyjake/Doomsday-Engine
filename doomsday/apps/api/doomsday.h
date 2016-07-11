@@ -44,7 +44,6 @@
 #include "api_map.h"
 #include "api_mapedit.h"
 #include "api_material.h"
-#include "api_materialarchive.h"
 #include "api_render.h"
 #include "api_resource.h"
 #include "api_server.h"

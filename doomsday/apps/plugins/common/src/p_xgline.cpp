@@ -111,7 +111,7 @@ using namespace de;
         : (x) == 1? DMU_BOTTOM_COLOR_GREEN \
         : DMU_BOTTOM_COLOR_BLUE)
 
-void XL_ChangeMaterial(Line *line, int sidenum, int section, Material *mat,
+void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
     blendmode_t blend = BM_NORMAL, Vector4f const &tintColor = Vector4f(), int flags = 0);
 
 int XL_DoChainSequence(Line *line, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
@@ -1765,17 +1765,17 @@ int XLTrav_ChangeWallMaterial(Line *line, dd_bool /*ceiling*/, void * /*context*
     LOG_MAP_MSG_XGDEVONLY2("Line %i", P_ToIndex(line));
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_UPPER,
-                      (Material *)P_ToPtr(DMU_MATERIAL, info->iparm[3]),
+                      (world_Material *)P_ToPtr(DMU_MATERIAL, info->iparm[3]),
                       BM_NORMAL, Vector3f(info->iparm[9], info->iparm[10], info->iparm[11]) / 255.f,
                       info->iparm[7]);
 
-    Material *mat = 0;
+    world_Material *mat = 0;
     if(info->iparm[4] && (P_GetPtrp(side, DMU_MIDDLE_MATERIAL) || info->iparm[6]))
     {
         if(!P_GetPtrp(line, DMU_BACK_SECTOR) && info->iparm[4] == -1)
             mat = 0;
         else
-            mat = (Material *)P_ToPtr(DMU_MATERIAL, info->iparm[4]);
+            mat = (world_Material *)P_ToPtr(DMU_MATERIAL, info->iparm[4]);
     }
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_MID, mat,
@@ -1784,7 +1784,7 @@ int XLTrav_ChangeWallMaterial(Line *line, dd_bool /*ceiling*/, void * /*context*
                       info->iparm[7]);
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_LOWER,
-                      (Material *)P_ToPtr(DMU_MATERIAL, info->iparm[5]),
+                      (world_Material *)P_ToPtr(DMU_MATERIAL, info->iparm[5]),
                       BM_NORMAL, Vector3f(info->iparm[16], info->iparm[17], info->iparm[18]) / 255.f,
                       info->iparm[7]);
 
@@ -2210,7 +2210,7 @@ void XL_SwapSwitchTextures(Line *line, int snum)
 /**
  * Changes material of the given line.
  */
-void XL_ChangeMaterial(Line *line, int sidenum, int section, Material *mat,
+void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
     blendmode_t blendmode, Vector4f const &tintColor, int flags)
 {
     Side *side = (Side *)P_GetPtrp(line, sidenum? DMU_BACK:DMU_FRONT);
@@ -2223,7 +2223,7 @@ void XL_ChangeMaterial(Line *line, int sidenum, int section, Material *mat,
     if(section == LWS_MID)
     {
         // Are we removing the middle texture?
-        if(mat == (Material *) -1)
+        if(mat == (world_Material *) -1)
         {
             P_SetPtrp(side, DMU_MIDDLE_MATERIAL, NULL);
         }
@@ -2424,7 +2424,7 @@ void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int siden
         if(info->wallSection && info->actMaterial != NOMATERIALID)
         {
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              (Material *)P_ToPtr(DMU_MATERIAL, info->actMaterial));
+                              (world_Material *)P_ToPtr(DMU_MATERIAL, info->actMaterial));
         }
 
         // Change the class of the line if asked to
@@ -2446,7 +2446,7 @@ void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int siden
         if(info->wallSection && info->deactMaterial != NOMATERIALID)
         {
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              (Material *)P_ToPtr(DMU_MATERIAL, info->deactMaterial));
+                              (world_Material *)P_ToPtr(DMU_MATERIAL, info->deactMaterial));
         }
 
         // Change the class of the line if asked to.

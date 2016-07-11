@@ -68,6 +68,7 @@
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/mapmanifests.h>
 #include <doomsday/res/Textures>
+#include <doomsday/world/Materials>
 #include <doomsday/help.h>
 #include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
@@ -599,9 +600,9 @@ void App_AbnormalShutdown(char const *message)
     throw Error("App_AudioSystem", "App not yet initialized");
 }
 
-ResourceSystem &App_ResourceSystem()
+ClientResources &App_ResourceSystem()
 {
-    return static_cast<ResourceSystem &>(Resources::get());
+    return static_cast<ClientResources &>(Resources::get());
 }
 
 ClientServerWorld &App_World()
@@ -699,7 +700,7 @@ int DD_ActivateGameWorker(void *context)
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
     auto &plugins = DoomsdayApp::plugins();
-    ResourceSystem &resSys = App_ResourceSystem();
+    ClientResources &resSys = App_ResourceSystem();
 
     // Some resources types are located prior to initializing the game.
     resSys.initTextures();
@@ -1506,9 +1507,9 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    App_ResourceSystem().forAllMaterials([] (Material &material)
+    world::Materials::get().forAllMaterials([] (world::Material &material)
     {
-        return material.forAllAnimators([] (MaterialAnimator &animator)
+        return static_cast<ClientMaterial &>(material).forAllAnimators([] (MaterialAnimator &animator)
         {
             animator.rewind();
             return LoopContinue;
@@ -1841,7 +1842,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
             return FS_GAME;
         }
     }
-    catch (ResourceSystem::UnknownSchemeError const &)
+    catch (Resources::UnknownSchemeError const &)
     {}
 #endif
     qDebug() << "Unknown font scheme:" << String(str) << ", returning 'FS_INVALID'";
@@ -2338,7 +2339,7 @@ void DD_ConsoleRegister()
     I_Register();
 #endif
 
-    ResourceSystem::consoleRegister();
+    ClientResources::consoleRegister();
     Net_Register();
     ClientServerWorld::consoleRegister();
     InFineSystem::consoleRegister();

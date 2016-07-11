@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/world/world.h"
+#include "doomsday/world/materials.h"
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/player.h"
 #include "api_player.h"
@@ -31,6 +32,7 @@ static World *theWorld = nullptr;
 DENG2_PIMPL(World)
 {
     BaseMap *map = nullptr;
+    world::Materials materials;
 
     Impl(Public *i) : Base(i)
     {
@@ -92,6 +94,16 @@ BaseMap &World::map() const
 {
     DENG2_ASSERT(hasMap());
     return *d->map;
+}
+
+Materials &World::materials()
+{
+    return d->materials;
+}
+
+Materials const &World::materials() const
+{
+    return d->materials;
 }
 
 World &World::get()

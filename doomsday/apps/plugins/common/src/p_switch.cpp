@@ -135,7 +135,7 @@ switchlist_t switchInfo[] = {
 };
 #endif
 
-static Material **switchlist; /// @todo fixme: Never free'd!
+static world_Material **switchlist; /// @todo fixme: Never free'd!
 static int max_numswitches;
 static int numswitches;
 
@@ -151,7 +151,7 @@ void P_InitSwitchList()
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) *
+            switchlist = (world_Material **) M_Realloc(switchlist, sizeof(*switchlist) *
                 (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
@@ -159,11 +159,11 @@ void P_InitSwitchList()
 
         Str_PercentEncode(Str_StripRight(Str_Set(path, switchInfo[i].name1)));
         Uri_SetPath(uri, Str_Text(path));
-        switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        switchlist[index++] = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
         Str_PercentEncode(Str_StripRight(Str_Set(path, switchInfo[i].name2)));
         Uri_SetPath(uri, Str_Text(path));
-        switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        switchlist[index++] = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
     Uri_Delete(uri);
 
@@ -227,7 +227,7 @@ void P_InitSwitchList()
     {
         if(index + 1 >= max_numswitches)
         {
-            switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
+            switchlist = (world_Material **) M_Realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(DD_SHORT(sList[i].episode) <= episode)
@@ -236,11 +236,11 @@ void P_InitSwitchList()
 
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name1)));
             Uri_SetPath(uri, Str_Text(&path));
-            switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            switchlist[index++] = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name2)));
             Uri_SetPath(uri, Str_Text(&path));
-            switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            switchlist[index++] = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             App_Log(lump? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
                     "  %d: Epi:%d A:\"%s\" B:\"%s\"", i, DD_SHORT(sList[i].episode),
@@ -261,7 +261,7 @@ void P_InitSwitchList()
 }
 #endif
 
-static Material* findSwitch(Material *mat, const switchlist_t** info)
+static world_Material *findSwitch(world_Material *mat, const switchlist_t** info)
 {
     if(!mat) return 0;
 
@@ -343,14 +343,14 @@ int materialchanger_s::read(MapStateReader *msr)
     DENG_ASSERT(side != 0);
 
     section = (SideSection) Reader_ReadByte(reader);
-    material = msr->material(Reader_ReadInt16(reader), 0);
+    material = (world_Material *) msr->material(Reader_ReadInt16(reader), 0);
 
     thinker.function = T_MaterialChanger;
 
     return true; // Add this thinker.
 }
 
-static void spawnMaterialChanger(Side *side, SideSection section, Material *mat, int tics)
+static void spawnMaterialChanger(Side *side, SideSection section, world_Material *mat, int tics)
 {
     materialchanger_t *mchanger = (materialchanger_t *)Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
@@ -380,7 +380,7 @@ static int findMaterialChanger(thinker_t *th, void *context)
     return false; // Keep looking.
 }
 
-static void startButton(Side *side, SideSection section, Material *mat, int tics)
+static void startButton(Side *side, SideSection section, world_Material *mat, int tics)
 {
     findmaterialchangerparams_t parm;
     parm.side    = side;
@@ -412,10 +412,10 @@ static int chooseDefaultSound(switchlist_t const *info)
 dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool silent, int tics)
 {
     int const sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
-    Material *current = (Material *)P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
+    world_Material *current = (world_Material *)P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
 
     switchlist_t const *info;
-    if(Material *mat = findSwitch(current, &info))
+    if(world_Material *mat = findSwitch(current, &info))
     {
         if(!silent)
         {

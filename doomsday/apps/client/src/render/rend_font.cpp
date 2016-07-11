@@ -173,7 +173,7 @@ void FR_SetFont(fontid_t num)
             fr.fontNum = num;
             return;
         }
-        catch(ResourceSystem::UnknownFontIdError const &)
+        catch(ClientResources::UnknownFontIdError const &)
         {}
     }
     else

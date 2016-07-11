@@ -26,6 +26,8 @@
 #include "doomsday/doomsdayapp.h"
 
 #include <de/str.h>
+#include <de/reader.h>
+#include <de/writer.h>
 #include <de/unittest.h>
 #include <de/NativePath>
 #include <de/Reader>
@@ -465,6 +467,42 @@ void Uri::operator << (Reader &from)
 void Uri::setResolverFunc(ResolverFunc resolver)
 {
     resolverFunc = resolver;
+}
+
+void Uri::readUri(reader_s *reader, String defaultScheme)
+{
+    clear();
+
+    ddstring_t scheme;
+    Str_InitStd(&scheme);
+    Str_Read(&scheme, reader);
+
+    ddstring_t path;
+    Str_InitStd(&path);
+    Str_Read(&path, reader);
+
+    if (Str_IsEmpty(&scheme) && !defaultScheme.isEmpty())
+    {
+        Str_Set(&scheme, defaultScheme.toUtf8().constData());
+    }
+
+    setScheme(Str_Text(&scheme));
+    setPath  (Str_Text(&path  ));
+}
+
+void Uri::writeUri(writer_s *writer, int omitComponents) const
+{
+    if (omitComponents & UCF_SCHEME)
+    {
+        ddstring_t emptyString;
+        Str_InitStatic(&emptyString, "");
+        Str_Write(&emptyString, writer);
+    }
+    else
+    {
+        Str_Write(DualString(scheme()).toStrUtf8(), writer);
+    }
+    Str_Write(DualString(path()).toStrUtf8(), writer);
 }
 
 #ifdef _DEBUG

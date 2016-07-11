@@ -29,7 +29,7 @@
 #include <de/Observers>
 #include <de/Vector>
 #include "ClientTexture"
-#include "Material"
+#include "ClientMaterial"
 #include "MaterialContext"
 #include "MaterialVariantSpec"
 #include "gl/gltextureunit.h"
@@ -117,12 +117,12 @@ public:
      * @param material  Material to animate.
      * @param spec      Draw-context variant specification.
      */
-    MaterialAnimator(Material &material, de::MaterialVariantSpec const &variantSpec);
+    MaterialAnimator(ClientMaterial &material, de::MaterialVariantSpec const &variantSpec);
 
     /**
      * Returns the Material being animated.
      */
-    Material &material() const;
+    ClientMaterial &material() const;
 
     /**
      * Returns the MaterialVariantSpec for the associated usage context.

@@ -30,6 +30,7 @@
 #define MAXVISSPRITES   8192
 
 namespace world { class BspLeaf; }
+class ClientMaterial;
 
 /**
  * These constants are used as the type of vissprite.
@@ -139,7 +140,7 @@ struct vissprite_t
 
 void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     de::dfloat secFloor, de::dfloat secCeil, de::dfloat floorClip, de::dfloat top,
-    Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
+    ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     de::dint tClass, de::dint tMap, world::BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom);
 

@@ -96,7 +96,8 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(!side.hasSections()) return false;
     if(!side.middle().hasMaterial()) return false;
 
-    MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = side.middle().material().as<ClientMaterial>()
+            .getAnimator(Rend_MapSurfaceMaterialSpec());
 
     // Ensure we have up to date info about the material.
     matAnimator.prepare();

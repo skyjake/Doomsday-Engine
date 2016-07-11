@@ -17,12 +17,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "resource/materialscheme.h"
-
-#include "MaterialManifest"
+#include "doomsday/world/materialscheme.h"
+#include "doomsday/world/MaterialManifest"
 
 using namespace de;
+
+namespace world {
 
 DENG2_PIMPL(MaterialScheme)
 {
@@ -32,8 +32,7 @@ DENG2_PIMPL(MaterialScheme)
     /// Mappings from paths to manifests.
     MaterialScheme::Index index;
 
-    Impl(Public *i, String symbolicName) : Base(i),
-        name(symbolicName)
+    Impl(Public *i, String symbolicName) : Base(i), name(symbolicName)
     {}
 
     ~Impl()
@@ -71,6 +70,8 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
     Manifest *newManifest = &d->index.insert(path);
     DENG2_ASSERT(newManifest);
 
+    newManifest->setScheme(*this);
+
     if(d->index.size() != sizeBefore)
     {
         // Notify interested parties that a new manifest was defined in the scheme.
@@ -105,3 +106,5 @@ MaterialScheme::Index const &MaterialScheme::index() const
 {
     return d->index;
 }
+
+} // namespace world

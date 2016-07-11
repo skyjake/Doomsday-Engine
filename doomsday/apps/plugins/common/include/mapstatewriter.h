@@ -24,6 +24,8 @@
 #include "common.h"
 #include "thingarchive.h"
 
+namespace world { class Material; }
+
 /**
  * Serialized map states are separated into identifiable chunks (in Hexen).
  */
@@ -68,7 +70,8 @@ public:
     Writer *writer();
 
     ThingArchive::SerialId serialIdFor(struct mobj_s *mobj);
-    materialarchive_serialid_t serialIdFor(Material *material);
+    materialarchive_serialid_t serialIdFor(world::Material *material);
+    materialarchive_serialid_t serialIdFor(struct material_s *material);
 
 private:
     DENG2_PRIVATE(d)

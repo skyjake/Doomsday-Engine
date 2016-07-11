@@ -55,7 +55,7 @@ void Vertex::setOrigin(Vector2d const &newOrigin)
     }
 }
 
-int Vertex::property(DmuArgs &args) const
+int Vertex::property(world::DmuArgs &args) const
 {
     switch(args.prop)
     {

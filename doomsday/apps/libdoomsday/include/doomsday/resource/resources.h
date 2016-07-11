@@ -66,8 +66,6 @@ public:
      */
     virtual void clear();
 
-    virtual void clearAllMaterialSchemes();
-
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */

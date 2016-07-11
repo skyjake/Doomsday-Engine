@@ -21,10 +21,15 @@
 #define LIBDOOMSDAY_WORLD_H
 
 #include "../libdoomsday.h"
+
 #include <de/Observers>
 #include <de/System>
 
-namespace world { class BaseMap; }
+namespace world
+{
+    class BaseMap;
+    class Materials;
+}
 
 /**
  * Base class for the game world.
@@ -52,6 +57,9 @@ public:
      * @see hasMap()
      */
     world::BaseMap &map() const;
+
+    world::Materials &       materials();
+    world::Materials const & materials() const;
 
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;

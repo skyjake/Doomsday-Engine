@@ -29,6 +29,8 @@
 #include "polyobjs.h"
 #include "thinkerinfo.h"
 
+#include <doomsday/world/MaterialArchive>
+
 namespace internal
 {
     static bool useMaterialArchiveSegments() {
@@ -45,7 +47,7 @@ using namespace internal;
 DENG2_PIMPL(MapStateWriter)
 {
     ThingArchive *thingArchive;
-    MaterialArchive *materialArchive;
+    world::MaterialArchive *materialArchive;
     Writer *writer; // Not owned.
 
     Impl(Public *i)
@@ -57,7 +59,7 @@ DENG2_PIMPL(MapStateWriter)
 
     ~Impl()
     {
-        MaterialArchive_Delete(materialArchive);
+        delete materialArchive;
         delete thingArchive;
     }
 
@@ -95,7 +97,7 @@ DENG2_PIMPL(MapStateWriter)
 
     void writeMaterialArchive()
     {
-        MaterialArchive_Write(materialArchive, writer);
+        materialArchive->write(*writer);
     }
 
     void writePlayers()
@@ -305,7 +307,8 @@ void MapStateWriter::write(Writer *writer, bool excludePlayers)
     d->writer = writer;
 
     // Prepare and populate the material archive.
-    d->materialArchive = MaterialArchive_New(useMaterialArchiveSegments());
+    d->materialArchive = new world::MaterialArchive(useMaterialArchiveSegments());
+    d->materialArchive->addWorldMaterials();
 
     Writer_WriteInt32(writer, MY_SAVE_MAGIC);
     Writer_WriteInt32(writer, MY_SAVE_VERSION);
@@ -337,8 +340,8 @@ void MapStateWriter::write(Writer *writer, bool excludePlayers)
     d->writeConsistencyBytes(); // To be absolutely sure...
 
     // Cleanup.
-    MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
-    delete d->thingArchive; d->thingArchive = 0;
+    delete d->materialArchive;  d->materialArchive = 0;
+    delete d->thingArchive;     d->thingArchive = 0;
 }
 
 ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
@@ -347,10 +350,15 @@ ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
     return d->thingArchive->serialIdFor(mobj);
 }
 
-materialarchive_serialid_t MapStateWriter::serialIdFor(Material *material)
+materialarchive_serialid_t MapStateWriter::serialIdFor(world::Material *material)
 {
     DENG2_ASSERT(d->materialArchive != 0);
-    return MaterialArchive_FindUniqueSerialId(d->materialArchive, material);
+    return d->materialArchive->findUniqueSerialId(material);
+}
+
+materialarchive_serialid_t MapStateWriter::serialIdFor(material_s *material)
+{
+    return serialIdFor(reinterpret_cast<world::Material *>(material));
 }
 
 Writer *MapStateWriter::writer()

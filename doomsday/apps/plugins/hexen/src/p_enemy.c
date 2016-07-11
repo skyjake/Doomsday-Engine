@@ -1670,7 +1670,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
 {
     int delta;
     coord_t oldpos[3];
-    Material* oldMaterial;
+    world_Material* oldMaterial;
     statenum_t state;
 
     if(actor->reactionTime)

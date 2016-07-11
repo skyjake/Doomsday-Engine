@@ -43,7 +43,7 @@ struct material_s;
 struct texturevariant_s;
 
 class ColorPalette;
-class Material;
+namespace world { class Material; }
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
@@ -213,10 +213,10 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(Material *mat, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
-void GL_SetMaterialUI(Material *mat);
+void GL_SetMaterialUI2(world::Material *mat, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
+void GL_SetMaterialUI(world::Material *mat);
 
-void GL_SetPSprite(Material *mat, int tclass, int tmap);
+void GL_SetPSprite(world::Material *mat, int tclass, int tmap);
 
 void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 

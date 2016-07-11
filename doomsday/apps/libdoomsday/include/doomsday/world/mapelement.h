@@ -18,11 +18,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_MAPELEMENT_H
-#define DENG_WORLD_MAPELEMENT_H
+#ifndef LIBDOOMSDAY_WORLD_MAPELEMENT_H
+#define LIBDOOMSDAY_WORLD_MAPELEMENT_H
 
 #include "dd_share.h"
-#include "api_map.h"
+#include "dmuargs.h"
 #include <de/Error>
 
 namespace world {
@@ -38,7 +38,7 @@ class Map;
  * Abstract handling of map elements is particularly helpful in the public Map Update (DMU)
  * API, where objects can be referenced either by type and index or by an opaque pointer.
  */
-class MapElement
+class LIBDOOMSDAY_PUBLIC MapElement
 {
     DENG2_NO_COPY  (MapElement)
     DENG2_NO_ASSIGN(MapElement)
@@ -179,7 +179,7 @@ public:
      *
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual de::dint property(de::DmuArgs &args) const;
+    virtual de::dint property(world::DmuArgs &args) const;
 
     /**
      * Update a property value, selected by DMU_* name.
@@ -193,12 +193,15 @@ public:
 
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual de::dint setProperty(de::DmuArgs const &args);
+    virtual de::dint setProperty(world::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace world
+} // namespace world
 
-#endif  // DENG_WORLD_MAPELEMENT_H
+#undef DMU_Str
+LIBDOOMSDAY_PUBLIC char const *DMU_Str(de::duint prop);
+
+#endif  // LIBDOOMSDAY_WORLD_MAPELEMENT_H

@@ -20,6 +20,7 @@
 
 #include <de/concurrency.h>
 #include <doomsday/res/Textures>
+#include <doomsday/world/Materials>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -56,9 +57,9 @@ static de::Uri *borderGraphicsNames[9];
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 static void loadViewBorderPatches()
@@ -250,8 +251,8 @@ void R_DrawViewBorder()
     // View background.
     try
     {
-        MaterialAnimator &matAnimator = resSys().material(*borderGraphicsNames[BG_BACKGROUND])
-                                                    .getAnimator(bgMaterialSpec());
+        MaterialAnimator &matAnimator = world::Materials::get().material(*borderGraphicsNames[BG_BACKGROUND])
+                .as<ClientMaterial>().getAnimator(bgMaterialSpec());
 
         // Ensure we've up to date info about the material.
         matAnimator.prepare();
@@ -263,7 +264,7 @@ void R_DrawViewBorder()
                               vd->window.topLeft.x - border, vd->window.topLeft.y - border,
                               vd->window.width() + 2 * border, vd->window.height() + 2 * border);
     }
-    catch(MaterialManifest::MissingMaterialError const &)
+    catch(world::MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
 
     if(border)

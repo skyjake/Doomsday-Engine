@@ -26,6 +26,7 @@
 #include <de/vector1.h>
 #include <de/ModelDrawable>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/world/Materials>
 
 #include "clientapp.h"
 #include "dd_main.h"  // App_World()
@@ -59,11 +60,6 @@ using namespace world;
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
-}
-
-static inline ResourceSystem &resSys()
-{
-    return ClientApp::resourceSystem();
 }
 
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
@@ -218,7 +214,7 @@ void R_ProjectSprite(mobj_t &mob)
 
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
-    Material *mat = nullptr;
+    ClientMaterial *mat = nullptr;
     bool matFlipS = false;
     bool matFlipT = false;
 
@@ -226,7 +222,7 @@ void R_ProjectSprite(mobj_t &mob)
     try
     {
         Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
-        mat      = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
+        mat      = &world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL))->as<ClientMaterial>();
         matFlipS = spriteView.getb("mirrorX");
     }
     catch(defn::Sprite::MissingViewError const &er)
@@ -480,8 +476,8 @@ void R_ProjectSprite(mobj_t &mob)
             Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
             // Lookup the Material for this Sprite and prepare the animator.
-            MaterialAnimator &matAnimator = resSys().material(de::Uri(spriteView.gets("material"), RC_NULL))
-                                                        .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
+            MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri(spriteView.gets("material"), RC_NULL))
+                    .as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
             Vector2ui const &matDimensions = matAnimator.dimensions();

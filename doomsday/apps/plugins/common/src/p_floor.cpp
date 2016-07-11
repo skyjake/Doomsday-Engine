@@ -59,7 +59,7 @@ typedef struct stairdata_s {
     coord_t stepDelta;
     int direction;
     float speed;
-    Material *material;
+    world_Material *material;
     int startDelay;
     int startDelayDelta;
     int textureChange;
@@ -446,13 +446,13 @@ int floor_s::read(MapStateReader *msr)
 
         if(ver >= 2)
         {
-            material = msr->material(Reader_ReadInt16(reader), 0);
+            material = (world_Material *) msr->material(Reader_ReadInt16(reader), 0);
         }
         else
         {
             // Flat number is an absolute lump index.
             de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
-            material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
+            material = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
         }
 
         floorDestHeight        = (float) Reader_ReadInt16(reader);
@@ -496,7 +496,7 @@ int floor_s::read(MapStateReader *msr)
 
         // Flat number is an absolute lump index.
         de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
-        material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
+        material               = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
         floorDestHeight        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         speed                  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
@@ -536,8 +536,8 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
     if(frontSec && backSec)
     {
-        Side *side    = (Side *)P_GetPtrp(li, DMU_FRONT);
-        Material *mat = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        Side *side = (Side *)P_GetPtrp(li, DMU_FRONT);
+        world_Material *mat = (world_Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
 
         /**
          * Emulate DOOM.exe behaviour. In the instance where no material is
@@ -562,7 +562,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         }
 
         side = (Side *)P_GetPtrp(li, DMU_BACK);
-        mat  = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        mat  = (world_Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
         {
             Uri *textureUrn = Uri_NewWithPath2("urn:Textures:0", RC_NULL);
@@ -996,7 +996,7 @@ int EV_DoFloor(Line *line, floortype_e floortype)
             floor->speed = FLOORSPEED;
             P_FindSectorSurroundingLowestFloor(sec,
                 P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &floor->floorDestHeight);
-            floor->material = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+            floor->material = (world_Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
 
             {
             Sector* otherSec = findSectorSurroundingAtFloorHeight(sec,
@@ -1004,7 +1004,7 @@ int EV_DoFloor(Line *line, floortype_e floortype)
 
             if(otherSec)
             {
-                floor->material = (Material *)P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+                floor->material = (world_Material *)P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
                 floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             }
@@ -1082,7 +1082,7 @@ static int findSectorNeighborsForStairBuild(void *ptr, void *context)
 struct spreadsectorparams_t
 {
     Sector *baseSec;
-    Material *material;
+    world_Material *material;
     Sector *foundSec;
     coord_t height, stairSize;
 };
@@ -1195,7 +1195,7 @@ int EV_BuildStairs(Line *line, stair_e type)
         // 1. Find 2-sided line with a front side in the same sector.
         // 2. Other side is the next sector to raise.
         params.baseSec   = sec;
-        params.material  = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+        params.material  = (world_Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         params.foundSec  = 0;
         params.height    = height;
         params.stairSize = stairsize;
@@ -1345,7 +1345,7 @@ int EV_BuildStairs(Line * /*line*/, byte *args, int direction, stairs_e stairsTy
     Sector *sec;
     while((sec = (Sector *)IterList_MoveIterator(list)))
     {
-        stairData.material    = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+        stairData.material    = (world_Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         stairData.startHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -1453,7 +1453,7 @@ int EV_DoDonut(Line *line)
             floor->state           = FS_UP;
             floor->sector          = ring;
             floor->speed           = FLOORSPEED * .5;
-            floor->material        = (Material *)P_GetPtrp(outer, DMU_FLOOR_MATERIAL);
+            floor->material        = (world_Material *)P_GetPtrp(outer, DMU_FLOOR_MATERIAL);
             floor->newSpecial      = 0;
             floor->floorDestHeight = destHeight;
 

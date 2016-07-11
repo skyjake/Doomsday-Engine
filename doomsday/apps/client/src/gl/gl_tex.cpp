@@ -23,7 +23,7 @@
 
 #include "color.h"
 #include "render/r_main.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 #include "gl/sys_opengl.h"
 
 #include <doomsday/resource/colorpalette.h>

@@ -18,16 +18,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALARCHIVE_H
-#define LIBDENG_RESOURCE_MATERIALARCHIVE_H
+#ifndef LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
+#define LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
 
 #include <de/Error>
-#include <de/writer.h>
-#include <de/reader.h>
+#include <dd_share.h>  // materialarchive_serialid_t
+
+struct reader_s; // legacy
+struct writer_s; // legacy
+
+namespace world {
 
 class Material;
-
-namespace de {
 
 /**
  * Collection of identifier-material pairs.
@@ -36,7 +38,7 @@ namespace de {
  *
  * @ingroup resource
  */
-class MaterialArchive
+class LIBDOOMSDAY_PUBLIC MaterialArchive
 {
 public:
     /// Base class for all deserialization errors. @ingroup errors
@@ -45,11 +47,13 @@ public:
 public:
     /**
      * @param useSegments  If @c true, the serialized archive will be preceded
-     *      by a segment id number.
+     *                     by a segment id number.
      * @param recordSymbolicMaterials  Add records for the symbolic materials
-     *      used to record special references in the serialized archive.
+     *                     used to record special references in the serialized archive.
      */
     MaterialArchive(int useSegments, bool recordSymbolicMaterials = true);
+
+    void addWorldMaterials();
 
     /**
      * Returns the number of materials in the archive.
@@ -60,9 +64,7 @@ public:
      * Returns the number of materials in the archive.
      * Same as count()
      */
-    inline int size() const {
-        return count();
-    }
+    inline int size() const { return count(); }
 
     /**
      * @return A new (unused) SerialId for the specified material.
@@ -109,6 +111,66 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace world
 
-#endif /* LIBDENG_RESOURCE_MATERIALARCHIVE_H */
+#if 0
+extern "C" {
+
+/**
+ * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+ */
+MaterialArchive *(*New)(int useSegments);
+
+/**
+ * @param useSegments  If @c true, a serialized archive will be preceded by a segment id number.
+ */
+MaterialArchive *(*NewEmpty)(int useSegments);
+
+void (*Delete)(MaterialArchive *arc);
+
+/**
+ * @return A new (unused) SerialId for the specified material.
+ */
+materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive const *arc, Material *mat);
+
+/**
+ * Finds and returns a material with the identifier @a serialId.
+ *
+ * @param arc  MaterialArchive instance.
+ * @param serialId  SerialId of a material.
+ * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
+ *
+ * @return  Pointer to a material instance. Ownership not given.
+ */
+Material *(*Find)(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group);
+
+/**
+ * Returns the number of materials in the archive.
+ *
+ * @param arc  MaterialArchive instance.
+ */
+int (*Count)(MaterialArchive const *arc);
+
+/**
+ * Serializes the state of the archive using @a writer.
+ *
+ * @param arc  MaterialArchive instance.
+ * @param writer  Writer instance.
+ */
+void (*Write)(MaterialArchive const *arc, Writer *writer);
+
+void (*Read)(MaterialArchive *arc, Reader *reader, int forcedVersion);
+
+/**
+ * Deserializes the state of the archive from @a reader.
+ *
+ * @param arc  MaterialArchive instance.
+ * @param reader  Reader instance.
+ * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
+ *                       version is encountered.
+ */
+
+} // extern "C"
+#endif
+
+#endif /* LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H */

@@ -24,8 +24,8 @@
 
 #include <de/Observers>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 
-#include "MapElement"
 #include "Mesh"
 
 class Line;
@@ -135,7 +135,7 @@ public:  //- Deprecated --------------------------------------------------------
     LineOwner *firstLineOwner() const;
 
 protected:
-    int property(de::DmuArgs &args) const;
+    int property(world::DmuArgs &args) const;
 
 private:
     de::Vector2d _origin;  ///< Map-space coordinates.

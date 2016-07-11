@@ -23,11 +23,13 @@
 #include "api_material.h"
 
 #include <doomsday/res/Textures>
+#include <doomsday/world/Materials>
+#include <doomsday/world/MaterialManifest>
 
 using namespace de;
 
 #undef DD_MaterialForTextureUri
-DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
+DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
     if(!textureUri) return nullptr;  // Not found.
 
@@ -35,14 +37,14 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     {
         de::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return &App_ResourceSystem().material(uri);
+        return reinterpret_cast<world_Material *>(&world::Materials::get().material(uri));
     }
-    catch(MaterialManifest::MissingMaterialError const &er)
+    catch(world::MaterialManifest::MissingMaterialError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch(ResourceSystem::UnknownSchemeError const &er)
+    catch(ClientResources::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -56,7 +58,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 #undef Materials_ComposeUri
 DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
-    MaterialManifest &manifest = App_ResourceSystem().toMaterialManifest(materialId);
+    world::MaterialManifest &manifest = world::Materials::get().toMaterialManifest(materialId);
     return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
 }
 
@@ -65,7 +67,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     try
     {
-        return App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
+        return world::Materials::get().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
     catch(Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
@@ -79,7 +81,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     {
         try
         {
-            return App_ResourceSystem().materialManifest(de::Uri(uriCString, RC_NULL)).id();
+            return world::Materials::get().materialManifest(de::Uri(uriCString, RC_NULL)).id();
         }
         catch(Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.

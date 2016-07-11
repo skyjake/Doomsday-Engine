@@ -87,7 +87,7 @@ DENG2_PIMPL_NOREF(FinaleAnimWidget)
 
         switch (f->type)
         {
-        case Frame::PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef);  break;
+        case Frame::PFT_MATERIAL:  f->texRef.material = ((world::Material *)texRef); break;
         case Frame::PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef); break;
         case Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
         case Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
@@ -254,7 +254,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             break;
 
         case FinaleAnimWidget::Frame::PFT_MATERIAL:
-            if (Material *mat = f->texRef.material)
+            if (ClientMaterial *mat = static_cast<ClientMaterial *>(f->texRef.material))
             {
                 /// @todo Utilize *all* properties of the Material.
                 MaterialAnimator &matAnimator      = mat->getAnimator(uiMaterialSpec());

@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "MapElement"
+#include <doomsday/world/MapElement>
 
 class Vertex;
 

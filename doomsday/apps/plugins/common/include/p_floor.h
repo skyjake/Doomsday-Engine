@@ -94,7 +94,7 @@ typedef struct floor_s {
     Sector *sector;
     floorstate_e state;
     int newSpecial;
-    Material *material;
+    world_Material *material;
     coord_t floorDestHeight;
     float speed;
 #if __JHEXEN__

@@ -22,6 +22,8 @@
 
 #ifdef __CLIENT__
 #  include "world/audioenvironment.h"
+#  include "audio/s_environ.h"
+#  include "ClientMaterial"
 #endif
 #include "BspLeaf"
 #include "Face"
@@ -397,7 +399,8 @@ dint ConvexSubspace::fanVertexCount() const
 }
 
 static void accumReverbForWallSections(HEdge const *hedge,
-    dfloat envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], dfloat &total)
+                                       dfloat envSpaceAccum[NUM_AUDIO_ENVIRONMENTS],
+                                       dfloat &total)
 {
     // Edges with no map line segment implicitly have no surfaces.
     if(!hedge || !hedge->hasMapElement())
@@ -408,7 +411,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
         return;
 
     Material &material = seg.lineSide().middle().material();
-    AudioEnvironmentId env = material.audioEnvironment();
+    AudioEnvironmentId env = material.as<ClientMaterial>().audioEnvironment();
     if(!(env >= 0 && env < NUM_AUDIO_ENVIRONMENTS))
     {
         env = AE_WOOD; // Assume it's wood if unknown.

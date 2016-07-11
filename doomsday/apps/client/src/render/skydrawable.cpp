@@ -34,6 +34,7 @@
 
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
+#include <doomsday/world/Materials>
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/Log>
@@ -52,9 +53,9 @@ static int sphereDetail     = 6;
 static float sphereDistance = 1600; ///< Map units.
 static int sphereRows       = 3;    ///< Per hemisphere.
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 /**
@@ -95,7 +96,7 @@ struct Hemisphere
     /**
      * Determine the material to use for the given sky @a layer.
      */
-    static Material *chooseMaterialForSkyLayer(SkyLayer const *layer)
+    static world::Material *chooseMaterialForSkyLayer(SkyLayer const *layer)
     {
         DENG2_ASSERT(layer);
         if(renderTextures == 0)
@@ -104,13 +105,13 @@ struct Hemisphere
         }
         if(renderTextures == 2)
         {
-            return resSys().materialPtr(de::Uri("System", Path("gray")));
+            return world::Materials::get().materialPtr(de::Uri("System", Path("gray")));
         }
-        if(Material *mat = layer->material())
+        if(world::Material *mat = layer->material())
         {
             return mat;
         }
-        return resSys().materialPtr(de::Uri("System", Path("missing")));
+        return world::Materials::get().materialPtr(de::Uri("System", Path("missing")));
     }
 
     /**
@@ -121,9 +122,9 @@ struct Hemisphere
     {
         DENG2_ASSERT(layer);
 
-        if(Material *mat = chooseMaterialForSkyLayer(layer))
+        if(world::Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(SkyDrawable::layerMaterialSpec(layer->isMasked()));
 
             // Ensure we've up to date info about the material.
             matAnimator.prepare();
@@ -219,9 +220,10 @@ struct Hemisphere
             if(!ldata.active) continue;
 
             TextureVariant *layerTex = nullptr;
-            if(Material *mat = chooseMaterialForSkyLayer(skyLayer))
+            if(world::Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
-                MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
+                MaterialAnimator &matAnimator = mat->as<ClientMaterial>()
+                        .getAnimator(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
 
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
@@ -548,7 +550,7 @@ DENG2_PIMPL(SkyDrawable)
                     }
                 }
             }
-            catch(ResourceSystem::MissingModelDefError const &)
+            catch(ClientResources::MissingModelDefError const &)
             {} // Ignore this error.
         }
     }
@@ -644,9 +646,9 @@ void SkyDrawable::cacheAssets()
     for(int i = 0; i < MAX_LAYERS; ++i)
     {
         SkyLayer const *layer = d->sky->layer(i);
-        if(Material *mat = layer->material())
+        if(world::Material *mat = layer->material())
         {
-            resSys().cache(*mat, layerMaterialSpec(layer->isMasked()));
+            resSys().cache(mat->as<ClientMaterial>(), layerMaterialSpec(layer->isMasked()));
         }
     }
 

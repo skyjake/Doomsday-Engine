@@ -27,6 +27,8 @@
 #include "common.h"
 #include "thingarchive.h"
 
+namespace world { class Material; }
+
 /**
  * Performs native saved game map state deserialization.
  *
@@ -68,7 +70,7 @@ public:
      *
      * @return  Pointer to the associated material; otherwise @c 0 (not archived).
      */
-    Material *material(materialarchive_serialid_t serialId, int group) const;
+    world_Material *material(materialarchive_serialid_t serialId, int group) const;
 
     /**
      * Lookup a pointer to a Side with the given @a sideIndex.

@@ -239,8 +239,8 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
     short ceilingheight       = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
     short floorFlags          = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
     short ceilingFlags        = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
-    Material *floorMaterial   = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
-    Material *ceilingMaterial = (Material *)P_GetPtrp(sec, DMU_CEILING_MATERIAL);
+    world_Material *floorMaterial   = (world_Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+    world_Material *ceilingMaterial = (world_Material *)P_GetPtrp(sec, DMU_CEILING_MATERIAL);
 
     xsector_t *xsec = P_ToXSector(sec);
 
@@ -359,17 +359,18 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     P_SetIntp(sec, DMU_CEILING_SPEED, 0);
 #endif
 
-    Material *floorMaterial = 0, *ceilingMaterial = 0;
+    world_Material *floorMaterial = 0, *ceilingMaterial = 0;
+
 #if !__JHEXEN__
     if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
         de::Uri uri("Flats:", RC_NULL);
         uri.setPath(CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
-        floorMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
+        floorMaterial = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
         uri.setPath(CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
-        ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
+        ceilingMaterial = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
     }
     else if(mapVersion >= 4)
 #endif
@@ -519,9 +520,9 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_FLAGS));
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((world_Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((world_Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((world_Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
@@ -698,7 +699,8 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
             P_SetIntp(si, DMU_BOTTOM_FLAGS, Reader_ReadInt16(reader));
         }
 
-        Material *topMaterial = 0, *bottomMaterial = 0, *middleMaterial = 0;
+        world_Material *topMaterial = 0, *bottomMaterial = 0, *middleMaterial = 0;
+
 #if !__JHEXEN__
         if(mapVersion >= 4)
 #endif

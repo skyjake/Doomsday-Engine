@@ -17,25 +17,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALSHINELAYER_H
-#define CLIENT_RESOURCE_MATERIALSHINELAYER_H
+#ifndef LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
+#define LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
 
 #include <de/String>
 #include <doomsday/defs/dedtypes.h>
-#include "resource/materialtexturelayer.h"
+#include "texturemateriallayer.h"
+
+namespace world {
 
 /**
- * Specialized MaterialTextureLayer for describing an animated shine/reflection layer.
+ * Specialized TextureMaterialLayer for describing an animated shine/reflection layer.
  *
  * @ingroup resource
  */
-class MaterialShineLayer : public MaterialTextureLayer
+class LIBDOOMSDAY_PUBLIC ShineTextureMaterialLayer : public TextureMaterialLayer
 {
 public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public MaterialTextureLayer::AnimationStage
+    class AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
         AnimationStage(de::Uri const &texture, int tics, float variance,
@@ -56,13 +58,14 @@ public:
     };
 
 public:
-    MaterialShineLayer();
-    virtual ~MaterialShineLayer();
+    ShineTextureMaterialLayer();
+
+    virtual ~ShineTextureMaterialLayer();
 
     /**
      * Construct a new layer from the specified definition.
      */
-    static MaterialShineLayer *fromDef(ded_reflection_t const &def);
+    static ShineTextureMaterialLayer *fromDef(ded_reflection_t const &def);
 
     /**
      * Add a new animation Stage to the layer.
@@ -76,4 +79,6 @@ public:
     de::String describe() const;
 };
 
-#endif  // CLIENT_RESOURCE_MATERIALSHINELAYER_H
+} // namespace world
+
+#endif // LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H

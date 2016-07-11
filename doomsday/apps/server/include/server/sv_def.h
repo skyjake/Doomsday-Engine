@@ -95,6 +95,6 @@ dd_bool Sv_CanTrustClientPos(de::dint plrNum);
 /**
  * Returns a unique id for material @a mat that can be passed on to clients.
  */
-de::duint Sv_IdForMaterial(Material *mat);
+de::duint Sv_IdForMaterial(world::Material *mat);
 
 #endif  // SERVER_DEF_H

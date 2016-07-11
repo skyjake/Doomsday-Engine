@@ -26,7 +26,7 @@
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "audio/system.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 #include "world/clientserverworld.h"
 
 /**
@@ -57,7 +57,7 @@ public:
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
     static audio::System &audioSystem();
-    static ResourceSystem &resourceSystem();
+    static ClientResources &resourceSystem();
     static ClientServerWorld &world();
 
 protected:

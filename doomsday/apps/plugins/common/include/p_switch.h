@@ -37,7 +37,7 @@ typedef struct materialchanger_s {
     int timer;
     Side *side;
     SideSection section;
-    Material *material;
+    world_Material *material;
 
 #ifdef __cplusplus
     void write(MapStateWriter *msw) const;

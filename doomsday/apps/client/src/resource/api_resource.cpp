@@ -20,7 +20,7 @@
 #define DENG_NO_API_MACROS_RESOURCE
 #include "de_base.h"
 #include "api_resource.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
@@ -160,7 +160,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
         // Create/update this translation.
         palette.newTranslation(Str_Text(translationId), mappings);
     }
-    catch(ResourceSystem::MissingResourceError const &er)
+    catch(ClientResources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
@@ -182,7 +182,7 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
     {
         return App_ResourceSystem().colorPalettes().colorPalette(name).id();
     }
-    catch(ResourceSystem::MissingResourceError const &er)
+    catch(ClientResources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -199,7 +199,7 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
         res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(id);
         return App_ResourceSystem().colorPalettes().colorPaletteName(palette).toUtf8().constData();
     }
-    catch(ResourceSystem::MissingResourceError const &er)
+    catch(ClientResources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -235,7 +235,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
             rgb[2] = texGammaLut[rgb[2]];
         }
     }
-    catch(ResourceSystem::MissingResourceError const &er)
+    catch(ClientResources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -275,7 +275,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
             rgb[2] = palColor.z;
         }
     }
-    catch(ResourceSystem::MissingResourceError const &er)
+    catch(ClientResources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");

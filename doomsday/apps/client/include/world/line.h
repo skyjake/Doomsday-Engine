@@ -29,8 +29,8 @@
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
+#include <doomsday/world/MapElement>
 #include "HEdge"
-#include "MapElement"
 #include "Polyobj"
 #include "Vertex"
 
@@ -512,8 +512,8 @@ public:
 #endif  // __CLIENT__
 
     protected:
-        de::dint property(de::DmuArgs &args) const;
-        de::dint setProperty(de::DmuArgs const &args);
+        de::dint property(world::DmuArgs &args) const;
+        de::dint setProperty(world::DmuArgs const &args);
 
     private:
         DENG2_PRIVATE(d)
@@ -887,8 +887,8 @@ public:
 #endif
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
 public:
     /**

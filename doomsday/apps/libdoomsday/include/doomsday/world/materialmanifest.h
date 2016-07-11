@@ -17,19 +17,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MATERIALMANIFEST_H
-#define DENG_RESOURCE_MATERIALMANIFEST_H
+#ifndef LIBDOOMSDAY_WORLD_MATERIALMANIFEST_H
+#define LIBDOOMSDAY_WORLD_MATERIALMANIFEST_H
 
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Vector>
-#include <doomsday/uri.h>
+
+#include "../uri.h"
 #include "Material"
 
-namespace de {
+namespace world {
+
 class MaterialScheme;
-}
 
 /**
  * Description for a would-be logical Material resource.
@@ -40,13 +41,13 @@ class MaterialScheme;
  * @see MaterialScheme, Material
  * @ingroup resource
  */
-class MaterialManifest : public de::PathTree::Node
+class LIBDOOMSDAY_PUBLIC MaterialManifest : public de::PathTree::Node
 {
 public:
     /// Required material instance is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion, void materialManifestBeingDeleted(MaterialManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(Deletion,        void materialManifestBeingDeleted   (MaterialManifest const &manifest))
     DENG2_DEFINE_AUDIENCE(MaterialDerived, void materialManifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag
@@ -59,8 +60,11 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
+    typedef std::function<Material * (MaterialManifest &)> MaterialConstructor;
+
 public:
     MaterialManifest(de::PathTree::NodeArgs const &args);
+
     ~MaterialManifest();
 
     /**
@@ -70,10 +74,12 @@ public:
      */
     Material *derive();
 
+    void setScheme(MaterialScheme &scheme);
+
     /**
      * Returns the owning scheme of the manifest.
      */
-    de::MaterialScheme &scheme() const;
+    MaterialScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
     de::String const &schemeName() const;
@@ -158,10 +164,14 @@ public:
      */
     void setMaterial(Material *newMaterial);
 
+    static void setMaterialConstructor(MaterialConstructor func);
+
 private:
     DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialManifest::Flags)
 
-#endif  // DENG_RESOURCE_MATERIALMANIFEST_H
+} // namespace world
+
+#endif  // LIBDOOMSDAY_WORLD_MATERIALMANIFEST_H

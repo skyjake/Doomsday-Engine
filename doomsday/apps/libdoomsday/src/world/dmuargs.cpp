@@ -18,12 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/mapelement.h"
+#include "doomsday/world/mapelement.h"
 #include "dd_share.h"
+
 #include <de/Log>
 #include <de/c_wrapper.h>
 
 using namespace de;
+
+namespace world {
+
+static DmuArgs::PointerToIndexFunc ptrToIndexFunc;
 
 /**
  * Convert propertyType enum constant into a string for error/debug messages.
@@ -51,9 +56,9 @@ static char const *value_Str(dint val)
         { 0, nullptr }
     };
 
-    for(duint i = 0; valuetypes[i].str; ++i)
+    for (duint i = 0; valuetypes[i].str; ++i)
     {
-        if(valuetypes[i].val == val)
+        if (valuetypes[i].val == val)
             return valuetypes[i].str;
     }
 
@@ -62,29 +67,29 @@ static char const *value_Str(dint val)
 }
 
 DmuArgs::DmuArgs(int type, uint prop)
-    : type     (type),
-      prop     (prop & ~DMU_FLAG_MASK),
-      modifiers(prop & DMU_FLAG_MASK),
-      valueType(DDVT_NONE),
-      booleanValues(0),
-      byteValues(0),
-      intValues(0),
-      fixedValues(0),
-      floatValues(0),
-      doubleValues(0),
-      angleValues(0),
-      ptrValues(0)
+    : type          (type)
+    , prop          (prop & ~DMU_FLAG_MASK)
+    , modifiers     (prop & DMU_FLAG_MASK)
+    , valueType     (DDVT_NONE)
+    , booleanValues (0)
+    , byteValues    (0)
+    , intValues     (0)
+    , fixedValues   (0)
+    , floatValues   (0)
+    , doubleValues  (0)
+    , angleValues   (0)
+    , ptrValues     (0)
 {
     DENG_ASSERT(VALID_DMU_ELEMENT_TYPE_ID(type));
 }
 
 void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
 {
-    if(dstValueType == DDVT_FIXED)
+    if (dstValueType == DDVT_FIXED)
     {
         fixed_t *d = (fixed_t *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             *d = (byteValues[index] << FRACBITS);
@@ -108,11 +113,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_FLOAT)
+    else if (dstValueType == DDVT_FLOAT)
     {
         float *d = (float *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             *d = byteValues[index];
@@ -136,11 +141,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_DOUBLE)
+    else if (dstValueType == DDVT_DOUBLE)
     {
         double *d = (double *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             *d = byteValues[index];
@@ -164,11 +169,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_BOOL)
+    else if (dstValueType == DDVT_BOOL)
     {
         dd_bool *d = (dd_bool *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             *d = booleanValues[index];
@@ -180,11 +185,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_BYTE)
+    else if (dstValueType == DDVT_BYTE)
     {
         byte *d = (byte *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             *d = booleanValues[index];
@@ -208,11 +213,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_INT)
+    else if (dstValueType == DDVT_INT)
     {
         int *d = (int *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             *d = booleanValues[index];
@@ -239,11 +244,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_SHORT)
+    else if (dstValueType == DDVT_SHORT)
     {
         short *d = (short *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             *d = booleanValues[index];
@@ -270,11 +275,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_ANGLE)
+    else if (dstValueType == DDVT_ANGLE)
     {
         angle_t *d = (angle_t *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_ANGLE:
             *d = angleValues[index];
@@ -286,14 +291,14 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_BLENDMODE)
+    else if (dstValueType == DDVT_BLENDMODE)
     {
         blendmode_t *d = (blendmode_t *)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_INT:
-            if(intValues[index] > DDNUM_BLENDMODES || intValues[index] < 0)
+            if (intValues[index] > DDNUM_BLENDMODES || intValues[index] < 0)
             {
                 QByteArray msg = String("DmuArgs::value: %1 is not a valid value for DDVT_BLENDMODE.").arg(intValues[index]).toUtf8();
                 App_FatalError(msg.constData());
@@ -308,11 +313,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
             }
         }
     }
-    else if(dstValueType == DDVT_PTR)
+    else if (dstValueType == DDVT_PTR)
     {
         void **d = (void **)dst;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_PTR:
             *d = ptrValues[index];
@@ -334,11 +339,11 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
 
 void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
 {
-    if(srcValueType == DDVT_FIXED)
+    if (srcValueType == DDVT_FIXED)
     {
         fixed_t const *s = (fixed_t const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             byteValues[index] = (*s >> FRACBITS);
@@ -361,11 +366,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_FLOAT)
+    else if (srcValueType == DDVT_FLOAT)
     {
         float const *s = (float const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             byteValues[index] = *s;
@@ -388,11 +393,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_DOUBLE)
+    else if (srcValueType == DDVT_DOUBLE)
     {
         double const *s = (double const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BYTE:
             byteValues[index] = (byte)*s;
@@ -415,11 +420,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_BOOL)
+    else if (srcValueType == DDVT_BOOL)
     {
         dd_bool const *s = (dd_bool const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             booleanValues[index] = *s;
@@ -430,11 +435,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_BYTE)
+    else if (srcValueType == DDVT_BYTE)
     {
         byte const *s = (byte const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             booleanValues[index] = *s;
@@ -457,11 +462,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_INT)
+    else if (srcValueType == DDVT_INT)
     {
         int const *s = (int const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             booleanValues[index] = *s;
@@ -487,11 +492,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_SHORT)
+    else if (srcValueType == DDVT_SHORT)
     {
         short const *s = (short const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_BOOL:
             booleanValues[index] = *s;
@@ -517,11 +522,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_ANGLE)
+    else if (srcValueType == DDVT_ANGLE)
     {
         angle_t const *s = (angle_t const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_ANGLE:
             angleValues[index] = *s;
@@ -532,11 +537,11 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_BLENDMODE)
+    else if (srcValueType == DDVT_BLENDMODE)
     {
         blendmode_t const *s = (blendmode_t const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_INT:
             intValues[index] = *s;
@@ -547,16 +552,17 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
             }
         }
     }
-    else if(srcValueType == DDVT_PTR)
+    else if (srcValueType == DDVT_PTR)
     {
         void const *const *s = (void const *const *)src;
 
-        switch(valueType)
+        switch (valueType)
         {
         case DDVT_INT:
             // Attempt automatic conversion using P_ToIndex(). Naturally only
             // works with map elements. Failure leads into a fatal error.
-            intValues[index] = P_ToIndex(*s);
+            DENG_ASSERT(ptrToIndexFunc);
+            intValues[index] = ptrToIndexFunc(*s);
             break;
         case DDVT_PTR:
             ptrValues[index] = (void *) *s;
@@ -573,3 +579,10 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         App_FatalError(msg.constData());
     }
 }
+
+void DmuArgs::setPointerToIndexFunc(PointerToIndexFunc func)
+{
+    ptrToIndexFunc = func;
+}
+
+} // namespace world

@@ -630,7 +630,7 @@ void P_SectorModifyLightx(Sector *sector, fixed_t value)
 
 terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane)
 {
-    return P_TerrainTypeForMaterial((Material *)P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
+    return P_TerrainTypeForMaterial((world_Material *)P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }
 
 void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaXY[2])

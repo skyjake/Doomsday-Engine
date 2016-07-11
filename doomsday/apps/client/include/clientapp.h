@@ -30,7 +30,7 @@
 #include "ui/clientwindowsystem.h"
 #include "ui/infine/infinesystem.h"
 #include "render/rendersystem.h"
-#include "resource/resourcesystem.h"
+#include "resource/clientresources.h"
 #include "updater.h"
 #include "busyrunner.h"
 #include "world/clientserverworld.h"
@@ -82,7 +82,7 @@ public:
     static ClientWindowSystem & windowSystem();
     static ::audio::System &    audioSystem();
     static RenderSystem &       renderSystem();
-    static ResourceSystem &     resourceSystem();
+    static ClientResources &    resources();
     static ClientServerWorld &  world();
 
     static bool hasInputSystem();

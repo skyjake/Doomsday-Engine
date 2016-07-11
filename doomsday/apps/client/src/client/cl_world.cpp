@@ -23,6 +23,7 @@
 
 #include <QVector>
 #include <de/stringarray.h>
+#include <doomsday/world/MaterialArchive>
 
 #include "client/cl_player.h"
 
@@ -34,11 +35,9 @@
 #include "network/net_msg.h"
 #include "network/protocol.h"
 
-#include "api_materialarchive.h"
-
 using namespace de;
 
-static MaterialArchive *serverMaterials;
+static world::MaterialArchive *serverMaterials;
 
 typedef QVector<int> IndexTransTable;
 static IndexTransTable xlatMobjType;
@@ -55,7 +54,7 @@ void Cl_ResetTransTables()
 {
     if (serverMaterials)
     {
-        MaterialArchive_Delete(serverMaterials);
+        delete serverMaterials;
         serverMaterials = 0;
     }
 
@@ -69,11 +68,11 @@ void Cl_ReadServerMaterials()
 
     if (!serverMaterials)
     {
-        serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
+        serverMaterials = new world::MaterialArchive(false /*no segment check*/, false /*empty*/);
     }
-    MaterialArchive_Read(serverMaterials, msgReader, -1 /*no forced version*/);
+    serverMaterials->read(*msgReader, -1 /*no forced version*/);
 
-    LOGDEV_NET_VERBOSE("Received %i materials") << MaterialArchive_Count(serverMaterials);
+    LOGDEV_NET_VERBOSE("Received %i materials") << serverMaterials->count();
 }
 
 void Cl_ReadServerMobjTypeIDs()
@@ -126,15 +125,15 @@ void Cl_ReadServerMobjStateIDs()
     StringArray_Delete(ar);
 }
 
-Material *Cl_LocalMaterial(materialarchive_serialid_t archId)
-{    
+world::Material *Cl_LocalMaterial(materialarchive_serialid_t archId)
+{
     if (!serverMaterials)
     {
         // Can't do it.
         LOGDEV_NET_WARNING("Cannot translate serial id %i, server has not sent its materials!") << archId;
         return 0;
     }
-    return (Material *) MaterialArchive_Find(serverMaterials, archId, 0);
+    return serverMaterials->find(archId, 0);
 }
 
 int Cl_LocalMobjType(int serverMobjType)

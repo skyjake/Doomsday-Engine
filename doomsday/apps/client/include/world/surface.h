@@ -29,8 +29,7 @@
 #include <de/String>
 #include <de/Vector>
 #include <doomsday/uri.h>
-#include "MapElement"
-#include "Material"
+#include <doomsday/world/Material>
 
 #ifdef __CLIENT__
 class Decoration;
@@ -213,8 +212,8 @@ public:  //- Material ----------------------------------------------------------
      *
      * @see hasMaterial(), hasFixMaterial()
      */
-    Material &material() const;
-    Material *materialPtr() const;
+    world::Material &material() const;
+    world::Material *materialPtr() const;
 
     /**
      * Change the material attributed to the surface. On client side, any existing
@@ -224,7 +223,7 @@ public:  //- Material ----------------------------------------------------------
      * @param newMaterial   New material to apply. Use @c nullptr to clear.
      * @param isMissingFix  @c true= this is a fix for a "missing" material.
      */
-    Surface &setMaterial(Material *newMaterial, bool isMissingFix = false);
+    Surface &setMaterial(world::Material *newMaterial, bool isMissingFix = false);
 
     /**
      * Returns @c true if the surface material is mirrored on the X axis.
@@ -296,8 +295,8 @@ public:  //- Material positioning ----------------------------------------------
 #endif // __CLIENT__
 
 protected:
-    de::dint property(de::DmuArgs &args) const;
-    de::dint setProperty(de::DmuArgs const &args);
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)

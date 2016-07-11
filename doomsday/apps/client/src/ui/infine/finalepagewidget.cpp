@@ -20,9 +20,9 @@
 
 #include "ui/infine/finalepagewidget.h"
 
+#include <doomsday/world/Material>
 #include <de/vector1.h>
 #include "dd_main.h" // App_ResourceSystem()
-#include "Material"
 
 #ifdef __CLIENT__
 #  include <de/GLState>
@@ -51,7 +51,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
     fontid_t preFont[FIPAGE_NUM_PREDEFINED_FONTS];
 
     struct Background {
-        Material *material;
+        world::Material *material;
         animatorvector4_t topColor;
         animatorvector4_t bottomColor;
 
@@ -117,9 +117,9 @@ void FinalePageWidget::draw() const
 
         if (topAlpha > 0 && bottomAlpha > 0)
         {
-            if (Material *material = d->bg.material)
+            if (world::Material *material = d->bg.material)
             {
-                MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec());
+                MaterialAnimator &matAnimator = material->as<ClientMaterial>().getAnimator(uiMaterialSpec());
 
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
@@ -257,12 +257,12 @@ FinalePageWidget::Children const &FinalePageWidget::children() const
     return d->children;
 }
 
-Material *FinalePageWidget::backgroundMaterial() const
+world::Material *FinalePageWidget::backgroundMaterial() const
 {
     return d->bg.material;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundMaterial(Material *newMaterial)
+FinalePageWidget &FinalePageWidget::setBackgroundMaterial(world::Material *newMaterial)
 {
     d->bg.material = newMaterial;
     return *this;

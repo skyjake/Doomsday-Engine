@@ -23,6 +23,8 @@
 #include <de/ArrayValue>
 #include <de/NativePath>
 #include <de/String>
+#include <doomsday/world/MaterialArchive>
+
 #include "d_netsv.h"           /// @todo remove me
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
@@ -75,7 +77,7 @@ DENG2_PIMPL(MapStateReader)
     int thingArchiveSize;
 
     ThingArchive *thingArchive;
-    MaterialArchive *materialArchive;
+    world::MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
 
     Impl(Public *i)
@@ -97,7 +99,7 @@ DENG2_PIMPL(MapStateReader)
     {
         delete thingArchive;
         delete sideArchive;
-        MaterialArchive_Delete(materialArchive);
+        delete materialArchive;
         Reader_Delete(reader);
     }
 
@@ -164,12 +166,12 @@ DENG2_PIMPL(MapStateReader)
 
     void readMaterialArchive()
     {
-        materialArchive = MaterialArchive_NewEmpty(useMaterialArchiveSegments());
+        materialArchive = new world::MaterialArchive(useMaterialArchiveSegments(), false /*empty*/);
 #if !__JHEXEN__
         if(mapVersion >= 4)
 #endif
         {
-            MaterialArchive_Read(materialArchive, reader, mapVersion < 6? 0 : -1);
+            materialArchive->read(*reader, mapVersion < 6? 0 : -1);
         }
     }
 
@@ -776,9 +778,9 @@ void MapStateReader::read(String const &mapUriStr)
     d->endSegment();
 
     // Cleanup.
-    delete d->thingArchive; d->thingArchive = 0;
-    delete d->sideArchive; d->sideArchive = 0;
-    MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+    delete d->thingArchive;     d->thingArchive = 0;
+    delete d->sideArchive;      d->sideArchive = 0;
+    delete d->materialArchive;  d->materialArchive = 0;
 
     d->readConsistencyBytes();
     Reader_Delete(d->reader); d->reader = 0;
@@ -817,16 +819,16 @@ mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) con
     return d->thingArchive->mobj(serialId, address);
 }
 
-Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
+world_Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
 {
     DENG2_ASSERT(d->materialArchive != 0);
-    return MaterialArchive_Find(d->materialArchive, serialId, group);
+    return reinterpret_cast<world_Material *>(d->materialArchive->find(serialId, group));
 }
 
 Side *MapStateReader::side(int sideIndex) const
 {
     DENG2_ASSERT(d->sideArchive != 0);
-    return (Side *)d->sideArchive->at(sideIndex);
+    return reinterpret_cast<Side *>(d->sideArchive->at(sideIndex));
 }
 
 player_t *MapStateReader::player(int serialId) const

@@ -36,6 +36,7 @@
 class Lumobj;
 class Sector;
 struct VectorLightData;
+class ClientMaterial;
 namespace de { class LightGrid; }
 namespace world {
 class ConvexSubspace;
@@ -279,7 +280,7 @@ Lumobj *Rend_MakeLumobj(de::Record const &sprite);
  * Selects a Material for the given map @a surface considering the current map
  * renderer configuration.
  */
-Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
+ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
 
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);

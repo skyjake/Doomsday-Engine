@@ -53,7 +53,7 @@ void P_InitTerrainTypes(void);
 void P_ShutdownTerrainTypes(void);
 void P_ClearTerrainTypes(void);
 
-terraintype_t const *P_TerrainTypeForMaterial(Material *mat);
+terraintype_t const *P_TerrainTypeForMaterial(world_Material *mat);
 terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane);
 
 #ifdef __cplusplus

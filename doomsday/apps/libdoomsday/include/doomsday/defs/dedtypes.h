@@ -26,6 +26,7 @@
 #include <de/memory.h>
 #include "../uri.h"
 
+#include "dd_share.h"
 #include "def_share.h"
 #include "api_gl.h"
 #include "dedarray.h"

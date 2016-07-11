@@ -26,6 +26,7 @@
 #include <de/Log>
 #include <de/StringPool>
 #include <doomsday/world/entitydef.h>
+#include <doomsday/world/Materials>
 #include <doomsday/EntityDatabase>
 
 #include "dd_main.h"
@@ -132,7 +133,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
         // First try the preferred scheme, then any.
         try
         {
-            material = &App_ResourceSystem().material(materialUri);
+            material = &world::Materials::get().material(materialUri);
         }
         catch(Resources::MissingResourceManifestError const &)
         {
@@ -140,7 +141,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
             try
             {
                 materialUri.setScheme("");
-                material = &App_ResourceSystem().material(materialUri);
+                material = &world::Materials::get().material(materialUri);
             }
             catch(Resources::MissingResourceManifestError const &)
             {}

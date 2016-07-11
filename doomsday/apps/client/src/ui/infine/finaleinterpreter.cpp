@@ -28,6 +28,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/world/Materials>
 #include <doomsday/Game>
 
 #include "dd_def.h"
@@ -1346,7 +1347,7 @@ DEFFC(End)
     fi.gotoEnd();
 }
 
-static void changePageBackground(FinalePageWidget &page, Material *newMaterial)
+static void changePageBackground(FinalePageWidget &page, world::Material *newMaterial)
 {
     // If the page does not yet have a background set we must setup the color+alpha.
     if (newMaterial && !page.backgroundMaterial())
@@ -1362,19 +1363,19 @@ DEFFC(BGMaterial)
     DENG2_UNUSED(cmd);
 
     // First attempt to resolve as a Values URI (which defines the material URI).
-    Material *material = nullptr;
+    world::Material *material = nullptr;
     try
     {
         if (ded_value_t *value = ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
         {
-            material = &App_ResourceSystem().material(de::Uri(value->text, RC_NULL));
+            material = &world::Materials::get().material(de::Uri(value->text, RC_NULL));
         }
         else
         {
-            material = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
+            material = &world::Materials::get().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
         }
     }
-    catch (MaterialManifest::MissingMaterialError const &)
+    catch (world::MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
     catch (Resources::MissingResourceManifestError const &)
     {} // Ignore this error.

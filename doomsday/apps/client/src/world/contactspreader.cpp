@@ -220,7 +220,8 @@ private:
                     openTop = fromCluster.visCeiling().heightSmoothed();
                 }
 
-                MaterialAnimator &matAnimator = facingLineSide.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+                MaterialAnimator &matAnimator = facingLineSide.middle().material()
+                        .as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
                 // Ensure we have up to date info about the material.
                 matAnimator.prepare();

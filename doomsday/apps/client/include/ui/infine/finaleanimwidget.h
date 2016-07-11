@@ -22,8 +22,8 @@
 #define DENG_UI_INFINE_FINALEANIMWIDGET_H
 
 #include <QList>
+#include <doomsday/world/Material>
 #include "finalewidget.h"
-#include "Material"
 
 /**
  * Finale animation widget. Colored rectangles or image sequence animations.
@@ -52,7 +52,7 @@ public:
             char flip:1;
         } flags;
         union {
-            Material *material;
+            world::Material *material;
             patchid_t patch;
             lumpnum_t lumpNum;
             DGLuint tex;

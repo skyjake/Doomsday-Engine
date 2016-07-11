@@ -1,7 +1,7 @@
-/** @file material.h  Logical material resource.
+/** @file material.h  Client-side material.
  *
  * @authors Copyright © 2009-2016 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,28 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MATERIAL_H
-#define DENG_RESOURCE_MATERIAL_H
+#ifndef DENG_RESOURCE_CLIENTMATERIAL_H
+#define DENG_RESOURCE_CLIENTMATERIAL_H
 
-#include <functional>
-#include <QList>
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-#include <doomsday/res/Texture>
+#include <doomsday/world/Material>
 #include "audio/s_environ.h"
-#include "MapElement"
-#ifdef __CLIENT__
-#  include "MaterialVariantSpec"
-#endif
+#include "MaterialVariantSpec"
 
-class MaterialManifest;
-#ifdef __CLIENT__
 class MaterialAnimator;
-#endif
 
 /**
- * Logical material resource.
+ * Material.
  *
  * @par Dimensions
  * Material dimensions are interpreted relative to the coordinate space in which the material
@@ -48,91 +37,20 @@ class MaterialAnimator;
  *
  * @ingroup resource
  */
-class Material : public world::MapElement
+class ClientMaterial : public world::Material
 {
-public:
-    /// Notified when the material is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion,         void materialBeingDeleted(Material const &material))
-
-    /// Notified whenever the logical dimensions change.
-    DENG2_DEFINE_AUDIENCE2(DimensionsChange, void materialDimensionsChanged(Material &material))
-
 public:
     /**
      * Construct a new Material and attribute it with the given resource @a manifest.
      */
-    Material(MaterialManifest &manifest);
+    ClientMaterial(world::MaterialManifest &manifest);
 
-    ~Material();
-
-    /**
-     * Returns the attributed MaterialManifest for the material.
-     */
-    MaterialManifest &manifest() const;
-
-    /**
-     * Returns the dimension metrics of the material.
-     */
-    de::Vector2ui const &dimensions() const;
-
-    inline int height() const { return dimensions().y; }
-    inline int width () const { return dimensions().x; }
-
-    /**
-     * Change the world dimensions of the material to @a newDimensions.
-     */
-    void setDimensions(de::Vector2ui const &newDimensions);
-
-    void setHeight(int newHeight);
-    void setWidth (int newWidth);
-
-    /**
-     * Returns @c true if the material is marked @em drawable.
-     */
-    bool isDrawable() const;
-
-    /**
-     * Returns @c true if the material is marked @em sky-masked.
-     */
-    bool isSkyMasked() const;
-
-    /**
-     * Returns @c true if the material is marked @em valid.
-     *
-     * Materials are invalidated only when dependent resources (such as the definition
-     * from which it was produced) are destroyed as a result of runtime file unloading.
-     *
-     * These 'orphaned' materials cannot be immediately destroyed as the game may be
-     * holding on to pointers (which are considered eternal). Therefore, materials are
-     * invalidated (disabled) and will be ignored until they can actually be destroyed
-     * (e.g., the current game is reset or changed).
-     */
-    bool isValid() const;
-
-    /**
-     * Change the do-not-draw property of the material according to @a yes.
-     */
-    void markDontDraw (bool yes = true);
-
-    /**
-     * Change the sky-masked property of the material according to @a yes.
-     */
-    void markSkyMasked(bool yes = true);
-
-    /**
-     * Change the is-valid property of the material according to @a yes.
-     */
-    void markValid    (bool yes = true);
-
-    /**
-     * Returns a human-friendly, textual name for the object.
-     */
-    de::String describe() const;
+    ~ClientMaterial();
 
     /**
      * Returns a human-friendly, textual description of the full material configuration.
      */
-    de::String description() const;
+    de::String description() const override;
 
     /**
      * Returns the attributed audio environment identifier for the material.
@@ -144,119 +62,7 @@ public:
      */
     void setAudioEnvironment(AudioEnvironmentId newEnvironment);
 
-public:  //- Layers ---------------------------------------------------------------------
-
-    /// The referenced layer does not exist. @ingroup errors
-    DENG2_ERROR(MissingLayerError);
-
-    /**
-     * Base class for modelling a logical layer.
-     *
-     * A layer in this context is a formalized extension mechanism for customizing the
-     * visual composition of a material. Layers are primarily intended for the modelling
-     * of animated texture layers.
-     *
-     * Each material is composed from one or more layers. Layers are arranged in a stack,
-     * according to the order in which they should be drawn, from the bottom-most to
-     * the top-most layer.
-     */
-    class Layer
-    {
-    public:
-        /// The referenced stage does not exist. @ingroup errors
-        DENG2_ERROR(MissingStageError);
-
-        /**
-         * Base class for a logical layer animation stage.
-         */
-        struct Stage
-        {
-            int tics;
-            float variance;  ///< Stage variance (time).
-
-            Stage(int tics, float variance) : tics(tics), variance(variance) {}
-            Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
-            virtual ~Stage() {}
-
-            DENG2_AS_IS_METHODS()
-
-            /**
-             * Returns a human-friendly, textual description of the animation stage
-             * configuration.
-             */
-            virtual de::String description() const = 0;
-        };
-
-    public:
-        virtual ~Layer();
-
-        DENG2_AS_IS_METHODS()
-
-        /**
-         * Returns a human-friendly, textual name for the type of material layer.
-         */
-        virtual de::String describe() const;
-
-        /**
-         * Returns a human-friendly, textual synopsis of the material layer.
-         */
-        de::String description() const;
-
-        /**
-         * Returns the total number of animation stages for the material layer.
-         */
-        int stageCount() const;
-
-        /**
-         * Returns @c true if the material layer is animated; otherwise @c false.
-         */
-        inline bool isAnimated() const { return stageCount() > 1; }
-
-        /**
-         * Lookup a material layer animation Stage by it's unique @a index.
-         *
-         * @param index  Index of the stage to lookup. Will be cycled into valid range.
-         */
-        Stage &stage(int index) const;
-
-    protected:
-        typedef QList<Stage *> Stages;
-        Stages _stages;
-    };
-
-    /**
-     * Returns the number of material layers.
-     */
-    int layerCount() const;
-
-    /**
-     * Add a new layer at the given layer stack position.
-     *
-     * @note As this alters the layer state, any existing client side MaterialAnimators
-     * will need to be reconfigured/destroyed as they will no longer be valid.
-     *
-     * @param layer  Layer to add. Material takes ownership.
-     * @param index  Numeric position in the layer stack at which to add the layer.
-     */
-    void addLayerAt(Layer *layer, int index);
-
-    /**
-     * Lookup a Layer by it's unique @a index.
-     */
-    Layer &layer   (int index) const;
-    Layer *layerPtr(int index) const;
-
-    /**
-     * Destroys all the material's layers.
-     *
-     * @note As this alters the layer state, any existing client side MaterialAnimators
-     * will need to be reconfigured/destroyed as they will no longer be valid.
-     */
-    void clearAllLayers();
-
-#ifdef __CLIENT__
-
-public:  //- Decorations ----------------------------------------------------------------
+//- Decorations -------------------------------------------------------------------------
 
     /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(MissingDecorationError);
@@ -327,10 +133,10 @@ public:  //- Decorations -------------------------------------------------------
         /**
          * Returns the Material 'owner' of the material decoration.
          */
-        Material       &material();
-        Material const &material() const;
+        ClientMaterial       &material();
+        ClientMaterial const &material() const;
 
-        void setMaterial(Material *newOwner);
+        void setMaterial(ClientMaterial *newOwner);
 
         /**
          * Returns the pattern skip configuration for the decoration.
@@ -408,7 +214,7 @@ public:  //- Decorations -------------------------------------------------------
      */
     void clearAllDecorations();
 
-public:  //- Animators ------------------------------------------------------------------
+//- Animators ---------------------------------------------------------------------------
 
     /**
      * Returns the total number of MaterialAnimators for the material.
@@ -441,22 +247,10 @@ public:  //- Animators ---------------------------------------------------------
      */
     void clearAllAnimators();
 
-#endif  // __CLIENT__
-
-protected:
-    int property(de::DmuArgs &args) const;
-
-public:
-    /// Register the console commands and variables of this module.
-    static void consoleRegister();
-
 private:
     DENG2_PRIVATE(d)
 };
 
-typedef Material::Layer      MaterialLayer;
-#ifdef __CLIENT__
-typedef Material::Decoration MaterialDecoration;
-#endif
+typedef ClientMaterial::Decoration MaterialDecoration;
 
-#endif  // DENG_RESOURCE_MATERIAL_H
+#endif  // DENG_RESOURCE_CLIENTMATERIAL_H

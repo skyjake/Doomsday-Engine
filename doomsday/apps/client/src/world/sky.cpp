@@ -24,6 +24,7 @@
 #include <QtAlgorithms>
 #include <de/Log>
 #include <doomsday/res/TextureManifest>
+#include <doomsday/world/Materials>
 #include "dd_main.h"
 
 #ifdef __CLIENT__
@@ -242,7 +243,7 @@ DENG2_PIMPL(Sky)
             if(!layer.isActive()) continue;
 
             // A material is required for drawing.
-            Material *mat = layer.material();
+            ClientMaterial *mat = static_cast<ClientMaterial *>(layer.material());
             if(!mat) continue;
             MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
 
@@ -342,12 +343,12 @@ void Sky::configure(defn::Sky const *def)
         lyr.setFadeoutLimit(lyrDef? lyrDef->getf("colorLimit") : DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
         de::Uri const matUri = lyrDef? de::Uri(lyrDef->gets("material")) : de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL);
-        Material *mat = 0;
+        world::Material *mat = 0;
         try
         {
-            mat = App_ResourceSystem().materialPtr(matUri);
+            mat = world::Materials::get().materialPtr(matUri);
         }
-        catch(MaterialManifest::MissingMaterialError const &er)
+        catch(world::MaterialManifest::MissingMaterialError const &er)
         {
             // Log if a material is specified but otherwise ignore this error.
             if(lyrDef)

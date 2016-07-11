@@ -91,7 +91,7 @@ static dint fogModeDefault;
 
 static viewport_t currentView;
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
     return App_ResourceSystem();
 }
@@ -914,11 +914,11 @@ static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint t
                                  0, 1, 0, false, true, true, false);
 }
 
-void GL_SetMaterialUI2(Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
+void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(!material) return; // @todo we need a "NULL material".
 
-    MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec(wrapS, wrapT));
+    MaterialAnimator &matAnimator = static_cast<ClientMaterial *>(material)->getAnimator(uiMaterialSpec(wrapS, wrapT));
 
     // Ensure we have up to date info about the material.
     matAnimator.prepare();
@@ -926,16 +926,16 @@ void GL_SetMaterialUI2(Material *material, gl::Wrapping wrapS, gl::Wrapping wrap
     GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
-void GL_SetMaterialUI(Material *mat)
+void GL_SetMaterialUI(world::Material *mat)
 {
     GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
 }
 
-void GL_SetPSprite(Material *material, dint tClass, dint tMap)
+void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
 {
     if(!material) return;
 
-    MaterialAnimator &matAnimator = material->getAnimator(pspriteMaterialSpec(tClass, tMap));
+    MaterialAnimator &matAnimator = static_cast<ClientMaterial *>(material)->getAnimator(pspriteMaterialSpec(tClass, tMap));
 
     // Ensure we have up to date info about the material.
     matAnimator.prepare();

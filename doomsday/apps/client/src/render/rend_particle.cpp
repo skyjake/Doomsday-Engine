@@ -382,7 +382,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
     spr.pose.distance   = dist;
     spr.pose.extraScale = size;  // Extra scaling factor.
 
-    parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
+    parm.mf = &ClientApp::resources().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
     dint frame;
@@ -397,7 +397,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
         parm.inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    ClientApp::resourceSystem().setModelDefFrame(*parm.mf, frame);
+    ClientApp::resources().setModelDefFrame(*parm.mf, frame);
     // Set the correct orientation for the particle.
     if(parm.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {

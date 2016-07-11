@@ -37,6 +37,8 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/MaterialManifest>
+#include <doomsday/world/Materials>
 
 #include "dd_main.h"
 #include "dd_def.h"
@@ -50,7 +52,6 @@
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
-
 #  include "gl/gl_main.h"
 #endif
 
@@ -96,7 +97,7 @@ dint validCount = 1;  // Increment every time a check is made.
 static dfloat handDistance = 300;  //cvar
 #endif
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
     return App_ResourceSystem();
 }
@@ -320,6 +321,18 @@ DENG2_PIMPL(ClientServerWorld)
 
         // One time init of the fallback MapInfo definition.
         defn::MapInfo(fallbackMapInfo).resetToDefaults();
+
+        // Callbacks.
+        world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
+#ifdef __CLIENT__
+        world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
+            return new ClientMaterial(m);
+        });
+#else
+        world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
+            return new world::Material(m);
+        });
+#endif
     }
 
     /**
@@ -630,9 +643,9 @@ DENG2_PIMPL(ClientServerWorld)
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
-        resSys().forAllMaterials([] (Material &material)
+        world::Materials::get().forAllMaterials([] (world::Material &material)
         {
-            return material.forAllAnimators([] (MaterialAnimator &animator)
+            return material.as<ClientMaterial>().forAllAnimators([] (MaterialAnimator &animator)
             {
                 animator.rewind();
                 return LoopContinue;

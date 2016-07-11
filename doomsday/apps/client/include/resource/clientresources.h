@@ -1,4 +1,4 @@
-/** @file resourcesystem.h  Resource subsystem.
+/** @file clientresources.h  Client-side resource subsystem.
  * @ingroup resource
  *
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef RESOURCESYSTEM_H
-#define RESOURCESYSTEM_H
+#ifndef DENG_CLIENT_RESOURCES_H
+#define DENG_CLIENT_RESOURCES_H
 
 #include <QList>
 #include <QMap>
@@ -27,6 +27,7 @@
 #include <de/Record>
 #include <de/String>
 #include <de/System>
+
 #include <doomsday/defs/ded.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
@@ -38,6 +39,8 @@
 #include <doomsday/res/TextureScheme>
 
 #include "resource/animgroup.h"
+#include "resource/rawtexture.h"
+
 #ifdef __CLIENT__
 #  include "AbstractFont"
 #  include "BitmapFont"
@@ -48,12 +51,10 @@
 #  include "resource/framemodeldef.h"
 #endif
 
-#include "Material"
-#include "MaterialScheme"
-#include "resource/rawtexture.h"
+class ClientMaterial;
 
 /**
- * Logical resources; materials, packages, textures, etc...
+ * Subsystem for managing client-side resources.
  *
  * Resource pointers are considered @em eternal in the sense that they will
  * continue to reference the same logical resource data, even after the engine
@@ -84,28 +85,16 @@
  *
  * @ingroup resource
  */
-class ResourceSystem : public Resources
+class ClientResources : public Resources
 {
 public:
-    /// An unknown material group was referenced. @ingroup errors
-    DENG2_ERROR(UnknownMaterialGroupError);
-
-    /// The specified material id was invalid (out of range). @ingroup errors
-    DENG2_ERROR(UnknownMaterialIdError);
-
 #ifdef __CLIENT__
     /// The referenced model def was not found. @ingroup errors
     DENG2_ERROR(MissingModelDefError);
 
     /// The specified font id was invalid (out of range). @ingroup errors
     DENG2_ERROR(UnknownFontIdError);
-#endif
 
-    typedef QSet<MaterialManifest *> MaterialManifestSet;
-    typedef MaterialManifestSet MaterialManifestGroup; // Alias
-    typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
-
-#ifdef __CLIENT__
     typedef QMap<de::String, de::FontScheme *> FontSchemes;
     typedef QList<AbstractFont *> AllFonts;
 #endif
@@ -117,7 +106,7 @@ public:
      * Construct a new resource system, configuring all resource classes and
      * the associated resource collection schemes.
      */
-    ResourceSystem();
+    ClientResources();
 
     void clear() override;
 
@@ -157,155 +146,6 @@ public:
      * Returns the total number of SpriteSets.
      */
     de::dint spriteCount();
-
-    /**
-     * Determines if a material exists for a @a path.
-     *
-     * @return @c true if a material exists; otherwise @a false.
-     *
-     * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
-     */
-    inline bool hasMaterial(de::Uri const &path) const {
-        if(hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
-        return false;
-    }
-
-    /**
-     * Lookup a material resource for the specified @a path.
-     *
-     * @return The found material.
-     *
-     * @see MaterialManifest::material()
-     */
-    inline Material &material(de::Uri const &path) const {
-        return materialManifest(path).material();
-    }
-
-    /**
-     * Returns a pointer to the identified Material.
-     *
-     * @see hasMaterialManifest(), MaterialManifest::materialPtr()
-     */
-    Material *materialPtr(de::Uri const &path);
-
-    /**
-     * Determines if a manifest exists for a material on @a path.
-     *
-     * @return @c true if a manifest exists; otherwise @a false.
-     */
-    bool hasMaterialManifest(de::Uri const &path) const;
-
-    /**
-     * Look up a material manifest by its unique resource @a path.
-     *
-     * @param path  The path to search for.
-     * @return  Found material manifest.
-     */
-    MaterialManifest &materialManifest(de::Uri const &path) const;
-
-    /**
-     * Look up a material manifest by its unique resource @a path.
-     *
-     * @param path  The path to search for.
-     * @return  Found material manifest, or nullptr if not found.
-     */
-    MaterialManifest *materialManifestPtr(de::Uri const &path) const;
-
-    /**
-     * Lookup a manifest by unique identifier.
-     *
-     * @param id  Unique identifier for the manifest to be looked up. Note
-     *            that @c 0 is not a valid identifier.
-     *
-     * @return  The associated manifest.
-     */
-    MaterialManifest &toMaterialManifest(materialid_t id) const;
-
-    /**
-     * Returns the total number of unique materials in the collection.
-     */
-    de::dint materialCount() const;
-
-    /**
-     * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
-     */
-    bool knownMaterialScheme(de::String name) const;
-
-    /**
-     * Lookup a material resource scheme by symbolic name.
-     *
-     * @param name  Symbolic name of the scheme.
-     * @return  MaterialScheme associated with @a name.
-     *
-     * @throws UnknownSchemeError If @a name is unknown.
-     *
-     * @see knownMaterialScheme()
-     */
-    de::MaterialScheme &materialScheme(de::String name) const;
-
-    /**
-     * Returns the total number of material manifest schemes in the collection.
-     */
-    de::dint materialSchemeCount() const;
-
-    /**
-     * Iterate through all the material resource schemes of the resource system.
-     *
-     * @param func  Callback to make for each MaterialScheme.
-     */
-    de::LoopResult forAllMaterialSchemes(std::function<de::LoopResult (de::MaterialScheme &)> func) const;
-
-    /**
-     * Clear all materials (and their manifests) in all schemes.
-     *
-     * @see forAllMaterialSchemes(), MaterialScheme::clear().
-     */
-    void clearAllMaterialSchemes() override;
-
-    /**
-     * Lookup a material manifest group by unique @a number.
-     */
-    MaterialManifestGroup &materialGroup(de::dint number) const;
-
-    /**
-     * Create a new (empty) material manifest group.
-     */
-    MaterialManifestGroup &newMaterialGroup();
-
-    /**
-     * Destroys all material manifest groups.
-     */
-    void clearAllMaterialGroups();
-
-    /**
-     * Provides a list of all material manifest groups, for efficient traversal.
-     */
-    MaterialManifestGroups const &allMaterialGroups() const;
-
-    /**
-     * Returns the total number of material manifest groups in the collection.
-     */
-    inline de::dint materialGroupCount() const { return allMaterialGroups().count(); }
-
-    /**
-     * Declare a material in the collection, producing a manifest for a logical
-     * Material which will be defined later. If a manifest with the specified
-     * @a uri already exists the existing manifest will be returned.
-     *
-     * @param uri  Uri representing a path to the material in the virtual hierarchy.
-     *
-     * @return  Manifest for this URI.
-     */
-    inline MaterialManifest &declareMaterial(de::Uri const &uri) {
-        return materialScheme(uri.scheme()).declare(uri.path());
-    }
-
-    /**
-     * Iterate through all the materials of the resource system.
-     *
-     * @param func  Callback to make for each Material.
-     */
-    de::LoopResult forAllMaterials(std::function<de::LoopResult (Material &)> func) const;
 
     patchid_t declarePatch(de::String encodedName);
 
@@ -612,7 +452,7 @@ public:
      * @param cacheGroups   @c true= variants for all materials in any applicable
      *                      groups are desired; otherwise just specified material.
      */
-    void cache(Material &material, de::MaterialVariantSpec const &spec,
+    void cache(ClientMaterial &material, de::MaterialVariantSpec const &spec,
                bool cacheGroups = true);
 
     /**
@@ -675,7 +515,6 @@ public:  /// @todo Should be private:
 #endif
 
     void clearAllRawTextures();
-
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
 
@@ -696,4 +535,4 @@ DENG_EXTERN_C byte texGammaLut[256];
 
 void R_BuildTexGammaLut();
 
-#endif  // RESOURCESYSTEM_H
+#endif // DENG_CLIENT_RESOURCES_H

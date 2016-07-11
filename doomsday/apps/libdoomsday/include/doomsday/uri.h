@@ -35,6 +35,8 @@
 #include <de/NativePath>
 #include <de/String>
 
+struct reader_s;
+struct writer_s;
 struct ddstring_s; // libdeng Str
 
 namespace de {
@@ -325,7 +327,11 @@ public:
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
-    void operator << (Reader &from);
+    void operator << (de::Reader &from);
+
+    // Legacy Reader/Writer.
+    void readUri(reader_s *reader, de::String defaultScheme = "");
+    void writeUri(writer_s *writer, int omitComponents = 0) const;
 
 public:
     /**

@@ -54,11 +54,11 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
         for(SurfaceSet const &set : decorated)
         for(Surface *surface : set)
         {
-            observeMaterial(surface->material(), false);
+            observeMaterial(surface->material().as<ClientMaterial>(), false);
         }
     }
 
-    void observeMaterial(Material &material, bool yes = true)
+    void observeMaterial(ClientMaterial &material, bool yes = true)
     {
         if(yes)
         {
@@ -73,13 +73,13 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
     }
 
     void updateDecorations(Surface &suf, MaterialAnimator &matAnimator,
-        Vector2f const &materialOrigin, Vector3d const &topLeft,
-        Vector3d const &bottomRight, Sector *containingSector = nullptr)
+                           Vector2f const &materialOrigin, Vector3d const &topLeft,
+                           Vector3d const &bottomRight, Sector *containingSector = nullptr)
     {
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
 
-        Material &material = matAnimator.material();
+        ClientMaterial &material = matAnimator.material();
         dint const axis = suf.normal().maxAxis();
 
         Vector2d sufDimensions;
@@ -257,7 +257,8 @@ void SurfaceDecorator::decorate(Surface &surface)
 
     if(prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
     {
-        MaterialAnimator &matAnimator = surface.material().getAnimator(Rend_MapSurfaceMaterialSpec());
+        MaterialAnimator &matAnimator = surface.material().as<ClientMaterial>()
+                .getAnimator(Rend_MapSurfaceMaterialSpec());
 
         d->updateDecorations(surface, matAnimator, materialOrigin,
                              topLeft, bottomRight, containingSector(surface));
@@ -281,7 +282,7 @@ void SurfaceDecorator::redecorate()
             if(!matAnimator)
             {
                 Material &material = *i.key();
-                matAnimator = &material.getAnimator(Rend_MapSurfaceMaterialSpec());
+                matAnimator = &material.as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
             }
 
             surface->markForDecorationUpdate(false);
@@ -321,7 +322,7 @@ void SurfaceDecorator::remove(Surface *surface)
                 if(surfaceSet.isEmpty())
                 {
                     d->decorated.remove(&surface->material());
-                    d->observeMaterial(surface->material(), false);
+                    d->observeMaterial(surface->material().as<ClientMaterial>(), false);
                 }
                 return;
             }
@@ -339,7 +340,7 @@ void SurfaceDecorator::remove(Surface *surface)
             {
                 Material *material = i.key();
                 d->decorated.remove(material);
-                d->observeMaterial(surface->material(), false);
+                d->observeMaterial(surface->material().as<ClientMaterial>(), false);
             }
             return;
         }
@@ -354,10 +355,10 @@ void SurfaceDecorator::add(Surface *surface)
     remove(surface);
 
     if(!surface->hasMaterial()) return;
-    if(!surface->material().hasDecorations()) return;
+    if(!surface->material().as<ClientMaterial>().hasDecorations()) return;
 
     d->decorated[&surface->material()].insert(surface);
 
     /// @todo Defer until first decorated?
-    d->observeMaterial(surface->material());
+    d->observeMaterial(surface->material().as<ClientMaterial>());
 }

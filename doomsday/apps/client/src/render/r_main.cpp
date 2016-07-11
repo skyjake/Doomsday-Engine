@@ -24,6 +24,7 @@
 #include <de/vector1.h>
 #include <de/GLState>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/world/Materials>
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
 
@@ -55,9 +56,9 @@ dfloat weaponFOVShift    = 45;
 dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
-static inline ResourceSystem &resSys()
+static inline ClientResources &resSys()
 {
-    return ClientApp::resourceSystem();
+    return ClientApp::resources();
 }
 
 static MaterialVariantSpec const &pspriteMaterialSpec()
@@ -80,8 +81,8 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     Record const &spriteView = defn::Sprite(resSys().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
-    MaterialAnimator &matAnimator = resSys().material(de::Uri(spriteView.gets("material"), RC_NULL))
-                                                .getAnimator(pspriteMaterialSpec());
+    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri(spriteView.gets("material"), RC_NULL))
+            .as<ClientMaterial>().getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
     TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
