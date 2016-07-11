@@ -590,10 +590,11 @@ uint ClientTexture::Variant::prepare()
 
 void ClientTexture::Variant::release()
 {
-    if(!isPrepared()) return;
-
-    glDeleteTextures(1, (GLuint const *) &d->glTexName);
-    d->glTexName = 0;
+    if (isPrepared())
+    {
+        glDeleteTextures(1, (GLuint const *) &d->glTexName);
+        d->glTexName = 0;
+    }
 }
 
 ClientTexture &ClientTexture::Variant::base() const

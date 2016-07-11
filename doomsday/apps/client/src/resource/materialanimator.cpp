@@ -54,15 +54,15 @@ static inline ClientResources &resSys()
  */
 static DGLuint prepareFlaremap(ClientTexture *texture, int oldIdx)
 {
-    if(texture)
+    if (texture)
     {
-        if(TextureVariant const *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
+        if (TextureVariant const *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
         // Dang...
     }
-    else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
+    else if (oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
     {
         return GL_PrepareSysFlaremap(flaretexid_t(oldIdx - 1));
     }
@@ -96,7 +96,7 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     bool useInterpolation() const
     {
         DENG2_ASSERT(matDecor);
-        if(auto const *light = matDecor->maybeAs<LightMaterialDecoration>())
+        if (auto const *light = matDecor->maybeAs<LightMaterialDecoration>())
         {
             return light->useInterpolation();
         }
@@ -176,21 +176,21 @@ void MaterialAnimator::Decoration::rewind()
 
 bool MaterialAnimator::Decoration::animate()
 {
-    if(decor().isAnimated())
+    if (decor().isAnimated())
     {
         d->inter = 0;
 
-        if(DD_IsSharpTick() && d->tics-- <= 0)
+        if (DD_IsSharpTick() && d->tics-- <= 0)
         {
             // Advance to next stage.
-            if(++d->stage == decor().stageCount())
+            if (++d->stage == decor().stageCount())
             {
                 // Loop back to the beginning.
                 d->stage = 0;
             }
 
             MaterialDecoration::Stage const &stage = decor().stage(d->stage);
-            if(stage.variance != 0)
+            if (stage.variance != 0)
                 d->tics = stage.tics * (1 - stage.variance * RNG_RandFloat());
             else
                 d->tics = stage.tics;
@@ -198,7 +198,7 @@ bool MaterialAnimator::Decoration::animate()
             return true;
         }
 
-        if(d->useInterpolation())
+        if (d->useInterpolation())
         {
             MaterialDecoration::Stage const &stage = decor().stage(d->stage);
             d->inter = 1.f - d->tics / float( stage.tics );
@@ -209,7 +209,7 @@ bool MaterialAnimator::Decoration::animate()
 
 void MaterialAnimator::Decoration::update()
 {
-    if(auto *lightDecor = decor().maybeAs<LightMaterialDecoration>())
+    if (auto *lightDecor = decor().maybeAs<LightMaterialDecoration>())
     {
         LightMaterialDecoration::AnimationStage const &stage = lightDecor->stage(d->stage);
         LightMaterialDecoration::AnimationStage const &next  = lightDecor->stage(d->stage + 1);
@@ -257,9 +257,9 @@ static ClientTexture *findTextureForAnimationStage(world::TextureMaterialLayer::
     {
         return static_cast<ClientTexture *>(&res::Textures::get().texture(de::Uri(stage.gets(propertyName, ""), RC_NULL)));
     }
-    catch(res::TextureManifest::MissingTextureError &)
+    catch (res::TextureManifest::MissingTextureError &)
     {}
-    catch(Resources::MissingResourceManifestError &)
+    catch (Resources::MissingResourceManifestError &)
     {}
     return nullptr;
 }
@@ -341,7 +341,7 @@ DENG2_PIMPL(MaterialAnimator)
     void initLayers()
     {
         clearLayers();
-        for(int i = 0; i < self.material().layerCount(); ++i)
+        for (int i = 0; i < self.material().layerCount(); ++i)
         {
             layers << new LayerState;
         }
@@ -365,7 +365,7 @@ DENG2_PIMPL(MaterialAnimator)
     void attachMissingSnapshot()
     {
         // Already been here?
-        if(snapshot) return;
+        if (snapshot) return;
 
         snapshot.reset(new Snapshot);
         lastSnapshotUpdate = -1; // Force an update.
@@ -377,76 +377,76 @@ DENG2_PIMPL(MaterialAnimator)
         attachMissingSnapshot();
 
         // Time to update?
-        if(!force && lastSnapshotUpdate == R_FrameCount())
+        if (!force && lastSnapshotUpdate == R_FrameCount())
             return;
 
         lastSnapshotUpdate = R_FrameCount();
 
         snapshot->clear();
-        for(Decoration *decor : decorations) decor->reset();
+        for (Decoration *decor : decorations) decor->reset();
 
         /*
          * Ensure all resources needed to visualize this have been prepared. If
          * skymasked, we only need to update the primary tex unit (due to it being
          * visible when skymask debug drawing is enabled).
          */
-        if(!material->isSkyMasked() || ::devRendSkyMode)
+        if (!material->isSkyMasked() || ::devRendSkyMode)
         {
             int texLayerIndex = 0;
-            for(int i = 0; i < material->layerCount(); ++i)
+            for (int i = 0; i < material->layerCount(); ++i)
             {
                 world::MaterialLayer const &layer = material->layer(i);
                 LayerState const &ls       = *layers[i];
 
-                if(auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
+                if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = detailLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = detailLayer->stage(ls.stage + 1);
 
-                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
+                    if (ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         float const contrast = de::clamp(0.f, stage.getf("strength"), 1.f) * ::detailFactor /*Global strength multiplier*/;
                         snapshot->textures[TU_DETAIL] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
                     // Smooth Texture Animation?
-                    if(::smoothTexAnim && &stage != &next)
+                    if (::smoothTexAnim && &stage != &next)
                     {
-                        if(ClientTexture *tex = findTextureForAnimationStage(next))
+                        if (ClientTexture *tex = findTextureForAnimationStage(next))
                         {
                             float const contrast = de::clamp(0.f, next.getf("strength"), 1.f) * ::detailFactor /*Global strength multiplier*/;
                             snapshot->textures[TU_DETAIL_INTER] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
                         }
                     }
                 }
-                else if(layer.is<world::ShineTextureMaterialLayer>())
+                else if (layer.is<world::ShineTextureMaterialLayer>())
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
                     //TextureMaterialLayer::AnimationStage const &next  = layer.stage(l.stage + 1);
 
-                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
+                    if (ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         snapshot->textures[TU_SHINE] = tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
 
                         // We are only interested in a mask if we have a shiny texture.
-                        if(ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
+                        if (ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
                         {
                             snapshot->textures[TU_SHINE_MASK] = maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                         }
                     }
                 }
-                else if(auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
+                else if (auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.stage + 1);
 
-                    if(ClientTexture *tex = findTextureForAnimationStage(stage))
+                    if (ClientTexture *tex = findTextureForAnimationStage(stage))
                     {
                         snapshot->textures[TU_LAYER0 + texLayerIndex] = tex->prepareVariant(*spec->primarySpec);
                     }
                     // Smooth Texture Animation?
-                    if(::smoothTexAnim && &stage != &next)
+                    if (::smoothTexAnim && &stage != &next)
                     {
-                        if(ClientTexture *tex = findTextureForAnimationStage(next))
+                        if (ClientTexture *tex = findTextureForAnimationStage(next))
                         {
                             snapshot->textures[TU_LAYER0_INTER + texLayerIndex] = tex->prepareVariant(*spec->primarySpec);
                         }
@@ -460,36 +460,36 @@ DENG2_PIMPL(MaterialAnimator)
         snapshot->dimensions = material->dimensions();
         snapshot->opaque     = (snapshot->textures[TU_LAYER0] && !snapshot->textures[TU_LAYER0]->isMasked());
 
-        if(snapshot->dimensions == Vector2ui()) return;
+        if (snapshot->dimensions == Vector2ui()) return;
 
-        if(material->isSkyMasked() && !::devRendSkyMode) return;
+        if (material->isSkyMasked() && !::devRendSkyMode) return;
 
         int texLayerIndex = 0;
-        for(int i = 0; i < material->layerCount(); ++i)
+        for (int i = 0; i < material->layerCount(); ++i)
         {
             world::MaterialLayer const &layer = material->layer(i);
             LayerState const &ls       = *layers[i];
 
-            if(auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
+            if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
             {
-                if(TextureVariant *tex = snapshot->textures[TU_DETAIL])
+                if (TextureVariant *tex = snapshot->textures[TU_DETAIL])
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = detailLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = detailLayer->stage(ls.stage + 1);
 
                     float scale = de::lerp(stage.getf("scale"), next.getf("scale"), ls.inter);
-                    if(::detailScale > .0001f) scale *= ::detailScale; // Global scale factor.
+                    if (::detailScale > .0001f) scale *= ::detailScale; // Global scale factor.
 
                     snapshot->units[TU_DETAIL] =
                             GLTextureUnit(*tex, Vector2f(1, 1) / tex->base().dimensions() * scale);
 
                     // Setup the inter detail texture unit.
-                    if(TextureVariant *tex = snapshot->textures[TU_DETAIL_INTER])
+                    if (TextureVariant *tex = snapshot->textures[TU_DETAIL_INTER])
                     {
                         // If fog is active, inter=0 is accepted as well. Otherwise
                         // flickering may occur if the rendering passes don't match for
                         // blended and unblended surfaces.
-                        if(!(!fogParams.usingFog && ls.inter == 0))
+                        if (!(!fogParams.usingFog && ls.inter == 0))
                         {
                             snapshot->units[TU_DETAIL_INTER] =
                                 GLTextureUnit(*tex,
@@ -500,21 +500,21 @@ DENG2_PIMPL(MaterialAnimator)
                     }
                 }
             }
-            else if(layer.is<world::ShineTextureMaterialLayer>())
+            else if (layer.is<world::ShineTextureMaterialLayer>())
             {
-                if(TextureVariant *tex = snapshot->textures[TU_SHINE])
+                if (TextureVariant *tex = snapshot->textures[TU_SHINE])
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = layer.as<world::TextureMaterialLayer>().stage(ls.stage + 1);
 
                     Vector2f origin;
-                    for(int k = 0; k < 2; ++k)
+                    for (int k = 0; k < 2; ++k)
                     {
                         origin[k] = de::lerp(stage.geta("origin")[k].asNumber(), next.geta("origin")[k].asNumber(), ls.inter);
                     }
 
                     Vector3f minColor;
-                    for(int k = 0; k < 3; ++k)
+                    for (int k = 0; k < 3; ++k)
                     {
                         minColor[k] = de::lerp(stage.geta("minColor")[k].asNumber(), next.geta("minColor")[k].asNumber(), ls.inter);
                     }
@@ -527,7 +527,7 @@ DENG2_PIMPL(MaterialAnimator)
                     snapshot->units[TU_SHINE] = GLTextureUnit(*tex, Vector2f(1, 1), origin, de::clamp(0.0f, opacity, 1.0f));
 
                     // Setup the shine mask texture unit.
-                    if(TextureVariant *maskTex = snapshot->textures[TU_SHINE_MASK])
+                    if (TextureVariant *maskTex = snapshot->textures[TU_SHINE_MASK])
                     {
                         snapshot->units[TU_SHINE_MASK] =
                             GLTextureUnit(*maskTex, Vector2f(1, 1) / (snapshot->dimensions * maskTex->base().dimensions()),
@@ -535,16 +535,16 @@ DENG2_PIMPL(MaterialAnimator)
                     }
                 }
             }
-            else if(auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
+            else if (auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
             {
-                if(TextureVariant *tex = snapshot->textures[TU_LAYER0 + texLayerIndex])
+                if (TextureVariant *tex = snapshot->textures[TU_LAYER0 + texLayerIndex])
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.stage + 1);
 
                     Vector2f const scale = Vector2f(1, 1) / snapshot->dimensions;
                     Vector2f origin;
-                    for(int k = 0; k < 2; ++k)
+                    for (int k = 0; k < 2; ++k)
                     {
                         origin[k] = de::lerp(stage.geta("origin")[k].asNumber(), next.geta("origin")[k].asNumber(), ls.inter);
                     }
@@ -553,18 +553,18 @@ DENG2_PIMPL(MaterialAnimator)
                     snapshot->units[TU_LAYER0 + texLayerIndex] = GLTextureUnit(*tex, scale, origin, de::clamp(0.0f, opacity, 1.0f));
 
                     // Glow strength is taken from texture layer #0.
-                    if(texLayerIndex == 0)
+                    if (texLayerIndex == 0)
                     {
                         snapshot->glowStrength = de::lerp(stage.getf("glowStrength"), next.getf("glowStrength"), ls.inter);
                     }
 
                     // Setup the inter texture unit.
-                    if(TextureVariant *tex = snapshot->textures[TU_LAYER0_INTER + texLayerIndex])
+                    if (TextureVariant *tex = snapshot->textures[TU_LAYER0_INTER + texLayerIndex])
                     {
                         // If fog is active, inter=0 is accepted as well. Otherwise
                         // flickering may occur if the rendering passes don't match for
                         // blended and unblended surfaces.
-                        if(!(!fogParams.usingFog && ls.inter == 0))
+                        if (!(!fogParams.usingFog && ls.inter == 0))
                         {
                             snapshot->units[TU_LAYER0_INTER + texLayerIndex] =
                                 GLTextureUnit(*tex,
@@ -579,8 +579,8 @@ DENG2_PIMPL(MaterialAnimator)
             }
         }
 
-        if(!material->isSkyMasked())
-        for(Decoration *decor : decorations)
+        if (!material->isSkyMasked())
+        for (Decoration *decor : decorations)
         {
             decor->update();
         }
@@ -595,10 +595,10 @@ DENG2_PIMPL(MaterialAnimator)
 
     void animateLayer(LayerState &ls, world::MaterialLayer const &layer)
     {
-        if(DD_IsSharpTick() && ls.tics-- <= 0)
+        if (DD_IsSharpTick() && ls.tics-- <= 0)
         {
             // Advance to next stage.
-            if(++ls.stage == layer.stageCount())
+            if (++ls.stage == layer.stageCount())
             {
                 // Loop back to the beginning.
                 ls.stage = 0;
@@ -606,7 +606,7 @@ DENG2_PIMPL(MaterialAnimator)
             ls.inter = 0;
 
             world::MaterialLayer::Stage const &stage = layer.stage(ls.stage);
-            if(stage.variance != 0)
+            if (stage.variance != 0)
                 ls.tics = stage.tics * (1 - stage.variance * RNG_RandFloat());
             else
                 ls.tics = stage.tics;
@@ -658,18 +658,18 @@ bool MaterialAnimator::isPaused() const
 void MaterialAnimator::animate(timespan_t /*ticLength*/)
 {
     // Animation ceases once the material is no longer valid.
-    if(!material().isValid()) return;
+    if (!material().isValid()) return;
 
     // Animation will only progress when not paused.
-    if(isPaused()) return;
+    if (isPaused()) return;
 
     /*
      * Animate layers:
      */
-    for(int i = 0; i < material().layerCount(); ++i)
+    for (int i = 0; i < material().layerCount(); ++i)
     {
         world::MaterialLayer const &layer = material().layer(i);
-        if(layer.isAnimated() && layer.is<world::TextureMaterialLayer>())
+        if (layer.isAnimated() && layer.is<world::TextureMaterialLayer>())
         {
             d->animateLayer(*d->layers[i], layer);
         }
@@ -679,15 +679,15 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
      * Animate decorations:
      */
     bool decorationStageChanged = false;
-    for(Decoration *decor : d->decorations)
+    for (Decoration *decor : d->decorations)
     {
-        if(decor->animate())
+        if (decor->animate())
         {
             decorationStageChanged = true;
         }
     }
 
-    if(decorationStageChanged)
+    if (decorationStageChanged)
     {
         // Notify interested parties.
         DENG2_FOR_AUDIENCE(DecorationStageChange, i) i->materialAnimatorDecorationStageChanged(*this);
@@ -697,14 +697,14 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
 void MaterialAnimator::rewind()
 {
     // Animation ceases once the material is no longer valid.
-    if(!material().isValid()) return;
+    if (!material().isValid()) return;
 
-    for(int i = 0; i < material().layerCount(); ++i)
+    for (int i = 0; i < material().layerCount(); ++i)
     {
         d->rewindLayer(*d->layers[i], material().layer(i));
     }
 
-    for(int i = 0; i < material().decorationCount(); ++i)
+    for (int i = 0; i < material().decorationCount(); ++i)
     {
         d->decorations[i]->rewind();
     }
@@ -718,27 +718,27 @@ void MaterialAnimator::prepare(bool fullUpdate)
 void MaterialAnimator::cacheAssets()
 {
     prepare(true);
-    if(material().isSkyMasked() && !::devRendSkyMode) return;
+    if (material().isSkyMasked() && !::devRendSkyMode) return;
 
-    for(int i = 0; i < material().layerCount(); ++i)
+    for (int i = 0; i < material().layerCount(); ++i)
     {
-        if(world::TextureMaterialLayer *layer = material().layer(i).maybeAs<world::TextureMaterialLayer>())
+        if (world::TextureMaterialLayer *layer = material().layer(i).maybeAs<world::TextureMaterialLayer>())
         {
-            for(int k = 0; k < layer->stageCount(); ++k)
+            for (int k = 0; k < layer->stageCount(); ++k)
             {
                 world::TextureMaterialLayer::AnimationStage &stage = layer->stage(k);
 
-                if(ClientTexture *tex = findTextureForAnimationStage(stage))
+                if (ClientTexture *tex = findTextureForAnimationStage(stage))
                 {
-                    if(layer->is<world::DetailTextureMaterialLayer>())
+                    if (layer->is<world::DetailTextureMaterialLayer>())
                     {
                         float const contrast = de::clamp(0.f, stage.getf("strength"), 1.f) * detailFactor /*Global strength multiplier*/;
                         tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
-                    else if(layer->is<world::ShineTextureMaterialLayer>())
+                    else if (layer->is<world::ShineTextureMaterialLayer>())
                     {
                         tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                        if(ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
+                        if (ClientTexture *maskTex = findTextureForAnimationStage(stage, "maskTexture"))
                         {
                             maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                         }
@@ -786,7 +786,7 @@ Vector3f const &MaterialAnimator::shineMinColor() const
 GLTextureUnit &MaterialAnimator::texUnit(int unitIndex) const
 {
     d->updateSnapshotIfNeeded();
-    if(unitIndex >= 0 && unitIndex < NUM_TEXTUREUNITS) return d->snapshot->units[unitIndex];
+    if (unitIndex >= 0 && unitIndex < NUM_TEXTUREUNITS) return d->snapshot->units[unitIndex];
     /// @throw MissingTextureUnitError  Invalid GL-texture unit reference.
     throw MissingTextureUnitError("MaterialAnimator::glTextureUnit", "Unknown GL texture unit #" + String::number(unitIndex));
 }
@@ -794,7 +794,7 @@ GLTextureUnit &MaterialAnimator::texUnit(int unitIndex) const
 MaterialAnimator::Decoration &MaterialAnimator::decoration(int decorIndex) const
 {
     d->updateSnapshotIfNeeded();
-    if(decorIndex >= 0 && decorIndex < d->decorations.count()) return *d->decorations[decorIndex];
+    if (decorIndex >= 0 && decorIndex < d->decorations.count()) return *d->decorations[decorIndex];
     /// @throw MissingDecorationError  Invalid decoration reference.
     throw MissingDecorationError("MaterialAnimator::decoration", "Unknown decoration #" + String::number(decorIndex));
 }

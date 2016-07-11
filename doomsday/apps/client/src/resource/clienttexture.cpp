@@ -146,7 +146,9 @@ void ClientTexture::clearVariants()
 
 void ClientTexture::release(/*TextureVariantSpec *spec*/)
 {
-    foreach (TextureVariant *variant, variants())
+    Texture::release();
+    
+    foreach (TextureVariant *variant, d->variants)
     {
         //if (!spec || spec == &variant->spec())
         {

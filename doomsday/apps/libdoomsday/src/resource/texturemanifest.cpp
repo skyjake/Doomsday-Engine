@@ -220,18 +220,18 @@ void TextureManifest::setTexture(Texture *newTexture)
 {
     if (d->texture.get() != newTexture)
     {
-        if (Texture *curTexture = d->texture.get())
+        if (d->texture)
         {
             // Cancel notifications about the existing texture.
-            curTexture->audienceForDeletion -= d;
+            d->texture->audienceForDeletion -= d;
         }
 
         d->texture.reset(newTexture);
 
-        if (Texture *curTexture = d->texture.get())
+        if (d->texture)
         {
             // We want notification when the new texture is about to be deleted.
-            curTexture->audienceForDeletion += d;
+            d->texture->audienceForDeletion += d;
         }
     }
 }

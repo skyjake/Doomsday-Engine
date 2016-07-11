@@ -205,6 +205,9 @@ void ClientMaterial::addDecoration(Decoration *decor)
 void ClientMaterial::clearAllDecorations()
 {
     qDeleteAll(d->decorations); d->decorations.clear();
+    
+    // Animators refer to decorations.
+    clearAllAnimators();
 }
 
 int ClientMaterial::animatorCount() const
