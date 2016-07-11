@@ -23,6 +23,7 @@
 #include "../libdoomsday.h"
 #include "valuetype.h"
 #include <de/types.h>
+#include <functional>
 
 namespace world {
 
