@@ -247,6 +247,8 @@ public:
      */
     void clearAllAnimators();
 
+    static ClientMaterial &find(de::Uri const &uri);
+
 private:
     DENG2_PRIVATE(d)
 };

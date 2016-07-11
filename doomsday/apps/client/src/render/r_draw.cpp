@@ -251,8 +251,8 @@ void R_DrawViewBorder()
     // View background.
     try
     {
-        MaterialAnimator &matAnimator = world::Materials::get().material(*borderGraphicsNames[BG_BACKGROUND])
-                .as<ClientMaterial>().getAnimator(bgMaterialSpec());
+        MaterialAnimator &matAnimator = ClientMaterial::find(*borderGraphicsNames[BG_BACKGROUND])
+                .getAnimator(bgMaterialSpec());
 
         // Ensure we've up to date info about the material.
         matAnimator.prepare();

@@ -921,8 +921,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", Path("gray")))
-                .as<ClientMaterial>().getAnimator(modelSkinMaterialSpec());
+        MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("gray")))
+                .getAnimator(modelSkinMaterialSpec());
 
         // Ensure we've up to date info about the material.
         matAnimator.prepare();

@@ -646,7 +646,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
         }
 
         // Use special "missing" material.
-        return &world::Materials::get().material(de::Uri("System", Path("missing"))).as<ClientMaterial>();
+        return &ClientMaterial::find(de::Uri("System", Path("missing")));
 
     case 2:  // Lighting debug mode.
         if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
@@ -654,7 +654,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
             {
                 // Use the special "gray" material.
-                return &world::Materials::get().material(de::Uri("System", Path("gray"))).as<ClientMaterial>();
+                return &ClientMaterial::find(de::Uri("System", Path("gray")));
             }
         }
         break;
@@ -2619,11 +2619,11 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
             }
             else
             {
-                world::Material *actualMaterial =
-                    surface.hasMaterial()? surface.materialPtr()
-                                         : &world::Materials::get().material(de::Uri("System", Path("missing")));
+                ClientMaterial *actualMaterial =
+                    surface.hasMaterial()? static_cast<ClientMaterial *>(surface.materialPtr())
+                                         : &ClientMaterial::find(de::Uri("System", Path("missing")));
 
-                parm.glowing = actualMaterial->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= ::glowFactor;
@@ -5223,8 +5223,8 @@ static void drawMobjBoundingBoxes(Map &map)
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
 
-    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", Path("bbox")))
-            .as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("bbox")))
+            .getAnimator(Rend_SpriteMaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

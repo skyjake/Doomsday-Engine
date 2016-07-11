@@ -476,8 +476,8 @@ void R_ProjectSprite(mobj_t &mob)
             Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
             // Lookup the Material for this Sprite and prepare the animator.
-            MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri(spriteView.gets("material"), RC_NULL))
-                    .as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
+            MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))
+                    .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
             Vector2ui const &matDimensions = matAnimator.dimensions();

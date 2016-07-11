@@ -81,8 +81,8 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     Record const &spriteView = defn::Sprite(resSys().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
-    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri(spriteView.gets("material"), RC_NULL))
-            .as<ClientMaterial>().getAnimator(pspriteMaterialSpec());
+    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))
+            .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
     TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;

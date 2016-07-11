@@ -245,8 +245,9 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
     if (!bottomColor)
         bottomColor = topColor;
 
-    MaterialAnimator &matAnimator = world::Materials::get().material(de::Uri("System", (filled? Path("ui/boxfill") : Path("ui/boxcorner"))))
-            .as<ClientMaterial>().getAnimator(UI_MaterialSpec());
+    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", (filled? Path("ui/boxfill")
+                                                                                  : Path("ui/boxcorner"))))
+            .getAnimator(UI_MaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

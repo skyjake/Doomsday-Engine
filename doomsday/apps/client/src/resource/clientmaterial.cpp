@@ -25,6 +25,7 @@
 #include <de/Log>
 #include <doomsday/console/cmd.h>
 #include <doomsday/res/Textures>
+#include <doomsday/world/Materials>
 #include <doomsday/world/MaterialManifest>
 
 #include "dd_main.h"
@@ -234,6 +235,11 @@ void ClientMaterial::clearAllAnimators()
 {
     qDeleteAll(d->animators);
     d->animators.clear();
+}
+
+ClientMaterial &ClientMaterial::find(de::Uri const &uri) // static
+{
+    return world::Materials::get().material(uri).as<ClientMaterial>();
 }
 
 String ClientMaterial::description() const
