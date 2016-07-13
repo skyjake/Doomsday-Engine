@@ -425,7 +425,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
         throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
-    CatchStatement *finalCatch = 0;
+    CatchStatement *finalCatch = nullptr;
     bool expectEnd = false;
     while (_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
@@ -459,7 +459,10 @@ void Parser::parseTryCatchSequence(Compound &compound)
         // Add it to the compound.
         compound.add(catchStat.release());
     }
-    finalCatch->flags |= CatchStatement::FinalCompound;
+    if (finalCatch)
+    {
+        finalCatch->flags |= CatchStatement::FinalCompound;
+    }
     if (expectEnd)
     {
         if (!_statementRange.firstToken().equals(ScriptLex::END))

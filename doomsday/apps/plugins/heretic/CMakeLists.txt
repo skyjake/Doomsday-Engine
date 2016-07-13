@@ -8,8 +8,8 @@ include (../PluginConfig.cmake)
 include (../common/Common.cmake)
 
 add_definitions (
-    -D__JHERETIC__
-    -DLIBDOOMSDAY_CUSTOM_MOBJ
+    -D__JHERETIC__=1
+    -DLIBDOOMSDAY_CUSTOM_MOBJ=1
 )
 
 include_directories (include)

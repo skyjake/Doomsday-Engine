@@ -117,9 +117,9 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     //qDebug() << "OperatorExpression:" << operatorToText(_op);
 
     // Get the operands.
-    Value *rightValue = (_op == MEMBER || _op == AND || _op == OR? 0 : evaluator.popResult());
-    Value *leftScopePtr = 0;
-    Value *leftValue = (_leftOperand? evaluator.popResult(&leftScopePtr) : 0);
+    Value *rightValue = (_op == MEMBER || _op == AND || _op == OR? nullptr : evaluator.popResult());
+    Value *leftScopePtr = nullptr;
+    Value *leftValue = (_leftOperand? evaluator.popResult(&leftScopePtr) : nullptr);
     Value *result = (leftValue? leftValue : rightValue);
 
     QScopedPointer<Value> leftScope(leftScopePtr); // will be deleted if not needed

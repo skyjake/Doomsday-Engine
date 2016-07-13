@@ -55,7 +55,7 @@ endif ()
 deng_add_package (net.dengine.stdlib.gui)
 
 # Definitions.
-add_definitions (-D__LIBGUI__)
+add_definitions (-D__LIBGUI__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)

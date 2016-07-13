@@ -51,9 +51,9 @@ void DD_ConsoleRegister();
 /**
  * Print an error message and quit.
  */
-void App_Error(char const *error, ...);
+DENG2_NORETURN void App_Error(char const *error, ...);
 
-void App_AbnormalShutdown(char const *error);
+DENG2_NORETURN void App_AbnormalShutdown(char const *error);
 
 /// Returns the application's global audio::System.
 audio::System &App_AudioSystem();

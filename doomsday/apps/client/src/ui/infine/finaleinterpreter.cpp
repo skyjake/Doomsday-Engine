@@ -666,7 +666,7 @@ DENG2_PIMPL(FinaleInterpreter)
                     valueLen = defaultValueLen;
                 }
                 op->data.cstring = (char *)M_Malloc(valueLen + 1);
-                qstrcpy((char *)op->data.cstring, token);
+                qstrcpy((char *)op->data.cstring, valueStr);
                 break; }
 
             case FVT_URI: {

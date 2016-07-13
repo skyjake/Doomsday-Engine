@@ -71,9 +71,13 @@
 #  else
 #    define DENG_PUBLIC __declspec(dllimport)
 #  endif
+#  define DENG_NORETURN __declspec(noreturn)
 #else
-// No need to use any special declarators.
 #  define DENG_PUBLIC
+#  define DENG_NORETURN __attribute__((__noreturn__))
+#endif
+
+#if !defined(_MSC_VER)
 #endif
 
 #ifdef __cplusplus
@@ -177,7 +181,7 @@ DENG_PUBLIC void Libdeng_Shutdown(void);
  * Terminates the process immediately. Call this when a malloc fails to handle
  * terminating gracefully instead of crashing with null pointer access.
  */
-DENG_PUBLIC void Libdeng_BadAlloc(void);
+DENG_PUBLIC DENG_NORETURN void Libdeng_BadAlloc(void);
 
 #ifdef __cplusplus
 } // extern "C"

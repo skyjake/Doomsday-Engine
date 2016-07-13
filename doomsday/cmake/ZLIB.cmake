@@ -2,7 +2,7 @@ if (NOT MSVC)
     find_package (ZLIB REQUIRED)
 else ()
     # There is a prebuilt zlib DLL in the external/zlib directory.
-    add_definitions (-DZLIB_WINAPI)
+    add_definitions (-DZLIB_WINAPI=1)
     set (zlibDir "${DENG_EXTERNAL_SOURCE_DIR}/zlib")
     set (ZLIB_INCLUDE_DIR "${zlibDir}/include")
     if (MSVC14)

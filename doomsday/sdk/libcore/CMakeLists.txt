@@ -10,7 +10,7 @@ find_package (Git QUIET)
 
 # Definitions.
 add_definitions (
-    -D__DENG2__
+    -D__DENG2__=1
     -DLIBDENG2_MAJOR_VERSION=${DENG_VERSION_MAJOR}
     -DLIBDENG2_MINOR_VERSION=${DENG_VERSION_MINOR}
     -DLIBDENG2_PATCHLEVEL=${DENG_VERSION_PATCH}
@@ -22,8 +22,8 @@ if (DEFINED DENG_BUILD)
 endif ()
 if (GIT_FOUND)
     execute_process (
-        COMMAND ${GIT_EXECUTABLE} describe --tags --always --long 
-        OUTPUT_VARIABLE DENG_GIT_DESCRIPTION 
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always --long
+        OUTPUT_VARIABLE DENG_GIT_DESCRIPTION
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )

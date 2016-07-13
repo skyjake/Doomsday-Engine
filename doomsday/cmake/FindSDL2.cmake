@@ -34,8 +34,8 @@ elseif (WIN32)
     # Also attempt to locate SLD2_mixer.
     set (_oldPath ${SDL_MIXER_LIBRARY})
     file (GLOB _hints ${SDL2_DIR}/SDL2_mixer* ${SDL2_MIXER_DIR}/SDL2_mixer*
-		 $ENV{DENG_DEPEND_PATH}/SDL2_mixer*
-	)
+                 $ENV{DENG_DEPEND_PATH}/SDL2_mixer*
+        )
     find_library (SDL2_MIXER_LIBRARY SDL2_mixer
         PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
         HINTS ${_hints} ENV DENG_DEPEND_PATH
@@ -64,10 +64,10 @@ elseif (WIN32)
 endif ()
 
 if (NOT TARGET SDL2)
-    add_definitions (-DDENG_NO_SDL)
+    add_definitions (-DDENG_NO_SDL=1)
     message (STATUS "SDL2 disabled (not found).")
 endif ()
 if (NOT TARGET SDL2_mixer)
-    add_definitions (-DDENG_DISABLE_SDLMIXER)
+    add_definitions (-DDENG_DISABLE_SDLMIXER=1)
     message (STATUS "SDL2_mixer disabled (not found).")
 endif ()

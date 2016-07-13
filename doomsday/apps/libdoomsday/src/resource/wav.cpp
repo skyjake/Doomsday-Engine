@@ -96,6 +96,10 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
     assert(sizeof(wave_format) == 16);
     assert(sizeof(riff_chunk) == 8);
 #endif
+    
+    // Initialize the format info.
+    memset(&wave_format, 0, sizeof(wave_format));
+    wave_format.wBlockAlign = 1;
 
     // Start readin' the chunks, baby!
     while (data < end)

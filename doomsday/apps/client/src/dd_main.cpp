@@ -542,6 +542,7 @@ void App_Error(char const *error, ...)
     {
         App_AbnormalShutdown(buff);
     }
+    exit(-1);
 }
 
 void App_AbnormalShutdown(char const *message)

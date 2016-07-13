@@ -49,7 +49,7 @@ extern "C" {
  */
 DENG2_PUBLIC void App_Log(unsigned int metadata, char const *format, ...);
 DENG2_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
-DENG2_PUBLIC void App_FatalError(char const *msgFormat, ...);
+DENG2_PUBLIC DENG2_NORETURN void App_FatalError(char const *msgFormat, ...);
 
 /*
  * CommandLine

@@ -12,7 +12,7 @@ if (NOT DEFINED DENG_BUILD)
     set (DENG_VERSION_WINDOWS "${DENG_VERSION_WINDOWS}0")
 endif ()
 
-set (DENG_RELEASE_TYPE 
+set (DENG_RELEASE_TYPE
     Unstable
     #Candidate
     #Stable
@@ -23,7 +23,7 @@ set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2015 Deng Team")
 # Build Configuration --------------------------------------------------------
 
 if (DENG_RELEASE_TYPE STREQUAL "Stable")
-    add_definitions (-DDENG_STABLE)
+    add_definitions (-DDENG_STABLE=1)
     set (DENG_STABLE 1)
 endif ()
 if (DEFINED DENG_BUILD)

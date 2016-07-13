@@ -3,7 +3,7 @@ set (ARCH_BITS "${_bits}" CACHE STRING "CPU architecture bits (32/64)")
 set (_bits)
 
 if (ARCH_BITS EQUAL 64)
-    add_definitions (-DDENG_64BIT_HOST -D__64BIT__)
+    add_definitions (-DDENG_64BIT_HOST=1 -D__64BIT__=1)
     if (WIN32)
         set (DENG_ARCH x64)
     else ()

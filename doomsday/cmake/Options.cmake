@@ -12,12 +12,12 @@ option (DENG_ENABLE_COTIRE "Enable/disable precompiled headers (cotire) for fast
     ${DENG_ENABLE_COTIRE_DEFAULT}
 )
 
-option (DENG_FIXED_ASM 
+option (DENG_FIXED_ASM
     "Use inline assembler for fixed-point math"
     ${DENG_FIXED_ASM_DEFAULT}
 )
 if (NOT DENG_FIXED_ASM)
-    add_definitions (-DDENG_NO_FIXED_ASM)
+    add_definitions (-DDENG_NO_FIXED_ASM=1)
 endif ()
 
 option (DENG_FAKE_MEMORY_ZONE
@@ -25,7 +25,7 @@ option (DENG_FAKE_MEMORY_ZONE
     OFF
 )
 if (DENG_FAKE_MEMORY_ZONE)
-    add_definitions (-DLIBDENG_FAKE_MEMORY_ZONE)
+    add_definitions (-DLIBDENG_FAKE_MEMORY_ZONE=1)
 endif ()
 
 option (DENG_ENABLE_COUNTED_TRACING
@@ -33,5 +33,5 @@ option (DENG_ENABLE_COUNTED_TRACING
     OFF
 )
 if (DENG_ENABLE_COUNTED_TRACING)
-    add_definitions (-DDENG_USE_COUNTED_TRACING)
+    add_definitions (-DDENG_USE_COUNTED_TRACING=1)
 endif ()

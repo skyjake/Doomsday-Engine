@@ -282,8 +282,8 @@ DENG_GUI_PIMPL(DialogWidget)
         else
         {
             self.content().rule().setInput(Rule::Height,
-                    OperatorRule::minimum(*maxHeight, heading->rule().height() +
-                                                      areaContentHeight + buttons->rule().height()));
+                    OperatorRule::minimum(*maxHeight, (heading? heading->rule().height() : Const(0)) +
+                                                       areaContentHeight + buttons->rule().height()));
         }
 
         releaseRef(maxHeight);

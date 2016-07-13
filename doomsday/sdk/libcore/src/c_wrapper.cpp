@@ -108,6 +108,9 @@ void App_FatalError(char const *msgFormat, ...)
     va_end(args);
 
     DENG2_APP->handleUncaughtException(buffer);
+    
+    // Let's make sure this is the end.
+    exit(-1);
 }
 
 void CommandLine_Alias(char const *longname, char const *shortname)

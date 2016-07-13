@@ -59,8 +59,7 @@ char gammamsg[5][81];
 
 void R_PrecachePSprites(void)
 {
-    int                 i, k;
-    int                 pclass = players[CONSOLEPLAYER].class_;
+    int i, k;
 
     if(IS_DEDICATED)
         return;
@@ -69,7 +68,7 @@ void R_PrecachePSprites(void)
     {
         for(k = 0; k < NUMWEAPLEVELS; ++k)
         {
-            pclass = players[CONSOLEPLAYER].class_;
+            int pclass = players[CONSOLEPLAYER].class_;
 
             Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
             Models_CacheForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);

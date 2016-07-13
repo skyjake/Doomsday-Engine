@@ -8,17 +8,17 @@ include (../../cmake/Config.cmake)
 find_package (DengCore)
 
 # Options.
-option (DENG_LIBLEGACY_WRITER_TYPE_CHECK 
-    "Type-check Writer1/Reader1 behavior (incompatible with no type checking)" 
+option (DENG_LIBLEGACY_WRITER_TYPE_CHECK
+    "Type-check Writer1/Reader1 behavior (incompatible with no type checking)"
     OFF
 )
 if (DENG_LIBLEGACY_WRITER_TYPE_CHECK)
-    add_definitions (-DDENG_WRITER_TYPECHECK)
+    add_definitions (-DDENG_WRITER_TYPECHECK=1)
 endif ()
 
 # Definitions.
-add_definitions (-D__DENG__ -D__DOOMSDAY__)
-if (DEFINED DENG_BUILD) 
+add_definitions (-D__DENG__=1 -D__DOOMSDAY__=1)
+if (DEFINED DENG_BUILD)
     add_definitions (-DDOOMSDAY_BUILD_TEXT="${DENG_BUILD}")
 endif ()
 

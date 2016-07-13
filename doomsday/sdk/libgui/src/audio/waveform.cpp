@@ -49,7 +49,7 @@ struct WAVFormat : public IReadable
         , channels(0)
         , sampleRate(0)
         , averageBytesPerSecond(0)
-        , blockAlign(0)
+        , blockAlign(1)
         , bitsPerSample(0) {}
 
     void operator << (Reader &from)

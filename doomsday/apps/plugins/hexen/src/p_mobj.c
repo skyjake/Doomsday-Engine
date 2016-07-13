@@ -585,6 +585,13 @@ explode:
 void P_MonsterFallingDamage(mobj_t* mo)
 {
     int damage;
+
+    /*
+     * Note: See Vanilla Hexen sources P_MOBJ.C:658. `damage` is calculated but
+     * 10000 is used anyway.
+     */
+
+    /*
     coord_t mom;
 
     mom = (int) fabs(mo->mom[MZ]);
@@ -596,7 +603,8 @@ void P_MonsterFallingDamage(mobj_t* mo)
     else
     {
         damage = (int) ((mom - 23) * 6);
-    }
+    }*/
+
     damage = 10000; // always kill 'em.
 
     P_DamageMobj(mo, NULL, NULL, damage, false);

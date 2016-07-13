@@ -1,4 +1,4 @@
-add_definitions (-DUNIX)
+add_definitions (-DUNIX=1)
 
 # Convince the compiler to enable C++11.
 include (CheckCXXCompilerFlag)
