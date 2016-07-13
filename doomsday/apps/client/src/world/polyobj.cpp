@@ -347,11 +347,6 @@ bool Polyobj::move(Vector2d const &delta)
             prevCoordsIt++;
         }
 
-        for(Line *line : lines())
-        {
-            line->updateAABox();
-        }
-
         Vector2d newOrigin = Vector2d(origin) + delta;
         V2d_Set(origin, newOrigin.x, newOrigin.y);
 
@@ -371,11 +366,6 @@ bool Polyobj::move(Vector2d const &delta)
             {
                 vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
-            }
-
-            for(Line *line : lines())
-            {
-                line->updateAABox();
             }
 
             Vector2d newOrigin = Vector2d(origin) - delta;
@@ -436,11 +426,6 @@ bool Polyobj::rotate(angle_t delta)
             prevCoordsIt++;
         }
 
-        for(Line *line : lines())
-        {
-            line->updateAABox();
-            line->updateSlopeType();
-        }
         updateAABox();
         angle += delta;
     }
@@ -460,11 +445,6 @@ bool Polyobj::rotate(angle_t delta)
                 prevCoordsIt++;
             }
 
-            for(Line *line : lines())
-            {
-                line->updateAABox();
-                line->updateSlopeType();
-            }
             updateAABox();
             angle -= delta;
         }

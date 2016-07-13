@@ -3862,13 +3862,6 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             vertex->setIndexInMap(ord++);
         }
 
-        /// Update lines. @todo Line should handle this itself.
-        for(Line *line : lines)
-        {
-            line->updateSlopeType();
-            line->updateAABox();
-        }
-
         LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused)")
                 << prunedCount << (prunedCount - numUnused) << numUnused;
     }

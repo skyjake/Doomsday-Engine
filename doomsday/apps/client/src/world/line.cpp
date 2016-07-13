@@ -1155,55 +1155,81 @@ dint Line::Side::setProperty(DmuArgs const &args)
 }
 
 DENG2_PIMPL(Line)
+, DENG2_OBSERVES(Vertex, OriginChange)
 {
-    dint flags;             ///< Public DDLF_* flags.
-    Vertex *from;           ///< Start vertex (not owned).
-    Vertex *to;             ///< End vertex (not owned).
-    Vector2d direction;     ///< From start to end vertex.
-    binangle_t angle;       ///< Calculated from the direction vector.
-    slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
-    ddouble length;         ///< Accurate length.
+    dint flags;                 ///< Public DDLF_* flags.
+    Side front;                 ///< Front side of the line.
+    Side back;                  ///< Back side of the line.
+    bool mapped[DDMAXPLAYERS];  ///< Whether the line has been seen by each player yet.
 
-    ///< Map space bounding box encompassing both vertexes.
-    AABoxd aaBox;
+    Vertex *from     = nullptr; ///< Start vertex (not owned).
+    Vertex *to       = nullptr; ///< End vertex (not owned).
+    Polyobj *polyobj = nullptr; ///< Polyobj the line defines a section of, if any.
 
-    /// Logical sides:
-    Side front;
-    Side back;
+    dint validCount  = 0;       ///< Used by legacy algorithms to prevent repeated processing.
 
-    Polyobj *polyobj = nullptr;  ///< Polyobj "this" line defines a section of, if any.
-    dint validCount = 0;         ///< Used by legacy algorithms to prevent repeated processing.
-
-    /// Whether the line has been mapped by each player yet.
-    bool mapped[DDMAXPLAYERS];
-
-    Impl(Public *i, Vertex &from, Vertex &to, dint flags, Sector *frontSector,
-             Sector *backSector)
-        : Base(i)
-        , flags    (flags)
-        , from     (&from)
-        , to       (&to)
-        , direction(to.origin() - from.origin())
-        , angle    (bamsAtan2(dint( direction.y ), dint( direction.x )))
-        , slopeType(M_SlopeTypeXY(direction.x, direction.y))
-        , length   (direction.length())
-        , front    (*i, frontSector)
-        , back     (*i, backSector)
+    /**
+     * POD: Additional metrics describing the geometry of the line (the vertices).
+     */
+    struct GeomData
     {
-        de::zap(mapped);
+        Vector2d direction;     ///< From start to end vertex.
+        ddouble length;         ///< Accurate length.
+        binangle_t angle;       ///< Calculated from the direction vector.
+        slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
+        AABoxd aaBox;           ///< Axis-aligned bounding box.
+
+        GeomData(Vertex &from, Vertex &to)
+            : direction(to.origin() - from.origin())
+            , length   (direction.length())
+            , angle    (bamsAtan2(dint(direction.y), dint(direction.x)))
+            , slopeType(M_SlopeTypeXY(direction.x, direction.y))
+        {
+            V2d_InitBoxXY (aaBox.arvec2, from.x(), from.y());
+            V2d_AddToBoxXY(aaBox.arvec2, to  .x(), to  .y());
+        }
+    };
+    std::unique_ptr<GeomData> gdata;
+
+    Impl(Public *i, Sector *frontSector, Sector *backSector)
+        : Base (i)
+        , front(*i, frontSector)
+        , back (*i, backSector)
+    {
+       de::zap(mapped);
     }
 
-    void notifyFlagsChanged(dint oldFlags)
+    /**
+     * Returns the additional geometry metrics (cached).
+     */
+    GeomData &geom()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(self, oldFlags);
+        if (!gdata)
+        {
+            // Time to calculate this info.
+            gdata.reset(new GeomData(self.from(), self.to()));
+        }
+        return *gdata;
+    }
+
+    void vertexOriginChanged(Vertex &vtx)
+    {
+        DENG2_ASSERT(&vtx == from || &vtx == to); // Should only observe changes to "our" vertices.
+        DENG2_ASSERT(polyobj != nullptr);         // Should only observe changes to moveable (not editable) vertices.
+        DENG2_UNUSED(vtx);
+
+        // Clear the now invalid geometry metrics (will update later).
+        gdata.release();
     }
 };
 
 Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINE)
-    , d(new Impl(this, from, to, flags, frontSector, backSector))
+    , d(new Impl(this, frontSector, backSector))
 {
-    updateAABox();
+    d->flags = flags;
+    replaceFrom(from);
+    replaceTo  (to);
 }
 
 dint Line::flags() const
@@ -1217,13 +1243,13 @@ void Line::setFlags(dint flagsToChange, FlagOp operation)
 
     applyFlagOperation(newFlags, flagsToChange, operation);
 
-    if(d->flags != newFlags)
+    if (d->flags != newFlags)
     {
         dint oldFlags = d->flags;
         d->flags = newFlags;
 
         // Notify interested parties of the change.
-        d->notifyFlagsChanged(oldFlags);
+        DENG2_FOR_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(*this, oldFlags);
     }
 }
 
@@ -1239,31 +1265,45 @@ bool Line::definesPolyobj() const
 
 Polyobj &Line::polyobj() const
 {
-    if(d->polyobj) return *d->polyobj;
+    if (d->polyobj) return *d->polyobj;
     /// @throw Line::MissingPolyobjError Attempted with no polyobj attributed.
     throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
 }
 
 void Line::setPolyobj(Polyobj *newPolyobj)
 {
+    if (d->polyobj == newPolyobj) return;
+
+    if (d->polyobj)
+    {
+        to  ().audienceForOriginChange -= d;
+        from().audienceForOriginChange -= d;
+    }
+
     d->polyobj = newPolyobj;
+
+    if (d->polyobj)
+    {
+        from().audienceForOriginChange += d;
+        to  ().audienceForOriginChange += d;
+    }
 }
 
 Line::Side &Line::side(dint back)
 {
-    return (back? d->back : d->front);
+    return (back ? d->back : d->front);
 }
 
 Line::Side const &Line::side(dint back) const
 {
-    return (back? d->back : d->front);
+    return (back ? d->back : d->front);
 }
 
 LoopResult Line::forAllSides(std::function<LoopResult(Side &)> func) const
 {
-    for(dint i = 0; i < 2; ++i)
+    for (dint i = 0; i < 2; ++i)
     {
-        if(auto result = func(const_cast<Line *>(this)->side(i)))
+        if (auto result = func(const_cast<Line *>(this)->side(i)))
             return result;
     }
     return LoopContinue;
@@ -1271,68 +1311,61 @@ LoopResult Line::forAllSides(std::function<LoopResult(Side &)> func) const
 
 Vertex &Line::vertex(dint to) const
 {
-    DENG2_ASSERT((to? d->to : d->from) != nullptr);
-    return (to? *d->to : *d->from);
+    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
+    return (to ? *d->to : *d->from);
 }
 
 void Line::replaceVertex(dint to, Vertex &newVertex)
 {
-    if(to) d->to   = &newVertex;
-    else   d->from = &newVertex;
+    Vertex **adr = (to ? &d->to : &d->from);
+
+    // No change?
+    if (*adr && *adr == &newVertex) return;
+
+    *adr = &newVertex;
+
+    // Clear the now invalid geometry metrics (will update later).
+    d->gdata.release();
 }
 
 LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
 {
-    for(dint i = 0; i < 2; ++i)
+    for (dint i = 0; i < 2; ++i)
     {
-        if(auto result = func(vertex(i))) return result;
+        if (auto result = func(vertex(i))) return result;
     }
     return LoopContinue;
 }
 
 AABoxd const &Line::aaBox() const
 {
-    return d->aaBox;
-}
-
-void Line::updateAABox()
-{
-    V2d_InitBoxXY(d->aaBox.arvec2, fromOrigin().x, fromOrigin().y);
-    V2d_AddToBoxXY(d->aaBox.arvec2, toOrigin().x, toOrigin().y);
+    return d->geom().aaBox;
 }
 
 ddouble Line::length() const
 {
-    return d->length;
+    return d->geom().length;
 }
 
 Vector2d const &Line::direction() const
 {
-    return d->direction;
+    return d->geom().direction;
 }
 
 slopetype_t Line::slopeType() const
 {
-    return d->slopeType;
-}
-
-void Line::updateSlopeType()
-{
-    d->direction = d->to->origin() - d->from->origin();
-    d->angle     = bamsAtan2(dint( d->direction.y ), dint( d->direction.x ));
-    d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
+    return d->geom().slopeType;
 }
 
 binangle_t Line::angle() const
 {
-    return d->angle;
+    return d->geom().angle;
 }
 
 dint Line::boxOnSide(AABoxd const &box) const
 {
-    ddouble fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
-    ddouble directionV1[2]  = { direction().x, direction().y };
-    return M_BoxOnLineSide(&box, fromOriginV1, directionV1);
+    return M_BoxOnLineSide(&box, from().origin().data().baseAs<ddouble>(),
+                           direction().data().baseAs<ddouble>());
 }
 
 int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
@@ -1343,39 +1376,40 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     /// somewhere in the vicinity of the line. The offset is floored to integers
     /// so we won't change the discretization of the fractional part into 16-bit
     /// precision.
-    ddouble offset[2] = { std::floor(d->from->origin().x + d->direction.x/2.0),
-                          std::floor(d->from->origin().y + d->direction.y/2.0) };
+    ddouble offset[2] = { std::floor(from().x() + direction().x / 2.0),
+                          std::floor(from().y() + direction().y / 2.0) };
 
     fixed_t boxx[4];
-    boxx[BOXLEFT]   = DBL2FIX(box.minX - offset[VX]);
-    boxx[BOXRIGHT]  = DBL2FIX(box.maxX - offset[VX]);
-    boxx[BOXBOTTOM] = DBL2FIX(box.minY - offset[VY]);
-    boxx[BOXTOP]    = DBL2FIX(box.maxY - offset[VY]);
+    boxx[BOXLEFT]   = DBL2FIX(box.minX - offset[0]);
+    boxx[BOXRIGHT]  = DBL2FIX(box.maxX - offset[0]);
+    boxx[BOXBOTTOM] = DBL2FIX(box.minY - offset[1]);
+    boxx[BOXTOP]    = DBL2FIX(box.maxY - offset[1]);
 
-    fixed_t pos[2] = { DBL2FIX(d->from->origin().x - offset[VX]),
-                       DBL2FIX(d->from->origin().y - offset[VY]) };
+    fixed_t pos[2] = { DBL2FIX(from().x() - offset[0]),
+                       DBL2FIX(from().y() - offset[1]) };
 
-    fixed_t delta[2] = { DBL2FIX(d->direction.x),
-                         DBL2FIX(d->direction.y) };
+    fixed_t delta[2] = { DBL2FIX(direction().x),
+                         DBL2FIX(direction().y) };
 
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
 ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
 {
-    Vector2d lineVec = d->direction - fromOrigin();
+    Vector2d lineVec = direction() - from().origin();
     ddouble len = lineVec.length();
-    if(len == 0)
+    if (len == 0)
     {
-        if(offset) *offset = 0;
+        if (offset) *offset = 0;
         return 0;
     }
 
-    Vector2d delta = fromOrigin() - point;
-    if(offset)
+    Vector2d delta = from().origin() - point;
+    if (offset)
     {
-        *offset = (  delta.y * (fromOrigin().y - d->direction.y)
-                   - delta.x * (d->direction.x - fromOrigin().x) ) / len;
+        *offset = (  delta.y * (from().y() - direction().y)
+                   - delta.x * (direction().x - from().x()) )
+                / len;
     }
 
     return (delta.y * lineVec.x - delta.x * lineVec.y) / len;
@@ -1383,19 +1417,17 @@ ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
 
 ddouble Line::pointOnSide(Vector2d const &point) const
 {
-    Vector2d delta = fromOrigin() - point;
-    return delta.y * d->direction.x - delta.x * d->direction.y;
+    Vector2d delta = from().origin() - point;
+    return delta.y * direction().x - delta.x * direction().y;
 }
 
 bool Line::isMappedByPlayer(dint playerNum) const
 {
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     return d->mapped[playerNum];
 }
 
 void Line::markMappedByPlayer(dint playerNum, bool yes)
 {
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     d->mapped[playerNum] = yes;
 }
 
@@ -1412,11 +1444,11 @@ void Line::setValidCount(dint newValidCount)
 #ifdef __CLIENT__
 bool Line::castsShadow() const
 {
-    if(definesPolyobj()) return false;
-    if(isSelfReferencing()) return false;
+    if (definesPolyobj()) return false;
+    if (isSelfReferencing()) return false;
 
     // Lines with no other neighbor do not qualify for shadowing.
-    if(&v1Owner()->next().line() == this || &v2Owner()->next().line() == this)
+    if (&v1Owner()->next().line() == this || &v2Owner()->next().line() == this)
        return false;
 
     return true;
@@ -1425,69 +1457,72 @@ bool Line::castsShadow() const
 
 LineOwner *Line::vertexOwner(dint to) const
 {
-    DENG2_ASSERT((to? _vo2 : _vo1) != nullptr);
-    return (to? _vo2 : _vo1);
+    DENG2_ASSERT((to ? _vo2 : _vo1) != nullptr);
+    return (to ? _vo2 : _vo1);
 }
 
 dint Line::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
+    case DMU_FLAGS:
+        args.setValue(DMT_LINE_FLAGS, &d->flags, 0);
+        break;
+    case DMU_FRONT: {
+        /// @todo Update the games so that sides without sections can be returned.
+        Line::Side const *frontAdr = hasFrontSections() ? &d->front : nullptr;
+        args.setValue(DDVT_PTR, &frontAdr, 0);
+        break; }
+    case DMU_BACK: {
+        /// @todo Update the games so that sides without sections can be returned.
+        Line::Side const *backAdr  = hasBackSections() ? &d->back   : nullptr;
+        args.setValue(DDVT_PTR, &backAdr, 0);
+        break; }
     case DMU_VERTEX0:
         args.setValue(DMT_LINE_V, &d->from, 0);
         break;
     case DMU_VERTEX1:
         args.setValue(DMT_LINE_V, &d->to, 0);
         break;
+    case DMU_VALID_COUNT:
+        args.setValue(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
+        break;
+
     case DMU_DX:
-        args.setValue(DMT_LINE_DX, &d->direction.x, 0);
+        args.setValue(DMT_LINE_DX, &direction().x, 0);
         break;
     case DMU_DY:
-        args.setValue(DMT_LINE_DY, &d->direction.y, 0);
+        args.setValue(DMT_LINE_DY, &direction().y, 0);
         break;
     case DMU_DXY:
-        args.setValue(DMT_LINE_DX, &d->direction.x, 0);
-        args.setValue(DMT_LINE_DY, &d->direction.y, 1);
+        args.setValue(DMT_LINE_DX, &direction().x, 0);
+        args.setValue(DMT_LINE_DY, &direction().y, 1);
         break;
-    case DMU_LENGTH:
-        args.setValue(DMT_LINE_LENGTH, &d->length, 0);
-        break;
+    case DMU_LENGTH: {
+        ddouble len = length();
+        args.setValue(DMT_LINE_LENGTH, &len, 0);
+        break; }
     case DMU_ANGLE: {
-        angle_t lineAngle = BANG_TO_ANGLE(d->angle);
-        args.setValue(DDVT_ANGLE, &lineAngle, 0);
+        angle_t ang = BANG_TO_ANGLE(angle());
+        args.setValue(DDVT_ANGLE, &ang, 0);
         break; }
-    case DMU_SLOPETYPE:
-        args.setValue(DMT_LINE_SLOPETYPE, &d->slopeType, 0);
-        break;
-    case DMU_FLAGS:
-        args.setValue(DMT_LINE_FLAGS, &d->flags, 0);
-        break;
-    case DMU_FRONT: {
-        /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *frontAdr = hasFrontSections()? &d->front : nullptr;
-        args.setValue(DDVT_PTR, &frontAdr, 0);
-        break; }
-    case DMU_BACK: {
-        /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *backAdr = hasBackSections()? &d->back : nullptr;
-        args.setValue(DDVT_PTR, &backAdr, 0);
+    case DMU_SLOPETYPE: {
+        slopetype_t st = slopeType();
+        args.setValue(DMT_LINE_SLOPETYPE, &st, 0);
         break; }
     case DMU_BOUNDING_BOX:
-        if(args.valueType == DDVT_PTR)
+        if (args.valueType == DDVT_PTR)
         {
-            AABoxd const *aaBoxAdr = &d->aaBox;
+            AABoxd const *aaBoxAdr = &aaBox();
             args.setValue(DDVT_PTR, &aaBoxAdr, 0);
         }
         else
         {
-            args.setValue(DMT_LINE_AABOX, &d->aaBox.minX, 0);
-            args.setValue(DMT_LINE_AABOX, &d->aaBox.maxX, 1);
-            args.setValue(DMT_LINE_AABOX, &d->aaBox.minY, 2);
-            args.setValue(DMT_LINE_AABOX, &d->aaBox.maxY, 3);
+            args.setValue(DMT_LINE_AABOX, &aaBox().minX, 0);
+            args.setValue(DMT_LINE_AABOX, &aaBox().maxX, 1);
+            args.setValue(DMT_LINE_AABOX, &aaBox().minY, 2);
+            args.setValue(DMT_LINE_AABOX, &aaBox().maxY, 3);
         }
-        break;
-    case DMU_VALID_COUNT:
-        args.setValue(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     default:
         return MapElement::property(args);
@@ -1522,13 +1557,13 @@ D_CMD(InspectLine)
 
     LOG_AS("inspectline (Cmd)");
 
-    if(argc != 2)
+    if (argc != 2)
     {
         LOG_SCR_NOTE("Usage: %s (line-id)") << argv[0];
         return true;
     }
 
-    if(!App_World().hasMap())
+    if (!App_World().hasMap())
     {
         LOG_SCR_ERROR("No map is currently loaded");
         return false;
@@ -1537,19 +1572,19 @@ D_CMD(InspectLine)
     // Find the line.
     dint const index = String(argv[1]).toInt();
     Line const *line = App_World().map().linePtr(index);
-    if(!line)
+    if (!line)
     {
         LOG_SCR_ERROR("Line #%i not found") << index;
         return false;
     }
 
     QStringList flagNames;
-    if(line->flags() & DDLF_BLOCKING)      flagNames << "blocking";
-    if(line->flags() & DDLF_DONTPEGTOP)    flagNames << "nopegtop";
-    if(line->flags() & DDLF_DONTPEGBOTTOM) flagNames << "nopegbottom";
+    if (line->flags() & DDLF_BLOCKING)      flagNames << "blocking";
+    if (line->flags() & DDLF_DONTPEGTOP)    flagNames << "nopegtop";
+    if (line->flags() & DDLF_DONTPEGBOTTOM) flagNames << "nopegbottom";
 
     String flagsString;
-    if(!flagNames.isEmpty())
+    if (!flagNames.isEmpty())
     {
         String const flagsAsText = flagNames.join("|");
         flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);

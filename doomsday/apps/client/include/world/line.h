@@ -722,12 +722,6 @@ public:
     slopetype_t slopeType() const;
 
     /**
-     * Update the line's logical slopetype and direction according to the points defined by
-     * the origins of it's vertexes.
-     */
-    void updateSlopeType();
-
-    /**
      * Returns the accurate length of the line from Start to End vertex.
      */
     de::ddouble length() const;
@@ -742,12 +736,6 @@ public:
      * in map coordinate space units.
      */
     AABoxd const &aaBox() const;
-
-    /**
-     * Update the line's map space axis-aligned bounding box to encompass the points defined
-     * by it's vertexes.
-     */
-    void updateAABox();
 
     /**
      * On which side of the line does the specified box lie?
