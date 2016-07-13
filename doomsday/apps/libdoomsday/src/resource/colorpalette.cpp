@@ -329,7 +329,7 @@ ColorPalette::Translation const *ColorPalette::translation(String id) const
     return d->translation(id);
 }
 
-void ColorPalette::newTranslation(String id, Translation const &mappings)
+void ColorPalette::newTranslation(String xlatId, Translation const &mappings)
 {
     LOG_AS("ColorPalette");
 
@@ -341,13 +341,13 @@ void ColorPalette::newTranslation(String id, Translation const &mappings)
 
     DENG2_ASSERT(mappings.count() == colorCount()); // sanity check
 
-    if (!id.isEmpty())
+    if (!xlatId.isEmpty())
     {
-        Translation *xlat = d->translation(id);
+        Translation *xlat = d->translation(xlatId);
         if (!xlat)
         {
             // An entirely new translation.
-            xlat = &d->translations.insert(id, Translation()).value();
+            xlat = &d->translations.insert(xlatId, Translation()).value();
         }
 
         // Replace the whole mapping table.

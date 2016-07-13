@@ -42,7 +42,7 @@ public:
     /**
      * Returns the ColorPalette associated with unique @a id.
      */
-    ColorPalette &colorPalette(ColorPalette::Id id) const;
+    ColorPalette &colorPalette(de::Id const &id) const;
 
     /**
      * Returns the symbolic name of the specified color @a palette. A zero-length
@@ -72,7 +72,7 @@ public:
     /**
      * Returns the unique identifier of the current default color palette.
      */
-    ColorPalette::Id defaultColorPalette() const;
+    de::Id defaultColorPalette() const;
 
     /**
      * Change the default color palette.

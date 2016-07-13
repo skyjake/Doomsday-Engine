@@ -28,13 +28,13 @@ namespace res {
 
 DENG2_PIMPL_NOREF(ColorPalettes)
 {
-    typedef QMap<ColorPalette::Id, ColorPalette *> ColorPalettes;
+    typedef QMap<Id::Type, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes; // owned
 
     typedef QMap<String, ColorPalette *> ColorPaletteNames;
     ColorPaletteNames colorPaletteNames;
 
-    ColorPalette::Id defaultColorPalette = 0;
+    Id defaultColorPalette { Id::None };
 
     ~Impl()
     {
@@ -65,18 +65,13 @@ dint ColorPalettes::colorPaletteCount() const
     return d->colorPalettes.count();
 }
 
-ColorPalette &ColorPalettes::colorPalette(ColorPalette::Id id) const
+ColorPalette &ColorPalettes::colorPalette(Id const &id) const
 {
-    // Choose the default palette?
-    if(!id)
-    {
-        id = d->defaultColorPalette;
-    }
-
-    auto found = d->colorPalettes.find(id);
+    auto found = d->colorPalettes.find(id.isNone()? d->defaultColorPalette : id);
     if(found != d->colorPalettes.end()) return *found.value();
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw Resources::MissingResourceError("ColorPalettes::colorPalette", "Invalid id " + String::number(id));
+    throw Resources::MissingResourceError("ColorPalettes::colorPalette",
+                                          "Invalid ID " + id.asText());
 }
 
 String ColorPalettes::colorPaletteName(ColorPalette &palette) const
@@ -122,7 +117,7 @@ void ColorPalettes::addColorPalette(res::ColorPalette &newPalette, String const 
     }
 }
 
-ColorPalette::Id ColorPalettes::defaultColorPalette() const
+Id ColorPalettes::defaultColorPalette() const
 {
     return d->defaultColorPalette;
 }
