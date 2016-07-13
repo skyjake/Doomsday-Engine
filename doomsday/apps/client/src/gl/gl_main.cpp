@@ -1213,7 +1213,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
         alphaSrc += width * region[2];
     }
 
-    duint8 rgb[3];
+    duint8 rgb[3] = { 0, 0, 0 };
     dint avgCnt = 0, lowCnt = 0;
     dint cnt = 0, posCnt = 0;
     for(dint y = region[2]; y <= region[3]; ++y)

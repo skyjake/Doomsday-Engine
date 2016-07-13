@@ -443,4 +443,6 @@ void guidata_face_t::prepareAssets()  // static
     }
     ::pFaces[idx++] = R_DeclarePatch("STFGOD0");
     ::pFaces[idx++] = R_DeclarePatch("STFDEAD0");
+
+    DENG_ASSERT(idx == FACE_COUNT);
 }

@@ -245,8 +245,7 @@ int P_GetPlayerCheats(player_t const *player)
 
     if(player->plr->flags & DDPF_CAMERA)
     {
-        return (player->cheats |
-                (CF_GODMODE | cfg.common.cameraNoClip? CF_NOCLIP : 0));
+        return (player->cheats | CF_GODMODE | (cfg.common.cameraNoClip? CF_NOCLIP : 0));
     }
     return player->cheats;
 }
