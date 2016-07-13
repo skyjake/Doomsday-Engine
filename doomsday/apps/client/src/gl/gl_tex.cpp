@@ -151,9 +151,7 @@ uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
 
     buffer = GetScratchBuffer(comps * outWidth * height);
 
-    if(0 == (out = (uint8_t*) malloc(comps * outWidth * outHeight)))
-        App_Error("GL_ScaleBuffer: Failed on allocation of %lu bytes for "
-            "output buffer.", (unsigned long) (comps * outWidth * outHeight));
+    out = (uint8_t *) M_Malloc(comps * outWidth * outHeight);
 
     // First scale horizontally, to outWidth, into the temporary buffer.
     inOff = in;
@@ -188,9 +186,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
     int rowStride, rowLen;
     void* dataOut;
 
-    if(NULL == (dataOut = malloc(bpp * widthOut * heightOut)))
-        App_Error("scaleImage: Failed on allocation of %lu bytes for output "
-                  "buffer.", (unsigned long) (bpp * widthOut * heightOut));
+    dataOut = M_Malloc(bpp * widthOut * heightOut);
 
     if(packRowLength > 0)
     {
@@ -395,16 +391,9 @@ void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
     }
 
     // Allocate storage for intermediate images.
-    if(NULL == (tempIn = (float*) malloc(widthIn * heightIn * bpp * sizeof(float))))
-        App_Error("scaleImage: Failed on allocation of %lu bytes for in buffer.",
-                  (unsigned long) (widthIn * heightIn * bpp * sizeof(float)));
+    tempIn = (float *) M_Malloc(widthIn * heightIn * bpp * sizeof(float));
 
-    if(NULL == (tempOut = (float*) malloc(widthOut * heightOut * bpp * sizeof(float))))
-    {
-        free(tempIn);
-        App_Error("scaleImage: Failed on allocation of %lu bytes for out buffer.",
-                  (unsigned long) (widthOut * heightOut * bpp * sizeof(float)));
-    }
+    tempOut = (float *) M_Malloc(widthOut * heightOut * bpp * sizeof(float));
 
     /**
      * Unpack the pixel data and convert to floating point
@@ -651,9 +640,7 @@ uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int com
     ratioX = (int)(width  << 16) / outWidth  + 1;
     ratioY = (int)(height << 16) / outHeight + 1;
 
-    if(NULL == (out = (uint8_t *) M_Malloc(comps * outWidth * outHeight)))
-        App_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
-                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
+    out = (uint8_t *) M_Malloc(comps * outWidth * outHeight);
 
     outP = out;
     shearY = 0;
@@ -686,9 +673,7 @@ void GL_DownMipmap32(uint8_t* in, int width, int height, int comps)
 
     if(width == 1 && height == 1)
     {
-#if _DEBUG
-        App_Error("GL_DownMipmap32: Can't be called for a 1x1 image.\n");
-#endif
+        DENG_ASSERT(!"GL_DownMipmap32: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -726,9 +711,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
 
     if(width == 1 && height == 1)
     {
-#if _DEBUG
-        App_Error("GL_DownMipmap8: Can't be called for a 1x1 image.\n");
-#endif
+        DENG_ASSERT(!"GL_DownMipmap8: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -889,9 +872,8 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
 
     if(line >= h)
     {
-#if _DEBUG
-        App_Error("FindAverageLineColorIdx: Attempted to average outside valid area (height=%i line=%i).", h, line);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "FindAverageLineColorIdx: height=%i, line=%i.", h, line);
+        DENG_ASSERT(!"FindAverageLineColorIdx: Attempted to average outside valid area.");
         V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
@@ -936,9 +918,9 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
 
     if(line >= height)
     {
-#if _DEBUG
-        App_Error("FindAverageLineColor: Attempted to average outside valid area (height=%i line=%i).", height, line);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: height=%i, line=%i.", height, line);
+        DENG_ASSERT(!"FindAverageLineColor: Attempted to average outside valid area.");
+
         V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
@@ -971,9 +953,9 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 
     if(pixelSize != 3 && pixelSize != 4)
     {
-#if _DEBUG
-        App_Error("FindAverageColor: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "FindAverageColor: pixelSize=%i", pixelSize);
+        DENG_ASSERT("FindAverageColor: Attempted on non-rgb(a) image.");
+
         V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
@@ -1047,9 +1029,9 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
 
     if(pixelSize != 3 && pixelSize != 4)
     {
-#ifdef DENG_DEBUG
-        App_Error("FindAverageAlpha: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "FindAverageAlpha: pixelSize=%i", pixelSize);
+        DENG_ASSERT(!"FindAverageAlpha: Attempted on non-rgb(a) image.");
+
         // Assume opaque.
         *alpha = 1;
         if(coverage) *coverage = 0;
@@ -1123,9 +1105,8 @@ void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
 
     if(width <= 0 || height <= 0)
     {
-#if _DEBUG
-        App_Error("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
-#endif
+        DENG_ASSERT(!"FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
+
         retRegion[0] = retRegion[1] = retRegion[2] = retRegion[3] = 0;
         return;
     }
@@ -1434,9 +1415,8 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int comps)
 
     if(comps != 3 && comps != 4)
     {
-#if _DEBUG
-        App_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: comps=%i", comps);
+        DENG_ASSERT(!"EnhanceContrast: Attempted on non-rgb(a) image.");
         return;
     }
 
@@ -1475,9 +1455,8 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
 
     if(comps != 3 && comps != 4)
     {
-#if _DEBUG
-        App_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
-#endif
+        App_Log(DE2_DEV_GL_ERROR, "SharpenPixels: comps=%i", comps);
+        DENG_ASSERT(!"SharpenPixels: Attempted on non-rgb(a) image.");
         return;
     }
 

@@ -67,7 +67,7 @@ struct image_t
     /// @ref imageFlags
     int flags = 0;
 
-    /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
+    /// Identifier of the color palette used/assumed or @c 0 if none (1-based).
     uint paletteId = 0;
 
     /// Size of the image in pixels.
