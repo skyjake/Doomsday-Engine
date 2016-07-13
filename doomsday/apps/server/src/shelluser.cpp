@@ -140,11 +140,11 @@ void ShellUser::sendMapOutline()
 
     std::unique_ptr<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    App_World().map().forAllLines([&packet] (Line &line)
+    App_World().map().forAllLines ([&packet] (Line &line)
     {
-        packet->addLine(Vector2i(line.fromOrigin().x, line.fromOrigin().y),
-                        Vector2i(line.toOrigin().x, line.toOrigin().y),
-                        (line.hasFrontSector() && line.hasBackSector())?
+        packet->addLine(line.from().origin().toVector2i(),
+                        line.to  ().origin().toVector2i(),
+                        (line.front().hasSector() && line.back().hasSector()) ?
                                  shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
         return LoopContinue;
     });

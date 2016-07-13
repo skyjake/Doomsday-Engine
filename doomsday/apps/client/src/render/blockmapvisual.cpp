@@ -59,8 +59,8 @@ static void drawMobj(mobj_t const &mobj)
 
 static void drawLine(Line const &line)
 {
-    glVertex2f(line.fromOrigin().x, line.fromOrigin().y);
-    glVertex2f(  line.toOrigin().x,   line.toOrigin().y);
+    glVertex2f(line.from().x(), line.from().y());
+    glVertex2f(line.to  ().x(), line.to  ().y());
 }
 
 static void drawSubspace(ConvexSubspace const &subspace)

@@ -406,11 +406,16 @@ DENG2_PIMPL(Map)
         Vector2d testLineCenter;
     };
 
+    static bool lineHasZeroLength(Line const &line)
+    {
+        return de::abs(line.length()) < 1.0 / 128.0;
+    }
+
     static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
     {
         if(&line == p.testLine) return;
         if(line.isSelfReferencing()) return;
-        if(line.hasZeroLength()) return;
+        if(lineHasZeroLength(line)) return;
 
         ddouble dist = 0;
         Sector *hitSector = nullptr;
@@ -424,8 +429,8 @@ DENG2_PIMPL(Map)
                (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
                 return;
 
-            dist = (line.fromOrigin().x +
-                    (p.testLineCenter.y - line.fromOrigin().y) * line.direction().x / line.direction().y)
+            dist = (line.from().x() +
+                    (p.testLineCenter.y - line.from().y()) * line.direction().x / line.direction().y)
                    - p.testLineCenter.x;
 
             isFront = ((p.testLine->direction().y > 0) != (dist > 0));
@@ -447,8 +452,8 @@ DENG2_PIMPL(Map)
                (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
                 return;
 
-            dist = (line.fromOrigin().y +
-                    (p.testLineCenter.x - line.fromOrigin().x) * line.direction().y / line.direction().x)
+            dist = (line.from().y() +
+                    (p.testLineCenter.x - line.from().x()) * line.direction().y / line.direction().x)
                    - p.testLineCenter.y;
 
             isFront = ((p.testLine->direction().x > 0) == (dist > 0));
@@ -485,9 +490,9 @@ DENG2_PIMPL(Map)
     bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.definesPolyobj()) return false;
-        if(line.hasFrontSector() && line.hasBackSector()) return false;
-        if(!line.hasFrontSector()) return false;
-        if(line.hasZeroLength()) return false;
+        if(line.front().hasSector() && line.back().hasSector()) return false;
+        if(!line.front().hasSector()) return false;
+        if(lineHasZeroLength(line)) return false;
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
@@ -542,7 +547,7 @@ DENG2_PIMPL(Map)
                 return LoopContinue;
             });
 
-            if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
+            if(p.backOpen && p.frontOpen && line->front().sectorPtr() == p.backOpen)
             {
                 notifyOneWayWindowFound(*line, *p.frontOpen);
 
@@ -874,8 +879,8 @@ DENG2_PIMPL(Map)
 
         // Lines with only one sector will not be linked to because a mobj can't
         // legally cross one.
-        if(!line->hasFrontSector()) return;
-        if(!line->hasBackSector()) return;
+        if(!line->front().hasSector()) return;
+        if(!line->back().hasSector()) return;
 
         // Add a node to the mobj's ring.
         nodeindex_t nodeIndex = NP_New(&mobjNodes, line);
@@ -1951,7 +1956,7 @@ void Map::initRadio()
     ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
     for(Line *line : d->lines)
     {
-        if(!line->castsShadow()) continue;
+        if(!line->isShadowCaster()) continue;
 
         // For each side of the line.
         for(dint i = 0; i < 2; ++i)
@@ -2513,7 +2518,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
 
                 // All these lines have sectors on both sides.
                 // First, try the front.
-                Sector &frontSec = ld->frontSector();
+                Sector &frontSec = ld->front().sector();
                 if(frontSec.validCount() != validCount)
                 {
                     frontSec.setValidCount(validCount);
@@ -2522,9 +2527,9 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
 
                 // And then the back.
                 /// @todo Above comment suggest always twosided, which is it? -ds
-                if(ld->hasBackSector())
+                if(ld->back().hasSector())
                 {
-                    Sector &backSec = ld->backSector();
+                    Sector &backSec = ld->back().sector();
                     if(backSec.validCount() != validCount)
                     {
                         backSec.setValidCount(validCount);
@@ -3821,7 +3826,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             VertexInfo &info = vertexInfo[line->from().indexInMap()];
 
             info.refCount--;
-            line->replaceFrom(*info.equiv);
+            line->replaceVertex(Line::From, *info.equiv);
 
             vertexInfo[line->from().indexInMap()].refCount++;
         }
@@ -3831,7 +3836,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             VertexInfo &info = vertexInfo[line->to().indexInMap()];
 
             info.refCount--;
-            line->replaceTo(*info.equiv);
+            line->replaceVertex(Line::To, *info.equiv);
 
             vertexInfo[line->to().indexInMap()].refCount++;
         }
@@ -3887,7 +3892,7 @@ bool Map::endEditing()
     // Ensure lines with only one sector are flagged as blocking.
     for(Line *line : d->editable.lines)
     {
-        if(!line->hasFrontSector() || !line->hasBackSector())
+        if(!line->front().hasSector() || !line->back().hasSector())
             line->setFlags(DDLF_BLOCKING);
     }
 

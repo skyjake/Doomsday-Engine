@@ -367,7 +367,7 @@ void Sector::buildSides()
     dint count = 0;
     map().forAllLines([this, &count] (Line &line)
     {
-        if(line.frontSectorPtr() == this || line.backSectorPtr()  == this)
+        if(line.front().sectorPtr() == this || line.back().sectorPtr()  == this)
         {
             ++count;
         }
@@ -381,12 +381,12 @@ void Sector::buildSides()
 
     map().forAllLines([this] (Line &line)
     {
-        if(line.frontSectorPtr() == this)
+        if(line.front().sectorPtr() == this)
         {
             // Ownership of the side is not given to the sector.
             d->sides.append(&line.front());
         }
-        else if(line.backSectorPtr()  == this)
+        else if(line.back().sectorPtr()  == this)
         {
             // Ownership of the side is not given to the sector.
             d->sides.append(&line.back());

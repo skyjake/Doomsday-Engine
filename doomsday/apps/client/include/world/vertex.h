@@ -68,12 +68,12 @@ public:
     /**
      * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
      */
-    inline coord_t x() const { return origin().x; }
+    inline de::ddouble x() const { return origin().x; }
 
     /**
      * Returns the Y axis origin (i.e., position) of the vertex in the map coordinate space.
      */
-    inline coord_t y() const { return origin().y; }
+    inline de::ddouble y() const { return origin().y; }
 
     /**
      * Change the origin (i.e., position) of the vertex in the map coordinate

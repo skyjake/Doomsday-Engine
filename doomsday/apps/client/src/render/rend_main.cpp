@@ -324,7 +324,7 @@ static void reportWallDrawn(Line &line)
     if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
-    line.markMappedByPlayer(playerNum);
+    line.setMappedByPlayer(playerNum);
 
     // Send a status report.
     if(gx.HandleMapObjectStatusReport)
@@ -2023,17 +2023,17 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
 {
-    if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
+    if (surface.parent().type() == DMU_SIDE) return Lumobj::Side;
     // Must be a plane then.
     auto const &plane = surface.parent().as<Plane>();
-    return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
+    return plane.isSectorFloor() ? Lumobj::Down : Lumobj::Up;
 }
 
 static DGLuint prepareLightmap(ClientTexture *tex = nullptr)
 {
-    if(tex)
+    if (tex)
     {
-        if(TextureVariant *variant = tex->prepareVariant(Rend_MapSurfaceLightmapTextureSpec()))
+        if (TextureVariant *variant = tex->prepareVariant(Rend_MapSurfaceLightmapTextureSpec()))
         {
             return variant->glName();
         }
@@ -2480,7 +2480,7 @@ static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &right
     mobj_t const *mo         = viewPlayer->publicData().mo;
     Line const &line         = leftEdge.lineSide().line();
 
-    coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
+    coord_t linePoint[2]     = { line.from().x(), line.from().y() };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
     vec2d_t result;
     ddouble pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
@@ -5324,7 +5324,7 @@ static void drawFakeRadioShadowPoints(Map &map)
             LineOwner const *own  = base;
             do
             {
-                coord_t const z = own->line().frontSector().floor().heightSmoothed();
+                coord_t const z = own->line().front().sector().floor().heightSmoothed();
 
                 drawPoint(Vector3d(vtx.origin() + own->extendedShadowOffset(), z), yellow);
                 drawPoint(Vector3d(vtx.origin() + own->innerShadowOffset   (), z), red);

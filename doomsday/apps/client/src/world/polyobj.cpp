@@ -205,21 +205,21 @@ void Polyobj::unlink()
 
 void Polyobj::link()
 {
-    if(!_bspLeaf)
+    if (!_bspLeaf)
     {
         map().link(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;
-        for(Line *line : lines())
+        for (Line *line : lines())
         {
-            avg += line->fromOrigin();
+            avg += line->from().origin();
         }
         avg /= lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        if(((BspLeaf *)_bspLeaf)->hasSubspace())
+        if (((BspLeaf *)_bspLeaf)->hasSubspace())
         {
             ((BspLeaf *)_bspLeaf)->subspace().link(*this);
         }

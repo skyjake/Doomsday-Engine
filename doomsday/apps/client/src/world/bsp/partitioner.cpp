@@ -274,8 +274,8 @@ DENG2_PIMPL(Partitioner)
     {
         for(Line *line : lines)
         {
-            Sector *frontSec = line->frontSectorPtr();
-            Sector *backSec  = line->backSectorPtr();
+            Sector *frontSec = line->front().sectorPtr();
+            Sector *backSec  = line->back().sectorPtr();
 
             // Handle the "one-way window" effect.
             if(!backSec && line->_bspWindowSector)

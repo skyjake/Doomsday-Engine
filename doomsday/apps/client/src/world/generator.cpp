@@ -831,8 +831,8 @@ void Generator::moveParticle(dint index)
         // particle should be killed (if it's moving slowly at max).
         if(pinfo->contact)
         {
-            Sector *front = pinfo->contact->frontSectorPtr();
-            Sector *back  = pinfo->contact->backSectorPtr();
+            Sector *front = pinfo->contact->front().sectorPtr();
+            Sector *back  = pinfo->contact->back().sectorPtr();
 
             if(front && back && abs(pinfo->mov[2]) < FRACUNIT / 2)
             {
@@ -919,13 +919,13 @@ void Generator::moveParticle(dint index)
         // Bounce if we hit a solid wall.
         /// @todo fixme: What about "one-way" window lines?
         clParm.ptcHitLine = &line;
-        if(!line.hasBackSector())
+        if(!line.back().hasSector())
         {
             return LoopAbort; // Boing!
         }
 
-        Sector *front = line.frontSectorPtr();
-        Sector *back  = line.backSectorPtr();
+        Sector *front = line.front().sectorPtr();
+        Sector *back  = line.back().sectorPtr();
 
         // Determine the opening we have here.
         /// @todo Use R_OpenRange()

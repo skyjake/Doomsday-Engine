@@ -192,14 +192,14 @@ DENG2_PIMPL_NOREF(Interceptor)
         fixed_t origin[2]    = { DBL2FIX(from.x), DBL2FIX(from.y) };
         fixed_t direction[2] = { DBL2FIX(to.x - from.x), DBL2FIX(to.y - from.y) };
 
-        fixed_t lineFromX[2] = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
-        fixed_t lineToX[2]   = { DBL2FIX(  line.toOrigin().x), DBL2FIX(  line.toOrigin().y) };
+        fixed_t lineFromX[2] = { DBL2FIX(line.from().x()), DBL2FIX(line.from().y()) };
+        fixed_t lineToX[2]   = { DBL2FIX(line.to  ().x()), DBL2FIX(line.to  ().y()) };
 
         // Is this line crossed?
         // Avoid precision problems with two routines.
         dint s1, s2;
-        if(direction[0] >  FRACUNIT * 16 || direction[1] >  FRACUNIT * 16 ||
-           direction[0] < -FRACUNIT * 16 || direction[1] < -FRACUNIT * 16)
+        if (   direction[0] >  FRACUNIT * 16 || direction[1] >  FRACUNIT * 16
+            || direction[0] < -FRACUNIT * 16 || direction[1] < -FRACUNIT * 16)
         {
             s1 = V2x_PointOnLineSide(lineFromX, origin, direction);
             s2 = V2x_PointOnLineSide(lineToX,   origin, direction);
@@ -212,14 +212,14 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
 
         // Is this line crossed?
-        if(s1 == s2) return;
+        if (s1 == s2) return;
 
         // Calculate interception point.
         fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
         dfloat distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX, origin, direction));
 
         // On the correct side of the trace origin?
-        if(distance >= 0)
+        if (distance >= 0)
         {
             addIntercept(ICPT_LINE, distance, &line);
         }

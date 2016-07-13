@@ -91,7 +91,7 @@ void Vertex::countLineOwners()
         LineOwner const *own = firstOwn;
         do
         {
-            if(!own->line().hasFrontSector() || !own->line().hasBackSector())
+            if(!own->line().front().hasSector() || !own->line().back().hasSector())
             {
                 _onesOwnerCount += 1;
             }

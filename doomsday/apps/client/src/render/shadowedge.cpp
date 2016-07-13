@@ -91,10 +91,10 @@ static dfloat opennessFactor(dfloat fz, dfloat bz, dfloat bhz)
 /// @todo fixme: Should use the visual plane heights of sector clusters.
 static bool middleMaterialCoversOpening(LineSide const &side)
 {
-    if(!side.hasSector()) return false;  // Never.
+    if (!side.hasSector()) return false;  // Never.
 
-    if(!side.hasSections()) return false;
-    if(!side.middle().hasMaterial()) return false;
+    if (!side.hasSections()) return false;
+    if (!side.middle().hasMaterial()) return false;
 
     MaterialAnimator &matAnimator = side.middle().material().as<ClientMaterial>()
             .getAnimator(Rend_MapSurfaceMaterialSpec());
@@ -103,10 +103,10 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     matAnimator.prepare();
 
     // Might the material cover the opening?
-    if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if (matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         // Stretched middles always cover the opening.
-        if(side.isFlagged(SDF_MIDDLE_STRETCH))
+        if (side.isFlagged(SDF_MIDDLE_STRETCH))
             return true;
 
         Sector const &frontSec = side.sector();
@@ -114,7 +114,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backSec && backSec->floor().heightSmoothed() > frontSec.floor().heightSmoothed())
+        if (backSec && backSec->floor().heightSmoothed() > frontSec.floor().heightSmoothed())
         {
             openBottom = backSec->floor().heightSmoothed();
         }
@@ -124,7 +124,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
         }
 
         coord_t openTop;
-        if(backSec && backSec->ceiling().heightSmoothed() < frontSec.ceiling().heightSmoothed())
+        if (backSec && backSec->ceiling().heightSmoothed() < frontSec.ceiling().heightSmoothed())
         {
             openTop = backSec->ceiling().heightSmoothed();
         }
@@ -133,7 +133,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             openTop = frontSec.ceiling().heightSmoothed();
         }
 
-        if(matAnimator.dimensions().y >= openTop - openBottom)
+        if (matAnimator.dimensions().y >= openTop - openBottom)
         {
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf
@@ -164,37 +164,37 @@ void ShadowEdge::prepare(dint planeIndex)
     // there won't be a shadow at all. Open neighbor sectors cause some changes
     // in the polygon corner vertices (placement, opacity).
 
-    if(hedge.twin().hasFace() &&
-       hedge.twin().face().mapElementAs<ConvexSubspace>().hasCluster())
+    if (hedge.twin().hasFace() &&
+        hedge.twin().face().mapElementAs<ConvexSubspace>().hasCluster())
     {
         SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
         Plane const &backPlane = backCluster.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
-            lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)
-                                       : lineSide.middle();
+            lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)
+                                        : lineSide.middle();
 
         // Figure out the relative plane heights.
         coord_t fz = plane.heightSmoothed();
-        if(planeIndex == Sector::Ceiling)
+        if (planeIndex == Sector::Ceiling)
             fz = -fz;
 
         coord_t bz = backPlane.heightSmoothed();
-        if(planeIndex == Sector::Ceiling)
+        if (planeIndex == Sector::Ceiling)
             bz = -bz;
 
         coord_t bhz = backCluster.plane(otherPlaneIndex).heightSmoothed();
-        if(planeIndex == Sector::Ceiling)
+        if (planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
         // Determine openness.
-        if(fz < bz && !wallEdgeSurface.hasMaterial())
+        if (fz < bz && !wallEdgeSurface.hasMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }
         // Is the back sector a closed yet sky-masked surface?
-        else if(cluster.visFloor().heightSmoothed() >= backCluster.visCeiling().heightSmoothed() &&
-                    cluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
-                backCluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
+        else if (cluster.visFloor().heightSmoothed() >= backCluster.visCeiling().heightSmoothed() &&
+                 cluster    .visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
+                 backCluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }
@@ -202,7 +202,7 @@ void ShadowEdge::prepare(dint planeIndex)
         {
             // Does the middle material completely cover the open range (we do
             // not want to give away the location of any secret areas)?
-            if(!middleMaterialCoversOpening(lineSide))
+            if (!middleMaterialCoversOpening(lineSide))
             {
                 d->sectorOpenness = opennessFactor(fz, bz, bhz);
             }
@@ -210,7 +210,7 @@ void ShadowEdge::prepare(dint planeIndex)
     }
 
     // Only calculate the remaining values when the edge is at least partially open.
-    if(d->sectorOpenness >= 1)
+    if (d->sectorOpenness >= 1)
         return;
 
     // Find the neighbor of this wall section and determine the relative
@@ -221,11 +221,11 @@ void ShadowEdge::prepare(dint planeIndex)
     LineOwner const *vo = &lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
     Line const &neighborLine = vo->line();
 
-    if(&neighborLine == &lineSide.line())
+    if (&neighborLine == &lineSide.line())
     {
         d->openness = 1; // Fully open.
     }
-    else if(neighborLine.isSelfReferencing()) /// @todo Skip over these? -ds
+    else if (neighborLine.isSelfReferencing()) /// @todo Skip over these? -ds
     {
         d->openness = 1;
     }
@@ -234,35 +234,35 @@ void ShadowEdge::prepare(dint planeIndex)
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         LineSide const &neighborLineSide = neighborLine.side(&lineSide.line().vertex(edge) == &neighborLine.from()? d->edge ^ 1 : d->edge);
 
-        if(!neighborLineSide.hasSections() && neighborLineSide.back().hasSector())
+        if (!neighborLineSide.hasSections() && neighborLineSide.back().hasSector())
         {
             // A one-way window, open side.
             d->openness = 1;
         }
-        else if(!neighborLineSide.hasSector() ||
-                (neighborLineSide.back().hasSector() && middleMaterialCoversOpening(neighborLineSide)))
+        else if (!neighborLineSide.hasSector() ||
+                 (neighborLineSide.back().hasSector() && middleMaterialCoversOpening(neighborLineSide)))
         {
             d->openness = 0;
         }
-        else if(neighborLineSide.back().hasSector())
+        else if (neighborLineSide.back().hasSector())
         {
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
-            if(backSec != &cluster.sector() &&
-               !((plane.isSectorFloor  () && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
-                 (plane.isSectorCeiling() && backSec->floor  ().heightSmoothed() >= plane.heightSmoothed())))
+            if (backSec != &cluster.sector() &&
+                !((plane.isSectorFloor  () && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
+                  (plane.isSectorCeiling() && backSec->floor  ().heightSmoothed() >= plane.heightSmoothed())))
             {
                 // Figure out the relative plane heights.
                 coord_t fz = plane.heightSmoothed();
-                if(planeIndex == Sector::Ceiling)
+                if (planeIndex == Sector::Ceiling)
                     fz = -fz;
 
                 coord_t bz = backSec->plane(planeIndex).heightSmoothed();
-                if(planeIndex == Sector::Ceiling)
+                if (planeIndex == Sector::Ceiling)
                     bz = -bz;
 
                 coord_t bhz = backSec->plane(otherPlaneIndex).heightSmoothed();
-                if(planeIndex == Sector::Ceiling)
+                if (planeIndex == Sector::Ceiling)
                     bhz = -bhz;
 
                 d->openness = opennessFactor(fz, bz, bhz);
@@ -270,10 +270,10 @@ void ShadowEdge::prepare(dint planeIndex)
         }
     }
 
-    if(d->openness < 1)
+    if (d->openness < 1)
     {
         LineOwner *vo = lineSide.line().vertexOwner(lineSide.sideId() ^ d->edge);
-        if(d->edge) vo = &vo->prev();
+        if (d->edge) vo = &vo->prev();
 
         d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
                             plane.heightSmoothed());

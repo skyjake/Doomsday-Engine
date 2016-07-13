@@ -20,14 +20,6 @@
 
 #include "world/line.h"
 
-#include <QList>
-#include <QMap>
-#include <QtAlgorithms>
-#include <doomsday/console/cmd.h>
-#include <doomsday/world/Materials>
-#include <doomsday/world/detailtexturemateriallayer.h>
-#include <doomsday/world/shinetexturemateriallayer.h>
-
 #include "dd_main.h"  // App_Materials(), verbose
 #include "m_misc.h"
 
@@ -48,6 +40,15 @@
 #  include "render/rend_fakeradio.h"
 #endif
 
+#include <doomsday/console/cmd.h>
+#include <doomsday/world/Materials>
+#include <doomsday/world/detailtexturemateriallayer.h>
+#include <doomsday/world/shinetexturemateriallayer.h>
+#include <QtAlgorithms>
+#include <QList>
+#include <QMap>
+#include <array>
+
 #ifdef WIN32
 #  undef max
 #  undef min
@@ -58,7 +59,7 @@ using namespace world;
 
 DENG2_PIMPL_NOREF(Line::Side::Segment)
 {
-    HEdge *hedge = nullptr;          ///< Half-edge attributed to the line segment (not owned).
+    HEdge *hedge = nullptr;      ///< Half-edge attributed to the line segment (not owned).
 
 #ifdef __CLIENT__
     ddouble length = 0;          ///< Accurate length of the segment.
@@ -72,6 +73,16 @@ Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
     , d(new Impl)
 {
     d->hedge = &hedge;
+}
+
+Line::Side &Line::Side::Segment::lineSide()
+{
+    return parent().as<Side>();
+}
+
+Line::Side const &Line::Side::Segment::lineSide() const
+{
+    return parent().as<Side>();
 }
 
 HEdge &Line::Side::Segment::hedge() const
@@ -122,8 +133,7 @@ DENG2_PIMPL_NOREF(Line::Side)
     dint flags = 0;                 ///< @ref sdefFlags
     Sector *sector = nullptr;       ///< Attributed sector (not owned).
 
-    typedef QList<Segment *> Segments;
-    Segments segments;              ///< On "this" side, sorted.
+    QList<Segment *> segments;      ///< On "this" side, sorted.
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
 
     dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
@@ -151,24 +161,17 @@ DENG2_PIMPL_NOREF(Line::Side)
 
 #ifdef __CLIENT__
     /**
-     * Stores data for FakeRadio.
+     * POD: FakeRadio geometry and shadow state.
      */
     struct RadioData
     {
+        std::array<edgespan_t, 2> spans;              ///< { bottom, top }
+        std::array<shadowcorner_t, 2> topCorners;     ///< { left, right }
+        std::array<shadowcorner_t, 2> bottomCorners;  ///< { left, right }
+        std::array<shadowcorner_t, 2> sideCorners;    ///< { left, right }
         de::dint updateFrame = 0;
-        edgespan_t spans[2];              ///< { bottom, top }
-        shadowcorner_t topCorners[2];     ///< { left, right }
-        shadowcorner_t bottomCorners[2];  ///< { left, right }
-        shadowcorner_t sideCorners[2];    ///< { left, right }
-
-        RadioData()
-        {
-            de::zap(spans);
-            de::zap(topCorners);
-            de::zap(bottomCorners);
-            de::zap(sideCorners);
-        }
-    } radioData;
+    };
+    RadioData radioData;
 #endif
 
     ~Impl() { qDeleteAll(segments); }
@@ -178,9 +181,9 @@ DENG2_PIMPL_NOREF(Line::Side)
      */
     Section &sectionById(dint sectionId)
     {
-        if(sections)
+        if (sections)
         {
-            switch(sectionId)
+            switch (sectionId)
             {
             case Middle: return sections->middle;
             case Bottom: return sections->bottom;
@@ -195,12 +198,12 @@ DENG2_PIMPL_NOREF(Line::Side)
     {
         needSortSegments = false;
 
-        if(segments.count() < 2)
+        if (segments.count() < 2)
             return;
 
         // We'll use a QMap for sorting the segments.
         QMap<ddouble, Segment *> sortedSegs;
-        for(Segment *seg : segments)
+        for (Segment *seg : segments)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
         }
@@ -213,7 +216,7 @@ DENG2_PIMPL_NOREF(Line::Side)
         DENG2_ASSERT(sector);
         sc.corner    = openness;
         sc.proximity = proximityPlane;
-        if(sc.proximity)
+        if (sc.proximity)
         {
             // Determine relative height offsets (affects shadow map selection).
             sc.pHeight = sc.proximity->heightSmoothed();
@@ -244,13 +247,13 @@ DENG2_PIMPL_NOREF(Line::Side)
 
     /**
      * Change the FakeRadio "edge span" metrics.
-     * @todo replace shadow edge enumeration with a shadow corner enumeration.
+     * @todo Replace shadow edge enumeration with a shadow corner enumeration. -ds
      */
     void setRadioEdgeSpan(bool top, bool right, ddouble length)
     {
         edgespan_t &span = radioData.spans[dint(top)];
         span.length = length;
-        if(!right)
+        if (!right)
         {
             span.shift = span.length;
         }
@@ -259,13 +262,13 @@ DENG2_PIMPL_NOREF(Line::Side)
     /// Observes Line FlagsChange
     void lineFlagsChanged(Line &line, dint oldFlags)
     {
-        if(sections)
+        if (sections)
         {
-            if((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
+            if ((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
             {
                 sections->top.surface.markForDecorationUpdate();
             }
-            if((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
+            if ((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
             {
                 sections->bottom.surface.markForDecorationUpdate();
             }
@@ -284,19 +287,34 @@ Line::Side::Side(Line &line, Sector *sector)
 #endif
 }
 
+Line &Line::Side::line()
+{
+    return parent().as<Line>();
+}
+
+Line const &Line::Side::line() const
+{
+    return parent().as<Line>();
+}
+
+bool Line::Side::isFront() const
+{
+    return sideId() == Line::Front;
+}
+
 String Line::Side::description() const
 {
     String const name = (isFront() ? "Front" : "Back");
 
     QStringList flagNames;
-    if(flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
-    if(flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
-    if(flags() & SDF_BLENDMIDTOBOTTOM) flagNames << "blendmiddletobottom";
-    if(flags() & SDF_BLENDBOTTOMTOMID) flagNames << "blendbottomtomiddle";
-    if(flags() & SDF_MIDDLE_STRETCH)   flagNames << "middlestretch";
+    if (flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
+    if (flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
+    if (flags() & SDF_BLENDMIDTOBOTTOM) flagNames << "blendmiddletobottom";
+    if (flags() & SDF_BLENDBOTTOMTOMID) flagNames << "blendbottomtomiddle";
+    if (flags() & SDF_MIDDLE_STRETCH)   flagNames << "middlestretch";
 
     String flagsString;
-    if(!flagNames.isEmpty())
+    if (!flagNames.isEmpty())
     {
         String const flagsAsText = flagNames.join("|");
         flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
@@ -331,22 +349,22 @@ dint Line::Side::sideId() const
 bool Line::Side::considerOneSided() const
 {
     // Are we suppressing the back sector?
-    if(d->flags & SDF_SUPPRESS_BACK_SECTOR) return true;
+    if (d->flags & SDF_SUPPRESS_BACK_SECTOR) return true;
 
-    if(!back().hasSector()) return true;
+    if (!back().hasSector()) return true;
     // Front side of a "one-way window"?
-    if(!back().hasSections()) return true;
+    if (!back().hasSections()) return true;
 
-    if(!line().definesPolyobj())
+    if (!line().definesPolyobj())
     {
         // If no segment is linked then the convex subspace on "this" side must
         // have been degenerate (thus no geometry).
         HEdge *hedge = leftHEdge();
 
-        if(!hedge || !hedge->twin().hasFace())
+        if (!hedge || !hedge->twin().hasFace())
             return true;
 
-        if(!hedge->twin().face().mapElementAs<ConvexSubspace>().hasCluster())
+        if (!hedge->twin().face().mapElementAs<ConvexSubspace>().hasCluster())
             return true;
     }
 
@@ -360,9 +378,14 @@ bool Line::Side::hasSector() const
 
 Sector &Line::Side::sector() const
 {
-    if(d->sector) return *d->sector;
-    /// @throw Line::MissingSectorError Attempted with no sector attributed.
-    throw Line::MissingSectorError("Line::Side::sector", "No sector is attributed");
+    if (d->sector) return *d->sector;
+    /// @throw MissingSectorError Attempted with no sector attributed.
+    throw MissingSectorError("Line::Side::sector", "No sector is attributed");
+}
+
+Sector *Line::Side::sectorPtr() const
+{
+    return hasSector() ? &sector() : nullptr;
 }
 
 bool Line::Side::hasSections() const
@@ -373,7 +396,7 @@ bool Line::Side::hasSections() const
 void Line::Side::addSections()
 {
     // Already defined?
-    if(hasSections()) return;
+    if (hasSections()) return;
 
     d->sections.reset(new Impl::Sections(*this));
 }
@@ -390,11 +413,11 @@ Surface const &Line::Side::surface(dint sectionId) const
 
 LoopResult Line::Side::forAllSurfaces(std::function<LoopResult(Surface &)> func) const
 {
-    if(hasSections())
+    if (hasSections())
     {
-        for(dint i = Middle; i <= Top; ++i)
+        for (dint i = Middle; i <= Top; ++i)
         {
-            if(auto result = func(const_cast<Side *>(this)->surface(i)))
+            if (auto result = func(const_cast<Side *>(this)->surface(i)))
                 return result;
         }
     }
@@ -420,14 +443,14 @@ void Line::Side::clearSegments()
 Line::Side::Segment *Line::Side::addSegment(HEdge &hedge)
 {
     // Have we an exiting segment for this half-edge?
-    for(Segment *seg : d->segments)
+    for (Segment *seg : d->segments)
     {
-        if(&seg->hedge() == &hedge)
+        if (&seg->hedge() == &hedge)
             return seg;
     }
 
     // No, insert a new one.
-    Segment *newSeg = new Segment(*this, hedge);
+    auto *newSeg = new Segment(*this, hedge);
     d->segments.append(newSeg);
     d->needSortSegments = true;  // We'll need to (re)sort.
 
@@ -440,7 +463,8 @@ Line::Side::Segment *Line::Side::addSegment(HEdge &hedge)
 HEdge *Line::Side::leftHEdge() const
 {
     if(d->segments.isEmpty()) return nullptr;
-    if(d->needSortSegments)
+
+    if (d->needSortSegments)
     {
         d->sortSegments(from().origin());
     }
@@ -449,8 +473,9 @@ HEdge *Line::Side::leftHEdge() const
 
 HEdge *Line::Side::rightHEdge() const
 {
-    if(d->segments.isEmpty()) return nullptr;
-    if(d->needSortSegments)
+    if (d->segments.isEmpty()) return nullptr;
+
+    if (d->needSortSegments)
     {
         d->sortSegments(from().origin());
     }
@@ -461,7 +486,7 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
 {
     LOG_AS("Line::Side::updateSoundEmitterOrigin");
 
-    if(!hasSections()) return;
+    if (!hasSections()) return;
 
     SoundEmitter &emitter = d->sectionById(sectionId).soundEmitter;
 
@@ -474,10 +499,10 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
     ddouble const fceil  = d->sector->ceiling().height();
 
     /// @todo fixme what if considered one-sided?
-    switch(sectionId)
+    switch (sectionId)
     {
     case Middle:
-        if(!back().hasSections() || line().isSelfReferencing())
+        if (!back().hasSections() || line().isSelfReferencing())
         {
             emitter.origin[2] = (ffloor + fceil) / 2;
         }
@@ -489,8 +514,8 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
         break;
 
     case Bottom:
-        if(!back().hasSections() || line().isSelfReferencing() ||
-           back().sector().floor().height() <= ffloor)
+        if (!back().hasSections() || line().isSelfReferencing()
+           || back().sector().floor().height() <= ffloor)
         {
             emitter.origin[2] = ffloor;
         }
@@ -501,8 +526,8 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
         break;
 
     case Top:
-        if(!back().hasSections() || line().isSelfReferencing() ||
-           back().sector().ceiling().height() >= fceil)
+        if (!back().hasSections() || line().isSelfReferencing()
+            || back().sector().ceiling().height() >= fceil)
         {
             emitter.origin[2] = fceil;
         }
@@ -516,7 +541,7 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
 
 void Line::Side::updateAllSoundEmitterOrigins()
 {
-    if(!hasSections()) return;
+    if (!hasSections()) return;
 
     updateMiddleSoundEmitterOrigin();
     updateBottomSoundEmitterOrigin();
@@ -525,7 +550,7 @@ void Line::Side::updateAllSoundEmitterOrigins()
 
 void Line::Side::updateSurfaceNormals()
 {
-    if(!hasSections()) return;
+    if (!hasSections()) return;
 
     Vector3f normal((  to().origin().y - from().origin().y) / line().length(),
                     (from().origin().x -   to().origin().x) / line().length(),
@@ -550,17 +575,17 @@ void Line::Side::setFlags(dint flagsToChange, FlagOp operation)
 void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topColor,
     Vector3f const **bottomColor) const
 {
-    if(hasSections())
+    if (hasSections())
     {
-        switch(sectionId)
+        switch (sectionId)
         {
         case Middle:
-            if(isFlagged(SDF_BLENDMIDTOTOP))
+            if (isFlagged(SDF_BLENDMIDTOTOP))
             {
                 *topColor    = &top   ().tintColor();
                 *bottomColor = &middle().tintColor();
             }
-            else if(isFlagged(SDF_BLENDMIDTOBOTTOM))
+            else if (isFlagged(SDF_BLENDMIDTOBOTTOM))
             {
                 *topColor    = &middle().tintColor();
                 *bottomColor = &bottom().tintColor();
@@ -573,7 +598,7 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
             return;
 
         case Top:
-            if(isFlagged(SDF_BLENDTOPTOMID))
+            if (isFlagged(SDF_BLENDTOPTOMID))
             {
                 *topColor    = &top   ().tintColor();
                 *bottomColor = &middle().tintColor();
@@ -586,7 +611,7 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
             return;
 
         case Bottom:
-            if(isFlagged(SDF_BLENDBOTTOMTOMID))
+            if (isFlagged(SDF_BLENDBOTTOMTOMID))
             {
                 *topColor    = &middle().tintColor();
                 *bottomColor = &bottom().tintColor();
@@ -599,8 +624,8 @@ void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topCol
             return;
         }
     }
-    /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", "Invalid section id " + String::number(sectionId));
+    /// @throw InvalidSectionIdError The given section identifier is not valid.
+    throw InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", "Invalid section id " + String::number(sectionId));
 }
 
 dint Line::Side::shadowVisCount() const
@@ -617,10 +642,10 @@ void Line::Side::setShadowVisCount(dint newCount)
 
 static bool materialHasAnimatedTextureLayers(Material const &mat)
 {
-    for(dint i = 0; i < mat.layerCount(); ++i)
+    for (dint i = 0; i < mat.layerCount(); ++i)
     {
         MaterialLayer const &layer = mat.layer(i);
-        if(!layer.is<DetailTextureMaterialLayer>() && !layer.is<ShineTextureMaterialLayer>())
+        if (!layer.is<DetailTextureMaterialLayer>() && !layer.is<ShineTextureMaterialLayer>())
         {
             if(layer.isAnimated()) return true;
         }
@@ -642,19 +667,19 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     Sector *frontSec = side.sectorPtr();
     Sector *backSec  = side.back().sectorPtr();
 
-    if(backSec)
+    if (backSec)
     {
         // Our first choice is a material in the other sector.
-        if(section == LineSide::Bottom)
+        if (section == LineSide::Bottom)
         {
-            if(frontSec->floor().height() < backSec->floor().height())
+            if (frontSec->floor().height() < backSec->floor().height())
             {
                 choice1 = backSec->floorSurface().materialPtr();
             }
         }
-        else if(section == LineSide::Top)
+        else if (section == LineSide::Top)
         {
-            if(frontSec->ceiling().height() > backSec->ceiling().height())
+            if (frontSec->ceiling().height() > backSec->ceiling().height())
             {
                 choice1 = backSec->ceilingSurface().materialPtr();
             }
@@ -662,7 +687,7 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
 
         // In the special case of sky mask on the back plane, our best
         // choice is always this material.
-        if(choice1 && choice1->isSkyMasked())
+        if (choice1 && choice1->isSkyMasked())
         {
             return choice1;
         }
@@ -673,16 +698,16 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
         // Try the left neighbor first.
         Line *other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()),
                                          Clockwise, frontSec);
-        if(!other)
+        if (!other)
         {
             // Try the right neighbor.
             other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
                                        Anticlockwise, frontSec);
         }
 
-        if(other)
+        if (other)
         {
-            if(!other->hasBackSector())
+            if (!other->back().hasSector())
             {
                 // Our choice is clear - the middle material.
                 choice1 = other->front().middle().materialPtr();
@@ -690,16 +715,16 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
             else
             {
                 // Compare the relative heights to decide.
-                LineSide &otherSide = other->side(&other->frontSector() == frontSec? Line::Front : Line::Back);
-                Sector &otherSec    = other->side(&other->frontSector() == frontSec? Line::Back  : Line::Front).sector();
+                LineSide &otherSide = other->side(&other->front().sector() == frontSec ? Line::Front : Line::Back);
+                Sector &otherSec    = other->side(&other->front().sector() == frontSec ? Line::Back  : Line::Front).sector();
 
-                if(otherSec.ceiling().height() <= frontSec->floor().height())
+                if (otherSec.ceiling().height() <= frontSec->floor().height())
                     choice1 = otherSide.top().materialPtr();
-                else if(otherSec.floor().height() >= frontSec->ceiling().height())
+                else if (otherSec.floor().height() >= frontSec->ceiling().height())
                     choice1 = otherSide.bottom().materialPtr();
-                else if(otherSec.ceiling().height() < frontSec->ceiling().height())
+                else if (otherSec.ceiling().height() < frontSec->ceiling().height())
                     choice1 = otherSide.top().materialPtr();
-                else if(otherSec.floor().height() > frontSec->floor().height())
+                else if (otherSec.floor().height() > frontSec->floor().height())
                     choice1 = otherSide.bottom().materialPtr();
                 // else we'll settle for a plane material.
             }
@@ -710,20 +735,20 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     choice2 = frontSec->planeSurface(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
-    if(choice1 && !materialHasAnimatedTextureLayers(*choice1) && !choice1->isSkyMasked())
+    if (choice1 && !materialHasAnimatedTextureLayers(*choice1) && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !materialHasAnimatedTextureLayers(*choice2) && !choice2->isSkyMasked())
+    if (choice2 && !materialHasAnimatedTextureLayers(*choice2) && !choice2->isSkyMasked())
         return choice2;
 
     // Prefer a non-masked material.
-    if(choice1 && !choice1->isSkyMasked())
+    if (choice1 && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !choice2->isSkyMasked())
+    if (choice2 && !choice2->isSkyMasked())
         return choice2;
 
     // At this point we'll accept anything if it means avoiding HOM.
-    if(choice1) return choice1;
-    if(choice2) return choice2;
+    if (choice1) return choice1;
+    if (choice2) return choice2;
 
     // We'll assign the special "missing" material...
     return &world::Materials::get().material(de::Uri("System", Path("missing")));
@@ -732,15 +757,15 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
 static void addMissingMaterial(LineSide &side, dint section)
 {
     // Sides without sections need no fixing.
-    if(!side.hasSections()) return;
+    if (!side.hasSections()) return;
     // ...nor those of self-referencing lines.
-    if(side.line().isSelfReferencing()) return;
+    if (side.line().isSelfReferencing()) return;
     // ...nor those of "one-way window" lines.
-    if(!side.back().hasSections() && side.back().hasSector()) return;
+    if (!side.back().hasSections() && side.back().hasSector()) return;
 
     // A material must actually be missing to qualify for fixing.
     Surface &surface = side.surface(section);
-    if(surface.hasMaterial() && !surface.hasFixMaterial())
+    if (surface.hasMaterial() && !surface.hasFixMaterial())
         return;
 
     Material *oldMaterial = surface.materialPtr();
@@ -748,13 +773,13 @@ static void addMissingMaterial(LineSide &side, dint section)
     // Look for and apply a suitable replacement (if found).
     surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
 
-    if(oldMaterial == surface.materialPtr())
+    if (oldMaterial == surface.materialPtr())
         return;
 
     // We'll need to recalculate reverb.
-    if(HEdge *hedge = side.leftHEdge())
+    if (HEdge *hedge = side.leftHEdge())
     {
-        if(hedge->hasFace() && hedge->face().hasMapElement())
+        if (hedge->hasFace() && hedge->face().hasMapElement())
         {
             SectorCluster &cluster = hedge->face().mapElementAs<ConvexSubspace>().cluster();
             cluster.markReverbDirty();
@@ -763,48 +788,48 @@ static void addMissingMaterial(LineSide &side, dint section)
     }
 
     // During map setup we log missing materials.
-    if(ddMapSetup && verbose)
+    if (ddMapSetup && verbose)
     {
         String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
 
         LOG_WARNING("%s of Line #%d is missing a material for the %s section.\n"
                     "  %s was chosen to complete the definition.")
-            << (side.isBack()? "Back" : "Front") << side.line().indexInMap()
-            << (section == LineSide::Middle? "middle" : section == LineSide::Top? "top" : "bottom")
+            << (side.isBack() ? "Back" : "Front") << side.line().indexInMap()
+            << (section == LineSide::Middle ? "middle" : section == LineSide::Top? "top" : "bottom")
             << path;
     }
 }
 
 void Line::Side::fixMissingMaterials()
 {
-    if(hasSector() && back().hasSector())
+    if (hasSector() && back().hasSector())
     {
         Sector const &frontSec = sector();
         Sector const &backSec  = back().sector();
 
         // A potential bottom section fix?
-        if(!(frontSec.floorSurface().hasSkyMaskedMaterial() &&
-              backSec.floorSurface().hasSkyMaskedMaterial()))
+        if (!(frontSec.floorSurface().hasSkyMaskedMaterial() &&
+              backSec .floorSurface().hasSkyMaskedMaterial()))
         {
-            if(frontSec.floor().height() < backSec.floor().height())
+            if (frontSec.floor().height() < backSec.floor().height())
             {
                 addMissingMaterial(*this, LineSide::Bottom);
             }
-            else if(bottom().hasFixMaterial())
+            else if (bottom().hasFixMaterial())
             {
                 bottom().setMaterial(0);
             }
         }
 
         // A potential top section fix?
-        if(!(frontSec.ceilingSurface().hasSkyMaskedMaterial() &&
-              backSec.ceilingSurface().hasSkyMaskedMaterial()))
+        if (!(frontSec.ceilingSurface().hasSkyMaskedMaterial() &&
+              backSec .ceilingSurface().hasSkyMaskedMaterial()))
         {
-            if(backSec.ceiling().height() < frontSec.ceiling().height())
+            if (backSec.ceiling().height() < frontSec.ceiling().height())
             {
                 addMissingMaterial(*this, LineSide::Top);
             }
-            else if(top().hasFixMaterial())
+            else if (top().hasFixMaterial())
             {
                 top().setMaterial(0);
             }
@@ -843,13 +868,13 @@ edgespan_t const &Line::Side::radioEdgeSpan(bool top) const
 static dfloat radioCornerOpenness(binangle_t angle)
 {
     // Facing outwards?
-    if(angle > BANG_180) return -1;
+    if (angle > BANG_180) return -1;
 
     // Precisely collinear?
-    if(angle == BANG_180) return 0;
+    if (angle == BANG_180) return 0;
 
     // If the difference is too small consider it collinear (there won't be a shadow).
-    if(angle < BANG_45 / 5) return 0;
+    if (angle < BANG_45 / 5) return 0;
 
     // 90 degrees is the largest effective difference.
     return (angle > BANG_90)? dfloat( BANG_90 ) / angle : dfloat( angle ) / BANG_90;
@@ -857,7 +882,7 @@ static dfloat radioCornerOpenness(binangle_t angle)
 
 static inline binangle_t lineNeighborAngle(LineSide const &side, Line const *other, binangle_t diff)
 {
-    return (other && other != &side.line())? diff : 0 /*Consider it coaligned*/;
+    return (other && other != &side.line()) ? diff : 0 /*Consider it coaligned*/;
 }
 
 static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
@@ -872,7 +897,7 @@ static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
 /**
  * Returns @c true if there is open space in the sector.
  */
-static inline bool sectorOpen(Sector const *sector)
+static inline bool sectorIsOpen(Sector const *sector)
 {
     return (sector && sector->ceiling().height() > sector->floor().height());
 }
@@ -905,14 +930,14 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         // Select the next line.
         binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev().angle());
         Line const *iter = &own->navigate(direction).line();
-        dint scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector ? Line::Back : Line::Front);
+        dint scanSecSide = (iter->front().hasSector() && iter->front().sectorPtr() == startSector ? Line::Back : Line::Front);
         // Step selfreferencing lines.
-        while((!iter->hasFrontSector() && !iter->hasBackSector()) || iter->isSelfReferencing())
+        while ((!iter->front().hasSector() && !iter->back().hasSector()) || iter->isSelfReferencing())
         {
             own         = &own->navigate(direction);
             diff       += (direction == Clockwise ? own->angle() : own->prev().angle());
             iter        = &own->navigate(direction).line();
-            scanSecSide = (iter->frontSectorPtr() == startSector);
+            scanSecSide = (iter->front().sectorPtr() == startSector);
         }
 
         // Determine the relative backsector.
@@ -920,15 +945,15 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         Sector const *scanSector = scanSide.sectorPtr();
 
         // Select plane heights for relative offset comparison.
-        ddouble const iFFloor = iter->frontSector().floor  ().heightSmoothed();
-        ddouble const iFCeil  = iter->frontSector().ceiling().heightSmoothed();
-        Sector const *bsec    = iter->backSectorPtr();
+        ddouble const iFFloor = iter->front().sector().floor  ().heightSmoothed();
+        ddouble const iFCeil  = iter->front().sector().ceiling().heightSmoothed();
+        Sector const *bsec    = iter->back().sectorPtr();
         ddouble const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
         ddouble const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
 
         // Determine whether the relative back sector is closed.
         bool closed = false;
-        if(side.isFront() && iter->hasBackSector())
+        if (side.isFront() && iter->back().hasSector())
         {
             closed = top? (iBFloor >= fCeil) : (iBCeil <= fFloor);  // Compared to "this" sector anyway.
         }
@@ -941,13 +966,13 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         // Does this line's length contribute to the alignment of the texture on the
         // segment shadow edge being rendered?
         ddouble lengthDelta = 0;
-        if(top)
+        if (top)
         {
-            if(iter->hasBackSector()
-                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFCeil >= fCeil)
-                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFCeil >= fCeil)
-                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
-                        && iBCeil >= fCeil && sectorOpen(iter->backSectorPtr()))))
+            if (iter->back().hasSector()
+                && (   (side.isFront() && iter->back().sectorPtr() == side.line().front().sectorPtr() && iFCeil >= fCeil)
+                    || (side.isBack () && iter->back().sectorPtr() == side.line().back().sectorPtr () && iFCeil >= fCeil)
+                    || (side.isFront() && closed == false && iter->back().sectorPtr() != side.line().front().sectorPtr()
+                        && iBCeil >= fCeil && sectorIsOpen(iter->back().sectorPtr()))))
             {
                 gap += iter->length();  // Should we just mark it done instead?
             }
@@ -959,11 +984,11 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         }
         else
         {
-            if(iter->hasBackSector()
-                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFFloor <= fFloor)
-                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFFloor <= fFloor)
-                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
-                        && iBFloor <= fFloor && sectorOpen(iter->backSectorPtr()))))
+            if (iter->back().hasSector()
+                && (   (side.isFront() && iter->back().sectorPtr() == side.line().front().sectorPtr() && iFFloor <= fFloor)
+                    || (side.isBack () && iter->back().sectorPtr() == side.line().back().sectorPtr () && iFFloor <= fFloor)
+                    || (side.isFront() && closed == false && iter->back().sectorPtr() != side.line().front().sectorPtr()
+                        && iBFloor <= fFloor && sectorIsOpen(iter->back().sectorPtr()))))
             {
                 gap += iter->length();  // Should we just mark it done instead?
             }
@@ -975,30 +1000,29 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         }
 
         // Time to stop?
-        if(iter == &side.line())
-            break;
+        if (iter == &side.line()) break;
+
         // Not coalignable?
-        if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
-            break;  // No.
+        if (!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP)) break;
+
         // Perhaps a closed edge?
-        if(scanSector)
+        if (scanSector)
         {
-            if(!sectorOpen(scanSector))
-                break;
+            if (!sectorIsOpen(scanSector)) break;
 
             // A height difference from the start sector?
-            if(top)
+            if (top)
             {
-                if(scanSector->ceiling().heightSmoothed() != fCeil
-                   && scanSector->floor().heightSmoothed() < startSector->ceiling().heightSmoothed())
+                if (scanSector->ceiling().heightSmoothed() != fCeil
+                    && scanSector->floor().heightSmoothed() < startSector->ceiling().heightSmoothed())
                 {
                     break;
                 }
             }
             else
             {
-                if(scanSector->floor().heightSmoothed() != fFloor
-                   && scanSector->ceiling().heightSmoothed() > startSector->floor().heightSmoothed())
+                if (scanSector->floor().heightSmoothed() != fFloor
+                    && scanSector->ceiling().heightSmoothed() > startSector->floor().heightSmoothed())
                 {
                     break;
                 }
@@ -1006,18 +1030,18 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         }
 
         // Swap to the iter line's owner node (i.e., around the corner)?
-        if(&own->navigate(direction) == iter->v2Owner())
+        if (&own->navigate(direction) == iter->v2Owner())
         {
             own = iter->v1Owner();
         }
-        else if(&own->navigate(direction) == iter->v1Owner())
+        else if (&own->navigate(direction) == iter->v1Owner())
         {
             own = iter->v2Owner();
         }
 
         // Skip into the back neighbor sector of the iter line if heights are within
         // the accepted range.
-        if(scanSector && side.back().hasSector() && scanSector != side.back().sectorPtr()
+        if (scanSector && side.back().hasSector() && scanSector != side.back().sectorPtr()
             && (   ( top && scanSector->ceiling().heightSmoothed() == startSector->ceiling().heightSmoothed())
                 || (!top && scanSector->floor  ().heightSmoothed() == startSector->floor  ().heightSmoothed())))
         {
@@ -1026,7 +1050,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
             // be two sided isn't, we need to check whether there is a valid neighbor.
             Line *backNeighbor = R_FindLineNeighbor(*iter, *own, direction, startSector);
 
-            if(backNeighbor && backNeighbor != iter)
+            if (backNeighbor && backNeighbor != iter)
             {
                 // Into the back neighbor sector.
                 own = &own->navigate(direction);
@@ -1040,13 +1064,13 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 
     // Now we've found the furthest coalignable neighbor, select the back neighbor if
     // present for "edge open-ness" comparison.
-    if(edge.sector)  // The back sector of the coalignable neighbor.
+    if (edge.sector)  // The back sector of the coalignable neighbor.
     {
         // Since we have the details of the backsector already, simply get the next
         // neighbor (it *is* the back neighbor).
         DENG2_ASSERT(edge.line);
         edge.line = R_FindLineNeighbor(*edge.line,
-                                       *edge.line->vertexOwner(dint(edge.line->hasBackSector() && edge.line->backSectorPtr() == edge.sector) ^ dint(right)),
+                                       *edge.line->vertexOwner(dint(edge.line->back().hasSector() && edge.line->back().sectorPtr() == edge.sector) ^ dint(right)),
                                        direction, edge.sector, &edge.diff);
     }
 }
@@ -1066,19 +1090,19 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 void Line::Side::updateRadioForFrame(dint frameNumber)
 {
     // Disabled completely?
-    if(!::rendFakeRadio || ::levelFullBright) return;
+    if (!::rendFakeRadio || ::levelFullBright) return;
 
     // Updates are disabled?
-    if(!::devFakeRadioUpdate) return;
+    if (!::devFakeRadioUpdate) return;
 
     // Sides without sectors don't need updating.
-    if(!hasSector()) return;
+    if (!hasSector()) return;
 
     // Sides of self-referencing lines do not receive shadows. (Not worth it?).
-    if(line().isSelfReferencing()) return;
+    if (line().isSelfReferencing()) return;
 
     // Have already determined the shadow properties?
-    if(d->radioData.updateFrame == frameNumber) return;
+    if (d->radioData.updateFrame == frameNumber) return;
     d->radioData.updateFrame = frameNumber;  // Mark as done.
 
     // Process the side corners first.
@@ -1087,7 +1111,7 @@ void Line::Side::updateRadioForFrame(dint frameNumber)
 
     // Top and bottom corners are somewhat more complex as we must traverse neighbors
     // to find the extent of the coalignable surfaces for texture mapping/selection.
-    for(dint i = 0; i < 2; ++i)
+    for (dint i = 0; i < 2; ++i)
     {
         bool const rightEdge = i != 0;
 
@@ -1131,7 +1155,7 @@ dint Line::Side::setProperty(DmuArgs const &args)
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        if(P_IsDummy(&line()))
+        if (P_IsDummy(&line()))
         {
             args.value(DMT_SIDE_SECTOR, &d->sector, 0);
         }
@@ -1160,11 +1184,11 @@ DENG2_PIMPL(Line)
     dint flags;                 ///< Public DDLF_* flags.
     Side front;                 ///< Front side of the line.
     Side back;                  ///< Back side of the line.
-    bool mapped[DDMAXPLAYERS];  ///< Whether the line has been seen by each player yet.
+    std::array<bool, DDMAXPLAYERS> mapped; ///< Whether the line has been seen by each player yet.
 
     Vertex *from     = nullptr; ///< Start vertex (not owned).
     Vertex *to       = nullptr; ///< End vertex (not owned).
-    Polyobj *polyobj = nullptr; ///< Polyobj the line defines a section of, if any.
+    Polyobj *polyobj = nullptr; ///< Polyobj the line defines a section of, if any (not owned).
 
     dint validCount  = 0;       ///< Used by legacy algorithms to prevent repeated processing.
 
@@ -1183,7 +1207,7 @@ DENG2_PIMPL(Line)
             : direction(to.origin() - from.origin())
             , length   (direction.length())
             , angle    (bamsAtan2(dint(direction.y), dint(direction.x)))
-            , slopeType(M_SlopeTypeXY(direction.x, direction.y))
+            , slopeType(M_SlopeType(direction.data().baseAs<ddouble>()))
         {
             V2d_InitBoxXY (aaBox.arvec2, from.x(), from.y());
             V2d_AddToBoxXY(aaBox.arvec2, to  .x(), to  .y());
@@ -1195,9 +1219,7 @@ DENG2_PIMPL(Line)
         : Base (i)
         , front(*i, frontSector)
         , back (*i, backSector)
-    {
-       de::zap(mapped);
-    }
+    {}
 
     /**
      * Returns the additional geometry metrics (cached).
@@ -1228,8 +1250,8 @@ Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *ba
     , d(new Impl(this, frontSector, backSector))
 {
     d->flags = flags;
-    replaceFrom(from);
-    replaceTo  (to);
+    replaceVertex(From, from);
+    replaceVertex(To  , to);
 }
 
 dint Line::flags() const
@@ -1266,8 +1288,8 @@ bool Line::definesPolyobj() const
 Polyobj &Line::polyobj() const
 {
     if (d->polyobj) return *d->polyobj;
-    /// @throw Line::MissingPolyobjError Attempted with no polyobj attributed.
-    throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
+    /// @throw MissingPolyobjError Attempted with no polyobj attributed.
+    throw MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
 }
 
 void Line::setPolyobj(Polyobj *newPolyobj)
@@ -1289,6 +1311,11 @@ void Line::setPolyobj(Polyobj *newPolyobj)
     }
 }
 
+bool Line::isSelfReferencing() const
+{
+    return front().hasSector() && front().sectorPtr() == back().sectorPtr();
+}
+
 Line::Side &Line::side(dint back)
 {
     return (back ? d->back : d->front);
@@ -1303,16 +1330,10 @@ LoopResult Line::forAllSides(std::function<LoopResult(Side &)> func) const
 {
     for (dint i = 0; i < 2; ++i)
     {
-        if (auto result = func(const_cast<Line *>(this)->side(i)))
+        if (auto result = func(const_cast<Side &>(side(i))))
             return result;
     }
     return LoopContinue;
-}
-
-Vertex &Line::vertex(dint to) const
-{
-    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
-    return (to ? *d->to : *d->from);
 }
 
 void Line::replaceVertex(dint to, Vertex &newVertex)
@@ -1328,11 +1349,44 @@ void Line::replaceVertex(dint to, Vertex &newVertex)
     d->gdata.release();
 }
 
+Vertex &Line::vertex(dint to)
+{
+    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
+    return (to ? *d->to : *d->from);
+}
+
+Vertex const &Line::vertex(dint to) const
+{
+    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
+    return (to ? *d->to : *d->from);
+}
+
+Vertex &Line::from()
+{
+    return vertex(From);
+}
+
+Vertex const &Line::from() const
+{
+    return vertex(From);
+}
+
+Vertex &Line::to()
+{
+    return vertex(To);
+}
+
+Vertex const &Line::to() const
+{
+    return vertex(To);
+}
+
 LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
 {
     for (dint i = 0; i < 2; ++i)
     {
-        if (auto result = func(vertex(i))) return result;
+        if (auto result = func(const_cast<Line *>(this)->vertex(i)))
+            return result;
     }
     return LoopContinue;
 }
@@ -1342,9 +1396,15 @@ AABoxd const &Line::aaBox() const
     return d->geom().aaBox;
 }
 
-ddouble Line::length() const
+binangle_t Line::angle() const
 {
-    return d->geom().length;
+    return d->geom().angle;
+}
+
+Vector2d Line::center() const
+{
+    /// @todo Worth caching in Impl::GeomData? -dj
+    return from().origin() + direction() / 2;
 }
 
 Vector2d const &Line::direction() const
@@ -1352,14 +1412,14 @@ Vector2d const &Line::direction() const
     return d->geom().direction;
 }
 
+ddouble Line::length() const
+{
+    return d->geom().length;
+}
+
 slopetype_t Line::slopeType() const
 {
     return d->geom().slopeType;
-}
-
-binangle_t Line::angle() const
-{
-    return d->geom().angle;
 }
 
 dint Line::boxOnSide(AABoxd const &box) const
@@ -1426,7 +1486,7 @@ bool Line::isMappedByPlayer(dint playerNum) const
     return d->mapped[playerNum];
 }
 
-void Line::markMappedByPlayer(dint playerNum, bool yes)
+void Line::setMappedByPlayer(dint playerNum, bool yes)
 {
     d->mapped[playerNum] = yes;
 }
@@ -1441,13 +1501,33 @@ void Line::setValidCount(dint newValidCount)
     d->validCount = newValidCount;
 }
 
+Line::Side &Line::front()
+{
+    return side(Front);
+}
+
+Line::Side const &Line::front() const
+{
+    return side(Front);
+}
+
+Line::Side &Line::back()
+{
+    return side(Back);
+}
+
+Line::Side const &Line::back() const
+{
+    return side(Back);
+}
+
 #ifdef __CLIENT__
-bool Line::castsShadow() const
+bool Line::isShadowCaster() const
 {
     if (definesPolyobj()) return false;
     if (isSelfReferencing()) return false;
 
-    // Lines with no other neighbor do not qualify for shadowing.
+    // Lines with no other neighbor do not qualify as shadow casters.
     if (&v1Owner()->next().line() == this || &v2Owner()->next().line() == this)
        return false;
 
@@ -1470,12 +1550,12 @@ dint Line::property(DmuArgs &args) const
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *frontAdr = hasFrontSections() ? &d->front : nullptr;
+        Line::Side const *frontAdr = front().hasSections() ? &d->front : nullptr;
         args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *backAdr  = hasBackSections() ? &d->back   : nullptr;
+        Line::Side const *backAdr  = back().hasSections() ? &d->back   : nullptr;
         args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_VERTEX0:

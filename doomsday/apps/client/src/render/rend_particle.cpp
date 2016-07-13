@@ -498,12 +498,12 @@ static void drawParticles(dint rtype, bool withBlend)
 
     // Should we use a texture?
     DGLuint tex = 0;
-    if(rtype == PTC_POINT ||
-       (rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES))
+    if (rtype == PTC_POINT
+       || (rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES))
     {
-        if(renderTextures)
+        if (renderTextures)
         {
-            if(rtype == PTC_POINT || 0 == ptctexname[rtype - PTC_TEXTURE])
+            if (rtype == PTC_POINT || 0 == ptctexname[rtype - PTC_TEXTURE])
                 tex = pointTex;
             else
                 tex = ptctexname[rtype - PTC_TEXTURE];
@@ -511,7 +511,7 @@ static void drawParticles(dint rtype, bool withBlend)
     }
 
     ushort primType = GL_QUADS;
-    if(rtype == PTC_MODEL)
+    if (rtype == PTC_MODEL)
     {
         //glDepthMask(GL_TRUE);
         //glEnable(GL_DEPTH_TEST);
@@ -520,7 +520,7 @@ static void drawParticles(dint rtype, bool withBlend)
                 .setDepthTest(true)
                 .apply();
     }
-    else if(tex != 0)
+    else if (tex != 0)
     {
         //glDepthMask(GL_FALSE);
         //glDisable(GL_CULL_FACE);
@@ -543,43 +543,43 @@ static void drawParticles(dint rtype, bool withBlend)
 
     // How many particles will be drawn?
     size_t i = 0;
-    if(maxParticles)
+    if (maxParticles)
     {
         i = numParts - (unsigned) maxParticles;
     }
 
     blendmode_t mode = BM_NORMAL, newMode;
-    for(; i < numParts; ++i)
+    for (; i < numParts; ++i)
     {
         OrderedParticle const *slot = &order[i];
         Generator const *gen        = slot->generator;
-        ParticleInfo const *pinfo   = &gen->particleInfo()[slot->particleId];
+        ParticleInfo const &pinfo   = gen->particleInfo()[slot->particleId];
 
-        GeneratorParticleStage const *st = &gen->stages[pinfo->stage];
-        ded_ptcstage_t const *stDef      = &gen->def->stages[pinfo->stage];
+        GeneratorParticleStage const *st = &gen->stages[pinfo.stage];
+        ded_ptcstage_t const *stDef      = &gen->def->stages[pinfo.stage];
 
         dshort stageType = st->type;
-        if(stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
-           0 == ptctexname[stageType - PTC_TEXTURE])
+        if (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
+            0 == ptctexname[stageType - PTC_TEXTURE])
         {
             stageType = PTC_POINT;
         }
 
         // Only render one type of particles.
-        if((rtype == PTC_MODEL && stDef->model < 0) ||
-           (rtype != PTC_MODEL && stageType != rtype))
+        if ((rtype == PTC_MODEL && stDef->model < 0) ||
+            (rtype != PTC_MODEL && stageType != rtype))
         {
             continue;
         }
 
-        if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES &&
-           0 == ptctexname[rtype - PTC_TEXTURE])
+        if (rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES &&
+            0 == ptctexname[rtype - PTC_TEXTURE])
             continue;
 
-        if((gen->blendmode() != BM_ADD) == withBlend)
+        if ((gen->blendmode() != BM_ADD) == withBlend)
             continue;
 
-        if(rtype != PTC_MODEL && !withBlend)
+        if (rtype != PTC_MODEL && !withBlend)
         {
             // We may need to change the blending mode.
             newMode = gen->blendmode();
@@ -594,19 +594,19 @@ static void drawParticles(dint rtype, bool withBlend)
 
         // Is there a next stage for this particle?
         ded_ptcstage_t const *nextStDef;
-        if(pinfo->stage >= gen->def->stages.size() - 1 ||
-           !gen->stages[pinfo->stage + 1].type)
+        if (pinfo.stage >= gen->def->stages.size() - 1 ||
+            !gen->stages[pinfo.stage + 1].type)
         {
             // There is no "next stage". Use the current one.
-            nextStDef = &gen->def->stages[pinfo->stage];
+            nextStDef = &gen->def->stages[pinfo.stage];
         }
         else
         {
-            nextStDef = &gen->def->stages[pinfo->stage + 1];
+            nextStDef = &gen->def->stages[pinfo.stage + 1];
         }
 
         // Where is intermark?
-        dfloat const inter = 1 - dfloat( pinfo->tics ) / stDef->tics;
+        dfloat const inter = 1 - dfloat( pinfo.tics ) / stDef->tics;
 
         // Calculate size and color.
         dfloat size = de::lerp(    stDef->particleRadius(slot->particleId),
@@ -621,7 +621,7 @@ static void drawParticles(dint rtype, bool withBlend)
         {
             // This is a simplified version of sectorlight (no distance
             // attenuation or range compression).
-            if(world::ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
+            if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
             {
                 dfloat const intensity = subspace->cluster().lightSourceIntensity();
                 color *= Vector4f(intensity, intensity, intensity, 1);
@@ -654,14 +654,14 @@ static void drawParticles(dint rtype, bool withBlend)
 
         glColor4f(color.x, color.y, color.z, color.w);
 
-        bool const nearWall = (pinfo->contact && !pinfo->mov[0] && !pinfo->mov[1]);
+        bool const nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
 
         bool nearPlane = false;
-        if(world::ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
+        if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
         {
             world::SectorCluster &cluster = subspace->cluster();
-            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[2] ||
-               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[2])
+            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2] ||
+               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
             {
                 nearPlane = true;
             }
@@ -677,19 +677,19 @@ static void drawParticles(dint rtype, bool withBlend)
                 flatOnWall = true;
         }
 
-        Vector3f center = gen->particleOrigin(*pinfo).xzy();
+        Vector3f center = gen->particleOrigin(pinfo).xzy();
 
         if(!flatOnPlane && !flatOnWall)
         {
-            Vector3f offset(frameTimePos, nearPlane? 0 : frameTimePos, frameTimePos);
-            center += offset * gen->particleMomentum(*pinfo).xzy();
+            Vector3f offset(frameTimePos, nearPlane ? 0 : frameTimePos, frameTimePos);
+            center += offset * gen->particleMomentum(pinfo).xzy();
         }
 
         // Model particles are rendered using the normal model rendering routine.
         if(rtype == PTC_MODEL && stDef->model >= 0)
         {
             vissprite_t temp; de::zap(temp);
-            setupModelParamsForParticle(temp, pinfo, st, stDef, center, dist, size, inter, color.w);
+            setupModelParamsForParticle(temp, &pinfo, st, stDef, center, dist, size, inter, color.w);
             Rend_DrawModel(temp);
             continue;
         }
@@ -715,18 +715,21 @@ static void drawParticles(dint rtype, bool withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                vec2d_t origin, projected;
+                DENG2_ASSERT(pinfo.contact);
+                Line const &contact = *pinfo.contact;
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
                 // collisions.
 
                 // Calculate a new center point (project onto the wall).
-                V2d_Set(origin, FIX2FLT(pinfo->origin[0]), FIX2FLT(pinfo->origin[1]));
+                vec2d_t origin;
+                V2d_Set(origin, FIX2FLT(pinfo.origin[0]), FIX2FLT(pinfo.origin[1]));
 
-                coord_t linePoint[2]     = { pinfo->contact->fromOrigin().x, pinfo->contact->fromOrigin().y };
-                coord_t lineDirection[2] = { pinfo->contact->direction().x, pinfo->contact->direction().y };
-                V2d_ProjectOnLine(projected, origin, linePoint, lineDirection);
+                vec2d_t projected;
+                V2d_ProjectOnLine(projected, origin,
+                                  contact.from().origin().data().baseAs<ddouble>(),
+                                  contact.direction().data().baseAs<ddouble>());
 
                 // Move away from the wall to avoid the worst Z-fighting.
                 ddouble const gap = -1;  // 1 map unit.
@@ -738,8 +741,7 @@ static void drawParticles(dint rtype, bool withBlend)
                     projected[1] += diff[1] / dist * gap;
                 }
 
-                DENG2_ASSERT(pinfo->contact);
-                Vector2f unitVec = lineUnitVector(*pinfo->contact);
+                Vector2f unitVec = lineUnitVector(*pinfo.contact);
 
                 glTexCoord2f(0, 0);
                 glVertex3d(projected[0] - size * unitVec.x, center.y - size,
@@ -783,9 +785,9 @@ static void drawParticles(dint rtype, bool withBlend)
         else  // It's a line.
         {
             glVertex3f(center.x, center.y, center.z);
-            glVertex3f(center.x - FIX2FLT(pinfo->mov[0]),
-                       center.y - FIX2FLT(pinfo->mov[2]),
-                       center.z - FIX2FLT(pinfo->mov[1]));
+            glVertex3f(center.x - FIX2FLT(pinfo.mov[0]),
+                       center.y - FIX2FLT(pinfo.mov[2]),
+                       center.z - FIX2FLT(pinfo.mov[1]));
         }
     }
 

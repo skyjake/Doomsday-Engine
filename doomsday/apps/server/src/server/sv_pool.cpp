@@ -1579,15 +1579,15 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     {
         LineSide *side = worldSys().map().sidePtr(delta->id);
         Line &line = side->line();
-        return M_ApproxDistance(info->origin[VX] - line.center().x,
-                                info->origin[VY] - line.center().y);
+        return M_ApproxDistance(info->origin[0] - line.center().x,
+                                info->origin[1] - line.center().y);
     }
 
     if (delta->type == DT_POLY)
     {
         Polyobj const &pob = worldSys().map().polyobj(delta->id);
-        return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
-                                info->origin[VY] - pob.origin[VY]);
+        return M_ApproxDistance(info->origin[0] - pob.origin[0],
+                                info->origin[1] - pob.origin[1]);
     }
 
     if (delta->type == DT_MOBJ_SOUND)

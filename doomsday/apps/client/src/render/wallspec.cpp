@@ -32,59 +32,59 @@ using namespace de;
 /**
  * Should angle based light level deltas be applied?
  */
-static bool useWallSectionLightLevelDeltas(LineSide const &side, int section)
+static bool useWallSectionLightLevelDeltas(LineSide const &side, dint section)
 {
     // Disabled?
-    if(rendLightWallAngle <= 0)
-        return false;
+    if (rendLightWallAngle <= 0) return false;
 
     // Never if the surface's material was chosen as a HOM fix (lighting must
     // be consistent with that applied to the relative back sector plane).
-    if(side.surface(section).hasFixMaterial() &&
-       side.hasSector() && side.back().hasSector())
+    if (side.surface(section).hasFixMaterial() &&
+        side.hasSector() && side.back().hasSector())
     {
         Sector &backSector = side.back().sector();
-        if(backSector.floor().height() < backSector.ceiling().height())
+        if (backSector.floor().height() < backSector.ceiling().height())
             return false;
     }
 
     return true;
 }
 
-WallSpec WallSpec::fromMapSide(LineSide const &side, int section) // static
+WallSpec WallSpec::fromMapSide(LineSide const &side, dint section) // static
 {
     bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
     WallSpec spec(section);
 
-    if(side.line().definesPolyobj() || isTwoSidedMiddle)
+    if (side.line().definesPolyobj() || isTwoSidedMiddle)
     {
         spec.flags &= ~WallSpec::ForceOpaque;
         spec.flags |= WallSpec::NoEdgeDivisions;
     }
 
-    if(isTwoSidedMiddle)
+    if (isTwoSidedMiddle)
     {
-        if(viewPlayer && ((viewPlayer->publicData().flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-                          !side.line().isFlagged(DDLF_BLOCKING)))
+        if (viewPlayer &&
+            ((viewPlayer->publicData().flags & (DDPF_NOCLIP | DDPF_CAMERA)) ||
+             !side.line().isFlagged(DDLF_BLOCKING)))
             spec.flags |= WallSpec::NearFade;
 
         spec.flags |= WallSpec::SortDynLights;
     }
 
     // Suppress the sky clipping in debug mode.
-    if(devRendSkyMode)
+    if (devRendSkyMode)
         spec.flags &= ~WallSpec::SkyClip;
 
-    if(side.line().definesPolyobj())
+    if (side.line().definesPolyobj())
         spec.flags |= WallSpec::NoFakeRadio;
 
     bool useLightLevelDeltas = useWallSectionLightLevelDeltas(side, section);
-    if(!useLightLevelDeltas)
+    if (!useLightLevelDeltas)
         spec.flags |= WallSpec::NoLightDeltas;
 
     // We can skip normal smoothing if light level delta smoothing won't be done.
-    if(!useLightLevelDeltas || !rendLightWallAngleSmooth)
+    if (!useLightLevelDeltas || !rendLightWallAngleSmooth)
         spec.flags |= WallSpec::NoEdgeNormalSmoothing;
 
     return spec;

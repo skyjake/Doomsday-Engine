@@ -67,14 +67,11 @@ class Line : public world::MapElement
     DENG2_NO_ASSIGN(Line)
 
 public:
-    /// Required sector attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSectorError);
+    /// The given side section identifier is invalid. @ingroup errors
+    DENG2_ERROR(InvalidSectionIdError);
 
     /// Required polyobj attribution is missing. @ingroup errors
     DENG2_ERROR(MissingPolyobjError);
-
-    /// The given side section identifier is invalid. @ingroup errors
-    DENG2_ERROR(InvalidSectionIdError);
 
     /// Notified whenever the flags change.
     DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, de::dint oldFlags))
@@ -94,6 +91,9 @@ public:
         DENG2_NO_ASSIGN(Side)
 
     public:
+        /// Required sector attribution is missing. @ingroup errors
+        DENG2_ERROR(MissingSectorError);
+
         // Section identifiers:
         enum {
             Middle,
@@ -132,24 +132,25 @@ public:
             Segment(Side &lineSide, de::HEdge &hedge);
 
             /**
-             * Returns the line side owner of the segment.
+             * Returns the half-edge for the segment.
              */
-            inline Side       &lineSide()       { return parent().as<Side>(); }
-            inline Side const &lineSide() const { return parent().as<Side>(); }
+            de::HEdge &hedge() const;
 
             /**
-             * Convenient accessor method for returning the line of the owning
-             * line side.
+             * Returns the Side owner of the segment.
+             *
+             * @see line()
+             */
+            Side       &lineSide();
+            Side const &lineSide() const;
+
+            /**
+             * Accessor. Returns the Line attributed to the Side owner of the segment.
              *
              * @see lineSide()
              */
             inline Line       &line()       { return lineSide().line(); }
             inline Line const &line() const { return lineSide().line(); }
-
-            /**
-             * Returns the half-edge for the segment.
-             */
-            de::HEdge &hedge() const;
 
 #ifdef __CLIENT__
 
@@ -208,65 +209,60 @@ public:
         /**
          * Returns the Line owner of the side.
          */
-        inline Line       &line()       { return parent().as<Line>(); }
-        inline Line const &line() const { return parent().as<Line>(); }
+        Line       &line();
+        Line const &line() const;
 
         /**
-         * Returns the logical identifier for the side (Front or Back).
+         * Returns the logical side identifier for the side (Front or Back), according to
+         * the "face" of the owning Line.
+         *
+         * @see line()
          */
         de::dint sideId() const;
 
         /**
-         * Returns @c true iff this is the front side of the owning line.
+         * Returns @c true if the side is the @ref Front of the owning Line.
          *
-         * @see lineSideId()
+         * @see sideId(), isBack()
          */
-        inline bool isFront() const { return sideId() == Front; }
+        bool isFront() const;
 
         /**
-         * Returns @c true iff this is the back side of the owning line.
+         * Returns @c true if the side is the @ref Back of the owning Line.
          *
-         * @see lineSideId(), isFront()
+         * @see sideId(), isFront()
          */
         inline bool isBack() const { return !isFront(); }
 
         /**
-         * Returns the relative back Side from the Line owner.
+         * Determines whether "this" side of the owning Line should be handled as if there
+         * were no back Sector, irrespective of whether a Sector is attributed to both.
          *
-         * @see lineSideId(), line(), Line::side(),
-         */
-        inline Side       &back()       { return line().side(sideId() ^ 1); }
-        inline Side const &back() const { return line().side(sideId() ^ 1); }
-
-        /**
-         * Determines whether "this" side of the respective line should be
-         * considered as though there were no back sector. Primarily for use
-         * with id Tech 1 format maps (which, supports partial suppression of
-         * the back sector, for use with special case drawing and playsim
-         * functionality).
+         * Primarily for use with id Tech 1 format maps (which, supports partial suppression
+         * of the back sector, for use with special case drawing and playsim functionality).
          */
         bool considerOneSided() const;
 
         /**
-         * Returns the specified relative vertex from the Line owner.
+         * Returns @c true if a Sector is attributed to the side.
          *
-         * @see lineSideId(), line(), Line::vertex(),
+         * @see sectorPtr(), sector(), considerOneSided()
          */
-        inline Vertex &vertex(de::dint to) const { return line().vertex(sideId() ^ to); }
+        bool hasSector() const;
 
         /**
-         * Returns the relative From Vertex for the side, from the Line owner.
+         * Returns the Sector attributed to the side.
          *
-         * @see vertex(), to()
+         * @see hasSector(), sectorPtr()
          */
-        inline Vertex &from() const { return vertex(From); }
+        Sector &sector() const;
 
         /**
-         * Returns the relative To Vertex for the side, from the Line owner.
+         * Returns a pointer to the Sector attributed to the side; otherwise @c nullptr.
          *
-         * @see vertex(), from()
+         * @see hasSector(), sector()
          */
-        inline Vertex &to  () const { return vertex(To); }
+        Sector *sectorPtr() const;
 
         /**
          * Returns @c true iff Sections are defined for the side.
@@ -388,27 +384,6 @@ public:
         void updateAllSoundEmitterOrigins();
 
         /**
-         * Returns @c true iff a Sector is attributed to the side.
-         *
-         * @see considerOneSided()
-         */
-        bool hasSector() const;
-
-        /**
-         * Returns the Sector attributed to the side.
-         *
-         * @see hasSector()
-         */
-        Sector &sector() const;
-
-        /**
-         * Returns a pointer to the Sector attributed to the side; otherwise @c nullptr.
-         *
-         * @see hasSector()
-         */
-        inline Sector *sectorPtr() const { return hasSector()? &sector() : nullptr; }
-
-        /**
          * Clears (destroys) all segments for the side.
          */
         void clearSegments();
@@ -511,6 +486,40 @@ public:
 
 #endif  // __CLIENT__
 
+    //- Line Accessors (side relative) --------------------------------------------------
+
+        /**
+         * Returns the relative back Side from the Line owner.
+         *
+         * @see sideId(), line()
+         */
+        inline Side       &back()       { return line().side(sideId() ^ 1); }
+        inline Side const &back() const { return line().side(sideId() ^ 1); }
+
+        /**
+         * Returns the relative From Vertex for the side, from the Line owner.
+         *
+         * @see vertex(), to()
+         */
+        inline Vertex       &from()       { return vertex(From); }
+        inline Vertex const &from() const { return vertex(From); }
+
+        /**
+         * Returns the relative To Vertex for the side, from the Line owner.
+         *
+         * @see vertex(), from()
+         */
+        inline Vertex       &to()       { return vertex(To); }
+        inline Vertex const &to() const { return vertex(To); }
+
+        /**
+         * Returns the specified relative vertex from the Line owner.
+         *
+         * @see from(), to(),
+         */
+        inline Vertex       &vertex(de::dint to)       { return line().vertex(sideId() ^ to); }
+        inline Vertex const &vertex(de::dint to) const { return line().vertex(sideId() ^ to); }
+
     protected:
         de::dint property(world::DmuArgs &args) const;
         de::dint setProperty(world::DmuArgs const &args);
@@ -535,24 +544,97 @@ public:
          Sector *backSector  = nullptr);
 
     /**
-     * Returns the specified logical side of the line.
+     * Returns the public DDLF_* flags for the line.
+     */
+    de::dint flags() const;
+
+    /**
+     * Change the line's flags. The FlagsChange audience is notified whenever the flags
+     * are changed.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param operation      Logical operation to perform on the flags.
+     */
+    void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
+
+    /**
+     * Returns @c true iff the line is flagged @a flagsToTest.
+     */
+    inline bool isFlagged(de::dint flagsToTest) const {
+        return (flags() & flagsToTest) != 0;
+    }
+
+    /**
+     * Returns @c true if the line is considered to be "self referencing" (term originates
+     * from the DOOM modding community), meaning that @em both Sides are attributed to/with
+     * the same (valid) Sector.
+     *
+     * @see isBspWindow()
+     */
+    bool isSelfReferencing() const;
+
+    /**
+     * Returns @c true if the line resulted in the creation of a BSP window effect when
+     * partitioning the map.
+     *
+     * @todo Refactor away. The prescence of a BSP window effect can now be trivially determined
+     * through inspection of the tree elements.
+     */
+    bool isBspWindow() const;
+
+    /**
+     * Returns @c true if the line is marked as @em mapped for @a playerNum.
+     */
+    bool isMappedByPlayer(de::dint playerNum) const;
+
+    /**
+     * Change the @em mapped by player state of the line.
+     */
+    void setMappedByPlayer(de::dint playerNum, bool yes = true);
+
+    /**
+     * Returns @c true if the line defines a section of some Polyobj.
+     */
+    bool definesPolyobj() const;
+
+    /**
+     * Returns the Polyobj for which the line is a defining section.
+     *
+     * @see definesPolyobj()
+     */
+    Polyobj &polyobj() const;
+
+    /**
+     * Change the polyobj attributed to the line.
+     *
+     * @param newPolyobj  New polyobj to attribute the line to. Can be @c nullptr, to clear
+     * the attribution. (Note that the polyobj may also represent this relationship, so
+     * the relevant method(s) of Polyobj will also need to be called to complete the job
+     * of clearing this relationship.)
+     */
+    void setPolyobj(Polyobj *newPolyobj);
+
+//- Sides -------------------------------------------------------------------------------
+
+    /**
+     * Returns the @em Front side of the line.
+     */
+    Side       &front();
+    Side const &front() const;
+
+    /**
+     * Returns the @em Back side of the line.
+     */
+    Side       &back();
+    Side const &back() const;
+
+    /**
+     * Returns the logical side of the line by it's fixed index.
      *
      * @param back  If not @c 0 return the Back side; otherwise the Front side.
      */
     Side       &side(de::dint back);
     Side const &side(de::dint back) const;
-
-    /**
-     * Returns the logical Front side of the line.
-     */
-    inline Side       &front()       { return side(Front); }
-    inline Side const &front() const { return side(Front); }
-
-    /**
-     * Returns the logical Back side of the line.
-     */
-    inline Side       &back()        { return side(Back); }
-    inline Side const &back() const  { return side(Back); }
 
     /**
      * Iterate through the Sides of the line.
@@ -561,144 +643,13 @@ public:
      */
     de::LoopResult forAllSides(std::function<de::LoopResult (Side &)> func) const;
 
-    /**
-     * Returns @c true iff Side::Sections are defined for the specified side
-     * of the line.
-     *
-     * @param back  If not @c 0 test the Back side; otherwise the Front side.
-     */
-    inline bool hasSections(de::dint back) const { return side(back).hasSections(); }
+//- Geometry ----------------------------------------------------------------------------
 
     /**
-     * Returns @c true iff Side::Sections are defined for the Front side of the line.
+     * Returns the axis-aligned bounding box which encompases both vertex origin points,
+     * in map coordinate space units.
      */
-    inline bool hasFrontSections() const { return hasSections(Front); }
-
-    /**
-     * Returns @c true iff Side::Sections are defined for the Back side of the line.
-     */
-    inline bool hasBackSections() const  { return hasSections(Back); }
-
-    /**
-     * Returns @c true iff a sector is attributed to the specified side of the line.
-     *
-     * @param back  If not @c 0 test the Back side; otherwise the Front side.
-     */
-    inline bool hasSector(de::dint back) const { return side(back).hasSector(); }
-
-    /**
-     * Returns @c true iff a sector is attributed to the Front side of the line.
-     */
-    inline bool hasFrontSector() const { return hasSector(Front); }
-
-    /**
-     * Returns @c true iff a sector is attributed to the Back side of the line.
-     */
-    inline bool hasBackSector() const  { return hasSector(Back); }
-
-    /**
-     * Convenient accessor method for returning the sector attributed to the
-     * specified side of the line.
-     *
-     * @param back  If not @c 0 return the sector for the Back side; otherwise
-     *              the sector of the Front side.
-     */
-    inline Sector &sector(de::dint back) const { return side(back).sector(); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sector attributed
-     * to the specified side of the line.
-     *
-     * @param back  If not @c 0 return the sector for the Back side; otherwise
-     *              the sector of the Front side.
-     */
-    inline Sector *sectorPtr(de::dint back) const { return side(back).sectorPtr(); }
-
-    /**
-     * Returns the sector attributed to the Front side of the line.
-     */
-    inline Sector &frontSector() const { return sector(Front); }
-
-    /**
-     * Returns the sector attributed to the Back side of the line.
-     */
-    inline Sector &backSector() const  { return sector(Back); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sector attributed
-     * to the front side of the line.
-     */
-    inline Sector *frontSectorPtr() const { return sectorPtr(Front); }
-
-    /**
-     * Convenient accessor method for returning a pointer to the sector attributed
-     * to the back side of the line.
-     */
-    inline Sector *backSectorPtr() const  { return sectorPtr(Back); }
-
-    /**
-     * Returns @c true iff the line is considered @em self-referencing. In this context,
-     * self-referencing (a term whose origins stem from the DOOM modding community) means
-     * a two-sided line (which is to say that a Sector is attributed to both logical sides
-     * of the line) where the attributed sectors for each logical side are the same.
-     */
-    inline bool isSelfReferencing() const {
-        return hasFrontSector() && frontSectorPtr() == backSectorPtr();
-    }
-
-    /**
-     * Returns the specified edge vertex of the line.
-     *
-     * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
-     */
-    Vertex &vertex(de::dint to) const;
-
-    /**
-     * Iterate through the edge Vertexs for the line.
-     *
-     * @param func  Callback to make for each Vertex.
-     */
-    de::LoopResult forAllVertexs(std::function<de::LoopResult(Vertex &)> func) const;
-
-    /**
-     * Convenient accessor method for returning the origin of the specified edge vertex
-     * for the line.
-     *
-     * @see vertex()
-     */
-    inline de::Vector2d const &vertexOrigin(de::dint to) const {
-        return vertex(to).origin();
-    }
-
-    /**
-     * Returns the From/Start vertex for the line.
-     */
-    inline Vertex &from() const { return vertex(From); }
-
-    /**
-     * Returns the To/End vertex for the line.
-     */
-    inline Vertex &to() const   { return vertex(To); }
-
-    /**
-     * Convenient accessor method for returning the origin of the From/Start vertex for
-     * the line.
-     *
-     * @see from()
-     */
-    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
-
-    /**
-     * Convenient accessor method for returning the origin of the To/End vertex for the line.
-     *
-     * @see to()
-     */
-    inline de::Vector2d const &toOrigin() const   { return to().origin(); }
-
-    /**
-     * Returns the point on the line which lies at the exact center of the two vertexes.
-     */
-    inline de::Vector2d center() const { return fromOrigin() + direction() / 2; }
+    AABoxd const &aaBox() const;
 
     /**
      * Returns the binary angle of the line (which, is derived from the direction vector).
@@ -708,9 +659,22 @@ public:
     binangle_t angle() const;
 
     /**
+     * Returns the map space point (on the line) which lies at the center of the line's
+     * two Vertexs.
+     */
+    de::Vector2d center() const;
+
+    /**
      * Returns a direction vector for the line from Start to End vertex.
+     *
+     * @see angle()
      */
     de::Vector2d const &direction() const;
+
+    /**
+     * Returns the accurate length of the line from Start to End vertex.
+     */
+    de::ddouble length() const;
 
     /**
      * Returns the logical @em slopetype for the line (which, is determined according to
@@ -722,20 +686,31 @@ public:
     slopetype_t slopeType() const;
 
     /**
-     * Returns the accurate length of the line from Start to End vertex.
+     * Returns the @em From Vertex for the line.
      */
-    de::ddouble length() const;
+    Vertex       &from();
+    Vertex const &from() const;
 
     /**
-     * Returns @c true iff the line has a length equivalent to zero.
+     * Returns the @em To Vertex for the line.
      */
-    inline bool hasZeroLength() const { return de::abs(length()) < 1.0 / 128.0; }
+    Vertex       &to();
+    Vertex const &to() const;
 
     /**
-     * Returns the axis-aligned bounding box which encompases both vertex origin points,
-     * in map coordinate space units.
+     * Returns the specified Vertex of the line.
+     *
+     * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
-    AABoxd const &aaBox() const;
+    Vertex       &vertex(de::dint to);
+    Vertex const &vertex(de::dint to) const;
+
+    /**
+     * Iterate through the edge Vertexs for the line.
+     *
+     * @param func  Callback to make for each Vertex.
+     */
+    de::LoopResult forAllVertexs(std::function<de::LoopResult(Vertex &)> func) const;
 
     /**
      * On which side of the line does the specified box lie?
@@ -781,67 +756,17 @@ public:
      */
     de::ddouble pointOnSide(de::Vector2d const &point) const;
 
-    /**
-     * Returns @c true iff the line defines a section of some Polyobj.
-     */
-    bool definesPolyobj() const;
+protected:
+    de::dint property(world::DmuArgs &args) const;
+    de::dint setProperty(world::DmuArgs const &args);
 
+public:
+#ifdef __CLIENT__
     /**
-     * Returns the Polyobj for which the line is a defining section.
-     *
-     * @see definesPolyobj()
-     */
-    Polyobj &polyobj() const;
-
-    /**
-     * Change the polyobj attributed to the line.
-     *
-     * @param newPolyobj  New polyobj to attribute the line to. Can be @c nullptr, to clear
-     *                    the attribution. (Note that the polyobj may also represent this
-     *                    relationship, so the relevant method(s) of Polyobj will also need
-     *                    to be called to complete the job of clearing this relationship.)
-     */
-    void setPolyobj(Polyobj *newPolyobj);
-
-    /**
-     * Returns @c true iff the line resulted in the creation of a BSP window effect when
-     * partitioning the map.
-     *
-     * @todo Refactor away. The prescence of a BSP window effect can now be trivially determined
-     *       through inspection of the tree elements.
-     */
-    bool isBspWindow() const;
-
-    /**
-     * Returns the public DDLF_* flags for the line.
-     */
-    de::dint flags() const;
-
-    /**
-     * Change the line's flags. The FlagsChange audience is notified whenever the flags
-     * are changed.
-     *
-     * @param flagsToChange  Flags to change the value of.
-     * @param operation      Logical operation to perform on the flags.
-     */
-    void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
-
-    /**
-     * Returns @c true iff the line is flagged @a flagsToTest.
-     */
-    inline bool isFlagged(de::dint flagsToTest) const {
-        return (flags() & flagsToTest) != 0;
-    }
-
-    /**
-     * Returns @c true if the line is marked as @em mapped for @a playerNum.
-     */
-    bool isMappedByPlayer(de::dint playerNum) const;
-
-    /**
-     * Change the @em mapped by player state of the line.
-     */
-    void markMappedByPlayer(de::dint playerNum, bool yes = true);
+    * Returns @c true if the line qualifies for FakeRadio shadow casting (on planes).
+    */
+    bool isShadowCaster() const;
+#endif
 
     /**
      * Returns the @em validCount of the line. Used by some legacy iteration algorithms
@@ -864,21 +789,6 @@ public:
      */
     void replaceVertex(de::dint to, Vertex &newVertex);
 
-    inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
-    inline void replaceTo  (Vertex &newVertex) { replaceVertex(To  , newVertex); }
-
-#ifdef __CLIENT__
-    /**
-     * Returns @c true if the line qualifies for FakeRadio shadow casting (on planes).
-     */
-    bool castsShadow() const;
-#endif
-
-protected:
-    de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
-
-public:
     /**
      * Returns a pointer to the line owner node for the specified edge vertex of the line.
      *

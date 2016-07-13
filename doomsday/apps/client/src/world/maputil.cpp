@@ -39,7 +39,7 @@ using namespace de;
 
 lineopening_s::lineopening_s(Line const &line)
 {
-    if(!line.hasBackSector())
+    if(!line.back().hasSector())
     {
         top = bottom = range = lowFloor = 0;
         return;
@@ -201,12 +201,12 @@ Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection 
         *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
     }
 
-    if(!other->hasBackSector() || !other->isSelfReferencing())
+    if(!other->back().hasSector() || !other->isSelfReferencing())
     {
         if(sector)  // Must one of the sectors match?
         {
-            if(other->frontSectorPtr() == sector ||
-               (other->hasBackSector() && other->backSectorPtr() == sector))
+            if(other->front().sectorPtr() == sector ||
+               (other->back().hasSector() && other->back().sectorPtr() == sector))
                 return other;
         }
         else
@@ -276,32 +276,32 @@ Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirec
     LineOwner const *cown = (direction == Anticlockwise ? &own.prev() : &own.next());
     Line *other = &cown->line();
 
-    if(other == &line) return nullptr;
+    if (other == &line) return nullptr;
 
-    if(diff)
+    if (diff)
     {
         *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
     }
 
-    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector)
-       && !other->isSelfReferencing())
+    if (!((other->isBspWindow()) && other->front().sectorPtr() != sector)
+        && !other->isSelfReferencing())
     {
-        if(!other->hasFrontSector() || !other->hasBackSector())
+        if (!other->front().hasSector() || !other->back().hasSector())
             return other;
 
-        if(   other->frontSector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
-           || other->frontSector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
-           || other->backSector ().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
-           || other->backSector ().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
-           || other->backSector ().ceiling().heightSmoothed() <= other->backSector().floor().heightSmoothed())
+        if (   other->front().sector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
+            || other->front().sector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
+            || other->back().sector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
+            || other->back().sector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
+            || other->back().sector().ceiling().heightSmoothed() <= other->back().sector().floor().heightSmoothed())
             return other;
 
         // Both front and back MUST be open by this point.
 
         // Perhaps a middle material completely covers the opening?
         // We should not give away the location of false walls (secrets).
-        LineSide &otherSide = other->side(other->frontSectorPtr() == sector ? Line::Front : Line::Back);
-        if(middleMaterialCoversOpening(otherSide))
+        LineSide &otherSide = other->side(other->front().sectorPtr() == sector ? Line::Front : Line::Back);
+        if (middleMaterialCoversOpening(otherSide))
             return other;
     }
 

@@ -47,11 +47,11 @@ void BuildRejectForMap(Map const &map)
     {
         Line *line = &map.lines[i];
 
-        if(!line->hasFrontSector() || !line->hasBackSector())
+        if(!line->front().hasSector() || !line->back().hasSector())
             continue;
 
-        Sector *sec1 = line->frontSectorPtr();
-        Sector *sec2 = line->backSectorPtr();
+        Sector *sec1 = line->front().sectorPtr();
+        Sector *sec2 = line->back().sectorPtr();
 
         if(!sec1 || !sec2 || sec1 == sec2)
             continue;
