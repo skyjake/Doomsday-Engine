@@ -20,7 +20,7 @@ endif ()
 
 include_directories (include ${DENG_API_DIR})
 
-add_definitions (-D__DOOMSDAY__ -D__CLIENT__)
+add_definitions (-D__DOOMSDAY__=1 -D__CLIENT__=1)
 
 file (GLOB API_HEADERS ../api/*.h)
 file (GLOB_RECURSE HEADERS include/*)
@@ -113,13 +113,13 @@ if (WIN32)
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"
         PROPERTY CPACK_START_MENU_SHORTCUTS "Doomsday Engine"
     )
-    
+
     # Also include OpenSSL support.
     if (OPENSSL_DIR)
-        find_file (OPENSSL_LIBEAY libeay32.dll 
+        find_file (OPENSSL_LIBEAY libeay32.dll
             PATHS ${OPENSSL_DIR}
             PATH_SUFFIXES ${DENG_ARCH})
-        find_file (OPENSSL_SSLEAY ssleay32.dll 
+        find_file (OPENSSL_SSLEAY ssleay32.dll
             PATHS ${OPENSSL_DIR}
             PATH_SUFFIXES ${DENG_ARCH})
         if (NOT OPENSSL_LIBEAY OR NOT OPENSSL_SSLEAY)

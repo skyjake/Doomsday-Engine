@@ -92,7 +92,7 @@ void OperatorRule::update()
         rightValue = (_rightOperand? _rightOperand->value() : 0);
     }
 
-    float v = leftValue;
+    float v;
 
     switch (_operator)
     {
@@ -142,6 +142,10 @@ void OperatorRule::update()
 
     case Select:
         v = (_condition->value() < 0? leftValue : rightValue);
+        break;
+            
+    default:
+        v = leftValue;
         break;
     }
 

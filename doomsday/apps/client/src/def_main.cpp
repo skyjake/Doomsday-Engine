@@ -1066,24 +1066,23 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                         res::TextureManifest &texture = resSys().textures().textureScheme("Reflections")
                                                                .findByResourceUri(*shineDef->stage.texture);
 
-                        res::TextureManifest *maskTexture = nullptr;
                         if (shineDef->stage.maskTexture)
                         {
                             try
                             {
-                                maskTexture = &resSys().textures().textureScheme("Masks")
+                                res::TextureManifest *maskTexture = &resSys().textures().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
+                                
+                                slayer->addStage(world::ShineTextureMaterialLayer::AnimationStage
+                                                 (texture.composeUri(), stage.tics, stage.variance,
+                                                  maskTexture->composeUri(), shineDef->stage.blendMode,
+                                                  shineDef->stage.shininess,
+                                                  Vector3f(shineDef->stage.minColor),
+                                                  Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
                             }
                             catch (Resources::MissingResourceManifestError const &)
                             {}  // Ignore this error.
                         }
-
-                        slayer->addStage(world::ShineTextureMaterialLayer::AnimationStage
-                                         (texture.composeUri(), stage.tics, stage.variance,
-                                          maskTexture->composeUri(), shineDef->stage.blendMode,
-                                          shineDef->stage.shininess,
-                                          Vector3f(shineDef->stage.minColor),
-                                          Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
 
                         if (slayer->stageCount() == 2)
                         {

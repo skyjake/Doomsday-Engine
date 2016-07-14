@@ -13,14 +13,14 @@ if (OPENAL_FOUND)
     set (CMAKE_REQUIRED_INCLUDES ${OPENAL_INCLUDE_DIR})
     check_include_file (al.h HAVE_AL_H)
     if (HAVE_AL_H)
-        add_definitions (-DHAVE_AL_H)
+        add_definitions (-DHAVE_AL_H=1)
     endif ()
-    
+
     append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSOPENAL_DEBUG")
-    
+
     include_directories (include)
     include_directories (SYSTEM ${OPENAL_INCLUDE_DIR})
-        
+
     file (GLOB SOURCES src/*.cpp include/*.h)
     deng_add_plugin (audio_openal ${SOURCES})
     target_link_libraries (audio_openal PRIVATE ${OPENAL_LIBRARY})

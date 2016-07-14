@@ -38,7 +38,7 @@ static int Mouse_Win32_Init()
     // We'll need a window handle for this.
     HWND hWnd = (HWND) ClientWindow::main().nativeHandle();
 
-    HRESULT hr = -1;
+    HRESULT hr = E_FAIL;
     // Prefer the newer version 8 interface if available.
     if(LPDIRECTINPUT8 dInput = DirectInput_IVersion8())
     {

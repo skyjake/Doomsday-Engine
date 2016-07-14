@@ -448,7 +448,7 @@ DENG2_PIMPL(SectorCluster)
         {
             HEdge *hedge = boundaryEdges[i];
             QRectF const &boundary = boundaries[i];
-            if (&boundary == largest || boundary == *largest)
+            if (&boundary == largest || (largest && boundary == *largest))
             {
                 boundaryData->uniqueOuterEdges.append(hedge);
             }

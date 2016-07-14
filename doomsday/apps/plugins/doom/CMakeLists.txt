@@ -8,8 +8,8 @@ include (../PluginConfig.cmake)
 include (../common/Common.cmake)
 
 add_definitions (
-    -D__JDOOM__
-    -DLIBDOOMSDAY_CUSTOM_MOBJ
+    -D__JDOOM__=1
+    -DLIBDOOMSDAY_CUSTOM_MOBJ=1
 )
 
 include_directories (include)

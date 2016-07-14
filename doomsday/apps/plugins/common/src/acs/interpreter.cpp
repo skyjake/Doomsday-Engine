@@ -1141,22 +1141,31 @@ Script &Interpreter::script() const
 
 void Interpreter::Stack::push(int value)
 {
-    if(height == ACS_INTERPRETER_SCRIPT_STACK_DEPTH)
+    if (height >= ACS_INTERPRETER_SCRIPT_STACK_DEPTH)
+    { 
         LOG_SCR_ERROR("acs::Interpreter::Stack::push: Overflow");
+        return;
+    }
     values[height++] = value;
 }
 
 int Interpreter::Stack::pop()
 {
-    if(height == 0)
+    if (height <= 0)
+    {
         LOG_SCR_ERROR("acs::Interpreter::Stack::pop: Underflow");
+        return 0;
+    }
     return values[--height];
 }
 
 int Interpreter::Stack::top() const
 {
-    if(height == 0)
+    if (height == 0)
+    {
         LOG_SCR_ERROR("acs::Interpreter::Stack::top: Underflow");
+        return 0;
+    }
     return values[height - 1];
 }
 

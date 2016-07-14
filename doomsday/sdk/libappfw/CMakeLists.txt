@@ -12,7 +12,7 @@ find_package (OculusVR QUIET)
 include (OpenGL)
 
 # Definitions.
-add_definitions (-D__LIBAPPFW__)
+add_definitions (-D__LIBAPPFW__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)

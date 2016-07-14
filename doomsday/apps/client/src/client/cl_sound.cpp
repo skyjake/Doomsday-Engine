@@ -113,7 +113,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         sound = Reader_ReadUInt16(::msgReader);
     }
 
-    if (type == DT_SECTOR_SOUND)
+    if (type == DT_SECTOR_SOUND && !skip)
     {
         // Select the emitter for the sound.
         if (flags & SNDDF_PLANE_FLOOR)
@@ -131,7 +131,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         }
     }
 
-    if (type == DT_SIDE_SOUND)
+    if (type == DT_SIDE_SOUND && !skip)
     {
         if (flags & SNDDF_SIDE_MIDDLE)
             emitter = (mobj_t *) &side->middleSoundEmitter();

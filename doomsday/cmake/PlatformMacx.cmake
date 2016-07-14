@@ -13,16 +13,16 @@ find_program (CODESIGN_COMMAND codesign)
 mark_as_advanced (CODESIGN_COMMAND)
 
 # Detect OS X version.
-execute_process (COMMAND sw_vers -productVersion 
-    OUTPUT_VARIABLE MACOS_VERSION 
+execute_process (COMMAND sw_vers -productVersion
+    OUTPUT_VARIABLE MACOS_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 if (NOT MACOS_VERSION VERSION_LESS 10.7)
-    add_definitions (-DMACOS_10_7)
+    add_definitions (-DMACOS_10_7=1)
 endif ()
 add_definitions (
-    -DMACOSX
+    -DMACOSX=1
     # Fallback basedir for command line apps.
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )

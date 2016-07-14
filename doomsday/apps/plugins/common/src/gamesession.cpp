@@ -449,7 +449,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         std::unique_ptr<SavedSession::MapStateReader> p;
         reader_s *reader = SV_NewReader();
         dint const magic = Reader_ReadInt32(reader);
-        if (magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC)  // Native format.
+        if (magic == MY_SAVE_MAGIC || magic == MY_CLIENT_SAVE_MAGIC)  // Native format.
         {
             p.reset(new MapStateReader(session));
         }

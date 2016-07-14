@@ -12,8 +12,8 @@ include (ZLIB)
 
 # Definitions.
 add_definitions (
-    -D__DENG__
-    -D__LIBDOOMSDAY__
+    -D__DENG__=1
+    -D__LIBDOOMSDAY__=1
 )
 
 # Set up the API.
@@ -31,13 +31,13 @@ deng_add_package (net.dengine.base)
 
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
-target_link_libraries (libdoomsday 
+target_link_libraries (libdoomsday
     PUBLIC Deng::libcore Deng::liblegacy Deng::libshell
 )
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
 if (DENG_ENABLE_SDK)
-    install (DIRECTORY include/doomsday 
+    install (DIRECTORY include/doomsday
         DESTINATION include
         COMPONENT sdk
     )

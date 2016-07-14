@@ -16,7 +16,7 @@ find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DENG_API_DIR})
 
-add_definitions (-D__DOOMSDAY__ -D__SERVER__)
+add_definitions (-D__DOOMSDAY__=1 -D__SERVER__=1)
 
 file (GLOB API_HEADERS ../api/*.h)
 file (GLOB_RECURSE HEADERS include/*)

@@ -144,9 +144,11 @@
 #  else
 #    define DENG2_PUBLIC __declspec(dllimport)
 #  endif
+#  define DENG2_NORETURN __declspec(noreturn)
 #else
 // No need to use any special declarators.
 #  define DENG2_PUBLIC
+#  define DENG2_NORETURN __attribute__((__noreturn__))
 #endif
 
 #ifndef NDEBUG

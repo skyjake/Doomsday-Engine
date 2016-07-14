@@ -14,9 +14,9 @@ if (APPLE)
     set (embed ON)
 elseif (UNIX)
     set (embed OFF)
-endif ()    
+endif ()
 
-option (DENG_FLUIDSYNTH_EMBEDDED 
+option (DENG_FLUIDSYNTH_EMBEDDED
     "Compile FluidSynth as part of the ${tgt} plugin" ${embed}
 )
 
@@ -26,9 +26,9 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
     # Bundle library dependencies on OS X.
     foreach (fn ${GLIB_LIBRARIES})
         list (APPEND macRes ${fn},Frameworks)
-    endforeach ()    
+    endforeach ()
     deng_find_resources (${macRes})
-        
+
     add_definitions (
         -D_BSD_SOURCE -DFLUIDSYNTH_NOT_A_DLL -DWITH_FLOAT
         -DHAVE_MATH_H -DHAVE_STDIO_H -DHAVE_STDLIB_H -DHAVE_STRING_H
@@ -42,7 +42,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
         )
     endif ()
     if (APPLE)
-        add_definitions (-DDARWIN)
+        add_definitions (-DDARWIN=1)
     endif ()
 
     set (FS_DIR ${DENG_EXTERNAL_SOURCE_DIR}/fluidsynth)
@@ -90,7 +90,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
         ${FS_DIR}/src/drivers/fluid_mdriver.c
         ${FS_DIR}/src/drivers/fluid_aufile.c
         ${FS_DIR}/src/bindings/fluid_cmd.c
-        ${FS_DIR}/src/bindings/fluid_filerenderer.c   
+        ${FS_DIR}/src/bindings/fluid_filerenderer.c
     )
 
 else ()
@@ -101,7 +101,7 @@ else ()
    You could try an embedded build instead (DENG_FLUIDSYNTH_EMBEDDED).")
         return ()
     endif ()
-    
+
     add_definitions (-DFLUIDSYNTH_DEFAULT_DRIVER_NAME="pulseaudio")
 endif ()
 
@@ -122,12 +122,12 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
         )
     endif ()
     if (CMAKE_C_COMPILER_ID MATCHES ".*Clang")
-        target_compile_options (${tgt} PRIVATE 
+        target_compile_options (${tgt} PRIVATE
             -fomit-frame-pointer -fdiagnostics-show-option -Wno-parentheses -Wno-unused-value
         )
     endif ()
-    
-    if (APPLE)        
+
+    if (APPLE)
         deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
     endif ()
 else ()

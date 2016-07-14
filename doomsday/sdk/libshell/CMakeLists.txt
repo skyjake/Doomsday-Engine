@@ -8,7 +8,7 @@ include (../../cmake/Config.cmake)
 find_package (DengCore)
 
 # Definitions.
-add_definitions (-D__LIBSHELL__)
+add_definitions (-D__LIBSHELL__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/shell/*)
