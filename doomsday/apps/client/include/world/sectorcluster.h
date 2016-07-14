@@ -1,40 +1,45 @@
 /** @file sectorcluster.h  Map sector cluster.
- * @ingroup world
- *
- * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
- *
- * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
- *
- * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version. This program is distributed in the hope that it
- * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
- */
+* @ingroup world
+*
+* @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
+*
+* @par License
+* GPL: http://www.gnu.org/licenses/gpl.html
+*
+* <small>This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by the
+* Free Software Foundation; either version 2 of the License, or (at your
+* option) any later version. This program is distributed in the hope that it
+* will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+* Public License for more details. You should have received a copy of the GNU
+* General Public License along with this program; if not, write to the Free
+* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+* 02110-1301 USA</small>
+*/
 
 #ifndef DENG_WORLD_SECTORCLUSTER_H
 #define DENG_WORLD_SECTORCLUSTER_H
 
-#include <QBitArray>
+#ifdef __CLIENT__
+#  include <QBitArray>
+#endif
 #include <QList>
 #include <de/aabox.h>
 #include <de/Observers>
 #include <de/Vector>
-#include <doomsday/world/MapElement>
+#include <doomsday/world/mapelement.h>
 
 #include "HEdge"
+
+#ifdef __CLIENT__
+#  include "world/audioenvironment.h"
+#endif
 #include "Line"
 #include "Plane"
 #include "Sector"
 
 #ifdef __CLIENT__
-#  include "world/audioenvironment.h"
 #  include "render/lightgrid.h"
 #endif
 
@@ -45,31 +50,18 @@ class Shard;
 namespace world {
 
 /**
- * Adjacent subspaces in the sector (i.e., those which share one or more common
- * edge) are grouped into a "cluster". Clusters are never empty and will always
- * contain at least one subspace.
+ * Adjacent subspaces in the sector (i.e., those which share one or more common edge) are
+ * grouped into a "cluster". Clusters are never empty and will always contain at least one
+ * subspace.
  */
 class SectorCluster
 #ifdef __CLIENT__
-  : public de::LightGrid::IBlockLightSource
+    : public de::LightGrid::IBlockLightSource
 #endif
 {
 public:
     /// Notified when the cluster is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
-
-    typedef QList<ConvexSubspace *> Subspaces;
-
-public:
-    /**
-     * Construct a new sector cluster comprised of the specified set of subspaces.
-     * It is assumed that all subspaces in the list are attributed to the same
-     * sector and there is always at least one.
-     *
-     * @param subspaces  Set of subspaces comprising the resulting cluster.
-     */
-    SectorCluster(Subspaces const &subspaces);
-    virtual ~SectorCluster();
 
     /**
      * Determines whether the specified @a hedge is an "internal" edge:
@@ -84,11 +76,60 @@ public:
      */
     static bool isInternalEdge(de::HEdge *hedge);
 
+public:
+    /**
+     * Construct a new sector cluster comprised of the specified set of subspaces.
+     * It is assumed that all subspaces in the list are attributed to the same
+     * sector and there is always at least one.
+     *
+     * @param subspaces  Set of subspaces comprising the resulting cluster.
+     */
+    SectorCluster(QList<ConvexSubspace *> const &subspaces);
+
     /**
      * Returns the parent Sector of the cluster.
      */
     Sector       &sector();
     Sector const &sector() const;
+
+    /**
+     * Returns the axis-aligned bounding box of the cluster.
+     */
+    AABoxd const &aaBox() const;
+
+    /**
+     * Returns the point defined by the center of the axis-aligned bounding box in the
+     * map coordinate space.
+     */
+    inline de::Vector2d center() const {
+        return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
+    }
+
+    /**
+     * Returns @c true if the given world Z @a height is outside the cluster.
+     */
+    bool isHeightInVoid(de::ddouble height) const;
+
+#ifdef __CLIENT__
+    /**
+     * Determines whether the cluster has a positive world volume, i.e., the height of
+     * the floor is lower than that of the ceiling plane.
+     *
+     * @param useSmoothedHeights  @c true= use the @em smoothed plane heights instead of
+     * the @em sharp heights.
+     */
+    bool hasWorldVolume(bool useSmoothedHeights = true) const;
+#endif
+
+//- Planes ------------------------------------------------------------------------------
+
+    /**
+     * Returns @c true iff at least one of the mapped visual planes of the cluster
+     * presently has a sky-masked material bound.
+     *
+     * @see Surface::hasSkyMaskedMaterial()
+     */
+    bool hasSkyMaskPlane() const;
 
     /**
      * Returns the identified @em physical plane of the parent sector. Note
@@ -115,7 +156,6 @@ public:
      */
     inline Plane       &ceiling()       { return plane(Sector::Ceiling); }
     inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
-
 
     /**
      * Returns the identified @em visual sector plane for the cluster (which
@@ -154,53 +194,19 @@ public:
      */
     void markVisPlanesDirty();
 
-    /**
-     * Returns @c true iff at least one of the mapped visual planes of the cluster
-     * presently has a sky-masked material bound.
-     *
-     * @see Surface::hasSkyMaskedMaterial()
-     */
-    bool hasSkyMaskedPlane() const;
-
-    /**
-     * Provides access to the list of all subspaces in the cluster, for efficient
-     * traversal.
-     */
-    Subspaces const &subspaces() const;
+//- Subspaces ---------------------------------------------------------------------------
 
     /**
      * Returns the total number of subspaces in the cluster.
      */
-    inline de::dint subspaceCount() const { return subspaces().count(); }
+    de::dint subspaceCount() const;
 
     /**
-     * Returns the axis-aligned bounding box of the cluster.
-     */
-    AABoxd const &aaBox() const;
-
-    /**
-     * Returns the point defined by the center of the axis-aligned bounding
-     * box in the map coordinate space.
-     */
-    inline de::Vector2d center() const {
-        return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
-    }
-
-    /**
-     * Returns @c true if the given world Z @a height is outside the cluster.
-     */
-    bool isHeightInVoid(de::ddouble height) const;
-
-#ifdef __CLIENT__
-
-    /**
-     * Determines whether the cluster has a positive world volume, i.e., the
-     * height of floor is lower than that of the ceiling plane.
+     * Iterate ConvexSubspaces of the cluster.
      *
-     * @param useSmoothedHeights  @c true= use the @em smoothed plane heights
-     *                            instead of the @em sharp heights.
+     * @param callback  Function to call for each ConvexSubspace.
      */
-    bool hasWorldVolume(bool useSmoothedHeights = true) const;
+    de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> func) const;
 
     /**
      * Returns a rough approximation of the total combined area of the geometry
@@ -208,15 +214,12 @@ public:
      */
     de::ddouble roughArea() const;
 
-    /**
-     * Request re-calculation of environmental audio (reverb) characteristics for
-     * the cluster (update is deferred until next accessed).
-     *
-     * To be called whenever any of the properties governing reverb properties
-     * have changed (i.e., wall/plane material changes).
-     */
-    void markReverbDirty(bool yes = true);
+#ifdef __CLIENT__
+//- Audio environment -------------------------------------------------------------------
 
+    /**
+     * POD: Environmental audio parameters.
+     */
     struct AudioEnvironment
     {
         de::dfloat volume  = 0;
@@ -234,14 +237,64 @@ public:
     AudioEnvironment const &reverb() const;
 
     /**
+     * Request re-calculation of environmental audio (reverb) characteristics for
+     * the cluster (update is deferred until next accessed).
+     *
+     * To be called whenever any of the properties governing reverb properties
+     * have changed (i.e., wall/plane material changes).
+     */
+    void markReverbDirty(bool yes = true);
+
+//- Bias lighting ----------------------------------------------------------------------
+
+    /**
+     * Apply bias lighting changes to @em all geometry Shards within the cluster.
+     *
+     * @param changes  Digest of lighting changes to be applied.
+     */
+    void applyBiasChanges(QBitArray &changes);
+
+    /**
+     * Convenient method of determining the frameCount of the current bias render
+     * frame. Used for tracking changes to bias sources/surfaces.
+     *
+     * @see Map::biasLastChangeOnFrame()
+     */
+    de::duint biasLastChangeOnFrame() const;
+
+    /**
+     * Returns the geometry Shard for the specified @a mapElement and geometry
+     * group identifier @a geomId; otherwise @c 0.
+     */
+    Shard *findShard(MapElement &mapElement, de::dint geomId);
+
+    /**
+     * Generate/locate the geometry Shard for the specified @a mapElement and
+     * geometry group identifier @a geomId.
+     */
+    Shard &shard(MapElement &mapElement, de::dint geomId);
+
+    /**
+     * Shards owned by the SectorCluster should call this periodically to update
+     * their bias lighting contributions.
+     *
+     * @param shard  Shard to be updated (owned by the SectorCluster).
+     *
+     * @return  @c true if one or more BiasIllum contributors was updated.
+    */
+    bool updateBiasContributors(Shard *shard);
+
+//- Implements LightGrid::IBlockLightSource ---------------------------------------------
+
+    /**
      * Returns the unique identifier of the light source.
      */
     LightId lightSourceId() const;
 
     /**
-     * Returns the final ambient light color for the source (which, may be affected
-     * by the sky light color if one or more Plane Surfaces in the cluster are using
-     * a sky-masked Material).
+     * Returns the final ambient light color for the source (which, may be affected by the
+     * sky light color if one or more Plane Surfaces in the cluster are using a sky-masked
+     * Material).
      */
     de::Vector3f lightSourceColorf() const;
 
@@ -264,43 +317,6 @@ public:
      */
     de::dint blockLightSourceZBias();
 
-    /**
-     * Returns the geometry Shard for the specified @a mapElement and geometry
-     * group identifier @a geomId; otherwise @c 0.
-     */
-    Shard *findShard(MapElement &mapElement, de::dint geomId);
-
-    /**
-     * Generate/locate the geometry Shard for the specified @a mapElement and
-     * geometry group identifier @a geomId.
-     */
-    Shard &shard(MapElement &mapElement, de::dint geomId);
-
-    /**
-     * Shards owned by the SectorCluster should call this periodically to update
-     * their bias lighting contributions.
-     *
-     * @param shard  Shard to be updated (owned by the SectorCluster).
-     *
-     * @return  @c true if one or more BiasIllum contributors was updated.
-     */
-    bool updateBiasContributors(Shard *shard);
-
-    /**
-     * Apply bias lighting changes to @em all geometry Shards within the cluster.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasChanges(QBitArray &changes);
-
-    /**
-     * Convenient method of determining the frameCount of the current bias render
-     * frame. Used for tracking changes to bias sources/surfaces.
-     *
-     * @see Map::biasLastChangeOnFrame()
-     */
-    de::duint biasLastChangeOnFrame() const;
-
 #endif  // __CLIENT__
 
 private:
@@ -308,15 +324,15 @@ private:
 };
 
 /**
- * Specialized sector cluster half-edge circulator. Used like an iterator, for
- * circumnavigating the boundary half-edges of a cluster.
+ * Specialized sector cluster half-edge circulator. Used like an iterator, for circumnavigating
+ * the boundary half-edges of a cluster.
  *
- * Cluster-internal edges (i.e., where both half-edge faces reference the same
- * cluster) are automatically skipped during traversal. Otherwise behavior is
- * the same as a "regular" half-edge face circulator.
+ * Cluster-internal edges (i.e., where both half-edge faces reference the same cluster)
+ * are automatically skipped during traversal. Otherwise behavior is the same as a "regular"
+ * half-edge face circulator.
  *
- * Also provides static search utilities for convenient, one-time use of this
- * specialized search logic (avoiding circulator instantiation).
+ * Also provides static search utilities for convenient, one-time use of this specialized
+ * search logic (avoiding circulator instantiation).
  *
  * @ingroup world
  */
@@ -330,8 +346,8 @@ public:
     /**
      * Construct a new sector cluster circulator.
      *
-     * @param hedge  Half-edge to circulate. It is assumed the half-edge lies on
-     * the @em boundary of the cluster and is not an "internal" edge.
+     * @param hedge  Half-edge to circulate. It is assumed the half-edge lies on the
+     * @em boundary of the cluster and is not an "internal" edge.
      */
     SectorClusterCirculator(de::HEdge *hedge = nullptr)
         : _hedge(hedge)
@@ -340,11 +356,10 @@ public:
     {}
 
     /**
-     * Intended as a convenient way to employ the specialized circulator logic
-     * to locate the relative back of the next/previous neighboring half-edge.
-     * Particularly useful when a geometry traversal requires a switch from the
-     * cluster to face boundary, or when navigating the so-called "one-ring" of
-     * a vertex.
+     * Intended as a convenient way to employ the specialized circulator logic to locate
+     * the relative back of the next/previous neighboring half-edge. Particularly useful
+     * when a geometry traversal requires a switch from the cluster to face boundary, or
+     * when navigating the so-called "one-ring" of a vertex.
      */
     static de::HEdge &findBackNeighbor(de::HEdge const &hedge, de::ClockDirection direction)
     {
@@ -398,7 +413,7 @@ public:
 
     /// Returns the current half-edge of a non-empty sequence.
     de::HEdge &operator * () const {
-        if(!_current)
+        if (!_current)
         {
             /// @throw NullError Attempted to dereference a "null" circulator.
             throw NullError("SectorClusterCirculator::operator *", "Circulator references an empty sequence");
@@ -406,7 +421,7 @@ public:
         return *_current;
     }
 
-    /// Returns a pointer to the current half-edge (might be @c NULL, meaning the
+    /// Returns a pointer to the current half-edge (might be @c nullptr, meaning the
     /// circulator references an empty sequence).
     de::HEdge *operator -> () { return _current; }
 

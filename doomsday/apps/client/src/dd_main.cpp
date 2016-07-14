@@ -2373,7 +2373,7 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
     {
         sector.forAllSides([] (LineSide &side)
         {
-            side.fixMissingMaterials();
+            side.fixSurfacesMissingMaterials();
             return LoopContinue;
         });
         return LoopContinue;

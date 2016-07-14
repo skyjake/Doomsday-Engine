@@ -22,20 +22,20 @@
 #include "de_platform.h"
 #include "api_mapedit.h"
 
-#include <de/Error>
-#include <de/Log>
-#include <de/StringPool>
-#include <doomsday/world/entitydef.h>
-#include <doomsday/world/Materials>
-#include <doomsday/EntityDatabase>
-
-#include "dd_main.h"
 #include "world/map.h"
 #include "world/polyobjdata.h"
 #include "Plane"
 #include "Sector"
 #include "Surface"
 #include "edit_map.h"
+#include "dd_main.h"
+
+#include <doomsday/world/entitydef.h>
+#include <doomsday/world/Materials>
+#include <doomsday/EntityDatabase>
+#include <de/Error>
+#include <de/Log>
+#include <de/StringPool>
 
 using namespace de;
 using namespace world;
@@ -285,18 +285,18 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     side.top()
         .setMaterial(findMaterialInDict(topMaterialUri))
         .setMaterialOrigin(Vector2f(topOffsetX, topOffsetY))
-        .setTintColor(Vector3f(topRed, topGreen, topBlue));
+        .setColor(Vector3f(topRed, topGreen, topBlue));
 
     side.middle()
         .setMaterial(findMaterialInDict(middleMaterialUri))
         .setMaterialOrigin(Vector2f(middleOffsetX, middleOffsetY))
-        .setTintColor(Vector3f(middleRed, middleGreen, middleBlue))
+        .setColor(Vector3f(middleRed, middleGreen, middleBlue))
         .setOpacity(middleOpacity);
 
     side.bottom()
         .setMaterial(findMaterialInDict(bottomMaterialUri))
         .setMaterialOrigin(Vector2f(bottomOffsetX, bottomOffsetY))
-        .setTintColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
+        .setColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
 }
 
 #undef MPE_PlaneCreate
@@ -315,7 +315,7 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 
     plane->surface()
         .setMaterial(findMaterialInDict(materialUri))
-        .setTintColor(Vector3f(tintRed, tintGreen, tintBlue))
+        .setColor(Vector3f(tintRed, tintGreen, tintBlue))
         .setMaterialOrigin(Vector2f(matOffsetX, matOffsetY));
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())

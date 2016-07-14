@@ -113,7 +113,7 @@ struct EditableElements
         qDeleteAll(lines); lines.clear();
         qDeleteAll(sectors); sectors.clear();
 
-        for(Polyobj *pob : polyobjs)
+        for (Polyobj *pob : polyobjs)
         {
             pob->~Polyobj();
             M_Free(pob);
@@ -147,7 +147,7 @@ DENG2_PIMPL(Map)
 
         void clear()
         {
-            if(!tree) return;
+            if (!tree) return;
             tree->traversePostOrder(clearUserDataWorker);
             delete tree; tree = nullptr;
         }
@@ -204,7 +204,7 @@ DENG2_PIMPL(Map)
         {
             bool outside;
             BlockmapCell cell = toCell(contact.objectOrigin(), &outside);
-            if(!outside)
+            if (!outside)
             {
                 Blockmap::link(cell, &contact);
             }
@@ -264,7 +264,7 @@ DENG2_PIMPL(Map)
          */
         void resize(duint listCount)
         {
-            if(!linkStore)
+            if (!linkStore)
             {
                 linkStore = (ListNode *) Z_Malloc(sizeof(*linkStore) * LINKSTORE_SIZE, PU_MAP, 0);
                 linkStoreCursor = 0;
@@ -280,7 +280,7 @@ DENG2_PIMPL(Map)
          */
         ListNode *newLink()
         {
-            if(linkStoreCursor < (unsigned)LINKSTORE_SIZE)
+            if (linkStoreCursor < (unsigned)LINKSTORE_SIZE)
             {
                 return &linkStore[linkStoreCursor++];
             }
@@ -331,7 +331,7 @@ DENG2_PIMPL(Map)
         qDeleteAll(clusters);
         qDeleteAll(subspaces);
         qDeleteAll(sectors);
-        for(Polyobj *polyobj : polyobjs)
+        for (Polyobj *polyobj : polyobjs)
         {
             polyobj->~Polyobj();
             M_Free(polyobj);
@@ -340,7 +340,7 @@ DENG2_PIMPL(Map)
 
 //#ifdef __CLIENT__
 //        // Stop observing client mobjs.
-//        for(mobj_t *mo : clMobjHash)
+//        for (mobj_t *mo : clMobjHash)
 //        {
 //            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
 //        }
@@ -356,12 +356,12 @@ DENG2_PIMPL(Map)
     void updateBounds()
     {
         bool haveGeometry = false;
-        for(Line *line : lines)
+        for (Line *line : lines)
         {
             // Polyobj lines don't count.
-            if(line->definesPolyobj()) continue;
+            if (line->definesPolyobj()) continue;
 
-            if(haveGeometry)
+            if (haveGeometry)
             {
                 // Expand the bounding box.
                 V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
@@ -413,48 +413,47 @@ DENG2_PIMPL(Map)
 
     static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
     {
-        if(&line == p.testLine) return;
-        if(line.isSelfReferencing()) return;
-        if(lineHasZeroLength(line)) return;
+        if (&line == p.testLine) return;
+        if (line.isSelfReferencing()) return;
+        if (lineHasZeroLength(line)) return;
 
         ddouble dist = 0;
         Sector *hitSector = nullptr;
         bool isFront = false;
-        if(p.castHorizontal)
+        if (p.castHorizontal)
         {
-            if(de::abs(line.direction().y) < bsp::DIST_EPSILON)
+            if (de::abs(line.direction().y) < bsp::DIST_EPSILON)
                 return;
 
-            if((line.aaBox().maxY < p.testLineCenter.y - bsp::DIST_EPSILON) ||
-               (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
+            if (   (line.aaBox().maxY < p.testLineCenter.y - bsp::DIST_EPSILON)
+                || (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
                 return;
 
-            dist = (line.from().x() +
-                    (p.testLineCenter.y - line.from().y()) * line.direction().x / line.direction().y)
-                   - p.testLineCenter.x;
+            dist = (line.from().x() + (p.testLineCenter.y - line.from().y()) * line.direction().x / line.direction().y)
+                 - p.testLineCenter.x;
 
             isFront = ((p.testLine->direction().y > 0) != (dist > 0));
             dist = de::abs(dist);
 
             // Too close? (overlapping lines?)
-            if(dist < bsp::DIST_EPSILON)
+            if (dist < bsp::DIST_EPSILON)
                 return;
 
             bool dir = (p.testLine->direction().y > 0) ^ (line.direction().y > 0);
             hitSector = line.side(dir ^ !isFront).sectorPtr();
         }
-        else // Cast vertically.
+        else  // Cast vertically.
         {
-            if(de::abs(line.direction().x) < bsp::DIST_EPSILON)
+            if (de::abs(line.direction().x) < bsp::DIST_EPSILON)
                 return;
 
-            if((line.aaBox().maxX < p.testLineCenter.x - bsp::DIST_EPSILON) ||
-               (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
+            if(   (line.aaBox().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
+               || (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
                 return;
 
             dist = (line.from().y() +
                     (p.testLineCenter.x - line.from().x()) * line.direction().y / line.direction().x)
-                   - p.testLineCenter.y;
+                 - p.testLineCenter.y;
 
             isFront = ((p.testLine->direction().x > 0) == (dist > 0));
             dist = de::abs(dist);
@@ -464,12 +463,12 @@ DENG2_PIMPL(Map)
         }
 
         // Too close? (overlapping lines?)
-        if(dist < bsp::DIST_EPSILON)
+        if (dist < bsp::DIST_EPSILON)
             return;
 
-        if(isFront)
+        if (isFront)
         {
-            if(dist < p.frontDist)
+            if (dist < p.frontDist)
             {
                 p.frontDist = dist;
                 p.frontOpen = hitSector;
@@ -478,7 +477,7 @@ DENG2_PIMPL(Map)
         }
         else
         {
-            if(dist < p.backDist)
+            if (dist < p.backDist)
             {
                 p.backDist = dist;
                 p.backOpen = hitSector;
@@ -489,19 +488,19 @@ DENG2_PIMPL(Map)
 
     bool lineMightHaveWindowEffect(Line const &line)
     {
-        if(line.definesPolyobj()) return false;
-        if(line.front().hasSector() && line.back().hasSector()) return false;
-        if(!line.front().hasSector()) return false;
-        if(lineHasZeroLength(line)) return false;
+        if (line.definesPolyobj()) return false;
+        if (line.front().hasSector() && line.back().hasSector()) return false;
+        if (!line.front().hasSector()) return false;
+        if (lineHasZeroLength(line)) return false;
 
         // Look for window effects by checking for an odd number of one-sided
         // line owners for a single vertex. Idea courtesy of Graham Jackson.
-        if((line.from()._onesOwnerCount % 2) == 1 &&
-           (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
+        if ((line.from()._onesOwnerCount % 2) == 1
+            && (line.from()._onesOwnerCount + line.from()._twosOwnerCount) > 1)
             return true;
 
-        if((line.to()._onesOwnerCount % 2) == 1 &&
-           (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
+        if  ((line.to()._onesOwnerCount % 2) == 1
+             && (line.to()._onesOwnerCount + line.to()._twosOwnerCount) > 1)
             return true;
 
         return false;
@@ -509,7 +508,7 @@ DENG2_PIMPL(Map)
 
     void findOneWayWindows()
     {
-        for(Vertex *vertex : mesh.vertexs())
+        for (Vertex *vertex : mesh.vertexs())
         {
             // Count the total number of one and two-sided line owners for each
             // vertex. (Used in the process of locating window effect lines.)
@@ -517,9 +516,9 @@ DENG2_PIMPL(Map)
         }
 
         // Search for "one-way window" effects.
-        for(Line *line : lines)
+        for (Line *line : lines)
         {
-            if(!lineMightHaveWindowEffect(*line))
+            if (!lineMightHaveWindowEffect(*line))
                 continue;
 
             testForWindowEffectParams p;
@@ -529,7 +528,7 @@ DENG2_PIMPL(Map)
             p.castHorizontal = (de::abs(line->direction().x) < de::abs(line->direction().y)? true : false);
 
             AABoxd scanRegion = bounds;
-            if(p.castHorizontal)
+            if (p.castHorizontal)
             {
                 scanRegion.minY = line->aaBox().minY - bsp::DIST_EPSILON;
                 scanRegion.maxY = line->aaBox().maxY + bsp::DIST_EPSILON;
@@ -547,7 +546,7 @@ DENG2_PIMPL(Map)
                 return LoopContinue;
             });
 
-            if(p.backOpen && p.frontOpen && line->front().sectorPtr() == p.backOpen)
+            if (p.backOpen && p.frontOpen && line->front().sectorPtr() == p.backOpen)
             {
                 notifyOneWayWindowFound(*line, *p.frontOpen);
 
@@ -584,8 +583,8 @@ DENG2_PIMPL(Map)
         auto linesToBuildFor = QSet<Line *>::fromList(lines);
 
         // Polyobj lines should be excluded.
-        for(Polyobj *pob : polyobjs)
-        for(Line *line : pob->lines())
+        for (Polyobj *pob : polyobjs)
+        for (Line *line : pob->lines())
         {
             linesToBuildFor.remove(line);
         }
@@ -606,7 +605,7 @@ DENG2_PIMPL(Map)
                     << partitioner.vertexCount();
 
             // Attribute an index to any new vertexes.
-            for(dint i = nextVertexOrd; i < mesh.vertexCount(); ++i)
+            for (dint i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
                 Vertex *vtx = mesh.vertexs().at(i);
                 vtx->setMap(thisPublic);
@@ -621,22 +620,22 @@ DENG2_PIMPL(Map)
             // Iterative pre-order traversal of the map element tree.
             BspTree const *cur  = bsp.tree;
             BspTree const *prev = nullptr;
-            while(cur)
+            while (cur)
             {
-                while(cur)
+                while (cur)
                 {
-                    if(cur->userData())
+                    if (cur->userData())
                     {
-                        if(cur->isLeaf())
+                        if (cur->isLeaf())
                         {
                             auto &leaf = cur->userData()->as<BspLeaf>();
-                            if(!leaf.sectorPtr())
+                            if (!leaf.sectorPtr())
                             {
                                 LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                                        << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
+                                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
                             }
 
-                            if(leaf.hasSubspace())
+                            if (leaf.hasSubspace())
                             {
                                 // Add this subspace to the LUT.
                                 ConvexSubspace &subspace = leaf.subspace();
@@ -648,55 +647,55 @@ DENG2_PIMPL(Map)
                                 HEdge *hedge = subspace.poly().hedge();
                                 do
                                 {
-                                    if(hedge->next().origin() != hedge->twin().origin())
+                                    if (hedge->next().origin() != hedge->twin().origin())
                                     {
                                         discontinuities++;
                                     }
-                                } while((hedge = &hedge->next()) != subspace.poly().hedge());
+                                } while ((hedge = &hedge->next()) != subspace.poly().hedge());
 
                                 if(discontinuities)
                                 {
                                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                                     "is not contiguous (%i gaps/overlaps).\n%s")
-                                            << &leaf << subspace.poly().center().asText()
-                                            << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
-                                            << discontinuities
-                                            << subspace.poly().description();
+                                        << &leaf << subspace.poly().center().asText()
+                                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+                                        << discontinuities
+                                        << subspace.poly().description();
                                 }
 #endif
                             }
                         }
                     }
 
-                    if(prev == cur->parentPtr())
+                    if (prev == cur->parentPtr())
                     {
                         // Descending - right first, then left.
                         prev = cur;
-                        if(cur->hasRight()) cur = cur->rightPtr();
-                        else                cur = cur->leftPtr();
+                        if (cur->hasRight()) cur = cur->rightPtr();
+                        else                 cur = cur->leftPtr();
                     }
-                    else if(prev == cur->rightPtr())
+                    else if (prev == cur->rightPtr())
                     {
                         // Last moved up the right branch - descend the left.
                         prev = cur;
-                        cur = cur->leftPtr();
+                        cur  = cur->leftPtr();
                     }
-                    else if(prev == cur->leftPtr())
+                    else if (prev == cur->leftPtr())
                     {
                         // Last moved up the left branch - continue upward.
                         prev = cur;
-                        cur = cur->parentPtr();
+                        cur  = cur->parentPtr();
                     }
                 }
 
-                if(prev)
+                if (prev)
                 {
                     // No left child - back up.
                     cur = prev->parentPtr();
                 }
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_MAP_WARNING("%s.") << er.asText();
         }
@@ -712,7 +711,7 @@ DENG2_PIMPL(Map)
      */
     void buildClusters(Sector &sector)
     {
-        for(auto it = clusters.find(&sector); it != clusters.end() && it.key() == &sector; )
+        for (auto it = clusters.find(&sector); it != clusters.end() && it.key() == &sector; )
         {
             delete *it;
         }
@@ -725,45 +724,45 @@ DENG2_PIMPL(Map)
         // Separate the subspaces into edge-adjacency clusters. We'll do this by
         // starting with a set per subspace and then keep merging these sets until
         // no more shared edges are found.
-        for(ConvexSubspace *subspace : subspaces)
+        for (ConvexSubspace *subspace : subspaces)
         {
-            if(subspace->bspLeaf().sectorPtr() == &sector)
+            if (subspace->bspLeaf().sectorPtr() == &sector)
             {
                 subspaceSets.append(Subspaces());
                 subspaceSets.last().append(subspace);
             }
         }
 
-        if(subspaceSets.isEmpty()) return;
+        if (subspaceSets.isEmpty()) return;
 
         // Merge sets whose subspaces share a common edge.
-        while(subspaceSets.count() > 1)
+        while (subspaceSets.count() > 1)
         {
             bool didMerge = false;
-            for(dint i = 0; i < subspaceSets.count(); ++i)
-            for(dint k = 0; k < subspaceSets.count(); ++k)
+            for (dint i = 0; i < subspaceSets.count(); ++i)
+            for (dint k = 0; k < subspaceSets.count(); ++k)
             {
-                if(i == k) continue;
+                if (i == k) continue;
 
-                for(ConvexSubspace *subspace : subspaceSets[i])
+                for (ConvexSubspace *subspace : subspaceSets[i])
                 {
                     HEdge *baseHEdge = subspace->poly().hedge();
                     HEdge *hedge = baseHEdge;
                     do
                     {
-                        if(hedge->twin().hasFace() &&
-                           hedge->twin().face().hasMapElement())
+                        if (hedge->twin().hasFace()
+                            && hedge->twin().face().hasMapElement())
                         {
                             auto &otherSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-                            if(otherSubspace.bspLeaf().sectorPtr() == &sector &&
-                               subspaceSets[k].contains(&otherSubspace))
+                            if (otherSubspace.bspLeaf().sectorPtr() == &sector
+                                && subspaceSets[k].contains(&otherSubspace))
                             {
                                 // Merge k into i.
                                 subspaceSets[i].append(subspaceSets[k]);
                                 subspaceSets.removeAt(k);
 
                                 // Compare the next pair.
-                                if(i >= k) i -= 1;
+                                if (i >= k) i -= 1;
                                 k -= 1;
 
                                 // We'll need to repeat in any case.
@@ -771,18 +770,18 @@ DENG2_PIMPL(Map)
                                 break;
                             }
                         }
-                    } while((hedge = &hedge->next()) != baseHEdge);
+                    } while ((hedge = &hedge->next()) != baseHEdge);
 
-                    if(didMerge) break;
+                    if (didMerge) break;
                 }
             }
 
-            if(!didMerge) break;
+            if (!didMerge) break;
         }
         // Clustering complete.
 
         // Build clusters.
-        for(Subspaces const &subspaceSet : subspaceSets)
+        for (Subspaces const &subspaceSet : subspaceSets)
         {
             // Subspace ownership is not given to the cluster.
             clusters.insert(&sector, new SectorCluster(subspaceSet));
@@ -792,7 +791,7 @@ DENG2_PIMPL(Map)
     /// @return  @c true= @a mobj was unlinked successfully.
     bool unlinkMobjFromSectors(mobj_t &mobj)
     {
-        if(Mobj_IsSectorLinked(&mobj))
+        if (Mobj_IsSectorLinked(&mobj))
         {
             Mobj_Sector(&mobj)->unlink(&mobj);
             return true;
@@ -814,7 +813,7 @@ DENG2_PIMPL(Map)
                                     bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_MAP_VERBOSE("Line blockmap dimensions:")
-                << lineBlockmap->dimensions().asText();
+            << lineBlockmap->dimensions().asText();
 
         // Populate the blockmap.
         lineBlockmap->link(lines);
@@ -834,23 +833,22 @@ DENG2_PIMPL(Map)
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_MAP_VERBOSE("Mobj blockmap dimensions:")
-                << mobjBlockmap->dimensions().asText();
+            << mobjBlockmap->dimensions().asText();
     }
 
     /**
-     * Unlinks the mobj from all the lines it's been linked to. Can be called
-     * without checking that the list does indeed contain lines.
+     * Unlinks the mobj from all the lines it's been linked to. Can be called without
+     * checking that the list does indeed contain lines.
      */
     bool unlinkMobjFromLines(mobj_t &mo)
     {
         // Try unlinking from lines.
-        if(!mo.lineRoot)
+        if (!mo.lineRoot)
             return false; // A zero index means it's not linked.
 
         // Unlink from each line.
         linknode_t *tn = mobjNodes.nodes;
-        for(nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot;
-            nix = tn[nix].next)
+        for (nodeindex_t nix = tn[mo.lineRoot].next; nix != mo.lineRoot; nix = tn[nix].next)
         {
             // Data is the linenode index that corresponds this mobj.
             NP_Unlink((&lineNodes), tn[nix].data);
@@ -875,12 +873,12 @@ DENG2_PIMPL(Map)
      */
     void linkMobjToLine(mobj_t *mob, Line *line)
     {
-        if(!mob || !line) return;
+        if (!mob || !line) return;
 
         // Lines with only one sector will not be linked to because a mobj can't
         // legally cross one.
-        if(!line->front().hasSector()) return;
-        if(!line->back().hasSector()) return;
+        if (!line->front().hasSector()) return;
+        if (!line->back().hasSector()) return;
 
         // Add a node to the mobj's ring.
         nodeindex_t nodeIndex = NP_New(&mobjNodes, line);
@@ -906,13 +904,13 @@ DENG2_PIMPL(Map)
         self.forAllLinesInBox(box, [this, &mob, &box] (Line &line)
         {
             // Do the bounding boxes intercept?
-            if(!(box.minX >= line.aaBox().maxX ||
-                 box.minY >= line.aaBox().maxY ||
-                 box.maxX <= line.aaBox().minX ||
-                 box.maxY <= line.aaBox().minY))
+            if (!(   box.minX >= line.aaBox().maxX
+                  || box.minY >= line.aaBox().maxY
+                  || box.maxX <= line.aaBox().minX
+                  || box.maxY <= line.aaBox().minY))
             {
                 // Line crosses the mobj's bounding box?
-                if(!line.boxOnSide(box))
+                if (!line.boxOnSide(box))
                 {
                     this->linkMobjToLine(&mob, &line);
                 }
@@ -935,7 +933,7 @@ DENG2_PIMPL(Map)
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_MAP_VERBOSE("Polyobj blockmap dimensions:")
-                << polyobjBlockmap->dimensions().asText();
+            << polyobjBlockmap->dimensions().asText();
     }
 
     /**
@@ -952,10 +950,10 @@ DENG2_PIMPL(Map)
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
         LOG_MAP_VERBOSE("Convex subspace blockmap dimensions:")
-                << subspaceBlockmap->dimensions().asText();
+            << subspaceBlockmap->dimensions().asText();
 
         // Populate the blockmap.
-        for(ConvexSubspace *subspace : subspaces)
+        for (ConvexSubspace *subspace : subspaces)
         {
             subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
         }
@@ -978,7 +976,7 @@ DENG2_PIMPL(Map)
      */
     ContactBlockmap &contactBlockmap(ContactType type)
     {
-        switch(type)
+        switch (type)
         {
         case ContactMobj:   return *mobjContactBlockmap;
         case ContactLumobj: return *lumobjContactBlockmap;
@@ -1020,9 +1018,9 @@ DENG2_PIMPL(Map)
      */
     Polyobj *polyobjBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        for(Polyobj *polyobj : polyobjs)
+        for (Polyobj *polyobj : polyobjs)
         {
-            if(&soundEmitter == &polyobj->soundEmitter())
+            if (&soundEmitter == &polyobj->soundEmitter())
                 return polyobj;
         }
         return nullptr; // Not found.
@@ -1037,9 +1035,9 @@ DENG2_PIMPL(Map)
      */
     Sector *sectorBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        for(Sector *sector : sectors)
+        for (Sector *sector : sectors)
         {
-            if(&soundEmitter == &sector->soundEmitter())
+            if (&soundEmitter == &sector->soundEmitter())
                 return sector;
         }
         return nullptr; // Not found.
@@ -1055,18 +1053,18 @@ DENG2_PIMPL(Map)
     Plane *planeBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         Plane *found = nullptr;  // Not found.
-        for(Sector *sector : sectors)
+        for (Sector *sector : sectors)
         {
             LoopResult located = sector->forAllPlanes([&soundEmitter, &found] (Plane &plane)
             {
-                if(&soundEmitter == &plane.soundEmitter())
+                if (&soundEmitter == &plane.soundEmitter())
                 {
                     found = &plane;
                     return LoopAbort;
                 }
                 return LoopContinue;
             });
-            if(located) break;
+            if (located) break;
         }
         return found;
     }
@@ -1081,21 +1079,21 @@ DENG2_PIMPL(Map)
     Surface *surfaceBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         // Perhaps a wall surface?
-        for(Line *line : lines)
-        for(dint i = 0; i < 2; ++i)
+        for (Line *line : lines)
+        for (dint i = 0; i < 2; ++i)
         {
             LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            if (!side.hasSections()) continue;
 
-            if(&soundEmitter == &side.middleSoundEmitter())
+            if (&soundEmitter == &side.middleSoundEmitter())
             {
                 return &side.middle();
             }
-            if(&soundEmitter == &side.bottomSoundEmitter())
+            if (&soundEmitter == &side.bottomSoundEmitter())
             {
                 return &side.bottom();
             }
-            if(&soundEmitter == &side.topSoundEmitter())
+            if (&soundEmitter == &side.topSoundEmitter())
             {
                 return &side.top();
             }
@@ -1107,7 +1105,7 @@ DENG2_PIMPL(Map)
 #ifdef __CLIENT__
     SurfaceDecorator &surfaceDecorator()
     {
-        if(!decorator)
+        if (!decorator)
         {
             decorator.reset(new SurfaceDecorator);
         }
@@ -1119,10 +1117,10 @@ DENG2_PIMPL(Map)
      */
     void lerpTrackedPlanes(bool resetNextViewer)
     {
-        if(resetNextViewer)
+        if (resetNextViewer)
         {
             // Reset the plane height trackers.
-            for(Plane *plane : trackedPlanes)
+            for (Plane *plane : trackedPlanes)
             {
                 plane->resetSmoothedHeight();
             }
@@ -1131,17 +1129,17 @@ DENG2_PIMPL(Map)
             trackedPlanes.clear();
         }
         // While the game is paused there is no need to smooth.
-        else //if(!clientPaused)
+        else //if (!clientPaused)
         {
             QMutableSetIterator<Plane *> iter(trackedPlanes);
-            while(iter.hasNext())
+            while (iter.hasNext())
             {
                 Plane *plane = iter.next();
 
                 plane->lerpSmoothedHeight();
 
                 // Has this plane reached its destination?
-                if(de::fequal(plane->heightSmoothed(), plane->height()))
+                if (de::fequal(plane->heightSmoothed(), plane->height()))
                 {
                     iter.remove();
                 }
@@ -1154,10 +1152,10 @@ DENG2_PIMPL(Map)
      */
     void lerpScrollingSurfaces(bool resetNextViewer)
     {
-        if(resetNextViewer)
+        if (resetNextViewer)
         {
             // Reset the surface material origin trackers.
-            for(Surface *surface : scrollingSurfaces)
+            for (Surface *surface : scrollingSurfaces)
             {
                 surface->resetSmoothedMaterialOrigin();
             }
@@ -1166,17 +1164,17 @@ DENG2_PIMPL(Map)
             scrollingSurfaces.clear();
         }
         // While the game is paused there is no need to smooth.
-        else //if(!clientPaused)
+        else //if (!clientPaused)
         {
             QMutableSetIterator<Surface *> iter(scrollingSurfaces);
-            while(iter.hasNext())
+            while (iter.hasNext())
             {
                 Surface *surface = iter.next();
 
                 surface->lerpSmoothedMaterialOrigin();
 
                 // Has this material reached its destination?
-                if(surface->materialOriginSmoothed() == surface->materialOrigin())
+                if (surface->materialOriginSmoothed() == surface->materialOrigin())
                 {
                     iter.remove();
                 }
@@ -1189,7 +1187,7 @@ DENG2_PIMPL(Map)
      */
     void biasBeginFrame()
     {
-        if(!useBias) return;
+        if (!useBias) return;
 
         // The time that applies on this frame.
         bias.currentTime = Timer_RealMilliseconds();
@@ -1199,22 +1197,22 @@ DENG2_PIMPL(Map)
         QBitArray allChanges(BiasTracker::MAX_CONTRIBUTORS);
         bool needUpdateSurfaces = false;
 
-        for(dint i = 0; i < bias.sources.count(); ++i)
+        for (dint i = 0; i < bias.sources.count(); ++i)
         {
             BiasSource *bsrc = bias.sources.at(i);
 
-            if(bsrc->trackChanges(allChanges, i, bias.currentTime))
+            if (bsrc->trackChanges(allChanges, i, bias.currentTime))
             {
                 // We'll need to redetermine source => surface affection.
                 needUpdateSurfaces = true;
             }
         }
 
-        if(!needUpdateSurfaces) return;
+        if (!needUpdateSurfaces) return;
 
         // Apply changes to all surfaces:
         bias.lastChangeOnFrame = R_FrameCount();
-        for(SectorCluster *cluster : clusters)
+        for (SectorCluster *cluster : clusters)
         {
             cluster->applyBiasChanges(allChanges);
         }
@@ -1225,8 +1223,8 @@ DENG2_PIMPL(Map)
      */
     void generateMobjContacts()
     {
-        for(Sector *sector : sectors)
-        for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
+        for (Sector *sector : sectors)
+        for (mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
             R_AddContact(*iter);
         }
@@ -1236,10 +1234,10 @@ DENG2_PIMPL(Map)
     {
         surface.forAllDecorations([this] (Decoration &decor)
         {
-            if(auto const *decorLight = decor.maybeAs<LightDecoration>())
+            if (auto const *decorLight = decor.maybeAs<LightDecoration>())
             {
                 std::unique_ptr<Lumobj> lum(decorLight->generateLumobj());
-                if(lum)
+                if (lum)
                 {
                     self.addLumobj(*lum);  // a copy is made.
                 }
@@ -1254,7 +1252,7 @@ DENG2_PIMPL(Map)
     Generators &getGenerators()
     {
         // Time to initialize a new collection?
-        if(!generators)
+        if (!generators)
         {
             generators.reset(new Generators);
             generators->resize(sectors.count());
@@ -1276,19 +1274,19 @@ DENG2_PIMPL(Map)
 
         // Prefer allocating a new generator if we've a spare id.
         duint unused = 0;
-        for(; unused < gens.activeGens.size(); ++unused)
+        for (; unused < gens.activeGens.size(); ++unused)
         {
-            if(!gens.activeGens[unused]) break;
+            if (!gens.activeGens[unused]) break;
         }
-        if(unused < gens.activeGens.size()) return Generator::Id(unused + 1);
+        if (unused < gens.activeGens.size()) return Generator::Id(unused + 1);
 
         // See if there is an active, non-static generator we can supplant.
         Generator *oldest = nullptr;
-        for(Generator *gen : gens.activeGens)
+        for (Generator *gen : gens.activeGens)
         {
-            if(!gen || gen->isStatic()) continue;
+            if (!gen || gen->isStatic()) continue;
 
-            if(!oldest || gen->age() > oldest->age())
+            if (!oldest || gen->age() > oldest->age())
             {
                 oldest = gen;
             }
@@ -1299,23 +1297,23 @@ DENG2_PIMPL(Map)
 
     void spawnMapParticleGens()
     {
-        if(!self.hasManifest()) return;
+        if (!self.hasManifest()) return;
 
-        for(dint i = 0; i < ::defs.ptcGens.size(); ++i)
+        for (dint i = 0; i < ::defs.ptcGens.size(); ++i)
         {
             ded_ptcgen_t *genDef = &::defs.ptcGens[i];
 
-            if(!genDef->map) continue;
+            if (!genDef->map) continue;
 
-            if(*genDef->map != self.manifest().composeUri())
+            if (*genDef->map != self.manifest().composeUri())
                 continue;
 
             // Are we still spawning using this generator?
-            if(genDef->spawnAge > 0 && App_World().time() > genDef->spawnAge)
+            if (genDef->spawnAge > 0 && App_World().time() > genDef->spawnAge)
                 continue;
 
             Generator *gen = self.newGenerator();
-            if(!gen) return;  // No more generators.
+            if (!gen) return;  // No more generators.
 
             // Initialize the particle generator.
             gen->count = genDef->particles;
@@ -1336,15 +1334,15 @@ DENG2_PIMPL(Map)
      */
     void spawnTypeParticleGens()
     {
-        for(dint i = 0; i < defs.ptcGens.size(); ++i)
+        for (dint i = 0; i < defs.ptcGens.size(); ++i)
         {
             ded_ptcgen_t *def = &defs.ptcGens[i];
 
-            if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
+            if (def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
                 continue;
 
             Generator *gen = self.newGenerator();
-            if(!gen) return;  // No more generators.
+            if (!gen) return;  // No more generators.
 
             // Initialize the particle generator.
             gen->count = def->particles;
@@ -1364,52 +1362,52 @@ DENG2_PIMPL(Map)
         DENG2_ASSERT(gen);
 
         // Search for a suitable definition.
-        for(dint i = 0; i < defs.ptcGens.size(); ++i)
+        for (dint i = 0; i < defs.ptcGens.size(); ++i)
         {
             ded_ptcgen_t *def = &defs.ptcGens[i];
 
             // A type generator?
-            if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
+            if (def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
             {
                 return i + 1;  // Stop iteration.
             }
-            if(def->typeNum >= 0 &&
+            if (def->typeNum >= 0 &&
                (gen->type == def->typeNum || gen->type2 == def->type2Num))
             {
                 return i + 1;  // Stop iteration.
             }
 
             // A damage generator?
-            if(gen->source && gen->source->type == def->damageNum)
+            if (gen->source && gen->source->type == def->damageNum)
             {
                 return i + 1;  // Stop iteration.
             }
 
             // A flat generator?
-            if(gen->plane && def->material)
+            if (gen->plane && def->material)
             {
                 try
                 {
                     world::Material &defMat = world::Materials::get().material(*def->material);
 
                     Material *mat = gen->plane->surface().materialPtr();
-                    if(def->flags & Generator::SpawnFloor)
-                        mat = gen->plane->sector().floorSurface().materialPtr();
-                    if(def->flags & Generator::SpawnCeiling)
-                        mat = gen->plane->sector().ceilingSurface().materialPtr();
+                    if (def->flags & Generator::SpawnFloor)
+                        mat = gen->plane->sector().floor().surface().materialPtr();
+                    if (def->flags & Generator::SpawnCeiling)
+                        mat = gen->plane->sector().ceiling().surface().materialPtr();
 
                     // Is this suitable?
-                    if(mat == &defMat)
+                    if (mat == &defMat)
                     {
                         return i + 1; // 1-based index.
                     }
 
 #if 0 /// @todo $revise-texture-animation
-                    if(def->flags & PGF_GROUP)
+                    if (def->flags & PGF_GROUP)
                     {
                         // Generator triggered by all materials in the animation.
-                        if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
-                           &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
+                        if (Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat)
+                            && &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
                         {
                             // Both are in this animation! This def will do.
                             return i + 1;  // 1-based index.
@@ -1417,15 +1415,15 @@ DENG2_PIMPL(Map)
                     }
 #endif
                 }
-                catch(MaterialManifest::MissingMaterialError const &)
+                catch (MaterialManifest::MissingMaterialError const &)
                 {}  // Ignore this error.
-                catch(Resources::MissingResourceManifestError const &)
+                catch (Resources::MissingResourceManifestError const &)
                 {}  // Ignore this error.
             }
 
             // A state generator?
-            if(gen->source && def->state[0] &&
-               ::runtimeDefs.states.indexOf(gen->source->state) == ::defs.getStateNum(def->state))
+            if (gen->source && def->state[0]
+                && ::runtimeDefs.states.indexOf(gen->source->state) == ::defs.getStateNum(def->state))
             {
                 return i + 1;  // 1-based index.
             }
@@ -1439,20 +1437,20 @@ DENG2_PIMPL(Map)
      */
     void updateParticleGens()
     {
-        for(Generator *gen : getGenerators().activeGens)
+        for (Generator *gen : getGenerators().activeGens)
         {
             // Only consider active generators.
-            if(!gen) continue;
+            if (!gen) continue;
 
             // Map generators cannot be updated (we have no means to reliably
             // identify them), so destroy them.
-            if(gen->isUntriggered())
+            if (gen->isUntriggered())
             {
                 Generator_Delete(gen);
                 continue;  // Continue iteration.
             }
 
-            if(dint defIndex = findDefForGenerator(gen))
+            if (dint defIndex = findDefForGenerator(gen))
             {
                 // Update the generator using the new definition.
                 gen->def = &defs.ptcGens[defIndex - 1];
@@ -1483,16 +1481,16 @@ DENG2_PIMPL(Map)
         std::memset(gens.lists, 0, sizeof(*gens.lists) * gens.listsSize);
         gens.linkStoreCursor = 0;
 
-        if(useParticles)
+        if (useParticles)
         {
-            for(Generator *gen : gens.activeGens)
+            for (Generator *gen : gens.activeGens)
             {
-                if(!gen) continue;
+                if (!gen) continue;
 
                 ParticleInfo const *pInfo = gen->particleInfo();
-                for(dint i = 0; i < gen->count; ++i, pInfo++)
+                for (dint i = 0; i < gen->count; ++i, pInfo++)
                 {
-                    if(pInfo->stage < 0 || !pInfo->bspLeaf)
+                    if (pInfo->stage < 0 || !pInfo->bspLeaf)
                         continue;
 
                     dint listIndex = pInfo->bspLeaf->sectorPtr()->indexInMap();
@@ -1500,9 +1498,9 @@ DENG2_PIMPL(Map)
 
                     // Must check that it isn't already there...
                     bool found = false;
-                    for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+                    for (Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
                     {
-                        if(it->gen == gen)
+                        if (it->gen == gen)
                         {
                             // Warning message disabled as these are occuring so thick and fast
                             // that logging is pointless (and negatively affecting performance).
@@ -1512,10 +1510,10 @@ DENG2_PIMPL(Map)
                         }
                     }
 
-                    if(found) continue;
+                    if (found) continue;
 
                     // We need a new link.
-                    if(Generators::ListNode *link = gens.newLink())
+                    if (Generators::ListNode *link = gens.newLink())
                     {
                         link->gen  = gen;
                         link->next = gens.lists[listIndex];
@@ -1556,10 +1554,7 @@ bool Map::hasBspTree() const
 
 BspTree const &Map::bspTree() const
 {
-    if(d->bsp.tree)
-    {
-        return *d->bsp.tree;
-    }
+    if (d->bsp.tree) return *d->bsp.tree;
     /// @throw MissingBspTreeError  Attempted with no BSP tree available.
     throw MissingBspTreeError("Map::bspTree", "No BSP tree is available");
 }
@@ -1593,7 +1588,7 @@ LightGrid const &Map::lightGrid() const
 void Map::initLightGrid()
 {
     // Disabled?
-    if(!Con_GetInteger("rend-bias-grid"))
+    if (!Con_GetInteger("rend-bias-grid"))
         return;
 
     // Diagonal in maze arrangement of natural numbers.
@@ -1602,7 +1597,7 @@ void Map::initLightGrid()
     static dint multisample[] = { 1, 5, 9, 17, 25, 37, 49, 65 };
 
     // Time to initialize the LightGrid?
-    if(bool(d->lightGrid))
+    if (bool(d->lightGrid))
     {
         d->lightGrid->updateIfNeeded();
         return;
@@ -1642,11 +1637,11 @@ void Map::initLightGrid()
 
     // Determine the size^2 of the samplePoint array plus its center.
     dint size = 0, center = 0;
-    if(numSamples > 1)
+    if (numSamples > 1)
     {
         dfloat f = sqrt(dfloat( numSamples ));
 
-        if(std::ceil(f) != std::floor(f))
+        if (std::ceil(f) != std::floor(f))
         {
             size = sqrt(dfloat( numSamples - 1 ));
             center = 0;
@@ -1661,21 +1656,21 @@ void Map::initLightGrid()
     // Construct the sample point offset array.
     // This way we can use addition only during calculation of:
     // (dimensions.y * dimensions.x) * numSamples
-    if(center == 0)
+    if (center == 0)
     {
         // Zero is the center so do that first.
         samplePoints[0] = Vector2d(lg.blockSize() / 2, lg.blockSize() / 2);
     }
 
-    if(numSamples > 1)
+    if (numSamples > 1)
     {
         ddouble bSize = ddouble(lg.blockSize()) / (size - 1);
 
         // Is there an offset?
         dint idx = (center == 0? 1 : 0);
 
-        for(dint y = 0; y < size; ++y)
-        for(dint x = 0; x < size; ++x, ++idx)
+        for (dint y = 0; y < size; ++y)
+        for (dint x = 0; x < size; ++x, ++idx)
         {
             samplePoints[idx] = Vector2d(de::round<ddouble>(x * bSize),
                                          de::round<ddouble>(y * bSize));
@@ -1683,14 +1678,14 @@ void Map::initLightGrid()
     }
 
     // Acquire the sector clusters at ALL the sample points.
-    for(dint y = 0; y < lg.dimensions().y; ++y)
-    for(dint x = 0; x < lg.dimensions().x; ++x)
+    for (dint y = 0; y < lg.dimensions().y; ++y)
+    for (dint x = 0; x < lg.dimensions().x; ++x)
     {
         LightGrid::Index const blk = lg.toIndex(x, y);
         Vector2d const off(x * lg.blockSize(), y * lg.blockSize());
 
         dint sampleOffset = 0;
-        if(center == 0)
+        if (center == 0)
         {
             // Center point is not considered with the term 'size'.
             // Sample this point and place at index 0 (at the start of the
@@ -1700,15 +1695,15 @@ void Map::initLightGrid()
         }
 
         dint count = blk * size;
-        for(dint b = 0; b < size; ++b)
+        for (dint b = 0; b < size; ++b)
         {
             dint i = (b + count) * size;
 
-            for(dint a = 0; a < size; ++a, ++sampleOffset)
+            for (dint a = 0; a < size; ++a, ++sampleOffset)
             {
                 dint idx = a + i + (center == 0? blk + 1 : 0);
 
-                if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
+                if (numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
                 {
                     // We have already sampled this point.
                     // Get the previous result.
@@ -1716,19 +1711,19 @@ void Map::initLightGrid()
                     LightGrid::Ref prevB(a, b);
                     dint prevIdx;
 
-                    if(x > 0 && a == 0)
+                    if (x > 0 && a == 0)
                     {
                         prevB.x = size -1;
                         prev.x--;
                     }
-                    if(y > 0 && b == 0)
+                    if (y > 0 && b == 0)
                     {
                         prevB.y = size -1;
                         prev.y--;
                     }
 
                     prevIdx = prevB.x + (prevB.y + lg.toIndex(prev) * size) * size;
-                    if(center == 0)
+                    if (center == 0)
                         prevIdx += lg.toIndex(prev) + 1;
 
                     ssamples[idx] = ssamples[prevIdx];
@@ -1745,8 +1740,8 @@ void Map::initLightGrid()
     // Allocate memory used for the collection of the sample results.
     QVector<SectorCluster *> blkSampleClusters(numSamples);
 
-    for(dint y = 0; y < lg.dimensions().y; ++y)
-    for(dint x = 0; x < lg.dimensions().x; ++x)
+    for (dint y = 0; y < lg.dimensions().y; ++y)
+    for (dint x = 0; x < lg.dimensions().x; ++x)
     {
         /// Pick the sector cluster at each of the sample points.
         ///
@@ -1758,13 +1753,13 @@ void Map::initLightGrid()
         ///
         /// For now we'll make use of it to clarify the code.
         dint const sampleOffset = lg.toIndex(x, y) * numSamples;
-        for(dint i = 0; i < numSamples; ++i)
+        for (dint i = 0; i < numSamples; ++i)
         {
             blkSampleClusters[i] = ssamples[i + sampleOffset];
         }
 
         SectorCluster *cluster = nullptr;
-        if(numSamples == 1)
+        if (numSamples == 1)
         {
             cluster = blkSampleClusters[center];
         }
@@ -1774,16 +1769,16 @@ void Map::initLightGrid()
             dint best = -1;
             sampleHits.fill(0);
 
-            for(dint i = 0; i < numSamples; ++i)
+            for (dint i = 0; i < numSamples; ++i)
             {
-                if(!blkSampleClusters[i]) continue;
+                if (!blkSampleClusters[i]) continue;
 
-                for(dint k = 0; k < numSamples; ++k)
+                for (dint k = 0; k < numSamples; ++k)
                 {
-                    if(blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
+                    if (blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
                     {
                         sampleHits[k]++;
-                        if(sampleHits[k] > best)
+                        if (sampleHits[k] > best)
                         {
                             best = i;
                         }
@@ -1791,11 +1786,10 @@ void Map::initLightGrid()
                 }
             }
 
-            if(best != -1)
+            if (best != -1)
             {
-                // Favour the center sample if its a draw.
-                if(sampleHits[best] == sampleHits[center] &&
-                   blkSampleClusters[center])
+                // Favor the center sample if its a draw.
+                if (sampleHits[best] == sampleHits[center] && blkSampleClusters[center])
                 {
                     cluster = blkSampleClusters[center];
                 }
@@ -1806,14 +1800,14 @@ void Map::initLightGrid()
             }
         }
 
-        if(cluster)
+        if (cluster)
         {
             lg.setPrimarySource(lg.toIndex(x, y), cluster);
         }
     }
 
     LOGDEV_GL_MSG("%i light blocks (%u bytes)")
-            << lg.numBlocks() << lg.blockStorageSize();
+        << lg.numBlocks() << lg.blockStorageSize();
 
     // How much time did we spend?
     LOGDEV_GL_MSG("LightGrid init completed in %.2f seconds") << begunAt.since();
@@ -1828,20 +1822,20 @@ void Map::initBias()
     // Start with no sources whatsoever.
     d->bias.sources.clear();
 
-    if(hasManifest())
+    if (hasManifest())
     {
         String const oldUniqueId = manifest().composeUniqueId(App_CurrentGame());
 
         // Load light sources from Light definitions.
-        for(dint i = 0; i < defs.lights.size(); ++i)
+        for (dint i = 0; i < defs.lights.size(); ++i)
         {
             ded_light_t *lightDef = &defs.lights[i];
 
-            if(lightDef->state[0]) continue;
-            if(oldUniqueId.compareWithoutCase(lightDef->uniqueMapID)) continue;
+            if (lightDef->state[0]) continue;
+            if (oldUniqueId.compareWithoutCase(lightDef->uniqueMapID)) continue;
 
             // Already at maximum capacity?
-            if(biasSourceCount() == MAX_BIAS_SOURCES)
+            if (biasSourceCount() == MAX_BIAS_SOURCES)
                 break;
 
             addBiasSource(BiasSource::fromDef(*lightDef));
@@ -1853,21 +1847,21 @@ void Map::initBias()
 
 void Map::unlinkInMaterialLists(Surface *surface)
 {
-    if(!surface) return;
-    if(!d->decorator) return;
+    if (!surface) return;
+    if (!d->decorator) return;
 
     d->surfaceDecorator().remove(surface);
 }
 
 void Map::linkInMaterialLists(Surface *surface)
 {
-    if(!surface) return;
+    if (!surface) return;
 
     // Only surfaces with a material will be linked.
-    if(!surface->hasMaterial()) return;
+    if (!surface->hasMaterial()) return;
 
     // Ignore surfaces not currently attributed to the map.
-    if(&surface->map() != this)
+    if (&surface->map() != this)
     {
         qDebug() << "Ignoring alien surface" << de::dintptr(surface) << "in Map::unlinkInMaterialLists";
         return;
@@ -1880,45 +1874,45 @@ void Map::buildMaterialLists()
 {
     d->surfaceDecorator().reset();
 
-    for(ConvexSubspace const *subspace : d->subspaces)
+    for (ConvexSubspace const *subspace : d->subspaces)
     {
         HEdge *base  = subspace->poly().hedge();
         HEdge *hedge = base;
         do
         {
-            if(hedge->hasMapElement())
+            if (hedge->hasMapElement())
             {
                 LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
-                if(side.hasSections())
+                if (side.hasSections())
                 {
                     linkInMaterialLists(&side.middle());
                     linkInMaterialLists(&side.top());
                     linkInMaterialLists(&side.bottom());
                 }
-                if(side.back().hasSections())
+                if (side.back().hasSections())
                 {
                     linkInMaterialLists(&side.back().middle());
                     linkInMaterialLists(&side.back().top());
                     linkInMaterialLists(&side.back().bottom());
                 }
             }
-        } while((hedge = &hedge->next()) != base);
+        } while ((hedge = &hedge->next()) != base);
 
         subspace->forAllExtraMeshes([this] (Mesh &mesh)
         {
-            for(HEdge *hedge : mesh.hedges())
+            for (HEdge *hedge : mesh.hedges())
             {
                 // Is this on the back of a one-sided line?
-                if(!hedge->hasMapElement()) continue;
+                if (!hedge->hasMapElement()) continue;
 
                 LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
-                if(side.hasSections())
+                if (side.hasSections())
                 {
                     linkInMaterialLists(&side.middle());
                     linkInMaterialLists(&side.top());
                     linkInMaterialLists(&side.bottom());
                 }
-                if(side.back().hasSections())
+                if (side.back().hasSections())
                 {
                     linkInMaterialLists(&side.back().middle());
                     linkInMaterialLists(&side.back().top());
@@ -1942,7 +1936,7 @@ void Map::initRadio()
 
     Time begunAt;
 
-    for(Vertex *vtx : d->mesh.vertexs())
+    for (Vertex *vtx : d->mesh.vertexs())
     {
         vtx->updateShadowOffsets();
     }
@@ -1954,20 +1948,20 @@ void Map::initRadio()
     /// 2. Check the ConvexSubspaces whose sector is the same as the line.
     /// 3. If any of the shadow points are in the subspace, or any of the shadow edges cross one
     ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
-    for(Line *line : d->lines)
+    for (Line *line : d->lines)
     {
-        if(!line->isShadowCaster()) continue;
+        if (!line->isShadowCaster()) continue;
 
         // For each side of the line.
-        for(dint i = 0; i < 2; ++i)
+        for (dint i = 0; i < 2; ++i)
         {
             LineSide &side = line->side(i);
 
-            if(!side.hasSector()) continue;
-            if(!side.hasSections()) continue;
+            if (!side.hasSector()) continue;
+            if (!side.hasSections()) continue;
 
             // Skip sides which share one or more edge with malformed geometry.
-            if(!side.leftHEdge() || !side.rightHEdge()) continue;
+            if (!side.leftHEdge() || !side.rightHEdge()) continue;
 
             Vertex const &vtx0   = line->vertex(i);
             Vertex const &vtx1   = line->vertex(i ^ 1);
@@ -1990,17 +1984,17 @@ void Map::initRadio()
             subspaceBlockmap().forAllInBox(bounds, [&bounds, &side, &localValidCount] (void *object)
             {
                 auto &sub = *(ConvexSubspace *)object;
-                if(sub.validCount() != localValidCount)  // not yet processed
+                if (sub.validCount() != localValidCount)  // not yet processed
                 {
                     sub.setValidCount(localValidCount);
-                    if(&sub.sector() == side.sectorPtr())
+                    if (&sub.sector() == side.sectorPtr())
                     {
                         // Check the bounds.
                         AABoxd const &polyBox = sub.poly().aaBox();
-                        if(!(polyBox.maxX < bounds.minX ||
-                             polyBox.minX > bounds.maxX ||
-                             polyBox.minY > bounds.maxY ||
-                             polyBox.maxY < bounds.minY))
+                        if (!(   polyBox.maxX < bounds.minX
+                              || polyBox.minX > bounds.maxX
+                              || polyBox.minY > bounds.maxY
+                              || polyBox.maxY < bounds.minY))
                         {
                             sub.addShadowLine(side);
                         }
@@ -2042,9 +2036,9 @@ void Map::initGenerators()
 
 void Map::spawnPlaneParticleGens()
 {
-    //if(!useParticles) return;
+    //if (!useParticles) return;
 
-    for(Sector *sector : d->sectors)
+    for (Sector *sector : d->sectors)
     {
         Plane &floor = sector->floor();
         floor.spawnParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()));
@@ -2064,12 +2058,12 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     LOG_AS("Map::clMobjFor");
 
     ClMobjHash::const_iterator found = d->clMobjHash.constFind(id);
-    if(found != d->clMobjHash.constEnd())
+    if (found != d->clMobjHash.constEnd())
     {
         return found.value();
     }
 
-    if(!canCreate) return nullptr;
+    if (!canCreate) return nullptr;
 
     // Create a new client mobj. This is a regular mobj that has network state
     // associated with it.
@@ -2096,8 +2090,8 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
 dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
 {
     ClMobjHash::const_iterator next;
-    for(ClMobjHash::const_iterator i = d->clMobjHash.constBegin();
-        i != d->clMobjHash.constEnd(); i = next)
+    for (ClMobjHash::const_iterator i = d->clMobjHash.constBegin();
+         i != d->clMobjHash.constEnd(); i = next)
     {
         next = i;
         next++;
@@ -2105,7 +2099,7 @@ dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
         DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasRemoteSync());
 
         // Callback returns zero to continue.
-        if(dint result = callback(i.value(), context))
+        if (dint result = callback(i.value(), context))
             return result;
     }
     return 0;
@@ -2130,11 +2124,11 @@ coord_t Map::gravity() const
 
 void Map::setGravity(coord_t newGravity)
 {
-    if(!de::fequal(_effectiveGravity, newGravity))
+    if (!de::fequal(_effectiveGravity, newGravity))
     {
         _effectiveGravity = newGravity;
         LOG_MAP_VERBOSE("Effective gravity for %s now %.1f")
-                << (hasManifest() ? manifest().gets("id") : "(unknown map)") << _effectiveGravity;
+            << (hasManifest() ? manifest().gets("id") : "(unknown map)") << _effectiveGravity;
     }
 }
 
@@ -2157,14 +2151,14 @@ dint Map::vertexCount() const
 
 Vertex &Map::vertex(dint index) const
 {
-    if(Vertex *vtx = vertexPtr(index)) return *vtx;
+    if (Vertex *vtx = vertexPtr(index)) return *vtx;
     /// @throw MissingElementError  Invalid Vertex reference specified.
     throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::number(index));
 }
 
 Vertex *Map::vertexPtr(dint index) const
 {
-    if(index >= 0 && index < d->mesh.vertexCount())
+    if (index >= 0 && index < d->mesh.vertexCount())
     {
         return d->mesh.vertexs().at(index);
     }
@@ -2173,9 +2167,9 @@ Vertex *Map::vertexPtr(dint index) const
 
 LoopResult Map::forAllVertexs(std::function<LoopResult (Vertex &)> func) const
 {
-    for(Vertex *vtx : d->mesh.vertexs())
+    for (Vertex *vtx : d->mesh.vertexs())
     {
-        if(auto result = func(*vtx)) return result;
+        if (auto result = func(*vtx)) return result;
     }
     return LoopContinue;
 }
@@ -2187,14 +2181,14 @@ dint Map::lineCount() const
 
 Line &Map::line(dint index) const
 {
-    if(Line *li = linePtr(index)) return *li;
+    if (Line *li = linePtr(index)) return *li;
     /// @throw MissingElementError  Invalid Line reference specified.
     throw MissingElementError("Map::line", "Unknown Line index:" + String::number(index));
 }
 
 Line *Map::linePtr(dint index) const
 {
-    if(index >= 0 && index < d->lines.count())
+    if (index >= 0 && index < d->lines.count())
     {
         return d->lines.at(index);
     }
@@ -2203,9 +2197,9 @@ Line *Map::linePtr(dint index) const
 
 LoopResult Map::forAllLines(std::function<LoopResult (Line &)> func) const
 {
-    for(Line *li : d->lines)
+    for (Line *li : d->lines)
     {
-        if(auto result = func(*li)) return result;
+        if (auto result = func(*li)) return result;
     }
     return LoopContinue;
 }
@@ -2217,14 +2211,14 @@ dint Map::sectorCount() const
 
 Sector &Map::sector(dint index) const
 {
-    if(Sector *sec = sectorPtr(index)) return *sec;
+    if (Sector *sec = sectorPtr(index)) return *sec;
     /// @throw MissingElementError  Invalid Sector reference specified.
     throw MissingElementError("Map::sector", "Unknown Sector index:" + String::number(index));
 }
 
 Sector *Map::sectorPtr(dint index) const
 {
-    if(index >= 0 && index < d->sectors.count())
+    if (index >= 0 && index < d->sectors.count())
     {
         return d->sectors.at(index);
     }
@@ -2233,16 +2227,16 @@ Sector *Map::sectorPtr(dint index) const
 
 LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
 {
-    for(Sector *sec : d->sectors)
+    for (Sector *sec : d->sectors)
     {
-        if(auto result = func(*sec)) return result;
+        if (auto result = func(*sec)) return result;
     }
     return LoopContinue;
 }
 
 bool Map::isPointInVoid(de::Vector3d const &pos) const
 {
-    if(SectorCluster const *cluster = clusterAt(pos))
+    if (SectorCluster const *cluster = clusterAt(pos))
     {
         return cluster->isHeightInVoid(pos.z);
     }
@@ -2256,14 +2250,14 @@ dint Map::subspaceCount() const
 
 ConvexSubspace &Map::subspace(dint index) const
 {
-    if(ConvexSubspace *sub = subspacePtr(index)) return *sub;
+    if (ConvexSubspace *sub = subspacePtr(index)) return *sub;
     /// @throw MissingElementError  Invalid ConvexSubspace reference specified.
     throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::number(index));
 }
 
 ConvexSubspace *Map::subspacePtr(dint index) const
 {
-    if(index >= 0 && index < d->subspaces.count())
+    if (index >= 0 && index < d->subspaces.count())
     {
         return d->subspaces.at(index);
     }
@@ -2272,9 +2266,9 @@ ConvexSubspace *Map::subspacePtr(dint index) const
 
 LoopResult Map::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
 {
-    for(ConvexSubspace *sub : d->subspaces)
+    for (ConvexSubspace *sub : d->subspaces)
     {
-        if(auto result = func(*sub)) return result;
+        if (auto result = func(*sub)) return result;
     }
     return LoopContinue;
 }
@@ -2286,18 +2280,18 @@ dint Map::clusterCount() const
 
 LoopResult Map::forAllClusters(std::function<LoopResult (SectorCluster &)> callback)
 {
-    for(SectorCluster *cluster : d->clusters)
+    for (SectorCluster *cluster : d->clusters)
     {
-        if(auto result = callback(*cluster)) return result;
+        if (auto result = callback(*cluster)) return result;
     }
     return LoopContinue;
 }
 
 LoopResult Map::forAllClustersOfSector(Sector &sector, std::function<LoopResult (SectorCluster &)> callback)
 {
-    for(auto it = d->clusters.constFind(&sector); it != d->clusters.end() && it.key() == &sector; ++it)
+    for (auto it = d->clusters.constFind(&sector); it != d->clusters.end() && it.key() == &sector; ++it)
     {
-        if(auto result = callback(**it)) return result;
+        if (auto result = callback(**it)) return result;
     }
     return LoopContinue;
 }
@@ -2309,14 +2303,14 @@ dint Map::polyobjCount() const
 
 Polyobj &Map::polyobj(dint index) const
 {
-    if(Polyobj *pob = polyobjPtr(index)) return *pob;
+    if (Polyobj *pob = polyobjPtr(index)) return *pob;
     /// @throw MissingObjectError  Invalid ConvexSubspace reference specified.
     throw MissingObjectError("Map::subspace", "Unknown Polyobj index:" + String::number(index));
 }
 
 Polyobj *Map::polyobjPtr(dint index) const
 {
-    if(index >= 0 && index < d->polyobjs.count())
+    if (index >= 0 && index < d->polyobjs.count())
     {
         return d->polyobjs.at(index);
     }
@@ -2325,9 +2319,9 @@ Polyobj *Map::polyobjPtr(dint index) const
 
 LoopResult Map::forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const
 {
-    for(Polyobj *pob : d->polyobjs)
+    for (Polyobj *pob : d->polyobjs)
     {
-        if(auto result = func(*pob)) return result;
+        if (auto result = func(*pob)) return result;
     }
     return LoopContinue;
 }
@@ -2336,7 +2330,7 @@ void Map::initPolyobjs()
 {
     LOG_AS("Map::initPolyobjs");
 
-    for(Polyobj *po : d->polyobjs)
+    for (Polyobj *po : d->polyobjs)
     {
         /// @todo Is this still necessary? -ds
         /// (This data is updated automatically when moving/rotating).
@@ -2355,14 +2349,14 @@ dint Map::ambientLightLevel() const
 
 LineSide &Map::side(dint index) const
 {
-    if(LineSide *side = sidePtr(index)) return *side;
+    if (LineSide *side = sidePtr(index)) return *side;
     /// @throw MissingElementError  Invalid LineSide reference specified.
     throw MissingElementError("Map::side", "Unknown LineSide index:" + String::number(index));
 }
 
 LineSide *Map::sidePtr(dint index) const
 {
-    if(index < 0) return nullptr;
+    if (index < 0) return nullptr;
     return &d->lines.at(index / 2)->side(index % 2);
 }
 
@@ -2384,15 +2378,15 @@ bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
     /// a chain. Make use of the chains instead.
 
     *poly = d->polyobjBySoundEmitter(emitter);
-    if(!*poly)
+    if (!*poly)
     {
         // Not a polyobj. Try the sectors next.
         *sector = d->sectorBySoundEmitter(emitter);
-        if(!*sector)
+        if (!*sector)
         {
             // Not a sector. Try the planes next.
             *plane = d->planeBySoundEmitter(emitter);
-            if(!*plane)
+            if (!*plane)
             {
                 // Not a plane. Try the surfaces next.
                 *surface = d->surfaceBySoundEmitter(emitter);
@@ -2417,7 +2411,7 @@ void Map::initNodePiles()
     DENG_ASSERT(d->lineLinks == nullptr);
     d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
-    for(dint i = 0; i < lineCount(); ++i)
+    for (dint i = 0; i < lineCount(); ++i)
     {
         d->lineLinks[i] = NP_New(&d->lineNodes, NP_ROOT_NODE);
     }
@@ -2428,40 +2422,28 @@ void Map::initNodePiles()
 
 Blockmap const &Map::mobjBlockmap() const
 {
-    if(bool(d->mobjBlockmap))
-    {
-        return *d->mobjBlockmap;
-    }
+    if (bool(d->mobjBlockmap)) return *d->mobjBlockmap;
     /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::mobjBlockmap", "Mobj blockmap is not initialized");
 }
 
 Blockmap const &Map::polyobjBlockmap() const
 {
-    if(bool(d->polyobjBlockmap))
-    {
-        return *d->polyobjBlockmap;
-    }
+    if (bool(d->polyobjBlockmap)) return *d->polyobjBlockmap;
     /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
 LineBlockmap const &Map::lineBlockmap() const
 {
-    if(bool(d->lineBlockmap))
-    {
-        return *d->lineBlockmap;
-    }
+    if (bool(d->lineBlockmap)) return *d->lineBlockmap;
     /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
     throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
 Blockmap const &Map::subspaceBlockmap() const
 {
-    if(bool(d->subspaceBlockmap))
-    {
-        return *d->subspaceBlockmap;
-    }
+    if (bool(d->subspaceBlockmap)) return *d->subspaceBlockmap;
     /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
     throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
@@ -2473,19 +2455,19 @@ LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (L
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
+    if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
     {
         QVarLengthArray<Line *, 16> linkStore;
 
         linknode_t *tn = d->mobjNodes.nodes;
-        for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+        for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
         {
             linkStore.append((Line *)(tn[nix].ptr));
         }
 
-        for(dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.count(); ++i)
         {
-            if(auto result = func(*linkStore[i]))
+            if (auto result = func(*linkStore[i]))
                 return result;
         }
     }
@@ -2499,7 +2481,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
+    if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
     {
         QVarLengthArray<Sector *, 16> linkStore;
 
@@ -2509,17 +2491,17 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
         linkStore.append(&ownSec);
 
         // Any good lines around here?
-        if(mob.lineRoot)
+        if (mob.lineRoot)
         {
             linknode_t *tn = d->mobjNodes.nodes;
-            for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+            for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
             {
                 auto *ld = (Line *)(tn[nix].ptr);
 
                 // All these lines have sectors on both sides.
                 // First, try the front.
                 Sector &frontSec = ld->front().sector();
-                if(frontSec.validCount() != validCount)
+                if (frontSec.validCount() != validCount)
                 {
                     frontSec.setValidCount(validCount);
                     linkStore.append(&frontSec);
@@ -2527,7 +2509,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
 
                 // And then the back.
                 /// @todo Above comment suggest always twosided, which is it? -ds
-                if(ld->back().hasSector())
+                if (ld->back().hasSector())
                 {
                     Sector &backSec = ld->back().sector();
                     if(backSec.validCount() != validCount)
@@ -2539,9 +2521,9 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
             }
         }
 
-        for(dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.count(); ++i)
         {
-            if(auto result = func(*linkStore[i]))
+            if (auto result = func(*linkStore[i]))
                 return result;
         }
     }
@@ -2556,21 +2538,21 @@ LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mo
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&line.map() == this)
+    if (&line.map() == this)
     {
         QVarLengthArray<mobj_t *, 256> linkStore;
 
         // Collate mobjs touching the given line in case these relationships change.
         linknode_t *ln   = d->lineNodes.nodes;
         nodeindex_t root = d->lineLinks[line.indexInMap()];
-        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+        for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
             linkStore.append((mobj_t *)(ln[nix].ptr));
         }
 
-        for(dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.count(); ++i)
         {
-            if(auto result = func(*linkStore[i]))
+            if (auto result = func(*linkStore[i]))
                 return result;
         }
     }
@@ -2584,14 +2566,14 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&sector.map() == this)
+    if (&sector.map() == this)
     {
         QVarLengthArray<mobj_t *, 256> linkStore;
 
         // Collate mobjs that obviously are in the sector.
-        for(mobj_t *mob = sector.firstMobj(); mob; mob = mob->sNext)
+        for (mobj_t *mob = sector.firstMobj(); mob; mob = mob->sNext)
         {
-            if(mob->validCount != validCount)
+            if (mob->validCount != validCount)
             {
                 mob->validCount = validCount;
                 linkStore.append(mob);
@@ -2603,10 +2585,10 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
         sector.forAllSides([this, &linkStore, &ln] (LineSide &side)
         {
             nodeindex_t root = d->lineLinks[side.line().indexInMap()];
-            for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+            for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
             {
                 auto *mob = (mobj_t *)(ln[nix].ptr);
-                if(mob->validCount != validCount)
+                if (mob->validCount != validCount)
                 {
                     mob->validCount = validCount;
                     linkStore.append(mob);
@@ -2616,9 +2598,9 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
         });
 
         // Process all collected mobjs.
-        for(dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.count(); ++i)
         {
-            if(auto result = func(*linkStore[i]))
+            if (auto result = func(*linkStore[i]))
                 return result;
         }
     }
@@ -2629,14 +2611,14 @@ dint Map::unlink(mobj_t &mob)
 {
     dint links = 0;
 
-    if(d->unlinkMobjFromSectors(mob))
+    if (d->unlinkMobjFromSectors(mob))
         links |= MLF_SECTOR;
 
     BlockmapCell cell = d->mobjBlockmap->toCell(Mobj_Origin(mob));
-    if(d->mobjBlockmap->unlink(cell, &mob))
+    if (d->mobjBlockmap->unlink(cell, &mob))
         links |= MLF_BLOCKMAP;
 
-    if(!d->unlinkMobjFromLines(mob))
+    if (!d->unlinkMobjFromLines(mob))
         links |= MLF_NOLINE;
 
     return links;
@@ -2647,7 +2629,7 @@ void Map::link(mobj_t &mob, dint flags)
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(Mobj_Origin(mob));
 
     // Link into the sector?
-    if(flags & MLF_SECTOR)
+    if (flags & MLF_SECTOR)
     {
         d->unlinkMobjFromSectors(mob);
         bspLeafAtOrigin.sectorPtr()->link(&mob);
@@ -2655,14 +2637,14 @@ void Map::link(mobj_t &mob, dint flags)
     mob._bspLeaf = &bspLeafAtOrigin;
 
     // Link into blockmap?
-    if(flags & MLF_BLOCKMAP)
+    if (flags & MLF_BLOCKMAP)
     {
         BlockmapCell cell = d->mobjBlockmap->toCell(Mobj_Origin(mob));
         d->mobjBlockmap->link(cell, &mob);
     }
 
     // Link into lines?
-    if(!(flags & MLF_NOLINE))
+    if (!(flags & MLF_NOLINE))
     {
         d->unlinkMobjFromLines(mob);
         d->linkMobjToLines(mob);
@@ -2670,20 +2652,20 @@ void Map::link(mobj_t &mob, dint flags)
 
     // If this is a player - perform additional tests to see if they have
     // entered or exited the void.
-    if(mob.dPlayer && mob.dPlayer->mo)
+    if (mob.dPlayer && mob.dPlayer->mo)
     {
         mob.dPlayer->inVoid = true;
 
-        if(SectorCluster *cluster = Mobj_ClusterPtr(mob))
+        if (SectorCluster *cluster = Mobj_ClusterPtr(mob))
         {
-            if(Mobj_BspLeafAtOrigin(mob).subspace().contains(Mobj_Origin(mob)))
+            if (Mobj_BspLeafAtOrigin(mob).subspace().contains(Mobj_Origin(mob)))
             {
 #ifdef __CLIENT__
-                if(mob.origin[2] <  cluster->visCeiling().heightSmoothed() + 4 &&
-                   mob.origin[2] >= cluster->  visFloor().heightSmoothed())
+                if (   mob.origin[2] <  cluster->visCeiling().heightSmoothed() + 4
+                    && mob.origin[2] >= cluster->  visFloor().heightSmoothed())
 #else
-                if(mob.origin[2] <  cluster->ceiling().height() + 4 &&
-                   mob.origin[2] >= cluster->  floor().height())
+                if (   mob.origin[2] <  cluster->ceiling().height() + 4
+                    && mob.origin[2] >= cluster->  floor().height())
 #endif
                 {
                     mob.dPlayer->inVoid = false;
@@ -2708,21 +2690,21 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
     LoopResult result = LoopContinue;
 
     // Process polyobj lines?
-    if((flags & LIF_POLYOBJ) && polyobjCount())
+    if ((flags & LIF_POLYOBJ) && polyobjCount())
     {
         dint const localValidCount = validCount;
         result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
             auto &pob = *(Polyobj *)object;
-            if(pob.validCount != localValidCount) // not yet processed
+            if (pob.validCount != localValidCount) // not yet processed
             {
                 pob.validCount = localValidCount;
-                for(Line *line : pob.lines())
+                for (Line *line : pob.lines())
                 {
-                    if(line->validCount() != localValidCount) // not yet processed
+                    if (line->validCount() != localValidCount) // not yet processed
                     {
                         line->setValidCount(localValidCount);
-                        if(auto result = func(*line))
+                        if (auto result = func(*line))
                             return result;
                     }
                 }
@@ -2732,13 +2714,13 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
     }
 
     // Process sector lines?
-    if(!result && (flags & LIF_SECTOR))
+    if (!result && (flags & LIF_SECTOR))
     {
         dint const localValidCount = validCount;
         result = lineBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
             auto &line = *(Line *)object;
-            if(line.validCount() != localValidCount) // not yet processed
+            if (line.validCount() != localValidCount) // not yet processed
             {
                 line.setValidCount(localValidCount);
                 return func(line);
@@ -2752,12 +2734,12 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
 
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 {
-    if(!d->bsp.tree)
+    if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
         throw MissingBspTreeError("Map::bspLeafAt", "No BSP data available");
 
     BspTree const *bspTree = d->bsp.tree;
-    while(!bspTree->isLeaf())
+    while (!bspTree->isLeaf())
     {
         auto &bspNode = bspTree->userData()->as<BspNode>();
         dint side     = bspNode.pointOnSide(point) < 0;
@@ -2772,14 +2754,14 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 {
-    if(!d->bsp.tree)
+    if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
         throw MissingBspTreeError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
     BspTree const *bspTree = d->bsp.tree;
-    while(!bspTree->isLeaf())
+    while (!bspTree->isLeaf())
     {
         auto const &bspNode = bspTree->userData()->as<BspNode>();
 
@@ -2798,7 +2780,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 SectorCluster *Map::clusterAt(Vector2d const &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
-    if(bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
+    if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
     {
         return bspLeaf.subspace().clusterPtr();
     }
@@ -2809,7 +2791,7 @@ SectorCluster *Map::clusterAt(Vector2d const &point) const
 
 void Map::updateScrollingSurfaces()
 {
-    for(Surface *surface : d->scrollingSurfaces)
+    for (Surface *surface : d->scrollingSurfaces)
     {
         surface->updateMaterialOriginTracking();
     }
@@ -2822,7 +2804,7 @@ Map::SurfaceSet &Map::scrollingSurfaces()
 
 void Map::updateTrackedPlanes()
 {
-    for(Plane *plane : d->trackedPlanes)
+    for (Plane *plane : d->trackedPlanes)
     {
         plane->updateHeightTracking();
     }
@@ -2844,30 +2826,29 @@ void Map::initSkyFix()
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     /// @todo Can't we defer this?
-    for(Sector *sector : d->sectors)
+    for (Sector *sector : d->sectors)
     {
-        if(!sector->sideCount()) continue;
+        if (!sector->sideCount()) continue;
 
-        bool const skyFloor = sector->floorSurface().hasSkyMaskedMaterial();
-        bool const skyCeil  = sector->ceilingSurface().hasSkyMaskedMaterial();
+        bool const skyFloor = sector->floor  ().surface().hasSkyMaskedMaterial();
+        bool const skyCeil  = sector->ceiling().surface().hasSkyMaskedMaterial();
 
-        if(!skyFloor && !skyCeil) continue;
+        if (!skyFloor && !skyCeil) continue;
 
-        if(skyCeil)
+        if (skyCeil)
         {
             // Adjust for the plane height.
-            if(sector->ceiling().heightSmoothed() > d->skyCeilingHeight)
+            if (sector->ceiling().heightSmoothed() > d->skyCeilingHeight)
             {
                 // Must raise the skyfix ceiling.
                 d->skyCeilingHeight = sector->ceiling().heightSmoothed();
             }
 
             // Check that all the mobjs in the sector fit in.
-            for(mobj_t *mob = sector->firstMobj(); mob; mob = mob->sNext)
+            for (mobj_t *mob = sector->firstMobj(); mob; mob = mob->sNext)
             {
-                coord_t extent = mob->origin[2] + mob->height;
-
-                if(extent > d->skyCeilingHeight)
+                ddouble extent = mob->origin[2] + mob->height;
+                if (extent > d->skyCeilingHeight)
                 {
                     // Must raise the skyfix ceiling.
                     d->skyCeilingHeight = extent;
@@ -2875,42 +2856,42 @@ void Map::initSkyFix()
             }
         }
 
-        if(skyFloor)
+        if (skyFloor)
         {
             // Adjust for the plane height.
-            if(sector->floor().heightSmoothed() < d->skyFloorHeight)
+            if (sector->floor().heightSmoothed() < d->skyFloorHeight)
             {
                 // Must lower the skyfix floor.
                 d->skyFloorHeight = sector->floor().heightSmoothed();
             }
         }
 
-        // Update for middle materials on lines which intersect the
-        // floor and/or ceiling on the front (i.e., sector) side.
+        // Update for middle materials on lines which intersect the floor and/or ceiling
+        // on the front (i.e., sector) side.
         sector->forAllSides([this, &skyCeil, &skyFloor] (LineSide &side)
         {
-            if(!side.hasSections()) return LoopContinue;
-            if(!side.middle().hasMaterial()) return LoopContinue;
+            if (!side.hasSections()) return LoopContinue;
+            if (!side.middle().hasMaterial()) return LoopContinue;
 
             // There must be a sector on both sides.
-            if(!side.hasSector() || !side.back().hasSector())
+            if (!side.hasSector() || !side.back().hasSector())
                 return LoopContinue;
 
             // Possibility of degenerate BSP leaf.
-            if(!side.leftHEdge()) return LoopContinue;
+            if (!side.leftHEdge()) return LoopContinue;
 
             WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
                           *side.leftHEdge(), Line::From);
 
-            if(edge.isValid() && edge.top().z() > edge.bottom().z())
+            if (edge.isValid() && edge.top().z() > edge.bottom().z())
             {
-                if(skyCeil && edge.top().z() + edge.materialOrigin().y > d->skyCeilingHeight)
+                if (skyCeil && edge.top().z() + edge.materialOrigin().y > d->skyCeilingHeight)
                 {
                     // Must raise the skyfix ceiling.
                     d->skyCeilingHeight = edge.top().z() + edge.materialOrigin().y;
                 }
 
-                if(skyFloor && edge.bottom().z() + edge.materialOrigin().y < d->skyFloorHeight)
+                if (skyFloor && edge.bottom().z() + edge.materialOrigin().y < d->skyFloorHeight)
                 {
                     // Must lower the skyfix floor.
                     d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
@@ -2925,24 +2906,24 @@ void Map::initSkyFix()
 
 coord_t Map::skyFix(bool ceiling) const
 {
-    return ceiling? d->skyCeilingHeight : d->skyFloorHeight;
+    return ceiling ? d->skyCeilingHeight : d->skyFloorHeight;
 }
 
 void Map::setSkyFix(bool ceiling, coord_t newHeight)
 {
-    if(ceiling) d->skyCeilingHeight = newHeight;
-    else        d->skyFloorHeight   = newHeight;
+    if (ceiling) d->skyCeilingHeight = newHeight;
+    else         d->skyFloorHeight   = newHeight;
 }
 
 Generator *Map::newGenerator()
 {
     Generator::Id id = d->findIdForNewGenerator();  // 1-based
-    if(!id) return nullptr;  // Failed; too many generators?
+    if (!id) return nullptr;  // Failed; too many generators?
 
     Impl::Generators &gens = d->getGenerators();
 
     // If there is already a generator with that id - remove it.
-    if(id > 0 && (unsigned)id <= gens.activeGens.size())
+    if (id > 0 && (unsigned)id <= gens.activeGens.size())
     {
         Generator_Delete(gens.activeGens[id - 1]);
     }
@@ -2964,11 +2945,11 @@ Generator *Map::newGenerator()
 
 dint Map::generatorCount() const
 {
-    if(!d->generators) return 0;
+    if (!d->generators) return 0;
     dint count = 0;
-    for(Generator *gen : d->getGenerators().activeGens)
+    for (Generator *gen : d->getGenerators().activeGens)
     {
-        if(gen) count += 1;
+        if (gen) count += 1;
     }
     return count;
 }
@@ -2976,9 +2957,9 @@ dint Map::generatorCount() const
 void Map::unlink(Generator &generator)
 {
     Impl::Generators &gens = d->getGenerators();
-    for(duint i = 0; i < gens.activeGens.size(); ++i)
+    for (duint i = 0; i < gens.activeGens.size(); ++i)
     {
-        if(gens.activeGens[i] == &generator)
+        if (gens.activeGens[i] == &generator)
         {
             gens.activeGens[i] = nullptr;
             break;
@@ -2988,11 +2969,11 @@ void Map::unlink(Generator &generator)
 
 LoopResult Map::forAllGenerators(std::function<LoopResult (Generator &)> func) const
 {
-    for(Generator *gen : d->getGenerators().activeGens)
+    for (Generator *gen : d->getGenerators().activeGens)
     {
-        if(!gen) continue;
+        if (!gen) continue;
 
-        if(auto result = func(*gen))
+        if (auto result = func(*gen))
             return result;
     }
     return LoopContinue;
@@ -3000,14 +2981,14 @@ LoopResult Map::forAllGenerators(std::function<LoopResult (Generator &)> func) c
 
 LoopResult Map::forAllGeneratorsInSector(Sector const &sector, std::function<LoopResult (Generator &)> func) const
 {
-    if(sector.mapPtr() == this)  // Ignore 'alien' sectors.
+    if (sector.mapPtr() == this)  // Ignore 'alien' sectors.
     {
         duint const listIndex = sector.indexInMap();
 
         Impl::Generators &gens = d->getGenerators();
-        for(Impl::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+        for (Impl::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
         {
-            if(auto result = func(*it->gen))
+            if (auto result = func(*it->gen))
                 return result;
         }
     }
@@ -3035,7 +3016,7 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
 
 void Map::removeLumobj(dint which)
 {
-    if(which >= 0 && which < lumobjCount())
+    if (which >= 0 && which < lumobjCount())
     {
         delete d->lumobjs.takeAt(which);
     }
@@ -3043,7 +3024,7 @@ void Map::removeLumobj(dint which)
 
 void Map::removeAllLumobjs()
 {
-    for(ConvexSubspace *subspace : d->subspaces)
+    for (ConvexSubspace *subspace : d->subspaces)
     {
         subspace->unlinkAllLumobjs();
     }
@@ -3052,14 +3033,14 @@ void Map::removeAllLumobjs()
 
 Lumobj &Map::lumobj(dint index) const
 {
-    if(Lumobj *lum = lumobjPtr(index)) return *lum;
+    if (Lumobj *lum = lumobjPtr(index)) return *lum;
     /// @throw MissingObjectError  Invalid Lumobj reference specified.
     throw MissingObjectError("Map::lumobj", "Unknown Lumobj index:" + String::number(index));
 }
 
 Lumobj *Map::lumobjPtr(dint index) const
 {
-    if(index >= 0 && index < d->lumobjs.count())
+    if (index >= 0 && index < d->lumobjs.count())
     {
         return d->lumobjs.at(index);
     }
@@ -3068,9 +3049,9 @@ Lumobj *Map::lumobjPtr(dint index) const
 
 LoopResult Map::forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const
 {
-    for(Lumobj *lob : d->lumobjs)
+    for (Lumobj *lob : d->lumobjs)
     {
-        if(auto result = func(*lob)) return result;
+        if (auto result = func(*lob)) return result;
     }
     return LoopContinue;
 }
@@ -3082,7 +3063,7 @@ dint Map::biasSourceCount() const
 
 BiasSource &Map::addBiasSource(BiasSource const &biasSource)
 {
-    if(biasSourceCount() < MAX_BIAS_SOURCES)
+    if (biasSourceCount() < MAX_BIAS_SOURCES)
     {
         d->bias.sources.append(new BiasSource(biasSource));
         return *d->bias.sources.last();
@@ -3093,7 +3074,7 @@ BiasSource &Map::addBiasSource(BiasSource const &biasSource)
 
 void Map::removeBiasSource(dint which)
 {
-    if(which >= 0 && which < biasSourceCount())
+    if (which >= 0 && which < biasSourceCount())
     {
         delete d->bias.sources.takeAt(which);
     }
@@ -3106,14 +3087,14 @@ void Map::removeAllBiasSources()
 
 BiasSource &Map::biasSource(dint index) const
 {
-   if(BiasSource *bsrc = biasSourcePtr(index)) return *bsrc;
+   if (BiasSource *bsrc = biasSourcePtr(index)) return *bsrc;
    /// @throw MissingObjectError  Invalid BiasSource reference specified.
    throw MissingObjectError("Map::biasSource", "Unknown BiasSource index:" + String::number(index));
 }
 
 BiasSource *Map::biasSourcePtr(dint index) const
 {
-   if(index >= 0 && index < d->bias.sources.count())
+   if (index >= 0 && index < d->bias.sources.count())
    {
        return d->bias.sources.at(index);
    }
@@ -3127,11 +3108,11 @@ BiasSource *Map::biasSourcePtr(dint index) const
 BiasSource *Map::biasSourceNear(Vector3d const &point) const
 {
     BiasSource *nearest = nullptr;
-    coord_t minDist = 0;
-    for(BiasSource *src : d->bias.sources)
+    ddouble minDist = 0;
+    for (BiasSource *src : d->bias.sources)
     {
-        coord_t dist = (src->origin() - point).length();
-        if(!nearest || dist < minDist)
+        ddouble dist = (src->origin() - point).length();
+        if (!nearest || dist < minDist)
         {
             minDist = dist;
             nearest = src;
@@ -3142,9 +3123,9 @@ BiasSource *Map::biasSourceNear(Vector3d const &point) const
 
 LoopResult Map::forAllBiasSources(std::function<LoopResult (BiasSource &)> func) const
 {
-    for(BiasSource *bsrc : d->bias.sources)
+    for (BiasSource *bsrc : d->bias.sources)
     {
-        if(auto result = func(*bsrc)) return result;
+        if (auto result = func(*bsrc)) return result;
     }
     return LoopContinue;
 }
@@ -3172,7 +3153,7 @@ void Map::update()
     d->updateParticleGens();  // Defs might've changed.
 
     // Update all surfaces.
-    for(Sector *sector : d->sectors)
+    for (Sector *sector : d->sectors)
     {
         sector->forAllPlanes([] (Plane &plane)
         {
@@ -3181,11 +3162,11 @@ void Map::update()
         });
     }
 
-    for(Line *line : d->lines)
-    for(dint i = 0; i < 2; ++i)
+    for (Line *line : d->lines)
+    for (dint i = 0; i < 2; ++i)
     {
         LineSide &side = line->side(i);
-        if(!side.hasSections()) continue;
+        if (!side.hasSections()) continue;
 
         side.top   ().markForDecorationUpdate();
         side.middle().markForDecorationUpdate();
@@ -3193,8 +3174,8 @@ void Map::update()
     }
 
     /// @todo Is this even necessary?
-    for(Polyobj *polyobj : d->polyobjs)
-    for(Line *line : polyobj->lines())
+    for (Polyobj *polyobj : d->polyobjs)
+    for (Line *line : polyobj->lines())
     {
         line->front().middle().markForDecorationUpdate();
     }
@@ -3217,7 +3198,7 @@ void Map::update()
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
     defn::Sky skyDef;
-    if(Record const *def = defs.skies.tryFind("id", inf.gets("skyId")))
+    if (Record const *def = defs.skies.tryFind("id", inf.gets("skyId")))
     {
         skyDef = *def;
     }
@@ -3238,7 +3219,7 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
     d->lerpTrackedPlanes(resetNextViewer);
     d->lerpScrollingSurfaces(resetNextViewer);
 
-    if(!freezeRLs)
+    if (!freezeRLs)
     {
         // Initialize and/or update the LightGrid.
         initLightGrid();
@@ -3250,24 +3231,24 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
         d->removeAllContacts();
 
         // Generate surface decorations for the frame.
-        if(useLightDecorations)
+        if (useLightDecorations)
         {
             // Perform scheduled redecoration.
             d->surfaceDecorator().redecorate();
 
             // Generate lumobjs for all decorations who want them.
-            for(Line *line : d->lines)
-            for(dint i = 0; i < 2; ++i)
+            for (Line *line : d->lines)
+            for (dint i = 0; i < 2; ++i)
             {
                 LineSide &side = line->side(i);
-                if(!side.hasSections()) continue;
+                if (!side.hasSections()) continue;
 
                 d->generateLumobjs(side.middle());
                 d->generateLumobjs(side.bottom());
                 d->generateLumobjs(side.top());
             }
 
-            for(Sector *sector : d->sectors)
+            for (Sector *sector : d->sectors)
             {
                 sector->forAllPlanes([this] (Plane &plane)
                 {
@@ -3278,10 +3259,10 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
         }
 
         // Spawn omnilights for mobjs?
-        if(useDynLights)
+        if (useDynLights)
         {
-            for(Sector *sector : d->sectors)
-            for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
+            for (Sector *sector : d->sectors)
+            for (mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
             {
                 Mobj_GenerateLumobjs(iter);
             }
@@ -3300,27 +3281,27 @@ static dint expireClMobjsWorker(mobj_t *mob, void *context)
     duint const nowTime = *static_cast<duint *>(context);
 
     // Already deleted?
-    if(mob->thinker.function == (thinkfunc_t)-1)
+    if (mob->thinker.function == (thinkfunc_t)-1)
         return 0;
 
     // Don't expire player mobjs.
-    if(mob->dPlayer) return 0;
+    if (mob->dPlayer) return 0;
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
     DENG2_ASSERT(info);
 
-    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mob->info)
+    if ((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mob->info)
     {
         // Has this mobj timed out?
-        if(nowTime - info->time > CLMOBJ_TIMEOUT)
+        if (nowTime - info->time > CLMOBJ_TIMEOUT)
         {
             LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
-                    << mob->thinker.id
-                    << info->time << nowTime
-                    << Def_GetStateName(mob->state)
-                    << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
-                    << (info->flags & CLMF_HIDDEN?        'H' : '_')
-                    << (info->flags & CLMF_NULLED?        '0' : '_');
+                << mob->thinker.id
+                << info->time << nowTime
+                << Def_GetStateName(mob->state)
+                << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
+                << (info->flags & CLMF_HIDDEN?        'H' : '_')
+                << (info->flags & CLMF_NULLED?        '0' : '_');
 
             // Too long. The server will probably never send anything for this map-object,
             // so get rid of it. (Both unpredictable and hidden mobjs are not visible or
@@ -3347,11 +3328,11 @@ String Map::elementSummaryAsStyledText() const
     String str;
     QTextStream os(&str);
 
-    if(lineCount())    os << TABBED(lineCount(),    "Lines");
-    //if(sideCount())    os << TABBED(sideCount(),    "Sides");
-    if(sectorCount())  os << TABBED(sectorCount(),  "Sectors");
-    if(vertexCount())  os << TABBED(vertexCount(),  "Vertexes");
-    if(polyobjCount()) os << TABBED(polyobjCount(), "Polyobjs");
+    if (lineCount())    os << TABBED(lineCount(),    "Lines");
+    //if (sideCount())    os << TABBED(sideCount(),    "Sides");
+    if (sectorCount())  os << TABBED(sectorCount(),  "Sectors");
+    if (vertexCount())  os << TABBED(vertexCount(),  "Vertexes");
+    if (polyobjCount()) os << TABBED(polyobjCount(), "Polyobjs");
 
     return str.rightStrip();
 
@@ -3368,11 +3349,11 @@ String Map::objectSummaryAsStyledText() const
     String str;
     QTextStream os(&str);
 
-    if(thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
+    if (thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
 #ifdef __CLIENT__
-    if(biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
-    if(generatorCount())  os << TABBED(generatorCount(),   "Generators");
-    if(lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
+    if (biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
+    if (generatorCount())  os << TABBED(generatorCount(),   "Generators");
+    if (lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
 #endif
 
     return str.rightStrip();
@@ -3386,7 +3367,7 @@ D_CMD(InspectMap)
 
     LOG_AS("inspectmap (Cmd)");
 
-    if(!App_World().hasMap())
+    if (!App_World().hasMap())
     {
         LOG_SCR_WARNING("No map is currently loaded");
         return false;
@@ -3406,7 +3387,7 @@ D_CMD(InspectMap)
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
 
-    if(map.hasManifest() && map.manifest().sourceFile()->hasCustom())
+    if (map.hasManifest() && map.manifest().sourceFile()->hasCustom())
     {
         LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"")
                 << NativePath(map.manifest().sourceFile()->composePath()).pretty();
@@ -3414,7 +3395,7 @@ D_CMD(InspectMap)
 
     LOG_SCR_MSG("\n");
 
-    if(map.isEditable())
+    if (map.isEditable())
     {
         LOG_MSG(_E(D) "Editing " _E(b) "Enabled");
     }
@@ -3422,7 +3403,7 @@ D_CMD(InspectMap)
     LOG_SCR_MSG(_E(D) "Elements:");
     LOG_SCR_MSG("%s") << map.elementSummaryAsStyledText();
 
-    if(map.thinkers().isInited())
+    if (map.thinkers().isInited())
     {
         LOG_SCR_MSG(_E(D) "Objects:");
         LOG_SCR_MSG("%s") << map.objectSummaryAsStyledText();
@@ -3430,33 +3411,33 @@ D_CMD(InspectMap)
 
     LOG_SCR_MSG(_E(R) "\n");
 
-    Vector2d geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
+    auto geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
     LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
 
-    if(map.hasBspTree())
+    if (map.hasBspTree())
     {
         LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << map.bspTree().summary();
     }
 
-    if(!map.subspaceBlockmap().isNull())
+    if (!map.subspaceBlockmap().isNull())
     {
         LOG_SCR_MSG(_E(l) "Subspace blockmap: " _E(.) _E(i)) << map.subspaceBlockmap().dimensions().asText();
     }
-    if(!map.lineBlockmap().isNull())
+    if (!map.lineBlockmap().isNull())
     {
         LOG_SCR_MSG(_E(l) "Line blockmap: "     _E(.) _E(i)) << map.lineBlockmap().dimensions().asText();
     }
-    if(!map.mobjBlockmap().isNull())
+    if (!map.mobjBlockmap().isNull())
     {
         LOG_SCR_MSG(_E(l) "Mobj blockmap: "     _E(.) _E(i)) << map.mobjBlockmap().dimensions().asText();
     }
-    if(!map.polyobjBlockmap().isNull())
+    if (!map.polyobjBlockmap().isNull())
     {
         LOG_SCR_MSG(_E(l) "Polyobj blockmap: "  _E(.) _E(i)) << map.polyobjBlockmap().dimensions().asText();
     }
 
 #ifdef __CLIENT__
-    if(map.hasLightGrid())
+    if (map.hasLightGrid())
     {
         LOG_SCR_MSG(_E(l) "LightGrid: " _E(.) _E(i)) << map.lightGrid().dimensions().asText();
     }
@@ -3481,7 +3462,7 @@ void Map::consoleRegister() // static
     C_CMD("inspectmap", "", InspectMap);
 }
 
-/// Runtime map editing -----------------------------------------------------
+//- Runtime map editing -----------------------------------------------------------------
 
 /// Used when sorting vertex line owners.
 static Vertex *rootVtx;
@@ -3497,9 +3478,9 @@ static dint lineAngleSorter(void const *a, void const *b)
     binangle_t angles[2];
 
     LineOwner *own[2] = { (LineOwner *)a, (LineOwner *)b };
-    for(duint i = 0; i < 2; ++i)
+    for (duint i = 0; i < 2; ++i)
     {
-        if(own[i]->_link[Anticlockwise]) // We have a cached result.
+        if (own[i]->_link[Anticlockwise]) // We have a cached result.
         {
             angles[i] = own[i]->angle();
         }
@@ -3533,9 +3514,9 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     LineOwner *np = &tmp;
 
     tmp._link[Clockwise] = np;
-    while(left && right)
+    while (left && right)
     {
-        if(compare(left, right) <= 0)
+        if (compare(left, right) <= 0)
         {
             np->_link[Clockwise] = left;
             np = left;
@@ -3552,17 +3533,17 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     }
 
     // At least one of these lists is now empty.
-    if(left)
+    if (left)
     {
         np->_link[Clockwise] = left;
     }
-    if(right)
+    if (right)
     {
         np->_link[Clockwise] = right;
     }
 
     // Is the list empty?
-    if(!tmp.hasNext())
+    if (!tmp.hasNext())
         return nullptr;
 
     return tmp.nextPtr();
@@ -3570,7 +3551,7 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
 
 static LineOwner *splitLineOwners(LineOwner *list)
 {
-    if(!list) return nullptr;
+    if (!list) return nullptr;
 
     LineOwner *lista = list;
     LineOwner *listb = list;
@@ -3581,11 +3562,11 @@ static LineOwner *splitLineOwners(LineOwner *list)
         listc = listb;
         listb = listb->nextPtr();
         lista = lista->nextPtr();
-        if(lista)
+        if (lista)
         {
             lista = lista->nextPtr();
         }
-    } while(lista);
+    } while (lista);
 
     listc->_link[Clockwise] = nullptr;
     return listb;
@@ -3597,7 +3578,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
 static LineOwner *sortLineOwners(LineOwner *list,
     dint (*compare) (void const *a, void const *b))
 {
-    if(list && list->nextPtr())
+    if (list && list->nextPtr())
     {
         LineOwner *p = splitLineOwners(list);
 
@@ -3610,13 +3591,13 @@ static LineOwner *sortLineOwners(LineOwner *list,
 
 static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
 {
-    if(!lineptr) return;
+    if (!lineptr) return;
 
     // Has this line already been registered with this vertex?
     LineOwner const *own = vtx->firstLineOwner();
-    while(own)
+    while (own)
     {
-        if(&own->line() == lineptr)
+        if (&own->line() == lineptr)
             return;  // Yes, we can exit.
 
         own = &own->next();
@@ -3638,7 +3619,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
     vtx->_lineOwners = newOwner;
 
     // Link the line to its respective owner node.
-    if(vtx == &lineptr->from())
+    if (vtx == &lineptr->from())
         lineptr->_vo1 = newOwner;
     else
         lineptr->_vo2 = newOwner;
@@ -3646,8 +3627,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
 
 #ifdef DENG2_DEBUG
 /**
- * Determines whether the specified vertex @a v has a correctly formed line
- * owner ring.
+ * Determines whether the specified vertex @a v has a correctly formed line owner ring.
  */
 static bool vertexHasValidLineOwnerRing(Vertex &v)
 {
@@ -3655,18 +3635,17 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
     LineOwner const *cur = base;
     do
     {
-        if(&cur->prev().next() != cur) return false;
-        if(&cur->next().prev() != cur) return false;
+        if (&cur->prev().next() != cur) return false;
+        if (&cur->next().prev() != cur) return false;
 
-    } while((cur = &cur->next()) != base);
+    } while ((cur = &cur->next()) != base);
     return true;
 }
 #endif
 
 /**
- * Generates the line owner rings for each vertex. Each ring includes all
- * the lines which the vertex belongs to sorted by angle, (the rings are
- * arranged in clockwise order, east = 0).
+ * Generates the line owner rings for each vertex. Each ring includes all the lines which
+ * the vertex belongs to sorted by angle, (the rings are arranged in clockwise order, east = 0).
  */
 void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &editableLines)
 {
@@ -3679,8 +3658,8 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
     auto *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    for(Line *line : editableLines)
-    for(dint p = 0; p < 2; ++p)
+    for (Line *line : editableLines)
+    for (dint p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
     }
@@ -3688,9 +3667,9 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
     //
     // Step 2: Sort line owners of each vertex and finalize the rings.
     //
-    for(Vertex *v : vertexs)
+    for (Vertex *v : vertexs)
     {
-        if(!v->_numLineOwners) continue;
+        if (!v->_numLineOwners) continue;
 
         // Sort them; ordered clockwise by angle.
         rootVtx = v;
@@ -3702,7 +3681,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         binangle_t firstAngle = v->_lineOwners->angle();
         LineOwner *last = v->_lineOwners;
         LineOwner *p = last->nextPtr();
-        while(p)
+        while (p)
         {
             p->_link[Anticlockwise] = last;
 
@@ -3720,7 +3699,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
 
 /*#ifdef DENG2_DEBUG
         LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
-                << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
+            << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
 
         LineOwner const *base = v->firstLineOwner();
         LineOwner const *cur = base;
@@ -3728,11 +3707,11 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         do
         {
             LOG_MAP_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
-                    << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
-                    << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
+                << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
+                << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
 
             idx++;
-        } while((cur = &cur->next()) != base);
+        } while ((cur = &cur->next()) != base);
 #endif*/
 
         // Sanity check.
@@ -3756,11 +3735,11 @@ struct VertexInfo
     {
         DENG2_ASSERT(vertex && other.vertex);
 
-        if(this == &other) return 0;
-        if(vertex == other.vertex) return 0;
+        if (this == &other) return 0;
+        if (vertex == other.vertex) return 0;
 
         // Order is firstly X axis major.
-        if(dint(vertex->origin().x) != dint(other.vertex->origin().x))
+        if (dint(vertex->origin().x) != dint(other.vertex->origin().x))
         {
             return dint(vertex->origin().x) - dint(other.vertex->origin().x);
         }
@@ -3783,7 +3762,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Populate the vertex info.
     QVector<VertexInfo> vertexInfo(mesh.vertexCount());
     dint ord = 0;
-    for(Vertex *vertex : mesh.vertexs())
+    for (Vertex *vertex : mesh.vertexs())
     {
         vertexInfo[ord++].vertex = vertex;
     }
@@ -3794,14 +3773,14 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
         qSort(sortedInfo.begin(), sortedInfo.end());
 
         // Locate equivalent vertexes in the sorted info.
-        for(dint i = 0; i < sortedInfo.count() - 1; ++i)
+        for (dint i = 0; i < sortedInfo.count() - 1; ++i)
         {
             VertexInfo &a = sortedInfo[i];
             VertexInfo &b = sortedInfo[i + 1];
 
             // Are these equivalent?
             /// @todo fixme: What about polyobjs? They need unique vertexes! -ds
-            if(a.compareVertexOrigins(b) == 0)
+            if (a.compareVertexOrigins(b) == 0)
             {
                 b.equiv = (a.equiv? a.equiv : a.vertex);
             }
@@ -3812,16 +3791,16 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Step 2 - Replace line references to equivalent vertexes:
     //
     // Count line -> vertex references.
-    for(Line *line : lines)
+    for (Line *line : lines)
     {
         vertexInfo[line->from().indexInMap()].refCount++;
         vertexInfo[  line->to().indexInMap()].refCount++;
     }
 
     // Perform the replacement.
-    for(Line *line : lines)
+    for (Line *line : lines)
     {
-        while(vertexInfo[line->from().indexInMap()].equiv)
+        while (vertexInfo[line->from().indexInMap()].equiv)
         {
             VertexInfo &info = vertexInfo[line->from().indexInMap()];
 
@@ -3831,7 +3810,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             vertexInfo[line->from().indexInMap()].refCount++;
         }
 
-        while(vertexInfo[line->to().indexInMap()].equiv)
+        while (vertexInfo[line->to().indexInMap()].equiv)
         {
             VertexInfo &info = vertexInfo[line->to().indexInMap()];
 
@@ -3846,53 +3825,53 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Step 3 - Prune vertexes:
     //
     dint prunedCount = 0, numUnused = 0;
-    for(VertexInfo const &info : vertexInfo)
+    for (VertexInfo const &info : vertexInfo)
     {
         Vertex *vertex = info.vertex;
 
-        if(info.refCount) continue;
+        if (info.refCount) continue;
 
         mesh.removeVertex(*vertex);
 
         prunedCount += 1;
-        if(!info.equiv) numUnused += 1;
+        if (!info.equiv) numUnused += 1;
     }
 
-    if(prunedCount)
+    if (prunedCount)
     {
         // Re-index with a contiguous range of indices.
         dint ord = 0;
-        for(Vertex *vertex : mesh.vertexs())
+        for (Vertex *vertex : mesh.vertexs())
         {
             vertex->setIndexInMap(ord++);
         }
 
         LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused)")
-                << prunedCount << (prunedCount - numUnused) << numUnused;
+            << prunedCount << (prunedCount - numUnused) << numUnused;
     }
 }
 
 bool Map::endEditing()
 {
-    if(!d->editingEnabled) return true; // Huh?
+    if (!d->editingEnabled) return true; // Huh?
 
     d->editingEnabled = false;
 
     LOG_AS("Map");
     LOG_MAP_VERBOSE("Editing ended");
     LOGDEV_MAP_VERBOSE("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors")
-            << d->mesh.vertexCount()        << d->editable.lines.count()
-            << d->editable.polyobjs.count() << d->editable.sectors.count();
+        << d->mesh.vertexCount()        << d->editable.lines.count()
+        << d->editable.polyobjs.count() << d->editable.sectors.count();
 
     //
     // Perform cleanup on the new map elements.
     //
     pruneVertexes(d->mesh, d->editable.lines);
 
-    // Ensure lines with only one sector are flagged as blocking.
-    for(Line *line : d->editable.lines)
+    // Ensure all map Lines with only one Sector are flagged as blocking.
+    for (Line *line : d->editable.lines)
     {
-        if(!line->front().hasSector() || !line->back().hasSector())
+        if (!line->front().hasSector() || !line->back().hasSector())
             line->setFlags(DDLF_BLOCKING);
     }
 
@@ -3922,13 +3901,13 @@ bool Map::endEditing()
 #ifdef DENG2_QT_4_7_OR_NEWER
     d->polyobjs.reserve(d->editable.polyobjs.count());
 #endif
-    while(!d->editable.polyobjs.isEmpty())
+    while (!d->editable.polyobjs.isEmpty())
     {
         d->polyobjs.append(d->editable.polyobjs.takeFirst());
         Polyobj *polyobj = d->polyobjs.back();
 
         // Create half-edge geometry and line segments for each line.
-        for(Line *line : polyobj->lines())
+        for (Line *line : polyobj->lines())
         {
             HEdge *hedge = polyobj->mesh().newHEdge(line->from());
 
@@ -3955,7 +3934,7 @@ bool Map::endEditing()
     d->initLineBlockmap();
 
     // Build a new BspTree.
-    if(!d->buildBspTree())
+    if (!d->buildBspTree())
         return false;
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -3963,15 +3942,17 @@ bool Map::endEditing()
     d->initPolyobjBlockmap();
 
     // Finish lines.
-    for(Line *line : d->lines)
-    for(dint i = 0; i < 2; ++i)
+    for (Line *line : d->lines)
     {
-        line->side(i).updateSurfaceNormals();
-        line->side(i).updateAllSoundEmitterOrigins();
+        line->forAllSides([] (Line::Side &side)
+        {
+            side.updateAllSurfaceNormals();
+            return LoopContinue;
+        });
     }
 
     // Finish sectors.
-    for(Sector *sector : d->sectors)
+    for (Sector *sector : d->sectors)
     {
         d->buildClusters(*sector);
         sector->buildSides();
@@ -3979,7 +3960,7 @@ bool Map::endEditing()
     }
 
     // Finish planes.
-    for(Sector *sector : d->sectors)
+    for (Sector *sector : d->sectors)
     {
         sector->forAllPlanes([] (Plane &plane)
         {
@@ -3999,7 +3980,7 @@ bool Map::endEditing()
 
 Vertex *Map::createVertex(Vector2d const &origin, dint archiveIndex)
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createVertex", "Editing is not enabled");
 
@@ -4017,7 +3998,7 @@ Vertex *Map::createVertex(Vector2d const &origin, dint archiveIndex)
 Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     Sector *backSector, int archiveIndex)
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createLine", "Editing is not enabled");
 
@@ -4038,7 +4019,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
 Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor,
     dint archiveIndex)
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createSector", "Editing is not enabled");
 
@@ -4056,7 +4037,7 @@ Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor,
 
 Polyobj *Map::createPolyobj(Vector2d const &origin)
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createPolyobj", "Editing is not enabled");
 
@@ -4072,7 +4053,7 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
 
 Map::Lines const &Map::editableLines() const
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::editableLines", "Editing is not enabled");
     return d->editable.lines;
@@ -4080,7 +4061,7 @@ Map::Lines const &Map::editableLines() const
 
 Map::Sectors const &Map::editableSectors() const
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::editableSectors", "Editing is not enabled");
     return d->editable.sectors;
@@ -4088,7 +4069,7 @@ Map::Sectors const &Map::editableSectors() const
 
 Map::Polyobjs const &Map::editablePolyobjs() const
 {
-    if(!d->editingEnabled)
+    if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::editablePolyobjs", "Editing is not enabled");
     return d->editable.polyobjs;

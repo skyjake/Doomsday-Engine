@@ -20,22 +20,6 @@
 
 #include "world/surface.h"
 
-#ifdef __CLIENT__
-#  include <QList>
-#endif
-#include <QtAlgorithms>
-#include <doomsday/res/TextureManifest>
-#include <doomsday/res/Textures>
-#include <doomsday/world/MaterialManifest>
-#include <de/vector1.h>
-#include <de/Log>
-#include "dd_loop.h" // frameTimePos
-#include "r_util.h"  // R_NameForBlendMode()
-
-#ifdef __CLIENT__
-#  include "gl/gl_tex.h"
-#endif
-
 #include "world/clientserverworld.h" // ddMapSetup
 #include "world/map.h"
 #include "Plane"
@@ -43,7 +27,22 @@
 #ifdef __CLIENT__
 #  include "Decoration"
 #  include "render/rend_main.h"
+
+#  include "gl/gl_tex.h"
 #endif
+
+#include "r_util.h"  // R_NameForBlendMode()
+#include "dd_loop.h" // frameTimePos
+
+#include <doomsday/res/TextureManifest>
+#include <doomsday/res/Textures>
+#include <doomsday/world/MaterialManifest>
+#include <de/Log>
+#include <de/vector1.h>
+#ifdef __CLIENT__
+#  include <QList>
+#endif
+#include <QtAlgorithms>
 
 using namespace de;
 using namespace world;
@@ -59,7 +58,7 @@ DENG2_PIMPL(Surface)
     bool materialIsMissingFix = false;          ///< @c true= @ref material is a "missing fix".
     Vector2f materialOrigin;                    ///< @em sharp surface space material origin.
 
-    Vector3f tintColor;
+    Vector3f color;
     dfloat opacity = 0;
     blendmode_t blendMode { BM_NORMAL };
 
@@ -119,6 +118,11 @@ DENG2_PIMPL(Surface)
         tangentMatrix = Matrix3f(values);
     }
 
+    void notifyColorChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(ColorChange, i) i->surfaceColorChanged(self);
+    }
+
     void notifyMaterialOriginChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(MaterialOriginChange, i) i->surfaceMaterialOriginChanged(self);
@@ -142,28 +146,23 @@ DENG2_PIMPL(Surface)
         DENG2_FOR_PUBLIC_AUDIENCE2(OpacityChange, i) i->surfaceOpacityChanged(self);
     }
 
-    void notifyTintColorChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(TintColorChange, i) i->surfaceTintColorChanged(self);
-    }
-
+    DENG2_PIMPL_AUDIENCE(ColorChange)
     DENG2_PIMPL_AUDIENCE(MaterialOriginChange)
     DENG2_PIMPL_AUDIENCE(NormalChange)
     DENG2_PIMPL_AUDIENCE(OpacityChange)
-    DENG2_PIMPL_AUDIENCE(TintColorChange)
 };
 
+DENG2_AUDIENCE_METHOD(Surface, ColorChange)
 DENG2_AUDIENCE_METHOD(Surface, MaterialOriginChange)
 DENG2_AUDIENCE_METHOD(Surface, NormalChange)
 DENG2_AUDIENCE_METHOD(Surface, OpacityChange)
-DENG2_AUDIENCE_METHOD(Surface, TintColorChange)
 
-Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &tintColor)
+Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &color)
     : MapElement(DMU_SURFACE, &owner)
     , d(new Impl(this))
 {
-    d->opacity   = opacity;
-    d->tintColor = tintColor;
+    d->color   = color;
+    d->opacity = opacity;
 }
 
 String Surface::description() const
@@ -174,12 +173,12 @@ String Surface::description() const
                   _E(l) " Opacity: "         _E(.)_E(i) "%4" _E(.)
                   _E(l) " Blend Mode: "      _E(.)_E(i) "%5" _E(.)
                   _E(l) " Tint Color: "      _E(.)_E(i) "%6" _E(.))
-               .arg(hasMaterial()? material().manifest().composeUri().asText() : "None")
+               .arg(hasMaterial() ? material().manifest().composeUri().asText() : "None")
                .arg(materialOrigin().asText())
                .arg(normal().asText())
                .arg(opacity())
                .arg(String(R_NameForBlendMode(blendMode())))
-               .arg(tintColor().asText());
+               .arg(color().asText());
 }
 
 Matrix3f const &Surface::tangentMatrix() const
@@ -396,7 +395,7 @@ Surface &Surface::setOpacity(dfloat newOpacity)
     DENG2_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane());  // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
-    if(!de::fequal(d->opacity, newOpacity))
+    if (!de::fequal(d->opacity, newOpacity))
     {
         d->opacity = newOpacity;
         d->notifyOpacityChanged();
@@ -404,21 +403,21 @@ Surface &Surface::setOpacity(dfloat newOpacity)
     return *this;
 }
 
-Vector3f const &Surface::tintColor() const
+Vector3f const &Surface::color() const
 {
-    return d->tintColor;
+    return d->color;
 }
 
-Surface &Surface::setTintColor(Vector3f const &newTintColor)
+Surface &Surface::setColor(Vector3f const &newColor)
 {
-    Vector3f const newColorClamped(de::clamp(0.f, newTintColor.x, 1.f),
-                                   de::clamp(0.f, newTintColor.y, 1.f),
-                                   de::clamp(0.f, newTintColor.z, 1.f));
+    Vector3f const newColorClamped(de::clamp(0.f, newColor.x, 1.f),
+                                   de::clamp(0.f, newColor.y, 1.f),
+                                   de::clamp(0.f, newColor.z, 1.f));
 
-    if(d->tintColor != newColorClamped)
+    if (d->color != newColorClamped)
     {
-        d->tintColor = newColorClamped;
-        d->notifyTintColorChanged();
+        d->color = newColorClamped;
+        d->notifyColorChanged();
     }
     return *this;
 }
@@ -437,7 +436,7 @@ Surface &Surface::setBlendMode(blendmode_t newBlendMode)
 #ifdef __CLIENT__
 dfloat Surface::glow(Vector3f &color) const
 {
-    if(!d->material || d->material->isSkyMasked())
+    if (!d->material || d->material->isSkyMasked())
     {
         color = Vector3f();
         return 0;
@@ -450,7 +449,7 @@ dfloat Surface::glow(Vector3f &color) const
 
     TextureVariant *texture       = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
-    if(!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
+    if (!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
 
     color = Vector3f(avgColorAmplified->color.rgb);
     return matAnimator.glowStrength() * glowFactor; // Global scale factor.
@@ -458,11 +457,11 @@ dfloat Surface::glow(Vector3f &color) const
 
 void Surface::addDecoration(Decoration *decoration)
 {
-    if(!decoration) return;
+    if (!decoration) return;
     d->decorations.append(decoration);
 
     decoration->setSurface(this);
-    if(hasMap()) decoration->setMap(&map());
+    if (hasMap()) decoration->setMap(&map());
 }
 
 void Surface::clearDecorations()
@@ -472,9 +471,9 @@ void Surface::clearDecorations()
 
 LoopResult Surface::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
 {
-    for(Decoration *decor : d->decorations)
+    for (Decoration *decor : d->decorations)
     {
-        if(auto result = func(*decor)) return result;
+        if (auto result = func(*decor)) return result;
     }
     return LoopContinue;
 }
@@ -486,7 +485,7 @@ dint Surface::decorationCount() const
 
 void Surface::markForDecorationUpdate(bool yes)
 {
-    if(ddMapSetup) return;
+    if (ddMapSetup) return;
     d->needDecorationUpdate = yes;
 }
 
@@ -499,7 +498,7 @@ bool Surface::needsDecorationUpdate() const
 
 dint Surface::property(DmuArgs &args) const
 {
-    switch(args.prop)
+    switch (args.prop)
     {
     case DMU_MATERIAL: {
         Material *mat = (d->materialIsMissingFix? nullptr : d->material);
@@ -574,22 +573,22 @@ dint Surface::property(DmuArgs &args) const
         break;
 
     case DMU_COLOR:
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.x, 0);
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.y, 1);
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.z, 2);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.x, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.y, 1);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.z, 2);
         args.setValue(DMT_SURFACE_RGBA, &d->opacity, 2);
         break;
 
     case DMU_COLOR_RED:
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.x, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.x, 0);
         break;
 
     case DMU_COLOR_GREEN:
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.y, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.y, 0);
         break;
 
     case DMU_COLOR_BLUE:
-        args.setValue(DMT_SURFACE_RGBA, &d->tintColor.z, 0);
+        args.setValue(DMT_SURFACE_RGBA, &d->color.z, 0);
         break;
 
     case DMU_ALPHA:
@@ -613,7 +612,7 @@ dint Surface::property(DmuArgs &args) const
 
 dint Surface::setProperty(DmuArgs const &args)
 {
-    switch(args.prop)
+    switch (args.prop)
     {
     case DMU_BLENDMODE: {
         blendmode_t newBlendMode;
@@ -626,29 +625,29 @@ dint Surface::setProperty(DmuArgs const &args)
         break;
 
     case DMU_COLOR: {
-        Vector3f newColor = d->tintColor;
+        Vector3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
         args.value(DMT_SURFACE_RGBA, &newColor.y, 1);
         args.value(DMT_SURFACE_RGBA, &newColor.z, 2);
-        setTintColor(newColor);
+        setColor(newColor);
         break; }
 
     case DMU_COLOR_RED: {
-        Vector3f newColor = d->tintColor;
+        Vector3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
-        setTintColor(newColor);
+        setColor(newColor);
         break; }
 
     case DMU_COLOR_GREEN: {
-        Vector3f newColor = d->tintColor;
+        Vector3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.y, 0);
-        setTintColor(newColor);
+        setColor(newColor);
         break; }
 
     case DMU_COLOR_BLUE: {
-        Vector3f newColor = d->tintColor;
+        Vector3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.z, 0);
-        setTintColor(newColor);
+        setColor(newColor);
         break; }
 
     case DMU_ALPHA: {

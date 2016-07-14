@@ -19,33 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include "de_platform.h"
 #include "render/rend_main.h"
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <QtAlgorithms>
-#include <QBitArray>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/vector1.h>
-#include <de/GLState>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
-#include <doomsday/defs/sprite.h>
-#include <doomsday/res/TextureManifest>
-#include <doomsday/world/Materials>
-#include <doomsday/BspNode>
-
-#include "clientapp.h"
-#include "sys_system.h"
-#include "api_fontrender.h"
-#include "edit_bias.h"         /// @todo remove me
-#include "r_util.h"
 #include "MaterialVariantSpec"
 #include "ClientTexture"
 #include "Face"
+
 #include "world/map.h"
 #include "world/blockmap.h"
 #include "world/lineowner.h"
@@ -74,6 +54,8 @@
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
+#include "api_fontrender.h"
+#include "r_util.h"
 #include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
@@ -97,6 +79,28 @@
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
+
+#include "edit_bias.h"
+
+#include "sys_system.h"
+#include "dd_main.h"
+#include "clientapp.h"
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/sprite.h>
+#include <doomsday/res/TextureManifest>
+#include <doomsday/world/Materials>
+#include <doomsday/BspNode>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <de/vector1.h>
+#include <de/GLState>
+#include <QtAlgorithms>
+#include <QBitArray>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 using namespace de;
 using namespace world;
@@ -321,13 +325,13 @@ static void reportWallDrawn(Line &line)
 {
     // Already been here?
     dint playerNum = DoomsdayApp::players().indexOf(viewPlayer);
-    if(line.isMappedByPlayer(playerNum)) return;
+    if (line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
     line.setMappedByPlayer(playerNum);
 
     // Send a status report.
-    if(gx.HandleMapObjectStatusReport)
+    if (gx.HandleMapObjectStatusReport)
     {
         gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, line.indexInMap(),
                                        DMU_LINE, &playerNum);
@@ -336,10 +340,10 @@ static void reportWallDrawn(Line &line)
 
 static void scheduleFullLightGridUpdate()
 {
-    if(!ClientApp::world().hasMap()) return;
+    if (!ClientApp::world().hasMap()) return;
 
     // Schedule a LightGrid update.
-    if(ClientApp::world().map().hasLightGrid())
+    if (ClientApp::world().map().hasLightGrid())
     {
         ClientApp::world().map().lightGrid().scheduleFullUpdate();
     }
@@ -349,11 +353,11 @@ static void scheduleFullLightGridUpdate()
 void Rend_Reset()
 {
     R_ClearViewData();
-    if(App_World().hasMap())
+    if (App_World().hasMap())
     {
         App_World().map().removeAllLumobjs();
     }
-    if(dlBBox)
+    if (dlBBox)
     {
         GL_DeleteLists(dlBBox, 1);
         dlBBox = 0;
@@ -372,7 +376,7 @@ bool Rend_IsMTexDetails()
 
 dfloat Rend_FieldOfView()
 {
-    if(vrCfg().mode() == VRConfig::OculusRift)
+    if (vrCfg().mode() == VRConfig::OculusRift)
     {
         // OVR tells us which FOV to use.
         return vrCfg().oculusRift().fovX();
@@ -384,7 +388,7 @@ dfloat Rend_FieldOfView()
         // than a 4:3, but not just scaled linearly since that would go too far
         // into the fish eye territory.
         dfloat widescreenCorrection = dfloat(viewpw) / dfloat(viewph) / (4.f / 3.f);
-        if(widescreenCorrection < 1.5)  // up to ~16:9
+        if (widescreenCorrection < 1.5)  // up to ~16:9
         {
             widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
             return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
@@ -423,17 +427,17 @@ Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
     Matrix4f headOrientation;
     Matrix4f headOffset;
 
-    if(applyHead)
+    if (applyHead)
     {
-        Vector3f headPos = swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
-                                   ovr.headPosition() * vrCfg().mapUnitsPerMeter(),
-                                   AxisNegX, AxisNegY, AxisZ);
+        Vector3f headPos = swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0))
+                                       * ovr.headPosition() * vrCfg().mapUnitsPerMeter()
+                                   , AxisNegX, AxisNegY, AxisZ);
         headOffset = Matrix4f::translate(headPos);
 
         vEyeOrigin -= headPos;
     }
 
-    if(inWorldSpace)
+    if (inWorldSpace)
     {
         dfloat yaw   = vang;
         dfloat pitch = vpitch;
@@ -445,7 +449,7 @@ Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
         // Pitch and yaw can be taken directly from the head tracker, as the game is aware of
         // these values and is syncing with them independently (however, game has more
         // latency).
-        if(applyHead)
+        if (applyHead)
         {
             // Use angles directly from the Rift for best response.
             Vector3f const pry = ovr.headOrientation();
@@ -453,22 +457,22 @@ Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
             pitch =  radianToDegree(pry[0]);
         }
 
-        headOrientation = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
-                          Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
-                          Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+        headOrientation = Matrix4f::rotate(roll,  Vector3f(0, 0, 1))
+                        * Matrix4f::rotate(pitch, Vector3f(1, 0, 0))
+                        * Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
 
         modelView = headOrientation * headOffset;
     }
 
-    if(applyHead)
+    if (applyHead)
     {
         // Apply the current eye offset to the eye origin.
         vEyeOrigin -= headOrientation.inverse() * (ovr.eyeOffset() * vrCfg().mapUnitsPerMeter());
     }
 
-    return (modelView *
-            Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
-            Matrix4f::translate(-vOrigin));
+    return (modelView
+            * Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) // This is the aspect correction.
+            * Matrix4f::translate(-vOrigin));
 }
 
 void Rend_ModelViewMatrix(bool inWorldSpace)
@@ -496,20 +500,20 @@ void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
     ddplayer_t *ddpl = &viewPlayer->publicData();
 
     // Disabled?
-    if(!ddpl->fixedColorMap) return;
+    if (!ddpl->fixedColorMap) return;
 
     // Check for torch.
-    if(!rendLightAttenuateFixedColormap || distance < 1024)
+    if (!rendLightAttenuateFixedColormap || distance < 1024)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
         dfloat d = (16 - ddpl->fixedColorMap) / 15.0f;
-        if(rendLightAttenuateFixedColormap)
+        if (rendLightAttenuateFixedColormap)
         {
             d *= (1024 - distance) / 1024.0f;
         }
 
-        if(torchAdditive)
+        if (torchAdditive)
         {
             color += torchColor * d;
         }
@@ -524,7 +528,7 @@ void Rend_ApplyTorchLight(dfloat *color3, dfloat distance)
 {
     Vector4f tmp(color3, 0);
     Rend_ApplyTorchLight(tmp, distance);
-    for(dint i = 0; i < 3; ++i)
+    for (dint i = 0; i < 3; ++i)
     {
         color3[i] = tmp[i];
     }
@@ -532,14 +536,14 @@ void Rend_ApplyTorchLight(dfloat *color3, dfloat distance)
 
 dfloat Rend_AttenuateLightLevel(dfloat distToViewer, dfloat lightLevel)
 {
-    if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
+    if (distToViewer > 0 && rendLightDistanceAttenuation > 0)
     {
         dfloat real = lightLevel -
             (distToViewer - 32) / rendLightDistanceAttenuation *
                 (1 - lightLevel);
 
         dfloat minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
-        if(real < minimum)
+        if (real < minimum)
             real = minimum; // Clamp it.
 
         return de::min(real, 1.f);
@@ -550,7 +554,7 @@ dfloat Rend_AttenuateLightLevel(dfloat distToViewer, dfloat lightLevel)
 
 dfloat Rend_ShadowAttenuationFactor(coord_t distance)
 {
-    if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
+    if (shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
         return (shadowMaxDistance - distance) / (shadowMaxDistance / 4);
     }
@@ -568,21 +572,21 @@ bool Rend_SkyLightIsEnabled()
 
 Vector3f Rend_SkyLightColor()
 {
-    if(Rend_SkyLightIsEnabled() && ClientApp::world().hasMap())
+    if (Rend_SkyLightIsEnabled() && ClientApp::world().hasMap())
     {
         Sky &sky = ClientApp::world().map().sky();
         Vector3f const &ambientColor = sky.ambientColor();
 
-        if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
+        if (rendSkyLight != oldRendSkyLight
+            || !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f)
+            || !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f)
+            || !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
         {
             skyLightColor = ambientColor;
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            for(dint i = 0; i < 3; ++i)
+            for (dint i = 0; i < 3; ++i)
             {
                 skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
             }
@@ -607,7 +611,7 @@ Vector3f Rend_SkyLightColor()
  */
 static Vector3f Rend_AmbientLightColor(Sector const &sector)
 {
-    if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskedPlane())
+    if (Rend_SkyLightIsEnabled() && sector.hasSkyMaskPlane())
     {
         return Rend_SkyLightColor();
     }
@@ -2555,26 +2559,26 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
 {
     DENG2_ASSERT(leftEdge.lineSideSegment().isFrontFacing() && leftEdge.lineSide().hasSections());
 
-    if(retWroteOpaque) *retWroteOpaque = false;
-    if(retBottomZ)     *retBottomZ     = 0;
-    if(retTopZ)        *retTopZ        = 0;
+    if (retWroteOpaque) *retWroteOpaque = false;
+    if (retBottomZ)     *retBottomZ     = 0;
+    if (retTopZ)        *retTopZ        = 0;
 
     SectorCluster &cluster = curSubspace->cluster();
     Surface &surface       = leftEdge.lineSide().surface(leftEdge.spec().section);
 
     // Skip nearly transparent surfaces.
     dfloat opacity = surface.opacity();
-    if(opacity < .001f)
+    if (opacity < .001f)
         return;
 
     // Determine which Material to use (a drawable material is required).
     ClientMaterial *material = Rend_ChooseMapSurfaceMaterial(surface);
-    if(!material || !material->isDrawable())
+    if (!material || !material->isDrawable())
         return;
 
     // Do the edge geometries describe a valid polygon?
-    if(!leftEdge.isValid() || !rightEdge.isValid() ||
-       de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+    if (!leftEdge.isValid() || !rightEdge.isValid()
+        || de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
         return;
 
     WallSpec const &wallSpec      = leftEdge.spec();
@@ -2609,19 +2613,19 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     wallLuminosityDeltas(leftEdge, rightEdge, parm.surfaceLuminosityDeltas);
 
     LineSide &side = leftEdge.lineSide();
-    if(!parm.skyMasked)
+    if (!parm.skyMasked)
     {
-        if(glowFactor > .0001f)
+        if (glowFactor > .0001f)
         {
-            if(material == surface.materialPtr())
+            if (material == surface.materialPtr())
             {
                 parm.glowing = matAnimator.glowStrength();
             }
             else
             {
-                ClientMaterial *actualMaterial =
-                    surface.hasMaterial()? static_cast<ClientMaterial *>(surface.materialPtr())
-                                         : &ClientMaterial::find(de::Uri("System", Path("missing")));
+                auto *actualMaterial =
+                    surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
+                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
 
                 parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
@@ -2635,14 +2639,14 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
                         wallSpec.flags.testFlag(WallSpec::SortDynLights),
                         parm.lightListIdx, parm.shadowListIdx);
 
-        if(twoSidedMiddle)
+        if (twoSidedMiddle)
         {
             parm.blendMode = surface.blendMode();
-            if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+            if (parm.blendMode == BM_NORMAL && noSpriteTrans)
                 parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
-        side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
+        side.chooseSurfaceColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
     //
@@ -2782,7 +2786,7 @@ static void writeSubspacePlane(Plane &plane)
     parm.bottomRight          = &bottomRight;
     parm.materialOrigin       = &materialOrigin;
     parm.materialScale        = &materialScale;
-    parm.surfaceColor         = &surface.tintColor();
+    parm.surfaceColor         = &surface.color();
     parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     if(material->isSkyMasked())
@@ -5433,42 +5437,44 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
  */
 static void drawSurfaceTangentVectors(SectorCluster &cluster)
 {
-    for(ConvexSubspace *subspace : cluster.subspaces())
+    cluster.forAllSubspaces([] (ConvexSubspace &subspace)
     {
-        HEdge const *base  = subspace->poly().hedge();
+        HEdge const *base  = subspace.poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWalls(hedge);
-        } while((hedge = &hedge->next()) != base);
+        } while ((hedge = &hedge->next()) != base);
 
-        subspace->forAllExtraMeshes([] (Mesh &mesh)
+        subspace.forAllExtraMeshes([] (Mesh &mesh)
         {
-            for(HEdge *hedge : mesh.hedges())
+            for (HEdge *hedge : mesh.hedges())
             {
                 drawTangentVectorsForWalls(hedge);
             }
             return LoopContinue;
         });
 
-        subspace->forAllPolyobjs([] (Polyobj &pob)
+        subspace.forAllPolyobjs([] (Polyobj &pob)
         {
-            for(HEdge *hedge : pob.mesh().hedges())
+            for (HEdge *hedge : pob.mesh().hedges())
             {
                 drawTangentVectorsForWalls(hedge);
             }
             return LoopContinue;
         });
-    }
+
+        return LoopContinue;
+    });
 
     dint const planeCount = cluster.sector().planeCount();
-    for(dint i = 0; i < planeCount; ++i)
+    for (dint i = 0; i < planeCount; ++i)
     {
         Plane const &plane = cluster.visPlane(i);
-        coord_t height     = 0;
+        ddouble height     = 0;
 
-        if(plane.surface().hasSkyMaskedMaterial() &&
-           (plane.isSectorFloor() || plane.isSectorCeiling()))
+        if (plane.surface().hasSkyMaskedMaterial()
+            && (plane.isSectorFloor() || plane.isSectorCeiling()))
         {
             height = plane.map().skyFix(plane.isSectorCeiling());
         }
@@ -5486,7 +5492,7 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
  */
 static void drawSurfaceTangentVectors(Map &map)
 {
-    if(!::devSurfaceVectors) return;
+    if (!::devSurfaceVectors) return;
 
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
@@ -5505,7 +5511,7 @@ static void drawLumobjs(Map &map)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    if(!devDrawLums) return;
+    if (!devDrawLums) return;
 
     GLState::current().setDepthTest(false).apply();
     //glDisable(GL_CULL_FACE);
@@ -5513,7 +5519,7 @@ static void drawLumobjs(Map &map)
 
     map.forAllLumobjs([] (Lumobj &lob)
     {
-        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
+        if (rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
             return LoopContinue;
 
         glMatrixMode(GL_MODELVIEW);

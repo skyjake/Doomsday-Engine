@@ -204,7 +204,7 @@ D_CMD(MovePlane);
 
 void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, world_Material &newMaterial);
 
-void XS_ChangePlaneTintColor(Sector &sector, bool ceiling, de::Vector3f const &newTintColor, bool isDelta = false);
+void XS_ChangePlaneColor(Sector &sector, bool ceiling, de::Vector3f const &newColor, bool isDelta = false);
 
 #endif
 

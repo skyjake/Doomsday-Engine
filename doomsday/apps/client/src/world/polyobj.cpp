@@ -321,10 +321,13 @@ void Polyobj::updateAABox()
 
 void Polyobj::updateSurfaceTangents()
 {
-    for(Line *line : lines())
+    for (Line *line : lines())
     {
-        line->front().updateSurfaceNormals();
-        line->back().updateSurfaceNormals();
+        line->forAllSides([] (LineSide &side)
+        {
+            side.updateAllSurfaceNormals();
+            return LoopContinue;
+        });
     }
 }
 

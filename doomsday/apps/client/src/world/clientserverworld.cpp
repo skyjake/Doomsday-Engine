@@ -593,7 +593,7 @@ DENG2_PIMPL(ClientServerWorld)
         {
             sector.forAllSides([] (LineSide &side)
             {
-                side.fixMissingMaterials();
+                side.fixSurfacesMissingMaterials();
                 return LoopContinue;
             });
             return LoopContinue;

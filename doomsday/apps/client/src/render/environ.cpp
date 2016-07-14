@@ -202,7 +202,7 @@ GLTexture const &Environment::reflectionInCluster(world::SectorCluster const *cl
     {
         return defaultReflection();
     }
-    if(cluster->hasSkyMaskedPlane())
+    if(cluster->hasSkyMaskPlane())
     {
         return d->reflectionTextures[Impl::Exterior];
     }

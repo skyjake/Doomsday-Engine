@@ -83,7 +83,11 @@ public:
     enum { Front, Back };
 
     /**
-     * Logical side of which there are always two (a front and a back).
+     * Logical side of which there are always two (Front and Back).
+     *
+     * @todo Invert the object model so that Side always contains a full set of logical
+     * subsections. Each Section having ownership of an Emitter and an optional Surface.
+     * This should allow for a significant reduction in implementation complexity. -ds
      */
     class Side : public world::MapElement
     {
@@ -207,6 +211,24 @@ public:
         de::String description() const;
 
         /**
+         * Returns the @ref sdefFlags for the side.
+         */
+        de::dint flags() const;
+
+        /**
+         * Change the side's flags.
+         *
+         * @param flagsToChange  Flags to change the value of.
+         * @param operation      Logical operation to perform on the flags.
+         */
+        void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
+
+        /**
+         * Returns @c true iff the side is flagged @a flagsToTest.
+         */
+        inline bool isFlagged(de::dint flagsToTest) const { return (flags() & flagsToTest) != 0; }
+
+        /**
          * Returns the Line owner of the side.
          */
         Line       &line();
@@ -279,78 +301,108 @@ public:
         void addSections();
 
         /**
-         * Returns the specified surface of the side.
+         * Returns the frame number of the last time shadows were drawn for the side.
+         */
+        de::dint shadowVisCount() const;
+
+        /**
+         * Change the frame number of the last time shadows were drawn for the side.
+         *
+         * @param newCount  New shadow vis count.
+         */
+        void setShadowVisCount(de::dint newCount);
+
+    //- Surfaces ------------------------------------------------------------------------
+
+        /**
+         * Returns the specified Surface of the side.
          *
          * @param sectionId  Identifier of the surface to return.
+         *
+         * @see middle(), bottom(), top()
          */
         Surface       &surface(de::dint sectionId);
         Surface const &surface(de::dint sectionId) const;
 
         /**
-         * Returns the middle surface of the side.
+         * Returns the @em Middle Surface of the side.
          *
-         * @see surface()
+         * @see surface(), bottom(), top()
          */
-        inline Surface       &middle()       { return surface(Middle); }
-        inline Surface const &middle() const { return surface(Middle); }
+        Surface       &middle();
+        Surface const &middle() const;
 
         /**
-         * Returns the bottom surface of the side.
+         * Returns the @em Bottom surface of the side.
          *
-         * @see surface()
+         * @see surface(), middle(), top()
          */
-        inline Surface       &bottom()       { return surface(Bottom); }
-        inline Surface const &bottom() const { return surface(Bottom); }
+        Surface       &bottom();
+        Surface const &bottom() const;
 
         /**
-         * Returns the top surface of the side.
+         * Returns the @em Top Surface of the side.
          *
-         * @see surface()
+         * @see surface(), middle(), bottom()
          */
-        inline Surface       &top()       { return surface(Top); }
-        inline Surface const &top() const { return surface(Top); }
+        Surface       &top();
+        Surface const &top() const;
 
         /**
-         * Iterate through the Surfaces of the side. If no sections are present
-         * then nothing happens.
+         * Iterate the Surfaces of the side. If no sections are present then nothing happens.
          *
          * @param func  Callback to make for each Surface.
          */
         de::LoopResult forAllSurfaces(std::function<de::LoopResult(Surface &)> func) const;
 
         /**
-         * Returns the specified sound emitter of the side.
-         *
-         * @param sectionId  Identifier of the sound emitter to return.
-         *
-         * @see Section::soundEmitter()
+         * Do as in the original DOOM if the texture has not been defined - extend the
+         * floor/ceiling to fill the space (unless it is skymasked).
          */
-        SoundEmitter       &soundEmitter(int sectionId);
-        SoundEmitter const &soundEmitter(int sectionId) const;
+        void fixSurfacesMissingMaterials();
 
         /**
-         * Returns the middle sound emitter of the side.
-         *
-         * @see Section::soundEmitter()
+         * Update the tangent space normals of the side's surfaces according to the points
+         * defined by the Line's vertices. If no Sections are defined this is a no-op.
          */
-        inline SoundEmitter       &middleSoundEmitter()       { return soundEmitter(Middle); }
-        inline SoundEmitter const &middleSoundEmitter() const { return soundEmitter(Middle); }
+        void updateAllSurfaceNormals();
+
+        void chooseSurfaceColors(de::dint sectionId, de::Vector3f const **topColor,
+                                 de::Vector3f const **bottomColor) const;
+
+    //- SoundEmitters -------------------------------------------------------------------
+
+        /**
+         * Returns the SoundEmitter of the section specified with @a sectionId.
+         *
+         * @see middleSoundEmitter(), bottomSoundEmitter(), topSoundEmitter()
+         */
+        SoundEmitter       &soundEmitter(de::dint sectionId);
+        SoundEmitter const &soundEmitter(de::dint sectionId) const;
+
+        /**
+         * Returns the SoundEmitter of the @em Middle section.
+         *
+         * @see soundEmitter(), bottomSoundEmitter(), topSoundEmitter()
+         */
+        SoundEmitter       &middleSoundEmitter();
+        SoundEmitter const &middleSoundEmitter() const;
 
         /**
          * Returns the bottom sound emitter (tee-hee) for the side.
          *
-         * @see Section::soundEmitter()
+         * @see soundEmitter(), middleSoundEmitter(), topSoundEmitter()
          */
-        inline SoundEmitter       &bottomSoundEmitter()       { return soundEmitter(Bottom); }
-        inline SoundEmitter const &bottomSoundEmitter() const { return soundEmitter(Bottom); }
+        SoundEmitter       &bottomSoundEmitter();
+        SoundEmitter const &bottomSoundEmitter() const;
 
         /**
          * Returns the top sound emitter for the side.
          *
-         * @see Section::soundEmitter()
+         * @see soundEmitter(), middleSoundEmitter(), bottomSoundEmitter()
          */
-        inline SoundEmitter       &topSoundEmitter()       { return soundEmitter(Top); }
-        inline SoundEmitter const &topSoundEmitter() const { return soundEmitter(Top); }
+        SoundEmitter       &topSoundEmitter();
+        SoundEmitter const &topSoundEmitter() const;
 
         /**
          * Update the sound emitter origin of the specified surface section. This
@@ -359,22 +411,8 @@ public:
          */
         void updateSoundEmitterOrigin(de::dint sectionId);
 
-        /**
-         * Update the @em middle sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
         inline void updateMiddleSoundEmitterOrigin() { updateSoundEmitterOrigin(Middle); }
-
-        /**
-         * Update the @em bottom sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
         inline void updateBottomSoundEmitterOrigin() { updateSoundEmitterOrigin(Bottom); }
-
-        /**
-         * Update the @em top sound emitter origin for the side.
-         * @see updateSoundEmitterOrigin()
-         */
         inline void updateTopSoundEmitterOrigin()    { updateSoundEmitterOrigin(Top); }
 
         /**
@@ -382,6 +420,8 @@ public:
          * @see updateSoundEmitterOrigin()
          */
         void updateAllSoundEmitterOrigins();
+
+    //- Segments ------------------------------------------------------------------------
 
         /**
          * Clears (destroys) all segments for the side.
@@ -417,53 +457,8 @@ public:
          */
         de::HEdge *rightHEdge() const;
 
-        /**
-         * Update the tangent space normals of the side's surfaces according to the
-         * points defined by the Line's vertices. If no Sections are defined this is
-         * a no-op.
-         */
-        void updateSurfaceNormals();
-
-        /**
-         * Returns the @ref sdefFlags for the side.
-         */
-        de::dint flags() const;
-
-        /**
-         * Change the side's flags.
-         *
-         * @param flagsToChange  Flags to change the value of.
-         * @param operation      Logical operation to perform on the flags.
-         */
-        void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
-
-        /**
-         * Returns @c true iff the side is flagged @a flagsToTest.
-         */
-        inline bool isFlagged(de::dint flagsToTest) const { return (flags() & flagsToTest) != 0; }
-
-        void chooseSurfaceTintColors(de::dint sectionId, de::Vector3f const **topColor,
-                                     de::Vector3f const **bottomColor) const;
-
-        /**
-         * Returns the frame number of the last time shadows were drawn for the side.
-         */
-        de::dint shadowVisCount() const;
-
-        /**
-         * Change the frame number of the last time shadows were drawn for the side.
-         *
-         * @param newCount  New shadow vis count.
-         */
-        void setShadowVisCount(de::dint newCount);
-
 #ifdef __CLIENT__
-
-        /**
-         * Do as in the original DOOM if the texture has not been defined -
-         * extend the floor/ceiling to fill the space (unless it is skymasked).
-         */
-        void fixMissingMaterials();
+    //- FakeRadio -----------------------------------------------------------------------
 
         /**
          * To be called to update the shadow properties for the line side.
