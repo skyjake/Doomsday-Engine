@@ -1673,6 +1673,7 @@ void *DD_GetVariable(dint ddvalue)
     static dint value;
     static ddouble valueD;
     static timespan_t valueT;
+    static AABoxd valueBox;
 
     switch (ddvalue)
     {
@@ -1682,6 +1683,17 @@ void *DD_GetVariable(dint ddvalue)
     case DD_POLYOBJ_COUNT:
         value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
+
+    case DD_MAP_BOUNDING_BOX:
+        if (App_World().hasMap())
+        {
+            valueBox = App_World().map().bounds();
+        }
+        else
+        {
+            valueBox = AABoxd(0.0, 0.0, 0.0, 0.0);
+        }
+        return &valueBox;
 
     case DD_MAP_MIN_X:
         valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;

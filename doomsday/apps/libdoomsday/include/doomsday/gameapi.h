@@ -87,7 +87,7 @@ enum {
     DD_UNUSED15, // DD_DEF_MUSIC_CDTRACK
 
     // Non-integer/special values for Set/Get
-    DD_UNUSED9, // DD_TRANSLATIONTABLES_ADDRESS
+    DD_MAP_BOUNDING_BOX,
     DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.

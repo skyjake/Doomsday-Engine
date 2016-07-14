@@ -1245,7 +1245,7 @@ DENG2_PIMPL(Line)
     dint flags;                 ///< Public DDLF_* flags.
     Side front;                 ///< Front side of the line.
     Side back;                  ///< Back side of the line.
-    std::array<bool, DDMAXPLAYERS> mapped; ///< Whether the line has been seen by each player yet.
+    std::array<bool, DDMAXPLAYERS> mapped {}; ///< Whether the line has been seen by each player yet.
 
     Vertex *from     = nullptr; ///< Start vertex (not owned).
     Vertex *to       = nullptr; ///< End vertex (not owned).

@@ -728,10 +728,8 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
 
     automap.reset();
 
-    automap.setMapBounds(*((coord_t *) DD_GetVariable(DD_MAP_MIN_X)),
-                         *((coord_t *) DD_GetVariable(DD_MAP_MAX_X)),
-                         *((coord_t *) DD_GetVariable(DD_MAP_MIN_Y)),
-                         *((coord_t *) DD_GetVariable(DD_MAP_MAX_Y)));
+    AABoxd const *mapBounds = reinterpret_cast<AABoxd *>(DD_GetVariable(DD_MAP_BOUNDING_BOX));
+    automap.setMapBounds(mapBounds->minX, mapBounds->maxX, mapBounds->minY, mapBounds->maxY);
 
     AutomapStyle *style = automap.style();
 
