@@ -386,8 +386,8 @@ public:
     PrivateAutoPtr(ImplType *p) : ptr(p) {}
     ~PrivateAutoPtr() { reset(); }
 
-    ImplType &operator * () const { return *ptr; }
-    ImplType *operator -> () const { return ptr; }
+    inline ImplType &operator * () const { return *ptr; }
+    inline ImplType *operator -> () const { return ptr; }
     void reset(ImplType *p = 0) {
         IPrivate *ip = reinterpret_cast<IPrivate *>(ptr);
         if (ip)
@@ -397,13 +397,13 @@ public:
         }
         ptr = p;
     }
-    ImplType *get() const {
+    inline ImplType *get() const {
         return ptr;
     }
-    ImplType const *getConst() const {
+    inline ImplType const *getConst() const {
         return ptr;
     }
-    operator ImplType *() const {
+    inline operator ImplType *() const {
         return ptr;
     }
     ImplType *release() {
@@ -414,7 +414,7 @@ public:
     void swap(PrivateAutoPtr &other) {
         std::swap(ptr, other.ptr);
     }
-    bool isNull() const {
+    inline bool isNull() const {
         return !ptr;
     }
 #ifdef DENG2_DEBUG
