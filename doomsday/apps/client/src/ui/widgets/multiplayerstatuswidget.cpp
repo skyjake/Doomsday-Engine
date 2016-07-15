@@ -1,4 +1,4 @@
-/** @file multiplayermenuwidget.cpp
+/** @file multiplayerstatuswidget.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/multiplayermenuwidget.h"
+#include "ui/widgets/multiplayerstatuswidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
 #include "CommandAction"
@@ -31,7 +31,7 @@ enum {
     POS_STATUS = 1
 };
 
-DENG_GUI_PIMPL(MultiplayerMenuWidget)
+DENG_GUI_PIMPL(MultiplayerStatusWidget)
 , DENG2_OBSERVES(ServerLink, Join)
 , DENG2_OBSERVES(ServerLink, Leave)
 {
@@ -44,12 +44,6 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
         link().audienceForJoin += this;
         link().audienceForLeave += this;
     }
-
-//    ~Impl()
-//    {
-//        link().audienceForJoin -= this;
-//        link().audienceForLeave -= this;
-//    }
 
     void networkGameJoined()
     {
@@ -69,7 +63,7 @@ DENG_GUI_PIMPL(MultiplayerMenuWidget)
     }
 };
 
-MultiplayerMenuWidget::MultiplayerMenuWidget()
+MultiplayerStatusWidget::MultiplayerStatusWidget()
     : PopupMenuWidget("multiplayer-menu"), d(new Impl(this))
 {
     connect(&d->timer, SIGNAL(timeout()), this, SLOT(updateElapsedTime()));
@@ -80,7 +74,7 @@ MultiplayerMenuWidget::MultiplayerMenuWidget()
             << new ui::Item(ui::Item::ShownAsLabel, ""); // sv address & time
 }
 
-void MultiplayerMenuWidget::updateElapsedTime()
+void MultiplayerStatusWidget::updateElapsedTime()
 {
     if (d->link().status() != ServerLink::Connected)
         return;
@@ -96,7 +90,7 @@ void MultiplayerMenuWidget::updateElapsedTime()
                 .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0')));
 }
 
-void MultiplayerMenuWidget::preparePanelForOpening()
+void MultiplayerStatusWidget::preparePanelForOpening()
 {
     d->timer.start();
     updateElapsedTime();
@@ -104,7 +98,7 @@ void MultiplayerMenuWidget::preparePanelForOpening()
     PopupMenuWidget::preparePanelForOpening();
 }
 
-void MultiplayerMenuWidget::panelClosing()
+void MultiplayerStatusWidget::panelClosing()
 {
     d->timer.stop();
     PopupMenuWidget::panelClosing();

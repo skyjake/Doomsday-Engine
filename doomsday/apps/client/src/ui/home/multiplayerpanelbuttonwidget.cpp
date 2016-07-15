@@ -84,24 +84,31 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
     void joinButtonPressed() const
     {
-        // Switch locally to the game running on the server.
-        BusyMode_FreezeGameForBusyMode();
-        ClientWindow::main().taskBar().close();
+        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
-        // Automatically leave the current MP game.
-        if (netGame && isClient)
+        // Use a delayed callback so that the UI is not blocked while we switch games.
+        serverinfo_t const info = serverInfo;
+        Loop::get().timer(0.1, [info] ()
         {
-            ClientApp::serverLink().disconnect();
-        }
+            // Switch locally to the game running on the server.
+            BusyMode_FreezeGameForBusyMode();
+            ClientWindow::main().taskBar().close();
 
-        /// @todo Set up a temporary profile using packages from the server.
+            // Automatically leave the current MP game.
+            if (netGame && isClient)
+            {
+                ClientApp::serverLink().disconnect();
+            }
 
-        DoomsdayApp::app().changeGame(
-                    DoomsdayApp::games()[serverInfo.gameIdentityKey].profile(),
-                    DD_ActivateGameWorker);
-        Con_Execute(CMDS_DDAY, String("connect %1:%2")
-                    .arg(serverInfo.address).arg(serverInfo.port).toLatin1(),
-                    false, false);
+            /// @todo Set up a temporary profile using packages from the server.
+
+            DoomsdayApp::app().changeGame(
+                        DoomsdayApp::games()[info.gameIdentityKey].profile(),
+                        DD_ActivateGameWorker);
+            Con_Execute(CMDS_DDAY, String("connect %1:%2")
+                        .arg(info.address).arg(info.port).toLatin1(),
+                        false, false);
+        });
     }
 
     bool hasConfig(String const &token) const
@@ -115,7 +122,11 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         catalog.clear();
         self.updateContent(serverInfo);
     }
+
+    DENG2_PIMPL_AUDIENCE(AboutToJoin)
 };
+
+DENG2_AUDIENCE_METHOD(MultiplayerPanelButtonWidget, AboutToJoin)
 
 MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
     : d(new Impl(this))

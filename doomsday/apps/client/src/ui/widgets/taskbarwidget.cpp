@@ -18,7 +18,7 @@
 
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/multiplayermenuwidget.h"
+#include "ui/widgets/multiplayerstatuswidget.h"
 #include "ui/widgets/tutorialwidget.h"
 #include "ui/widgets/packagessidebarwidget.h"
 #include "ui/home/homewidget.h"
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
-    MultiplayerMenuWidget *multiMenu;
+    MultiplayerStatusWidget *multiMenu;
 
     AnimationRule *vertShift;
     bool mouseWasTrappedWhenOpening;
@@ -437,7 +437,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     d->conf->setPopup(*d->configMenu);
 
     // Multiplayer menu.
-    add(d->multiMenu = new MultiplayerMenuWidget);
+    add(d->multiMenu = new MultiplayerStatusWidget);
     d->multi->setPopup(*d->multiMenu);
 
     // The DE menu.
@@ -804,7 +804,7 @@ void TaskBarWidget::showMultiplayer()
 
 void TaskBarWidget::connectToServerManually()
 {
-    ManualConnectionDialog *dlg = new ManualConnectionDialog;
+    auto *dlg = new ManualConnectionDialog;
     dlg->setDeleteAfterDismissed(true);
     dlg->exec(root());
 }

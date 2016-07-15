@@ -1,6 +1,6 @@
-/** @file multiplayermenuwidget.h
+/** @file multiplayerstatuswidget.h
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MULTIPLAYERMENUWIDGET_H
-#define DENG_CLIENT_MULTIPLAYERMENUWIDGET_H
+#ifndef DENG_CLIENT_MULTIPLAYERSTATUSWIDGET_H
+#define DENG_CLIENT_MULTIPLAYERSTATUSWIDGET_H
 
 #include <de/PopupMenuWidget>
 
@@ -26,13 +26,13 @@
  *
  * @ingroup ui
  */
-class MultiplayerMenuWidget : public de::PopupMenuWidget
+class MultiplayerStatusWidget : public de::PopupMenuWidget
 {
     Q_OBJECT
-    
+
 public:
-    MultiplayerMenuWidget();
-    
+    MultiplayerStatusWidget();
+
 public slots:
     void updateElapsedTime();
 
@@ -44,4 +44,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_MULTIPLAYERMENUWIDGET_H
+#endif // DENG_CLIENT_MULTIPLAYERSTATUSWIDGET_H

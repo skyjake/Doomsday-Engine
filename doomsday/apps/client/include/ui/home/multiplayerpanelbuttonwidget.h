@@ -26,6 +26,9 @@ struct serverinfo_s;
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
+    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(serverinfo_s const &))
+
+public:
     MultiplayerPanelButtonWidget();
 
     void setSelected(bool selected) override;

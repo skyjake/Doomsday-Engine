@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/manualconnectiondialog.h"
-//#include "ui/widgets/mpsessionmenuwidget.h"
+#include "ui/widgets/multiplayerservermenuwidget.h"
 #include "clientapp.h"
 
 #include <de/SignalAction>
@@ -28,10 +28,11 @@ using namespace de;
 
 DENG2_PIMPL(ManualConnectionDialog)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
+, DENG2_OBSERVES(MultiplayerServerMenuWidget, AboutToJoin)
 {
     String usedAddress;
     FoldPanelWidget *fold;
-    //MPSessionMenuWidget *games; // TODO: refactor to use menu from MultiplayerColumnWidget
+    MultiplayerServerMenuWidget *servers;
     ProgressWidget *progress;
     bool querying;
     bool joinWhenEnterPressed;
@@ -46,7 +47,7 @@ DENG2_PIMPL(ManualConnectionDialog)
         ClientApp::serverLink().audienceForDiscoveryUpdate += this;
     }
 
-    void linkDiscoveryUpdate(ServerLink const &link)
+    void linkDiscoveryUpdate(ServerLink const &link) override
     {
         if (querying)
         {
@@ -80,26 +81,34 @@ DENG2_PIMPL(ManualConnectionDialog)
     {
         return self.buttonWidget(tr("Connect"));
     }
+
+    void aboutToJoinMultiplayerGame(serverinfo_t const &) override
+    {
+        self.accept();
+    }
 };
 
 ManualConnectionDialog::ManualConnectionDialog(String const &name)
     : InputDialog(name), d(new Impl(this))
 {
+    area().enableIndicatorDraw(true);
+
     add(d->progress = new ProgressWidget);
     d->progress->useMiniStyle("altaccent");
     d->progress->setWidthPolicy(ui::Expand);
     d->progress->setTextAlignment(ui::AlignLeft);
     d->progress->hide();
 
-    // The found games are shown inside a fold panel.
-    d->fold  = new FoldPanelWidget;
-/*    d->games = new MPSessionMenuWidget(MPSessionMenuWidget::DirectDiscoveryOnly);
-    connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
+    // The found servers are shown inside a fold panel.
+    d->fold = new FoldPanelWidget;
+    d->servers = new MultiplayerServerMenuWidget(MultiplayerServerMenuWidget::DirectDiscoveryOnly);
+    d->servers->audienceForAboutToJoin() += d;
+    /*connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
             this,     SIGNAL(selected(de::ui::Item const *)));
-    connect(d->games, SIGNAL(sessionSelected(de::ui::Item const *)),
-            this,     SLOT  (serverSelected(de::ui::Item const *)));
-    d->games->rule().setInput(Rule::Width, rule().width() - margins().width());
-    d->fold->setContent(d->games);*/
+    connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
+            this,     SLOT  (serverSelected(de::ui::Item const *)));*/
+    d->servers->rule().setInput(Rule::Width, rule().width() - margins().width());
+    d->fold->setContent(d->servers);
     area().add(d->fold);
 
     title().setText(tr("Connect to Server"));
@@ -124,7 +133,7 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(validate()));
     connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(contentChanged()));
 
-    updateLayout();
+    updateLayout(IncludeHidden); // fold widgets are hidden while closed
 }
 
 void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
@@ -134,7 +143,7 @@ void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
 
 Action *ManualConnectionDialog::makeAction(ui::Item const &/*item*/)
 {
-    //return d->games->makeAction(item);
+    //return d->servers->makeAction(item);
     return nullptr;
 }
 
@@ -163,8 +172,8 @@ void ManualConnectionDialog::queryOrConnect()
         // Automatically connect if there is a single choice.
         if (d->joinWhenEnterPressed)
         {
-            //emit selected(&d->games->items().at(0));
-            //serverSelected(&d->games->items().at(0));
+            //emit selected(&d->servers->items().at(0));
+            //serverSelected(&d->servers->items().at(0));
             return;
         }
 
@@ -195,8 +204,10 @@ void ManualConnectionDialog::validate()
         valid = false;
     }
 
-    if (editor().text().isEmpty() || editor().text().contains(';') ||
-       editor().text().endsWith(":") || editor().text().startsWith(":"))
+    if (editor().text().isEmpty()     ||
+        editor().text().contains(';') ||
+        editor().text().endsWith(":") ||
+        (editor().text().startsWith(":") && !editor().text().startsWith("::")))
     {
         valid = false;
     }
@@ -220,6 +231,5 @@ void ManualConnectionDialog::finish(int result)
         // The dialog was accepted.
         d->usedAddress = editor().text();
     }
-
     InputDialog::finish(result);
 }
