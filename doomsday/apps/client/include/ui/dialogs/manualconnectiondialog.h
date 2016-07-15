@@ -43,8 +43,6 @@ public:
      */
     void enableJoinWhenSelected(bool joinWhenSelected);
 
-    de::Action *makeAction(de::ui::Item const &item);
-
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);
@@ -56,7 +54,7 @@ public slots:
     void queryOrConnect();
     void contentChanged();
     void validate();
-    void serverSelected(de::ui::Item const *);
+    //void serverSelected(de::ui::Item const *);
 
 protected:
     void finish(int result);

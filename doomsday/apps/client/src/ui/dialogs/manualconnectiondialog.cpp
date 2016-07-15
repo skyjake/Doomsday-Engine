@@ -143,12 +143,6 @@ void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
     d->autoJoin = joinWhenSelected;
 }
 
-Action *ManualConnectionDialog::makeAction(ui::Item const &/*item*/)
-{
-    //return d->servers->makeAction(item);
-    return nullptr;
-}
-
 void ManualConnectionDialog::operator >> (PersistentState &toState) const
 {
     toState.objectNamespace().set(name() + ".address", d->usedAddress);
@@ -219,6 +213,7 @@ void ManualConnectionDialog::validate()
     d->connectButton().enable(valid);
 }
 
+/*
 void ManualConnectionDialog::serverSelected(ui::Item const *item)
 {
     if (d->autoJoin)
@@ -226,7 +221,7 @@ void ManualConnectionDialog::serverSelected(ui::Item const *item)
         setAcceptanceAction(makeAction(*item));
     }
     accept();
-}
+}*/
 
 void ManualConnectionDialog::finish(int result)
 {
