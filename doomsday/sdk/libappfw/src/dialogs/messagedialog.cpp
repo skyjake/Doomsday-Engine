@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(MessageDialog)
         updateLayout();
     }
 
-    void updateLayout()
+    void updateLayout(LayoutBehavior behavior = ExcludeHidden)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(MessageDialog)
         foreach (Widget *w, area.childWidgets())
         {
             // Individual children can be hidden to exclude them from the layout.
-            if (!w->behavior().testFlag(Widget::Hidden))
+            if (behavior == IncludeHidden || !w->behavior().testFlag(Widget::Hidden))
             {
                 layout << w->as<GuiWidget>();
             }
@@ -106,9 +106,9 @@ LabelWidget &MessageDialog::message()
     return *d->message;
 }
 
-void MessageDialog::updateLayout()
+void MessageDialog::updateLayout(LayoutBehavior behavior)
 {
-    d->updateLayout();
+    d->updateLayout(behavior);
 }
 
 } // namespace de

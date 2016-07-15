@@ -38,11 +38,13 @@ public:
     LabelWidget &title();
     LabelWidget &message();
 
+    enum LayoutBehavior { ExcludeHidden, IncludeHidden };
+
     /**
      * Derived classes should call this after they add or remove widgets in the
      * dialog content area.
      */
-    void updateLayout();
+    void updateLayout(LayoutBehavior behavior = ExcludeHidden);
 
 private:
     DENG2_PRIVATE(d)
