@@ -18,10 +18,16 @@
 
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/widgets/multiplayerservermenuwidget.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "ui/home/headerwidget.h"
+#include "ui/clientwindow.h"
 #include "clientapp.h"
 
 #include <doomsday/Games>
+#include <de/PopupButtonWidget>
+#include <de/PopupMenuWidget>
+#include <de/SignalAction>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 
@@ -34,6 +40,14 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
         // Set up the widgets.
         ScrollAreaWidget &area = self.scrollArea();
         area.add(menu = new MultiplayerServerMenuWidget);
+
+        self.header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+            auto *menu = new PopupMenuWidget;
+            menu->items() << new ui::ActionItem(tr("Connect to Server..."),
+                                                new SignalAction(&ClientWindow::main().taskBar(),
+                                                                 SLOT(connectToServerManually())));
+            return menu;
+        }, ui::Down);
 
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
