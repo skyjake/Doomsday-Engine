@@ -228,7 +228,7 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             currentOffsetTab = restoredOffsetTab;
             setScrollOffset(currentOffsetTab, 0.0);
-            tabs->setCurrent(restoredActiveTab);
+            tabs->setCurrent(ui::DataPos(restoredActiveTab));
 
             restoredActiveTab = -1;
             restoredOffsetTab = -1;
