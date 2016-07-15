@@ -276,7 +276,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
         //itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
-        itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
+        //itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
         itemWidget(configMenu, POS_3D_VR_SETTINGS)   .show(!game.isNull());

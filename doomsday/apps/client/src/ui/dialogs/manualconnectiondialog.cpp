@@ -18,6 +18,7 @@
 
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/widgets/multiplayerservermenuwidget.h"
+#include "ui/home/multiplayerpanelbuttonwidget.h"
 #include "clientapp.h"
 
 #include <de/SignalAction>
@@ -103,6 +104,7 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     d->fold = new FoldPanelWidget;
     d->servers = new MultiplayerServerMenuWidget(MultiplayerServerMenuWidget::DirectDiscoveryOnly);
     d->servers->audienceForAboutToJoin() += d;
+    d->servers->margins().setLeft("dialog.gap");
     /*connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
             this,     SIGNAL(selected(de::ui::Item const *)));
     connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
@@ -172,6 +174,8 @@ void ManualConnectionDialog::queryOrConnect()
         // Automatically connect if there is a single choice.
         if (d->joinWhenEnterPressed)
         {
+            d->servers->childWidgets().first()->as<MultiplayerPanelButtonWidget>()
+                    .joinButton().trigger();
             //emit selected(&d->servers->items().at(0));
             //serverSelected(&d->servers->items().at(0));
             return;

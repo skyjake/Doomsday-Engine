@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
 
 #include "../widgets/panelbuttonwidget.h"
+#include <de/ButtonWidget>
 
 struct serverinfo_s;
 
@@ -30,6 +31,8 @@ public:
 
 public:
     MultiplayerPanelButtonWidget();
+
+    de::ButtonWidget &joinButton();
 
     void setSelected(bool selected) override;
 

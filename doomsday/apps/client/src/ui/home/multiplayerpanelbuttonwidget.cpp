@@ -132,6 +132,11 @@ MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
     : d(new Impl(this))
 {}
 
+ButtonWidget &MultiplayerPanelButtonWidget::joinButton()
+{
+    return *d->joinButton;
+}
+
 void MultiplayerPanelButtonWidget::setSelected(bool selected)
 {
     PanelButtonWidget::setSelected(selected);
