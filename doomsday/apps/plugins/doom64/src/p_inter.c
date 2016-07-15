@@ -52,21 +52,21 @@ int clipAmmo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
  */
 dd_bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
-    if(ammo == AT_NOAMMO)
+    if (ammo == AT_NOAMMO)
         return false;
 
-    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
+    if ((int) ammo < 0 || (int) ammo >= NUM_AMMO_TYPES)
         Con_Error("P_GiveAmmo: bad type %i", ammo);
 
-    if(!(player->ammo[ammo].owned < player->ammo[ammo].max))
+    if (!(player->ammo[ammo].owned < player->ammo[ammo].max))
         return false;
 
-    if(num)
+    if (num)
         num *= clipAmmo[ammo];
     else
         num = clipAmmo[ammo] / 2;
 
-    if(G_Ruleset_Skill() == SM_BABY)
+    if (G_Ruleset_Skill() == SM_BABY)
     {
         // Give double ammo in trainer mode.
         num <<= 1;
@@ -76,7 +76,7 @@ dd_bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     // change weapon automatically?
     P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
 
-    if(player->ammo[ammo].owned + num > player->ammo[ammo].max)
+    if (player->ammo[ammo].owned + num > player->ammo[ammo].max)
         player->ammo[ammo].owned = player->ammo[ammo].max;
     else
         player->ammo[ammo].owned += num;
@@ -98,10 +98,10 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
     dd_bool gaveWeapon;
     int numClips;
 
-    if(IS_NETGAME && (G_Ruleset_Deathmatch() != 2) && !dropped)
+    if (IS_NETGAME && (G_Ruleset_Deathmatch() != 2) && !dropped)
     {
         // leave placed weapons forever on net games
-        if(player->weapons[weapon].owned)
+        if (player->weapons[weapon].owned)
             return false;
 
         player->bonusCount += BONUSADD;
@@ -109,17 +109,17 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
         player->update |= PSF_OWNED_WEAPONS;
 
         // Give some of each of the ammo types used by this weapon.
-        for(i = 0; i < NUM_AMMO_TYPES; ++i)
+        for (i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
+            if (!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
-            if(G_Ruleset_Deathmatch())
+            if (G_Ruleset_Deathmatch())
                 numClips = 5;
             else
                 numClips = 2;
 
-            if(P_GiveAmmo(player, i, numClips))
+            if (P_GiveAmmo(player, i, numClips))
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
@@ -135,23 +135,23 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
     else
     {
         // Give some of each of the ammo types used by this weapon.
-        for(i = 0; i < NUM_AMMO_TYPES; ++i)
+        for (i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
+            if (!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             // Give one clip with a dropped weapon, two clips with a found
             // weapon.
-            if(dropped)
+            if (dropped)
                 numClips = 1;
             else
                 numClips = 2;
 
-            if(P_GiveAmmo(player, i, numClips))
+            if (P_GiveAmmo(player, i, numClips))
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
-        if(player->weapons[weapon].owned)
+        if (player->weapons[weapon].owned)
             gaveWeapon = false;
         else
         {
@@ -164,7 +164,7 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
         }
 
         // Maybe unhide the HUD?
-        if(gaveWeapon)
+        if (gaveWeapon)
             ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
         return (gaveWeapon || gaveAmmo);
@@ -178,11 +178,11 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
  */
 dd_bool P_GiveBody(player_t *player, int num)
 {
-    if(player->health >= maxHealth)
+    if (player->health >= maxHealth)
         return false;
 
     player->health += num;
-    if(player->health > maxHealth)
+    if (player->health > maxHealth)
         player->health = maxHealth;
 
     player->plr->mo->health = player->health;
@@ -199,7 +199,7 @@ dd_bool P_GiveBody(player_t *player, int num)
  */
 dd_bool P_GiveArmor(player_t* plr, int type, int points)
 {
-    if(plr->armorPoints >= points)
+    if (plr->armorPoints >= points)
         return false; // Don't pick up.
 
     P_PlayerSetArmorType(plr, type);
@@ -213,7 +213,7 @@ dd_bool P_GiveArmor(player_t* plr, int type, int points)
 
 void P_GiveKey(player_t* player, keytype_t card)
 {
-    if(player->keys[card])
+    if (player->keys[card])
         return;
 
     player->bonusCount = BONUSADD;
@@ -229,7 +229,7 @@ void P_GiveKey(player_t* player, keytype_t card)
  */
 dd_bool P_GiveItem(player_t* player, inventoryitemtype_t item)
 {
-    if(!P_InventoryGive(player - players, item, false))
+    if (!P_InventoryGive(player - players, item, false))
         return false;
 
     player->bonusCount = BONUSADD;
@@ -241,10 +241,10 @@ void P_GiveBackpack(player_t* player)
 {
     int i;
 
-    if(!player->backpack)
+    if (!player->backpack)
     {
         player->update |= PSF_MAX_AMMO;
-        for(i = 0; i < NUM_AMMO_TYPES; ++i)
+        for (i = 0; i < NUM_AMMO_TYPES; ++i)
         {
             player->ammo[i].max *= 2;
         }
@@ -252,7 +252,7 @@ void P_GiveBackpack(player_t* player)
         player->backpack = true;
     }
 
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for (i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         P_GiveAmmo(player, i, 1);
     }
@@ -264,7 +264,7 @@ dd_bool P_GivePower(player_t* player, int power)
 {
     player->update |= PSF_POWERS;
 
-    switch(power)
+    switch (power)
     {
     case PT_INVULNERABILITY:
         player->powers[power] = INVULNTICS;
@@ -279,7 +279,7 @@ dd_bool P_GivePower(player_t* player, int power)
         player->powers[power] = 1;
         player->plr->mo->flags2 |= MF2_FLY;
         player->plr->mo->flags |= MF_NOGRAVITY;
-        if(player->plr->mo->origin[VZ] <= player->plr->mo->floorZ)
+        if (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ)
         {
             player->flyHeight = 10; // Thrust the player in the air a bit.
             player->plr->mo->flags |= DDPF_FIXMOM;
@@ -300,14 +300,14 @@ dd_bool P_GivePower(player_t* player, int power)
         break;
 
     default:
-        if(player->powers[power])
+        if (player->powers[power])
             return false; // Already got it.
 
         player->powers[power] = 1;
         break;
     }
 
-    if(power == PT_ALLMAP)
+    if (power == PT_ALLMAP)
         ST_RevealAutomap(player - players, true);
 
     // Maybe unhide the HUD?
@@ -321,9 +321,9 @@ dd_bool P_TakePower(player_t* player, int power)
     mobj_t*             plrmo = player->plr->mo;
 
     player->update |= PSF_POWERS;
-    if(player->powers[PT_FLIGHT])
+    if (player->powers[PT_FLIGHT])
     {
-        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
+        if (plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
         {
             player->centering = true;
         }
@@ -334,7 +334,7 @@ dd_bool P_TakePower(player_t* player, int power)
         return true;
     }
 
-    if(!player->powers[power])
+    if (!player->powers[power])
         return false; // Don't got it.
 
     player->powers[power] = 0;
@@ -346,7 +346,7 @@ dd_bool P_TogglePower(player_t *player, powertype_t powerType)
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
-    if(!player->powers[powerType])
+    if (!player->powers[powerType])
     {
         return P_GivePower(player, powerType);
     }
@@ -450,8 +450,8 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
     };
     uint                i;
 
-    for(i = 0; items[i].type != IT_NONE; ++i)
-        if(items[i].sprite == sprite)
+    for (i = 0; items[i].type != IT_NONE; ++i)
+        if (items[i].sprite == sprite)
             return items[i].type;
 
     return IT_NONE;
@@ -466,13 +466,13 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  */
 static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 {
-    if(!plr)
+    if (!plr)
         return false;
 
-    switch(item)
+    switch (item)
     {
     case IT_ARMOR_GREEN:
-        if(!P_GiveArmor(plr, armorClass[0],
+        if (!P_GiveArmor(plr, armorClass[0],
                         armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
             return false;
         P_SetMessage(plr, GOTARMOR);
@@ -480,7 +480,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_ARMOR_BLUE:
-        if(!P_GiveArmor(plr, armorClass[1],
+        if (!P_GiveArmor(plr, armorClass[1],
                         armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
             return false;
         P_SetMessage(plr, GOTMEGA);
@@ -488,9 +488,9 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_ARMOR_BONUS:
-        if(!plr->armorType)
+        if (!plr->armorType)
             P_PlayerSetArmorType(plr, armorClass[0]);
-        if(plr->armorPoints < armorPoints[1])
+        if (plr->armorPoints < armorPoints[1])
             P_PlayerGiveArmorBonus(plr, 2);
 
         P_SetMessage(plr, GOTARMBONUS);
@@ -503,7 +503,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
     case IT_HEALTH_BONUS:
         //plr->health++;       // Can go over 100%
         plr->health += 2;      // jd64 Can go over 100%
-        if(plr->health > healthLimit)
+        if (plr->health > healthLimit)
             plr->health = healthLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
@@ -516,7 +516,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_HEALTH_SOULSPHERE:
         plr->health += soulSphereHealth;
-        if(plr->health > soulSphereLimit)
+        if (plr->health > soulSphereLimit)
             plr->health = soulSphereLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
@@ -540,61 +540,61 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_KEY_BLUE:
-        if(!plr->keys[KT_BLUECARD])
+        if (!plr->keys[KT_BLUECARD])
             P_SetMessage(plr, GOTBLUECARD);
         P_GiveKey(plr, KT_BLUECARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_YELLOW:
-        if(!plr->keys[KT_YELLOWCARD])
+        if (!plr->keys[KT_YELLOWCARD])
             P_SetMessage(plr, GOTYELWCARD);
         P_GiveKey(plr, KT_YELLOWCARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_RED:
-        if(!plr->keys[KT_REDCARD])
+        if (!plr->keys[KT_REDCARD])
             P_SetMessage(plr, GOTREDCARD);
         P_GiveKey(plr, KT_REDCARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_BLUESKULL:
-        if(!plr->keys[KT_BLUESKULL])
+        if (!plr->keys[KT_BLUESKULL])
             P_SetMessage(plr, GOTBLUESKUL);
         P_GiveKey(plr, KT_BLUESKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_YELLOWSKULL:
-        if(!plr->keys[KT_YELLOWSKULL])
+        if (!plr->keys[KT_YELLOWSKULL])
             P_SetMessage(plr, GOTYELWSKUL);
         P_GiveKey(plr, KT_YELLOWSKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_REDSKULL:
-        if(!plr->keys[KT_REDSKULL])
+        if (!plr->keys[KT_REDSKULL])
             P_SetMessage(plr, GOTREDSKULL);
         P_GiveKey(plr, KT_REDSKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             return false;
         break;
 
     case IT_HEALTH_PACK:
-        if(!P_GiveBody(plr, 10))
+        if (!P_GiveBody(plr, 10))
             return false;
         P_SetMessage(plr, GOTSTIM);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -611,24 +611,24 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
          * the GOTMEDINEED "Picked up a medikit that you REALLY need"
          * was never used.
          */
-        if(!P_GiveBody(plr, 25)) return false;
+        if (!P_GiveBody(plr, 25)) return false;
 
         P_SetMessage(plr, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break; }
 
     case IT_INVUL:
-        if(!P_GivePower(plr, PT_INVULNERABILITY))
+        if (!P_GivePower(plr, PT_INVULNERABILITY))
             return false;
         P_SetMessage(plr, GOTINVUL);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_BESERK:
-        if(!P_GivePower(plr, PT_STRENGTH))
+        if (!P_GivePower(plr, PT_STRENGTH))
             return false;
         P_SetMessage(plr, GOTBERSERK);
-        if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
+        if (plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
             plr->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
@@ -637,84 +637,84 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_INVIS:
-        if(!P_GivePower(plr, PT_INVISIBILITY))
+        if (!P_GivePower(plr, PT_INVISIBILITY))
             return false;
         P_SetMessage(plr, GOTINVIS);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_SUIT:
-        if(!P_GivePower(plr, PT_IRONFEET))
+        if (!P_GivePower(plr, PT_IRONFEET))
             return false;
         P_SetMessage(plr, GOTSUIT);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_ALLMAP:
-        if(!P_GivePower(plr, PT_ALLMAP))
+        if (!P_GivePower(plr, PT_ALLMAP))
             return false;
         P_SetMessage(plr, GOTMAP);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_VISOR:
-        if(!P_GivePower(plr, PT_INFRARED))
+        if (!P_GivePower(plr, PT_INFRARED))
             return false;
         P_SetMessage(plr, GOTVISOR);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_AMMO_CLIP:
-        if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
+        if (!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
             return false;
         P_SetMessage(plr, GOTCLIP);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CLIP_BOX:
-        if(!P_GiveAmmo(plr, AT_CLIP, 5))
+        if (!P_GiveAmmo(plr, AT_CLIP, 5))
             return false;
         P_SetMessage(plr, GOTCLIPBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_ROCKET:
-        if(!P_GiveAmmo(plr, AT_MISSILE, 1))
+        if (!P_GiveAmmo(plr, AT_MISSILE, 1))
             return false;
         P_SetMessage(plr, GOTROCKET);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_ROCKET_BOX:
-        if(!P_GiveAmmo(plr, AT_MISSILE, 5))
+        if (!P_GiveAmmo(plr, AT_MISSILE, 5))
             return false;
         P_SetMessage(plr, GOTROCKBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CELL:
-        if(!P_GiveAmmo(plr, AT_CELL, 1))
+        if (!P_GiveAmmo(plr, AT_CELL, 1))
             return false;
         P_SetMessage(plr, GOTCELL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CELL_BOX:
-        if(!P_GiveAmmo(plr, AT_CELL, 5))
+        if (!P_GiveAmmo(plr, AT_CELL, 5))
             return false;
         P_SetMessage(plr, GOTCELLBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SHELL:
-        if(!P_GiveAmmo(plr, AT_SHELL, 1))
+        if (!P_GiveAmmo(plr, AT_SHELL, 1))
             return false;
         P_SetMessage(plr, GOTSHELLS);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SHELL_BOX:
-        if(!P_GiveAmmo(plr, AT_SHELL, 5))
+        if (!P_GiveAmmo(plr, AT_SHELL, 5))
             return false;
         P_SetMessage(plr, GOTSHELLBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -726,56 +726,56 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_WEAPON_BFG:
-        if(!P_GiveWeapon(plr, WT_SEVENTH, dropped))
+        if (!P_GiveWeapon(plr, WT_SEVENTH, dropped))
             return false;
         P_SetMessage(plr, GOTBFG9000);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINGUN:
-        if(!P_GiveWeapon(plr, WT_FOURTH, dropped))
+        if (!P_GiveWeapon(plr, WT_FOURTH, dropped))
             return false;
         P_SetMessage(plr, GOTCHAINGUN);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINSAW:
-        if(!P_GiveWeapon(plr, WT_EIGHTH, dropped))
+        if (!P_GiveWeapon(plr, WT_EIGHTH, dropped))
             return false;
         P_SetMessage(plr, GOTCHAINSAW);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_RLAUNCHER:
-        if(!P_GiveWeapon(plr, WT_FIFTH, dropped))
+        if (!P_GiveWeapon(plr, WT_FIFTH, dropped))
             return false;
         P_SetMessage(plr, GOTLAUNCHER);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_PLASMARIFLE:
-        if(!P_GiveWeapon(plr, WT_SIXTH, dropped))
+        if (!P_GiveWeapon(plr, WT_SIXTH, dropped))
             return false;
         P_SetMessage(plr, GOTPLASMA);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SHOTGUN:
-        if(!P_GiveWeapon(plr, WT_THIRD, dropped))
+        if (!P_GiveWeapon(plr, WT_THIRD, dropped))
             return false;
         P_SetMessage(plr, GOTSHOTGUN);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SSHOTGUN:
-        if(!P_GiveWeapon(plr, WT_NINETH, dropped))
+        if (!P_GiveWeapon(plr, WT_NINETH, dropped))
             return false;
         P_SetMessage(plr, GOTSHOTGUN2);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_LASERGUN:
-        if(!P_GiveWeapon(plr, WT_TENTH, dropped))
+        if (!P_GiveWeapon(plr, WT_TENTH, dropped))
             return false;
 
         P_SetMessage(plr, GOTUNMAKER);
@@ -783,9 +783,9 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_DEMONKEY1:
-        if(P_InventoryCount(plr - players, IIT_DEMONKEY1))
+        if (P_InventoryCount(plr - players, IIT_DEMONKEY1))
         {
-            if(!(mapTime & 0x1f))
+            if (!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP1);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
@@ -800,9 +800,9 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_DEMONKEY2:
-        if(P_InventoryCount(plr - players, IIT_DEMONKEY2))
+        if (P_InventoryCount(plr - players, IIT_DEMONKEY2))
         {
-            if(!(mapTime & 0x1f))
+            if (!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP2);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
@@ -817,9 +817,9 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         break;
 
     case IT_DEMONKEY3:
-        if(P_InventoryCount(plr - players, IIT_DEMONKEY3))
+        if (P_InventoryCount(plr - players, IIT_DEMONKEY3))
         {
-            if(!(mapTime & 0x1f))
+            if (!(mapTime & 0x1f))
                 P_SetMessage(plr, NGOTPOWERUP3);
 
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -847,21 +847,21 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     itemtype_t item;
 
     delta = special->origin[VZ] - toucher->origin[VZ];
-    if(delta > toucher->height || delta < -8)
+    if (delta > toucher->height || delta < -8)
     {
         // Out of reach.
         return;
     }
 
     // Dead thing touching (can happen with a sliding player corpse).
-    if(toucher->health <= 0) return;
+    if (toucher->health <= 0) return;
 
     player = toucher->player;
 
     // Identify by sprite.
-    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
+    if ((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        if(!giveItem(player, item, (special->flags & MF_DROPPED)? true : false))
+        if (!giveItem(player, item, (special->flags & MF_DROPPED)? true : false))
             return; // Don't destroy the item.
     }
     else
@@ -870,7 +870,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
                 (int) special->type);
     }
 
-    if(special->flags & MF_COUNTITEM)
+    if (special->flags & MF_COUNTITEM)
     {
         player->itemCount++;
         player->update |= PSF_COUNTERS;
@@ -890,12 +890,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
     angle_t             angle;
     statenum_t          state;
 
-    if(!target) // nothing to kill
+    if (!target) // nothing to kill
         return;
 
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY);
 
-    if(target->type != MT_SKULL)
+    if (target->type != MT_SKULL)
         target->flags &= ~MF_NOGRAVITY;
 
     target->flags |= MF_CORPSE | MF_DROPOFF;
@@ -903,32 +903,32 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
     target->corpseTics = 0;
     // target->height >>= 2; // jd64
 
-    if(source && source->player)
+    if (source && source->player)
     {
         // Count for intermission.
-        if(target->flags & MF_COUNTKILL)
+        if (target->flags & MF_COUNTKILL)
         {
             source->player->killCount++;
             source->player->update |= PSF_COUNTERS;
         }
 
-        if(target->player)
+        if (target->player)
         {
             source->player->frags[target->player - players]++;
             NetSv_FragsForAll(source->player);
             NetSv_KillMessage(source->player, target->player, stomping);
         }
     }
-    else if(!IS_NETGAME && (target->flags & MF_COUNTKILL))
+    else if (!IS_NETGAME && (target->flags & MF_COUNTKILL))
     {
         // Count all monster deaths, even those caused by other monsters.
         players[0].killCount++;
     }
 
-    if(target->player)
+    if (target->player)
     {
         // Count environment kills against the player.
-        if(!source)
+        if (!source)
         {
             target->player->frags[target->player - players]++;
             NetSv_FragsForAll(target->player);
@@ -948,7 +948,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
         ST_CloseAll(target->player - players, false);
     }
 
-    if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
+    if ((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
        target->health < -target->info->spawnHealth)
     {   // Extreme death.
         P_MobjChangeState(target, state);
@@ -960,13 +960,13 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
 
     target->tics -= P_Random() & 3;
 
-    if(target->tics < 1)
+    if (target->tics < 1)
         target->tics = 1;
 
     // Drop stuff.
     // This determines the kind of object spawned during the death frame
     // of a thing.
-    switch(target->type)
+    switch (target->type)
     {
     case MT_POSSESSED:
     //case MT_TROOP: // jd64
@@ -985,7 +985,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
     // 3D sprites.
     angle = P_Random() << 24;
     an = angle >> ANGLETOFINESHIFT;
-    if((mo = P_SpawnMobjXYZ(item, target->origin[VX] + 3 * FIX2FLT(finecosine[an]),
+    if ((mo = P_SpawnMobjXYZ(item, target->origin[VX] + 3 * FIX2FLT(finecosine[an]),
                                   target->origin[VY] + 3 * FIX2FLT(finesine[an]),
                                   0, angle, MSF_Z_FLOOR)))
     {
@@ -1028,54 +1028,54 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // The actual damage (== damageP * netMobDamageModifier for any non-player mobj).
     int damage = damageP;
 
-    if(!target)
+    if (!target)
         return 0; // Wha?
 
     originalHealth = target->health;
 
-    if(!skipNetworkCheck)
+    if (!skipNetworkCheck)
     {
         // Clients can't harm anybody.
-        if(IS_CLIENT)
+        if (IS_CLIENT)
             return 0;
     }
 
-    if(!(target->flags & MF_SHOOTABLE))
+    if (!(target->flags & MF_SHOOTABLE))
         return 0; // Shouldn't happen...
 
-    if(target->health <= 0)
+    if (target->health <= 0)
         return 0;
 
     // Player specific.
-    if(target->player)
+    if (target->player)
     {
         // Check if player-player damage is disabled.
-        if(source && source->player && source->player != target->player)
+        if (source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !G_Ruleset_Deathmatch() && cfg.noCoopDamage)
+            if (IS_NETGAME && !G_Ruleset_Deathmatch() && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
-            if(cfg.noTeamDamage &&
+            if (cfg.noTeamDamage &&
                cfg.playerColor[target->player - players] ==
                cfg.playerColor[source->player - players])
                 return 0;
         }
     }
 
-    if(target->flags & MF_SKULLFLY)
+    if (target->flags & MF_SKULLFLY)
     {
         target->mom[MX] = target->mom[MY] = target->mom[MZ] = 0;
     }
 
     player = target->player;
-    if(player && G_Ruleset_Skill() == SM_BABY)
+    if (player && G_Ruleset_Skill() == SM_BABY)
         damage >>= 1; // take half damage in trainer mode
 
     // jd64 >
 #if 0
-    if(inflictor && inflictor->type == MT_FIREEND)
+    if (inflictor && inflictor->type == MT_FIREEND)
     {   // Special for Motherdemon attack
 #if 0
         /** DJS - This was originally in a sub routine called P_TouchMotherFire
@@ -1089,7 +1089,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         int         damage;
         player_t   *player;
 
-        if(player = target->player)
+        if (player = target->player)
         {
             damage = ((P_Random() % 10) + 1) * 8;
 
@@ -1105,17 +1105,17 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
     // inflictor is not a player.
-    if(inflictor && !inflictor->player &&
+    if (inflictor && !inflictor->player &&
        (!source || (source && !source->player)))
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
-        if(IS_NETGAME)
+        if (IS_NETGAME)
             damage *= cfg.common.netMobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the
     // victim out of reach, thus kick away unless using the chainsaw.
-    if(inflictor && !(target->flags & MF_NOCLIP) &&
+    if (inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
@@ -1125,7 +1125,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
-        if(damage < 40 && damage > target->health &&
+        if (damage < 40 && damage > target->health &&
            target->origin[VZ] - inflictor->origin[VZ] > 64 && (P_Random() & 1))
         {
             angle += ANG180;
@@ -1138,15 +1138,15 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         NetSv_PlayerMobjImpulse(target, thrust * FIX2FLT(finecosine[an]), thrust * FIX2FLT(finesine[an]), 0);
 
         // $dropoff_fix: thrust objects hanging off ledges.
-        if(target->intFlags & MIF_FALLING && target->gear >= MAXGEAR)
+        if (target->intFlags & MIF_FALLING && target->gear >= MAXGEAR)
             target->gear = 0;
     }
 
     // Player specific.
-    if(player)
+    if (player)
     {
         // End of game hell hack.
-        if(P_ToXSector(Mobj_Sector(target))->special == 11 &&
+        if (P_ToXSector(Mobj_Sector(target))->special == 11 &&
            damage >= target->health)
         {
             damage = target->health - 1;
@@ -1154,21 +1154,21 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         // Below certain threshold, ignore damage in GOD mode, or with
         // INVUL power.
-        if(damage < 1000 &&
+        if (damage < 1000 &&
            ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[PT_INVULNERABILITY]))
         {
             return 0;
         }
 
-        if(player->armorType)
+        if (player->armorType)
         {
-            if(player->armorType == 1)
+            if (player->armorType == 1)
                 saved = damage / 3;
             else
                 saved = damage / 2;
 
-            if(player->armorPoints <= saved)
+            if (player->armorPoints <= saved)
             {
                 // Armor is used up.
                 saved = player->armorPoints;
@@ -1181,14 +1181,14 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         player->health -= damage;
-        if(player->health < 0)
+        if (player->health < 0)
             player->health = 0;
         player->update |= PSF_HEALTH;
 
         player->attacker = source;
         player->damageCount += damage; // Add damage after armor / invuln.
 
-        if(player->damageCount > 100)
+        if (player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
         // temp = damage < 100 ? damage : 100; Unused?
@@ -1199,22 +1199,22 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     Mobj_InflictDamage(target, inflictor, damage);
 
-    if(target->health > 0)
+    if (target->health > 0)
     {   // Still alive, phew!
-        if((P_Random() < target->info->painChance) &&
+        if ((P_Random() < target->info->painChance) &&
            !(target->flags & MF_SKULLFLY))
         {
             statenum_t          state;
 
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+            if ((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
                 P_MobjChangeState(target, state);
         }
 
         target->reactionTime = 0; // We're awake now...
 
-        if(source &&
+        if (source &&
            (!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) &&
            source != target)
         {
@@ -1224,7 +1224,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             target->target = source;
             target->threshold = BASETHRESHOLD;
 
-            if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
+            if ((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
                target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
                 P_MobjChangeState(target, state);
         }
