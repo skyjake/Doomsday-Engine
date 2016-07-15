@@ -31,7 +31,7 @@
 #include "client/cl_mobj.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "render/rend_model.h"
@@ -593,14 +593,14 @@ static dint touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
 dfloat Generator::particleZ(ParticleInfo const &pinfo) const
 {
-    SectorCluster &cluster = pinfo.bspLeaf->subspace().cluster();
+    Subsector &subsec = pinfo.bspLeaf->subspace().subsector();
     if(pinfo.origin[2] == DDMAXINT)
     {
-        return cluster.visCeiling().heightSmoothed() - 2;
+        return subsec.visCeiling().heightSmoothed() - 2;
     }
     if(pinfo.origin[2] == DDMININT)
     {
-        return (cluster.visFloor().heightSmoothed() + 2);
+        return (subsec.visFloor().heightSmoothed() + 2);
     }
     return FIX2FLT(pinfo.origin[2]);
 }
@@ -750,11 +750,11 @@ void Generator::moveParticle(dint index)
     bool zBounce = false, hitFloor = false;
     if(pinfo->origin[2] != DDMININT && pinfo->origin[2] != DDMAXINT && pinfo->bspLeaf)
     {
-        SectorCluster &cluster = pinfo->bspLeaf->subspace().cluster();
-        if(z > FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius)
+        Subsector &subsec = pinfo->bspLeaf->subspace().subsector();
+        if(z > FLT2FIX(subsec.visCeiling().heightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!
-            if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
+            if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
             {
                 // Special case: particle gets lost in the sky.
                 pinfo->stage = -1;
@@ -764,15 +764,15 @@ void Generator::moveParticle(dint index)
             if(!touchParticle(pinfo, st, stDef, false))
                 return;
 
-            z = FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius;
+            z = FLT2FIX(subsec.visCeiling().heightSmoothed()) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
 
         // Also check the floor.
-        if(z < FLT2FIX(cluster.visFloor().heightSmoothed()) + hardRadius)
+        if(z < FLT2FIX(subsec.visFloor().heightSmoothed()) + hardRadius)
         {
-            if(cluster.visFloor().surface().hasSkyMaskedMaterial())
+            if(subsec.visFloor().surface().hasSkyMaskedMaterial())
             {
                 pinfo->stage = -1;
                 return;
@@ -781,7 +781,7 @@ void Generator::moveParticle(dint index)
             if(!touchParticle(pinfo, st, stDef, false))
                 return;
 
-            z = FLT2FIX(cluster.visFloor().heightSmoothed()) + hardRadius;
+            z = FLT2FIX(subsec.visFloor().heightSmoothed()) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }

@@ -33,7 +33,7 @@
 #include "world/impulseaccumulator.h"
 #include "world/map.h"
 #include "world/p_object.h"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #ifdef __CLIENT__
@@ -174,33 +174,33 @@ bool P_IsInVoid(player_t *player)
 
         if(!Mobj_HasSubspace(*mo))
             return true;
-        world::SectorCluster &cluster = Mobj_Cluster(*mo);
+        world::Subsector &subsec = Mobj_Subsector(*mo);
 
 #ifdef __CLIENT__
-        if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
+        if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            ddouble const skyCeil = cluster.sector().map().skyFixCeiling();
+            ddouble const skyCeil = subsec.sector().map().skyFixCeiling();
             if(skyCeil < DDMAXFLOAT && mo->origin[2] > skyCeil - 4)
                 return true;
         }
-        else if(mo->origin[2] > cluster.visCeiling().heightSmoothed() - 4)
+        else if(mo->origin[2] > subsec.visCeiling().heightSmoothed() - 4)
 #else
-        if(mo->origin[2] > cluster.ceiling().height() - 4)
+        if(mo->origin[2] > subsec.ceiling().height() - 4)
 #endif
         {
             return true;
         }
 
 #ifdef __CLIENT__
-        if(cluster.visFloor().surface().hasSkyMaskedMaterial())
+        if(subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
-            ddouble const skyFloor = cluster.sector().map().skyFixFloor();
+            ddouble const skyFloor = subsec.sector().map().skyFixFloor();
             if(skyFloor > DDMINFLOAT && mo->origin[2] < skyFloor + 4)
                 return true;
         }
-        else if(mo->origin[2] < cluster.visFloor().heightSmoothed() + 4)
+        else if(mo->origin[2] < subsec.visFloor().heightSmoothed() + 4)
 #else
-        if(mo->origin[2] < cluster.floor().height() + 4)
+        if(mo->origin[2] < subsec.floor().height() + 4)
 #endif
         {
             return true;

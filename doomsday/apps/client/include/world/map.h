@@ -67,7 +67,7 @@ namespace world {
 class Blockmap;
 class ConvexSubspace;
 class LineBlockmap;
-class SectorCluster;
+class Subsector;
 class Sky;
 class Thinkers;
 
@@ -522,39 +522,39 @@ public:  //- Sectors -----------------------------------------------------------
      */
     de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
 
-public:  //- SectorClusters -------------------------------------------------------------
+public:  //- Subsectors -------------------------------------------------------------
 
     /**
-     * Returns the total number of SectorClusters in the map.
+     * Returns the total number of Subsectors in the map.
      */
-    de::dint clusterCount() const;
+    de::dint subsecCount() const;
 
     /**
-     * Determine the SectorCluster which contains @a point and which is on the back side
+     * Determine the Subsector which contains @a point and which is on the back side
      * of the BS partition that lies in front of @a point.
      *
      * @param point  Map space coordinates to determine the BSP leaf for.
      *
-     * @return  SectorCluster containing the specified point if any or @c nullptr if the
-     * clusters have not yet been built.
+     * @return  Subsector containing the specified point if any or @c nullptr if the
+     * subsectors have not yet been built.
      */
-    SectorCluster *clusterAt(de::Vector2d const &point) const;
+    Subsector *subsectorAt(de::Vector2d const &point) const;
 
     /**
-     * Iterate SectorClusters in the map, making a function @a callback for each.
+     * Iterate Subsectors in the map, making a function @a callback for each.
      *
-     * @param callback  Function to call for each SectorCluster.
+     * @param callback  Function to call for each Subsector.
      */
-    de::LoopResult forAllClusters(std::function<de::LoopResult (SectorCluster &)> callback);
+    de::LoopResult forAllSubsectors(std::function<de::LoopResult (Subsector &)> callback);
 
     /**
-     * Iterate SectorClusters in the map which are attributed to the given @a sector,
+     * Iterate Subsectors in the map which are attributed to the given @a sector,
      * making a function @a callback for each.
      *
-     * @param sector    Sector requirement (only attributed clusters will be processed).
-     * @param callback  Function to call for each SectorCluster.
+     * @param sector    Sector requirement (only attributed subsectors will be processed).
+     * @param callback  Function to call for each Subsector.
      */
-    de::LoopResult forAllClustersOfSector(Sector &sector, std::function<de::LoopResult (SectorCluster &)> callback);
+    de::LoopResult forAllSubsectorsOfSector(Sector &sector, std::function<de::LoopResult (Subsector &)> callback);
 
 public:  //- Skies ----------------------------------------------------------------------
 
@@ -731,7 +731,7 @@ public:  //- Data structures ---------------------------------------------------
      * (Re)-initialize the light grid used for smoothed sector lighting.
      *
      * If the grid has not yet been initialized block light sources are determined at this
-     * time (SectorClusters must be built for this).
+     * time (Subsectors must be built for this).
      *
      * If the grid has already been initialized calling this will perform a full update.
      *

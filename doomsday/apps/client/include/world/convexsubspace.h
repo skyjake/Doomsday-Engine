@@ -28,7 +28,7 @@
 #include <doomsday/world/MapElement>
 #include "Mesh"
 #include "Line"
-#include "SectorCluster"
+#include "Subsector"
 
 #ifdef __CLIENT__
 class Lumobj;
@@ -54,8 +54,8 @@ public:
     /// Required BspLeaf attribution is missing. @ingroup errors
     DENG2_ERROR(MissingBspLeafError);
 
-    /// Required sector cluster attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingClusterError);
+    /// Required subsector attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingSubsectorError);
 
 public:
 
@@ -103,35 +103,35 @@ public:
     de::LoopResult forAllExtraMeshes(std::function<de::LoopResult (de::Mesh &)> func) const;
 
     /**
-     * Returns @c true iff a SectorCluster is attributed to the subspace. The only time a
-     * cluster might not be attributed is during initial map setup.
+     * Returns @c true if a Subsector is attributed to the subspace. The only time that a
+     * subsector might not be attributed is during initial map setup.
      */
-    bool hasCluster() const;
+    bool hasSubsector() const;
 
     /**
-     * Returns the SectorCluster attributed to the subspace.
+     * Returns the Subsector attributed to the subspace.
      *
-     * @see hasCluster()
+     * @see hasSubsector()
      */
-    SectorCluster &cluster   () const;
-    SectorCluster *clusterPtr() const;
+    Subsector &subsector   () const;
+    Subsector *subsectorPtr() const;
 
     /**
-     * Change the sector cluster attributed to the subspace.
+     * Change the subsector attributed to the subspace.
      *
-     * @param newCluster New sector cluster to attribute to the subspace (Use @c nullptr
+     * @param newSubsector New subsector to attribute to the subspace (Use @c nullptr
      *                   to clear). Ownership is unaffected.
      *
-     * @see hasCluster(), cluster()
+     * @see hasSubsector(), subsector()
      */
-    void setCluster(SectorCluster *newCluster);
+    void setSubsector(Subsector *newSubsector);
 
     /**
-     * Convenient method returning Sector of the SectorCluster attributed to the subspace.
+     * Convenient method returning Sector of the Subsector attributed to the subspace.
      *
-     * @see cluster()
+     * @see subsector()
      */
-    inline Sector &sector() const { return cluster().sector(); }
+    inline Sector &sector() const { return subsector().sector(); }
 
     /**
      * Returns the BspLeaf to which the subspace is assigned.

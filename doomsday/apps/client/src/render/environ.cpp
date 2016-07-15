@@ -18,7 +18,7 @@
 
 #include "render/environ.h"
 #include "world/map.h"
-#include "world/sectorcluster.h"
+#include "world/subsector.h"
 #include "clientapp.h"
 
 #include <de/ImageFile>
@@ -196,13 +196,13 @@ GLTexture const &Environment::defaultReflection() const
     return d->reflectionTextures[Impl::Interior];
 }
 
-GLTexture const &Environment::reflectionInCluster(world::SectorCluster const *cluster) const
+GLTexture const &Environment::reflectionInSubsector(world::Subsector const *subsec) const
 {
-    if(!cluster)
+    if(!subsec)
     {
         return defaultReflection();
     }
-    if(cluster->hasSkyMaskPlane())
+    if(subsec->hasSkyMaskPlane())
     {
         return d->reflectionTextures[Impl::Exterior];
     }

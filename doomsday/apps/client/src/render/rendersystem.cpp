@@ -41,7 +41,7 @@
 #include "gl/gl_texmanager.h"
 
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "Contact"

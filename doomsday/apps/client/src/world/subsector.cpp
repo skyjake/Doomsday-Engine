@@ -1,4 +1,4 @@
-/** @file sectorcluster.cpp  World map sector cluster.
+/** @file subsector.cpp  World map subsector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "world/sectorcluster.h"
+#include "world/subsector.h"
 
 #include "Face"
 #include "BspLeaf"
@@ -56,7 +56,7 @@ using namespace de;
 namespace internal {
 
 /// Classification flags:
-enum ClusterFlag
+enum SubsectorFlag
 {
     NeverMapped      = 0x01,
     AllMissingBottom = 0x02,
@@ -65,8 +65,8 @@ enum ClusterFlag
     PartSelfRef      = 0x10
 };
 
-Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ClusterFlags)
+Q_DECLARE_FLAGS(SubsectorFlags, SubsectorFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SubsectorFlags)
 
 static QRectF qrectFromAABox(AABoxd const &aaBox)
 {
@@ -78,8 +78,8 @@ using namespace ::internal;
 
 namespace world {
 
-DENG2_PIMPL(SectorCluster)
-, DENG2_OBSERVES(SectorCluster, Deletion)
+DENG2_PIMPL(Subsector)
+, DENG2_OBSERVES(Subsector, Deletion)
 , DENG2_OBSERVES(Plane,         Deletion)
 , DENG2_OBSERVES(Plane,         HeightChange)
 #ifdef __CLIENT__
@@ -90,17 +90,17 @@ DENG2_PIMPL(SectorCluster)
 {
     bool needClassify = true;  ///< @c true= (Re)classification is necessary.
 
-    ClusterFlags flags = 0;
+    SubsectorFlags flags = 0;
     QList<ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> aaBox;
 
-    SectorCluster *mappedVisFloor   = nullptr;
-    SectorCluster *mappedVisCeiling = nullptr;
+    Subsector *mappedVisFloor   = nullptr;
+    Subsector *mappedVisCeiling = nullptr;
 
     struct BoundaryData
     {
-        /// Lists of unique exterior clusters which share a boundary edge with
-        /// "this" cluster (i.e., one edge per cluster).
+        /// Lists of unique exterior subsectors which share a boundary edge with
+        /// "this" subsector (i.e., one edge per subsec).
         QList<HEdge *> uniqueInnerEdges; /// not owned.
         QList<HEdge *> uniqueOuterEdges; /// not owned.
     };
@@ -157,7 +157,7 @@ DENG2_PIMPL(SectorCluster)
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
 
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(self);
     }
 
     inline Sector &sector()
@@ -181,7 +181,7 @@ DENG2_PIMPL(SectorCluster)
         return mappedVisFloor == 0 || mappedVisCeiling == 0;
     }
 
-    SectorCluster **mappedClusterAdr(dint planeIdx)
+    Subsector **mappedSubsectorAdr(dint planeIdx)
     {
         if (planeIdx == Sector::Floor)   return &mappedVisFloor;
         if (planeIdx == Sector::Ceiling) return &mappedVisCeiling;
@@ -190,21 +190,21 @@ DENG2_PIMPL(SectorCluster)
 
     inline Plane *mappedPlane(dint planeIdx)
     {
-        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
-        if (clusterAdr && *clusterAdr)
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        if (subsecAdr && *subsecAdr)
         {
-            return &(*clusterAdr)->plane(planeIdx);
+            return &(*subsecAdr)->plane(planeIdx);
         }
         return nullptr;
     }
 
-    void observeCluster(SectorCluster *cluster, bool yes = true)
+    void observeSubsector(Subsector *subsec, bool yes = true)
     {
-        if (!cluster || cluster == thisPublic)
+        if (!subsec || subsec == thisPublic)
             return;
 
-        if (yes) cluster->audienceForDeletion += this;
-        else     cluster->audienceForDeletion -= this;
+        if (yes) subsec->audienceForDeletion += this;
+        else     subsec->audienceForDeletion -= this;
     }
 
     void observePlane(Plane *plane, bool yes = true, bool observeHeight = true)
@@ -232,22 +232,22 @@ DENG2_PIMPL(SectorCluster)
         }
     }
 
-    void map(dint planeIdx, SectorCluster *newCluster, bool permanent = false)
+    void map(dint planeIdx, Subsector *newSubsector, bool permanent = false)
     {
-        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
-        if (!clusterAdr || *clusterAdr == newCluster)
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        if (!subsecAdr || *subsecAdr == newSubsector)
             return;
 
-        if (*clusterAdr != thisPublic)
+        if (*subsecAdr != thisPublic)
         {
             observePlane(mappedPlane(planeIdx), false);
         }
-        observeCluster(*clusterAdr, false);
+        observeSubsector(*subsecAdr, false);
 
-        *clusterAdr = newCluster;
+        *subsecAdr = newSubsector;
 
-        observeCluster(*clusterAdr);
-        if (*clusterAdr != thisPublic)
+        observeSubsector(*subsecAdr);
+        if (*subsecAdr != thisPublic)
         {
             observePlane(mappedPlane(planeIdx), true, !permanent);
         }
@@ -267,8 +267,8 @@ DENG2_PIMPL(SectorCluster)
         if (classification() & NeverMapped)
             return;
 
-        SectorCluster **clusterAdr = mappedClusterAdr(planeIdx);
-        if (!clusterAdr || *clusterAdr == thisPublic)
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        if (!subsecAdr || *subsecAdr == thisPublic)
             return;
 
         clearMapping(planeIdx);
@@ -281,10 +281,10 @@ DENG2_PIMPL(SectorCluster)
     }
 
     /**
-     * Returns a copy of the classification flags for the cluster, performing
-     * classification of the cluster if necessary.
+     * Returns a copy of the classification flags for the subsector, performing
+     * classification of the subsector if necessary.
      */
-    ClusterFlags classification()
+    SubsectorFlags classification()
     {
         if (needClassify)
         {
@@ -315,8 +315,8 @@ DENG2_PIMPL(SectorCluster)
                         continue;
 
                     auto const &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-                    // Cluster internal edges are not considered.
-                    if (&backSubspace.cluster() == thisPublic)
+                    // Subsector internal edges are not considered.
+                    if (&backSubspace.subsector() == thisPublic)
                         continue;
 
                     LineSide const &frontSide = hedge->mapElementAs<LineSideSegment>().lineSide();
@@ -351,14 +351,14 @@ DENG2_PIMPL(SectorCluster)
                         flags &= ~AllMissingTop;
                     }
 
-                    SectorCluster const &backCluster = backSubspace.cluster();
-                    if (backCluster.floor().height() < sector().floor().height() &&
+                    Subsector const &backSubsector = backSubspace.subsector();
+                    if (backSubsector.floor().height() < sector().floor().height() &&
                         backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if (backCluster.ceiling().height() > sector().ceiling().height() &&
+                    if (backSubsector.ceiling().height() > sector().ceiling().height() &&
                         backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
@@ -374,7 +374,7 @@ DENG2_PIMPL(SectorCluster)
     {
         if (boundaryData) return;
 
-        QMap<SectorCluster *, HEdge *> extClusterMap;
+        QMap<Subsector *, HEdge *> extSubsectorMap;
         for (ConvexSubspace *subspace : subspaces)
         {
             HEdge *base = subspace->poly().hedge();
@@ -387,46 +387,46 @@ DENG2_PIMPL(SectorCluster)
                 if (!hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
                     continue;
 
-                SectorCluster &backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
-                if (&backCluster == thisPublic)
+                Subsector &backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
+                if (&backSubsector == thisPublic)
                     continue;
 
-                extClusterMap.insert(&backCluster, hedge);
+                extSubsectorMap.insert(&backSubsector, hedge);
 
             } while ((hedge = &hedge->next()) != base);
         }
 
         boundaryData.reset(new BoundaryData);
-        if (extClusterMap.isEmpty())
+        if (extSubsectorMap.isEmpty())
             return;
 
         QRectF boundingRect = qrectFromAABox(self.aaBox());
 
-        // First try to quickly decide by comparing cluster bounding boxes.
-        QMutableMapIterator<SectorCluster *, HEdge *> iter(extClusterMap);
+        // First try to quickly decide by comparing subsector bounding boxes.
+        QMutableMapIterator<Subsector *, HEdge *> iter(extSubsectorMap);
         while (iter.hasNext())
         {
             iter.next();
-            SectorCluster &extCluster = iter.value()->twin().face().mapElementAs<ConvexSubspace>().cluster();
-            if (!boundingRect.contains(qrectFromAABox(extCluster.aaBox())))
+            Subsector &extSubsector = iter.value()->twin().face().mapElementAs<ConvexSubspace>().subsector();
+            if (!boundingRect.contains(qrectFromAABox(extSubsector.aaBox())))
             {
                 boundaryData->uniqueOuterEdges.append(iter.value());
                 iter.remove();
             }
         }
 
-        if (extClusterMap.isEmpty())
+        if (extSubsectorMap.isEmpty())
             return;
 
         // More extensive tests are necessary. At this point we know that all
-        // clusters which remain in the map are inside according to the bounding
-        // box of "this" cluster.
-        QList<HEdge *> const boundaryEdges = extClusterMap.values();
+        // subsectors which remain in the map are inside according to the bounding
+        // box of "this" subsector.
+        QList<HEdge *> const boundaryEdges = extSubsectorMap.values();
         QList<QRectF> boundaries;
         for (HEdge *base : boundaryEdges)
         {
             QRectF bounds;
-            SectorClusterCirculator it(base);
+            SubsectorCirculator it(base);
             do
             {
                 bounds |= QRectF(QPointF(it->origin().x, it->origin().y),
@@ -470,53 +470,53 @@ DENG2_PIMPL(SectorCluster)
 
         if (classification() & (AllSelfRef | PartSelfRef))
         {
-            // Should we permanently map planes to another cluster?
+            // Should we permanently map one or both planes to those of another sector?
 
             initBoundaryDataIfNeeded();
 
             for (HEdge *hedge : boundaryData->uniqueOuterEdges)
             {
-                SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+                Subsector &extSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
                 if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                     continue;
 
                 if (!(classification() & AllSelfRef) &&
-                     (extCluster.d->classification() & AllSelfRef))
+                     (extSubsector.d->classification() & AllSelfRef))
                     continue;
 
-                if (extCluster.d->mappedVisFloor == thisPublic)
+                if (extSubsector.d->mappedVisFloor == thisPublic)
                     continue;
 
                 // Setup the mapping and we're done.
-                map(Sector::Floor,   &extCluster, true /*permanently*/);
-                map(Sector::Ceiling, &extCluster, true /*permanently*/);
+                map(Sector::Floor,   &extSubsector, true /*permanently*/);
+                map(Sector::Ceiling, &extSubsector, true /*permanently*/);
                 break;
             }
 
             if (floorIsMapped())
             {
-                // Remove the mapping from all inner clusters to this, forcing
-                // their re-evaluation (however next time a different cluster
+                // Remove the mapping from all inner subsectors to this, forcing
+                // their re-evaluation (however next time a different subsector
                 // will be selected from the boundary).
                 for (HEdge *hedge : boundaryData->uniqueInnerEdges)
                 {
-                    SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+                    Subsector &extSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
                     if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                         continue;
 
                     if (!(classification() & AllSelfRef) &&
-                         (extCluster.d->classification() & AllSelfRef))
+                         (extSubsector.d->classification() & AllSelfRef))
                         continue;
 
-                    if (extCluster.d->mappedVisFloor == thisPublic)
+                    if (extSubsector.d->mappedVisFloor == thisPublic)
                     {
-                        extCluster.d->clearMapping(Sector::Floor);
+                        extSubsector.d->clearMapping(Sector::Floor);
                     }
-                    if (extCluster.d->mappedVisCeiling == thisPublic)
+                    if (extSubsector.d->mappedVisCeiling == thisPublic)
                     {
-                        extCluster.d->clearMapping(Sector::Ceiling);
+                        extSubsector.d->clearMapping(Sector::Ceiling);
                     }
                 }
 
@@ -544,29 +544,29 @@ DENG2_PIMPL(SectorCluster)
 
         initBoundaryDataIfNeeded();
 
-        // Map "this" cluster to the first outer cluster found.
+        // Map "this" subsector to the first outer subsector found.
         for (HEdge *hedge : boundaryData->uniqueOuterEdges)
         {
-            SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+            Subsector &extSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
             if (doFloor && !floorIsMapped())
             {
-                Plane &extVisPlane = extCluster.visFloor();
+                Plane &extVisPlane = extSubsector.visFloor();
                 if (!extVisPlane.surface().hasSkyMaskedMaterial() &&
                     extVisPlane.height() > sector().floor().height())
                 {
-                    map(Sector::Floor, &extCluster);
+                    map(Sector::Floor, &extSubsector);
                     if (!doCeiling) break;
                 }
             }
 
             if (doCeiling && !ceilingIsMapped())
             {
-                Plane &extVisPlane = extCluster.visCeiling();
+                Plane &extVisPlane = extSubsector.visCeiling();
                 if (!extVisPlane.surface().hasSkyMaskedMaterial() &&
-                    extCluster.visCeiling().height() < sector().ceiling().height())
+                    extSubsector.visCeiling().height() < sector().ceiling().height())
                 {
-                    map(Sector::Ceiling, &extCluster);
+                    map(Sector::Ceiling, &extSubsector);
                     if (!doFloor) break;
                 }
             }
@@ -575,26 +575,26 @@ DENG2_PIMPL(SectorCluster)
         if (!floorIsMapped() && !ceilingIsMapped())
             return;
 
-        // Clear mappings for all inner clusters to force re-evaluation (which
-        // may in turn lead to their inner clusters being re-evaluated, producing
+        // Clear mappings for all inner subsectors to force re-evaluation (which
+        // may in turn lead to their inner subsectors being re-evaluated, producing
         // a "ripple effect" that will remap any deeply nested dependents).
         for (HEdge *hedge : boundaryData->uniqueInnerEdges)
         {
-            SectorCluster &extCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+            Subsector &extSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
-            if (extCluster.d->classification() & NeverMapped)
+            if (extSubsector.d->classification() & NeverMapped)
                 continue;
 
             if (doFloor && floorIsMapped() &&
-                extCluster.visFloor().height() >= sector().floor().height())
+                extSubsector.visFloor().height() >= sector().floor().height())
             {
-                extCluster.d->clearMapping(Sector::Floor);
+                extSubsector.d->clearMapping(Sector::Floor);
             }
 
             if (doCeiling && ceilingIsMapped() &&
-                extCluster.visCeiling().height() <= sector().ceiling().height())
+                extSubsector.visCeiling().height() <= sector().ceiling().height())
             {
-                extCluster.d->clearMapping(Sector::Ceiling);
+                extSubsector.d->clearMapping(Sector::Ceiling);
             }
         }
     }
@@ -631,11 +631,11 @@ DENG2_PIMPL(SectorCluster)
         initBoundaryDataIfNeeded();
 
         // Mark surfaces of the outer edge loop.
-        /// @todo What about the special case of a cluster with no outer neighbors? -ds
+        /// @todo What about the special case of a subsector with no outer neighbors? -ds
         if (!boundaryData->uniqueOuterEdges.isEmpty())
         {
             HEdge *base = boundaryData->uniqueOuterEdges.first();
-            SectorClusterCirculator it(base);
+            SubsectorCirculator it(base);
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -648,7 +648,7 @@ DENG2_PIMPL(SectorCluster)
         // Mark surfaces of the inner edge loop(s).
         for (HEdge *base : boundaryData->uniqueInnerEdges)
         {
-            SectorClusterCirculator it(base);
+            SubsectorCirculator it(base);
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -661,11 +661,11 @@ DENG2_PIMPL(SectorCluster)
 
 #endif // __CLIENT__
 
-    /// Observes SectorCluster Deletion.
-    void sectorClusterBeingDeleted(SectorCluster const &cluster)
+    /// Observes Subsector Deletion.
+    void subsectorBeingDeleted(Subsector const &subsec)
     {
-        if (  mappedVisFloor == &cluster) clearMapping(Sector::Floor);
-        if (mappedVisCeiling == &cluster) clearMapping(Sector::Ceiling);
+        if (  mappedVisFloor == &subsec) clearMapping(Sector::Floor);
+        if (mappedVisCeiling == &subsec) clearMapping(Sector::Ceiling);
     }
 
     /// Observes Plane Deletion.
@@ -707,7 +707,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 ddplayer_t &ddpl = plr.publicData();
                 if (plr.isInGame() && (ddpl.flags & DDPF_CAMERA)
-                    && Mobj_ClusterPtr(*ddpl.mo) == thisPublic
+                    && Mobj_SubsectorPtr(*ddpl.mo) == thisPublic
                     && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
                         || ddpl.mo->origin[2] < self.visFloor  ().height()))
                 {
@@ -793,7 +793,7 @@ DENG2_PIMPL(SectorCluster)
      */
     GeometryData *geomDataForShard(Shard *shard)
     {
-        if (shard && shard->cluster() == thisPublic)
+        if (shard && shard->subsector() == thisPublic)
         {
             ShardGeometryMap::const_iterator found = shardGeomMap.find(shard);
             if (found != shardGeomMap.end())
@@ -970,14 +970,14 @@ DENG2_PIMPL(SectorCluster)
 #endif // __CLIENT__
 };
 
-SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
+Subsector::Subsector(QList<ConvexSubspace *> const &subspaces)
     : d(new Impl(this))
 {
     d->subspaces.append(subspaces);
     for (ConvexSubspace *subspace : subspaces)
     {
-        // Attribute the subspace to the cluster.
-        subspace->setCluster(this);
+        // Attribute the subspace to the subsector.
+        subspace->setSubsector(this);
     }
 
     // Observe changes to plane heights in "this" sector.
@@ -991,46 +991,46 @@ SectorCluster::SectorCluster(QList<ConvexSubspace *> const &subspaces)
 #endif
 }
 
-bool SectorCluster::isInternalEdge(HEdge *hedge) // static
+bool Subsector::isInternalEdge(HEdge *hedge) // static
 {
     if (!hedge) return false;
     if (!hedge->hasFace() || !hedge->twin().hasFace()) return false;
     if (!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_SUBSPACE) return false;
     if (!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_SUBSPACE) return false;
 
-    SectorCluster *frontCluster = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
-    if (!frontCluster) return false;
-    return frontCluster == hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
+    Subsector *frontSubsector = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
+    if (!frontSubsector) return false;
+    return frontSubsector == hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr();
 }
 
-Sector &SectorCluster::sector()
+Sector &Subsector::sector()
 {
     return d->sector();
 }
 
-Sector const &SectorCluster::sector() const
+Sector const &Subsector::sector() const
 {
     return d->sector();
 }
 
-Plane &SectorCluster::plane(dint planeIndex)
+Plane &Subsector::plane(dint planeIndex)
 {
     // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
-Plane const &SectorCluster::plane(dint planeIndex) const
+Plane const &Subsector::plane(dint planeIndex) const
 {
     // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
-Plane &SectorCluster::visPlane(dint planeIndex)
+Plane &Subsector::visPlane(dint planeIndex)
 {
-    return const_cast<Plane &>(const_cast<SectorCluster const *>(this)->visPlane(planeIndex));
+    return const_cast<Plane &>(const_cast<Subsector const *>(this)->visPlane(planeIndex));
 }
 
-Plane const &SectorCluster::visPlane(dint planeIndex) const
+Plane const &Subsector::visPlane(dint planeIndex) const
 {
     if (planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling)
     {
@@ -1041,19 +1041,19 @@ Plane const &SectorCluster::visPlane(dint planeIndex) const
         }
 
         /// @todo Cache this result.
-        SectorCluster *mappedCluster = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling : d->mappedVisFloor);
-        if (mappedCluster && mappedCluster != this)
+        Subsector *mappedSubsector = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling : d->mappedVisFloor);
+        if (mappedSubsector && mappedSubsector != this)
         {
-            return mappedCluster->visPlane(planeIndex);
+            return mappedSubsector->visPlane(planeIndex);
         }
     }
     // Not mapped.
     return sector().plane(planeIndex);
 }
 
-AABoxd const &SectorCluster::aaBox() const
+AABoxd const &Subsector::aaBox() const
 {
-    // If the cluster is comprised of a single subspace we can use the bounding
+    // If the subsector is comprised of a single subspace we can use the bounding
     // box of the subspace geometry directly.
     if (d->subspaces.count() == 1)
     {
@@ -1063,7 +1063,7 @@ AABoxd const &SectorCluster::aaBox() const
     // Time to determine bounds?
     if (!d->aaBox)
     {
-        // Unite the geometry bounding boxes of all subspaces in the cluster.
+        // Unite the geometry bounding boxes of all subspaces in the subsector.
         for (ConvexSubspace const *subspace : d->subspaces)
         {
             AABoxd const &leafAABox = subspace->poly().aaBox();
@@ -1081,9 +1081,9 @@ AABoxd const &SectorCluster::aaBox() const
     return *d->aaBox;
 }
 
-bool SectorCluster::isHeightInVoid(ddouble height) const
+bool Subsector::isHeightInVoid(ddouble height) const
 {
-    // Check the planes of the cluster.
+    // Check the mapped planes.
 #ifdef __CLIENT__
     if (visCeiling().surface().hasSkyMaskedMaterial())
     {
@@ -1117,7 +1117,7 @@ bool SectorCluster::isHeightInVoid(ddouble height) const
     return false;  // Not in the void.
 }
 
-ddouble SectorCluster::roughArea() const
+ddouble Subsector::roughArea() const
 {
     AABoxd const &bounds = aaBox();
     return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
@@ -1125,7 +1125,7 @@ ddouble SectorCluster::roughArea() const
 
 #ifdef __CLIENT__
 
-bool SectorCluster::hasWorldVolume(bool useSmoothedHeights) const
+bool Subsector::hasWorldVolume(bool useSmoothedHeights) const
 {
     if (useSmoothedHeights)
     {
@@ -1137,12 +1137,12 @@ bool SectorCluster::hasWorldVolume(bool useSmoothedHeights) const
     }
 }
 
-void SectorCluster::markReverbDirty(bool yes)
+void Subsector::markReverbDirty(bool yes)
 {
     d->needReverbUpdate = yes;
 }
 
-SectorCluster::AudioEnvironment const &SectorCluster::reverb() const
+Subsector::AudioEnvironment const &Subsector::reverb() const
 {
     // Perform any scheduled update now.
     if (d->needReverbUpdate)
@@ -1152,13 +1152,13 @@ SectorCluster::AudioEnvironment const &SectorCluster::reverb() const
     return d->reverb;
 }
 
-void SectorCluster::markVisPlanesDirty()
+void Subsector::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
-bool SectorCluster::hasSkyMaskPlane() const
+bool Subsector::hasSkyMaskPlane() const
 {
     for (dint i = 0; i < sector().planeCount(); ++i)
     {
@@ -1168,12 +1168,12 @@ bool SectorCluster::hasSkyMaskPlane() const
     return false;
 }
 
-dint SectorCluster::subspaceCount() const
+dint Subsector::subspaceCount() const
 {
     return d->subspaces.count();
 }
 
-LoopResult SectorCluster::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
+LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
 {
     for (ConvexSubspace *sub : d->subspaces)
     {
@@ -1182,13 +1182,13 @@ LoopResult SectorCluster::forAllSubspaces(std::function<LoopResult (ConvexSubspa
     return LoopContinue;
 }
 
-SectorCluster::LightId SectorCluster::lightSourceId() const
+Subsector::LightId Subsector::lightSourceId() const
 {
-    /// @todo Need unique cluster ids.
+    /// @todo Need unique Subsector ids.
     return LightId(sector().indexInMap());
 }
 
-Vector3f SectorCluster::lightSourceColorf() const
+Vector3f Subsector::lightSourceColorf() const
 {
     if (Rend_SkyLightIsEnabled() && hasSkyMaskPlane())
     {
@@ -1200,12 +1200,12 @@ Vector3f SectorCluster::lightSourceColorf() const
     return sector().lightColor();
 }
 
-dfloat SectorCluster::lightSourceIntensity(Vector3d const &/*viewPoint*/) const
+dfloat Subsector::lightSourceIntensity(Vector3d const &/*viewPoint*/) const
 {
     return sector().lightLevel();
 }
 
-dint SectorCluster::blockLightSourceZBias()
+dint Subsector::blockLightSourceZBias()
 {
     dint const height = dint(visCeiling().height() - visFloor().height());
     bool hasSkyFloor = visFloor().surface().hasSkyMaskedMaterial();
@@ -1226,7 +1226,7 @@ dint SectorCluster::blockLightSourceZBias()
     return 0;
 }
 
-void SectorCluster::applyBiasChanges(QBitArray &allChanges)
+void Subsector::applyBiasChanges(QBitArray &allChanges)
 {
     Impl::ShardGeometryMap::const_iterator it = d->shardGeomMap.constBegin();
     while (it != d->shardGeomMap.constEnd())
@@ -1253,12 +1253,12 @@ static dint countIlluminationPoints(MapElement &mapElement, dint group)
         return 4;
 
     default:
-        throw Error("SectorCluster::countIlluminationPoints", "Invalid MapElement type");
+        throw Error("Subsector::countIlluminationPoints", "Invalid MapElement type");
     }
     return 0;
 }
 
-Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
+Shard &Subsector::shard(MapElement &mapElement, dint geomId)
 {
     auto *gdata = d->geomData(mapElement, geomId, true /*create*/);
     if (!gdata->shard)
@@ -1268,7 +1268,7 @@ Shard &SectorCluster::shard(MapElement &mapElement, dint geomId)
     return *gdata->shard;
 }
 
-Shard *SectorCluster::findShard(MapElement &mapElement, dint geomId)
+Shard *Subsector::findShard(MapElement &mapElement, dint geomId)
 {
     if (auto *gdata = d->geomData(mapElement, geomId))
     {
@@ -1281,7 +1281,7 @@ Shard *SectorCluster::findShard(MapElement &mapElement, dint geomId)
  * @todo This could be enhanced so that only the lights on the right side of the
  * surface are taken into consideration.
  */
-bool SectorCluster::updateBiasContributors(Shard *shard)
+bool Subsector::updateBiasContributors(Shard *shard)
 {
     if (Impl::GeometryData *gdata = d->geomDataForShard(shard))
     {
@@ -1360,7 +1360,7 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
             break; }
 
         default:
-            throw Error("SectorCluster::updateBiasContributors", "Invalid MapElement type");
+            throw Error("Subsector::updateBiasContributors", "Invalid MapElement type");
         }
 
         return true;
@@ -1368,31 +1368,31 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
     return false;
 }
 
-duint SectorCluster::biasLastChangeOnFrame() const
+duint Subsector::biasLastChangeOnFrame() const
 {
     return sector().map().biasLastChangeOnFrame();
 }
 
 #endif  // __CLIENT__
 
-//- SectorClusterCirculator -------------------------------------------------------------
+//- SubsectorCirculator -------------------------------------------------------------
 
-SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
+Subsector *SubsectorCirculator::getSubsector(HEdge const &hedge) // static
 {
     if (!hedge.hasFace()) return nullptr;
     if (!hedge.face().hasMapElement()) return nullptr;
     if (hedge.face().mapElement().type() != DMU_SUBSPACE) return nullptr;
-    return hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
+    return hedge.face().mapElementAs<ConvexSubspace>().subsectorPtr();
 }
 
-HEdge &SectorClusterCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
-                                            SectorCluster const *cluster) // static
+HEdge &SubsectorCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
+                                            Subsector const *subsec) // static
 {
     HEdge *neighbor = &hedge.neighbor(direction);
     // Skip over interior edges.
-    if (cluster)
+    if (subsec)
     {
-        while (neighbor->hasTwin() && cluster == getCluster(neighbor->twin()))
+        while (neighbor->hasTwin() && subsec == getSubsector(neighbor->twin()))
         {
             neighbor = &neighbor->twin().neighbor(direction);
         }

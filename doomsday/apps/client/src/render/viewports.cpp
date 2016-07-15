@@ -56,7 +56,7 @@
 #include "world/sky.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include "Contact"
 
@@ -744,7 +744,7 @@ static void setupPlayerSprites()
     mobj_t *mob = ddpl->mo;
 
     if(!Mobj_HasSubspace(*mob)) return;
-    SectorCluster &cluster = Mobj_Cluster(*mob);
+    Subsector &subsec = Mobj_Subsector(*mob);
 
     // Determine if we should be drawing all the psprites full bright?
     bool fullBright = CPP_BOOL(::levelFullBright);
@@ -812,8 +812,8 @@ static void setupPlayerSprites()
             spr->data.model.flags       = 0;
             // 32 is the raised weapon height.
             spr->data.model.topZ        = viewData->current.origin.z;
-            spr->data.model.secFloor    = cluster.visFloor().heightSmoothed();
-            spr->data.model.secCeil     = cluster.visCeiling().heightSmoothed();
+            spr->data.model.secFloor    = subsec.visFloor().heightSmoothed();
+            spr->data.model.secCeil     = subsec.visCeiling().heightSmoothed();
             spr->data.model.pClass      = 0;
             spr->data.model.floorClip   = 0;
 

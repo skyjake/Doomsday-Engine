@@ -40,7 +40,7 @@ class ClientMaterial;
 namespace de { class LightGrid; }
 namespace world {
 class ConvexSubspace;
-class SectorCluster;
+class Subsector;
 }
 
 // Multiplicative blending for dynamic lights?

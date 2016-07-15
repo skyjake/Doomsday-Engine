@@ -31,7 +31,7 @@
 #include "world/lineowner.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
-#include "SectorCluster"
+#include "Subsector"
 
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
@@ -136,9 +136,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        world::SectorCluster const *cluster =
+        world::Subsector const *subsec =
             (line.definesPolyobj() ? &line.polyobj().bspLeaf().subspace()
-                                   : &wallHEdge->face().mapElementAs<world::ConvexSubspace>())->clusterPtr();
+                                   : &wallHEdge->face().mapElementAs<world::ConvexSubspace>())->subsectorPtr();
 
         if(seg.lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
@@ -146,12 +146,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
         {
             if(spec.section == LineSide::Middle)
             {
-                lo = cluster->visFloor().heightSmoothed();
-                hi = cluster->visCeiling().heightSmoothed();
+                lo = subsec->visFloor().heightSmoothed();
+                hi = subsec->visCeiling().heightSmoothed();
             }
             else
             {
-                lo = hi = cluster->visFloor().heightSmoothed();
+                lo = hi = subsec->visFloor().heightSmoothed();
             }
 
             materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
@@ -163,14 +163,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
         else
         {
             // Two sided.
-            world::SectorCluster const *backCluster =
-                line.definesPolyobj() ? cluster
-                                      : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>().clusterPtr();
+            world::Subsector const *backSubsector =
+                line.definesPolyobj() ? subsec
+                                      : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>().subsectorPtr();
 
-            Plane const *ffloor = &cluster->visFloor();
-            Plane const *fceil  = &cluster->visCeiling();
-            Plane const *bfloor = &backCluster->visFloor();
-            Plane const *bceil  = &backCluster->visCeiling();
+            Plane const *ffloor = &subsec->visFloor();
+            Plane const *fceil  = &subsec->visCeiling();
+            Plane const *bfloor = &backSubsector->visFloor();
+            Plane const *bceil  = &backSubsector->visCeiling();
 
             switch(spec.section)
             {
@@ -255,7 +255,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
 
-                if(!line.isSelfReferencing() && ffloor == &cluster->sector().floor())
+                if(!line.isSelfReferencing() && ffloor == &subsec->sector().floor())
                 {
                     lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
                 }
@@ -265,7 +265,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     lo = lineSide.sector().floor().heightSmoothed();
                 }
 
-                if(!line.isSelfReferencing() && fceil == &cluster->sector().ceiling())
+                if(!line.isSelfReferencing() && fceil == &subsec->sector().ceiling())
                 {
                     hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
                 }
@@ -498,19 +498,19 @@ DENG2_PIMPL(WallEdge), public IHPlane
         ClockDirection const direction = edge? Clockwise : Anticlockwise;
 
         HEdge const *hedge = wallHEdge;
-        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
+        while((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no back subspace.
             auto const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
             if(!backSubspace)
                 break;
 
-            SectorCluster const &cluster = backSubspace->cluster();
-            if(cluster.hasWorldVolume())
+            Subsector const &subsec = backSubspace->subsector();
+            if(subsec.hasWorldVolume())
             {
-                for(dint i = 0; i < cluster.visPlaneCount(); ++i)
+                for(dint i = 0; i < subsec.visPlaneCount(); ++i)
                 {
-                    Plane const &plane = cluster.visPlane(i);
+                    Plane const &plane = subsec.visPlane(i);
 
                     if(plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
                     {
@@ -544,7 +544,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                  * elsewhere we automatically fix the case of a floor above a
                  * ceiling by lowering the floor.
                  */
-                coord_t z = cluster.visCeiling().heightSmoothed();
+                coord_t z = subsec.visCeiling().heightSmoothed();
 
                 if(z > bottom && z < top)
                 {
@@ -562,7 +562,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     /**
      * Determines whether the wall edge should be intercepted with neighboring
-     * planes from other sector clusters.
+     * planes from other subsectors.
      */
     bool shouldInterceptNeighbors()
     {
@@ -572,10 +572,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
         if(de::fequal(hi, lo))
             return false;
 
-        // Cluster-internal edges won't be intercepted. This is because such an
+        // Subsector-internal edges won't be intercepted. This is because such an
         // edge only ever produces middle wall sections, which, do not support
         // divisions in any case (they become vissprites).
-        if(SectorCluster::isInternalEdge(wallHEdge))
+        if(Subsector::isInternalEdge(wallHEdge))
             return false;
 
         return true;

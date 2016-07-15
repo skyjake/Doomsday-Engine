@@ -38,7 +38,7 @@
 #include "world/p_players.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 
 using namespace de;
 
@@ -132,7 +132,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         }
         else
         {
-            Vector4f const color = vs.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+            Vector4f const color = vs.bspLeaf->subspace().subsector().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;

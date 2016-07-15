@@ -40,7 +40,7 @@
 #endif
 
 namespace world {
-class SectorCluster;
+class Subsector;
 }
 class Plane;
 
@@ -133,23 +133,23 @@ world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
 bool Mobj_HasSubspace(mobj_t const &mob);
 
 /**
- * Returns the sector cluster in which the map-object currently resides.
+ * Returns the subsector in which the map-object currently resides.
  *
  * @param mob  Map-object.
  *
  * @see Mobj_HasSubspace()
  */
-world::SectorCluster &Mobj_Cluster(mobj_t const &mob);
+world::Subsector &Mobj_Subsector(mobj_t const &mob);
 
 /**
- * Returns a pointer to sector cluster in which the mobj currently resides, or @c nullptr
+ * Returns a pointer to subsector in which the mobj currently resides, or @c nullptr
  * if not linked or the BSP leaf at the origin has no convex geometry.
  *
  * @param mob  Map-object.
  *
- * @see Mobj_HasCluster()
+ * @see Mobj_HasSubsector()
  */
-world::SectorCluster *Mobj_ClusterPtr(mobj_t const &mob);
+world::Subsector *Mobj_SubsectorPtr(mobj_t const &mob);
 
 /**
  * Creates a new map-object triggered particle generator based on the given definition.

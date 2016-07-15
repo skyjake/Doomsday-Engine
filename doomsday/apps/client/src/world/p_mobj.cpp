@@ -56,7 +56,7 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 
 #ifdef __CLIENT__
 #  include "Generator"
@@ -297,14 +297,14 @@ bool Mobj_HasSubspace(mobj_t const &mobj)
     return Mobj_BspLeafAtOrigin(mobj).hasSubspace();
 }
 
-SectorCluster &Mobj_Cluster(mobj_t const &mobj)
+Subsector &Mobj_Subsector(mobj_t const &mobj)
 {
-    return Mobj_BspLeafAtOrigin(mobj).subspace().cluster();
+    return Mobj_BspLeafAtOrigin(mobj).subspace().subsector();
 }
 
-SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
+Subsector *Mobj_SubsectorPtr(mobj_t const &mobj)
 {
-    return Mobj_HasSubspace(mobj)? &Mobj_Cluster(mobj) : 0;
+    return Mobj_HasSubspace(mobj)? &Mobj_Subsector(mobj) : 0;
 }
 
 #undef Mobj_Sector
@@ -406,14 +406,14 @@ dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
     if(!mo || !Mobj_HasSubspace(*mo))
         return false;
-    SectorCluster &cluster = Mobj_Cluster(*mo);
+    Subsector &subsec = Mobj_Subsector(*mo);
 
-    if(&cluster.floor() != &cluster.visFloor() &&
-       mo->origin[VZ] < cluster.visFloor().heightSmoothed())
+    if(&subsec.floor() != &subsec.visFloor() &&
+       mo->origin[VZ] < subsec.visFloor().heightSmoothed())
         return true;
 
-    if(&cluster.ceiling() != &cluster.visCeiling() &&
-       mo->origin[VZ] > cluster.visCeiling().heightSmoothed())
+    if(&subsec.ceiling() != &subsec.visCeiling() &&
+       mo->origin[VZ] > subsec.visCeiling().heightSmoothed())
         return true;
 
     return false;
@@ -447,7 +447,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     Mobj_UnlinkLumobjs(mo);
 
     if(!Mobj_HasSubspace(*mo)) return;
-    SectorCluster &cluster = Mobj_Cluster(*mo);
+    Subsector &subsec = Mobj_Subsector(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
@@ -489,10 +489,10 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -texOrigin.y - matAnimator.dimensions().y - cluster.visFloor().heightSmoothed();
+    coord_t impacted = mo->origin[VZ] + -texOrigin.y - matAnimator.dimensions().y - subsec.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
-    if(impacted < 0 && &cluster.visFloor() != &cluster.floor())
+    if(impacted < 0 && &subsec.visFloor() != &subsec.floor())
         return;
 
     // Attempt to generate luminous object from the sprite.
@@ -538,7 +538,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
+    mo->lumIdx = subsec.sector().map().addLumobj(*lum).indexInMap();
 }
 
 void Mobj_AnimateHaloOcclussion(mobj_t &mob)
@@ -605,15 +605,15 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     if(mob.ddFlags & DDMF_ALWAYSLIT) return 0;
 
     // Evaluate the ambient light level at our map origin.
-    SectorCluster const &cluster = Mobj_Cluster(mob);
+    Subsector const &subsec = Mobj_Subsector(mob);
     dfloat ambientLightLevel;
-    if(::useBias && cluster.sector().map().hasLightGrid())
+    if(::useBias && subsec.sector().map().hasLightGrid())
     {
-        ambientLightLevel = cluster.sector().map().lightGrid().evaluateIntensity(mob.origin);
+        ambientLightLevel = subsec.sector().map().lightGrid().evaluateIntensity(mob.origin);
     }
     else
     {
-        ambientLightLevel = cluster.lightSourceIntensity();
+        ambientLightLevel = subsec.lightSourceIntensity();
     }
     Rend_ApplyLightAdaptation(ambientLightLevel);
 
@@ -981,12 +981,12 @@ D_CMD(InspectMobj)
     LOG_MAP_MSG("VisAngle:%x") << mob->visAngle;
 #endif
     LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mob->floorZ << mob->ceilingZ;
-    if(SectorCluster *cluster = Mobj_ClusterPtr(*mob))
+    if(Subsector *subsec = Mobj_SubsectorPtr(*mob))
     {
         LOG_MAP_MSG("Sector:%i (FloorZ:%f CeilingZ:%f)")
-                << cluster->sector().indexInMap()
-                << cluster->floor().height()
-                << cluster->ceiling().height();
+                << subsec->sector().indexInMap()
+                << subsec->floor().height()
+                << subsec->ceiling().height();
     }
     if(mob->onMobj)
     {

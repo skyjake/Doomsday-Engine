@@ -21,7 +21,7 @@
 
 #include <de/GLTexture>
 
-namespace world { class SectorCluster; }
+namespace world { class Subsector; }
 
 namespace render {
 
@@ -36,14 +36,12 @@ public:
     de::GLTexture const &defaultReflection() const;
 
     /**
-     * Determines the reflection cube map suitable for an object at a particular
-     * position in the current map.
-     *
-     * @param cluster  Subspace cluster.
+     * Determines the reflection cube map suitable for an object whose origin lies inside
+     * the given @a subsector.
      *
      * @return Reflection cube map.
      */
-    de::GLTexture const &reflectionInCluster(world::SectorCluster const *cluster) const;
+    de::GLTexture const &reflectionInSubsector(world::Subsector const *subsector) const;
 
 private:
     DENG2_PRIVATE(d)

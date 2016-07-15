@@ -731,17 +731,17 @@ DENG2_PIMPL(ModelRenderer)
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
-    void setReflectionForCluster(world::SectorCluster const *cluster)
+    void setReflectionForSubsector(world::Subsector const *subsec)
     {
         uReflectionTex = ClientApp::renderSystem()
-                            .environment().reflectionInCluster(cluster);
+                            .environment().reflectionInSubsector(subsec);
     }
 
     void setReflectionForObject(mobj_t const *object)
     {
         if (object && Mobj_HasSubspace(*object))
         {
-            setReflectionForCluster(&Mobj_Cluster(*object));
+            setReflectionForSubsector(&Mobj_Subsector(*object));
         }
         else
         {
@@ -827,7 +827,7 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
     auto const &p = pspr.data.model2;
     world::ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
 
-    d->setReflectionForCluster(sub ? sub->clusterPtr() : nullptr);
+    d->setReflectionForSubsector(sub ? sub->subsectorPtr() : nullptr);
 
     // Walk bobbing is specified using angle offsets.
     dfloat yaw   = vang   + p.yawAngleOffset;

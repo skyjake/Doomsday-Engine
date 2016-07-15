@@ -34,7 +34,7 @@
 #include "Face"
 #include "HEdge"
 #include "Line"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include "WallEdge"
 
@@ -182,9 +182,9 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
 
     LineSide const &side         = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
-    Plane const &visFloor        = cluster.visFloor  ();
-    Plane const &visCeiling      = cluster.visCeiling();
+    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
+    Plane const &visFloor        = subsec.visFloor  ();
+    Plane const &visCeiling      = subsec.visCeiling();
 
     switch(shadow)
     {
@@ -249,9 +249,9 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
-    Plane const &visFloor        = cluster.visFloor  ();
-    Plane const &visCeiling      = cluster.visCeiling();
+    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
+    Plane const &visFloor        = subsec.visFloor  ();
+    Plane const &visCeiling      = subsec.visCeiling();
 
     de::zap(projected);
     projected.texDimensions = Vector2f(0, shadowSize);
@@ -405,9 +405,9 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
 {
     LineSide /*const*/ &side     = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
-    Plane const &visFloor        = cluster.visFloor  ();
-    Plane const &visCeiling      = cluster.visCeiling();
+    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
+    Plane const &visFloor        = subsec.visFloor  ();
+    Plane const &visCeiling      = subsec.visCeiling();
 
     de::zap(projected);
     projected.texDimensions.y = -shadowSize;
@@ -562,9 +562,9 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     LineSide /*const*/ &side      = leftEdge.lineSide();
     HEdge const *hedge            = side.leftHEdge();
     DENG2_ASSERT(hedge);
-    SectorCluster const &cluster  = hedge->face().mapElementAs<ConvexSubspace>().cluster();
-    Plane const &visFloor         = cluster.visFloor  ();
-    Plane const &visCeiling       = cluster.visCeiling();
+    Subsector const &subsec  = hedge->face().mapElementAs<ConvexSubspace>().subsector();
+    Plane const &visFloor         = subsec.visFloor  ();
+    Plane const &visCeiling       = subsec.visCeiling();
     DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
     de::zap(projected);
@@ -621,10 +621,10 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
             projected.texture = LST_RADIO_CC;
         }
     }
-    else if(SectorCluster *backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr())
+    else if(Subsector *backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr())
     {
-        coord_t const bFloor = backCluster->visFloor  ().heightSmoothed();
-        coord_t const bCeil  = backCluster->visCeiling().heightSmoothed();
+        coord_t const bFloor = backSubsector->visFloor  ().heightSmoothed();
+        coord_t const bCeil  = backSubsector->visCeiling().heightSmoothed();
 
         if(bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
         {
@@ -942,7 +942,7 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     if(!hEdges[0]->hasFace() || !hEdges[0]->face().hasMapElement())
         return false;
 
-    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
+    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().hasWorldVolume())
         return false;
 
     for(dint i = 0; i < 2; ++i)
@@ -1007,9 +1007,9 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     // If no shadow-casting lines are linked we no work to do.
     if(!subspace.shadowLineCount()) return;
 
-    SectorCluster &cluster  = subspace.cluster();
+    Subsector &subsec  = subspace.subsector();
     // Determine the shadow properties.
-    dfloat const shadowDark = calcShadowDarkness(cluster.lightSourceIntensity());
+    dfloat const shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
@@ -1022,7 +1022,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     DrawList &shadowList     = rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
 
     // Process all LineSides linked to this subspace as potential shadow casters.
-    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
+    subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
     {
         DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
 
@@ -1031,9 +1031,9 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
         {
             side.setShadowVisCount(R_FrameCount());  // Mark processed.
 
-            for(dint pln = 0; pln < cluster.visPlaneCount(); ++pln)
+            for(dint pln = 0; pln < subsec.visPlaneCount(); ++pln)
             {
-                Plane const &plane = cluster.visPlane(pln);
+                Plane const &plane = subsec.visPlane(pln);
 
                 // Skip Planes which should not receive FakeRadio shadowing.
                 if(!plane.receivesShadow()) continue;

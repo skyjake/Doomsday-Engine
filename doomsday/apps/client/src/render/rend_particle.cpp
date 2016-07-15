@@ -41,7 +41,7 @@
 #include "ConvexSubspace"
 #include "Line"
 #include "Plane"
-#include "SectorCluster"
+#include "Subsector"
 
 #include "resource/image.h"
 
@@ -442,7 +442,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
         }
         else
         {
-            Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+            Vector4f const color = pinfo->bspLeaf->subspace().subsector().lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
 
@@ -623,7 +623,7 @@ static void drawParticles(dint rtype, bool withBlend)
             // attenuation or range compression).
             if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
             {
-                dfloat const intensity = subspace->cluster().lightSourceIntensity();
+                dfloat const intensity = subspace->subsector().lightSourceIntensity();
                 color *= Vector4f(intensity, intensity, intensity, 1);
             }
         }
@@ -659,9 +659,9 @@ static void drawParticles(dint rtype, bool withBlend)
         bool nearPlane = false;
         if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
         {
-            world::SectorCluster &cluster = subspace->cluster();
-            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2] ||
-               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
+            world::Subsector &subsec = subspace->subsector();
+            if(FLT2FIX(subsec.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2] ||
+               FLT2FIX(subsec.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
             {
                 nearPlane = true;
             }

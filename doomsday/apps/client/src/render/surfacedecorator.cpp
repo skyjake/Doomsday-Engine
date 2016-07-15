@@ -25,7 +25,7 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec()

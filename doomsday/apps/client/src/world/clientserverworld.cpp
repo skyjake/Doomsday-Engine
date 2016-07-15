@@ -70,7 +70,7 @@
 #include "edit_map.h"
 #include "Plane"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #ifdef __CLIENT__
 #  include "world/contact.h"
@@ -569,14 +569,14 @@ DENG2_PIMPL(ClientServerWorld)
             ddpl.inVoid = true;
             if(mobj_t *mo = ddpl.mo)
             {
-                if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
+                if(Subsector *subsec = Mobj_SubsectorPtr(*mo))
                 {
 #ifdef __CLIENT__
-                    if(mo->origin[2] >= cluster->visFloor  ().heightSmoothed() &&
-                       mo->origin[2] <  cluster->visCeiling().heightSmoothed() - 4)
+                    if(mo->origin[2] >= subsec->visFloor  ().heightSmoothed() &&
+                       mo->origin[2] <  subsec->visCeiling().heightSmoothed() - 4)
 #else
-                    if(mo->origin[2] >= cluster->floor  ().height() &&
-                       mo->origin[2] <  cluster->ceiling().height() - 4)
+                    if(mo->origin[2] >= subsec->floor  ().height() &&
+                       mo->origin[2] <  subsec->ceiling().height() - 4)
 #endif
                     {
                         ddpl.inVoid = false;

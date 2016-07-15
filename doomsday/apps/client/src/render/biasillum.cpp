@@ -24,7 +24,7 @@
 #include "world/linesighttest.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "BiasTracker"
@@ -158,11 +158,11 @@ DENG2_PIMPL_NOREF(BiasIllum)
             return;
         }
 
-        SectorCluster &cluster = subspace->cluster();
-        if((!cluster.visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < cluster.visFloor().heightSmoothed()) ||
-           (!cluster.visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > cluster.visCeiling().heightSmoothed()))
+        Subsector &subsec = subspace->subsector();
+        if((!subsec.visFloor().surface().hasSkyMaskedMaterial() &&
+                source.origin().z < subsec.visFloor().heightSmoothed()) ||
+           (!subsec.visCeiling().surface().hasSkyMaskedMaterial() &&
+                source.origin().z > subsec.visCeiling().heightSmoothed()))
         {
             casted = Vector3f();
             return;

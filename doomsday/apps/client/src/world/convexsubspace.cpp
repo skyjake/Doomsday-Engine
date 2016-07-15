@@ -28,7 +28,7 @@
 #include "BspLeaf"
 #include "Face"
 #include "Polyobj"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include <de/Log>
 #include <QSet>
@@ -60,8 +60,8 @@ DENG2_PIMPL(ConvexSubspace)
     typedef QSet<polyobj_s *> Polyobjs;
     Polyobjs polyobjs;                     ///< Linked polyobjs (not owned).
 
-    SectorCluster *cluster = nullptr;      ///< Attributed cluster (if any, not owned).
-    BspLeaf *bspLeaf       = nullptr;      ///< Attributed BSP leaf (if any, not owned).
+    Subsector *subsector = nullptr;        ///< Attributed subsector (if any, not owned).
+    BspLeaf *bspLeaf = nullptr;            ///< Attributed BSP leaf (if any, not owned).
 
 #ifdef __CLIENT__
     Vector2d worldGridOffset;              ///< For aligning the materials to the map space grid.
@@ -282,26 +282,26 @@ bool ConvexSubspace::unlink(Polyobj const &polyobj)
     return d->polyobjs.size() != sizeBefore;
 }
 
-bool ConvexSubspace::hasCluster() const
+bool ConvexSubspace::hasSubsector() const
 {
-    return d->cluster != 0;
+    return d->subsector != nullptr;
 }
 
-SectorCluster &ConvexSubspace::cluster() const
+Subsector &ConvexSubspace::subsector() const
 {
-    if(d->cluster) return *d->cluster;
-    /// @throw MissingClusterError  Attempted with no sector cluster attributed.
-    throw MissingClusterError("ConvexSubspace::cluster", "No sector cluster is attributed");
+    if(d->subsector) return *d->subsector;
+    /// @throw MissingSubsectorError  Attempted with no subsector attributed.
+    throw MissingSubsectorError("ConvexSubspace::subsector", "No subsector is attributed");
 }
 
-SectorCluster *ConvexSubspace::clusterPtr() const
+Subsector *ConvexSubspace::subsectorPtr() const
 {
-    return hasCluster()? &cluster() : nullptr;
+    return hasSubsector()? &subsector() : nullptr;
 }
 
-void ConvexSubspace::setCluster(SectorCluster *newCluster)
+void ConvexSubspace::setSubsector(Subsector *newSubsector)
 {
-    d->cluster = newCluster;
+    d->subsector = newSubsector;
 }
 
 dint ConvexSubspace::validCount() const
@@ -426,7 +426,7 @@ bool ConvexSubspace::updateAudioEnvironment()
 {
     world::AudioEnvironment &env = d->audioEnvironment;
 
-    if(!hasCluster())
+    if(!hasSubsector())
     {
         env.reset();
         return false;
@@ -436,7 +436,7 @@ bool ConvexSubspace::updateAudioEnvironment()
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = poly().aaBox();
-    env.space = dint(cluster().ceiling().height() - cluster().floor().height())
+    env.space = dint(subsector().ceiling().height() - subsector().floor().height())
               * ((aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY));
 
     // The other reverb properties can be found out by taking a look at the

@@ -26,7 +26,7 @@
 #include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "world/lineowner.h"
@@ -88,7 +88,7 @@ static dfloat opennessFactor(dfloat fz, dfloat bz, dfloat bhz)
     return 2;  // Fully open!
 }
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
+/// @todo fixme: Should use the visual plane heights of subsectors.
 static bool middleMaterialCoversOpening(LineSide const &side)
 {
     if (!side.hasSector()) return false;  // Never.
@@ -153,8 +153,8 @@ void ShadowEdge::prepare(dint planeIndex)
 {
     dint const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
-    SectorCluster const &cluster = hedge.face().mapElementAs<ConvexSubspace>().cluster();
-    Plane const &plane = cluster.visPlane(planeIndex);
+    Subsector const &subsec = hedge.face().mapElementAs<ConvexSubspace>().subsector();
+    Plane const &plane = subsec.visPlane(planeIndex);
 
     LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
 
@@ -165,10 +165,10 @@ void ShadowEdge::prepare(dint planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if (hedge.twin().hasFace() &&
-        hedge.twin().face().mapElementAs<ConvexSubspace>().hasCluster())
+        hedge.twin().face().mapElementAs<ConvexSubspace>().hasSubsector())
     {
-        SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
-        Plane const &backPlane = backCluster.visPlane(planeIndex);
+        Subsector const &backSubsector = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
+        Plane const &backPlane = backSubsector.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)
                                         : lineSide.middle();
@@ -182,7 +182,7 @@ void ShadowEdge::prepare(dint planeIndex)
         if (planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backCluster.plane(otherPlaneIndex).heightSmoothed();
+        coord_t bhz = backSubsector.plane(otherPlaneIndex).heightSmoothed();
         if (planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
@@ -192,9 +192,9 @@ void ShadowEdge::prepare(dint planeIndex)
             d->sectorOpenness = 2; // Consider it fully open.
         }
         // Is the back sector a closed yet sky-masked surface?
-        else if (cluster.visFloor().heightSmoothed() >= backCluster.visCeiling().heightSmoothed() &&
-                 cluster    .visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
-                 backCluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
+        else if (subsec.visFloor().heightSmoothed() >= backSubsector.visCeiling().heightSmoothed() &&
+                 subsec    .visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
+                 backSubsector.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }
@@ -215,7 +215,7 @@ void ShadowEdge::prepare(dint planeIndex)
 
     // Find the neighbor of this wall section and determine the relative
     // 'openness' of it's plane heights vs those of "this" wall section.
-    /// @todo fixme: Should use the visual plane heights of sector clusters.
+    /// @todo fixme: Should use the visual plane heights of subsectors.
 
     dint const edge = lineSide.sideId() ^ d->edge;
     LineOwner const *vo = &lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
@@ -248,7 +248,7 @@ void ShadowEdge::prepare(dint planeIndex)
         {
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
-            if (backSec != &cluster.sector() &&
+            if (backSec != &subsec.sector() &&
                 !((plane.isSectorFloor  () && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
                   (plane.isSectorCeiling() && backSec->floor  ().heightSmoothed() >= plane.heightSmoothed())))
             {

@@ -50,7 +50,7 @@
 #include "Line"
 #include "Polyobj"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include "Vertex"
 
@@ -161,7 +161,7 @@ DENG2_PIMPL(Map)
     } bsp;
 
     QList<ConvexSubspace *> subspaces;
-    QMultiMap<Sector *, SectorCluster *> clusters;
+    QMultiMap<Sector *, Subsector *> subsectors;
 
     //
     // Map entities and element properties (things, line specials, etc...).
@@ -328,7 +328,7 @@ DENG2_PIMPL(Map)
         // in their private data destructors.
         thinkers.reset();
 
-        qDeleteAll(clusters);
+        qDeleteAll(subsectors);
         qDeleteAll(subspaces);
         qDeleteAll(sectors);
         for (Polyobj *polyobj : polyobjs)
@@ -707,23 +707,24 @@ DENG2_PIMPL(Map)
     }
 
     /**
-     * (Re)Build subspace clusters for the sector.
+     * (Re)Build Subsectors for the given @a sector.
      */
-    void buildClusters(Sector &sector)
+    void buildSubsectors(Sector &sector)
     {
-        for (auto it = clusters.find(&sector); it != clusters.end() && it.key() == &sector; )
+        for (auto it = subsectors.find(&sector); it != subsectors.end() && it.key() == &sector; )
         {
             delete *it;
         }
-        clusters.remove(&sector);
+        subsectors.remove(&sector);
+
+        // Group the subspaces into sets which share at least one common edge. We'll do
+        // this by starting with a set per subspace and then keep merging the sets until
+        // no two sets share a common edge ("clustering").
 
         typedef QList<ConvexSubspace *> Subspaces;
         typedef QList<Subspaces> SubspaceSets;
         SubspaceSets subspaceSets;
 
-        // Separate the subspaces into edge-adjacency clusters. We'll do this by
-        // starting with a set per subspace and then keep merging these sets until
-        // no more shared edges are found.
         for (ConvexSubspace *subspace : subspaces)
         {
             if (subspace->bspLeaf().sectorPtr() == &sector)
@@ -780,11 +781,11 @@ DENG2_PIMPL(Map)
         }
         // Clustering complete.
 
-        // Build clusters.
+        // Build subsectors.
         for (Subspaces const &subspaceSet : subspaceSets)
         {
-            // Subspace ownership is not given to the cluster.
-            clusters.insert(&sector, new SectorCluster(subspaceSet));
+            // Subspace ownership is not given to the subsector.
+            subsectors.insert(&sector, new Subsector(subspaceSet));
         }
     }
 
@@ -1212,9 +1213,9 @@ DENG2_PIMPL(Map)
 
         // Apply changes to all surfaces:
         bias.lastChangeOnFrame = R_FrameCount();
-        for (SectorCluster *cluster : clusters)
+        for (Subsector *subsec : subsectors)
         {
-            cluster->applyBiasChanges(allChanges);
+            subsec->applyBiasChanges(allChanges);
         }
     }
 
@@ -1608,7 +1609,7 @@ void Map::initLightGrid()
 
     LightGrid &lg = *d->lightGrid;
 
-    // Determine how many sector cluster samples we'll make per block and
+    // Determine how many subsector samples we'll make per block and
     // allocate the tempoary storage.
     dint const numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
     QVector<Vector2d> samplePoints(numSamples);
@@ -1633,7 +1634,7 @@ void Map::initLightGrid()
     /// optimize this much further.
 
     // Allocate memory for all the sample results.
-    QVector<SectorCluster *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
+    QVector<Subsector *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
 
     // Determine the size^2 of the samplePoint array plus its center.
     dint size = 0, center = 0;
@@ -1677,7 +1678,7 @@ void Map::initLightGrid()
         }
     }
 
-    // Acquire the sector clusters at ALL the sample points.
+    // Acquire the subsectors at ALL the sample points.
     for (dint y = 0; y < lg.dimensions().y; ++y)
     for (dint x = 0; x < lg.dimensions().x; ++x)
     {
@@ -1690,7 +1691,7 @@ void Map::initLightGrid()
             // Center point is not considered with the term 'size'.
             // Sample this point and place at index 0 (at the start of the
             // samples for this block).
-            ssamples[blk * numSamples] = clusterAt(lg.origin() + off + samplePoints[0]);
+            ssamples[blk * numSamples] = subsectorAt(lg.origin() + off + samplePoints[0]);
             sampleOffset++;
         }
 
@@ -1731,21 +1732,21 @@ void Map::initLightGrid()
                 else
                 {
                     // We haven't sampled this point yet.
-                    ssamples[idx] = clusterAt(lg.origin() + off + samplePoints[sampleOffset]);
+                    ssamples[idx] = subsectorAt(lg.origin() + off + samplePoints[sampleOffset]);
                 }
             }
         }
     }
 
     // Allocate memory used for the collection of the sample results.
-    QVector<SectorCluster *> blkSampleClusters(numSamples);
+    QVector<Subsector *> blkSampleSubsectors(numSamples);
 
     for (dint y = 0; y < lg.dimensions().y; ++y)
     for (dint x = 0; x < lg.dimensions().x; ++x)
     {
-        /// Pick the sector cluster at each of the sample points.
+        /// Pick the subsector at each of the sample points.
         ///
-        /// @todo We don't actually need the blkSampleClusters array anymore.
+        /// @todo We don't actually need the blkSampleSubsectors array anymore.
         /// Now that ssamples stores the results consecutively a simple index
         /// into ssamples would suffice. However if the optimization to save
         /// memory is implemented as described in the comments above we WOULD
@@ -1755,13 +1756,13 @@ void Map::initLightGrid()
         dint const sampleOffset = lg.toIndex(x, y) * numSamples;
         for (dint i = 0; i < numSamples; ++i)
         {
-            blkSampleClusters[i] = ssamples[i + sampleOffset];
+            blkSampleSubsectors[i] = ssamples[i + sampleOffset];
         }
 
-        SectorCluster *cluster = nullptr;
+        Subsector *subsec = nullptr;
         if (numSamples == 1)
         {
-            cluster = blkSampleClusters[center];
+            subsec = blkSampleSubsectors[center];
         }
         else
         {
@@ -1771,11 +1772,11 @@ void Map::initLightGrid()
 
             for (dint i = 0; i < numSamples; ++i)
             {
-                if (!blkSampleClusters[i]) continue;
+                if (!blkSampleSubsectors[i]) continue;
 
                 for (dint k = 0; k < numSamples; ++k)
                 {
-                    if (blkSampleClusters[k] == blkSampleClusters[i] && blkSampleClusters[k])
+                    if (blkSampleSubsectors[k] == blkSampleSubsectors[i] && blkSampleSubsectors[k])
                     {
                         sampleHits[k]++;
                         if (sampleHits[k] > best)
@@ -1789,20 +1790,20 @@ void Map::initLightGrid()
             if (best != -1)
             {
                 // Favor the center sample if its a draw.
-                if (sampleHits[best] == sampleHits[center] && blkSampleClusters[center])
+                if (sampleHits[best] == sampleHits[center] && blkSampleSubsectors[center])
                 {
-                    cluster = blkSampleClusters[center];
+                    subsec = blkSampleSubsectors[center];
                 }
                 else
                 {
-                    cluster = blkSampleClusters[best];
+                    subsec = blkSampleSubsectors[best];
                 }
             }
         }
 
-        if (cluster)
+        if (subsec)
         {
-            lg.setPrimarySource(lg.toIndex(x, y), cluster);
+            lg.setPrimarySource(lg.toIndex(x, y), subsec);
         }
     }
 
@@ -2236,9 +2237,9 @@ LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
 
 bool Map::isPointInVoid(de::Vector3d const &pos) const
 {
-    if (SectorCluster const *cluster = clusterAt(pos))
+    if (Subsector const *subsec = subsectorAt(pos))
     {
-        return cluster->isHeightInVoid(pos.z);
+        return subsec->isHeightInVoid(pos.z);
     }
     return true;  // In the void.
 }
@@ -2273,23 +2274,23 @@ LoopResult Map::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> fun
     return LoopContinue;
 }
 
-dint Map::clusterCount() const
+dint Map::subsecCount() const
 {
-    return d->clusters.count();
+    return d->subsectors.count();
 }
 
-LoopResult Map::forAllClusters(std::function<LoopResult (SectorCluster &)> callback)
+LoopResult Map::forAllSubsectors(std::function<LoopResult (Subsector &)> callback)
 {
-    for (SectorCluster *cluster : d->clusters)
+    for (Subsector *subsec : d->subsectors)
     {
-        if (auto result = callback(*cluster)) return result;
+        if (auto result = callback(*subsec)) return result;
     }
     return LoopContinue;
 }
 
-LoopResult Map::forAllClustersOfSector(Sector &sector, std::function<LoopResult (SectorCluster &)> callback)
+LoopResult Map::forAllSubsectorsOfSector(Sector &sector, std::function<LoopResult (Subsector &)> callback)
 {
-    for (auto it = d->clusters.constFind(&sector); it != d->clusters.end() && it.key() == &sector; ++it)
+    for (auto it = d->subsectors.constFind(&sector); it != d->subsectors.end() && it.key() == &sector; ++it)
     {
         if (auto result = callback(**it)) return result;
     }
@@ -2656,16 +2657,16 @@ void Map::link(mobj_t &mob, dint flags)
     {
         mob.dPlayer->inVoid = true;
 
-        if (SectorCluster *cluster = Mobj_ClusterPtr(mob))
+        if (Subsector *subsec = Mobj_SubsectorPtr(mob))
         {
             if (Mobj_BspLeafAtOrigin(mob).subspace().contains(Mobj_Origin(mob)))
             {
 #ifdef __CLIENT__
-                if (   mob.origin[2] <  cluster->visCeiling().heightSmoothed() + 4
-                    && mob.origin[2] >= cluster->  visFloor().heightSmoothed())
+                if (   mob.origin[2] <  subsec->visCeiling().heightSmoothed() + 4
+                    && mob.origin[2] >= subsec->  visFloor().heightSmoothed())
 #else
-                if (   mob.origin[2] <  cluster->ceiling().height() + 4
-                    && mob.origin[2] >= cluster->  floor().height())
+                if (   mob.origin[2] <  subsec->ceiling().height() + 4
+                    && mob.origin[2] >= subsec->  floor().height())
 #endif
                 {
                     mob.dPlayer->inVoid = false;
@@ -2777,12 +2778,12 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     return bspTree->userData()->as<BspLeaf>();
 }
 
-SectorCluster *Map::clusterAt(Vector2d const &point) const
+Subsector *Map::subsectorAt(Vector2d const &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
     if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
     {
-        return bspLeaf.subspace().clusterPtr();
+        return bspLeaf.subspace().subsectorPtr();
     }
     return nullptr;
 }
@@ -3954,7 +3955,7 @@ bool Map::endEditing()
     // Finish sectors.
     for (Sector *sector : d->sectors)
     {
-        d->buildClusters(*sector);
+        d->buildSubsectors(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
     }

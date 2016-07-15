@@ -34,7 +34,7 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #ifdef __CLIENT__
-#  include "SectorCluster"
+#  include "Subsector"
 #  include "Shard"
 #endif
 
@@ -65,9 +65,9 @@ static void notifyGeometryChanged(Polyobj &pob)
             if(!hedge->hasMapElement())
                 continue;
 
-            /// @note If polyobjs are allowed to move between sector clusters
+            /// @note If polyobjs are allowed to move between subsectors
             /// then we'll need to revise the bias illumination storage specially.
-            if(Shard *shard = pob.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            if(Shard *shard = pob.bspLeaf().subspace().subsector().findShard(hedge->mapElement(), LineSide::Middle))
             {
                 shard->updateBiasAfterMove();
             }

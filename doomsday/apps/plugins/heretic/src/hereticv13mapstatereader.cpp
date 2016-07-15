@@ -258,7 +258,7 @@ static void readMobj(reader_s *reader)
     Reader_ReadInt32(reader);
     Reader_ReadInt32(reader);
 
-    // Subsector.
+    // BSP leaf.
     Reader_ReadInt32(reader);
 
     coord_t floorz   = FIX2FLT(Reader_ReadInt32(reader));

@@ -165,8 +165,8 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/polyobjdata.cpp
     ${src}/src/world/reject.cpp
     ${src}/src/world/sector.cpp
-    ${src}/src/world/sectorcluster.cpp
     ${src}/src/world/sky.cpp
+    ${src}/src/world/subsector.cpp
     ${src}/src/world/surface.cpp
     ${src}/src/world/thinkers.cpp
     ${src}/src/world/vertex.cpp

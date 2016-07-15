@@ -103,7 +103,7 @@ lineopening_s &lineopening_s::operator = (lineopening_s const &other)
  *
  * @return Height of the open range.
  *
- * @todo fixme: Should use the visual plane heights of sector clusters.
+ * @todo fixme: Should use the visual plane heights of subsectors.
  */
 static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = nullptr, coord_t *retTop = nullptr)
 {
@@ -136,7 +136,7 @@ static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = nullptr, 
     return top - bottom;
 }
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
+/// @todo fixme: Should use the visual plane heights of subsectors.
 bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
 {
     if(!side.hasSections()) return false;
@@ -226,7 +226,7 @@ Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection 
  * @return  @c true iff there is a "middle" material on @a side which
  * completely covers the open range.
  *
- * @todo fixme: Should use the visual plane heights of sector clusters.
+ * @todo fixme: Should use the visual plane heights of subsectors.
  */
 static bool middleMaterialCoversOpening(LineSide const &side)
 {
@@ -267,7 +267,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     return false;
 }
 
-/// @todo fixme: Should use the visual plane heights of sector clusters.
+/// @todo fixme: Should use the visual plane heights of subsectors.
 Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
     Sector const *sector, binangle_t *diff)
 {

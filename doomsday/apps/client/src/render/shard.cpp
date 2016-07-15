@@ -22,7 +22,7 @@
 #include <doomsday/console/var.h>
 #include "BiasIllum"
 #include "BiasTracker"
-#include "SectorCluster"
+#include "Subsector"
 
 using namespace de;
 
@@ -30,7 +30,7 @@ static dint devUpdateBiasContributors = true;  //cvar
 
 DENG2_PIMPL_NOREF(Shard)
 {
-    world::SectorCluster *owner = nullptr;
+    world::Subsector *owner = nullptr;
     typedef QVector<BiasIllum *> BiasIllums;
     BiasIllums biasIllums;
     BiasTracker biasTracker;
@@ -59,9 +59,9 @@ DENG2_PIMPL_NOREF(Shard)
     }
 };
 
-Shard::Shard(dint numBiasIllums, world::SectorCluster *owner) : d(new Impl)
+Shard::Shard(dint numBiasIllums, world::Subsector *owner) : d(new Impl)
 {
-    setCluster(owner);
+    setSubsector(owner);
     if(numBiasIllums)
     {
         d->biasIllums.reserve(numBiasIllums);
@@ -103,12 +103,12 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     }
 }
 
-world::SectorCluster *Shard::cluster() const
+world::Subsector *Shard::subsector() const
 {
     return d->owner;
 }
 
-void Shard::setCluster(world::SectorCluster *newOwner)
+void Shard::setSubsector(world::Subsector *newOwner)
 {
     d->owner = newOwner;
 }

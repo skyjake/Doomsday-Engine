@@ -52,7 +52,7 @@
 #include "world/clientmobjthinkerdata.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 
 using namespace de;
 using namespace world;
@@ -72,8 +72,8 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
     }
     else
     {
-        SectorCluster &cluster = subspaceAtOrigin.cluster();
-        Map &map = cluster.sector().map();
+        Subsector &subsec = subspaceAtOrigin.subsector();
+        Map &map = subsec.sector().map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -88,7 +88,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
         }
         else
         {
-            Vector4f const color = cluster.lightSourceColorfIntensity();
+            Vector4f const color = subsec.lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
@@ -134,7 +134,7 @@ static Vector3d mobjOriginSmoothed(mobj_t *mob)
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  *
- * @todo fixme: Should use the visual plane heights of sector clusters.
+ * @todo fixme: Should use the visual plane heights of subsectors.
  */
 static void findMobjZOrigin(mobj_t &mob, bool floorAdjust, vissprite_t &vis)
 {
@@ -175,8 +175,8 @@ void R_ProjectSprite(mobj_t &mob)
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
     ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(mob).subspace();
-    SectorCluster &cluster   = subspace.cluster();
-    if(!cluster.hasWorldVolume()) return;
+    Subsector &subsec   = subspace.subsector();
+    if(!subsec.hasWorldVolume()) return;
 
     ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
 
@@ -286,8 +286,8 @@ void R_ProjectSprite(mobj_t &mob)
 
     // The Z origin of the visual should match that of the mobj. When smoothing
     // is enabled this requires examining all touched sector planes in the vicinity.
-    Plane &floor     = cluster.visFloor();
-    Plane &ceiling   = cluster.visCeiling();
+    Plane &floor     = subsec.visFloor();
+    Plane &ceiling   = subsec.visCeiling();
     bool floorAdjust = false;
     if(!Mobj_OriginBehindVisPlane(&mob))
     {
@@ -492,7 +492,7 @@ void R_ProjectSprite(mobj_t &mob)
             auto const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
             DENG2_ASSERT(pl);
 
-            Lumobj const &lob = cluster.sector().map().lumobj(mob.lumIdx);
+            Lumobj const &lob = subsec.sector().map().lumobj(mob.lumIdx);
             vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);
 
             vis->pose.distance = distFromEye;

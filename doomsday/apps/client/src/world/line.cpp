@@ -29,7 +29,7 @@
 #include "world/map.h"
 #include "ConvexSubspace"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include "Vertex"
 #include "world/maputil.h"
@@ -364,7 +364,7 @@ bool Line::Side::considerOneSided() const
         if (!hedge || !hedge->twin().hasFace())
             return true;
 
-        if (!hedge->twin().face().mapElementAs<ConvexSubspace>().hasCluster())
+        if (!hedge->twin().face().mapElementAs<ConvexSubspace>().hasSubsector())
             return true;
     }
 
@@ -842,9 +842,9 @@ static void addMissingMaterial(LineSide &side, dint section)
     {
         if (hedge->hasFace() && hedge->face().hasMapElement())
         {
-            SectorCluster &cluster = hedge->face().mapElementAs<ConvexSubspace>().cluster();
-            cluster.markReverbDirty();
-            cluster.markVisPlanesDirty();
+            Subsector &subsec = hedge->face().mapElementAs<ConvexSubspace>().subsector();
+            subsec.markReverbDirty();
+            subsec.markVisPlanesDirty();
         }
     }
 
@@ -972,7 +972,7 @@ struct edge_t
 };
 
 /// @todo fixme: Should be rewritten to work at half-edge level.
-/// @todo fixme: Should use the visual plane heights of sector clusters.
+/// @todo fixme: Should use the visual plane heights of subsectors.
 static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edge)
 {
     static dint const SEP = 10;
@@ -1146,7 +1146,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
  * This may look like a complicated operation (performed for all line sides) but in most
  * cases this won't take long. Aligned neighbours are relatively rare.
  *
- * @todo fixme: Should use the visual plane heights of sector clusters.
+ * @todo fixme: Should use the visual plane heights of subsectors.
  */
 void Line::Side::updateRadioForFrame(dint frameNumber)
 {

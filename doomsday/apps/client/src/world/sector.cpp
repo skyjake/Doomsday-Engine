@@ -24,7 +24,7 @@
 #include "world/p_object.h"
 #include "Line"
 #include "Plane"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "dd_main.h"  // App_World()
@@ -42,12 +42,12 @@ DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
     /**
-     * POD: Metrics describing the geometry of the sector (the clusters).
+     * POD: Metrics describing the geometry of the sector (the subsectors).
      */
     struct GeomData
     {
-        AABoxd aaBox;               ///< Bounding box for the whole sector (all clusters).
-        ddouble roughArea = 0;      ///< Rough approximation. @c < 0= Invalid/need update.
+        AABoxd aaBox;               ///< Bounding box for the whole sector (all subsectors).
+        ddouble roughArea = 0;      ///< Rough approximation.
     };
 
     struct MapObjects
@@ -150,21 +150,21 @@ DENG2_PIMPL(Sector)
     }
 
     /**
-     * Calculate the minimum bounding rectangle containing all the cluster geometries.
+     * Calculate the minimum bounding rectangle containing all the subsector geometries.
      */
     AABoxd findBounds() const
     {
         bool inited = false;
         AABoxd bounds;
-        self.map().forAllClustersOfSector(self, [&bounds, &inited] (SectorCluster &cluster)
+        self.map().forAllSubsectorsOfSector(self, [&bounds, &inited] (Subsector &subsec)
         {
             if (inited)
             {
-                V2d_UniteBox(bounds.arvec2, cluster.aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, subsec.aaBox().arvec2);
             }
             else
             {
-                bounds = cluster.aaBox();
+                bounds = subsec.aaBox();
                 inited = true;
             }
             return LoopContinue;
@@ -173,14 +173,14 @@ DENG2_PIMPL(Sector)
     }
 
     /**
-     * Approximate the total area of all the cluster geometries.
+     * Approximate the total area of all the subsector geometries.
      */
     ddouble findRoughArea() const
     {
         ddouble roughArea = 0;
-        self.map().forAllClustersOfSector(self, [&roughArea] (SectorCluster &cluster)
+        self.map().forAllSubsectorsOfSector(self, [&roughArea] (Subsector &subsec)
         {
-            roughArea += cluster.roughArea();
+            roughArea += subsec.roughArea();
             return LoopContinue;
         });
         return roughArea;
@@ -354,13 +354,12 @@ void Sector::buildSides()
 {
     d->sides.clear();
 
-#ifdef DENG2_QT_4_7_OR_NEWER
     dint count = 0;
     map().forAllLines([this, &count] (Line &line)
     {
         if (line.front().sectorPtr() == this || line.back().sectorPtr() == this)
         {
-            ++count;
+            count += 1;
         }
         return LoopContinue;
     });
@@ -368,7 +367,6 @@ void Sector::buildSides()
     if (!count) return;
 
     d->sides.reserve(count);
-#endif
 
     map().forAllLines([this] (Line &line)
     {

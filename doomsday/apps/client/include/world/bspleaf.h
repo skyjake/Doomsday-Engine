@@ -29,7 +29,7 @@ class Sector;
 namespace world {
 
 class ConvexSubspace;
-class SectorCluster;
+class Subsector;
 
 /**
  * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf defines a

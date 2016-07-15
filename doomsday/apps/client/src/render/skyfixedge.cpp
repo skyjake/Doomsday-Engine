@@ -27,7 +27,7 @@
 #include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "render/rend_main.h"
@@ -123,16 +123,16 @@ DENG2_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if(!hedge->hasMapElement()) return false;
 
-        SectorCluster const *cluster     = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
-        SectorCluster const *backCluster = hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>() .clusterPtr() : 0;
+        Subsector const *subsec     = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
+        Subsector const *backSubsector = hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>() .subsectorPtr() : 0;
 
-        if(backCluster && &backCluster->sector() == &cluster->sector())
+        if(backSubsector && &backSubsector->sector() == &subsec->sector())
             return false;
 
         // Select the relative planes for the fix type.
         int relPlane = lower? Sector::Floor : Sector::Ceiling;
-        Plane const *front   = &cluster->visPlane(relPlane);
-        Plane const *back    = backCluster? &backCluster->visPlane(relPlane) : 0;
+        Plane const *front   = &subsec->visPlane(relPlane);
+        Plane const *back    = backSubsector? &backSubsector->visPlane(relPlane) : 0;
 
         if(!front->surface().hasSkyMaskedMaterial())
             return false;
@@ -185,25 +185,25 @@ DENG2_PIMPL(SkyFixEdge)
             return;
         }
 
-        SectorCluster const *cluster     = hedge->face().mapElementAs<ConvexSubspace>().clusterPtr();
-        SectorCluster const *backCluster =
-            hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr() : 0;
+        Subsector const *subsec     = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
+        Subsector const *backSubsector =
+            hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr() : 0;
 
-        Plane const *ffloor = &cluster->visFloor();
-        Plane const *fceil  = &cluster->visCeiling();
-        Plane const *bceil  = backCluster? &backCluster->visCeiling() : 0;
-        Plane const *bfloor = backCluster? &backCluster->visFloor()   : 0;
+        Plane const *ffloor = &subsec->visFloor();
+        Plane const *fceil  = &subsec->visCeiling();
+        Plane const *bceil  = backSubsector? &backSubsector->visCeiling() : 0;
+        Plane const *bfloor = backSubsector? &backSubsector->visFloor()   : 0;
 
         if(fixType == Upper)
         {
             hi = skyFixCeilZ(fceil, bceil);
-            lo = de::max((backCluster && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
+            lo = de::max((backSubsector && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
                                                                                  : fceil->heightSmoothed(),
                          ffloor->heightSmoothed());
         }
         else
         {
-            hi = de::min((backCluster && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
+            hi = de::min((backSubsector && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
                                                                                   : ffloor->heightSmoothed(),
                          fceil->heightSmoothed());
             lo = skyFixFloorZ(ffloor, bfloor);

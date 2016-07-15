@@ -25,7 +25,7 @@
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 
 using namespace de;
 
@@ -269,18 +269,18 @@ bool BiasSource::trackChanges(QBitArray &changes, duint digestIndex, duint curre
 
         if(ConvexSubspace *subspace = d->bspLeaf->subspacePtr())
         {
-            SectorCluster &cluster = subspace->cluster();
+            Subsector &subsec = subspace->subsector();
 
             // Lower intensities are useless for light emission.
-            if(cluster.lightSourceIntensity() >= d->maxLight)
+            if(subsec.lightSourceIntensity() >= d->maxLight)
             {
                 newIntensity = d->primaryIntensity;
             }
 
-            if(cluster.lightSourceIntensity() >= d->minLight && d->minLight != d->maxLight)
+            if(subsec.lightSourceIntensity() >= d->minLight && d->minLight != d->maxLight)
             {
                 newIntensity = d->primaryIntensity *
-                    (cluster.lightSourceIntensity() - d->minLight) / (d->maxLight - d->minLight);
+                    (subsec.lightSourceIntensity() - d->minLight) / (d->maxLight - d->minLight);
             }
         }
 

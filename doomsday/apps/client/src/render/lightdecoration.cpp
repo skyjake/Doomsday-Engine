@@ -27,7 +27,7 @@
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "render/rend_main.h" // Rend_ApplyLightAdaptation
@@ -83,7 +83,7 @@ Lumobj *LightDecoration::generateLumobj() const
     if(!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
-    dfloat intensity = subspace->cluster().lightSourceIntensity();
+    dfloat intensity = subspace->subsector().lightSourceIntensity();
     Rend_ApplyLightAdaptation(intensity);
 
     dfloat lightLevels[2];

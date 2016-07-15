@@ -190,7 +190,7 @@ void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
     }
     else
     {
-        Vector4f const color = bspLeaf.subspace().cluster().lightSourceColorfIntensity();
+        Vector4f const color = bspLeaf.subspace().subsector().lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

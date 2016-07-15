@@ -23,12 +23,12 @@
 #include <de/Vector>
 
 class BiasTracker;
-namespace world { class SectorCluster; }
+namespace world { class Subsector; }
 
 /**
  * 3D map geometry fragment.
  *
- * Shards are produced (and perhaps owned) by SectorClusters when the map geometry
+ * Shards are produced (and perhaps owned) by Subsectors when the map geometry
  * is split into drawable geometry fragments. Shard ownership may be transferred
  * however a shard should never outlive the MapElement for which it was produced.
  */
@@ -39,9 +39,9 @@ public:
      * Construct a new Shard of 3D map geometry.
      *
      * @param numBiasIllums  Number of bias illumination points for the geometry.
-     * @param owner          SectorCluster which owns the shard (if any).
+     * @param owner          Subsector which owns the shard (if any).
      */
-    Shard(de::dint numBiasIllums, world::SectorCluster *owner = nullptr);
+    Shard(de::dint numBiasIllums, world::Subsector *owner = nullptr);
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -63,14 +63,14 @@ public:
                               de::Matrix3f const &tangentMatrix, de::duint biasTime);
 
     /**
-     * Returns a pointer to the SectorCluster which owns the shard (if any).
+     * Returns a pointer to the Subsector which owns the shard (if any).
      */
-    world::SectorCluster *cluster() const;
+    world::Subsector *subsector() const;
 
     /**
-     * Change SectorCluster which owns the shard to @a newOwner.
+     * Change Subsector which owns the shard to @a newOwner.
      */
-    void setCluster(world::SectorCluster *newOwner);
+    void setSubsector(world::Subsector *newOwner);
 
     /**
      * Returns the BiasTracker for the shard.

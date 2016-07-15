@@ -46,7 +46,7 @@
 #include "world/p_players.h"
 #include "world/thinkers.h"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -589,7 +589,7 @@ DENG2_PIMPL(System)
 
     bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
     mobj_t *sfxListener = nullptr;
-    world::SectorCluster *sfxListenerCluster = nullptr;
+    world::Subsector *sfxListenerSubsector = nullptr;
     std::unique_ptr<SfxChannels> sfxChannels;
 #endif
 
@@ -1259,7 +1259,7 @@ DENG2_PIMPL(System)
     {
         if(!sfxAvail) return;
 
-        sfxListenerCluster = nullptr;
+        sfxListenerSubsector = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
         self.sfx()->Listenerv(SFXLP_REVERB, rev);
@@ -1300,14 +1300,14 @@ DENG2_PIMPL(System)
                 self.sfx()->Listenerv(SFXLP_VELOCITY, vec);
             }
 
-            // Reverb effects. Has the current sector cluster changed?
-            world::SectorCluster *newCluster = Mobj_ClusterPtr(*sfxListener);
-            if(newCluster && (!sfxListenerCluster || sfxListenerCluster != newCluster))
+            // Reverb effects. Has the current subsector changed?
+            world::Subsector *newSubsector = Mobj_SubsectorPtr(*sfxListener);
+            if(newSubsector && (!sfxListenerSubsector || sfxListenerSubsector != newSubsector))
             {
-                sfxListenerCluster = newCluster;
+                sfxListenerSubsector = newSubsector;
 
                 // It may be necessary to recalculate the reverb properties...
-                world::SectorCluster::AudioEnvironment const &aenv = sfxListenerCluster->reverb();
+                world::Subsector::AudioEnvironment const &aenv = sfxListenerSubsector->reverb();
 
                 dfloat args[NUM_REVERB_DATA];
                 args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;
@@ -1459,7 +1459,7 @@ void System::reset()
 
     if(d->sfxAvail)
     {
-        d->sfxListenerCluster = nullptr;
+        d->sfxListenerSubsector = nullptr;
 
         // Stop all channels.
         d->sfxChannels->forAll([] (SfxChannel &ch)
@@ -2364,7 +2364,7 @@ void System::allowSfxRefresh(bool allow)
 void System::requestSfxListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
-    d->sfxListenerCluster = nullptr;
+    d->sfxListenerSubsector = nullptr;
 }
 
 #endif  // __CLIENT__
@@ -2394,7 +2394,7 @@ void System::aboutToUnloadMap()
     });
 
     // Sectors, too, for that matter.
-    d->sfxListenerCluster = nullptr;
+    d->sfxListenerSubsector = nullptr;
 #endif
 }
 

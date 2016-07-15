@@ -484,7 +484,7 @@ D_CMD(BLEditor)
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
-#include "SectorCluster"
+#include "Subsector"
 
 #include "render/rend_font.h"
 
@@ -580,7 +580,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
 static void drawLightGauge(Vector2i const &origin, dint height = 255)
 {
     static dfloat minLevel = 0, maxLevel = 0;
-    static SectorCluster *lastCluster = 0;
+    static Subsector *lastSubsector = 0;
 
     Hand &hand = App_World().hand();
     Map &map = App_World().map();
@@ -593,14 +593,14 @@ static void drawLightGauge(Vector2i const &origin, dint height = 255)
 
     if(ConvexSubspace *subspace = source->bspLeafAtOrigin().subspacePtr())
     {
-        if(subspace->hasCluster() && lastCluster != subspace->clusterPtr())
+        if(subspace->hasSubsector() && lastSubsector != subspace->subsectorPtr())
         {
-            lastCluster = &subspace->cluster();
-            minLevel = maxLevel = lastCluster->lightSourceIntensity();
+            lastSubsector = &subspace->subsector();
+            minLevel = maxLevel = lastSubsector->lightSourceIntensity();
         }
     }
 
-    float const lightLevel = lastCluster? lastCluster->lightSourceIntensity() : 0;
+    float const lightLevel = lastSubsector? lastSubsector->lightSourceIntensity() : 0;
     if(lightLevel < minLevel)
         minLevel = lightLevel;
     if(lightLevel > maxLevel)

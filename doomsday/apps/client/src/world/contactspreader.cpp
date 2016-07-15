@@ -29,7 +29,7 @@
 #include "Contact"
 #include "ConvexSubspace"
 #include "Sector"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 
 #include "world/clientserverworld.h"  // validCount
@@ -141,14 +141,14 @@ private:
         if(!hedge) return;
 
         auto &subspace         = hedge->face().mapElementAs<ConvexSubspace>();
-        SectorCluster &cluster = subspace.cluster();
+        Subsector &subsec = subspace.subsector();
 
         // There must be a back BSP leaf to spread to.
         if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             return;
 
         auto &backSubspace         = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        SectorCluster &backCluster = backSubspace.cluster();
+        Subsector &backSubsector = backSubspace.subsector();
 
         // Which way does the spread go?
         if(!(subspace.validCount() == validCount &&
@@ -170,11 +170,11 @@ private:
             return;
 
         // Do not spread if the sector on the back side is closed with no height.
-        if(!backCluster.hasWorldVolume())
+        if(!backSubsector.hasWorldVolume())
             return;
 
-        if(backCluster.visCeiling().heightSmoothed() <= cluster.visFloor().heightSmoothed() ||
-           backCluster.visFloor().heightSmoothed() >= cluster.visCeiling().heightSmoothed())
+        if(backSubsector.visCeiling().heightSmoothed() <= subsec.visFloor().heightSmoothed() ||
+           backSubsector.visFloor().heightSmoothed() >= subsec.visCeiling().heightSmoothed())
             return;
 
         // Are there line side surfaces which should prevent spreading?
@@ -189,8 +189,8 @@ private:
             if(!facingLineSide.back().hasSections())
                 return;
 
-            SectorCluster const &fromCluster = facingLineSide.isFront()? cluster : backCluster;
-            SectorCluster const &toCluster   = facingLineSide.isFront()? backCluster : cluster;
+            Subsector const &fromSubsector = facingLineSide.isFront()? subsec : backSubsector;
+            Subsector const &toSubsector   = facingLineSide.isFront()? backSubsector : subsec;
 
             // Might a material cover the opening?
             if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
@@ -201,23 +201,23 @@ private:
 
                 // Determine the opening between the visual sector planes at this edge.
                 coord_t openBottom;
-                if(toCluster.visFloor().heightSmoothed() > fromCluster.visFloor().heightSmoothed())
+                if(toSubsector.visFloor().heightSmoothed() > fromSubsector.visFloor().heightSmoothed())
                 {
-                    openBottom = toCluster.visFloor().heightSmoothed();
+                    openBottom = toSubsector.visFloor().heightSmoothed();
                 }
                 else
                 {
-                    openBottom = fromCluster.visFloor().heightSmoothed();
+                    openBottom = fromSubsector.visFloor().heightSmoothed();
                 }
 
                 coord_t openTop;
-                if(toCluster.visCeiling().heightSmoothed() < fromCluster.visCeiling().heightSmoothed())
+                if(toSubsector.visCeiling().heightSmoothed() < fromSubsector.visCeiling().heightSmoothed())
                 {
-                    openTop = toCluster.visCeiling().heightSmoothed();
+                    openTop = toSubsector.visCeiling().heightSmoothed();
                 }
                 else
                 {
-                    openTop = fromCluster.visCeiling().heightSmoothed();
+                    openTop = fromSubsector.visCeiling().heightSmoothed();
                 }
 
                 MaterialAnimator &matAnimator = facingLineSide.middle().material()

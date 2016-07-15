@@ -37,7 +37,7 @@
 #include "Contact"
 #include "ConvexSubspace"
 #include "Hand"
-#include "SectorCluster"
+#include "Subsector"
 #include "Surface"
 #include "BiasIllum"
 #include "HueCircleVisual"
@@ -605,8 +605,8 @@ Vector3f Rend_SkyLightColor()
 
 /**
  * Determine the effective ambient light color for the given @a sector. Usually
- * one would obtain this info from SectorCluster, however in some situations the
- * correct light color is *not* that of the cluster (e.g., where map hacks use
+ * one would obtain this info from Subsector, however in some situations the
+ * correct light color is *not* that of the subsector (e.g., where map hacks use
  * mapped planes to reference another sector).
  */
 static Vector3f Rend_AmbientLightColor(Sector const &sector)
@@ -823,7 +823,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
     Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
     bool const haveWall    = mapElement.is<LineSideSegment>();
-    SectorCluster &cluster = ::curSubspace->cluster();
+    Subsector &subsec = ::curSubspace->subsector();
 
     // Uniform color?
     if(::levelFullBright || !(glowing < 1))
@@ -839,8 +839,8 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
 
     if(::useBias)  // Bias lighting model.
     {
-        Map &map     = cluster.sector().map();
-        Shard &shard = cluster.shard(mapElement, geomGroup);
+        Map &map     = subsec.sector().map();
+        Shard &shard = subsec.shard(mapElement, geomGroup);
 
         // Apply the ambient light term from the grid (if available).
         if(map.hasLightGrid())
@@ -2276,11 +2276,11 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
         {
             // Project all plane glows affecting the given quad (world space), calculate
             // coordinates (in texture space) then store into a new list of projections.
-            SectorCluster const &cluster = curSubspace->cluster();
-            for(dint i = 0; i < cluster.visPlaneCount(); ++i)
+            Subsector const &subsec = curSubspace->subsector();
+            for(dint i = 0; i < subsec.visPlaneCount(); ++i)
             {
-                Plane const &plane = cluster.visPlane(i);
-                Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+                Plane const &plane = subsec.visPlane(i);
+                Vector3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
 
                 ProjectedTextureData projected;
                 if(projectPlaneGlow(topLeft, bottomRight, plane, pointOnPlane, blendFactor,
@@ -2377,10 +2377,10 @@ static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLigh
     return true;
 }
 
-static bool lightWithPlaneGlow(Vector3d const &point, SectorCluster const &cluster,
+static bool lightWithPlaneGlow(Vector3d const &point, Subsector const &subsec,
     dint visPlaneIndex, VectorLightData &vlight)
 {
-    Plane const &plane     = cluster.visPlane(visPlaneIndex);
+    Plane const &plane     = subsec.visPlane(visPlaneIndex);
     Surface const &surface = plane.surface();
 
     // Glowing at this moment?
@@ -2392,7 +2392,7 @@ static bool lightWithPlaneGlow(Vector3d const &point, SectorCluster const &clust
     if(glowHeight < 2) return false;  // Not too small!
 
     // In front of the plane?
-    Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+    Vector3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
     ddouble const dist = (point - pointOnPlane).dot(surface.normal());
     if(dist < 0) return false;
 
@@ -2447,11 +2447,11 @@ duint Rend_CollectAffectingLights(Vector3d const &point, Vector3f const &ambient
 
         // Interpret vlights from glowing planes at the origin in the specfified
         // subspace and add them to the identified list.
-        SectorCluster const &cluster = subspace->cluster();
-        for(dint i = 0; i < cluster.sector().planeCount(); ++i)
+        Subsector const &subsec = subspace->subsector();
+        for(dint i = 0; i < subsec.sector().planeCount(); ++i)
         {
             VectorLightData vlight;
-            if(lightWithPlaneGlow(point, cluster, i, vlight))
+            if(lightWithPlaneGlow(point, subsec, i, vlight))
             {
                 rendSys().findVectorLightList(&lightListIdx)
                         << vlight;  // a copy is made.
@@ -2563,7 +2563,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if (retBottomZ)     *retBottomZ     = 0;
     if (retTopZ)        *retTopZ        = 0;
 
-    SectorCluster &cluster = curSubspace->cluster();
+    Subsector &subsec = curSubspace->subsector();
     Surface &surface       = leftEdge.lineSide().surface(leftEdge.spec().section);
 
     // Skip nearly transparent surfaces.
@@ -2653,7 +2653,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     // Geometry write/drawing begins.
     //
 
-    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
+    if(twoSidedMiddle && side.sectorPtr() != &subsec.sector())
     {
         // Temporarily modify the draw state.
         curSectorLightColor = Rend_AmbientLightColor(side.sector());
@@ -2676,10 +2676,10 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
         Rend_DrawWallRadio(leftEdge, rightEdge, ::curSectorLightLevel);
     }
 
-    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
+    if(twoSidedMiddle && side.sectorPtr() != &subsec.sector())
     {
         // Undo temporary draw state changes.
-        Vector4f const color = cluster.lightSourceColorfIntensity();
+        Vector4f const color = subsec.lightSourceColorfIntensity();
         curSectorLightColor = color.toVector3f();
         curSectorLightLevel = color.w;
     }
@@ -2867,7 +2867,7 @@ static void writeSubspacePlane(Plane &plane)
     if(&plane.sector() != &curSubspace->sector())
     {
         // Undo temporary draw state changes.
-        Vector4f const color = curSubspace->cluster().lightSourceColorfIntensity();
+        Vector4f const color = curSubspace->subsector().lightSourceColorfIntensity();
         curSectorLightColor = color.toVector3f();
         curSectorLightLevel = color.w;
     }
@@ -2967,7 +2967,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         if(splitOnMaterialChange)
         {
             skyMaterial = hedge->face().mapElementAs<ConvexSubspace>()
-                              .cluster().visPlane(relPlane).surface().materialPtr();
+                              .subsector().visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -3075,15 +3075,15 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 
 static coord_t skyPlaneZ(dint skyCap)
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    Subsector &subsec = curSubspace->subsector();
 
     dint const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
     {
-        return cluster.sector().map().skyFix(relPlane == Sector::Ceiling);
+        return subsec.sector().map().skyFix(relPlane == Sector::Ceiling);
     }
 
-    return cluster.visPlane(relPlane).heightSmoothed();
+    return subsec.visPlane(relPlane).heightSmoothed();
 }
 
 static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &primitive,
@@ -3133,11 +3133,11 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     // No work to do?
     if(!skyCap) return;
 
-    SectorCluster &cluster = curSubspace->cluster();
+    Subsector &subsec = curSubspace->subsector();
     DrawList &skyMaskList  = rendSys().drawLists().find(DrawListSpec(SkyMaskGeom));
 
     // Lower?
-    if((skyCap & SKYCAP_LOWER) && cluster.visFloor().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) && subsec.visFloor().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
 
@@ -3156,7 +3156,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     }
 
     // Upper?
-    if((skyCap & SKYCAP_UPPER) && cluster.visCeiling().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_UPPER) && subsec.visCeiling().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
 
@@ -3193,13 +3193,13 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    SectorCluster const &cluster     = hedge.face().mapElementAs<ConvexSubspace>().cluster();
-    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
+    Subsector const &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector();
+    Subsector const &backSubsector = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
 
-    coord_t const ffloor   = cluster.visFloor().heightSmoothed();
-    coord_t const fceil    = cluster.visCeiling().heightSmoothed();
-    coord_t const bfloor   = backCluster.visFloor().heightSmoothed();
-    coord_t const bceil    = backCluster.visCeiling().heightSmoothed();
+    coord_t const ffloor   = subsec.visFloor().heightSmoothed();
+    coord_t const fceil    = subsec.visCeiling().heightSmoothed();
+    coord_t const bfloor   = backSubsector.visFloor().heightSmoothed();
+    coord_t const bceil    = backSubsector.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -3220,10 +3220,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if(   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
        || (bfloor >= fceil  && (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = cluster.visFloor  ().surface();
-        Surface const &fceilSurface  = cluster.visCeiling().surface();
-        Surface const &bfloorSurface = backCluster.visFloor  ().surface();
-        Surface const &bceilSurface  = backCluster.visCeiling().surface();
+        Surface const &ffloorSurface = subsec.visFloor  ().surface();
+        Surface const &fceilSurface  = subsec.visCeiling().surface();
+        Surface const &bfloorSurface = backSubsector.visFloor  ().surface();
+        Surface const &bceilSurface  = backSubsector.visCeiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -3323,14 +3323,14 @@ static void writeSubspaceWalls()
 static void writeSubspaceFlats()
 {
     DENG2_ASSERT(::curSubspace);
-    SectorCluster &cluster = ::curSubspace->cluster();
+    Subsector &subsec = ::curSubspace->subsector();
 
-    for(dint i = 0; i < cluster.visPlaneCount(); ++i)
+    for(dint i = 0; i < subsec.visPlaneCount(); ++i)
     {
-        Plane &plane = cluster.visPlane(i);
+        Plane &plane = subsec.visPlane(i);
 
         // Skip planes facing away from the viewer.
-        Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+        Vector3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
         if((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
@@ -3394,7 +3394,7 @@ static void occludeSubspace(bool frontFacing)
     if(P_IsInVoid(viewPlayer)) return;
 
     AngleClipper &clipper  = rendSys().angleClipper();
-    SectorCluster &cluster = ::curSubspace->cluster();
+    Subsector &subsec = ::curSubspace->subsector();
 
     HEdge *base  = ::curSubspace->poly().hedge();
     DENG2_ASSERT(base);
@@ -3419,27 +3419,27 @@ static void occludeSubspace(bool frontFacing)
         if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             continue;
 
-        SectorCluster &backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
+        Subsector &backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backCluster.visFloor().heightSmoothed() > cluster.visFloor().heightSmoothed())
+        if(backSubsector.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
         {
-            openBottom = backCluster.visFloor().heightSmoothed();
+            openBottom = backSubsector.visFloor().heightSmoothed();
         }
         else
         {
-            openBottom = cluster.visFloor().heightSmoothed();
+            openBottom = subsec.visFloor().heightSmoothed();
         }
 
         coord_t openTop;
-        if(backCluster.visCeiling().heightSmoothed() < cluster.visCeiling().heightSmoothed())
+        if(backSubsector.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
         {
-            openTop = backCluster.visCeiling().heightSmoothed();
+            openTop = backSubsector.visCeiling().heightSmoothed();
         }
         else
         {
-            openTop = cluster.visCeiling().heightSmoothed();
+            openTop = subsec.visCeiling().heightSmoothed();
         }
 
         // Choose start and end vertexes so that it's facing forward.
@@ -3447,17 +3447,17 @@ static void occludeSubspace(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > cluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
-            || (openBottom >  backCluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
-           && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
+        if(((openBottom > subsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
+            || (openBottom >  backSubsector.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
+           && canOccludeEdgeBetweenPlanes(subsec.visFloor(), backSubsector.visFloor()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < cluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
-            || (openTop <  backCluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
-           && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
+        if(((openTop < subsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
+            || (openTop <  backSubsector.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
+           && canOccludeEdgeBetweenPlanes(subsec.visCeiling(), backSubsector.visCeiling()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
@@ -3551,7 +3551,7 @@ static void projectSubspaceSprites()
 
     R_ForAllSubspaceMobContacts(*::curSubspace, [] (mobj_t &mob)
     {
-        SectorCluster &cluster = ::curSubspace->cluster();
+        Subsector &subsec = ::curSubspace->subsector();
         if(mob.addFrameCount != R_FrameCount())
         {
             mob.addFrameCount = R_FrameCount();
@@ -3561,7 +3561,7 @@ static void projectSubspaceSprites()
             // Kludge: Map-objects have a tendency to extend into the ceiling in
             // sky sectors. Here we will raise the skyfix dynamically, to make
             // sure they don't get clipped by the sky.
-            if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
+            if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
             {
                 /// @todo fixme: Consider 3D models, also. -ds
                 if(Record *spriteRec = Mobj_SpritePtr(mob))
@@ -3572,14 +3572,14 @@ static void projectSubspaceSprites()
                         if(world::Material *material = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
                         {
                             if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
-                               && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
-                               && mob.origin[2] >= cluster.visFloor  ().heightSmoothed())
+                               && mob.origin[2] <= subsec.visCeiling().heightSmoothed()
+                               && mob.origin[2] >= subsec.visFloor  ().heightSmoothed())
                             {
                                 coord_t visibleTop = mob.origin[2] + material->height();
-                                if(visibleTop > cluster.sector().map().skyFixCeiling())
+                                if(visibleTop > subsec.sector().map().skyFixCeiling())
                                 {
                                     // Raise the skyfix ceiling.
-                                    cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                    subsec.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
                                 }
                             }
                         }
@@ -3656,14 +3656,14 @@ static void drawCurrentSubspace()
  */
 static void makeCurrent(ConvexSubspace &subspace)
 {
-    bool const clusterChanged = (!::curSubspace || ::curSubspace->clusterPtr() != subspace.clusterPtr());
+    bool const subsecChanged = (!::curSubspace || ::curSubspace->subsectorPtr() != subspace.subsectorPtr());
 
     ::curSubspace = &subspace;
 
     // Update draw state.
-    if(clusterChanged)
+    if(subsecChanged)
     {
-        Vector4f const color = subspace.cluster().lightSourceColorfIntensity();
+        Vector4f const color = subspace.subsector().lightSourceColorfIntensity();
         ::curSectorLightColor = color.toVector3f();
         ::curSectorLightLevel = color.w;
     }
@@ -3698,11 +3698,11 @@ static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
     // Only leafs with a convex subspace geometry contain surfaces to draw.
     if(ConvexSubspace *subspace = bspTree->userData()->as<BspLeaf>().subspacePtr())
     {
-        DENG2_ASSERT(subspace->hasCluster());
+        DENG2_ASSERT(subspace->hasSubsector());
 
         // Skip zero-volume subspaces.
         // (Neighbors handle the angle clipper ranges.)
-        if(!subspace->cluster().hasWorldVolume())
+        if(!subspace->subsector().hasWorldVolume())
             return;
 
         // Is this subspace visible?
@@ -5319,7 +5319,7 @@ static void drawFakeRadioShadowPoints(Map &map)
     GLState::current().setDepthTest(false).apply();
     glDisable(GL_CULL_FACE);
 
-    /// @todo fixme: Should use the visual plane heights of sector clusters.
+    /// @todo fixme: Should use the visual plane heights of subsectors.
     map.forAllLines([] (Line &line)
     {
         return line.forAllVertexs([] (Vertex &vtx)
@@ -5380,51 +5380,51 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
 
     if(lineSide.considerOneSided())
     {
-        SectorCluster &cluster =
+        Subsector &subsec =
             (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).subsector();
 
-        coord_t const bottom = cluster.  visFloor().heightSmoothed();
-        coord_t const top    = cluster.visCeiling().heightSmoothed();
+        coord_t const bottom = subsec.  visFloor().heightSmoothed();
+        coord_t const top    = subsec.visCeiling().heightSmoothed();
 
         drawTangentVectorsForSurface(lineSide.middle(),
                                      Vector3d(center, bottom + (top - bottom) / 2));
     }
     else
     {
-        SectorCluster &cluster =
+        Subsector &subsec =
             (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
-        SectorCluster &backCluster =
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).subsector();
+        Subsector &backSubsector =
             (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->twin().face().mapElementAs<ConvexSubspace>()).cluster();
+                                  : hedge->twin().face().mapElementAs<ConvexSubspace>()).subsector();
 
         if(lineSide.middle().hasMaterial())
         {
-            coord_t const bottom = cluster.  visFloor().heightSmoothed();
-            coord_t const top    = cluster.visCeiling().heightSmoothed();
+            coord_t const bottom = subsec.  visFloor().heightSmoothed();
+            coord_t const top    = subsec.visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.middle(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backCluster.visCeiling().heightSmoothed() < cluster.visCeiling().heightSmoothed() &&
-           !(cluster.    visCeiling().surface().hasSkyMaskedMaterial() &&
-             backCluster.visCeiling().surface().hasSkyMaskedMaterial()))
+        if(backSubsector.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed() &&
+           !(subsec.    visCeiling().surface().hasSkyMaskedMaterial() &&
+             backSubsector.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = backCluster.visCeiling().heightSmoothed();
-            coord_t const top    = cluster.    visCeiling().heightSmoothed();
+            coord_t const bottom = backSubsector.visCeiling().heightSmoothed();
+            coord_t const top    = subsec.    visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.top(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backCluster.visFloor().heightSmoothed() > cluster.visFloor().heightSmoothed() &&
-           !(cluster.    visFloor().surface().hasSkyMaskedMaterial() &&
-             backCluster.visFloor().surface().hasSkyMaskedMaterial()))
+        if(backSubsector.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed() &&
+           !(subsec.    visFloor().surface().hasSkyMaskedMaterial() &&
+             backSubsector.visFloor().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = cluster.    visFloor().heightSmoothed();
-            coord_t const top    = backCluster.visFloor().heightSmoothed();
+            coord_t const bottom = subsec.    visFloor().heightSmoothed();
+            coord_t const top    = backSubsector.visFloor().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.bottom(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
@@ -5435,9 +5435,9 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
 /**
  * @todo Use drawTangentVectorsForWalls() for polyobjs too.
  */
-static void drawSurfaceTangentVectors(SectorCluster &cluster)
+static void drawSurfaceTangentVectors(Subsector &subsec)
 {
-    cluster.forAllSubspaces([] (ConvexSubspace &subspace)
+    subsec.forAllSubspaces([] (ConvexSubspace &subspace)
     {
         HEdge const *base  = subspace.poly().hedge();
         HEdge const *hedge = base;
@@ -5467,10 +5467,10 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
         return LoopContinue;
     });
 
-    dint const planeCount = cluster.sector().planeCount();
+    dint const planeCount = subsec.sector().planeCount();
     for (dint i = 0; i < planeCount; ++i)
     {
-        Plane const &plane = cluster.visPlane(i);
+        Plane const &plane = subsec.visPlane(i);
         ddouble height     = 0;
 
         if (plane.surface().hasSkyMaskedMaterial()
@@ -5483,7 +5483,7 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
             height = plane.heightSmoothed();
         }
 
-        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster.center(), height));
+        drawTangentVectorsForSurface(plane.surface(), Vector3d(subsec.center(), height));
     }
 }
 
@@ -5497,9 +5497,9 @@ static void drawSurfaceTangentVectors(Map &map)
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
 
-    map.forAllClusters([] (SectorCluster &cluster)
+    map.forAllSubsectors([] (Subsector &subsec)
     {
-        drawSurfaceTangentVectors(cluster);
+        drawSurfaceTangentVectors(subsec);
         return LoopContinue;
     });
 
@@ -5812,34 +5812,34 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     if(!base->hasFace() || !base->face().hasMapElement())
         return;
 
-    if(!base->face().mapElementAs<ConvexSubspace>().hasCluster())
+    if(!base->face().mapElementAs<ConvexSubspace>().hasSubsector())
         return;
 
     // Process neighbors?
-    if(!SectorCluster::isInternalEdge(base))
+    if(!Subsector::isInternalEdge(base))
     {
         ClockDirection const direction = edge? Clockwise : Anticlockwise;
         HEdge *hedge = base;
-        while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
+        while((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
             // Stop if there is no back subspace.
             ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
             if(!subspace) break;
 
-            if(subspace->cluster().visFloor().heightSmoothed() < min)
-                min = subspace->cluster().visFloor().heightSmoothed();
+            if(subspace->subsector().visFloor().heightSmoothed() < min)
+                min = subspace->subsector().visFloor().heightSmoothed();
 
-            if(subspace->cluster().visCeiling().heightSmoothed() > max)
-                max = subspace->cluster().visCeiling().heightSmoothed();
+            if(subspace->subsector().visCeiling().heightSmoothed() > max)
+                max = subspace->subsector().visCeiling().heightSmoothed();
         }
     }
 }
 
 static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
-    SectorCluster &cluster = sub.cluster();
-    ddouble const min      = cluster.  visFloor().heightSmoothed();
-    ddouble const max      = cluster.visCeiling().heightSmoothed();
+    Subsector &subsec = sub.subsector();
+    ddouble const min      = subsec.  visFloor().heightSmoothed();
+    ddouble const max      = subsec.visCeiling().heightSmoothed();
 
     HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
@@ -5989,13 +5989,13 @@ static void drawVertexes(Map &map)
 #undef MAX_VERTEX_POINT_DIST
 }
 
-static String labelForCluster(SectorCluster const &cluster)
+static String labelForSubsector(Subsector const &subsec)
 {
-    return String::number(cluster.sector().indexInMap());
+    return String::number(subsec.sector().indexInMap());
 }
 
 /**
- * Draw the sector cluster debugging aids.
+ * Draw the sector debugging aids.
  */
 static void drawSectors(Map &map)
 {
@@ -6011,14 +6011,14 @@ static void drawSectors(Map &map)
     GLState::current().setDepthTest(false).apply();
     glEnable(GL_TEXTURE_2D);
 
-    // Draw per-cluster sector labels:
-    map.forAllClusters([] (SectorCluster &cluster)
+    // Draw a sector label at the center of each subsector:
+    map.forAllSubsectors([] (Subsector &subsec)
     {
-        Vector3d const origin(cluster.center(), cluster.visPlane(Sector::Floor).heightSmoothed());
+        Vector3d const origin(subsec.center(), subsec.visPlane(Sector::Floor).heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
-            drawLabel(labelForCluster(cluster), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+            drawLabel(labelForSubsector(subsec), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
                       , 1 - distToEye / MAX_LABEL_DIST);
         }
         return LoopContinue;
