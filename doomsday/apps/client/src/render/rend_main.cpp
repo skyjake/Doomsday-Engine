@@ -5497,10 +5497,13 @@ static void drawSurfaceTangentVectors(Map &map)
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
 
-    map.forAllSubsectors([] (Subsector &subsec)
+    map.forAllSectors([] (Sector &sec)
     {
-        drawSurfaceTangentVectors(subsec);
-        return LoopContinue;
+        return sec.forAllSubsectors([] (Subsector &subsec)
+        {
+            drawSurfaceTangentVectors(subsec);
+            return LoopContinue;
+        });
     });
 
     //glEnable(GL_CULL_FACE);
@@ -6012,16 +6015,19 @@ static void drawSectors(Map &map)
     glEnable(GL_TEXTURE_2D);
 
     // Draw a sector label at the center of each subsector:
-    map.forAllSubsectors([] (Subsector &subsec)
+    map.forAllSectors([] (Sector &sec)
     {
-        Vector3d const origin(subsec.center(), subsec.visPlane(Sector::Floor).heightSmoothed());
-        ddouble const distToEye = (eyeOrigin - origin).length();
-        if(distToEye < MAX_LABEL_DIST)
+        return sec.forAllSubsectors([] (Subsector &subsec)
         {
-            drawLabel(labelForSubsector(subsec), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
-                      , 1 - distToEye / MAX_LABEL_DIST);
-        }
-        return LoopContinue;
+            Vector3d const origin(subsec.center(), subsec.visPlane(Sector::Floor).heightSmoothed());
+            ddouble const distToEye = (eyeOrigin - origin).length();
+            if (distToEye < MAX_LABEL_DIST)
+            {
+                drawLabel(labelForSubsector(subsec), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                          , 1 - distToEye / MAX_LABEL_DIST);
+            }
+            return LoopContinue;
+        });
     });
 
     GLState::current().setDepthTest(true).apply();

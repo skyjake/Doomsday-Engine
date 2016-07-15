@@ -34,6 +34,11 @@
 #include "Line"
 #include "Plane"
 
+namespace world
+{
+    class ConvexSubspace;
+    class Subsector;
+}
 struct mobj_s;
 
 /**
@@ -60,27 +65,6 @@ public:
      */
     Sector(de::dfloat lightLevel          = 1,
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
-
-//- Geometry ----------------------------------------------------------------------------
-
-    /**
-     * Returns the axis-aligned bounding box which encompases the geometry of all BSP leafs
-     * attributed to the sector (map units squared). Note that if no BSP leafs reference
-     * the sector the bounding box will be invalid (has negative dimensions).
-     */
-    AABoxd const &aaBox() const;
-
-#ifdef __CLIENT__
-
-    /**
-     * Returns a rough approximation of the total combined area of the geometry for all
-     * BSP leafs attributed to the sector (map units squared).
-     *
-     * @todo Refactor away (still used by the particle system).
-     */
-    de::ddouble roughArea() const;
-
-#endif  // __CLIENT__
 
 //- Lighting ----------------------------------------------------------------------------
 
@@ -125,6 +109,30 @@ public:
      * @see lightColor()
      */
     void setLightColor(de::Vector3f const &newLightColor);
+
+//- MapObjects --------------------------------------------------------------------------
+
+    /**
+     * Unlink MapObject @a mob from the sector..
+     *
+     * @param mob  Mobj to be unlinked.
+     */
+    void unlink(struct mobj_s *mob);
+
+    /**
+     * Link the mobj to the head of the list of mobjs "in" the sector. Note that mobjs in
+     * this list may not actually be inside the sector. This is because the sector is
+     * determined by interpreting the BSP leaf as a half-space and not a closed convex
+     * subspace (@ref world::Map::link()).
+     *
+     * @param mob  Mobj to be linked.
+     */
+    void link(struct mobj_s *mob);
+
+    /**
+     * Returns the first mobj in the linked list of mobjs "in" the sector.
+     */
+    struct mobj_s *firstMobj() const;
 
 //- Planes ------------------------------------------------------------------------------
 
@@ -178,6 +186,52 @@ public:
      */
     Plane *addPlane(de::Vector3f const &normal, de::ddouble height);
 
+//- Subsectors --------------------------------------------------------------------------
+
+    /**
+     * Returns the minimum bounding rectangle containing all the subsector geometries.
+     * If no subsectors are defined an invalid rectangle is returned (negative dimensions).
+     *
+     * @see hasSubsectors()
+     */
+    AABoxd const &aaBox() const;
+
+    /**
+     * Returns a rough approximation of the total area of all the subsector geometries.
+     * If no subsectors are defined @c 0 is returned.
+     *
+     * @see hasSubsectors()
+     */
+    de::ddouble roughArea() const;
+
+    /**
+     * Returns @c true if at least one Subsector exists for the sector.
+     *
+     * @see subsectorCount()
+     */
+    bool hasSubsectors() const;
+
+    /**
+     * Returns the total number of Subsectors of the sector.
+     *
+     * @see hasSubsectors()
+     */
+    de::dint subsectorCount() const;
+
+    /**
+     * Iterate Subsectors of the sector.
+     *
+     * @param callback  Function to call for each Subsector.
+     */
+    de::LoopResult forAllSubsectors(std::function<de::LoopResult (world::Subsector &)> callback) const;
+
+    /**
+     * Generate a new Subsector from the given set of map @a subspaces.
+     *
+     * @return  The newly constructed Subsector (ownership retained); otherwise @c nullptr
+     */
+    world::Subsector *addSubsector(QList<world::ConvexSubspace *> const &subspaces);
+
 //- Sides -------------------------------------------------------------------------------
 
     /**
@@ -206,29 +260,7 @@ public:
      */
     void buildSides();
 
-//- MapObjects --------------------------------------------------------------------------
-
-    /**
-     * Unlink MapObject @a mob from the sector..
-     *
-     * @param mob  Mobj to be unlinked.
-     */
-    void unlink(struct mobj_s *mob);
-
-    /**
-     * Link the mobj to the head of the list of mobjs "in" the sector. Note that mobjs in
-     * this list may not actually be inside the sector. This is because the sector is
-     * determined by interpreting the BSP leaf as a half-space and not a closed convex
-     * subspace (@ref world::Map::link()).
-     *
-     * @param mob  Mobj to be linked.
-     */
-    void link(struct mobj_s *mob);
-
-    /**
-     * Returns the first mobj in the linked list of mobjs "in" the sector.
-     */
-    struct mobj_s *firstMobj() const;
+//---------------------------------------------------------------------------------------
 
     /**
      * Returns the primary sound emitter for the sector. Other emitters in the sector are

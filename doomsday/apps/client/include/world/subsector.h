@@ -51,8 +51,10 @@ class Shard;
 namespace world {
 
 /**
- * Top level map geometry component describing a cluster of adjacent map subspaces (one or
- * more common edge) which are @em all attributed to the same Sector of the parent Map.
+ * Top level map geometry component describing a cluster of adjacent map subspaces (one
+ * or more common edge) which are @em all attributed to the same Sector of the parent Map.
+ * In other words, a Subsector can be thought of as an "island" of traversable map space
+ * somewhere in the void.
  *
  * @attention Should not be confused with the (more granular) id Tech 1 component of the
  * same name (now ConvexSubspace).
@@ -90,7 +92,7 @@ public:
     Subsector(QList<ConvexSubspace *> const &subspaces);
 
     /**
-     * Returns the parent Sector of the subsector.
+     * Returns the attributed Sector of the subsector.
      */
     Sector       &sector();
     Sector const &sector() const;
@@ -128,15 +130,15 @@ public:
 //- Planes ------------------------------------------------------------------------------
 
     /**
-     * Returns @c true iff at least one of the mapped visual planes of the subsector
-     * presently has a sky-masked material bound.
+     * Returns @c true if at least one of the @em visual Planes of the subsector is using
+     * a sky-masked Material.
      *
      * @see Surface::hasSkyMaskedMaterial()
      */
     bool hasSkyMaskPlane() const;
 
     /**
-     * Returns the @em physical Plane of the subsector associated with the given @a planeIndex.
+     * Returns the @em physical Plane of the subsector associated with @a planeIndex.
      *
      * @see floor(), ceiling()
      */
@@ -160,7 +162,7 @@ public:
     inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
 
     /**
-     * Returns the @em visual Plane of the subsector associated with the given @a planeIndex.
+     * Returns the @em visual Plane of the subsector associated with @a planeIndex.
      *
      * @see visFloor(), visCeiling()
      */

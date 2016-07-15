@@ -22,6 +22,7 @@
 
 #include "world/map.h"
 #include "world/p_object.h"
+#include "ConvexSubspace"
 #include "Line"
 #include "Plane"
 #include "Subsector"
@@ -114,9 +115,15 @@ DENG2_PIMPL(Sector)
         ~Planes() { qDeleteAll(*this); }
     };
 
-    Planes planes;                      ///< All planes of the sector.
-    MapObjects mapObjects;              ///< All map-objects "physically inside" the sector (not owned).
-    QList<LineSide *> sides;            ///< All referencing line sides (not owned).
+    struct Subsectors : public QList<Subsector *>
+    {
+        ~Subsectors() { qDeleteAll(*this); }
+    };
+
+    Planes planes;                      ///< Planes of the sector.
+    MapObjects mapObjects;              ///< All map-objects "in" one of the subsectors (not owned).
+    QList<LineSide *> sides;            ///< All line sides referencing the sector (not owned).
+    Subsectors subsectors;              ///< Traversable subsectors of the sector.
     ThinkerT<SoundEmitter> emitter;     ///< Head of the sound emitter chain.
 
     dfloat lightLevel = 0;              ///< Ambient light level.
@@ -156,19 +163,18 @@ DENG2_PIMPL(Sector)
     {
         bool inited = false;
         AABoxd bounds;
-        self.map().forAllSubsectorsOfSector(self, [&bounds, &inited] (Subsector &subsec)
+        for (Subsector const *subsec : subsectors)
         {
             if (inited)
             {
-                V2d_UniteBox(bounds.arvec2, subsec.aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, subsec->aaBox().arvec2);
             }
             else
             {
-                bounds = subsec.aaBox();
+                bounds = subsec->aaBox();
                 inited = true;
             }
-            return LoopContinue;
-        });
+        }
         return bounds;
     }
 
@@ -178,11 +184,10 @@ DENG2_PIMPL(Sector)
     ddouble findRoughArea() const
     {
         ddouble roughArea = 0;
-        self.map().forAllSubsectorsOfSector(self, [&roughArea] (Subsector &subsec)
+        for (Subsector const *subsec : subsectors)
         {
-            roughArea += subsec.roughArea();
-            return LoopContinue;
-        });
+            roughArea += subsec->roughArea();
+        }
         return roughArea;
     }
 
@@ -334,6 +339,33 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
     }
 
     return plane;
+}
+
+bool Sector::hasSubsectors() const
+{
+    return !d->subsectors.isEmpty();
+}
+
+dint Sector::subsectorCount() const
+{
+    return d->subsectors.count();
+}
+
+LoopResult Sector::forAllSubsectors(std::function<LoopResult(Subsector &)> callback) const
+{
+    for (Subsector *subsec : d->subsectors)
+    {
+        if (auto result = callback(*subsec)) return result;
+    }
+    return LoopContinue;
+}
+
+Subsector *Sector::addSubsector(QList<ConvexSubspace *> const &subspaces)
+{
+    /// @todo Add/move debug logic for ensuring the set is valid here. -ds
+    std::unique_ptr<Subsector> subsec(new Subsector(subspaces));
+    d->subsectors << subsec.get();
+    return subsec.release();
 }
 
 dint Sector::sideCount() const

@@ -141,8 +141,8 @@ DENG2_PIMPL(Subsector)
 
     ~Impl()
     {
-        observePlane(&sector().floor(), false);
-        observePlane(&sector().ceiling(), false);
+        //observePlane(&sector().floor(), false);
+        //observePlane(&sector().ceiling(), false);
 
 #ifdef __CLIENT__
         //sector().audienceForLightLevelChange() -= this;

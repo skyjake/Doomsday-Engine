@@ -527,7 +527,7 @@ public:  //- Subsectors --------------------------------------------------------
     /**
      * Returns the total number of Subsectors in the map.
      */
-    de::dint subsecCount() const;
+    de::dint subsectorCount() const;
 
     /**
      * Determine the Subsector which contains @a point and which is on the back side
@@ -539,22 +539,6 @@ public:  //- Subsectors --------------------------------------------------------
      * subsectors have not yet been built.
      */
     Subsector *subsectorAt(de::Vector2d const &point) const;
-
-    /**
-     * Iterate Subsectors in the map, making a function @a callback for each.
-     *
-     * @param callback  Function to call for each Subsector.
-     */
-    de::LoopResult forAllSubsectors(std::function<de::LoopResult (Subsector &)> callback);
-
-    /**
-     * Iterate Subsectors in the map which are attributed to the given @a sector,
-     * making a function @a callback for each.
-     *
-     * @param sector    Sector requirement (only attributed subsectors will be processed).
-     * @param callback  Function to call for each Subsector.
-     */
-    de::LoopResult forAllSubsectorsOfSector(Sector &sector, std::function<de::LoopResult (Subsector &)> callback);
 
 public:  //- Skies ----------------------------------------------------------------------
 

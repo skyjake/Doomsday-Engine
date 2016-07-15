@@ -128,17 +128,6 @@ DENG2_PIMPL(Map)
 , DENG2_OBSERVES(ThinkerData, Deletion)
 #endif
 {
-    bool editingEnabled = true;
-    EditableElements editable;
-
-    AABoxd bounds;              ///< Boundary points which encompass the entire map
-
-    Mesh mesh;                  ///< All map geometries.
-
-    QList<Sector *> sectors;
-    QList<Line *> lines;
-    QList<Polyobj *> polyobjs;
-
     struct Bsp
     {
         BspTree *tree = nullptr;  ///< Owns the BspElements.
@@ -158,10 +147,21 @@ DENG2_PIMPL(Map)
             delete subtree.userData();
             return 0;
         }
-    } bsp;
+    };
 
-    QList<ConvexSubspace *> subspaces;
-    QMultiMap<Sector *, Subsector *> subsectors;
+    bool editingEnabled = true;
+    EditableElements editable;
+
+    AABoxd bounds;              ///< Boundary points which encompass the entire map
+
+    Mesh mesh;                  ///< All map geometries.
+
+    QList<Sector *> sectors;
+    QList<Line *> lines;
+    QList<Polyobj *> polyobjs;
+
+    Bsp bsp;
+    QList<ConvexSubspace *> subspaces; ///< All player-traversable subspaces.
 
     //
     // Map entities and element properties (things, line specials, etc...).
@@ -328,7 +328,6 @@ DENG2_PIMPL(Map)
         // in their private data destructors.
         thinkers.reset();
 
-        qDeleteAll(subsectors);
         qDeleteAll(subspaces);
         qDeleteAll(sectors);
         for (Polyobj *polyobj : polyobjs)
@@ -707,15 +706,11 @@ DENG2_PIMPL(Map)
     }
 
     /**
-     * (Re)Build Subsectors for the given @a sector.
+     * Build Subsectors for the given @a sector.
      */
     void buildSubsectors(Sector &sector)
     {
-        for (auto it = subsectors.find(&sector); it != subsectors.end() && it.key() == &sector; )
-        {
-            delete *it;
-        }
-        subsectors.remove(&sector);
+        DENG2_ASSERT(!sector.hasSubsectors());
 
         // Group the subspaces into sets which share at least one common edge. We'll do
         // this by starting with a set per subspace and then keep merging the sets until
@@ -784,8 +779,7 @@ DENG2_PIMPL(Map)
         // Build subsectors.
         for (Subspaces const &subspaceSet : subspaceSets)
         {
-            // Subspace ownership is not given to the subsector.
-            subsectors.insert(&sector, new Subsector(subspaceSet));
+            sector.addSubsector(subspaceSet);
         }
     }
 
@@ -1213,9 +1207,13 @@ DENG2_PIMPL(Map)
 
         // Apply changes to all surfaces:
         bias.lastChangeOnFrame = R_FrameCount();
-        for (Subsector *subsec : subsectors)
+        for (Sector *sec : sectors)
         {
-            subsec->applyBiasChanges(allChanges);
+            sec->forAllSubsectors([&allChanges] (Subsector &subsec)
+            {
+                subsec.applyBiasChanges(allChanges);
+                return LoopContinue;
+            });
         }
     }
 
@@ -2270,29 +2268,6 @@ LoopResult Map::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> fun
     for (ConvexSubspace *sub : d->subspaces)
     {
         if (auto result = func(*sub)) return result;
-    }
-    return LoopContinue;
-}
-
-dint Map::subsecCount() const
-{
-    return d->subsectors.count();
-}
-
-LoopResult Map::forAllSubsectors(std::function<LoopResult (Subsector &)> callback)
-{
-    for (Subsector *subsec : d->subsectors)
-    {
-        if (auto result = callback(*subsec)) return result;
-    }
-    return LoopContinue;
-}
-
-LoopResult Map::forAllSubsectorsOfSector(Sector &sector, std::function<LoopResult (Subsector &)> callback)
-{
-    for (auto it = d->subsectors.constFind(&sector); it != d->subsectors.end() && it.key() == &sector; ++it)
-    {
-        if (auto result = callback(**it)) return result;
     }
     return LoopContinue;
 }
@@ -3970,7 +3945,7 @@ bool Map::endEditing()
         });
     }
 
-    // We can now initialize the convex subspace blockmap.
+    // We can now initialize the subspace blockmap.
     d->initSubspaceBlockmap();
 
     // Prepare the thinker lists.
