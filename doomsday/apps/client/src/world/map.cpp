@@ -789,11 +789,11 @@ DENG2_PIMPL(Map)
     }
 
     /// @return  @c true= @a mobj was unlinked successfully.
-    bool unlinkMobjFromSectors(mobj_t &mobj)
+    bool unlinkMobjFromSectors(mobj_t &mob)
     {
-        if (Mobj_IsSectorLinked(&mobj))
+        if (Mobj_IsSectorLinked(mob))
         {
-            Mobj_Sector(&mobj)->unlink(&mobj);
+            Mobj_Sector(&mob)->unlink(&mob);
             return true;
         }
         return false;

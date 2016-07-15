@@ -176,9 +176,9 @@ void P_MobjRecycle(mobj_t* mo)
     unusedMobjs = mo;
 }
 
-dd_bool Mobj_IsSectorLinked(mobj_t *mo)
+bool Mobj_IsSectorLinked(mobj_t const &mob)
 {
-    return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
+    return (mob._bspLeaf != nullptr && mob.sPrev != nullptr);
 }
 
 #undef Mobj_SetState

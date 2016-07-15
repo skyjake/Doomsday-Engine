@@ -1,7 +1,7 @@
 /** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -42,106 +42,111 @@ DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
     /**
-     * All planes of the sector.
-     */
-    struct Planes : public QList<Plane *>
-    {
-        ~Planes() { qDeleteAll(*this); }
-    } planes;
-
-    dfloat lightLevel = 0;          ///< Ambient light level.
-    Vector3f lightColor;            ///< Ambient light color.
-    mobj_t *mobjList = nullptr;     ///< Head of the list of map objects "in" the sector (not owned).
-    QList<LineSide *> sides;        ///< All referencing line sides (not owned).
-    ThinkerT<SoundEmitter> emitter; ///< Head of the sound emitter chain.
-
-    dint validCount = 0;            ///< Used by legacy algorithms to prevent repeated processing.
-
-    /**
-     * POD: Additional metrics describing the geometry of the sector (the clusters).
+     * POD: Metrics describing the geometry of the sector (the clusters).
      */
     struct GeomData
     {
         AABoxd aaBox;               ///< Bounding box for the whole sector (all clusters).
         ddouble roughArea = 0;      ///< Rough approximation. @c < 0= Invalid/need update.
     };
-    std::unique_ptr<GeomData> gdata;
+
+    struct MapObjects
+    {
+        mobj_t *head = nullptr;     ///< The list of map objects.
+
+        /**
+         * Returns @c true if the map-object @a mob is linked.
+         */
+        bool contains(mobj_t const *mob) const
+        {
+            if (mob)
+            {
+                for (mobj_t const *it = head; it; it = it->sNext)
+                {
+                    if (it == mob) return true;
+                }
+            }
+            return false;
+        }
+
+        void add(mobj_t *mob)
+        {
+            if (!mob) return;
+
+            // Ensure this isn't already included.
+            DENG2_ASSERT(!contains(mob));
+
+            // Prev pointers point to the pointer that points back to us.
+            // (Which practically disallows traversing the list backwards.)
+            if ((mob->sNext = head))
+            {
+                mob->sNext->sPrev = &mob->sNext;
+            }
+            *(mob->sPrev = &head) = mob;
+        }
+
+        /**
+         * Two links to update:
+         * 1) The link to the mobj from the previous node (sprev, always set) will
+         *    be modified to point to the node following it.
+         * 2) If there is a node following the mobj, set its sprev pointer to point
+         *    to the pointer that points back to it (the mobj's sprev, just modified).
+         */
+        void remove(mobj_t *mob)
+        {
+            if (!mob || !Mobj_IsSectorLinked(*mob)) return;
+
+            if ((*mob->sPrev = mob->sNext))
+            {
+                mob->sNext->sPrev = mob->sPrev;
+            }
+            // Not linked any more.
+            mob->sNext = nullptr;
+            mob->sPrev = nullptr;
+
+            // Ensure this has been completely unlinked.
+            DENG2_ASSERT(!contains(mob));
+        }
+    };
+
+    struct Planes : public QList<Plane *>
+    {
+        ~Planes() { qDeleteAll(*this); }
+    };
+
+    Planes planes;                      ///< All planes of the sector.
+    MapObjects mapObjects;              ///< All map-objects "physically inside" the sector (not owned).
+    QList<LineSide *> sides;            ///< All referencing line sides (not owned).
+    ThinkerT<SoundEmitter> emitter;     ///< Head of the sound emitter chain.
+
+    dfloat lightLevel = 0;              ///< Ambient light level.
+    Vector3f lightColor;                ///< Ambient light color.
+
+    std::unique_ptr<GeomData> gdata;    ///< Additional geometry info/metrics (cache).
+
+    dint validCount = 0;                ///< Used by legacy algorithms to prevent repeated processing.
 
     Impl(Public *i) : Base(i) {}
 
     /**
-     * Returns the additional geometry metrics (cached).
+     * Returns the additional geometry info/metrics from the cache.
      */
     GeomData &geom()
     {
         if (!gdata)
         {
-            // Time to calculate this info.
+            // Time to prepare this info.
             std::unique_ptr<GeomData> gd(new GeomData);
             gd->aaBox     = findBounds();
             gd->roughArea = findRoughArea();
             gdata.reset(gd.get());
             gd.release();
 
-            // Update the primary SoundEmitter right away.
-            updateEmitterOriginXY();
+            // As the bounds are now known; update the origin of the primary SoundEmitter.
+            emitter->origin[0] = (gdata->aaBox.minX + gdata->aaBox.maxX) / 2;
+            emitter->origin[1] = (gdata->aaBox.minY + gdata->aaBox.maxY) / 2;
         }
         return *gdata;
-    }
-
-#ifdef __CLIENT__
-
-    void fixSurfacesMissingMaterials()
-    {
-        for (LineSide *side : sides)
-        {
-            side->fixSurfacesMissingMaterials();
-            side->back().fixSurfacesMissingMaterials();
-        }
-    }
-
-#endif  // __CLIENT__
-
-    void updateEmitterOriginXY()
-    {
-        if (gdata)
-        {
-            AABoxd const &aaBox = geom().aaBox;
-            emitter->origin[0] = (aaBox.minX + aaBox.maxX) / 2;
-            emitter->origin[1] = (aaBox.minY + aaBox.maxY) / 2;
-        }
-        else
-        {
-            emitter->origin[0] = emitter->origin[1] = 0;
-        }
-    }
-
-    void updateEmitterOriginZ()
-    {
-        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
-    }
-
-    void updateSideEmitterOrigins()
-    {
-        for (LineSide *side : sides)
-        {
-            side->updateAllSoundEmitterOrigins();
-            side->back().updateAllSoundEmitterOrigins();
-        }
-    }
-
-    void updateAllEmitterOrigins()
-    {
-        updateEmitterOriginZ();
-        updateSideEmitterOrigins();
-    }
-
-    void planeHeightChanged(Plane &)
-    {
-        updateAllEmitterOrigins();
-#ifdef __CLIENT__
-        fixSurfacesMissingMaterials();
-#endif
     }
 
     /**
@@ -181,6 +186,45 @@ DENG2_PIMPL(Sector)
         return roughArea;
     }
 
+    void updateEmitterOriginZ()
+    {
+        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
+    }
+
+    void updateSideEmitterOrigins()
+    {
+        for (LineSide *side : sides)
+        {
+            side->updateAllSoundEmitterOrigins();
+            side->back().updateAllSoundEmitterOrigins();
+        }
+    }
+
+    void updateAllSideEmitterOrigins()
+    {
+        updateEmitterOriginZ();
+        updateSideEmitterOrigins();
+    }
+
+#ifdef __CLIENT__
+    void fixSurfacesMissingMaterials()
+    {
+        for (LineSide *side : sides)
+        {
+            side->fixSurfacesMissingMaterials();
+            side->back().fixSurfacesMissingMaterials();
+        }
+    }
+#endif
+
+    void planeHeightChanged(Plane &)
+    {
+        updateAllSideEmitterOrigins();
+#ifdef __CLIENT__
+        fixSurfacesMissingMaterials();
+#endif
+    }
+
     DENG2_PIMPL_AUDIENCE(LightLevelChange)
     DENG2_PIMPL_AUDIENCE(LightColorChange)
 };
@@ -196,58 +240,19 @@ Sector::Sector(dfloat lightLevel, Vector3f const &lightColor)
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
 }
 
-/**
- * Two links to update:
- * 1) The link to the mobj from the previous node (sprev, always set) will
- *    be modified to point to the node following it.
- * 2) If there is a node following the mobj, set its sprev pointer to point
- *    to the pointer that points back to it (the mobj's sprev, just modified).
- */
 void Sector::unlink(mobj_t *mob)
 {
-    if (!mob || !Mobj_IsSectorLinked(mob))
-        return;
-
-    if ((*mob->sPrev = mob->sNext))
-        mob->sNext->sPrev = mob->sPrev;
-
-    // Not linked any more.
-    mob->sNext = nullptr;
-    mob->sPrev = nullptr;
-
-    // Ensure this has been completely unlinked.
-#ifdef DENG2_DEBUG
-    for (mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
-    {
-        DENG2_ASSERT(iter != mob);
-    }
-#endif
+    d->mapObjects.remove(mob);
 }
 
 void Sector::link(mobj_t *mob)
 {
-    if (!mob) return;
-
-    // Ensure this isn't already linked.
-#ifdef DENG2_DEBUG
-    for (mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
-    {
-        DENG2_ASSERT(iter != mob);
-    }
-#endif
-
-    // Prev pointers point to the pointer that points back to us.
-    // (Which practically disallows traversing the list backwards.)
-
-    if ((mob->sNext = d->mobjList))
-        mob->sNext->sPrev = &mob->sNext;
-
-    *(mob->sPrev = &d->mobjList) = mob;
+    d->mapObjects.add(mob);
 }
 
 struct mobj_s *Sector::firstMobj() const
 {
-    return d->mobjList;
+    return d->mapObjects.head;
 }
 
 bool Sector::hasSkyMaskPlane() const
@@ -269,7 +274,7 @@ Plane &Sector::plane(dint planeIndex)
 {
     if (planeIndex >= 0 && planeIndex < d->planes.count()) return *d->planes.at(planeIndex);
     /// @throw MissingPlaneError The referenced plane does not exist.
-    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
+    throw MissingPlaneError("Sector::plane", "Unknown plane #" + String::number(planeIndex));
 }
 
 Plane const &Sector::plane(dint planeIndex) const
@@ -410,13 +415,13 @@ void Sector::chainSoundEmitters()
     // Clear the root of the emitter chain.
     root.thinker.next = root.thinker.prev = nullptr;
 
-    // Link emitters for planes:
+    // Link emitters for planes.
     for (Plane *plane : d->planes)
     {
         linkSoundEmitter(root, plane->soundEmitter());
     }
 
-    // Link emitters for LineSide sections:
+    // Link emitters for LineSide sections.
     for (LineSide *side : d->sides)
     {
         if (side->hasSections())
@@ -513,7 +518,7 @@ dint Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:
-        args.setValue(DMT_SECTOR_MOBJLIST, &d->mobjList, 0);
+        args.setValue(DMT_SECTOR_MOBJLIST, &d->mapObjects.head, 0);
         break;
     case DMU_VALID_COUNT:
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);

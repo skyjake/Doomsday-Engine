@@ -219,10 +219,14 @@ coord_t Mobj_ShadowRadius(mobj_t const &mob);
 
 coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point);
 
-dd_bool Mobj_IsSectorLinked(mobj_t *mob);
+/**
+ * Returns @c true if the map-object is physically inside (and @em presently linked to)
+ * some Sector of the owning Map.
+ */
+bool Mobj_IsSectorLinked(mobj_t const &mob);
 
 /**
- * Returns the current "float bob" offset for the given map-object @a mob (if enabled); otherwise @c 0.
+ * Returns the current "float bob" offset (if enabled); otherwise @c 0.
  */
 coord_t Mobj_BobOffset(mobj_t const &mob);
 
