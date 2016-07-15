@@ -82,8 +82,10 @@ HeaderWidget::HeaderWidget()
     d->title->setAlignment(ui::AlignLeft);
     d->title->setTextLineAlignment(ui::AlignLeft);
     d->title->setFont("title");
-    d->title->setSizePolicy(ui::Fixed, ui::Fixed);
-    d->title->margins().setLeft("");
+    d->title->setSizePolicy(ui::Fixed, ui::Expand);
+    d->title->margins()
+            .setLeft("")
+            .setBottom(style().fonts().font("title").descent());
 
     d->logo->setSizePolicy(ui::Filled, ui::Filled);
     d->logo->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
@@ -122,17 +124,17 @@ HeaderWidget::HeaderWidget()
             .setInput(Rule::Width,  Const(0))
             .setInput(Rule::Top,    rule().top() + margins().top())
             .setInput(Rule::Left,   rule().left());
-    d->title->rule()
-            .setInput(Rule::Height, logoHeight)
-            .setInput(Rule::Right,  rule().right())
-            .setInput(Rule::Top,    d->logo->rule().top())
-            .setInput(Rule::Left,   d->logo->rule().right());
     d->menuButton->rule()
-            .setInput(Rule::Bottom, d->title->rule().bottom())
-            .setInput(Rule::Left,   d->title->rule().left() +
+            .setInput(Rule::Bottom, d->logo->rule().bottom())
+            .setInput(Rule::Left,   d->logo->rule().right() +
                                     d->title->margins().left());
+    d->title->rule()
+            //.setInput(Rule::Height, logoHeight)
+            .setInput(Rule::Right,  rule().right())
+            .setInput(Rule::Bottom, d->menuButton->rule().top())
+            .setInput(Rule::Left,   d->logo->rule().right());
     d->infoPanel->rule()
-            .setInput(Rule::Top,    d->title->rule().bottom())
+            .setInput(Rule::Top,    d->logo->rule().bottom())
             .setInput(Rule::Left,   rule().left());
     d->info->rule()
             .setInput(Rule::Width,  rule().width());
