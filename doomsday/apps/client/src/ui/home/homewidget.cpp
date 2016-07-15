@@ -44,6 +44,7 @@
 using namespace de;
 
 static TimeDelta const SCROLL_SPAN = .5;
+static TimeDelta const DISMISS_SPAN = 2.0;
 
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(Games, Readiness)
@@ -70,10 +71,12 @@ DENG_GUI_PIMPL(HomeWidget)
     SafeWidgetPtr<FadeToBlackWidget> blanker;
     int currentOffsetTab = 0;
     AnimationRule *scrollOffset;
+    AnimationRule *dismissOffset;
     ButtonWidget *moveLeft;
     ButtonWidget *moveRight;
     QTimer moveShowTimer;
     ButtonWidget *taskBarHintButton;
+    bool dismissing = false;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -87,6 +90,8 @@ DENG_GUI_PIMPL(HomeWidget)
         columnWidth  = new IndirectRule;
         scrollOffset = new AnimationRule(0);
         scrollOffset->setStyle(Animation::EaseOut);
+        dismissOffset = new AnimationRule(0);
+        dismissOffset->setStyle(Animation::EaseBoth);
 
         tabs = new TabWidget;
 
@@ -114,7 +119,7 @@ DENG_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setOpacity(.66f);
         taskBarHintButton->rule()
                 .setInput(Rule::Right,  self.rule().right()  - rule("dialog.gap"))
-                .setInput(Rule::Bottom, self.rule().bottom() - rule("dialog.gap"));
+                .setInput(Rule::Bottom, self.rule().bottom() - rule("dialog.gap") + *dismissOffset);
         taskBarHintButton->setActionFn([this] () {
             ClientWindow::main().taskBar().open();
         });
@@ -149,6 +154,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
+        releaseRef(dismissOffset);
     }
 
     void configureEdgeNavigationButton(ButtonWidget &button)
@@ -231,21 +237,29 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void currentGameChanged(Game const &newGame)
     {
-        if (newGame.isNull())
+        if (!newGame.isNull())
         {
-            self.show();
+            //self.show();
+            //moveOnscreen();
+            ClientWindow::main().fadeContentFromBlack(1.0);
         }
-        else
+        /*else
         {
-            self.hide();
-        }
+            //self.hide();
+            moveOffscreen();
+        }*/
     }
 
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
         if (gameBeingUnloaded.isNull())
         {
-            self.hide();
+            //self.hide();
+            moveOffscreen();
+        }
+        else
+        {
+            moveOnscreen();
         }
     }
 
@@ -254,6 +268,33 @@ DENG_GUI_PIMPL(HomeWidget)
         updateVisibleColumnsAndTabs();
         calculateColumnCount();
         updateLayout();
+    }
+
+    void moveOffscreen()
+    {
+        if (fequal(dismissOffset->animation().target(), 0.f))
+        {
+            dismissOffset->set(-root().viewHeight(), DISMISS_SPAN);
+            dismissing = true;
+        }
+    }
+
+    void moveOnscreen()
+    {
+        if (!fequal(dismissOffset->animation().target(), 0.f))
+        {
+            self.show();
+            dismissOffset->set(0, DISMISS_SPAN);
+        }
+    }
+
+    void checkDismissHiding()
+    {
+        if (dismissing && dismissOffset->animation().done())
+        {
+            self.hide();
+            dismissing = false;
+        }
     }
 
     void addColumn(ColumnWidget *col)
@@ -289,7 +330,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Lay out the columns from left to right.
         SequentialLayout layout(self.rule().left() - *scrollOffset,
-                                self.rule().top(), ui::Right);
+                                self.rule().top()  + *dismissOffset,
+                                ui::Right);
         for (Widget *widget : self.childWidgets())
         {
             if (!widget->behavior().testFlag(Widget::Hidden))
@@ -456,12 +498,12 @@ HomeWidget::HomeWidget()
     Rule const &gap = rule("gap");
     d->tabsBackground->rule()
             .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Top,    rule().top())
+            .setInput(Rule::Top,    rule().top() + *d->dismissOffset)
             .setInput(Rule::Width,  rule().width())
             .setInput(Rule::Height, d->tabs->rule().height() + gap*2);
     d->tabs->rule()
             .setInput(Rule::Width,  rule().width())
-            .setInput(Rule::Top,    rule().top() + gap)
+            .setInput(Rule::Top,    rule().top() + gap + *d->dismissOffset)
             .setInput(Rule::Left,   rule().left());
 
     d->updateLayout();
@@ -504,6 +546,12 @@ bool HomeWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void HomeWidget::update()
+{
+    GuiWidget::update();
+    d->checkDismissHiding();
 }
 
 PopupWidget *HomeWidget::makeSettingsPopup()

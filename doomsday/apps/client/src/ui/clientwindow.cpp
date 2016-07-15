@@ -180,15 +180,19 @@ DENG2_PIMPL(ClientWindow)
         gameUI->disable();
         container().add(gameUI);
 
-        home = new HomeWidget;
-        home->rule().setRect(root.viewRule());
-        container().add(home);
-
         // Busy widget shows progress indicator and frozen game content.
         busy = new BusyWidget;
         busy->hide(); // normally hidden
         busy->rule().setRect(root.viewRule());
         root.add(busy);
+
+        home = new HomeWidget;
+        home->rule().setRect(root.viewRule());
+        container().add(home);
+
+        // Busy progress should be visible over the Home.
+        busy->progress().orphan();
+        container().add(&busy->progress());
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -1040,7 +1044,7 @@ void ClientWindow::drawGameContent()
 
     GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
-    d->root.drawUntil(*d->notifications);
+    d->root.drawUntil(*d->home);
 }
 
 void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
