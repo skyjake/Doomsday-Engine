@@ -148,7 +148,7 @@ private:
             return;
 
         auto &backSubspace         = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        Subsector &backSubsector = backSubspace.subsector();
+        Subsector &backSubsec = backSubspace.subsector();
 
         // Which way does the spread go?
         if(!(subspace.validCount() == validCount &&
@@ -170,11 +170,11 @@ private:
             return;
 
         // Do not spread if the sector on the back side is closed with no height.
-        if(!backSubsector.hasWorldVolume())
+        if(!backSubsec.hasWorldVolume())
             return;
 
-        if(backSubsector.visCeiling().heightSmoothed() <= subsec.visFloor().heightSmoothed() ||
-           backSubsector.visFloor().heightSmoothed() >= subsec.visCeiling().heightSmoothed())
+        if(backSubsec.visCeiling().heightSmoothed() <= subsec.visFloor().heightSmoothed() ||
+           backSubsec.visFloor().heightSmoothed() >= subsec.visCeiling().heightSmoothed())
             return;
 
         // Are there line side surfaces which should prevent spreading?
@@ -189,8 +189,8 @@ private:
             if(!facingLineSide.back().hasSections())
                 return;
 
-            Subsector const &fromSubsector = facingLineSide.isFront()? subsec : backSubsector;
-            Subsector const &toSubsector   = facingLineSide.isFront()? backSubsector : subsec;
+            Subsector const &fromSubsector = facingLineSide.isFront()? subsec : backSubsec;
+            Subsector const &toSubsector   = facingLineSide.isFront()? backSubsec : subsec;
 
             // Might a material cover the opening?
             if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())

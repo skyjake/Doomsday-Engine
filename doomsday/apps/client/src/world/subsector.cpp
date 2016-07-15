@@ -351,14 +351,14 @@ DENG2_PIMPL(Subsector)
                         flags &= ~AllMissingTop;
                     }
 
-                    Subsector const &backSubsector = backSubspace.subsector();
-                    if (backSubsector.floor().height() < sector().floor().height() &&
+                    Subsector const &backSubsec = backSubspace.subsector();
+                    if (backSubsec.floor().height() < sector().floor().height() &&
                         backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if (backSubsector.ceiling().height() > sector().ceiling().height() &&
+                    if (backSubsec.ceiling().height() > sector().ceiling().height() &&
                         backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
@@ -387,11 +387,11 @@ DENG2_PIMPL(Subsector)
                 if (!hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
                     continue;
 
-                Subsector &backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
-                if (&backSubsector == thisPublic)
+                Subsector &backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
+                if (&backSubsec == thisPublic)
                     continue;
 
-                extSubsectorMap.insert(&backSubsector, hedge);
+                extSubsectorMap.insert(&backSubsec, hedge);
 
             } while ((hedge = &hedge->next()) != base);
         }

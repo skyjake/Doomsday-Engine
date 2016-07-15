@@ -167,8 +167,8 @@ void ShadowEdge::prepare(dint planeIndex)
     if (hedge.twin().hasFace() &&
         hedge.twin().face().mapElementAs<ConvexSubspace>().hasSubsector())
     {
-        Subsector const &backSubsector = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
-        Plane const &backPlane = backSubsector.visPlane(planeIndex);
+        Subsector const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
+        Plane const &backPlane = backSubsec.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)
                                         : lineSide.middle();
@@ -182,7 +182,7 @@ void ShadowEdge::prepare(dint planeIndex)
         if (planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backSubsector.plane(otherPlaneIndex).heightSmoothed();
+        coord_t bhz = backSubsec.plane(otherPlaneIndex).heightSmoothed();
         if (planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
@@ -192,9 +192,9 @@ void ShadowEdge::prepare(dint planeIndex)
             d->sectorOpenness = 2; // Consider it fully open.
         }
         // Is the back sector a closed yet sky-masked surface?
-        else if (subsec.visFloor().heightSmoothed() >= backSubsector.visCeiling().heightSmoothed() &&
+        else if (subsec.visFloor().heightSmoothed() >= backSubsec.visCeiling().heightSmoothed() &&
                  subsec    .visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
-                 backSubsector.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
+                 backSubsec.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
         }

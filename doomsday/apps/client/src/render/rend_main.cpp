@@ -3194,12 +3194,12 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     }
 
     Subsector const &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector();
-    Subsector const &backSubsector = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
+    Subsector const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
 
     coord_t const ffloor   = subsec.visFloor().heightSmoothed();
     coord_t const fceil    = subsec.visCeiling().heightSmoothed();
-    coord_t const bfloor   = backSubsector.visFloor().heightSmoothed();
-    coord_t const bceil    = backSubsector.visCeiling().heightSmoothed();
+    coord_t const bfloor   = backSubsec.visFloor().heightSmoothed();
+    coord_t const bceil    = backSubsec.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
@@ -3222,8 +3222,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     {
         Surface const &ffloorSurface = subsec.visFloor  ().surface();
         Surface const &fceilSurface  = subsec.visCeiling().surface();
-        Surface const &bfloorSurface = backSubsector.visFloor  ().surface();
-        Surface const &bceilSurface  = backSubsector.visCeiling().surface();
+        Surface const &bfloorSurface = backSubsec.visFloor  ().surface();
+        Surface const &bceilSurface  = backSubsec.visCeiling().surface();
 
         // A closed gap?
         if(de::fequal(fceil, bfloor))
@@ -3419,13 +3419,13 @@ static void occludeSubspace(bool frontFacing)
         if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             continue;
 
-        Subsector &backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
+        Subsector &backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if(backSubsector.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
+        if(backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
         {
-            openBottom = backSubsector.visFloor().heightSmoothed();
+            openBottom = backSubsec.visFloor().heightSmoothed();
         }
         else
         {
@@ -3433,9 +3433,9 @@ static void occludeSubspace(bool frontFacing)
         }
 
         coord_t openTop;
-        if(backSubsector.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
+        if(backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
         {
-            openTop = backSubsector.visCeiling().heightSmoothed();
+            openTop = backSubsec.visCeiling().heightSmoothed();
         }
         else
         {
@@ -3448,16 +3448,16 @@ static void occludeSubspace(bool frontFacing)
 
         // Does the floor create an occlusion?
         if(((openBottom > subsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
-            || (openBottom >  backSubsector.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
-           && canOccludeEdgeBetweenPlanes(subsec.visFloor(), backSubsector.visFloor()))
+            || (openBottom >  backSubsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
+           && canOccludeEdgeBetweenPlanes(subsec.visFloor(), backSubsec.visFloor()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
         if(((openTop < subsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
-            || (openTop <  backSubsector.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
-           && canOccludeEdgeBetweenPlanes(subsec.visCeiling(), backSubsector.visCeiling()))
+            || (openTop <  backSubsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
+           && canOccludeEdgeBetweenPlanes(subsec.visCeiling(), backSubsec.visCeiling()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
@@ -5395,7 +5395,7 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
         Subsector &subsec =
             (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
                                   : hedge->face().mapElementAs<ConvexSubspace>()).subsector();
-        Subsector &backSubsector =
+        Subsector &backSubsec =
             (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
                                   : hedge->twin().face().mapElementAs<ConvexSubspace>()).subsector();
 
@@ -5408,23 +5408,23 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backSubsector.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed() &&
+        if(backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed() &&
            !(subsec.    visCeiling().surface().hasSkyMaskedMaterial() &&
-             backSubsector.visCeiling().surface().hasSkyMaskedMaterial()))
+             backSubsec.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = backSubsector.visCeiling().heightSmoothed();
+            coord_t const bottom = backSubsec.visCeiling().heightSmoothed();
             coord_t const top    = subsec.    visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.top(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
         }
 
-        if(backSubsector.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed() &&
+        if(backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed() &&
            !(subsec.    visFloor().surface().hasSkyMaskedMaterial() &&
-             backSubsector.visFloor().surface().hasSkyMaskedMaterial()))
+             backSubsec.visFloor().surface().hasSkyMaskedMaterial()))
         {
             coord_t const bottom = subsec.    visFloor().heightSmoothed();
-            coord_t const top    = backSubsector.visFloor().heightSmoothed();
+            coord_t const top    = backSubsec.visFloor().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.bottom(),
                                          Vector3d(center, bottom + (top - bottom) / 2));

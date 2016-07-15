@@ -621,10 +621,10 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
             projected.texture = LST_RADIO_CC;
         }
     }
-    else if(Subsector *backSubsector = hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr())
+    else if(Subsector *backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr())
     {
-        coord_t const bFloor = backSubsector->visFloor  ().heightSmoothed();
-        coord_t const bCeil  = backSubsector->visCeiling().heightSmoothed();
+        coord_t const bFloor = backSubsec->visFloor  ().heightSmoothed();
+        coord_t const bCeil  = backSubsec->visCeiling().heightSmoothed();
 
         if(bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
         {

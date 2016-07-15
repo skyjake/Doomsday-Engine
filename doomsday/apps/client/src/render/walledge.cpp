@@ -163,14 +163,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
         else
         {
             // Two sided.
-            world::Subsector const *backSubsector =
+            world::Subsector const *backSubsec =
                 line.definesPolyobj() ? subsec
                                       : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>().subsectorPtr();
 
             Plane const *ffloor = &subsec->visFloor();
             Plane const *fceil  = &subsec->visCeiling();
-            Plane const *bfloor = &backSubsector->visFloor();
-            Plane const *bceil  = &backSubsector->visCeiling();
+            Plane const *bfloor = &backSubsec->visFloor();
+            Plane const *bceil  = &backSubsec->visCeiling();
 
             switch(spec.section)
             {

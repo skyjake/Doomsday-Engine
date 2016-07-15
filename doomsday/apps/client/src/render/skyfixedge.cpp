@@ -124,15 +124,15 @@ DENG2_PIMPL(SkyFixEdge)
         if(!hedge->hasMapElement()) return false;
 
         Subsector const *subsec     = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
-        Subsector const *backSubsector = hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>() .subsectorPtr() : 0;
+        Subsector const *backSubsec = hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>() .subsectorPtr() : 0;
 
-        if(backSubsector && &backSubsector->sector() == &subsec->sector())
+        if(backSubsec && &backSubsec->sector() == &subsec->sector())
             return false;
 
         // Select the relative planes for the fix type.
         int relPlane = lower? Sector::Floor : Sector::Ceiling;
         Plane const *front   = &subsec->visPlane(relPlane);
-        Plane const *back    = backSubsector? &backSubsector->visPlane(relPlane) : 0;
+        Plane const *back    = backSubsec? &backSubsec->visPlane(relPlane) : 0;
 
         if(!front->surface().hasSkyMaskedMaterial())
             return false;
@@ -186,24 +186,24 @@ DENG2_PIMPL(SkyFixEdge)
         }
 
         Subsector const *subsec     = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
-        Subsector const *backSubsector =
+        Subsector const *backSubsec =
             hedge->twin().hasFace()? hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr() : 0;
 
         Plane const *ffloor = &subsec->visFloor();
         Plane const *fceil  = &subsec->visCeiling();
-        Plane const *bceil  = backSubsector? &backSubsector->visCeiling() : 0;
-        Plane const *bfloor = backSubsector? &backSubsector->visFloor()   : 0;
+        Plane const *bceil  = backSubsec? &backSubsec->visCeiling() : 0;
+        Plane const *bfloor = backSubsec? &backSubsec->visFloor()   : 0;
 
         if(fixType == Upper)
         {
             hi = skyFixCeilZ(fceil, bceil);
-            lo = de::max((backSubsector && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
+            lo = de::max((backSubsec && bceil->surface().hasSkyMaskedMaterial())? bceil->heightSmoothed()
                                                                                  : fceil->heightSmoothed(),
                          ffloor->heightSmoothed());
         }
         else
         {
-            hi = de::min((backSubsector && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
+            hi = de::min((backSubsec && bfloor->surface().hasSkyMaskedMaterial())? bfloor->heightSmoothed()
                                                                                   : ffloor->heightSmoothed(),
                          fceil->heightSmoothed());
             lo = skyFixFloorZ(ffloor, bfloor);
