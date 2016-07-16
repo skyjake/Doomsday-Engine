@@ -39,6 +39,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     PackagesWidget *list = nullptr;
     ui::ListData actions;
     ProgressWidget *updating;
+    bool ignoreCheck = false;
 
     Impl(Public *i) : Base(i)
     {
@@ -53,6 +54,29 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                 .setInput(Rule::Top,    self.buttonsMenu().rule().top())
                 .setInput(Rule::Right,  self.buttonsMenu().rule().left())
                 .setInput(Rule::Height, self.buttonsMenu().rule().height() - self.margins().bottom());
+    }
+
+    String defaultButtonLabel() const
+    {
+        if (!list) return "";
+        if (ignoreCheck)
+        {
+            return _E(b)_E(D) + tr("Ignore and Continue");
+        }
+        if (list->itemCount() > 0)
+        {
+            return _E(b) + tr("Load Packages");
+        }
+        return _E(b) + tr("Unload Packages");
+    }
+
+    void enableIgnore(bool yes)
+    {
+        ignoreCheck = yes;
+        if (auto *button = self.buttonWidget(Id1))
+        {
+            button->setText(defaultButtonLabel());
+        }
     }
 
     void update()
@@ -78,7 +102,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             list->setFilterEditorMinimumY(self.area().rule().top());
 
             StringList const loaded = DoomsdayApp::loadedPackagesIncludedInSavegames();
-            qDebug() << "Currently loaded:" << loaded;
+            //qDebug() << "Currently loaded:" << loaded;
 
             if (!GameProfiles::arePackageListsCompatible(loaded, wanted))
             {
@@ -88,7 +112,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                     self.message().setText(message + "\n\n" + tr("The packages listed below "
                                                                  "should be loaded."));
                     self.buttons()
-                            << new DialogButtonItem(Default | Accept, tr("Load Packages"),
+                            << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                     new CallbackAction([this] () { resolvePackages(); }));
                 }
                 else
@@ -97,7 +121,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                     self.message().setText(message + "\n\n" + tr("All additional packages "
                                                                  "should be unloaded."));
                     self.buttons()
-                               << new DialogButtonItem(Default | Accept, tr("Unload Packages"),
+                               << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                        new CallbackAction([this] () { resolvePackages(); }));
                 }
                 self.buttons()
@@ -125,6 +149,13 @@ DENG2_PIMPL(PackageCompatibilityDialog)
 
     void resolvePackages()
     {
+        if (ignoreCheck)
+        {
+            LOG_RES_NOTE("Ignoring package compatibility check due to user request");
+            self.accept();
+            return;
+        }
+
         qDebug() << "resolving...";
 
         auto &pkgLoader = PackageLoader::get();
@@ -209,4 +240,19 @@ void PackageCompatibilityDialog::setWantedPackages(StringList const &packages)
 bool PackageCompatibilityDialog::isCompatible() const
 {
     return !d->conflicted;
+}
+
+bool PackageCompatibilityDialog::handleEvent(Event const &event)
+{
+    // Hold Alt to skip the check.
+    if (event.isKey())
+    {
+        auto const &key = event.as<KeyEvent>();
+        if (key.ddKey() == DDKEY_LALT || key.ddKey() == DDKEY_RALT)
+        {
+            d->enableIgnore(key.type() != Event::KeyRelease);
+        }
+    }
+
+    return MessageDialog::handleEvent(event);
 }

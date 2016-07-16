@@ -30,10 +30,12 @@ public:
     PackageCompatibilityDialog(de::String const &name = "");
 
     void setMessage(de::String const &msg);
-
     void setWantedPackages(de::StringList const &packages);
 
     bool isCompatible() const;
+
+    // Events.
+    bool handleEvent(de::Event const &event) override;
 
 private:
     DENG2_PRIVATE(d)
