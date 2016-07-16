@@ -88,7 +88,7 @@ DENG2_PIMPL(ClientWindow)
 
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
-    CompositorWidget *compositor = nullptr;
+    //CompositorWidget *compositor = nullptr;
     GameWidget *game = nullptr;
     GameUIWidget *gameUI = nullptr;
     TaskBarWidget *taskBar = nullptr;
@@ -155,14 +155,14 @@ DENG2_PIMPL(ClientWindow)
                 << self.configName("vsync");
     }
 
-    Widget &container()
+    /*Widget &container()
     {
         if (compositor)
         {
             return *compositor;
         }
         return root;
-    }
+    }*/
 
     void setupUI()
     {
@@ -178,7 +178,7 @@ DENG2_PIMPL(ClientWindow)
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
-        container().add(gameUI);
+        root.add(gameUI);
 
         // Busy widget shows progress indicator and frozen game content.
         busy = new BusyWidget;
@@ -188,16 +188,16 @@ DENG2_PIMPL(ClientWindow)
 
         home = new HomeWidget;
         home->rule().setRect(root.viewRule());
-        container().add(home);
+        root.add(home);
 
         // Busy progress should be visible over the Home.
         busy->progress().orphan();
-        container().add(&busy->progress());
+        root.add(&busy->progress());
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
         notifications->useDefaultPlacement(game->rule());
-        container().add(notifications);
+        root.add(notifications);
 
         // Alerts notification and popup.
         alerts = new AlertDialog;
@@ -213,7 +213,7 @@ DENG2_PIMPL(ClientWindow)
         taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
         taskBarBlur->rule().setRect(root.viewRule());
         taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
-        container().add(taskBarBlur);
+        root.add(taskBarBlur);
 
         // Taskbar is over almost everything else.
         taskBar = new TaskBarWidget;
@@ -221,7 +221,7 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
-        container().add(taskBar);
+        root.add(taskBar);
 
 #if 0
         // The game selection's height depends on the taskbar.
@@ -235,7 +235,7 @@ DENG2_PIMPL(ClientWindow)
         // Privileged work-in-progress log.
         privLog = new PrivilegedLogWidget;
         privLog->rule().setRect(root.viewRule());
-        container().add(privLog);
+        root.add(privLog);
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -255,7 +255,7 @@ DENG2_PIMPL(ClientWindow)
                 .setSize(Const(48), Const(48))
                 .setLeftTop(*cursorX, *cursorY);
         cursor->hide();
-        container().add(cursor);
+        root.add(cursor);
     }
 
     void appStartupCompleted()
@@ -533,7 +533,7 @@ DENG2_PIMPL(ClientWindow)
         }
 
         sidebar = widget;
-        container().insertBefore(sidebar, *notifications);
+        root.insertBefore(sidebar, *notifications);
     }
 
     void uninstallSidebar(SidebarLocation location)
@@ -548,7 +548,7 @@ DENG2_PIMPL(ClientWindow)
             break;
         }
 
-        container().remove(*sidebar);
+        root.remove(*sidebar);
         sidebar->guiDeleteLater();
         sidebar = 0;
     }
@@ -594,7 +594,7 @@ DENG2_PIMPL(ClientWindow)
         root.setViewSize(size);
     }
 
-    void enableCompositor(bool enable)
+/*    void enableCompositor(bool enable)
     {
         DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -708,7 +708,7 @@ DENG2_PIMPL(ClientWindow)
             // We'll simply cover the entire view.
             compositor->useDefaultCompositeProjection();
         }
-    }
+    }*/
 
     void updateMouseCursor()
     {
@@ -907,7 +907,7 @@ void ClientWindow::preDraw()
 
 void ClientWindow::drawWindowContent()
 {
-    d->updateCompositor();
+    //d->updateCompositor();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
@@ -997,7 +997,7 @@ bool ClientWindow::prepareForDraw()
     }
 
     // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
+    //d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
 
     if (d->performDeferredTasks() == Impl::AbortFrame)
     {
@@ -1106,10 +1106,10 @@ void ClientWindow::showColorAdjustments()
 
 void ClientWindow::addOnTop(GuiWidget *widget)
 {
-    d->container().add(widget);
+    d->root.add(widget);
 
     // Make sure the cursor remains the topmost widget.
-    d->container().moveChildToLast(*d->cursor);
+    d->root.moveChildToLast(*d->cursor);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
