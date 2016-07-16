@@ -105,6 +105,7 @@ DENG2_PIMPL(ClientWindow)
     ConstantRule *cursorX;
     ConstantRule *cursorY;
     bool cursorHasBeenHidden = false;
+    bool isGameMini = false;
 
     // FPS notifications.
     UniqueWidgetPtr<LabelWidget> fpsCounter;
@@ -176,7 +177,7 @@ DENG2_PIMPL(ClientWindow)
         root.add(game);
 
         gameUI = new GameUIWidget;
-        gameUI->rule().setRect(root.viewRule());
+        gameUI->rule().setRect(game->rule());
         gameUI->disable();
         root.add(gameUI);
 
@@ -192,11 +193,12 @@ DENG2_PIMPL(ClientWindow)
 
         // Busy progress should be visible over the Home.
         busy->progress().orphan();
+        busy->progress().rule().setRect(game->rule());
         root.add(&busy->progress());
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
-        notifications->useDefaultPlacement(game->rule());
+        notifications->useDefaultPlacement(root.viewRule());
         root.add(notifications);
 
         // Alerts notification and popup.
@@ -527,8 +529,10 @@ DENG2_PIMPL(ClientWindow)
                     .setInput(Rule::Bottom, taskBar->rule().top());
             game->rule()
                     .setInput(Rule::Right,  widget->rule().left());
-            gameUI->rule()
-                    .setInput(Rule::Right,  widget->rule().left());
+            notifications->rule()
+                    .setInput(Rule::Right,  widget->rule().left() - Style::get().rules().rule("gap"));
+            /*gameUI->rule()
+                    .setInput(Rule::Right,  widget->rule().left());*/
             break;
         }
 
@@ -544,7 +548,7 @@ DENG2_PIMPL(ClientWindow)
         {
         case RightEdge:
             game->rule().setInput(Rule::Right, root.viewRight());
-            gameUI->rule().setInput(Rule::Right, root.viewRight());
+            notifications->useDefaultPlacement(root.viewRule());
             break;
         }
 
@@ -710,6 +714,18 @@ DENG2_PIMPL(ClientWindow)
         }
     }*/
 
+    void minimizeGame(bool mini)
+    {
+        if (mini && !isGameMini)
+        {
+
+        }
+        else if (!mini && isGameMini)
+        {
+
+        }
+    }
+
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
@@ -838,6 +854,11 @@ void ClientWindow::setMode(Mode const &mode)
     LOG_AS("ClientWindow");
 
     d->setMode(mode);
+}
+
+void ClientWindow::setGameMinimized(bool minimize)
+{
+    d->minimizeGame(minimize);
 }
 
 void ClientWindow::closeEvent(QCloseEvent *ev)

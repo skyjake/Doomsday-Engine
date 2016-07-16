@@ -117,6 +117,15 @@ public:
     void setMode(Mode const &mode);
 
     /**
+     * Minimizes or restores the game to full size. While minimized, the Home is
+     * moved partially onscreen to be accessible while the game is still running and
+     * loaded.
+     *
+     * @param minimize  @c true to minimize game, @c false to restore.
+     */
+    void setGameMinimized(bool minimize);
+
+    /**
      * Must be called before any canvas windows are created. Defines the
      * default OpenGL format settings for the contained canvases.
      *
@@ -130,7 +139,7 @@ public:
      * execution of the main loop callback, or should we wait for an update event
      * from the windowing system.
      */
-    bool shouldRepaintManually() const;
+    bool shouldRepaintManually() const override;
 
     /**
      * Grab the contents of the window into the supplied @a image. Ownership of
@@ -162,21 +171,21 @@ public:
     bool isFPSCounterVisible() const;
 
     // Events.
-    void closeEvent(QCloseEvent *);
-    void canvasGLReady(de::Canvas &);
+    void closeEvent(QCloseEvent *) override;
+    void canvasGLReady(de::Canvas &) override;
 
     // Implements BaseWindow.
-    de::Vector2f windowContentSize() const;
-    void drawWindowContent();
-    void preDraw();
-    void postDraw();
-    bool handleFallbackEvent(de::Event const &event);
+    de::Vector2f windowContentSize() const override;
+    void drawWindowContent() override;
+    void preDraw() override;
+    void postDraw() override;
+    bool handleFallbackEvent(de::Event const &event) override;
 
     static ClientWindow &main();
     static bool mainExists();
 
 protected:
-    bool prepareForDraw();
+    bool prepareForDraw() override;
 
 public slots:
     void toggleFPSCounter();

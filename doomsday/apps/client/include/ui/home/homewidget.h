@@ -40,6 +40,9 @@ public:
     bool dispatchEvent(de::Event const &event,
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
 
+    void moveOnscreen();
+    void moveOffscreen();
+
     // Events.
     void update() override;
 

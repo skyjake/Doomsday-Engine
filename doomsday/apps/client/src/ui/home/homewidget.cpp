@@ -239,22 +239,14 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         if (!newGame.isNull())
         {
-            //self.show();
-            //moveOnscreen();
             ClientWindow::main().fadeContentFromBlack(1.0);
         }
-        /*else
-        {
-            //self.hide();
-            moveOffscreen();
-        }*/
     }
 
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
         if (gameBeingUnloaded.isNull())
         {
-            //self.hide();
             moveOffscreen();
         }
         else
@@ -274,7 +266,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         if (fequal(dismissOffset->animation().target(), 0.f))
         {
-            dismissOffset->set(-root().viewHeight(), DISMISS_SPAN);
+            dismissOffset->set(-self.rule().height(), DISMISS_SPAN);
             dismissing = true;
         }
     }
@@ -546,6 +538,16 @@ bool HomeWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void HomeWidget::moveOnscreen()
+{
+    d->moveOnscreen();
+}
+
+void HomeWidget::moveOffscreen()
+{
+    d->moveOffscreen();
 }
 
 void HomeWidget::update()
