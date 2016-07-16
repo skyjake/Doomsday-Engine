@@ -356,15 +356,7 @@ QStringList Package::tags(String const &tagsString)
 
 StringList Package::requires(File const &packageFile)
 {
-    StringList ids;
-    if (packageFile.objectNamespace().has(PACKAGE_REQUIRES))
-    {
-        for (auto const *value : packageFile.objectNamespace().geta(PACKAGE_REQUIRES).elements())
-        {
-            ids << value->asText();
-        }
-    }
-    return ids;
+    return packageFile.objectNamespace().getStringList(PACKAGE_REQUIRES);
 }
 
 void Package::addRequiredPackage(File &packageFile, String const &id)

@@ -222,6 +222,7 @@ DENG2_PIMPL(PackageLoader)
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
         pkg->didLoad();
+
         return *pkg;
     }
 
@@ -298,7 +299,8 @@ DENG2_PIMPL(PackageLoader)
         }
     }
 
-    void loadOptionalContent(File const &packageFile)
+    void forOptionalContent(File const &packageFile,
+                            std::function<void (String const &)> callback) const
     {
         // Packages enabled/disabled for use.
         DictionaryValue const &selPkgs = Config::get()["fs.selectedPackages"]
@@ -323,9 +325,9 @@ DENG2_PIMPL(PackageLoader)
             for (auto const *id : meta.geta("recommends").elements())
             {
                 String const pkgId = id->asText();
-                if (isPackageSelected(pkgId, true) && !self.isLoaded(pkgId))
+                if (isPackageSelected(pkgId, true))
                 {
-                    self.load(pkgId);
+                    callback(pkgId);
                 }
             }
         }
@@ -334,12 +336,23 @@ DENG2_PIMPL(PackageLoader)
             for (auto const *id : meta.geta("extras").elements())
             {
                 String const pkgId = id->asText();
-                if (isPackageSelected(pkgId, false) && !self.isLoaded(pkgId))
+                if (isPackageSelected(pkgId, false))
                 {
-                    self.load(pkgId);
+                    callback(pkgId);
                 }
             }
         }
+    }
+
+    void loadOptionalContent(File const &packageFile)
+    {
+        forOptionalContent(packageFile, [this] (String const &pkgId)
+        {
+            if (!self.isLoaded(pkgId))
+            {
+                self.load(pkgId);
+            }
+        });
     }
 
     QList<Package *> loadedInOrder() const
@@ -560,6 +573,27 @@ StringList PackageLoader::findAllPackages() const
         d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);
     }
     return all;
+}
+
+StringList PackageLoader::expandDependencies(StringList const &packageIdentifiers) const
+{
+    StringList expanded;
+    for (String pkgId : packageIdentifiers)
+    {
+        if (File const *file = select(pkgId))
+        {
+            for (String reqId : Package::requires(*file))
+            {
+                expanded << reqId;
+            }
+            d->forOptionalContent(*file, [&expanded] (String const &pkgId)
+            {
+                expanded << pkgId;
+            });
+        }
+        expanded << pkgId;
+    }
+    return expanded;
 }
 
 PackageLoader &PackageLoader::get()

@@ -75,6 +75,8 @@ public:
         IdentifierList(String const &spaceSeparatedIds);
     };
 
+    static PackageLoader &get();
+
 public:
     PackageLoader();
 
@@ -156,7 +158,16 @@ public:
      */
     StringList findAllPackages() const;
 
-    static PackageLoader &get();
+    /**
+     * Takes a list of package identifiers and checks if they have any dependent packages
+     * (required, recommended, or extra). Those are then expanded using the same logic as
+     * when loading packages (everything precedes the main package).
+     *
+     * @param packageIdentifiers  Package identifiers.
+     *
+     * @return Expanded list of identifiers.
+     */
+    StringList expandDependencies(StringList const &packageIdentifiers) const;
 
 private:
     DENG2_PRIVATE(d)
