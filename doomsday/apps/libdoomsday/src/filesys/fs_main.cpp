@@ -519,6 +519,8 @@ void FS1::deindex(File1 &file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if (found == d->loadedFiles.end()) return; // Most peculiar..
+    
+    FileHandle *fileHandle = *found;
 
     d->releaseFileId(file.composePath());
 
@@ -527,7 +529,8 @@ void FS1::deindex(File1 &file)
 
     d->loadedFiles.erase(found);
     d->loadedFilesCRC = 0;
-    delete *found;
+    
+    delete fileHandle;
 }
 
 File1 &FS1::find(de::Uri const &search)

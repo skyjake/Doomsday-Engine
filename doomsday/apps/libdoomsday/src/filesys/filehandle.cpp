@@ -34,7 +34,8 @@
 
 namespace de {
 
-struct FileHandle::Impl
+    //struct FileHandle::Impl
+DENG2_PIMPL_NOREF(FileHandle)
 {
     /// The referenced file (if any).
     File1 *file;
@@ -71,9 +72,8 @@ static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
 }
 
 FileHandle::FileHandle()
-{
-    d = new Impl();
-}
+    : d(new Impl)
+{}
 
 FileHandle::~FileHandle()
 {
@@ -84,8 +84,6 @@ FileHandle::~FileHandle()
     {
         M_Free(d->data); d->data = 0;
     }
-
-    delete d;
 }
 
 FileHandle &FileHandle::close()

@@ -27,6 +27,7 @@
 #define LIBDENG_FILESYS_FILEHANDLE_H
 
 #include "../libdoomsday.h"
+#include <de/libcore.h>
 #include <de/types.h>
 #include <stdio.h>
 
@@ -134,8 +135,7 @@ public:
 private:
     FileHandle();
 
-    struct Impl;
-    Impl *d;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
