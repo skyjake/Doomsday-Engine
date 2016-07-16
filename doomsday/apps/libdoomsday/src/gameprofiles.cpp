@@ -172,7 +172,7 @@ StringList GameProfiles::Profile::allRequiredPackages() const
 
 StringList GameProfiles::Profile::packagesIncludedInSavegames() const
 {
-    StringList ids = allRequiredPackages();
+    StringList ids = PackageLoader::get().expandDependencies(allRequiredPackages());
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
