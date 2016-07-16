@@ -96,8 +96,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
     bool gotSubheading = false;
 
     Impl(Public *i,
-             String const &gameFamily,
-             SavedSessionListData const &savedItems)
+         String const &gameFamily,
+         SavedSessionListData const &savedItems)
         : Base(i)
         , gameFamily(gameFamily)
         , savedItems(savedItems)
