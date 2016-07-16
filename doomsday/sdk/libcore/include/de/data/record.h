@@ -384,6 +384,15 @@ public:
     Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
 
     Variable &appendToArray(String const &name, Value *value);
+    
+    /**
+     * Inserts a value to an array variable. The array is assumed to be sorted, and the
+     * insertion point is determined based on the sorting function.
+     * 
+     * @param name   Name of the variable.
+     * @param value  Value to insert.
+     */
+    Variable &insertToSortedArray(String const &name, Value *value);
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed

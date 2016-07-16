@@ -409,8 +409,8 @@ DENG2_PIMPL(DataBundle), public Lockable
                 {
                     subset = VAR_REQUIRES;
                 }
-                container->packageMetadata().appendToArray(subset, new TextValue(versionedPackageId));
-
+                container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
+                
                 /*
                 qDebug() << container->d->versionedPackageId
                          << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"

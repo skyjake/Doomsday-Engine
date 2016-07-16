@@ -586,6 +586,29 @@ Variable &Record::appendToArray(String const &name, Value *value)
     var.value<ArrayValue>().add(value);
     return var;
 }
+    
+Variable &Record::insertToSortedArray(String const &name, Value *value)
+{
+    if (!has(name))
+    {
+        return appendToArray(name, value);
+    }
+    
+    Variable &var = (*this)[name];
+    ArrayValue &array = var.value().as<ArrayValue>();
+    // O(n) insertion sort.
+    for (dsize i = 0; i < array.size(); ++i)
+    {
+        if (value->compare(array.at(i)) <= 0)
+        {
+            array.insert(i, value);
+            return var;
+        }
+    }
+    // Value is larger than everything in the array.
+    array.add(value);
+    return var;
+}
 
 Variable &Record::operator [] (String const &name)
 {
