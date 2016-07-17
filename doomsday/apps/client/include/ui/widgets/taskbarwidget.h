@@ -63,8 +63,7 @@ public slots:
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
-    void switchGame();
-    void showMultiplayer();
+    void showOrHideHome();
     void connectToServerManually();
     void showTutorial();
     void openPackagesSidebar();

@@ -211,6 +211,14 @@ void BusyWidget::releaseTransitionFrame()
     }
 }
 
+void BusyWidget::clearTransitionFrameToBlack()
+{
+    if (d->haveTransitionFrame())
+    {
+        d->transitionFrame.target().clear(GLTarget::Color);
+    }
+}
+
 GLTexture const *BusyWidget::transitionFrame() const
 {
     if (d->haveTransitionFrame())

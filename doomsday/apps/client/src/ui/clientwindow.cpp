@@ -91,6 +91,7 @@ DENG2_PIMPL(ClientWindow)
     //CompositorWidget *compositor = nullptr;
     GameWidget *game = nullptr;
     GameUIWidget *gameUI = nullptr;
+    LabelWidget *nowPlaying = nullptr;
     TaskBarWidget *taskBar = nullptr;
     LabelWidget *taskBarBlur = nullptr; ///< Blur everything below the task bar.
     NotificationAreaWidget *notifications = nullptr;
@@ -104,6 +105,9 @@ DENG2_PIMPL(ClientWindow)
     LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
     ConstantRule *cursorY;
+    AnimationRule *gameWidth;
+    AnimationRule *gameHeight;
+    AnimationRule *homeDelta;
     bool cursorHasBeenHidden = false;
     bool isGameMini = false;
 
@@ -115,11 +119,14 @@ DENG2_PIMPL(ClientWindow)
     VRWindowTransform contentXf;
 
     Impl(Public *i)
-        : Base(i)
-        , root(thisPublic)
-        , cursorX(new ConstantRule(0))
-        , cursorY(new ConstantRule(0))
-        , contentXf(*i)
+        : Base      (i)
+        , root      (i)
+        , cursorX   (new ConstantRule(0))
+        , cursorY   (new ConstantRule(0))
+        , gameWidth (new AnimationRule(0, Animation::EaseBoth))
+        , gameHeight(new AnimationRule(0, Animation::EaseBoth))
+        , homeDelta   (new AnimationRule(0, Animation::EaseBoth))
+        , contentXf (*i)
     {
         self.setTransform(contentXf);
 
@@ -142,6 +149,9 @@ DENG2_PIMPL(ClientWindow)
     {
         releaseRef(cursorX);
         releaseRef(cursorY);
+        releaseRef(gameWidth);
+        releaseRef(gameHeight);
+        releaseRef(homeDelta);
 
         if (thisPublic == mainWindow)
         {
@@ -169,8 +179,15 @@ DENG2_PIMPL(ClientWindow)
     {
         Style &style = ClientApp::windowSystem().style();
 
+        gameWidth ->set(root.viewWidth());
+        gameHeight->set(root.viewHeight());
+        //homeDelta->set(root.viewBottom());
+
         game = new GameWidget;
-        game->rule().setRect(root.viewRule());
+        game->rule().setInput(Rule::Left,   root.viewLeft())
+                    .setInput(Rule::Right,  root.viewLeft() + *gameWidth)
+                    .setInput(Rule::Bottom, root.viewBottom())
+                    .setInput(Rule::Height, *gameHeight);
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         game->disable();
@@ -181,6 +198,41 @@ DENG2_PIMPL(ClientWindow)
         gameUI->disable();
         root.add(gameUI);
 
+        auto *miniGameControls = new LabelWidget;
+        {
+            miniGameControls->set(GuiWidget::Background(style.colors().colorf("inverted.background")));
+            miniGameControls->rule()
+                    .setInput(Rule::Width,  root.viewWidth()/2 -   style.rules().rule("unit"))
+                    .setInput(Rule::Left,   game->rule().right() + style.rules().rule("unit"))
+                    .setInput(Rule::Top,    game->rule().top());
+
+            ButtonWidget *backToGame = new ButtonWidget;
+            backToGame->setText("Back to Game");
+            backToGame->setSizePolicy(ui::Expand, ui::Expand);
+            backToGame->setActionFn([this] () { home->moveOffscreen(1.0); });
+
+            nowPlaying = new LabelWidget;
+            nowPlaying->setSizePolicy(ui::Expand, ui::Expand);
+            nowPlaying->margins().setLeftRight("").setBottom("dialog.gap");
+            nowPlaying->setMaximumTextWidth(miniGameControls->rule().width());
+            nowPlaying->setTextLineAlignment(ui::AlignLeft);
+            nowPlaying->setTextColor("inverted.text");
+            nowPlaying->setFont("heading");
+
+            AutoRef<Rule> combined = nowPlaying->rule().height() + backToGame->rule().height();
+
+            nowPlaying->rule()
+                    .setMidAnchorX(miniGameControls->rule().midX())
+                    .setInput(Rule::Top, miniGameControls->rule().midY() - combined/2);
+            backToGame->rule()
+                    .setInput(Rule::Left, nowPlaying->rule().left())
+                    .setInput(Rule::Top,  nowPlaying->rule().bottom());
+
+            miniGameControls->add(nowPlaying);
+            miniGameControls->add(backToGame);
+            root.add(miniGameControls);
+        }
+
         // Busy widget shows progress indicator and frozen game content.
         busy = new BusyWidget;
         busy->hide(); // normally hidden
@@ -188,7 +240,10 @@ DENG2_PIMPL(ClientWindow)
         root.add(busy);
 
         home = new HomeWidget;
-        home->rule().setRect(root.viewRule());
+        home->rule().setInput(Rule::Left,   root.viewLeft())
+                    .setInput(Rule::Right,  root.viewRight())
+                    .setInput(Rule::Top,    root.viewTop())
+                    .setInput(Rule::Bottom, root.viewBottom() + *homeDelta);
         root.add(home);
 
         // Busy progress should be visible over the Home.
@@ -224,6 +279,8 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
         root.add(taskBar);
+
+        miniGameControls->rule().setInput(Rule::Bottom, taskBar->rule().top());
 
 #if 0
         // The game selection's height depends on the taskbar.
@@ -277,8 +334,16 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void currentGameChanged(Game const &/*newGame*/)
+    void currentGameChanged(Game const &newGame)
     {
+        minimizeGame(false);
+
+        if (!newGame.isNull())
+        {
+            nowPlaying->setText(_E(l) + tr("Now playing") + "\n" + _E(b) +
+                                newGame.title());
+        }
+
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
         self.hideTaskBarBlur(); // update background blur mode
@@ -316,7 +381,6 @@ DENG2_PIMPL(ClientWindow)
             game->disable();
             gameUI->hide();
             gameUI->disable();
-            //showGameSelectionMenu(false);
             taskBar->disable();
 
             busy->show();
@@ -324,7 +388,6 @@ DENG2_PIMPL(ClientWindow)
             break;
 
         case Normal:
-            //busy->hide();
             // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
 
@@ -332,7 +395,6 @@ DENG2_PIMPL(ClientWindow)
             game->enable();
             gameUI->show();
             gameUI->enable();
-            //if (!App_GameLoaded()) showGameSelectionMenu(true);
             taskBar->enable();
             break;
         }
@@ -421,26 +483,31 @@ DENG2_PIMPL(ClientWindow)
             switch (ev.type())
             {
             case Event::MouseButton:
-                Mouse_Qt_SubmitButton(
-                            mouse->button() == MouseEvent::Left?     IMB_LEFT :
-                            mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
-                            mouse->button() == MouseEvent::Right?    IMB_RIGHT :
-                            mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                            mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                            mouse->state() == MouseEvent::Pressed);
-                return true;
+                if (game->hitTest(ev))
+                {
+                    Mouse_Qt_SubmitButton(
+                                mouse->button() == MouseEvent::Left?     IMB_LEFT   :
+                                mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
+                                mouse->button() == MouseEvent::Right?    IMB_RIGHT  :
+                                mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                                mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                                mouse->state() == MouseEvent::Pressed);
+                    return true;
+                }
+                break;
 
             case Event::MouseMotion:
                 Mouse_Qt_SubmitMotion(IMA_POINTER, mouse->pos().x, mouse->pos().y);
                 return true;
 
             case Event::MouseWheel:
-                if (mouse->wheelMotion() == MouseEvent::Step)
+                if (game->hitTest(ev) && mouse->wheelMotion() == MouseEvent::Step)
                 {
                     // The old input system can only do wheel step events.
                     Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
+                    return true;
                 }
-                return true;
+                break;
 
             default:
                 break;
@@ -547,7 +614,7 @@ DENG2_PIMPL(ClientWindow)
         switch (location)
         {
         case RightEdge:
-            game->rule().setInput(Rule::Right, root.viewRight());
+            game->rule().setInput(Rule::Right, root.viewLeft() + *gameWidth);
             notifications->useDefaultPlacement(root.viewRule());
             break;
         }
@@ -716,13 +783,26 @@ DENG2_PIMPL(ClientWindow)
 
     void minimizeGame(bool mini)
     {
+        TimeDelta const SPAN = 1.0;
+
         if (mini && !isGameMini)
         {
+            // Get rid of the sidebar, if it's open.
+            self.setSidebar(RightEdge, nullptr);
 
+            auto const &unit = Style::get().rules().rule("unit");
+
+            gameWidth ->set(root.viewWidth()/2 - unit, SPAN);
+            gameHeight->set(root.viewHeight()/4,       SPAN);
+            homeDelta ->set(-*gameHeight - unit,       SPAN);
+            isGameMini = true;
         }
         else if (!mini && isGameMini)
         {
-
+            gameWidth ->set(root.viewWidth(),  SPAN);
+            gameHeight->set(root.viewHeight(), SPAN);
+            homeDelta ->set(0,                 SPAN);
+            isGameMini = false;
         }
     }
 
@@ -829,6 +909,11 @@ NotificationAreaWidget &ClientWindow::notifications()
     return *d->notifications;
 }
 
+HomeWidget &ClientWindow::home()
+{
+    return *d->home;
+}
+
 GameWidget &ClientWindow::game()
 {
     return *d->game;
@@ -859,6 +944,11 @@ void ClientWindow::setMode(Mode const &mode)
 void ClientWindow::setGameMinimized(bool minimize)
 {
     d->minimizeGame(minimize);
+}
+
+bool ClientWindow::isGameMinimized() const
+{
+    return d->isGameMini;
 }
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
