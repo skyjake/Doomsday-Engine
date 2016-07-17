@@ -294,7 +294,7 @@ protected:
      * Commits an an image to the actual physical atlas storage.
      *
      * @param image    Image to commit.
-     * @param topleft  Top left corner of where to place the image.
+     * @param topLeft  Top left corner of where to place the image.
      */
     virtual void commit(Image const &image, Vector2i const &topLeft) const = 0;
 
