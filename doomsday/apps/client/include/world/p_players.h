@@ -76,6 +76,8 @@ int P_ConsoleToLocal(int playerNum);
  */
 int P_GetDDPlayerIdx(ddplayer_t *ddpl);
 
+#ifdef __CLIENT__
+
 /**
  * Do we THINK the given (camera) player is currently in the void.
  * The method used to test this is to compare the position of the mobj
@@ -88,6 +90,8 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl);
  * @return  @c true if the player is thought to be in the void.
  */
 bool P_IsInVoid(player_t *player);
+
+#endif // __CLIENT__
 
 /**
  * Remove all the player impulse definitions and destroy the associated accumulators

@@ -52,6 +52,7 @@
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
+#  include "client/clientsubsector.h"
 #  include "gl/gl_main.h"
 #endif
 
@@ -328,9 +329,15 @@ DENG2_PIMPL(ClientServerWorld)
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
+        Sector::setSubsectorConstructor([] (QList<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+            return new ClientSubsector(sl);
+        });
 #else
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new world::Material(m);
+        });
+        Sector::setSubsectorConstructor([] (QList<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+            return new Subsector(sl);
         });
 #endif
     }
@@ -559,30 +566,28 @@ DENG2_PIMPL(ClientServerWorld)
         // Init player values.
         DoomsdayApp::players().forAll([] (Player &plr)
         {
-            ddplayer_t &ddpl = plr.publicData();
-
             plr.extraLight        = 0;
             plr.targetExtraLight  = 0;
             plr.extraLightCounter = 0;
 
-            // Determine the "invoid" status.
-            ddpl.inVoid = true;
-            if(mobj_t *mo = ddpl.mo)
-            {
-                if(Subsector *subsec = Mobj_SubsectorPtr(*mo))
-                {
 #ifdef __CLIENT__
-                    if(mo->origin[2] >= subsec->visFloor  ().heightSmoothed() &&
-                       mo->origin[2] <  subsec->visCeiling().heightSmoothed() - 4)
-#else
-                    if(mo->origin[2] >= subsec->floor  ().height() &&
-                       mo->origin[2] <  subsec->ceiling().height() - 4)
-#endif
+            auto &client = plr.as<ClientPlayer>();
+
+            // Determine the "invoid" status.
+            client.inVoid = true;
+            if (mobj_t const *mob = plr.publicData().mo)
+            {
+                if (Mobj_HasSubsector(*mob))
+                {
+                    auto const &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+                    if (   mob->origin[2] >= subsec.visFloor  ().heightSmoothed()
+                        && mob->origin[2] <  subsec.visCeiling().heightSmoothed() - 4)
                     {
-                        ddpl.inVoid = false;
+                        client.inVoid = false;
                     }
                 }
             }
+#endif
 
             return LoopContinue;
         });

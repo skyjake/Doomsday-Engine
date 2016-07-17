@@ -20,12 +20,11 @@
 #include "render/biassource.h"
 
 #include "dd_main.h"  // App_World()
-
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
+#include "client/clientsubsector.h"
 
 using namespace de;
 
@@ -269,7 +268,7 @@ bool BiasSource::trackChanges(QBitArray &changes, duint digestIndex, duint curre
 
         if(ConvexSubspace *subspace = d->bspLeaf->subspacePtr())
         {
-            Subsector &subsec = subspace->subsector();
+            auto &subsec = subspace->subsector().as<world::ClientSubsector>();
 
             // Lower intensities are useless for light emission.
             if(subsec.lightSourceIntensity() >= d->maxLight)

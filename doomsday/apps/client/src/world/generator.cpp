@@ -22,22 +22,23 @@
 #include "de_platform.h"
 #include "world/generator.h"
 
-#include "clientapp.h"
-#include "dd_def.h"
-#include "Face"
-
 #include "world/clientserverworld.h" // validCount
 #include "world/thinkers.h"
 #include "client/cl_mobj.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
 #include "Surface"
 
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 
+#include "client/clientsubsector.h"
+
 #include "api_sound.h"
+
+#include "Face"
+#include "dd_def.h"
+#include "clientapp.h"
 
 #include <doomsday/console/var.h>
 #include <de/String>
@@ -593,7 +594,7 @@ static dint touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
 dfloat Generator::particleZ(ParticleInfo const &pinfo) const
 {
-    Subsector &subsec = pinfo.bspLeaf->subspace().subsector();
+    auto const &subsec = pinfo.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
     if(pinfo.origin[2] == DDMAXINT)
     {
         return subsec.visCeiling().heightSmoothed() - 2;
@@ -750,7 +751,7 @@ void Generator::moveParticle(dint index)
     bool zBounce = false, hitFloor = false;
     if(pinfo->origin[2] != DDMININT && pinfo->origin[2] != DDMAXINT && pinfo->bspLeaf)
     {
-        Subsector &subsec = pinfo->bspLeaf->subspace().subsector();
+        auto &subsec = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>();
         if(z > FLT2FIX(subsec.visCeiling().heightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!

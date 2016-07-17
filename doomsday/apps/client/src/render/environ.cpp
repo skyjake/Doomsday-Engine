@@ -17,8 +17,9 @@
  */
 
 #include "render/environ.h"
+
 #include "world/map.h"
-#include "world/subsector.h"
+#include "client/clientsubsector.h"
 #include "clientapp.h"
 
 #include <de/ImageFile>
@@ -202,7 +203,7 @@ GLTexture const &Environment::reflectionInSubsector(world::Subsector const *subs
     {
         return defaultReflection();
     }
-    if(subsec->hasSkyMaskPlane())
+    if(subsec->as<world::ClientSubsector>().hasSkyMaskPlane())
     {
         return d->reflectionTextures[Impl::Exterior];
     }

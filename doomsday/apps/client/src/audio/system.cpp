@@ -29,6 +29,10 @@
 #  include "sys_system.h"  // Sys_Sleep()
 #endif
 
+#ifdef __CLIENT__
+#  include "client/clientsubsector.h"
+#endif
+
 #ifdef __SERVER__
 #  include "server/sv_sound.h"
 #endif
@@ -1307,7 +1311,7 @@ DENG2_PIMPL(System)
                 sfxListenerSubsector = newSubsector;
 
                 // It may be necessary to recalculate the reverb properties...
-                world::Subsector::AudioEnvironment const &aenv = sfxListenerSubsector->reverb();
+                world::ClientSubsector::AudioEnvironment const &aenv = sfxListenerSubsector->as<world::ClientSubsector>().reverb();
 
                 dfloat args[NUM_REVERB_DATA];
                 args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;

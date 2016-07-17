@@ -85,9 +85,6 @@ typedef struct ddplayer_s {
     int             fixedColorMap; // Can be set to REDCOLORMAP, etc.
     int             extraLight; // So gun flashes light up areas.
     int             inGame; // Is this player in game?
-    int             inVoid; // True if player is in the void
-                            // (not entirely accurate so it shouldn't
-                            // be used for anything critical).
     int             flags;
     float           filterColor[4]; // RGBA filter for the camera.
     fixcounters_t   fixCounter;

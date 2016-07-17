@@ -31,11 +31,12 @@
 
 #include "world/map.h"
 #include "ConvexSubspace"
+#include "Line"
+#include "Surface"
+#include "client/clientsubsector.h"
+
 #include "Face"
 #include "HEdge"
-#include "Line"
-#include "Subsector"
-#include "Surface"
 #include "WallEdge"
 
 #include "render/rend_main.h"
@@ -180,11 +181,12 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
 {
     if(shadowSize <= 0) return false;
 
-    LineSide const &side         = leftEdge.lineSide();
+    LineSide const &side = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
-    Plane const &visFloor        = subsec.visFloor  ();
-    Plane const &visCeiling      = subsec.visCeiling();
+
+    auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    Plane const &visFloor   = subsec.visFloor  ();
+    Plane const &visCeiling = subsec.visCeiling();
 
     switch(shadow)
     {
@@ -249,13 +251,15 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
-    Plane const &visFloor        = subsec.visFloor  ();
-    Plane const &visCeiling      = subsec.visCeiling();
+    auto const &space       = side.leftHEdge()->face().mapElementAs<ConvexSubspace>();
+    auto const &subsec      = space.subsector().as<world::ClientSubsector>();
+    Plane const &visFloor   = subsec.visFloor  ();
+    Plane const &visCeiling = subsec.visCeiling();
 
     de::zap(projected);
     projected.texDimensions = Vector2f(0, shadowSize);
-    projected.texOrigin     = Vector2f(0, calcTexCoordY(leftEdge.top().z(), visFloor.heightSmoothed(), visCeiling.heightSmoothed(), shadowSize));
+    projected.texOrigin     = Vector2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
+                                                        , subsec.visCeiling().heightSmoothed(), shadowSize));
     projected.texture       = LST_RADIO_OO;
 
     edgespan_t const &edgeSpan = side.radioEdgeSpan(true/*top*/);
@@ -403,11 +407,11 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
 static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
     ProjectedShadowData &projected)
 {
-    LineSide /*const*/ &side     = leftEdge.lineSide();
+    LineSide /*const*/ &side = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
-    Subsector const &subsec = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector();
-    Plane const &visFloor        = subsec.visFloor  ();
-    Plane const &visCeiling      = subsec.visCeiling();
+    auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    Plane const &visFloor   = subsec.visFloor  ();
+    Plane const &visCeiling = subsec.visCeiling();
 
     de::zap(projected);
     projected.texDimensions.y = -shadowSize;
@@ -559,12 +563,12 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
 static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, bool rightSide,
     ddouble shadowSize, ProjectedShadowData &projected)
 {
-    LineSide /*const*/ &side      = leftEdge.lineSide();
-    HEdge const *hedge            = side.leftHEdge();
+    LineSide /*const*/ &side = leftEdge.lineSide();
+    HEdge const *hedge = side.leftHEdge();
     DENG2_ASSERT(hedge);
-    Subsector const &subsec  = hedge->face().mapElementAs<ConvexSubspace>().subsector();
-    Plane const &visFloor         = subsec.visFloor  ();
-    Plane const &visCeiling       = subsec.visCeiling();
+    auto const &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    Plane const &visFloor   = subsec.visFloor  ();
+    Plane const &visCeiling = subsec.visCeiling();
     DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
     de::zap(projected);
@@ -621,62 +625,66 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
             projected.texture = LST_RADIO_CC;
         }
     }
-    else if(Subsector *backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr())
+    else
     {
-        coord_t const bFloor = backSubsec->visFloor  ().heightSmoothed();
-        coord_t const bCeil  = backSubsec->visCeiling().heightSmoothed();
-
-        if(bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
+        auto const &bSpace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        if (bSpace.hasSubsector())
         {
-            if(visFloor.castsShadow() && visCeiling.castsShadow())
+            auto const &bSubsec  = bSpace.subsector().as<world::ClientSubsector>();
+            ddouble const bFloor = bSubsec.visFloor  ().heightSmoothed();
+            ddouble const bCeil  = bSubsec.visCeiling().heightSmoothed();
+            if (bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
             {
-                projected.texture = LST_RADIO_CC;
+                if (visFloor.castsShadow() && visCeiling.castsShadow())
+                {
+                    projected.texture = LST_RADIO_CC;
+                }
+                else if (!visFloor.castsShadow())
+                {
+                    projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
+                    projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
+                    projected.texture         = LST_RADIO_CO;
+                }
+                else
+                {
+                    projected.texture = LST_RADIO_CO;
+                }
             }
-            else if(!visFloor.castsShadow())
+            else if (bFloor > visFloor.heightSmoothed())
             {
-                projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
-                projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
-                projected.texture         = LST_RADIO_CO;
+                if (visFloor.castsShadow() && visCeiling.castsShadow())
+                {
+                    projected.texture = LST_RADIO_CC;
+                }
+                else if (!visFloor.castsShadow())
+                {
+                    projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
+                    projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
+                    projected.texture         = LST_RADIO_CO;
+                }
+                else
+                {
+                    projected.texture = LST_RADIO_CO;
+                }
             }
-            else
+            else if (bCeil < visCeiling.heightSmoothed())
             {
-                projected.texture = LST_RADIO_CO;
+                if (visFloor.castsShadow() && visCeiling.castsShadow())
+                {
+                    projected.texture = LST_RADIO_CC;
+                }
+                else if (!visFloor.castsShadow())
+                {
+                    projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
+                    projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
+                    projected.texture         = LST_RADIO_CO;
+                }
+                else
+                {
+                    projected.texture = LST_RADIO_CO;
+                }
             }
-        }
-        else if(bFloor > visFloor.heightSmoothed())
-        {
-            if(visFloor.castsShadow() && visCeiling.castsShadow())
-            {
-                projected.texture = LST_RADIO_CC;
             }
-            else if(!visFloor.castsShadow())
-            {
-                projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
-                projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
-                projected.texture         = LST_RADIO_CO;
-            }
-            else
-            {
-                projected.texture = LST_RADIO_CO;
-            }
-        }
-        else if(bCeil < visCeiling.heightSmoothed())
-        {
-            if(visFloor.castsShadow() && visCeiling.castsShadow())
-            {
-                projected.texture = LST_RADIO_CC;
-            }
-            else if(!visFloor.castsShadow())
-            {
-                projected.texOrigin.y     = leftEdge.bottom().z() - visCeiling.heightSmoothed();
-                projected.texDimensions.y = -(visCeiling.heightSmoothed() - visFloor.heightSmoothed());
-                projected.texture         = LST_RADIO_CO;
-            }
-            else
-            {
-                projected.texture = LST_RADIO_CO;
-            }
-        }
     }
 }
 
@@ -942,7 +950,7 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     if(!hEdges[0]->hasFace() || !hEdges[0]->face().hasMapElement())
         return false;
 
-    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().hasWorldVolume())
+    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>().hasWorldVolume())
         return false;
 
     for(dint i = 0; i < 2; ++i)
@@ -1007,7 +1015,8 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     // If no shadow-casting lines are linked we no work to do.
     if(!subspace.shadowLineCount()) return;
 
-    Subsector &subsec  = subspace.subsector();
+    auto const &subsec = subspace.subsector().as<world::ClientSubsector>();
+
     // Determine the shadow properties.
     dfloat const shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
     if(shadowDark < MIN_SHADOW_DARKNESS)
@@ -1019,7 +1028,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
-    DrawList &shadowList     = rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
+    DrawList &shadowList = rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
 
     // Process all LineSides linked to this subspace as potential shadow casters.
     subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
@@ -1031,33 +1040,32 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
         {
             side.setShadowVisCount(R_FrameCount());  // Mark processed.
 
-            for(dint pln = 0; pln < subsec.visPlaneCount(); ++pln)
+            for (dint pln = 0; pln < subsec.visPlaneCount(); ++pln)
             {
                 Plane const &plane = subsec.visPlane(pln);
 
                 // Skip Planes which should not receive FakeRadio shadowing.
-                if(!plane.receivesShadow()) continue;
+                if (!plane.receivesShadow()) continue;
 
                 // Skip Planes facing away from the viewer.
-                if(Vector3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
-                        .dot(plane.surface().normal()) >= 0)
+                if (Vector3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
+                         .dot(plane.surface().normal()) >= 0)
                 {
                     HEdge const *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
 
-                    if(prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
+                    if (prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
                     {
                         bool const haveFloor = plane.surface().normal()[2] > 0;
 
-                        // Make geometry.
+                        // Build geometry.
                         Store &buffer = rendSys().buffer();
                         gl::Primitive primitive;
-                        DrawList::Indices indices =
-                            makeFlatShadowGeometry(buffer, primitive, shadowEdges, shadowDark, haveFloor);
+                        DrawList::Indices indices = makeFlatShadowGeometry(buffer, primitive, shadowEdges, shadowDark, haveFloor);
 
                         // Skip drawing entirely?
-                        if(::rendFakeRadio == 2) continue;
+                        if (::rendFakeRadio == 2) continue;
 
-                        // Write geometry.
+                        // Write the geometry.
                         shadowList.write(buffer, primitive, indices);
                     }
                 }

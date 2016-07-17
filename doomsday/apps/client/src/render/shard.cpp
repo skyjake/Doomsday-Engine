@@ -17,12 +17,14 @@
  */
 
 #include "render/shard.h"
-#include <QVector>
-#include <QtAlgorithms>
-#include <doomsday/console/var.h>
+
 #include "BiasIllum"
 #include "BiasTracker"
-#include "Subsector"
+#include "client/clientsubsector.h"
+
+#include <doomsday/console/var.h>
+#include <QVector>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -50,7 +52,7 @@ DENG2_PIMPL_NOREF(Shard)
         if(!owner) return false;
 
         // If the data is already up to date, nothing needs to be done.
-        duint lastChangeFrame = owner->biasLastChangeOnFrame();
+        duint lastChangeFrame = owner->as<world::ClientSubsector>().biasLastChangeOnFrame();
         if(biasLastUpdateFrame == lastChangeFrame) return false;
 
         // Mark the data as having been updated (it will be soon).
@@ -85,7 +87,7 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     if(d->needBiasContributorUpdate())
     {
         // Perhaps our owner has updated lighting contributions for us?
-        biasUpdated = d->owner->updateBiasContributors(this);
+        biasUpdated = d->owner->as<world::ClientSubsector>().updateBiasContributors(this);
     }
 
     // Light the given geometry.

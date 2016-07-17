@@ -21,16 +21,6 @@
 #include "de_base.h"
 #include "render/rend_particle.h"
 
-#include <cstdlib>
-#include <de/concurrency.h>
-#include <de/vector1.h>
-#include <doomsday/console/var.h>
-#include <doomsday/filesys/fs_main.h>
-
-#include "clientapp.h"
-#include "r_util.h"
-#include "sys_system.h"  // novideo
-
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
@@ -41,7 +31,7 @@
 #include "ConvexSubspace"
 #include "Line"
 #include "Plane"
-#include "Subsector"
+#include "client/clientsubsector.h"
 
 #include "resource/image.h"
 
@@ -50,6 +40,16 @@
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
+
+#include "clientapp.h"
+#include "r_util.h"
+#include "sys_system.h"  // novideo
+
+#include <doomsday/console/var.h>
+#include <doomsday/filesys/fs_main.h>
+#include <de/concurrency.h>
+#include <de/vector1.h>
+#include <cstdlib>
 
 using namespace de;
 using namespace world;
@@ -442,7 +442,8 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
         }
         else
         {
-            Vector4f const color = pinfo->bspLeaf->subspace().subsector().lightSourceColorfIntensity();
+            Vector4f const color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
+                                       .lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
 
@@ -617,13 +618,14 @@ static void drawParticles(dint rtype, bool withBlend)
 
         Vector4f color = de::lerp(Vector4f(stDef->color), Vector4f(nextStDef->color), inter);
 
-        if(!st->flags.testFlag(GeneratorParticleStage::Bright) && !levelFullBright)
+        if (!st->flags.testFlag(GeneratorParticleStage::Bright) && !levelFullBright)
         {
-            // This is a simplified version of sectorlight (no distance
-            // attenuation or range compression).
-            if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
+            // This is a simplified version of sectorlight (no distance attenuation or
+            // range compression).
+            if (world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
             {
-                dfloat const intensity = subspace->subsector().lightSourceIntensity();
+                dfloat const intensity = subspace->subsector().as<world::ClientSubsector>()
+                                            .lightSourceIntensity();
                 color *= Vector4f(intensity, intensity, intensity, 1);
             }
         }
@@ -657,11 +659,11 @@ static void drawParticles(dint rtype, bool withBlend)
         bool const nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
 
         bool nearPlane = false;
-        if(world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
+        if (world::ConvexSubspace *space = pinfo.bspLeaf->subspacePtr())
         {
-            world::Subsector &subsec = subspace->subsector();
-            if(FLT2FIX(subsec.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2] ||
-               FLT2FIX(subsec.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
+            auto &subsec = space->subsector().as<world::ClientSubsector>();
+            if (   FLT2FIX(subsec.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2]
+                || FLT2FIX(subsec.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
             {
                 nearPlane = true;
             }

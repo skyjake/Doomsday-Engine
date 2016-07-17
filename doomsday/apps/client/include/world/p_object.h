@@ -125,19 +125,19 @@ dd_bool Mobj_SetOrigin(mobj_t *mob, coord_t x, coord_t y, coord_t z);
 world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
 
 /**
- * Returns @c true iff the BSP leaf at the map-object's origin is known (i.e., it has been
+ * Returns @c true if the BSP leaf at the map-object's origin is known (i.e., it has been
  * linked into the map by calling @ref Mobj_SetOrigin() and has a convex geometry).
  *
  * @param mob  Map-object.
  */
-bool Mobj_HasSubspace(mobj_t const &mob);
+bool Mobj_HasSubsector(mobj_t const &mob);
 
 /**
  * Returns the subsector in which the map-object currently resides.
  *
  * @param mob  Map-object.
  *
- * @see Mobj_HasSubspace()
+ * @see Mobj_HasSubsector()
  */
 world::Subsector &Mobj_Subsector(mobj_t const &mob);
 

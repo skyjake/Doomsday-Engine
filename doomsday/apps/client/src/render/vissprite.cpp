@@ -29,6 +29,7 @@
 #include "world/map.h"
 #include "world/bspleaf.h"
 #include "world/convexsubspace.h"
+#include "client/clientsubsector.h"
 
 using namespace de;
 
@@ -49,7 +50,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
 {
     vissprite_t *spr;
 
-    if(visSpriteP == &visSprites[MAXVISSPRITES])
+    if (visSpriteP == &visSprites[MAXVISSPRITES])
     {
         spr = &overflowVisSprite;
     }
@@ -190,7 +191,8 @@ void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
     }
     else
     {
-        Vector4f const color = bspLeaf.subspace().subsector().lightSourceColorfIntensity();
+        auto const &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
+        Vector4f const color = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

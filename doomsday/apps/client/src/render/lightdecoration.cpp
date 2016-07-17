@@ -24,11 +24,12 @@
 #include <doomsday/console/var.h>
 #include "def_main.h"
 
+
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
 #include "Surface"
+#include "client/clientsubsector.h"
 
 #include "render/rend_main.h" // Rend_ApplyLightAdaptation
 
@@ -83,7 +84,7 @@ Lumobj *LightDecoration::generateLumobj() const
     if(!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
-    dfloat intensity = subspace->subsector().lightSourceIntensity();
+    dfloat intensity = subspace->subsector().as<ClientSubsector>().lightSourceIntensity();
     Rend_ApplyLightAdaptation(intensity);
 
     dfloat lightLevels[2];

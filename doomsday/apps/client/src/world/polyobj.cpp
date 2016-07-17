@@ -20,27 +20,27 @@
 
 #include "de_base.h"
 #include "world/polyobj.h"
+
 #include "world/polyobjdata.h"
-
-#include <QSet>
-#include <QVector>
-#include <de/vector1.h>
-
-#include "dd_main.h"
-#include "world/clientserverworld.h"  // validCount
 #include "world/blockmap.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#ifdef __CLIENT__
-#  include "Subsector"
-#  include "Shard"
-#endif
+#include "world/clientserverworld.h"  // validCount
 
 #ifdef __CLIENT__
+#  include "client/clientsubsector.h"
+
+#  include "Shard"
 #  include "render/rend_main.h"  // useBias
 #endif
+
+#include "dd_main.h"
+
+#include <de/vector1.h>
+#include <QSet>
+#include <QVector>
 
 using namespace de;
 using namespace world;
@@ -67,7 +67,8 @@ static void notifyGeometryChanged(Polyobj &pob)
 
             /// @note If polyobjs are allowed to move between subsectors
             /// then we'll need to revise the bias illumination storage specially.
-            if(Shard *shard = pob.bspLeaf().subspace().subsector().findShard(hedge->mapElement(), LineSide::Middle))
+            auto &subsec = pob.bspLeaf().subspace().subsector().as<ClientSubsector>();
+            if(Shard *shard = subsec.findShard(hedge->mapElement(), LineSide::Middle))
             {
                 shard->updateBiasAfterMove();
             }

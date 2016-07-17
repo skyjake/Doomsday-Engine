@@ -20,20 +20,21 @@
 #include "de_base.h"
 #include "render/walledge.h"
 
-#include <QtAlgorithms>
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Sector"
 #include "Surface"
 
-#include "Face"
-
 #include "world/lineowner.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
-#include "Subsector"
+#include "client/clientsubsector.h"
 
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
+
+#include "Face"
+
+#include <QtAlgorithms>
 
 using namespace de;
 using namespace world;
@@ -136,26 +137,26 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        world::Subsector const *subsec =
-            (line.definesPolyobj() ? &line.polyobj().bspLeaf().subspace()
-                                   : &wallHEdge->face().mapElementAs<world::ConvexSubspace>())->subsectorPtr();
+        ConvexSubspace const &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                                                             : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
+        auto const &subsec = space.subsector().as<world::ClientSubsector>();
 
-        if(seg.lineSide().considerOneSided() ||
-           // Mapping errors may result in a line segment missing a back face.
-           (!line.definesPolyobj() && !wallHEdge->twin().hasFace()))
+        if (seg.lineSide().considerOneSided()
+            || // Mapping errors may result in a line segment missing a back face.
+               (!line.definesPolyobj() && !wallHEdge->twin().hasFace()))
         {
-            if(spec.section == LineSide::Middle)
+            if (spec.section == LineSide::Middle)
             {
-                lo = subsec->visFloor().heightSmoothed();
-                hi = subsec->visCeiling().heightSmoothed();
+                lo = subsec.visFloor().heightSmoothed();
+                hi = subsec.visCeiling().heightSmoothed();
             }
             else
             {
-                lo = hi = subsec->visFloor().heightSmoothed();
+                lo = hi = subsec.visFloor().heightSmoothed();
             }
 
             materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
-            if(unpegBottom)
+            if (unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
             }
@@ -163,38 +164,39 @@ DENG2_PIMPL(WallEdge), public IHPlane
         else
         {
             // Two sided.
-            world::Subsector const *backSubsec =
+            auto const &backSubsec =
                 line.definesPolyobj() ? subsec
-                                      : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>().subsectorPtr();
+                                      : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>()
+                                            .subsector().as<world::ClientSubsector>();
 
-            Plane const *ffloor = &subsec->visFloor();
-            Plane const *fceil  = &subsec->visCeiling();
-            Plane const *bfloor = &backSubsec->visFloor();
-            Plane const *bceil  = &backSubsec->visCeiling();
+            Plane const *ffloor = &subsec.visFloor();
+            Plane const *fceil  = &subsec.visCeiling();
+            Plane const *bfloor = &backSubsec.visFloor();
+            Plane const *bceil  = &backSubsec.visCeiling();
 
-            switch(spec.section)
+            switch (spec.section)
             {
             case LineSide::Top:
                 // Self-referencing lines only ever get a middle.
-                if(!line.isSelfReferencing())
+                if (!line.isSelfReferencing())
                 {
                     // Can't go over front ceiling (would induce geometry flaws).
-                    if(bceil->heightSmoothed() < ffloor->heightSmoothed())
+                    if (bceil->heightSmoothed() < ffloor->heightSmoothed())
                         lo = ffloor->heightSmoothed();
                     else
                         lo = bceil->heightSmoothed();
 
                     hi = fceil->heightSmoothed();
 
-                    if(spec.flags.testFlag(WallSpec::SkyClip)
-                       && fceil->surface().hasSkyMaskedMaterial()
-                       && bceil->surface().hasSkyMaskedMaterial())
+                    if (spec.flags.testFlag(WallSpec::SkyClip)
+                        && fceil->surface().hasSkyMaskedMaterial()
+                        && bceil->surface().hasSkyMaskedMaterial())
                     {
                         hi = lo;
                     }
 
                     materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
-                    if(!unpegTop)
+                    if (!unpegTop)
                     {
                         // Align with normal middle texture.
                         materialOrigin.y -= fceil->heightSmoothed() - bceil->heightSmoothed();
@@ -204,12 +206,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
             case LineSide::Bottom:
                 // Self-referencing lines only ever get a middle.
-                if(!line.isSelfReferencing())
+                if (!line.isSelfReferencing())
                 {
                     bool const raiseToBackFloor =
-                        (fceil->surface().hasSkyMaskedMaterial()
+                        (   fceil->surface().hasSkyMaskedMaterial()
                          && bceil->surface().hasSkyMaskedMaterial()
-                         && fceil->heightSmoothed() < bceil->heightSmoothed()
+                         && fceil ->heightSmoothed() < bceil->heightSmoothed()
                          && bfloor->heightSmoothed() > fceil->heightSmoothed());
 
                     coord_t t = bfloor->heightSmoothed();
@@ -217,32 +219,32 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     lo = ffloor->heightSmoothed();
 
                     // Can't go over the back ceiling, would induce polygon flaws.
-                    if(bfloor->heightSmoothed() > bceil->heightSmoothed())
+                    if (bfloor->heightSmoothed() > bceil->heightSmoothed())
                         t = bceil->heightSmoothed();
 
                     // Can't go over front ceiling, would induce polygon flaws.
                     // In the special case of a sky masked upper we must extend the bottom
                     // section up to the height of the back floor.
-                    if(t > fceil->heightSmoothed() && !raiseToBackFloor)
+                    if (t > fceil->heightSmoothed() && !raiseToBackFloor)
                         t = fceil->heightSmoothed();
 
                     hi = t;
 
-                    if(spec.flags.testFlag(WallSpec::SkyClip)
-                       && ffloor->surface().hasSkyMaskedMaterial()
-                       && bfloor->surface().hasSkyMaskedMaterial())
+                    if (spec.flags.testFlag(WallSpec::SkyClip)
+                        && ffloor->surface().hasSkyMaskedMaterial()
+                        && bfloor->surface().hasSkyMaskedMaterial())
                     {
                         lo = hi;
                     }
 
                     materialOrigin = seg.lineSide().bottom().materialOriginSmoothed();
-                    if(bfloor->heightSmoothed() > fceil->heightSmoothed())
+                    if (bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
                         materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
                                           - bfloor->heightSmoothed();
                     }
 
-                    if(unpegBottom)
+                    if (unpegBottom)
                     {
                         // Align with normal middle texture.
                         materialOrigin.y += (raiseToBackFloor? t : fceil->heightSmoothed())
@@ -255,7 +257,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
 
-                if(!line.isSelfReferencing() && ffloor == &subsec->sector().floor())
+                if (!line.isSelfReferencing() && ffloor == &subsec.sector().floor())
                 {
                     lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
                 }
@@ -265,7 +267,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     lo = lineSide.sector().floor().heightSmoothed();
                 }
 
-                if(!line.isSelfReferencing() && fceil == &subsec->sector().ceiling())
+                if (!line.isSelfReferencing() && fceil == &subsec.sector().ceiling())
                 {
                     hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
                 }
@@ -278,11 +280,11 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
 
                 // Perform clipping.
-                if(middle.hasMaterial()
-                   && !seg.lineSide().isFlagged(SDF_MIDDLE_STRETCH))
+                if (middle.hasMaterial()
+                    && !seg.lineSide().isFlagged(SDF_MIDDLE_STRETCH))
                 {
                     coord_t openBottom, openTop;
-                    if(!line.isSelfReferencing())
+                    if (!line.isSelfReferencing())
                     {
                         openBottom = lo;
                         openTop    = hi;
@@ -293,9 +295,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         openTop    = fceil->heightSmoothed();
                     }
 
-                    if(openTop > openBottom)
+                    if (openTop > openBottom)
                     {
-                        if(unpegBottom)
+                        if (unpegBottom)
                         {
                             lo += middle.materialOriginSmoothed().y;
                             hi = lo + middle.material().height();
@@ -306,7 +308,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                             lo = hi - middle.material().height();
                         }
 
-                        if(hi > openTop)
+                        if (hi > openTop)
                         {
                             materialOrigin.y = hi - openTop;
                         }
@@ -314,16 +316,16 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         // Clip it?
                         bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
                         bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
-                        if(clipTop || clipBottom)
+                        if (clipTop || clipBottom)
                         {
-                            if(clipBottom && lo < openBottom)
+                            if (clipBottom && lo < openBottom)
                                 lo = openBottom;
 
-                            if(clipTop && hi > openTop)
+                            if (clipTop && hi > openTop)
                                 hi = openTop;
                         }
 
-                        if(!clipTop)
+                        if (!clipTop)
                         {
                             materialOrigin.y = 0;
                         }
@@ -493,67 +495,64 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return (worldHeight - lo) / (hi - lo);
     }
 
-    void addNeighborIntercepts(coord_t bottom, coord_t top)
+    void addNeighborIntercepts(ddouble bottom, ddouble top)
     {
-        ClockDirection const direction = edge? Clockwise : Anticlockwise;
+        ClockDirection const direction = edge ? Clockwise : Anticlockwise;
 
         HEdge const *hedge = wallHEdge;
-        while((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
+        while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
-            // Stop if there is no back subspace.
-            auto const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
-            if(!backSubspace)
+            // Stop if there is no space on the back side.
+            if (!hedge->hasFace() || !hedge->hasMapElement())
                 break;
 
-            Subsector const &subsec = backSubspace->subsector();
-            if(subsec.hasWorldVolume())
+            auto const &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
+            auto const &subsec    = backSpace.subsector().as<world::ClientSubsector>();
+
+            if (subsec.hasWorldVolume())
             {
-                for(dint i = 0; i < subsec.visPlaneCount(); ++i)
+                for (dint i = 0; i < subsec.visPlaneCount(); ++i)
                 {
                     Plane const &plane = subsec.visPlane(i);
 
-                    if(plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
+                    if (plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
                     {
                         ddouble distance = distanceTo(plane.heightSmoothed());
-                        if(!haveEvent(distance))
+                        if (!haveEvent(distance))
                         {
                             createEvent(distance);
 
                             // Have we reached the div limit?
-                            if(interceptCount() == WALLEDGE_MAX_INTERCEPTS)
+                            if (interceptCount() == WALLEDGE_MAX_INTERCEPTS)
                                 return;
                         }
                     }
 
                     // Clip a range bound to this height?
-                    if(plane.isSectorFloor() && plane.heightSmoothed() > bottom)
+                    if (plane.isSectorFloor() && plane.heightSmoothed() > bottom)
                         bottom = plane.heightSmoothed();
-                    else if(plane.isSectorCeiling() && plane.heightSmoothed() < top)
+                    else if (plane.isSectorCeiling() && plane.heightSmoothed() < top)
                         top = plane.heightSmoothed();
 
                     // All clipped away?
-                    if(bottom >= top)
+                    if (bottom >= top)
                         return;
                 }
             }
             else
             {
-                /*
-                 * A neighbor with zero volume is a special case -- the potential
-                 * division is at the height of the back ceiling. This is because
-                 * elsewhere we automatically fix the case of a floor above a
-                 * ceiling by lowering the floor.
-                 */
-                coord_t z = subsec.visCeiling().heightSmoothed();
-
+                // A neighbor with zero volume -- the potential division is at the height
+                // of the back ceiling. This is because elsewhere we automatically fix the
+                // case of a floor above a ceiling by lowering the floor.
+                ddouble z = subsec.visCeiling().heightSmoothed();
                 if(z > bottom && z < top)
                 {
                     ddouble distance = distanceTo(z);
                     if(!haveEvent(distance))
                     {
                         createEvent(distance);
-                        // All clipped away.
-                        return;
+
+                        return; // All clipped away.
                     }
                 }
             }

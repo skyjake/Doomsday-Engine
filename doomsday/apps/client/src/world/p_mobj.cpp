@@ -41,6 +41,7 @@
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
+#  include "client/clientsubsector.h"
 #  include "gl/gl_tex.h"
 #  include "network/net_demo.h"
 #  include "render/viewports.h"
@@ -282,29 +283,31 @@ bool Mobj_IsLinked(mobj_t const &mobj)
     return mobj._bspLeaf != 0;
 }
 
-BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
+BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob)
 {
-    if(Mobj_IsLinked(mobj))
+    if (Mobj_IsLinked(mob))
     {
-        return *(BspLeaf *)mobj._bspLeaf;
+        return *(BspLeaf *)mob._bspLeaf;
     }
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
 
-bool Mobj_HasSubspace(mobj_t const &mobj)
+bool Mobj_HasSubsector(mobj_t const &mob)
 {
-    if(!Mobj_IsLinked(mobj)) return false;
-    return Mobj_BspLeafAtOrigin(mobj).hasSubspace();
+    if (!Mobj_IsLinked(mob)) return false;
+    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    if (!bspLeaf.hasSubspace()) return false;
+    return bspLeaf.subspace().hasSubsector();
 }
 
-Subsector &Mobj_Subsector(mobj_t const &mobj)
+Subsector &Mobj_Subsector(mobj_t const &mob)
 {
-    return Mobj_BspLeafAtOrigin(mobj).subspace().subsector();
+    return Mobj_BspLeafAtOrigin(mob).subspace().subsector();
 }
 
-Subsector *Mobj_SubsectorPtr(mobj_t const &mobj)
+Subsector *Mobj_SubsectorPtr(mobj_t const &mob)
 {
-    return Mobj_HasSubspace(mobj)? &Mobj_Subsector(mobj) : 0;
+    return Mobj_HasSubsector(mob) ? &Mobj_Subsector(mob) : nullptr;
 }
 
 #undef Mobj_Sector
@@ -402,27 +405,27 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mo, mobj_t const *i
 
 #ifdef __CLIENT__
 
-dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
+dd_bool Mobj_OriginBehindVisPlane(mobj_t *mob)
 {
-    if(!mo || !Mobj_HasSubspace(*mo))
-        return false;
-    Subsector &subsec = Mobj_Subsector(*mo);
+    if (!mob || !Mobj_HasSubsector(*mob)) return false;
 
-    if(&subsec.floor() != &subsec.visFloor() &&
-       mo->origin[VZ] < subsec.visFloor().heightSmoothed())
+    auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+
+    if (&subsec.floor() != &subsec.visFloor()
+        && mob->origin[2] < subsec.visFloor().heightSmoothed())
         return true;
 
-    if(&subsec.ceiling() != &subsec.visCeiling() &&
-       mo->origin[VZ] > subsec.visCeiling().heightSmoothed())
+    if (&subsec.ceiling() != &subsec.visCeiling()
+        && mob->origin[2] > subsec.visCeiling().heightSmoothed())
         return true;
 
     return false;
 }
 
-void Mobj_UnlinkLumobjs(mobj_t *mo)
+void Mobj_UnlinkLumobjs(mobj_t *mob)
 {
-    if(!mo) return;
-    mo->lumIdx = Lumobj::NoIndex;
+    if (!mob) return;
+    mob->lumIdx = Lumobj::NoIndex;
 }
 
 static ded_light_t *lightDefByMobjState(state_t const *state)
@@ -440,26 +443,26 @@ static inline ClientTexture *lightmap(de::Uri const *textureUri)
     return static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", *textureUri));
 }
 
-void Mobj_GenerateLumobjs(mobj_t *mo)
+void Mobj_GenerateLumobjs(mobj_t *mob)
 {
-    if(!mo) return;
+    if (!mob) return;
 
-    Mobj_UnlinkLumobjs(mo);
+    Mobj_UnlinkLumobjs(mob);
 
-    if(!Mobj_HasSubspace(*mo)) return;
-    Subsector &subsec = Mobj_Subsector(*mo);
+    if (!Mobj_HasSubsector(*mob)) return;
+    auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
 
-    if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
-         !(mo->ddFlags & DDMF_DONTDRAW)) ||
-       (mo->ddFlags & DDMF_ALWAYSLIT)))
+    if (!(((mob->state && (mob->state->flags & STF_FULLBRIGHT))
+            && !(mob->ddFlags & DDMF_DONTDRAW))
+          || (mob->ddFlags & DDMF_ALWAYSLIT)))
     {
         return;
     }
 
     // Are the automatically calculated light values for fullbright sprite frames in use?
-    if(mo->state &&
-       (!mobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
-       !runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mo->state)].light)
+    if (mob->state
+        && (!mobjAutoLights || (mob->state->flags & STF_NOAUTOLIGHT))
+        && !runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mob->state)].light)
     {
        return;
     }
@@ -467,11 +470,11 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
-    if(!Mobj_BspLeafAtOrigin(*mo).subspace().contains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mob).subspace().contains(mob->origin))
         return;
 
     // Always use the front view of the Sprite when determining light properties.
-    Record *spriteRec = Mobj_SpritePtr(*mo);
+    Record *spriteRec = Mobj_SpritePtr(*mob);
     if(!spriteRec) return;
     defn::Sprite sprite(*spriteRec);
     if(!sprite.hasView(0)) return;
@@ -489,7 +492,8 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -texOrigin.y - matAnimator.dimensions().y - subsec.visFloor().heightSmoothed();
+    coord_t impacted = mob->origin[2] + -texOrigin.y - matAnimator.dimensions().y
+                     - subsec.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
     if(impacted < 0 && &subsec.visFloor() != &subsec.floor())
@@ -499,10 +503,10 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(sprite.def()));
     if(!lum) return;
 
-    lum->setSourceMobj(mo);
+    lum->setSourceMobj(mob);
 
     // A light definition may override the (auto-calculated) defaults.
-    if(ded_light_t *def = lightDefByMobjState(mo->state))
+    if(ded_light_t *def = lightDefByMobjState(mob->state))
     {
         if(!de::fequal(def->size, 0))
         {
@@ -525,11 +529,11 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     }
 
     // Translate to the mobj's origin in map space.
-    lum->move(mo->origin);
+    lum->move(mob->origin);
 
     // Does the mobj need a Z origin offset?
-    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(*mo);
-    if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
+    coord_t zOffset = -mob->floorClip - Mobj_BobOffset(*mob);
+    if(!(mob->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
     {
         // Raise the light out of the impacted surface.
         zOffset -= impacted;
@@ -538,7 +542,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mo->lumIdx = subsec.sector().map().addLumobj(*lum).indexInMap();
+    mob->lumIdx = subsec.sector().map().addLumobj(*lum).indexInMap();
 }
 
 void Mobj_AnimateHaloOcclussion(mobj_t &mob)
@@ -596,7 +600,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     static dfloat const minSpriteAlphaLimit = .1f;
 
     // A shadow is not cast if the map-object is not linked in the map.
-    if(!Mobj_HasSubspace(mob)) return 0;
+    if(!Mobj_HasSubsector(mob)) return 0;
     // ...or the current state is invalid or full-bright.
     if(!mob.state || (mob.state->flags & STF_FULLBRIGHT)) return 0;
     // ...or it won't be drawn at all.
@@ -605,7 +609,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     if(mob.ddFlags & DDMF_ALWAYSLIT) return 0;
 
     // Evaluate the ambient light level at our map origin.
-    Subsector const &subsec = Mobj_Subsector(mob);
+    auto const &subsec = Mobj_Subsector(mob).as<ClientSubsector>();
     dfloat ambientLightLevel;
     if(::useBias && subsec.sector().map().hasLightGrid())
     {

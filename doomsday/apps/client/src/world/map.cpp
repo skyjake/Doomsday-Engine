@@ -27,6 +27,7 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_mobj.h"
+#  include "client/clientsubsector.h"
 #endif
 
 #include "api_console.h"
@@ -41,6 +42,7 @@
 #include "world/lineowner.h"
 #include "m_nodepile.h"
 #include "world/p_object.h"
+#include "world/p_players.h"
 #include "world/polyobjdata.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
@@ -53,6 +55,9 @@
 #include "Subsector"
 #include "Surface"
 #include "Vertex"
+#ifdef __CLIENT__
+#  include "client/clientsubsector.h"
+#endif
 
 #ifdef __CLIENT__
 #  include "Contact"
@@ -1211,7 +1216,7 @@ DENG2_PIMPL(Map)
         {
             sec->forAllSubsectors([&allChanges] (Subsector &subsec)
             {
-                subsec.applyBiasChanges(allChanges);
+                subsec.as<ClientSubsector>().applyBiasChanges(allChanges);
                 return LoopContinue;
             });
         }
@@ -1632,7 +1637,7 @@ void Map::initLightGrid()
     /// optimize this much further.
 
     // Allocate memory for all the sample results.
-    QVector<Subsector *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
+    QVector<world::ClientSubsector *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
 
     // Determine the size^2 of the samplePoint array plus its center.
     dint size = 0, center = 0;
@@ -1686,10 +1691,10 @@ void Map::initLightGrid()
         dint sampleOffset = 0;
         if (center == 0)
         {
-            // Center point is not considered with the term 'size'.
-            // Sample this point and place at index 0 (at the start of the
-            // samples for this block).
-            ssamples[blk * numSamples] = subsectorAt(lg.origin() + off + samplePoints[0]);
+            // Center point is not considered with the term 'size'. Sample this point and
+            // place at index 0 (at the start of the samples for this block).
+            Subsector *s = subsectorAt(lg.origin() + off + samplePoints[0]);
+            ssamples[blk * numSamples] = s ? &s->as<world::ClientSubsector>() : nullptr;
             sampleOffset++;
         }
 
@@ -1730,14 +1735,15 @@ void Map::initLightGrid()
                 else
                 {
                     // We haven't sampled this point yet.
-                    ssamples[idx] = subsectorAt(lg.origin() + off + samplePoints[sampleOffset]);
+                    Subsector *s = subsectorAt(lg.origin() + off + samplePoints[sampleOffset]);
+                    ssamples[idx] = s ? &s->as<world::ClientSubsector>() : nullptr;
                 }
             }
         }
     }
 
     // Allocate memory used for the collection of the sample results.
-    QVector<Subsector *> blkSampleSubsectors(numSamples);
+    QVector<world::ClientSubsector *> blkSampleSubsectors(numSamples);
 
     for (dint y = 0; y < lg.dimensions().y; ++y)
     for (dint x = 0; x < lg.dimensions().x; ++x)
@@ -1757,7 +1763,7 @@ void Map::initLightGrid()
             blkSampleSubsectors[i] = ssamples[i + sampleOffset];
         }
 
-        Subsector *subsec = nullptr;
+        world::ClientSubsector *subsec = nullptr;
         if (numSamples == 1)
         {
             subsec = blkSampleSubsectors[center];
@@ -1921,7 +1927,7 @@ void Map::buildMaterialLists()
             return LoopContinue;
         });
 
-        subspace->sector().forAllPlanes([this] (Plane &plane)
+        subspace->subsector().sector().forAllPlanes([this] (Plane &plane)
         {
             linkInMaterialLists(&plane.surface());
             return LoopContinue;
@@ -1986,7 +1992,7 @@ void Map::initRadio()
                 if (sub.validCount() != localValidCount)  // not yet processed
                 {
                     sub.setValidCount(localValidCount);
-                    if (&sub.sector() == side.sectorPtr())
+                    if (&sub.subsector().sector() == side.sectorPtr())
                     {
                         // Check the bounds.
                         AABoxd const &polyBox = sub.poly().aaBox();
@@ -2233,14 +2239,18 @@ LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
     return LoopContinue;
 }
 
-bool Map::isPointInVoid(de::Vector3d const &pos) const
+#ifdef __CLIENT__
+bool Map::isPointInVoid(de::Vector3d const &point) const
 {
-    if (Subsector const *subsec = subsectorAt(pos))
+    BspLeaf const &bspLeaf = bspLeafAt(point);
+    if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point) && bspLeaf.subspace().hasSubsector())
     {
-        return subsec->isHeightInVoid(pos.z);
+        auto const &subsec = bspLeaf.subspace().subsector().as<ClientSubsector>();
+        return subsec.isHeightInVoid(point.z);
     }
-    return true;  // In the void.
+    return true; // In the void.
 }
+#endif
 
 dint Map::subspaceCount() const
 {
@@ -2626,29 +2636,26 @@ void Map::link(mobj_t &mob, dint flags)
         d->linkMobjToLines(mob);
     }
 
-    // If this is a player - perform additional tests to see if they have
-    // entered or exited the void.
+#ifdef __CLIENT__
+    // If this is a player - perform additional tests to see if they have either entered or exited the void.
     if (mob.dPlayer && mob.dPlayer->mo)
     {
-        mob.dPlayer->inVoid = true;
-
-        if (Subsector *subsec = Mobj_SubsectorPtr(mob))
+        auto &client = ClientApp::players().at(P_GetDDPlayerIdx(mob.dPlayer)).as<ClientPlayer>();
+        client.inVoid = true;
+        if (Mobj_HasSubsector(mob))
         {
+            auto &subsec = Mobj_Subsector(mob).as<world::ClientSubsector>();
             if (Mobj_BspLeafAtOrigin(mob).subspace().contains(Mobj_Origin(mob)))
             {
-#ifdef __CLIENT__
-                if (   mob.origin[2] <  subsec->visCeiling().heightSmoothed() + 4
-                    && mob.origin[2] >= subsec->  visFloor().heightSmoothed())
-#else
-                if (   mob.origin[2] <  subsec->ceiling().height() + 4
-                    && mob.origin[2] >= subsec->  floor().height())
-#endif
+                if (   mob.origin[2] <  subsec.visCeiling().heightSmoothed() + 4
+                    && mob.origin[2] >= subsec.  visFloor().heightSmoothed())
                 {
-                    mob.dPlayer->inVoid = false;
+                    client.inVoid = false;
                 }
             }
         }
     }
+#endif
 }
 
 void Map::unlink(Polyobj &polyobj)

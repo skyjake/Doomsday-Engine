@@ -21,15 +21,6 @@
 
 #include "world/p_players.h"
 
-#include <QList>
-#include <QMap>
-#include <QtAlgorithms>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#endif
-
 #include "world/impulseaccumulator.h"
 #include "world/map.h"
 #include "world/p_object.h"
@@ -40,7 +31,16 @@
 #  include "BindContext"
 #  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
+
+#  include "client/clientsubsector.h"
+#  include "clientapp.h"
 #endif
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <QList>
+#include <QMap>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -159,49 +159,42 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
     return DoomsdayApp::players().indexOf(ddpl);
 }
 
+#ifdef __CLIENT__
+
 bool P_IsInVoid(player_t *player)
 {
     if(!player) return false;
-    ddplayer_t *ddpl = &player->publicData();
+    ddplayer_t const *ddpl = &player->publicData();
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
     if(ddpl->flags & DDPF_CAMERA)
     {
-        if(ddpl->inVoid || !ddpl->mo)
+        if(player->inVoid || !ddpl->mo)
             return true;
-        mobj_t *mo = ddpl->mo;
 
-        if(!Mobj_HasSubspace(*mo))
+        mobj_t const *mob = ddpl->mo;
+        if(!Mobj_HasSubsector(*mob))
             return true;
-        world::Subsector &subsec = Mobj_Subsector(*mo);
 
-#ifdef __CLIENT__
+        auto const &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
         if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
             ddouble const skyCeil = subsec.sector().map().skyFixCeiling();
-            if(skyCeil < DDMAXFLOAT && mo->origin[2] > skyCeil - 4)
+            if(skyCeil < DDMAXFLOAT && mob->origin[2] > skyCeil - 4)
                 return true;
         }
-        else if(mo->origin[2] > subsec.visCeiling().heightSmoothed() - 4)
-#else
-        if(mo->origin[2] > subsec.ceiling().height() - 4)
-#endif
+        else if(mob->origin[2] > subsec.visCeiling().heightSmoothed() - 4)
         {
             return true;
         }
-
-#ifdef __CLIENT__
         if(subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
             ddouble const skyFloor = subsec.sector().map().skyFixFloor();
-            if(skyFloor > DDMINFLOAT && mo->origin[2] < skyFloor + 4)
+            if(skyFloor > DDMINFLOAT && mob->origin[2] < skyFloor + 4)
                 return true;
         }
-        else if(mo->origin[2] < subsec.visFloor().heightSmoothed() + 4)
-#else
-        if(mo->origin[2] < subsec.floor().height() + 4)
-#endif
+        else if(mob->origin[2] < subsec.visFloor().heightSmoothed() + 4)
         {
             return true;
         }
@@ -209,6 +202,8 @@ bool P_IsInVoid(player_t *player)
 
     return false;
 }
+
+#endif // __CLIENT__
 
 void P_ClearPlayerImpulses()
 {

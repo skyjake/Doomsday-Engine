@@ -56,9 +56,9 @@
 #include "world/sky.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
 #include "Surface"
 #include "Contact"
+#include "client/clientsubsector.h"
 
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
@@ -743,8 +743,8 @@ static void setupPlayerSprites()
     if(!ddpl->mo) return;
     mobj_t *mob = ddpl->mo;
 
-    if(!Mobj_HasSubspace(*mob)) return;
-    Subsector &subsec = Mobj_Subsector(*mob);
+    if(!Mobj_HasSubsector(*mob)) return;
+    auto &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
 
     // Determine if we should be drawing all the psprites full bright?
     bool fullBright = CPP_BOOL(::levelFullBright);

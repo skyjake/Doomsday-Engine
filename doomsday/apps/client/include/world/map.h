@@ -492,7 +492,7 @@ public:  //- Polyobjects -------------------------------------------------------
      */
     void unlink(Polyobj &polyobj);
 
-public:  //- Sectors --------------------------------------------------------------------
+//- Sectors -----------------------------------------------------------------------------
 
     /**
      * Returns the total number of Sectors in the map.
@@ -513,34 +513,27 @@ public:  //- Sectors -----------------------------------------------------------
     de::LoopResult forAllSectors(std::function<de::LoopResult (Sector &)> callback) const;
 
     /**
-     * Increment validCount before calling this routine. The callback function will be called
-     * once for each sector the mobj is touching (totally or partly inside). This is not
-     * a 3D check; the mobj may actually reside above or under the sector.
+     * Increment validCount before calling this routine. The callback function will be
+     * called once for each sector the mobj is touching (totally or partly inside). This
+     * is not a 3D check; the mobj may actually reside above or under the sector.
      *
      * @param mob       Map-object to iterate the "touched" Sectors of.
      * @param callback  Function to call for each Sector.
      */
     de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
 
-public:  //- Subsectors -------------------------------------------------------------
-
     /**
-     * Returns the total number of Subsectors in the map.
-     */
-    de::dint subsectorCount() const;
-
-    /**
-     * Determine the Subsector which contains @a point and which is on the back side
-     * of the BS partition that lies in front of @a point.
+     * Determine the Subsector which contains @a point and which is on the back side of
+     * the binary map space partition which, lies in front of @a point.
      *
-     * @param point  Map space coordinates to determine the BSP leaf for.
+     * @param point  Map space coordinates to determine the Subsector for.
      *
      * @return  Subsector containing the specified point if any or @c nullptr if the
      * subsectors have not yet been built.
      */
     Subsector *subsectorAt(de::Vector2d const &point) const;
 
-public:  //- Skies ----------------------------------------------------------------------
+//- Skies -------------------------------------------------------------------------------
 
     /**
      * Returns the logical sky for the map.
@@ -571,11 +564,6 @@ public:  //- Skies -------------------------------------------------------------
 public:  //- Subspaces ------------------------------------------------------------------
 
     /**
-     * Returns @c true if the given @a point is in the void (outside all map subspaces).
-     */
-    bool isPointInVoid(de::Vector3d const &pos) const;
-
-    /**
      * Returns the total number of subspaces in the map.
      */
     de::dint subspaceCount() const;
@@ -592,6 +580,13 @@ public:  //- Subspaces ---------------------------------------------------------
      * @param callback  Function to call for each ConvexSubspace.
      */
     de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> callback) const;
+
+#ifdef __CLIENT__
+    /**
+    * Returns @c true if the given @a point is in the void (outside all map subspaces).
+    */
+    bool isPointInVoid(de::Vector3d const &pos) const;
+#endif
 
 public:  //- Vertexs --------------------------------------------------------------------
 

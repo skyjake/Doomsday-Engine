@@ -31,6 +31,7 @@
 #include "world/map.h"
 #include "world/p_players.h"  // viewPlayer
 #include "ConvexSubspace"
+#include "client/clientsubsector.h"
 #include "Hand"
 #include "HueCircle"
 
@@ -580,7 +581,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
 static void drawLightGauge(Vector2i const &origin, dint height = 255)
 {
     static dfloat minLevel = 0, maxLevel = 0;
-    static Subsector *lastSubsector = 0;
+    static Subsector *lastSubsector = nullptr;
 
     Hand &hand = App_World().hand();
     Map &map = App_World().map();
@@ -596,11 +597,11 @@ static void drawLightGauge(Vector2i const &origin, dint height = 255)
         if(subspace->hasSubsector() && lastSubsector != subspace->subsectorPtr())
         {
             lastSubsector = &subspace->subsector();
-            minLevel = maxLevel = lastSubsector->lightSourceIntensity();
+            minLevel = maxLevel = lastSubsector->as<world::ClientSubsector>().lightSourceIntensity();
         }
     }
 
-    float const lightLevel = lastSubsector? lastSubsector->lightSourceIntensity() : 0;
+    dfloat const lightLevel = lastSubsector ? lastSubsector->as<world::ClientSubsector>().lightSourceIntensity() : 0;
     if(lightLevel < minLevel)
         minLevel = lightLevel;
     if(lightLevel > maxLevel)

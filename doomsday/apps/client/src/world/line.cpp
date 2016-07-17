@@ -38,6 +38,8 @@
 #  include "world/lineowner.h"
 #  include "render/r_main.h"  // levelFullBright
 #  include "render/rend_fakeradio.h"
+
+#  include "client/clientsubsector.h"
 #endif
 
 #include <doomsday/console/cmd.h>
@@ -842,7 +844,8 @@ static void addMissingMaterial(LineSide &side, dint section)
     {
         if (hedge->hasFace() && hedge->face().hasMapElement())
         {
-            Subsector &subsec = hedge->face().mapElementAs<ConvexSubspace>().subsector();
+            auto &subsec = hedge->face().mapElementAs<ConvexSubspace>()
+                               .subsector().as<ClientSubsector>();
             subsec.markReverbDirty();
             subsec.markVisPlanesDirty();
         }

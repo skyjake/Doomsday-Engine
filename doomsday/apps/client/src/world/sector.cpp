@@ -39,6 +39,8 @@
 using namespace de;
 using namespace world;
 
+static Sector::SubsectorConstructor subsectorConstructor;
+
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
@@ -362,8 +364,9 @@ LoopResult Sector::forAllSubsectors(std::function<LoopResult(Subsector &)> callb
 
 Subsector *Sector::addSubsector(QList<ConvexSubspace *> const &subspaces)
 {
+    DENG2_ASSERT(subsectorConstructor);
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
-    std::unique_ptr<Subsector> subsec(new Subsector(subspaces));
+    std::unique_ptr<Subsector> subsec(subsectorConstructor(subspaces));
     d->subsectors << subsec.get();
     return subsec.release();
 }
@@ -655,3 +658,9 @@ void Sector::consoleRegister()  // static
 {
     C_CMD("inspectsector", "i", InspectSector);
 }
+
+void Sector::setSubsectorConstructor(SubsectorConstructor func) // static
+{
+    subsectorConstructor = func;
+}
+

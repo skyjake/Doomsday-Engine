@@ -26,10 +26,9 @@
 #include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
-#include "Subsector"
 #include "Surface"
-
 #include "world/lineowner.h"
+#include "client/clientsubsector.h"
 
 #include "render/rend_main.h"
 #include "MaterialAnimator"
@@ -153,7 +152,8 @@ void ShadowEdge::prepare(dint planeIndex)
 {
     dint const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
-    Subsector const &subsec = hedge.face().mapElementAs<ConvexSubspace>().subsector();
+    auto const &subsec = hedge.face().mapElementAs<ConvexSubspace>()
+                            .subsector().as<world::ClientSubsector>();
     Plane const &plane = subsec.visPlane(planeIndex);
 
     LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
@@ -167,7 +167,9 @@ void ShadowEdge::prepare(dint planeIndex)
     if (hedge.twin().hasFace() &&
         hedge.twin().face().mapElementAs<ConvexSubspace>().hasSubsector())
     {
-        Subsector const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
+        auto const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>()
+                                    .subsector().as<world::ClientSubsector>();
+
         Plane const &backPlane = backSubsec.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)

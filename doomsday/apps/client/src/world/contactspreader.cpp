@@ -17,9 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QBitArray>
-#include <de/vector1.h>
-
 #include "world/contactspreader.h"
 
 #include "Face"
@@ -31,12 +28,16 @@
 #include "Sector"
 #include "Subsector"
 #include "Surface"
-
 #include "world/clientserverworld.h"  // validCount
 
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
 #include "MaterialAnimator"
 #include "WallEdge"
+
+#include "client/clientsubsector.h"
+
+#include <de/vector1.h>
+#include <QBitArray>
 
 using namespace de;
 
@@ -138,47 +139,46 @@ private:
     {
         DENG2_ASSERT(_spread.contact != 0);
 
-        if(!hedge) return;
+        if (!hedge) return;
 
-        auto &subspace         = hedge->face().mapElementAs<ConvexSubspace>();
-        Subsector &subsec = subspace.subsector();
+        auto &subspace = hedge->face().mapElementAs<ConvexSubspace>();
+        auto &subsec   = subspace.subsector().as<ClientSubsector>();
 
         // There must be a back BSP leaf to spread to.
-        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
+        if (!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             return;
 
-        auto &backSubspace         = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        Subsector &backSubsec = backSubspace.subsector();
+        auto &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        auto &backSubsec   = backSubspace.subsector().as<ClientSubsector>();
 
         // Which way does the spread go?
-        if(!(subspace.validCount() == validCount &&
-             backSubspace.validCount() != validCount))
+        if (!(subspace.validCount() == validCount && backSubspace.validCount() != validCount))
         {
             return; // Not eligible for spreading.
         }
 
         // Is the leaf on the back side outside the origin's AABB?
         AABoxd const &aaBox = backSubspace.poly().aaBox();
-        if(aaBox.maxX <= _spread.contactAABox.minX || aaBox.minX >= _spread.contactAABox.maxX ||
-           aaBox.maxY <= _spread.contactAABox.minY || aaBox.minY >= _spread.contactAABox.maxY)
+        if (   aaBox.maxX <= _spread.contactAABox.minX || aaBox.minX >= _spread.contactAABox.maxX
+            || aaBox.maxY <= _spread.contactAABox.minY || aaBox.minY >= _spread.contactAABox.maxY)
             return;
 
         // Too far from the edge?
         coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
         coord_t const distance = pointOnHEdgeSide(*hedge, _spread.contact->objectOrigin()) / length;
-        if(abs(distance) >= _spread.contact->objectRadius())
+        if (abs(distance) >= _spread.contact->objectRadius())
             return;
 
         // Do not spread if the sector on the back side is closed with no height.
         if(!backSubsec.hasWorldVolume())
             return;
 
-        if(backSubsec.visCeiling().heightSmoothed() <= subsec.visFloor().heightSmoothed() ||
-           backSubsec.visFloor().heightSmoothed() >= subsec.visCeiling().heightSmoothed())
+        if (   backSubsec.visCeiling().heightSmoothed() <= subsec.visFloor  ().heightSmoothed()
+            || backSubsec.visFloor  ().heightSmoothed() >= subsec.visCeiling().heightSmoothed())
             return;
 
         // Are there line side surfaces which should prevent spreading?
-        if(hedge->hasMapElement())
+        if (hedge->hasMapElement())
         {
             LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
 
@@ -186,38 +186,38 @@ private:
             LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
             // One-way window?
-            if(!facingLineSide.back().hasSections())
+            if (!facingLineSide.back().hasSections())
                 return;
 
-            Subsector const &fromSubsector = facingLineSide.isFront()? subsec : backSubsec;
-            Subsector const &toSubsector   = facingLineSide.isFront()? backSubsec : subsec;
+            ClientSubsector const &fromSubsec = facingLineSide.isFront() ? subsec : backSubsec;
+            ClientSubsector const &toSubsec   = facingLineSide.isFront() ? backSubsec : subsec;
 
             // Might a material cover the opening?
-            if(facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
+            if (facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
             {
                 // Stretched middles always cover the opening.
-                if(facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
+                if (facingLineSide.isFlagged(SDF_MIDDLE_STRETCH))
                     return;
 
                 // Determine the opening between the visual sector planes at this edge.
                 coord_t openBottom;
-                if(toSubsector.visFloor().heightSmoothed() > fromSubsector.visFloor().heightSmoothed())
+                if (toSubsec.visFloor().heightSmoothed() > fromSubsec.visFloor().heightSmoothed())
                 {
-                    openBottom = toSubsector.visFloor().heightSmoothed();
+                    openBottom = toSubsec.visFloor().heightSmoothed();
                 }
                 else
                 {
-                    openBottom = fromSubsector.visFloor().heightSmoothed();
+                    openBottom = fromSubsec.visFloor().heightSmoothed();
                 }
 
                 coord_t openTop;
-                if(toSubsector.visCeiling().heightSmoothed() < fromSubsector.visCeiling().heightSmoothed())
+                if (toSubsec.visCeiling().heightSmoothed() < fromSubsec.visCeiling().heightSmoothed())
                 {
-                    openTop = toSubsector.visCeiling().heightSmoothed();
+                    openTop = toSubsec.visCeiling().heightSmoothed();
                 }
                 else
                 {
-                    openTop = fromSubsector.visCeiling().heightSmoothed();
+                    openTop = fromSubsec.visCeiling().heightSmoothed();
                 }
 
                 MaterialAnimator &matAnimator = facingLineSide.middle().material()
@@ -226,14 +226,14 @@ private:
                 // Ensure we have up to date info about the material.
                 matAnimator.prepare();
 
-                if(matAnimator.isOpaque() && matAnimator.dimensions().y >= openTop - openBottom)
+                if (matAnimator.isOpaque() && matAnimator.dimensions().y >= openTop - openBottom)
                 {
                     // Possibly; check the placement.
                     WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
                                      *facingLineSide.leftHEdge(), Line::From);
 
-                    if(edge.isValid() && edge.top().z() > edge.bottom().z() &&
-                       edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
+                    if (edge.isValid() && edge.top().z() > edge.bottom().z() &&
+                        edge.top().z() >= openTop && edge.bottom().z() <= openBottom)
                         return;
                 }
             }

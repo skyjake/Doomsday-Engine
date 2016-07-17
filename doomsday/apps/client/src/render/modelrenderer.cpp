@@ -739,7 +739,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void setReflectionForObject(mobj_t const *object)
     {
-        if (object && Mobj_HasSubspace(*object))
+        if (object && Mobj_HasSubsector(*object))
         {
             setReflectionForSubsector(&Mobj_Subsector(*object));
         }

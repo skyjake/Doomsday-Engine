@@ -1,52 +1,32 @@
-
 /** @file subsector.h  Map subsector.
-* @ingroup world
-*
-* @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
-*
-* @par License
-* GPL: http://www.gnu.org/licenses/gpl.html
-*
-* <small>This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by the
-* Free Software Foundation; either version 2 of the License, or (at your
-* option) any later version. This program is distributed in the hope that it
-* will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-* Public License for more details. You should have received a copy of the GNU
-* General Public License along with this program; if not, write to the Free
-* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA</small>
-*/
+ * @ingroup world
+ *
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
+ */
 
 #ifndef DENG_WORLD_SUBSECTOR_H
 #define DENG_WORLD_SUBSECTOR_H
 
-#ifdef __CLIENT__
-#  include <QBitArray>
-#endif
 #include <QList>
 #include <de/aabox.h>
 #include <de/Observers>
 #include <de/Vector>
-#include <doomsday/world/mapelement.h>
-
-#include "HEdge"
-
-#ifdef __CLIENT__
-#  include "world/audioenvironment.h"
-#endif
-#include "Line"
-#include "Plane"
 #include "Sector"
-
-#ifdef __CLIENT__
-#  include "render/lightgrid.h"
-#endif
-
-#ifdef __CLIENT__
-class Shard;
-#endif
+#include "HEdge"
 
 namespace world {
 
@@ -60,9 +40,6 @@ namespace world {
  * same name (now ConvexSubspace).
  */
 class Subsector
-#ifdef __CLIENT__
-    : public de::LightGrid::IBlockLightSource
-#endif
 {
 public:
     /// Notified when the subsector is about to be deleted.
@@ -91,8 +68,12 @@ public:
      */
     Subsector(QList<ConvexSubspace *> const &subspaces);
 
+    virtual ~Subsector();
+
+    DENG2_AS_IS_METHODS()
+
     /**
-     * Returns the attributed Sector of the subsector.
+     * Returns the Sector attributed to the subsector.
      */
     Sector       &sector();
     Sector const &sector() const;
@@ -110,32 +91,7 @@ public:
         return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
     }
 
-    /**
-     * Returns @c true if @a height (up-axis offset) lies above/below the ceiling/floor
-     * height of the subsector.
-     */
-    bool isHeightInVoid(de::ddouble height) const;
-
-#ifdef __CLIENT__
-    /**
-     * Determines whether the subsector has positive world volume, i.e., the height of
-     * the floor is lower than that of the ceiling plane.
-     *
-     * @param useSmoothedHeights  @c true= use the @em smoothed plane heights instead of
-     * the @em sharp heights.
-     */
-    bool hasWorldVolume(bool useSmoothedHeights = true) const;
-#endif
-
 //- Planes ------------------------------------------------------------------------------
-
-    /**
-     * Returns @c true if at least one of the @em visual Planes of the subsector is using
-     * a sky-masked Material.
-     *
-     * @see Surface::hasSkyMaskedMaterial()
-     */
-    bool hasSkyMaskPlane() const;
 
     /**
      * Returns the @em physical Plane of the subsector associated with @a planeIndex.
@@ -161,41 +117,6 @@ public:
     inline Plane       &ceiling()       { return plane(Sector::Ceiling); }
     inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
 
-    /**
-     * Returns the @em visual Plane of the subsector associated with @a planeIndex.
-     *
-     * @see visFloor(), visCeiling()
-     */
-    Plane       &visPlane(de::dint planeIndex);
-    Plane const &visPlane(de::dint planeIndex) const;
-
-    /**
-     * Returns the @em visual floor Plane of the subsector.
-     *
-     * @see ceiling(), plane()
-     */
-    inline Plane       &visFloor()       { return visPlane(Sector::Floor); }
-    inline Plane const &visFloor() const { return visPlane(Sector::Floor); }
-
-    /**
-     * Returns the @em visual ceiling Plane of the subsector.
-     *
-     * @see floor(), plane()
-     */
-    inline Plane       &visCeiling()       { return visPlane(Sector::Ceiling); }
-    inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
-
-    /**
-     * Returns the total number of @em visual planes in the subsector.
-     */
-    inline de::dint visPlaneCount() const { return sector().planeCount(); }
-
-    /**
-     * To be called to force re-evaluation of mapped visual planes. This is only necessary
-     * when a surface material change occurs on a boundary line of the subsector.
-     */
-    void markVisPlanesDirty();
-
 //- Subspaces ---------------------------------------------------------------------------
 
     /**
@@ -215,111 +136,6 @@ public:
      * in the subsector (map units squared).
      */
     de::ddouble roughArea() const;
-
-#ifdef __CLIENT__
-//- Audio environment -------------------------------------------------------------------
-
-    /**
-     * POD: Environmental audio parameters.
-     */
-    struct AudioEnvironment
-    {
-        de::dfloat volume  = 0;
-        de::dfloat space   = 0;
-        de::dfloat decay   = 0;
-        de::dfloat damping = 0;
-
-        void reset() { volume = space = decay = damping = 0; }
-    };
-
-    /**
-     * Returns the environmental audio config for the subsector. Note that if a reverb
-     * update is scheduled it will be done at this time (@ref markReverbDirty()).
-     */
-    AudioEnvironment const &reverb() const;
-
-    /**
-     * Request re-calculation of the environmental audio (reverb) characteristics of the
-     * subsector (deferred until necessary).
-     *
-     * To be called whenever any of the properties governing reverb properties have changed
-     * (i.e., wall/plane material changes).
-     */
-    void markReverbDirty(bool yes = true);
-
-//- Bias lighting ----------------------------------------------------------------------
-
-    /**
-     * Apply bias lighting changes to @em all geometry Shards within the subsector.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasChanges(QBitArray &changes);
-
-    /**
-     * Convenient method of determining the frameCount of the current bias render
-     * frame. Used for tracking changes to bias sources/surfaces.
-     *
-     * @see Map::biasLastChangeOnFrame()
-     */
-    de::duint biasLastChangeOnFrame() const;
-
-    /**
-     * Returns the geometry Shard for the specified @a mapElement and geometry
-     * group identifier @a geomId; otherwise @c 0.
-     */
-    Shard *findShard(MapElement &mapElement, de::dint geomId);
-
-    /**
-     * Generate/locate the geometry Shard for the specified @a mapElement and
-     * geometry group identifier @a geomId.
-     */
-    Shard &shard(MapElement &mapElement, de::dint geomId);
-
-    /**
-     * Shards owned by the Subsector should call this periodically to update
-     * their bias lighting contributions.
-     *
-     * @param shard  Shard to be updated (owned by the Subsector).
-     *
-     * @return  @c true if one or more BiasIllum contributors was updated.
-    */
-    bool updateBiasContributors(Shard *shard);
-
-//- Implements LightGrid::IBlockLightSource ---------------------------------------------
-
-    /**
-     * Returns the unique identifier of the light source.
-     */
-    LightId lightSourceId() const;
-
-    /**
-     * Returns the final ambient light color for the source (which, may be affected by the
-     * sky light color if one or more Plane Surfaces in the subsector are using a sky-masked
-     * Material).
-     */
-    de::Vector3f lightSourceColorf() const;
-
-    /**
-     * Returns the final ambient light intensity for the source.
-     * @see lightSourceColorf()
-     */
-    de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint = de::Vector3d(0, 0, 0)) const;
-
-    /**
-     * Returns the final ambient light color and intensity for the source.
-     * @see lightSourceColorf()
-     */
-    inline de::Vector4f lightSourceColorfIntensity() {
-        return de::Vector4f(lightSourceColorf(), lightSourceIntensity());
-    }
-
-    /**
-     * Returns the Z-axis bias scale factor for the light grid, block light source.
-     */
-    de::dint blockLightSourceZBias();
-
-#endif  // __CLIENT__
 
 private:
     DENG2_PRIVATE(d)

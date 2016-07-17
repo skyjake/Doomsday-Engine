@@ -64,8 +64,12 @@ class ClientPlayer : public Player
 public:
     // Demo recording file (being recorded if not NULL).
     LZFILE *demo;
-    bool    recording;
-    bool    recordPaused;
+    bool recording;
+    bool recordPaused;
+
+    /// @c true if the player is in the void. (Not entirely accurate so should not be used
+    /// for anything critical).
+    bool inVoid;
 
 public:
     ClientPlayer();

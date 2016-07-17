@@ -37,7 +37,7 @@
 #include "Contact"
 #include "ConvexSubspace"
 #include "Hand"
-#include "Subsector"
+#include "client/clientsubsector.h"
 #include "Surface"
 #include "BiasIllum"
 #include "HueCircleVisual"
@@ -822,8 +822,8 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
     MapElement &mapElement, dint geomGroup, Matrix3f const &surfaceTangents,
     Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
-    bool const haveWall    = mapElement.is<LineSideSegment>();
-    Subsector &subsec = ::curSubspace->subsector();
+    bool const haveWall = mapElement.is<LineSideSegment>();
+    auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
 
     // Uniform color?
     if(::levelFullBright || !(glowing < 1))
@@ -2276,7 +2276,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
         {
             // Project all plane glows affecting the given quad (world space), calculate
             // coordinates (in texture space) then store into a new list of projections.
-            Subsector const &subsec = curSubspace->subsector();
+            auto const &subsec = curSubspace->subsector().as<world::ClientSubsector>();
             for(dint i = 0; i < subsec.visPlaneCount(); ++i)
             {
                 Plane const &plane = subsec.visPlane(i);
@@ -2380,7 +2380,7 @@ static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLigh
 static bool lightWithPlaneGlow(Vector3d const &point, Subsector const &subsec,
     dint visPlaneIndex, VectorLightData &vlight)
 {
-    Plane const &plane     = subsec.visPlane(visPlaneIndex);
+    Plane const &plane     = subsec.as<world::ClientSubsector>().visPlane(visPlaneIndex);
     Surface const &surface = plane.surface();
 
     // Glowing at this moment?
@@ -2447,7 +2447,7 @@ duint Rend_CollectAffectingLights(Vector3d const &point, Vector3f const &ambient
 
         // Interpret vlights from glowing planes at the origin in the specfified
         // subspace and add them to the identified list.
-        Subsector const &subsec = subspace->subsector();
+        auto const &subsec = subspace->subsector().as<world::ClientSubsector>();
         for(dint i = 0; i < subsec.sector().planeCount(); ++i)
         {
             VectorLightData vlight;
@@ -2563,8 +2563,8 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     if (retBottomZ)     *retBottomZ     = 0;
     if (retTopZ)        *retTopZ        = 0;
 
-    Subsector &subsec = curSubspace->subsector();
-    Surface &surface       = leftEdge.lineSide().surface(leftEdge.spec().section);
+    auto &subsec = curSubspace->subsector().as<world::ClientSubsector>();
+    Surface &surface = leftEdge.lineSide().surface(leftEdge.spec().section);
 
     // Skip nearly transparent surfaces.
     dfloat opacity = surface.opacity();
@@ -2849,7 +2849,7 @@ static void writeSubspacePlane(Plane &plane)
     // Geometry write/drawing begins.
     //
 
-    if(&plane.sector() != &curSubspace->sector())
+    if(&plane.sector() != &curSubspace->subsector().sector())
     {
         // Temporarily modify the draw state.
         curSectorLightColor = Rend_AmbientLightColor(plane.sector());
@@ -2864,10 +2864,10 @@ static void writeSubspacePlane(Plane &plane)
     // Draw this section.
     renderWorldPoly(posCoords, vertCount, parm, matAnimator);
 
-    if(&plane.sector() != &curSubspace->sector())
+    if(&plane.sector() != &curSubspace->subsector().sector())
     {
         // Undo temporary draw state changes.
-        Vector4f const color = curSubspace->subsector().lightSourceColorfIntensity();
+        Vector4f const color = curSubspace->subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
         curSectorLightColor = color.toVector3f();
         curSectorLightLevel = color.w;
     }
@@ -2967,7 +2967,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         if(splitOnMaterialChange)
         {
             skyMaterial = hedge->face().mapElementAs<ConvexSubspace>()
-                              .subsector().visPlane(relPlane).surface().materialPtr();
+                              .subsector().as<world::ClientSubsector>()
+                                   .visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
@@ -3073,16 +3074,14 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 #define SKYCAP_UPPER        0x2
 ///@}
 
-static coord_t skyPlaneZ(dint skyCap)
+static ddouble skyPlaneZ(dint skyCap)
 {
-    Subsector &subsec = curSubspace->subsector();
-
-    dint const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
-    if(!P_IsInVoid(viewPlayer))
+    auto const &subsec  = curSubspace->subsector().as<world::ClientSubsector>();
+    dint const relPlane = (skyCap & SKYCAP_UPPER) ? Sector::Ceiling : Sector::Floor;
+    if (!P_IsInVoid(viewPlayer))
     {
         return subsec.sector().map().skyFix(relPlane == Sector::Ceiling);
     }
-
     return subsec.visPlane(relPlane).heightSmoothed();
 }
 
@@ -3133,16 +3132,16 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     // No work to do?
     if(!skyCap) return;
 
-    Subsector &subsec = curSubspace->subsector();
-    DrawList &skyMaskList  = rendSys().drawLists().find(DrawListSpec(SkyMaskGeom));
+    auto &subsec = curSubspace->subsector().as<world::ClientSubsector>();
+    DrawList &skyMaskList = rendSys().drawLists().find(DrawListSpec(SkyMaskGeom));
 
     // Lower?
-    if((skyCap & SKYCAP_LOWER) && subsec.visFloor().surface().hasSkyMaskedMaterial())
+    if ((skyCap & SKYCAP_LOWER) && subsec.visFloor().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
 
         // Draw a cap? (handled as a regular plane in sky-debug mode).
-        if(!::devRendSkyMode)
+        if (!::devRendSkyMode)
         {
             // Make geometry.
             Store &verts = rendSys().buffer();
@@ -3156,12 +3155,12 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     }
 
     // Upper?
-    if((skyCap & SKYCAP_UPPER) && subsec.visCeiling().surface().hasSkyMaskedMaterial())
+    if ((skyCap & SKYCAP_UPPER) && subsec.visCeiling().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
 
         // Draw a cap? (handled as a regular plane in sky-debug mode).
-        if(!::devRendSkyMode)
+        if (!::devRendSkyMode)
         {
             // Make geometry.
             Store &verts = rendSys().buffer();
@@ -3193,19 +3192,20 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    Subsector const &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector();
-    Subsector const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector();
+    auto const &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    auto const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
 
-    coord_t const ffloor   = subsec.visFloor().heightSmoothed();
-    coord_t const fceil    = subsec.visCeiling().heightSmoothed();
-    coord_t const bfloor   = backSubsec.visFloor().heightSmoothed();
-    coord_t const bceil    = backSubsec.visCeiling().heightSmoothed();
+    ddouble const ffloor   = subsec.visFloor().heightSmoothed();
+    ddouble const fceil    = subsec.visCeiling().heightSmoothed();
+
+    ddouble const bfloor   = backSubsec.visFloor().heightSmoothed();
+    ddouble const bceil    = backSubsec.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
     if(wroteOpaqueMiddle)
     {
-        coord_t xbottom = de::max(bfloor, ffloor);
-        coord_t xtop    = de::min(bceil,  fceil);
+        ddouble xbottom = de::max(bfloor, ffloor);
+        ddouble xtop    = de::min(bceil,  fceil);
 
         Surface const &middle = front.middle();
         xbottom += middle.materialOriginSmoothed().y;
@@ -3323,15 +3323,13 @@ static void writeSubspaceWalls()
 static void writeSubspaceFlats()
 {
     DENG2_ASSERT(::curSubspace);
-    Subsector &subsec = ::curSubspace->subsector();
-
-    for(dint i = 0; i < subsec.visPlaneCount(); ++i)
+    auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
+    for (dint i = 0; i < subsec.visPlaneCount(); ++i)
     {
-        Plane &plane = subsec.visPlane(i);
-
         // Skip planes facing away from the viewer.
+        Plane &plane = subsec.visPlane(i);
         Vector3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
-        if((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
+        if ((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
         writeSubspacePlane(plane);
@@ -3377,12 +3375,11 @@ static void markSubspaceFrontFacingWalls()
     });
 }
 
-static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &backPlane)
+static inline bool canOccludeEdgeBetweenPlanes(Plane const &frontPlane, Plane const &backPlane)
 {
     // Do not create an occlusion between two sky-masked planes.
     // Only because the open range does not account for the sky plane height? -ds
-    return !(frontPlane.surface().hasSkyMaskedMaterial() &&
-             backPlane .surface().hasSkyMaskedMaterial());
+    return !(frontPlane.surface().hasSkyMaskedMaterial() && backPlane .surface().hasSkyMaskedMaterial());
 }
 
 /**
@@ -3390,40 +3387,42 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
  */
 static void occludeSubspace(bool frontFacing)
 {
-    if(devNoCulling) return;
-    if(P_IsInVoid(viewPlayer)) return;
+    if (devNoCulling) return;
+    if (P_IsInVoid(viewPlayer)) return;
 
-    AngleClipper &clipper  = rendSys().angleClipper();
-    Subsector &subsec = ::curSubspace->subsector();
+    AngleClipper &clipper = rendSys().angleClipper();
 
-    HEdge *base  = ::curSubspace->poly().hedge();
+    auto const &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
+    HEdge const *base  = ::curSubspace->poly().hedge();
     DENG2_ASSERT(base);
-    HEdge *hedge = base;
+    HEdge const *hedge = base;
     do
     {
         // Edges without a line segment can never occlude.
-        if(!hedge->hasMapElement())
+        if (!hedge->hasMapElement())
             continue;
 
         auto &seg = hedge->mapElementAs<LineSideSegment>();
 
-        // Edges without line segment surface sections can never occlude.
-        if(!seg.lineSide().hasSections())
+        // Only front-facing edges can occlude.
+        if (frontFacing != seg.isFrontFacing())
             continue;
 
-        // Only front-facing edges can occlude.
-        if(frontFacing != seg.isFrontFacing())
+        // Edges without line segment surface sections can never occlude.
+        if (!seg.lineSide().hasSections())
             continue;
 
         // Occlusions should only happen where two sectors meet.
-        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
+        if (!hedge->hasTwin() || !hedge->twin().hasFace()
+            || !hedge->twin().face().hasMapElement())
             continue;
 
-        Subsector &backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>().subsector();
+        auto const &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        auto const &backSubsec   = backSubspace.subsector().as<world::ClientSubsector>();
 
-        // Determine the opening between the visual sector planes at this edge.
-        coord_t openBottom;
-        if(backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
+        // Determine the opening between plane heights at this edge.
+        ddouble openBottom;
+        if (backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
         {
             openBottom = backSubsec.visFloor().heightSmoothed();
         }
@@ -3432,8 +3431,8 @@ static void occludeSubspace(bool frontFacing)
             openBottom = subsec.visFloor().heightSmoothed();
         }
 
-        coord_t openTop;
-        if(backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
+        ddouble openTop;
+        if (backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
         {
             openTop = backSubsec.visCeiling().heightSmoothed();
         }
@@ -3443,25 +3442,25 @@ static void occludeSubspace(bool frontFacing)
         }
 
         // Choose start and end vertexes so that it's facing forward.
-        Vertex const &from = frontFacing? hedge->vertex() : hedge->twin().vertex();
-        Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
+        Vertex const &from = frontFacing ? hedge->vertex() : hedge->twin().vertex();
+        Vertex const &to   = frontFacing ? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > subsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
-            || (openBottom >  backSubsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
-           && canOccludeEdgeBetweenPlanes(subsec.visFloor(), backSubsec.visFloor()))
+        if ( (   (openBottom > subsec    .visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
+              || (openBottom > backSubsec.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
+            && canOccludeEdgeBetweenPlanes(subsec.visFloor(), backSubsec.visFloor()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < subsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
-            || (openTop <  backSubsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
-           && canOccludeEdgeBetweenPlanes(subsec.visCeiling(), backSubsec.visCeiling()))
+        if ( (   (openTop < subsec    .visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
+              || (openTop < backSubsec.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
+            && canOccludeEdgeBetweenPlanes(subsec.visCeiling(), backSubsec.visCeiling()))
         {
             clipper.addViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
-    } while((hedge = &hedge->next()) != base);
+    } while ((hedge = &hedge->next()) != base);
 }
 
 static void clipSubspaceLumobjs()
@@ -3551,7 +3550,7 @@ static void projectSubspaceSprites()
 
     R_ForAllSubspaceMobContacts(*::curSubspace, [] (mobj_t &mob)
     {
-        Subsector &subsec = ::curSubspace->subsector();
+        auto const &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
         if(mob.addFrameCount != R_FrameCount())
         {
             mob.addFrameCount = R_FrameCount();
@@ -3663,7 +3662,7 @@ static void makeCurrent(ConvexSubspace &subspace)
     // Update draw state.
     if(subsecChanged)
     {
-        Vector4f const color = subspace.subsector().lightSourceColorfIntensity();
+        Vector4f const color = subspace.subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
         ::curSectorLightColor = color.toVector3f();
         ::curSectorLightLevel = color.w;
     }
@@ -3702,7 +3701,7 @@ static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
 
         // Skip zero-volume subspaces.
         // (Neighbors handle the angle clipper ranges.)
-        if(!subspace->subsector().hasWorldVolume())
+        if(!subspace->subsector().as<world::ClientSubsector>().hasWorldVolume())
             return;
 
         // Is this subspace visible?
@@ -5380,29 +5379,33 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
 
     if(lineSide.considerOneSided())
     {
-        Subsector &subsec =
-            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->face().mapElementAs<ConvexSubspace>()).subsector();
+        auto &subsec =
+            (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                                   : hedge->face().mapElementAs<ConvexSubspace>())
+                .subsector().as<world::ClientSubsector>();
 
-        coord_t const bottom = subsec.  visFloor().heightSmoothed();
-        coord_t const top    = subsec.visCeiling().heightSmoothed();
+        ddouble const bottom = subsec.  visFloor().heightSmoothed();
+        ddouble const top    = subsec.visCeiling().heightSmoothed();
 
         drawTangentVectorsForSurface(lineSide.middle(),
                                      Vector3d(center, bottom + (top - bottom) / 2));
     }
     else
     {
-        Subsector &subsec =
-            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->face().mapElementAs<ConvexSubspace>()).subsector();
-        Subsector &backSubsec =
-            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
-                                  : hedge->twin().face().mapElementAs<ConvexSubspace>()).subsector();
+        auto &subsec =
+            (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                                   : hedge->face().mapElementAs<ConvexSubspace>())
+                .subsector().as<world::ClientSubsector>();
+
+        auto &backSubsec =
+            (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                                   : hedge->twin().face().mapElementAs<ConvexSubspace>())
+                .subsector().as<world::ClientSubsector>();
 
         if(lineSide.middle().hasMaterial())
         {
-            coord_t const bottom = subsec.  visFloor().heightSmoothed();
-            coord_t const top    = subsec.visCeiling().heightSmoothed();
+            ddouble const bottom = subsec.  visFloor().heightSmoothed();
+            ddouble const top    = subsec.visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.middle(),
                                          Vector3d(center, bottom + (top - bottom) / 2));
@@ -5437,16 +5440,16 @@ static void drawTangentVectorsForWalls(HEdge const *hedge)
  */
 static void drawSurfaceTangentVectors(Subsector &subsec)
 {
-    subsec.forAllSubspaces([] (ConvexSubspace &subspace)
+    subsec.forAllSubspaces([] (ConvexSubspace &space)
     {
-        HEdge const *base  = subspace.poly().hedge();
+        HEdge const *base  = space.poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWalls(hedge);
         } while ((hedge = &hedge->next()) != base);
 
-        subspace.forAllExtraMeshes([] (Mesh &mesh)
+        space.forAllExtraMeshes([] (Mesh &mesh)
         {
             for (HEdge *hedge : mesh.hedges())
             {
@@ -5455,7 +5458,7 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
             return LoopContinue;
         });
 
-        subspace.forAllPolyobjs([] (Polyobj &pob)
+        space.forAllPolyobjs([] (Polyobj &pob)
         {
             for (HEdge *hedge : pob.mesh().hedges())
             {
@@ -5470,7 +5473,7 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
     dint const planeCount = subsec.sector().planeCount();
     for (dint i = 0; i < planeCount; ++i)
     {
-        Plane const &plane = subsec.visPlane(i);
+        Plane const &plane = subsec.as<world::ClientSubsector>().visPlane(i);
         ddouble height     = 0;
 
         if (plane.surface().hasSkyMaskedMaterial()
@@ -5811,38 +5814,42 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
 static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     ddouble &min, ddouble &max)
 {
-    if(!base) return;
-    if(!base->hasFace() || !base->face().hasMapElement())
+    if (!base || !base->hasFace())
         return;
 
-    if(!base->face().mapElementAs<ConvexSubspace>().hasSubsector())
+    if (!base->face().hasMapElement() || !base->face().mapElementAs<ConvexSubspace>().hasSubsector())
         return;
 
     // Process neighbors?
-    if(!Subsector::isInternalEdge(base))
+    if (!Subsector::isInternalEdge(base))
     {
         ClockDirection const direction = edge? Clockwise : Anticlockwise;
         HEdge *hedge = base;
-        while((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
+        while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
-            // Stop if there is no back subspace.
-            ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
-            if(!subspace) break;
+            // Stop if there is no back space.
+            auto const *backSpace = hedge->hasFace() ? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
+            if (!backSpace) break;
 
-            if(subspace->subsector().visFloor().heightSmoothed() < min)
-                min = subspace->subsector().visFloor().heightSmoothed();
+            auto const &subsec = backSpace->subsector().as<world::ClientSubsector>();
+            if (subsec.visFloor().heightSmoothed() < min)
+            {
+                min = subsec.visFloor().heightSmoothed();
+            }
 
-            if(subspace->subsector().visCeiling().heightSmoothed() > max)
-                max = subspace->subsector().visCeiling().heightSmoothed();
+            if (subsec.visCeiling().heightSmoothed() > max)
+            {
+                max = subsec.visCeiling().heightSmoothed();
+            }
         }
     }
 }
 
 static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
-    Subsector &subsec = sub.subsector();
-    ddouble const min      = subsec.  visFloor().heightSmoothed();
-    ddouble const max      = subsec.visCeiling().heightSmoothed();
+    auto &subsec = sub.subsector().as<world::ClientSubsector>();
+    ddouble const min = subsec.  visFloor().heightSmoothed();
+    ddouble const max = subsec.visCeiling().heightSmoothed();
 
     HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
@@ -6002,9 +6009,9 @@ static String labelForSubsector(Subsector const &subsec)
  */
 static void drawSectors(Map &map)
 {
-    static coord_t const MAX_LABEL_DIST = 1280;
+    static ddouble const MAX_LABEL_DIST = 1280;
 
-    if(!devSectorIndices) return;
+    if (!devSectorIndices) return;
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -6019,7 +6026,7 @@ static void drawSectors(Map &map)
     {
         return sec.forAllSubsectors([] (Subsector &subsec)
         {
-            Vector3d const origin(subsec.center(), subsec.visPlane(Sector::Floor).heightSmoothed());
+            Vector3d const origin(subsec.center(), subsec.as<world::ClientSubsector>().visFloor().heightSmoothed());
             ddouble const distToEye = (eyeOrigin - origin).length();
             if (distToEye < MAX_LABEL_DIST)
             {

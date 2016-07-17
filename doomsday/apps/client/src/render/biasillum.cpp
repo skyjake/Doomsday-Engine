@@ -24,8 +24,8 @@
 #include "world/linesighttest.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
 #include "Surface"
+#include "client/clientsubsector.h"
 
 #include "BiasTracker"
 
@@ -141,8 +141,8 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param normalAtPoint  Surface normal at @a point.
      * @param bspRoot        Root BSP element for the map.
      */
-    void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, BspTree const &bspRoot)
+    void updateContribution(de::dint index, Vector3d const &point, Vector3f const &normalAtPoint,
+                            BspTree const &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 
@@ -158,11 +158,12 @@ DENG2_PIMPL_NOREF(BiasIllum)
             return;
         }
 
-        Subsector &subsec = subspace->subsector();
-        if((!subsec.visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < subsec.visFloor().heightSmoothed()) ||
-           (!subsec.visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > subsec.visCeiling().heightSmoothed()))
+        auto &subsec = subspace->subsector().as<world::ClientSubsector>();
+        if ((!subsec.visFloor().surface().hasSkyMaskedMaterial()
+             && source.origin().z < subsec.visFloor().heightSmoothed())
+            ||
+            (!subsec.visCeiling().surface().hasSkyMaskedMaterial()
+             && source.origin().z > subsec.visCeiling().heightSmoothed()))
         {
             casted = Vector3f();
             return;

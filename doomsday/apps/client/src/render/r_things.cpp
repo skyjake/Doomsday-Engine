@@ -52,7 +52,7 @@
 #include "world/clientmobjthinkerdata.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
-#include "Subsector"
+#include "client/clientsubsector.h"
 
 using namespace de;
 using namespace world;
@@ -72,7 +72,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
     }
     else
     {
-        Subsector &subsec = subspaceAtOrigin.subsector();
+        auto &subsec = subspaceAtOrigin.subsector().as<world::ClientSubsector>();
         Map &map = subsec.sector().map();
 
         if(useBias && map.hasLightGrid())
@@ -164,7 +164,7 @@ void R_ProjectSprite(mobj_t &mob)
     // ...hidden?
     if((mob.ddFlags & DDMF_DONTDRAW)) return;
     // ...not linked into the map?
-    if(!Mobj_HasSubspace(mob)) return;
+    if(!Mobj_HasSubsector(mob)) return;
     // ...in an invalid state?
     if(!mob.state || !runtimeDefs.states.indexOf(mob.state)) return;
     // ...no sprite frame is defined?
@@ -175,7 +175,7 @@ void R_ProjectSprite(mobj_t &mob)
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
     ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(mob).subspace();
-    Subsector &subsec   = subspace.subsector();
+    auto &subsec = subspace.subsector().as<ClientSubsector>();
     if(!subsec.hasWorldVolume()) return;
 
     ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
@@ -413,8 +413,7 @@ void R_ProjectSprite(mobj_t &mob)
         Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - matDimensions.y / 2.0f);
         Vector4f ambientColor;
         duint vLightListIdx = 0;
-        evaluateLighting(origin, subspace, vis->pose.distance, fullbright,
-                         ambientColor, &vLightListIdx);
+        evaluateLighting(origin, subspace, vis->pose.distance, fullbright, ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;

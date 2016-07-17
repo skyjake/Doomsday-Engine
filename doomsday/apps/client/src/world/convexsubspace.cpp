@@ -277,7 +277,7 @@ void ConvexSubspace::link(Polyobj const &polyobj)
 
 bool ConvexSubspace::unlink(Polyobj const &polyobj)
 {
-    int sizeBefore = d->polyobjs.size();
+    dint sizeBefore = d->polyobjs.size();
     d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
     return d->polyobjs.size() != sizeBefore;
 }
@@ -296,12 +296,17 @@ Subsector &ConvexSubspace::subsector() const
 
 Subsector *ConvexSubspace::subsectorPtr() const
 {
-    return hasSubsector()? &subsector() : nullptr;
+    return hasSubsector() ? &subsector() : nullptr;
 }
 
 void ConvexSubspace::setSubsector(Subsector *newSubsector)
 {
     d->subsector = newSubsector;
+}
+
+Sector &ConvexSubspace::sector() const
+{
+    return subsector().sector();
 }
 
 dint ConvexSubspace::validCount() const

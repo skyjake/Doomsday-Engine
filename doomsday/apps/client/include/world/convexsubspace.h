@@ -131,7 +131,7 @@ public:
      *
      * @see subsector()
      */
-    inline Sector &sector() const { return subsector().sector(); }
+    Sector &sector() const;
 
     /**
      * Returns the BspLeaf to which the subspace is assigned.
