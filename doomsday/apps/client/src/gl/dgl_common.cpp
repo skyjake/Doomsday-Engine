@@ -375,11 +375,16 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 
     GameWidget &game = ClientWindow::main().game();
 
-    GLState::current().setNormalizedScissor(
-                game.normalizedRect(
-                    Rectanglei(rect->origin.x, rect->origin.y,
-                               rect->size.width, rect->size.height),
-                    game.rule().recti())).apply();
+    // Note that the game is unaware of the game widget position, assuming that (0,0)
+    // is the top left corner of the drawing area. Fortunately, the current viewport
+    // has been set to cover the game widget area, so we can set the scissor relative
+    // to it.
+
+    auto norm = GuiWidget::normalizedRect(Rectanglei(rect->origin.x, rect->origin.y,
+                                                     rect->size.width, rect->size.height),
+                                          Rectanglei::fromSize(game.rule().recti().size()));
+
+    GLState::current().setNormalizedScissor(norm).apply();
 }
 
 #undef DGL_SetScissor2

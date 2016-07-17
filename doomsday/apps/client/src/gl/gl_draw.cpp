@@ -409,7 +409,7 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
         int offset = int((bp->availWidth - bp->scaleFactor * bp->width) / 2 + .5f);
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            DGL_SetScissor2(DENG_GAMEVIEW_X + offset, DENG_GAMEVIEW_Y,
+            DGL_SetScissor2(offset, 0,
                             int(bp->scaleFactor * bp->width), bp->availHeight);
         }
 
@@ -422,7 +422,7 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
         int offset = int((bp->availHeight - bp->scaleFactor * 1.2f * bp->height) / 2 + .5f);
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            DGL_SetScissor2(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y + offset,
+            DGL_SetScissor2(0, offset,
                             bp->availWidth, int(bp->scaleFactor * 1.2f * bp->height));
         }
 
