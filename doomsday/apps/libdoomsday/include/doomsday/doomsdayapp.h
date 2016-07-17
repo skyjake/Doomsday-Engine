@@ -48,6 +48,8 @@ public:
     /// Notified before the current game is unloaded.
     DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
 
+    DENG2_DEFINE_AUDIENCE2(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
+
     /// Notified after the current game has been changed.
     DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
 

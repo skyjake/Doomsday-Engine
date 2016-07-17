@@ -345,12 +345,14 @@ DENG2_PIMPL(DoomsdayApp)
     }
 #endif // WIN32
 
+    DENG2_PIMPL_AUDIENCE(GameLoad)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
     DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
     DENG2_PIMPL_AUDIENCE(FileRefresh)
 };
 
+DENG2_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
@@ -707,14 +709,11 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
     }
 
     // The current game will now be unloaded.
-    DENG2_FOR_AUDIENCE2(GameUnload, i)
-    {
-        i->aboutToUnloadGame(game());
-    }
-
+    DENG2_FOR_AUDIENCE2(GameUnload, i) i->aboutToUnloadGame(game());
     unloadGame(profile);
 
     // Do the switch.
+    DENG2_FOR_AUDIENCE2(GameLoad, i) i->aboutToLoadGame(newGame);
     makeGameCurrent(profile);
 
     /*
