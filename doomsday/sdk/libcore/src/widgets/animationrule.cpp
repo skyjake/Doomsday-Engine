@@ -23,16 +23,16 @@
 
 namespace de {
 
-AnimationRule::AnimationRule(float initialValue)
+AnimationRule::AnimationRule(float initialValue, Animation::Style style)
     : Rule(initialValue)
-    , _animation(initialValue)
+    , _animation(initialValue, style)
     , _targetRule(0)
     , _behavior(Singleshot)
 {}
 
-AnimationRule::AnimationRule(Rule const &target, TimeDelta transition)
+AnimationRule::AnimationRule(Rule const &target, TimeDelta transition, Animation::Style style)
     : Rule(target.value())
-    , _animation(target.value())
+    , _animation(target.value(), style)
     , _targetRule(0)
     , _behavior(RestartWhenTargetChanges)
 {
