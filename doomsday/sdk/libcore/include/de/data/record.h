@@ -52,6 +52,11 @@ class NativeFunctionSpec;
  *
  * @see http://en.wikipedia.org/wiki/Record_(computer_science)
  *
+ * @par Thread-safety
+ *
+ * One Record instance can be accessed simultaneously from multiple threads.
+ * Record locks its internal state when calling its methods.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC Record
@@ -384,11 +389,11 @@ public:
     Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
 
     Variable &appendToArray(String const &name, Value *value);
-    
+
     /**
      * Inserts a value to an array variable. The array is assumed to be sorted, and the
      * insertion point is determined based on the sorting function.
-     * 
+     *
      * @param name   Name of the variable.
      * @param value  Value to insert.
      */

@@ -52,7 +52,7 @@ String const Record::VAR_NATIVE_SELF = "__self__";
  */
 static duint32 recordIdCounter = 0;
 
-DENG2_PIMPL(Record)
+DENG2_PIMPL(Record), public Lockable
 {
     Record::Members members;
     duint32 uniqueId; ///< Identifier to track serialized references.
@@ -111,6 +111,8 @@ DENG2_PIMPL(Record)
     template <typename Predicate>
     void copyMembersFrom(Record const &other, Predicate excluded)
     {
+        DENG2_GUARD(this); // and the other?
+
         DENG2_FOR_EACH_CONST(Members, i, other.d->members)
         {
             if (excluded(*i.value())) continue;
@@ -166,6 +168,8 @@ DENG2_PIMPL(Record)
 
     Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
     {
+        DENG2_GUARD(this);
+
         Subrecords subs;
         forSubrecords([&subs, filter] (String const &name, Record &rec)
         {
@@ -181,6 +185,8 @@ DENG2_PIMPL(Record)
 
     Variable const *findMemberByPath(String const &name) const
     {
+        DENG2_GUARD(this);
+
         // Path notation allows looking into subrecords.
         int pos = name.indexOf('.');
         if (pos >= 0)
@@ -211,6 +217,8 @@ DENG2_PIMPL(Record)
      */
     Record &parentRecordByPath(String const &pathOrName)
     {
+        DENG2_GUARD(this);
+
         int pos = pathOrName.indexOf('.');
         if (pos >= 0)
         {
@@ -303,11 +311,15 @@ Record::~Record()
     // to the record prior to deletion.
     DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
 
+    DENG2_GUARD(d);
+
     clear();
 }
 
 void Record::clear(Behavior behavior)
 {
+    DENG2_GUARD(d);
+
     d->clear(Impl::ExcludeByBehavior(behavior));
 }
 
@@ -323,6 +335,8 @@ Record &Record::operator = (Record const &other)
 
 Record &Record::assign(Record const &other, Behavior behavior)
 {
+    DENG2_GUARD(d);
+
     clear(behavior);
     copyMembersFrom(other, behavior);
     return *this;
@@ -330,6 +344,8 @@ Record &Record::assign(Record const &other, Behavior behavior)
 
 Record &Record::assign(Record const &other, QRegExp const &excluded)
 {
+    DENG2_GUARD(d);
+
     d->clear(Impl::ExcludeByRegExp(excluded));
     d->copyMembersFrom(other, Impl::ExcludeByRegExp(excluded));
     return *this;
@@ -365,13 +381,17 @@ Variable &Record::add(Variable *variable)
         /// @throw UnnamedError All variables in a record must have a name.
         throw UnnamedError("Record::add", "All members of a record must have a name");
     }
-    if (hasMember(variable->name()))
+
     {
-        // Delete the previous variable with this name.
-        delete d->members[variable->name()];
+        DENG2_GUARD(d);
+        if (hasMember(variable->name()))
+        {
+            // Delete the previous variable with this name.
+            delete d->members[variable->name()];
+        }
+        var->audienceForDeletion() += this;
+        d->members[variable->name()] = var.release();
     }
-    var->audienceForDeletion() += this;
-    d->members[variable->name()] = var.release();
 
     DENG2_FOR_AUDIENCE2(Addition, i) i->recordMemberAdded(*this, *variable);
 
@@ -380,8 +400,11 @@ Variable &Record::add(Variable *variable)
 
 Variable *Record::remove(Variable &variable)
 {
-    variable.audienceForDeletion() -= this;
-    d->members.remove(variable.name());
+    {
+        DENG2_GUARD(d);
+        variable.audienceForDeletion() -= this;
+        d->members.remove(variable.name());
+    }
 
     DENG2_FOR_AUDIENCE2(Removal, i) i->recordMemberRemoved(*this, variable);
 
@@ -497,6 +520,8 @@ Record *Record::removeSubrecord(String const &name)
 
 Variable &Record::set(String const &name, bool value)
 {
+    DENG2_GUARD(d);
+
     if (hasMember(name))
     {
         return (*this)[name].set(NumberValue(value));
@@ -506,6 +531,8 @@ Variable &Record::set(String const &name, bool value)
 
 Variable &Record::set(String const &name, char const *value)
 {
+    DENG2_GUARD(d);
+
     if (hasMember(name))
     {
         return (*this)[name].set(TextValue(value));
@@ -515,6 +542,8 @@ Variable &Record::set(String const &name, char const *value)
 
 Variable &Record::set(String const &name, Value::Text const &value)
 {
+    DENG2_GUARD(d);
+
     if (hasMember(name))
     {
         return (*this)[name].set(TextValue(value));
@@ -524,6 +553,8 @@ Variable &Record::set(String const &name, Value::Text const &value)
 
 Variable &Record::set(String const &name, Value::Number const &value)
 {
+    DENG2_GUARD(d);
+
     if (hasMember(name))
     {
         return (*this)[name].set(NumberValue(value));
@@ -548,6 +579,8 @@ Variable &Record::set(String const &name, dsize value)
 
 Variable &Record::set(String const &name, ArrayValue *value)
 {
+    DENG2_GUARD(d);
+
     if (hasMember(name))
     {
         return (*this)[name].set(value);
@@ -557,6 +590,8 @@ Variable &Record::set(String const &name, ArrayValue *value)
 
 Variable &Record::appendWord(String const &name, String const &word, String const &separator)
 {
+    DENG2_GUARD(d);
+
     String value = gets(name, "");
     if (!value.isEmpty()) value.append(separator);
     set(name, value + word);
@@ -565,6 +600,8 @@ Variable &Record::appendWord(String const &name, String const &word, String cons
 
 Variable &Record::appendUniqueWord(String const &name, String const &word, String const &separator)
 {
+    DENG2_GUARD(d);
+
     QRegExp re(QString("\\b%1\\b").arg(word));
     String const value = gets(name, "");
     if (re.indexIn(value) < 0)
@@ -576,6 +613,8 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
 
 Variable &Record::appendToArray(String const &name, Value *value)
 {
+    DENG2_GUARD(d);
+
     if (!has(name))
     {
         return addArray(name, new ArrayValue({ value }));
@@ -586,14 +625,16 @@ Variable &Record::appendToArray(String const &name, Value *value)
     var.value<ArrayValue>().add(value);
     return var;
 }
-    
+
 Variable &Record::insertToSortedArray(String const &name, Value *value)
 {
+    DENG2_GUARD(d);
+
     if (!has(name))
     {
         return appendToArray(name, value);
     }
-    
+
     Variable &var = (*this)[name];
     ArrayValue &array = var.value().as<ArrayValue>();
     // O(n) insertion sort.
@@ -681,6 +722,8 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
 
 String Record::asText(String const &prefix, List *lines) const
 {
+    DENG2_GUARD(d);
+
     /*
     // If this is a module, don't print out the entire contents.
     /// @todo Should only apply to actual modules. -jk
@@ -760,6 +803,8 @@ Function const &Record::function(String const &name) const
 
 void Record::addSuperRecord(Value *superValue)
 {
+    DENG2_GUARD(d);
+
     if (!has(VAR_SUPER))
     {
         addArray(VAR_SUPER);
@@ -774,6 +819,8 @@ void Record::addSuperRecord(Record const &superRecord)
 
 void Record::operator >> (Writer &to) const
 {
+    DENG2_GUARD(d);
+
     to << d->uniqueId << duint32(d->members.size());
     DENG2_FOR_EACH_CONST(Members, i, d->members)
     {
@@ -827,6 +874,8 @@ void Record::variableBeingDeleted(Variable &variable)
     DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
 
     LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << this);
+
+    DENG2_GUARD(d);
 
     // Remove from our index.
     d->members.remove(variable.name());
