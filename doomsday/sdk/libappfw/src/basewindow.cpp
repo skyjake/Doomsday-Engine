@@ -62,8 +62,8 @@ DENG2_PIMPL(BaseWindow)
 
         // Translate mouse coordinates for direct interaction.
         if (ev.type() == Event::MousePosition ||
-           ev.type() == Event::MouseButton ||
-           ev.type() == Event::MouseWheel)
+            ev.type() == Event::MouseButton   ||
+            ev.type() == Event::MouseWheel)
         {
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVector2i());
         }
