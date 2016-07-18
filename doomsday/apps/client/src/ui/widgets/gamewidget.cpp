@@ -35,6 +35,7 @@
 #include "edit_bias.h"
 #include "world/map.h"
 #include "network/net_main.h"
+#include "client/cl_def.h" // clientPaused
 #include "render/r_main.h"
 #include "render/rend_main.h"
 #include "render/cameralensfx.h"
@@ -43,6 +44,7 @@
 #include "gl/sys_opengl.h"
 #include "gl/gl_defer.h"
 
+#include <doomsday/console/exec.h>
 #include <de/GLState>
 
 /**
@@ -117,6 +119,14 @@ void GameWidget::glApplyViewport(Rectanglei const &rect)
     GLState::current()
             .setNormalizedViewport(normalizedRect(rect))
             .apply();
+}
+
+void GameWidget::pause()
+{
+    if (App_GameLoaded() && !clientPaused)
+    {
+        Con_Execute(CMDS_DDAY, "pause", true, false);
+    }
 }
 
 void GameWidget::viewResized()
@@ -194,9 +204,9 @@ bool GameWidget::handleEvent(Event const &event)
     ClientWindow &window = root().window().as<ClientWindow>();
 
     if (event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
-       rule().recti().contains(event.as<MouseEvent>().pos()))
+        rule().recti().contains(event.as<MouseEvent>().pos()))
     {
-        if (!window.hasSidebar())
+        if (!window.hasSidebar() && !window.isGameMinimized())
         {
             // If the mouse is not trapped, we will just eat button clicks which
             // will prevent them from reaching the legacy input system.
@@ -221,8 +231,8 @@ bool GameWidget::handleEvent(Event const &event)
     }
 
     if (event.type() == Event::KeyPress ||
-       event.type() == Event::KeyRepeat ||
-       event.type() == Event::KeyRelease)
+        event.type() == Event::KeyRepeat ||
+        event.type() == Event::KeyRelease)
     {
         KeyEvent const &ev = event.as<KeyEvent>();
         Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :

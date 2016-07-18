@@ -1306,7 +1306,7 @@ D_CMD(Net)
             }
             else return false;
         }
-        else if(!stricmp(argv[1], "setup"))
+        /*else if(!stricmp(argv[1], "setup"))
         {
             // Start network setup.
             if(!stricmp(argv[2], "client"))
@@ -1315,7 +1315,7 @@ D_CMD(Net)
                 ClientWindow::main().taskBar().showMultiplayer();
             }
             else return false;
-        }
+        }*/
 #endif
     }
 

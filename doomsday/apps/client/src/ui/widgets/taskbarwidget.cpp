@@ -37,7 +37,6 @@
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
 #include "CommandAction"
-#include "client/cl_def.h" // clientPaused
 #include "ui/ui_main.h"
 #include "ui/progress.h"
 #include "dd_main.h"
@@ -90,6 +89,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(ServerLink, Join)
 , DENG2_OBSERVES(ServerLink, Leave)
+, DENG2_OBSERVES(PanelWidget, AboutToOpen) // update menu
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -326,6 +326,18 @@ DENG_GUI_PIMPL(TaskBarWidget)
             status->setText(tr("No game loaded"));
         }
     }
+
+    void panelAboutToOpen(PanelWidget &)
+    {
+        if (self.root().window().as<ClientWindow>().isGameMinimized())
+        {
+            mainMenu->items().at(POS_MULTIPLAYER).setLabel(tr("Hide Home"));
+        }
+        else
+        {
+            mainMenu->items().at(POS_MULTIPLAYER).setLabel(tr("Show Home"));
+        }
+    }
 };
 
 static PopupWidget *makeUpdaterSettings()
@@ -442,6 +454,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 
     // The DE menu.
     add(d->mainMenu = new PopupMenuWidget("de-menu"));
+    d->mainMenu->audienceForAboutToOpen() += d;
     d->logo->setPopup(*d->mainMenu);
 
     // Game unloading confirmation submenu.
@@ -476,8 +489,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
-            //<< new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
-            << new ui::ActionItem(tr("Multiplayer..."), new SignalAction(this, SLOT(showMultiplayer())))
+            << new ui::ActionItem(style().images().image("home.icon"), "",
+                                  new SignalAction(this, SLOT(showOrHideHome())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
@@ -563,7 +576,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
     ClientWindow &window = root().window().as<ClientWindow>();
 
     if (!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-       !window.hasSidebar())
+        !window.hasSidebar() && !window.isGameMinimized())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -632,7 +645,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 if (key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    if (!window.hasSidebar())
+                    if (!window.hasSidebar() && !window.isGameMinimized())
                     {
                         // Automatically focus the command line, unless an editor is open.
                         root().setFocus(&d->console->commandLine());
@@ -683,10 +696,7 @@ void TaskBarWidget::open()
 
 void TaskBarWidget::openAndPauseGame()
 {
-    if (App_GameLoaded() && !clientPaused)
-    {
-        Con_Execute(CMDS_DDAY, "pause", true, false);
-    }
+    root().window().as<ClientWindow>().game().pause();
     open();
 }
 
@@ -715,12 +725,15 @@ void TaskBarWidget::close()
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if (hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
+        if (hasRoot())
         {
-            Canvas &canvas = root().window().canvas();
-            if (d->mouseWasTrappedWhenOpening)
+            auto &window = root().window().as<ClientWindow>();
+            if (App_GameLoaded() && !window.hasSidebar() && !window.isGameMinimized())
             {
-                canvas.trapMouse();
+                if (d->mouseWasTrappedWhenOpening)
+                {
+                    window.canvas().trapMouse();
+                }
             }
         }
     }
@@ -776,30 +789,23 @@ void TaskBarWidget::showUpdaterSettings()
     dlg->open();
 }
 
-void TaskBarWidget::switchGame()
-{
-    /*GamesDialog *games = new GamesDialog(GamesDialog::ShowSingleplayerOnly);
-    games->setDeleteAfterDismissed(true);
-    games->exec(root());*/
-}
-
-void TaskBarWidget::showMultiplayer()
+void TaskBarWidget::showOrHideHome()
 {
     DENG2_ASSERT(App_GameLoaded());
 
-    /// @todo Minimize the game, switch to MP column in Home.
-
-/*    GamesDialog *games = new GamesDialog(GamesDialog::ShowMultiplayerOnly);
-    games->setDeleteAfterDismissed(true);
-    if (isOpen())
+    // Minimize the game, switch to MP column in Home.
+    auto &win = ClientWindow::main();
+    if (!win.isGameMinimized())
     {
-        games->exec(root());
+        win.game().pause();
+        win.setGameMinimized(true);
+        win.home().moveOnscreen(1.0);
+        close();
     }
     else
     {
-        root().addOnTop(games);
-        games->open();
-    }*/
+        win.home().moveOffscreen(1.0);
+    }
 }
 
 void TaskBarWidget::connectToServerManually()

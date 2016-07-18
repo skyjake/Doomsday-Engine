@@ -34,7 +34,7 @@ namespace de {
 class DENG2_PUBLIC AnimationRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    explicit AnimationRule(float initialValue);
+    explicit AnimationRule(float initialValue, Animation::Style style = Animation::EaseOut);
 
     /**
      * Constructs an AnimationRule whose value will animate to the specified target
@@ -43,8 +43,9 @@ public:
      *
      * @param target      Target value.
      * @param transition  Transition time to reach the current or future target values.
+     * @param style       Animation style.
      */
-    explicit AnimationRule(Rule const &target, TimeDelta transition);
+    explicit AnimationRule(Rule const &target, TimeDelta transition, Animation::Style style = Animation::EaseOut);
 
     void set(float target, TimeDelta transition = 0, TimeDelta delay = 0);
 

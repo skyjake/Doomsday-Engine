@@ -47,13 +47,18 @@ public:
         virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
     };
 
+    enum PopulateBehavior { PopulationDisabled, PopulationEnabled };
+
 public:
-    PackagesWidget(de::String const &name = de::String());
+    PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,
+                   de::String const &name = de::String());
 
     PackagesWidget(de::StringList const &manualPackageIds,
                    de::String const &name = de::String());
 
     de::ProgressWidget &progress();
+
+    void setPopulationEnabled(bool enable);
 
     void setFilterEditorMinimumY(de::Rule const &minY);
 

@@ -53,6 +53,7 @@ class ConsoleWidget;
 class TaskBarWidget;
 class BusyWidget;
 class AlertDialog;
+class HomeWidget;
 
 /**
  * Top-level window that contains UI widgets. @ingroup gui
@@ -79,6 +80,7 @@ public:
     de::GuiWidget &taskBarBlur();
     ConsoleWidget &console();
     de::NotificationAreaWidget &notifications();
+    HomeWidget &home();
     GameWidget &game();
     BusyWidget &busy();
     AlertDialog &alerts();
@@ -124,6 +126,8 @@ public:
      * @param minimize  @c true to minimize game, @c false to restore.
      */
     void setGameMinimized(bool minimize);
+
+    bool isGameMinimized() const;
 
     /**
      * Must be called before any canvas windows are created. Defines the

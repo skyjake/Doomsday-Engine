@@ -34,6 +34,7 @@ public:
 
     void renderTransitionFrame();
     void releaseTransitionFrame();
+    void clearTransitionFrameToBlack();
     de::GLTexture const *transitionFrame() const;
 
     // Events.

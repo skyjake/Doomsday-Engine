@@ -325,7 +325,7 @@ bool GuiRootWidget::processEvent(Event const &event)
         if (event.type() == Event::MouseButton)
         {
             // Button events that no one handles will relinquish input focus.
-            setFocus(0);
+            //setFocus(0);
         }
         return false;
     }

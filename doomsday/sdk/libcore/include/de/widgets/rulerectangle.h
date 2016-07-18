@@ -82,9 +82,11 @@ public:
     RuleRectangle &setMidAnchorY(Rule const &middle);
 
     /**
-     * Sets the outputs of another rule rectangle as the inputs of this one.
+     * Sets the outputs of another rule rectangle as the inputs of this one. Uses the
+     * edge rules of @a rect; to later override width or height, make sure that one of
+     * the edges in that dimension are cleared.
      *
-     * @param rect  Rectangle whose outputs to use as inputs.
+     * @param rect  Rectangle whose left, right, top and bottom outputs to use as inputs.
      */
     RuleRectangle &setRect(RuleRectangle const &rect);
 

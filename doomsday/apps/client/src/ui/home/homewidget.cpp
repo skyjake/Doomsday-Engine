@@ -22,6 +22,7 @@
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/home/packagescolumnwidget.h"
+#include "ui/widgets/busywidget.h"
 #include "ui/savedsessionlistdata.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -44,13 +45,14 @@
 using namespace de;
 
 static TimeDelta const SCROLL_SPAN = .5;
-static TimeDelta const DISMISS_SPAN = 2.0;
+static TimeDelta const DISMISS_SPAN = 1.5;
 
 DENG_GUI_PIMPL(HomeWidget)
-, DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(Games,        Readiness)
+//, DENG2_OBSERVES(DoomsdayApp,  GameUnload)
+, DENG2_OBSERVES(DoomsdayApp,  GameLoad)
+, DENG2_OBSERVES(DoomsdayApp,  GameChange)
+, DENG2_OBSERVES(Variable,     Change)
 , DENG2_OBSERVES(ButtonWidget, StateChange)
 {
     struct Column {
@@ -85,13 +87,12 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
-        DoomsdayApp::app().audienceForGameUnload() += this;
+        //DoomsdayApp::app().audienceForGameUnload() += this;
+        DoomsdayApp::app().audienceForGameLoad() += this;
 
-        columnWidth  = new IndirectRule;
-        scrollOffset = new AnimationRule(0);
-        scrollOffset->setStyle(Animation::EaseOut);
-        dismissOffset = new AnimationRule(0);
-        dismissOffset->setStyle(Animation::EaseBoth);
+        columnWidth   = new IndirectRule;
+        scrollOffset  = new AnimationRule(0, Animation::EaseOut);
+        dismissOffset = new AnimationRule(0, Animation::EaseBoth);
 
         tabs = new TabWidget;
 
@@ -235,23 +236,30 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
+    void aboutToLoadGame(Game const &gameBeingLoaded)
+    {
+        if (gameBeingLoaded.isNull())
+        {
+            moveOnscreen();
+        }
+        else
+        {
+            TimeDelta span = DISMISS_SPAN;
+            auto &win = self.root().window().as<ClientWindow>();
+            if (win.isGameMinimized())
+            {
+                win.busy().clearTransitionFrameToBlack();
+                span = 1.0;
+            }
+            moveOffscreen();
+        }
+    }
+
     void currentGameChanged(Game const &newGame)
     {
         if (!newGame.isNull())
         {
             ClientWindow::main().fadeContentFromBlack(1.0);
-        }
-    }
-
-    void aboutToUnloadGame(Game const &gameBeingUnloaded)
-    {
-        if (gameBeingUnloaded.isNull())
-        {
-            moveOffscreen();
-        }
-        else
-        {
-            moveOnscreen();
         }
     }
 
@@ -262,21 +270,24 @@ DENG_GUI_PIMPL(HomeWidget)
         updateLayout();
     }
 
-    void moveOffscreen()
+    void moveOffscreen(TimeDelta span = DISMISS_SPAN)
     {
+        // Home is being moved offscreen, so the game can take over in full size.
+        ClientWindow::main().setGameMinimized(false);
+
         if (fequal(dismissOffset->animation().target(), 0.f))
         {
-            dismissOffset->set(-self.rule().height(), DISMISS_SPAN);
+            dismissOffset->set(-self.rule().height(), span);
             dismissing = true;
         }
     }
 
-    void moveOnscreen()
+    void moveOnscreen(TimeDelta span = DISMISS_SPAN)
     {
         if (!fequal(dismissOffset->animation().target(), 0.f))
         {
             self.show();
-            dismissOffset->set(0, DISMISS_SPAN);
+            dismissOffset->set(0, span);
         }
     }
 
@@ -310,9 +321,9 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void calculateColumnCount()
     {
-        visibleColumnCount = de::min(de::max(1, self.rule().width().valuei() /
-                                             rule("home.column.width").valuei()),
-                                     int(tabs->items().size()));
+        visibleColumnCount = de::min(de::max(dsize(1), dsize(self.rule().width().valuei() /
+                                                             rule("home.column.width").valuei())),
+                                     tabs->items().size());
     }
 
     void updateLayout()
@@ -335,7 +346,20 @@ DENG_GUI_PIMPL(HomeWidget)
                 }
             }
         }
+
         updateHighlightedTab();
+
+        // Make sure we stay within the valid range.
+        if (visibleTabRange().end >= columns.size())
+        {
+            currentOffsetTab = columns.size() - int(visibleColumnCount);
+            setScrollOffset(currentOffsetTab, 0.0);
+        }
+        if (!visibleTabRange().contains(int(tabs->current())))
+        {
+            currentOffsetTab = int(tabs->current());
+            setScrollOffset(currentOffsetTab, 0.0);
+        }
     }
 
     Rangei visibleTabRange() const
@@ -540,14 +564,14 @@ bool HomeWidget::handleEvent(Event const &event)
     return false;
 }
 
-void HomeWidget::moveOnscreen()
+void HomeWidget::moveOnscreen(TimeDelta span)
 {
-    d->moveOnscreen();
+    d->moveOnscreen(span);
 }
 
-void HomeWidget::moveOffscreen()
+void HomeWidget::moveOffscreen(TimeDelta span)
 {
-    d->moveOffscreen();
+    d->moveOffscreen(span);
 }
 
 void HomeWidget::update()

@@ -65,7 +65,7 @@ public:
         /**
          * Renames the profile.
          *
-         * @param name  New name of the profile.
+         * @param newName  New name of the profile.
          *
          * @return @c true, if renamed successfully. The renaming will fail if
          * a profile with the new name already exists.
