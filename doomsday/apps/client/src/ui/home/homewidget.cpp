@@ -321,9 +321,9 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void calculateColumnCount()
     {
-        visibleColumnCount = de::min(de::max(1, self.rule().width().valuei() /
-                                             rule("home.column.width").valuei()),
-                                     int(tabs->items().size()));
+        visibleColumnCount = de::min(de::max(dsize(1), dsize(self.rule().width().valuei() /
+                                                             rule("home.column.width").valuei())),
+                                     tabs->items().size());
     }
 
     void updateLayout()
@@ -346,7 +346,20 @@ DENG_GUI_PIMPL(HomeWidget)
                 }
             }
         }
+
         updateHighlightedTab();
+
+        // Make sure we stay within the valid range.
+        if (visibleTabRange().end >= columns.size())
+        {
+            currentOffsetTab = columns.size() - int(visibleColumnCount);
+            setScrollOffset(currentOffsetTab, 0.0);
+        }
+        if (!visibleTabRange().contains(int(tabs->current())))
+        {
+            currentOffsetTab = int(tabs->current());
+            setScrollOffset(currentOffsetTab, 0.0);
+        }
     }
 
     Rangei visibleTabRange() const
