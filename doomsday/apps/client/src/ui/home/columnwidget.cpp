@@ -76,6 +76,15 @@ DENG_GUI_PIMPL(ColumnWidget)
                                Vector4f(colorAnim, colorAnim, colorAnim, 1.f),
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
+
+                int const edgeWidth = GuiWidget::toDevicePixels(1);
+                auto const edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
+                verts.makeQuad(Rectanglef(rect.left(), rect.top(),
+                                          edgeWidth, rect.height()),
+                               Vector4f(0, 0, 0, 1), edgeUv);
+                verts.makeQuad(Rectanglef(rect.right() - edgeWidth, rect.top(),
+                                          edgeWidth, rect.height()),
+                               Vector4f(0, 0, 0, 1), edgeUv);
             }
         }
     };
