@@ -584,6 +584,9 @@ DENG2_PIMPL(ClientWindow)
         }
         if (!widget) return;
 
+        // Maximize game to hide the "Now playing" controls.
+        home->moveOffscreen(1.0);
+
         DENG2_ASSERT(sidebar == NULL);
 
         // Attach the widget.
