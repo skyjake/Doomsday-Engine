@@ -65,7 +65,7 @@ PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
 , DENG2_OBSERVES(res::Bundles, Identify)
-, DENG2_OBSERVES(DoomsdayApp, FileRefresh)
+//, DENG2_OBSERVES(DoomsdayApp, FileRefresh)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -102,6 +102,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     };
 
     LoopCallback mainCall;
+    LoopCallback mainCallForIdentify;
 
     // Search filter:
     LineEditWidget *search;
@@ -121,6 +122,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::ListData defaultActionItems;
     ui::Data const *actionItems = &defaultActionItems;
     //IndirectRule *maxPanelHeight;
+    bool populateEnabled = true;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
 
@@ -519,7 +521,9 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void populate()
     {
-        qDebug() << "Populating" << &self;
+        if (!populateEnabled) return;
+
+        //qDebug() << "Populating" << &self;
 
         showProgressIndicator(false);
 
@@ -621,20 +625,21 @@ DENG_GUI_PIMPL(PackagesWidget)
     void dataBundlesIdentified() override
     {
         // After bundles have been refreshed, make sure the list items are up to date.
-        if (!mainCall)
+        if (!mainCallForIdentify)
         {
-            mainCall.enqueue([this] ()
+            mainCallForIdentify.enqueue([this] ()
             {
                 //qDebug() << "Bundles identified, re-populating" << &self;
+                populateEnabled = true;
                 self.populate();
             });
         }
     }
 
-    void aboutToRefreshFiles()
+    /*void aboutToRefreshFiles()
     {
         showProgressIndicator(true);
-    }
+    }*/
 
     /**
      * Checks whether the filter terms can be found in the provided text strings.
@@ -676,12 +681,14 @@ DENG_GUI_PIMPL(PackagesWidget)
     }
 };
 
-PackagesWidget::PackagesWidget(String const &name)
+PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
     auto &bundles = DoomsdayApp::bundles();
     bundles.audienceForIdentify() += d;
+
+    d->populateEnabled = (initBehavior == PopulationEnabled);
 
     if (bundles.isEverythingIdentified())
     {
@@ -700,6 +707,11 @@ PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const 
 ProgressWidget &PackagesWidget::progress()
 {
     return *d->refreshProgress;
+}
+
+void PackagesWidget::setPopulationEnabled(bool enable)
+{
+    d->populateEnabled = enable;
 }
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)

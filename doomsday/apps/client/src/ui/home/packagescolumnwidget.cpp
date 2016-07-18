@@ -93,7 +93,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         countLabel = new LabelWidget;
 
         ScrollAreaWidget &area = self.scrollArea();
-        area.add(packages = new PackagesWidget("home-packages"));
+        area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
         //packages->setMaximumPanelHeight(self.rule().height() - self.margins().height() - rule("gap")*3);
         packages->setActionItems(actions);
         packages->rule()

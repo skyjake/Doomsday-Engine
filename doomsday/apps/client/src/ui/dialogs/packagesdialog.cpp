@@ -209,7 +209,8 @@ DENG_GUI_PIMPL(PackagesDialog)
         });
 
         // Package browser.
-        self.rightArea().add(browser = new PackagesWidget(self.name() + ".filter"));
+        self.rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
+                                                          self.name() + ".filter"));
         browser->setActionsAlwaysShown(true);
         browser->setPackageStatus(*this);
 
@@ -380,6 +381,8 @@ PackagesDialog::PackagesDialog(String const &titleText)
     rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
     d->browser->progress().rule().setRect(rightArea().rule());
 
+    // Setup has been completed, so contents can be updated.
+    //d->browser->setPopulationEnabled(true);
     refreshPackages();
 }
 
@@ -405,8 +408,6 @@ StringList PackagesDialog::selectedPackages() const
 void PackagesDialog::refreshPackages()
 {
     d->browser->refreshPackages();
-    //App::fileSystem().refresh();
-    //d->populate();
 }
 
 void PackagesDialog::preparePanelForOpening()
