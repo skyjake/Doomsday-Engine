@@ -51,10 +51,12 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     ~Impl()
     {
+#ifdef DENG2_DEBUG
         foreach (GuiWidget *w, shown.keys())
         {
             DENG2_ASSERT(w->audienceForDeletion().contains(this));
         }
+#endif
         releaseRef(shift);
     }
 
