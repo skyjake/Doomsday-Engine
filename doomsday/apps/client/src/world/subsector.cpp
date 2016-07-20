@@ -55,6 +55,7 @@ DENG2_PIMPL_NOREF(Subsector)
             else
             {
                 bounds = subBounds;
+                inited = true;
             }
         }
         return bounds;
