@@ -53,9 +53,11 @@ public:
     /**
      * Places the notification widget in the top right corner of @a area.
      *
-     * @param area  Reference area.
+     * @param area              Reference area.
+     * @param horizontalOffset  Additional horizontal offset.
      */
-    void useDefaultPlacement(RuleRectangle const &area);
+    void useDefaultPlacement(RuleRectangle const &area,
+                             Rule const &horizontalOffset);
 
     Rule const &shift();
 

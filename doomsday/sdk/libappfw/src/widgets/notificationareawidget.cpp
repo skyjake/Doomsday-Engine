@@ -159,10 +159,11 @@ NotificationAreaWidget::NotificationAreaWidget(String const &name)
     hide();
 }
 
-void NotificationAreaWidget::useDefaultPlacement(RuleRectangle const &area)
+void NotificationAreaWidget::useDefaultPlacement(RuleRectangle const &area,
+                                                 Rule const &horizontalOffset)
 {
     rule().setInput(Rule::Top,   area.top() + rule("gap") - shift())
-          .setInput(Rule::Right, area.right() - rule("gap"));
+          .setInput(Rule::Right, area.right() - rule("gap") + horizontalOffset);
 }
 
 Rule const &NotificationAreaWidget::shift()

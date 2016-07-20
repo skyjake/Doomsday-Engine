@@ -259,7 +259,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             // Fake notification area that doesn't have any the real currently showed
             // notifications.
             notifs = new NotificationAreaWidget("tutorial-notifications");
-            notifs->useDefaultPlacement(ClientWindow::main().game().rule());
+            notifs->useDefaultPlacement(ClientWindow::main().game().rule(), Const(0));
             root().addOnTop(notifs);
             notifs->showChild(*exampleAlert);
 

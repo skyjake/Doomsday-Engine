@@ -95,6 +95,7 @@ DENG2_PIMPL(ClientWindow)
     TaskBarWidget *taskBar = nullptr;
     LabelWidget *taskBarBlur = nullptr; ///< Blur everything below the task bar.
     NotificationAreaWidget *notifications = nullptr;
+    ButtonWidget *quitButton = nullptr;
     AlertDialog *alerts = nullptr;
     ColorAdjustmentDialog *colorAdjust = nullptr;
     HomeWidget *home = nullptr;
@@ -108,6 +109,7 @@ DENG2_PIMPL(ClientWindow)
     AnimationRule *gameWidth;
     AnimationRule *gameHeight;
     AnimationRule *homeDelta;
+    AnimationRule *quitX;
     bool cursorHasBeenHidden = false;
     bool isGameMini = false;
 
@@ -125,7 +127,8 @@ DENG2_PIMPL(ClientWindow)
         , cursorY   (new ConstantRule(0))
         , gameWidth (new AnimationRule(0, Animation::EaseBoth))
         , gameHeight(new AnimationRule(0, Animation::EaseBoth))
-        , homeDelta   (new AnimationRule(0, Animation::EaseBoth))
+        , homeDelta (new AnimationRule(0, Animation::EaseBoth))
+        , quitX     (new AnimationRule(0, Animation::EaseBoth))
         , contentXf (*i)
     {
         self.setTransform(contentXf);
@@ -152,6 +155,7 @@ DENG2_PIMPL(ClientWindow)
         releaseRef(gameWidth);
         releaseRef(gameHeight);
         releaseRef(homeDelta);
+        releaseRef(quitX);
 
         if (thisPublic == mainWindow)
         {
@@ -166,22 +170,12 @@ DENG2_PIMPL(ClientWindow)
                 << self.configName("vsync");
     }
 
-    /*Widget &container()
-    {
-        if (compositor)
-        {
-            return *compositor;
-        }
-        return root;
-    }*/
-
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
 
         gameWidth ->set(root.viewWidth());
         gameHeight->set(root.viewHeight());
-        //homeDelta->set(root.viewBottom());
 
         game = new GameWidget;
         game->rule().setInput(Rule::Left,   root.viewLeft())
@@ -253,8 +247,25 @@ DENG2_PIMPL(ClientWindow)
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
-        notifications->useDefaultPlacement(root.viewRule());
+        notifications->useDefaultPlacement(root.viewRule(), *quitX);
         root.add(notifications);
+
+        // Quit shortcut.
+        quitButton = new ButtonWidget;
+        quitButton->setText(_E(b)_E(D) + tr("QUIT"));
+        quitButton->setFont("small");
+        quitButton->setSizePolicy(ui::Expand, ui::Fixed);
+        quitButton->setStyleImage("close.ringless", "default");
+        quitButton->setImageColor(style.colors().colorf("accent"));
+        quitButton->setTextAlignment(ui::AlignLeft);
+        quitButton->set(GuiWidget::Background(style.colors().colorf("background")));
+        quitButton->setActionFn([] () { DENG2_BASE_GUI_APP->quit(); });
+        quitButton->rule()
+                .setInput(Rule::Top,    root.viewTop() + style.rules().rule("gap"))
+                .setInput(Rule::Left,   root.viewRight() + *quitX)
+                .setInput(Rule::Height, style.fonts().font("default").height() +
+                          style.rules().rule("gap") * 2);
+        root.add(quitButton);
 
         // Alerts notification and popup.
         alerts = new AlertDialog;
@@ -337,6 +348,7 @@ DENG2_PIMPL(ClientWindow)
     void currentGameChanged(Game const &newGame)
     {
         minimizeGame(false);
+        showOrHideQuitButton();
 
         if (!newGame.isNull())
         {
@@ -418,6 +430,22 @@ DENG2_PIMPL(ClientWindow)
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
         updateRootSize();
+
+        // Show or hide the Quit button depending on the window mode.
+        showOrHideQuitButton();
+    }
+
+    void showOrHideQuitButton()
+    {
+        TimeDelta const SPAN = 0.6;
+        if (self.isFullScreen() && !DoomsdayApp::isGameLoaded())
+        {
+            quitX->set(-quitButton->rule().width() - Style::get().rules().rule("gap"), SPAN);
+        }
+        else
+        {
+            quitX->set(0, SPAN);
+        }
     }
 
     /**
@@ -618,7 +646,7 @@ DENG2_PIMPL(ClientWindow)
         {
         case RightEdge:
             game->rule().setInput(Rule::Right, root.viewLeft() + *gameWidth);
-            notifications->useDefaultPlacement(root.viewRule());
+            notifications->useDefaultPlacement(root.viewRule(), *quitX);
             break;
         }
 
