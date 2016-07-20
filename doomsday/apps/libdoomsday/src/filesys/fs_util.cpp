@@ -43,7 +43,6 @@
 #include "doomsday/DoomsdayApp"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
-#include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/lumpindex.h"
 
 #include <de/Log>

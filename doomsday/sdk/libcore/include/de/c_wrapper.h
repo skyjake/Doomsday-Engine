@@ -242,7 +242,7 @@ DENG2_PUBLIC int Info_FindValue(Info *info, char const *path, char *buffer, size
 /*
  * UnixInfo
  */
-DENG2_PUBLIC int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest, size_t destLen);
+DENG2_PUBLIC char *UnixInfo_GetConfigValue(char const *configFile, char const *key); // caller must free() returned
 
 /*
  * ByteOrder

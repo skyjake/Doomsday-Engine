@@ -44,7 +44,6 @@
 #include <doomsday/defs/state.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/filesys/sys_direc.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/res/Bundles>
 #include <doomsday/res/Textures>
@@ -425,6 +424,7 @@ static void readDefinitionFile(String path)
     Def_ReadProcessDED(&defs, path);
 }
 
+#if 0
 /**
  * Attempt to prepend the current work path. If @a src is already absolute do nothing.
  *
@@ -437,10 +437,13 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
 
     if (!F_IsAbsolute(src))
     {
-        char *curPath = Dir_CurrentPath();
-        Str_Prepend(dst, curPath);
-        Dir_CleanPathStr(dst);
-        M_Free(curPath);
+        NativePath prepended = NativePath::workPath() / Str_Text(src);
+
+        //char *curPath = Dir_CurrentPath();
+        //Str_Prepend(dst, curPath.);
+        //Dir_CleanPathStr(dst);
+        //M_Free(curPath);
+
         return;
     }
 
@@ -450,6 +453,7 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
         Str_Set(dst, Str_Text(src));
     }
 }
+#endif
 
 /**
  * Returns a URN list (in load order) for all lumps whose name matches the pattern "MAPINFO.lmp".
@@ -619,7 +623,6 @@ static void readAllDefinitions()
     }
 
     // Next are any definition files specified on the command line.
-    AutoStr *buf = AutoStr_NewStd();
     for (dint p = 0; p < CommandLine_Count(); ++p)
     {
         char const *arg = CommandLine_At(p);
@@ -628,16 +631,17 @@ static void readAllDefinitions()
 
         while (++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            char const *searchPath = CommandLine_PathAt(p);
+            // CommandLine cleans the path, expands symbols, and makes it absolute.
+            NativePath searchPath(CommandLine_PathAt(p));
 
-            Str_Clear(buf); Str_Set(buf, searchPath);
-            F_FixSlashes(buf, buf);
-            F_ExpandBasePath(buf, buf);
+            //Str_Clear(buf); Str_Set(buf, searchPath);
+            //F_FixSlashes(buf, buf);
+            //F_ExpandBasePath(buf, buf);
             // We must have an absolute path. If we still do not have one then
             // prepend the current working directory if necessary.
-            prependWorkPath(buf, buf);
+            //prependWorkPath(buf, buf);
 
-            readDefinitionFile(String(Str_Text(buf)));
+            readDefinitionFile(searchPath.withSeparators('/'));
         }
         p--;  /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
@@ -1072,7 +1076,7 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                             {
                                 res::TextureManifest *maskTexture = &resSys().textures().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
-                                
+
                                 slayer->addStage(world::ShineTextureMaterialLayer::AnimationStage
                                                  (texture.composeUri(), stage.tics, stage.variance,
                                                   maskTexture->composeUri(), shineDef->stage.blendMode,

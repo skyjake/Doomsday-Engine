@@ -73,16 +73,17 @@ int DS_Init(void)
 
 #ifndef FLUIDSYNTH_NOT_A_DLL
     // Create the output driver that will play the music.
-    char driverName[50];
-    if(!UnixInfo_GetConfigValue("defaults", "fluidsynth:driver", driverName, sizeof(driverName) - 1))
+    std::string driverName = FLUIDSYNTH_DEFAULT_DRIVER_NAME;
+    if (char *cfgValue = UnixInfo_GetConfigValue("defaults", "fluidsynth:driver"))
     {
-        strcpy(driverName, FLUIDSYNTH_DEFAULT_DRIVER_NAME);
+        driverName = cfgValue;
+        free(cfgValue);
     }
-    fluid_settings_setstr(fsConfig, "audio.driver", driverName);
+    fluid_settings_setstr(fsConfig, "audio.driver", driverName.c_str());
     fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
     if(!fsDriver)
     {
-        App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName);
+        App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName.c_str());
         return false;
     }
 #else

@@ -65,7 +65,6 @@
 #include "doomsday/defs/sky.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
-#include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
 #include "doomsday/world/xgclass.h"
 

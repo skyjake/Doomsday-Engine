@@ -39,6 +39,16 @@
 #  include "fs_windows.h"
 #endif
 
+#ifdef WIN32
+#  define DENG_DIR_SEP_CHAR       '\\'
+#  define DENG_DIR_SEP_STR        "\\"
+#  define DENG_DIR_WRONG_SEP_CHAR '/'
+#else
+#  define DENG_DIR_SEP_CHAR        '/'
+#  define DENG_DIR_SEP_STR         "/"
+#  define DENG_DIR_WRONG_SEP_CHAR  '\\'
+#endif
+
 #ifdef __cplusplus
 
 #include <QList>

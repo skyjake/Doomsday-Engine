@@ -62,7 +62,6 @@
 #include <doomsday/console/var.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/filesys/sys_direc.h>
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
@@ -319,12 +318,12 @@ static void createPackagesScheme()
 
 #ifdef UNIX
     // There may be an iwaddir specified in a system-level config file.
-    filename_t fn;
-    if (UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+    if (char *fn = UnixInfo_GetConfigValue("paths", "iwaddir"))
     {
         NativePath path = de::App::commandLine().startupPath() / fn;
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
+        free(fn);
     }
 #endif
 
@@ -996,37 +995,6 @@ static void initialize()
     BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
-#if 0
-    // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme &scheme = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
-    for (dint p = 0; p < CommandLine_Count(); ++p)
-    {
-        if (!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
-        {
-            continue;
-        }
-
-        while (++p != CommandLine_Count() && !CommandLine_IsOption(p))
-        {
-            /// @todo Do not add these as search paths, publish them directly to
-            ///       the "Packages" scheme.
-
-            // CommandLine_PathAt() always returns an absolute path.
-            directory_t *dir = Dir_FromText(CommandLine_PathAt(p));
-            de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
-
-            LOG_RES_NOTE("User-supplied IWAD path: \"%s\"") << Dir_Path(dir);
-
-            scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
-
-            Dir_Delete(dir);
-        }
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }
-
-    App_ResourceSystem().updateOverrideIWADPathFromConfig();
-#endif
     //
     // Try to locate all required data files for all registered games.
     //

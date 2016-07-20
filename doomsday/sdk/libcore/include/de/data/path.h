@@ -355,6 +355,11 @@ public:
     QChar separator() const;
 
     /**
+     * Adds a separator in the end of the path, if one is not there already.
+     */
+    void addTerminatingSeparator();
+
+    /**
      * Returns the file name portion of the path, i.e., the last segment.
      */
     String fileName() const;

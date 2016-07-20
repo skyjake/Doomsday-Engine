@@ -108,7 +108,7 @@ void App_FatalError(char const *msgFormat, ...)
     va_end(args);
 
     DENG2_APP->handleUncaughtException(buffer);
-    
+
     // Let's make sure this is the end.
     exit(-1);
 }
@@ -274,7 +274,7 @@ int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
     }
 }
 
-int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest, size_t destLen)
+char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
 {
     de::UnixInfo &info = de::App::unixInfo();
 
@@ -284,8 +284,7 @@ int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest,
         de::NativePath foundValue;
         if (info.path(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toString().toUtf8().constData(), uint(destLen));
-            return true;
+            return qstrdup(foundValue.toString().toUtf8().constData());
         }
     }
     else if (!qstrcmp(configFile, "defaults"))
@@ -293,11 +292,10 @@ int UnixInfo_GetConfigValue(char const *configFile, char const *key, char *dest,
         de::String foundValue;
         if (info.defaults(key, foundValue))
         {
-            qstrncpy(dest, foundValue.toUtf8().constData(), uint(destLen));
-            return true;
+            return qstrdup(foundValue.toUtf8().constData());
         }
     }
-    return false;
+    return nullptr;
 }
 
 dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value)

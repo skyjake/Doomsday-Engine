@@ -25,7 +25,6 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/filesys/sys_direc.h>
 
 #include "client/cl_player.h"
 
@@ -59,7 +58,7 @@ struct demopacket_header_t
 
 extern dfloat netConnectTime;
 
-filename_t demoPath = "/home/demo/";
+static char const *demoPath = "/home/demo/";
 
 LZFILE *playdemo;
 dint playback;

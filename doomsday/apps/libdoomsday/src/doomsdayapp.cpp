@@ -20,7 +20,6 @@
 #include "doomsday/games.h"
 #include "doomsday/gameprofiles.h"
 #include "doomsday/console/exec.h"
-#include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/bundles.h"
@@ -48,6 +47,7 @@
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <de/memoryzone.h>
+#include <de/memory.h>
 
 #include <QDir>
 #include <QSettings>
@@ -241,10 +241,10 @@ DENG2_PIMPL(DoomsdayApp)
 
 #ifdef UNIX
         // There may be an iwaddir specified in a system-level config file.
-        filename_t fn;
-        if (UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        if (char *fn = UnixInfo_GetConfigValue("paths", "iwaddir"))
         {
             attachWadFeed("UnixInfo " _E(i) "paths.iwaddir" _E(.), startupPath / fn);
+            free(fn);
         }
 #endif
 
@@ -279,11 +279,11 @@ DENG2_PIMPL(DoomsdayApp)
 
 #ifdef UNIX
         // There may be an iwaddir specified in a system-level config file.
-        filename_t fn;
-        if (UnixInfo_GetConfigValue("paths", "packsdir", fn, FILENAME_T_MAXLEN))
+        if (char *fn = UnixInfo_GetConfigValue("paths", "packsdir"))
         {
             attachPacksFeed("UnixInfo " _E(i) "paths.packsdir" _E(.),
                             cmdLine.startupPath() / fn);
+            free(fn);
         }
 #endif
 
@@ -501,29 +501,11 @@ std::string const &DoomsdayApp::doomsdayBasePath() const
 
 void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
 {
-    /// @todo Unfortunately the legacy Dir/fs_util assumes fixed-size strings, so we
-    /// can't take advantage of std::string. -jk
-    filename_t temp;
-    strncpy(temp, path.toUtf8(), FILENAME_T_MAXLEN);
+    NativePath cleaned = App::commandLine().startupPath() / path; // In case it's relative.
+    cleaned.addTerminatingSeparator();
 
-    Dir_CleanPath(temp, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(temp, FILENAME_T_MAXLEN);
-
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(temp, FILENAME_T_MAXLEN);
-
-    d->ddBasePath = temp;
+    d->ddBasePath = cleaned.toString().toStdString();
 }
-
-/*std::string const &DoomsdayApp::doomsdayRuntimePath() const
-{
-    return d->ddRuntimePath;
-}
-
-void DoomsdayApp::setDoomsdayRuntimePath(NativePath const &path)
-{
-    d->ddRuntimePath = path.toUtf8().constData();
-}*/
 
 #ifdef WIN32
 void *DoomsdayApp::moduleHandle() const

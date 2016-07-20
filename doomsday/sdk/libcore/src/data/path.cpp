@@ -92,6 +92,9 @@ String Path::Segment::toString() const
 
 struct Path::Impl
 {
+    DENG2_NO_ASSIGN(Impl)
+    DENG2_NO_COPY  (Impl)
+
     String path;
 
     /// The character in Impl::path that acts as the segment separator.
@@ -240,9 +243,6 @@ struct Path::Impl
 
         DENG2_ASSERT(segmentCount > 0);
     }
-
-    Impl &operator = (Impl const &) = delete; // no assignment
-    Impl(Impl const &) = delete; // no copying
 };
 
 Path::Path() : d(new Impl)
@@ -471,6 +471,18 @@ Path Path::withSeparators(QChar sep) const
 QChar Path::separator() const
 {
     return d->separator;
+}
+
+void Path::addTerminatingSeparator()
+{
+    if (!isEmpty())
+    {
+        if (last() != d->separator)
+        {
+            d->path.append(d->separator);
+            d->clearSegments();
+        }
+    }
 }
 
 String Path::fileName() const
