@@ -49,7 +49,7 @@ DENG2_PIMPL(Sector)
      */
     struct GeomData
     {
-        AABoxd aaBox;               ///< Bounding box for the whole sector (all subsectors).
+        AABoxd bounds;              ///< Bounding box for the whole sector (all subsectors).
         ddouble roughArea = 0;      ///< Rough approximation.
     };
 
@@ -146,14 +146,14 @@ DENG2_PIMPL(Sector)
         {
             // Time to prepare this info.
             std::unique_ptr<GeomData> gd(new GeomData);
-            gd->aaBox     = findBounds();
+            gd->bounds    = findBounds();
             gd->roughArea = findRoughArea();
             gdata.reset(gd.get());
             gd.release();
 
             // As the bounds are now known; update the origin of the primary SoundEmitter.
-            emitter->origin[0] = (gdata->aaBox.minX + gdata->aaBox.maxX) / 2;
-            emitter->origin[1] = (gdata->aaBox.minY + gdata->aaBox.maxY) / 2;
+            emitter->origin[0] = (gdata->bounds.minX + gdata->bounds.maxX) / 2;
+            emitter->origin[1] = (gdata->bounds.minY + gdata->bounds.maxY) / 2;
         }
         return *gdata;
     }
@@ -169,11 +169,11 @@ DENG2_PIMPL(Sector)
         {
             if (inited)
             {
-                V2d_UniteBox(bounds.arvec2, subsec->aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, subsec->bounds().arvec2);
             }
             else
             {
-                bounds = subsec->aaBox();
+                bounds = subsec->bounds();
                 inited = true;
             }
         }
@@ -513,9 +513,9 @@ void Sector::setValidCount(dint newValidCount)
     d->validCount = newValidCount;
 }
 
-AABoxd const &Sector::aaBox() const
+AABoxd const &Sector::bounds() const
 {
-    return d->geom().aaBox;
+    return d->geom().bounds;
 }
 
 #ifdef __CLIENT__

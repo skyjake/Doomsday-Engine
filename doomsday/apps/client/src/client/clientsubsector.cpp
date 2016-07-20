@@ -26,7 +26,7 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 
-#include "render/rend_main.h" // Rend_SkyLightCoor(), useBias
+#include "render/rend_main.h" // Rend_SkyLightColor(), useBias
 #include "BiasIllum"
 #include "BiasTracker"
 #include "Shard"
@@ -57,9 +57,9 @@ enum SubsectorFlag
 Q_DECLARE_FLAGS(SubsectorFlags, SubsectorFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(SubsectorFlags)
 
-static QRectF qrectFromAABox(AABoxd const &aaBox)
+static QRectF qrectFromAABox(AABoxd const &b)
 {
-    return QRectF(QPointF(aaBox.minX, aaBox.maxY), QPointF(aaBox.maxX, aaBox.minY));
+    return QRectF(QPointF(b.minX, b.maxY), QPointF(b.maxX, b.minY));
 }
 
 }  // namespace internal
@@ -373,7 +373,7 @@ DENG2_PIMPL(ClientSubsector)
         if (extSubsectorMap.isEmpty())
             return;
 
-        QRectF boundingRect = qrectFromAABox(self.aaBox());
+        QRectF boundingRect = qrectFromAABox(self.bounds());
 
         // First try to quickly decide by comparing subsector bounding boxes.
         QMutableMapIterator<ClientSubsector *, HEdge *> iter(extSubsectorMap);
@@ -382,7 +382,7 @@ DENG2_PIMPL(ClientSubsector)
             iter.next();
             auto &extSubsec = iter.value()->twin().face().mapElementAs<ConvexSubspace>()
                                   .subsector().as<ClientSubsector>();
-            if (!boundingRect.contains(qrectFromAABox(extSubsec.aaBox())))
+            if (!boundingRect.contains(qrectFromAABox(extSubsec.bounds())))
             {
                 boundaryData->uniqueOuterEdges.append(iter.value());
                 iter.remove();
@@ -792,7 +792,7 @@ DENG2_PIMPL(ClientSubsector)
     {
         Map const &map = self.sector().map();
 
-        AABoxd box = self.aaBox();
+        AABoxd box = self.bounds();
         box.minX -= 128;
         box.minY -= 128;
         box.maxX += 128;
@@ -809,11 +809,11 @@ DENG2_PIMPL(ClientSubsector)
                 sub.setValidCount(localValidCount);
 
                 // Check the bounds.
-                AABoxd const &polyBox = sub.poly().aaBox();
-                if (!(   polyBox.maxX < box.minX
-                      || polyBox.minX > box.maxX
-                      || polyBox.minY > box.maxY
-                      || polyBox.maxY < box.minY))
+                AABoxd const &polyBounds = sub.poly().bounds();
+                if (!(   polyBounds.maxX < box.minX
+                      || polyBounds.minX > box.maxX
+                      || polyBounds.minY > box.maxY
+                      || polyBounds.maxY < box.minY))
                 {
                     addReverbSubspace(&sub);
                 }

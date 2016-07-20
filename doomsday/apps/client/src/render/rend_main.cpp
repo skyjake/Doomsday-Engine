@@ -2765,18 +2765,18 @@ static void writeSubspacePlane(Plane &plane)
     /// @todo fixme: What is this meant to do? -ds
     if(plane.isSectorCeiling())
     {
-        materialOrigin.y -= poly.aaBox().maxY - poly.aaBox().minY;
+        materialOrigin.y -= poly.bounds().maxY - poly.bounds().minY;
     }
     materialOrigin.y = -materialOrigin.y;
 
     Vector2f const materialScale = surface.materialScale();
 
     // Set the texture origin, Y is flipped for the ceiling.
-    Vector3d topLeft(poly.aaBox().minX,
-                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][1],
+    Vector3d topLeft(poly.bounds().minX,
+                     poly.bounds().arvec2[plane.isSectorFloor()? 1 : 0][1],
                      plane.heightSmoothed());
-    Vector3d bottomRight(poly.aaBox().maxX,
-                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][1],
+    Vector3d bottomRight(poly.bounds().maxX,
+                         poly.bounds().arvec2[plane.isSectorFloor()? 0 : 1][1],
                          plane.heightSmoothed());
 
     rendworldpoly_params_t parm; de::zap(parm);
@@ -3607,7 +3607,7 @@ static void drawCurrentSubspace()
     markSubspaceFrontFacingWalls();
 
     // Perform contact spreading for this map region.
-    sector.map().spreadAllContacts(::curSubspace->poly().aaBox());
+    sector.map().spreadAllContacts(::curSubspace->poly().bounds());
 
     Rend_DrawFlatRadio(*::curSubspace);
 
@@ -5250,12 +5250,12 @@ static void drawMobjBoundingBoxes(Map &map)
         {
             Sector const &sec = pob.sector();
 
-            coord_t width  = (pob.aaBox.maxX - pob.aaBox.minX)/2;
-            coord_t length = (pob.aaBox.maxY - pob.aaBox.minY)/2;
+            coord_t width  = (pob.bounds.maxX - pob.bounds.minX)/2;
+            coord_t length = (pob.bounds.maxY - pob.bounds.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
-            Vector3d pos(pob.aaBox.minX + width,
-                         pob.aaBox.minY + length,
+            Vector3d pos(pob.bounds.minX + width,
+                         pob.bounds.minY + length,
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
@@ -5909,7 +5909,7 @@ static void drawVertexes(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    if(devVertexBars)
+    if (devVertexBars)
     {
         GLState::current().setDepthTest(false).apply();
 
@@ -5924,11 +5924,11 @@ static void drawVertexes(Map &map)
         {
             // Check the bounds.
             auto &subspace = *(ConvexSubspace *)object;
-            AABoxd const &polyBox = subspace.poly().aaBox();
-            if(!(polyBox.maxX < box.minX ||
-                 polyBox.minX > box.maxX ||
-                 polyBox.minY > box.maxY ||
-                 polyBox.maxY < box.minY))
+            AABoxd const &polyBounds = subspace.poly().bounds();
+            if(!(   polyBounds.maxX < box.minX
+                 || polyBounds.minX > box.maxX
+                 || polyBounds.minY > box.maxY
+                 || polyBounds.maxY < box.minY))
             {
                 drawSubspaceVertexs(subspace, parms);
             }
@@ -5949,15 +5949,16 @@ static void drawVertexes(Map &map)
     parms.drawnVerts->fill(false);  // Process all again.
     parms.drawOrigin = true;
     parms.drawBar    = parms.drawLabel = false;
+
     map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
     {
         // Check the bounds.
         auto &subspace = *(ConvexSubspace *)object;
-        AABoxd const &polyBox = subspace.poly().aaBox();
-        if(!(polyBox.maxX < box.minX ||
-             polyBox.minX > box.maxX ||
-             polyBox.minY > box.maxY ||
-             polyBox.maxY < box.minY))
+        AABoxd const &polyBounds = subspace.poly().bounds();
+        if (!(   polyBounds.maxX < box.minX
+              || polyBounds.minX > box.maxX
+              || polyBounds.minY > box.maxY
+              || polyBounds.maxY < box.minY))
         {
             drawSubspaceVertexs(subspace, parms);
         }
@@ -5966,20 +5967,21 @@ static void drawVertexes(Map &map)
 
     GLState::current().setDepthTest(true).apply();
 
-    if(devVertexIndices)
+    if (devVertexIndices)
     {
         parms.drawnVerts->fill(false);  // Process all again.
         parms.drawLabel = true;
         parms.drawBar   = parms.drawOrigin = false;
+
         map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
         {
             auto &subspace = *(ConvexSubspace *)object;
             // Check the bounds.
-            AABoxd const &polyBox = subspace.poly().aaBox();
-            if(!(polyBox.maxX < box.minX ||
-                 polyBox.minX > box.maxX ||
-                 polyBox.minY > box.maxY ||
-                 polyBox.maxY < box.minY))
+            AABoxd const &polyBounds = subspace.poly().bounds();
+            if (!(   polyBounds.maxX < box.minX
+                  || polyBounds.minX > box.maxX
+                  || polyBounds.minY > box.maxY
+                  || polyBounds.maxY < box.minY))
             {
                 drawSubspaceVertexs(subspace, parms);
             }
@@ -5988,7 +5990,7 @@ static void drawVertexes(Map &map)
     }
 
     // Restore previous state.
-    if(devVertexBars)
+    if (devVertexBars)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
         glDisable(GL_LINE_SMOOTH);

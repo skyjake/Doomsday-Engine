@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
     {
         fixed_t origin[2];
         fixed_t direction[2];
-        AABoxd aabox;
+        AABoxd bounds;
 
         Ray(Vector3d const &from, Vector3d const &to)
         {
@@ -63,10 +63,10 @@ DENG2_PIMPL_NOREF(LineSightTest)
             direction[1] = DBL2FIX(to.y - from.y);
 
             ddouble v1From[2] = { from.x, from.y };
-            V2d_InitBox(aabox.arvec2, v1From);
+            V2d_InitBox(bounds.arvec2, v1From);
 
             ddouble v1To[2] = { to.x, to.y };
-            V2d_AddToBox(aabox.arvec2, v1To);
+            V2d_AddToBox(bounds.arvec2, v1To);
         }
     } ray;
 
@@ -91,24 +91,24 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
         Line &line = side.line();
 
-        if(line.validCount() == validCount)
+        if (line.validCount() == validCount)
             return true;  // Ignore
 
         line.setValidCount(validCount);
 
         // Does the ray intercept the line on the X/Y plane?
         // Try a quick bounding-box rejection.
-        if(line.aaBox().minX > ray.aabox.maxX ||
-           line.aaBox().maxX < ray.aabox.minX ||
-           line.aaBox().minY > ray.aabox.maxY ||
-           line.aaBox().maxY < ray.aabox.minY)
+        if (   line.bounds().minX > ray.bounds.maxX
+            || line.bounds().maxX < ray.bounds.minX
+            || line.bounds().minY > ray.bounds.maxY
+            || line.bounds().maxY < ray.bounds.minY)
             return true;
 
         fixed_t const lineV1OriginX[2]  = { DBL2FIX(line.from().x()), DBL2FIX(line.from().y()) };
         fixed_t const lineV2OriginX[2]  = { DBL2FIX(line.to  ().x()), DBL2FIX(line.to  ().y()) };
 
-        if(V2x_PointOnLineSide(lineV1OriginX, ray.origin, ray.direction) ==
-           V2x_PointOnLineSide(lineV2OriginX, ray.origin, ray.direction))
+        if (   V2x_PointOnLineSide(lineV1OriginX, ray.origin, ray.direction)
+            == V2x_PointOnLineSide(lineV2OriginX, ray.origin, ray.direction))
             return true;
 
         fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
@@ -116,15 +116,15 @@ DENG2_PIMPL_NOREF(LineSightTest)
         fixed_t const fromPointX[2] = { DBL2FIX(from.x), DBL2FIX(from.y) };
         fixed_t const toPointX[2]   = { DBL2FIX(to  .x), DBL2FIX(to  .y) };
 
-        if(V2x_PointOnLineSide(fromPointX, lineV1OriginX, lineDirectionX) ==
-           V2x_PointOnLineSide(toPointX, lineV1OriginX, lineDirectionX))
+        if (   V2x_PointOnLineSide(fromPointX, lineV1OriginX, lineDirectionX)
+            == V2x_PointOnLineSide(toPointX, lineV1OriginX, lineDirectionX))
             return true;
 
         // Is this the passable side of a one-way BSP window?
-        if(!side.hasSections())
+        if (!side.hasSections())
             return true;
 
-        if(!side.hasSector())
+        if (!side.hasSector())
             return false;
 
         Sector const *frontSec = side.sectorPtr();
@@ -132,64 +132,64 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
         bool noBack = side.considerOneSided();
 
-        if(!noBack && !(flags & LS_PASSLEFT))
+        if (!noBack && !(flags & LS_PASSLEFT))
         {
             noBack = (!( backSec->floor().height() < frontSec->ceiling().height()) ||
                       !(frontSec->floor().height() <  backSec->ceiling().height()));
         }
 
-        if(noBack)
+        if (noBack)
         {
             // Does the ray pass from left to right?
-            if(flags & LS_PASSLEFT) // Allowed.
+            if (flags & LS_PASSLEFT) // Allowed.
             {
-                if(line.pointOnSide(Vector2d(from.x, from.y)) < 0)
+                if (line.pointOnSide(Vector2d(from.x, from.y)) < 0)
                     return true;
             }
 
             // No back side is present so if the ray is not allowed to pass over/under
             // the line then end it right here.
-            if(!(flags & (LS_PASSOVER | LS_PASSUNDER)))
+            if (!(flags & (LS_PASSOVER | LS_PASSUNDER)))
                 return false;
         }
 
         // Handle the case of a zero height back side in the top range.
         dbyte ranges = 0;
-        if(noBack)
+        if (noBack)
         {
             ranges |= RTOP;
         }
         else
         {
-            if(backSec->floor().height()   != frontSec->floor().height())
+            if (backSec->floor().height()   != frontSec->floor().height())
                 ranges |= RBOTTOM;
 
-            if(backSec->ceiling().height() != frontSec->ceiling().height())
+            if (backSec->ceiling().height() != frontSec->ceiling().height())
                 ranges |= RTOP;
         }
 
         // No partially closed ranges which require testing?
-        if(!ranges)
+        if (!ranges)
             return true;
 
         dfloat frac = FIX2FLT(V2x_Intersection(lineV1OriginX, lineDirectionX, ray.origin, ray.direction));
 
         // Does the ray pass over the top range?
-        if(flags & LS_PASSOVER) // Allowed.
+        if (flags & LS_PASSOVER) // Allowed.
         {
-            if(bottomSlope > (frontSec->ceiling().height() - from.z) / frac)
+            if (bottomSlope > (frontSec->ceiling().height() - from.z) / frac)
                 return true;
         }
 
         // Does the ray pass under the bottom range?
-        if(flags & LS_PASSUNDER) // Allowed.
+        if (flags & LS_PASSUNDER) // Allowed.
         {
-            if(topSlope    < (  frontSec->floor().height() - from.z) / frac)
+            if (topSlope    < (  frontSec->floor().height() - from.z) / frac)
                 return true;
         }
 
         // Test a partially closed top range?
-        if(ranges & RTOP)
+        if (ranges & RTOP)
         {
             dfloat const top =                                      noBack ? frontSec->ceiling().height() :
                  frontSec->ceiling().height() < backSec->ceiling().height()? frontSec->ceiling().height() :
@@ -197,27 +197,27 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
             dfloat const slope = (top - from.z) / frac;
 
-            if((slope < topSlope)     ^ (noBack && !(flags & LS_PASSOVER)) ||
-               (noBack && topSlope    > (frontSec->floor().height() - from.z) / frac))
+            if ((slope < topSlope) ^ (noBack && !(flags & LS_PASSOVER))
+                || (noBack && topSlope > (frontSec->floor().height() - from.z) / frac))
                 topSlope = slope;
 
-            if((slope < bottomSlope)  ^ (noBack && !(flags & LS_PASSUNDER)) ||
-               (noBack && bottomSlope > (frontSec->floor().height() - from.z) / frac))
+            if ((slope < bottomSlope) ^ (noBack && !(flags & LS_PASSUNDER))
+                || (noBack && bottomSlope > (frontSec->floor().height() - from.z) / frac))
                 bottomSlope = slope;
         }
 
         // Test a partially closed bottom range?
-        if(ranges & RBOTTOM)
+        if (ranges & RBOTTOM)
         {
             dfloat const bottom =                                noBack? frontSec->floor().height() :
                  frontSec->floor().height() > backSec->floor().height()? frontSec->floor().height() :
-                                                                         backSec->floor().height();
+                                                                         backSec ->floor().height();
             dfloat const slope = (bottom - from.z) / frac;
 
-            if(slope > bottomSlope)
+            if (slope > bottomSlope)
                 bottomSlope = slope;
 
-            if(slope > topSlope)
+            if (slope > topSlope)
                 topSlope = slope;
         }
 
@@ -235,37 +235,37 @@ DENG2_PIMPL_NOREF(LineSightTest)
         // Check polyobj lines.
         LoopResult blocked = subspace.forAllPolyobjs([this] (Polyobj &pob)
         {
-            for(Line *line : pob.lines())
+            for (Line *line : pob.lines())
             {
-                if(!crossLine(line->front()))
+                if (!crossLine(line->front()))
                     return LoopAbort;
             }
             return LoopContinue;
         });
-        if(blocked) return false;
+        if (blocked) return false;
 
         // Check lines for the edges of the subspace geometry.
         HEdge *base  = subspace.poly().hedge();
         HEdge *hedge = base;
         do
         {
-            if(hedge->hasMapElement())
+            if (hedge->hasMapElement())
             {
-                if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
+                if (!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
                     return false;
             }
-        } while((hedge = &hedge->next()) != base);
+        } while ((hedge = &hedge->next()) != base);
 
         // Check lines for the extra meshes.
         blocked = subspace.forAllExtraMeshes([this] (Mesh &mesh)
         {
-            for(HEdge *hedge : mesh.hedges())
+            for (HEdge *hedge : mesh.hedges())
             {
                 // Is this on the back of a one-sided line?
-                if(!hedge->hasMapElement())
+                if (!hedge->hasMapElement())
                     continue;
 
-                if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
+                if (!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
                     return LoopAbort;
             }
             return LoopContinue;
@@ -281,7 +281,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
     {
         DENG2_ASSERT(bspTree);
 
-        while(!bspTree->isLeaf())
+        while (!bspTree->isLeaf())
         {
             DENG2_ASSERT(bspTree->userData());
             auto const &bspNode = bspTree->userData()->as<BspNode>();
@@ -290,10 +290,10 @@ DENG2_PIMPL_NOREF(LineSightTest)
             /// @todo Optionally use the fixed precision version -ds
             dint const fromSide = bspNode.pointOnSide(Vector2d(from.x, from.y)) < 0;
             dint const toSide   = bspNode.pointOnSide(Vector2d(to.x, to.y)) < 0;
-            if(fromSide != toSide)
+            if (fromSide != toSide)
             {
                 // Yes.
-                if(!crossBspNode(bspTree->childPtr(BspTree::ChildId(fromSide))))
+                if (!crossBspNode(bspTree->childPtr(BspTree::ChildId(fromSide))))
                     return false;  // Cross the From side.
 
                 bspTree = bspTree->childPtr(BspTree::ChildId(fromSide ^ 1));  // Cross the To side.
@@ -307,8 +307,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
         // We've arrived at a leaf.
         auto const &bspLeaf = bspTree->userData()->as<BspLeaf>();
-
-        if(bspLeaf.hasSubspace())
+        if (bspLeaf.hasSubspace())
         {
             return crossSubspace(bspLeaf.subspace());
         }

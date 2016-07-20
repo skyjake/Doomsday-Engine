@@ -479,7 +479,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 }
 
                 /// @todo Face should encapsulate.
-                face->updateAABox();
+                face->updateBounds();
                 face->updateCenter();
 
                 extraMeshes.append(extraMesh);
@@ -574,7 +574,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         }
 
         /// @todo Face should encapsulate.
-        face->updateAABox();
+        face->updateBounds();
         face->updateCenter();
 
         // Assign a new convex subspace to the BSP leaf (takes ownership).

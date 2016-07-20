@@ -132,7 +132,7 @@ Lumobj &Lumobj::setRadius(ddouble newRadius)
     return *this;
 }
 
-AABoxd Lumobj::aaBox() const
+AABoxd Lumobj::bounds() const
 {
     return AABoxd(origin().x - d->radius, origin().y - d->radius,
                   origin().x + d->radius, origin().y + d->radius);

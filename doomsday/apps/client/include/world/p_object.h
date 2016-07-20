@@ -259,6 +259,6 @@ coord_t Mobj_VisualRadius(mobj_t const &mob);
  *
  * @see Mobj_Radius()
  */
-AABoxd Mobj_AABox(mobj_t const &mob);
+AABoxd Mobj_Bounds(mobj_t const &mob);
 
 #endif  // WORLD_P_OBJECT_H

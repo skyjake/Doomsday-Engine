@@ -196,7 +196,7 @@ public:
      *
      * @see hasSubsectors()
      */
-    AABoxd const &aaBox() const;
+    AABoxd const &bounds() const;
 
     /**
      * Returns a rough approximation of the total area of all the subsector geometries.

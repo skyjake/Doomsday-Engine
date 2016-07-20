@@ -368,12 +368,12 @@ DENG2_PIMPL(Map)
             if (haveGeometry)
             {
                 // Expand the bounding box.
-                V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, line->bounds().arvec2);
             }
             else
             {
                 // The first line's bounds are used as is.
-                V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+                V2d_CopyBox(bounds.arvec2, line->bounds().arvec2);
                 haveGeometry = true;
             }
         }
@@ -429,8 +429,8 @@ DENG2_PIMPL(Map)
             if (de::abs(line.direction().y) < bsp::DIST_EPSILON)
                 return;
 
-            if (   (line.aaBox().maxY < p.testLineCenter.y - bsp::DIST_EPSILON)
-                || (line.aaBox().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
+            if (   (line.bounds().maxY < p.testLineCenter.y - bsp::DIST_EPSILON)
+                || (line.bounds().minY > p.testLineCenter.y + bsp::DIST_EPSILON))
                 return;
 
             dist = (line.from().x() + (p.testLineCenter.y - line.from().y()) * line.direction().x / line.direction().y)
@@ -451,8 +451,8 @@ DENG2_PIMPL(Map)
             if (de::abs(line.direction().x) < bsp::DIST_EPSILON)
                 return;
 
-            if(   (line.aaBox().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
-               || (line.aaBox().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
+            if(   (line.bounds().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
+               || (line.bounds().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
                 return;
 
             dist = (line.from().y() +
@@ -534,13 +534,13 @@ DENG2_PIMPL(Map)
             AABoxd scanRegion = bounds;
             if (p.castHorizontal)
             {
-                scanRegion.minY = line->aaBox().minY - bsp::DIST_EPSILON;
-                scanRegion.maxY = line->aaBox().maxY + bsp::DIST_EPSILON;
+                scanRegion.minY = line->bounds().minY - bsp::DIST_EPSILON;
+                scanRegion.maxY = line->bounds().maxY + bsp::DIST_EPSILON;
             }
             else
             {
-                scanRegion.minX = line->aaBox().minX - bsp::DIST_EPSILON;
-                scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
+                scanRegion.minX = line->bounds().minX - bsp::DIST_EPSILON;
+                scanRegion.maxX = line->bounds().maxX + bsp::DIST_EPSILON;
             }
 
             validCount++;
@@ -895,7 +895,7 @@ DENG2_PIMPL(Map)
      */
     void linkMobjToLines(mobj_t &mob)
     {
-        AABoxd const box = Mobj_AABox(mob);
+        AABoxd const box = Mobj_Bounds(mob);
 
         // Get a new root node.
         mob.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
@@ -904,10 +904,10 @@ DENG2_PIMPL(Map)
         self.forAllLinesInBox(box, [this, &mob, &box] (Line &line)
         {
             // Do the bounding boxes intercept?
-            if (!(   box.minX >= line.aaBox().maxX
-                  || box.minY >= line.aaBox().maxY
-                  || box.maxX <= line.aaBox().minX
-                  || box.maxY <= line.aaBox().minY))
+            if (!(   box.minX >= line.bounds().maxX
+                  || box.minY >= line.bounds().maxY
+                  || box.maxX <= line.bounds().minX
+                  || box.maxY <= line.bounds().minY))
             {
                 // Line crosses the mobj's bounding box?
                 if (!line.boxOnSide(box))
@@ -955,7 +955,7 @@ DENG2_PIMPL(Map)
         // Populate the blockmap.
         for (ConvexSubspace *subspace : subspaces)
         {
-            subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
+            subspaceBlockmap->link(subspace->poly().bounds(), subspace);
         }
     }
 
@@ -1973,7 +1973,7 @@ void Map::initRadio()
             LineOwner const &vo0 = line->vertexOwner(i)->next();
             LineOwner const &vo1 = line->vertexOwner(i ^ 1)->prev();
 
-            AABoxd bounds = line->aaBox();
+            AABoxd bounds = line->bounds();
 
             // Use the extended points, they are wider than inoffsets.
             Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
@@ -1995,7 +1995,7 @@ void Map::initRadio()
                     if (&sub.subsector().sector() == side.sectorPtr())
                     {
                         // Check the bounds.
-                        AABoxd const &polyBox = sub.poly().aaBox();
+                        AABoxd const &polyBox = sub.poly().bounds();
                         if (!(   polyBox.maxX < bounds.minX
                               || polyBox.minX > bounds.maxX
                               || polyBox.minY > bounds.maxY
@@ -2320,7 +2320,7 @@ void Map::initPolyobjs()
     {
         /// @todo Is this still necessary? -ds
         /// (This data is updated automatically when moving/rotating).
-        po->updateAABox();
+        po->updateBounds();
         po->updateSurfaceTangents();
 
         po->unlink();

@@ -177,7 +177,7 @@ public:
      * Returns the vector described by the offset from the map coordinate space origin to
      * the top most, left most point of the geometry of the subspace.
      *
-     * @see aaBox()
+     * @see bounds()
      */
     de::Vector2d const &worldGridOffset() const;
 

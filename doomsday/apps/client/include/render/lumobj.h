@@ -150,7 +150,7 @@ public:
      *
      * @see radius()
      */
-    AABoxd aaBox() const;
+    AABoxd bounds() const;
 
     /**
      * Returns the z-offset of the lumobj.

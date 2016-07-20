@@ -71,7 +71,7 @@ struct ContactSpreader
     struct SpreadState
     {
         Contact *contact = nullptr;
-        AABoxd contactAABox;
+        AABoxd contactBounds;
     };
     SpreadState _spread;
 
@@ -129,8 +129,8 @@ private:
         // Spread to neighboring BSP leafs.
         subspace.setValidCount(++validCount);
 
-        _spread.contact      = &contact;
-        _spread.contactAABox = contact.objectAABox();
+        _spread.contact       = &contact;
+        _spread.contactBounds = contact.objectBounds();
 
         spreadInSubspace(subspace);
     }
@@ -158,9 +158,11 @@ private:
         }
 
         // Is the leaf on the back side outside the origin's AABB?
-        AABoxd const &aaBox = backSubspace.poly().aaBox();
-        if (   aaBox.maxX <= _spread.contactAABox.minX || aaBox.minX >= _spread.contactAABox.maxX
-            || aaBox.maxY <= _spread.contactAABox.minY || aaBox.minY >= _spread.contactAABox.maxY)
+        AABoxd const &bounds = backSubspace.poly().bounds();
+        if (   bounds.maxX <= _spread.contactBounds.minX
+            || bounds.minX >= _spread.contactBounds.maxX
+            || bounds.maxY <= _spread.contactBounds.minY
+            || bounds.minY >= _spread.contactBounds.maxY)
             return;
 
         // Too far from the edge?

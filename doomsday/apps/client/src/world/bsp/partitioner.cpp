@@ -765,11 +765,11 @@ DENG2_PIMPL(Partitioner)
         {
             if(initialized)
             {
-                V2d_UniteBox(bounds.arvec2, seg->aaBox().arvec2);
+                V2d_UniteBox(bounds.arvec2, seg->bounds().arvec2);
             }
             else
             {
-                V2d_CopyBox(bounds.arvec2, seg->aaBox().arvec2);
+                V2d_CopyBox(bounds.arvec2, seg->bounds().arvec2);
                 initialized = true;
             }
         }
@@ -1155,13 +1155,13 @@ BspTree *Partitioner::makeBspTree(QSet<Line *> const &lines, Mesh &mesh)
         if(isFirst)
         {
             // The first line's bounds are used as is.
-            V2d_CopyBox(bounds.arvec2, line->aaBox().arvec2);
+            V2d_CopyBox(bounds.arvec2, line->bounds().arvec2);
             isFirst = false;
         }
         else
         {
             // Expand the bounding box.
-            V2d_UniteBox(bounds.arvec2, line->aaBox().arvec2);
+            V2d_UniteBox(bounds.arvec2, line->bounds().arvec2);
         }
     }
 

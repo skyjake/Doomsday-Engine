@@ -210,7 +210,7 @@ public:
      *
      * @todo Should be private.
      */
-    void updateAABox();
+    void updateBounds();
 
     /**
      * Update the tangent space vectors for all surfaces of the polyobj,

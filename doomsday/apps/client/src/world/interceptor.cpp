@@ -225,35 +225,35 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
     }
 
-    void intercept(mobj_t &mobj)
+    void intercept(mobj_t &mob)
     {
         // Ignore cameras.
-        if(mobj.dPlayer && (mobj.dPlayer->flags & DDPF_CAMERA))
+        if (mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
             return;
 
         fixed_t origin[2]    = { DBL2FIX(from.x), DBL2FIX(from.y) };
         fixed_t direction[2] = { DBL2FIX(to.x - from.x), DBL2FIX(to.y - from.y) };
 
         // Check a corner to corner crossection for hit.
-        AABoxd const aaBox = Mobj_AABox(mobj);
+        AABoxd const &box = Mobj_Bounds(mob);
 
         fixed_t icptFrom[2], icptTo[2];
-        if((direction[0] ^ direction[1]) > 0)
+        if ((direction[0] ^ direction[1]) > 0)
         {
             // \ Slope
-            V2x_Set(icptFrom, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.maxY));
-            V2x_Set(icptTo,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.minY));
+            V2x_Set(icptFrom, DBL2FIX(box.minX), DBL2FIX(box.maxY));
+            V2x_Set(icptTo,   DBL2FIX(box.maxX), DBL2FIX(box.minY));
         }
         else
         {
             // / Slope
-            V2x_Set(icptFrom, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.minY));
-            V2x_Set(icptTo,   DBL2FIX(aaBox.maxX), DBL2FIX(aaBox.maxY));
+            V2x_Set(icptFrom, DBL2FIX(box.minX), DBL2FIX(box.minY));
+            V2x_Set(icptTo,   DBL2FIX(box.maxX), DBL2FIX(box.maxY));
         }
 
         // Is this line crossed?
-        if(V2x_PointOnLineSide(icptFrom, origin, direction) ==
-           V2x_PointOnLineSide(icptTo,   origin, direction))
+        if (   V2x_PointOnLineSide(icptFrom, origin, direction)
+            == V2x_PointOnLineSide(icptTo,   origin, direction))
             return;
 
         // Calculate interception point.
@@ -261,9 +261,9 @@ DENG2_PIMPL_NOREF(Interceptor)
         dfloat distance = FIX2FLT(V2x_Intersection(icptFrom, icptDirection, origin, direction));
 
         // On the correct side of the trace origin?
-        if(distance >= 0)
+        if (distance >= 0)
         {
-            addIntercept(ICPT_MOBJ, distance, &mobj);
+            addIntercept(ICPT_MOBJ, distance, &mob);
         }
     }
 

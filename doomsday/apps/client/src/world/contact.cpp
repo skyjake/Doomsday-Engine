@@ -67,12 +67,12 @@ ddouble Contact::objectRadius() const
     return 0;
 }
 
-AABoxd Contact::objectAABox() const
+AABoxd Contact::objectBounds() const
 {
     switch(_type)
     {
-    case ContactLumobj: return objectAs<Lumobj>().aaBox();
-    case ContactMobj:   return Mobj_AABox(objectAs<mobj_t>());
+    case ContactLumobj: return objectAs<Lumobj>().bounds();
+    case ContactMobj:   return Mobj_Bounds(objectAs<mobj_t>());
 
     default: break;
     }

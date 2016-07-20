@@ -180,29 +180,29 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
 SurfaceDecorator::SurfaceDecorator() : d(new Impl)
 {}
 
-static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
-    Vector3d &bottomRight, Vector2f &materialOrigin)
+static bool prepareGeometry(Surface &surface, Vector3d &topLeft, Vector3d &bottomRight,
+    Vector2f &materialOrigin)
 {
-    if(surface.parent().type() == DMU_SIDE)
+    if (surface.parent().type() == DMU_SIDE)
     {
         LineSide &side = surface.parent().as<LineSide>();
-        int section = &side.middle() == &surface? LineSide::Middle
-                    : &side.bottom() == &surface? LineSide::Bottom : LineSide::Top;
+        dint section = &side.middle() == &surface ? LineSide::Middle
+                     : &side.bottom() == &surface ? LineSide::Bottom : LineSide::Top;
 
-        if(!side.hasSections()) return false;
+        if (!side.hasSections()) return false;
 
         HEdge *leftHEdge  = side.leftHEdge();
         HEdge *rightHEdge = side.rightHEdge();
 
-        if(!leftHEdge || !rightHEdge) return false;
+        if (!leftHEdge || !rightHEdge) return false;
 
         // Is the wall section potentially visible?
         WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
         WallEdge leftEdge (wallSpec, *leftHEdge, Line::From);
         WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
 
-        if(!leftEdge.isValid() || !rightEdge.isValid() ||
-           de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+        if (!leftEdge.isValid() || !rightEdge.isValid()
+            || de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
             return false;
 
         topLeft        = leftEdge.top().origin();
@@ -212,21 +212,21 @@ static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
         return true;
     }
 
-    if(surface.parent().type() == DMU_PLANE)
+    if (surface.parent().type() == DMU_PLANE)
     {
         Plane &plane = surface.parent().as<Plane>();
-        AABoxd const &sectorAABox = plane.sector().aaBox();
+        AABoxd const &sectorBounds = plane.sector().bounds();
 
-        topLeft = Vector3d(sectorAABox.minX,
-                           plane.isSectorFloor()? sectorAABox.maxY : sectorAABox.minY,
+        topLeft = Vector3d(sectorBounds.minX,
+                           plane.isSectorFloor() ? sectorBounds.maxY : sectorBounds.minY,
                            plane.heightSmoothed());
 
-        bottomRight = Vector3d(sectorAABox.maxX,
-                               plane.isSectorFloor()? sectorAABox.minY : sectorAABox.maxY,
+        bottomRight = Vector3d(sectorBounds.maxX,
+                               plane.isSectorFloor() ? sectorBounds.minY : sectorBounds.maxY,
                                plane.heightSmoothed());
 
-        materialOrigin = Vector2f(-fmod(sectorAABox.minX, 64) - surface.materialOriginSmoothed().x,
-                                  -fmod(sectorAABox.minY, 64) - surface.materialOriginSmoothed().y);
+        materialOrigin = Vector2f(-fmod(sectorBounds.minX, 64) - surface.materialOriginSmoothed().x,
+                                  -fmod(sectorBounds.minY, 64) - surface.materialOriginSmoothed().y);
 
         return true;
     }

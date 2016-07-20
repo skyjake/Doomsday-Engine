@@ -74,7 +74,7 @@ struct Contact
     /**
      * Returns an axis-aligned bounding box for the linked object in map space.
      */
-    AABoxd objectAABox() const;
+    AABoxd objectBounds() const;
 
     /**
      * Returns the BSP leaf at the linked object's origin in map space.

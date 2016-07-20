@@ -405,7 +405,7 @@ public:
          * Returns the axis-aligned bounding box of the line segment (derived
          * from the coordinates of the two vertexes).
          */
-        inline AABoxd aaBox() const { return line().aaBox(); }
+        inline AABoxd bounds() const { return line().bounds(); }
 
         /**
          * Returns @c true iff a built half-edge is linked to "this" side of
@@ -539,7 +539,7 @@ public:
      *
      * @todo Cache this result.
      */
-    AABoxd aaBox() const;
+    AABoxd bounds() const;
 
     /**
      * Replace the specified edge vertex of the line segment.

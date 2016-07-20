@@ -48,20 +48,6 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(Subsector const &subsector))
 
     /**
-     * Determines whether the specified @a hedge is an "internal" edge:
-     *
-     * - both the half-edge and it's twin have a face.
-     * - both faces are assigned to a subspace.
-     * - both subspaces are in the same subsector.
-     *
-     * @param hedge  Half-edge to test.
-     *
-     * @return  @c true= @a hedge is a subsector-internal edge.
-     */
-    static bool isInternalEdge(de::HEdge *hedge);
-
-public:
-    /**
      * Construct a new subsector comprised of the specified set of map subspace regions.
      * It is assumed that all the subspaces are attributed to the same Sector and there
      * is always at least one in the set.
@@ -81,17 +67,17 @@ public:
     Sector const &sector() const;
 
     /**
-     * Returns the axis-aligned bounding box of the subsector.
+     * Determines whether the specified @a hedge is an "internal" edge:
+     *
+     * - both the half-edge and it's twin have a face.
+     * - both faces are assigned to a subspace.
+     * - both subspaces are in the same subsector.
+     *
+     * @param hedge  Half-edge to test.
+     *
+     * @return  @c true= @a hedge is a subsector-internal edge.
      */
-    AABoxd const &aaBox() const;
-
-    /**
-     * Returns the point defined by the center of the axis-aligned bounding box in the
-     * map coordinate space.
-     */
-    inline de::Vector2d center() const {
-        return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
-    }
+    static bool isInternalEdge(de::HEdge *hedge);
 
 //- Planes ------------------------------------------------------------------------------
 
@@ -108,18 +94,35 @@ public:
      *
      * @see ceiling(), plane()
      */
-    inline Plane       &floor()       { return plane(Sector::Floor); }
-    inline Plane const &floor() const { return plane(Sector::Floor); }
+    Plane       &floor();
+    Plane const &floor() const;
 
     /**
      * Returns the @em physical ceiling Plane of the subsector.
      *
      * @see floor(), plane()
      */
-    inline Plane       &ceiling()       { return plane(Sector::Ceiling); }
-    inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
+    Plane       &ceiling();
+    Plane const &ceiling() const;
 
 //- Subspaces ---------------------------------------------------------------------------
+
+    /**
+     * Returns the axis-aligned bounding box of the subsector.
+     */
+    AABoxd const &bounds() const;
+
+    /**
+     * Returns the point defined by the center of the axis-aligned bounding box in the
+     * map coordinate space.
+     */
+    de::Vector2d center() const;
+
+    /**
+     * Returns a rough approximation of the total area of the geometries of all subspaces
+     * in the subsector (map units squared).
+     */
+    de::ddouble roughArea() const;
 
     /**
      * Returns the total number of subspaces in the subsector.
@@ -132,12 +135,6 @@ public:
      * @param callback  Function to call for each ConvexSubspace.
      */
     de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> func) const;
-
-    /**
-     * Returns a rough approximation of the total area of the geometries of all subspaces
-     * in the subsector (map units squared).
-     */
-    de::ddouble roughArea() const;
 
 private:
     DENG2_PRIVATE(d)

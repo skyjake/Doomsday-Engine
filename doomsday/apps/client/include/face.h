@@ -37,7 +37,7 @@ class Face : public MeshElement
 {
 public: /// @todo make private:
     /// Total number of half-edge's in the face geometry.
-    int _hedgeCount;
+    dint _hedgeCount;
 
 public:
     explicit Face(Mesh &mesh);
@@ -45,7 +45,7 @@ public:
     /**
      * Total number of half-edges in the face geometry.
      */
-    int hedgeCount() const;
+    dint hedgeCount() const;
 
     /**
      * Returns a pointer to the first half-edge in the face geometry (note that
@@ -63,12 +63,12 @@ public:
      * Returns the axis-aligned bounding box which encompases all the vertexes
      * which define the face geometry.
      */
-    AABoxd const &aaBox() const;
+    AABoxd const &bounds() const;
 
     /**
      * Update the face geometry's axis-aligned bounding box to encompass all vertexes.
      */
-    void updateAABox();
+    void updateBounds();
 
     /**
      * Returns the point described by the average origin coordinates of all the

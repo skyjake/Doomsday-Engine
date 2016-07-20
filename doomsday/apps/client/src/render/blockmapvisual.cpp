@@ -47,9 +47,9 @@ using namespace world;
 byte bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
 dfloat bmapDebugSize = 1.5f; // cvar
 
-static void drawMobj(mobj_t const &mobj)
+static void drawMobj(mobj_t const &mob)
 {
-    AABoxd const bounds = Mobj_AABox(mobj);
+    AABoxd const bounds = Mobj_Bounds(mob);
 
     glVertex2f(bounds.minX, bounds.minY);
     glVertex2f(bounds.maxX, bounds.minY);
@@ -82,7 +82,7 @@ static void drawSubspace(ConvexSubspace const &subspace)
         glEnd();
 
         ddouble length = (end - start).length();
-        if(length > 0)
+        if (length > 0)
         {
             Vector2d const unit = (end - start) / length;
             Vector2d const normal(-unit.y, unit.x);
@@ -107,8 +107,8 @@ static void drawSubspace(ConvexSubspace const &subspace)
         }
 
         // Draw a bounding box for the leaf's face geometry.
-        start = Vector2d(poly.aaBox().minX, poly.aaBox().minY);
-        end   = Vector2d(poly.aaBox().maxX, poly.aaBox().maxY);
+        start = Vector2d(poly.bounds().minX, poly.bounds().minY);
+        end   = Vector2d(poly.bounds().maxX, poly.bounds().maxY);
 
         glBegin(GL_LINES);
             glVertex2f(start.x, start.y);
@@ -121,7 +121,7 @@ static void drawSubspace(ConvexSubspace const &subspace)
             glVertex2f(start.x, start.y);
         glEnd();
 
-    } while((hedge = &hedge->next()) != base);
+    } while ((hedge = &hedge->next()) != base);
 }
 
 static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
@@ -130,7 +130,7 @@ static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
         bmap.forAllInCell(cell, [] (void *object)
         {
             Line &line = *(Line *)object;
-            if(line.validCount() != validCount)
+            if (line.validCount() != validCount)
             {
                 line.setValidCount(validCount);
                 drawLine(line);
@@ -147,9 +147,9 @@ static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void
         bmap.forAllInCell(cell, [&context] (void *object)
         {
             Polyobj &pob = *(Polyobj *)object;
-            for(Line *line : pob.lines())
+            for (Line *line : pob.lines())
             {
-                if(line->validCount() != validCount)
+                if (line->validCount() != validCount)
                 {
                     line->setValidCount(validCount);
                     drawLine(*line);
@@ -167,7 +167,7 @@ static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
         bmap.forAllInCell(cell, [] (void *object)
         {
             mobj_t &mob = *(mobj_t *)object;
-            if(mob.validCount != validCount)
+            if (mob.validCount != validCount)
             {
                 mob.validCount = validCount;
                 drawMobj(mob);
@@ -183,7 +183,7 @@ static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, voi
     bmap.forAllInCell(cell, [] (void *object)
     {
         ConvexSubspace *sub = (ConvexSubspace *)object;
-        if(sub->validCount() != validCount)
+        if (sub->validCount() != validCount)
         {
             sub->setValidCount(validCount);
             drawSubspace(*sub);
@@ -219,10 +219,10 @@ static void drawBackground(Blockmap const &bmap)
      */
     glColor4f(0, 0, 0, .95f);
     BlockmapCell cell;
-    for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
-    for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
+    for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
+    for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
     {
-        if(bmap.cellElementCount(cell)) continue;
+        if (bmap.cellElementCount(cell)) continue;
 
         glBegin(GL_QUADS);
             glVertex2f(cell.x,     cell.y);
@@ -330,31 +330,31 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     BlockmapCell const &dimensions = bmap.dimensions();
     Vector2d const cellDimensions = bmap.cellDimensions();
 
-    if(followMobj)
+    if (followMobj)
     {
         // Determine the followed Mobj's blockmap coords.
         bool didClip;
         vCell = bmap.toCell(followMobj->origin, &didClip);
 
-        if(didClip)
+        if (didClip)
             followMobj = 0; // Outside the blockmap.
 
-        if(followMobj)
+        if (followMobj)
         {
             // Determine the extended blockmap coords for the followed
             // Mobj's "touch" range.
-            AABoxd aaBox = Mobj_AABox(*followMobj);
+            AABoxd mobBox = Mobj_Bounds(*followMobj);
 
-            aaBox.minX -= DDMOBJ_RADIUS_MAX * 2;
-            aaBox.minY -= DDMOBJ_RADIUS_MAX * 2;
-            aaBox.maxX += DDMOBJ_RADIUS_MAX * 2;
-            aaBox.maxY += DDMOBJ_RADIUS_MAX * 2;
+            mobBox.minX -= DDMOBJ_RADIUS_MAX * 2;
+            mobBox.minY -= DDMOBJ_RADIUS_MAX * 2;
+            mobBox.maxX += DDMOBJ_RADIUS_MAX * 2;
+            mobBox.maxY += DDMOBJ_RADIUS_MAX * 2;
 
-            vCellBlock = bmap.toCellBlock(aaBox);
+            vCellBlock = bmap.toCellBlock(mobBox);
         }
     }
 
-    if(followMobj)
+    if (followMobj)
     {
         // Orient on the center of the followed Mobj.
         glTranslated(-(vCell.x * cellDimensions.x), -(vCell.y * cellDimensions.y), 0);
@@ -368,16 +368,16 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
     // First we'll draw a background showing the "null" cells.
     drawBackground(bmap);
-    if(followMobj)
+    if (followMobj)
     {
         // Highlight cells the followed Mobj "touches".
         glBegin(GL_QUADS);
 
         BlockmapCell cell;
-        for(cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
-        for(cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
+        for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
+        for (cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
         {
-            if(cell == vCell)
+            if (cell == vCell)
             {
                 // The cell the followed Mobj is actually in.
                 glColor4f(.66f, .66f, 1, .66f);
@@ -423,9 +423,9 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     glPushMatrix();
     glTranslated(-bmap.origin().x, -bmap.origin().y, 0);
 
-    if(cellDrawer)
+    if (cellDrawer)
     {
-        if(followMobj)
+        if (followMobj)
         {
             /*
              * Draw cell contents color coded according to their range from the
@@ -436,15 +436,15 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
             BlockmapCell cell;
-            for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
-            for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
+            for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
+            for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
-                if(cell.x >= vCellBlock.min.x && cell.x < vCellBlock.max.x &&
-                   cell.y >= vCellBlock.min.y && cell.y < vCellBlock.max.y)
+                if (   cell.x >= vCellBlock.min.x && cell.x < vCellBlock.max.x
+                    && cell.y >= vCellBlock.min.y && cell.y < vCellBlock.max.y)
                 {
                     continue;
                 }
-                if(!bmap.cellElementCount(cell)) continue;
+                if (!bmap.cellElementCount(cell)) continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -452,11 +452,11 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             // Next, the cells within the "touch" range (orange).
             validCount++;
             glColor3f(1, .5f, 0);
-            for(cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
-            for(cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
+            for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
+            for (cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
             {
-                if(cell == vCell) continue;
-                if(!bmap.cellElementCount(cell)) continue;
+                if (cell == vCell) continue;
+                if (!bmap.cellElementCount(cell)) continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -464,7 +464,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             // Lastly, the cell the followed Mobj is in (yellow).
             validCount++;
             glColor3f(1, 1, 0);
-            if(bmap.cellElementCount(vCell))
+            if (bmap.cellElementCount(vCell))
             {
                 cellDrawer(bmap, vCell, 0/*no params*/);
             }
@@ -475,10 +475,10 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
             BlockmapCell cell;
-            for(cell.y = 0; cell.y < dimensions.y; ++cell.y)
-            for(cell.x = 0; cell.x < dimensions.x; ++cell.x)
+            for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
+            for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
-                if(!bmap.cellElementCount(cell)) continue;
+                if (!bmap.cellElementCount(cell)) continue;
 
                 cellDrawer(bmap, cell, 0/*no params*/);
             }
@@ -488,7 +488,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     /*
      * Draw the followed mobj, if any.
      */
-    if(followMobj)
+    if (followMobj)
     {
         validCount++;
         glColor3f(0, 1, 0);
@@ -505,15 +505,15 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 void Rend_BlockmapDebug()
 {
     // Disabled?
-    if(!bmapShowDebug || bmapShowDebug > 4) return;
+    if (!bmapShowDebug || bmapShowDebug > 4) return;
 
-    if(!App_World().hasMap()) return;
+    if (!App_World().hasMap()) return;
     Map &map = App_World().map();
 
     Blockmap const *blockmap;
     int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *);
     char const *objectTypeName;
-    switch(bmapShowDebug)
+    switch (bmapShowDebug)
     {
     default: // Mobjs.
         blockmap = &map.mobjBlockmap();
@@ -559,7 +559,7 @@ void Rend_BlockmapDebug()
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
     mobj_t *followMobj = 0;
-    if(viewPlayer && viewPlayer->publicData().mo)
+    if (viewPlayer && viewPlayer->publicData().mo)
     {
         followMobj = viewPlayer->publicData().mo;
     }
@@ -578,12 +578,12 @@ void Rend_BlockmapDebug()
     glLoadIdentity();
     glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    if(followMobj)
+    if (followMobj)
     {
         // About the cell the followed Mobj is in.
         bool didClip;
         BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
-        if(!didClip)
+        if (!didClip)
         {
             drawCellInfoBox(Vector2d(DENG_GAMEVIEW_WIDTH / 2, 30), *blockmap,
                             objectTypeName, cell);

@@ -1265,7 +1265,7 @@ DENG2_PIMPL(Line)
         ddouble length;         ///< Accurate length.
         binangle_t angle;       ///< Calculated from the direction vector.
         slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
-        AABoxd aaBox;           ///< Axis-aligned bounding box.
+        AABoxd bounds;          ///< Axis-aligned bounding box.
 
         GeomData(Vertex &from, Vertex &to)
             : direction(to.origin() - from.origin())
@@ -1273,8 +1273,8 @@ DENG2_PIMPL(Line)
             , angle    (bamsAtan2(dint(direction.y), dint(direction.x)))
             , slopeType(M_SlopeType(direction.data().baseAs<ddouble>()))
         {
-            V2d_InitBoxXY (aaBox.arvec2, from.x(), from.y());
-            V2d_AddToBoxXY(aaBox.arvec2, to  .x(), to  .y());
+            V2d_InitBoxXY (bounds.arvec2, from.x(), from.y());
+            V2d_AddToBoxXY(bounds.arvec2, to  .x(), to  .y());
         }
     };
     std::unique_ptr<GeomData> gdata;
@@ -1455,9 +1455,9 @@ LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
     return LoopContinue;
 }
 
-AABoxd const &Line::aaBox() const
+AABoxd const &Line::bounds() const
 {
-    return d->geom().aaBox;
+    return d->geom().bounds;
 }
 
 binangle_t Line::angle() const
@@ -1654,20 +1654,10 @@ dint Line::property(DmuArgs &args) const
         slopetype_t st = slopeType();
         args.setValue(DMT_LINE_SLOPETYPE, &st, 0);
         break; }
-    case DMU_BOUNDING_BOX:
-        if (args.valueType == DDVT_PTR)
-        {
-            AABoxd const *aaBoxAdr = &aaBox();
-            args.setValue(DDVT_PTR, &aaBoxAdr, 0);
-        }
-        else
-        {
-            args.setValue(DMT_LINE_AABOX, &aaBox().minX, 0);
-            args.setValue(DMT_LINE_AABOX, &aaBox().maxX, 1);
-            args.setValue(DMT_LINE_AABOX, &aaBox().minY, 2);
-            args.setValue(DMT_LINE_AABOX, &aaBox().maxY, 3);
-        }
-        break;
+    case DMU_BOUNDING_BOX: {
+        AABoxd const *boxAdr = &bounds();
+        args.setValue(DDVT_PTR, &boxAdr, 0);
+        break; }
     default:
         return MapElement::property(args);
     }

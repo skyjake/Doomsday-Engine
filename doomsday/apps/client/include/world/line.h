@@ -644,7 +644,7 @@ public:
      * Returns the axis-aligned bounding box which encompases both vertex origin points,
      * in map coordinate space units.
      */
-    AABoxd const &aaBox() const;
+    AABoxd const &bounds() const;
 
     /**
      * Returns the binary angle of the line (which, is derived from the direction vector).

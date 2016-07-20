@@ -172,8 +172,8 @@ ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
     d->poly = &convexPolygon;
 #ifdef __CLIENT__
     // Determine the world grid offset.
-    d->worldGridOffset = Vector2d(fmod(poly().aaBox().minX, 64),
-                                  fmod(poly().aaBox().maxY, 64));
+    d->worldGridOffset = Vector2d(fmod(poly().bounds().minX, 64),
+                                  fmod(poly().bounds().maxY, 64));
 #endif
     poly().setMapElement(this);
     setBspLeaf(bspLeaf);
@@ -439,10 +439,10 @@ bool ConvexSubspace::updateAudioEnvironment()
 
     dfloat contrib[NUM_AUDIO_ENVIRONMENTS]; de::zap(contrib);
 
-    // Space is the rough volume of the BSP leaf (bounding box).
-    AABoxd const &aaBox = poly().aaBox();
+    // Space is the rough volume of the bounding box.
+    AABoxd const &bounds = poly().bounds();
     env.space = dint(subsector().ceiling().height() - subsector().floor().height())
-              * ((aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY));
+              * ((bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY));
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.

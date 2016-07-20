@@ -452,10 +452,10 @@ dint Generator::newParticle()
         ConvexSubspace *subspace = 0;
         for(dint i = 0; i < 5; ++i) // Try a couple of times (max).
         {
-            dfloat x = sector->aaBox().minX +
-                RNG_RandFloat() * (sector->aaBox().maxX - sector->aaBox().minX);
-            dfloat y = sector->aaBox().minY +
-                RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
+            dfloat x = sector->bounds().minX +
+                RNG_RandFloat() * (sector->bounds().maxX - sector->bounds().minX);
+            dfloat y = sector->bounds().minY +
+                RNG_RandFloat() * (sector->bounds().maxY - sector->bounds().minY);
 
             subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
             if(subspace && sector == &subspace->sector())
@@ -470,16 +470,16 @@ dint Generator::newParticle()
             return -1;
         }
 
-        AABoxd const &subAABox = subspace->poly().aaBox();
+        AABoxd const &subBounds = subspace->poly().bounds();
 
         // Try a couple of times to get a good random spot.
         dint tries;
         for(tries = 0; tries < 10; ++tries) // Max this many tries before giving up.
         {
-            dfloat x = subAABox.minX +
-                RNG_RandFloat() * (subAABox.maxX - subAABox.minX);
-            dfloat y = subAABox.minY +
-                RNG_RandFloat() * (subAABox.maxY - subAABox.minY);
+            dfloat x = subBounds.minX +
+                RNG_RandFloat() * (subBounds.maxX - subBounds.minX);
+            dfloat y = subBounds.minY +
+                RNG_RandFloat() * (subBounds.maxY - subBounds.minY);
 
             pinfo->origin[0] = FLT2FIX(x);
             pinfo->origin[1] = FLT2FIX(y);
@@ -900,8 +900,8 @@ void Generator::moveParticle(dint index)
     map().forAllLinesInBox(clParm.box, [&clParm] (Line &line)
     {
         // Does the bounding box miss the line completely?
-        if(clParm.box.maxX <= line.aaBox().minX || clParm.box.minX >= line.aaBox().maxX ||
-           clParm.box.maxY <= line.aaBox().minY || clParm.box.minY >= line.aaBox().maxY)
+        if(clParm.box.maxX <= line.bounds().minX || clParm.box.minX >= line.bounds().maxX ||
+           clParm.box.maxY <= line.bounds().minY || clParm.box.minY >= line.bounds().maxY)
         {
             return LoopContinue;
         }

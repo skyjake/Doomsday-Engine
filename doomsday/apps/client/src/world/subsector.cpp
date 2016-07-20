@@ -36,7 +36,29 @@ namespace world {
 DENG2_PIMPL_NOREF(Subsector)
 {
     QList<ConvexSubspace *> subspaces;
-    std::unique_ptr<AABoxd> aaBox;
+    std::unique_ptr<AABoxd> bounds;
+
+    /**
+     * Calculate the minimum bounding rectangle containing all the subspace geometries.
+     */
+    AABoxd findBounds() const
+    {
+        bool inited = false;
+        AABoxd bounds;
+        for (ConvexSubspace const *subspace : subspaces)
+        {
+            AABoxd const &subBounds = subspace->poly().bounds();
+            if (inited)
+            {
+                V2d_UniteBox(bounds.arvec2, subBounds.arvec2);
+            }
+            else
+            {
+                bounds = subBounds;
+            }
+        }
+        return bounds;
+    }
 };
 
 Subsector::Subsector(QList<ConvexSubspace *> const &subspaces) : d(new Impl)
@@ -52,18 +74,6 @@ Subsector::Subsector(QList<ConvexSubspace *> const &subspaces) : d(new Impl)
 Subsector::~Subsector()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(*this);
-}
-
-bool Subsector::isInternalEdge(HEdge *hedge) // static
-{
-    if (!hedge) return false;
-    if (!hedge->hasFace() || !hedge->twin().hasFace()) return false;
-    if (!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_SUBSPACE) return false;
-    if (!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_SUBSPACE) return false;
-
-    Subsector *frontSubsector = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
-    if (!frontSubsector) return false;
-    return frontSubsector == hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr();
 }
 
 Sector &Subsector::sector()
@@ -88,40 +98,24 @@ Plane const &Subsector::plane(dint planeIndex) const
     return sector().plane(planeIndex);
 }
 
-AABoxd const &Subsector::aaBox() const
+Plane &Subsector::floor()
 {
-    // If the subsector is comprised of a single subspace we can use the bounding
-    // box of the subspace geometry directly.
-    if (d->subspaces.count() == 1)
-    {
-        return d->subspaces.first()->poly().aaBox();
-    }
-
-    // Time to determine bounds?
-    if (!d->aaBox)
-    {
-        // Unite the geometry bounding boxes of all subspaces in the subsector.
-        for (ConvexSubspace const *subspace : d->subspaces)
-        {
-            AABoxd const &leafAABox = subspace->poly().aaBox();
-            if (d->aaBox)
-            {
-                V2d_UniteBox((*d->aaBox).arvec2, leafAABox.arvec2);
-            }
-            else
-            {
-                d->aaBox.reset(new AABoxd(leafAABox));
-            }
-        }
-    }
-
-    return *d->aaBox;
+    return plane(Sector::Floor);
 }
 
-ddouble Subsector::roughArea() const
+Plane const &Subsector::floor() const
 {
-    AABoxd const &bounds = aaBox();
-    return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
+    return plane(Sector::Floor);
+}
+
+Plane &Subsector::ceiling()
+{
+    return plane(Sector::Ceiling);
+}
+
+Plane const &Subsector::ceiling() const
+{
+    return plane(Sector::Ceiling);
 }
 
 dint Subsector::subspaceCount() const
@@ -136,6 +130,47 @@ LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &
         if (auto result = func(*sub)) return result;
     }
     return LoopContinue;
+}
+
+AABoxd const &Subsector::bounds() const
+{
+    // If the subsector is comprised of a single subspace we can use the bounding
+    // box of the subspace geometry directly.
+    if (d->subspaces.count() == 1)
+    {
+        return d->subspaces.first()->poly().bounds();
+    }
+
+    // Time to determine bounds?
+    if (!d->bounds)
+    {
+        d->bounds.reset(new AABoxd(d->findBounds()));
+    }
+
+    return *d->bounds;
+}
+
+Vector2d Subsector::center() const
+{
+    return (Vector2d(bounds().min) + Vector2d(bounds().max)) / 2;
+}
+
+ddouble Subsector::roughArea() const
+{
+    AABoxd const &box = bounds();
+    return (box.maxX - box.minX) * (box.maxY - box.minY);
+}
+
+bool Subsector::isInternalEdge(HEdge *hedge) // static
+{
+    if (!hedge) return false;
+    if (!hedge->hasFace() || !hedge->twin().hasFace()) return false;
+    if (!hedge->face().hasMapElement() || hedge->face().mapElement().type() != DMU_SUBSPACE) return false;
+    if (!hedge->twin().face().hasMapElement() || hedge->twin().face().mapElement().type() != DMU_SUBSPACE) return false;
+
+    Subsector *frontSubsector = hedge->face().mapElementAs<ConvexSubspace>().subsectorPtr();
+    if (!frontSubsector) return false;
+    return frontSubsector == hedge->twin().face().mapElementAs<ConvexSubspace>().subsectorPtr();
 }
 
 //- SubsectorCirculator -----------------------------------------------------------------

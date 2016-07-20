@@ -27,7 +27,7 @@ namespace de {
 DENG2_PIMPL_NOREF(Face)
 {
     HEdge *hedge = nullptr;  ///< First half-edge in the face geometry.
-    AABoxd aaBox;            ///< Vertex bounding box.
+    AABoxd bounds;           ///< Vertex bounding box.
     Vector2d center;         ///< Center of vertices.
 };
 
@@ -37,7 +37,7 @@ Face::Face(Mesh &mesh)
     , d(new Impl())
 {}
 
-int Face::hedgeCount() const
+dint Face::hedgeCount() const
 {
     return _hedgeCount;
 }
@@ -52,23 +52,23 @@ void Face::setHEdge(HEdge const *newHEdge)
     d->hedge = const_cast<HEdge *>(newHEdge);
 }
 
-AABoxd const &Face::aaBox() const
+AABoxd const &Face::bounds() const
 {
-    return d->aaBox;
+    return d->bounds;
 }
 
-void Face::updateAABox()
+void Face::updateBounds()
 {
-    d->aaBox.clear();
+    d->bounds.clear();
 
     if(!d->hedge) return; // Very odd...
 
     HEdge const *hedge = d->hedge;
-    V2d_InitBoxXY(d->aaBox.arvec2, hedge->origin().x, hedge->origin().y);
+    V2d_InitBoxXY(d->bounds.arvec2, hedge->origin().x, hedge->origin().y);
 
-    while((hedge = &hedge->next()) != d->hedge)
+    while ((hedge = &hedge->next()) != d->hedge)
     {
-        V2d_AddToBoxXY(d->aaBox.arvec2, hedge->origin().x, hedge->origin().y);
+        V2d_AddToBoxXY(d->bounds.arvec2, hedge->origin().x, hedge->origin().y);
     }
 }
 
@@ -80,8 +80,8 @@ Vector2d const &Face::center() const
 void Face::updateCenter()
 {
     // The center is the middle of our AABox.
-    d->center = Vector2d(d->aaBox.min)
-              + (Vector2d(d->aaBox.max) - Vector2d(d->aaBox.min)) / 2;
+    d->center = Vector2d(d->bounds.min)
+              + (Vector2d(d->bounds.max) - Vector2d(d->bounds.min)) / 2;
 }
 
 bool Face::isConvex() const
@@ -95,7 +95,7 @@ String Face::description() const
     String text = String("Face [0x%1] comprises %2 half-edges")
                       .arg(de::dintptr(this), 0, 16).arg(_hedgeCount);
 
-    if(HEdge const *hedge = d->hedge)
+    if (HEdge const *hedge = d->hedge)
     {
         do
         {
@@ -108,7 +108,7 @@ String Face::description() const
                         .arg(hedge->origin().asText())
                         .arg(hedge->twin().origin().asText());
 
-        } while((hedge = &hedge->next()) != d->hedge);
+        } while ((hedge = &hedge->next()) != d->hedge);
     }
 
     return text;

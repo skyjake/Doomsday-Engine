@@ -1591,7 +1591,7 @@ DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
     int (*callback) (struct convexsubspace_s *, void *), void *context)
 {
     DENG2_ASSERT(box && callback);
-    if(!App_World().hasMap()) return LoopContinue;
+    if (!App_World().hasMap()) return LoopContinue;
 
     dint const localValidCount = validCount;
 
@@ -1599,15 +1599,15 @@ DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
         .forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
     {
         auto &sub = *(ConvexSubspace *)object;
-        if(sub.validCount() != localValidCount) // not yet processed
+        if (sub.validCount() != localValidCount) // not yet processed
         {
             sub.setValidCount(localValidCount);
             // Check the bounds.
-            AABoxd const &polyBox = sub.poly().aaBox();
-            if(!(polyBox.maxX < box->minX ||
-                    polyBox.minX > box->maxX ||
-                    polyBox.minY > box->maxY ||
-                    polyBox.maxY < box->minY))
+            AABoxd const &polyBounds = sub.poly().bounds();
+            if (!(   polyBounds.maxX < box->minX
+                  || polyBounds.minX > box->maxX
+                  || polyBounds.minY > box->maxY
+                  || polyBounds.maxY < box->minY))
             {
                 return LoopResult( callback((convexsubspace_s *) &sub, context) );
             }

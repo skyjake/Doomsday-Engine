@@ -403,7 +403,7 @@ Vertex &LineSegment::vertex(int to) const
     return to? *d->to : *d->from;
 }
 
-AABoxd LineSegment::aaBox() const
+AABoxd LineSegment::bounds() const
 {
     AABoxd bounds;
     Vector2d min = d->from->origin().min(d->to->origin());

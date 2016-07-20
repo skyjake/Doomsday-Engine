@@ -506,7 +506,7 @@ enum { MX, MY, MZ };
 \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    AABoxd          aaBox; \
+    AABoxd          bounds; \
     coord_t         dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
