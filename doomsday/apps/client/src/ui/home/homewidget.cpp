@@ -350,14 +350,14 @@ DENG_GUI_PIMPL(HomeWidget)
         updateHighlightedTab();
 
         // Make sure we stay within the valid range.
-        if (visibleTabRange().end >= columns.size())
-        {
-            currentOffsetTab = columns.size() - int(visibleColumnCount);
-            setScrollOffset(currentOffsetTab, 0.0);
-        }
         if (!visibleTabRange().contains(int(tabs->current())))
         {
             currentOffsetTab = int(tabs->current());
+            setScrollOffset(currentOffsetTab, 0.0);
+        }
+        if (visibleTabRange().end >= columns.size())
+        {
+            currentOffsetTab = columns.size() - int(visibleColumnCount);
             setScrollOffset(currentOffsetTab, 0.0);
         }
     }
