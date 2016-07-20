@@ -1,4 +1,3 @@
-
 /** @file clientsubsector.h  Client-side world map subsector.
  * @ingroup world
  *
@@ -132,7 +131,7 @@ public:
     */
     bool updateBiasContributors(Shard *shard);
 
-//- Light grid ---------------------------------------------------------------------------
+//- Light grid --------------------------------------------------------------------------
 
     /**
      * Returns the unique identifier of the light source.

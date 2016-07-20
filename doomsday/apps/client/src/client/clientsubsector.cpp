@@ -18,28 +18,21 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "client/clientsubsector.h"
 
-#include "Face"
-#include "ConvexSubspace"
-#include "Line"
-#include "Plane"
-#include "Sector"
 #include "Surface"
-#include "world/audioenvironment.h"
 #include "world/blockmap.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 
-#include "render/rend_main.h" // useBias
+#include "render/rend_main.h" // Rend_SkyLightCoor(), useBias
 #include "BiasIllum"
 #include "BiasTracker"
 #include "Shard"
 
-#include <doomsday/console/var.h>
-#include <de/aabox.h>
+#include "Face"
+
 #include <QtAlgorithms>
 #include <QHash>
 #include <QMap>
@@ -418,7 +411,7 @@ DENG2_PIMPL(ClientSubsector)
             boundaries.append(bounds);
         }
 
-        QRectF const *largest = 0;
+        QRectF const *largest = nullptr;
         for (QRectF const &boundary : boundaries)
         {
             if (!largest || boundary.contains(*largest))
@@ -463,8 +456,8 @@ DENG2_PIMPL(ClientSubsector)
                 if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                     continue;
 
-                if (!(classification() & AllSelfRef) &&
-                     (extSubsec.d->classification() & AllSelfRef))
+                if (!(classification() & AllSelfRef)
+                    && (extSubsec.d->classification() & AllSelfRef))
                     continue;
 
                 if (extSubsec.d->mappedVisFloor == thisPublic)
@@ -489,8 +482,8 @@ DENG2_PIMPL(ClientSubsector)
                     if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
                         continue;
 
-                    if (!(classification() & AllSelfRef) &&
-                         (extSubsec.d->classification() & AllSelfRef))
+                    if (!(classification() & AllSelfRef)
+                        && (extSubsec.d->classification() & AllSelfRef))
                         continue;
 
                     if (extSubsec.d->mappedVisFloor == thisPublic)
@@ -536,8 +529,8 @@ DENG2_PIMPL(ClientSubsector)
             if (doFloor && !floorIsMapped())
             {
                 Plane &extVisPlane = extSubsec.visFloor();
-                if (!extVisPlane.surface().hasSkyMaskedMaterial() &&
-                    extVisPlane.height() > self.sector().floor().height())
+                if (!extVisPlane.surface().hasSkyMaskedMaterial()
+                    && extVisPlane.height() > self.sector().floor().height())
                 {
                     map(Sector::Floor, &extSubsec);
                     if (!doCeiling) break;
@@ -547,8 +540,8 @@ DENG2_PIMPL(ClientSubsector)
             if (doCeiling && !ceilingIsMapped())
             {
                 Plane &extVisPlane = extSubsec.visCeiling();
-                if (!extVisPlane.surface().hasSkyMaskedMaterial() &&
-                    extSubsec.visCeiling().height() < self.sector().ceiling().height())
+                if (!extVisPlane.surface().hasSkyMaskedMaterial()
+                    && extSubsec.visCeiling().height() < self.sector().ceiling().height())
                 {
                     map(Sector::Ceiling, &extSubsec);
                     if (!doFloor) break;
@@ -570,14 +563,14 @@ DENG2_PIMPL(ClientSubsector)
             if (extSubsec.d->classification() & NeverMapped)
                 continue;
 
-            if (doFloor && floorIsMapped() &&
-                extSubsec.visFloor().height() >= self.sector().floor().height())
+            if (doFloor && floorIsMapped()
+                && extSubsec.visFloor().height() >= self.sector().floor().height())
             {
                 extSubsec.d->clearMapping(Sector::Floor);
             }
 
-            if (doCeiling && ceilingIsMapped() &&
-                extSubsec.visCeiling().height() <= self.sector().ceiling().height())
+            if (doCeiling && ceilingIsMapped()
+                && extSubsec.visCeiling().height() <= self.sector().ceiling().height())
             {
                 extSubsec.d->clearMapping(Sector::Ceiling);
             }
@@ -685,7 +678,8 @@ DENG2_PIMPL(ClientSubsector)
             DoomsdayApp::players().forAll([this] (Player &plr)
             {
                 ddplayer_t const &ddpl = plr.publicData();
-                if (plr.isInGame() && (ddpl.flags & DDPF_CAMERA)
+                if (plr.isInGame()
+                    && (ddpl.flags & DDPF_CAMERA)
                     && Mobj_SubsectorPtr(*ddpl.mo) == thisPublic
                     && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
                         || ddpl.mo->origin[2] < self.visFloor  ().height()))
@@ -813,6 +807,7 @@ DENG2_PIMPL(ClientSubsector)
             if (sub.validCount() != localValidCount) // not yet processed
             {
                 sub.setValidCount(localValidCount);
+
                 // Check the bounds.
                 AABoxd const &polyBox = sub.poly().aaBox();
                 if (!(   polyBox.maxX < box.minX
@@ -972,7 +967,6 @@ Plane const &ClientSubsector::visPlane(dint planeIndex) const
             d->remapVisPlanes();
         }
 
-        /// @todo Cache this result.
         ClientSubsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
                                                                   : d->mappedVisFloor);
         if (mapping && mapping != this)
@@ -1080,7 +1074,7 @@ dfloat ClientSubsector::lightSourceIntensity(Vector3d const &/*viewPoint*/) cons
 
 dint ClientSubsector::blockLightSourceZBias()
 {
-    dint const height = dint(visCeiling().height() - visFloor().height());
+    dint height      = dint(visCeiling().height() - visFloor().height());
     bool hasSkyFloor = visFloor().surface().hasSkyMaskedMaterial();
     bool hasSkyCeil  = visCeiling().surface().hasSkyMaskedMaterial();
 

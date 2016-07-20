@@ -26,9 +26,12 @@
 #include <de/Error>
 #include <de/Vector>
 #include <doomsday/world/MapElement>
-#include "Mesh"
-#include "Line"
+#include "world/bspleaf.h"
 #include "Subsector"
+#ifdef __CLIENT__
+#  include "Line"
+#endif
+#include "Mesh"
 
 #ifdef __CLIENT__
 class Lumobj;
@@ -139,16 +142,36 @@ public:
     BspLeaf &bspLeaf() const;
     void setBspLeaf(BspLeaf *newBspLeaf);
 
+//- Poly objects ------------------------------------------------------------------------
+
     /**
-     * Returns the @em validCount of the subspace. Used by some legacy iteration
-     * algorithms for marking subspaces as processed/visited.
-     *
-     * @todo Refactor away.
+     * Returns the total number of Polyobjs linked to the subspace.
      */
-    de::dint validCount() const;
-    void setValidCount(de::dint newValidCount);
+    de::dint polyobjCount() const;
+
+    /**
+     * Iterate all Polyobjs linked in the subspace.
+     *
+     * @param callback  Call to make for each.
+     */
+    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (struct polyobj_s &)> callback) const;
+
+    /**
+     * Remove the given @a polyobj from the set of those linked to the subspace.
+     *
+     * @return  @c true= @a polyobj was linked and subsequently removed.
+     */
+    bool unlink(struct polyobj_s const &polyobj);
+
+    /**
+     * Add the given @a polyobj to the set of those linked to the subspace. Ownership
+     * is unaffected. If the polyobj is already linked in this set then nothing will
+     * happen.
+     */
+    void link(struct polyobj_s const &polyobj);
 
 #ifdef __CLIENT__
+// --------------------------------------------------------------------------------------
 
     /**
      * Returns the vector described by the offset from the map coordinate space origin to
@@ -182,7 +205,7 @@ public:
     de::dint lastSpriteProjectFrame() const;
     void setLastSpriteProjectFrame(de::dint newFrameNumber);
 
-public:  //- Audio Environment (reverb) --------------------------------------------------
+//- Audio environment -------------------------------------------------------------------
 
     /**
      * Recalculate the environmental audio characteristics (reverb) of the subspace.
@@ -195,7 +218,34 @@ public:  //- Audio Environment (reverb) ----------------------------------------
      */
     AudioEnvironment const &audioEnvironment() const;
 
-public:  //- Luminous objects -----------------------------------------------------------
+//- Fake radio ---------------------------------------------------------------------------
+
+    /**
+     * Returns the total number of shadow line sides linked in the subspace.
+     */
+    de::dint shadowLineCount() const;
+
+    /**
+     * Clear the list of fake radio shadow line sides for the subspace.
+     */
+    void clearShadowLines();
+
+    /**
+     * Iterate through the set of fake radio shadow lines for the subspace.
+     *
+     * @param func  Callback to make for each LineSide.
+     */
+    de::LoopResult forAllShadowLines(std::function<de::LoopResult (LineSide &)> func) const;
+
+    /**
+     * Add the specified line @a side to the set of fake radio shadow lines for the
+     * subspace. If the line is already present in this set then nothing will happen.
+     *
+     * @param side  Map line side to add to the set.
+     */
+    void addShadowLine(LineSide &side);
+
+//- Luminous objects --------------------------------------------------------------------
 
     /**
      * Returns the total number of Lumobjs linked to the subspace.
@@ -227,67 +277,16 @@ public:  //- Luminous objects --------------------------------------------------
      * @see unlink()
      */
     void link(Lumobj &lumobj);
-
 #endif  // __CLIENT__
 
-public:  //- Poly objects ---------------------------------------------------------------
-
     /**
-     * Returns the total number of Polyobjs linked to the subspace.
-     */
-    de::dint polyobjCount() const;
-
-    /**
-     * Iterate all Polyobjs linked in the subspace.
+     * Returns the @em validCount of the subspace. Used by some legacy algorithms to avoid
+     * repeat processing.
      *
-     * @param callback  Call to make for each.
+     * @todo Refactor away.
      */
-    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (struct polyobj_s &)> callback) const;
-
-    /**
-     * Remove the given @a polyobj from the set of those linked to the subspace.
-     *
-     * @return  @c true= @a polyobj was linked and subsequently removed.
-     */
-    bool unlink(struct polyobj_s const &polyobj);
-
-    /**
-     * Add the given @a polyobj to the set of those linked to the subspace. Ownership
-     * is unaffected. If the polyobj is already linked in this set then nothing will
-     * happen.
-     */
-    void link(struct polyobj_s const &polyobj);
-
-#ifdef __CLIENT__
-
-public:  //- Fakeradio ------------------------------------------------------------------
-
-    /**
-     * Returns the total number of shadow line sides linked in the subspace.
-     */
-    de::dint shadowLineCount() const;
-
-    /**
-     * Clear the list of fake radio shadow line sides for the subspace.
-     */
-    void clearShadowLines();
-
-    /**
-     * Iterate through the set of fake radio shadow lines for the subspace.
-     *
-     * @param func  Callback to make for each LineSide.
-     */
-    de::LoopResult forAllShadowLines(std::function<de::LoopResult (LineSide &)> func) const;
-
-    /**
-     * Add the specified line @a side to the set of fake radio shadow lines for the
-     * subspace. If the line is already present in this set then nothing will happen.
-     *
-     * @param side  Map line side to add to the set.
-     */
-    void addShadowLine(LineSide &side);
-
-#endif  // __CLIENT__
+    de::dint validCount() const;
+    void setValidCount(de::dint newValidCount);
 
 private:
     ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);

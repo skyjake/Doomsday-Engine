@@ -23,14 +23,12 @@
 #define DENG_WORLD_SECTOR_H
 
 #include <functional>
-#ifdef __CLIENT__
-#  include <de/aabox.h>
-#endif
+#include <QList>
+#include <de/aabox.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <doomsday/world/MapElement>
-
 #include "Line"
 #include "Plane"
 
@@ -110,7 +108,7 @@ public:
      */
     void setLightColor(de::Vector3f const &newLightColor);
 
-//- MapObjects --------------------------------------------------------------------------
+//- Map objects -------------------------------------------------------------------------
 
     /**
      * Unlink MapObject @a mob from the sector..

@@ -21,12 +21,14 @@
 #ifndef DENG_WORLD_SUBSECTOR_H
 #define DENG_WORLD_SUBSECTOR_H
 
+#include <functional>
 #include <QList>
 #include <de/aabox.h>
 #include <de/Observers>
 #include <de/Vector>
-#include "Sector"
+#include "ConvexSubspace"
 #include "HEdge"
+#include "Sector"
 
 namespace world {
 

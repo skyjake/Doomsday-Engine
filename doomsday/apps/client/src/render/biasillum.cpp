@@ -17,38 +17,39 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "render/biasillum.h"
 
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
-#include "ConvexSubspace"
 #include "Surface"
 #include "client/clientsubsector.h"
 
 #include "BiasTracker"
+#include "clientapp.h"
 
-#include <QScopedPointer>
-#include <doomsday/console/var.h>
 #include <doomsday/BspNode>
+#include <doomsday/console/var.h>
+#include <de/Vector>
+#include <QBitArray>
 
 using namespace de;
 using namespace world;
 
-static int lightSpeed        = 130;  //cvar
-static int devUseSightCheck  = true; //cvar
+static dint lightSpeed        = 130;  //cvar
+static dint devUseSightCheck  = true; //cvar
 
 DENG2_PIMPL_NOREF(BiasIllum)
 {
-    struct InterpolateInfo {
+    struct InterpolateInfo
+    {
         Vector3f dest;    ///< Destination light color (interpolated to).
-        uint updateTime;  ///< When the value was calculated.
+        duint updateTime; ///< When the value was calculated.
     };
 
-    BiasTracker *tracker; ///< Controlling tracker.
-    Vector3f color;       ///< Current light color.
-    QScopedPointer<InterpolateInfo> lerpInfo;
+    BiasTracker *tracker = nullptr; ///< Controlling tracker.
+    Vector3f color; ///< Current light color.
+    std::unique_ptr<InterpolateInfo> lerpInfo;
 
     /**
      * Cast lighting contributions from each source that affects the map point.
@@ -56,15 +57,12 @@ DENG2_PIMPL_NOREF(BiasIllum)
      */
     Vector3f casted[MAX_CONTRIBUTORS];
 
-    Impl() : tracker(0)
-    {}
-
     /**
      * Returns a previous light contribution by unique contributor @a index.
      */
-    inline Vector3f &contribution(int index)
+    inline Vector3f &contribution(dint index)
     {
-        DENG_ASSERT(index >= 0 && index < MAX_CONTRIBUTORS);
+        DENG2_ASSERT(index >= 0 && index < MAX_CONTRIBUTORS);
         return casted[index];
     }
 
@@ -85,19 +83,19 @@ DENG2_PIMPL_NOREF(BiasIllum)
         Vector3f newColor;
 
         // Do we need to re-accumulate light contributions?
-        if(activeContributorCount)
+        if (activeContributorCount)
         {
             // Maximum accumulated color strength.
             static Vector3f const saturated(1, 1, 1);
 
-            for(dint i = 0; i < activeContributors.size(); ++i)
+            for (dint i = 0; i < activeContributors.size(); ++i)
             {
-                if(activeContributors.testBit(i))
+                if (activeContributors.testBit(i))
                 {
                     newColor += contribution(i);
 
                     // Stop once fully saturated.
-                    if(newColor >= saturated)
+                    if (newColor >= saturated)
                         break;
                 }
             }
@@ -107,14 +105,14 @@ DENG2_PIMPL_NOREF(BiasIllum)
         }
 
         // Is there a new destination?
-        Vector3f const &currentColor = lerpInfo.isNull()? color : lerpInfo->dest;
+        Vector3f const &currentColor = lerpInfo ? lerpInfo->dest : color;
 
-        if(!activeContributorCount ||
-           (!de::fequal(currentColor.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
-            !de::fequal(currentColor.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
-            !de::fequal(currentColor.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
+        if (!activeContributorCount
+            || (   !de::fequal(currentColor.x, newColor.x, COLOR_CHANGE_THRESHOLD)
+                || !de::fequal(currentColor.y, newColor.y, COLOR_CHANGE_THRESHOLD)
+                || !de::fequal(currentColor.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
         {
-            if(!lerpInfo.isNull())
+            if (lerpInfo)
             {
                 // Must not lose the half-way interpolation.
                 // This is current color at this very moment.
@@ -144,14 +142,14 @@ DENG2_PIMPL_NOREF(BiasIllum)
     void updateContribution(de::dint index, Vector3d const &point, Vector3f const &normalAtPoint,
                             BspTree const &bspRoot)
     {
-        DENG_ASSERT(tracker != 0);
+        DENG2_ASSERT(tracker);
 
         BiasSource const &source = tracker->contributor(index);
         Vector3f &casted = contribution(index);
 
         /// @todo LineSightTest should (optionally) perform this test.
         ConvexSubspace *subspace = source.bspLeafAtOrigin().subspacePtr();
-        if(!subspace)
+        if (!subspace)
         {
             // This affecting source does not contribute any light.
             casted = Vector3f();
@@ -159,30 +157,29 @@ DENG2_PIMPL_NOREF(BiasIllum)
         }
 
         auto &subsec = subspace->subsector().as<world::ClientSubsector>();
-        if ((!subsec.visFloor().surface().hasSkyMaskedMaterial()
-             && source.origin().z < subsec.visFloor().heightSmoothed())
-            ||
-            (!subsec.visCeiling().surface().hasSkyMaskedMaterial()
-             && source.origin().z > subsec.visCeiling().heightSmoothed()))
+        if (   (!subsec.visFloor  ().surface().hasSkyMaskedMaterial()
+                && source.origin().z < subsec.visFloor  ().heightSmoothed())
+            || (!subsec.visCeiling().surface().hasSkyMaskedMaterial()
+                && source.origin().z > subsec.visCeiling().heightSmoothed()))
         {
             casted = Vector3f();
             return;
         }
 
         Vector3d sourceToPoint = source.origin() - point;
-        double distance = sourceToPoint.length();
-        double dot = sourceToPoint.normalize().dot(normalAtPoint);
+        ddouble distance = sourceToPoint.length();
+        ddouble dot = sourceToPoint.normalize().dot(normalAtPoint);
 
         // The point faces away from the light?
-        if(dot < 0)
+        if (dot < 0)
         {
             casted = Vector3f();
             return;
         }
 
-        if(devUseSightCheck &&
-           !LineSightTest(source.origin(), point + sourceToPoint / 100)
-                        .trace(bspRoot))
+        if (devUseSightCheck
+            && !LineSightTest(source.origin(), point + sourceToPoint / 100)
+                    .trace(bspRoot))
         {
             // LOS fail.
             casted = Vector3f();
@@ -190,7 +187,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
         }
 
         // Apply light casted from this source.
-        float strength = dot * source.evaluateIntensity() / distance;
+        dfloat strength = dot * source.evaluateIntensity() / distance;
         casted = source.color() * de::clamp(0.f, strength, 1.f);
     }
 
@@ -201,22 +198,24 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param currentTime     Time in milliseconds of the last bias frame update.
      * @param retainLerpInfo  @c true= do not free the interpolation info if completed.
      */
-    Vector3f lerp(uint currentTime, bool retainLerpInfo = false)
+    Vector3f lerp(duint currentTime, bool retainLerpInfo = false)
     {
-        if(lerpInfo.isNull())
+        if (!lerpInfo)
         {
             // Not interpolating -- use the current color.
             return color;
         }
 
-        float inter = (currentTime - lerpInfo->updateTime) / float( lightSpeed );
+        dfloat inter = (currentTime - lerpInfo->updateTime) / dfloat( lightSpeed );
 
         if(inter > 1)
         {
             color = lerpInfo->dest;
 
-            if(!retainLerpInfo)
+            if (!retainLerpInfo)
+            {
                 lerpInfo.reset();
+            }
 
             return color;
         }
@@ -227,7 +226,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
     }
 };
 
-float const BiasIllum::MIN_INTENSITY = .005f;
+dfloat const BiasIllum::MIN_INTENSITY = .005f;
 
 BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Impl())
 {
@@ -236,7 +235,7 @@ BiasIllum::BiasIllum(BiasTracker *tracker) : d(new Impl())
 
 bool BiasIllum::hasTracker() const
 {
-    return d->tracker != 0;
+    return d->tracker != nullptr;
 }
 
 BiasTracker &BiasIllum::tracker() const
@@ -254,25 +253,25 @@ void BiasIllum::setTracker(BiasTracker *newTracker)
 Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoint,
     duint biasTime)
 {
-    if(hasTracker())
+    if (hasTracker())
     {
         // Does the tracker have any lighting changes to apply?
         QBitArray const &active  = tracker().activeContributors();
         QBitArray const &changed = tracker().changedContributions();
 
-        if(changed.count(true))
+        if (changed.count(true))
         {
             /// @todo Do not assume the current map.
-            Map &map = App_World().map();
+            Map &map = ClientApp::world().map();
 
             /*
              * Recalculate the contribution for each changed light source.
              * Continue using the previously calculated value otherwise.
              */
             QBitArray const activeAndChanged = (active & changed);
-            for(dint i = 0; i < active.size(); ++i)
+            for (dint i = 0; i < active.size(); ++i)
             {
-                if(activeAndChanged.testBit(i))
+                if (activeAndChanged.testBit(i))
                 {
                     d->updateContribution(i, point, normalAtPoint, map.bspTree());
                 }

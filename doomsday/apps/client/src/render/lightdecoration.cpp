@@ -21,17 +21,15 @@
 
 #include "render/lightdecoration.h"
 
-#include <doomsday/console/var.h>
-#include "def_main.h"
-
-
 #include "world/map.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
 #include "Surface"
 #include "client/clientsubsector.h"
 
 #include "render/rend_main.h" // Rend_ApplyLightAdaptation
+
+#include "def_main.h"
+
+#include <doomsday/console/var.h>
 
 using namespace de;
 using namespace world;
@@ -47,16 +45,16 @@ LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec
 dfloat LightDecoration::occlusion(Vector3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.
-    if(source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
+    if (source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
         Vector3d const vecFromOriginToEye = (origin() - eye).normalize();
 
-        dfloat dot = float( -surface().normal().dot(vecFromOriginToEye) );
-        if(dot < ::angleFadeFactor / 2)
+        auto dot = dfloat( -surface().normal().dot(vecFromOriginToEye) );
+        if (dot < ::angleFadeFactor / 2)
         {
             return 0;
         }
-        else if(dot < 3 * ::angleFadeFactor)
+        else if (dot < 3 * ::angleFadeFactor)
         {
             return (dot - ::angleFadeFactor / 2) / (2.5f * ::angleFadeFactor);
         }
@@ -70,18 +68,18 @@ dfloat LightDecoration::occlusion(Vector3d const &eye) const
 static dfloat checkLightLevel(dfloat lightlevel, dfloat min, dfloat max)
 {
     // Has a limit been set?
-    if(de::fequal(min, max)) return 1;
+    if (de::fequal(min, max)) return 1;
     return de::clamp(0.f, (lightlevel - min) / dfloat(max - min), 1.f);
 }
 
 Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
-    if(source().color() == Vector3f(0, 0, 0))
+    if (source().color() == Vector3f(0, 0, 0))
         return nullptr;
 
     ConvexSubspace *subspace = bspLeafAtOrigin().subspacePtr();
-    if(!subspace) return nullptr;
+    if (!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
     dfloat intensity = subspace->subsector().as<ClientSubsector>().lightSourceIntensity();
@@ -91,12 +89,12 @@ Lumobj *LightDecoration::generateLumobj() const
     source().lightLevels(lightLevels[0], lightLevels[1]);
 
     intensity = checkLightLevel(intensity, lightLevels[0], lightLevels[1]);
-    if(intensity < .0001f)
+    if (intensity < .0001f)
         return nullptr;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
     dfloat fadeMul = intensity * ::brightFactor;
-    if(fadeMul <= 0)
+    if (fadeMul <= 0)
         return nullptr;
 
     Lumobj *lum = new Lumobj(origin(), source().radius(), source().color() * fadeMul);
