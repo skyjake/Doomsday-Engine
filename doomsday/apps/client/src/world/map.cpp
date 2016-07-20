@@ -2660,12 +2660,12 @@ void Map::link(mobj_t &mob, dint flags)
 
 void Map::unlink(Polyobj &polyobj)
 {
-    d->polyobjBlockmap->unlink(polyobj.aaBox, &polyobj);
+    d->polyobjBlockmap->unlink(polyobj.bounds, &polyobj);
 }
 
 void Map::link(Polyobj &polyobj)
 {
-    d->polyobjBlockmap->link(polyobj.aaBox, &polyobj);
+    d->polyobjBlockmap->link(polyobj.bounds, &polyobj);
 }
 
 LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<LoopResult (Line &line)> func) const
