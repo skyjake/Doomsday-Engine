@@ -97,8 +97,8 @@ Rule const &RootWidget::viewHeight() const
 
 void RootWidget::setViewSize(Size const &size)
 {
-    d->viewRect->setInput(Rule::Right,  Const(size.x));
-    d->viewRect->setInput(Rule::Bottom, Const(size.y));
+    d->viewRect->setInput(Rule::Right,  Constu(size.x));
+    d->viewRect->setInput(Rule::Bottom, Constu(size.y));
 
     notifyTree(&Widget::viewResized);
 }
@@ -144,11 +144,7 @@ void RootWidget::update()
 
 void RootWidget::draw()
 {
-    NotifyArgs args(&Widget::draw);
-    args.conditionFunc  = &Widget::isVisible;
-    args.preNotifyFunc  = &Widget::preDrawChildren;
-    args.postNotifyFunc = &Widget::postDrawChildren;
-    notifyTree(args);
+    notifyTree(notifyArgsForDraw());
 
     Rule::markRulesValid(); // All done for this frame.
 }

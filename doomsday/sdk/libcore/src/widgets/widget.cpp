@@ -494,6 +494,15 @@ String Widget::uniqueName(String const &name) const
     return String("#%1.%2").arg(id().asInt64()).arg(name);
 }
 
+Widget::NotifyArgs Widget::notifyArgsForDraw() const
+{
+    NotifyArgs args(&Widget::draw);
+    args.conditionFunc  = &Widget::isVisible;
+    args.preNotifyFunc  = &Widget::preDrawChildren;
+    args.postNotifyFunc = &Widget::postDrawChildren;
+    return args;
+}
+
 Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 {
     NotifyArgs::Result result = NotifyArgs::Continue;

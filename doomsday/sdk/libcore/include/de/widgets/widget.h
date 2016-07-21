@@ -255,7 +255,7 @@ public:
         };
         void (Widget::*notifyFunc)();
         bool (Widget::*conditionFunc)() const;
-        void (Widget::*preNotifyFunc)();
+        void (Widget::*preNotifyFunc)(); ///< Pre and post callbacks must always be paired.
         void (Widget::*postNotifyFunc)();
         Widget *until;
 
@@ -264,6 +264,7 @@ public:
             until(0) {}
     };
 
+    NotifyArgs notifyArgsForDraw() const;
     NotifyArgs::Result notifyTree(NotifyArgs const &args);
     NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
     void notifyTreeReversed(NotifyArgs const &args);
