@@ -28,6 +28,7 @@
 #include <de/Drawable>
 #include <de/GLTexture>
 #include <de/GLTarget>
+#include <de/FocusWidget>
 
 #include <QList>
 
@@ -1001,6 +1002,13 @@ void GuiWidget::postDrawChildren()
     if (behavior().testFlag(ChildVisibilityClipping))
     {
         GLState::pop();
+    }
+
+    // Focus indicator is an overlay.
+    auto &rootWidget = root();
+    if (rootWidget.focus() && rootWidget.focus()->parent() == this)
+    {
+        rootWidget.focusIndicator().draw();
     }
 }
 

@@ -132,8 +132,9 @@ DENG2_PIMPL(GuiRootWidget)
         self.audienceForChildAddition() += this;
         self.audienceForFocusChange() += this;
 
+        // The focus indicator exists outside the widget tree.
         focusIndicator = new FocusWidget;
-        self.add(focusIndicator);
+        focusIndicator->setRoot(thisPublic);
     }
 
     ~Impl()
@@ -143,9 +144,11 @@ DENG2_PIMPL(GuiRootWidget)
         // Tell all widgets to release their resource allocations. The base
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
+        focusIndicator->deinitialize();
         self.notifyTree(&Widget::deinitialize);
 
         // Destroy GUI widgets while the shared resources are still available.
+        GuiWidget::destroy(focusIndicator);
         self.clearTree();
     }
 
@@ -188,9 +191,6 @@ DENG2_PIMPL(GuiRootWidget)
         // Make sure newly added children know the view size.
         child.viewResized();
         child.notifyTree(&Widget::viewResized);
-
-        // Keep the focus at the top.
-        self.moveChildToLast(*focusIndicator);
     }
 
     void focusedWidgetChanged(Widget *focused)
@@ -361,6 +361,11 @@ GuiWidget const *GuiRootWidget::guiFind(String const &name) const
     return find(name)->maybeAs<GuiWidget>();
 }
 
+FocusWidget &GuiRootWidget::focusIndicator()
+{
+    return *d->focusIndicator;
+}
+
 void GuiRootWidget::update()
 {
     if (window().canvas().isGLReady())
@@ -369,6 +374,7 @@ void GuiRootWidget::update()
         window().canvas().makeCurrent();
 
         RootWidget::update();
+        d->focusIndicator->update();
 
         // Request a window draw so that the updated content becomes visible.
         window().as<BaseWindow>().draw();
@@ -377,6 +383,8 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
+    d->focusIndicator->initialize();
+
     if (d->noFramesDrawnYet)
     {
         // Widgets may not yet be ready on the first frame; make sure
@@ -398,11 +406,8 @@ void GuiRootWidget::draw()
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
-    NotifyArgs args(&Widget::draw);
-    args.conditionFunc  = &Widget::isVisible;
-    args.preNotifyFunc  = &Widget::preDrawChildren;
-    args.postNotifyFunc = &Widget::postDrawChildren;
-    args.until          = &until;
+    NotifyArgs args = notifyArgsForDraw();
+    args.until = &until;
     notifyTree(args);
 }
 

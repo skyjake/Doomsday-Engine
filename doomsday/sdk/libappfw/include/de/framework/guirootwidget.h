@@ -31,6 +31,7 @@
 namespace de {
 
 class GuiWidget;
+class FocusWidget;
 
 /**
  * Graphical root widget.
@@ -95,6 +96,8 @@ public:
     GuiWidget const *globalHitTest(Vector2i const &pos) const;
 
     GuiWidget const *guiFind(String const &name) const;
+
+    FocusWidget &focusIndicator();
 
     // Events.
     void update();
