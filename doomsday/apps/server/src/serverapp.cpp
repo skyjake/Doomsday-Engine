@@ -53,6 +53,7 @@ static ServerApp *serverAppSingleton = 0;
 
 static void handleAppTerminate(char const *msg)
 {
+    LogBuffer::get().flush();
     qFatal("Application terminated due to exception:\n%s\n", msg);
 }
 
