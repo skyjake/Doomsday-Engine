@@ -353,7 +353,7 @@ DENG2_PIMPL(ClientWindow)
         if (!newGame.isNull())
         {
             nowPlaying->setText(_E(l) + tr("Now playing") + "\n" + _E(b) +
-                                newGame.title());
+                                DoomsdayApp::currentGameProfile()->name());
         }
 
         // Check with Style if blurring is allowed.
