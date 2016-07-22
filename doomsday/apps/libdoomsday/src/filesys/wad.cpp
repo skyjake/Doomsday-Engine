@@ -48,8 +48,8 @@ struct FileHeader
         if (readBytes != 12) throw ReadError("FileHeader::operator << (FileHandle &)", "Source file is truncated");
 
         identification    = Block(buf, 4);
-        lumpRecordsCount  = littleEndianByteOrder.toHost(*(dint32 *)(buf + 4));
-        lumpRecordsOffset = littleEndianByteOrder.toHost(*(dint32 *)(buf + 8));
+        lumpRecordsCount  = littleEndianByteOrder.toHost(*reinterpret_cast<dint32 *>(buf + 4));
+        lumpRecordsOffset = littleEndianByteOrder.toHost(*reinterpret_cast<dint32 *>(buf + 8));
     }
 };
 
@@ -68,8 +68,9 @@ struct IndexEntry
         if (readBytes != 16) throw ReadError("IndexEntry::operator << (FileHandle &)", "Source file is truncated");
 
         name   = Block(buf + 8, 8);
-        offset = littleEndianByteOrder.toHost(*(dint32 *)(buf));
-        size   = littleEndianByteOrder.toHost(*(dint32 *)(buf + 4));
+        dint32 const *off = reinterpret_cast<dint32 const *>(buf);
+        offset = littleEndianByteOrder.toHost(*off);
+        size   = littleEndianByteOrder.toHost(*reinterpret_cast<dint32 const *>(buf + 4));
     }
 
     /// Perform all translations and encodings to the actual lump name.
