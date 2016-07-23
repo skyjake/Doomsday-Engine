@@ -29,6 +29,7 @@
 #include "../DotPath"
 
 #include <QList>
+#include <functional>
 
 namespace de {
 
