@@ -46,6 +46,10 @@ NumberValue::NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic)
     : _value(initialUnsignedInteger), _semantic(semantic)
 {}
 
+NumberValue::NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic)
+    : _value(initialUnsignedInteger), _semantic(semantic)
+{}
+
 NumberValue::NumberValue(bool initialBoolean)
     : _value(initialBoolean? True : False), _semantic(Boolean)
 {}

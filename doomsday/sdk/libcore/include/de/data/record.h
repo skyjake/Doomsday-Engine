@@ -361,7 +361,7 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, dint32 value);
 
-    /// @copydoc set()                                                                                                
+    /// @copydoc set()
     Variable &set(String const &name, duint32 value);
 
     /// @copydoc set()
@@ -369,6 +369,9 @@ public:
 
     /// @copydoc set()
     Variable &set(String const &name, duint64 value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, unsigned long value);
 
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.

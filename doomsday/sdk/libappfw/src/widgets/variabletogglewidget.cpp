@@ -100,13 +100,13 @@ Variable &VariableToggleWidget::variable() const
 
 void VariableToggleWidget::setActiveValue(double val)
 {
-    d->activeValue = val;
+    d->activeValue = NumberValue(val);
     d->updateFromVariable();
 }
 
 void VariableToggleWidget::setInactiveValue(double val)
 {
-    d->inactiveValue = val;
+    d->inactiveValue = NumberValue(val);
     d->updateFromVariable();
 }
 

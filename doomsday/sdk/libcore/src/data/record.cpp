@@ -582,6 +582,11 @@ Variable &Record::set(String const &name, duint64 value)
     return set(name, Value::Number(value));
 }
 
+Variable &Record::set(String const &name, unsigned long value)
+{
+    return set(name, Value::Number(value));
+}
+
 Variable &Record::set(String const &name, ArrayValue *value)
 {
     DENG2_GUARD(d);

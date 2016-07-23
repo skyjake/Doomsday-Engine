@@ -54,12 +54,13 @@ public:
     Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
 
 public:
-    NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
-    NumberValue(dint64 initialInteger);
-    NumberValue(duint64 initialUnsignedInteger);
-    NumberValue(dint32 initialInteger, SemanticHints semantic = Generic);
-    NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic = Generic);
-    NumberValue(bool initialBoolean);
+    explicit NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
+    explicit NumberValue(dint64 initialInteger);
+    explicit NumberValue(duint64 initialUnsignedInteger);
+    explicit NumberValue(dint32 initialInteger, SemanticHints semantic = Generic);
+    explicit NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic = Generic);
+    explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = Generic);
+    explicit NumberValue(bool initialBoolean);
 
     void setSemanticHints(SemanticHints hints);
     SemanticHints semanticHints() const;
