@@ -375,10 +375,15 @@ bool PopupWidget::handleEvent(Event const &event)
     }
 
     if (event.type() == Event::KeyPress  ||
-       event.type() == Event::KeyRepeat ||
-       event.type() == Event::KeyRelease)
+        event.type() == Event::KeyRepeat ||
+        event.type() == Event::KeyRelease)
     {
-        if (event.isKeyDown() && event.as<KeyEvent>().ddKey() == DDKEY_ESCAPE)
+        KeyEvent const &key = event.as<KeyEvent>();
+        if (event.isKeyDown() &&
+            (key.ddKey() == DDKEY_ESCAPE ||
+             key.ddKey() == DDKEY_ENTER  ||
+             key.ddKey() == DDKEY_RETURN ||
+             key.ddKey() == ' '))
         {
             close();
             return true;

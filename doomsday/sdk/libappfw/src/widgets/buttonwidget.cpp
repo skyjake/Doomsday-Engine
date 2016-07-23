@@ -311,6 +311,23 @@ bool ButtonWidget::handleEvent(Event const &event)
 {
     if (isDisabled()) return false;
 
+    if (event.isKey() && hasFocus())
+    {
+        KeyEvent const &key = event.as<KeyEvent>();
+        if (key.ddKey() == DDKEY_RETURN ||
+            key.ddKey() == DDKEY_ENTER  ||
+            key.ddKey() == ' ')
+        {
+            if (key.isKeyDown())
+            {
+                d->setState(Down);
+                trigger();
+                d->setState(Up);
+            }
+            return true;
+        }
+    }
+
     if (event.isMouse())
     {
         MouseEvent const &mouse = event.as<MouseEvent>();

@@ -391,6 +391,15 @@ DENG_GUI_PIMPL(DialogWidget)
         return 0;
     }
 
+    ButtonWidget *findDefaultButton() const
+    {
+        if (ui::ActionItem const *defaultAction = findDefaultAction())
+        {
+            return &buttonWidget(*defaultAction);
+        }
+        return nullptr;
+    }
+
     ButtonWidget &buttonWidget(ui::Item const &item) const
     {
         GuiWidget *w = extraButtons->organizer().itemWidget(item);
@@ -587,23 +596,21 @@ void DialogWidget::update()
 
 bool DialogWidget::handleEvent(Event const &event)
 {
+    if (!isOpen()) return false;
+
     if (event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if (key.ddKey() == DDKEY_ENTER ||
-           key.ddKey() == DDKEY_RETURN ||
-           key.ddKey() == ' ')
+        if (key.ddKey() == DDKEY_ENTER  ||
+            key.ddKey() == DDKEY_RETURN ||
+            key.ddKey() == ' ')
         {
-            if (ui::ActionItem const *defaultAction = d->findDefaultAction())
+            if (ButtonWidget *but = d->findDefaultButton())
             {
-                ButtonWidget const &but = d->buttonWidget(*defaultAction);
-                if (but.action())
-                {
-                    const_cast<de::Action *>(but.action())->trigger();
-                }
+                but->trigger();
+                return true;
             }
-            return true;
         }
 
         if (key.ddKey() == DDKEY_ESCAPE)
@@ -618,9 +625,9 @@ bool DialogWidget::handleEvent(Event const &event)
     {
         // The event should already have been handled by the children.
         if ((event.isKeyDown() && !event.as<KeyEvent>().isModifier()) ||
-           (event.type() == Event::MouseButton &&
-            event.as<MouseEvent>().state() == MouseEvent::Pressed &&
-            !hitTest(event)))
+            (event.type() == Event::MouseButton &&
+             event.as<MouseEvent>().state() == MouseEvent::Pressed &&
+             !hitTest(event)))
         {
             d->startBorderFlash();
         }
@@ -629,7 +636,7 @@ bool DialogWidget::handleEvent(Event const &event)
     else
     {
         if ((event.type() == Event::MouseButton || event.type() == Event::MousePosition ||
-            event.type() == Event::MouseWheel) &&
+             event.type() == Event::MouseWheel) &&
            hitTest(event))
         {
             // Non-modal dialogs eat mouse clicks/position inside the dialog.
@@ -675,7 +682,7 @@ void DialogWidget::prepare()
     // Mouse needs to be untrapped for the user to be access the dialog.
     d->untrapper.reset(new Untrapper(root().window()));
 
-    root().setFocus(0);
+    root().setFocus(d->findDefaultButton());
 
     if (openingDirection() == ui::NoDirection)
     {

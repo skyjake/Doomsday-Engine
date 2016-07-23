@@ -351,9 +351,33 @@ DENG2_PIMPL(GuiWidget)
         }
     }
 
-    static float toDevicePixels(float logicalPixels)
+    GuiWidget *findNextWidgetToFocus(WalkDirection dir)
     {
-        return logicalPixels * DENG2_BASE_GUI_APP->dpiFactor();
+        Rectanglei const viewRect = self.root().viewRule().recti();
+        auto *widget = self.walkInOrder(dir, [this, &viewRect] (Widget &widget)
+        {
+            if (widget.behavior().testFlag(Focusable) && widget.isEnabled() &&
+                widget.isVisible() && widget.is<GuiWidget>())
+            {
+                // The widget's center must be in view.
+                if (viewRect.contains(widget.as<GuiWidget>().rule().recti().middle()))
+                {
+                    // This is good.
+                    return LoopAbort;
+                }
+            }
+            return LoopContinue;
+        });
+        if (widget)
+        {
+            return widget->asPtr<GuiWidget>();
+        }
+        return nullptr;
+    }
+
+    static float toDevicePixels(double logicalPixels)
+    {
+        return float(logicalPixels * DENG2_BASE_GUI_APP->dpiFactor());
     }
 };
 
@@ -729,6 +753,20 @@ bool GuiWidget::handleEvent(Event const &event)
         }
     }
 
+    if (hasFocus() && event.isKey())
+    {
+        KeyEvent const &key = event.as<KeyEvent>();
+        if (key.isKeyDown() && key.ddKey() == DDKEY_TAB)
+        {
+            if (auto *focus = d->findNextWidgetToFocus(
+                        key.modifiers().testFlag(KeyEvent::Shift)? Backward : Forward))
+            {
+                root().setFocus(focus);
+                return true;
+            }
+        }
+    }
+
     if (Widget::handleEvent(event))
     {
         return true;
@@ -737,8 +775,8 @@ bool GuiWidget::handleEvent(Event const &event)
     if (d->attribs.testFlag(EatAllMouseEvents))
     {
         if ((event.type() == Event::MouseButton ||
-            event.type() == Event::MousePosition ||
-            event.type() == Event::MouseWheel) && hitTest(event))
+             event.type() == Event::MousePosition ||
+             event.type() == Event::MouseWheel) && hitTest(event))
         {
             return true;
         }
