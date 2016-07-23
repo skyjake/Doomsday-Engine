@@ -84,6 +84,8 @@ public:
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
 
+    enum WalkDirection { Forward, Backward };
+
     typedef WidgetList Children;
 
     /**
@@ -236,6 +238,27 @@ public:
     Widget *parent() const;
     bool isFirstChild() const;
     bool isLastChild() const;
+
+    /**
+     * Calls the given callback on each widget of the tree, starting from this widget.
+     * The callback is not called for this widget.
+     *
+     * When walking forward, the callback is called on parents first, and then on
+     * children in first-to-last order. When walking backward, the callback is first
+     * called on children in last-to-first order, and finally the parent.
+     *
+     * The walk can be started at any widget in the tree, and it will descend and ascend
+     * in the tree to find the next/previous widget.
+     *
+     * @param dir       Walk direction: Forward or Backward.
+     * @param callback  Callback to call for each widget. Return LoopContinue to continue
+     *                  the walk, anything else will abort.
+     *
+     * @return If the walk was aborted, returns the widget at which the callback returned
+     * LoopAbort. Otherwise returns nullptr to indicate that all the available widgets
+     * were handled.
+     */
+    Widget *walkInOrder(WalkDirection dir, std::function<LoopResult (Widget &)> callback);
 
     /**
      * Removes the widget from its parent, if it has a parent.

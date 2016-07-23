@@ -299,9 +299,19 @@
         return *static_cast<T_ *>(this); \
     } \
     template <typename T_> \
+    T_ *asPtr() { \
+        DENG2_ASSERT(is<T_>()); \
+        return static_cast<T_ *>(this); \
+    } \
+    template <typename T_> \
     T_ const &as() const { \
         DENG2_ASSERT(is<T_>()); \
         return *static_cast<T_ const *>(this); \
+    } \
+    template <typename T_> \
+    T_ const *asPtr() const { \
+        DENG2_ASSERT(is<T_>()); \
+        return static_cast<T_ const *>(this); \
     } \
     template <typename T_> \
     T_ *maybeAs() { return dynamic_cast<T_ *>(this); } \

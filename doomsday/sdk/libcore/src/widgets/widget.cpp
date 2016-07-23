@@ -141,6 +141,76 @@ DENG2_PIMPL(Widget)
         }
     }
 
+    Widget *walkChildren(Widget *beginFrom,
+                         WalkDirection dir,
+                         std::function<LoopResult (Widget &)> func,
+                         int verticalDir = 0)
+    {
+        bool first = true;
+
+        // This gets a little complicated. The method handles both forward and backward
+        // directions, and is called recursively when either descending into subtrees
+        // or ascending to the parent level.
+
+        for (int pos = children.indexOf(beginFrom); ;
+             pos += (dir == Forward? +1 : -1), first = false)
+        {
+            // Skip the first widget when walking back up the tree.
+            if (first && (verticalDir < 0 || (verticalDir == 0 && dir == Backward)))
+            {
+                continue;
+            }
+
+            // During the first round, we will skip the starting point widget but allow
+            // descending into its children.
+            bool const onlyDescend = (verticalDir == 0 && first);
+
+            // When we run out of siblings, try to ascend to parent and continue from
+            // there without handling the parent again.
+            if (pos < 0 || pos >= children.size())
+            {
+                if (verticalDir > 0)
+                {
+                    // We were descending: the recursion should fall back to the
+                    // previous parent.
+                    return nullptr;
+                }
+                if (dir == Backward && func(self))
+                {
+                    return thisPublic;
+                }
+                if (parent)
+                {
+                    return parent->d->walkChildren(thisPublic, dir, func, -1 /*up*/);
+                }
+                return nullptr;
+            }
+
+            Widget *i = children.at(pos);
+
+            if (dir == Forward && !onlyDescend && func(*i))
+            {
+                return i;
+            }
+
+            // Descend into subtree.
+            if (i->childCount() > 0)
+            {
+                Widget *starting = (dir == Forward? i->d->children.first()
+                                                  : i->d->children.last());
+                if (Widget *found = i->d->walkChildren(starting, dir, func, +1 /*down*/))
+                {
+                    return found;
+                }
+            }
+
+            if (dir == Backward && !onlyDescend && func(*i))
+            {
+                return i;
+            }
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(ParentChange)
     DENG2_PIMPL_AUDIENCE(ChildAddition)
@@ -487,6 +557,31 @@ bool Widget::isLastChild() const
 {
     if (!parent()) return false;
     return this == parent()->d->children.last();
+}
+
+Widget *Widget::walkInOrder(WalkDirection dir, std::function<LoopResult (Widget &)> callback)
+{
+    if (!d->parent)
+    {
+        // This is the root.
+        if (d->children.isEmpty()) return nullptr;
+        if (dir == Forward)
+        {
+            /*if (callback(*d->children.first()))
+            {
+                return d->children.first();
+            }*/
+            //return d->children.first()->walkInOrder(Forward, callback);
+            return d->walkChildren(d->children.first(), Forward, callback, +1);
+        }
+        else
+        {
+            // There is going back from the root.
+            return nullptr;
+        }
+    }
+
+    return d->parent->d->walkChildren(this, dir, callback);
 }
 
 String Widget::uniqueName(String const &name) const
