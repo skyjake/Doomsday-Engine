@@ -18,7 +18,7 @@
 
 #include "render/shadervar.h"
 
-#include <de/NativeValue>
+#include <de/NativePointerValue>
 #include <de/ScriptedInfo>
 #include <de/ScriptSystem>
 
@@ -167,6 +167,6 @@ ShaderVars::~ShaderVars()
 void ShaderVars::addBinding(Record &names, String const &varName, Animation &anim)
 {
     names.add(varName)
-            .set(new NativeValue(&anim, &ScriptSystem::builtInClass(QStringLiteral("Animation"))))
+            .set(new NativePointerValue(&anim, &ScriptSystem::builtInClass(QStringLiteral("Animation"))))
             .setReadOnly();
 }

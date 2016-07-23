@@ -23,7 +23,7 @@
 #include "de/DictionaryValue"
 #include "de/File"
 #include "de/Function"
-#include "de/NativeValue"
+#include "de/NativePointerValue"
 #include "de/Path"
 #include "de/Record"
 #include "de/RecordValue"
@@ -112,7 +112,7 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
 
 static Animation &animationInstance(Context &ctx)
 {
-    Animation *obj = ctx.nativeSelf().as<NativeValue>().nativeObject<Animation>();
+    Animation *obj = ctx.nativeSelf().as<NativePointerValue>().nativeObject<Animation>();
     if (!obj)
     {
         throw Value::IllegalError("ScriptSystem::animationInstance", "No Animation instance available");

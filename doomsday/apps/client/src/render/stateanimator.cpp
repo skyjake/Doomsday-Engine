@@ -28,7 +28,7 @@
 #include <de/ScriptSystem>
 #include <de/RecordValue>
 #include <de/NoneValue>
-#include <de/NativeValue>
+#include <de/NativePointerValue>
 #include <de/GLUniform>
 
 using namespace de;
@@ -151,7 +151,7 @@ DENG2_PIMPL(StateAnimator)
 
     Impl(Public *i, DotPath const &id) : Base(i)
     {
-        names.add(Record::VAR_NATIVE_SELF).set(new NativeValue(&self)).setReadOnly();
+        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(&self)).setReadOnly();
         names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
                                                         QStringLiteral("StateAnimator")));
         names.addText(VAR_ID, id).setReadOnly();
@@ -309,7 +309,7 @@ DENG2_PIMPL(StateAnimator)
     void addBinding(String const &varName, Animation &anim)
     {
         names.add(varName)
-                .set(new NativeValue(&anim, &ScriptSystem::builtInClass("Animation")))
+                .set(new NativePointerValue(&anim, &ScriptSystem::builtInClass("Animation")))
                 .setReadOnly();
     }
 

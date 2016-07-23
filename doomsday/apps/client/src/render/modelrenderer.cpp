@@ -32,7 +32,7 @@
 #include <de/App>
 #include <de/ModelBank>
 #include <de/ScriptedInfo>
-#include <de/NativeValue>
+#include <de/NativePointerValue>
 #include <de/MultiAtlas>
 
 #include <QHash>
@@ -880,7 +880,7 @@ int ModelRenderer::identifierFromText(String const &text,
 
 static render::StateAnimator &animatorInstance(Context &ctx)
 {
-    if (auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativeValue>())
+    if (auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativePointerValue>())
     {
         if (auto *obj = self->nativeObject<render::StateAnimator>())
         {

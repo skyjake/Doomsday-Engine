@@ -31,7 +31,7 @@
 
 #include <de/App>
 #include <de/DialogContentStylist>
-#include <de/NativeValue>
+#include <de/NativePointerValue>
 #include <de/NumberValue>
 #include <de/PackageLoader>
 #include <de/ScriptedInfo>
@@ -396,7 +396,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
-            else if (var.value().is<NativeValue>())
+            else if (var.value().is<NativePointerValue>()) // assumed to be Animation
             {
                 g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);

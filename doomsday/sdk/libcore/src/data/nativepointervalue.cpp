@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NativeValue"
+#include "de/NativePointerValue"
 
 namespace de {
 
-DENG2_PIMPL_NOREF(NativeValue)
+DENG2_PIMPL_NOREF(NativePointerValue)
 , DENG2_OBSERVES(Deletable, Deletion)
 {
     Object *object = nullptr;
@@ -46,55 +46,55 @@ DENG2_PIMPL_NOREF(NativeValue)
     }
 };
 
-NativeValue::NativeValue(Object *object, Record const *memberScope)
+NativePointerValue::NativePointerValue(Object *object, Record const *memberScope)
     : d(new Impl)
 {
     d->memberScope = memberScope;
     d->setObject(object);
 }
 
-NativeValue::Object *NativeValue::object() const
+NativePointerValue::Object *NativePointerValue::object() const
 {
     return d->object;
 }
 
-void NativeValue::setObject(Object *object)
+void NativePointerValue::setObject(Object *object)
 {
     d->object = object;
 }
 
-Value::Text NativeValue::typeId() const
+Value::Text NativePointerValue::typeId() const
 {
     return "Native";
 }
 
-Value *NativeValue::duplicate() const
+Value *NativePointerValue::duplicate() const
 {
-    return new NativeValue(d->object, d->memberScope);
+    return new NativePointerValue(d->object, d->memberScope);
 }
 
-Value::Text NativeValue::asText() const
+Value::Text NativePointerValue::asText() const
 {
     return QString("(native object 0x%1)").arg(dintptr(d->object), 0, 16);
 }
 
-bool NativeValue::isTrue() const
+bool NativePointerValue::isTrue() const
 {
     return d->object != nullptr;
 }
 
-Record *NativeValue::memberScope() const
+Record *NativePointerValue::memberScope() const
 {
     return const_cast<Record *>(d->memberScope);
 }
 
-void NativeValue::operator >> (Writer &) const
+void NativePointerValue::operator >> (Writer &) const
 {
-    throw CannotSerializeError("NativeValue::operator >>",
+    throw CannotSerializeError("NativePointerValue::operator >>",
                                "Cannot serialize native object references");
 }
 
-void NativeValue::operator << (Reader &)
+void NativePointerValue::operator << (Reader &)
 {}
 
 } // namespace de

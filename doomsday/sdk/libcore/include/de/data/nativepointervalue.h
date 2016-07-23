@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NATIVEVALUE_H
-#define LIBDENG2_NATIVEVALUE_H
+#ifndef LIBDENG2_NATIVEPOINTERVALUE_H
+#define LIBDENG2_NATIVEPOINTERVALUE_H
 
 #include "../Value"
 #include "../Record"
@@ -26,23 +26,23 @@
 namespace de {
 
 /**
- * Reference to a native object. Only stores a pointer, and observes the
- * deletion of the referenced object.
+ * Reference to a native object. Only stores a pointer, and observes the deletion of the
+ * referenced object.
  *
- * The referenced objects must be derived from Deletable, because scripts may
- * duplicate values and the values may get copied into any Variable. All
- * NativeValue instances referencing a native object must be changed to point
- * to @c nullptr if the native object gets deleted.
+ * The referenced objects must be derived from Deletable, because scripts may duplicate
+ * values and the values may get copied into any Variable. All NativePointerValue
+ * instances referencing a native object must be changed to point to @c nullptr if the
+ * native object gets deleted.
  *
  * @ingroup data
  */
-class DENG2_PUBLIC NativeValue : public Value
+class DENG2_PUBLIC NativePointerValue : public Value
 {
 public:
     typedef Deletable Object;
 
 public:
-    NativeValue(Object *object, Record const *memberScope = nullptr);
+    NativePointerValue(Object *object, Record const *memberScope = nullptr);
 
     Object *object() const;
     void setObject(Object *object);
@@ -71,5 +71,5 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_NATIVEVALUE_H
+#endif // LIBDENG2_NATIVEPOINTERVALUE_H
 

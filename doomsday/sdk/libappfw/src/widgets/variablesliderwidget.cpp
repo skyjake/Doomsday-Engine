@@ -19,7 +19,7 @@
 #include "de/VariableSliderWidget"
 
 #include <de/NumberValue>
-#include <de/NativeValue>
+#include <de/NativePointerValue>
 #include <de/Animation>
 
 namespace de {
@@ -55,7 +55,7 @@ DENG2_PIMPL(VariableSliderWidget)
             break;
 
         case VariableSliderWidget::Animation:
-            self.setValue(var->value<NativeValue>().nativeObject<de::Animation>()->target());
+            self.setValue(var->value<NativePointerValue>().nativeObject<de::Animation>()->target());
             break;
         }
     }
@@ -72,7 +72,7 @@ DENG2_PIMPL(VariableSliderWidget)
             break;
 
         case VariableSliderWidget::Animation:
-            var->value<NativeValue>().nativeObject<de::Animation>()->setValue(float(self.value()));
+            var->value<NativePointerValue>().nativeObject<de::Animation>()->setValue(float(self.value()));
             break;
         }
         var->audienceForChange() += this;

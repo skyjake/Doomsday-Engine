@@ -24,7 +24,6 @@
 #include "de/Config"
 #include "de/DictionaryValue"
 #include "de/Module"
-#include "de/NativeValue"
 #include "de/NumberValue"
 #include "de/Record"
 #include "de/RecordValue"
