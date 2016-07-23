@@ -70,9 +70,8 @@ DENG2_PIMPL(LogSettingsDialog)
 
             columnWidth = new IndirectRule;
 
-            self.area().add(separately =
-                    new VariableToggleWidget(tr("Filter by Subsystem"),
-                                             App::config("log.filterBySubsystem")));
+            separately = new VariableToggleWidget(tr("Filter by Subsystem"),
+                                                  App::config("log.filterBySubsystem"));
 
             levels << new ChoiceItem(        tr("1 - X.Verbose"), LogEntry::XVerbose)
                    << new ChoiceItem(        tr("2 - Verbose"),   LogEntry::Verbose )
@@ -83,7 +82,7 @@ DENG2_PIMPL(LogSettingsDialog)
                    << new ChoiceItem(_E(D) + tr("7 - Critical"),  LogEntry::Critical);
 
             // Folding panel for the per-domain settings.
-            self.area().add(fold = new FoldPanelWidget);
+            fold = new FoldPanelWidget;
             fold->setContent(new GuiWidget);
 
             foldLayout.setLeftTop(fold->content().rule().left(),
@@ -98,6 +97,8 @@ DENG2_PIMPL(LogSettingsDialog)
                            domWidgets[i],
                            i == 0? &self.area() : &fold->content());
             }
+            self.area().add(separately);
+            self.area().add(fold);
 
             // This'll keep the dialog's size fixed even though the choices change size.
             columnWidth->setSource(domWidgets[0].level->maximumWidth());

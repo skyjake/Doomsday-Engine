@@ -215,8 +215,8 @@ DENG_GUI_PIMPL(DialogWidget)
         }
 
         container->add(area);
-        container->add(buttons);
         container->add(extraButtons);
+        container->add(buttons);
         self.setContent(container);
     }
 
