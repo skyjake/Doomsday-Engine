@@ -572,7 +572,12 @@ Variable &Record::set(String const &name, duint32 value)
     return set(name, Value::Number(value));
 }
 
-Variable &Record::set(String const &name, dsize value)
+Variable &Record::set(String const &name, dint64 value)
+{
+  return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, duint64 value)
 {
     return set(name, Value::Number(value));
 }

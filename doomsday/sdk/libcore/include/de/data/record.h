@@ -106,7 +106,6 @@ public:
      * @param behavior  Which members to copy.
      */
     Record(Record const &other, Behavior behavior = AllMembers);
-
     virtual ~Record();
 
     /**
@@ -362,11 +361,14 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, dint32 value);
 
-    /// @copydoc set()
+    /// @copydoc set()                                                                                                
     Variable &set(String const &name, duint32 value);
 
     /// @copydoc set()
-    Variable &set(String const &name, dsize value);
+    Variable &set(String const &name, dint64 value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, duint64 value);
 
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.

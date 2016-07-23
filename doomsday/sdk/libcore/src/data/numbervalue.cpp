@@ -30,15 +30,19 @@ NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
     : _value(initialValue), _semantic(semantic)
 {}
 
-NumberValue::NumberValue(dsize initialSize)
-    : _value(initialSize), _semantic(Generic)
+NumberValue::NumberValue(dint64 initialInteger)
+    : _value(initialInteger), _semantic(Generic)
 {}
 
-NumberValue::NumberValue(dint initialInteger, SemanticHints semantic)
+NumberValue::NumberValue(duint64 initialUnsignedInteger)
+    : _value(initialUnsignedInteger), _semantic(Generic)
+{}
+
+NumberValue::NumberValue(dint32 initialInteger, SemanticHints semantic)
     : _value(initialInteger), _semantic(semantic)
 {}
 
-NumberValue::NumberValue(duint initialUnsignedInteger, SemanticHints semantic)
+NumberValue::NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic)
     : _value(initialUnsignedInteger), _semantic(semantic)
 {}
 
