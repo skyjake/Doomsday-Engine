@@ -170,6 +170,8 @@ String File::description(int verbosity) const
         desc += _E(s)_E(D) " {\"" + path() + "\": data sourced from " +
                 source()->description(verbosity) + "}" _E(.)_E(.);
     }
+#else
+    DENG2_UNUSED(verbosity);
 #endif
 
     return desc;
