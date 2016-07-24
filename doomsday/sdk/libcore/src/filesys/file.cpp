@@ -128,7 +128,7 @@ String File::description(int verbosity) const
     if (verbosity < 0)
     {
         Log &log = Log::threadLog();
-        int verbosity = 0;
+        verbosity = 0;
         if (!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
         {
             // For dev entries and everything outside log entries, use a full description.
