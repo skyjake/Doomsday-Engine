@@ -383,7 +383,7 @@ Reader &Reader::operator >> (IReadable &readable)
 
 Reader &Reader::readUntil(IByteArray &byteArray, IByteArray::Byte delimiter)
 {
-    int pos = 0;
+    dsize pos = 0;
     IByteArray::Byte b = 0;
     do {
         if (atEnd()) break;
@@ -438,18 +438,19 @@ void Reader::setOffset(IByteArray::Offset offset)
     d->offset = offset;
 }
 
-void Reader::seek(dint count)
+void Reader::seek(IByteArray::Delta count)
 {
     if (!d->source)
     {
         throw SeekError("Reader::seek", "Cannot seek when reading from a stream");
     }
 
-    if (IByteArray::Offset(d->offset + count) >= d->source->size())
+    auto const seeked = IByteArray::Offset(IByteArray::Delta(d->offset) + count);
+    if (seeked >= d->source->size())
     {
         throw IByteArray::OffsetError("Reader::seek", "Seek past bounds of source data");
     }
-    d->offset += count;
+    d->offset = seeked;
 }
 
 void Reader::mark()

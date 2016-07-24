@@ -741,10 +741,10 @@ void NetSv_DismissHUDs(int plrNum, dd_bool fast)
 {
     if(!IS_SERVER) return;
     if(plrNum < 1 || plrNum >= DDMAXPLAYERS) return;
-    
+
     writer_s *writer = D_NetWrite();
     Writer_WriteByte(writer, fast? 1 : 0);
-    
+
     Net_SendPacket(plrNum, GPT_DISMISS_HUDS, Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1334,7 +1334,7 @@ void NetSv_DoAction(int player, reader_s *msg)
     angle_t angle   = Reader_ReadUInt32(msg);
     float lookDir   = Reader_ReadFloat(msg);
     int actionParam = Reader_ReadInt32(msg);
-    
+
     App_Log(DE2_DEV_MAP_VERBOSE,
             "NetSv_DoAction: player=%i, action=%i, xyz=(%.1f,%.1f,%.1f)\n  "
             "angle=%x lookDir=%g param=%i",
@@ -1369,7 +1369,7 @@ void NetSv_DoAction(int player, reader_s *msg)
         {
             // Update lookdir to match client's direction at the time of the action.
             pl->plr->lookDir = lookDir;
-            
+
             if(type == GPA_FIRE)
             {
                 pl->refire = actionParam;
@@ -1461,7 +1461,7 @@ void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
     }
 
     writer_s *writer = D_NetWrite();
-    Writer_WriteUInt16(writer, strlen(msg));
+    Writer_WriteUInt16(writer, uint16_t(strlen(msg)));
     Writer_Write(writer, msg, strlen(msg));
     Net_SendPacket(plrNum,
                    yellow ? GPT_YELLOW_MESSAGE : GPT_MESSAGE,

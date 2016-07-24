@@ -285,7 +285,7 @@ DENG2_PIMPL(NativeTranslator)
         }
     }
 
-    Block *bufferFile() const
+    Block *bufferFile()
     {
 #define BLOCKSIZE 1024  // Read in 1kb blocks.
 
@@ -294,12 +294,12 @@ DENG2_PIMPL(NativeTranslator)
 
         while (!lzEOF(saveFile()))
         {
-            dsize bytesRead = lzRead(readBuf, BLOCKSIZE, const_cast<Impl *>(this)->saveFile());
+            long bytesRead = lzRead(readBuf, BLOCKSIZE, saveFile());
             if (!buffer)
             {
                 buffer = new Block;
             }
-            buffer->append((char *)readBuf, bytesRead);
+            buffer->append((char *)readBuf, int(bytesRead));
         }
 
         return buffer;

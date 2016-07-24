@@ -285,7 +285,7 @@ public:
      * @param count  Number of bytes to move forward. Negative values move
      *               the reader offset backward.
      */
-    void seek(dint count);
+    void seek(IByteArray::Delta count);
 
     /**
      * Marks the current position for rewinding later. After setting the mark,

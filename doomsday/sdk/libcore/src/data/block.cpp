@@ -111,6 +111,30 @@ IByteArray::Byte const *Block::dataConst() const
     return reinterpret_cast<Byte const *>(QByteArray::constData());
 }
 
+Block &Block::append(IByteArray::Byte b)
+{
+    QByteArray::append(char(b));
+    return *this;
+}
+
+Block &Block::append(char const *str, int len)
+{
+    QByteArray::append(str, len);
+    return *this;
+}
+
+Block &Block::operator += (char const *nullTerminatedCStr)
+{
+    QByteArray::append(nullTerminatedCStr);
+    return *this;
+}
+
+Block &Block::operator += (QByteArray const &bytes)
+{
+    QByteArray::append(bytes);
+    return *this;
+}
+
 Block::Byte *Block::data()
 {
     return reinterpret_cast<Byte *>(QByteArray::data());
@@ -123,7 +147,7 @@ Block::Byte const *Block::data() const
 
 Block &Block::operator += (Block const &other)
 {
-    append(other);
+    QByteArray::append(other);
     return *this;
 }
 

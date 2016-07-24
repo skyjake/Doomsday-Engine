@@ -274,18 +274,18 @@ ByteOrder const &Writer::byteOrder() const
     return d->convert;
 }
 
-void Writer::seek(dint count)
+void Writer::seek(IByteArray::Delta count)
 {
     if (d->stream)
     {
         throw SeekError("Writer::seek", "Cannot seek when writing to a stream");
     }
 
-    if (dint(d->fixedOffset + d->offset) + count < 0)
+    if (IByteArray::Delta(d->fixedOffset + d->offset) + count < 0)
     {
         throw IByteArray::OffsetError("Writer::seek", "Seek past beginning of destination");
     }
-    d->offset += count;
+    d->offset = IByteArray::Offset(IByteArray::Delta(d->offset) + count);
 }
 
 } // namespace de

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_IBYTEARRAY_H
@@ -40,6 +40,9 @@ public:
 
     /// Array elements are indexed using this type.
     typedef dsize Offset;
+
+    /// Difference between two offsets.
+    typedef dlong Delta;
 
     /// The elements of the array must be of type Byte.
     typedef dbyte Byte;

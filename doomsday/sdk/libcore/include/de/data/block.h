@@ -91,6 +91,12 @@ public:
     Byte *data();
     Byte const *dataConst() const;
 
+    Block &append(Byte b);
+    Block &append(char const *str, int len);
+
+    Block &operator += (char const *nullTerminatedCStr);
+    Block &operator += (QByteArray const &bytes);
+
     /// Appends a block after this one.
     Block &operator += (Block const &other);
 

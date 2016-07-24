@@ -600,7 +600,8 @@ typedef qint64  dint64;     ///< 64-bit signed integer.
 typedef quint64 duint64;    ///< 64-bit unsigned integer.
 typedef float   dfloat;     ///< 32-bit floating point number.
 typedef double  ddouble;    ///< 64-bit floating point number.
-typedef size_t  dsize;
+typedef size_t  dsize;      // Likely unsigned long.
+typedef long    dlong;
 
 // Pointer-integer conversion (used for legacy code).
 #ifdef DENG2_64BIT
@@ -640,6 +641,7 @@ typedef unsigned int    duint;  // 32-bit
 typedef float           dfloat;
 typedef double          ddouble;
 typedef size_t          dsize;
+typedef long            dlong;
 
 #endif // !__cplusplus
 

@@ -66,12 +66,11 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 
     File1 &lump = lumpIndex[lumpNum];
     size_t len  = lump.size();
-    Block deh   = Block::fromRawData((char const *)lump.cache(), len);
+    Block deh   = Block::fromRawData(reinterpret_cast<char const *>(lump.cache()), len);
     /// @attention Results in a deep-copy of the lump data into the Block
     ///            thus the cached lump can be released after this call.
     ///
     /// @todo Do not use a local buffer - read using QTextStream.
-    deh.append(QChar(0));
     lump.unlock();
 
     /// @todo Custom status for contained files is not inherited from the container?

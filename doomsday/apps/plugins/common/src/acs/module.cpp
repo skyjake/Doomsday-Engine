@@ -83,7 +83,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
     from >> magic >> scriptInfoOffset;
 
     // Read script entry point info.
-    from.seek(scriptInfoOffset - from.offset());
+    from.seek(dint(scriptInfoOffset) - dint(from.offset()));
     dint32 numEntryPoints;
     from >> numEntryPoints;
     module->d->entryPoints.reserve(numEntryPoints);
@@ -102,7 +102,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
 
         dint32 offset;
         from >> offset;
-        if(offset > module->d->pcode.size())
+        if(offset > dint32(module->d->pcode.size()))
         {
             throw FormatError("acs::Module", "Invalid script entrypoint offset");
         }
@@ -135,7 +135,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
     for(auto const &offset : constantOffsets)
     {
         Block utf;
-        from.setOffset(offset);
+        from.setOffset(dsize(offset));
         from.readUntil(utf, 0);
         module->d->constants << String::fromUtf8(utf);
     }

@@ -252,7 +252,7 @@ public:
      *
      * @param count Number of bytes to move forward (negative to move backward).
      */
-    void seek(dint count);
+    void seek(IByteArray::Delta count);
 
     inline void swap(Writer &other) {
         d.swap(other.d);

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/Protocol"
@@ -302,7 +302,7 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
 Block Protocol::passwordResponse(String const &plainPassword)
 {
     Block response;
-    response.append("Shell");
+    response += "Shell";
     response += QCryptographicHash::hash(plainPassword.toUtf8(),
                                          QCryptographicHash::Sha1);
     return response;

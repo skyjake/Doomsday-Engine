@@ -833,7 +833,7 @@ void NetCl_CheatRequest(char const *command)
 {
     writer_s *msg = D_NetWrite();
 
-    Writer_WriteUInt16(msg, strlen(command));
+    Writer_WriteUInt16(msg, uint16_t(strlen(command)));
     Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)

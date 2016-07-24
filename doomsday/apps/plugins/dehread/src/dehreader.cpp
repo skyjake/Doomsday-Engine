@@ -691,7 +691,6 @@ public:
                 {
                     /// @todo Do not use a local buffer.
                     Block deh = file.readAll();
-                    deh.append(QChar(0));
                     file.close();
 
                     LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
