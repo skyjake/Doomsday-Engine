@@ -326,6 +326,33 @@ DENG2_PIMPL(ClientWindow)
                 .setLeftTop(*cursorX, *cursorY);
         cursor->hide();
         root.add(cursor);
+
+        /*
+#ifdef DENG2_DEBUG
+        auto debugPrint = [] (Widget &w)
+        {
+            int depth = 0;
+            for (auto *p = w.parent(); p; p = p->parent()) ++depth;
+            qDebug() << QByteArray(4 * depth, ' ').constData()
+                     << (w.parent()? w.parent()->children().indexOf(&w) : -1)
+                     << w.name() << "childCount:" << w.childCount();
+        };
+
+        root.walkInOrder(Widget::Forward, [&debugPrint] (Widget &w)
+        {
+            debugPrint(w);
+            return LoopContinue;
+        });
+
+        qDebug() << "AND BACKWARDS:";
+
+        root.children().last()->walkInOrder(Widget::Backward, [&debugPrint] (Widget &w)
+        {
+            debugPrint(w);
+            return LoopContinue;
+        });
+#endif
+        */
     }
 
     void appStartupCompleted()
