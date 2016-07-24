@@ -540,7 +540,9 @@ void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT /*hmo*/, UINT uMsg,
         if(!me->playing)
             return;
 
+        /// @todo This is incompatible with 64-bit builds. -jk
         mh = (LPMIDIHDR) dwParam1;
+
         // This buffer has stopped. Is this the last buffer?
         // If so, check for looping.
         if(mh == me->loopBuffer)

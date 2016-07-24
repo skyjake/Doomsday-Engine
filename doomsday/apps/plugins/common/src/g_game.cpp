@@ -289,7 +289,7 @@ static void initSaveSlots()
     sslots = new SaveSlots;
 
     // Setup the logical save slot bindings.
-    uint const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
+    menu::Widget::Flag const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
         menu::Widget::Id0, menu::Widget::Id1, menu::Widget::Id2,
         menu::Widget::Id3, menu::Widget::Id4, menu::Widget::Id5,
 #if !__JHEXEN__
@@ -299,7 +299,7 @@ static void initSaveSlots()
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
         sslots->add(String::number(i), true, String(SAVEGAMENAME"%1").arg(i),
-                    gameMenuSaveSlotWidgetIds[i]);
+                    int(gameMenuSaveSlotWidgetIds[i]));
     }
 }
 

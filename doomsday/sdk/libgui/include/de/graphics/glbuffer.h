@@ -67,7 +67,7 @@ namespace internal
         duint startOffset;      ///< Offset in bytes from the start of the buffer.
     };
 
-    typedef std::pair<AttribSpec const *, duint> AttribSpecs;
+    typedef std::pair<AttribSpec const *, dsize> AttribSpecs;
 }
 
 #define LIBGUI_DECLARE_VERTEX_FORMAT(NumElems) \

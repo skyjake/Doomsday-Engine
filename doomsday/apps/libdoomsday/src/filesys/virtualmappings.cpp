@@ -28,6 +28,10 @@
 #include <de/memory.h>
 #include <de/c_wrapper.h>
 
+#ifdef WIN32
+#  define strupr _strupr
+#endif
+
 using namespace de;
 
 void FS_InitVirtualPathMappings()
@@ -40,7 +44,7 @@ void FS_InitVirtualPathMappings()
     dint argC = CommandLine_Count();
     for (dint i = 0; i < argC; ++i)
     {
-        if (strnicmp("-vdmap", CommandLine_At(i), 6))
+        if (qstrnicmp("-vdmap", CommandLine_At(i), 6))
         {
             continue;
         }

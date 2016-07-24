@@ -524,7 +524,7 @@ bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
         *file << data;
         return true;
     }
-    catch (Error const &er)
+    catch (Error const &)
     {
         return false;
     }

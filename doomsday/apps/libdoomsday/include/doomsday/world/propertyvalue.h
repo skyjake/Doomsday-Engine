@@ -77,12 +77,12 @@ public:
 
     int16_t value() const { return value_; }
 
-    byte    asByte()  const { return value_; }
+    byte    asByte()  const { return byte(value_); }
     int16_t asInt16() const { return value_; }
-    int32_t asInt32() const { return value_; }
-    fixed_t asFixed() const { return value_ << FRACBITS; }
-    angle_t asAngle() const { return value_; }
-    float   asFloat() const { return value_; }
+    int32_t asInt32() const { return int32_t(value_); }
+    fixed_t asFixed() const { return fixed_t(value_ << FRACBITS); }
+    angle_t asAngle() const { return angle_t(value_); }
+    float   asFloat() const { return float(value_); }
 
 private:
     int16_t value_;
@@ -98,12 +98,12 @@ public:
 
     int32_t value() const { return value_; }
 
-    byte    asByte()  const { return value_; }
-    int16_t asInt16() const { return value_; }
+    byte    asByte()  const { return byte(value_); }
+    int16_t asInt16() const { return int16_t(value_); }
     int32_t asInt32() const { return value_; }
-    fixed_t asFixed() const { return value_ << FRACBITS; }
-    angle_t asAngle() const { return value_; }
-    float   asFloat() const { return value_; }
+    fixed_t asFixed() const { return fixed_t(value_ << FRACBITS); }
+    angle_t asAngle() const { return angle_t(value_); }
+    float   asFloat() const { return float(value_); }
 
 private:
     int32_t value_;
@@ -119,11 +119,11 @@ public:
 
     fixed_t value() const { return value_; }
 
-    byte    asByte()  const { return value_ >> FRACBITS; }
-    int16_t asInt16() const { return value_ >> FRACBITS; }
-    int32_t asInt32() const { return value_ >> FRACBITS; }
+    byte    asByte()  const { return byte(value_ >> FRACBITS); }
+    int16_t asInt16() const { return int16_t(value_ >> FRACBITS); }
+    int32_t asInt32() const { return int32_t(value_ >> FRACBITS); }
     fixed_t asFixed() const { return value_; }
-    angle_t asAngle() const { return value_ >> FRACBITS; }
+    angle_t asAngle() const { return angle_t(value_ >> FRACBITS); }
     float   asFloat() const { return FIX2FLT(value_); }
 
 private:
@@ -140,12 +140,12 @@ public:
 
     angle_t value() const { return value_; }
 
-    byte    asByte()  const { return value_; }
-    int16_t asInt16() const { return value_; }
-    int32_t asInt32() const { return value_; }
-    fixed_t asFixed() const { return value_ << FRACBITS; }
+    byte    asByte()  const { return byte(value_); }
+    int16_t asInt16() const { return int16_t(value_); }
+    int32_t asInt32() const { return int32_t(value_); }
+    fixed_t asFixed() const { return fixed_t(value_ << FRACBITS); }
     angle_t asAngle() const { return value_; }
-    float   asFloat() const { return value_; }
+    float   asFloat() const { return float(value_); }
 
 private:
     angle_t value_;
@@ -161,11 +161,11 @@ public:
 
     float value() const { return value_; }
 
-    byte    asByte()  const { return value_; }
-    int16_t asInt16() const { return value_; }
-    int32_t asInt32() const { return value_; }
+    byte    asByte()  const { return byte(value_); }
+    int16_t asInt16() const { return int16_t(value_); }
+    int32_t asInt32() const { return int32_t(value_); }
     fixed_t asFixed() const { return FLT2FIX(value_); }
-    angle_t asAngle() const { return value_; }
+    angle_t asAngle() const { return angle_t(value_); }
     float   asFloat() const { return value_; }
 
 private:

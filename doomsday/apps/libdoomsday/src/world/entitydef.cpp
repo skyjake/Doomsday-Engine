@@ -129,7 +129,7 @@ int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
         for (uint i = 0; i < def->numProps; ++i)
         {
             MapEntityPropertyDef *prop = def->props + i;
-            if (!stricmp(prop->name, propertyName))
+            if (!qstricmp(prop->name, propertyName))
             {
                 found = prop;
                 break;
