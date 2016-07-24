@@ -3306,7 +3306,7 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
     case SORC_STOPPING: // Balls stopping.
         if((parent->special2 == actor->type) &&
            (parent->args[1] > SORCBALL_SPEED_ROTATIONS) &&
-           (abs(an - (parent->angle >> ANGLETOFINESHIFT)) < (30 << 5)))
+           (abs((int)(an - (parent->angle >> ANGLETOFINESHIFT))) < (30 << 5)))
         {
             // Can stop now.
             actor->target->args[3] = SORC_FIRESPELL;

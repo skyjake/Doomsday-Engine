@@ -428,12 +428,12 @@ void P_MobjMoveXY(mobj_t* mo)
                 {
                     angle = M_PointToAngle2(tmBlockingMobj->origin, mo->origin);
 
-                    // Change angle for delflection/reflection
+                    // Change angle for deflection/reflection
                     switch(tmBlockingMobj->type)
                     {
                     case MT_CENTAUR:
                     case MT_CENTAURLEADER:
-                        if(abs(angle - tmBlockingMobj->angle) >> 24 > 45)
+                        if(abs((int)(angle - tmBlockingMobj->angle)) >> 24 > 45)
                             goto explode;
                         if(mo->type == MT_HOLY_FX)
                             goto explode;
