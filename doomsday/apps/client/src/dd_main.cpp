@@ -882,6 +882,9 @@ static GameProfile const *autoselectGameProfile()
 {
     if (CommandLine_CheckWith("-game", 1))
     {
+        // Make sure all files have been found so we can determine which games are playable.
+        Folder::waitForPopulation();
+
         char const *identityKey = CommandLine_Next();
 
         Game &game = App_Games()[identityKey];
@@ -890,12 +893,6 @@ static GameProfile const *autoselectGameProfile()
         {
             return &prof;
         }
-    }
-
-    // If but one lonely game; select it.
-    if (App_Games().numPlayable() == 1)
-    {
-        return App_Games().firstPlayable();
     }
 
     // We don't know what to do.
