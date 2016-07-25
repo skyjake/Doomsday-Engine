@@ -20,7 +20,7 @@
 #include <doomsday/console/var.h>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 DENG2_PIMPL_NOREF(CVarLineEditWidget)
 {

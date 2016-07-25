@@ -23,7 +23,7 @@
 
 #include <QTextStream>
 
-using namespace de;
+namespace de {
 
 BlockValue::BlockValue()
 {}
@@ -109,3 +109,5 @@ Value::Text BlockValue::typeId() const
 {
     return "Block";
 }
+
+} // namespace de

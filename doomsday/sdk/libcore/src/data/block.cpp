@@ -22,7 +22,7 @@
 
 #include <cstring>
 
-using namespace de;
+namespace de {
 
 Block::Block(Size initialSize)
 {
@@ -175,3 +175,5 @@ void Block::clear()
 {
     QByteArray::clear();
 }
+
+} // namespace de

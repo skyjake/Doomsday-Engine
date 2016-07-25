@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "coretextnativefont_macx.h"
+#include "../src/text/coretextnativefont_macx.h"
 #include <de/Log>
 
 #include <QFont>

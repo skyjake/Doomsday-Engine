@@ -26,7 +26,7 @@
 
 #include <QTextStream>
 
-using namespace de;
+namespace de {
 
 DictionaryValue::DictionaryValue() : /*_iteration(0),*/ _validIteration(false)
 {}
@@ -314,3 +314,5 @@ void DictionaryValue::operator << (Reader &from)
         add(key.take(), value.take());
     }
 }
+
+} // namespace de

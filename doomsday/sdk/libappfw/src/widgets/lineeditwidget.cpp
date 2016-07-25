@@ -32,7 +32,7 @@ namespace de {
 
 using namespace ui;
 
-static TimeDelta const ANIM_SPAN = .5f;
+static TimeDelta const HEIGHT_ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 
@@ -509,7 +509,7 @@ int LineEditWidget::maximumWidth() const
 void LineEditWidget::numberOfLinesChanged(int /*lineCount*/)
 {
     // Changes in the widget's height are animated.
-    d->height->set(d->calculateHeight(), ANIM_SPAN);
+    d->height->set(d->calculateHeight(), HEIGHT_ANIM_SPAN);
 }
 
 void LineEditWidget::cursorMoved()

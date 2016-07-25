@@ -31,7 +31,7 @@
 #include <de/SignalAction>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 DENG_GUI_PIMPL(InputSettingsDialog)
 {

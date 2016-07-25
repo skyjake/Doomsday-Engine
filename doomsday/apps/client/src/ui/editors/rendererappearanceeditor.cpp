@@ -35,7 +35,7 @@
 #include <de/VariableSliderWidget>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
 DENG2_OBSERVES(ConfigProfiles, ProfileChange),

@@ -132,8 +132,6 @@ namespace internal
     static CurrentTarget currentTarget;
 }
 
-using namespace internal;
-
 DENG2_PIMPL(GLState)
 {
     BitField props;
@@ -203,11 +201,11 @@ DENG2_PIMPL(GLState)
         return gl::Zero;
     }
 
-    void glApply(Property prop)
+    void glApply(internal::Property prop)
     {
         switch (prop)
         {
-        case CullMode:
+        case internal::CullMode:
             switch (self.cull())
             {
             case gl::None:
@@ -224,50 +222,50 @@ DENG2_PIMPL(GLState)
             }
             break;
 
-        case DepthTest:
+        case internal::DepthTest:
             if (self.depthTest())
                 glEnable(GL_DEPTH_TEST);
             else
                 glDisable(GL_DEPTH_TEST);
             break;
 
-        case DepthFunc:
+        case internal::DepthFunc:
             glDepthFunc(glComp(self.depthFunc()));
             break;
 
-        case DepthWrite:
+        case internal::DepthWrite:
             if (self.depthWrite())
                 glDepthMask(GL_TRUE);
             else
                 glDepthMask(GL_FALSE);
             break;
 
-        case AlphaTest:
+        case internal::AlphaTest:
             if (self.alphaTest())
                 glEnable(GL_ALPHA_TEST);
             else
                 glDisable(GL_ALPHA_TEST);
             break;
 
-        case AlphaLimit:
+        case internal::AlphaLimit:
             glAlphaFunc(GL_GREATER, self.alphaLimit());
             break;
 
-        case Blend:
+        case internal::Blend:
             if (self.blend())
                 glEnable(GL_BLEND);
             else
                 glDisable(GL_BLEND);
             break;
 
-        case BlendFuncSrc:
-        case BlendFuncDest:
+        case internal::BlendFuncSrc:
+        case internal::BlendFuncDest:
             //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
             glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
                                 GL_ONE, GL_ONE);
             break;
 
-        case BlendOp:
+        case internal::BlendOp:
             switch (self.blendOp())
             {
             case gl::Add:
@@ -282,7 +280,7 @@ DENG2_PIMPL(GLState)
             }
             break;
 
-        case ColorMask:
+        case internal::ColorMask:
         {
             gl::ColorMask const mask = self.colorMask();
             glColorMask((mask & gl::WriteRed)   != 0,
@@ -292,11 +290,11 @@ DENG2_PIMPL(GLState)
             break;
         }
 
-        case Scissor:
-        case ScissorX:
-        case ScissorY:
-        case ScissorWidth:
-        case ScissorHeight:
+        case internal::Scissor:
+        case internal::ScissorX:
+        case internal::ScissorY:
+        case internal::ScissorWidth:
+        case internal::ScissorHeight:
         {
             if (self.scissor() || self.target().hasActiveRect())
             {
@@ -323,10 +321,10 @@ DENG2_PIMPL(GLState)
             break;
         }
 
-        case ViewportX:
-        case ViewportY:
-        case ViewportWidth:
-        case ViewportHeight:
+        case internal::ViewportX:
+        case internal::ViewportY:
+        case internal::ViewportWidth:
+        case internal::ViewportHeight:
         {
             Rectangleui const vp = self.target().scaleToActiveRect(self.viewport());
             //qDebug() << "glViewport" << vp.asText();
@@ -397,69 +395,69 @@ GLState &GLState::operator = (GLState const &other)
 
 GLState &GLState::setCull(gl::Cull mode)
 {
-    d->props.set(CullMode, duint(mode));
+    d->props.set(internal::CullMode, duint(mode));
     return *this;
 }
 
 GLState &GLState::setDepthTest(bool enable)
 {
-    d->props.set(DepthTest, enable);
+    d->props.set(internal::DepthTest, enable);
     return *this;
 }
 
 GLState &GLState::setDepthFunc(gl::Comparison func)
 {
-    d->props.set(DepthFunc, duint(func));
+    d->props.set(internal::DepthFunc, duint(func));
     return *this;
 }
 
 GLState &GLState::setDepthWrite(bool enable)
 {
-    d->props.set(DepthWrite, enable);
+    d->props.set(internal::DepthWrite, enable);
     return *this;
 }
 
 GLState &GLState::setAlphaTest(bool enable)
 {
-    d->props.set(AlphaTest, enable);
+    d->props.set(internal::AlphaTest, enable);
     return *this;
 }
 
 GLState &GLState::setAlphaLimit(float greaterThanValue)
 {
-    d->props.set(AlphaLimit, unsigned(clamp(0.f, greaterThanValue, 1.f) * 255));
+    d->props.set(internal::AlphaLimit, unsigned(clamp(0.f, greaterThanValue, 1.f) * 255));
     return *this;
 }
 
 GLState &GLState::setBlend(bool enable)
 {
-    d->props.set(Blend, enable);
+    d->props.set(internal::Blend, enable);
     return *this;
 }
 
 GLState &GLState::setBlendFunc(gl::Blend src, gl::Blend dest)
 {
-    d->props.set(BlendFuncSrc,  duint(src));
-    d->props.set(BlendFuncDest, duint(dest));
+    d->props.set(internal::BlendFuncSrc,  duint(src));
+    d->props.set(internal::BlendFuncDest, duint(dest));
     return *this;
 }
 
 GLState &GLState::setBlendFunc(gl::BlendFunc func)
 {
-    d->props.set(BlendFuncSrc,  duint(func.first));
-    d->props.set(BlendFuncDest, duint(func.second));
+    d->props.set(internal::BlendFuncSrc,  duint(func.first));
+    d->props.set(internal::BlendFuncDest, duint(func.second));
     return *this;
 }
 
 GLState &GLState::setBlendOp(gl::BlendOp op)
 {
-    d->props.set(BlendOp, duint(op));
+    d->props.set(internal::BlendOp, duint(op));
     return *this;
 }
 
 GLState &GLState::setColorMask(gl::ColorMask mask)
 {
-    d->props.set(ColorMask, duint(mask));
+    d->props.set(internal::ColorMask, duint(mask));
     return *this;
 }
 
@@ -477,10 +475,10 @@ GLState &GLState::setDefaultTarget()
 
 GLState &GLState::setViewport(Rectangleui const &viewportRect)
 {
-    d->props.set(ViewportX,      viewportRect.left());
-    d->props.set(ViewportY,      viewportRect.top());
-    d->props.set(ViewportWidth,  viewportRect.width());
-    d->props.set(ViewportHeight, viewportRect.height());
+    d->props.set(internal::ViewportX,      viewportRect.left());
+    d->props.set(internal::ViewportY,      viewportRect.top());
+    d->props.set(internal::ViewportWidth,  viewportRect.width());
+    d->props.set(internal::ViewportHeight, viewportRect.height());
     return *this;
 }
 
@@ -511,11 +509,11 @@ GLState &GLState::setScissor(Rectangleui const &newScissorRect)
         cumulative = newScissorRect;
     }
 
-    d->props.set(Scissor,       true);
-    d->props.set(ScissorX,      cumulative.left());
-    d->props.set(ScissorY,      cumulative.top());
-    d->props.set(ScissorWidth,  cumulative.width());
-    d->props.set(ScissorHeight, cumulative.height());
+    d->props.set(internal::Scissor,       true);
+    d->props.set(internal::ScissorX,      cumulative.left());
+    d->props.set(internal::ScissorY,      cumulative.top());
+    d->props.set(internal::ScissorWidth,  cumulative.width());
+    d->props.set(internal::ScissorHeight, cumulative.height());
     return *this;
 }
 
@@ -531,11 +529,11 @@ GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
 
 GLState &GLState::clearScissor()
 {
-    d->props.set(Scissor,       false);
-    d->props.set(ScissorX,      0u);
-    d->props.set(ScissorY,      0u);
-    d->props.set(ScissorWidth,  0u);
-    d->props.set(ScissorHeight, 0u);
+    d->props.set(internal::Scissor,       false);
+    d->props.set(internal::ScissorX,      0u);
+    d->props.set(internal::ScissorY,      0u);
+    d->props.set(internal::ScissorWidth,  0u);
+    d->props.set(internal::ScissorHeight, 0u);
     return *this;
 }
 
@@ -546,42 +544,42 @@ gl::Cull GLState::cull() const
 
 bool GLState::depthTest() const
 {
-    return d->props.asBool(DepthTest);
+    return d->props.asBool(internal::DepthTest);
 }
 
 gl::Comparison GLState::depthFunc() const
 {
-    return d->props.valueAs<gl::Comparison>(DepthFunc);
+    return d->props.valueAs<gl::Comparison>(internal::DepthFunc);
 }
 
 bool GLState::depthWrite() const
 {
-    return d->props.asBool(DepthWrite);
+    return d->props.asBool(internal::DepthWrite);
 }
 
 bool GLState::alphaTest() const
 {
-    return d->props.asBool(AlphaTest);
+    return d->props.asBool(internal::AlphaTest);
 }
 
 float GLState::alphaLimit() const
 {
-    return float(d->props.asUInt(AlphaLimit)) / 255.f;
+    return float(d->props.asUInt(internal::AlphaLimit)) / 255.f;
 }
 
 bool GLState::blend() const
 {
-    return d->props.asBool(Blend);
+    return d->props.asBool(internal::Blend);
 }
 
 gl::Blend GLState::srcBlendFunc() const
 {
-    return d->props.valueAs<gl::Blend>(BlendFuncSrc);
+    return d->props.valueAs<gl::Blend>(internal::BlendFuncSrc);
 }
 
 gl::Blend GLState::destBlendFunc() const
 {
-    return d->props.valueAs<gl::Blend>(BlendFuncDest);
+    return d->props.valueAs<gl::Blend>(internal::BlendFuncDest);
 }
 
 gl::BlendFunc GLState::blendFunc() const
@@ -591,12 +589,12 @@ gl::BlendFunc GLState::blendFunc() const
 
 gl::BlendOp GLState::blendOp() const
 {
-    return d->props.valueAs<gl::BlendOp>(BlendOp);
+    return d->props.valueAs<gl::BlendOp>(internal::BlendOp);
 }
 
 gl::ColorMask GLState::colorMask() const
 {
-    return d->props.valueAs<gl::ColorMask>(ColorMask);
+    return d->props.valueAs<gl::ColorMask>(internal::ColorMask);
 }
 
 GLTarget &GLState::target() const
@@ -610,10 +608,10 @@ GLTarget &GLState::target() const
 
 Rectangleui GLState::viewport() const
 {
-    return Rectangleui(d->props[ViewportX],
-                       d->props[ViewportY],
-                       d->props[ViewportWidth],
-                       d->props[ViewportHeight]);
+    return Rectangleui(d->props[internal::ViewportX],
+                       d->props[internal::ViewportY],
+                       d->props[internal::ViewportWidth],
+                       d->props[internal::ViewportHeight]);
 }
 
 Rectanglef GLState::normalizedViewport() const
@@ -633,10 +631,10 @@ bool GLState::scissor() const
 
 Rectangleui GLState::scissorRect() const
 {
-    return Rectangleui(d->props[ScissorX],
-                       d->props[ScissorY],
-                       d->props[ScissorWidth],
-                       d->props[ScissorHeight]);
+    return Rectangleui(d->props[internal::ScissorX],
+                       d->props[internal::ScissorY],
+                       d->props[internal::ScissorWidth],
+                       d->props[internal::ScissorHeight]);
 }
 
 void GLState::apply() const

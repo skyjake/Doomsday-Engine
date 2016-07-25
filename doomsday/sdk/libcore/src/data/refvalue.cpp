@@ -21,7 +21,7 @@
 #include "de/Variable"
 #include "de/Writer"
 
-using namespace de;
+namespace de {
 
 RefValue::RefValue(Variable *variable) : _variable(variable)
 {
@@ -187,3 +187,5 @@ Value::Text RefValue::typeId() const
 {
     return "Ref";
 }
+
+} // namespace de

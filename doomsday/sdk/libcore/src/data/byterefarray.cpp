@@ -20,7 +20,7 @@
 #include "de/ByteRefArray"
 #include <cstring>
 
-using namespace de;
+namespace de {
 
 ByteRefArray::ByteRefArray() : _writeBase(0), _readBase(0), _size(0)
 {}
@@ -98,3 +98,5 @@ void ByteRefArray::set(Offset at, Byte const *values, Size count)
     }
     std::memmove(_writeBase + at, values, count);
 }
+
+} // namespace de

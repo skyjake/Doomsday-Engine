@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <QTextStream>
 
-using namespace de;
+namespace de {
 
 ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
@@ -408,3 +408,5 @@ Value::Text ArrayValue::typeId() const
 {
     return "Array";
 }
+
+} // namespace de

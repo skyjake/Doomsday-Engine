@@ -18,21 +18,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "callbacktimer.h"
+#include "../src/core/callbacktimer.h"
 
-using namespace de;
+namespace de {
+namespace internal {
 
-internal::CallbackTimer::CallbackTimer(std::function<void ()> func, QObject *parent)
+CallbackTimer::CallbackTimer(std::function<void ()> func, QObject *parent)
     : QTimer(parent), _func(func)
 {
     setSingleShot(true);
     connect(this, SIGNAL(timeout()), this, SLOT(callbackAndDeleteLater()));
 }
 
-void internal::CallbackTimer::callbackAndDeleteLater()
+void CallbackTimer::callbackAndDeleteLater()
 {
     if (_func) _func();
 
     // The timer will be gone.
     this->deleteLater();
 }
+
+} // namespace internal
+} // namespace de

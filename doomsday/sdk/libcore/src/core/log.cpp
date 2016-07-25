@@ -25,7 +25,7 @@
 #include "de/Reader"
 #include "de/Writer"
 #include "de/FIFO"
-#include "logtextstyle.h"
+#include "../src/core/logtextstyle.h"
 
 #include <QMap>
 #include <QTextStream>

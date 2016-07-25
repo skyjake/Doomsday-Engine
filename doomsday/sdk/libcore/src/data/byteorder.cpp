@@ -19,12 +19,10 @@
 
 #include "de/data/byteorder.h"
 
-using de::ByteOrder;
-using de::BigEndianByteOrder;
-using de::LittleEndianByteOrder;
+namespace de {
 
-DENG2_PUBLIC BigEndianByteOrder de::bigEndianByteOrder;
-DENG2_PUBLIC LittleEndianByteOrder de::littleEndianByteOrder;
+DENG2_PUBLIC BigEndianByteOrder    bigEndianByteOrder;
+DENG2_PUBLIC LittleEndianByteOrder littleEndianByteOrder;
 
 void ByteOrder::hostToNetwork(de::dint16 const &hostValue, de::dint16 &networkValue) const
 {
@@ -198,7 +196,7 @@ void LittleEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duin
 #endif
 }
 
-de::duint64 de::swap64(de::duint64 const &n)
+de::duint64 swap64(de::duint64 const &n)
 {
     de::duint64 result;
     dbyte const *in = reinterpret_cast<dbyte const *>(&n);
@@ -215,3 +213,5 @@ de::duint64 de::swap64(de::duint64 const &n)
 
     return result;
 }
+
+} // namespace de

@@ -29,11 +29,10 @@
 
 namespace de {
 
-static TimeDelta const ANIM_SPAN = .5;
-
 DENG_GUI_PIMPL(NotificationAreaWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
+    static TimeDelta const ANIM_SPAN;
     AnimationRule *shift;
     QMap<GuiWidget *, RelayWidget *> shown;
 
@@ -147,6 +146,8 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         removeChild(*w);
     }
 };
+
+TimeDelta const NotificationAreaWidget::Impl::ANIM_SPAN = 0.5;
 
 NotificationAreaWidget::NotificationAreaWidget(String const &name)
     : GuiWidget(name)

@@ -21,7 +21,7 @@
 #include "de/Writer"
 #include "de/Reader"
 
-using namespace de;
+namespace de {
 
 NoneValue::NoneValue()
 {}
@@ -74,3 +74,5 @@ Value::Text NoneValue::typeId() const
 {
     return "None";
 }
+
+} // namespace de

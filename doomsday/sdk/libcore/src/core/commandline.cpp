@@ -33,7 +33,7 @@
 #include <cctype>
 #include <string.h>
 
-using namespace de;
+namespace de {
 
 static char *duplicateStringAsUtf8(QString const &s)
 {
@@ -487,3 +487,5 @@ dint CommandLine::ArgWithParams::size() const
 {
     return params.size();
 }
+
+} // namespace de

@@ -44,7 +44,7 @@ private:
     std::function<void ()> _func;
 };
 
-} // internal
-} // de
+} // namespace internal
+} // namespace de
 
 #endif // LIBDENG2_CALLBACKTIMER_H

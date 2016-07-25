@@ -19,7 +19,7 @@
 
 #include "de/FixedByteArray"
 
-using namespace de;
+namespace de {
 
 FixedByteArray::FixedByteArray(IByteArray &mainArray) 
     : ByteSubArray(mainArray, 0, mainArray.size())
@@ -46,3 +46,5 @@ void FixedByteArray::set(Offset at, Byte const *values, Size count)
     }
     ByteSubArray::set(at, values, count);
 }
+
+} // namespace de

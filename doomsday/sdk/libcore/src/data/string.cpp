@@ -27,7 +27,7 @@
 #include <cstdio>
 #include <cstdarg>
 
-using namespace de;
+namespace de {
 
 String::size_type const String::npos = -1;
 
@@ -721,7 +721,7 @@ String String::fromCP437(IByteArray const &byteArray)
     return conv;
 }
 
-size_t de::qchar_strlen(QChar const *str)
+size_t qchar_strlen(QChar const *str)
 {
     if (!str) return 0;
 
@@ -729,3 +729,5 @@ size_t de::qchar_strlen(QChar const *str)
     while (str->unicode() != 0) { ++str; ++len; }
     return len;
 }
+
+} // namespace de

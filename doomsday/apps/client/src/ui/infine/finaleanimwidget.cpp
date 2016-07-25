@@ -187,7 +187,7 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
     glEnd();
 }
 
-static inline MaterialVariantSpec const &uiMaterialSpec()
+static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
 {
     return App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
@@ -257,7 +257,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             if (ClientMaterial *mat = static_cast<ClientMaterial *>(f->texRef.material))
             {
                 /// @todo Utilize *all* properties of the Material.
-                MaterialAnimator &matAnimator      = mat->getAnimator(uiMaterialSpec());
+                MaterialAnimator &matAnimator      = mat->getAnimator(uiMaterialSpec_FinaleAnim());
 
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();

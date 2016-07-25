@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "qtnativefont.h"
+#include "../src/text/qtnativefont.h"
 
 #include <QFont>
 #include <QFontMetrics>

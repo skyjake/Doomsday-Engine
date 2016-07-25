@@ -35,7 +35,7 @@
 #include <QPoint>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 #ifndef MACOSX
 #  define USE_COLOR_DEPTH_CHOICE

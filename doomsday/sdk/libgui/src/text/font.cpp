@@ -25,10 +25,10 @@
 #include <QPainter>
 
 #if defined(MACOSX) && defined(MACOS_10_7)
-#  include "coretextnativefont_macx.h"
+#  include "../src/text/coretextnativefont_macx.h"
 namespace de { typedef CoreTextNativeFont PlatformFont; }
 #else
-#  include "qtnativefont.h"
+#  include "../src/text/qtnativefont.h"
 namespace de { typedef QtNativeFont PlatformFont; }
 #endif
 

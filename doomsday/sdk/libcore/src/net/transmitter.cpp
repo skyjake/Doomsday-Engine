@@ -23,7 +23,7 @@
 #include "de/Writer"
 #include "de/Reader"
 
-using namespace de;
+namespace de {
 
 Transmitter::~Transmitter()
 {}
@@ -46,3 +46,5 @@ void Transmitter::sendPacket(Packet const &packet)
     Writer(data) << packet;
     send(data);
 }
+
+} // namespace de

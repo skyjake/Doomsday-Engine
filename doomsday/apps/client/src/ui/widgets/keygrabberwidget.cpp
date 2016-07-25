@@ -25,7 +25,7 @@
 #include <de/ddstring.h>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 DENG_GUI_PIMPL(KeyGrabberWidget)
 {

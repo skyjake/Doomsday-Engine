@@ -61,7 +61,7 @@
 #include <QFileDialog>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 

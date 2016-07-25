@@ -29,7 +29,8 @@
 #include <list>
 #include <cmath>
 
-using namespace de;
+namespace de {
+
 using std::list;
 
 TextValue::TextValue(String const &initialValue)
@@ -214,3 +215,5 @@ Value::Text TextValue::typeId() const
 {
     return "Text";
 }
+
+} // namespace de

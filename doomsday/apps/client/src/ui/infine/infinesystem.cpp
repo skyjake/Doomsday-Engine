@@ -177,6 +177,7 @@ void InFineSystem::consoleRegister() // static
 
 // Public API (C Wrapper) ---------------------------------------------------------------
 
+#undef FI_Execute2
 finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
 {
     LOG_AS("InFine.Execute");
@@ -196,11 +197,13 @@ finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
     return App_InFineSystem().newFinale(flags, script, setupCmds).id();
 }
 
+#undef FI_Execute
 finaleid_t FI_Execute(char const *script, int flags)
 {
     return FI_Execute2(script, flags, 0);
 }
 
+#undef FI_ScriptTerminate
 void FI_ScriptTerminate(finaleid_t id)
 {
     LOG_AS("InFine.ScriptTerminate");
@@ -216,6 +219,7 @@ void FI_ScriptTerminate(finaleid_t id)
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
+#undef FI_ScriptActive
 dd_bool FI_ScriptActive(finaleid_t id)
 {
     LOG_AS("InFine.ScriptActive");
@@ -227,6 +231,7 @@ dd_bool FI_ScriptActive(finaleid_t id)
     return false;
 }
 
+#undef FI_ScriptSuspend
 void FI_ScriptSuspend(finaleid_t id)
 {
     LOG_AS("InFine.ScriptSuspend");
@@ -238,6 +243,7 @@ void FI_ScriptSuspend(finaleid_t id)
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
+#undef FI_ScriptResume
 void FI_ScriptResume(finaleid_t id)
 {
     LOG_AS("InFine.ScriptResume");
@@ -249,6 +255,7 @@ void FI_ScriptResume(finaleid_t id)
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
+#undef FI_ScriptSuspended
 dd_bool FI_ScriptSuspended(finaleid_t id)
 {
     LOG_AS("InFine.ScriptSuspended");
@@ -260,6 +267,7 @@ dd_bool FI_ScriptSuspended(finaleid_t id)
     return false;
 }
 
+#undef FI_ScriptFlags
 int FI_ScriptFlags(finaleid_t id)
 {
     LOG_AS("InFine.ScriptFlags");
@@ -271,6 +279,7 @@ int FI_ScriptFlags(finaleid_t id)
     return 0;
 }
 
+#undef FI_ScriptResponder
 int FI_ScriptResponder(finaleid_t id, void const *ev)
 {
     DENG2_ASSERT(ev);
@@ -283,6 +292,7 @@ int FI_ScriptResponder(finaleid_t id, void const *ev)
     return false;
 }
 
+#undef FI_ScriptCmdExecuted
 dd_bool FI_ScriptCmdExecuted(finaleid_t id)
 {
     LOG_AS("InFine.CmdExecuted");
@@ -294,6 +304,7 @@ dd_bool FI_ScriptCmdExecuted(finaleid_t id)
     return false;
 }
 
+#undef FI_ScriptRequestSkip
 dd_bool FI_ScriptRequestSkip(finaleid_t id)
 {
     LOG_AS("InFine.ScriptRequestSkip");
@@ -305,6 +316,7 @@ dd_bool FI_ScriptRequestSkip(finaleid_t id)
     return false;
 }
 
+#undef FI_ScriptIsMenuTrigger
 dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
 {
     LOG_AS("InFine.ScriptIsMenuTrigger");

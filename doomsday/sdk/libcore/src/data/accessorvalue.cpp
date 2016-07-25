@@ -19,7 +19,7 @@
 
 #include "de/AccessorValue"
 
-using namespace de;
+namespace de {
 
 Variable::Flags const AccessorValue::VARIABLE_MODE = Variable::AllowText |
     Variable::ReadOnly | Variable::NoSerialize;
@@ -103,3 +103,5 @@ Value::Text AccessorValue::typeId() const
 {
     return "Accessor";
 }
+
+} // namespace de

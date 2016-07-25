@@ -24,7 +24,7 @@
 
 #include <QByteArray>
 
-using namespace de;
+namespace de {
 
 Packet::Packet(Type const &t)
 {
@@ -69,3 +69,5 @@ bool Packet::checkType(Reader &from, String const &type)
     from.rewind();
     return !type.compareWithCase(ident);
 }
+
+} // namespace de

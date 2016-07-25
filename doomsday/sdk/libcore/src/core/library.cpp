@@ -30,7 +30,7 @@ typedef void *Handle;
 typedef QLibrary *Handle;
 #endif
 
-using namespace de;
+namespace de {
 
 char const *Library::DEFAULT_TYPE = "library/generic";
 
@@ -180,3 +180,5 @@ bool Library::hasSymbol(String const &name) const
     return dlsym(d->library, name.toAscii().constData()) != 0;
 #endif
 }
+
+} // namespace de

@@ -19,7 +19,7 @@
 
 #include "de/Date"
 
-using namespace de;
+namespace de {
 
 Date::Date()
 {}
@@ -45,8 +45,10 @@ String Date::asText() const
     return result;
 }
 
-QTextStream &de::operator << (QTextStream &os, Date const &d)
+QTextStream &operator << (QTextStream &os, Date const &d)
 {
     os << d.asDateTime().toString("yyyy-MM-dd");
     return os;
 }
+
+} // namespace de

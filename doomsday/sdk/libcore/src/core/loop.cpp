@@ -22,10 +22,10 @@
 #include "de/Log"
 #include "de/math.h"
 
-#include "callbacktimer.h"
-
 #include <QCoreApplication>
 #include <QTimer>
+
+#include "../src/core/callbacktimer.h"
 
 namespace de {
 

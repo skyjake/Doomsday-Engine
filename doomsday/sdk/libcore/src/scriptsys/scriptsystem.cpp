@@ -30,8 +30,8 @@
 #include "de/Version"
 #include "de/math.h"
 
-#include "bindings_core.h"
-#include "bindings_math.h"
+#include "../src/scriptsys/bindings_core.h"
+#include "../src/scriptsys/bindings_math.h"
 
 #include <QMap>
 
