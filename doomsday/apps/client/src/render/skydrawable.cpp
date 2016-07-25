@@ -53,11 +53,6 @@ static int sphereDetail     = 6;
 static float sphereDistance = 1600; ///< Map units.
 static int sphereRows       = 3;    ///< Per hemisphere.
 
-static inline ClientResources &resSys()
-{
-    return ClientApp::resources();
-}
-
 /**
  * Effective layer configuration used with both sphere and model drawing.
  */
@@ -507,7 +502,7 @@ DENG2_PIMPL(SkyDrawable)
             visModel.mf                          = modef;
             visModel.alwaysInterpolate           = true;
             visModel.shineTranslateWithViewerPos = true;
-            resSys().setModelDefFrame(*modef, mstate.frame);
+            ClientApp::resources().setModelDefFrame(*modef, mstate.frame);
 
             vis.light.ambientColor = Vector4f(skyModelDef.get("color"), 1);
 
@@ -541,7 +536,7 @@ DENG2_PIMPL(SkyDrawable)
 
             try
             {
-                if(FrameModelDef *modef = &resSys().modelDef(skyModelDef.gets("id")))
+                if(FrameModelDef *modef = &ClientApp::resources().modelDef(skyModelDef.gets("id")))
                 {
                     if(modef->subCount())
                     {
@@ -648,7 +643,7 @@ void SkyDrawable::cacheAssets()
         SkyLayer const *layer = d->sky->layer(i);
         if(world::Material *mat = layer->material())
         {
-            resSys().cache(mat->as<ClientMaterial>(), layerMaterialSpec(layer->isMasked()));
+            ClientApp::resources().cache(mat->as<ClientMaterial>(), layerMaterialSpec(layer->isMasked()));
         }
     }
 
@@ -659,7 +654,7 @@ void SkyDrawable::cacheAssets()
         // Is this model in use?
         if(FrameModelDef *modef = d->models[i].modef)
         {
-            resSys().cache(modef);
+            ClientApp::resources().cache(modef);
         }
     }
 }
@@ -695,7 +690,7 @@ void SkyDrawable::draw(Animator const *animator) const
 
 MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
 {
-    return resSys().materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+    return ClientApp::resources().materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
                                  0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
                                  0, -1, -1, false, true, false, false);
 }

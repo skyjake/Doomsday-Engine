@@ -108,16 +108,6 @@ static uint vertexBufferSize; ///< Current number of vertices supported by the r
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
-static inline ClientResources &resSys()
-{
-    return ClientApp::resources();
-}
-
 /*static void modelAspectModChanged()
 {
     /// @todo Reload and resize all models.
@@ -510,7 +500,7 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
         // Accumulate contributions from all affecting lights.
         dint numProcessed = 0;
         Vector3f accum[2];  // Begin with total darkness [color, extra].
-        rendSys().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
+        ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
                                                       , &rotatePitch, &normal
                                                       , &accum, &numProcessed] (VectorLightData const &vlight)
         {
@@ -659,7 +649,7 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
 
 static inline MaterialVariantSpec const &modelSkinMaterialSpec()
 {
-    return resSys().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+    return ClientApp::resources().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                  1, -2, -1, true, true, false, false);
 }
 
@@ -1115,7 +1105,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
-        rendSys().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
         {
             if(distFromViewer < 1600 - 8)
             {
@@ -1135,14 +1125,14 @@ void Rend_DrawModel(vissprite_t const &spr)
 
 TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
-    return resSys().textureSpec(TC_MODELSKIN_DIFFUSE,
+    return ClientApp::resources().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
 TextureVariantSpec const &Rend_ModelShinyTextureSpec()
 {
-    return resSys().textureSpec(TC_MODELSKIN_REFLECTION,
+    return ClientApp::resources().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
         false, false, false);
 }

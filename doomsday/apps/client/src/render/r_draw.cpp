@@ -50,24 +50,19 @@ enum {
     BG_BOTTOMLEFT
 };
 
-static bool inited = false;
+static bool initedDraw = false;
 static int borderSize;
 static de::Uri *borderGraphicsNames[9];
 
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
 
-static inline ClientResources &resSys()
-{
-    return ClientApp::resources();
-}
-
 static void loadViewBorderPatches()
 {
     borderPatches[0] = 0;
     for(uint i = 1; i < 9; ++i)
     {
-        borderPatches[i] = resSys().declarePatch(borderGraphicsNames[i]->path());
+        borderPatches[i] = ClientApp::resources().declarePatch(borderGraphicsNames[i]->path());
     }
 
     // Detemine the view border size.
@@ -90,7 +85,7 @@ static ClientTexture &borderTexture(int borderComp)
 #undef R_SetBorderGfx
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
-    DENG2_ASSERT(inited);
+    DENG2_ASSERT(initedDraw);
     if(!paths) return;
 
     for(uint i = 0; i < 9; ++i)
@@ -125,7 +120,7 @@ void R_InitViewWindow()
         R_SetupDefaultViewWindow(i);
     }
 
-    if(inited)
+    if(initedDraw)
     {
         for(int i = 0; i < 9; ++i)
         {
@@ -138,12 +133,12 @@ void R_InitViewWindow()
     de::zap(borderGraphicsNames);
     de::zap(borderPatches);
     borderSize = 0;
-    inited = true;
+    initedDraw = true;
 }
 
 void R_ShutdownViewWindow()
 {
-    if(!inited) return;
+    if(!initedDraw) return;
 
     for(int i = 0; i < 9; ++i)
     {
@@ -154,13 +149,13 @@ void R_ShutdownViewWindow()
     }
 
     de::zap(borderGraphicsNames);
-    inited = false;
+    initedDraw = false;
 }
 
 TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
     gl::Wrapping wrapT)
 {
-    return resSys().textureSpec(TC_UI, flags, 0, 0, 0,
+    return ClientApp::resources().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
 }
 
@@ -206,7 +201,7 @@ void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
 
 static MaterialVariantSpec const &bgMaterialSpec()
 {
-    return resSys().materialSpec(UiContext, 0, 0, 0, 0,
+    return ClientApp::resources().materialSpec(UiContext, 0, 0, 0, 0,
                                                     GL_REPEAT, GL_REPEAT, 0, -3,
                                                     0, false, false, false, false);
 }
@@ -214,7 +209,7 @@ static MaterialVariantSpec const &bgMaterialSpec()
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
 void R_DrawViewBorder()
 {
-    DENG2_ASSERT(inited);
+    DENG2_ASSERT(initedDraw);
 
     viewport_t const *port = R_CurrentViewPort();
     viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();

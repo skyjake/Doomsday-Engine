@@ -56,14 +56,9 @@ dfloat weaponFOVShift    = 45;
 dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
-static inline ClientResources &resSys()
-{
-    return ClientApp::resources();
-}
-
 static MaterialVariantSpec const &pspriteMaterialSpec()
 {
-    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return ClientApp::resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
@@ -78,7 +73,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     DENG2_ASSERT(psp.statePtr);
     state_t const &state = *psp.statePtr;
 
-    Record const &spriteView = defn::Sprite(resSys().sprite(state.sprite, state.frame)).view(0);
+    Record const &spriteView = defn::Sprite(ClientApp::resources().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
     MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))

@@ -20,9 +20,9 @@
 
 using namespace de;
 
-static String const DEF_TIMELINE("timeline");
-
 namespace render {
+
+static String const DEF_TIMELINE("timeline");
 
 Model::AnimSequence::AnimSequence(String const &name, Record const &def)
     : name(name)

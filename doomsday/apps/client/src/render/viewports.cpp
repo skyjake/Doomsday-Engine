@@ -98,11 +98,6 @@ static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
 
 static dint resetNextViewer = true;
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
 dint R_FrameCount()
 {
     return frameCount;
@@ -1324,7 +1319,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
 
     if(!(devNoCulling || P_IsInVoid(DD_Player(displayPlayer))))
     {
-        if(!rendSys().angleClipper().isPointVisible(origin))
+        if(!ClientApp::renderSystem().angleClipper().isPointVisible(origin))
         {
             markLumobjClipped(*lum); // Won't have a halo.
         }

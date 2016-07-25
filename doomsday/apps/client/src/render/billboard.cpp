@@ -50,11 +50,6 @@ dint noSpriteZWrite;
 
 dbyte devNoSprites;
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
 static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 {
     glBegin(GL_QUADS);
@@ -260,7 +255,7 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
             Vector3f const normal(normals[i].xyz);
             Vector3f accum[2];  // Begin with total darkness [color, extra].
             dint numProcessed = 0;
-            rendSys().forAllVectorLights(lightListIdx, [&maxLights, &normal
+            ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &normal
                                          , &accum, &numProcessed](VectorLightData const &vlight)
             {
                 numProcessed += 1;
@@ -622,7 +617,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
-        rendSys().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
         {
             if(distFromViewer < 1600 - 8)
             {

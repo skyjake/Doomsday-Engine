@@ -66,11 +66,6 @@ dint rendFakeRadio              = true;  ///< cvar
 static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
 byte devFakeRadioUpdate         = true;  ///< cvar
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
 /**
  * Returns the "shadow darkness" (factor) for the given @a ambientLight (level), derived
  * from values in Config.
@@ -755,12 +750,12 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;
     listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(tp.texture), gl::ClampToEdge, gl::ClampToEdge);
-    DrawList &shadowList = rendSys().drawLists().find(listSpec);
+    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
     // Walls with edge divisions mean two trifans.
     if(leftEdge.divisionCount() || rightEdge.divisionCount())
     {
-        Store &buffer = rendSys().buffer();
+        Store &buffer = ClientApp::renderSystem().buffer();
         // Right fan.
         {
             duint const numVerts = 3 + rightEdge.divisionCount();
@@ -846,7 +841,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     }
     else
     {
-        Store &buffer = rendSys().buffer();
+        Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(4);
         DrawList::Indices indices;
         indices.resize(4);
@@ -1028,7 +1023,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
-    DrawList &shadowList = rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
+    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
 
     // Process all LineSides linked to this subspace as potential shadow casters.
     subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
@@ -1058,7 +1053,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
                         bool const haveFloor = plane.surface().normal()[2] > 0;
 
                         // Build geometry.
-                        Store &buffer = rendSys().buffer();
+                        Store &buffer = ClientApp::renderSystem().buffer();
                         gl::Primitive primitive;
                         DrawList::Indices indices = makeFlatShadowGeometry(buffer, primitive, shadowEdges, shadowDark, haveFloor);
 

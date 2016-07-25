@@ -100,7 +100,7 @@ typedef struct {
 static void drawChar(uchar ch, float posX, float posY, AbstractFont *font, int alignFlags, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
-static int inited = false;
+static int initedFont = false;
 
 static char smallTextBuffer[FR_SMALL_TEXT_BUFFER_SIZE+1];
 static char *largeTextBuffer = NULL;
@@ -110,7 +110,7 @@ static int typeInTime;
 
 static void errorIfNotInited(const char* callerName)
 {
-    if(inited) return;
+    if(initedFont) return;
     App_Error("%s: font renderer module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
@@ -131,18 +131,18 @@ static inline fr_state_attributes_t *currentAttribs(void)
 
 void FR_Shutdown(void)
 {
-    if(!inited) return;
-    inited = false;
+    if(!initedFont) return;
+    initedFont = false;
 }
 
 dd_bool FR_Available(void)
 {
-    return inited;
+    return initedFont;
 }
 
 void FR_Ticker(timespan_t /*ticLength*/)
 {
-    if(!inited)
+    if(!initedFont)
         return;
 
     // Restricted to fixed 35 Hz ticks.
@@ -1539,10 +1539,10 @@ void FR_DrawCharXY(unsigned char ch, int x, int y)
 void FR_Init(void)
 {
     // No reinitializations...
-    if(inited) return;
+    if(initedFont) return;
     if(isDedicated) return;
 
-    inited = true;
+    initedFont = true;
     fr.fontNum = 0;
     FR_LoadDefaultAttrib();
     typeInTime = 0;

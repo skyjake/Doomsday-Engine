@@ -44,11 +44,6 @@
 
 using namespace de;
 
-static inline ClientResources &resSys()
-{
-    return App_ResourceSystem();
-}
-
 // m_misc.c
 DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 
@@ -58,7 +53,7 @@ DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 #ifdef __CLIENT__
     if(FrameModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
     {
-        resSys().cache(modelDef);
+        App_ResourceSystem().cache(modelDef);
     }
 #endif
 }
@@ -89,7 +84,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
         {
             if(state_t *state = Def_GetState(i))
             {
-                resSys().cache(state->sprite, spec);
+                App_ResourceSystem().cache(state->sprite, spec);
             }
         }
         /// @todo What about sounds?
@@ -114,7 +109,7 @@ DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
 #ifdef __CLIENT__
-static inline MaterialVariantSpec const &pspriteMaterialSpec()
+static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 {
     return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              0, 1, -1, false, true, true, false);
@@ -130,14 +125,14 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 
     de::zapPtr(info);
 
-    if(!resSys().hasSprite(id, frame))
+    if(!App_ResourceSystem().hasSprite(id, frame))
     {
         LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i")
             << id << frame;
         return false;
     }
 
-    defn::Sprite sprite(resSys().sprite(id, frame));
+    defn::Sprite sprite(App_ResourceSystem().sprite(id, frame));
     if(!sprite.hasView(0))
     {
         LOG_RES_WARNING("Sprite id:%i frame:%i has no front view")
@@ -154,7 +149,7 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialAnimator &matAnimator = reinterpret_cast<world::Material *>(info->material)->as<ClientMaterial>()
-            .getAnimator(pspriteMaterialSpec());
+            .getAnimator(pspriteMaterialSpec_GetSpriteInfo());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
     Vector2ui const &matDimensions = matAnimator.dimensions();

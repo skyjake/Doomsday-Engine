@@ -57,11 +57,6 @@
 using namespace de;
 using namespace world;
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vector4f &ambientColor, duint *vLightListIdx)
 {
@@ -261,7 +256,7 @@ void R_ProjectSprite(mobj_t &mob)
                                 v1, v2);
 
     // Not visible?
-    if(!rendSys().angleClipper().checkRangeFromViewRelPoints(v1, v2))
+    if(!ClientApp::renderSystem().angleClipper().checkRangeFromViewRelPoints(v1, v2))
     {
         coord_t const MAX_OBJECT_RADIUS = 128;
 
