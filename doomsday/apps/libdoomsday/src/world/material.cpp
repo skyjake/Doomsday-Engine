@@ -31,6 +31,10 @@
 #include <QtAlgorithms>
 #include <de/Log>
 
+using namespace de;
+
+namespace world {
+
 namespace internal
 {
     enum MaterialFlag
@@ -46,12 +50,7 @@ namespace internal
     Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
 }
-
-using namespace internal;
-using namespace de;
-
-namespace world {
-
+    
 int Material::Layer::stageCount() const
 {
     return _stages.count();
@@ -97,7 +96,7 @@ DENG2_PIMPL(Material)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
-    MaterialFlags flags = DefaultFlags;
+    internal::MaterialFlags flags = internal::DefaultFlags;
 
     /// Layers (owned), from bottom-most to top-most draw order.
     QList<Layer *> layers;
@@ -248,35 +247,35 @@ void Material::setWidth(int newWidth)
 
 bool Material::isDrawable() const
 {
-    return d->flags.testFlag(DontDraw) == false;
+    return d->flags.testFlag(internal::DontDraw) == false;
 }
 
 bool Material::isSkyMasked() const
 {
-    return d->flags.testFlag(SkyMasked);
+    return d->flags.testFlag(internal::SkyMasked);
 }
 
 bool Material::isValid() const
 {
-    return d->flags.testFlag(Valid);
+    return d->flags.testFlag(internal::Valid);
 }
 
 void Material::markDontDraw(bool yes)
 {
-    if (yes) d->flags |=  DontDraw;
-    else     d->flags &= ~DontDraw;
+    if (yes) d->flags |=  internal::DontDraw;
+    else     d->flags &= ~internal::DontDraw;
 }
 
 void Material::markSkyMasked(bool yes)
 {
-    if (yes) d->flags |=  SkyMasked;
-    else     d->flags &= ~SkyMasked;
+    if (yes) d->flags |=  internal::SkyMasked;
+    else     d->flags &= ~internal::SkyMasked;
 }
 
 void Material::markValid(bool yes)
 {
-    if (yes) d->flags |=  Valid;
-    else     d->flags &= ~Valid;
+    if (yes) d->flags |=  internal::Valid;
+    else     d->flags &= ~internal::Valid;
 }
 
 void Material::clearAllLayers()
