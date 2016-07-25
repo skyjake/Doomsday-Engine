@@ -139,7 +139,7 @@ DENG2_PIMPL(GLState)
 
     Impl(Public *i)
         : Base(i)
-        , props(glStateProperties)
+        , props(internal::glStateProperties)
         , target(0)
     {}
 
@@ -343,27 +343,27 @@ DENG2_PIMPL(GLState)
 
     void removeRedundancies(BitField::Ids &changed)
     {
-        if (changed.contains(BlendFuncSrc) && changed.contains(BlendFuncDest))
+        if (changed.contains(internal::BlendFuncSrc) && changed.contains(internal::BlendFuncDest))
         {
-            changed.remove(BlendFuncDest);
+            changed.remove(internal::BlendFuncDest);
         }
 
-        if (changed.contains(ScissorX) || changed.contains(ScissorY) ||
-           changed.contains(ScissorWidth) || changed.contains(ScissorHeight))
+        if (changed.contains(internal::ScissorX) || changed.contains(internal::ScissorY) ||
+            changed.contains(internal::ScissorWidth) || changed.contains(internal::ScissorHeight))
         {
-            changed.insert(ScissorX);
-            changed.remove(ScissorY);
-            changed.remove(ScissorWidth);
-            changed.remove(ScissorHeight);
+            changed.insert(internal::ScissorX);
+            changed.remove(internal::ScissorY);
+            changed.remove(internal::ScissorWidth);
+            changed.remove(internal::ScissorHeight);
         }
 
-        if (changed.contains(ViewportX) || changed.contains(ViewportY) ||
-           changed.contains(ViewportWidth) || changed.contains(ViewportHeight))
+        if (changed.contains(internal::ViewportX) || changed.contains(internal::ViewportY) ||
+            changed.contains(internal::ViewportWidth) || changed.contains(internal::ViewportHeight))
         {
-            changed.insert(ViewportX);
-            changed.remove(ViewportY);
-            changed.remove(ViewportWidth);
-            changed.remove(ViewportHeight);
+            changed.insert(internal::ViewportX);
+            changed.remove(internal::ViewportY);
+            changed.remove(internal::ViewportWidth);
+            changed.remove(internal::ViewportHeight);
         }
     }
 };
@@ -539,7 +539,7 @@ GLState &GLState::clearScissor()
 
 gl::Cull GLState::cull() const
 {
-    return d->props.valueAs<gl::Cull>(CullMode);
+    return d->props.valueAs<gl::Cull>(internal::CullMode);
 }
 
 bool GLState::depthTest() const
@@ -626,7 +626,7 @@ Rectanglef GLState::normalizedViewport() const
 
 bool GLState::scissor() const
 {
-    return d->props.asBool(Scissor);
+    return d->props.asBool(internal::Scissor);
 }
 
 Rectangleui GLState::scissorRect() const
@@ -650,16 +650,16 @@ void GLState::apply() const
     GLTarget *newTarget = &target();
     DENG2_ASSERT(newTarget != 0);
 
-    if (currentTarget != newTarget)
+    if (internal::currentTarget != newTarget)
     {
-        GLTarget const *oldTarget = currentTarget;
+        GLTarget const *oldTarget = internal::currentTarget;
         if (oldTarget)
         {
             oldTarget->glRelease();
         }
 
-        currentTarget = newTarget;
-        currentTarget.get()->glBind();
+        internal::currentTarget = newTarget;
+        internal::currentTarget.get()->glBind();
 
         if ((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
         {
@@ -673,7 +673,7 @@ void GLState::apply() const
 
     // Determine which properties have changed.
     BitField::Ids changed;
-    if (currentProps.isEmpty())
+    if (internal::currentProps.isEmpty())
     {
         // Apply everything.
         changed = d->props.elements().ids();
@@ -681,12 +681,12 @@ void GLState::apply() const
     else
     {
         // Just apply the changed parts of the state.
-        changed = d->props.delta(currentProps);
+        changed = d->props.delta(internal::currentProps);
 
         if (forceViewportAndScissor)
         {
-            changed.insert(ViewportX);
-            changed.insert(ScissorX);
+            changed.insert(internal::ViewportX);
+            changed.insert(internal::ScissorX);
         }
     }
 
@@ -697,9 +697,9 @@ void GLState::apply() const
         // Apply the changed properties.
         foreach (BitField::Id id, changed)
         {
-            d->glApply(Property(id));
+            d->glApply(internal::Property(id));
         }
-        currentProps = d->props;
+        internal::currentProps = d->props;
     }
 
 #if 0
@@ -739,14 +739,14 @@ void GLState::apply() const
 
 void GLState::considerNativeStateUndefined()
 {
-    currentProps.clear();
-    currentTarget = 0;
+    internal::currentProps.clear();
+    internal::currentTarget = 0;
 }
 
 GLState &GLState::current()
 {
-    DENG2_ASSERT(!stack.isEmpty());
-    return *stack.last();
+    DENG2_ASSERT(!internal::stack.isEmpty());
+    return *internal::stack.last();
 }
 
 GLState &GLState::push()
@@ -764,18 +764,18 @@ GLState &GLState::pop()
 
 void GLState::push(GLState *state)
 {
-    stack.append(state);
+    internal::stack.append(state);
 }
 
 GLState *GLState::take()
 {
-    DENG2_ASSERT(stack.size() > 1);
-    return stack.takeLast();
+    DENG2_ASSERT(internal::stack.size() > 1);
+    return internal::stack.takeLast();
 }
 
 dsize GLState::stackDepth()
 {
-    return stack.size();
+    return internal::stack.size();
 }
 
 } // namespace de
