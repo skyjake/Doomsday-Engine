@@ -26,8 +26,6 @@
 
 #ifdef WIN32
 
-using namespace de;
-
 static bool isProcessRunning(char const *name)
 {
     QProcess wmic;
@@ -46,6 +44,8 @@ static bool isProcessRunning(char const *name)
 
 dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
 {
+    using namespace de;
+
     while (isProcessRunning(processName))
     {
         MessageDialog *msg = new MessageDialog;

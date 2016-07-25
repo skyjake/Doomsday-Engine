@@ -21,6 +21,10 @@
 
 #include "../libdoomsday.h"
 #include <stdio.h>
+#ifdef WIN32
+#  include <io.h> // before the defines
+#  include <direct.h> 
+#endif
 
 #define fopen  FS_Win32_fopen
 #define access FS_Win32_access

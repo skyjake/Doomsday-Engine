@@ -56,7 +56,7 @@ endmacro ()
 macro (enable_cxx11 target)
     if (NOT MSVC)
         if (NOT CMAKE_VERSION VERSION_LESS 3.2 OR # Clang/GCC & CMake 3.2+
-            (NOT CMAKE_VERSION VERSION_LESS 3.1 AND 
+            (NOT CMAKE_VERSION VERSION_LESS 3.1 AND
                 NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
             set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
             set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
@@ -71,11 +71,11 @@ endmacro (enable_cxx11)
 
 macro (strict_warnings target)
     if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-        set_property (TARGET ${target} 
+        set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra -pedantic
         )
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set_property (TARGET ${target} 
+        set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra -Wno-deprecated-declarations
         )
     endif ()
@@ -85,7 +85,7 @@ macro (relaxed_warnings target)
     if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
         set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS
-                -Wno-missing-field-initializers 
+                -Wno-missing-field-initializers
                 -Wno-missing-braces
                 -Wno-nested-anon-types
                 -Wno-gnu-anonymous-struct
@@ -94,7 +94,7 @@ macro (relaxed_warnings target)
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS
-                -Wno-missing-field-initializers 
+                -Wno-missing-field-initializers
         )
     endif ()
 endmacro (relaxed_warnings)
@@ -102,7 +102,7 @@ endmacro (relaxed_warnings)
 # Apply cotire to improve build efficiency.
 macro (deng_cotire target precompiledHeader)
     if (DENG_ENABLE_COTIRE)
-        set_target_properties (${target} PROPERTIES 
+        set_target_properties (${target} PROPERTIES
             COTIRE_ADD_UNITY_BUILD        FALSE
             COTIRE_CXX_PREFIX_HEADER_INIT ${precompiledHeader}
         )
@@ -187,7 +187,7 @@ function (deng_filter_platform_sources outName)
     list (REMOVE_AT ARGV 0) # outName
     foreach (fn ${ARGV})
         set (filtered NO)
-        if ("${fn}" MATCHES ".*_windows\\..*" OR 
+        if ("${fn}" MATCHES ".*_windows\\..*" OR
             "${fn}" MATCHES ".*/windows/.*") # Windows-specific
             if (NOT WIN32)
                 set (filtered YES)
@@ -224,21 +224,21 @@ macro (deng_merge_sources srcName globbing)
     if (DENG_ENABLE_TURBO)
         file (GLOB _files ${globbing})
         deng_filter_platform_sources (_mergingSources ${_files})
-        set (_combo ${CMAKE_CURRENT_BINARY_DIR}/src_${srcName}_combo.cpp)
+        set (_turbo ${CMAKE_CURRENT_BINARY_DIR}/src_${srcName}_turbo.cpp)
         add_custom_command (
-            OUTPUT  ${_combo}
-            COMMAND ${DENG_CMAKE_DIR}/merge_sources.py ${_combo} ${_mergingSources}
+            OUTPUT  ${_turbo}
+            COMMAND ${PYTHON_EXECUTABLE} "${DENG_CMAKE_DIR}/merge_sources.py" ${_turbo} ${_mergingSources}
             DEPENDS ${_mergingSources}
             COMMENT "Merging sources ${globbing}"
         )
         # The original source files should not be compiled any more.
         # They remain part of the project so they are available in the IDE.
         set_property (SOURCE ${_mergingSources} PROPERTY HEADER_FILE_ONLY YES)
-        list (APPEND SOURCES ${_combo};${_mergingSources})
+        list (APPEND SOURCES ${_turbo};${_mergingSources})
         set (fn)
         set (_files)
         set (_mergingSources)
-        set (_combo)
+        set (_turbo)
     else ()
         # Simply use the source files as is.
         deng_glob_sources (SOURCES ${globbing})
@@ -246,7 +246,7 @@ macro (deng_merge_sources srcName globbing)
 endmacro()
 
 # Set up resource bundling on OS X.
-# The arguments are a list of resource files/directories with the 
+# The arguments are a list of resource files/directories with the
 # destination directory separated by a comma:
 #
 #   res/macx/shell.icns,Resources
@@ -254,7 +254,7 @@ endmacro()
 # If the destionation is omitted, it defaults to "Resources".
 #
 # If the file path is the name of an existing target, its location
-# is used as the path.    
+# is used as the path.
 #
 # DENG_RESOURCES is set to a list of the individual source files
 # to be added to add_executable().
@@ -622,10 +622,10 @@ set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
 include (Macros)
 fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/Contents/MacOS/${target}\"
     \"${libs}\")\n")
-    add_custom_command (TARGET ${target} POST_BUILD 
+    add_custom_command (TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -DINT_DIR=${CMAKE_CFG_INTDIR} -P "${scriptName}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )    
+    )
 endfunction (deng_bundle_install_names)
 
 # OS X: Install the libraries of a dependency target into the application bundle.
@@ -683,13 +683,13 @@ function (deng_install_deployqt target)
             if (\"\${CMAKE_INSTALL_CONFIG_NAME}\" MATCHES \"([Dd][Ee][Bb])\")
                 set (deployQtOptions -no-strip)
             endif ()
-            execute_process (COMMAND ${MACDEPLOYQT_COMMAND} 
+            execute_process (COMMAND ${MACDEPLOYQT_COMMAND}
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\" \${deployQtOptions}
                 OUTPUT_QUIET ERROR_QUIET)
-            ")        
+            ")
     elseif (WIN32)
         if (NOT WINDEPLOYQT_COMMAND)
-            message (FATAL_ERROR "windeployqt not available")            
+            message (FATAL_ERROR "windeployqt not available")
         endif ()
         set (script "${CMAKE_CURRENT_BINARY_DIR}/deploy-${target}.bat")
         string (REPLACE "/" "\\" qtPath ${QT_PREFIX_DIR})
@@ -703,8 +703,8 @@ function (deng_install_deployqt target)
     endif ()
 endfunction (deng_install_deployqt)
 
-# Installs a tool executable into the approprite place(s). 
-# OS X: Also fix the Qt framework install names that wouldn't be touched by 
+# Installs a tool executable into the approprite place(s).
+# OS X: Also fix the Qt framework install names that wouldn't be touched by
 # the qt deploy utility because they aren't the app bundle binary.
 function (deng_install_tool target)
     # OS X: Also install to the client application bundle.
@@ -754,7 +754,7 @@ endfunction (deng_install_tool)
 # bundled with the applicatino.
 macro (deng_install_library library)
     if (UNIX AND NOT APPLE)
-        string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})            
+        string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
             DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
@@ -801,7 +801,7 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
                 -o${_name} ${ameSourceDir}/${mainSrc}
             DEPENDS ${_ameSrc}
             COMMENT "Compiling ${descText}..."
-        )        
+        )
         if (${type} STREQUAL MAN)
             install (FILES ${file} DESTINATION ${DENG_INSTALL_MAN_DIR})
         elseif (UNIX)

@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import sys, codecs
+import sys, codecs, platform
 
 BOM = u'\uFEFF'
 includes = []
@@ -15,7 +15,7 @@ for fn in sys.argv[2:]:
     for line in source.split(u'\n'):
         if line.startswith(BOM):
             line = line[1:]
-        original_line = line
+        original_line = line.rstrip()
         line = line.strip()
         if len(line) == 0: continue
         if line.startswith(u'#if'):
@@ -31,7 +31,14 @@ for fn in sys.argv[2:]:
         else:
             in_body = True
             code.append(original_line)
-            
+
+if platform.system() == 'Windows':
+    # All kinds of wacky useless defines.
+    includes.append(u'#undef min')
+    includes.append(u'#undef max')
+    includes.append(u'#undef small')
+    includes.append(u'#undef SearchPath')
+
 # Compress braces.
 compressed = []
 for i in range(len(code)):
@@ -41,12 +48,14 @@ for i in range(len(code)):
     else:
         compressed.append(code[i])
 code = compressed
-    
+
+NL = u'\n'
+
 out_file = codecs.open(sys.argv[1], 'w', 'utf-8')
 out_file.write(BOM) # BOM
 # Merged preamble.
-out_file.write(u'\n'.join(includes) + u'\n')
-out_file.write(u'\n'.join(usings) + u'\n')
+out_file.write(NL.join(includes) + NL)
+out_file.write(NL.join(usings) + NL)
 # Merged source lines.
-out_file.write(u'\n'.join(code) + u'\n')
+out_file.write(NL.join(code) + NL)
 out_file.close()
