@@ -35,8 +35,6 @@ using namespace common;
 #define PAUSEF_PAUSED           0x1
 #define PAUSEF_FORCED_PERIOD    0x2
 
-#define READONLYCVAR        (CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE)
-
 int paused;
 
 static int gamePauseWhenFocusLost; // cvar
@@ -199,10 +197,14 @@ void Pause_Register()
 
     C_CMD("pause", "", Pause);
 
+#define READONLYCVAR    (CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE)
+
     C_VAR_INT("game-paused",              &paused,                     READONLYCVAR, 0,  0);
     C_VAR_INT("game-pause-focuslost",     &gamePauseWhenFocusLost,     0,            0,  1);
     C_VAR_INT("game-unpause-focusgained", &gameUnpauseWhenFocusGained, 0,            0,  1);
     C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            -1, 70);
+    
+#undef READONLYCVAR
 }
 
 void NetSv_Paused(int pauseState)

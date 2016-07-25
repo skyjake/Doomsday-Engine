@@ -3013,6 +3013,8 @@ static void registerGameStatusCVars()
 #endif
 }
 
+#undef READONLYCVAR
+
 void G_ConsoleRegister()
 {
     GameSession::consoleRegister();

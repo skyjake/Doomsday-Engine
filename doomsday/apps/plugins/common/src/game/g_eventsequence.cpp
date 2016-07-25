@@ -107,7 +107,7 @@ public:
         DD_Execute(true/*silent*/, Str_Text(cmd));
     }
 private:
-    Str commandTemplate;
+    ::Str commandTemplate;
 };
 
 class EventSequence
@@ -212,7 +212,7 @@ public:
     }
 
 private:
-    Str sequence;
+    ::Str sequence;
     ISequenceCompleteHandler& handler;
     int pos;
     int numArgs;
