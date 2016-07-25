@@ -26,7 +26,7 @@
 
 using namespace de;
 
-static patchid_t pIcon[NUMARMOR];
+static patchid_t pArmorIcon[NUMARMOR];
 
 static void ArmorIconsWidget_Draw(guidata_armoricons_t *icons, Point2Raw const *offset)
 {
@@ -104,7 +104,7 @@ void guidata_armoricons_t::draw(Vector2i const &offset) const
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity * opacity);
-        GL_DrawPatch(::pIcon[i], origin + Vector2i(X_OFFSET + 31 * i, Y_OFFSET));
+        GL_DrawPatch(::pArmorIcon[i], origin + Vector2i(X_OFFSET + 31 * i, Y_OFFSET));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -127,7 +127,7 @@ void guidata_armoricons_t::updateGeometry()
     for(dint i = 0, x = 0; i < NUMARMOR; ++i, x += 31)
     {
         if(!_armorPoints[i]) continue;
-        if(!R_GetPatchInfo(::pIcon[i], &info)) continue;
+        if(!R_GetPatchInfo(::pArmorIcon[i], &info)) continue;
 
         info.geometry.origin.x = x;
         info.geometry.origin.y = 0;
@@ -142,6 +142,6 @@ void guidata_armoricons_t::prepareAssets()  // static
 {
     for(dint i = 0; i < NUMARMOR; ++i)
     {
-        ::pIcon[i] = R_DeclarePatch(String("ARMSLOT%1").arg(i + 1).toUtf8().constData());
+        ::pArmorIcon[i] = R_DeclarePatch(String("ARMSLOT%1").arg(i + 1).toUtf8().constData());
     }
 }

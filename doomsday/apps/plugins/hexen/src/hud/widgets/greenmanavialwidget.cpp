@@ -26,7 +26,7 @@
 
 using namespace de;
 
-static patchid_t pBackground[2];  ///< [ dim, bright ]
+static patchid_t pGreenBackground[2];  ///< [ dim, bright ]
 
 static void GreenManaVialWidget_Draw(guidata_greenmanavial_t *vial, Point2Raw const *offset)
 {
@@ -104,7 +104,7 @@ void guidata_greenmanavial_t::draw(Vector2i const &offset) const
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pBackground[_backgroundIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
+        GL_DrawPatch(::pGreenBackground[_backgroundIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -131,7 +131,7 @@ void guidata_greenmanavial_t::updateGeometry()
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     patchinfo_t info;
-    if(R_GetPatchInfo(::pBackground[_backgroundIdx], &info))
+    if(R_GetPatchInfo(::pGreenBackground[_backgroundIdx], &info))
     {
         Rect_SetWidthHeight(&geometry(), info.geometry.size.width  * ::cfg.common.statusbarScale,
                                          info.geometry.size.height * ::cfg.common.statusbarScale);
@@ -140,6 +140,6 @@ void guidata_greenmanavial_t::updateGeometry()
 
 void guidata_greenmanavial_t::prepareAssets()  // static
 {
-    ::pBackground[0] = R_DeclarePatch("MANAVL2D");
-    ::pBackground[1] = R_DeclarePatch("MANAVL2");
+    ::pGreenBackground[0] = R_DeclarePatch("MANAVL2D");
+    ::pGreenBackground[1] = R_DeclarePatch("MANAVL2");
 }

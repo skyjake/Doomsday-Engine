@@ -27,7 +27,7 @@ using namespace de;
 
 #define FRAME_COUNT             ( 16 )  ///< min 1
 
-static patchid_t pIcon[FRAME_COUNT];
+static patchid_t pServantIcon[FRAME_COUNT];
 
 static void ServantWidget_Draw(guidata_servant_t *svnt, Point2Raw const *offset)
 {
@@ -65,7 +65,7 @@ void guidata_servant_t::tick(timespan_t /*elapsed*/)
     if(plr.powers[PT_MINOTAUR] &&
        (plr.powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr.powers[PT_MINOTAUR] & 16)))
     {
-        _patchId = ::pIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
+        _patchId = ::pServantIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
     }
 }
 
@@ -110,6 +110,6 @@ void guidata_servant_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pIcon[i] = R_DeclarePatch(String("SPMINO%1").arg(i).toUtf8().constData());
+        ::pServantIcon[i] = R_DeclarePatch(String("SPMINO%1").arg(i).toUtf8().constData());
     }
 }

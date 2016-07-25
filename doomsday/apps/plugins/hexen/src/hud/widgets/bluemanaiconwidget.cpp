@@ -26,7 +26,7 @@
 
 using namespace de;
 
-static patchid_t pIcon[2];  ///< [ dim, bright ]
+static patchid_t pBlueManaIcon[2];  ///< [ dim, bright ]
 
 guidata_bluemanaicon_t::guidata_bluemanaicon_t(void (*updateGeometry) (HudWidget *wi),
                                                void (*drawer) (HudWidget *wi, Point2Raw const *offset),
@@ -81,7 +81,7 @@ void BlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *offs
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(::pIcon[icon->_iconIdx]);
+    GL_DrawPatch(::pBlueManaIcon[icon->_iconIdx]);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -114,7 +114,7 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(::pIcon[icon->_iconIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
+    GL_DrawPatch(::pBlueManaIcon[icon->_iconIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -136,7 +136,7 @@ void BlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
     if(P_MobjIsCamera(::players[icon->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     patchinfo_t info;
-    if(R_GetPatchInfo(::pIcon[icon->_iconIdx], &info))
+    if(R_GetPatchInfo(::pBlueManaIcon[icon->_iconIdx], &info))
     {
         Rect_SetWidthHeight(&icon->geometry(), info.geometry.size.width  * ::cfg.common.hudScale,
                                                info.geometry.size.height * ::cfg.common.hudScale);
@@ -155,7 +155,7 @@ void SBarBlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
     if(P_MobjIsCamera(::players[icon->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     patchinfo_t info;
-    if(R_GetPatchInfo(::pIcon[icon->_iconIdx], &info))
+    if(R_GetPatchInfo(::pBlueManaIcon[icon->_iconIdx], &info))
     {
         Rect_SetWidthHeight(&icon->geometry(), info.geometry.size.width  * ::cfg.common.statusbarScale,
                                                info.geometry.size.height * ::cfg.common.statusbarScale);
@@ -164,6 +164,6 @@ void SBarBlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
 
 void guidata_bluemanaicon_t::prepareAssets()  // static
 {
-    ::pIcon[0] = R_DeclarePatch("MANADIM1");
-    ::pIcon[1] = R_DeclarePatch("MANABRT1");
+    ::pBlueManaIcon[0] = R_DeclarePatch("MANADIM1");
+    ::pBlueManaIcon[1] = R_DeclarePatch("MANABRT1");
 }

@@ -27,7 +27,7 @@ using namespace de;
 
 #define FRAME_COUNT             ( 16 )  ///< min 1
 
-static patchid_t pIcon[FRAME_COUNT];
+static patchid_t pDefenseIcon[FRAME_COUNT];
 
 static void DefenseWidget_Draw(guidata_defense_t *dfns, Point2Raw const *offset)
 {
@@ -65,7 +65,7 @@ void guidata_defense_t::tick(timespan_t /*elapsed*/)
     if(plr.powers[PT_INVULNERABILITY] &&
        (plr.powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr.powers[PT_INVULNERABILITY] & 16)))
     {
-        _patchId = ::pIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
+        _patchId = ::pDefenseIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
     }
 }
 
@@ -110,6 +110,6 @@ void guidata_defense_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pIcon[i] = R_DeclarePatch(String("SPSHLD%1").arg(i).toUtf8().constData());
+        ::pDefenseIcon[i] = R_DeclarePatch(String("SPSHLD%1").arg(i).toUtf8().constData());
     }
 }

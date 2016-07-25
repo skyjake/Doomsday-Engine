@@ -27,7 +27,7 @@ using namespace de;
 
 #define FRAME_COUNT             ( 16 )  ///< min 1
 
-static patchid_t pIcon[FRAME_COUNT];
+static patchid_t pBootsIcon[FRAME_COUNT];
 
 static void BootsWidget_Draw(guidata_boots_t *boots, Point2Raw const *offset)
 {
@@ -65,7 +65,7 @@ void guidata_boots_t::tick(timespan_t /*elapsed*/)
     if(plr.powers[PT_SPEED] &&
        (plr.powers[PT_SPEED] > BLINKTHRESHOLD || !(plr.powers[PT_SPEED] & 16)))
     {
-        _patchId = ::pIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
+        _patchId = ::pBootsIcon[(::mapTime / 3) & (FRAME_COUNT - 1)];
     }
 }
 
@@ -111,6 +111,6 @@ void guidata_boots_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pIcon[i] = R_DeclarePatch(String("SPBOOT%1").arg(i).toUtf8().constData());
+        ::pBootsIcon[i] = R_DeclarePatch(String("SPBOOT%1").arg(i).toUtf8().constData());
     }
 }
