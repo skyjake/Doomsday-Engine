@@ -267,7 +267,7 @@ DENG2_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 /*
  * BinaryTree
  */
-DENG2_OPAQUE(BinaryTree)
+DENG2_OPAQUE(de_BinaryTree)
 
 /**
  * Create a new BinaryTree node. The binary tree should
@@ -275,7 +275,7 @@ DENG2_OPAQUE(BinaryTree)
  *
  * @return  New BinaryTree instance.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_New(void);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_New(void);
 
 /**
  * Create a new BinaryTree node.
@@ -283,7 +283,7 @@ DENG2_PUBLIC BinaryTree *BinaryTree_New(void);
  * @param userData  User data to be associated with the new (sub)tree.
  * @return  New BinaryTree instance.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_NewWithUserData(void *userData);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_NewWithUserData(void *userData);
 
 /**
  * Create a new BinaryTree.
@@ -292,7 +292,7 @@ DENG2_PUBLIC BinaryTree *BinaryTree_NewWithUserData(void *userData);
  * @param parent  Parent node to associate with the new (sub)tree.
  * @return  New BinaryTree instance.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_NewWithParent(void *userData, BinaryTree *parent);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_NewWithParent(void *userData, de_BinaryTree *parent);
 
 /**
  * Create a new BinaryTree with right and left subtrees. This binary tree node
@@ -304,19 +304,19 @@ DENG2_PUBLIC BinaryTree *BinaryTree_NewWithParent(void *userData, BinaryTree *pa
  * @param leftSubtree   Left child subtree. Can be @c NULL.
  * @return  New BinaryTree instance.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_NewWithSubtrees(void *userData, BinaryTree *rightSubtree, BinaryTree *leftSubtree);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_NewWithSubtrees(void *userData, de_BinaryTree *rightSubtree, de_BinaryTree *leftSubtree);
 
 /**
  * Destroy the binary tree.
  * @param tree  BinaryTree instance.
  */
-DENG2_PUBLIC void BinaryTree_Delete(BinaryTree *tree);
+DENG2_PUBLIC void BinaryTree_Delete(de_BinaryTree *tree);
 
-DENG2_PUBLIC BinaryTree *BinaryTree_Parent(BinaryTree *tree);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_Parent(de_BinaryTree *tree);
 
-DENG2_PUBLIC int BinaryTree_HasParent(BinaryTree *tree);
+DENG2_PUBLIC int BinaryTree_HasParent(de_BinaryTree *tree);
 
-DENG2_PUBLIC BinaryTree *BinaryTree_SetParent(BinaryTree *tree, BinaryTree *parent);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_SetParent(de_BinaryTree *tree, de_BinaryTree *parent);
 
 /**
  * Given the specified node, return one of it's children.
@@ -326,7 +326,7 @@ DENG2_PUBLIC BinaryTree *BinaryTree_SetParent(BinaryTree *tree, BinaryTree *pare
  *              @c false= retrieve the right child.
  * @return  The identified child if present else @c NULL.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_Child(BinaryTree *tree, int left);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_Child(de_BinaryTree *tree, int left);
 
 #define BinaryTree_Right(tree) BinaryTree_Child((tree), false)
 #define BinaryTree_Left(tree)  BinaryTree_Child((tree), true)
@@ -337,7 +337,7 @@ DENG2_PUBLIC BinaryTree *BinaryTree_Child(BinaryTree *tree, int left);
  * @param tree  BinaryTree instance.
  * @return  User data pointer associated with this tree node else @c NULL.
  */
-DENG2_PUBLIC void *BinaryTree_UserData(BinaryTree *tree);
+DENG2_PUBLIC void *BinaryTree_UserData(de_BinaryTree *tree);
 
 /**
  * Set a child of the specified tree.
@@ -347,12 +347,12 @@ DENG2_PUBLIC void *BinaryTree_UserData(BinaryTree *tree);
  *              @c false= set the right child.
  * @param subtree  Ptr to the (child) tree to be linked or @c NULL.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_SetChild(BinaryTree *tree, int left, BinaryTree *subtree);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_SetChild(de_BinaryTree *tree, int left, de_BinaryTree *subtree);
 
 #define BinaryTree_SetRight(tree, subtree) BinaryTree_SetChild((tree), false, (subtree))
 #define BinaryTree_SetLeft(tree, subtree)  BinaryTree_SetChild((tree), true, (subtree))
 
-DENG2_PUBLIC int BinaryTree_HasChild(BinaryTree *tree, int left);
+DENG2_PUBLIC int BinaryTree_HasChild(de_BinaryTree *tree, int left);
 
 #define BinaryTree_HasRight(tree, subtree) BinaryTree_HasChild((tree), false)
 #define BinaryTree_HasLeft(tree, subtree)  BinaryTree_HasChild((tree), true)
@@ -363,7 +363,7 @@ DENG2_PUBLIC int BinaryTree_HasChild(BinaryTree *tree, int left);
  * @param tree  BinaryTree instance.
  * @param userData  User data pointer to associate with this tree node.
  */
-DENG2_PUBLIC BinaryTree *BinaryTree_SetUserData(BinaryTree *tree, void *userData);
+DENG2_PUBLIC de_BinaryTree *BinaryTree_SetUserData(de_BinaryTree *tree, void *userData);
 
 /**
  * Is this node a leaf?
@@ -371,7 +371,7 @@ DENG2_PUBLIC BinaryTree *BinaryTree_SetUserData(BinaryTree *tree, void *userData
  * @param tree  BinaryTree instance.
  * @return  @c true iff this node is a leaf.
  */
-DENG2_PUBLIC int BinaryTree_IsLeaf(BinaryTree *tree);
+DENG2_PUBLIC int BinaryTree_IsLeaf(de_BinaryTree *tree);
 
 /**
  * Calculate the height of the given tree.
@@ -379,7 +379,7 @@ DENG2_PUBLIC int BinaryTree_IsLeaf(BinaryTree *tree);
  * @param tree  BinaryTree instance.
  * @return  Height of the tree.
  */
-DENG2_PUBLIC int BinaryTree_Height(BinaryTree *tree);
+DENG2_PUBLIC int BinaryTree_Height(de_BinaryTree *tree);
 
 /**
  * Traverse a binary tree in Preorder.
@@ -395,7 +395,7 @@ DENG2_PUBLIC int BinaryTree_Height(BinaryTree *tree);
  * @return  @c 0= iff all callbacks complete wholly else the return value of the
  * callback last made.
  */
-DENG2_PUBLIC int BinaryTree_PreOrder(BinaryTree *tree, int (*callback) (BinaryTree*, void*), void *parameters);
+DENG2_PUBLIC int BinaryTree_PreOrder(de_BinaryTree *tree, int (*callback) (de_BinaryTree*, void*), void *parameters);
 
 /**
  * Traverse a binary tree in Inorder.
@@ -411,7 +411,7 @@ DENG2_PUBLIC int BinaryTree_PreOrder(BinaryTree *tree, int (*callback) (BinaryTr
  * @return  @c 0= iff all callbacks complete wholly else the return value of the
  * callback last made.
  */
-DENG2_PUBLIC int BinaryTree_InOrder(BinaryTree *tree, int (*callback) (BinaryTree*, void*), void *parameters);
+DENG2_PUBLIC int BinaryTree_InOrder(de_BinaryTree *tree, int (*callback) (de_BinaryTree*, void*), void *parameters);
 
 /**
  * Traverse a binary tree in Postorder.
@@ -427,7 +427,7 @@ DENG2_PUBLIC int BinaryTree_InOrder(BinaryTree *tree, int (*callback) (BinaryTre
  * @return  @c 0= iff all callbacks complete wholly else the return value of the
  * callback last made.
  */
-DENG2_PUBLIC int BinaryTree_PostOrder(BinaryTree *tree, int (*callback) (BinaryTree*, void*), void *parameters);
+DENG2_PUBLIC int BinaryTree_PostOrder(de_BinaryTree *tree, int (*callback) (de_BinaryTree*, void*), void *parameters);
 
 #ifdef __cplusplus
 } // extern "C"

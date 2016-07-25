@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BinaryTree"
@@ -31,94 +31,94 @@ namespace de {
 #define CHILD_ID(v)     ((v)? de::VoidBinaryTree::Left : de::VoidBinaryTree::Right)
 
 #define INTERNAL(inst)  reinterpret_cast<de::VoidBinaryTree *>(inst)
-#define PUBLIC(inst)    reinterpret_cast<BinaryTree *>(inst)
+#define PUBLIC(inst)    reinterpret_cast<de_BinaryTree *>(inst)
 #define SELF(inst)      DENG2_SELF(VoidBinaryTree, inst)
 
-BinaryTree *BinaryTree_NewWithSubtrees(void *userData, BinaryTree *rightSubtree, BinaryTree *leftSubtree)
+de_BinaryTree *BinaryTree_NewWithSubtrees(void *userData, de_BinaryTree *rightSubtree, de_BinaryTree *leftSubtree)
 {
-    BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData, 0/*no parent*/, INTERNAL(rightSubtree), INTERNAL(leftSubtree)));
+    de_BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData, 0/*no parent*/, INTERNAL(rightSubtree), INTERNAL(leftSubtree)));
     return tree;
 }
 
-BinaryTree *BinaryTree_NewWithParent(void *userData, BinaryTree *parent)
+de_BinaryTree *BinaryTree_NewWithParent(void *userData, de_BinaryTree *parent)
 {
-    BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData, INTERNAL(parent)));
+    de_BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData, INTERNAL(parent)));
     return tree;
 }
 
-BinaryTree *BinaryTree_NewWithUserData(void *userData)
+de_BinaryTree *BinaryTree_NewWithUserData(void *userData)
 {
-    BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData));
+    de_BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(userData));
     return tree;
 }
 
-BinaryTree *BinaryTree_New(void)
+de_BinaryTree *BinaryTree_New(void)
 {
-    BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(NULL/*no user data*/));
+    de_BinaryTree *tree = PUBLIC(new de::BinaryTree<void*>(NULL/*no user data*/));
     return tree;
 }
 
-void BinaryTree_Delete(BinaryTree *tree)
+void BinaryTree_Delete(de_BinaryTree *tree)
 {
     SELF(tree);
     delete self;
 }
 
-int BinaryTree_Height(BinaryTree *tree)
+int BinaryTree_Height(de_BinaryTree *tree)
 {
     SELF(tree);
     return int(self->height());
 }
 
-int BinaryTree_IsLeaf(BinaryTree *tree)
+int BinaryTree_IsLeaf(de_BinaryTree *tree)
 {
     SELF(tree);
     return self->isLeaf();
 }
 
-BinaryTree *BinaryTree_Parent(BinaryTree *tree)
+de_BinaryTree *BinaryTree_Parent(de_BinaryTree *tree)
 {
     SELF(tree);
     return PUBLIC(self->parentPtr());
 }
 
-int BinaryTree_HasParent(BinaryTree *tree)
+int BinaryTree_HasParent(de_BinaryTree *tree)
 {
     SELF(tree);
     return self->hasParent();
 }
 
-BinaryTree *BinaryTree_SetParent(BinaryTree *tree, BinaryTree *parent)
+de_BinaryTree *BinaryTree_SetParent(de_BinaryTree *tree, de_BinaryTree *parent)
 {
     SELF(tree);
     return PUBLIC(&self->setParent(INTERNAL(parent)));
 }
 
-BinaryTree *BinaryTree_Child(BinaryTree *tree, int left)
+de_BinaryTree *BinaryTree_Child(de_BinaryTree *tree, int left)
 {
     SELF(tree);
     return PUBLIC(self->childPtr(CHILD_ID(left)));
 }
 
-BinaryTree *BinaryTree_SetChild(BinaryTree *tree, int left, BinaryTree *child)
+de_BinaryTree *BinaryTree_SetChild(de_BinaryTree *tree, int left, de_BinaryTree *child)
 {
     SELF(tree);
     return PUBLIC(&self->setChild(CHILD_ID(left), INTERNAL(child)));
 }
 
-int BinaryTree_HasChild(BinaryTree *tree, int left)
+int BinaryTree_HasChild(de_BinaryTree *tree, int left)
 {
     SELF(tree);
     return self->hasChild(CHILD_ID(left));
 }
 
-void *BinaryTree_UserData(BinaryTree *tree)
+void *BinaryTree_UserData(de_BinaryTree *tree)
 {
     SELF(tree);
     return self->userData();
 }
 
-BinaryTree *BinaryTree_SetUserData(BinaryTree *tree, void *userData)
+de_BinaryTree *BinaryTree_SetUserData(de_BinaryTree *tree, void *userData)
 {
     SELF(tree);
     return PUBLIC(&self->setUserData(userData));
@@ -126,7 +126,7 @@ BinaryTree *BinaryTree_SetUserData(BinaryTree *tree, void *userData)
 
 namespace de { namespace internal {
     struct CallbackWrapper {
-        int (*callback) (::BinaryTree *, void *);
+        int (*callback) (de_BinaryTree *, void *);
         void *parameters;
     };
 }}
@@ -137,7 +137,7 @@ static int callbackWrapper(de::BinaryTree<void *> &tree, void *parameters)
     return p->callback(PUBLIC(&tree), p->parameters);
 }
 
-int BinaryTree_PreOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
+int BinaryTree_PreOrder(de_BinaryTree *tree, int (*callback)(de_BinaryTree *, void *), void *parameters)
 {
     if (!tree || !callback) return false; // Continue iteration.
 
@@ -149,7 +149,7 @@ int BinaryTree_PreOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *),
     return self->traversePreOrder(callbackWrapper, &parm);
 }
 
-int BinaryTree_InOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
+int BinaryTree_InOrder(de_BinaryTree *tree, int (*callback)(de_BinaryTree *, void *), void *parameters)
 {
     if (!tree || !callback) return false; // Continue iteration.
 
@@ -161,7 +161,7 @@ int BinaryTree_InOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), 
     return self->traverseInOrder(callbackWrapper, &parm);
 }
 
-int BinaryTree_PostOrder(BinaryTree *tree, int (*callback)(BinaryTree *, void *), void *parameters)
+int BinaryTree_PostOrder(de_BinaryTree *tree, int (*callback)(de_BinaryTree *, void *), void *parameters)
 {
     if (!tree || !callback) return false; // Continue iteration.
 
