@@ -61,7 +61,6 @@ namespace internal
     }
 }
 
-using namespace internal;
 using namespace de;
 
 DENG2_PIMPL(MapStateReader)
@@ -166,7 +165,7 @@ DENG2_PIMPL(MapStateReader)
 
     void readMaterialArchive()
     {
-        materialArchive = new world::MaterialArchive(useMaterialArchiveSegments(), false /*empty*/);
+        materialArchive = new world::MaterialArchive(::internal::useMaterialArchiveSegments(), false /*empty*/);
 #if !__JHEXEN__
         if(mapVersion >= 4)
 #endif
@@ -761,7 +760,7 @@ void MapStateReader::read(String const &mapUriStr)
         d->readMapHeader();
         d->readMaterialArchive();
 
-        d->thingArchive = new ThingArchive(thingArchiveVersionFor(d->mapVersion));
+        d->thingArchive = new ThingArchive(::internal::thingArchiveVersionFor(d->mapVersion));
 #if !__JHEXEN__
         d->thingArchive->initForLoad(d->thingArchiveSize);
 #endif

@@ -21,10 +21,6 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef MSVC
-#  pragma optimize("g", off)
-#endif
-
 #include "common.h"
 #include "mobj.h"
 
@@ -38,6 +34,10 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "player.h"
+
+#ifdef MSVC
+#  pragma optimize("g", off)
+#endif
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
 

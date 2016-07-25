@@ -33,7 +33,7 @@
 
 namespace internal
 {
-    static bool useMaterialArchiveSegments() {
+    static bool MapStateWriter_useMaterialArchiveSegments() {
 #if __JHEXEN__
         return true;
 #else
@@ -41,8 +41,6 @@ namespace internal
 #endif
     }
 }
-
-using namespace internal;
 
 DENG2_PIMPL(MapStateWriter)
 {
@@ -307,7 +305,7 @@ void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
     d->writer = writer;
 
     // Prepare and populate the material archive.
-    d->materialArchive = new world::MaterialArchive(useMaterialArchiveSegments());
+    d->materialArchive = new world::MaterialArchive(::internal::MapStateWriter_useMaterialArchiveSegments());
     d->materialArchive->addWorldMaterials();
 
     Writer_WriteInt32(writer, MY_SAVE_MAGIC);
