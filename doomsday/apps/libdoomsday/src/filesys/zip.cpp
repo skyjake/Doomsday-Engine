@@ -180,7 +180,7 @@ static bool readCentralEnd(FileHandle &file, centralend_t &end)
     return false;
 }
 
-static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
+static String Zip_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     String msg = String("Invalid lump index %1").arg(invalidIdx);
     if (lastValidIdx < 0) msg += " (file is empty)";
@@ -544,7 +544,7 @@ void Zip::clearCachedLump(int lumpIndex, bool *retCleared)
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
+        LOGDEV_RES_WARNING(Zip_invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 
@@ -602,7 +602,7 @@ void Zip::unlockLump(int lumpIndex)
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
+        LOGDEV_RES_WARNING(Zip_invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 

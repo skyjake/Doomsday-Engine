@@ -114,7 +114,7 @@ struct IndexEntry
     }
 };
 
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
+static QString Wad_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
     if (lastValidIdx < 0) msg += "(file is empty)";
@@ -241,7 +241,7 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
+        LOGDEV_RES_WARNING(Wad_invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 
@@ -299,7 +299,7 @@ void Wad::unlockLump(int lumpIndex)
     }
     else
     {
-        LOGDEV_RES_WARNING(invalidIndexMessage(lumpIndex, lastIndex()));
+        LOGDEV_RES_WARNING(Wad_invalidIndexMessage(lumpIndex, lastIndex()));
     }
 }
 

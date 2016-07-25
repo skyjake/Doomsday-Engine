@@ -501,7 +501,7 @@ bool LumpIndex::hasLump(lumpnum_t lumpNum) const
     return (lumpNum >= 0 && lumpNum < d->lumps.size());
 }
 
-static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
+static String LumpIndex_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     String msg = String("Invalid lump index %1").arg(invalidIdx);
     if (lastValidIdx < 0) msg += " (file is empty)";
@@ -511,7 +511,7 @@ static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
 
 File1 &LumpIndex::lump(lumpnum_t lumpNum) const
 {
-    if (!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
+    if (!hasLump(lumpNum)) throw NotFoundError("LumpIndex::lump", LumpIndex_invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumps[lumpNum];
 }
 
