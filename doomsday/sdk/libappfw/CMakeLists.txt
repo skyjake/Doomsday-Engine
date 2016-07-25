@@ -16,7 +16,12 @@ add_definitions (-D__LIBAPPFW__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
-file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
+file (GLOB SOURCES src/*.h)
+
+deng_merge_sources (libappfw src/*.cpp)
+deng_merge_sources (dialogs  src/dialogs/*.cpp)
+deng_merge_sources (vr       src/vr/*.cpp)
+deng_merge_sources (widgets  src/widgets/*.cpp)
 
 deng_add_library (libappfw ${SOURCES} ${HEADERS})
 

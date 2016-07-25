@@ -213,6 +213,38 @@ function (deng_filter_platform_sources outName)
     set (${outName} ${result} PARENT_SCOPE)
 endfunction (deng_filter_platform_sources)
 
+macro (deng_glob_sources varName globbing)
+    file (GLOB _src ${globbing})
+    list (APPEND ${varName} ${_src})
+    set (_src)
+endmacro ()
+
+# Combines multiple source files into a single large file.
+macro (deng_merge_sources srcName globbing)
+    if (DENG_ENABLE_TURBO)
+        file (GLOB _files ${globbing})
+        deng_filter_platform_sources (_mergingSources ${_files})
+        set (_combo ${CMAKE_CURRENT_BINARY_DIR}/src_${srcName}_combo.cpp)
+        add_custom_command (
+            OUTPUT  ${_combo}
+            COMMAND ${DENG_CMAKE_DIR}/merge_sources.py ${_combo} ${_mergingSources}
+            DEPENDS ${_mergingSources}
+            COMMENT "Merging sources ${globbing}"
+        )
+        # The original source files should not be compiled any more.
+        # They remain part of the project so they are available in the IDE.
+        set_property (SOURCE ${_mergingSources} PROPERTY HEADER_FILE_ONLY YES)
+        list (APPEND SOURCES ${_combo};${_mergingSources})
+        set (fn)
+        set (_files)
+        set (_mergingSources)
+        set (_combo)
+    else ()
+        # Simply use the source files as is.
+        deng_glob_sources (SOURCES ${globbing})
+    endif ()
+endmacro()
+
 # Set up resource bundling on OS X.
 # The arguments are a list of resource files/directories with the 
 # destination directory separated by a comma:

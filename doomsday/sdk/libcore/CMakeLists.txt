@@ -35,7 +35,15 @@ endif ()
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
-file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
+file (GLOB SOURCES src/*.cpp src/*.h src/core/*.h)
+
+deng_merge_sources (concurrency src/concurrency/*.cpp)
+deng_merge_sources (core        src/core/*.cpp)
+deng_merge_sources (data        src/data/*.cpp)
+deng_merge_sources (filesys     src/filesys/*.cpp)
+deng_merge_sources (net         src/net/*.cpp)
+deng_merge_sources (scriptsys   src/scriptsys/*.cpp)
+deng_merge_sources (widgets     src/widgets/*.cpp)
 
 if (WIN32)
     # Update the resource file.

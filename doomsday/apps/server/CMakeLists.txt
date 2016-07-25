@@ -99,6 +99,8 @@ set (SHARED_WITH_CLIENT
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp
+    ${src}/src/api_map.cpp
+    ${src}/src/api_mapedit.cpp
     ${src}/src/api_uri.cpp
     ${src}/src/audio/s_cache.cpp
     ${src}/src/audio/system.cpp
@@ -114,13 +116,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/m_misc.cpp
     ${src}/src/m_nodepile.cpp
     ${src}/src/mesh.cpp
-    ${src}/src/network/masterserver.cpp
-    ${src}/src/network/monitor.cpp
-    ${src}/src/network/net_buf.cpp
-    ${src}/src/network/net_event.cpp
-    ${src}/src/network/net_main.cpp
-    ${src}/src/network/net_msg.cpp
-    ${src}/src/network/net_ping.cpp
     ${src}/src/r_util.cpp
     ${src}/src/resource/animgroup.cpp
     ${src}/src/resource/api_material.cpp
@@ -131,47 +126,12 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/tga.cpp
     ${src}/src/sys_system.cpp
     ${src}/src/tab_tables.c
-    ${src}/src/ui/infine/finale.cpp
-    ${src}/src/ui/infine/finaleanimwidget.cpp
-    ${src}/src/ui/infine/finaleinterpreter.cpp
-    ${src}/src/ui/infine/finalepagewidget.cpp
-    ${src}/src/ui/infine/finaletextwidget.cpp
-    ${src}/src/ui/infine/finalewidget.cpp
-    ${src}/src/ui/infine/infinesystem.cpp
-    ${src}/src/world/api_map.cpp
-    ${src}/src/world/api_mapedit.cpp
-    ${src}/src/world/bindings_world.cpp
-    ${src}/src/world/blockmap.cpp
-    ${src}/src/world/bsp/convexsubspaceproxy.cpp
-    ${src}/src/world/bsp/hplane.cpp
-    ${src}/src/world/bsp/linesegment.cpp
-    ${src}/src/world/bsp/partitioner.cpp
-    ${src}/src/world/bsp/partitionevaluator.cpp
-    ${src}/src/world/bsp/superblockmap.cpp
-    ${src}/src/world/bspleaf.cpp
-    ${src}/src/world/convexsubspace.cpp
-    ${src}/src/world/impulseaccumulator.cpp
-    ${src}/src/world/interceptor.cpp
-    ${src}/src/world/line.cpp
-    ${src}/src/world/lineblockmap.cpp
-    ${src}/src/world/linesighttest.cpp
-    ${src}/src/world/map.cpp
-    ${src}/src/world/maputil.cpp
-    ${src}/src/world/p_mobj.cpp
-    ${src}/src/world/p_players.cpp
-    ${src}/src/world/p_ticker.cpp
-    ${src}/src/world/plane.cpp
-    ${src}/src/world/polyobj.cpp
-    ${src}/src/world/polyobjdata.cpp
-    ${src}/src/world/reject.cpp
-    ${src}/src/world/sector.cpp
-    ${src}/src/world/sky.cpp
-    ${src}/src/world/subsector.cpp
-    ${src}/src/world/surface.cpp
-    ${src}/src/world/thinkers.cpp
-    ${src}/src/world/vertex.cpp
-    ${src}/src/world/clientserverworld.cpp
 )
+
+deng_merge_sources (infine     ${src}/src/ui/infine/*.cpp)
+deng_merge_sources (net_base   ${src}/src/network/base/*.cpp)
+deng_merge_sources (world_base ${src}/src/world/base/*.cpp)
+deng_merge_sources (world_bsp  ${src}/src/world/bsp/*.cpp)
 
 if (WIN32)
     include_directories (../client/include/windows)

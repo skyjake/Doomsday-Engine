@@ -13,7 +13,9 @@ add_definitions (
 )
 
 include_directories (include)
-file (GLOB_RECURSE SOURCES src/*.c src/*.cpp include/*.h)
+file (GLOB_RECURSE SOURCES include/*.h)
+file (GLOB SOURCES src/*.c src/*.cpp)
+deng_merge_sources (hud_widgets src/hud/widgets/*.cpp)
 
 deng_find_resources (libheretic.pk3)
 

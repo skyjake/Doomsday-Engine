@@ -25,7 +25,14 @@ configure_file (
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/doomsday/*)
-file (GLOB_RECURSE SOURCES src/*.cpp)
+file (GLOB SOURCES src/c_wrapper/*.cpp)
+
+deng_merge_sources (libdoomsday src/*.cpp)
+deng_merge_sources (defs        src/defs/*.cpp)
+deng_merge_sources (console     src/console/*.cpp)
+deng_merge_sources (filesys     src/filesys/*.cpp)
+deng_merge_sources (resource    src/resource/*.cpp)
+deng_merge_sources (world       src/world/*.cpp)
 
 deng_add_package (net.dengine.base)
 

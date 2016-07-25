@@ -59,7 +59,12 @@ add_definitions (-D__LIBGUI__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
-file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
+file (GLOB SOURCES src/*.cpp src/*.h)
+
+deng_merge_sources (audio    src/audio/*.cpp)
+deng_merge_sources (graphics src/graphics/*.cpp)
+deng_merge_sources (input    src/input/*.cpp)
+deng_merge_sources (text     src/text/*.cpp)
 
 # Choose which DisplayMode sources to use.
 list_remove_matches (SOURCES ".*/displaymode_.*")
