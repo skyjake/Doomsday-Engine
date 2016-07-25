@@ -139,8 +139,8 @@ public:
      */
     void setEntryPoint(Module::EntryPoint const &entryPoint);
 
-    void read(Reader *reader);
-    void write(Writer *writer) const;
+    void read(Reader1 *reader);
+    void write(Writer1 *writer) const;
 
 public:  /// @todo make private:
 

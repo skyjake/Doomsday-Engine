@@ -185,7 +185,7 @@ ddstring_t *Str_New(void)
     return str;
 }
 
-ddstring_t *Str_NewFromReader(Reader *reader)
+ddstring_t *Str_NewFromReader(Reader1 *reader)
 {
     ddstring_t *str = Str_New();
     Str_Read(str, reader);
@@ -824,7 +824,7 @@ ddstring_t *Str_PercentDecode(ddstring_t *str)
     return str;
 }
 
-void Str_Write(const ddstring_t *str, Writer *writer)
+void Str_Write(const ddstring_t *str, Writer1 *writer)
 {
     size_t len = Str_Length(str);
 
@@ -834,7 +834,7 @@ void Str_Write(const ddstring_t *str, Writer *writer)
     Writer_Write(writer, Str_Text(str), len);
 }
 
-void Str_Read(ddstring_t *str, Reader *reader)
+void Str_Read(ddstring_t *str, Reader1 *reader)
 {
     size_t len = Reader_ReadUInt32(reader);
     char *buf = malloc(len + 1);

@@ -31,7 +31,7 @@ DENG2_PIMPL(TextureManifest)
 , DENG2_OBSERVES(Texture, Deletion)
 {
     int uniqueId;                    ///< Scheme-unique identifier (user defined).
-    Uri resourceUri;                 ///< Image resource path, to be loaded.
+    de::Uri resourceUri;             ///< Image resource path, to be loaded.
     Vector2ui logicalDimensions;     ///< Dimensions in map space.
     Vector2i origin;                 ///< Origin offset in map space.
     Texture::Flags flags;            ///< Classification flags.
@@ -106,8 +106,8 @@ String const &TextureManifest::schemeName() const
 String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
     String info = String("%1 %2")
-                      .arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
-                           ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) )
+                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
                       .arg(sourceDescription(), -7);
 #ifdef __CLIENT__
     info += String("x%1").arg(!hasTexture()? 0 : texture().variantCount());

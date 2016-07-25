@@ -107,7 +107,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * Constructs a Uri instance by reading it from @a reader.  The uri should be
      * destroyed with Uri_Delete() once it is no longer needed.
      */
-    Uri* (*FromReader)(Reader* reader);
+    Uri* (*FromReader)(Reader1* reader);
 
     /**
      * Destroys the uri.
@@ -232,9 +232,9 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param writer            Writer instance.
      * @param omitComponents    @ref uriComponentFlags
      */
-    void (*Write2)(Uri const* uri, Writer* writer, int omitComponents);
+    void (*Write2)(Uri const* uri, Writer1* writer, int omitComponents);
 
-    void (*Write)(Uri const* uri, Writer* writer/*, omitComponents = 0 (include everything)*/);
+    void (*Write)(Uri const* uri, Writer1* writer/*, omitComponents = 0 (include everything)*/);
 
     /**
      * Deserializes @a uri using @a reader.
@@ -243,7 +243,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param reader  Reader instance.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*Read)(Uri* uri, Reader* reader);
+    Uri* (*Read)(Uri* uri, Reader1* reader);
 
     /**
      * Deserializes @a uri using @a reader. If the deserialized Uri lacks a scheme,
@@ -253,7 +253,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param reader            Reader instance.
      * @param defaultScheme     Default scheme.
      */
-    void (*ReadWithDefaultScheme)(Uri* uri, Reader* reader, char const* defaultScheme);
+    void (*ReadWithDefaultScheme)(Uri* uri, Reader1* reader, char const* defaultScheme);
 
 } DENG_API_T(Uri);
 

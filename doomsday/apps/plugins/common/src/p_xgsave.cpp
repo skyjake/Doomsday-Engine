@@ -30,7 +30,7 @@
 
 void SV_WriteXGLine(Line *li, MapStateWriter *msw)
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
     xline_t *xline = P_ToXLine(li);
 
     // Version byte.
@@ -62,7 +62,7 @@ void SV_WriteXGLine(Line *li, MapStateWriter *msw)
 
 void SV_ReadXGLine(Line *li, MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     xline_t *xline = P_ToXLine(li);
 
     // Read version.
@@ -93,7 +93,7 @@ void SV_ReadXGLine(Line *li, MapStateReader *msr)
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_WriteXGFunction(xgsector_t * /*xg*/, function_t *fn, Writer *writer)
+void SV_WriteXGFunction(xgsector_t * /*xg*/, function_t *fn, Writer1 *writer)
 {
     // Version byte.
     Writer_WriteByte(writer, 1);
@@ -110,7 +110,7 @@ void SV_WriteXGFunction(xgsector_t * /*xg*/, function_t *fn, Writer *writer)
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_ReadXGFunction(xgsector_t * /*xg*/, function_t *fn, Reader *reader, int /*mapVersion*/)
+void SV_ReadXGFunction(xgsector_t * /*xg*/, function_t *fn, Reader1 *reader, int /*mapVersion*/)
 {
     // Version byte.
     Reader_ReadByte(reader);
@@ -124,7 +124,7 @@ void SV_ReadXGFunction(xgsector_t * /*xg*/, function_t *fn, Reader *reader, int 
     fn->oldValue = Reader_ReadFloat(reader);
 }
 
-void SV_WriteXGSector(Sector *sec, Writer *writer)
+void SV_WriteXGSector(Sector *sec, Writer1 *writer)
 {
     xsector_t *xsec = P_ToXSector(sec);
 
@@ -150,7 +150,7 @@ void SV_WriteXGSector(Sector *sec, Writer *writer)
     SV_WriteXGFunction(xg, &xg->light, writer);
 }
 
-void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion)
+void SV_ReadXGSector(Sector *sec, Reader1 *reader, int mapVersion)
 {
     xsector_t *xsec = P_ToXSector(sec);
 
@@ -178,7 +178,7 @@ void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion)
 
 void xgplanemover_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 3); // Version.
 
@@ -209,7 +209,7 @@ void xgplanemover_s::write(MapStateWriter *msw) const
 
 int xgplanemover_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
 
     byte ver = Reader_ReadByte(reader); // Version.
 

@@ -175,16 +175,16 @@ DENG_PUBLIC dd_bool StringArray_Contains(StringArray const *ar, char const *str)
 /**
  * Serializes the array of strings using @a writer.
  * @param ar StringArray instance.
- * @param writer  Writer instance.
+ * @param writer  Writer1 instance.
  */
-DENG_PUBLIC void StringArray_Write(StringArray const *ar, Writer *writer);
+DENG_PUBLIC void StringArray_Write(StringArray const *ar, Writer1 *writer);
 
 /**
  * Deserializes the array of strings from @a reader.
  * @param ar StringArray instance.
- * @param reader  Reader instance.
+ * @param reader  Reader1 instance.
  */
-DENG_PUBLIC void StringArray_Read(StringArray *ar, Reader *reader);
+DENG_PUBLIC void StringArray_Read(StringArray *ar, Reader1 *reader);
 
 /// @}
 

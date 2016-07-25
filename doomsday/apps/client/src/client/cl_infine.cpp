@@ -33,7 +33,7 @@ finaleid_t Cl_CurrentFinale()
     return currentFinale;
 }
 
-void Cl_Finale(Reader *msg)
+void Cl_Finale(Reader1 *msg)
 {
     LOG_AS("Cl_Finale");
 
@@ -71,7 +71,7 @@ void Cl_Finale(Reader *msg)
     }
 
     if ((flags & FINF_SKIP) && currentFinale)
-    {       
+    {
         FI_ScriptRequestSkip(currentFinale);
     }
 

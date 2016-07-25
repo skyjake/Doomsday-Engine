@@ -62,12 +62,12 @@ public:
      *
      * @param excludePlayers  @c true= Do not include players in the ThingArchive.
      */
-    void write(Writer *writer, bool excludePlayers = false);
+    void write(Writer1 *writer, bool excludePlayers = false);
 
     /**
      * Returns the writer to use when serializing the map state.
      */
-    Writer *writer();
+    Writer1 *writer();
 
     ThingArchive::SerialId serialIdFor(struct mobj_s *mobj);
     materialarchive_serialid_t serialIdFor(world::Material *material);

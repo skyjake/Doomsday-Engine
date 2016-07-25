@@ -167,7 +167,7 @@ dd_bool StringArray_Contains(StringArray const *ar, char const *str)
     return StringArray_IndexOf(ar, str) >= 0;
 }
 
-void StringArray_Write(const StringArray *ar, Writer *writer)
+void StringArray_Write(const StringArray *ar, Writer1 *writer)
 {
     assert(ar);
     Writer_WriteUInt32(writer, ar->array.size());
@@ -178,7 +178,7 @@ void StringArray_Write(const StringArray *ar, Writer *writer)
     }
 }
 
-void StringArray_Read(StringArray *ar, Reader *reader)
+void StringArray_Read(StringArray *ar, Reader1 *reader)
 {
     StringArray_Clear(ar);
 

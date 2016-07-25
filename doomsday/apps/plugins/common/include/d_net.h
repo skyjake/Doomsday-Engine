@@ -194,9 +194,9 @@ DENG_EXTERN_C float netJumpPower;
 extern "C" {
 #endif
 
-Writer *D_NetWrite(void);
+Writer1 *D_NetWrite(void);
 
-Reader *D_NetRead(byte const *buffer, size_t len);
+Reader1 *D_NetRead(byte const *buffer, size_t len);
 
 void D_NetClearBuffer(void);
 

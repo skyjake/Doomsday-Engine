@@ -136,7 +136,7 @@ DENG_PUBLIC Str *Str_NewStd(void);
  * Constructs a new string by reading it from @a reader.
  * Memory for the string is allocated with de::Zone.
  */
-DENG_PUBLIC Str *Str_NewFromReader(Reader *reader);
+DENG_PUBLIC Str *Str_NewFromReader(Reader1 *reader);
 
 /**
  * Call this for uninitialized strings. Global variables are
@@ -420,9 +420,9 @@ DENG_PUBLIC Str *Str_PercentEncode2(Str *str, char const *excludeChars, char con
  */
 DENG_PUBLIC Str *Str_PercentDecode(Str *str);
 
-DENG_PUBLIC void Str_Write(Str const *str, Writer *writer);
+DENG_PUBLIC void Str_Write(Str const *str, Writer1 *writer);
 
-DENG_PUBLIC void Str_Read(Str *str, Reader *reader);
+DENG_PUBLIC void Str_Read(Str *str, Reader1 *reader);
 
 /*
  * AutoStr

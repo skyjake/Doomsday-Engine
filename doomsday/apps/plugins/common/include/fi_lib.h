@@ -106,7 +106,7 @@ dd_bool FI_IsMenuTrigger(void);
 
 int FI_PrivilegedResponder(const void* ev);
 
-void NetCl_UpdateFinaleState(Reader *msg);
+void NetCl_UpdateFinaleState(Reader1 *msg);
 
 #ifdef __cplusplus
 } // extern "C"

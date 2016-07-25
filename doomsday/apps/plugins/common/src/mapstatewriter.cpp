@@ -48,7 +48,7 @@ DENG2_PIMPL(MapStateWriter)
 {
     ThingArchive *thingArchive;
     world::MaterialArchive *materialArchive;
-    Writer *writer; // Not owned.
+    Writer1 *writer; // Not owned.
 
     Impl(Public *i)
         : Base(i)
@@ -301,7 +301,7 @@ DENG2_PIMPL(MapStateWriter)
 MapStateWriter::MapStateWriter() : d(new Impl(this))
 {}
 
-void MapStateWriter::write(Writer *writer, bool excludePlayers)
+void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
 {
     DENG2_ASSERT(writer != 0);
     d->writer = writer;
@@ -361,7 +361,7 @@ materialarchive_serialid_t MapStateWriter::serialIdFor(material_s *material)
     return serialIdFor(reinterpret_cast<world::Material *>(material));
 }
 
-Writer *MapStateWriter::writer()
+Writer1 *MapStateWriter::writer()
 {
     DENG2_ASSERT(d->writer != 0);
     return d->writer;

@@ -1,5 +1,5 @@
 /**
- * @file de/writer.h
+ * @file de/writer1.c
  * Serializer for writing values and data into a byte array.
  *
  * @authors Copyright &copy; 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -50,7 +50,7 @@ struct writer_s
     writerfuncs_t func;     // Callbacks for write operations.
 };
 
-static dd_bool Writer_Check(Writer const *writer, size_t len)
+static dd_bool Writer_Check(Writer1 const *writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.
@@ -73,7 +73,7 @@ static dd_bool Writer_Check(Writer const *writer, size_t len)
         // Dynamic buffers will expand.
         if (writer->isDynamic && len)
         {
-            Writer *modWriter = (Writer *) writer;
+            Writer1 *modWriter = (Writer1 *) writer;
             while ((int)modWriter->size < (int)writer->pos + (int)len)
             {
                 modWriter->size *= 2;
@@ -94,28 +94,28 @@ static dd_bool Writer_Check(Writer const *writer, size_t len)
                 (unsigned long) len,
                 (unsigned long) writer->size,
                 writer->isDynamic);
-        App_FatalError("Writer bounds check failed.");
+        App_FatalError("Writer1 bounds check failed.");
     }
     return true;
 }
 
-static void Writer_WriteRaw(Writer *writer, void const *buffer, size_t len)
+static void Writer_WriteRaw(Writer1 *writer, void const *buffer, size_t len)
 {
     memcpy(writer->data + writer->pos, buffer, len);
     writer->pos += len;
 }
 
-Writer *Writer_NewWithBuffer(byte *buffer, size_t maxLen)
+Writer1 *Writer_NewWithBuffer(byte *buffer, size_t maxLen)
 {
-    Writer *w = M_Calloc(sizeof(Writer));
+    Writer1 *w = M_Calloc(sizeof(Writer1));
     w->size = maxLen;
     w->data = buffer;
     return w;
 }
 
-Writer *Writer_NewWithDynamicBuffer(size_t maxLen)
+Writer1 *Writer_NewWithDynamicBuffer(size_t maxLen)
 {
-    Writer *w = M_Calloc(sizeof(Writer));
+    Writer1 *w = M_Calloc(sizeof(Writer1));
     w->isDynamic = true;
     w->maxDynamicSize = maxLen;
     w->size = 256;
@@ -123,13 +123,13 @@ Writer *Writer_NewWithDynamicBuffer(size_t maxLen)
     return w;
 }
 
-Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
-                                Writer_Callback_WriteInt16 writeInt16,
-                                Writer_Callback_WriteInt32 writeInt32,
-                                Writer_Callback_WriteFloat writeFloat,
-                                Writer_Callback_WriteData  writeData)
+Writer1 *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
+                                 Writer_Callback_WriteInt16 writeInt16,
+                                 Writer_Callback_WriteInt32 writeInt32,
+                                 Writer_Callback_WriteFloat writeFloat,
+                                 Writer_Callback_WriteData  writeData)
 {
-    Writer *w = M_Calloc(sizeof(Writer));
+    Writer1 *w = M_Calloc(sizeof(Writer1));
     w->useCustomFuncs = true;
     w->func.writeInt8 = writeInt8;
     w->func.writeInt16 = writeInt16;
@@ -139,7 +139,7 @@ Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
     return w;
 }
 
-void Writer_Delete(Writer *writer)
+void Writer_Delete(Writer1 *writer)
 {
     if (!writer) return;
     if (writer->isDynamic)
@@ -150,24 +150,24 @@ void Writer_Delete(Writer *writer)
     M_Free(writer);
 }
 
-size_t Writer_Size(Writer const *writer)
+size_t Writer_Size(Writer1 const *writer)
 {
     if (!writer) return 0;
     return writer->pos;
 }
 
-size_t Writer_TotalBufferSize(Writer const *writer)
+size_t Writer_TotalBufferSize(Writer1 const *writer)
 {
     if (!writer) return 0;
     return writer->size;
 }
 
-size_t Writer_BytesLeft(Writer const *writer)
+size_t Writer_BytesLeft(Writer1 const *writer)
 {
     return Writer_TotalBufferSize(writer) - Writer_Size(writer);
 }
 
-byte const *Writer_Data(Writer const *writer)
+byte const *Writer_Data(Writer1 const *writer)
 {
     if (Writer_Check(writer, 0))
     {
@@ -176,14 +176,14 @@ byte const *Writer_Data(Writer const *writer)
     return 0;
 }
 
-void Writer_SetPos(Writer *writer, size_t newPos)
+void Writer_SetPos(Writer1 *writer, size_t newPos)
 {
     if (!writer || writer->useCustomFuncs) return;
     writer->pos = newPos;
     Writer_Check(writer, 0);
 }
 
-void Writer_WriteChar(Writer *writer, char v)
+void Writer_WriteChar(Writer1 *writer, char v)
 {
     if (!Writer_Check(writer, 1)) return;
     if (!writer->useCustomFuncs)
@@ -198,7 +198,7 @@ void Writer_WriteChar(Writer *writer, char v)
     }
 }
 
-void Writer_WriteByte(Writer *writer, byte v)
+void Writer_WriteByte(Writer1 *writer, byte v)
 {
     if (!Writer_Check(writer, 1)) return;
     if (!writer->useCustomFuncs)
@@ -213,7 +213,7 @@ void Writer_WriteByte(Writer *writer, byte v)
     }
 }
 
-void Writer_WriteInt16(Writer *writer, int16_t v)
+void Writer_WriteInt16(Writer1 *writer, int16_t v)
 {
     if (Writer_Check(writer, 2))
     {
@@ -231,7 +231,7 @@ void Writer_WriteInt16(Writer *writer, int16_t v)
     }
 }
 
-void Writer_WriteUInt16(Writer *writer, uint16_t v)
+void Writer_WriteUInt16(Writer1 *writer, uint16_t v)
 {
     if (Writer_Check(writer, 2))
     {
@@ -249,7 +249,7 @@ void Writer_WriteUInt16(Writer *writer, uint16_t v)
     }
 }
 
-void Writer_WriteInt32(Writer *writer, int32_t v)
+void Writer_WriteInt32(Writer1 *writer, int32_t v)
 {
     if (Writer_Check(writer, 4))
     {
@@ -267,7 +267,7 @@ void Writer_WriteInt32(Writer *writer, int32_t v)
     }
 }
 
-void Writer_WriteUInt32(Writer *writer, uint32_t v)
+void Writer_WriteUInt32(Writer1 *writer, uint32_t v)
 {
     if (Writer_Check(writer, 4))
     {
@@ -285,7 +285,7 @@ void Writer_WriteUInt32(Writer *writer, uint32_t v)
     }
 }
 
-void Writer_WriteFloat(Writer *writer, float v)
+void Writer_WriteFloat(Writer1 *writer, float v)
 {
     if (Writer_Check(writer, 4))
     {
@@ -303,7 +303,7 @@ void Writer_WriteFloat(Writer *writer, float v)
     }
 }
 
-void Writer_Write(Writer *writer, void const *buffer, size_t len)
+void Writer_Write(Writer1 *writer, void const *buffer, size_t len)
 {
     if (!len) return;
 
@@ -322,7 +322,7 @@ void Writer_Write(Writer *writer, void const *buffer, size_t len)
     }
 }
 
-void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
+void Writer_WritePackedUInt16(Writer1 *writer, uint16_t v)
 {
     DENG_ASSERT(!(v & 0x8000));
     if (v & 0x8000)
@@ -344,7 +344,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
     }
 }
 
-void Writer_WritePackedUInt32(Writer *writer, uint32_t l)
+void Writer_WritePackedUInt32(Writer1 *writer, uint32_t l)
 {
     while (l >= 0x80)
     {

@@ -35,12 +35,12 @@ void SV_CloseFile();
 bool SV_OpenFileForRead(de::File const &file);
 bool SV_OpenFileForWrite(de::IByteArray &block);
 
-Writer *SV_NewWriter();
+Writer1 *SV_NewWriter();
 
 /// Provides access to the wrapped de::Writer instance used for serialization.
 de::Writer &SV_RawWriter();
 
-Reader *SV_NewReader();
+Reader1 *SV_NewReader();
 
 /// Provides access to the wrapped de::Reader instance used for deserialization.
 de::Reader &SV_RawReader();

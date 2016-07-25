@@ -27,8 +27,8 @@
 #include <de/reader.h>
 #include <de/writer.h>
 
-DENG_EXTERN_C Writer* msgWriter;
-DENG_EXTERN_C Reader* msgReader;
+DENG_EXTERN_C Writer1 *msgWriter;
+DENG_EXTERN_C Reader1 *msgReader;
 
 #ifdef __cplusplus
 extern "C" {

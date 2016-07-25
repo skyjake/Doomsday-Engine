@@ -416,7 +416,7 @@ dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
 
 void mobj_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     mobj_t const *original = (mobj_t *) this;
     ThinkerT<mobj_t> temp(*original);
@@ -631,7 +631,7 @@ int mobj_s::read(MapStateReader *msr)
 #define FF_FULLBRIGHT 0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK  0x7fff
 
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
 
     int ver = Reader_ReadByte(reader);
 

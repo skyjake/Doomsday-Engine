@@ -38,13 +38,13 @@
     DENG2_ASSERT(inst); \
     de::Uri const* self = TOINTERNAL_CONST(inst)
 
-static void readUri(Uri *uri, Reader *reader, de::String defaultScheme = "")
+static void readUri(Uri *uri, Reader1 *reader, de::String defaultScheme = "")
 {
     SELF(uri);
     self->readUri(reader, defaultScheme);
 }
 
-static void writeUri(Uri const *uri, Writer *writer, int omitComponents = 0)
+static void writeUri(Uri const *uri, Writer1 *writer, int omitComponents = 0)
 {
     SELF_CONST(uri);
     self->writeUri(writer, omitComponents);
@@ -105,7 +105,7 @@ Uri* Uri_Dup(Uri const* other)
 }
 
 #undef Uri_FromReader
-Uri* Uri_FromReader(Reader* reader)
+Uri* Uri_FromReader(Reader1 *reader)
 {
     DENG_ASSERT(reader);
 

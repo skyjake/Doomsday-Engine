@@ -30,7 +30,7 @@
 
 using namespace de;
 
-static patchid_t pKeys[NUM_KEY_TYPES];
+static patchid_t pKeySlots[NUM_KEY_TYPES];
 
 static void KeySlotWidget_UpdateGeometry(guidata_keyslot_t *kslt)
 {
@@ -97,18 +97,18 @@ void guidata_keyslot_t::tick(timespan_t /*elapsed*/)
     d->patchId = -1;
     if(plr->keys[d->keyTypeA] || plr->keys[d->keyTypeB])
     {
-        d->patchId = ::pKeys[plr->keys[d->keyTypeB]? d->keyTypeB : d->keyTypeA];
+        d->patchId = ::pKeySlots[plr->keys[d->keyTypeB]? d->keyTypeB : d->keyTypeA];
     }
 
     d->patchId2 = -1;
     if(!cfg.hudKeysCombine && plr->keys[d->keyTypeA] && plr->keys[d->keyTypeB])
     {
-        d->patchId2 = ::pKeys[d->keyTypeA];
+        d->patchId2 = ::pKeySlots[d->keyTypeA];
     }
 #elif __JHEXEN__
-    d->patchId = (plr->keys & (1 << d->keyTypeA)) ? pKeys[d->keyTypeA] : -1;
+    d->patchId = (plr->keys & (1 << d->keyTypeA)) ? pKeySlots[d->keyTypeA] : -1;
 #else
-    d->patchId = plr->keys[d->keyTypeA] ? pKeys[d->keyTypeA] : -1;
+    d->patchId = plr->keys[d->keyTypeA] ? pKeySlots[d->keyTypeA] : -1;
 #endif
 }
 
@@ -198,14 +198,14 @@ void guidata_keyslot_t::prepareAssets()
 {
 #if __JHERETIC__
     dint n = 0;
-    ::pKeys[/*KT_YELLOW*/ n++] = R_DeclarePatch("YKEYICON");
-    ::pKeys[/*KT_GREEN*/  n++] = R_DeclarePatch("GKEYICON");
-    ::pKeys[/*KT_BLUE*/   n++] = R_DeclarePatch("BKEYICON");
+    ::pKeySlots[/*KT_YELLOW*/ n++] = R_DeclarePatch("YKEYICON");
+    ::pKeySlots[/*KT_GREEN*/  n++] = R_DeclarePatch("GKEYICON");
+    ::pKeySlots[/*KT_BLUE*/   n++] = R_DeclarePatch("BKEYICON");
     DENG2_ASSERT(n == NUM_KEY_TYPES);
 #else
     for(dint i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        ::pKeys[i] = R_DeclarePatch(String("STKEYS%1").arg(i).toUtf8().constData());
+        ::pKeySlots[i] = R_DeclarePatch(String("STKEYS%1").arg(i).toUtf8().constData());
     }
 #endif
 }

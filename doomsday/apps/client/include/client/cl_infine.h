@@ -27,7 +27,7 @@ finaleid_t Cl_CurrentFinale();
 /**
  * This is where clients start their InFine sequences.
  */
-void Cl_Finale(Reader *msg);
+void Cl_Finale(Reader1 *msg);
 
 /**
  * Client sends a request to skip the finale.

@@ -119,7 +119,7 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
     }
 }
 
-void playerheader_s::write(Writer *writer)
+void playerheader_s::write(Writer1 *writer)
 {
     Writer_WriteByte(writer, 2); // version byte
 
@@ -150,7 +150,7 @@ void playerheader_s::write(Writer *writer)
 #endif
 }
 
-void playerheader_s::read(Reader *reader, int saveVersion)
+void playerheader_s::read(Reader1 *reader, int saveVersion)
 {
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -227,7 +227,7 @@ enum sectorclass_t
 
 void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     int i, type;
     float flooroffx           = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
@@ -318,7 +318,7 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 void SV_ReadSector(Sector *sec, MapStateReader *msr)
 {
     xsector_t *xsec = P_ToXSector(sec);
-    Reader *reader  = msr->reader();
+    Reader1 *reader  = msr->reader();
     int mapVersion  = msr->mapVersion();
 
     // A type byte?
@@ -468,7 +468,7 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
 void SV_WriteLine(Line *li, MapStateWriter *msw)
 {
     xline_t *xli   = P_ToXLine(li);
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
 #if !__JHEXEN__
     Writer_WriteByte(writer, xli->xg? 1 : 0); /// @c 1= XG data will follow.
@@ -556,7 +556,7 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
 void SV_ReadLine(Line *li, MapStateReader *msr)
 {
     xline_t *xli   = P_ToXLine(li);
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     bool xgDataFollows = false;
@@ -801,7 +801,7 @@ void SV_SaveGameClient(uint /*sessionId*/)
         return;
     }
 
-    Writer *writer = SV_NewWriter();
+    Writer1 *writer = SV_NewWriter();
     SV_WriteSessionMetadata(*metadata, writer);
 
     // Some important information.
@@ -869,7 +869,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
         return;
     }
 
-    Reader *reader = SV_NewReader();
+    Reader1 *reader = SV_NewReader();
 
     int const saveVersion = (*metadata)["version"].value().asNumber();
     Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText().toUtf8().constData(), RC_NULL);

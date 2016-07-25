@@ -2599,6 +2599,7 @@ bool Mus_IsPlaying()
 #endif
 }
 
+#undef S_StopMusic
 void S_StopMusic()
 {
 #ifdef __CLIENT__
@@ -2606,6 +2607,7 @@ void S_StopMusic()
 #endif
 }
 
+#undef S_PauseMusic
 void S_PauseMusic(dd_bool paused)
 {
 #ifdef __CLIENT__
@@ -2655,6 +2657,7 @@ dint Mus_StartCDTrack(dint cdTrack, bool looped)
 #endif
 }
 
+#undef S_StartMusicNum
 dint S_StartMusicNum(dint musicId, dd_bool looped)
 {
 #ifdef __CLIENT__
@@ -2672,6 +2675,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 #endif
 }
 
+#undef S_StartMusic
 dint S_StartMusic(char const *musicId, dd_bool looped)
 {
     dint idx = ::defs.getMusicNum(musicId);
@@ -2694,6 +2698,7 @@ mobj_t *S_GetListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
+#undef S_LocalSoundAtVolumeFrom
 dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *point, dfloat volume)
 {
 #ifdef __CLIENT__
@@ -2782,22 +2787,26 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 #endif
 }
 
+#undef S_LocalSoundAtVolume
 dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
 }
 
+#undef S_LocalSound
 dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
     // Play local sound at max volume.
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1);
 }
 
+#undef S_LocalSoundFrom
 dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 {
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1);
 }
 
+#undef S_StartSound
 dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
 #ifdef __SERVER__
@@ -2809,6 +2818,7 @@ dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
     return S_LocalSound(soundIdAndFlags, emitter);
 }
 
+#undef S_StartSoundEx
 dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 {
 #ifdef __SERVER__
@@ -2819,6 +2829,7 @@ dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
     return S_LocalSound(soundIdAndFlags, emitter);
 }
 
+#undef S_StartSoundAtVolume
 dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
 #ifdef __SERVER__
@@ -2830,6 +2841,7 @@ dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
     return S_LocalSoundAtVolume(soundIdAndFlags, emitter, volume);
 }
 
+#undef S_ConsoleSound
 dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
 {
 #ifdef __SERVER__
@@ -2845,16 +2857,19 @@ dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
     return true;
 }
 
+#undef S_StopSound
 void S_StopSound(dint soundId, mobj_t *emitter)
 {
     App_AudioSystem().stopSound(soundId, emitter);
 }
 
+#undef S_StopSound2
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
     App_AudioSystem().stopSound(soundId, emitter, flags);
 }
 
+#undef S_IsPlaying
 dint S_IsPlaying(dint soundId, mobj_t *emitter)
 {
     return (dint) App_AudioSystem().soundIsPlaying(soundId, emitter);

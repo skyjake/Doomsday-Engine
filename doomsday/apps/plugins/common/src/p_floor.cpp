@@ -392,7 +392,7 @@ void T_MoveFloor(void *floorThinkerPtr)
 
 void floor_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 3); // Write a version byte.
 
@@ -426,7 +426,7 @@ void floor_s::write(MapStateWriter *msw) const
 
 int floor_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
 #if __JHEXEN__

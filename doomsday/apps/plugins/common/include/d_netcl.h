@@ -29,41 +29,41 @@
 extern "C" {
 #endif
 
-void NetCl_UpdateGameState(Reader *msg);
+void NetCl_UpdateGameState(Reader1 *msg);
 
-void NetCl_PlayerSpawnPosition(Reader *msg);
+void NetCl_PlayerSpawnPosition(Reader1 *msg);
 
-void NetCl_UpdateTotalCounts(Reader *msg);
+void NetCl_UpdateTotalCounts(Reader1 *msg);
 
-void NetCl_UpdatePlayerState(Reader *msg, int plrNum);
+void NetCl_UpdatePlayerState(Reader1 *msg, int plrNum);
 
-void NetCl_UpdatePlayerState2(Reader *msg, int plrNum);
+void NetCl_UpdatePlayerState2(Reader1 *msg, int plrNum);
 
-void NetCl_UpdatePSpriteState(Reader *msg);
+void NetCl_UpdatePSpriteState(Reader1 *msg);
 
 /**
  * Set the jump power used in client mode.
  */
-void NetCl_UpdateJumpPower(Reader *msg);
+void NetCl_UpdateJumpPower(Reader1 *msg);
     
-void NetCl_DismissHUDs(Reader *msg);
+void NetCl_DismissHUDs(Reader1 *msg);
 
-void NetCl_Intermission(Reader *msg);
+void NetCl_Intermission(Reader1 *msg);
 
-void NetCl_LocalMobjState(Reader *msg);
+void NetCl_LocalMobjState(Reader1 *msg);
 
 /**
  * Clients have other players' info, but it's only "FYI"; they don't really need it.
  */
-void NetCl_UpdatePlayerInfo(Reader *msg);
+void NetCl_UpdatePlayerInfo(Reader1 *msg);
 
-void NetCl_SaveGame(Reader *msg);
+void NetCl_SaveGame(Reader1 *msg);
 
-void NetCl_LoadGame(Reader *msg);
+void NetCl_LoadGame(Reader1 *msg);
 
-void NetCl_Paused(Reader *msg);
+void NetCl_Paused(Reader1 *msg);
 
-void NetCl_MobjImpulse(Reader *msg);
+void NetCl_MobjImpulse(Reader1 *msg);
 
 void NetCl_SendPlayerInfo(void);
 

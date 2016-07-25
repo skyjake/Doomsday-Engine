@@ -48,7 +48,7 @@ public:
     GameRuleset();
     GameRuleset(GameRuleset const &other);
 
-    static GameRuleset *fromReader(Reader *reader);
+    static GameRuleset *fromReader(Reader1 *reader);
     static GameRuleset *fromRecord(de::Record const &rec, GameRuleset const *defaults = 0);
 
     GameRuleset &operator = (GameRuleset const &other);
@@ -57,8 +57,8 @@ public:
 
     de::Record *toRecord() const;
 
-    void write(Writer *writer) const;
-    void read(Reader *reader);
+    void write(Writer1 *writer) const;
+    void read(Reader1 *reader);
 
     de::String asText() const;
 };

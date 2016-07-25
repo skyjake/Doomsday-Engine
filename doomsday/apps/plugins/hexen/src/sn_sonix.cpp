@@ -491,7 +491,7 @@ void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
     node->currentSoundID  = currentSoundID;
 }
 
-void SN_WriteSequences(Writer *writer)
+void SN_WriteSequences(Writer1 *writer)
 {
     Writer_WriteInt32(writer, activeSequenceCount);
     for(seqnode_t *node = sequences; node; node = node->next)
@@ -533,7 +533,7 @@ void SN_WriteSequences(Writer *writer)
     }
 }
 
-void SN_ReadSequences(Reader *reader, int mapVersion)
+void SN_ReadSequences(Reader1 *reader, int mapVersion)
 {
     // Reload and restart all sound sequences
     int numSequences = Reader_ReadInt32(reader);

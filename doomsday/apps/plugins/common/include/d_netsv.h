@@ -95,7 +95,7 @@ void NetSv_SoundAtVolume(mobj_t *origin, int soundId, int volume, int toPlr);
 
 void NetSv_Intermission(int flags, int state, int time);
 
-void NetSv_ChangePlayerInfo(int from, Reader *reader);
+void NetSv_ChangePlayerInfo(int from, Reader1 *reader);
 
 void NetSv_SendPlayerInfo(int whose, int toWhom);
 
@@ -135,18 +135,18 @@ void NetSv_Paused(int pauseState);
 /**
  * Process the requested cheat command, if possible.
  */
-void NetSv_DoCheat(int player, Reader *reader);
+void NetSv_DoCheat(int player, Reader1 *reader);
 
 void NetSv_ExecuteCheat(int player, char const *command);
 
 /**
  * Process the requested player action, if possible.
  */
-void NetSv_DoAction(int player, Reader *reader);
+void NetSv_DoAction(int player, Reader1 *reader);
 
-void NetSv_DoDamage(int player, Reader *reader);
+void NetSv_DoDamage(int player, Reader1 *reader);
 
-void NetSv_DoFloorHit(int player, Reader *msg);
+void NetSv_DoFloorHit(int player, Reader1 *msg);
 
 /**
  * The default jump power is 9.

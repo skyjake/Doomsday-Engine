@@ -73,7 +73,7 @@ extern dd_bool  allowSending;
  * as the reading buffer. The reader has to be destroyed with Reader_Delete()
  * after it is not needed any more.
  */
-Reader* Reader_NewWithNetworkBuffer(void);
+Reader1* Reader_NewWithNetworkBuffer(void);
 
 /**
  * Functions.

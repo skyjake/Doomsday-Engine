@@ -53,7 +53,7 @@ void T_LightFlash(lightflash_t *flash)
 
 void lightflash_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -71,7 +71,7 @@ void lightflash_s::write(MapStateWriter *msw) const
 
 int lightflash_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 5)
@@ -167,7 +167,7 @@ void T_StrobeFlash(strobe_t *flash)
 
 void strobe_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -185,7 +185,7 @@ void strobe_s::write(MapStateWriter *msw) const
 
 int strobe_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 5)
@@ -369,7 +369,7 @@ void T_Glow(glow_t *g)
 
 void glow_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -385,7 +385,7 @@ void glow_s::write(MapStateWriter *msw) const
 
 int glow_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 5)

@@ -127,21 +127,21 @@ static void swi8(writer_s *w, char val)
     *writer << val;
 }
 
-static void swi16(Writer *w, short val)
+static void swi16(Writer1 *w, short val)
 {
     if(!w) return;
     DENG2_ASSERT(writer);
     *writer << val;
 }
 
-static void swi32(Writer *w, int val)
+static void swi32(Writer1 *w, int val)
 {
     if(!w) return;
     DENG2_ASSERT(writer);
     *writer << val;
 }
 
-static void swf(Writer *w, float val)
+static void swf(Writer1 *w, float val)
 {
     if(!w) return;
     DENG2_ASSERT(writer);
@@ -152,7 +152,7 @@ static void swf(Writer *w, float val)
     *writer << val;
 }
 
-static void swd(Writer *w, char const *data, int len)
+static void swd(Writer1 *w, char const *data, int len)
 {
     if(!w) return;
     DENG2_ASSERT(writer);

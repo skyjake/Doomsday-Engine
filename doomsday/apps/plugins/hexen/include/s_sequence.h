@@ -91,8 +91,8 @@ int SN_GetSequenceOffset(int sequence, int *sequencePtr);
  */
 void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume, int currentSoundID);
 
-void SN_WriteSequences(Writer *writer);
-void SN_ReadSequences(Reader *reader, int mapVersion);
+void SN_WriteSequences(Writer1 *writer);
+void SN_ReadSequences(Reader1 *reader, int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"

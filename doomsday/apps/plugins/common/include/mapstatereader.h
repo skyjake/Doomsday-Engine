@@ -54,7 +54,7 @@ public:
     /**
      * Returns the reader to use when deserializing the saved map state.
      */
-    Reader *reader();
+    Reader1 *reader();
 
     /**
      * Lookup a pointer to a Mobj with the given @a serialId.

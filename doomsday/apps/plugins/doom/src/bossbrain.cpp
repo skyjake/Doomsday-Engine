@@ -66,7 +66,7 @@ int BossBrain::targetCount() const
 
 void BossBrain::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     // Not for us?
     if(!IS_SERVER) return;
@@ -86,7 +86,7 @@ void BossBrain::write(MapStateWriter *msw) const
 
 void BossBrain::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     // Not for us?

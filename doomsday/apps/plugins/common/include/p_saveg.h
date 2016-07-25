@@ -67,8 +67,8 @@ typedef struct playerheader_s {
 #endif
 
 #ifdef __cplusplus
-    void write(Writer *writer);
-    void read(Reader *reader, int saveVersion);
+    void write(Writer1 *writer);
+    void read(Reader1 *reader, int saveVersion);
 #endif
 } playerheader_t;
 

@@ -66,7 +66,7 @@ void T_Scroll(scroll_t *s)
 
 void scroll_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -84,7 +84,7 @@ void scroll_s::write(MapStateWriter *msw) const
 
 int scroll_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     /*int ver =*/ Reader_ReadByte(reader); // version byte.

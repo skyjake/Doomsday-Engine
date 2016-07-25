@@ -1,5 +1,5 @@
 /**
- * @file src/reader.c
+ * @file src/reader1.c
  * Deserializer for reading values and data from a byte array.
  *
  * @authors Copyright &copy; 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -53,12 +53,12 @@ struct reader_s
     readerfuncs_t func;
 };
 
-static uint32_t Reader_8(Reader *reader, int shift)
+static uint32_t Reader_8(Reader1 *reader, int shift)
 {
     return reader->data[reader->pos++] << shift;
 }
 
-static dd_bool Reader_Check(Reader const *reader, size_t len)
+static dd_bool Reader_Check(Reader1 const *reader, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One byte for the code.
@@ -83,26 +83,26 @@ static dd_bool Reader_Check(Reader const *reader, size_t len)
                 (unsigned long) reader->pos,
                 (unsigned long) len,
                 (unsigned long) reader->size);
-        App_FatalError("Reader bounds check failed.");
+        App_FatalError("Reader1 bounds check failed.");
     }
     return true;
 }
 
-Reader *Reader_NewWithBuffer(byte const *buffer, size_t len)
+Reader1 *Reader_NewWithBuffer(byte const *buffer, size_t len)
 {
-    Reader *rd = M_Calloc(sizeof(Reader));
+    Reader1 *rd = M_Calloc(sizeof(Reader1));
     rd->size = len;
     rd->data = buffer;
     return rd;
 }
 
-Reader *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
-                                Reader_Callback_ReadInt16 readInt16,
-                                Reader_Callback_ReadInt32 readInt32,
-                                Reader_Callback_ReadFloat readFloat,
-                                Reader_Callback_ReadData  readData)
+Reader1 *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+                                 Reader_Callback_ReadInt16 readInt16,
+                                 Reader_Callback_ReadInt32 readInt32,
+                                 Reader_Callback_ReadFloat readFloat,
+                                 Reader_Callback_ReadData  readData)
 {
-    Reader *rd = M_Calloc(sizeof(Reader));
+    Reader1 *rd = M_Calloc(sizeof(Reader1));
     rd->useCustomFuncs = true;
     rd->func.readInt8 = readInt8;
     rd->func.readInt16 = readInt16;
@@ -112,24 +112,24 @@ Reader *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
     return rd;
 }
 
-void Reader_Delete(Reader *reader)
+void Reader_Delete(Reader1 *reader)
 {
     M_Free(reader);
 }
 
-size_t Reader_Pos(Reader const *reader)
+size_t Reader_Pos(Reader1 const *reader)
 {
     if (!reader) return 0;
     return reader->pos;
 }
 
-size_t Reader_Size(Reader const *reader)
+size_t Reader_Size(Reader1 const *reader)
 {
     if (!reader) return 0;
     return reader->size;
 }
 
-void Reader_SetPos(Reader *reader, size_t newPos)
+void Reader_SetPos(Reader1 *reader, size_t newPos)
 {
     if (!reader) return;
     if (reader->useCustomFuncs) return;
@@ -137,14 +137,14 @@ void Reader_SetPos(Reader *reader, size_t newPos)
     Reader_Check(reader, 0);
 }
 
-dd_bool Reader_AtEnd(Reader const *reader)
+dd_bool Reader_AtEnd(Reader1 const *reader)
 {
     Reader_Check(reader, 0);
     if (reader->useCustomFuncs) return false;
     return reader->pos == reader->size;
 }
 
-int8_t Reader_ReadChar(Reader *reader)
+int8_t Reader_ReadChar(Reader1 *reader)
 {
     int8_t result = 0;
     if (Reader_Check(reader, 1))
@@ -163,7 +163,7 @@ int8_t Reader_ReadChar(Reader *reader)
     return result;
 }
 
-byte Reader_ReadByte(Reader *reader)
+byte Reader_ReadByte(Reader1 *reader)
 {
     byte result = 0;
     if (Reader_Check(reader, 1))
@@ -182,7 +182,7 @@ byte Reader_ReadByte(Reader *reader)
     return result;
 }
 
-int16_t Reader_ReadInt16(Reader *reader)
+int16_t Reader_ReadInt16(Reader1 *reader)
 {
     int16_t result = 0;
     if (Reader_Check(reader, 2))
@@ -201,7 +201,7 @@ int16_t Reader_ReadInt16(Reader *reader)
     return result;
 }
 
-uint16_t Reader_ReadUInt16(Reader *reader)
+uint16_t Reader_ReadUInt16(Reader1 *reader)
 {
     uint16_t result = 0;
     if (Reader_Check(reader, 2))
@@ -220,7 +220,7 @@ uint16_t Reader_ReadUInt16(Reader *reader)
     return result;
 }
 
-int32_t Reader_ReadInt32(Reader *reader)
+int32_t Reader_ReadInt32(Reader1 *reader)
 {
     int32_t result = 0;
     if (Reader_Check(reader, 4))
@@ -239,7 +239,7 @@ int32_t Reader_ReadInt32(Reader *reader)
     return result;
 }
 
-uint32_t Reader_ReadUInt32(Reader *reader)
+uint32_t Reader_ReadUInt32(Reader1 *reader)
 {
     uint32_t result = 0;
     if (Reader_Check(reader, 4))
@@ -258,7 +258,7 @@ uint32_t Reader_ReadUInt32(Reader *reader)
     return result;
 }
 
-float Reader_ReadFloat(Reader *reader)
+float Reader_ReadFloat(Reader1 *reader)
 {
     float result = 0;
     if (Reader_Check(reader, 4))
@@ -280,7 +280,7 @@ float Reader_ReadFloat(Reader *reader)
     return result;
 }
 
-void Reader_Read(Reader *reader, void *buffer, size_t len)
+void Reader_Read(Reader1 *reader, void *buffer, size_t len)
 {
     if (!len || !buffer) return;
 
@@ -300,7 +300,7 @@ void Reader_Read(Reader *reader, void *buffer, size_t len)
     }
 }
 
-uint16_t Reader_ReadPackedUInt16(Reader *reader)
+uint16_t Reader_ReadPackedUInt16(Reader1 *reader)
 {
     ushort pack = Reader_ReadByte(reader);
     if (pack & 0x80)
@@ -311,7 +311,7 @@ uint16_t Reader_ReadPackedUInt16(Reader *reader)
     return pack;
 }
 
-uint32_t Reader_ReadPackedUInt32(Reader *reader)
+uint32_t Reader_ReadPackedUInt32(Reader1 *reader)
 {
     byte pack = 0;
     int pos = 0;

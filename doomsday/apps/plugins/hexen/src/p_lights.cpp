@@ -116,7 +116,7 @@ void T_Light(light_t *light)
 
 void light_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -136,7 +136,7 @@ void light_s::write(MapStateWriter *msw) const
 
 int light_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 4)
@@ -302,7 +302,7 @@ void T_Phase(phase_t *phase)
 
 void phase_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -317,7 +317,7 @@ void phase_s::write(MapStateWriter *msw) const
 
 int phase_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 4)

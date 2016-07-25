@@ -125,8 +125,8 @@ typedef struct player_s {
     int             lockFull;
 
 #ifdef __cplusplus
-    void write(Writer *writer, struct playerheader_s &plrHdr) const;
-    void read(Reader *reader, struct playerheader_s &plrHdr);
+    void write(Writer1 *writer, struct playerheader_s &plrHdr) const;
+    void read(Reader1 *reader, struct playerheader_s &plrHdr);
 #endif
 } player_t;
 

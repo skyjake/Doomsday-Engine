@@ -266,7 +266,7 @@ void T_MovePoly(void *polyThinker)
 
 void polyevent_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -283,7 +283,7 @@ void polyevent_s::write(MapStateWriter *msw) const
 
 int polyevent_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 4)
@@ -322,7 +322,7 @@ int polyevent_s::read(MapStateReader *msr)
 
 void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -339,7 +339,7 @@ void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
 
 int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 4)
@@ -576,7 +576,7 @@ void T_PolyDoor(void *polyDoorThinker)
 
 void polydoor_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -599,7 +599,7 @@ void polydoor_s::write(MapStateWriter *msw) const
 
 int polydoor_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
     if(mapVersion >= 4)
@@ -851,7 +851,7 @@ dd_bool PO_Busy(int tag)
 
 void polyobj_s::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // write a version byte (unused).
 
@@ -863,7 +863,7 @@ void polyobj_s::write(MapStateWriter *msw) const
 
 int polyobj_s::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
 
     angle_t newAngle = angle_t(Reader_ReadInt32(reader));
     Polyobj_Rotate(this, newAngle);

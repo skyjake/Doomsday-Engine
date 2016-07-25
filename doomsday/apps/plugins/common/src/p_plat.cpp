@@ -200,7 +200,7 @@ void T_PlatRaise(void *platThinkerPtr)
 
 void plat_t::write(MapStateWriter *msw) const
 {
-    Writer *writer = msw->writer();
+    Writer1 *writer = msw->writer();
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -224,7 +224,7 @@ void plat_t::write(MapStateWriter *msw) const
 
 int plat_t::read(MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
+    Reader1 *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
 #if __JHEXEN__

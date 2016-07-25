@@ -32,23 +32,23 @@
 
 using namespace de;
 
+namespace res {
+
 namespace internal {
 
-    static String readAndPercentEncodeRawName(de::Reader &from)
-    {
-        /// @attention The raw ASCII name is not necessarily terminated.
-        char asciiName[9];
-        for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
-        asciiName[8] = 0;
+static String readAndPercentEncodeRawName(de::Reader &from)
+{
+    /// @attention The raw ASCII name is not necessarily terminated.
+    char asciiName[9];
+    for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
+    asciiName[8] = 0;
 
-        // WAD format allows characters not typically permitted in native paths.
-        // To achieve uniformity we apply a percent encoding to the "raw" names.
-        return QString(QByteArray(asciiName).toPercentEncoding());
-    }
+    // WAD format allows characters not typically permitted in native paths.
+    // To achieve uniformity we apply a percent encoding to the "raw" names.
+    return QString(QByteArray(asciiName).toPercentEncoding());
+}
 
 } // namespace internal
-
-namespace res {
 
 Composite::Component::Component(Vector2i const &origin)
     : _origin (origin)
@@ -175,7 +175,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
     Composite *pctex = new Composite;
 
     // First is the raw name.
-    pctex->d->name = internal::readAndPercentEncodeRawName(reader);
+    pctex->d->name = res::internal::readAndPercentEncodeRawName(reader);
 
     // Next is some unused junk from a previous format version.
     dint16 unused16;
