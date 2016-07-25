@@ -71,7 +71,8 @@ struct uri_s; // The uri instance (opaque).
 /**
  * Uri instance. Created with Uri_New() or one of the other constructors.
  */
-typedef struct uri_s Uri;
+typedef struct uri_s UriWrapper;
+typedef UriWrapper Uri;
 
 DENG_API_TYPEDEF(Uri) // v1
 {
@@ -81,9 +82,9 @@ DENG_API_TYPEDEF(Uri) // v1
      * Constructs a default (empty) Uri instance. The uri should be destroyed with
      * Uri_Delete() once it is no longer needed.
      */
-    Uri* (*New)(void);
+    UriWrapper* (*New)(void);
 
-    Uri* (*NewWithPath3)(char const *defaultScheme, char const *path);
+    UriWrapper* (*NewWithPath3)(char const *defaultScheme, char const *path);
 
     /**
      * Constructs a Uri instance from @a path. The uri should be destroyed with
@@ -93,39 +94,39 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c FC_NULL,
      *      look for an appropriate default scheme for this class of resource.
      */
-    Uri* (*NewWithPath2)(char const *path, resourceclassid_t defaultResourceClass);
+    UriWrapper* (*NewWithPath2)(char const *path, resourceclassid_t defaultResourceClass);
 
-    Uri* (*NewWithPath)(char const *path);
+    UriWrapper* (*NewWithPath)(char const *path);
 
     /**
      * Constructs a Uri instance by duplicating @a other. The uri should be destroyed
      * with Uri_Delete() once it is no longer needed.
      */
-    Uri* (*Dup)(Uri const* other);
+    UriWrapper* (*Dup)(UriWrapper const* other);
 
     /**
      * Constructs a Uri instance by reading it from @a reader.  The uri should be
      * destroyed with Uri_Delete() once it is no longer needed.
      */
-    Uri* (*FromReader)(Reader1* reader);
+    UriWrapper* (*FromReader)(Reader1* reader);
 
     /**
      * Destroys the uri.
      */
-    void (*Delete)(Uri* uri);
+    void (*Delete)(UriWrapper* uri);
 
     /**
      * Returns true if the path component of the URI is empty; otherwise false.
      * @param uri  Uri instance.
      */
-    dd_bool (*IsEmpty)(Uri const* uri);
+    dd_bool (*IsEmpty)(UriWrapper const* uri);
 
     /**
      * Clears the uri, returning it to an empty state.
      * @param uri  Uri instance.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*Clear)(Uri* uri);
+    UriWrapper* (*Clear)(UriWrapper* uri);
 
     /**
      * Copy the contents of @a other into this uri.
@@ -134,7 +135,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param other  Uri to be copied.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*Copy)(Uri* uri, Uri const* other);
+    UriWrapper* (*Copy)(Uri* uri, UriWrapper const* other);
 
     /**
      * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
@@ -145,33 +146,33 @@ DENG_API_TYPEDEF(Uri) // v1
      *
      * @return  Resolved path else @c NULL if non-resolvable.
      */
-    AutoStr* (*Resolved)(Uri const* uri);
+    AutoStr* (*Resolved)(UriWrapper const* uri);
 
     /**
      * @param uri  Uri instance.
      * @return  Plain-text String representation of the current scheme.
      */
-    const Str* (*Scheme)(Uri const* uri);
+    const Str* (*Scheme)(UriWrapper const* uri);
 
     /**
      * @param uri  Uri instance.
      * @return  Plain-text String representation of the current path.
      */
-    const Str* (*Path)(Uri const* uri);
+    const Str* (*Path)(UriWrapper const* uri);
 
     /**
      * @param uri     Uri instance.
      * @param scheme  New scheme to be parsed.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*SetScheme)(Uri* uri, char const* scheme);
+    UriWrapper* (*SetScheme)(UriWrapper* uri, char const* scheme);
 
     /**
      * @param uri   Uri instance.
      * @param path  New path to be parsed.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*SetPath)(Uri* uri, char const* path);
+    UriWrapper* (*SetPath)(UriWrapper* uri, char const* path);
 
     /**
      * Update uri by parsing new values from the specified arguments.
@@ -184,11 +185,11 @@ DENG_API_TYPEDEF(Uri) // v1
      *
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*SetUri2)(Uri* uri, char const* path, resourceclassid_t defaultResourceClass);
+    UriWrapper* (*SetUri2)(UriWrapper* uri, char const* path, resourceclassid_t defaultResourceClass);
 
-    Uri* (*SetUri)(Uri* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
+    UriWrapper* (*SetUri)(UriWrapper* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
 
-    Uri* (*SetUriStr)(Uri* uri, ddstring_t const* path);
+    UriWrapper* (*SetUriStr)(UriWrapper* uri, ddstring_t const* path);
 
     /**
      * Transform the uri into a plain-text representation. Any internal encoding method
@@ -200,9 +201,9 @@ DENG_API_TYPEDEF(Uri) // v1
      *
      * @return  Plain-text String representation.
      */
-    AutoStr* (*Compose2)(Uri const* uri, int flags);
+    AutoStr* (*Compose2)(UriWrapper const* uri, int flags);
 
-    AutoStr* (*Compose)(Uri const* uri);
+    AutoStr* (*Compose)(UriWrapper const* uri);
 
     /**
      * Transform the uri into a human-friendly representation (percent decoding is done).
@@ -211,7 +212,7 @@ DENG_API_TYPEDEF(Uri) // v1
      *
      * @return  Human-friendly String representation.
      */
-    AutoStr* (*ToString)(Uri const* uri);
+    AutoStr* (*ToString)(UriWrapper const* uri);
 
     /**
      * Are these two uri instances considered equal once resolved?
@@ -221,7 +222,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param uri  Uri instance.
      * @param other  Other uri instance.
      */
-    dd_bool (*Equality)(Uri const* uri, Uri const* other);
+    dd_bool (*Equality)(UriWrapper const* uri, UriWrapper const* other);
 
     /**
      * Serialize @a uri using @a writer.
@@ -232,9 +233,9 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param writer            Writer instance.
      * @param omitComponents    @ref uriComponentFlags
      */
-    void (*Write2)(Uri const* uri, Writer1* writer, int omitComponents);
+    void (*Write2)(UriWrapper const* uri, Writer1* writer, int omitComponents);
 
-    void (*Write)(Uri const* uri, Writer1* writer/*, omitComponents = 0 (include everything)*/);
+    void (*Write)(UriWrapper const* uri, Writer1* writer/*, omitComponents = 0 (include everything)*/);
 
     /**
      * Deserializes @a uri using @a reader.
@@ -243,7 +244,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param reader  Reader instance.
      * @return  Same as @a uri, for caller convenience.
      */
-    Uri* (*Read)(Uri* uri, Reader1* reader);
+    UriWrapper* (*Read)(UriWrapper* uri, Reader1* reader);
 
     /**
      * Deserializes @a uri using @a reader. If the deserialized Uri lacks a scheme,
@@ -253,7 +254,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param reader            Reader instance.
      * @param defaultScheme     Default scheme.
      */
-    void (*ReadWithDefaultScheme)(Uri* uri, Reader1* reader, char const* defaultScheme);
+    void (*ReadWithDefaultScheme)(UriWrapper* uri, Reader1* reader, char const* defaultScheme);
 
 } DENG_API_T(Uri);
 

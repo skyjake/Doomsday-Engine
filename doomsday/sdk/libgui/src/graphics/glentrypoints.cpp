@@ -250,4 +250,8 @@ void getAllOpenGLEntryPoints()
     haveProcs = true;
 }
 
+#undef GET_PROC
+#undef GET_PROC_EXT
+#undef GET_PROC_EXT_ALT
+
 #endif // LIBGUI_USE_GLENTRYPOINTS

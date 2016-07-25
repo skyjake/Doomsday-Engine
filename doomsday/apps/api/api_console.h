@@ -44,7 +44,7 @@ DENG_API_TYPEDEF(Con)
     int (*GetInteger)(char const* name);
     float (*GetFloat)(char const* name);
     char const* (*GetString)(char const* name);
-    Uri const* (*GetUri)(char const* name);
+    struct uri_s const* (*GetUri)(char const* name);
 
     /**
      * @copydoc CVar_SetInteger()
@@ -67,8 +67,8 @@ DENG_API_TYPEDEF(Con)
     void (*SetString2)(char const* name, char const* text, int svflags);
     void (*SetString)(char const* name, char const* text);
 
-    void (*SetUri2)(char const* name, Uri const* uri, int svflags);
-    void (*SetUri)(char const* name, Uri const* uri);
+    void (*SetUri2)(char const* name, struct uri_s const* uri, int svflags);
+    void (*SetUri)(char const* name, struct uri_s const* uri);
 
     void (*Error)(char const* error, ...);
 
