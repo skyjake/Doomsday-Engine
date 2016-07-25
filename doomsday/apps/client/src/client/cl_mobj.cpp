@@ -627,6 +627,7 @@ mobj_t *ClMobj_Find(thid_t id)
 }
 
 // cl_player.c
+#undef ClPlayer_ClMobj
 DENG_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
 
 DENG_DECLARE_API(Client) =

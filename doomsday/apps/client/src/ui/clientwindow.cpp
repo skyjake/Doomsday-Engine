@@ -64,11 +64,6 @@
 
 using namespace de;
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
 
 DENG2_PIMPL(ClientWindow)
@@ -578,12 +573,12 @@ DENG2_PIMPL(ClientWindow)
 
         if (!hasFocus)
         {
-            inputSys().forAllDevices([] (InputDevice &device)
+            InputSystem::get().forAllDevices([] (InputDevice &device)
             {
                 device.reset();
                 return LoopContinue;
             });
-            inputSys().clearEvents();
+            InputSystem::get().clearEvents();
 
             canvas.trapMouse(false);
         }
@@ -599,7 +594,7 @@ DENG2_PIMPL(ClientWindow)
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1;         /// @todo Ask WindowSystem for an identifier number.
-        inputSys().postEvent(&ev);
+        InputSystem::get().postEvent(&ev);
     }
 
     void updateFpsNotification(float fps)

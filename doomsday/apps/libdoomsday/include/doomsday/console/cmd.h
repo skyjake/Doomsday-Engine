@@ -20,8 +20,12 @@
 #define LIBDOOMSDAY_CONSOLE_CMD_H
 
 #include "../libdoomsday.h"
-#include "dd_share.h"
-#include <de/String>
+#include "var.h"
+#include <de/types.h>
+
+#ifdef __cplusplus
+#  include <de/String>
+#endif
 
 #define DENG_MAX_ARGS            256
 
@@ -30,6 +34,24 @@ typedef struct {
     int argc;
     char *argv[DENG_MAX_ARGS];
 } cmdargs_t;
+
+/**
+ * Console command template. Used with Con_AddCommand().
+ * @ingroup ccmd
+ */
+typedef struct ccmdtemplate_s {
+    /// Name of the command.
+    const char* name;
+
+    /// Argument template.
+    const char* argTemplate;
+
+    /// Execute function.
+    int (*execFunc) (byte src, int argc, char** argv);
+
+    /// @ref consoleCommandFlags
+    unsigned int flags;
+} ccmdtemplate_t;
 
 typedef struct ccmd_s {
     /// Next command in the global list.
@@ -54,6 +76,69 @@ typedef struct ccmd_s {
     /// List of argument types for this command.
     cvartype_t args[DENG_MAX_ARGS];
 } ccmd_t;
+
+/**
+ * @defgroup consoleCommandFlags Console Command Flags
+ * @ingroup ccmd apiFlags
+ */
+///@{
+#define CMDF_NO_NULLGAME    0x00000001 ///< Not available unless a game is loaded.
+#define CMDF_NO_DEDICATED   0x00000002 ///< Not available in dedicated server mode.
+///@}
+
+/**
+ * @defgroup consoleUsageFlags Console Command Usage Flags
+ * @ingroup ccmd apiFlags
+ * The method(s) that @em CANNOT be used to invoke a console command, used with
+ * @ref commandSource.
+ */
+///@{
+#define CMDF_DDAY           0x00800000
+#define CMDF_GAME           0x01000000
+#define CMDF_CONSOLE        0x02000000
+#define CMDF_BIND           0x04000000
+#define CMDF_CONFIG         0x08000000
+#define CMDF_PROFILE        0x10000000
+#define CMDF_CMDLINE        0x20000000
+#define CMDF_DED            0x40000000
+#define CMDF_CLIENT         0x80000000 ///< Sent over the net from a client.
+///@}
+
+/**
+ * @defgroup commandSource Command Sources
+ * @ingroup ccmd
+ * Where a console command originated.
+ */
+///@{
+#define CMDS_UNKNOWN        0
+#define CMDS_DDAY           1 ///< Sent by the engine.
+#define CMDS_GAME           2 ///< Sent by a game library.
+#define CMDS_CONSOLE        3 ///< Sent via direct console input.
+#define CMDS_BIND           4 ///< Sent from a binding/alias.
+#define CMDS_CONFIG         5 ///< Sent via config file.
+#define CMDS_PROFILE        6 ///< Sent via player profile.
+#define CMDS_CMDLINE        7 ///< Sent via the command line.
+#define CMDS_SCRIPT         8 ///< Sent based on a def in a DED file eg (state->execute).
+///@}
+
+/// Helper macro for declaring console command functions. @ingroup console
+#define D_CMD(x)        DENG_EXTERN_C int CCmd##x(byte src, int argc, char** argv)
+
+/**
+ * Helper macro for registering new console commands.
+ * @ingroup ccmd
+ */
+#define C_CMD(name, argTemplate, fn) \
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_template); }
+
+/**
+ * Helper macro for registering new console commands.
+ * @ingroup ccmd
+ */
+#define C_CMD_FLAGS(name, argTemplate, fn, flags) \
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_template); }
+
+#ifdef __cplusplus
 
 void Con_InitCommands();
 void Con_ClearCommands(void);
@@ -117,5 +202,7 @@ LIBDOOMSDAY_PUBLIC de::String Con_CmdUsageAsStyledText(ccmd_t const *ccmd);
 LIBDOOMSDAY_PUBLIC void Con_AddMappedConfigVariable(char const *consoleName,
                                                     char const *opts,
                                                     de::String const &configVariable);
+
+#endif // __cplusplus
 
 #endif // LIBDOOMSDAY_CONSOLE_CMD_H

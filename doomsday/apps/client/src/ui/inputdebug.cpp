@@ -90,11 +90,6 @@ static void initKeyMappingsOnce()
     }
 }
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 static void initDrawStateForVisual(Point2Raw const *origin)
 {
     FR_PushAttrib();
@@ -780,19 +775,19 @@ void I_DebugDrawer()
 
     if (devRendKeyState)
     {
-        Rend_RenderInputDeviceStateVisual(inputSys().device(IDEV_KEYBOARD), &keyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(InputSystem::get().device(IDEV_KEYBOARD), &keyLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if (devRendMouseState)
     {
-        Rend_RenderInputDeviceStateVisual(inputSys().device(IDEV_MOUSE), &mouseLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(InputSystem::get().device(IDEV_MOUSE), &mouseLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if (devRendJoyState)
     {
-        Rend_RenderInputDeviceStateVisual(inputSys().device(IDEV_JOY1), &joyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(InputSystem::get().device(IDEV_JOY1), &joyLayout, &origin, &dimensions);
     }
 
     glMatrixMode(GL_PROJECTION);

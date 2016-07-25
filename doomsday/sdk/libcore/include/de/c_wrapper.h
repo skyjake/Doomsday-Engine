@@ -232,12 +232,12 @@ DENG2_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ..
 /*
  * Info
  */
-DENG2_OPAQUE(Info)
+DENG2_OPAQUE(de_Info)
 
-DENG2_PUBLIC Info *Info_NewFromString(char const *utf8text);
-DENG2_PUBLIC Info *Info_NewFromFile(char const *nativePath);
-DENG2_PUBLIC void Info_Delete(Info *info);
-DENG2_PUBLIC int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize);
+DENG2_PUBLIC de_Info *Info_NewFromString(char const *utf8text);
+DENG2_PUBLIC de_Info *Info_NewFromFile(char const *nativePath);
+DENG2_PUBLIC void Info_Delete(de_Info *info);
+DENG2_PUBLIC int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize);
 
 /*
  * UnixInfo

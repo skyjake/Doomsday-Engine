@@ -73,7 +73,7 @@ typedef struct {
 } tga_imagespec_t;
 #pragma pack()
 
-static char *lastErrorMsg = 0; /// @todo potentially never free'd
+static char *lastTgaErrorMsg = 0; /// @todo potentially never free'd
 
 #ifdef __BIG_ENDIAN__
 static int16_t shortSwap(int16_t n)
@@ -82,21 +82,21 @@ static int16_t shortSwap(int16_t n)
 }
 #endif
 
-static void setLastError(char const *msg)
+static void TGA_SetLastError(char const *msg)
 {
     size_t len;
     if(0 == msg || 0 == (len = strlen(msg)))
     {
-        if(lastErrorMsg != 0)
+        if(lastTgaErrorMsg != 0)
         {
-            M_Free(lastErrorMsg);
+            M_Free(lastTgaErrorMsg);
         }
-        lastErrorMsg = 0;
+        lastTgaErrorMsg = 0;
         return;
     }
 
-    lastErrorMsg = (char *) M_Realloc(lastErrorMsg, len+1);
-    strcpy(lastErrorMsg, msg);
+    lastTgaErrorMsg = (char *) M_Realloc(lastTgaErrorMsg, len+1);
+    strcpy(lastTgaErrorMsg, msg);
 }
 
 static uint8_t readByte(FileHandle &f)
@@ -150,8 +150,8 @@ static void readImageSpec(tga_imagespec_t *dst, FileHandle &file)
 
 const char* TGA_LastError(void)
 {
-    if(lastErrorMsg)
-        return lastErrorMsg;
+    if(lastTgaErrorMsg)
+        return lastTgaErrorMsg;
     return 0;
 }
 
@@ -178,7 +178,7 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
         imageSpec.attributeBits != 0) ||
         (imageSpec.flags & ISF_SCREEN_ORIGIN_UPPER))
     {
-        setLastError("Unsupported format.");
+        TGA_SetLastError("Unsupported format.");
         file.seek(initPos, SeekSet);
         return 0;
     }
@@ -209,7 +209,7 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
     }
     M_Free(srcBuf);
 
-    setLastError(0); // Success.
+    TGA_SetLastError(0); // Success.
     file.seek(initPos, SeekSet);
 
     return dstBuf;

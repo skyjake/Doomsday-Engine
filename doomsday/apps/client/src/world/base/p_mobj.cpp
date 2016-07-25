@@ -79,11 +79,6 @@ dint useSRVOAngle = 1;
 
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
-
-static inline ClientResources &resSys()
-{
-    return App_ResourceSystem();
-}
 #endif
 
 /**
@@ -665,7 +660,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
 
 Record *Mobj_SpritePtr(mobj_t const &mob)
 {
-    return resSys().spritePtr(mob.sprite, mob.frame);
+    return App_ResourceSystem().spritePtr(mob.sprite, mob.frame);
 }
 
 FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, float *retInter)
@@ -678,7 +673,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
     if (!mo.state) return 0;
 
     state_t &st = *mo.state;
-    FrameModelDef *modef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+    FrameModelDef *modef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if (!modef) return 0; // No model available.
 
     dfloat interp = -1;
@@ -738,7 +733,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
         }
         else if (worldTime)
         {
-            *retNextModef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+            *retNextModef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
         }
         else if (st.nextState > 0) // Check next state.
         {
@@ -754,8 +749,8 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
                 dint max = 20; // Let's not be here forever...
                 while (!stopScan)
                 {
-                    if(!((  !resSys().modelDefForState(runtimeDefs.states.indexOf(it))
-                          || resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0)
+                    if(!((  !App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it))
+                          || App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0)
                          && it->nextState > 0))
                     {
                         stopScan = true;
@@ -763,7 +758,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        FrameModelDef *mdit = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                        FrameModelDef *mdit = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if (mdit && mdit->interNext)
                         {
                             forever
@@ -803,7 +798,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
 
             if (!foundNext)
             {
-                *retNextModef = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                *retNextModef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
             }
         }
     }

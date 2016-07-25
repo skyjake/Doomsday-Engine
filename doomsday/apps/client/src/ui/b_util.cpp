@@ -38,11 +38,6 @@ byte zeroControlUponConflict = true;
 static float STAGE_THRESHOLD = 6.f/35;
 static float STAGE_FACTOR    = .5f;
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
 {
     DENG2_ASSERT(toggleName);
@@ -151,7 +146,7 @@ bool B_ParseKeyId(int &id, char const *desc)
 bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
 {
     DENG2_ASSERT(desc);
-    InputDevice const &mouse = inputSys().device(IDEV_MOUSE);
+    InputDevice const &mouse = InputSystem::get().device(IDEV_MOUSE);
 
     // Maybe it's one of the named buttons?
     id = mouse.toButtonId(desc);
@@ -196,7 +191,7 @@ bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const 
 
 bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc)
 {
-    InputDevice &device = inputSys().device(deviceId);
+    InputDevice &device = InputSystem::get().device(deviceId);
 
     if (!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
     {
@@ -442,7 +437,7 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         break;
 
     case Binding::AxisState: {
-        InputDeviceAxisControl const &axis = inputSys().device(cond->geti("device")).axis(cond->geti("id"));
+        InputDeviceAxisControl const &axis = InputSystem::get().device(cond->geti("device")).axis(cond->geti("id"));
         if (B_CheckAxisPosition(Binding::ControlTest(cond->geti("test")), cond->getf("pos"), axis.position()))
         {
             return fulfilled;
@@ -450,7 +445,7 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         break; }
 
     case Binding::ButtonState: {
-        InputDeviceButtonControl const &button = inputSys().device(cond->geti("device")).button(cond->geti("id"));
+        InputDeviceButtonControl const &button = InputSystem::get().device(cond->geti("device")).button(cond->geti("id"));
         bool isDown = button.isDown();
         if (( isDown && cond->geti("test") == Binding::ButtonStateDown) ||
            (!isDown && cond->geti("test") == Binding::ButtonStateUp))
@@ -460,7 +455,7 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         break; }
 
     case Binding::HatState: {
-        InputDeviceHatControl const &hat = inputSys().device(cond->geti("device")).hat(cond->geti("id"));
+        InputDeviceHatControl const &hat = InputSystem::get().device(cond->geti("device")).hat(cond->geti("id"));
         if (hat.position() == cond->getf("pos"))
         {
             return fulfilled;
@@ -534,7 +529,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         if (skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = inputSys().devicePtr(bind.geti("deviceId"));
+        InputDevice const *device = InputSystem::get().devicePtr(bind.geti("deviceId"));
         if (!device || !device->isActive())
             return LoopContinue; // Not available.
 
@@ -664,7 +659,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
     String str;
     if (type != E_SYMBOLIC)
     {
-        device = &inputSys().device(deviceId);
+        device = &InputSystem::get().device(deviceId);
         // Name of the device.
         str += device->name() + "-";
     }
@@ -678,7 +673,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
         {
             str += button.name();
         }
-        else if (device == inputSys().devicePtr(IDEV_KEYBOARD))
+        else if (device == InputSystem::get().devicePtr(IDEV_KEYBOARD))
         {
             char const *name = B_ShortNameForKey(id);
             if (name)

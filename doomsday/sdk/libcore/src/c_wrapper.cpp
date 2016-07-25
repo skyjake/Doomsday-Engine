@@ -217,11 +217,11 @@ void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
     logFragmentPrinter(metadata, buffer);
 }
 
-Info *Info_NewFromString(char const *utf8text)
+de_Info *Info_NewFromString(char const *utf8text)
 {
     try
     {
-        return reinterpret_cast<Info *>(new de::Info(QString::fromUtf8(utf8text)));
+        return reinterpret_cast<de_Info *>(new de::Info(QString::fromUtf8(utf8text)));
     }
     catch (de::Error const &er)
     {
@@ -230,13 +230,13 @@ Info *Info_NewFromString(char const *utf8text)
     }
 }
 
-Info *Info_NewFromFile(char const *nativePath)
+de_Info *Info_NewFromFile(char const *nativePath)
 {
     try
     {
         QScopedPointer<de::Info> info(new de::Info);
         info->parseNativeFile(nativePath);
-        return reinterpret_cast<Info *>(info.take());
+        return reinterpret_cast<de_Info *>(info.take());
     }
     catch (de::Error const &er)
     {
@@ -245,7 +245,7 @@ Info *Info_NewFromFile(char const *nativePath)
     }
 }
 
-void Info_Delete(Info *info)
+void Info_Delete(de_Info *info)
 {
     if (info)
     {
@@ -254,7 +254,7 @@ void Info_Delete(Info *info)
     }
 }
 
-int Info_FindValue(Info *info, char const *path, char *buffer, size_t bufSize)
+int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize)
 {
     if (!info) return false;
 

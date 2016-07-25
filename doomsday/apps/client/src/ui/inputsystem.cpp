@@ -1398,6 +1398,11 @@ LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)>
     return LoopContinue;
 }
 
+InputSystem &InputSystem::get() // static
+{
+    return ClientApp::inputSystem();
+}
+
 // ---------------------------------------------------------------------------
 
 void InputSystem::bindDefaults()
@@ -1748,6 +1753,7 @@ void InputSystem::consoleRegister() // static
 #undef PROTECTED_FLAGS
 }
 
+#undef B_SetContextFallback
 DENG_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
 {
     InputSystem &isys = ClientApp::inputSystem();
@@ -1757,6 +1763,7 @@ DENG_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(e
     }
 }
 
+#undef B_BindingsForCommand
 DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, size_t outBufSize)
 {
     DENG2_ASSERT(commandCString && outBuf);
@@ -1795,6 +1802,7 @@ DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf,
     return numFound;
 }
 
+#undef B_BindingsForControl
 DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCString, int inverse,
     char *outBuf, size_t outBufSize)
 {
@@ -1845,6 +1853,7 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
     return numFound;
 }
 
+#undef DD_GetKeyCode
 DENG_EXTERN_C int DD_GetKeyCode(char const *key)
 {
     DENG2_ASSERT(key);

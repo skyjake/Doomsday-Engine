@@ -20,9 +20,24 @@
 #define LIBDOOMSDAY_CONSOLE_VAR_H
 
 #include "../libdoomsday.h"
-#include "dd_share.h"
-#include <de/String>
+#include <de/types.h>
+#include <de/str.h>
 #include "../uri.h"
+
+#ifdef __cplusplus
+#  include <de/String>
+#endif
+
+/// Console variable types. @ingroup console
+typedef enum {
+    CVT_NULL,
+    CVT_BYTE,
+    CVT_INT,
+    CVT_FLOAT,
+    CVT_CHARPTR, ///< ptr points to a char*, which points to the string.
+    CVT_URIPTR, ///< ptr points to a Uri*, which points to the uri.
+    CVARTYPE_COUNT
+} cvartype_t;
 
 typedef struct cvar_s {
     /// @ref consoleVariableFlags
@@ -43,6 +58,106 @@ typedef struct cvar_s {
     /// On-change notification callback.
     void (*notifyChanged)();
 } cvar_t;
+
+#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) < CVARTYPE_COUNT)
+
+/**
+ * Console variable template. Used with Con_AddVariable().
+ * @ingroup cvar
+ */
+typedef struct cvartemplate_s {
+    /// Path of the variable.
+    const char* path;
+
+    /// @ref consoleVariableFlags
+    int flags;
+
+    /// Type of variable.
+    cvartype_t type;
+
+    /// Pointer to the user data.
+    void* ptr;
+
+    /// Minimum and maximum values (for ints and floats).
+    float min, max;
+
+    /// On-change notification callback.
+    void (*notifyChanged)(void);
+} cvartemplate_t;
+
+/**
+ * @defgroup consoleVariableFlags Console Variable Flags
+ * @ingroup apiFlags cvar
+ */
+///@{
+#define CVF_NO_ARCHIVE      0x1 ///< Not written in/read from the defaults file.
+#define CVF_PROTECTED       0x2 ///< Can't be changed unless forced.
+#define CVF_NO_MIN          0x4 ///< Minimum is not in affect.
+#define CVF_NO_MAX          0x8 ///< Maximum is not in affect.
+#define CVF_CAN_FREE        0x10 ///< The string can be freed.
+#define CVF_HIDE            0x20 ///< Do not include in listings or add to known words.
+#define CVF_READ_ONLY       0x40 ///< Can't be changed manually at all.
+///@}
+
+/**
+ * @defgroup setVariableFlags Console Set Variable Flags
+ * @ingroup apiFlags cvar
+ * Use with the various Con_Set* routines (e.g., Con_SetInteger2()).
+ */
+///@{
+#define SVF_WRITE_OVERRIDE  0x1 ///< Override a read-only restriction.
+///@}
+
+#define C_VAR(path, ptr, type, flags, min, max, notifyChanged)            \
+    { cvartemplate_t _template = { path, flags, type, ptr, min, max, notifyChanged };    \
+        Con_AddVariable(&_template); }
+
+/// Helper macro for registering a new byte console variable. @ingroup cvar
+#define C_VAR_BYTE(path, ptr, flags, min, max)    \
+    C_VAR(path, ptr, CVT_BYTE, flags, min, max, NULL)
+
+/// Helper macro for registering a new integer console variable. @ingroup cvar
+#define C_VAR_INT(path, ptr, flags, min, max)     \
+    C_VAR(path, ptr, CVT_INT, flags, min, max, NULL)
+
+/// Helper macro for registering a new float console variable. @ingroup cvar
+#define C_VAR_FLOAT(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_FLOAT, flags, min, max, NULL)
+
+/// Helper macro for registering a new text console variable. @ingroup cvar
+#define C_VAR_CHARPTR(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, NULL)
+
+/// Helper macro for registering a new Uri console variable. @ingroup cvar
+#define C_VAR_URIPTR(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_URIPTR, flags, min, max, NULL)
+
+/// Same as C_VAR_BYTE() except allows specifying a callback function for
+/// change notification. @ingroup cvar
+#define C_VAR_BYTE2(path, ptr, flags, min, max, notifyChanged)    \
+    C_VAR(path, ptr, CVT_BYTE, flags, min, max, notifyChanged)
+
+/// Same as C_VAR_INT() except allows specifying a callback function for
+/// change notification. @ingroup cvar
+#define C_VAR_INT2(path, ptr, flags, min, max, notifyChanged)     \
+    C_VAR(path, ptr, CVT_INT, flags, min, max, notifyChanged)
+
+/// Same as C_VAR_FLOAT() except allows specifying a callback function for
+/// change notification. @ingroup cvar
+#define C_VAR_FLOAT2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_FLOAT, flags, min, max, notifyChanged)
+
+/// Same as C_VAR_CHARPTR() except allows specifying a callback function for
+/// change notification. @ingroup cvar
+#define C_VAR_CHARPTR2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
+
+/// Same as C_VAR_URIPTR() except allows specifying a callback function for
+/// change notification. @ingroup cvar
+#define C_VAR_URIPTR2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_URIPTR, flags, min, max, notifyChanged)
+
+#ifdef __cplusplus
 
 void Con_InitVariableDirectory();
 void Con_DeinitVariableDirectory();
@@ -82,5 +197,7 @@ LIBDOOMSDAY_PUBLIC void CVar_SetFloat2(cvar_t* var, float value, int svFlags);
 LIBDOOMSDAY_PUBLIC void Con_PrintCVar(cvar_t *cvar, char const *prefix);
 LIBDOOMSDAY_PUBLIC void CVar_PrintReadOnlyWarning(cvar_t const *var);
 LIBDOOMSDAY_PUBLIC de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);
+
+#endif // __cplusplus
 
 #endif // LIBDOOMSDAY_CONSOLE_VAR_H

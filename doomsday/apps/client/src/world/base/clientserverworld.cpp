@@ -96,14 +96,6 @@ dint validCount = 1;  // Increment every time a check is made.
 
 #ifdef __CLIENT__
 static dfloat handDistance = 300;  //cvar
-#endif
-
-static inline ClientResources &resSys()
-{
-    return App_ResourceSystem();
-}
-
-#ifdef __CLIENT__
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
@@ -632,8 +624,8 @@ DENG2_PIMPL(ClientServerWorld)
         Time begunPrecacheAt;
         // Sky models usually have big skins.
         rendSys().sky().cacheAssets();
-        resSys().cacheForCurrentMap();
-        resSys().processCacheQueue();
+        App_ResourceSystem().cacheForCurrentMap();
+        App_ResourceSystem().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
         rendSys().clearDrawLists();
@@ -810,7 +802,7 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 
     if(!mapUri.path().isEmpty())
     {
-        mapDef = resSys().mapManifests().tryFindMapManifest(mapUri);
+        mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.

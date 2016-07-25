@@ -42,23 +42,23 @@ typedef struct {
 } header_t;
 #pragma pack()
 
-static char *lastErrorMsg = 0; /// @todo potentially never free'd
+static char *lastPcxErrorMsg = 0; /// @todo potentially never free'd
 
-static void setLastError(char const *msg)
+static void PCX_SetLastError(char const *msg)
 {
     size_t len;
     if(0 == msg || 0 == (len = strlen(msg)))
     {
-        if(lastErrorMsg != 0)
+        if(lastPcxErrorMsg != 0)
         {
-            M_Free(lastErrorMsg);
+            M_Free(lastPcxErrorMsg);
         }
-        lastErrorMsg = 0;
+        lastPcxErrorMsg = 0;
         return;
     }
 
-    lastErrorMsg = (char *) M_Realloc(lastErrorMsg, len+1);
-    strcpy(lastErrorMsg, msg);
+    lastPcxErrorMsg = (char *) M_Realloc(lastPcxErrorMsg, len+1);
+    strcpy(lastPcxErrorMsg, msg);
 }
 
 static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
@@ -102,12 +102,12 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 
     if(!((size_t) (srcPos - (uint8_t *) raw) > len))
     {
-        setLastError(0); // Success.
+        PCX_SetLastError(0); // Success.
         result = true;
     }
     else
     {
-        setLastError("RLE inflation failed.");
+        PCX_SetLastError("RLE inflation failed.");
     }
 
     M_Free(raw);
@@ -116,9 +116,9 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 
 char const *PCX_LastError()
 {
-    if(lastErrorMsg)
+    if(lastPcxErrorMsg)
     {
-        return lastErrorMsg;
+        return lastPcxErrorMsg;
     }
     return 0;
 }
@@ -137,7 +137,7 @@ uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
         if(hdr.manufacturer != 0x0a || hdr.version != 5 ||
            hdr.encoding != 1 || hdr.bits_per_pixel != 8)
         {
-            setLastError("Unsupported format.");
+            PCX_SetLastError("Unsupported format.");
             file.seek(initPos, SeekSet);
             return 0;
         }

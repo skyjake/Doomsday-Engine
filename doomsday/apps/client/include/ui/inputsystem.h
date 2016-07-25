@@ -61,6 +61,8 @@ class ControllerPresets;
 class InputSystem : public de::System
 {
 public:
+    static InputSystem &get();
+
     InputSystem();
 
     ConfigProfiles &settings();

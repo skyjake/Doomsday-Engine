@@ -330,16 +330,21 @@ void P_ConsoleRegister()
 #endif
 }
 
+#undef DD_GetPlayer
 DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
     return &DD_Player(number)->publicData();
 }
 
 // net_main.c
+#undef Net_GetPlayerName
+#undef Net_GetPlayerID
+#undef Net_PlayerSmoother
 DENG_EXTERN_C char const *Net_GetPlayerName(int player);
 DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
 DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
+#undef P_NewPlayerControl
 DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
     char const *bindContextName)
 {
@@ -364,6 +369,7 @@ DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *na
     addImpulse(id, type, name, bindContextName);
 }
 
+#undef P_IsControlBound
 DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 {
 #ifdef __CLIENT__
@@ -411,6 +417,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 #endif
 }
 
+#undef P_GetControlState
 DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
     float *relativeOffset)
 {
@@ -432,6 +439,7 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
 #endif
 }
 
+#undef P_GetImpulseControlState
 DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 {
     LOG_AS("P_GetImpulseControlState");
@@ -449,6 +457,7 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
     return accum->takeBinary();
 }
 
+#undef P_Impulse
 DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
 {
     LOG_AS("P_Impulse");

@@ -31,21 +31,6 @@
 #include "dd_main.h"
 #include "MaterialAnimator"
 
-namespace internal
-{
-    enum MaterialFlag
-    {
-        //Unused1      = MATF_UNUSED1,
-        DontDraw     = MATF_NO_DRAW,  ///< Map surfaces using the material should never be drawn.
-        SkyMasked    = MATF_SKYMASK,  ///< Apply sky masking for map surfaces using the material.
-
-        Valid        = 0x8,           ///< Marked as @em valid.
-        DefaultFlags = Valid
-    };
-    Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
-}
-using namespace internal;
 using namespace de;
 
 DENG2_PIMPL_NOREF(ClientMaterial::Decoration)

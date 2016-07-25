@@ -35,11 +35,6 @@
 
 using namespace de;
 
-static InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 void CommandBinding::resetToDefaults()
 {
     Binding::resetToDefaults();
@@ -334,7 +329,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     {
         if (geti("deviceId") != event.device) return nullptr;
 
-        dev = inputSys().devicePtr(geti("deviceId"));
+        dev = InputSystem::get().devicePtr(geti("deviceId"));
         if (!dev || !dev->isActive())
         {
             // The device is not active, there is no way this could get executed.
@@ -401,7 +396,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
 
         // Is the position as required?
         if (!B_CheckAxisPosition(ControlTest(geti("test")), getf("pos"),
-                                inputSys().device(event.device).axis(event.axis.id)
+                                InputSystem::get().device(event.device).axis(event.axis.id)
                                     .translateRealPosition(event.axis.pos)))
             return nullptr;
         break;

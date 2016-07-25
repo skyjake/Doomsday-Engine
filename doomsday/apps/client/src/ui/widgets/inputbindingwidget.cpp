@@ -36,11 +36,6 @@ using namespace de;
 #  define CONTROL_CHAR  DENG2_CHAR_CONTROL_KEY
 #endif
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 DENG_GUI_PIMPL(InputBindingWidget)
 , DENG2_OBSERVES(ButtonWidget, Press)
 {
@@ -102,8 +97,8 @@ DENG_GUI_PIMPL(InputBindingWidget)
         // Check all the contexts associated with this widget.
         foreach (QString bcName, contexts)
         {
-            if (!inputSys().hasContext(bcName)) continue;
-            BindContext const &context = inputSys().context(bcName);
+            if (!InputSystem::get().hasContext(bcName)) continue;
+            BindContext const &context = InputSystem::get().context(bcName);
 
             if (Record const *rec = context.findCommandBinding(command.toLatin1(), device))
             {
@@ -120,7 +115,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
     void bindCommand(String const &eventDesc)
     {
         Block const cmd = command.toLatin1();
-        inputSys().forAllContexts([&cmd] (BindContext &context)
+        InputSystem::get().forAllContexts([&cmd] (BindContext &context)
         {
             while (Record *bind = context.findCommandBinding(cmd.constData()))
             {
@@ -132,7 +127,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
         foreach (QString bcName, contexts)
         {
             String ev = String("%1:%2").arg(bcName, eventDesc);
-            inputSys().bindCommand(ev.toLatin1(), command.toLatin1());
+            InputSystem::get().bindCommand(ev.toLatin1(), command.toLatin1());
         }
     }
 
