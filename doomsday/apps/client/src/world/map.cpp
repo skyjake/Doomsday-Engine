@@ -333,8 +333,8 @@ DENG2_PIMPL(Map)
         // in their private data destructors.
         thinkers.reset();
 
-        qDeleteAll(subspaces);
         qDeleteAll(sectors);
+        qDeleteAll(subspaces);
         for (Polyobj *polyobj : polyobjs)
         {
             polyobj->~Polyobj();
