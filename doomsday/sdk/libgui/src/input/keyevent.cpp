@@ -40,6 +40,12 @@ static int x11ScancodeToDDKey(int scancode);
 #  ifdef KeyRelease
 #    undef KeyRelease
 #  endif
+#  ifdef Always
+#    undef Always
+#  endif
+#  ifdef None
+#    undef None
+#  endif
 #endif
 
 #ifdef WIN32

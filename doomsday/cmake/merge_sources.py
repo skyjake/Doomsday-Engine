@@ -39,10 +39,6 @@ if platform.system() == 'Windows':
     includes.append(u'#undef small')
     includes.append(u'#undef SearchPath')
 
-if platform.system() == 'Linux':
-    includes.append(u'#undef Always')
-    includes.append(u'#undef None') 
-
 # Compress braces.
 compressed = []
 for i in range(len(code)):

@@ -26,6 +26,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/xf86vmode.h>
+#undef Always
+#undef None
 
 #include "de/gui/displaymode_native.h"
 
