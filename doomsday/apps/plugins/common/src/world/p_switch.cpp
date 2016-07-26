@@ -142,7 +142,7 @@ static int numswitches;
 #if __JHEXEN__
 void P_InitSwitchList()
 {
-    Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
+    uri_s *uri = Uri_NewWithPath2("Textures:", RC_NULL);
 
     AutoStr *path = AutoStr_NewStd();
 
@@ -218,7 +218,7 @@ void P_InitSwitchList()
         App_Log(DE2_RES_VERBOSE, "Registering default switches...");
     }
 
-    Uri *uri = Uri_New();
+    uri_s *uri = Uri_New();
     Uri_SetScheme(uri, "Textures");
 
     ddstring_t path; Str_Init(&path);

@@ -1062,10 +1062,11 @@ namespace internal
 
 #endif  // __JHEXEN__
 
-}  // namespace internal
-using namespace internal;
+} // namespace internal
 
 namespace acs {
+
+using namespace internal;
 
 thinker_t *Interpreter::newThinker(Script &script, Script::Args const &scriptArgs,
     mobj_t *activator, Line *line, int side, int delayCount)

@@ -5,10 +5,10 @@ file (GLOB_RECURSE COMMON_HEADERS ${DIR}/include/*)
 
 file (GLOB COMMON_SOURCES ${DIR}/src/*)
 
-deng_glob_sources (COMMON_SOURCES ${DIR}/src/acs/*.cpp)
 deng_glob_sources (COMMON_SOURCES ${DIR}/src/hud/*.cpp)
 deng_glob_sources (COMMON_SOURCES ${DIR}/src/menu/*.cpp)
 
+deng_merge_sources (common_acs          ${DIR}/src/acs/*.cpp)
 deng_merge_sources (common_game         ${DIR}/src/game/*.cpp)
 deng_merge_sources (common_hud_widgets  ${DIR}/src/hud/widgets/*.cpp)
 deng_merge_sources (common_menu_widgets ${DIR}/src/menu/widgets/*.cpp)
