@@ -23,6 +23,8 @@
 
 #ifdef DENG_X11
 #  include <GL/glx.h>
+#  undef Always
+#  undef None
 #endif
 
 #ifdef LIBGUI_FETCH_GL_1_3

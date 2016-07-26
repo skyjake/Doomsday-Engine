@@ -26,6 +26,9 @@
 #include <GL/glx.h>
 #include <GL/glxext.h>
 
+#undef None
+#undef Always
+
 PFNGLXSWAPINTERVALEXTPROC   glXSwapIntervalEXT;
 
 void getGLXEntryPoints()
