@@ -45,6 +45,7 @@
 using namespace de;
 
 // m_misc.c
+#undef M_ScreenShot
 DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 
 #undef Models_CacheForState
@@ -59,6 +60,7 @@ DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 }
 
 // r_draw.cpp
+#undef R_SetBorderGfx
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
 
 #undef Rend_CacheForMobjType
@@ -91,6 +93,19 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
     }
 }
 
+#undef R_RenderPlayerView
+#undef R_SetViewOrigin
+#undef R_SetViewAngle
+#undef R_SetViewPitch
+#undef R_ViewWindowGeometry
+#undef R_ViewWindowOrigin
+#undef R_ViewWindowSize
+#undef R_SetViewWindowGeometry
+#undef R_ViewPortGeometry
+#undef R_ViewPortOrigin
+#undef R_ViewPortSize
+#undef R_SetViewPortPlayer
+
 // r_main.cpp
 DENG_EXTERN_C void R_RenderPlayerView(dint num);
 DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3]);
@@ -106,6 +121,7 @@ DENG_EXTERN_C dint R_ViewPortSize(dint consoleNum, Size2Raw *size);
 DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 
 // sky.cpp
+#undef R_SkyParams
 DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
 #ifdef __CLIENT__
@@ -174,6 +190,10 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 
     return true;
 }
+
+#undef R_ChooseAlignModeAndScaleFactor
+#undef R_ChooseScaleMode2
+#undef R_ChooseScaleMode
 
 // r_util.c
 DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(dfloat *scale, dint width, dint height, dint availWidth, dint availHeight, scalemode_t scaleMode);

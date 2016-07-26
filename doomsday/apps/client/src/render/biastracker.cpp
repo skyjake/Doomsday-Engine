@@ -29,7 +29,7 @@
 using namespace de;
 using namespace world;
 
-namespace internal {
+namespace render {
 
 struct Contributor
 {
@@ -39,8 +39,7 @@ struct Contributor
 
 typedef std::array<Contributor, BiasTracker::MAX_CONTRIBUTORS> Contributors;
 
-}  // namespace internal
-using namespace ::internal;
+} // namespace render
 
 /**
  * @todo Do not observe source deletion. A better solution would represent any source
@@ -49,7 +48,7 @@ using namespace ::internal;
 DENG2_PIMPL_NOREF(BiasTracker)
 , DENG2_OBSERVES(BiasSource, Deletion)
 {
-    Contributors contributors;
+    render::Contributors contributors;
 
     QBitArray activeContributors   = QBitArray(MAX_CONTRIBUTORS);
     QBitArray changedContributions = QBitArray(MAX_CONTRIBUTORS);
@@ -59,9 +58,9 @@ DENG2_PIMPL_NOREF(BiasTracker)
     /// Observes BiasSource Deletion
     void biasSourceBeingDeleted(BiasSource const &source)
     {
-        for(Contributors::size_type i = 0; i < contributors.size(); ++i)
+        for(render::Contributors::size_type i = 0; i < contributors.size(); ++i)
         {
-            Contributor &ctbr = contributors[i];
+            auto &ctbr = contributors[i];
 
             if(ctbr.source == &source)
             {
@@ -98,9 +97,9 @@ dint BiasTracker::addContributor(BiasSource *source, dfloat intensity)
     dint slot = -1;
 
     // Do we have a latent contribution or an unused slot?
-    for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
+    for(render::Contributors::size_type i = 0; i < d->contributors.size(); ++i)
     {
-        Contributor const &ctbr = d->contributors[i];
+        auto const &ctbr = d->contributors[i];
         if(!ctbr.source)
         {
             // Remember the first unused slot.
@@ -125,16 +124,16 @@ dint BiasTracker::addContributor(BiasSource *source, dfloat intensity)
         {
             // Dang, we'll need to drop the weakest.
             dint weakest = -1;
-            for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
+            for(render::Contributors::size_type i = 0; i < d->contributors.size(); ++i)
             {
-                Contributor *ctbr = &d->contributors[i];
+                auto *ctbr = &d->contributors[i];
                 DENG2_ASSERT(ctbr->source);
                 if(i == 0 || ctbr->influence < d->contributors[weakest].influence)
                 {
                     weakest = i;
                 }
             }
-            Contributor *ctbr = &d->contributors[weakest];
+            auto *ctbr = &d->contributors[weakest];
 
             if(intensity <= ctbr->influence)
                 return - 1;
@@ -145,7 +144,7 @@ dint BiasTracker::addContributor(BiasSource *source, dfloat intensity)
         }
     }
 
-    Contributor *ctbr = &d->contributors[slot];
+    auto *ctbr = &d->contributors[slot];
 
     // When reactivating a latent contribution if the intensity has not
     // changed we don't need to force an update.
@@ -180,9 +179,9 @@ duint BiasTracker::timeOfLatestContributorUpdate() const
 {
     duint latest = 0;
 
-    for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
+    for(render::Contributors::size_type i = 0; i < d->contributors.size(); ++i)
     {
-        Contributor const &ctbr = d->contributors[i];
+        auto const &ctbr = d->contributors[i];
 
         if(!d->changedContributions.testBit(i))
             continue;
@@ -214,7 +213,7 @@ QBitArray const &BiasTracker::changedContributions() const
 
 void BiasTracker::updateAllContributors()
 {
-    for(Contributor &ctbr : d->contributors)
+    for(render::Contributor &ctbr : d->contributors)
     {
         if(ctbr.source)
         {
@@ -227,9 +226,9 @@ void BiasTracker::applyChanges(QBitArray &changes)
 {
     // All contributions from changed sources will need to be updated.
 
-    for(Contributors::size_type i = 0; i < MAX_CONTRIBUTORS; ++i)
+    for(render::Contributors::size_type i = 0; i < MAX_CONTRIBUTORS; ++i)
     {
-        Contributor &ctbr = d->contributors[i];
+        auto &ctbr = d->contributors[i];
 
         if(!ctbr.source) continue;
 
