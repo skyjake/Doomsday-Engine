@@ -20,7 +20,9 @@ add_definitions (-D__DOOMSDAY__=1 -D__SERVER__=1)
 
 file (GLOB API_HEADERS ../api/*.h)
 file (GLOB_RECURSE HEADERS include/*)
-file (GLOB_RECURSE SOURCES src/*.cpp)
+file (GLOB SOURCES src/*.cpp)
+
+deng_merge_sources (server src/server/*.cpp)
 
 # TODO: Get rid of these, shared code should be in libdoomsday.
 set (src ../client)
