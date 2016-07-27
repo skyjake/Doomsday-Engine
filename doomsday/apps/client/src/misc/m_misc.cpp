@@ -57,7 +57,6 @@
 #include <cctype>
 #include <cmath>
 
-#undef M_WriteFile
 #undef M_ReadFile
 
 #define SLOPERANGE      2048
@@ -420,63 +419,4 @@ static size_t FileReader(const char* name, char** buffer)
     *buffer = buf;
 
     return length;
-}
-
-#undef M_WriteFile
-DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
-{
-    int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-    size_t count;
-
-    if(handle == -1)
-        return false;
-
-    count = write(handle, source, length);
-    close(handle);
-
-    return (count >= length);
-}
-
-#undef M_ScreenShot
-DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
-{
-#ifdef __CLIENT__
-    DENG2_UNUSED(bits);
-
-    de::String fullName(name);
-    if(fullName.fileNameExtension().isEmpty())
-    {
-        fullName += ".png"; // Default format.
-    }
-
-    // By default, place the file in the runtime folder.
-    return ClientWindow::main().grabToFile(App::app().nativeHomePath()/fullName)? 1 : 0;
-#else
-    DENG2_UNUSED2(name, bits);
-    return false;
-#endif
-}
-
-dd_bool M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
-{
-    // Either use the trigger's duration, or fall back to the default.
-    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
-
-    trigger->accum += advanceTime;
-
-    if(trigger->accum >= duration)
-    {
-        trigger->accum -= duration;
-        return true;
-    }
-
-    // It wasn't triggered.
-    return false;
-}
-
-dd_bool M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
-{
-    // Either use the trigger's duration, or fall back to the default.
-    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
-    return (trigger->accum + advanceTime>= duration);
 }

@@ -681,6 +681,7 @@ D_CMD(StopDemo)
     return true;
 }
 
+#if 0
 /**
  * Make a demo lump.
  *
@@ -694,10 +695,11 @@ D_CMD(DemoLump)
     strncpy(buf, argv[1], 64);
     return M_WriteFile(argv[2], buf, 64);
 }
+#endif
 
 void Demo_Register()
 {
-    C_CMD_FLAGS("demolump",     "ss",       DemoLump,   CMDF_NO_NULLGAME);
+    //C_CMD_FLAGS("demolump",   "ss",       DemoLump,   CMDF_NO_NULLGAME);
     C_CMD_FLAGS("pausedemo",    nullptr,    PauseDemo,  CMDF_NO_NULLGAME);
     C_CMD_FLAGS("playdemo",     "s",        PlayDemo,   CMDF_NO_NULLGAME);
     C_CMD_FLAGS("recorddemo",   nullptr,    RecordDemo, CMDF_NO_NULLGAME);

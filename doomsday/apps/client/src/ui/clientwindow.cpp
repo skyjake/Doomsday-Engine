@@ -1312,3 +1312,18 @@ void GL_AssertContextActive()
     DENG_ASSERT(QGLContext::currentContext() != 0);
 }
 #endif
+
+#undef M_ScreenShot
+DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
+{
+    DENG2_UNUSED(bits);
+
+    de::String fullName(name);
+    if(fullName.fileNameExtension().isEmpty())
+    {
+        fullName += ".png"; // Default format.
+    }
+
+    // By default, place the file in the runtime folder.
+    return ClientWindow::main().grabToFile(App::app().nativeHomePath()/fullName)? 1 : 0;
+}

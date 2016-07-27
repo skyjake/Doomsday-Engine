@@ -28,7 +28,6 @@
 
 #include "dd_types.h"
 #include <de/vector1.h>
-#include <doomsday/filesys/filehandle.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,34 +69,6 @@ int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[
  */
 int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
     double const lineDirection[2], double linePerp, double lineLength, double epsilon);
-
-typedef struct trigger_s {
-    timespan_t duration;
-    timespan_t accum;
-} trigger_t;
-
-/**
- * Advances time and return true if the trigger is triggered.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
- */
-dd_bool M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
-
-/**
- * Checks if the trigger will trigger after @a advanceTime seconds.
- * The trigger itself is not modified in any way.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return @c true, if the trigger will accumulate enough time after @a advanceTime
- *         to fill the trigger's time threshold.
- */
-dd_bool M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
 #ifdef __cplusplus
 } // extern "C"

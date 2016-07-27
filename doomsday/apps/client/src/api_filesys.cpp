@@ -22,16 +22,9 @@
 #define DENG_NO_API_MACROS_FILESYS
 #include "api_filesys.h"
 
-/*
-extern int F_FileExists(char const *path);
-extern dd_bool F_MakePath(char const *path);
-extern const char* F_PrettyPath(char const *path);
-*/
-
 // m_misc.c
 DENG_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
 DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom);
-DENG_EXTERN_C dd_bool M_WriteFile(char const *name, char const *source, size_t length);
 
 DENG_DECLARE_API(F) =
 {
@@ -43,6 +36,5 @@ DENG_DECLARE_API(F) =
     F_PrettyPath,
     M_ReadFile,
     M_ReadFileIntoString,
-    M_WriteFile,
     F_LumpIndex
 };
