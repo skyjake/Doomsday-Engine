@@ -161,7 +161,7 @@ public:
      * @param behavior   Flags to modify.
      * @param operation  Operation to perform on the flags.
      */
-    void setBehavior(Behaviors behavior, FlagOp operation = SetFlags);
+    void setBehavior(Behaviors behavior, FlagOpArg operation = SetFlags);
 
     /**
      * Clears one or more behavior flags.

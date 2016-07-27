@@ -329,10 +329,10 @@ bool Widget::hasFamilyBehavior(Behavior const &flags) const
 
 void Widget::show(bool doShow)
 {
-    setBehavior(Hidden, doShow? UnsetFlags : SetFlags);
+    setBehavior(Hidden, !doShow);
 }
 
-void Widget::setBehavior(Behaviors behavior, FlagOp operation)
+void Widget::setBehavior(Behaviors behavior, FlagOpArg operation)
 {
     applyFlagOperation(d->behavior, behavior, operation);
 }

@@ -505,6 +505,13 @@ enum FlagOp {
     ReplaceFlags = 2    ///< Specified flags become the new set of flags, replacing all previous flags.
 };
 
+struct FlagOpArg {
+    FlagOp op;
+    inline FlagOpArg(FlagOp op) : op(op) {}
+    inline FlagOpArg(bool set)  : op(set? SetFlags : UnsetFlags) {}
+    inline operator FlagOp () const { return op; }
+};
+
 template <typename FlagsType, typename FlagsCompatibleType>
 void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOp operation) {
     switch (operation) {
