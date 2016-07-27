@@ -128,20 +128,23 @@ String File::description(int verbosity) const
     if (verbosity < 0)
     {
         Log &log = Log::threadLog();
-        verbosity = 0;
-        if (!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
+        if (log.isStaging())
         {
-            // For dev entries and everything outside log entries, use a full description.
-            verbosity = 2;
-        }
-        else if ((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
-        {
-            // Verbose entries can contain some additional information.
-            verbosity = 1;
+            verbosity = 0;
+            if (log.currentEntryMetadata() & LogEntry::Dev)
+            {
+                // For dev entries, use a full description.
+                verbosity = 2;
+            }
+            else if ((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
+            {
+                // Verbose entries can contain some additional information.
+                verbosity = 1;
+            }
         }
     }
 
-    if (verbosity > 0)
+    if (verbosity > 1)
     {
         if (!mode().testFlag(Write))
         {
