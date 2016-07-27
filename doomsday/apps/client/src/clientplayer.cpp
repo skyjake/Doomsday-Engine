@@ -45,8 +45,7 @@ DENG2_PIMPL(ClientPlayer)
 };
 
 ClientPlayer::ClientPlayer()
-    : demo(nullptr)
-    , recording(false)
+    : recording(false)
     , recordPaused(false)
     , d(new Impl(this))
 {}

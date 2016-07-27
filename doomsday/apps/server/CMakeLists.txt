@@ -11,7 +11,6 @@ find_package (DengCore)
 find_package (DengLegacy)
 find_package (DengShell)
 find_package (DengDoomsday)
-find_package (LZSS)
 find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DENG_API_DIR})
@@ -151,7 +150,6 @@ target_link_libraries (server
     Deng::liblegacy
     Deng::libshell
     Deng::libdoomsday
-    lzss
 )
 
 # Server is installed as part of the "client" component instead of the

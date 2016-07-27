@@ -1,4 +1,4 @@
-/** @file m_misc.cpp  Miscellanous utility routines.
+/** @file readfile.cpp  Legacy file reading utility routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_FILESYS
-
-#include "de_platform.h"
-#include "misc/m_misc.h"
-
+#include "doomsday/filesys/readfile.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -42,36 +38,25 @@
 #  define O_BINARY 0
 #endif
 
-#include "de_base.h"
-
+#include "doomsday/filesys/fs_main.h"
 #include "lzss.h"
 
-#include <doomsday/filesys/fs_main.h>
 #include <de/App>
 #include <de/str.h>
+#include <de/memoryzone.h>
 #include <cstdlib>
 #include <cctype>
-
-#undef M_ReadFile
-
-/*#define SLOPERANGE      2048
-#define SLOPEBITS       11
-#define DBITS           (FRACBITS-SLOPEBITS)*/
-//extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
 using namespace de;
 
 static size_t FileReader(char const* name, char** buffer);
 
-/**
- * Read a file into a buffer allocated using M_Malloc().
- */
-DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer)
+size_t M_ReadFile(const char* name, char** buffer)
 {
     return FileReader(name, buffer);
 }
 
-DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
+AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 {
     if(isCustom) *isCustom = false;
 
@@ -185,9 +170,9 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 }
 
 #if defined(WIN32)
-#define close _close
-#define read  _read
-#define write _write
+#  define close _close
+#  define read  _read
+#  define write _write
 #endif
 
 static size_t FileReader(const char* name, char** buffer)
@@ -268,3 +253,9 @@ static size_t FileReader(const char* name, char** buffer)
 
     return length;
 }
+
+#if defined(WIN32)
+#  undef close
+#  undef read
+#  undef write
+#endif

@@ -60,7 +60,9 @@ extern dfloat netConnectTime;
 
 static char const *demoPath = "/home/demo/";
 
+#if 0
 LZFILE *playdemo;
+#endif
 dint playback;
 dint viewangleDelta;
 dfloat lookdirDelta;
@@ -186,12 +188,14 @@ void Demo_StopRecording(dint playerNum)
     if(!cl.recording) return;
 
     // Close demo file.
-    lzClose(cl.demo); cl.demo = nullptr;
+    //lzClose(cl.demo); cl.demo = nullptr;
     cl.recording = false;
 }
 
 void Demo_WritePacket(dint playerNum)
 {
+    DENG_UNUSED(playerNum);
+#if 0
     if(playerNum < 0)
     {
         Demo_BroadcastPacket();
@@ -253,6 +257,7 @@ void Demo_WritePacket(dint playerNum)
     // Write the packet itself.
     lzPutC(::netBuffer.msg.type, file);
     lzWrite(::netBuffer.msg.data, (long) netBuffer.length, file);
+#endif
 }
 
 void Demo_BroadcastPacket()
@@ -288,10 +293,14 @@ dd_bool Demo_BeginPlayback(char const *fileName)
     F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
+#if 0
     playdemo = lzOpen(Str_Text(&buf), "rp");
+#endif
     Str_Free(&buf);
 
+#if 0
     if(!playdemo)
+#endif
         return false;
 
     // OK, let's begin the demo.
@@ -320,6 +329,7 @@ void Demo_StopPlayback()
 {
     if(!::playback) return;
 
+#if 0
     LOG_MSG("Demo was %.2f seconds (%i tics) long.")
         << ((DEMOTIC - ::demoStartTic) / dfloat( TICSPERSEC ))
         << (DEMOTIC - ::demoStartTic);
@@ -343,10 +353,13 @@ void Demo_StopPlayback()
     // "Play demo once" mode?
     if(CommandLine_Check("-playdemo"))
         Sys_Quit();
+#endif
 }
 
 dd_bool Demo_ReadPacket()
 {
+    return false;
+#if 0
     static byte ptime;
     dint nowtime = DEMOTIC;
 
@@ -387,6 +400,7 @@ dd_bool Demo_ReadPacket()
     ptime = lzGetC(::playdemo);
 
     return true;
+#endif
 }
 
 /**

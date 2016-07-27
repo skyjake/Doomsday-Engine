@@ -21,7 +21,7 @@
 
 #include <doomsday/player.h>
 #include "render/viewports.h"
-#include "lzss.h" // legacy demo code
+//#include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
 namespace render { class PlayerWeaponAnimator; }
@@ -63,7 +63,7 @@ class ClientPlayer : public Player
 {
 public:
     // Demo recording file (being recorded if not NULL).
-    LZFILE *demo;
+    //LZFILE *demo;
     bool recording;
     bool recordPaused;
 

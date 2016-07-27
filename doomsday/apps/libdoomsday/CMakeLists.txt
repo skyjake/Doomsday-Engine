@@ -8,6 +8,7 @@ include (../../cmake/Config.cmake)
 find_package (DengCore)
 find_package (DengLegacy)
 find_package (DengShell)
+find_package (LZSS)
 include (ZLIB)
 
 # Definitions.
@@ -40,6 +41,7 @@ deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
 target_link_libraries (libdoomsday
     PUBLIC Deng::libcore Deng::liblegacy Deng::libshell
+    PRIVATE lzss
 )
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
