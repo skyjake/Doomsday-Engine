@@ -84,6 +84,8 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
     void joinButtonPressed() const
     {
+        self.root().setFocus(nullptr);
+
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
         // Use a delayed callback so that the UI is not blocked while we switch games.

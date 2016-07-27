@@ -238,6 +238,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void aboutToLoadGame(Game const &gameBeingLoaded)
     {
+        self.root().setFocus(nullptr);
+
         if (gameBeingLoaded.isNull())
         {
             moveOnscreen();
@@ -272,6 +274,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void moveOffscreen(TimeDelta span = DISMISS_SPAN)
     {
+        self.root().setFocus(nullptr);
+
         // Home is being moved offscreen, so the game can take over in full size.
         ClientWindow::main().setGameMinimized(false);
 
