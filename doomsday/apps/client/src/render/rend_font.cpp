@@ -27,7 +27,6 @@
 #include <cstdlib>
 #include <de/concurrency.h>
 #include <de/GLState>
-#include "misc/m_misc.h"
 
 #include "BitmapFont"
 #include "CompositeBitmapFont"

@@ -38,7 +38,6 @@
 #include "dd_def.h"  // MAXEVENTS, ASSERT_NOT_64BIT
 #include "dd_main.h" // App_GameLoaded()
 #include "dd_loop.h" // DD_IsFrameTimeAdvancing()
-#include "misc/m_misc.h"  // M_WriteTextEsc
 
 #include "render/vr.h"
 

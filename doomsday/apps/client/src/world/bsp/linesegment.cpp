@@ -26,11 +26,11 @@
 #include "world/bsp/linesegment.h"
 
 #include <de/vector1.h> /// @todo remove me
+#include <de/aabox.h> // M_BoxOnLineSide2
 #include <de/Observers>
 #include <de/Vector>
 #include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
-#include "misc/m_misc.h" // M_BoxOnLineSide2
 
 using namespace de;
 
@@ -212,7 +212,7 @@ void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
 
 void LineSegment::Side::setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode)
 {
-    d->blockTreeNode = (LineSegmentBlockTreeNode *)newNode;
+    d->blockTreeNode = reinterpret_cast<LineSegmentBlockTreeNode *>(newNode);
 }
 
 bool LineSegment::Side::hasSector() const

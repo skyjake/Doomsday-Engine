@@ -21,8 +21,7 @@
 #include "de_base.h"
 #include "world/huecircle.h"
 
-#include "misc/m_misc.h" // M_HSVToRGB(), remove me (use QColor)
-
+#include <de/mathutil.h> // M_HSVToRGB(), remove me (use QColor)
 #include <cmath>
 
 using namespace de;

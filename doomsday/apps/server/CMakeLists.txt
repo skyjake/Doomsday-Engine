@@ -42,9 +42,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/misc/face.h
     ${src}/include/misc/hedge.h
     ${src}/include/misc/mesh.h
-    ${src}/include/misc/m_decomp64.h
-    ${src}/include/misc/m_misc.h
-    ${src}/include/misc/m_nodepile.h
     ${src}/include/misc/r_util.h
     ${src}/include/misc/tab_anorms.h
     ${src}/include/m_profiler.h

@@ -1,4 +1,6 @@
-/** @file
+/** @file m_decomp64.h  DOOM64 decompression algorithm.
+ *
+ * Used with various lumps of DOOM64 data.
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -16,14 +18,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * m_decomp64.h: Decompression algorithm, used with various lumps of
- *               DOOM64 data.
- */
+#ifndef LIBDOOMSDAY_MISC_DECOMPRESS64_H
+#define LIBDOOMSDAY_MISC_DECOMPRESS64_H
 
-#ifndef __M_DECOMPRESS64_H__
-#define __M_DECOMPRESS64_H__
+#include "../libdoomsday.h"
+#include <de/types.h>
 
-void            M_Decompress64(byte* dst, const byte* src);
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/**
+ * DOOM64 data decompression algorithm.
+ *
+ * \todo Needs further analysis and documentation.
+ *       Get rid of the fixed-size working buffer used with byte sequences.
+ *       Clean up
+ *
+ * @param dst           Output buffer. Must be large enough!
+ * @param src           Src buffer (the compressed data).
+ */
+LIBDOOMSDAY_PUBLIC void M_Decompress64(byte* dst, const byte* src);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDOOMSDAY_MISC_DECOMPRESS64_H

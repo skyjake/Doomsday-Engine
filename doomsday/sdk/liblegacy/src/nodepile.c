@@ -1,4 +1,4 @@
-/** @file m_nodepile.cpp  Specialized Node Allocation (from Zone as PU_MAP).
+/** @file m_nodepile.c  Specialized Node Allocation (from Zone as PU_MAP).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
-#include "misc/m_nodepile.h"
+#include "de/nodepile.h"
+#include "de/memoryzone.h"
 
-#include <de/memoryzone.h>
-#include "dd_main.h"
+#include <string.h>
 
 #define NP_MAX_NODES    65535  ///< Indices are shorts.
 
@@ -33,13 +32,14 @@
  */
 void NP_Init(nodepile_t *pile, int initial)
 {
-    size_t      size;
+    size_t size;
 
     // Allocate room for at least two nodes.
     // Node zero is never used.
     if(initial < 2)
+    {
         initial = 2;
-
+    }
     size = sizeof(*pile->nodes) * initial;
     pile->nodes = (linknode_t *) Z_Calloc(size, PU_MAP, 0);
     pile->count = initial;
@@ -73,7 +73,9 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
     while(i < pile->count - 1 && !found)
     {
         if(node == end)
+        {
             node = pile->nodes + 1; // Wrap back to #1.
+        }
         if(!node->ptr)
         {
             // This is the one!
@@ -90,12 +92,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
     if(!found)
     {
         // Damned, we ran out of nodes. Let's allocate more.
-        if(pile->count == NP_MAX_NODES)
-        {
-            // This happens *theoretically* only in freakishly complex
-            // maps with lots and lots of mobjs.
-            App_Error("NP_New: Out of linknodes! Contact the developer.\n");
-        }
+        DENG_ASSERT(pile->count < NP_MAX_NODES);
 
         // Double the number of nodes, but add at most 1024.
         if(pile->count >= 1024)
@@ -107,8 +104,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
 
         newlist = (linknode_t *) Z_Malloc(sizeof(*newlist) * newcount, PU_MAP, 0);
         memcpy(newlist, pile->nodes, sizeof(*pile->nodes) * pile->count);
-        memset(newlist + pile->count, 0,
-               (newcount - pile->count) * sizeof(*newlist));
+        memset(newlist + pile->count, 0, (newcount - pile->count) * sizeof(*newlist));
 
         // Get rid of the old list and start using the new one.
         Z_Free(pile->nodes);
@@ -156,13 +152,3 @@ void NP_Unlink(nodepile_t *pile, nodeindex_t node)
     // Make it link to itself (a root, basically).
     nd[node].next = nd[node].prev = node;
 }
-
-#if 0 // This is now a macro.
-/**
- * Caller must unlink first.
- */
-void NP_Dismiss(nodepile_t *pile, nodeindex_t node)
-{
-    pile->nodes[node].ptr = 0;
-}
-#endif

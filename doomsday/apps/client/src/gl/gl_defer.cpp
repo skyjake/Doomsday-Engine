@@ -1,4 +1,4 @@
-/** @file gl_defer.cpp  Implementation of deferred GL tasks. 
+/** @file gl_defer.cpp  Implementation of deferred GL tasks.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
@@ -27,7 +27,6 @@
 #include <de/timer.h>
 #include <doomsday/doomsdayapp.h>
 #include "dd_main.h"
-#include "misc/m_misc.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 
 #include "gl/gl_main.h"

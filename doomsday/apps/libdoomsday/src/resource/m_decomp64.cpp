@@ -16,38 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * m_decomp64.c: Decompression algorithm.
- *
- * Used with various lumps of DOOM64 data.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include "de_platform.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+#include "doomsday/resource/m_decomp64.h"
 
 static short mapA[629], mapB[629];
 static short tableA[1258], tableB[1258];
 
 static const byte* srcPos;
-
-// CODE --------------------------------------------------------------------
 
 static void cycleTable(int a, int b)
 {
@@ -92,16 +66,6 @@ static short rotateMap(int a, int b, int c)
     }
 }
 
-/**
- * DOOM64 data decompression algorithm.
- *
- * \todo Needs further analysis and documentation.
- *       Get rid of the fixed-size working buffer used with byte sequences.
- *       Clean up
- *
- * @param dst           Output buffer. Must be large enough!
- * @param src           Src buffer (the compressed data).
- */
 void M_Decompress64(byte* dst, const byte* src)
 {
 #define BUFF_SIZE       (21903)

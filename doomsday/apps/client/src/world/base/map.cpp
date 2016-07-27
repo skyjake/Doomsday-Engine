@@ -40,7 +40,6 @@
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/lineowner.h"
-#include "misc/m_nodepile.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/polyobjdata.h"
@@ -82,6 +81,7 @@
 #include <de/Rectangle>
 
 #include <de/aabox.h>
+#include <de/nodepile.h>
 #include <de/vector1.h>
 #include <de/timer.h>
 
