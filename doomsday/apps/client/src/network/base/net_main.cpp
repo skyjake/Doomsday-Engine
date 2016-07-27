@@ -944,14 +944,13 @@ D_CMD(Chat)
     if(mode && argc < 3) return false;
 
     // Assemble the chat message.
-    char buffer[100];
-    strcpy(buffer, argv[!mode ? 1 : 2]);
+    std::string buffer;
+    buffer = argv[!mode ? 1 : 2];;
     for(dint i = (!mode ? 2 : 3); i < argc; ++i)
     {
-        strcat(buffer, " ");
-        strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
+        buffer += " ";
+        buffer += argv[i];
     }
-    buffer[80] = 0;
 
     // Send the message.
     dushort mask = 0;
@@ -976,10 +975,12 @@ D_CMD(Chat)
         }
         break;
 
-    default: LOG_SCR_ERROR("Invalid value, mode = %i") << mode; break;
+    default:
+        LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
+        return false;
     }
 
-    Net_WriteChatMessage(::consolePlayer, mask, buffer);
+    Net_WriteChatMessage(::consolePlayer, mask, buffer.c_str());
 
     if(!::isClient)
     {
@@ -1002,10 +1003,10 @@ D_CMD(Chat)
     }
 
     // Show the message locally.
-    Net_ShowChatMessage(::consolePlayer, buffer);
+    Net_ShowChatMessage(::consolePlayer, buffer.c_str());
 
     // Inform the game, too.
-    gx.NetPlayerEvent(::consolePlayer, DDPE_CHAT_MESSAGE, buffer);
+    gx.NetPlayerEvent(::consolePlayer, DDPE_CHAT_MESSAGE, (void *) buffer.c_str());
 
     return true;
 }

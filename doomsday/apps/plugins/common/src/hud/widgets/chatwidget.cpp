@@ -78,9 +78,8 @@ DENG2_PIMPL(ChatWidget)
             }
             else
             {
-                String const cmd = String("chat %1").arg(msg);
-                char buf[256]; M_StrCatQuoted(buf, cmd.toUtf8().constData(), 256);
-                DD_Execute(false, buf);
+                String const cmd = String("chat %1").arg(msg.escaped());
+                DD_Execute(false, cmd.toUtf8().constData());
             }
         }
         else
@@ -98,9 +97,8 @@ DENG2_PIMPL(ChatWidget)
                 }
                 else
                 {
-                    String const cmd = String("chatnum %1 %2").arg(i).arg(msg);
-                    char buf[256]; M_StrCatQuoted(buf, cmd.toUtf8().constData(), 256);
-                    DD_Execute(false, buf);
+                    String const cmd = String("chatnum %1 %2").arg(i).arg(msg.escaped());
+                    DD_Execute(false, cmd.toUtf8().constData());
                 }
             }
         }
