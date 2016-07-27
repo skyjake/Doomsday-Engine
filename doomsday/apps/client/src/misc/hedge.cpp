@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "hedge.h"
+#include "HEdge"
 
 #include <de/Log>
 #include <de/String>

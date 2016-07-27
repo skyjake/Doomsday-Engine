@@ -18,7 +18,7 @@
  */
 
 #include "de_base.h"
-#include "m_nodepile.h"
+#include "misc/m_nodepile.h"
 
 #include <de/memoryzone.h>
 #include "dd_main.h"

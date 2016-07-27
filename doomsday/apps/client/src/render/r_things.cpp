@@ -32,7 +32,7 @@
 #include "dd_main.h"  // App_World()
 #include "dd_loop.h"  // frameTimePos
 #include "def_main.h"  // states
-#include "r_util.h"
+#include "misc/r_util.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"

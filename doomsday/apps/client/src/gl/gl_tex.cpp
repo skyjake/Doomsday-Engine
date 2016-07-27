@@ -21,7 +21,7 @@
 #include "gl/gl_tex.h"
 #include "dd_main.h"
 
-#include "color.h"
+#include "misc/color.h"
 #include "render/r_main.h"
 #include "resource/clientresources.h"
 #include "gl/sys_opengl.h"

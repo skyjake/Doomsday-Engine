@@ -21,7 +21,7 @@
 #include "world/line.h"
 
 #include "dd_main.h"  // App_Materials(), verbose
-#include "m_misc.h"
+#include "misc/m_misc.h"
 
 #include "Face"
 #include "HEdge"

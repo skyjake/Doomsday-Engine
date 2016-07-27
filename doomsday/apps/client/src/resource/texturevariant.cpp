@@ -20,7 +20,7 @@
 
 #include "de_base.h"
 
-#include "r_util.h"
+#include "misc/r_util.h"
 
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"

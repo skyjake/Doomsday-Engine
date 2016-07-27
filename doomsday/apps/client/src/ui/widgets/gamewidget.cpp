@@ -32,7 +32,7 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
-#include "edit_bias.h"
+#include "ui/editors/edit_bias.h"
 #include "world/map.h"
 #include "network/net_main.h"
 #include "client/cl_def.h" // clientPaused

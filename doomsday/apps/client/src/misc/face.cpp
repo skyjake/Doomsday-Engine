@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "face.h"
+#include "Face"
 #include <de/mathutil.h>
 #include <de/vector1.h> /// @todo remove me
 #include <de/Log>

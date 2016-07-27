@@ -63,7 +63,7 @@
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 #include "render/vr.h"
-#include "r_util.h"
+#include "misc/r_util.h"
 
 #include "ui/ui_main.h"
 #include "ui/clientwindowsystem.h"

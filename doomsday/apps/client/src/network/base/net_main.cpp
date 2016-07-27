@@ -64,7 +64,7 @@
 #  include "render/viewports.h"
 
 #  include "api_fontrender.h"
-#  include "edit_bias.h"
+#  include "ui/editors/edit_bias.h"
 #  include "ui/ui_main.h"
 #  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"

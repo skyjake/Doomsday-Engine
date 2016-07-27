@@ -34,7 +34,7 @@
 #endif
 
 #include "dd_main.h"
-#include "m_misc.h"
+#include "misc/m_misc.h"
 
 #ifdef __CLIENT__
 #  include <doomsday/res/Composite>

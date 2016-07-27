@@ -23,7 +23,7 @@
 #include <de/GLState>
 
 #include "api_console.h"
-#include "edit_bias.h"
+#include "ui/editors/edit_bias.h"
 
 #include "audio/sfxchannel.h"  // debug visual
 #include "network/net_main.h"

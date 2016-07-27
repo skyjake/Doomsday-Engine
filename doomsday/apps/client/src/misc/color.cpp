@@ -18,7 +18,7 @@
  */
 
 #include "de_platform.h"
-#include "color.h"
+#include "misc/color.h"
 
 float ColorRawf_AverageColor(ColorRawf* c)
 {

@@ -20,7 +20,7 @@
 #define DENG_NO_API_MACROS_FILESYS
 
 #include "de_platform.h"
-#include "m_misc.h"
+#include "misc/m_misc.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -339,7 +339,7 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 
 #if defined(WIN32)
 #define close _close
-#define read _read
+#define read  _read
 #define write _write
 #endif
 
@@ -422,6 +422,7 @@ static size_t FileReader(const char* name, char** buffer)
     return length;
 }
 
+#undef M_WriteFile
 DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
 {
     int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
@@ -436,36 +437,7 @@ DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t l
     return (count >= length);
 }
 
-/*AutoStr *M_WriteCommented(const char* text)
-{
-    char *buff = (char *) M_Malloc(strlen(text) + 1), *line;
-
-    strcpy(buff, text);
-    line = strtok(buff, "\n");
-    while(line)
-    {
-        fprintf(file, "# %s\n", line);
-        line = strtok(NULL, "\n");
-    }
-    M_Free(buff);
-}*/
-
-/*
- * The caller must provide the opening and closing quotes.
- */
-/*void M_WriteTextEsc(FILE* file, const char* text)
-{
-    DENG_ASSERT(file && text);
-
-    size_t i;
-    for(i = 0; i < strlen(text) && text[i]; ++i)
-    {
-        if(text[i] == '"' || text[i] == '\\')
-            fprintf(file, "\\");
-        fprintf(file, "%c", text[i]);
-    }
-}*/
-
+#undef M_ScreenShot
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 {
 #ifdef __CLIENT__

@@ -25,7 +25,7 @@
 #include "ClientTexture"
 #include "gl/gl_main.h"
 #include "MaterialVariantSpec"
-#include "r_util.h"
+#include "misc/r_util.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers

@@ -27,7 +27,7 @@
 #include <de/timer.h>
 #include <doomsday/doomsdayapp.h>
 #include "dd_main.h"
-#include "m_misc.h"
+#include "misc/m_misc.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 
 #include "gl/gl_main.h"

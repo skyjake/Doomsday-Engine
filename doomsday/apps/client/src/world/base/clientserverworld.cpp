@@ -85,7 +85,7 @@
 #  include "render/rendpoly.h"
 #  include "MaterialAnimator"
 
-#  include "edit_bias.h"
+#  include "ui/editors/edit_bias.h"
 #  include "ui/progress.h"
 #endif
 

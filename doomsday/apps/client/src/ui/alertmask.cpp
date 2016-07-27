@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "alertmask.h"
+#include "ui/alertmask.h"
 #include "clientapp.h"
 
 #include <de/Config>

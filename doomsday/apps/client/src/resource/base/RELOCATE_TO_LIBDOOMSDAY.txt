@@ -1,0 +1,2 @@
+These sources are used by both the client and server and should be therefore
+moved to libdoomsday.

@@ -40,7 +40,7 @@
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/lineowner.h"
-#include "m_nodepile.h"
+#include "misc/m_nodepile.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/polyobjdata.h"

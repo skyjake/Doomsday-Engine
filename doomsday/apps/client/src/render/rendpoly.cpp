@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "render/rendpoly.h"
 
-#include "color.h"
+#include "misc/color.h"
 #include "WallEdge"
 
 using namespace de;

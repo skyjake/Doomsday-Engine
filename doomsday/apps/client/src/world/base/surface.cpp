@@ -31,7 +31,7 @@
 #  include "gl/gl_tex.h"
 #endif
 
-#include "r_util.h"  // R_NameForBlendMode()
+#include "misc/r_util.h"  // R_NameForBlendMode()
 #include "dd_loop.h" // frameTimePos
 
 #include <doomsday/res/TextureManifest>

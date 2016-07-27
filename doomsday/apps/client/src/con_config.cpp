@@ -39,7 +39,7 @@
 
 #include "dd_main.h"
 #include "dd_def.h"
-#include "m_misc.h"
+#include "misc/m_misc.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"

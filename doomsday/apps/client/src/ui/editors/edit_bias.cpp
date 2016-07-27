@@ -20,7 +20,7 @@
 
 #ifdef __CLIENT__
 #include "de_base.h"
-#include "edit_bias.h"
+#include "ui/editors/edit_bias.h"
 
 #include <de/concurrency.h>
 #include <de/Log>

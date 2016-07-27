@@ -47,7 +47,6 @@
 #include <doomsday/console/exec.h>
 
 #include "clientplayer.h"
-#include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
@@ -66,6 +65,7 @@
 #include "world/contact.h"
 #include "world/p_players.h"
 
+#include "ui/alertmask.h"
 #include "ui/inputsystem.h"
 #include "ui/b_main.h"
 #include "ui/sys_input.h"

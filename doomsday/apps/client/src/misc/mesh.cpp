@@ -17,13 +17,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
-
+#include "Mesh"
 #include "HEdge"
 #include "Face"
 #include "Vertex"
 
-#include "mesh.h"
+#include <QtAlgorithms>
 
 namespace de {
 

@@ -31,7 +31,7 @@
 #include "api_console.h"
 #include "dd_main.h"
 #include "dd_loop.h"
-#include "edit_bias.h"
+#include "ui/editors/edit_bias.h"
 
 #include "gl/gl_main.h"
 

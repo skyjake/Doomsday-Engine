@@ -34,7 +34,7 @@
 #  include "server/sv_def.h"
 #endif
 #include "dd_main.h"
-#include "m_misc.h"
+#include "misc/m_misc.h"
 
 #include <de/App>
 

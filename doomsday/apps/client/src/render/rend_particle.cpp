@@ -42,7 +42,7 @@
 #include "render/vissprite.h"
 
 #include "clientapp.h"
-#include "r_util.h"
+#include "misc/r_util.h"
 #include "sys_system.h"  // novideo
 
 #include <doomsday/console/var.h>

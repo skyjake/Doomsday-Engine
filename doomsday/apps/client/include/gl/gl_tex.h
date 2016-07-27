@@ -25,7 +25,7 @@
 #ifndef DENG_GL_IMAGE_MANIPULATION_H
 #define DENG_GL_IMAGE_MANIPULATION_H
 
-#include "color.h"
+#include "misc/color.h"
 
 #include <doomsday/resource/colorpalette.h>
 

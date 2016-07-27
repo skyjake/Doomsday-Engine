@@ -30,7 +30,7 @@
 #include <de/Vector>
 #include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
-#include "m_misc.h" // M_BoxOnLineSide2
+#include "misc/m_misc.h" // M_BoxOnLineSide2
 
 using namespace de;
 

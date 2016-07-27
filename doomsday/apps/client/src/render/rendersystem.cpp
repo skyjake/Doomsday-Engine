@@ -45,7 +45,7 @@
 #include "Surface"
 
 #include "Contact"
-#include "r_util.h"
+#include "misc/r_util.h"
 
 using namespace de;
 

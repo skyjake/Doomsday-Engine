@@ -55,7 +55,7 @@
 #include "gl/sys_opengl.h"
 
 #include "api_fontrender.h"
-#include "r_util.h"
+#include "misc/r_util.h"
 #include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
@@ -80,7 +80,7 @@
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
 
-#include "edit_bias.h"
+#include "ui/editors/edit_bias.h"
 
 #include "sys_system.h"
 #include "dd_main.h"
