@@ -610,7 +610,7 @@ void GuiWidget::removeEventHandler(IEventHandler *handler)
     d->eventHandlers.removeOne(handler);
 }
 
-void GuiWidget::setAttribute(Attributes const &attr, FlagOp op)
+void GuiWidget::setAttribute(Attributes const &attr, FlagOpArg op)
 {
     applyFlagOperation(d->attribs, attr, op);
 }
@@ -756,7 +756,8 @@ bool GuiWidget::handleEvent(Event const &event)
     if (hasFocus() && event.isKey())
     {
         KeyEvent const &key = event.as<KeyEvent>();
-        if (key.isKeyDown() && key.ddKey() == DDKEY_TAB)
+        if (key.isKeyDown() && key.ddKey() == DDKEY_TAB &&
+            !attributes().testFlag(FocusCyclingDisabled))
         {
             if (auto *focus = d->findNextWidgetToFocus(
                         key.modifiers().testFlag(KeyEvent::Shift)? Backward : Forward))

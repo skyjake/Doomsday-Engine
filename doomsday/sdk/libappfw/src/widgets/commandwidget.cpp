@@ -81,9 +81,9 @@ bool CommandWidget::handleEvent(Event const &event)
         KeyEvent const &key = event.as<KeyEvent>();
 
         if (d->allowReshow &&
-           isSuggestingCompletion() &&
-           key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
-           suggestedCompletions().size() > 1)
+            isSuggestingCompletion() &&
+            key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
+            suggestedCompletions().size() > 1)
         {
             // The completion popup has been manually dismissed, but the editor is
             // still in autocompletion mode. Let's just reopen the popup with its
@@ -116,7 +116,7 @@ bool CommandWidget::handleEvent(Event const &event)
 
     if (hasFocus())
     {
-        // All Tab keys are eaten by a focused console command widget.
+        // All Tab keys are eaten by a focused command widget.
         if (event.isKey() && event.as<KeyEvent>().ddKey() == DDKEY_TAB)
         {
             return true;
@@ -129,6 +129,13 @@ bool CommandWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+void CommandWidget::update()
+{
+    LineEditWidget::update();
+
+    setAttribute(FocusCyclingDisabled, !text().isEmpty());
 }
 
 void CommandWidget::dismissContentToHistory()

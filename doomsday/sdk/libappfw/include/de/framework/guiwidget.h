@@ -209,6 +209,11 @@ public:
          */
         EatAllMouseEvents = 0x40,
 
+        /**
+         * When the widget is in focus, this will prevent cycling focus away with Tab.
+         */
+        FocusCyclingDisabled = 0x80,
+
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
@@ -334,7 +339,7 @@ public:
      * @param attr  Attribute(s) to modify.
      * @param op    Flag operation.
      */
-    void setAttribute(Attributes const &attr, FlagOp op = SetFlags);
+    void setAttribute(Attributes const &attr, FlagOpArg op = SetFlags);
 
     /**
      * Returns the current widget attributes.

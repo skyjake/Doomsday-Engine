@@ -41,9 +41,10 @@ public:
     PopupWidget &autocompletionPopup();
 
     // Events.
-    void focusGained();
-    void focusLost();
-    bool handleEvent(Event const &event);
+    void focusGained() override;
+    void focusLost() override;
+    bool handleEvent(Event const &event) override;
+    void update() override;
 
 public slots:
     /**
@@ -74,7 +75,7 @@ protected:
      */
     void showAutocompletionPopup(String const &completionsText);
 
-    void autoCompletionEnded(bool accepted);
+    void autoCompletionEnded(bool accepted) override;
 
 signals:
     void gotFocus();
