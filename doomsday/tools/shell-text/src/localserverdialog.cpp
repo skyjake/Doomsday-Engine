@@ -36,10 +36,8 @@ DENG2_PIMPL_NOREF(LocalServerDialog)
 
 LocalServerDialog::LocalServerDialog() : d(new Impl)
 {
-    d->choice = new ChoiceWidget("gameMode");
-    d->port = new LineEditWidget("serverPort");
-    add(d->choice);
-    add(d->port);
+    add(d->choice = new ChoiceWidget  ("gameMode"));
+    add(d->port   = new LineEditWidget("serverPort"));
 
     // Define the contents for the choice list.
     ChoiceWidget::Items modes;
