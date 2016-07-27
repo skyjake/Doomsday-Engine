@@ -42,18 +42,6 @@ DENG2_PIMPL(FocusWidget)
 
     void flash()
     {
-        // Flashing depends on the reference widget's visibility.
-        //float const maxOpacity = (reference? reference->visibleOpacity() : 1.f);
-        if (reference)
-        {
-            self.show(reference->isVisible());
-        }
-
-        /*if (color.target() == 0)
-        {
-            color.setValue(.8f * maxOpacity, FLASH_SPAN + .1, .1);
-        }
-        else*/
         if (color.target() > .5f)
         {
             color.setValue(0, FLASH_SPAN);
@@ -98,11 +86,7 @@ void FocusWidget::stopFlashing()
 void FocusWidget::update()
 {
     setOpacity(d->reference? d->reference->visibleOpacity() : 0.f);
-
-    if (isVisible())
-    {
-        set(Background(Background::GradientFrame, d->currentColor(), 6));
-    }
+    set(Background(Background::GradientFrame, d->currentColor(), 6));
 
     LabelWidget::update();
 }

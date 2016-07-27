@@ -439,6 +439,11 @@ void PopupMenuWidget::setColorTheme(ColorTheme theme)
     d->updateButtonColors();
 }
 
+void PopupMenuWidget::offerFocus()
+{
+    menu().offerFocus();
+}
+
 void PopupMenuWidget::update()
 {
     PopupWidget::update();

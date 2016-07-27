@@ -579,6 +579,11 @@ ui::ActionItem *DialogWidget::defaultActionItem()
     return const_cast<ui::ActionItem *>(d->findDefaultAction());
 }
 
+void DialogWidget::offerFocus()
+{
+    root().setFocus(d->findDefaultButton());
+}
+
 void DialogWidget::update()
 {
     PopupWidget::update();
@@ -681,8 +686,6 @@ void DialogWidget::prepare()
 {
     // Mouse needs to be untrapped for the user to be access the dialog.
     d->untrapper.reset(new Untrapper(root().window()));
-
-    root().setFocus(d->findDefaultButton());
 
     if (openingDirection() == ui::NoDirection)
     {

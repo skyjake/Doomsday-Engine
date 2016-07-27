@@ -173,8 +173,9 @@ public:
     Rule const &contentHeight() const;
 
     // Events.
-    void update();
-    bool handleEvent(Event const &event);
+    void offerFocus() override;
+    void update() override;
+    bool handleEvent(Event const &event) override;
 
 public slots:
     void dismissPopups();

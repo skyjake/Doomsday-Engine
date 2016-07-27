@@ -112,14 +112,15 @@ public:
     ButtonWidget &closeButton();
 
     // Events.
-    bool handleEvent(Event const &event);
+    void offerFocus() override;
+    bool handleEvent(Event const &event) override;
 
 protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void updateStyle();
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void updateStyle() override;
 
-    virtual void preparePanelForOpening();
-    virtual void panelDismissed();
+    virtual void preparePanelForOpening() override;
+    virtual void panelDismissed() override;
 
 private:
     DENG2_PRIVATE(d)

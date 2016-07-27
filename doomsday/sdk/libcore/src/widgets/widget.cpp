@@ -764,6 +764,9 @@ void Widget::focusGained()
 void Widget::focusLost()
 {}
 
+void Widget::offerFocus()
+{}
+
 void Widget::update()
 {}
 

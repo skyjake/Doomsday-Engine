@@ -44,12 +44,13 @@ public:
     void setColorTheme(ColorTheme theme);
 
     // Events.
-    void update();
+    void offerFocus() override;
+    void update() override;
 
 protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void preparePanelForOpening();
-    void panelClosing();
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void preparePanelForOpening() override;
+    void panelClosing() override;
 
 private:
     DENG2_PRIVATE(d)

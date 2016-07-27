@@ -350,6 +350,14 @@ ButtonWidget &PopupWidget::closeButton()
     return *d->close;
 }
 
+void PopupWidget::offerFocus()
+{
+    if (d->close)
+    {
+        root().setFocus(d->close);
+    }
+}
+
 GuiWidget::Background PopupWidget::infoStyleBackground() const
 {
     return Background(style().colors().colorf("popup.info.background"),
@@ -479,10 +487,7 @@ void PopupWidget::preparePanelForOpening()
 
     d->updateLayout();
 
-    if (d->close)
-    {
-        root().setFocus(d->close);
-    }
+    offerFocus();
 }
 
 void PopupWidget::panelDismissed()

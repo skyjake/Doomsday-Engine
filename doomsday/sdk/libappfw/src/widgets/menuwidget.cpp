@@ -593,6 +593,22 @@ Rule const &MenuWidget::contentHeight() const
     return *d->outContentHeight;
 }
 
+void MenuWidget::offerFocus()
+{
+    foreach (Widget *w, childWidgets())
+    {
+        if (GuiWidget const *widget = w->maybeAs<GuiWidget>())
+        {
+            if (!widget->behavior().testFlag(Hidden) &&
+                widget->behavior().testFlag(Focusable))
+            {
+                root().setFocus(w);
+                return;
+            }
+        }
+    }
+}
+
 ChildWidgetOrganizer &MenuWidget::organizer()
 {
     return d->organizer;

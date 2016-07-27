@@ -230,8 +230,9 @@ public:
     ui::ActionItem *defaultActionItem();
 
     // Events.
-    void update();
-    bool handleEvent(Event const &event);
+    void offerFocus() override;
+    void update() override;
+    bool handleEvent(Event const &event) override;
 
 public slots:
     void accept(int result = 1);
@@ -242,7 +243,7 @@ signals:
     void rejected(int result);
 
 protected:
-    void preparePanelForOpening();
+    void preparePanelForOpening() override;
 
     /**
      * Derived classes can override this to do additional tasks before

@@ -300,6 +300,7 @@ public:
     virtual void viewResized();
     virtual void focusGained();
     virtual void focusLost();
+    virtual void offerFocus();
     virtual void update();
     virtual void draw();
     virtual void preDrawChildren();
