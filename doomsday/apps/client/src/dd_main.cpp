@@ -120,6 +120,7 @@
 #  include "ui/busyvisual.h"
 #  include "ui/sys_input.h"
 #  include "ui/widgets/taskbarwidget.h"
+#  include "ui/home/homewidget.h"
 
 #  include "updater.h"
 #  include "updater/downloaddialog.h"
@@ -1026,6 +1027,9 @@ static void initialize()
             }
 
             // Begin the game session.
+#ifdef __CLIENT__
+            ClientWindow::main().home().moveOffscreen(0.0);
+#endif
             DoomsdayApp::app().changeGame(*game, DD_ActivateGameWorker);
         }
 #ifdef __SERVER__
