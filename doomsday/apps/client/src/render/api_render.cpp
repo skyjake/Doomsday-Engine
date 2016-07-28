@@ -25,6 +25,7 @@
 #include <de/Log>
 #include <doomsday/console/exec.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/res/Sprites>
 #include <doomsday/world/Materials>
 
 #include "dd_main.h"  // App_ResourceSystem
@@ -52,7 +53,7 @@ DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
 #ifdef __CLIENT__
-    if(FrameModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
+    if (FrameModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
     {
         App_ResourceSystem().cache(modelDef);
     }
@@ -68,23 +69,23 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
 {
     LOG_AS("Rend.CacheForMobjType");
 
-    if(::novideo) return;
-    if(!((::useModels && ::precacheSkins) || ::precacheSprites)) return;
-    if(num < 0 || num >= ::runtimeDefs.mobjInfo.size()) return;
+    if (::novideo) return;
+    if (!((::useModels && ::precacheSkins) || ::precacheSprites)) return;
+    if (num < 0 || num >= ::runtimeDefs.mobjInfo.size()) return;
 
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
-    for(dint i = 0; i < ::defs.states.size(); ++i)
+    for (dint i = 0; i < ::defs.states.size(); ++i)
     {
-        if(::runtimeDefs.stateInfo[i].owner != &::runtimeDefs.mobjInfo[num])
+        if (::runtimeDefs.stateInfo[i].owner != &::runtimeDefs.mobjInfo[num])
             continue;
 
         Models_CacheForState(i);
 
-        if(::precacheSprites)
+        if (::precacheSprites)
         {
-            if(state_t *state = Def_GetState(i))
+            if (state_t *state = Def_GetState(i))
             {
                 App_ResourceSystem().cache(state->sprite, spec);
             }
@@ -137,19 +138,19 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 {
     LOG_AS("Rend.GetSpriteInfo");
 
-    if(!info) return false;
+    if (!info) return false;
 
     de::zapPtr(info);
 
-    if(!App_ResourceSystem().hasSprite(id, frame))
+    if (!res::Sprites::get().hasSprite(id, frame))
     {
         LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i")
             << id << frame;
         return false;
     }
 
-    defn::Sprite sprite(App_ResourceSystem().sprite(id, frame));
-    if(!sprite.hasView(0))
+    defn::Sprite sprite(res::Sprites::get().sprite(id, frame));
+    if (!sprite.hasView(0))
     {
         LOG_RES_WARNING("Sprite id:%i frame:%i has no front view")
             << id << frame;
@@ -160,7 +161,7 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
     info->material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
     info->flip     = spriteView.getb("mirrorX");
 
-    if(::novideo) return true;  // We can't prepare the material.
+    if (::novideo) return true;  // We can't prepare the material.
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds

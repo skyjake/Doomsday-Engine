@@ -32,6 +32,7 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/res/Textures>
+#include <doomsday/res/Sprites>
 #include <doomsday/world/mobjthinkerdata.h>
 #include <doomsday/world/Materials>
 
@@ -660,7 +661,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
 
 Record *Mobj_SpritePtr(mobj_t const &mob)
 {
-    return App_ResourceSystem().spritePtr(mob.sprite, mob.frame);
+    return res::Sprites::get().spritePtr(mob.sprite, mob.frame);
 }
 
 FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, float *retInter)

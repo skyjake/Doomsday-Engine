@@ -1,7 +1,7 @@
 /** @file clientresources.cpp  Client-side resource subsystem.
  *
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -54,15 +54,17 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>
-#include <doomsday/resource/patch.h>
-#include <doomsday/resource/patchname.h>
-#include <doomsday/resource/mapmanifests.h>
-#include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/AnimGroups>
+#include <doomsday/res/ColorPalettes>
 #include <doomsday/res/Composite>
+#include <doomsday/res/MapManifests>
+#include <doomsday/res/Patch>
+#include <doomsday/res/PatchName>
+#include <doomsday/res/Sprites>
 #include <doomsday/res/TextureManifest>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Material>
-#include <doomsday/world/materials.h>
+#include <doomsday/world/Materials>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -491,8 +493,6 @@ DENG2_PIMPL(ClientResources)
     CacheQueue cacheQueue;
 #endif
 
-    QMap<spritenum_t, SpriteSet> sprites;
-
     Impl(Public *i)
         : Base(i)
 #ifdef __CLIENT__
@@ -551,11 +551,7 @@ DENG2_PIMPL(ClientResources)
 
         clearAllTextureSpecs();
         clearMaterialSpecs();
-#endif
 
-        sprites.clear();
-
-#ifdef __CLIENT__
         clearModels();
 #endif
     }
@@ -598,33 +594,7 @@ DENG2_PIMPL(ClientResources)
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
     }
-#endif
 
-    inline bool hasSpriteSet(spritenum_t id) const
-    {
-        return sprites.contains(id);
-    }
-
-    SpriteSet *tryFindSpriteSet(spritenum_t id)
-    {
-        auto found = sprites.find(id);
-        return (found != sprites.end() ? &found.value() : nullptr);
-    }
-
-    SpriteSet &findSpriteSet(spritenum_t id)
-    {
-        if (SpriteSet *frames = tryFindSpriteSet(id)) return *frames;
-        /// @throw MissingResourceError An unknown/invalid id was specified.
-        throw MissingResourceError("ClientResources::findSpriteSet", "Unknown sprite id " + String::number(id));
-    }
-
-    SpriteSet &addSpriteSet(spritenum_t id, QMap<dint, Record> const &frames)
-    {
-        DENG2_ASSERT(!tryFindSpriteSet(id));  // sanity check.
-        return sprites.insert(id, frames).value();
-    }
-
-#ifdef __CLIENT__
     void clearRuntimeFonts()
     {
         self.fontScheme("Game").clear();
@@ -922,19 +892,22 @@ DENG2_PIMPL(ClientResources)
         }
     }
 
-    void queueCacheTasksForSprite(spritenum_t id, MaterialVariantSpec const &contextSpec,
-        bool cacheGroups = true)
+    void queueCacheTasksForSprite(spritenum_t id,
+                                  MaterialVariantSpec const &contextSpec,
+                                  bool cacheGroups = true)
     {
-        if (SpriteSet *sprites = tryFindSpriteSet(id))
+        if (auto const *sprites = self.sprites().tryFindSpriteSet(id))
         {
             for (Record const &sprite : *sprites)
-            for (Value const *val : sprite.geta("views").elements())
             {
-                Record const &spriteView = val->as<RecordValue>().dereference();
-                if (world::Material *material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL)))
+                for (Value const *val : sprite.geta("views").elements())
                 {
-                    queueCacheTasksForMaterial(material->as<ClientMaterial>(),
-                                               contextSpec, cacheGroups);
+                    Record const &spriteView = val->as<RecordValue>().dereference();
+                    if (world::Material *material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL)))
+                    {
+                        queueCacheTasksForMaterial(material->as<ClientMaterial>(),
+                                                   contextSpec, cacheGroups);
+                    }
                 }
             }
         }
@@ -1575,7 +1548,7 @@ DENG2_PIMPL(ClientResources)
         mf.offset.y = -bottom * scale + offset;
     }
 
-    void scaleModelToSprite(FrameModelDef &mf, Record *spriteRec)
+    void scaleModelToSprite(FrameModelDef &mf, Record const *spriteRec)
     {
         if (!spriteRec) return;
 
@@ -1840,7 +1813,7 @@ DENG2_PIMPL(ClientResources)
                 sprFrame = modef->state->frame;
             }
 
-            if (Record *sprite = self.spritePtr(sprNum, sprFrame))
+            if (Record const *sprite = self.sprites().spritePtr(sprNum, sprFrame))
             {
                 scaleModelToSprite(*modef, sprite);
             }
@@ -2110,30 +2083,6 @@ void ClientResources::addColorPalette(res::ColorPalette &newPalette, String cons
     // Observe changes to the color table so we can schedule texture updates.
     newPalette.audienceForColorTableChange += d;
 #endif
-}
-
-dint ClientResources::spriteCount()
-{
-    return d->sprites.count();
-}
-
-bool ClientResources::hasSprite(spritenum_t id, dint frame)
-{
-    if (SpriteSet const *frames = d->tryFindSpriteSet(id))
-    {
-        return frames->contains(frame);
-    }
-    return false;
-}
-
-Record &ClientResources::sprite(spritenum_t id, dint frame)
-{
-    return d->findSpriteSet(id).find(frame).value();
-}
-
-ClientResources::SpriteSet const &ClientResources::spriteSet(spritenum_t id)
-{
-    return d->findSpriteSet(id);
 }
 
 void ClientResources::initTextures()
@@ -3037,7 +2986,7 @@ void ClientResources::initSprites()
 
     Time begunAt;
 
-    d->sprites.clear();
+    sprites().clear();
 
     // Build Sprite sets from their definitions.
     /// @todo It should no longer be necessary to split this into two phases -ds
@@ -3054,7 +3003,7 @@ void ClientResources::initSprites()
         }
 
         // Build a Sprite (frame) set from these definitions.
-        d->addSpriteSet(id, buildSprites(it.value()));
+        sprites().addSpriteSet(id, buildSprites(it.value()));
     }
     // We're done with the definitions.
     spriteDefs.clear();
@@ -3154,7 +3103,7 @@ void ClientResources::cacheForCurrentMap()
     {
         MaterialVariantSpec const &matSpec = Rend_SpriteMaterialSpec();
 
-        for (dint i = 0; i < spriteCount(); ++i)
+        for (dint i = 0; i < sprites().spriteCount(); ++i)
         {
             auto const sprite = spritenum_t(i);
 

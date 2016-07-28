@@ -2,6 +2,7 @@
  * @ingroup resource
  *
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -99,8 +100,6 @@ public:
     typedef QList<AbstractFont *> AllFonts;
 #endif
 
-    typedef QMap<de::dint, de::Record> SpriteSet;  ///< frame => Sprite
-
     static ClientResources &get();
 
 public:
@@ -117,37 +116,6 @@ public:
     void clearAllSystemResources();
 
     void addColorPalette(res::ColorPalette &newPalette, de::String const &name);
-
-    /**
-     * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
-     */
-    bool hasSprite(spritenum_t id, de::dint frame);
-
-    /**
-     * Lookup a Sprite by it's unique @a id and @a frame number.
-     *
-     * @see hasSprite(), spritePtr()
-     */
-    de::Record &sprite(spritenum_t id, de::dint frame);
-
-    /**
-     * Returns a pointer to the identified Sprite.
-     *
-     * @see hasSprite()
-     */
-    inline de::Record *spritePtr(spritenum_t id, de::dint frame) {
-        return hasSprite(id, frame) ? &sprite(id, frame) : nullptr;
-    }
-
-    /**
-     * Returns the SpriteSet associated with the given unique @a id.
-     */
-    SpriteSet const &spriteSet(spritenum_t id);
-
-    /**
-     * Returns the total number of SpriteSets.
-     */
-    de::dint spriteCount();
 
     patchid_t declarePatch(de::String encodedName);
 

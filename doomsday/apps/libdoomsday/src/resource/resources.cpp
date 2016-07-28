@@ -20,6 +20,7 @@
 #include "doomsday/resource/animgroups.h"
 #include "doomsday/resource/mapmanifests.h"
 #include "doomsday/resource/colorpalettes.h"
+#include "doomsday/resource/sprites.h"
 #include "doomsday/resource/textures.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/DoomsdayApp"
@@ -82,6 +83,7 @@ DENG2_PIMPL(Resources)
     res::MapManifests   mapManifests;
     res::Textures       textures;
     res::AnimGroups     animGroups;
+    res::Sprites        sprites;
 
     Impl(Public *i)
         : Base(i)
@@ -204,6 +206,16 @@ res::AnimGroups &Resources::animGroups()
 res::AnimGroups const &Resources::animGroups() const
 {
     return d->animGroups;
+}
+
+res::Sprites &Resources::sprites()
+{
+    return d->sprites;
+}
+
+res::Sprites const &Resources::sprites() const
+{
+    return d->sprites;
 }
 
 ResourceClass &App_ResourceClass(String className)

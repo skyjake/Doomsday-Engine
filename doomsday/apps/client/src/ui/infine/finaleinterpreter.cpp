@@ -1589,12 +1589,12 @@ DEFFC(Image)
     LOG_AS("FIC_Image");
 
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    char const *name       = OP_CSTRING(1);
-    lumpnum_t lumpNum      = App_FileSystem().lumpNumForName(name);
-
     anim.clearAllFrames();
 
 #ifdef __CLIENT__
+    char const *name  = OP_CSTRING(1);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
+
     if (rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, -1, &rawTex->lumpNum, 0, false);

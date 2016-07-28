@@ -25,6 +25,7 @@
 #include <de/GLState>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/Materials>
+#include <doomsday/res/Sprites>
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
 
@@ -73,7 +74,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     DENG2_ASSERT(psp.statePtr);
     state_t const &state = *psp.statePtr;
 
-    Record const &spriteView = defn::Sprite(ClientApp::resources().sprite(state.sprite, state.frame)).view(0);
+    Record const &spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
     MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))

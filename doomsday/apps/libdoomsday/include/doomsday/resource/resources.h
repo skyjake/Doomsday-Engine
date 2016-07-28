@@ -32,6 +32,7 @@ namespace res
     class ColorPalettes;
     class Textures;
     class AnimGroups;
+    class Sprites;
 }
 
 /**
@@ -83,18 +84,22 @@ public:
      */
     de::NativePath nativeSavePath() const;
 
-    res::MapManifests &       mapManifests();
-    res::MapManifests const & mapManifests() const;
+    res::MapManifests &         mapManifests();
+    res::MapManifests const &   mapManifests() const;
 
-    res::ColorPalettes &       colorPalettes();
-    res::ColorPalettes const & colorPalettes() const;
+    res::ColorPalettes &        colorPalettes();
+    res::ColorPalettes const &  colorPalettes() const;
 
-    res::Textures &       textures();
-    res::Textures const & textures() const;
+    res::Textures &         textures();
+    res::Textures const &   textures() const;
 
     res::AnimGroups &       animGroups();
     res::AnimGroups const & animGroups() const;
 
+    res::Sprites &          sprites();
+    res::Sprites const &    sprites() const;
+
+public:
     static de::String resolveSymbol(de::String const &symbol);
 
 private:

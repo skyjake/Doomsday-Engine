@@ -45,6 +45,7 @@
 #include <doomsday/world/Materials>
 #include <doomsday/world/detailtexturemateriallayer.h>
 #include <doomsday/world/shinetexturemateriallayer.h>
+#include <de/vector1.h>
 #include <QtAlgorithms>
 #include <QList>
 #include <QMap>
