@@ -945,7 +945,7 @@ void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
 
 void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
-    if(rawtex_t *rawTex = resSys().declareRawTexture(lumpNum))
+    if(rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
     {
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
                                 (filterUI ? gl::Linear : gl::Nearest));

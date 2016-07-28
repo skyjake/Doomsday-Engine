@@ -101,6 +101,8 @@ public:
 
     typedef QMap<de::dint, de::Record> SpriteSet;  ///< frame => Sprite
 
+    static ClientResources &get();
+
 public:
     /**
      * Construct a new resource system, configuring all resource classes and
@@ -149,6 +151,8 @@ public:
 
     patchid_t declarePatch(de::String encodedName);
 
+#ifdef __CLIENT__
+
     /**
      * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
      */
@@ -165,7 +169,6 @@ public:
      */
     QList<rawtex_t *> collectRawTextures() const;
 
-#ifdef __CLIENT__
     /**
      * Determines if a manifest exists for a resource on @a path.
      *

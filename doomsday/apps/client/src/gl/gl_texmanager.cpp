@@ -61,7 +61,7 @@ static DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 void GL_InitTextureManager()
 {
-    if(initedOk)
+    if (initedOk)
     {
         GL_LoadLightingSystemTextures();
         GL_LoadFlareTextures();
@@ -97,7 +97,7 @@ static int reloadTextures(void *context)
     Rend_ParticleLoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
 
-    if(usingBusyMode)
+    if (usingBusyMode)
     {
         Con_SetProgress(200);
     }
@@ -106,13 +106,13 @@ static int reloadTextures(void *context)
 
 void GL_TexReset()
 {
-    if(!initedOk) return;
+    if (!initedOk) return;
 
     App_ResourceSystem().releaseAllGLTextures();
     LOG_GL_VERBOSE("Released all GL textures");
 
     bool useBusyMode = !BusyMode_Active();
-    if(useBusyMode)
+    if (useBusyMode)
     {
         BusyMode_FreezeGameForBusyMode();
 
@@ -128,7 +128,7 @@ void GL_TexReset()
 
 void GL_LoadLightingSystemTextures()
 {
-    if(novideo || !initedOk) return;
+    if (novideo || !initedOk) return;
 
     // Preload lighting system textures.
     GL_PrepareLSTexture(LST_DYNAMIC);
@@ -138,7 +138,7 @@ void GL_LoadLightingSystemTextures()
 
 void GL_ReleaseAllLightingSystemTextures()
 {
-    if(novideo || !initedOk) return;
+    if (novideo || !initedOk) return;
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     zap(lightingTextures);
@@ -146,8 +146,8 @@ void GL_ReleaseAllLightingSystemTextures()
 
 GLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
-    if(novideo) return 0;
-    if(which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
+    if (novideo) return 0;
+    if (which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
 
     static const struct TexDef {
         char const *name;
@@ -163,11 +163,11 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
     };
     struct TexDef const &def = texDefs[which];
 
-    if(!lightingTextures[which])
+    if (!lightingTextures[which])
     {
         image_t image;
 
-        if(GL_LoadExtImage(image, def.name, def.mode))
+        if (GL_LoadExtImage(image, def.name, def.mode))
         {
             // Loaded successfully and converted accordingly.
             // Upload the image to GL.
@@ -191,11 +191,11 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 void GL_LoadFlareTextures()
 {
-    if(novideo || !initedOk) return;
+    if (novideo || !initedOk) return;
 
     GL_PrepareSysFlaremap(FXT_ROUND);
     GL_PrepareSysFlaremap(FXT_FLARE);
-    if(!haloRealistic)
+    if (!haloRealistic)
     {
         GL_PrepareSysFlaremap(FXT_BRFLARE);
         GL_PrepareSysFlaremap(FXT_BIGFLARE);
@@ -204,7 +204,7 @@ void GL_LoadFlareTextures()
 
 void GL_ReleaseAllFlareTextures()
 {
-    if(novideo || !initedOk) return;
+    if (novideo || !initedOk) return;
 
     glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     zap(sysFlareTextures);
@@ -212,8 +212,8 @@ void GL_ReleaseAllFlareTextures()
 
 GLuint GL_PrepareSysFlaremap(flaretexid_t which)
 {
-    if(novideo) return 0;
-    if(which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
+    if (novideo) return 0;
+    if (which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
 
     static const struct TexDef {
         char const *name;
@@ -225,11 +225,11 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
     };
     struct TexDef const &def = texDefs[which];
 
-    if(!sysFlareTextures[which])
+    if (!sysFlareTextures[which])
     {
         image_t image;
 
-        if(GL_LoadExtImage(image, def.name, LGM_WHITE_ALPHA))
+        if (GL_LoadExtImage(image, def.name, LGM_WHITE_ALPHA))
         {
             // Loaded successfully and converted accordingly.
             // Upload the image to GL.
@@ -253,19 +253,19 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
 
 GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
 {
-    if(resourceUri.path().length() == 1)
+    if (resourceUri.path().length() == 1)
     {
         // Select a system flare by numeric identifier?
         int number = resourceUri.path().toStringRef().first().digitValue();
-        if(number == 0) return 0; // automatic
-        if(number >= 1 && number <= 4)
+        if (number == 0) return 0; // automatic
+        if (number >= 1 && number <= 4)
         {
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if(auto *tex = res::Textures::get().texture("Flaremaps", resourceUri))
+    if (auto *tex = res::Textures::get().texture("Flaremaps", resourceUri))
     {
-        if(TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
+        if (TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -288,13 +288,13 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
         return GL_LoadImage(image, foundPath)? res::External : res::None;
     }
-    catch(FS1::NotFoundError const&)
+    catch (FS1::NotFoundError const&)
     {} // Ignore this error.
 
     try
     {
         FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
-        if(Image_LoadFromFile(image, file))
+        if (Image_LoadFromFile(image, file))
         {
             fileSys.releaseFile(file.file());
             delete &file;
@@ -315,7 +315,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
         // Load the raw image data.
         size_t const numPels = RAW_WIDTH * RAW_HEIGHT;
         image.pixels = (uint8_t *) M_Malloc(3 * numPels);
-        if(fileLength < 3 * numPels)
+        if (fileLength < 3 * numPels)
         {
             std::memset(image.pixels, 0, 3 * numPels);
         }
@@ -329,7 +329,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
     }
-    catch(LumpIndex::NotFoundError const &)
+    catch (LumpIndex::NotFoundError const &)
     {} // Ignore error.
 
     return res::None;
@@ -337,14 +337,14 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
 GLuint GL_PrepareRawTexture(rawtex_t &raw)
 {
-    if(raw.lumpNum < 0 || raw.lumpNum >= App_FileSystem().lumpCount()) return 0;
+    if (raw.lumpNum < 0 || raw.lumpNum >= App_FileSystem().lumpCount()) return 0;
 
-    if(!raw.tex)
+    if (!raw.tex)
     {
         image_t image;
         Image_Init(image);
 
-        if(loadRaw(image, raw) == res::External)
+        if (loadRaw(image, raw) == res::External)
         {
             // Loaded an external raw texture.
             raw.tex = GL_NewTextureWithParams(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
@@ -374,9 +374,9 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
 void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    foreach(rawtex_t *raw, App_ResourceSystem().collectRawTextures())
+    foreach (rawtex_t *raw, App_ResourceSystem().collectRawTextures())
     {
-        if(raw->tex) // Is the texture loaded?
+        if (raw->tex) // Is the texture loaded?
         {
             DENG_ASSERT_IN_MAIN_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -389,9 +389,9 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
 
 void GL_ReleaseTexturesForRawImages()
 {
-    foreach(rawtex_t *raw, App_ResourceSystem().collectRawTextures())
+    foreach (rawtex_t *raw, App_ResourceSystem().collectRawTextures())
     {
-        if(raw->tex)
+        if (raw->tex)
         {
             glDeleteTextures(1, (GLuint const *) &raw->tex);
             raw->tex = 0;

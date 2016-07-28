@@ -1594,13 +1594,15 @@ DEFFC(Image)
 
     anim.clearAllFrames();
 
-    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+#ifdef __CLIENT__
+    if (rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
 
     LOG_SCR_WARNING("Missing lump '%s'") << name;
+#endif
 }
 
 DEFFC(ImageAt)
@@ -1609,13 +1611,15 @@ DEFFC(ImageAt)
     LOG_AS("FIC_ImageAt");
 
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    float x                = OP_FLOAT(1);
-    float y                = OP_FLOAT(2);
-    char const *name       = OP_CSTRING(3);
-    lumpnum_t lumpNum      = App_FileSystem().lumpNumForName(name);
+    float x = OP_FLOAT(1);
+    float y = OP_FLOAT(2);
 
     anim.clearAllFrames()
         .setOrigin(Vector2f(x, y));
+
+#ifdef __CLIENT__
+    char const *name  = OP_CSTRING(3);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
 
     if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
@@ -1624,6 +1628,7 @@ DEFFC(ImageAt)
     }
 
     LOG_SCR_WARNING("Missing lump '%s'") << name;
+#endif
 }
 
 #ifdef __CLIENT__
@@ -1766,16 +1771,20 @@ DEFFC(AnimImage)
     LOG_AS("FIC_AnimImage");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
+
+#ifdef __CLIENT__
     char const *encodedName = OP_CSTRING(1);
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
-
-    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
+    lumpnum_t lumpNum       = App_FileSystem().lumpNumForName(encodedName);
     if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         return;
     }
     LOG_SCR_WARNING("Lump '%s' not found") << encodedName;
+#else
+    DENG2_UNUSED(anim);
+#endif
 }
 
 DEFFC(Repeat)
@@ -1981,7 +1990,7 @@ DEFFC(FillColor)
     int which = 0;
     if (!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
     else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
-    else                                        which = 3;
+    else                                         which = 3;
 
     Vector4f color;
     for (int i = 0; i < 4; ++i)

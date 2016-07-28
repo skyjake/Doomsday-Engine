@@ -1378,9 +1378,9 @@ static dint DD_UpdateEngineStateWorker(void *context)
     //
     // Rebuild resource data models (defs might've changed).
     //
-    App_ResourceSystem().clearAllRawTextures();
     App_ResourceSystem().initSprites();
 #ifdef __CLIENT__
+    App_ResourceSystem().clearAllRawTextures();
     App_ResourceSystem().initModels();
 #endif
     Def_PostInit();

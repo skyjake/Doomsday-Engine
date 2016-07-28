@@ -220,7 +220,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
         switch (f->type)
         {
         case FinaleAnimWidget::Frame::PFT_RAW: {
-            rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(f->texRef.lumpNum);
+            rawtex_t *rawTex = ClientResources::get().declareRawTexture(f->texRef.lumpNum);
             if (rawTex)
             {
                 DGLuint glName = GL_PrepareRawTexture(*rawTex);

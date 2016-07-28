@@ -425,10 +425,13 @@ DENG2_PIMPL(ClientResources)
 , DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
 #endif
 {
+#ifdef __CLIENT__
+    Binder binder;
+    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
 
-#ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
     QList<FontScheme *> fontSchemeCreationOrder;
@@ -489,11 +492,6 @@ DENG2_PIMPL(ClientResources)
 #endif
 
     QMap<spritenum_t, SpriteSet> sprites;
-
-#ifdef __CLIENT__
-    Binder binder;
-    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
-#endif
 
     Impl(Public *i)
         : Base(i)
@@ -2063,6 +2061,11 @@ DENG2_PIMPL(ClientResources)
     }
 };
 
+ClientResources &ClientResources::get() // static
+{
+    return static_cast<ClientResources &>(Resources::get());
+}
+
 ClientResources::ClientResources() : d(new Impl(this))
 {}
 
@@ -2255,6 +2258,8 @@ patchid_t ClientResources::declarePatch(String encodedName)
     return 0;
 }
 
+#ifdef __CLIENT__
+
 rawtex_t *ClientResources::rawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ClientResources::rawTexture");
@@ -2301,8 +2306,6 @@ void ClientResources::clearAllRawTextures()
     qDeleteAll(d->rawTexHash);
     d->rawTexHash.clear();
 }
-
-#ifdef __CLIENT__
 
 void ClientResources::releaseAllSystemGLTextures()
 {
