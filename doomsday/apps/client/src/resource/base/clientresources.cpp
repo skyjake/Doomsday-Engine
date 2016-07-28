@@ -425,9 +425,6 @@ DENG2_PIMPL(ClientResources)
 , DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
 #endif
 {
-    typedef QList<res::AnimGroup *> AnimGroups;
-    AnimGroups animGroups;
-
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
 
@@ -549,7 +546,6 @@ DENG2_PIMPL(ClientResources)
     {
         convertSavegameTasks.waitForDone();
 
-        self.clearAllAnimGroups();
 #ifdef __CLIENT__
         self.clearAllFontSchemes();
         clearFontManifests();
@@ -2079,7 +2075,7 @@ void ClientResources::clear()
     R_ShutdownSvgs();
 #endif
     clearAllRuntimeResources();
-    clearAllAnimGroups();
+    animGroups().clearAllAnimGroups();
 }
 
 void ClientResources::clearAllResources()
@@ -2873,52 +2869,6 @@ void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
 }
 
 #endif // __CLIENT__
-
-void ClientResources::clearAllAnimGroups()
-{
-    qDeleteAll(d->animGroups);
-    d->animGroups.clear();
-}
-
-dint ClientResources::animGroupCount()
-{
-    return d->animGroups.count();
-}
-
-res::AnimGroup &ClientResources::newAnimGroup(dint flags)
-{
-    LOG_AS("ResourceSystem");
-    dint const uniqueId = d->animGroups.count() + 1; // 1-based.
-    // Allocating one by one is inefficient but it doesn't really matter.
-    d->animGroups.append(new res::AnimGroup(uniqueId, flags));
-    return *d->animGroups.last();
-}
-
-res::AnimGroup *ClientResources::animGroup(dint uniqueId)
-{
-    LOG_AS("ClientResources::animGroup");
-    if (uniqueId > 0 && uniqueId <= d->animGroups.count())
-    {
-        return d->animGroups.at(uniqueId - 1);
-    }
-    LOGDEV_RES_WARNING("Invalid group #%i, returning NULL") << uniqueId;
-    return nullptr;
-}
-
-res::AnimGroup *ClientResources::animGroupForTexture(res::TextureManifest const &textureManifest)
-{
-    // Group ids are 1-based.
-    // Search backwards to allow patching.
-    for (dint i = animGroupCount(); i > 0; i--)
-    {
-        res::AnimGroup *group = animGroup(i);
-        if (group->hasFrameFor(textureManifest))
-        {
-            return group;
-        }
-    }
-    return nullptr;  // Not found.
-}
 
 struct SpriteFrameDef
 {

@@ -411,34 +411,6 @@ public:
      */
     void releaseFontGLTexturesByScheme(de::String schemeName);
 
-#endif // __CLIENT__
-
-    /**
-     * Returns the total number of animation/precache groups.
-     */
-    de::dint animGroupCount();
-
-    /**
-     * Destroys all the animation groups.
-     */
-    void clearAllAnimGroups();
-
-    /**
-     * Construct a new animation group.
-     *
-     * @param flags  @ref animationGroupFlags
-     */
-    res::AnimGroup &newAnimGroup(de::dint flags);
-
-    /**
-     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
-     */
-    res::AnimGroup *animGroup(de::dint uniqueId);
-
-    res::AnimGroup *animGroupForTexture(res::TextureManifest const &textureManifest);
-
-#ifdef __CLIENT__
-
     /**
      * Prepare resources for the current Map.
      */

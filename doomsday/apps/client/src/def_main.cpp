@@ -45,6 +45,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/resource/animgroups.h>
 #include <doomsday/res/Bundles>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
@@ -708,7 +709,7 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
     st0.set("texture", texUri.compose());
 
     // Is there an animation for this?
-    res::AnimGroup const *anim = resSys().animGroupForTexture(manifest);
+    res::AnimGroup const *anim = res::AnimGroups::get().animGroupForTexture(manifest);
     if (anim && anim->frameCount() > 1)
     {
         // Determine the start frame.

@@ -31,13 +31,13 @@ namespace res {
  *
  * @ingroup resource
  */
-class AnimGroup
+class LIBDOOMSDAY_PUBLIC AnimGroup
 {
 public:
     /**
      * A single frame in the animation.
      */
-    struct Frame
+    struct LIBDOOMSDAY_PUBLIC Frame
     {
     public:
         /**

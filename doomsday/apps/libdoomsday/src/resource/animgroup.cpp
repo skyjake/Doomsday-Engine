@@ -66,9 +66,9 @@ int AnimGroup::flags() const
 
 bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
 {
-    foreach(Frame *frame, d->frames)
+    foreach (Frame *frame, d->frames)
     {
-        if(&frame->textureManifest() == &textureManifest)
+        if (&frame->textureManifest() == &textureManifest)
             return true;
     }
     return false;

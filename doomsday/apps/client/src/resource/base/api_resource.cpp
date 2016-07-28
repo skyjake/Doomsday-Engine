@@ -28,6 +28,7 @@
 #endif
 
 #include <doomsday/resource/colorpalettes.h>
+#include <doomsday/resource/animgroups.h>
 #include <doomsday/res/Textures>
 
 using namespace de;
@@ -63,7 +64,7 @@ DENG_EXTERN_C int Textures_UniqueId(uri_s const *uri)
 #undef R_CreateAnimGroup
 DENG_EXTERN_C int R_CreateAnimGroup(int flags)
 {
-    return App_ResourceSystem().newAnimGroup(flags & ~AGF_PRECACHE).id();
+    return res::AnimGroups::get().newAnimGroup(flags & ~AGF_PRECACHE).id();
 }
 
 #undef R_AddAnimGroupFrame
@@ -76,7 +77,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
 
     try
     {
-        if(AnimGroup *group = App_ResourceSystem().animGroup(groupId))
+        if(res::AnimGroup *group = res::AnimGroups::get().animGroup(groupId))
         {
             group->newFrame(res::Textures::get().textureManifest(textureUri), tics, randomTics);
         }

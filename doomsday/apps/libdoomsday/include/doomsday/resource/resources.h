@@ -31,6 +31,7 @@ namespace res
     class MapManifests;
     class ColorPalettes;
     class Textures;
+    class AnimGroups;
 }
 
 /**
@@ -90,6 +91,9 @@ public:
 
     res::Textures &       textures();
     res::Textures const & textures() const;
+
+    res::AnimGroups &       animGroups();
+    res::AnimGroups const & animGroups() const;
 
 private:
     DENG2_PRIVATE(d)
