@@ -496,8 +496,6 @@ public:
      */
     static void consoleRegister();
 
-    static de::String resolveSymbol(de::String const &symbol);
-
 private:
     DENG2_PRIVATE(d)
 };

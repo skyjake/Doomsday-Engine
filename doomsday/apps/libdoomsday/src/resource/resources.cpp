@@ -22,6 +22,7 @@
 #include "doomsday/resource/colorpalettes.h"
 #include "doomsday/resource/textures.h"
 #include "doomsday/filesys/fs_main.h"
+#include "doomsday/DoomsdayApp"
 
 #include <de/App>
 #include <de/CommandLine>
@@ -30,6 +31,45 @@
 using namespace de;
 
 static Resources *theResources = nullptr;
+
+static String resolveUriSymbol(String const &symbol)
+{
+    if (!symbol.compare("App.DataPath", Qt::CaseInsensitive))
+    {
+        return "data";
+    }
+    else if (!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
+    {
+        return "defs";
+    }
+    else if (!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
+    {
+        if (DoomsdayApp::game().isNull())
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
+                                              "Symbol 'Game' did not resolve (no game loaded)");
+        }
+        return DoomsdayApp::game().id();
+    }
+    else if (!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
+    {
+        auto &gx = DoomsdayApp::plugins().gameExports();
+        if (DoomsdayApp::game().isNull() || !gx.GetVariable)
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
+                                              "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
+        }
+        return String(reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)));
+    }
+    else
+    {
+        /// @throw UnknownSymbolError  An unknown symbol was encountered.
+        throw de::Uri::UnknownSymbolError("Resources::resolveUriSymbol",
+                                          "Symbol '" + symbol + "' is unknown");
+    }
+}
 
 DENG2_PIMPL(Resources)
 {
@@ -49,6 +89,8 @@ DENG2_PIMPL(Resources)
     {
         theResources = thisPublic;
 
+        de::Uri::setResolverFunc(resolveUriSymbol);
+
         resClasses << new ResourceClass("RC_PACKAGE",    "Packages")
                    << new ResourceClass("RC_DEFINITION", "Defs")
                    << new ResourceClass("RC_GRAPHIC",    "Graphics")
@@ -58,11 +100,12 @@ DENG2_PIMPL(Resources)
                    << new ResourceClass("RC_FONT",       "Fonts");
 
         // Determine the root directory of the saved session repository.
-        if (auto arg = App::commandLine().check("-savedir", 1))
+        auto &cmdLine = App::commandLine();
+        if (auto arg = cmdLine.check("-savedir", 1))
         {
             // Using a custom root save directory.
-            App::commandLine().makeAbsolutePath(arg.pos + 1);
-            nativeSavePath = App::commandLine().at(arg.pos + 1);
+            cmdLine.makeAbsolutePath(arg.pos + 1);
+            nativeSavePath = cmdLine.at(arg.pos + 1);
         }
     }
 

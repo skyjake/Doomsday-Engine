@@ -490,8 +490,10 @@ DENG2_PIMPL(ClientResources)
 
     QMap<spritenum_t, SpriteSet> sprites;
 
+#ifdef __CLIENT__
     Binder binder;
     Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+#endif
 
     Impl(Public *i)
         : Base(i)
@@ -511,7 +513,6 @@ DENG2_PIMPL(ClientResources)
             return new res::Texture(m);
         });
 #endif
-        de::Uri::setResolverFunc(ClientResources::resolveSymbol);
 
         LOG_AS("ResourceSystem");
 
@@ -519,9 +520,7 @@ DENG2_PIMPL(ClientResources)
         /// @note Order here defines the ambigious-URI search order.
         createFontScheme("System");
         createFontScheme("Game");
-#endif
 
-#ifdef __CLIENT__
         // Setup the SavedSession module.
         binder.init(savedSessionModule)
                 << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
@@ -3855,42 +3854,4 @@ void ClientResources::consoleRegister() // static
 
     res  ::Texture ::consoleRegister();
     world::Material::consoleRegister();
-}
-
-String ClientResources::resolveSymbol(String const &symbol) // static
-{
-    if (!symbol.compare("App.DataPath", Qt::CaseInsensitive))
-    {
-        return "data";
-    }
-    else if (!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
-    {
-        return "defs";
-    }
-    else if (!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
-    {
-        if (!App_GameLoaded())
-        {
-            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("ClientResources::resolveSymbol",
-                    "Symbol 'Game' did not resolve (no game loaded)");
-        }
-        return App_CurrentGame().id();
-    }
-    else if (!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
-    {
-        if (!App_GameLoaded() || !gx.GetVariable)
-        {
-            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("ClientResources::resolveSymbol",
-                    "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
-        }
-        return String((char *)gx.GetVariable(DD_PLUGIN_NAME));
-    }
-    else
-    {
-        /// @throw UnknownSymbolError  An unknown symbol was encountered.
-        throw de::Uri::UnknownSymbolError("ClientResources::resolveSymbol",
-                                          "Symbol '" + symbol + "' is unknown");
-    }
 }

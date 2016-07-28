@@ -95,6 +95,8 @@ public:
     res::AnimGroups &       animGroups();
     res::AnimGroups const & animGroups() const;
 
+    static de::String resolveSymbol(de::String const &symbol);
+
 private:
     DENG2_PRIVATE(d)
 };
