@@ -185,7 +185,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 
     state_t const *oldState = mob->state;
 
-    DENG2_ASSERT(statenum >= 0 && statenum < defs.states.size());
+    DENG2_ASSERT(statenum >= 0 && statenum < DED_Definitions()->states.size());
 
     mob->state  = &runtimeDefs.states[statenum];
     mob->tics   = mob->state->tics;
@@ -194,7 +194,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 
     if (!(mob->ddFlags & DDMF_REMOTE))
     {
-        String const exec = defs.states[statenum].gets("execute");
+        String const exec = DED_Definitions()->states[statenum].gets("execute");
         if (!exec.isEmpty())
         {
             Con_Execute(CMDS_SCRIPT, exec.toUtf8(), true, false);
@@ -962,7 +962,7 @@ D_CMD(InspectMobj)
     LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
             << mobType << id << mob << Def_GetStateName(mob->state) << ::runtimeDefs.states.indexOf(mob->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
-            << ::defs.getMobjName(mob->type) << mob->type << mob->info
+            << DED_Definitions()->getMobjName(mob->type) << mob->type << mob->info
             << (mob->info ? QString(" (%1)").arg(::runtimeDefs.mobjInfo.indexOf(mob->info)) : "");
     LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mob->tics << mob->ddFlags;
 #ifdef __CLIENT__

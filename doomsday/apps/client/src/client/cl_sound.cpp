@@ -240,7 +240,7 @@ void Cl_Sound()
     }
 
     // Is the ID valid?
-    if (sound < 1 || sound >= ::defs.sounds.size())
+    if (sound < 1 || sound >= DED_Definitions()->sounds.size())
     {
         LOGDEV_NET_WARNING("Invalid sound ID %i") << sound;
         return;

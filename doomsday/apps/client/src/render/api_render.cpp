@@ -76,7 +76,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
-    for (dint i = 0; i < ::defs.states.size(); ++i)
+    for (dint i = 0; i < DED_Definitions()->states.size(); ++i)
     {
         if (::runtimeDefs.stateInfo[i].owner != &::runtimeDefs.mobjInfo[num])
             continue;

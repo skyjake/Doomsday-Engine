@@ -1944,7 +1944,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
         // Check the priority.
         if(defPriority >= 0)
         {
-            dint oldPrio = ::defs.sounds[sbuf.sample->id].priority;
+            dint oldPrio = DED_Definitions()->sounds[sbuf.sample->id].priority;
             if(oldPrio < defPriority)  // Old is more important.
             {
                 stopCount = -1;
@@ -2015,18 +2015,18 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
     bool const play3D = sfx3D && (emitter || fixedOrigin);
 
     LOG_AS("audio::System");
-    if(sample->id < 1 || sample->id >= ::defs.sounds.size()) return false;
+    if(sample->id < 1 || sample->id >= DED_Definitions()->sounds.size()) return false;
     if(volume <= 0 || !sample->size) return false;
 
     if(emitter && sfxOneSoundPerEmitter)
     {
         // Stop any other sounds from the same emitter.
-        if(stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
+        if(stopSoundWithLowerPriority(0, emitter, DED_Definitions()->sounds[sample->id].priority) < 0)
         {
             // Something with a higher priority is playing, can't start now.
             LOG_AUDIO_MSG("Not playing soundId:%i (prio:%i) because overridden (emitter id:%i)")
                 << sample->id
-                << ::defs.sounds[sample->id].priority
+                << DED_Definitions()->sounds[sample->id].priority
                 << emitter->thinker.id;
             return false;
         }
@@ -2428,7 +2428,7 @@ D_CMD(PlaySound)
     dint p = 0;
 
     // The sound ID is always first.
-    dint const id = ::defs.getSoundNum(argv[1]);
+    dint const id = DED_Definitions()->getSoundNum(argv[1]);
 
     // The second argument may be a volume.
     dfloat volume = 1;
@@ -2490,7 +2490,7 @@ D_CMD(PlayMusic)
     if(argc == 2)
     {
         // Play a file associated with the referenced music definition.
-        if(Record const *definition = ::defs.musics.tryFind("id", argv[1]))
+        if(Record const *definition = DED_Definitions()->musics.tryFind("id", argv[1]))
         {
             return Mus_Start(*definition, looped);
         }
@@ -2663,9 +2663,9 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 #ifdef __CLIENT__
     if(::isDedicated) return true;
 
-    if(musicId >= 0 && musicId < ::defs.musics.size())
+    if(musicId >= 0 && musicId < DED_Definitions()->musics.size())
     {
-        Record const &def = ::defs.musics[musicId];
+        Record const &def = DED_Definitions()->musics[musicId];
         return Mus_Start(def, looped);
     }
     return false;
@@ -2678,7 +2678,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 #undef S_StartMusic
 dint S_StartMusic(char const *musicId, dd_bool looped)
 {
-    dint idx = ::defs.getMusicNum(musicId);
+    dint idx = DED_Definitions()->getMusicNum(musicId);
     if(idx < 0)
     {
         if(musicId && !String(musicId).isEmpty())
@@ -2712,7 +2712,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
         return false;
 
     dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
-    if(soundId <= 0 || soundId >= ::defs.sounds.size())
+    if(soundId <= 0 || soundId >= DED_Definitions()->sounds.size())
         return false;
 
     // Skip if sounds won't be heard.

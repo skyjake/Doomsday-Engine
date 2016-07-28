@@ -306,4 +306,17 @@ Texture *Textures::deriveTexture(TextureManifest &manifest)
     }
     return tex;
 }
+
+void Textures::deriveAllTexturesInScheme(String schemeName)
+{
+    TextureScheme &scheme = textureScheme(schemeName);
+
+    PathTreeIterator<res::TextureScheme::Index> iter(scheme.index().leafNodes());
+    while (iter.hasNext())
+    {
+        res::TextureManifest &manifest = iter.next();
+        deriveTexture(manifest);
+    }
+}
+
 } // namespace res

@@ -180,6 +180,8 @@ public:
      */
     Texture *deriveTexture(TextureManifest &manifest);
 
+    void deriveAllTexturesInScheme(de::String schemeName);
+
 private:
     DENG2_PRIVATE(d)
 };

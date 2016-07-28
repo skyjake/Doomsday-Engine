@@ -89,7 +89,7 @@ void Cl_ReadServerMobjTypeIDs()
     // Translate the type IDs to local.
     for (dint i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjType[i] = ::defs.getMobjNum(StringArray_At(ar, i));
+        xlatMobjType[i] = DED_Definitions()->getMobjNum(StringArray_At(ar, i));
         if (xlatMobjType[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local thing definitions")
@@ -114,7 +114,7 @@ void Cl_ReadServerMobjStateIDs()
     // Translate the type IDs to local.
     for (dint i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjState[i] = ::defs.getStateNum(StringArray_At(ar, i));
+        xlatMobjState[i] = DED_Definitions()->getStateNum(StringArray_At(ar, i));
         if (xlatMobjState[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local state definitions")

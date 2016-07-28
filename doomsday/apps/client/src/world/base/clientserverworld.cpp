@@ -507,7 +507,7 @@ DENG2_PIMPL(ClientServerWorld)
 #ifdef __CLIENT__
         // Reconfigure the sky.
         defn::Sky skyDef;
-        if(Record const *def = ::defs.skies.tryFind("id", mapInfo.gets("skyId")))
+        if(Record const *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
         {
             skyDef = *def;
         }
@@ -860,12 +860,12 @@ void ClientServerWorld::update()
 Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
-    if(Record const *def = ::defs.mapInfos.tryFind("id", mapUri.compose()))
+    if(Record const *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if(Record const *def = ::defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if(Record const *def = DED_Definitions()->mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }

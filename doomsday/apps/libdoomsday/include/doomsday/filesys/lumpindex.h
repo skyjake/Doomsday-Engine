@@ -278,6 +278,19 @@ public:
      */
     bool pruneLump(File1 &lump);
 
+public:
+    /**
+     * Compose the path to the data resource.
+     *
+     * @param lumpNum  Lump number.
+     *
+     * @note We do not use the lump name, instead we use the logical lump index
+     * in the global LumpIndex. This is necessary because of the way id tech 1
+     * manages graphic references in animations (intermediate frames are chosen
+     * by their 'original indices' rather than by name).
+     */
+    static de::Uri composeResourceUrn(lumpnum_t lumpNum);
+
 private:
     DENG2_PRIVATE(d)
 };

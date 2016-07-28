@@ -688,4 +688,9 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     return earliest;
 }
 
+Uri LumpIndex::composeResourceUrn(lumpnum_t lumpNum) // static
+{
+    return Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
+}
+
 } // namespace de

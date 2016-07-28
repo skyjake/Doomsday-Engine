@@ -103,65 +103,6 @@
 namespace de {
 namespace internal
 {
-    /**
-     * Compose the path to the data resource.
-     * @note We do not use the lump name, instead we use the logical lump index
-     * in the global LumpIndex. This is necessary because of the way id tech 1
-     * manages graphic references in animations (intermediate frames are chosen
-     * by their 'original indices' rather than by name).
-     */
-    static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
-    {
-        return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
-    }
-
-    /// Returns a value in the range [0..Sprite::MAX_VIEWS] if @a angleCode can be
-    /// interpreted as a sprite view (angle) index; otherwise @c -1
-    static dint toSpriteAngle(QChar angleCode)
-    {
-        static dint const MAX_ANGLES = 16;
-
-        dint angle = -1; // Unknown.
-        if (angleCode.isDigit())
-        {
-            angle = angleCode.digitValue();
-        }
-        else if (angleCode.isLetter())
-        {
-            char charCodeLatin1 = angleCode.toUpper().toLatin1();
-            if (charCodeLatin1 >= 'A')
-            {
-                angle = charCodeLatin1 - 'A' + 10;
-            }
-        }
-
-        if (angle < 0 || angle > MAX_ANGLES)
-            return -1;
-
-        if (angle == 0) return 0;
-
-        if (angle <= MAX_ANGLES / 2)
-        {
-            return (angle - 1) * 2 + 1;
-        }
-        else
-        {
-            return (angle - 9) * 2 + 2;
-        }
-    }
-
-    /// Returns @c true if @a name is a well-formed sprite name.
-    static bool validSpriteName(String name)
-    {
-        if (name.length() < 6) return false;
-
-        // Character at position 5 is a view (angle) index.
-        if (toSpriteAngle(name.at(5)) < 0) return false;
-
-        // If defined, the character at position 7 is also a rotation number.
-        return (name.length() <= 7 || toSpriteAngle(name.at(7)) >= 0);
-    }
-
     static QList<File1 *> collectPatchCompositeDefinitionFiles()
     {
         QList<File1 *> result;
@@ -566,6 +507,35 @@ DENG2_PIMPL(ClientResources)
         App::fileSystem().makeFolder(String("/home/savegames") / game.id());
     }
 
+    void clearRuntimeTextures()
+    {
+        auto &textures = self.textures();
+        textures.textureScheme("Flats").clear();
+        textures.textureScheme("Textures").clear();
+        textures.textureScheme("Patches").clear();
+        textures.textureScheme("Sprites").clear();
+        textures.textureScheme("Details").clear();
+        textures.textureScheme("Reflections").clear();
+        textures.textureScheme("Masks").clear();
+        textures.textureScheme("ModelSkins").clear();
+        textures.textureScheme("ModelReflectionSkins").clear();
+        textures.textureScheme("Lightmaps").clear();
+        textures.textureScheme("Flaremaps").clear();
+
+#ifdef __CLIENT__
+        self.pruneUnusedTextureSpecs();
+#endif
+    }
+
+    void clearSystemTextures()
+    {
+        self.textures().textureScheme("System").clear();
+
+#ifdef __CLIENT__
+        self.pruneUnusedTextureSpecs();
+#endif
+    }
+
 #ifdef __CLIENT__
     void clearFontManifests()
     {
@@ -801,38 +771,7 @@ DENG2_PIMPL(ClientResources)
             detailTextureSpecs[i].clear();
         }
     }
-#endif // __CLIENT__
 
-    void clearRuntimeTextures()
-    {
-        auto &textures = self.textures();
-        textures.textureScheme("Flats").clear();
-        textures.textureScheme("Textures").clear();
-        textures.textureScheme("Patches").clear();
-        textures.textureScheme("Sprites").clear();
-        textures.textureScheme("Details").clear();
-        textures.textureScheme("Reflections").clear();
-        textures.textureScheme("Masks").clear();
-        textures.textureScheme("ModelSkins").clear();
-        textures.textureScheme("ModelReflectionSkins").clear();
-        textures.textureScheme("Lightmaps").clear();
-        textures.textureScheme("Flaremaps").clear();
-
-#ifdef __CLIENT__
-        self.pruneUnusedTextureSpecs();
-#endif
-    }
-
-    void clearSystemTextures()
-    {
-        self.textures().textureScheme("System").clear();
-
-#ifdef __CLIENT__
-        self.pruneUnusedTextureSpecs();
-#endif
-    }
-
-#ifdef __CLIENT__
     void processCacheQueue()
     {
         while (!cacheQueue.isEmpty())
@@ -940,18 +879,6 @@ DENG2_PIMPL(ClientResources)
         }
     }
 #endif
-
-    void deriveAllTexturesInScheme(String schemeName)
-    {
-        res::TextureScheme &scheme = self.textures().textureScheme(schemeName);
-
-        PathTreeIterator<res::TextureScheme::Index> iter(scheme.index().leafNodes());
-        while (iter.hasNext())
-        {
-            res::TextureManifest &manifest = iter.next();
-            self.textures().deriveTexture(manifest);
-        }
-    }
 
     Composites loadCompositeTextureDefs()
     {
@@ -1216,7 +1143,7 @@ DENG2_PIMPL(ClientResources)
                 Vector2ui dimensions(64, 64);
                 Vector2i origin(0, 0);
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
-                de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
+                de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
                 self.textures().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
             }
@@ -1224,7 +1151,7 @@ DENG2_PIMPL(ClientResources)
 
         // Define any as yet undefined flat textures.
         /// @todo Defer until necessary (manifest texture is first referenced).
-        deriveAllTexturesInScheme("Flats");
+        self.textures().deriveAllTexturesInScheme("Flats");
 
         LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
     }
@@ -1268,7 +1195,7 @@ DENG2_PIMPL(ClientResources)
             if (!Stack_Height(stack)) continue;
 
             String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
-            if (!validSpriteName(decodedFileName))
+            if (!Sprites::isValidSpriteName(decodedFileName))
             {
                 LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
                 continue;
@@ -1311,7 +1238,7 @@ DENG2_PIMPL(ClientResources)
                 file.unlock();
             }
 
-            de::Uri const resourceUri = composeLumpIndexResourceUrn(i);
+            de::Uri const resourceUri = LumpIndex::composeResourceUrn(i);
             try
             {
                 self.textures().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
@@ -1330,7 +1257,7 @@ DENG2_PIMPL(ClientResources)
 
         // Define any as yet undefined sprite textures.
         /// @todo Defer until necessary (manifest texture is first referenced).
-        deriveAllTexturesInScheme("Sprites");
+        self.textures().deriveAllTexturesInScheme("Sprites");
 
         LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
     }
@@ -1605,6 +1532,8 @@ DENG2_PIMPL(ClientResources)
     {
         LOG_AS("setupModel");
 
+        auto &defs = *DED_Definitions();
+
         dint const modelScopeFlags = def.geti("flags") | defs.modelFlags;
         dint const statenum = defs.getStateNum(def.gets("state"));
 
@@ -1803,7 +1732,7 @@ DENG2_PIMPL(ClientResources)
         }
         else if (modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
         {
-            spritenum_t sprNum = ::defs.getSpriteNum(def.gets("sprite"));
+            spritenum_t sprNum = DED_Definitions()->getSpriteNum(def.gets("sprite"));
             int sprFrame       = def.geti("spriteFrame");
 
             if (sprNum < 0)
@@ -1874,9 +1803,7 @@ DENG2_PIMPL(ClientResources)
             return LoopContinue;
         });
     }
-#endif
 
-#ifdef __CLIENT__
     /// Observes FontScheme ManifestDefined.
     void fontSchemeManifestDefined(FontScheme & /*scheme*/, FontManifest &manifest)
     {
@@ -2034,13 +1961,13 @@ DENG2_PIMPL(ClientResources)
     }
 };
 
+ClientResources::ClientResources() : d(new Impl(this))
+{}
+
 ClientResources &ClientResources::get() // static
 {
     return static_cast<ClientResources &>(Resources::get());
 }
-
-ClientResources::ClientResources() : d(new Impl(this))
-{}
 
 void ClientResources::clear()
 {
@@ -2127,7 +2054,7 @@ void ClientResources::initSystemTextures()
 
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
-    d->deriveAllTexturesInScheme("System");
+    textures().deriveAllTexturesInScheme("System");
 }
 
 patchid_t ClientResources::declarePatch(String encodedName)
@@ -2188,7 +2115,7 @@ patchid_t ClientResources::declarePatch(String encodedName)
     file.unlock();
 
     dint uniqueId       = textures().textureScheme("Patches").count() + 1;  // 1-based index.
-    de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
+    de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
     try
     {
@@ -2665,7 +2592,7 @@ FrameModelDef &ClientResources::modelDef(String id)
 
 FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
 {
-    if (stateIndex < 0 || stateIndex >= defs.states.size())
+    if (stateIndex < 0 || stateIndex >= DED_Definitions()->states.size())
         return nullptr;
     if (stateIndex < 0 || stateIndex >= d->stateModefs.count())
         return nullptr;
@@ -2715,6 +2642,8 @@ void ClientResources::initModels()
 
     delete d->modelRepository;
     d->modelRepository = new StringPool();
+
+    auto &defs = *DED_Definitions();
 
     // There can't be more modeldefs than there are DED Models.
     d->modefs.resize(defs.models.size());
@@ -2821,196 +2750,6 @@ void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
 
 #endif // __CLIENT__
 
-struct SpriteFrameDef
-{
-    bool mirrored = false;
-    dint angle = 0;
-    String material;
-};
-
-// Tempory storage, used when reading sprite definitions.
-typedef QMultiMap<dint, SpriteFrameDef> SpriteFrameDefs;  ///< frame => frame angle def.
-typedef QHash<String, SpriteFrameDefs> SpriteDefs;        ///< sprite name => frame set.
-
-/**
- * In DOOM, a sprite frame is a patch texture contained in a lump existing between
- * the S_START and S_END marker lumps (in WAD) whose lump name matches the following
- * pattern:
- *
- *    NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
- *
- * NAME: Four character name of the sprite.
- * A: Animation frame ordinal 'A'... (ASCII).
- * R: Rotation angle 0...G
- *    0 : Use this frame for ALL angles.
- *    1...8: Angle of rotation in 45 degree increments.
- *    A...G: Angle of rotation in 22.5 degree increments.
- *
- * The second set of (optional) frame and rotation characters instruct that the
- * same sprite frame is to be used for an additional frame but that the sprite
- * patch should be flipped horizontally (right to left) during the loading phase.
- *
- * Sprite view 0 is facing the viewer, rotation 1 is one half-angle turn CLOCKWISE
- * around the axis. This is not the same as the angle, which increases
- * counter clockwise (protractor).
- */
-static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const &texIndex)
-{
-    static dint const NAME_LENGTH = 4;
-
-    SpriteDefs frameSets;
-    frameSets.reserve(texIndex.leafNodes().count() / 8);  // overestimate.
-
-    PathTreeIterator<res::TextureScheme::Index> iter(texIndex.leafNodes());
-    while (iter.hasNext())
-    {
-        res::TextureManifest const &texManifest = iter.next();
-
-        String const material   = de::Uri("Sprites", texManifest.path()).compose();
-        // Decode the sprite frame descriptor.
-        String const desc       = QString(QByteArray::fromPercentEncoding(texManifest.path().toUtf8()));
-
-        // Find/create a new sprite frame set.
-        String const spriteName = desc.left(NAME_LENGTH).toLower();
-        SpriteFrameDefs *frames = nullptr;
-        if (frameSets.contains(spriteName))
-        {
-            frames = &frameSets.find(spriteName).value();
-        }
-        else
-        {
-            frames = &frameSets.insert(spriteName, SpriteFrameDefs()).value();
-        }
-
-        // The descriptor may define either one or two frames.
-        bool const haveMirror = desc.length() >= 8;
-        for (dint i = 0; i < (haveMirror ? 2 : 1); ++i)
-        {
-            dint const frameNumber = desc.at(NAME_LENGTH + i * 2).toUpper().unicode() - QChar('A').unicode();
-            dint const angleNumber = toSpriteAngle(desc.at(NAME_LENGTH + i * 2 + 1));
-
-            if (frameNumber < 0) continue;
-
-            // Find/create a new frame.
-            SpriteFrameDef *frame = nullptr;
-            auto found = frames->find(frameNumber);
-            if (found != frames->end() && found.value().angle == angleNumber)
-            {
-                frame = &found.value();
-            }
-            else
-            {
-                // Create a new frame.
-                frame = &frames->insert(frameNumber, SpriteFrameDef()).value();
-            }
-
-            // (Re)Configure the frame.
-            DENG2_ASSERT(frame);
-            frame->material = material;
-            frame->angle    = angleNumber;
-            frame->mirrored = i == 1;
-        }
-    }
-
-    return frameSets;
-}
-
-/**
- * Generates a set of Sprites from the given @a frameSet.
- *
- * @note Gaps in the frame number range will be filled with dummy Sprite instances
- * (no view angles added).
- *
- * @param frameDefs  SpriteFrameDefs to process.
- *
- * @return  Newly built sprite frame-number => definition map.
- *
- * @todo Don't do this here (no need for two-stage construction). -ds
- */
-static QMap<dint, Record> buildSprites(QMultiMap<dint, SpriteFrameDef> const &frameDefs)
-{
-    static de::dint const MAX_ANGLES = 16;
-
-    // Build initial Sprites and add views.
-    QMap<dint, Record> frames;
-    for (auto it = frameDefs.constBegin(); it != frameDefs.constEnd(); ++it)
-    {
-        Record *rec = nullptr;
-        if (frames.contains(it.key()))
-        {
-            rec = &frames.find(it.key()).value();
-        }
-        else
-        {
-            Record temp;
-            defn::Sprite sprite(temp);
-            sprite.resetToDefaults();
-            rec = &frames.insert(it.key(), sprite.def()) // A copy is made.
-                  .value();
-        }
-
-        SpriteFrameDef const &def = it.value();
-        defn::Sprite(*rec).addView(def.material, def.angle, def.mirrored);
-    }
-
-    // Duplicate views to complete angle sets (if defined).
-    for (Record &rec : frames)
-    {
-        defn::Sprite sprite(rec);
-
-        if (sprite.viewCount() < 2)
-            continue;
-
-        for (dint angle = 0; angle < MAX_ANGLES / 2; ++angle)
-        {
-            if (!sprite.hasView(angle * 2 + 1) && sprite.hasView(angle * 2))
-            {
-                auto const &src = sprite.view(angle * 2);
-                sprite.addView(src.gets("material"), angle * 2 + 2, src.getb("mirrorX"));
-            }
-            if (!sprite.hasView(angle * 2) && sprite.hasView(angle * 2 + 1))
-            {
-                auto const &src = sprite.view(angle * 2 + 1);
-                sprite.addView(src.gets("material"), angle * 2 + 1, src.getb("mirrorX"));
-            }
-        }
-    }
-
-    return frames;
-}
-
-void ClientResources::initSprites()
-{
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Building sprites...");
-
-    Time begunAt;
-
-    sprites().clear();
-
-    // Build Sprite sets from their definitions.
-    /// @todo It should no longer be necessary to split this into two phases -ds
-    dint customIdx = 0;
-    SpriteDefs spriteDefs = buildSpriteFramesFromTextures(res::Textures::get().textureScheme("Sprites").index());
-    for (auto it = spriteDefs.constBegin(); it != spriteDefs.constEnd(); ++it)
-    {
-        // Lookup the id for the named sprite.
-        spritenum_t id = ::defs.getSpriteNum(it.key());
-        if (id == -1)
-        {
-            // Assign a new id from the end of the range.
-            id = (::defs.sprites.size() + customIdx++);
-        }
-
-        // Build a Sprite (frame) set from these definitions.
-        sprites().addSpriteSet(id, buildSprites(it.value()));
-    }
-    // We're done with the definitions.
-    spriteDefs.clear();
-
-    LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
-}
-
 #ifdef __CLIENT__
 
 void ClientResources::purgeCacheQueue()
@@ -3115,7 +2854,7 @@ void ClientResources::cacheForCurrentMap()
                 if (mob.type >= 0 && mob.type < runtimeDefs.mobjInfo.size())
                 {
                     /// @todo optimize: traverses the entire state list!
-                    for (dint k = 0; k < defs.states.size(); ++k)
+                    for (dint k = 0; k < DED_Definitions()->states.size(); ++k)
                     {
                         if (runtimeDefs.stateInfo[k].owner != &runtimeDefs.mobjInfo[mob.type])
                             continue;

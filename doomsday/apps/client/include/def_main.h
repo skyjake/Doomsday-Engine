@@ -78,7 +78,6 @@ private:
     PODType *_elements;
 };
 
-extern ded_t defs;  ///< Main definitions database (internal).
 struct xgclass_s;   ///< @note The actual classes are on game side.
 
 struct sfxinfo_t

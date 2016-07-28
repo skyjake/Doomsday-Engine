@@ -65,7 +65,8 @@
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
-#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/res/MapManifests>
+#include <doomsday/res/Sprites>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
 #include <doomsday/help.h>
@@ -785,7 +786,7 @@ int DD_ActivateGameWorker(void *context)
         Con_SetProgress(130);
     }
 
-    resSys.initSprites(); // Fully initialize sprites.
+    resSys.sprites().initSprites(); // Fully initialize sprites.
 #ifdef __CLIENT__
     resSys.initModels();
 #endif
@@ -1155,7 +1156,7 @@ static void initialize()
 
         Def_Read();
 
-        App_ResourceSystem().initSprites();
+        App_ResourceSystem().sprites().initSprites();
 #ifdef __CLIENT__
         App_ResourceSystem().initModels();
 #endif
@@ -1378,7 +1379,7 @@ static dint DD_UpdateEngineStateWorker(void *context)
     //
     // Rebuild resource data models (defs might've changed).
     //
-    App_ResourceSystem().initSprites();
+    App_ResourceSystem().sprites().initSprites();
 #ifdef __CLIENT__
     App_ResourceSystem().clearAllRawTextures();
     App_ResourceSystem().initModels();
@@ -1531,14 +1532,14 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {&isDedicated, 0},
     {&novideo, 0},
-    {0, 0}, // &defs.mobjs.count.num
+    {0, 0},
     {&gotFrame, 0},
 #ifdef __CLIENT__
     {&playback, 0},
 #else
     {0, 0},
 #endif
-    {&::defs.sounds.count.num, 0},
+    {&DED_Definitions()->sounds.count.num, 0},
     {0, 0},
     {0, 0},
 #ifdef __CLIENT__
@@ -1591,13 +1592,13 @@ dint DD_GetInteger(dint ddvalue)
 #endif
 
     case DD_NUMMOBJTYPES:
-        return ::defs.things.size();
+        return DED_Definitions()->things.size();
 
     case DD_MAP_MUSIC:
         if (App_World().hasMap())
         {
             Record const &mapInfo = App_World().map().mapInfo();
-            return ::defs.getMusicNum(mapInfo.gets("music").toUtf8().constData());
+            return DED_Definitions()->getMusicNum(mapInfo.gets("music").toUtf8().constData());
         }
         return -1;
 
@@ -1721,7 +1722,7 @@ void *DD_GetVariable(dint ddvalue)
         return &valueT;
 
     case DD_DEFS:
-        return &defs;
+        return DED_Definitions();
 
     default: break;
     }

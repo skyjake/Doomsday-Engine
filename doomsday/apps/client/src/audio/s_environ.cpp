@@ -51,9 +51,9 @@ AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
 {
     if(uri)
     {
-        for(dint i = 0; i < ::defs.textureEnv.size(); ++i)
+        for(dint i = 0; i < DED_Definitions()->textureEnv.size(); ++i)
         {
-            ded_tenviron_t const *env = &::defs.textureEnv[i];
+            ded_tenviron_t const *env = &DED_Definitions()->textureEnv[i];
             for(dint k = 0; k < env->materials.size(); ++k)
             {
                 de::Uri *ref = env->materials[k].uri;

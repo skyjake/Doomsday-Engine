@@ -452,7 +452,6 @@ public:
 public:  /// @todo Should be private:
     void initTextures();
     void initSystemTextures();
-    void initSprites();
 #ifdef __CLIENT__
     void initModels();
 #endif

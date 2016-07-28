@@ -520,7 +520,7 @@ void Sfx_ChannelDrawer()
                     (sbuf.flags & SFXBF_REPEAT ) ? 'R' : '.',
                     (sbuf.flags & SFXBF_RELOAD ) ? 'L' : '.',
                     sbuf.sample ? sbuf.sample->id : 0,
-                    sbuf.sample ? ::defs.sounds[sbuf.sample->id].id : "",
+                    sbuf.sample ? DED_Definitions()->sounds[sbuf.sample->id].id : "",
                     sbuf.sample ? sbuf.sample->size : 0,
                     sbuf.bytes, sbuf.rate / 1000, sbuf.length,
                     sbuf.cursor, sbuf.written);

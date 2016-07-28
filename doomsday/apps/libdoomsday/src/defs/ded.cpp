@@ -41,6 +41,8 @@
 
 using namespace de;
 
+static ded_t defs;
+
 float ded_ptcstage_t::particleRadius(int ptcIDX) const
 {
     if (radiusVariance)
@@ -685,4 +687,9 @@ int ded_s::getTextNum(char const *id) const
         }
     }
     return -1; // Not found.
+}
+
+ded_t *DED_Definitions()
+{
+    return &defs;
 }

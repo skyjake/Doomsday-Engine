@@ -71,7 +71,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     String thingName() const
     {
-        return ::defs.getMobjName(self.mobj()->type);
+        return DED_Definitions()->getMobjName(self.mobj()->type);
     }
 
     String stateName() const

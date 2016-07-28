@@ -135,10 +135,10 @@ public:
     int addFlag(de::String const &id, int value);
 
     int addEpisode();
-    
+
     int addThing(de::String const &id);
-    
-    int addState(de::String const &id);    
+
+    int addState(de::String const &id);
 
     int addDecoration();
 
@@ -155,7 +155,7 @@ public:
     int addSky();
 
     int evalFlags(char const *ptr) const;
-    
+
     int getEpisodeNum(de::String const &id) const;
 
     int getMapInfoNum(de::Uri const &uri) const;
@@ -216,6 +216,11 @@ typedef ded_s ded_t;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Returns the main definitions database.
+ */
+LIBDOOMSDAY_PUBLIC ded_t *DED_Definitions();
 
 // Routines for managing DED files:
 

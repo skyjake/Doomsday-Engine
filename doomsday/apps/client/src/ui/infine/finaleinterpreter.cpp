@@ -1366,7 +1366,7 @@ DEFFC(BGMaterial)
     world::Material *material = nullptr;
     try
     {
-        if (ded_value_t *value = ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
+        if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
         {
             material = &world::Materials::get().material(de::Uri(value->text, RC_NULL));
         }
@@ -1803,7 +1803,7 @@ DEFFC(StateAnim)
 #endif
 
     // Animate N states starting from the given one.
-    dint stateId = ::defs.getStateNum(OP_CSTRING(1));
+    dint stateId = DED_Definitions()->getStateNum(OP_CSTRING(1));
     for (dint count = OP_INT(2); count > 0 && stateId > 0; count--)
     {
         state_t *st = &runtimeDefs.states[stateId];
@@ -1822,7 +1822,7 @@ DEFFC(PicSound)
 {
     DENG2_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    int const sound        = ::defs.getSoundNum(OP_CSTRING(1));
+    int const sound        = DED_Definitions()->getSoundNum(OP_CSTRING(1));
 
     if (!anim.frameCount())
     {
@@ -2044,13 +2044,13 @@ DEFFC(OffsetY)
 DEFFC(Sound)
 {
     DENG2_UNUSED2(cmd, fi);
-    S_LocalSound(::defs.getSoundNum(OP_CSTRING(0)), nullptr);
+    S_LocalSound(DED_Definitions()->getSoundNum(OP_CSTRING(0)), nullptr);
 }
 
 DEFFC(SoundAt)
 {
     DENG2_UNUSED2(cmd, fi);
-    dint const soundId = ::defs.getSoundNum(OP_CSTRING(0));
+    dint const soundId = DED_Definitions()->getSoundNum(OP_CSTRING(0));
     dfloat const vol   = de::min(OP_FLOAT(1), 1.f);
     S_LocalSoundAtVolume(soundId, nullptr, vol);
 }
@@ -2058,7 +2058,7 @@ DEFFC(SoundAt)
 DEFFC(SeeSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    dint num = ::defs.getMobjNum(OP_CSTRING(0));
+    dint num = DED_Definitions()->getMobjNum(OP_CSTRING(0));
     if (num >= 0 && ::runtimeDefs.mobjInfo[num].seeSound > 0)
     {
         S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, nullptr);
@@ -2068,7 +2068,7 @@ DEFFC(SeeSound)
 DEFFC(DieSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    dint num = ::defs.getMobjNum(OP_CSTRING(0));
+    dint num = DED_Definitions()->getMobjNum(OP_CSTRING(0));
     if (num >= 0 && ::runtimeDefs.mobjInfo[num].deathSound > 0)
     {
         S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, nullptr);
@@ -2107,9 +2107,9 @@ DEFFC(TextFromDef)
 {
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
-    int textIdx          = defs.getTextNum((char *)OP_CSTRING(3));
+    int textIdx          = DED_Definitions()->getTextNum((char *)OP_CSTRING(3));
 
-    text.setText(textIdx >= 0? defs.text[textIdx].text : "(undefined)")
+    text.setText(textIdx >= 0? DED_Definitions()->text[textIdx].text : "(undefined)")
         .setCursorPos(0) // Restart the type-in animation (if any).
         .setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 }
@@ -2167,9 +2167,9 @@ DEFFC(SetTextDef)
 {
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
-    int textIdx            = defs.getTextNum((char *)OP_CSTRING(1));
+    int textIdx            = DED_Definitions()->getTextNum((char *)OP_CSTRING(1));
 
-    text.setText(textIdx >= 0? defs.text[textIdx].text : "(undefined)");
+    text.setText(textIdx >= 0? DED_Definitions()->text[textIdx].text : "(undefined)");
 }
 
 DEFFC(DeleteText)

@@ -47,7 +47,7 @@ class Subsector;
 #define IS_MUL              (dynlightBlend != 1 && !fogParams.usingFog)
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
-                              defs.details.size() > 0)
+                              DED_Definitions()->details.size() > 0)
 #define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
 #define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !fogParams.usingFog && useMultiTexLights \
                              && numTexUnits > 1 && envModAdd)

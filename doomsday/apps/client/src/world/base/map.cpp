@@ -1303,9 +1303,9 @@ DENG2_PIMPL(Map)
     {
         if (!self.hasManifest()) return;
 
-        for (dint i = 0; i < ::defs.ptcGens.size(); ++i)
+        for (dint i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
         {
-            ded_ptcgen_t *genDef = &::defs.ptcGens[i];
+            ded_ptcgen_t *genDef = &DED_Definitions()->ptcGens[i];
 
             if (!genDef->map) continue;
 
@@ -1338,6 +1338,8 @@ DENG2_PIMPL(Map)
      */
     void spawnTypeParticleGens()
     {
+        auto &defs = *DED_Definitions();
+
         for (dint i = 0; i < defs.ptcGens.size(); ++i)
         {
             ded_ptcgen_t *def = &defs.ptcGens[i];
@@ -1364,6 +1366,8 @@ DENG2_PIMPL(Map)
     dint findDefForGenerator(Generator *gen)
     {
         DENG2_ASSERT(gen);
+
+        auto &defs = *DED_Definitions();
 
         // Search for a suitable definition.
         for (dint i = 0; i < defs.ptcGens.size(); ++i)
@@ -1427,7 +1431,7 @@ DENG2_PIMPL(Map)
 
             // A state generator?
             if (gen->source && def->state[0]
-                && ::runtimeDefs.states.indexOf(gen->source->state) == ::defs.getStateNum(def->state))
+                && ::runtimeDefs.states.indexOf(gen->source->state) == DED_Definitions()->getStateNum(def->state))
             {
                 return i + 1;  // 1-based index.
             }
@@ -1457,7 +1461,7 @@ DENG2_PIMPL(Map)
             if (dint defIndex = findDefForGenerator(gen))
             {
                 // Update the generator using the new definition.
-                gen->def = &defs.ptcGens[defIndex - 1];
+                gen->def = &DED_Definitions()->ptcGens[defIndex - 1];
             }
             else
             {
@@ -1830,6 +1834,7 @@ void Map::initBias()
     if (hasManifest())
     {
         String const oldUniqueId = manifest().composeUniqueId(App_CurrentGame());
+        auto &defs = *DED_Definitions();
 
         // Load light sources from Light definitions.
         for (dint i = 0; i < defs.lights.size(); ++i)
@@ -3181,7 +3186,7 @@ void Map::update()
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
     defn::Sky skyDef;
-    if (Record const *def = defs.skies.tryFind("id", inf.gets("skyId")))
+    if (Record const *def = DED_Definitions()->skies.tryFind("id", inf.gets("skyId")))
     {
         skyDef = *def;
     }

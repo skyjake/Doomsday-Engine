@@ -37,6 +37,8 @@ public:
 public:
     Sprites();
 
+    void initSprites();
+
     void clear();
 
     SpriteSet &addSpriteSet(spritenum_t id, SpriteSet const &frames);
@@ -73,6 +75,14 @@ public:
      * Returns the total number of SpriteSets.
      */
     de::dint spriteCount() const;
+
+public:
+    /// Returns a value in the range [0..Sprite::MAX_VIEWS] if @a angleCode can be
+    /// interpreted as a sprite view (angle) index; otherwise @c -1
+    static de::dint toSpriteAngle(QChar angleCode);
+
+    /// Returns @c true if @a name is a well-formed sprite name.
+    static bool isValidSpriteName(de::String name);
 
 private:
     DENG2_PRIVATE(d)
