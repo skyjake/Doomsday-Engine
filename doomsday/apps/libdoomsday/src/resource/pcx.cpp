@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "dd_share.h" // endianness conversion macros
-#include "resource/pcx.h"
+#include "doomsday/resource/pcx.h"
+#include "dd_share.h"
 
 #include <de/memory.h>
 
@@ -47,9 +47,9 @@ static char *lastPcxErrorMsg = 0; /// @todo potentially never free'd
 static void PCX_SetLastError(char const *msg)
 {
     size_t len;
-    if(0 == msg || 0 == (len = strlen(msg)))
+    if (0 == msg || 0 == (len = strlen(msg)))
     {
-        if(lastPcxErrorMsg != 0)
+        if (lastPcxErrorMsg != 0)
         {
             M_Free(lastPcxErrorMsg);
         }
@@ -77,13 +77,13 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
     uint8_t const *palette = srcPos + len - 768; // Palette is at the end.
 
     srcPos += sizeof(header_t);
-    for(y = 0; y < height; ++y, dstBuf += width * 3)
+    for (y = 0; y < height; ++y, dstBuf += width * 3)
     {
-        for(x = 0; x < width;)
+        for (x = 0; x < width;)
         {
             dataByte = *srcPos++;
 
-            if((dataByte & 0xC0) == 0xC0)
+            if ((dataByte & 0xC0) == 0xC0)
             {
                 runLength = dataByte & 0x3F;
                 dataByte = *srcPos++;
@@ -93,14 +93,14 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
                 runLength = 1;
             }
 
-            while(runLength-- > 0)
+            while (runLength-- > 0)
             {
                 std::memcpy(dstBuf + x++ * 3, palette + dataByte * 3, 3);
             }
         }
     }
 
-    if(!((size_t) (srcPos - (uint8_t *) raw) > len))
+    if (!((size_t) (srcPos - (uint8_t *) raw) > len))
     {
         PCX_SetLastError(0); // Success.
         result = true;
@@ -116,7 +116,7 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 
 char const *PCX_LastError()
 {
-    if(lastPcxErrorMsg)
+    if (lastPcxErrorMsg)
     {
         return lastPcxErrorMsg;
     }
@@ -130,11 +130,11 @@ uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
     size_t const initPos = file.tell();
 
     header_t hdr;
-    if(file.read((uint8_t *)&hdr, sizeof(hdr)) >= sizeof(hdr))
+    if (file.read((uint8_t *)&hdr, sizeof(hdr)) >= sizeof(hdr))
     {
         size_t dstBufSize;
 
-        if(hdr.manufacturer != 0x0a || hdr.version != 5 ||
+        if (hdr.manufacturer != 0x0a || hdr.version != 5 ||
            hdr.encoding != 1 || hdr.bits_per_pixel != 8)
         {
             PCX_SetLastError("Unsupported format.");
@@ -149,7 +149,7 @@ uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
         dstBuf = (uint8_t *) M_Malloc(dstBufSize);
 
         file.rewind();
-        if(!load(file, outSize.x, outSize.y, dstBuf))
+        if (!load(file, outSize.x, outSize.y, dstBuf))
         {
             M_Free(dstBuf);
             dstBuf = 0;

@@ -51,7 +51,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/network/net_event.h
     ${src}/include/network/net_main.h
     ${src}/include/network/net_msg.h
-    ${src}/include/resource/animgroup.h
     ${src}/include/resource/clientresources.h
     ${src}/include/resource/image.h
     ${src}/include/sys_system.h

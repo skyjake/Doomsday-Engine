@@ -32,13 +32,13 @@
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
 #include <doomsday/uri.h>
+#include <doomsday/resource/animgroup.h>
 #include <doomsday/resource/mapmanifest.h>
 #include <doomsday/resource/resources.h>
 #include <doomsday/resource/colorpalette.h>
 #include <doomsday/res/Texture>
 #include <doomsday/res/TextureScheme>
 
-#include "resource/animgroup.h"
 #include "resource/rawtexture.h"
 
 #ifdef __CLIENT__
@@ -428,14 +428,14 @@ public:
      *
      * @param flags  @ref animationGroupFlags
      */
-    de::AnimGroup &newAnimGroup(de::dint flags);
+    res::AnimGroup &newAnimGroup(de::dint flags);
 
     /**
      * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
      */
-    de::AnimGroup *animGroup(de::dint uniqueId);
+    res::AnimGroup *animGroup(de::dint uniqueId);
 
-    de::AnimGroup *animGroupForTexture(res::TextureManifest const &textureManifest);
+    res::AnimGroup *animGroupForTexture(res::TextureManifest const &textureManifest);
 
 #ifdef __CLIENT__
 

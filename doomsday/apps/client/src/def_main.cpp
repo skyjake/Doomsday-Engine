@@ -708,7 +708,7 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
     st0.set("texture", texUri.compose());
 
     // Is there an animation for this?
-    AnimGroup const *anim = resSys().animGroupForTexture(manifest);
+    res::AnimGroup const *anim = resSys().animGroupForTexture(manifest);
     if (anim && anim->frameCount() > 1)
     {
         // Determine the start frame.
@@ -723,7 +723,7 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
             return;
 
         // Complete configuration of the first stage.
-        AnimGroupFrame const &animFrame0 = anim->frame(startFrame);
+        res::AnimGroupFrame const &animFrame0 = anim->frame(startFrame);
         st0.set("tics", dint( animFrame0.tics() + animFrame0.randomTics()) );
         if (animFrame0.randomTics())
         {
@@ -734,7 +734,7 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
         startFrame++;
         for (dint i = 0; i < anim->frameCount() - 1; ++i)
         {
-            AnimGroupFrame const &animFrame           = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
+            res::AnimGroupFrame const &animFrame      = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
             res::TextureManifest const &frameManifest = animFrame.textureManifest();
 
             Record &st = layerDef.addStage();

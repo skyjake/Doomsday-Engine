@@ -425,7 +425,7 @@ DENG2_PIMPL(ClientResources)
 , DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
 #endif
 {
-    typedef QList<AnimGroup *> AnimGroups;
+    typedef QList<res::AnimGroup *> AnimGroups;
     AnimGroups animGroups;
 
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
@@ -2885,16 +2885,16 @@ dint ClientResources::animGroupCount()
     return d->animGroups.count();
 }
 
-AnimGroup &ClientResources::newAnimGroup(dint flags)
+res::AnimGroup &ClientResources::newAnimGroup(dint flags)
 {
     LOG_AS("ResourceSystem");
     dint const uniqueId = d->animGroups.count() + 1; // 1-based.
     // Allocating one by one is inefficient but it doesn't really matter.
-    d->animGroups.append(new AnimGroup(uniqueId, flags));
+    d->animGroups.append(new res::AnimGroup(uniqueId, flags));
     return *d->animGroups.last();
 }
 
-AnimGroup *ClientResources::animGroup(dint uniqueId)
+res::AnimGroup *ClientResources::animGroup(dint uniqueId)
 {
     LOG_AS("ClientResources::animGroup");
     if (uniqueId > 0 && uniqueId <= d->animGroups.count())
@@ -2905,13 +2905,13 @@ AnimGroup *ClientResources::animGroup(dint uniqueId)
     return nullptr;
 }
 
-AnimGroup *ClientResources::animGroupForTexture(res::TextureManifest const &textureManifest)
+res::AnimGroup *ClientResources::animGroupForTexture(res::TextureManifest const &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.
     for (dint i = animGroupCount(); i > 0; i--)
     {
-        AnimGroup *group = animGroup(i);
+        res::AnimGroup *group = animGroup(i);
         if (group->hasFrameFor(textureManifest))
         {
             return group;

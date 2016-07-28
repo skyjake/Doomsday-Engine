@@ -18,14 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_ANIMATIONGROUP_H
-#define DENG_RESOURCE_ANIMATIONGROUP_H
+#ifndef LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H
+#define LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H
 
-#include "dd_types.h"
-#include <doomsday/res/TextureManifest>
+#include "../TextureManifest"
 #include <QList>
 
-namespace de {
+namespace res {
 
 /**
  * Material Animation group.
@@ -44,7 +43,7 @@ public:
         /**
          * Returns the texture manifest for the frame.
          */
-        res::TextureManifest &textureManifest() const;
+        TextureManifest &textureManifest() const;
 
         /**
          * Returns the duration of the frame in tics.
@@ -59,9 +58,9 @@ public:
         friend class AnimGroup;
 
     private:
-        Frame(res::TextureManifest &textureManifest, ushort tics, ushort randomTics);
+        Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics);
 
-        res::TextureManifest *_textureManifest;
+        TextureManifest *_textureManifest;
         ushort _tics;
         ushort _randomTics;
     };
@@ -93,7 +92,7 @@ public:
      *
      * @see frames()
      */
-    bool hasFrameFor(res::TextureManifest const &textureManifest) const;
+    bool hasFrameFor(TextureManifest const &textureManifest) const;
 
     /**
      * Append a new frame to the animation.
@@ -104,7 +103,7 @@ public:
      *
      * @return  The new frame.
      */
-    Frame &newFrame(res::TextureManifest &textureManifest, ushort tics,
+    Frame &newFrame(TextureManifest &textureManifest, ushort tics,
                     ushort randomTics = 0);
 
     /**
@@ -138,6 +137,6 @@ private:
 
 typedef AnimGroup::Frame AnimGroupFrame;
 
-} // namespace de
+} // namespace res
 
-#endif // DENG_RESOURCE_ANIMATIONGROUP_H
+#endif // LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H

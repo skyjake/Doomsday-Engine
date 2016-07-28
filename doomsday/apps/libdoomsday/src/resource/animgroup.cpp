@@ -18,21 +18,83 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "resource/animgroup.h"
+#include "doomsday/resource/animgroup.h"
 
 #include <de/Log>
 #include <QtAlgorithms>
 
-using namespace de;
+namespace res {
 
-AnimGroup::Frame::Frame(res::TextureManifest &textureManifest, ushort tics, ushort randomTics)
+DENG2_PIMPL_NOREF(AnimGroup)
+{
+    Frames frames;
+    int uniqueId = 0;
+    int flags = 0; ///< @ref animationGroupFlags
+
+    ~Impl()
+    {
+        clearAllFrames();
+    }
+
+    void clearAllFrames()
+    {
+        qDeleteAll(frames);
+        frames.clear();
+    }
+};
+
+AnimGroup::AnimGroup(int uniqueId, int flags) : d(new Impl)
+{
+    d->uniqueId = uniqueId;
+    d->flags    = flags;
+}
+
+void AnimGroup::clearAllFrames()
+{
+    d->clearAllFrames();
+}
+
+int AnimGroup::id() const
+{
+    return d->uniqueId;
+}
+
+int AnimGroup::flags() const
+{
+    return d->flags;
+}
+
+bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
+{
+    foreach(Frame *frame, d->frames)
+    {
+        if(&frame->textureManifest() == &textureManifest)
+            return true;
+    }
+    return false;
+}
+
+AnimGroup::Frame &AnimGroup::newFrame(TextureManifest &textureManifest,
+                                      ushort tics, ushort randomTics)
+{
+    d->frames.append(new Frame(textureManifest, tics, randomTics));
+    return *d->frames.last();
+}
+
+AnimGroup::Frames const &AnimGroup::allFrames() const
+{
+    return d->frames;
+}
+
+//---------------------------------------------------------------------------------------
+
+AnimGroup::Frame::Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics)
     : _textureManifest(&textureManifest)
     , _tics(tics)
     , _randomTics(randomTics)
 {}
 
-res::TextureManifest &AnimGroup::Frame::textureManifest() const
+TextureManifest &AnimGroup::Frame::textureManifest() const
 {
     return *_textureManifest;
 }
@@ -47,64 +109,4 @@ ushort AnimGroup::Frame::randomTics() const
     return _randomTics;
 }
 
-DENG2_PIMPL(AnimGroup)
-{
-    Frames frames;
-    int uniqueId;
-    int flags; ///< @ref animationGroupFlags
-
-    Impl(Public *i)
-        : Base(i)
-        , uniqueId(0)
-        , flags(0)
-    {}
-
-    ~Impl()
-    {
-        self.clearAllFrames();
-    }
-};
-
-AnimGroup::AnimGroup(int uniqueId, int flags) : d(new Impl(this))
-{
-    d->uniqueId = uniqueId;
-    d->flags    = flags;
-}
-
-void AnimGroup::clearAllFrames()
-{
-    qDeleteAll(d->frames);
-    d->frames.clear();
-}
-
-int AnimGroup::id() const
-{
-    return d->uniqueId;
-}
-
-int AnimGroup::flags() const
-{
-    return d->flags;
-}
-
-bool AnimGroup::hasFrameFor(res::TextureManifest const &textureManifest) const
-{
-    foreach(Frame *frame, d->frames)
-    {
-        if(&frame->textureManifest() == &textureManifest)
-            return true;
-    }
-    return false;
-}
-
-AnimGroup::Frame &AnimGroup::newFrame(res::TextureManifest &textureManifest,
-                                      ushort tics, ushort randomTics)
-{
-    d->frames.append(new Frame(textureManifest, tics, randomTics));
-    return *d->frames.last();
-}
-
-AnimGroup::Frames const &AnimGroup::allFrames() const
-{
-    return d->frames;
-}
+} // namespace res

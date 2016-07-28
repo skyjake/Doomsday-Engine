@@ -37,8 +37,8 @@
 
 #ifdef __CLIENT__
 #  include <doomsday/res/Composite>
-#  include "resource/pcx.h"
-#  include "resource/tga.h"
+#  include <doomsday/resource/pcx.h>
+#  include <doomsday/resource/tga.h>
 
 #  include "gl/gl_tex.h"
 

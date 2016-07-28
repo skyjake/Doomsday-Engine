@@ -1,4 +1,4 @@
-/** @file tga.cpp  Truevision TGA (a.k.a Targa) image reader/writer
+/** @file tga.cpp  Truevision TGA (a.k.a Targa) image reader
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "dd_share.h" // endianness conversion macros
-#include "resource/tga.h"
+#include "doomsday/resource/tga.h"
+#include "dd_share.h"
 
 #include <de/memory.h>
 #include <cstdio>
@@ -33,13 +33,6 @@ enum {
     TGA_TARGA24, // rgb888
     TGA_TARGA32 // rgba8888
 };
-
-#undef DD_SHORT
-#ifdef __BIG_ENDIAN__
-#define DD_SHORT(x)            shortSwap(x)
-# else // Little-endian.
-#define DD_SHORT(x)            (x)
-#endif
 
 #pragma pack(1)
 typedef struct {
@@ -75,19 +68,12 @@ typedef struct {
 
 static char *lastTgaErrorMsg = 0; /// @todo potentially never free'd
 
-#ifdef __BIG_ENDIAN__
-static int16_t shortSwap(int16_t n)
-{
-    return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
-}
-#endif
-
 static void TGA_SetLastError(char const *msg)
 {
     size_t len;
-    if(0 == msg || 0 == (len = strlen(msg)))
+    if (0 == msg || 0 == (len = strlen(msg)))
     {
-        if(lastTgaErrorMsg != 0)
+        if (lastTgaErrorMsg != 0)
         {
             M_Free(lastTgaErrorMsg);
         }
@@ -150,7 +136,7 @@ static void readImageSpec(tga_imagespec_t *dst, FileHandle &file)
 
 const char* TGA_LastError(void)
 {
-    if(lastTgaErrorMsg)
+    if (lastTgaErrorMsg)
         return lastTgaErrorMsg;
     return 0;
 }
@@ -172,7 +158,7 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
 
     outSize = Vector2ui(imageSpec.width, imageSpec.height);
 
-    if(header.imageType != 2 ||
+    if (header.imageType != 2 ||
        (imageSpec.pixelDepth != 32 && imageSpec.pixelDepth != 24) ||
        (imageSpec.attributeBits != 8 &&
         imageSpec.attributeBits != 0) ||
@@ -197,15 +183,15 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
     // TGA pixels are in BGRA format.
     dstBuf = (uint8_t *) M_Malloc(4 * numPels);
     uint8_t const *src = srcBuf;
-    for(int y = outSize.y - 1; y >= 0; y--)
-    for(int x = 0; x < (signed) outSize.x; x++)
+    for (int y = outSize.y - 1; y >= 0; y--)
+    for (int x = 0; x < (signed) outSize.x; x++)
     {
         uint8_t *dst = &dstBuf[(y * outSize.x + x) * pixelSize];
 
         dst[2] = *src++;
         dst[1] = *src++;
         dst[0] = *src++;
-        if(pixelSize == 4) dst[3] = *src++;
+        if (pixelSize == 4) dst[3] = *src++;
     }
     M_Free(srcBuf);
 

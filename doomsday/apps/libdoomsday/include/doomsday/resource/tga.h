@@ -1,10 +1,7 @@
-/** @file pcx.h  PCX image reader.
+/** @file tga.h  Truevision TGA (a.k.a Targa) image reader
  *
- * Originally derived from the Q2 utils source (lbmlib.c).
- *
- * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1997-2006 id Software, Inc
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,8 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_PCX_H
-#define DENG_RESOURCE_PCX_H
+#ifndef LIBDOOMSDAY_RESOURCE_TGA_H
+#define LIBDOOMSDAY_RESOURCE_TGA_H
+
+#ifdef __cplusplus
 
 #include <doomsday/filesys/filehandle.h>
 #include <de/Vector>
@@ -31,16 +30,22 @@
 ///@{
 
 /**
- * Reads the given PCX image and returns a pointer to a planar RGBA buffer.
- * The caller must free the allocated buffer with Z_Free.
+ * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).
+ *
+ * @warning: This is not a generic TGA loader. Only type 2, 24/32 pixel
+ *     size, attrbits 0/8 and lower left origin supported.
+ *
+ * @return  Non-zero iff the image is loaded successfully.
  */
-uint8_t *PCX_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
+LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.
  */
-char const *PCX_LastError();
+LIBDOOMSDAY_PUBLIC char const *TGA_LastError();
 
 ///@}
 
-#endif // DENG_RESOURCE_PCX_H
+#endif // __cplusplus
+
+#endif // LIBDOOMSDAY_RESOURCE_TGA_H
