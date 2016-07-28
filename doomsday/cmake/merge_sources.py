@@ -7,17 +7,22 @@ includes = []
 usings = set()
 code = []
 
+# Read and process all input source files.
 for fn in sys.argv[2:]:
     preamble = True
     in_body = False
     if_level = 0
     source = codecs.open(fn, 'r', 'utf-8').read()
     for line in source.split(u'\n'):
+        # Strip BOMs.
         if line.startswith(BOM):
             line = line[1:]
         original_line = line.rstrip()
         line = line.strip()
+        # Ignore empty lines and single-line comments.
         if len(line) == 0: continue
+        if line.startswith(u'//'): continue
+        # Keep track of define blocks, they will be included as-is.
         if line.startswith(u'#if'):
             if_level += 1
         elif line.startswith(u'#endif'):
@@ -51,6 +56,7 @@ code = compressed
 
 NL = u'\n'
 
+# Write the merged source file.
 out_file = codecs.open(sys.argv[1], 'w', 'utf-8')
 out_file.write(BOM) # BOM
 # Merged preamble.
