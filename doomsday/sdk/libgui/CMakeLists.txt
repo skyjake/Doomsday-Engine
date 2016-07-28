@@ -5,11 +5,13 @@ project (DENG_LIBGUI)
 
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
 
+#----------------------------------------------------------------------------------------
 # Configure Assimp first as a static library. Doomsday's Config is not
 # included yet so that Assimp's build products are not included in
 # the client component.
 set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
 set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
+set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
 if (APPLE OR WIN32)
     set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_LIB_DIR}
         CACHE PATH "libassimp install directory" FORCE
@@ -19,7 +21,23 @@ else ()
         CACHE PATH "libassimp install directory" FORCE
     )
 endif ()
-set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
+
+# Enable only the relevant Assimp model importers.
+set (_allAssimpFormats
+    3DS AC ASE ASSBIN ASSXML B3D BVH COLLADA DXF CSM HMP IRR LWO LWS MD2 MD3 MD5
+    MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB BLEND IFC XGL FBX Q3D Q3BSP RAW SMD
+    STL TERRAGEN 3D X)
+set (_enabledAssimpFormats 3DS COLLADA MD2 MD3 MD5 MDL OBJ BLEND FBX IRR)
+foreach (_fmt ${_allAssimpFormats})
+    list (FIND _enabledAssimpFormats ${_fmt} _pos)
+    if (_pos GREATER -1)
+        set (_enabled YES)
+    else ()
+        set (_enabled NO)
+    endif ()
+    set (ASSIMP_BUILD_${_fmt}_IMPORTER ${_enabled} CACHE BOOL "Assimp: Enable ${_fmt} importer")
+endforeach (_fmt)
+
 set (CMAKE_AUTOMOC OFF)
 set (oldCFlags ${CMAKE_C_FLAGS})
 if (NOT MSVC)
@@ -28,6 +46,7 @@ endif ()
 add_subdirectory (../../external/assimp assimp)
 set_property (TARGET assimp PROPERTY FOLDER Libraries)
 set (CMAKE_C_FLAGS ${oldCFlags})
+#----------------------------------------------------------------------------------------
 
 # Apply Doomsday's configuration.
 include (../../cmake/Config.cmake)
