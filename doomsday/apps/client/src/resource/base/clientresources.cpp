@@ -1195,7 +1195,7 @@ DENG2_PIMPL(ClientResources)
             if (!Stack_Height(stack)) continue;
 
             String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
-            if (!Sprites::isValidSpriteName(decodedFileName))
+            if (!res::Sprites::isValidSpriteName(decodedFileName))
             {
                 LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
                 continue;
