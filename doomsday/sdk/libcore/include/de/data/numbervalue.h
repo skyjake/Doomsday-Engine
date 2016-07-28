@@ -24,6 +24,13 @@
 
 #include <QFlags>
 
+#ifdef False
+#  undef False
+#endif
+#ifdef True
+#  undef True
+#endif
+
 namespace de {
 
 /**
