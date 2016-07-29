@@ -67,6 +67,7 @@
 #include <doomsday/world/Materials>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
+#include <doomsday/SaveGames>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -338,29 +339,7 @@ namespace internal
 using namespace de;
 using namespace internal;
 
-/**
- * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
- */
-Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
-{
-    String gameId     = args[0]->asText();
-    String sourcePath = args[1]->asText();
-    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId, sourcePath));
-}
-
-/**
- * Native Doomsday Script utility for scheduling conversion of @em all legacy savegames
- * for the specified gameId.
- */
-Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues const &args)
-{
-    String gameId = args[0]->asText();
-    return new NumberValue(App_ResourceSystem().convertLegacySavegames(gameId));
-}
-
 DENG2_PIMPL(ClientResources)
-, DENG2_OBSERVES(Loop,              Iteration)        // post savegame conversion FS population
-, DENG2_OBSERVES(Games,             Addition)         // savegames folder setup
 #ifdef __CLIENT__
 , DENG2_OBSERVES(FontScheme,        ManifestDefined)
 , DENG2_OBSERVES(FontManifest,      Deletion)
@@ -369,9 +348,6 @@ DENG2_PIMPL(ClientResources)
 #endif
 {
 #ifdef __CLIENT__
-    Binder binder;
-    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
-
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
 
@@ -459,31 +435,13 @@ DENG2_PIMPL(ClientResources)
         /// @note Order here defines the ambigious-URI search order.
         createFontScheme("System");
         createFontScheme("Game");
-
-        // Setup the SavedSession module.
-        binder.init(savedSessionModule)
-                << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
-                << DENG2_FUNC(SavedSession_ConvertAll, "convertAll", "gameId");
-        App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
 #endif
-
-        App_Games().audienceForAddition() += this;
-
-        // Create the user saved session folder in the local FS if it doesn't yet exist.
-        // Once created, any SavedSessions in this folder will be found and indexed
-        // automatically into the file system.
-        App::fileSystem().makeFolder("/home/savegames");
-
-        // Create the legacy savegame folder.
-        App::fileSystem().makeFolder("/sys/legacysavegames");
 
         App::packageLoader().loadFromCommandLine();
     }
 
     ~Impl()
     {
-        convertSavegameTasks.waitForDone();
-
 #ifdef __CLIENT__
         self.clearAllFontSchemes();
         clearFontManifests();
@@ -498,14 +456,6 @@ DENG2_PIMPL(ClientResources)
     }
 
     inline de::FS1 &fileSys() { return App_FileSystem(); }
-
-    void gameAdded(Game &game)
-    {
-        // Called from a non-UI thread.
-        LOG_AS("ResourceSystem");
-        // Make the /home/savegames/<gameId> subfolder in the local FS if it does not yet exist.
-        App::fileSystem().makeFolder(String("/home/savegames") / game.id());
-    }
 
     void clearRuntimeTextures()
     {
@@ -1868,97 +1818,6 @@ DENG2_PIMPL(ClientResources)
         }
     }
 #endif // __CLIENT__
-
-    /**
-     * Asynchronous task that attempts conversion of a legacy savegame. Each converter
-     * plugin is tried in turn.
-     */
-    class ConvertSavegameTask : public Task
-    {
-        ddhook_savegame_convert_t parm;
-
-    public:
-        ConvertSavegameTask(String const &sourcePath, String const &gameId)
-        {
-            // Ensure the game is defined (sanity check).
-            /*Game &game = */ App_Games()[gameId];
-
-            // Ensure the output folder exists if it doesn't already.
-            String const outputPath = String("/home/savegames") / gameId;
-            App::fileSystem().makeFolder(outputPath);
-
-            Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
-            Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
-            Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
-        }
-
-        ~ConvertSavegameTask()
-        {
-            Str_Free(&parm.sourcePath);
-            Str_Free(&parm.outputPath);
-            Str_Free(&parm.fallbackGameId);
-        }
-
-        void runTask()
-        {
-            DoomsdayApp::plugins().callAllHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
-        }
-    };
-    TaskPool convertSavegameTasks;
-
-    void loopIteration()
-    {
-        /// @todo Refactor: TaskPool has a signal (or audience) when all tasks are complete.
-        /// No need to check on every loop iteration.
-        if (convertSavegameTasks.isDone())
-        {
-            LOG_AS("ResourceSystem");
-            Loop::get().audienceForIteration() -= this;
-            try
-            {
-                // The newly converted savegame(s) should now be somewhere in /home/savegames
-                App::rootFolder().locate<Folder>("/home/savegames").populate();
-            }
-            catch (Folder::NotFoundError const &)
-            {} // Ignore.
-        }
-    }
-
-    void beginConvertLegacySavegame(String const &sourcePath, String const &gameId)
-    {
-        LOG_AS("ResourceSystem");
-        LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
-        Loop::get().audienceForIteration() += this;
-        convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
-    }
-
-    void locateLegacySavegames(String const &gameId)
-    {
-        LOG_AS("ResourceSystem");
-        String const legacySavePath = String("/sys/legacysavegames") / gameId;
-        if (Folder *oldSaveFolder = App::rootFolder().tryLocate<Folder>(legacySavePath))
-        {
-            // Add any new legacy savegames which may have appeared in this folder.
-            oldSaveFolder->populate(Folder::PopulateOnlyThisFolder /* no need to go deep */);
-        }
-        else
-        {
-            try
-            {
-                // Make and setup a feed for the /sys/legacysavegames/<gameId> subfolder if the game
-                // might have legacy savegames we may need to convert later.
-                NativePath const oldSavePath = App_Games()[gameId].legacySavegamePath();
-                if (oldSavePath.exists() && oldSavePath.isReadable())
-                {
-                    App::fileSystem().makeFolderWithFeed(legacySavePath,
-                            new DirectoryFeed(oldSavePath),
-                            Folder::PopulateOnlyThisFolder /* no need to go deep */);
-                }
-            }
-            catch (Games::NotFoundError const &)
-            {} // Ignore this error
-        }
-    }
 };
 
 ClientResources::ClientResources() : d(new Impl(this))
@@ -2902,51 +2761,6 @@ void ClientResources::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-bool ClientResources::convertLegacySavegames(String const &gameId, String const &sourcePath)
-{
-    // A converter plugin is required.
-    if (!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
-
-    // Populate /sys/legacysavegames/<gameId> with new savegames which may have appeared.
-    d->locateLegacySavegames(gameId);
-
-    bool didSchedule = false;
-    if (sourcePath.isEmpty())
-    {
-        // Process all legacy savegames.
-        if (Folder const *saveFolder = App::rootFolder().tryLocate<Folder>("sys/legacysavegames"/gameId))
-        {
-            /// @todo File name pattern matching should not be done here. This is to prevent
-            /// attempting to convert Hexen's map state sidecar files separately when this
-            /// is called from Doomsday Script (in bootstrap.de).
-            Game const &game = App_Games()[gameId];
-            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
-            if (namePattern.isValid() && !namePattern.isEmpty())
-            {
-                saveFolder->forContents([this, &gameId, &namePattern, &didSchedule] (String name, File &file)
-                {
-                    if (namePattern.exactMatch(name.fileName()))
-                    {
-                        // Schedule the conversion task.
-                        d->beginConvertLegacySavegame(file.path(), gameId);
-                        didSchedule = true;
-                    }
-                    return LoopContinue;
-                });
-            }
-        }
-    }
-    // Just the one legacy savegame.
-    else if (App::rootFolder().has(sourcePath))
-    {
-        // Schedule the conversion task.
-        d->beginConvertLegacySavegame(sourcePath, gameId);
-        didSchedule = true;
-    }
-
-    return didSchedule;
-}
-
 String ClientResources::tryFindMusicFile(Record const &definition)
 {
     LOG_AS("ClientResources::tryFindMusicFile");
@@ -3488,32 +3302,6 @@ D_CMD(PrintFontStats)
 #  endif // __CLIENT__
 #endif // DENG_DEBUG
 
-D_CMD(InspectSavegame)
-{
-    DENG2_UNUSED2(src, argc);
-    String savePath = argv[1];
-    // Append a .save extension if none exists.
-    if (savePath.fileNameExtension().isEmpty())
-    {
-        savePath += ".save";
-    }
-    // If a game is loaded assume the user is referring to those savegames if not specified.
-    if (savePath.fileNamePath().isEmpty() && App_GameLoaded())
-    {
-        savePath = Session::savePath() / savePath;
-    }
-
-    if (SavedSession const *saved = App::rootFolder().tryLocate<SavedSession>(savePath))
-    {
-        LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
-        LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();
-        return true;
-    }
-
-    LOG_WARNING("Failed to locate savegame with \"%s\"") << savePath;
-    return false;
-}
-
 void ClientResources::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
@@ -3522,8 +3310,6 @@ void ClientResources::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
-
-    C_CMD("inspectsavegame", "s",   InspectSavegame)
 
 #ifdef __CLIENT__
     C_CMD("listfonts",      "ss",   ListFonts)
@@ -3543,6 +3329,7 @@ void ClientResources::consoleRegister() // static
     C_CMD("listmaps",       "s",    ListMaps)
     C_CMD("listmaps",       "",     ListMaps)
 
+    SaveGames      ::consoleRegister();
     res  ::Texture ::consoleRegister();
     world::Material::consoleRegister();
 }

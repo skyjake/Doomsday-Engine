@@ -1,4 +1,4 @@
-/** @file
+/** @file savegames.h  Saved games.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -15,7 +15,45 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-#ifndef SAVEGAMES_H
-#define SAVEGAMES_H
 
-#endif // SAVEGAMES_H
+#ifndef LIBDOOMSDAY_SAVEGAMES_H
+#define LIBDOOMSDAY_SAVEGAMES_H
+
+#include "libdoomsday.h"
+#include <de/String>
+
+class Games;
+
+class LIBDOOMSDAY_PUBLIC SaveGames
+{
+public:
+    static SaveGames &get();
+
+public:
+    SaveGames();
+
+    void setGames(Games &games);
+
+    void initialize();
+
+    /**
+     * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
+     *
+     * @param gameId      Identifier of the game and corresponding subfolder name within
+     *                    save repository to output the converted savegame to. Also used for
+     *                    resolving ambiguous savegame formats.
+     * @param sourcePath  If a zero-length string then @em all legacy savegames located for
+     *                    this game will be considered. Otherwise use the path of a single
+     *                    legacy savegame file to schedule a single conversion.
+     *
+     * @return  @c true if one or more conversion tasks were scheduled.
+     */
+    bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
+
+    static void consoleRegister();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+#endif // LIBDOOMSDAY_SAVEGAMES_H

@@ -32,6 +32,7 @@
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
 #include "doomsday/world/materials.h"
+#include "doomsday/SaveGames"
 #include "doomsday/Session"
 #include "doomsday/SavedSession"
 
@@ -85,6 +86,7 @@ DENG2_PIMPL(DoomsdayApp)
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
+    SaveGames saveGames;
     LoopCallback mainCall;
 
 #ifdef WIN32
@@ -117,6 +119,7 @@ DENG2_PIMPL(DoomsdayApp)
         audienceForGameChange += scriptAudienceForGameChange;
 
         gameProfiles.setGames(games);
+        saveGames   .setGames(games);
 
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
@@ -390,6 +393,8 @@ void DoomsdayApp::initialize()
                                        DirectoryFeed::OnlyThisFolder));
     tmpFolder.populate(Folder::PopulateOnlyThisFolder);
 
+    d->saveGames.initialize();
+
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
     fs.makeFolder("/sys/bundles", FS::DontInheritFeeds)
@@ -458,6 +463,11 @@ BusyMode &DoomsdayApp::busyMode()
     return DoomsdayApp::app().d->busyMode;
 }
 
+SaveGames &DoomsdayApp::saveGames()
+{
+    return DoomsdayApp::app().d->saveGames;
+}
+
 NativePath DoomsdayApp::steamBasePath()
 {
 #ifdef WIN32
@@ -474,15 +484,11 @@ NativePath DoomsdayApp::steamBasePath()
     }
 #elif MACOSX
     return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
-#endif
+#else
     /// @todo Where are Steam apps located on Linux?
     return "";
+#endif
 }
-
-/*bool DoomsdayApp::isUsingUserDir() const
-{
-    return d->usingUserDir;
-}*/
 
 bool DoomsdayApp::isShuttingDown() const
 {

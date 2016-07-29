@@ -424,20 +424,6 @@ public:
 #endif // __CLIENT__
 
     /**
-     * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
-     *
-     * @param gameId      Identifier of the game and corresponding subfolder name within
-     *                    save repository to output the converted savegame to. Also used for
-     *                    resolving ambiguous savegame formats.
-     * @param sourcePath  If a zero-length string then @em all legacy savegames located for
-     *                    this game will be considered. Otherwise use the path of a single
-     *                    legacy savegame file to schedule a single conversion.
-     *
-     * @return  @c true if one or more conversion tasks were scheduled.
-     */
-    bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
-
-    /**
      * Attempt to locate a music file referenced in the given @em Music @a definition. Songs
      * can be either in external files or non-MUS lumps.
      *
