@@ -26,6 +26,7 @@
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/GLInfo>
+#include <de/texgamma.h>
 #include "dd_def.h"  // texGamma
 #include "dd_main.h"  // App_ResourceSystem()
 #include "sys_system.h"
@@ -720,9 +721,9 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
 
             for(long i = 0; i < numPels; ++i)
             {
-                dst[CR] = texGammaLut[src[CR]];
-                dst[CG] = texGammaLut[src[CG]];
-                dst[CB] = texGammaLut[src[CB]];
+                dst[CR] = R_TexGammaLut(src[CR]);
+                dst[CG] = R_TexGammaLut(src[CG]);
+                dst[CB] = R_TexGammaLut(src[CB]);
                 if(comps == 4)
                     dst[CA] = src[CA];
 

@@ -40,7 +40,7 @@
 #include "gl/gl_main.h"  // DENG_ASSERT_GL_CONTEXT_ACTIVE
 #include "gl/texturecontent.h"
 
-#include "render/r_main.h"  // R_BuildTexGammaLut
+//#include "render/r_main.h"
 #include "render/rend_halo.h"  // haloRealistic
 #include "render/rend_main.h"  // misc global vars
 #include "render/rend_particle.h"  // Rend_ParticleLoadSystemTextures()

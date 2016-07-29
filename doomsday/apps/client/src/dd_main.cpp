@@ -53,6 +53,7 @@
 #include <de/Log>
 #include <de/NativePath>
 #ifdef __CLIENT__
+#  include <de/texgamma.h>
 #  include <de/DisplayMode>
 #endif
 #include <doomsday/Session>
@@ -1288,8 +1289,8 @@ static dint DD_StartupWorker(void * /*context*/)
     }
     //Con_SetProgress(90);
 
-    R_BuildTexGammaLut();
 #ifdef __CLIENT__
+    R_BuildTexGammaLut(texGamma);
     UI_LoadFonts();
     R_InitSvgs();
     R_InitViewWindow();

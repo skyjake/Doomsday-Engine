@@ -30,6 +30,7 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
+#include <de/texgamma.h>
 #include <cstdlib>
 #include <cmath>
 #include <cctype>
@@ -762,9 +763,9 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *
 
             if(applyTexGamma)
             {
-                out[0] = texGammaLut[out[0]];
-                out[1] = texGammaLut[out[1]];
-                out[2] = texGammaLut[out[2]];
+                out[0] = R_TexGammaLut(out[0]);
+                out[1] = R_TexGammaLut(out[1]);
+                out[2] = R_TexGammaLut(out[2]);
             }
 
             if(outformat == 4)

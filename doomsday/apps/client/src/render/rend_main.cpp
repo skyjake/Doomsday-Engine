@@ -94,6 +94,7 @@
 #include <doomsday/BspNode>
 #include <de/concurrency.h>
 #include <de/timer.h>
+#include <de/texgamma.h>
 #include <de/vector1.h>
 #include <de/GLState>
 #include <QtAlgorithms>
@@ -6286,7 +6287,7 @@ static void mipmappingChanged()
 
 static void texGammaChanged()
 {
-    R_BuildTexGammaLut();
+    R_BuildTexGammaLut(texGamma);
     GL_TexReset();
     LOG_GL_MSG("Texture gamma correction set to %f") << texGamma;
 }

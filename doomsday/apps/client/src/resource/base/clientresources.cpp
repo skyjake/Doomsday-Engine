@@ -2677,22 +2677,6 @@ void ClientResources::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-byte texGammaLut[256];
-
-void R_BuildTexGammaLut()
-{
-#ifdef __SERVER__
-    double invGamma = 1.0f;
-#else
-    double invGamma = 1.0f - de::clamp(0.f, texGamma, 1.f); // Clamp to a sane range.
-#endif
-
-    for (int i = 0; i < 256; ++i)
-    {
-        texGammaLut[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
-    }
-}
-
 #ifdef __CLIENT__
 
 /**

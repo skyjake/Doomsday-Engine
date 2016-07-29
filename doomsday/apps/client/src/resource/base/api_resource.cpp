@@ -30,6 +30,7 @@
 #include <doomsday/resource/colorpalettes.h>
 #include <doomsday/resource/animgroups.h>
 #include <doomsday/res/Textures>
+#include <de/texgamma.h>
 
 using namespace de;
 
@@ -231,9 +232,9 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
         rgb[2] = palColor.z;
         if(applyTexGamma)
         {
-            rgb[0] = texGammaLut[rgb[0]];
-            rgb[1] = texGammaLut[rgb[1]];
-            rgb[2] = texGammaLut[rgb[2]];
+            rgb[0] = R_TexGammaLut(rgb[0]);
+            rgb[1] = R_TexGammaLut(rgb[1]);
+            rgb[2] = R_TexGammaLut(rgb[2]);
         }
     }
     catch(ClientResources::MissingResourceError const &er)
@@ -264,9 +265,9 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         if(applyTexGamma)
         {
             Vector3ub palColor = palette[colorIdx];
-            rgb[0] = texGammaLut[palColor.x] * reciprocal255;
-            rgb[1] = texGammaLut[palColor.y] * reciprocal255;
-            rgb[2] = texGammaLut[palColor.z] * reciprocal255;
+            rgb[0] = R_TexGammaLut(palColor.x) * reciprocal255;
+            rgb[1] = R_TexGammaLut(palColor.y) * reciprocal255;
+            rgb[2] = R_TexGammaLut(palColor.z) * reciprocal255;
         }
         else
         {

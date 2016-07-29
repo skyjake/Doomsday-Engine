@@ -23,6 +23,7 @@
 #include "de/binangle.h"
 #include "de/concurrency.h"
 #include "de/timer.h"
+#include "de/texgamma.h"
 #include "memoryzone_private.h"
 
 #include <stdlib.h>
@@ -30,6 +31,7 @@
 
 void Libdeng_Init(void)
 {
+    R_BuildTexGammaLut(0.f);
     bamsInit();
     Timer_Init();
     Z_Init();
