@@ -136,7 +136,7 @@ DENG2_PIMPL(Profiles)
                 // There may be multiple profiles in the file.
                 de::Info::BlockElement const &profBlock = elem->as<de::Info::BlockElement>();
                 if (profBlock.blockType() == "group" &&
-                   profBlock.name()      == "profile")
+                    profBlock.name()      == "profile")
                 {
                     String profileName = profBlock.keyValue("name").text;
                     if (profileName.isEmpty()) continue; // Name is required.

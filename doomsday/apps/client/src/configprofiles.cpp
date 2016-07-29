@@ -59,7 +59,7 @@ DENG2_PIMPL(ConfigProfiles)
          */
         void setValue(QVariant const &val) const
         {
-            switch(type)
+            switch (type)
             {
             case IntCVar:
                 Con_SetInteger(name.toLatin1(), val.toInt());
@@ -74,7 +74,7 @@ DENG2_PIMPL(ConfigProfiles)
                 break;
 
             case ConfigVariable:
-                if(!qstrcmp(val.typeName(), "QString"))
+                if (!qstrcmp(val.typeName(), "QString"))
                 {
                     App::config()[name].set(TextValue(val.toString()));
                 }
@@ -107,7 +107,7 @@ DENG2_PIMPL(ConfigProfiles)
 
         bool resetToDefaults() override
         {
-            if(!isReadOnly())
+            if (!isReadOnly())
             {
                 values = owner().d->defaults.values;
                 return true;
@@ -130,7 +130,7 @@ DENG2_PIMPL(ConfigProfiles)
                 Setting const &st = settings[val.key()];
 
                 String valueText;
-                switch(st.type)
+                switch (st.type)
                 {
                 case IntCVar:
                 case FloatCVar:
@@ -158,14 +158,14 @@ DENG2_PIMPL(ConfigProfiles)
             values = profs.d->defaults.values;
 
             // Read all the setting values from the profile block.
-            foreach(auto const *element, block.contentsInOrder())
+            foreach (auto const *element, block.contentsInOrder())
             {
-                if(!element->isBlock()) continue;
+                if (!element->isBlock()) continue;
 
                 de::Info::BlockElement const &setBlock = element->as<de::Info::BlockElement>();
 
                 // Only process known settings.
-                if(setBlock.blockType() == "setting" &&
+                if (setBlock.blockType() == "setting" &&
                    profs.d->settings.contains(setBlock.name()))
                 {
                     values[setBlock.name()] =
@@ -185,12 +185,6 @@ DENG2_PIMPL(ConfigProfiles)
         DoomsdayApp::app().audienceForGameChange() += this;
 
         addProfile(current);
-    }
-
-    ~Impl()
-    {
-        //DoomsdayApp::app().audienceForGameUnload() -= this;
-        //DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     Profile *addProfile(String const &name)
@@ -226,11 +220,11 @@ DENG2_PIMPL(ConfigProfiles)
             DENG2_ASSERT(confDefaults.has(name));
 
             Variable const &var = confDefaults[name];
-            if(var.value().is<NumberValue>())
+            if (var.value().is<NumberValue>())
             {
                 return var.value().asNumber();
             }
-            else if(var.value().is<TextValue>())
+            else if (var.value().is<TextValue>())
             {
                 return var.value().asText();
             }
@@ -240,7 +234,7 @@ DENG2_PIMPL(ConfigProfiles)
                 DENG2_ASSERT(false);
             }
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
@@ -253,13 +247,13 @@ DENG2_PIMPL(ConfigProfiles)
     void fetch(String const &profileName)
     {
         Profile &prof = self.find(profileName).as<Profile>();
-        if(prof.isReadOnly()) return;
+        if (prof.isReadOnly()) return;
 
-        foreach(Setting const &st, settings.values())
+        foreach (Setting const &st, settings.values())
         {
             QVariant val;
 
-            switch(st.type)
+            switch (st.type)
             {
             case IntCVar:
                 val = Con_GetInteger(st.name.toLatin1());
@@ -275,7 +269,7 @@ DENG2_PIMPL(ConfigProfiles)
 
             case ConfigVariable: {
                 Value const &cfgValue = App::config()[st.name].value();
-                if(cfgValue.is<NumberValue>())
+                if (cfgValue.is<NumberValue>())
                 {
                     val = cfgValue.asNumber();
                 }
@@ -294,7 +288,7 @@ DENG2_PIMPL(ConfigProfiles)
     {
         current = name;
 
-        if(!self.persistentName().isEmpty())
+        if (!self.persistentName().isEmpty())
         {
             App::config().set(configVarName(), name);
         }
@@ -304,7 +298,7 @@ DENG2_PIMPL(ConfigProfiles)
     {
         Profile &profile = self.find(profileName).as<Profile>();
 
-        foreach(Setting const &st, settings.values())
+        foreach (Setting const &st, settings.values())
         {
             QVariant const &val = profile.values[st.name];
             st.setValue(val);
@@ -316,9 +310,9 @@ DENG2_PIMPL(ConfigProfiles)
         LOG_AS("ConfigProfiles");
         DENG2_ASSERT(tryFind(profileName));
 
-        if(current == profileName) return;
+        if (current == profileName) return;
 
-        if(!self.persistentName().isEmpty())
+        if (!self.persistentName().isEmpty())
         {
             LOG_MSG("Changing %s profile to '%s'") << self.persistentName() << profileName;
         }
@@ -338,7 +332,7 @@ DENG2_PIMPL(ConfigProfiles)
 
     void reset()
     {
-        if(currentProfile().resetToDefaults())
+        if (currentProfile().resetToDefaults())
         {
             apply(current);
         }
@@ -358,7 +352,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     String configVarName() const
     {
-        if(self.persistentName().isEmpty()) return "";
+        if (self.persistentName().isEmpty()) return "";
         return self.persistentName().concatenateMember("profile");
     }
 
@@ -368,7 +362,7 @@ DENG2_PIMPL(ConfigProfiles)
 
         Setting const &st = settings[settingName];
 
-        switch(st.type)
+        switch (st.type)
         {
         case IntCVar:
             return text.toInt();
@@ -389,7 +383,7 @@ DENG2_PIMPL(ConfigProfiles)
 
     bool addCustomProfileIfMissing()
     {
-        if(!tryFind(CUSTOM_PROFILE))
+        if (!tryFind(CUSTOM_PROFILE))
         {
             addProfile(CUSTOM_PROFILE);
 
@@ -408,7 +402,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void currentGameChanged(Game const &newGame)
     {
-        if(!self.isPersistent() || newGame.isNull()) return;
+        if (!self.isPersistent() || newGame.isNull()) return;
 
         LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self.persistentName();
@@ -417,7 +411,7 @@ DENG2_PIMPL(ConfigProfiles)
 
         // Settings haven't previously been created -- make sure we at least
         // have the Custom profile.
-        if(addCustomProfileIfMissing())
+        if (addCustomProfileIfMissing())
         {
             current = CUSTOM_PROFILE;
         }
@@ -425,10 +419,10 @@ DENG2_PIMPL(ConfigProfiles)
         // Update current profile.
         current = App::config().gets(configVarName(), current);
 
-        if(!tryFind(current))
+        if (!tryFind(current))
         {
             // Fall back to the one profile we know is available.
-            if(tryFind(CUSTOM_PROFILE))
+            if (tryFind(CUSTOM_PROFILE))
             {
                 current = CUSTOM_PROFILE;
             }
@@ -454,7 +448,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
-        if(!self.isPersistent() || gameBeingUnloaded.isNull()) return;
+        if (!self.isPersistent() || gameBeingUnloaded.isNull()) return;
 
         LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game being unloaded, serializing %s profiles") << self.persistentName();
@@ -479,7 +473,7 @@ ConfigProfiles &ConfigProfiles::define(SettingType type,
     d->settings.insert(settingName, Impl::Setting(type, settingName));
 
     QVariant def;
-    if(type == ConfigVariable)
+    if (type == ConfigVariable)
     {
         def = d->getDefaultFromConfig(settingName);
     }
@@ -499,7 +493,7 @@ String ConfigProfiles::currentProfile() const
 
 bool ConfigProfiles::saveAsProfile(String const &name)
 {
-    if(!tryFind(name) && !name.isEmpty())
+    if (!tryFind(name) && !name.isEmpty())
     {
         d->addProfile(name);
         d->fetch(name);
@@ -530,7 +524,7 @@ void ConfigProfiles::resetSettingToDefaults(String const &settingName)
 
 bool ConfigProfiles::rename(String const &name)
 {
-    if(d->currentProfile().setName(name))
+    if (d->currentProfile().setName(name))
     {
         d->setCurrent(name);
 
@@ -546,9 +540,9 @@ bool ConfigProfiles::rename(String const &name)
 void ConfigProfiles::deleteProfile(String const &name)
 {
     // Can't delete the current profile.
-    if(name == d->current) return;
+    if (name == d->current) return;
 
-    if(auto *prof = tryFind(name))
+    if (auto *prof = tryFind(name))
     {
         remove(*prof);
         delete prof;
