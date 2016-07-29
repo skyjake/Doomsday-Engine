@@ -115,7 +115,7 @@ DENG2_PIMPL(ConfigProfiles)
             return false;
         }
 
-        String toInfoSource() const
+        String toInfoSource() const override
         {
             auto const &settings = owner().d->settings;
 
@@ -140,6 +140,8 @@ DENG2_PIMPL(ConfigProfiles)
                     valueText = val.value().toString();
                     break;
                 }
+
+                if (!info.isEmpty()) os << "\n";
 
                 os << "setting \"" << st.name << "\" {\n"
                    << "    value: " << valueText << "\n"
