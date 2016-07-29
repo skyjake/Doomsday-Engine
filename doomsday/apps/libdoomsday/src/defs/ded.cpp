@@ -41,8 +41,6 @@
 
 using namespace de;
 
-static ded_t defs;
-
 float ded_ptcstage_t::particleRadius(int ptcIDX) const
 {
     if (radiusVariance)
@@ -689,7 +687,18 @@ int ded_s::getTextNum(char const *id) const
     return -1; // Not found.
 }
 
+static void destroyDefinitions()
+{
+    delete DED_Definitions();
+}
+
 ded_t *DED_Definitions()
 {
-    return &defs;
+    static ded_t *defs = nullptr;
+    if (!defs)
+    {
+        defs = new ded_t;
+        atexit(destroyDefinitions);
+    }
+    return defs;
 }
