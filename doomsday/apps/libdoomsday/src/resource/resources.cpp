@@ -23,7 +23,11 @@
 #include "doomsday/resource/sprites.h"
 #include "doomsday/resource/textures.h"
 #include "doomsday/filesys/fs_main.h"
+#include "doomsday/filesys/fs_util.h"
+#include "doomsday/defs/music.h"
+#include "doomsday/world/Materials"
 #include "doomsday/DoomsdayApp"
+#include "doomsday/SaveGames"
 
 #include <de/App>
 #include <de/CommandLine>
@@ -218,6 +222,42 @@ res::Sprites const &Resources::sprites() const
     return d->sprites;
 }
 
+String Resources::tryFindMusicFile(Record const &definition)
+{
+    LOG_AS("Resources::tryFindMusicFile");
+
+    defn::Music const music(definition);
+
+    de::Uri songUri(music.gets("path"), RC_NULL);
+    if (!songUri.path().isEmpty())
+    {
+        // All external music files are specified relative to the base path.
+        String fullPath = App_BasePath() / songUri.path();
+        if (F_Access(fullPath.toUtf8().constData()))
+        {
+            return fullPath;
+        }
+
+        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
+                << songUri << music.gets("id");
+    }
+
+    // Try the resource locator.
+    String const lumpName = music.gets("lumpName");
+    if (!lumpName.isEmpty())
+    {
+        try
+        {
+            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
+                                                               App_ResourceClass(RC_MUSIC));
+            return App_BasePath() / foundPath;  // Ensure the path is absolute.
+        }
+        catch (FS1::NotFoundError const &)
+        {}  // Ignore this error.
+    }
+    return "";  // None found.
+}
+
 ResourceClass &App_ResourceClass(String className)
 {
     return Resources::get().resClass(className);
@@ -226,4 +266,356 @@ ResourceClass &App_ResourceClass(String className)
 ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
     return Resources::get().resClass(classId);
+}
+
+/**
+ * @param like             Map path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    res::MapManifests::Tree::FoundNodes found;
+    Resources::get().mapManifests().allMapManifests()
+            .findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+    if (found.isEmpty()) return 0;
+
+    //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known maps";
+    //if (!printSchemeName && scheme)
+    //    heading += " in scheme '" + scheme->name() + "'";
+    if (!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
+    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    dint idx = 0;
+    for (res::MapManifest *mapManifest : found)
+    {
+        String info = String("%1: " _E(1) "%2" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(mapManifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+/**
+ * @param scheme    Material subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Material path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    world::MaterialScheme::Index::FoundNodes found;
+    if (scheme) // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else // Consider resources in any scheme.
+    {
+        world::Materials::get().forAllMaterialSchemes([&found, &like] (world::MaterialScheme &scheme)
+        {
+            scheme.index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+            return LoopContinue;
+        });
+    }
+    if (found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known materials";
+    if (!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if (!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<world::MaterialManifest>);
+    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach (world::MaterialManifest *manifest, found)
+    {
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasMaterial()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+/**
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
+                              de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    res::TextureScheme::Index::FoundNodes found;
+    if (scheme)  // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else  // Consider resources in any scheme.
+    {
+        foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
+        {
+            scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
+    if (found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known textures";
+    if (!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if (!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index key.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::TextureManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach (res::TextureManifest *manifest, found)
+    {
+        String info = String("%1: %2%3")
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasTexture()? _E(0) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+static void printMaterialIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if (search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        LOG_RES_MSG(_E(R));
+    }
+    // Print results within only the one scheme?
+    else if (world::Materials::get().isKnownMaterialScheme(search.scheme()))
+    {
+        printTotal = printMaterialIndex2(&world::Materials::get().materialScheme(search.scheme()),
+                                         search.path(), flags | de::Uri::OmitScheme);
+        LOG_RES_MSG(_E(R));
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        world::Materials::get().forAllMaterialSchemes([&search, &flags, &printTotal] (world::MaterialScheme &scheme)
+        {
+            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
+            if (numPrinted)
+            {
+                LOG_MSG(_E(R));
+                printTotal += numPrinted;
+            }
+            return LoopContinue;
+        });
+    }
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
+}
+
+static void printMapsIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    int printTotal = printMapsIndex2(search.path(), flags | de::Uri::OmitScheme);
+    LOG_RES_MSG(_E(R));
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
+}
+
+static void printTextureIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    auto &textures = res::Textures::get();
+
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if (search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        LOG_RES_MSG(_E(R));
+    }
+    // Print results within only the one scheme?
+    else if (textures.isKnownTextureScheme(search.scheme()))
+    {
+        printTotal = printTextureIndex2(&textures.textureScheme(search.scheme()),
+                                        search.path(), flags | de::Uri::OmitScheme);
+        LOG_RES_MSG(_E(R));
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        foreach (res::TextureScheme *scheme, textures.allTextureSchemes())
+        {
+            int numPrinted = printTextureIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            if (numPrinted)
+            {
+                LOG_RES_MSG(_E(R));
+                printTotal += numPrinted;
+            }
+        }
+    }
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s") << printTotal << (printTotal == 1? "texture" : "textures in total");
+}
+
+static bool isKnownMaterialSchemeCallback(String name)
+{
+    return world::Materials::get().isKnownMaterialScheme(name);
+}
+
+static bool isKnownTextureSchemeCallback(String name)
+{
+    return res::Textures::get().isKnownTextureScheme(name);
+}
+
+/**
+ * Print a list of all currently available maps and the location of the source
+ * file which contains them.
+ *
+ * @todo Improve output: find common map id prefixes, find "suffixed" numerical
+ * ranges, etc... (Do not assume *anything* about the formatting of map ids -
+ * ZDoom allows the mod author to give a map any id they wish, which, is then
+ * specified in MAPINFO when defining the map progression, clusters, etc...).
+ */
+D_CMD(ListMaps)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    if (search.scheme().isEmpty()) search.setScheme("Maps");
+
+    if (!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
+    {
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printMapsIndex(search);
+    return true;
+}
+
+D_CMD(ListMaterials)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
+
+    if (!search.scheme().isEmpty() &&
+        !world::Materials::get().isKnownMaterialScheme(search.scheme()))
+    {
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printMaterialIndex(search);
+    return true;
+}
+
+D_CMD(ListTextures)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
+
+    if (!search.scheme().isEmpty() &&
+        !res::Textures::get().isKnownTextureScheme(search.scheme()))
+    {
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printTextureIndex(search);
+    return true;
+}
+
+#ifdef DENG_DEBUG
+D_CMD(PrintMaterialStats)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG(_E(b) "Material Statistics:");
+    world::Materials::get().forAllMaterialSchemes([] (world::MaterialScheme &scheme)
+    {
+        world::MaterialScheme::Index const &index = scheme.index();
+
+        uint count = index.count();
+        LOG_MSG("Scheme: %s (%u %s)")
+                << scheme.name() << count << (count == 1? "material" : "materials");
+        index.debugPrintHashDistribution();
+        index.debugPrint();
+        return LoopContinue;
+    });
+    return true;
+}
+
+D_CMD(PrintTextureStats)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG(_E(b) "Texture Statistics:");
+    foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
+    {
+        res::TextureScheme::Index const &index = scheme->index();
+
+        uint const count = index.count();
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "texture" : "textures");
+        index.debugPrintHashDistribution();
+        index.debugPrint();
+    }
+    return true;
+}
+#endif // DENG_DEBUG
+
+void Resources::consoleRegister()
+{
+    C_CMD("listtextures",   "ss",   ListTextures)
+    C_CMD("listtextures",   "s",    ListTextures)
+    C_CMD("listtextures",   "",     ListTextures)
+
+    C_CMD("listmaterials",  "ss",   ListMaterials)
+    C_CMD("listmaterials",  "s",    ListMaterials)
+    C_CMD("listmaterials",  "",     ListMaterials)
+
+    C_CMD("listmaps",       "s",    ListMaps)
+    C_CMD("listmaps",       "",     ListMaps)
+
+#ifdef DENG_DEBUG
+    C_CMD("texturestats",   NULL,   PrintTextureStats)
+    C_CMD("materialstats",  NULL,   PrintMaterialStats)
+#endif
+
+    SaveGames      ::consoleRegister();
+    res  ::Texture ::consoleRegister();
+    world::Material::consoleRegister();
 }

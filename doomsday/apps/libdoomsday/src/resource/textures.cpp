@@ -19,6 +19,8 @@
 #include "doomsday/resource/textures.h"
 #include "doomsday/resource/resources.h"
 #include "doomsday/res/TextureScheme"
+#include "doomsday/res/Patch"
+#include "doomsday/filesys/fs_main.h"
 
 #include <de/mathutil.h>
 #include <de/types.h>
@@ -131,14 +133,14 @@ Textures &Textures::get() // static
 
 TextureScheme &Textures::textureScheme(String name) const
 {
-    LOG_AS("ResourceSystem::textureScheme");
+    LOG_AS("Textures::textureScheme");
     if (!name.isEmpty())
     {
         TextureSchemes::iterator found = d->textureSchemes.find(name.toLower());
         if (found != d->textureSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
-    throw Resources::UnknownSchemeError("ResourceSystem::textureScheme", "No scheme found matching '" + name + "'");
+    throw Resources::UnknownSchemeError("Textures::textureScheme", "No scheme found matching '" + name + "'");
 }
 
 bool Textures::isKnownTextureScheme(String name) const
@@ -224,7 +226,7 @@ TextureManifest &Textures::textureManifest(de::Uri const &uri) const
     }
 
     /// @throw MissingResourceManifestError Failed to locate a matching manifest.
-    throw Resources::MissingResourceManifestError("ResourceSystem::findTexture", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    throw Resources::MissingResourceManifestError("Textures::findTexture", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 Textures::AllTextures const &Textures::allTextures() const
@@ -256,7 +258,7 @@ Texture *Textures::texture(String schemeName, de::Uri const &resourceUri)
 Texture *Textures::defineTexture(String schemeName, de::Uri const &resourceUri,
                                  Vector2ui const &dimensions)
 {
-    LOG_AS("ResourceSystem::defineTexture");
+    LOG_AS("Textures::defineTexture");
 
     if (resourceUri.isEmpty()) return nullptr;
 
@@ -317,6 +319,85 @@ void Textures::deriveAllTexturesInScheme(String schemeName)
         res::TextureManifest &manifest = iter.next();
         deriveTexture(manifest);
     }
+}
+
+patchid_t Textures::declarePatch(String encodedName)
+{
+    LOG_AS("Textures::declarePatch");
+
+    if (encodedName.isEmpty())
+        return 0;
+
+    de::Uri uri("Patches", Path(encodedName));
+
+    // Already defined as a patch?
+    try
+    {
+        TextureManifest &manifest = textureManifest(uri);
+        /// @todo We should instead define Materials from patches and return the material id.
+        return patchid_t(manifest.uniqueId());
+    }
+    catch (Resources::MissingResourceManifestError const &)
+    {}  // Ignore this error.
+
+    auto &fs1 = App_FileSystem();
+
+    Path lumpPath = uri.path() + ".lmp";
+    if (!fs1.nameIndex().contains(lumpPath))
+    {
+        LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
+        return 0;
+    }
+
+    lumpnum_t const lumpNum = fs1.nameIndex().findLast(lumpPath);
+    File1 &file = fs1.lump(lumpNum);
+
+    Texture::Flags flags;
+    if (file.container().hasCustom()) flags |= Texture::Custom;
+
+    Vector2ui dimensions;
+    Vector2i origin;
+
+    // If this is a Patch (the format) read the world dimension and origin offset values.
+    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+    if (Patch::recognize(fileData))
+    {
+        try
+        {
+            auto info = Patch::loadMetadata(fileData);
+
+            dimensions = info.logicalDimensions;
+            origin     = Vector2i(-info.origin.x, -info.origin.y);
+        }
+        catch (IByteArray::OffsetError const &)
+        {
+            LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
+                            "World dimension and origin offset not set for patch \"%s\".")
+                << NativePath(file.container().composePath()).pretty()
+                << NativePath(file.composePath()).pretty()
+                << uri;
+        }
+    }
+    file.unlock();
+
+    dint uniqueId       = textureScheme("Patches").count() + 1;  // 1-based index.
+    de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
+
+    try
+    {
+        TextureManifest &manifest = declareTexture(uri, flags, dimensions, origin,
+                                                   uniqueId, &resourceUri);
+
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveTexture(manifest);
+
+        return uniqueId;
+    }
+    catch (TextureScheme::InvalidPathError const &er)
+    {
+        LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
+    }
+    return 0;
 }
 
 } // namespace res

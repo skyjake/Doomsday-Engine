@@ -319,7 +319,7 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 #undef R_DeclarePatch
 DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
 {
-    return App_ResourceSystem().declarePatch(encodedName);
+    return res::Textures::get().declarePatch(encodedName);
 }
 
 #undef R_GetPatchInfo

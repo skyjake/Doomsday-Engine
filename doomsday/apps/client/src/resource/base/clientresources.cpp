@@ -24,6 +24,7 @@
 #include <QHash>
 #include <QVector>
 #include <QtAlgorithms>
+
 #include <de/memory.h>
 #include <de/stack.h>  /// @todo remove me
 #include <de/App>
@@ -41,12 +42,11 @@
 #include <de/Task>
 #include <de/TaskPool>
 #include <de/Time>
-#ifdef __CLIENT__
-#  include <de/ByteOrder>
-#  include <de/NativePath>
-#  include <de/RecordValue>
-#  include <de/StringPool>
-#endif
+#include <de/ByteOrder>
+#include <de/NativePath>
+#include <de/RecordValue>
+#include <de/StringPool>
+
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/music.h>
@@ -65,20 +65,15 @@
 #include <doomsday/res/Textures>
 #include <doomsday/world/Material>
 #include <doomsday/world/Materials>
-#include <doomsday/SavedSession>
-#include <doomsday/Session>
-#include <doomsday/SaveGames>
 
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#  include "ui/progress.h"
-#  include "sys_system.h"  // novideo
-#endif
 #include "def_main.h"
 #include "dd_main.h"
 #include "dd_def.h"
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
+#  include "ui/progress.h"
+#  include "sys_system.h"  // novideo
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
 #  include "gl/svg.h"
@@ -330,14 +325,21 @@ namespace internal
 } // namespace internal
 } // namespace de
 
-#ifdef __CLIENT__
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
-#endif
 
 using namespace de;
 using namespace internal;
+
+// Console variables (globals).
+byte precacheMapMaterials = true;
+byte precacheSprites      = true;
+
+ClientResources &ClientResources::get() // static
+{
+    return static_cast<ClientResources &>(Resources::get());
+}
 
 DENG2_PIMPL(ClientResources)
 #ifdef __CLIENT__
@@ -1823,11 +1825,6 @@ DENG2_PIMPL(ClientResources)
 ClientResources::ClientResources() : d(new Impl(this))
 {}
 
-ClientResources &ClientResources::get() // static
-{
-    return static_cast<ClientResources &>(Resources::get());
-}
-
 void ClientResources::clear()
 {
     Resources::clear();
@@ -1914,83 +1911,6 @@ void ClientResources::initSystemTextures()
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
     textures().deriveAllTexturesInScheme("System");
-}
-
-patchid_t ClientResources::declarePatch(String encodedName)
-{
-    LOG_AS("ClientResources::declarePatch");
-
-    if (encodedName.isEmpty())
-        return 0;
-
-    de::Uri uri("Patches", Path(encodedName));
-
-    // Already defined as a patch?
-    try
-    {
-        res::TextureManifest &manifest = textures().textureManifest(uri);
-        /// @todo We should instead define Materials from patches and return the material id.
-        return patchid_t( manifest.uniqueId() );
-    }
-    catch (MissingResourceManifestError const &)
-    {}  // Ignore this error.
-
-    Path lumpPath = uri.path() + ".lmp";
-    if (!d->fileSys().nameIndex().contains(lumpPath))
-    {
-        LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
-        return 0;
-    }
-
-    lumpnum_t const lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
-    File1 &file = d->fileSys().lump(lumpNum);
-
-    res::Texture::Flags flags;
-    if (file.container().hasCustom()) flags |= res::Texture::Custom;
-
-    Vector2ui dimensions;
-    Vector2i origin;
-
-    // If this is a Patch (the format) read the world dimension and origin offset values.
-    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-    if (res::Patch::recognize(fileData))
-    {
-        try
-        {
-            auto info = res::Patch::loadMetadata(fileData);
-
-            dimensions = info.logicalDimensions;
-            origin     = Vector2i(-info.origin.x, -info.origin.y);
-        }
-        catch (IByteArray::OffsetError const &)
-        {
-            LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
-                            "World dimension and origin offset not set for patch \"%s\".")
-                << NativePath(file.container().composePath()).pretty()
-                << NativePath(file.composePath()).pretty()
-                << uri;
-        }
-    }
-    file.unlock();
-
-    dint uniqueId       = textures().textureScheme("Patches").count() + 1;  // 1-based index.
-    de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
-
-    try
-    {
-        res::TextureManifest &manifest = textures().declareTexture(uri, flags, dimensions, origin,
-                                                   uniqueId, &resourceUri);
-
-        /// @todo Defer until necessary (manifest texture is first referenced).
-        textures().deriveTexture(manifest);
-
-        return uniqueId;
-    }
-    catch (res::TextureScheme::InvalidPathError const &er)
-    {
-        LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
-    }
-    return 0;
 }
 
 #ifdef __CLIENT__
@@ -2607,10 +2527,6 @@ void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
     }
 }
 
-#endif // __CLIENT__
-
-#ifdef __CLIENT__
-
 void ClientResources::purgeCacheQueue()
 {
     qDeleteAll(d->cacheQueue);
@@ -2761,44 +2677,6 @@ void ClientResources::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
-String ClientResources::tryFindMusicFile(Record const &definition)
-{
-    LOG_AS("ClientResources::tryFindMusicFile");
-
-    defn::Music const music(definition);
-
-    de::Uri songUri(music.gets("path"), RC_NULL);
-    if (!songUri.path().isEmpty())
-    {
-        // All external music files are specified relative to the base path.
-        String fullPath = App_BasePath() / songUri.path();
-        if (F_Access(fullPath.toUtf8().constData()))
-        {
-            return fullPath;
-        }
-
-        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
-            << songUri << music.gets("id");
-    }
-
-    // Try the resource locator.
-    String const lumpName = music.gets("lumpName");
-    if (!lumpName.isEmpty())
-    {
-        try
-        {
-            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
-                                                               App_ResourceClass(RC_MUSIC));
-            return App_BasePath() / foundPath;  // Ensure the path is absolute.
-        }
-        catch (FS1::NotFoundError const &)
-        {}  // Ignore this error.
-    }
-    return "";  // None found.
-}
-
-byte precacheMapMaterials = true;
-byte precacheSprites = true;
 byte texGammaLut[256];
 
 void R_BuildTexGammaLut()
@@ -2815,167 +2693,6 @@ void R_BuildTexGammaLut()
     }
 }
 
-template <typename ManifestType>
-static bool pathBeginsWithComparator(ManifestType const &manifest, void *context)
-{
-    auto const *path = reinterpret_cast<Path *>(context);
-    /// @todo Use PathTree::Node::compare()
-    return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
-}
-
-/**
- * Decode and then lexicographically compare the two manifest paths,
- * returning @c true if @a is less than @a b.
- */
-template <typename PathTreeNodeType>
-static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
-{
-    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
-    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
-    return pathA.compareWithoutCase(pathB) < 0;
-}
-
-/**
- * @param like             Map path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
-{
-    res::MapManifests::Tree::FoundNodes found;
-    App_ResourceSystem().mapManifests().allMapManifests()
-            .findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-    if (found.isEmpty()) return 0;
-
-    //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known maps";
-    //if (!printSchemeName && scheme)
-    //    heading += " in scheme '" + scheme->name() + "'";
-    if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
-    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    dint idx = 0;
-    for (res::MapManifest *mapManifest : found)
-    {
-        String info = String("%1: " _E(1) "%2" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(mapManifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
-}
-
-/**
- * @param scheme    Material subspace scheme being printed. Can be @c NULL in
- *                  which case textures are printed from all schemes.
- * @param like      Material path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
-{
-    world::MaterialScheme::Index::FoundNodes found;
-    if (scheme) // Consider resources in the specified scheme only.
-    {
-        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-    }
-    else // Consider resources in any scheme.
-    {
-        world::Materials::get().forAllMaterialSchemes([&found, &like] (world::MaterialScheme &scheme)
-        {
-            scheme.index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-            return LoopContinue;
-        });
-    }
-    if (found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known materials";
-    if (!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<world::MaterialManifest>);
-    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach (world::MaterialManifest *manifest, found)
-    {
-        String info = String("%1: %2%3" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasMaterial()? _E(1) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
-}
-
-/**
- * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
- *                  which case textures are printed from all schemes.
- * @param like      Texture path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
-                              de::Uri::ComposeAsTextFlags composeUriFlags)
-{
-    res::TextureScheme::Index::FoundNodes found;
-    if (scheme)  // Consider resources in the specified scheme only.
-    {
-        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-    }
-    else  // Consider resources in any scheme.
-    {
-        foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
-        {
-            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-        }
-    }
-    if (found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known textures";
-    if (!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index key.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::TextureManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach (res::TextureManifest *manifest, found)
-    {
-        String info = String("%1: %2%3")
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(0) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
-}
-
 #ifdef __CLIENT__
 
 /**
@@ -2990,13 +2707,13 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     FontScheme::Index::FoundNodes found;
     if (scheme) // Only resources in this scheme.
     {
-        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
     }
     else // Consider resources in any scheme.
     {
         foreach (FontScheme *scheme, App_ResourceSystem().allFontSchemes())
         {
-            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+            scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
         }
     }
     if (found.isEmpty()) return 0;
@@ -3028,89 +2745,6 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
 
     return found.count();
 }
-
-#endif // __CLIENT__
-
-static void printMaterialIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
-{
-    int printTotal = 0;
-
-    // Collate and print results from all schemes?
-    if (search.scheme().isEmpty() && !search.path().isEmpty())
-    {
-        printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        LOG_RES_MSG(_E(R));
-    }
-    // Print results within only the one scheme?
-    else if (world::Materials::get().isKnownMaterialScheme(search.scheme()))
-    {
-        printTotal = printMaterialIndex2(&world::Materials::get().materialScheme(search.scheme()),
-                                         search.path(), flags | de::Uri::OmitScheme);
-        LOG_RES_MSG(_E(R));
-    }
-    else
-    {
-        // Collect and sort results in each scheme separately.
-        world::Materials::get().forAllMaterialSchemes([&search, &flags, &printTotal] (world::MaterialScheme &scheme)
-        {
-            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
-            if (numPrinted)
-            {
-                LOG_MSG(_E(R));
-                printTotal += numPrinted;
-            }
-            return LoopContinue;
-        });
-    }
-    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
-}
-
-static void printMapsIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
-{
-    int printTotal = printMapsIndex2(search.path(), flags | de::Uri::OmitScheme);
-    LOG_RES_MSG(_E(R));
-    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
-}
-
-static void printTextureIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
-{
-    auto &textures = res::Textures::get();
-
-    int printTotal = 0;
-
-    // Collate and print results from all schemes?
-    if (search.scheme().isEmpty() && !search.path().isEmpty())
-    {
-        printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        LOG_RES_MSG(_E(R));
-    }
-    // Print results within only the one scheme?
-    else if (textures.isKnownTextureScheme(search.scheme()))
-    {
-        printTotal = printTextureIndex2(&textures.textureScheme(search.scheme()),
-                                        search.path(), flags | de::Uri::OmitScheme);
-        LOG_RES_MSG(_E(R));
-    }
-    else
-    {
-        // Collect and sort results in each scheme separately.
-        foreach (res::TextureScheme *scheme, textures.allTextureSchemes())
-        {
-            int numPrinted = printTextureIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
-            if (numPrinted)
-            {
-                LOG_RES_MSG(_E(R));
-                printTotal += numPrinted;
-            }
-        }
-    }
-    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s") << printTotal << (printTotal == 1? "texture" : "textures in total");
-}
-
-#ifdef __CLIENT__
 
 static void printFontIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
@@ -3146,86 +2780,11 @@ static void printFontIndex(de::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
 }
 
-#endif // __CLIENT__
-
-static bool isKnownMaterialSchemeCallback(String name)
-{
-    return world::Materials::get().isKnownMaterialScheme(name);
-}
-
-static bool isKnownTextureSchemeCallback(String name)
-{
-    return res::Textures::get().isKnownTextureScheme(name);
-}
-
-#ifdef __CLIENT__
 static bool isKnownFontSchemeCallback(String name)
 {
     return App_ResourceSystem().knownFontScheme(name);
 }
-#endif
 
-/**
- * Print a list of all currently available maps and the location of the source
- * file which contains them.
- *
- * @todo Improve output: find common map id prefixes, find "suffixed" numerical
- * ranges, etc... (Do not assume *anything* about the formatting of map ids -
- * ZDoom allows the mod author to give a map any id they wish, which, is then
- * specified in MAPINFO when defining the map progression, clusters, etc...).
- */
-D_CMD(ListMaps)
-{
-    DENG2_UNUSED(src);
-
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
-    if (search.scheme().isEmpty()) search.setScheme("Maps");
-
-    if (!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
-    {
-        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
-        return false;
-    }
-
-    printMapsIndex(search);
-    return true;
-}
-
-D_CMD(ListMaterials)
-{
-    DENG2_UNUSED(src);
-
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
-
-    if (!search.scheme().isEmpty() &&
-        !world::Materials::get().isKnownMaterialScheme(search.scheme()))
-    {
-        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
-        return false;
-    }
-
-    printMaterialIndex(search);
-    return true;
-}
-
-D_CMD(ListTextures)
-{
-    DENG2_UNUSED(src);
-
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
-
-    if (!search.scheme().isEmpty() &&
-        !res::Textures::get().isKnownTextureScheme(search.scheme()))
-    {
-        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
-        return false;
-    }
-
-    printTextureIndex(search);
-    return true;
-}
-
-#ifdef __CLIENT__
 D_CMD(ListFonts)
 {
     DENG2_UNUSED(src);
@@ -3241,47 +2800,8 @@ D_CMD(ListFonts)
     printFontIndex(search);
     return true;
 }
-#endif // __CLIENT__
 
 #ifdef DENG_DEBUG
-D_CMD(PrintMaterialStats)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    LOG_MSG(_E(b) "Material Statistics:");
-    world::Materials::get().forAllMaterialSchemes([] (world::MaterialScheme &scheme)
-    {
-        world::MaterialScheme::Index const &index = scheme.index();
-
-        uint count = index.count();
-        LOG_MSG("Scheme: %s (%u %s)")
-                << scheme.name() << count << (count == 1? "material" : "materials");
-        index.debugPrintHashDistribution();
-        index.debugPrint();
-        return LoopContinue;
-    });
-    return true;
-}
-
-D_CMD(PrintTextureStats)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    LOG_MSG(_E(b) "Texture Statistics:");
-    foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
-    {
-        res::TextureScheme::Index const &index = scheme->index();
-
-        uint const count = index.count();
-        LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "texture" : "textures");
-        index.debugPrintHashDistribution();
-        index.debugPrint();
-    }
-    return true;
-}
-
-#  ifdef __CLIENT__
 D_CMD(PrintFontStats)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -3299,37 +2819,18 @@ D_CMD(PrintFontStats)
     }
     return true;
 }
-#  endif // __CLIENT__
 #endif // DENG_DEBUG
 
 void ClientResources::consoleRegister() // static
 {
-    C_CMD("listtextures",   "ss",   ListTextures)
-    C_CMD("listtextures",   "s",    ListTextures)
-    C_CMD("listtextures",   "",     ListTextures)
-#ifdef DENG_DEBUG
-    C_CMD("texturestats",   NULL,   PrintTextureStats)
-#endif
+    Resources::consoleRegister();
 
-#ifdef __CLIENT__
     C_CMD("listfonts",      "ss",   ListFonts)
     C_CMD("listfonts",      "s",    ListFonts)
     C_CMD("listfonts",      "",     ListFonts)
-#  ifdef DENG_DEBUG
-    C_CMD("fontstats",      NULL,   PrintFontStats)
-#  endif
-#endif
-
-    C_CMD("listmaterials",  "ss",   ListMaterials)
-    C_CMD("listmaterials",  "s",    ListMaterials)
-    C_CMD("listmaterials",  "",     ListMaterials)
 #ifdef DENG_DEBUG
-    C_CMD("materialstats",  NULL,   PrintMaterialStats)
+    C_CMD("fontstats",      NULL,   PrintFontStats)
 #endif
-    C_CMD("listmaps",       "s",    ListMaps)
-    C_CMD("listmaps",       "",     ListMaps)
-
-    SaveGames      ::consoleRegister();
-    res  ::Texture ::consoleRegister();
-    world::Material::consoleRegister();
 }
+
+#endif // __CLIENT__

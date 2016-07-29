@@ -125,7 +125,7 @@ patchid_t CompositeBitmapFont::glyphPatch(uchar ch)
 void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 {
     //if(ch >= MAX_CHARS) return;
-    d->glyphs[ch].patch = App_ResourceSystem().declarePatch(encodedPatchName);
+    d->glyphs[ch].patch = res::Textures::get().declarePatch(encodedPatchName);
 
     // We'll need to rebuild the prepared GL resources.
     d->needGLInit = true;

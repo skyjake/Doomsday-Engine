@@ -426,6 +426,18 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
 
 /**
+ * Decode and then lexicographically compare the two manifest paths,
+ * returning @c true if @a is less than @a b.
+ */
+template <typename PathTreeNodeType>
+inline bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
+{
+    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
+    return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
  * Iterator template for PathTree nodes. Can be used to iterate any set of
  * Nodes returned by a PathTree (PathTree::nodes(), PathTree::leafNodes(),
  * PathTree::branchNodes()). @ingroup data

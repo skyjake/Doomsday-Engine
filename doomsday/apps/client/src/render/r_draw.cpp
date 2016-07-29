@@ -62,7 +62,7 @@ static void loadViewBorderPatches()
     borderPatches[0] = 0;
     for(uint i = 1; i < 9; ++i)
     {
-        borderPatches[i] = ClientResources::get().declarePatch(borderGraphicsNames[i]->path());
+        borderPatches[i] = res::Textures::get().declarePatch(borderGraphicsNames[i]->path());
     }
 
     // Detemine the view border size.

@@ -22,6 +22,8 @@
 #include "texturescheme.h"
 #include "texture.h"
 
+#include <de/types.h>
+
 namespace res {
 
 class LIBDOOMSDAY_PUBLIC Textures
@@ -181,6 +183,8 @@ public:
     Texture *deriveTexture(TextureManifest &manifest);
 
     void deriveAllTexturesInScheme(de::String schemeName);
+
+    patchid_t declarePatch(de::String encodedName);
 
 private:
     DENG2_PRIVATE(d)

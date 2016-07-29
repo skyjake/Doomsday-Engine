@@ -1,7 +1,7 @@
 /** @file resource/resources.h
  *
- * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,10 +21,11 @@
 #define LIBDOOMSDAY_RESOURCES_H
 
 #include "resourceclass.h"
+#include <de/Info>
 #include <de/NativePath>
 #include <de/PathTree>
+#include <de/Record>
 #include <de/System>
-#include <de/Info>
 
 namespace res
 {
@@ -99,12 +100,37 @@ public:
     res::Sprites &          sprites();
     res::Sprites const &    sprites() const;
 
+    /**
+     * Attempt to locate a music file referenced in the given @em Music @a definition.
+     * Songs can be either in external files or non-MUS lumps.
+     *
+     * @note Lump based music is presently handled separately!
+     *
+     * @param musicDef  Music definition to find the music file for.
+     *
+     * @return  Absolute path to the music if found; otherwise a zero-length string.
+     */
+    de::String tryFindMusicFile(de::Record const &musicDef);
+
 public:
     static de::String resolveSymbol(de::String const &symbol);
+
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
 };
+
+namespace res
+{
+    template <typename ManifestType>
+    inline bool pathBeginsWithComparator(ManifestType const &manifest, void *context)
+    {
+        auto const *path = reinterpret_cast<de::Path *>(context);
+        /// @todo Use PathTree::Node::compare()
+        return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
+    }
+}
 
 /**
  * Convenient method of returning a resource class from the application's global

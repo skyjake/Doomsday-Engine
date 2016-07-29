@@ -117,8 +117,6 @@ public:
 
     void addColorPalette(res::ColorPalette &newPalette, de::String const &name);
 
-    patchid_t declarePatch(de::String encodedName);
-
 #ifdef __CLIENT__
 
     /**
@@ -423,18 +421,6 @@ public:
 
 #endif // __CLIENT__
 
-    /**
-     * Attempt to locate a music file referenced in the given @em Music @a definition. Songs
-     * can be either in external files or non-MUS lumps.
-     *
-     * @note Lump based music is presently handled separately!!
-     *
-     * @param musicDef  Music definition to find the music file for.
-     *
-     * @return  Absolute path to the music if found; otherwise a zero-length string.
-     */
-    de::String tryFindMusicFile(de::Record const &musicDef);
-
 public:  /// @todo Should be private:
     void initTextures();
     void initSystemTextures();
@@ -447,10 +433,12 @@ public:  /// @todo Should be private:
     void pruneUnusedTextureSpecs();
 
 public:
+#ifdef __CLIENT__
     /**
      * Register the console commands, variables, etc..., of this module.
      */
     static void consoleRegister();
+#endif
 
 private:
     DENG2_PRIVATE(d)
