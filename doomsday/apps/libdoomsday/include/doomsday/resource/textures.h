@@ -21,6 +21,7 @@
 
 #include "texturescheme.h"
 #include "texture.h"
+#include "composite.h"
 
 #include <de/types.h>
 
@@ -37,7 +38,12 @@ public:
 public:
     Textures();
 
+    /// Sets the Game-specific data format identifier/selector.
+    void setCompositeArchiveFormat(Composite::ArchiveFormat format);
+
     void clear();
+
+    void initTextures();
 
     /**
      * Determines if a texture exists for @a path.

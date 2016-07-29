@@ -155,7 +155,7 @@ enum {
     DD_UNUSED12, // DD_NUMLUMPS
     DD_CLIENT_PAUSED,
     DD_WEAPON_OFFSET_SCALE_Y, ///< 1000x
-    DD_GAME_DATA_FORMAT,
+    DD_UNUSED5,
     DD_GAME_DRAW_HUD_HINT, ///< Doomsday advises not to draw the HUD.
     DD_SYMBOLIC_ECHO,
     DD_MAX_TEXTURE_UNITS,

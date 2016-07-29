@@ -66,6 +66,7 @@
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/resource/resources.h>
 #include <doomsday/res/MapManifests>
 #include <doomsday/res/Sprites>
 #include <doomsday/res/Textures>
@@ -181,7 +182,6 @@ static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
-dint gameDataFormat;               ///< Game-specific data format identifier/selector.
 #ifdef __CLIENT__
 dint symbolicEchoMode = false;     ///< @note Mutable via public API.
 #endif
@@ -706,9 +706,10 @@ int DD_ActivateGameWorker(void *context)
     ClientResources &resSys = App_ResourceSystem();
 
     // Some resources types are located prior to initializing the game.
-    resSys.initTextures();
-    res::Textures::get().textureScheme("Lightmaps").clear();
-    res::Textures::get().textureScheme("Flaremaps").clear();
+    auto &textures = res::Textures::get();
+    textures.initTextures();
+    textures.textureScheme("Lightmaps").clear();
+    textures.textureScheme("Flaremaps").clear();
     resSys.mapManifests().initMapManifests();
 
     if (parms.initiatedBusyMode)
@@ -1150,9 +1151,10 @@ static void initialize()
         FS_InitVirtualPathMappings();
         App_FileSystem().resetAllSchemes();
 
-        App_ResourceSystem().initTextures();
-        res::Textures::get().textureScheme("Lightmaps").clear();
-        res::Textures::get().textureScheme("Flaremaps").clear();
+        auto &textures = res::Textures::get();
+        textures.initTextures();
+        textures.textureScheme("Lightmaps").clear();
+        textures.textureScheme("Flaremaps").clear();
         App_ResourceSystem().mapManifests().initMapManifests();
 
         Def_Read();
@@ -1434,8 +1436,8 @@ void DD_UpdateEngineState()
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
-    App_ResourceSystem().initTextures();
-    App_ResourceSystem().mapManifests().initMapManifests();
+    res::Textures::get().initTextures();
+    Resources::get().mapManifests().initMapManifests();
 
     if (App_GameLoaded() && gx.UpdateState)
     {
@@ -1550,7 +1552,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
     {0, 0},
 #endif
-    {&gameDataFormat, &gameDataFormat},
+    {0, 0},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
     {&symbolicEchoMode, &symbolicEchoMode},
