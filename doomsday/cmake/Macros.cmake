@@ -235,7 +235,6 @@ macro (deng_merge_sources srcName globbing)
         # They remain part of the project so they are available in the IDE.
         set_property (SOURCE ${_mergingSources} PROPERTY HEADER_FILE_ONLY YES)
         list (APPEND SOURCES ${_turbo};${_mergingSources})
-        set (fn)
         set (_files)
         set (_mergingSources)
         set (_turbo)

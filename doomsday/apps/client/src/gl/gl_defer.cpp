@@ -93,7 +93,7 @@ typedef struct apifunc_s {
     } param;
 } apifunc_t;
 
-static dd_bool inited = false;
+static dd_bool deferredInited = false;
 static mutex_t deferredMutex;
 static DGLuint reservedTextureNames[NUM_RESERVED_TEXTURENAMES];
 static volatile int reservedCount = 0;
@@ -104,7 +104,7 @@ static deferredtask_t* allocTask(deferredtask_type_t type, void* data)
 {
     deferredtask_t* dt = 0;
 
-    assert(inited);
+    assert(deferredInited);
     dt = (deferredtask_t*) malloc(sizeof(*dt));
     if(!dt)
     {
@@ -122,7 +122,7 @@ static void enqueueTask(deferredtask_type_t type, void* data)
 {
     deferredtask_t* d;
 
-    if(!inited)
+    if(!deferredInited)
         App_Error("enqueueTask: Deferred GL task system not initialized.");
 
     d = allocTask(type, data);
@@ -141,7 +141,7 @@ static void enqueueTask(deferredtask_type_t type, void* data)
 
 static deferredtask_t* nextTask(void)
 {
-    assert(inited);
+    assert(deferredInited);
     {
     deferredtask_t* d = NULL;
     if(NULL != (d = (deferredtask_t*) deferredTaskFirst))
@@ -275,24 +275,24 @@ static void destroyTaskData(deferredtask_t* d)
 
 static void destroyTask(deferredtask_t* d)
 {
-    assert(inited && d);
+    assert(deferredInited && d);
     destroyTaskData(d);
     free(d);
 }
 
 void GL_InitDeferredTask(void)
 {
-    if(inited)
+    if(deferredInited)
         return; // Been here already...
 
-    inited = true;
+    deferredInited = true;
     deferredMutex = Sys_CreateMutex("DGLDeferredMutex");
     GL_ReserveNames();
 }
 
 void GL_ShutdownDeferredTask(void)
 {
-    if(!inited)
+    if(!deferredInited)
         return;
 
     GL_ReleaseReservedNames();
@@ -301,7 +301,7 @@ void GL_ShutdownDeferredTask(void)
     Sys_DestroyMutex(deferredMutex);
     deferredMutex = 0;
 
-    inited = false;
+    deferredInited = false;
 }
 
 int GL_DeferredTaskCount(void)
@@ -309,7 +309,7 @@ int GL_DeferredTaskCount(void)
     deferredtask_t* i = 0;
     int count = 0;
 
-    if(!inited)
+    if(!deferredInited)
         return 0;
 
     Sys_Lock(deferredMutex);
@@ -320,7 +320,7 @@ int GL_DeferredTaskCount(void)
 
 void GL_ReserveNames(void)
 {
-    if(!inited)
+    if(!deferredInited)
         return; // Just ignore.
 
     Sys_Lock(deferredMutex);
@@ -338,7 +338,7 @@ void GL_ReserveNames(void)
 
 void GL_ReleaseReservedNames(void)
 {
-    if(!inited)
+    if(!deferredInited)
         return; // Just ignore.
 
     DENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
@@ -357,7 +357,7 @@ DGLuint GL_GetReservedTextureName(void)
 
     LOG_AS("GL_GetReservedTextureName");
 
-    DENG_ASSERT(inited);
+    DENG_ASSERT(deferredInited);
 
     Sys_Lock(deferredMutex);
 
@@ -385,7 +385,7 @@ DGLuint GL_GetReservedTextureName(void)
 
 void GL_PurgeDeferredTasks(void)
 {
-    if(!inited)
+    if(!deferredInited)
         return;
 
     Sys_Lock(deferredMutex);
@@ -399,7 +399,7 @@ void GL_PurgeDeferredTasks(void)
 static deferredtask_t* GL_NextDeferredTask(void)
 {
     deferredtask_t* d = NULL;
-    if(!inited)
+    if(!deferredInited)
     {
         return NULL;
     }
@@ -414,7 +414,7 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     deferredtask_t* d;
     uint startTime;
 
-    if(novideo || !inited) return;
+    if(novideo || !deferredInited) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();

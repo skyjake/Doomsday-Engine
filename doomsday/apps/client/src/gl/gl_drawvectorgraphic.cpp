@@ -30,7 +30,7 @@
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
 
-static dd_bool inited = false;
+static dd_bool svgInited = false;
 static uint svgCount;
 static Svg** svgs;
 
@@ -113,7 +113,7 @@ static void clearSvgs(void)
 
 void R_InitSvgs(void)
 {
-    if(inited)
+    if(svgInited)
     {
         // Allow re-init.
         clearSvgs();
@@ -124,21 +124,21 @@ void R_InitSvgs(void)
         svgs = NULL;
         svgCount = 0;
     }
-    inited = true;
+    svgInited = true;
 }
 
 void R_ShutdownSvgs(void)
 {
-    if(!inited) return;
+    if(!svgInited) return;
 
     clearSvgs();
-    inited = false;
+    svgInited = false;
 }
 
 void R_UnloadSvgs(void)
 {
     uint i;
-    if(!inited) return;
+    if(!svgInited) return;
     if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return; // Nothing to do.
 
     for(i = 0; i < svgCount; ++i)
@@ -159,7 +159,7 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
         LOGDEV_GL_ERROR("Cannot draw SVG #%i: failed to prepare") << id;
         return;
     }
-    
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin->x, origin->y, 0);
 

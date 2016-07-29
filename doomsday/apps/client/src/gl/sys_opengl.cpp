@@ -52,7 +52,7 @@ PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
 
 static dd_bool doneEarlyInit = false;
-static dd_bool inited = false;
+static dd_bool sysOpenGLInited = false;
 static dd_bool firstTimeInit = true;
 
 static void initialize(void)
@@ -254,7 +254,7 @@ dd_bool Sys_GLInitialize(void)
     }
 
     // GL system is now fully initialized.
-    inited = true;
+    sysOpenGLInited = true;
 
     /**
      * We can now (re)configure GL state that is dependent upon extensions
@@ -272,9 +272,9 @@ dd_bool Sys_GLInitialize(void)
 
 void Sys_GLShutdown(void)
 {
-    if(!inited) return;
+    if(!sysOpenGLInited) return;
     // No cleanup.
-    inited = false;
+    sysOpenGLInited = false;
 }
 
 void Sys_GLConfigureDefaultState(void)

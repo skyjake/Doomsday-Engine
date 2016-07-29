@@ -21,10 +21,9 @@ include_directories (include ${DENG_API_DIR})
 
 add_definitions (-D__DOOMSDAY__=1 -D__CLIENT__=1)
 
-file (GLOB API_HEADERS ../api/*.h)
-file (GLOB_RECURSE HEADERS include/*)
-
-file (GLOB SOURCES src/*.cpp src/*.c)
+file (GLOB         API_HEADERS ../api/*.h)
+file (GLOB_RECURSE HEADERS     include/*)
+file (GLOB         SOURCES     src/*.cpp src/*.c)
 
 deng_merge_sources (audio         src/audio/*.cpp)
 deng_merge_sources (audio_base    src/audio/base/*.cpp)
@@ -47,7 +46,7 @@ deng_merge_sources (world         src/world/*.cpp)
 deng_merge_sources (world_base    src/world/base/*.cpp)
 deng_merge_sources (world_bsp     src/world/bsp/*.cpp)
 
-deng_glob_sources (SOURCES src/gl/*.cpp)
+deng_glob_sources (SOURCES src/gl/*.cpp) # Can't merge due to GL deferred calls mechanism.
 
 if (APPLE)
     include_directories (include/macx)
