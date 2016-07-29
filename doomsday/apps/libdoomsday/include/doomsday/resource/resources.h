@@ -69,6 +69,11 @@ public:
      */
     virtual void clear();
 
+    void clearAllResources();
+
+    virtual void clearAllSystemResources();
+    virtual void clearAllRuntimeResources();
+
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */

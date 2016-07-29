@@ -43,6 +43,8 @@ public:
 
     void clear();
 
+    void clearRuntimeTextures();
+
     void initTextures();
 
     /**

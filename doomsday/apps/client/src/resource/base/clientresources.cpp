@@ -245,25 +245,17 @@ DENG2_PIMPL(ClientResources)
         , modelRepository          (0)
 #endif
     {
+        LOG_AS("ClientResources");
+
 #ifdef __CLIENT__
         res::TextureManifest::setTextureConstructor([] (res::TextureManifest &m) -> res::Texture * {
             return new ClientTexture(m);
         });
-#else
-        res::TextureManifest::setTextureConstructor([] (res::TextureManifest &m) -> res::Texture * {
-            return new res::Texture(m);
-        });
-#endif
 
-        LOG_AS("ResourceSystem");
-
-#ifdef __CLIENT__
         /// @note Order here defines the ambigious-URI search order.
         createFontScheme("System");
         createFontScheme("Game");
 #endif
-
-        App::packageLoader().loadFromCommandLine();
     }
 
     ~Impl()
@@ -281,38 +273,9 @@ DENG2_PIMPL(ClientResources)
 #endif
     }
 
+#ifdef __CLIENT__
     inline de::FS1 &fileSys() { return App_FileSystem(); }
 
-    void clearRuntimeTextures()
-    {
-        auto &textures = self.textures();
-        textures.textureScheme("Flats").clear();
-        textures.textureScheme("Textures").clear();
-        textures.textureScheme("Patches").clear();
-        textures.textureScheme("Sprites").clear();
-        textures.textureScheme("Details").clear();
-        textures.textureScheme("Reflections").clear();
-        textures.textureScheme("Masks").clear();
-        textures.textureScheme("ModelSkins").clear();
-        textures.textureScheme("ModelReflectionSkins").clear();
-        textures.textureScheme("Lightmaps").clear();
-        textures.textureScheme("Flaremaps").clear();
-
-#ifdef __CLIENT__
-        self.pruneUnusedTextureSpecs();
-#endif
-    }
-
-    void clearSystemTextures()
-    {
-        self.textures().textureScheme("System").clear();
-
-#ifdef __CLIENT__
-        self.pruneUnusedTextureSpecs();
-#endif
-    }
-
-#ifdef __CLIENT__
     void clearFontManifests()
     {
         qDeleteAll(fontSchemes);
@@ -654,9 +617,7 @@ DENG2_PIMPL(ClientResources)
             }
         }
     }
-#endif
 
-#ifdef __CLIENT__
     void clearModels()
     {
         /// @todo Why only centralized memory deallocation? Bad (lazy) design...
@@ -1267,38 +1228,32 @@ DENG2_PIMPL(ClientResources)
 ClientResources::ClientResources() : d(new Impl(this))
 {}
 
+#ifdef __CLIENT__
+
 void ClientResources::clear()
 {
     Resources::clear();
 
-#ifdef __CLIENT__
     R_ShutdownSvgs();
-#endif
-    clearAllRuntimeResources();
-    animGroups().clearAllAnimGroups();
-}
-
-void ClientResources::clearAllResources()
-{
-    clearAllRuntimeResources();
-    clearAllSystemResources();
 }
 
 void ClientResources::clearAllRuntimeResources()
 {
-#ifdef __CLIENT__
+    Resources::clearAllRuntimeResources();
+
     d->clearRuntimeFonts();
-#endif
-    d->clearRuntimeTextures();
+    pruneUnusedTextureSpecs();
 }
 
 void ClientResources::clearAllSystemResources()
 {
-#ifdef __CLIENT__
+    Resources::clearAllSystemResources();
+
     d->clearSystemFonts();
-#endif
-    d->clearSystemTextures();
+    pruneUnusedTextureSpecs();
 }
+
+#endif // __CLIENT__
 
 void ClientResources::addColorPalette(res::ColorPalette &newPalette, String const &name)
 {

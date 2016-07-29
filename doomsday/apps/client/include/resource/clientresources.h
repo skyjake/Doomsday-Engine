@@ -109,15 +109,13 @@ public:
      */
     ClientResources();
 
-    void clear() override;
-
-    void clearAllResources();
-    void clearAllRuntimeResources();
-    void clearAllSystemResources();
-
     void addColorPalette(res::ColorPalette &newPalette, de::String const &name);
 
 #ifdef __CLIENT__
+
+    void clear() override;
+    void clearAllRuntimeResources() override;
+    void clearAllSystemResources() override;
 
     /**
      * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
@@ -425,11 +423,11 @@ public:  /// @todo Should be private:
     void initSystemTextures();
 #ifdef __CLIENT__
     void initModels();
-#endif
 
     void clearAllRawTextures();
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
+#endif
 
 public:
 #ifdef __CLIENT__

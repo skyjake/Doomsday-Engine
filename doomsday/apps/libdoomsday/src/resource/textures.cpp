@@ -48,6 +48,11 @@ DENG2_PIMPL(Textures)
 
     Impl(Public *i) : Base(i)
     {
+        // This may be overridden later.
+        TextureManifest::setTextureConstructor([] (TextureManifest &m) -> Texture * {
+            return new Texture(m);
+        });
+
         // Note: Order here defines the ambigious-URI search order.
         createTextureScheme("Sprites");
         createTextureScheme("Textures");
@@ -529,7 +534,7 @@ DENG2_PIMPL(Textures)
                 if (!blockContainer)
                 {
                     if (!percentEncodedName.compareWithoutCase("F_END") ||
-                       !percentEncodedName.compareWithoutCase("FF_END"))
+                        !percentEncodedName.compareWithoutCase("FF_END"))
                     {
                         blockContainer = &file.container();
                     }
@@ -544,8 +549,8 @@ DENG2_PIMPL(Textures)
 
                 // Ignore extra marker lumps.
                 if (!percentEncodedName.compareWithoutCase("FF_START") ||
-                   !percentEncodedName.compareWithoutCase("F_END")    ||
-                   !percentEncodedName.compareWithoutCase("FF_END")) continue;
+                    !percentEncodedName.compareWithoutCase("F_END")    ||
+                    !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
                 de::Uri uri("Flats", Path(percentEncodedName));
                 if (self.hasTextureManifest(uri)) continue;
@@ -697,6 +702,22 @@ void Textures::setCompositeArchiveFormat(Composite::ArchiveFormat format)
 void Textures::clear()
 {
     d->clear();
+}
+
+void Textures::clearRuntimeTextures()
+{
+    // Everything except "System".
+    textureScheme("Sprites").clear();
+    textureScheme("Textures").clear();
+    textureScheme("Flats").clear();
+    textureScheme("Patches").clear();
+    textureScheme("Details").clear();
+    textureScheme("Reflections").clear();
+    textureScheme("Masks").clear();
+    textureScheme("ModelSkins").clear();
+    textureScheme("ModelReflectionSkins").clear();
+    textureScheme("Lightmaps").clear();
+    textureScheme("Flaremaps").clear();
 }
 
 void Textures::initTextures()

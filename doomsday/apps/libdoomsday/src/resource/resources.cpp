@@ -31,6 +31,7 @@
 
 #include <de/App>
 #include <de/CommandLine>
+#include <de/PackageLoader>
 #include <de/Config>
 
 using namespace de;
@@ -125,7 +126,9 @@ DENG2_PIMPL(Resources)
 };
 
 Resources::Resources() : d(new Impl(this))
-{}
+{
+    App::packageLoader().loadFromCommandLine();
+}
 
 void Resources::timeChanged(Clock const &)
 {
@@ -135,6 +138,25 @@ void Resources::timeChanged(Clock const &)
 void Resources::clear()
 {
     d->colorPalettes.clearAllColorPalettes();
+    d->animGroups   .clearAllAnimGroups();
+
+    clearAllRuntimeResources();
+}
+
+void Resources::clearAllResources()
+{
+    clearAllRuntimeResources();
+    clearAllSystemResources();
+}
+
+void Resources::clearAllSystemResources()
+{
+    textures().textureScheme("System").clear();
+}
+
+void Resources::clearAllRuntimeResources()
+{
+    textures().clearRuntimeTextures();
 }
 
 Resources &Resources::get()
