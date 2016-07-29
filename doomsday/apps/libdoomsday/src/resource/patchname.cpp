@@ -37,7 +37,7 @@ PatchName::PatchName(String percentEncodedName, lumpnum_t lumpNum)
 lumpnum_t PatchName::lumpNum()
 {
     // Have we already searched for this lump?
-    if(_lumpNum == -2)
+    if (_lumpNum == -2)
     {
         // Mark as not found.
         _lumpNum = -1;
@@ -46,7 +46,7 @@ lumpnum_t PatchName::lumpNum()
         {
             _lumpNum = App_FileSystem().lumpNumForName(_name);
         }
-        catch(FS1::NotFoundError const &er)
+        catch (FS1::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -59,7 +59,7 @@ void PatchName::operator << (de::Reader &from)
 {
     // The raw ASCII name is not necessarily terminated.
     char asciiName[9];
-    for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
+    for (int i = 0; i < 8; ++i) { from >> asciiName[i]; }
     asciiName[8] = 0;
 
     // WAD format allows characters not normally permitted in native paths.

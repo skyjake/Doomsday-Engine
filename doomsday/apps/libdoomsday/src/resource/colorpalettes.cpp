@@ -68,7 +68,7 @@ dint ColorPalettes::colorPaletteCount() const
 ColorPalette &ColorPalettes::colorPalette(Id const &id) const
 {
     auto found = d->colorPalettes.find(id.isNone()? d->defaultColorPalette : id);
-    if(found != d->colorPalettes.end()) return *found.value();
+    if (found != d->colorPalettes.end()) return *found.value();
     /// @throw MissingResourceError An unknown/invalid id was specified.
     throw Resources::MissingResourceError("ColorPalettes::colorPalette",
                                           "Invalid ID " + id.asText());
@@ -77,7 +77,7 @@ ColorPalette &ColorPalettes::colorPalette(Id const &id) const
 String ColorPalettes::colorPaletteName(ColorPalette &palette) const
 {
     QList<String> const names = d->colorPaletteNames.keys(&palette);
-    if(!names.isEmpty())
+    if (!names.isEmpty())
     {
         return names.first();
     }
@@ -92,7 +92,7 @@ bool ColorPalettes::hasColorPalette(String name) const
 ColorPalette &ColorPalettes::colorPalette(String name) const
 {
     auto found = d->colorPaletteNames.find(name);
-    if(found != d->colorPaletteNames.end()) return *found.value();
+    if (found != d->colorPaletteNames.end()) return *found.value();
     /// @throw MissingResourceError An unknown name was specified.
     throw Resources::MissingResourceError("ColorPalettes::colorPalette", "Unknown name '" + name + "'");
 }
@@ -100,18 +100,18 @@ ColorPalette &ColorPalettes::colorPalette(String name) const
 void ColorPalettes::addColorPalette(res::ColorPalette &newPalette, String const &name)
 {
     // Do we already own this palette?
-    if(d->colorPalettes.contains(newPalette.id()))
+    if (d->colorPalettes.contains(newPalette.id()))
         return;
 
     d->colorPalettes.insert(newPalette.id(), &newPalette);
 
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
         d->colorPaletteNames.insert(name, &newPalette);
     }
 
     // If this is the first palette automatically set it as the default.
-    if(d->colorPalettes.count() == 1)
+    if (d->colorPalettes.count() == 1)
     {
         d->defaultColorPalette = newPalette.id();
     }

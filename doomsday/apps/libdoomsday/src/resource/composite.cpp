@@ -40,7 +40,7 @@ static String readAndPercentEncodeRawName(de::Reader &from)
 {
     /// @attention The raw ASCII name is not necessarily terminated.
     char asciiName[9];
-    for(int i = 0; i < 8; ++i) { from >> asciiName[i]; }
+    for (int i = 0; i < 8; ++i) { from >> asciiName[i]; }
     asciiName[8] = 0;
 
     // WAD format allows characters not typically permitted in native paths.
@@ -62,8 +62,8 @@ void Composite::Component::setOrigin(const Vector2i &origin)
 
 bool Composite::Component::operator == (Component const &other) const
 {
-    if(lumpNum() != other.lumpNum()) return false;
-    if(origin()  != other.origin())  return false;
+    if (lumpNum() != other.lumpNum()) return false;
+    if (origin()  != other.origin())  return false;
     return true;
 }
 
@@ -110,14 +110,14 @@ Composite::Composite(String const &percentEncodedName,
 
 bool Composite::operator == (Composite const &other) const
 {
-    if(dimensions()        != other.dimensions())        return false;
-    if(logicalDimensions() != other.logicalDimensions()) return false;
-    if(componentCount()    != other.componentCount())    return false;
+    if (dimensions()        != other.dimensions())        return false;
+    if (logicalDimensions() != other.logicalDimensions()) return false;
+    if (componentCount()    != other.componentCount())    return false;
 
     // Check each component also.
-    for(int i = 0; i < componentCount(); ++i)
+    for (int i = 0; i < componentCount(); ++i)
     {
-        if(components()[i] != other.components()[i]) return false;
+        if (components()[i] != other.components()[i]) return false;
     }
 
     return true;
@@ -193,7 +193,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
     pctex->d->logicalDimensions =
         pctex->d->dimensions = Vector2ui(dimensions[0], dimensions[1]);
 
-    if(format == DoomFormat)
+    if (format == DoomFormat)
     {
         // Next is some more unused junk from a previous format version.
         dint32 unused32;
@@ -212,7 +212,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
                                    pctex->d->logicalDimensions.y));
 
     int foundComponentCount = 0;
-    for(dint16 i = 0; i < componentCount; ++i)
+    for (dint16 i = 0; i < componentCount; ++i)
     {
         Component comp;
 
@@ -223,7 +223,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
         dint16 pnamesIndex;
         reader >> pnamesIndex;
 
-        if(pnamesIndex < 0 || pnamesIndex >= patchNames.count())
+        if (pnamesIndex < 0 || pnamesIndex >= patchNames.count())
         {
             LOG_RES_WARNING("Invalid PNAMES index %i in composite texture \"%s\", ignoring.")
                     << pnamesIndex << pctex->d->name;
@@ -232,7 +232,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
         {
             comp.setLumpNum(patchNames[pnamesIndex].lumpNum());
 
-            if(comp.lumpNum() >= 0)
+            if (comp.lumpNum() >= 0)
             {
                 /// There is now one more found component.
                 foundComponentCount += 1;
@@ -240,14 +240,14 @@ Composite *Composite::constructFrom(de::Reader &reader,
                 File1 &file = App_FileSystem().lump(comp.lumpNum());
 
                 // If this a "custom" component - the whole texture is.
-                if(file.container().hasCustom())
+                if (file.container().hasCustom())
                 {
                     pctex->d->flags |= Custom;
                 }
 
                 // If this is a Patch - unite the geometry of the component.
                 ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-                if(res::Patch::recognize(fileData))
+                if (res::Patch::recognize(fileData))
                 {
                     try
                     {
@@ -255,7 +255,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
                         geom |= QRect(QPoint(comp.origin().x, comp.origin().y),
                                       QSize(info.dimensions.x, info.dimensions.y));
                     }
-                    catch(IByteArray::OffsetError const &)
+                    catch (IByteArray::OffsetError const &)
                     {
                         LOG_RES_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
                                         "It may be missing from composite texture \"%s\".")
@@ -281,13 +281,13 @@ Composite *Composite::constructFrom(de::Reader &reader,
     }
 
     // Clip and apply the final height.
-    if(geom.top()  < 0) geom.setTop(0);
-    if(geom.height() > int(pctex->d->logicalDimensions.y))
+    if (geom.top()  < 0) geom.setTop(0);
+    if (geom.height() > int(pctex->d->logicalDimensions.y))
     {
         pctex->d->dimensions.y = geom.height();
     }
 
-    if(!foundComponentCount)
+    if (!foundComponentCount)
     {
         LOG_RES_WARNING("Zero valid component images in composite texture %s (will be ignored).")
             << pctex->d->name;

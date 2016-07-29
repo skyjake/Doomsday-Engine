@@ -235,9 +235,9 @@ char const *DMU_Str(uint prop)
         { 0, NULL }
     };
 
-    for(uint i = 0; props[i].str; ++i)
+    for (uint i = 0; props[i].str; ++i)
     {
-        if(props[i].prop == prop)
+        if (props[i].prop == prop)
             return props[i].str;
     }
 

@@ -85,7 +85,7 @@ TextureMaterialLayer *TextureMaterialLayer::fromDef(Record const &definition)
 {
     defn::MaterialLayer layerDef(definition);
     auto *layer = new TextureMaterialLayer();
-    for(int i = 0; i < layerDef.stageCount(); ++i)
+    for (int i = 0; i < layerDef.stageCount(); ++i)
     {
         layer->_stages.append(AnimationStage::fromDef(layerDef.stage(i)));
     }
@@ -105,9 +105,9 @@ TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index) con
 
 bool TextureMaterialLayer::hasGlow() const
 {
-    for(int i = 0; i < stageCount(); ++i)
+    for (int i = 0; i < stageCount(); ++i)
     {
-        if(stage(i).getf("glowStrength") > .0001f)
+        if (stage(i).getf("glowStrength") > .0001f)
             return true;
     }
     return false;

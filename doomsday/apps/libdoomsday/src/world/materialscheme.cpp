@@ -60,7 +60,7 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
 {
     LOG_AS("MaterialScheme::declare");
 
-    if(path.isEmpty())
+    if (path.isEmpty())
     {
         /// @throw InvalidPathError An empty path was specified.
         throw InvalidPathError("MaterialScheme::declare", "Missing/zero-length path was supplied");
@@ -72,7 +72,7 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
 
     newManifest->setScheme(*this);
 
-    if(d->index.size() != sizeBefore)
+    if (d->index.size() != sizeBefore)
     {
         // Notify interested parties that a new manifest was defined in the scheme.
         DENG2_FOR_AUDIENCE(ManifestDefined, i) i->materialSchemeManifestDefined(*this, *newManifest);
@@ -88,7 +88,7 @@ bool MaterialScheme::has(Path const &path) const
 
 MaterialManifest const &MaterialScheme::find(Path const &path) const
 {
-    if(has(path))
+    if (has(path))
     {
         return d->index.find(path, Index::NoBranch | Index::MatchFull);
     }

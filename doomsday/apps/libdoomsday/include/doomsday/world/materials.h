@@ -66,7 +66,7 @@ public:
      * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
      */
     inline bool hasMaterial(de::Uri const &path) const {
-        if(hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
+        if (hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
         return false;
     }
 

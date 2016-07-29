@@ -27,7 +27,7 @@ namespace world {
 
 static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
 {
-    if(de::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
+    if (de::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
     {
         try
         {
@@ -36,7 +36,7 @@ static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findM
                            .findByResourceUri(*resourceUri)
                                .composeUri();
         }
-        catch(res::TextureScheme::NotFoundError const &)
+        catch (res::TextureScheme::NotFoundError const &)
         {} // Ignore this error.
     }
     return de::Uri();

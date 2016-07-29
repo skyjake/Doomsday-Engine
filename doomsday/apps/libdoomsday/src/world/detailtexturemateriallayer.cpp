@@ -30,14 +30,14 @@ static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
 {
     try
     {
-        if(def.texture)
+        if (def.texture)
         {
             return res::Textures::get().textureScheme("Details")
                        .findByResourceUri(*def.texture)
                            .composeUri();
         }
     }
-    catch(res::TextureScheme::NotFoundError const &)
+    catch (res::TextureScheme::NotFoundError const &)
     {} // Ignore this error.
     return de::Uri();
 }

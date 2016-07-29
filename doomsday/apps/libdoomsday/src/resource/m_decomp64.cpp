@@ -27,16 +27,16 @@ static void cycleTable(int a, int b)
 {
     short               n;
 
-    for(;;)
+    for (;;)
     {
-        if(a == mapA[tableA[b]])
+        if (a == mapA[tableA[b]])
             n = mapB[tableA[b]];
         else
             n = mapA[tableA[b]];
 
         tableB[tableA[a]] = tableB[n] + tableB[a];
 
-        if(tableA[a] == 1)
+        if (tableA[a] == 1)
             break;
 
         a = b = tableA[a];
@@ -45,7 +45,7 @@ static void cycleTable(int a, int b)
 
 static short rotateMap(int a, int b, int c)
 {
-    if(a == mapA[tableA[a]])
+    if (a == mapA[tableA[a]])
     {
         mapB[tableA[a]] = c;
     }
@@ -54,7 +54,7 @@ static short rotateMap(int a, int b, int c)
         mapA[tableA[a]] = c;
     }
 
-    if(c == mapA[a])
+    if (c == mapA[a])
     {
         mapA[a] = b;
         return mapB[a];
@@ -78,23 +78,23 @@ void M_Decompress64(byte* dst, const byte* src)
     byte*               dstPos;
 
     // Initialize LUTs, todo: precalculate where possible.
-    for(i = 0; i < 1258; ++i)
+    for (i = 0; i < 1258; ++i)
     {
        tableB[i] = 1;
     }
 
-    for(i = 0; i < 1258; ++i)
+    for (i = 0; i < 1258; ++i)
     {
         tableA[i] = ((i + 2) / 2) - 1;
     }
 
     mapB[0] = 0;
-    for(i = 0; i < 628; ++i)
+    for (i = 0; i < 628; ++i)
     {
         mapB[1 + i] = (i * 2) + 3;
     }
 
-    for(i = 0; i < 629; ++i)
+    for (i = 0; i < 629; ++i)
     {
         mapA[i] = i * 2;
     }
@@ -111,12 +111,12 @@ void M_Decompress64(byte* dst, const byte* src)
     {
         int                 index = 1;
 
-        while(index < 629)
+        while (index < 629)
         {
-            if(curBit == 0)
+            if (curBit == 0)
                 curByte = *srcPos++;
 
-            if(curByte & 0x80)
+            if (curByte & 0x80)
                 index = mapB[index];
             else
                 index = mapA[index];
@@ -127,15 +127,15 @@ void M_Decompress64(byte* dst, const byte* src)
 
         tableB[index]++;
 
-        if(tableA[index] != 1)
+        if (tableA[index] != 1)
         {
             cycleTable(index, index);
 
-            if(tableB[1] == 2000)
+            if (tableB[1] == 2000)
             {
                 int                 i;
 
-                for(i = 0; i < 1258; ++i)
+                for (i = 0; i < 1258; ++i)
                 {
                     tableB[i] >>= 1;
                 }
@@ -146,18 +146,18 @@ void M_Decompress64(byte* dst, const byte* src)
         int                 c;
 
         c = index;
-        while(tableA[c] != 1)
+        while (tableA[c] != 1)
         {
             int                 b, a;
 
             a = tableA[c];
 
-            if(a == mapA[tableA[a]])
+            if (a == mapA[tableA[a]])
                 b = mapB[tableA[a]];
             else
                 b = mapA[tableA[a]];
 
-            if(tableB[b] < tableB[c])
+            if (tableB[b] < tableB[c])
             {
                 int                 result;
 
@@ -179,9 +179,9 @@ void M_Decompress64(byte* dst, const byte* src)
 
         val = index - 629;
 
-        if(val != 256)
+        if (val != 256)
         {
-            if(val < 256)
+            if (val < 256)
             {
                 byte                out = (val & 0xff);
 
@@ -198,12 +198,12 @@ void M_Decompress64(byte* dst, const byte* src)
                 {
                 int                 shift = 1;
 
-                for(i = 0; i < div * 2 + 4; ++i)
+                for (i = 0; i < div * 2 + 4; ++i)
                 {
-                    if(curBit == 0)
+                    if (curBit == 0)
                         curByte = *srcPos++;
 
-                    if((curByte) & 0x80)
+                    if ((curByte) & 0x80)
                         result |= shift;
 
                     curBit = (curBit == 0? 7 : curBit - 1);
@@ -216,32 +216,32 @@ void M_Decompress64(byte* dst, const byte* src)
                 num = val - 254 - (div * 62);
 
                 from = lastOut - result - strides[div] - num;
-                if(from < 0)
+                if (from < 0)
                     from += BUFF_SIZE;
 
                 to = lastOut;
 
-                for(i = 0; i < num; ++i)
+                for (i = 0; i < num; ++i)
                 {
                     byte                out = buff[from];
 
                     *dstPos++ = out;
                     buff[to] = out;
 
-                    if(++from == BUFF_SIZE)
+                    if (++from == BUFF_SIZE)
                         from = 0;
 
-                    if(++to == BUFF_SIZE)
+                    if (++to == BUFF_SIZE)
                         to = 0;
                 }
 
                 lastOut += num;
             }
 
-            if(lastOut >= BUFF_SIZE)
+            if (lastOut >= BUFF_SIZE)
                 lastOut -= BUFF_SIZE;
         }
-    } while(val != 256);
+    } while (val != 256);
 
 #undef BUFF_SIZE
 }

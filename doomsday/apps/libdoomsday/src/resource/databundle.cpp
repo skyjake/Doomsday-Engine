@@ -313,7 +313,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             // WAD files sometimes come with a matching TXT file.
             if (format == Pwad || format == Iwad)
             {
-                if(File const *wadTxt = root.tryLocate<File const>(
+                if (File const *wadTxt = root.tryLocate<File const>(
                             dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() + ".txt"))
                 {
                     Block txt;
@@ -410,7 +410,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                     subset = VAR_REQUIRES;
                 }
                 container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
-                
+
                 /*
                 qDebug() << container->d->versionedPackageId
                          << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
@@ -532,7 +532,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         if (Info::BlockElement const *english = rootBlock.findAs<Info::BlockElement>("english"))
         {
-            if(english->blockType() == "language")
+            if (english->blockType() == "language")
             {
                 // Doomsday must understand the version number.
                 meta.set(VAR_VERSION, Version(english->keyValue("version")).asText());

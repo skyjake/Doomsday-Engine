@@ -58,30 +58,30 @@ size_t M_ReadFile(const char* name, char** buffer)
 
 AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 {
-    if(isCustom) *isCustom = false;
+    if (isCustom) *isCustom = false;
 
-    if(Str_StartsWith(path, "LumpIndex:"))
+    if (Str_StartsWith(path, "LumpIndex:"))
     {
         bool isNumber;
         lumpnum_t const lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
         LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-        if(isNumber && lumpIndex.hasLump(lumpNum))
+        if (isNumber && lumpIndex.hasLump(lumpNum))
         {
             File1 &lump = lumpIndex.lump(lumpNum);
-            if(isCustom)
+            if (isCustom)
             {
                 /// @todo Custom status for contained files is not inherited from the container?
                 *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
             }
 
             // Ignore zero-length lumps.
-            if(!lump.size()) return 0;
+            if (!lump.size()) return 0;
 
             // Ensure the resulting string is terminated.
             AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
             lump.unlock();
 
-            if(Str_IsEmpty(string))
+            if (Str_IsEmpty(string))
                 return 0;
 
             return string;
@@ -90,28 +90,28 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
         return 0;
     }
 
-    if(Str_StartsWith(path, "Lumps:"))
+    if (Str_StartsWith(path, "Lumps:"))
     {
         char const *lumpName       = Str_Text(path) + 6;
         LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-        if(!lumpIndex.contains(String(lumpName) + ".lmp"))
+        if (!lumpIndex.contains(String(lumpName) + ".lmp"))
             return 0;
 
         File1 &lump = lumpIndex[lumpIndex.findLast(String(lumpName) + ".lmp")];
-        if(isCustom)
+        if (isCustom)
         {
             /// @todo Custom status for contained files is not inherited from the container?
             *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
         }
 
         // Ignore zero-length lumps.
-        if(!lump.size()) return 0;
+        if (!lump.size()) return 0;
 
         // Ensure the resulting string is terminated.
         AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
         lump.unlock();
 
-        if(Str_IsEmpty(string))
+        if (Str_IsEmpty(string))
             return 0;
 
         return string;
@@ -122,7 +122,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
     {
         QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(Str_Text(path), "rb"));
 
-        if(isCustom)
+        if (isCustom)
         {
             /// @todo Custom status for contained files is not inherited from the container?
             File1 &file = hndl->file();
@@ -131,7 +131,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 
         // Ignore zero-length lumps.
         AutoStr *string = nullptr;
-        if(size_t lumpLength = hndl->length())
+        if (size_t lumpLength = hndl->length())
         {
             // Read in the whole thing and ensure the resulting string is terminated.
             Block buffer;
@@ -142,25 +142,25 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 
         App_FileSystem().releaseFile(hndl->file());
 
-        if(!string || Str_IsEmpty(string))
+        if (!string || Str_IsEmpty(string))
             return 0;
 
         return string;
     }
-    catch(FS1::NotFoundError const &)
+    catch (FS1::NotFoundError const &)
     {} // Ignore this error.
 
 
     // Perhaps a local file known to the native file system?
     char *readBuf = 0;
-    if(size_t bytesRead = M_ReadFile(Str_Text(path), &readBuf))
+    if (size_t bytesRead = M_ReadFile(Str_Text(path), &readBuf))
     {
         // Ensure the resulting string is terminated.
         AutoStr *string = Str_PartAppend(AutoStr_New(), readBuf, 0, int(bytesRead));
         Z_Free(readBuf);
 
         // Ignore zero-length files.
-        if(Str_IsEmpty(string))
+        if (Str_IsEmpty(string))
             return 0;
 
         return string;
@@ -187,21 +187,21 @@ static size_t FileReader(const char* name, char** buffer)
     // First try with LZSS.
     LZFILE *file = lzOpen((char*) name, "rp");
 
-    if(NULL != file)
+    if (NULL != file)
     {
 #define BSIZE 1024
 
         char readBuf[BSIZE];
 
         // Read 1kb pieces until file ends.
-        while(!lzEOF(file))
+        while (!lzEOF(file))
         {
             size_t bytesRead = lzRead(readBuf, BSIZE, file);
             char* newBuf;
 
             // Allocate more memory.
             newBuf = (char*) Z_Malloc(length + bytesRead, PU_APPSTATIC, 0);
-            if(buf != NULL)
+            if (buf != NULL)
             {
                 memcpy(newBuf, buf, length);
                 Z_Free(buf);
@@ -221,20 +221,20 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     handle = open(name, O_RDONLY | O_BINARY, 0666);
-    if(handle == -1)
+    if (handle == -1)
     {
         LOG_RES_WARNING("Failed opening \"%s\" for reading") << name;
         return length;
     }
 
-    if(-1 == fstat(handle, &fileinfo))
+    if (-1 == fstat(handle, &fileinfo))
     {
         LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
         return 0;
     }
 
     length = fileinfo.st_size;
-    if(!length)
+    if (!length)
     {
         *buffer = 0;
         return 0;
@@ -245,7 +245,7 @@ static size_t FileReader(const char* name, char** buffer)
 
     size_t bytesRead = read(handle, buf, length);
     close(handle);
-    if(bytesRead < length)
+    if (bytesRead < length)
     {
         LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
     }
