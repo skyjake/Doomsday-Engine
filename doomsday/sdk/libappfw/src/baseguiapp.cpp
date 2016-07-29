@@ -23,6 +23,7 @@
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/DictionaryValue>
+#include <de/FileSystem>
 #include <de/Function>
 #include <de/NativeFont>
 #include <de/BaseWindow>

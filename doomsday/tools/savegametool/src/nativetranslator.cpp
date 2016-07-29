@@ -20,11 +20,12 @@
 #include "lzss.h"
 #include <QList>
 #include <QMutableListIterator>
-#include <de/TextApp>
 #include <de/ArrayValue>
+#include <de/FileSystem>
 #include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Reader>
+#include <de/TextApp>
 #include <de/Writer>
 #include <de/ZipArchive>
 #include "nativetranslator.h"

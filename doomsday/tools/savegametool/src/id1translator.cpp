@@ -20,7 +20,7 @@
 #include <cstring> // memcpy
 #include <de/TextApp>
 #include <de/ArrayValue>
-#include <de/File>
+#include <de/FileSystem>
 #include <de/FixedByteArray>
 #include <de/NativeFile>
 #include <de/NumberValue>

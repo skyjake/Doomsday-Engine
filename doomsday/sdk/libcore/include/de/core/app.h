@@ -22,7 +22,7 @@
 
 #include "../libcore.h"
 #include "de/Clock"
-#include "de/FileSystem"
+#include "de/FileIndex"
 #include "de/Package"
 
 /**
@@ -37,6 +37,8 @@ namespace de {
 class Archive;
 class CommandLine;
 class Config;
+class Event;
+class FileSystem;
 class Folder;
 class LogBuffer;
 class LogFilter;
@@ -293,7 +295,7 @@ public:
      *
      * @return Number of files found.
      */
-    static int findInPackages(String const &partialPath, FS::FoundFiles &files);
+    static int findInPackages(String const &partialPath, FileIndex::FoundFiles &files);
 
     /**
      * Checks if an asset exists.

@@ -37,6 +37,7 @@
 #include <de/DictionaryValue>
 #include <de/DisplayMode>
 #include <de/Error>
+#include <de/FileSystem>
 #include <de/Garbage>
 #include <de/Log>
 #include <de/LogSink>

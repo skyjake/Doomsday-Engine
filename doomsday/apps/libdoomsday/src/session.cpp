@@ -20,6 +20,7 @@
 #include "doomsday/SavedSession"
 
 #include <de/App>
+#include <de/FileSystem>
 #include <de/Log>
 #include <de/Writer>
 

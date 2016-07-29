@@ -20,6 +20,7 @@
 #include "appwindowsystem.h"
 
 #include <de/DisplayMode>
+#include <de/FileSystem>
 #include <de/ScriptSystem>
 
 using namespace de;

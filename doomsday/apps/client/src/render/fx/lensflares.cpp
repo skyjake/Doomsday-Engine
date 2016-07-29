@@ -27,6 +27,7 @@
 #include <de/concurrency.h>
 #include <doomsday/console/cmd.h>
 #include <de/Drawable>
+#include <de/FileSystem>
 #include <de/KdTreeAtlasAllocator>
 #include <de/Log>
 #include <de/Range>

@@ -17,12 +17,13 @@
  */
 
 #include "de/ScriptedInfo"
-#include "de/Script"
-#include "de/Process"
-#include "de/ArrayValue"
-#include "de/RecordValue"
-#include "de/NumberValue"
 #include "de/App"
+#include "de/ArrayValue"
+#include "de/Folder"
+#include "de/NumberValue"
+#include "de/Process"
+#include "de/RecordValue"
+#include "de/Script"
 
 #include <algorithm>
 

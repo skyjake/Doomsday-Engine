@@ -21,6 +21,7 @@
 #include "doomsday/defs/dedfile.h"
 
 #include <de/App>
+#include <de/Folder>
 #include <de/Log>
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"

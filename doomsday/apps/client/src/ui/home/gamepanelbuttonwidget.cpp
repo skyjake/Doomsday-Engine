@@ -34,6 +34,7 @@
 #include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/FileSystem>
 #include <de/PopupMenuWidget>
 #include <de/ui/FilteredData>
 

@@ -23,6 +23,7 @@
 #include <de/TextApp>
 #include <de/CommandLine>
 #include <de/LogBuffer>
+#include <de/FileSystem>
 #include <de/Time>
 #include "id1translator.h"
 #include "nativetranslator.h"

@@ -21,6 +21,7 @@
 #include <de/CommandLine>
 #include <de/DirectoryFeed>
 #include <de/Error>
+#include <de/Folder>
 #include <de/Log>
 #include <de/NativeFile>
 #include <de/NativePath>

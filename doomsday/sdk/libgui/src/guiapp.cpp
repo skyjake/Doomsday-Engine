@@ -19,6 +19,7 @@
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
 #include "de/ImageFile"
+#include <de/FileSystem>
 #include <de/Log>
 #include <de/NativePath>
 

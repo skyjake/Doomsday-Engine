@@ -18,6 +18,7 @@
 
 #include "de/ImageBank"
 #include "de/App"
+#include "de/Folder"
 
 #include <de/ScriptedInfo>
 

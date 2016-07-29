@@ -19,6 +19,7 @@
 #include "de/ImageFile"
 #include "de/HeightMap"
 #include <de/App>
+#include <de/Folder>
 
 #include <QHash>
 

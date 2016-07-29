@@ -18,15 +18,16 @@
  */
 
 #include "de/LogBuffer"
+#include "de/App"
+#include "de/DebugLogSink"
+#include "de/FileLogSink"
+#include "de/FixedByteArray"
+#include "de/Folder"
+#include "de/Guard"
 #include "de/LogSink"
 #include "de/SimpleLogFilter"
-#include "de/FileLogSink"
-#include "de/DebugLogSink"
 #include "de/TextStreamLogSink"
 #include "de/Writer"
-#include "de/FixedByteArray"
-#include "de/Guard"
-#include "de/App"
 
 #include <stdio.h>
 #include <QTextStream>

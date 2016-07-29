@@ -22,6 +22,7 @@
 #include "client/clientsubsector.h"
 #include "clientapp.h"
 
+#include <de/FileSystem>
 #include <de/ImageFile>
 #include <de/filesys/AssetObserver>
 #include <doomsday/world/world.h>

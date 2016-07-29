@@ -29,10 +29,12 @@
 #include "de/DirectoryFeed"
 #include "de/EscapeParser"
 #include "de/FileLogSink"
+#include "de/FileSystem"
 #include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
+#include "de/math.h"
 #include "de/Module"
 #include "de/NativeFile"
 #include "de/NumberValue"
@@ -44,7 +46,6 @@
 #include "de/Version"
 #include "de/Writer"
 #include "de/ZipArchive"
-#include "de/math.h"
 
 #include <QDir>
 #include <QThread>

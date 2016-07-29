@@ -23,8 +23,10 @@
 #include "doomsday/doomsdayapp.h"
 
 #include <de/App>
-#include <de/NativeFile>
+#include <de/FileSystem>
+#include <de/Folder>
 #include <de/Library>
+#include <de/NativeFile>
 #include <de/str.h>
 
 #include <QList>
@@ -181,7 +183,7 @@ char const *Library_LastError()
 
 de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func)
 {
-    de::FS::Index const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+    auto const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
     DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
         auto &libraryFile = i->second->as<de::LibraryFile>();

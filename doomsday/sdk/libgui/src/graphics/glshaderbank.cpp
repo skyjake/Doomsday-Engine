@@ -22,10 +22,11 @@
 #include "de/GLUniform"
 
 #include <de/App>
-#include <de/ScriptedInfo>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
 #include <de/DictionaryValue>
+#include <de/Folder>
+#include <de/ScriptedInfo>
 #include <de/math.h>
 
 #include <QMap>

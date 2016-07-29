@@ -23,6 +23,7 @@
 #include "de/BlockValue"
 #include "de/Config"
 #include "de/DictionaryValue"
+#include "de/FileSystem"
 #include "de/Module"
 #include "de/NumberValue"
 #include "de/Record"
@@ -232,7 +233,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     foreach (String dir, importPaths)
     {
         String p;
-        FileSystem::FoundFiles matching;
+        FS::FoundFiles matching;
         File *found = 0;
         if (dir.empty())
         {

@@ -17,10 +17,10 @@
  */
 
 #include "de/InfoBank"
-#include "de/ScriptedInfo"
-#include "de/File"
 #include "de/App"
+#include "de/Folder"
 #include "de/Package"
+#include "de/ScriptedInfo"
 
 namespace de {
 

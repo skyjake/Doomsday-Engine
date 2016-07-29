@@ -18,6 +18,7 @@
 
 #include "de/ModelBank"
 #include <de/App>
+#include <de/Folder>
 
 namespace de {
 

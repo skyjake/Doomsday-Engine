@@ -23,17 +23,17 @@
 #include <QPainter>
 #include <QGLFormat>
 
-#include <de/ImageBank>
-#include <de/GLState>
+#include <de/AtlasTexture>
 #include <de/Drawable>
+#include <de/FileSystem>
 #include <de/GLBuffer>
 #include <de/GLShader>
-#include <de/GLTexture>
+#include <de/GLState>
 #include <de/GLTarget>
-#include <de/AtlasTexture>
-#include <de/ModelDrawable>
+#include <de/GLTexture>
 #include <de/GuiApp>
-#include <de/Clock>
+#include <de/ImageBank>
+#include <de/ModelDrawable>
 
 using namespace de;
 

@@ -19,14 +19,15 @@
 
 #include "con_config.h"
 
-#include <cctype>
+#include <de/App>
+#include <de/DirectoryFeed>
+#include <de/FileSystem>
 #include <de/Log>
+#include <de/NativeFile>
 #include <de/Path>
 #include <de/Writer>
-#include <de/App>
-#include <de/NativeFile>
-#include <de/DirectoryFeed>
 #include <de/c_wrapper.h>
+#include <cctype>
 
 #include <doomsday/help.h>
 #include <doomsday/console/exec.h>

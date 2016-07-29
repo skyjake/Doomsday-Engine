@@ -1,4 +1,4 @@
-/** @file nativeui.cpp Native GUI functionality. 
+/** @file nativeui.cpp Native GUI functionality.
  * @ingroup base
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -32,6 +32,7 @@
 
 #include <de/App>
 #include <de/ByteArrayFile>
+#include <de/FileSystem>
 
 #include "ui/nativeui.h"
 #include "ui/clientwindow.h"

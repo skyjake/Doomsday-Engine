@@ -17,8 +17,9 @@
  */
 
 #include "de/filesys/AssetObserver"
-#include "de/LinkFile"
 #include "de/App"
+#include "de/FileSystem"
+#include "de/LinkFile"
 #include <QRegExp>
 
 namespace de {

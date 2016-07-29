@@ -17,18 +17,18 @@
  */
 
 #include "de/Animation"
+#include "de/Animation"
 #include "de/App"
 #include "de/BlockValue"
 #include "de/Context"
 #include "de/DictionaryValue"
-#include "de/File"
+#include "de/Folder"
 #include "de/Function"
 #include "de/NativePointerValue"
 #include "de/Path"
 #include "de/Record"
 #include "de/RecordValue"
 #include "de/TextValue"
-#include "de/Animation"
 
 namespace de {
 

@@ -114,6 +114,8 @@ public:
     typedef FileIndex Index;
     typedef FileIndex::FoundFiles FoundFiles;
 
+    static FileSystem &get();
+
 public:
     /**
      * Constructs a new file system. The file system needs to be manually

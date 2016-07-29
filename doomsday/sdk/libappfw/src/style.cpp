@@ -20,11 +20,12 @@
 
 #include <de/App>
 #include <de/CommandLine>
-#include <de/ScriptSystem>
-#include <de/Record>
-#include <de/Variable>
-#include <de/RecordValue>
+#include <de/Folder>
 #include <de/Package>
+#include <de/Record>
+#include <de/RecordValue>
+#include <de/ScriptSystem>
+#include <de/Variable>
 
 namespace de {
 

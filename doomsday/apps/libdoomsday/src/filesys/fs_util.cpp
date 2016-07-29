@@ -45,9 +45,11 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/lumpindex.h"
 
+#include <de/App>
+#include <de/FileSystem>
+#include <de/Folder>
 #include <de/Log>
 #include <de/NativeFile>
-#include <de/App>
 #include <de/findfile.h>
 
 using namespace de;

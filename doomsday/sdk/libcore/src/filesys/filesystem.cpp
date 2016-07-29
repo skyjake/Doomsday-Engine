@@ -18,15 +18,17 @@
  */
 
 #include "de/FS"
-#include "de/LibraryFile"
+
+#include "de/App"
 #include "de/ArchiveFeed"
-#include "de/DirectoryFeed"
-#include "de/NativePath"
 #include "de/ArchiveFolder"
-#include "de/ZipArchive"
+#include "de/DirectoryFeed"
+#include "de/Guard"
+#include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
-#include "de/Guard"
+#include "de/NativePath"
+#include "de/ZipArchive"
 
 #include <QHash>
 
@@ -367,6 +369,11 @@ Folder &FileSystem::root()
 Folder const &FileSystem::root() const
 {
     return d->root;
+}
+
+FileSystem &FileSystem::get() // static
+{
+    return App::fileSystem();
 }
 
 } // namespace de

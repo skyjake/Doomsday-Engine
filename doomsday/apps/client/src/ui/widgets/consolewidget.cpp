@@ -24,8 +24,10 @@
 #include "ui/clientwindow.h"
 #include "ui/styledlogsinkformatter.h"
 
+#include <de/AnimationRule>
 #include <de/App>
 #include <de/Config>
+#include <de/FileSystem>
 #include <de/KeyEvent>
 #include <de/LogBuffer>
 #include <de/LogWidget>
@@ -34,7 +36,6 @@
 #include <de/PersistentState>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
-#include <de/AnimationRule>
 #include <de/ScriptCommandWidget>
 #include <de/SignalAction>
 #include <de/ToggleWidget>

@@ -26,6 +26,7 @@
 #include "doomsday/filesys/zip.h"
 
 #include <de/App>
+#include <de/FileSystem>
 #include <de/NativeFile>
 #include <de/Path>
 

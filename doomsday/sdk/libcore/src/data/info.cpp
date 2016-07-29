@@ -18,10 +18,11 @@
  */
 
 #include "de/Info"
-#include "de/ScriptLex"
+#include "de/App"
+#include "de/Folder"
 #include "de/Log"
 #include "de/LogBuffer"
-#include "de/App"
+#include "de/ScriptLex"
 #include "de/SourceLineTable"
 
 #include <QFile>

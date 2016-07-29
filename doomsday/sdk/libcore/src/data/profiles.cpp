@@ -17,9 +17,10 @@
  */
 
 #include "de/Profiles"
-#include "de/String"
-#include "de/File"
 #include "de/App"
+#include "de/FileSystem"
+#include "de/Folder"
+#include "de/String"
 
 #include <QTextStream>
 

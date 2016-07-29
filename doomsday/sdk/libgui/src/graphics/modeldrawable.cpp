@@ -23,6 +23,7 @@
 #include <de/Animation>
 #include <de/App>
 #include <de/ByteArrayFile>
+#include <de/Folder>
 #include <de/GLBuffer>
 #include <de/GLProgram>
 #include <de/GLState>
