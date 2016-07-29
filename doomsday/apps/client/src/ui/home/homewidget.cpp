@@ -48,8 +48,8 @@ static TimeDelta const SCROLL_SPAN = .5;
 static TimeDelta const DISMISS_SPAN = 1.5;
 
 DENG_GUI_PIMPL(HomeWidget)
+, DENG2_OBSERVES(App,          StartupComplete)
 , DENG2_OBSERVES(Games,        Readiness)
-//, DENG2_OBSERVES(DoomsdayApp,  GameUnload)
 , DENG2_OBSERVES(DoomsdayApp,  GameLoad)
 , DENG2_OBSERVES(DoomsdayApp,  GameChange)
 , DENG2_OBSERVES(Variable,     Change)
@@ -85,10 +85,10 @@ DENG_GUI_PIMPL(HomeWidget)
 
     Impl(Public *i) : Base(i)
     {
+        App::app().audienceForStartupComplete()     += this;
         DoomsdayApp::games().audienceForReadiness() += this;
-        DoomsdayApp::app().audienceForGameChange() += this;
-        //DoomsdayApp::app().audienceForGameUnload() += this;
-        DoomsdayApp::app().audienceForGameLoad() += this;
+        DoomsdayApp::app().audienceForGameChange()  += this;
+        DoomsdayApp::app().audienceForGameLoad()    += this;
 
         columnWidth   = new IndirectRule;
         scrollOffset  = new AnimationRule(0, Animation::EaseOut);
@@ -216,10 +216,13 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void gameReadinessUpdated()
+    void appStartupCompleted()
     {
         blanker->guiDeleteLater();
+    }
 
+    void gameReadinessUpdated()
+    {
         updateVisibleColumnsAndTabs();
         calculateColumnCount();
         updateLayout();
