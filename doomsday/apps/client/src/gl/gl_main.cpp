@@ -93,7 +93,7 @@ static viewport_t currentView;
 
 static inline ClientResources &resSys()
 {
-    return App_ResourceSystem();
+    return App_Resources();
 }
 
 dd_bool GL_IsInited()

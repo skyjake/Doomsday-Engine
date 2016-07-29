@@ -87,7 +87,7 @@ void H_Register(void)
 
 TextureVariantSpec const &Rend_HaloTextureSpec()
 {
-    return App_ResourceSystem().textureSpec(TC_HALO_LUMINANCE,
+    return App_Resources().textureSpec(TC_HALO_LUMINANCE,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
         false, false, false, true);
 }

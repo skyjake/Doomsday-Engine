@@ -64,6 +64,8 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/virtualmappings.h>
+#include <doomsday/filesys/wad.h>
+#include <doomsday/filesys/zip.h>
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/resources.h>
@@ -603,10 +605,17 @@ void App_AbnormalShutdown(char const *message)
     throw Error("App_AudioSystem", "App not yet initialized");
 }
 
-ClientResources &App_ResourceSystem()
+#ifdef __CLIENT__
+ClientResources &App_Resources()
 {
-    return static_cast<ClientResources &>(Resources::get());
+    return ClientResources::get();
 }
+#else
+Resources &App_Resources()
+{
+    return Resources::get();
+}
+#endif
 
 ClientServerWorld &App_World()
 {
@@ -703,7 +712,7 @@ int DD_ActivateGameWorker(void *context)
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
     auto &plugins = DoomsdayApp::plugins();
-    ClientResources &resSys = App_ResourceSystem();
+    auto &resSys = App_Resources();
 
     // Some resources types are located prior to initializing the game.
     auto &textures = res::Textures::get();
@@ -984,8 +993,8 @@ static void initialize()
 #ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
-    App_ResourceSystem().clearAllTextureSpecs();
-    App_ResourceSystem().initSystemTextures();
+    App_Resources().clearAllTextureSpecs();
+    App_Resources().initSystemTextures();
     LensFx_Init();
 #endif
 
@@ -1155,13 +1164,13 @@ static void initialize()
         textures.initTextures();
         textures.textureScheme("Lightmaps").clear();
         textures.textureScheme("Flaremaps").clear();
-        App_ResourceSystem().mapManifests().initMapManifests();
+        App_Resources().mapManifests().initMapManifests();
 
         Def_Read();
 
-        App_ResourceSystem().sprites().initSprites();
+        App_Resources().sprites().initSprites();
 #ifdef __CLIENT__
-        App_ResourceSystem().initModels();
+        App_Resources().initModels();
 #endif
 
         Def_PostInit();
@@ -1363,8 +1372,8 @@ static dint DD_UpdateEngineStateWorker(void *context)
     if (!novideo)
     {
         GL_InitRefresh();
-        App_ResourceSystem().clearAllTextureSpecs();
-        App_ResourceSystem().initSystemTextures();
+        App_Resources().clearAllTextureSpecs();
+        App_Resources().initSystemTextures();
     }
 #endif
 
@@ -1382,10 +1391,10 @@ static dint DD_UpdateEngineStateWorker(void *context)
     //
     // Rebuild resource data models (defs might've changed).
     //
-    App_ResourceSystem().sprites().initSprites();
+    App_Resources().sprites().initSprites();
 #ifdef __CLIENT__
-    App_ResourceSystem().clearAllRawTextures();
-    App_ResourceSystem().initModels();
+    App_Resources().clearAllRawTextures();
+    App_Resources().initModels();
 #endif
     Def_PostInit();
 
@@ -1818,7 +1827,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
 #ifdef __CLIENT__
     try
     {
-        FontScheme &scheme = App_ResourceSystem().fontScheme(str);
+        FontScheme &scheme = App_Resources().fontScheme(str);
         if (!scheme.name().compareWithoutCase("System"))
         {
             return FS_SYSTEM;
@@ -2323,9 +2332,13 @@ void DD_ConsoleRegister()
     Demo_Register();
     P_ConsoleRegister();
     I_Register();
+    ClientResources::consoleRegister();
 #endif
 
-    ClientResources::consoleRegister();
+#ifdef __SERVER__
+    Resources::consoleRegister();
+#endif
+
     Net_Register();
     ClientServerWorld::consoleRegister();
     InFineSystem::consoleRegister();

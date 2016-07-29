@@ -6257,7 +6257,7 @@ D_CMD(TexReset)
 
 static void detailFactorChanged()
 {
-    App_ResourceSystem().releaseGLTexturesByScheme("Details");
+    App_Resources().releaseGLTexturesByScheme("Details");
 }
 
 /*

@@ -30,6 +30,7 @@
 #include <de/Log>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/wad.h>
 #include <doomsday/world/MaterialArchive>
 
 #include "dd_main.h"

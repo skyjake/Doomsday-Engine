@@ -674,7 +674,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
     if (!mo.state) return 0;
 
     state_t &st = *mo.state;
-    FrameModelDef *modef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+    FrameModelDef *modef = App_Resources().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if (!modef) return 0; // No model available.
 
     dfloat interp = -1;
@@ -734,7 +734,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
         }
         else if (worldTime)
         {
-            *retNextModef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+            *retNextModef = App_Resources().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
         }
         else if (st.nextState > 0) // Check next state.
         {
@@ -750,8 +750,8 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
                 dint max = 20; // Let's not be here forever...
                 while (!stopScan)
                 {
-                    if(!((  !App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it))
-                          || App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0)
+                    if(!((  !App_Resources().modelDefForState(runtimeDefs.states.indexOf(it))
+                          || App_Resources().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0)
                          && it->nextState > 0))
                     {
                         stopScan = true;
@@ -759,7 +759,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        FrameModelDef *mdit = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                        FrameModelDef *mdit = App_Resources().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if (mdit && mdit->interNext)
                         {
                             forever
@@ -799,7 +799,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
 
             if (!foundNext)
             {
-                *retNextModef = App_ResourceSystem().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                *retNextModef = App_Resources().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
             }
         }
     }

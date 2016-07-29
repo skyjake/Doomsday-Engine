@@ -288,7 +288,7 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return App_ResourceSystem().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return App_Resources().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, -2, 0, false, true, true, false);
 }
 
@@ -385,7 +385,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
 {
-    return App_ResourceSystem().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return App_Resources().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, -2, -1, true, true, true, false);
 }
 

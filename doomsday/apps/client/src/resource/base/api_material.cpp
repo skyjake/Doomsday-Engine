@@ -31,7 +31,7 @@ using namespace de;
 #undef DD_MaterialForTextureUri
 DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
-    if(!textureUri) return nullptr;  // Not found.
+    if (!textureUri) return nullptr;  // Not found.
 
     try
     {
@@ -39,17 +39,17 @@ DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return reinterpret_cast<world_Material *>(&world::Materials::get().material(uri));
     }
-    catch(world::MaterialManifest::MissingMaterialError const &er)
+    catch (world::MaterialManifest::MissingMaterialError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch(ClientResources::UnknownSchemeError const &er)
+    catch (Resources::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch(Resources::MissingResourceManifestError const &)
+    catch (Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
 
     return nullptr;  // Not found.
@@ -69,7 +69,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
     {
         return world::Materials::get().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
-    catch(Resources::MissingResourceManifestError const &)
+    catch (Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
     return NOMATERIALID;
 }
@@ -77,13 +77,13 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 #undef Materials_ResolveUriCString
 DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
 {
-    if(uriCString && uriCString[0])
+    if (uriCString && uriCString[0])
     {
         try
         {
             return world::Materials::get().materialManifest(de::Uri(uriCString, RC_NULL)).id();
         }
-        catch(Resources::MissingResourceManifestError const &)
+        catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
     return NOMATERIALID;

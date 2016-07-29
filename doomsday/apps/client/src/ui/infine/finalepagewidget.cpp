@@ -22,7 +22,7 @@
 
 #include <doomsday/world/Material>
 #include <de/vector1.h>
-#include "dd_main.h" // App_ResourceSystem()
+#include "dd_main.h" // App_Resources()
 
 #ifdef __CLIENT__
 #  include <de/GLState>
@@ -97,7 +97,7 @@ FinalePageWidget::~FinalePageWidget()
 #ifdef __CLIENT__
 static inline MaterialVariantSpec const &uiMaterialSpec()
 {
-    return App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+    return App_Resources().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_REPEAT, GL_REPEAT, 0, 1, 0,
                                              false, false, false, false);
 }

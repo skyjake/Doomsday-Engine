@@ -1392,14 +1392,14 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    return App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)) != nullptr;
+    return App_Resources().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)) != nullptr;
 }
 
 #undef P_MapIsCustom
 DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    if(res::MapManifest const *mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
+    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1410,7 +1410,7 @@ DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
-    if(res::MapManifest const *mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
+    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::Uri(uriCString, RC_NULL)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());
     }
@@ -1429,7 +1429,7 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     App_AudioSystem().aboutToUnloadMap();
 
 #ifdef __CLIENT__
-    App_ResourceSystem().purgeCacheQueue();
+    App_Resources().purgeCacheQueue();
 #endif
 
 #ifdef __SERVER__

@@ -837,6 +837,18 @@ Textures::AllTextures const &Textures::allTextures() const
     return d->textures;
 }
 
+TextureManifest &Textures::declareSystemTexture(Path const &texturePath, de::Uri const &resourceUri)
+{
+    auto &scheme = textureScheme("System");
+    dint const uniqueId = scheme.count() + 1;
+    return scheme.declare(texturePath,
+                          Texture::Custom,
+                          Vector2ui(),
+                          Vector2i(),
+                          uniqueId,
+                          &resourceUri);
+}
+
 Texture *Textures::texture(String schemeName, de::Uri const &resourceUri)
 {
     if (!resourceUri.isEmpty())

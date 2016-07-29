@@ -28,7 +28,7 @@
 #include <de/GLInfo>
 #include <de/texgamma.h>
 #include "dd_def.h"  // texGamma
-#include "dd_main.h"  // App_ResourceSystem()
+#include "dd_main.h"  // App_Resources()
 #include "sys_system.h"
 
 #include "gl/gl_main.h"
@@ -184,7 +184,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         if(monochrome && !scaleSharp)
         {
             GL_DeSaturatePalettedImage(image.pixels,
-                                       App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
+                                       App_Resources().colorPalettes().colorPalette(image.paletteId),
                                        image.size.x, image.size.y);
         }
 

@@ -168,7 +168,7 @@ void FR_SetFont(fontid_t num)
     {
         try
         {
-            App_ResourceSystem().toFontManifest(num);
+            App_Resources().toFontManifest(num);
             fr.fontNum = num;
             return;
         }
@@ -425,7 +425,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
     errorIfNotInited("FR_CharSize");
     if(size)
     {
-        Vector2ui dimensions = App_ResourceSystem().font(fr.fontNum).glyphPosCoords(ch).size();
+        Vector2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
@@ -436,7 +436,7 @@ int FR_CharWidth(uchar ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return App_ResourceSystem().font(fr.fontNum).glyphPosCoords(ch).width();
+        return App_Resources().font(fr.fontNum).glyphPosCoords(ch).width();
     return 0;
 }
 
@@ -445,7 +445,7 @@ int FR_CharHeight(uchar ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return App_ResourceSystem().font(fr.fontNum).glyphPosCoords(ch).height();
+        return App_Resources().font(fr.fontNum).glyphPosCoords(ch).height();
     return 0;
 }
 
@@ -454,7 +454,7 @@ int FR_SingleLineHeight(char const *text)
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontNum == 0 || !text)
         return 0;
-    AbstractFont &font = App_ResourceSystem().font(fr.fontNum);
+    AbstractFont &font = App_Resources().font(fr.fontNum);
     int ascent = font.ascent();
     if(ascent != 0)
         return ascent;
@@ -466,7 +466,7 @@ int FR_GlyphTopToAscent(char const *text)
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontNum == 0 || !text)
         return 0;
-    AbstractFont &font = App_ResourceSystem().font(fr.fontNum);
+    AbstractFont &font = App_Resources().font(fr.fontNum);
     int lineHeight = font.lineSpacing();
     if(lineHeight == 0)
         return 0;
@@ -520,7 +520,7 @@ static int textFragmentHeight(char const *fragment)
         height = de::max(height, FR_CharHeight(c));
     }
 
-    return topToAscent(&App_ResourceSystem().font(fr.fontNum)) + height;
+    return topToAscent(&App_Resources().font(fr.fontNum)) + height;
 }
 
 /*
@@ -536,7 +536,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 {
     DENG2_ASSERT(fragment != 0 && fragment[0]);
 
-    AbstractFont *font = &App_ResourceSystem().font(fr.fontNum);
+    AbstractFont *font = &App_Resources().font(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     dd_bool noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     dd_bool noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
@@ -1034,7 +1034,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 {
                     try
                     {
-                        state->fontNum = App_ResourceSystem().fontManifest(de::Uri(buf, RC_NULL)).uniqueId();
+                        state->fontNum = App_Resources().fontManifest(de::Uri(buf, RC_NULL)).uniqueId();
                         continue;
                     }
                     catch(Resources::MissingResourceManifestError const &)
@@ -1553,7 +1553,7 @@ DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
     if(!uri) return NOFONTID;
     try
     {
-        return App_ResourceSystem().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
+        return App_Resources().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
     }
     catch(Resources::MissingResourceManifestError const &)
     {}

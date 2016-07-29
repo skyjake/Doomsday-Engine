@@ -49,7 +49,11 @@ DENG2_PIMPL_NOREF(ColorPalettes)
 
         defaultColorPalette = 0;
     }
+
+    DENG2_PIMPL_AUDIENCE(Addition)
 };
+
+DENG2_AUDIENCE_METHOD(ColorPalettes, Addition)
 
 ColorPalettes::ColorPalettes()
     : d(new Impl)
@@ -97,7 +101,7 @@ ColorPalette &ColorPalettes::colorPalette(String name) const
     throw Resources::MissingResourceError("ColorPalettes::colorPalette", "Unknown name '" + name + "'");
 }
 
-void ColorPalettes::addColorPalette(res::ColorPalette &newPalette, String const &name)
+void ColorPalettes::addColorPalette(ColorPalette &newPalette, String const &name)
 {
     // Do we already own this palette?
     if (d->colorPalettes.contains(newPalette.id()))
@@ -115,6 +119,8 @@ void ColorPalettes::addColorPalette(res::ColorPalette &newPalette, String const 
     {
         d->defaultColorPalette = newPalette.id();
     }
+
+    DENG2_FOR_AUDIENCE2(Addition, i) i->colorPaletteAdded(newPalette);
 }
 
 Id ColorPalettes::defaultColorPalette() const
@@ -122,7 +128,7 @@ Id ColorPalettes::defaultColorPalette() const
     return d->defaultColorPalette;
 }
 
-void ColorPalettes::setDefaultColorPalette(res::ColorPalette *newDefaultPalette)
+void ColorPalettes::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 {
     d->defaultColorPalette = newDefaultPalette ? newDefaultPalette->id().asUInt32() : 0;
 }

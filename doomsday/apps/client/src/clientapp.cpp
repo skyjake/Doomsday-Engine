@@ -336,8 +336,8 @@ DENG2_PIMPL(ClientApp)
         Demo_StopPlayback();
         GL_PurgeDeferredTasks();
 
-        App_ResourceSystem().releaseAllGLTextures();
-        App_ResourceSystem().pruneUnusedTextureSpecs();
+        App_Resources().releaseAllGLTextures();
+        App_Resources().pruneUnusedTextureSpecs();
         GL_LoadLightingSystemTextures();
         GL_LoadFlareTextures();
         Rend_ParticleLoadSystemTextures();

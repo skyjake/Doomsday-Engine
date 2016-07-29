@@ -28,7 +28,7 @@
 #include <doomsday/res/Sprites>
 #include <doomsday/world/Materials>
 
-#include "dd_main.h"  // App_ResourceSystem
+#include "dd_main.h"  // App_Resources
 #include "def_main.h"
 #include "sys_system.h"  // novideo
 #include "gl/sys_opengl.h"
@@ -53,9 +53,9 @@ DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
 #ifdef __CLIENT__
-    if (FrameModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
+    if (FrameModelDef *modelDef = App_Resources().modelDefForState(stateIndex))
     {
-        App_ResourceSystem().cache(modelDef);
+        App_Resources().cache(modelDef);
     }
 #endif
 }
@@ -87,7 +87,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
         {
             if (state_t *state = Def_GetState(i))
             {
-                App_ResourceSystem().cache(state->sprite, spec);
+                App_Resources().cache(state->sprite, spec);
             }
         }
         /// @todo What about sounds?
@@ -128,7 +128,7 @@ DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 #ifdef __CLIENT__
 static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 {
-    return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return App_Resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              0, 1, -1, false, true, true, false);
 }
 #endif

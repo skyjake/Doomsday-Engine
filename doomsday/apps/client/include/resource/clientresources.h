@@ -21,6 +21,10 @@
 #ifndef DENG_CLIENT_RESOURCES_H
 #define DENG_CLIENT_RESOURCES_H
 
+#ifndef __CLIENT__
+#  error "resource/clientresources.h is only for the Client"
+#endif
+
 #include <QList>
 #include <QMap>
 #include <QSet>
@@ -109,13 +113,13 @@ public:
      */
     ClientResources();
 
-    void addColorPalette(res::ColorPalette &newPalette, de::String const &name);
-
 #ifdef __CLIENT__
 
     void clear() override;
     void clearAllRuntimeResources() override;
     void clearAllSystemResources() override;
+
+    void initSystemTextures() override;
 
     /**
      * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
@@ -417,20 +421,13 @@ public:
      */
     void purgeCacheQueue();
 
-#endif // __CLIENT__
-
 public:  /// @todo Should be private:
-    void initSystemTextures();
-#ifdef __CLIENT__
     void initModels();
-
     void clearAllRawTextures();
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
-#endif
 
 public:
-#ifdef __CLIENT__
     /**
      * Register the console commands, variables, etc..., of this module.
      */

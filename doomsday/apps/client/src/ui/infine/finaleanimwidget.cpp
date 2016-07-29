@@ -22,7 +22,7 @@
 #include <doomsday/res/Textures>
 #include "ui/infine/finaleanimwidget.h"
 
-#include "dd_main.h"   // App_ResourceSystem()
+#include "dd_main.h"   // App_Resources()
 #include "api_sound.h"
 
 #ifdef __CLIENT__
@@ -189,7 +189,7 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
 
 static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
 {
-    return App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+    return App_Resources().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              0, -3, 0, false, false, false, false);
 }

@@ -63,7 +63,7 @@ DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
 {
     QScopedPointer<ServerSystem> serverSystem;
-    QScopedPointer<ClientResources> resourceSys;
+    QScopedPointer<Resources> resources;
     QScopedPointer<audio::System> audioSys;
     ClientServerWorld world;
     InFineSystem infineSys;
@@ -153,8 +153,8 @@ ServerApp::ServerApp(int &argc, char **argv)
     d->serverSystem.reset(new ServerSystem);
     addSystem(*d->serverSystem);
 
-    d->resourceSys.reset(new ClientResources);
-    addSystem(*d->resourceSys);
+    d->resources.reset(new Resources);
+    addSystem(*d->resources);
 
     d->audioSys.reset(new ::audio::System);
     addSystem(*d->audioSys);
@@ -264,9 +264,9 @@ InFineSystem &ServerApp::infineSystem()
     return *app().d->audioSys;
 }
 
-ClientResources &ServerApp::resourceSystem()
+Resources &ServerApp::resources()
 {
-    return *app().d->resourceSys;
+    return *app().d->resources;
 }
 
 ClientServerWorld &ServerApp::world()

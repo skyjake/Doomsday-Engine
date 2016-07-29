@@ -167,10 +167,11 @@ ClientResources &ClientResources::get() // static
 
 DENG2_PIMPL(ClientResources)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(FontScheme,        ManifestDefined)
-, DENG2_OBSERVES(FontManifest,      Deletion)
-, DENG2_OBSERVES(AbstractFont,      Deletion)
-, DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
+, DENG2_OBSERVES(FontScheme,         ManifestDefined)
+, DENG2_OBSERVES(FontManifest,       Deletion)
+, DENG2_OBSERVES(AbstractFont,       Deletion)
+, DENG2_OBSERVES(res::ColorPalettes, Addition)
+, DENG2_OBSERVES(res::ColorPalette,  ColorTableChange)
 #endif
 {
 #ifdef __CLIENT__
@@ -255,6 +256,8 @@ DENG2_PIMPL(ClientResources)
         /// @note Order here defines the ambigious-URI search order.
         createFontScheme("System");
         createFontScheme("Game");
+
+        self.colorPalettes().audienceForAddition() += this;
 #endif
     }
 
@@ -1209,6 +1212,12 @@ DENG2_PIMPL(ClientResources)
         fonts.removeOne(const_cast<AbstractFont *>(&font));
     }
 
+    void colorPaletteAdded(res::ColorPalette &newPalette)
+    {
+        // Observe changes to the color table so we can schedule texture updates.
+        newPalette.audienceForColorTableChange += this;
+    }
+
     /// Observes ColorPalette ColorTableChange
     void colorPaletteColorTableChanged(res::ColorPalette &colorPalette)
     {
@@ -1253,55 +1262,34 @@ void ClientResources::clearAllSystemResources()
     pruneUnusedTextureSpecs();
 }
 
-#endif // __CLIENT__
-
-void ClientResources::addColorPalette(res::ColorPalette &newPalette, String const &name)
-{
-    colorPalettes().addColorPalette(newPalette, name);
-
-#ifdef __CLIENT__
-    // Observe changes to the color table so we can schedule texture updates.
-    newPalette.audienceForColorTableChange += d;
-#endif
-}
-
 void ClientResources::initSystemTextures()
 {
-    LOG_AS("ResourceSystem");
+    Resources::initSystemTextures();
 
-    static const struct TexDef {
+    LOG_AS("ClientResources");
+
+    static struct {
         String const graphicName;
-        String const path;
-    } texDefs[] = {
-        { "unknown",    "unknown" },
-        { "missing",    "missing" },
+        Path const path;
+    } const texDefs[] = {
         { "bbox",       "bbox" },
         { "gray",       "gray" },
         { "boxcorner",  "ui/boxcorner" },
         { "boxfill",    "ui/boxfill" },
-        { "boxshade",   "ui/boxshade" },
-        { "", "" }
+        { "boxshade",   "ui/boxshade" }
     };
 
     LOG_RES_VERBOSE("Initializing System textures...");
 
-    for (duint i = 0; !texDefs[i].graphicName.isEmpty(); ++i)
+    for (auto const &def : texDefs)
     {
-        struct TexDef const &def = texDefs[i];
-
-        dint uniqueId = i + 1/*1-based index*/;
-        de::Uri resourceUri("Graphics", Path(def.graphicName));
-
-        textures().declareTexture(de::Uri("System", Path(def.path)), res::Texture::Custom,
-                       Vector2ui(), Vector2i(), uniqueId, &resourceUri);
+        textures().declareSystemTexture(def.path, de::Uri("Graphics", def.graphicName));
     }
 
     // Define any as yet undefined system textures.
     /// @todo Defer until necessary (manifest texture is first referenced).
     textures().deriveAllTexturesInScheme("System");
 }
-
-#ifdef __CLIENT__
 
 rawtex_t *ClientResources::rawTexture(lumpnum_t lumpNum)
 {
@@ -2079,7 +2067,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     }
     else // Consider resources in any scheme.
     {
-        foreach (FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        foreach (FontScheme *scheme, App_Resources().allFontSchemes())
         {
             scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
         }
@@ -2126,16 +2114,16 @@ static void printFontIndex(de::Uri const &search,
         LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
-    else if (App_ResourceSystem().knownFontScheme(search.scheme()))
+    else if (App_Resources().knownFontScheme(search.scheme()))
     {
-        printTotal = printFontIndex2(&App_ResourceSystem().fontScheme(search.scheme()),
+        printTotal = printFontIndex2(&App_Resources().fontScheme(search.scheme()),
                                      search.path(), flags | de::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach (FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        foreach (FontScheme *scheme, App_Resources().allFontSchemes())
         {
             int numPrinted = printFontIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if (numPrinted)
@@ -2150,7 +2138,7 @@ static void printFontIndex(de::Uri const &search,
 
 static bool isKnownFontSchemeCallback(String name)
 {
-    return App_ResourceSystem().knownFontScheme(name);
+    return App_Resources().knownFontScheme(name);
 }
 
 D_CMD(ListFonts)
@@ -2159,7 +2147,7 @@ D_CMD(ListFonts)
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
     if (!search.scheme().isEmpty() &&
-       !App_ResourceSystem().knownFontScheme(search.scheme()))
+       !App_Resources().knownFontScheme(search.scheme()))
     {
         LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
@@ -2175,7 +2163,7 @@ D_CMD(PrintFontStats)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_MSG(_E(b) "Font Statistics:");
-    foreach (FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+    foreach (FontScheme *scheme, App_Resources().allFontSchemes())
     {
         FontScheme::Index const &index = scheme->index();
 

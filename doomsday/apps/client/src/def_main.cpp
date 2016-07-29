@@ -85,11 +85,6 @@ static inline FS1 &fileSys()
     return App_FileSystem();
 }
 
-static inline ClientResources &resSys()
-{
-    return App_ResourceSystem();
-}
-
 void RuntimeDefs::clear()
 {
     for (dint i = 0; i < sounds.size(); ++i)
@@ -667,7 +662,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
 
-    resSys().textures().defineTexture("Flaremaps", resourceUri);
+    res::Textures::get().defineTexture("Flaremaps", resourceUri);
 }
 
 static void defineLightmap(de::Uri const &resourceUri)
@@ -677,7 +672,7 @@ static void defineLightmap(de::Uri const &resourceUri)
     // Reference to none?
     if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
 
-    resSys().textures().defineTexture("Lightmaps", resourceUri);
+    res::Textures::get().defineTexture("Lightmaps", resourceUri);
 }
 
 static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
@@ -757,7 +752,7 @@ static void generateMaterialDefsForAllTexturesInScheme(res::TextureScheme &schem
 
 static inline void generateMaterialDefsForAllTexturesInScheme(String const &schemeName)
 {
-    generateMaterialDefsForAllTexturesInScheme(resSys().textures().textureScheme(schemeName));
+    generateMaterialDefsForAllTexturesInScheme(res::Textures::get().textureScheme(schemeName));
 }
 
 static void generateMaterialDefs()
@@ -1024,7 +1019,7 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                     // Add a new stage.
                     try
                     {
-                        res::TextureManifest &texture = resSys().textures().textureScheme("Details")
+                        res::TextureManifest &texture = res::Textures::get().textureScheme("Details")
                                 .findByResourceUri(*detailDef->stage.texture);
                         dlayer->addStage(world::DetailTextureMaterialLayer::AnimationStage
                                          (texture.composeUri(), stage.tics, stage.variance,
@@ -1068,14 +1063,14 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                     // Add a new stage.
                     try
                     {
-                        res::TextureManifest &texture = resSys().textures().textureScheme("Reflections")
+                        res::TextureManifest &texture = res::Textures::get().textureScheme("Reflections")
                                                                .findByResourceUri(*shineDef->stage.texture);
 
                         if (shineDef->stage.maskTexture)
                         {
                             try
                             {
-                                res::TextureManifest *maskTexture = &resSys().textures().textureScheme("Masks")
+                                res::TextureManifest *maskTexture = &res::Textures::get().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
 
                                 slayer->addStage(world::ShineTextureMaterialLayer::AnimationStage
@@ -1135,7 +1130,7 @@ static void interpretMaterialDef(Record const &definition)
                 de::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
                 try
                 {
-                    res::TextureManifest &texManifest = resSys().textures().textureManifest(textureUri);
+                    res::TextureManifest &texManifest = res::Textures::get().textureManifest(textureUri);
                     if (texManifest.hasTexture() && texManifest.texture().isFlagged(res::Texture::Custom))
                     {
                         manifest->setFlags(world::MaterialManifest::Custom);
@@ -1156,7 +1151,7 @@ static void interpretMaterialDef(Record const &definition)
         /// @todo Defer until necessary.
         configureMaterial(*manifest->derive(), definition);
     }
-    catch (ClientResources::UnknownSchemeError const &er)
+    catch (Resources::UnknownSchemeError const &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
             << materialUri << er.asText();
@@ -1180,7 +1175,7 @@ static void invalidateAllMaterials()
 #ifdef __CLIENT__
 static void clearFontDefinitionLinks()
 {
-    for (AbstractFont *font : resSys().allFonts())
+    for (AbstractFont *font : ClientResources::get().allFonts())
     {
         if (CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
         {
@@ -1228,7 +1223,7 @@ void Def_Read()
     // Composite fonts.
     for (dint i = 0; i < defs.compositeFonts.size(); ++i)
     {
-        resSys().newFontFromDef(defs.compositeFonts[i]);
+        ClientResources::get().newFontFromDef(defs.compositeFonts[i]);
     }
 #endif
 
@@ -1633,15 +1628,15 @@ void Def_PostInit()
             st->model = -1;
             try
             {
-                FrameModelDef &modef = resSys().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                FrameModelDef &modef = ClientResources::get().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
                 if (modef.subModelId(0) == NOMODELID)
                 {
                     continue;
                 }
 
-                FrameModel &mdl = resSys().model(modef.subModelId(0));
+                FrameModel &mdl = ClientResources::get().model(modef.subModelId(0));
 
-                st->model = resSys().indexOf(&modef);
+                st->model = ClientResources::get().indexOf(&modef);
                 st->frame = mdl.frameNumber(st->frameName);
                 if (st->frame < 0) st->frame = 0;
                 if (st->endFrameName[0])

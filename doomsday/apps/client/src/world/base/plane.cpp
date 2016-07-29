@@ -21,7 +21,7 @@
 #include "world/plane.h"
 
 #include "dd_loop.h"  // frameTimePos
-#include "dd_main.h"  // App_ResourceSystem()
+#include "dd_main.h"  // App_Resources()
 
 #include "world/map.h"
 #include "world/thinkers.h"

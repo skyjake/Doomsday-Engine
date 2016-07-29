@@ -1621,7 +1621,7 @@ DEFFC(ImageAt)
     char const *name  = OP_CSTRING(3);
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
 
-    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if (rawtex_t *rawTex = App_Resources().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
@@ -1776,7 +1776,7 @@ DEFFC(AnimImage)
     char const *encodedName = OP_CSTRING(1);
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum       = App_FileSystem().lumpNumForName(encodedName);
-    if (rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if (rawtex_t *rawTex = App_Resources().declareRawTexture(lumpNum))
     {
         anim.newFrame(FinaleAnimWidget::Frame::PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         return;

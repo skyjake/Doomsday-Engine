@@ -1739,7 +1739,7 @@ dint System::playMusic(Record const &definition, bool looped)
             break;
 
         case MUSP_EXT:
-            if(d->playMusicFile(App_ResourceSystem().tryFindMusicFile(definition), looped))
+            if(d->playMusicFile(App_Resources().tryFindMusicFile(definition), looped))
                 return true;
 
             // Next, try non-MUS lumps.

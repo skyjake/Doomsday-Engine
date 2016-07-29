@@ -404,7 +404,7 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageColorIdx(image.pixels, image.size.x, image.size.y,
-                                    App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
+                                    App_Resources().colorPalettes().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
         }
@@ -432,7 +432,7 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageColorIdx(image.pixels, image.size.x, image.size.y,
-                                    App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
+                                    App_Resources().colorPalettes().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
             Vector3f color(ac->color.rgb);
@@ -466,7 +466,7 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageLineColorIdx(image.pixels, image.size.x, image.size.y, 0,
-                                        App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
+                                        App_Resources().colorPalettes().colorPalette(image.paletteId),
                                         false, &ac->color);
             }
         }
@@ -495,7 +495,7 @@ static void performImageAnalyses(image_t const &image,
             {
                 FindAverageLineColorIdx(image.pixels, image.size.x, image.size.y,
                                         image.size.y - 1,
-                                        App_ResourceSystem().colorPalettes().colorPalette(image.paletteId),
+                                        App_Resources().colorPalettes().colorPalette(image.paletteId),
                                         false, &ac->color);
             }
         }

@@ -159,6 +159,14 @@ void Resources::clearAllRuntimeResources()
     textures().clearRuntimeTextures();
 }
 
+void Resources::initSystemTextures()
+{
+    LOG_AS("Resources");
+
+    textures().declareSystemTexture("unknown", de::Uri("Graphics", "unknown"));
+    textures().declareSystemTexture("missing", de::Uri("Graphics", "missing"));
+}
+
 Resources &Resources::get()
 {
     DENG2_ASSERT(theResources);

@@ -30,6 +30,7 @@
 namespace res
 {
     class MapManifests;
+    class ColorPalette;
     class ColorPalettes;
     class Textures;
     class AnimGroups;
@@ -73,6 +74,8 @@ public:
 
     virtual void clearAllSystemResources();
     virtual void clearAllRuntimeResources();
+
+    virtual void initSystemTextures();
 
     /**
      * Lookup a ResourceClass by symbolic @a name.

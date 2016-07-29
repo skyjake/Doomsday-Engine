@@ -624,8 +624,8 @@ DENG2_PIMPL(ClientServerWorld)
         Time begunPrecacheAt;
         // Sky models usually have big skins.
         rendSys().sky().cacheAssets();
-        App_ResourceSystem().cacheForCurrentMap();
-        App_ResourceSystem().processCacheQueue();
+        App_Resources().cacheForCurrentMap();
+        App_Resources().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
         rendSys().clearDrawLists();
@@ -802,7 +802,7 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 
     if(!mapUri.path().isEmpty())
     {
-        mapDef = App_ResourceSystem().mapManifests().tryFindMapManifest(mapUri);
+        mapDef = App_Resources().mapManifests().tryFindMapManifest(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.

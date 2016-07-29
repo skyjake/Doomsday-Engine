@@ -32,7 +32,7 @@
 #include <doomsday/filesys/fs_main.h>
 
 #include "clientapp.h"
-#include "dd_main.h"  // App_ResourceSystem()
+#include "dd_main.h"  // App_Resources()
 #include "def_main.h"
 
 #include "sys_system.h"
@@ -108,7 +108,7 @@ void GL_TexReset()
 {
     if (!initedOk) return;
 
-    App_ResourceSystem().releaseAllGLTextures();
+    App_Resources().releaseAllGLTextures();
     LOG_GL_VERBOSE("Released all GL textures");
 
     bool useBusyMode = !BusyMode_Active();
@@ -374,7 +374,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
 void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    foreach (rawtex_t *raw, App_ResourceSystem().collectRawTextures())
+    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
     {
         if (raw->tex) // Is the texture loaded?
         {
@@ -389,7 +389,7 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
 
 void GL_ReleaseTexturesForRawImages()
 {
-    foreach (rawtex_t *raw, App_ResourceSystem().collectRawTextures())
+    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
     {
         if (raw->tex)
         {

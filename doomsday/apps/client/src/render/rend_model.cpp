@@ -354,7 +354,7 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
         curFrame += mobjId % sub.frameRange;
     }
 
-    return App_ResourceSystem().model(sub.modelId).frame(curFrame);
+    return App_Resources().model(sub.modelId).frame(curFrame);
 }
 
 /**
@@ -606,7 +606,7 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
     }
 
     SubmodelDef &smf = mf.subModelDef(submodel);
-    FrameModel &mdl = App_ResourceSystem().model(smf.modelId);
+    FrameModel &mdl = App_Resources().model(smf.modelId);
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
@@ -660,7 +660,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     FrameModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
-    FrameModel &mdl = App_ResourceSystem().model(smf.modelId);
+    FrameModel &mdl = App_Resources().model(smf.modelId);
 
     // Do not bother with infinitely small models...
     if(mf->scale == Vector3f(0, 0, 0))

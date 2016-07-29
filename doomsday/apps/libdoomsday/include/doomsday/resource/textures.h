@@ -179,6 +179,8 @@ public:
                             resourceUri);
     }
 
+    TextureManifest &declareSystemTexture(de::Path const &texturePath, de::Uri const &resourceUri);
+
     Texture *defineTexture(de::String schemeName,
                            de::Uri const &resourceUri,
                            de::Vector2ui const &dimensions = de::Vector2ui());

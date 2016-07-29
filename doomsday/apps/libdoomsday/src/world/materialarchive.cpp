@@ -353,7 +353,7 @@ MaterialArchive *MaterialArchive_New(int useSegments)
     auto *archive = new world::MaterialArchive(useSegments);
 
     // Populate the archive using the application's global/main Material collection.
-    App_ResourceSystem().forAllMaterials([&archive] (Material &material)
+    App_Resources().forAllMaterials([&archive] (Material &material)
     {
         archive->addRecord(material);
         return de::LoopContinue;

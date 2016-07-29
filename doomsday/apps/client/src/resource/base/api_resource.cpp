@@ -20,15 +20,15 @@
 #define DENG_NO_API_MACROS_RESOURCE
 #include "de_base.h"
 #include "api_resource.h"
-#include "resource/clientresources.h"
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
 #  include "render/r_main.h" // texGammaLut
 #endif
 
-#include <doomsday/resource/colorpalettes.h>
 #include <doomsday/resource/animgroups.h>
+#include <doomsday/resource/colorpalettes.h>
+#include <doomsday/resource/resources.h>
 #include <doomsday/res/Textures>
 #include <de/texgamma.h>
 
@@ -103,36 +103,40 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
 
     LOG_AS("R_CreateColorPalette");
 
-    String name(nameCStr);
-    if(name.isEmpty())
-    {
-        LOG_RES_WARNING("Invalid/zero-length name specified, ignoring.");
-        return 0;
-    }
-
     try
     {
+        using namespace res;
+
+        String name(nameCStr);
+        if(name.isEmpty())
+        {
+            LOG_RES_WARNING("Invalid/zero-length name specified, ignoring.");
+            return 0;
+        }
+
         QVector<Vector3ub> colors =
-            res::ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
+            ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
+
+        auto &palettes = Resources::get().colorPalettes();
 
         // Replacing an existing palette?
-        if(App_ResourceSystem().colorPalettes().hasColorPalette(name))
+        if(palettes.hasColorPalette(name))
         {
-            res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(name);
+            ColorPalette &palette = palettes.colorPalette(name);
             palette.replaceColorTable(colors);
             return palette.id();
         }
 
         // A new palette.
-        res::ColorPalette *palette = new res::ColorPalette(colors);
-        App_ResourceSystem().addColorPalette(*palette, name);
+        ColorPalette *palette = new ColorPalette(colors);
+        palettes.addColorPalette(*palette, name);
 
         return palette->id();
     }
     catch(res::ColorTableReader::FormatError const &er)
     {
         LOG_RES_WARNING("Error creating/replacing color palette '%s':\n")
-            << name << er.asText();
+            << nameCStr << er.asText();
     }
     return 0;
 }
@@ -147,7 +151,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
 
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(paletteId);
+        res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(paletteId);
 
         // Convert the mapping table.
         int const colorCount  = palette.colorCount();
@@ -162,7 +166,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
         // Create/update this translation.
         palette.newTranslation(Str_Text(translationId), mappings);
     }
-    catch(ClientResources::MissingResourceError const &er)
+    catch(Resources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
@@ -182,9 +186,9 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
     LOG_AS("R_GetColorPaletteNumForName");
     try
     {
-        return App_ResourceSystem().colorPalettes().colorPalette(name).id();
+        return App_Resources().colorPalettes().colorPalette(name).id();
     }
-    catch(ClientResources::MissingResourceError const &er)
+    catch(Resources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -198,10 +202,10 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
     LOG_AS("R_GetColorPaletteNameForNum");
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(id);
-        return App_ResourceSystem().colorPalettes().colorPaletteName(palette).toUtf8().constData();
+        res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(id);
+        return App_Resources().colorPalettes().colorPaletteName(palette).toUtf8().constData();
     }
-    catch(ClientResources::MissingResourceError const &er)
+    catch(Resources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -226,7 +230,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 
     try
     {
-        Vector3ub palColor = App_ResourceSystem().colorPalettes().colorPalette(paletteId)[colorIdx];
+        Vector3ub palColor = App_Resources().colorPalettes().colorPalette(paletteId)[colorIdx];
         rgb[0] = palColor.x;
         rgb[1] = palColor.y;
         rgb[2] = palColor.z;
@@ -237,7 +241,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
             rgb[2] = R_TexGammaLut(rgb[2]);
         }
     }
-    catch(ClientResources::MissingResourceError const &er)
+    catch(Resources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -261,7 +265,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
 
     try
     {
-        res::ColorPalette &palette = App_ResourceSystem().colorPalettes().colorPalette(paletteId);
+        res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(paletteId);
         if(applyTexGamma)
         {
             Vector3ub palColor = palette[colorIdx];
@@ -277,7 +281,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
             rgb[2] = palColor.z;
         }
     }
-    catch(ClientResources::MissingResourceError const &er)
+    catch(Resources::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");

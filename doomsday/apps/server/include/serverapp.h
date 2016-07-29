@@ -23,10 +23,10 @@
 #include <de/TextApp>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Games>
+#include <doomsday/resource/resources.h>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "audio/system.h"
-#include "resource/clientresources.h"
 #include "world/clientserverworld.h"
 
 /**
@@ -57,7 +57,7 @@ public:
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
     static audio::System &audioSystem();
-    static ClientResources &resourceSystem();
+    static Resources &resources();
     static ClientServerWorld &world();
 
 protected:

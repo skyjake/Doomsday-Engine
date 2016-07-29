@@ -24,13 +24,15 @@
 #include <QMap>
 #include <de/LibraryFile>
 #include <de/String>
-#include <doomsday/resource/resourceclass.h>
+#include <doomsday/resource/resources.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
 #include <doomsday/Games>
 
-#include "audio/system.h"
+#ifdef __CLIENT__
 #include "resource/clientresources.h"
+#endif
+#include "audio/system.h"
 #include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
@@ -60,8 +62,13 @@ audio::System &App_AudioSystem();
 /// Returns the application's global InFineSystem.
 InFineSystem &App_InFineSystem();
 
-/// Returns the application's global ResourceSystem.
-ClientResources &App_ResourceSystem();
+#ifdef __CLIENT__
+/// Returns the application's resources.
+ClientResources &App_Resources();
+#else
+/// Returns the application's resources.
+Resources &App_Resources();
+#endif
 
 /// Returns the application's global WorldSystem.
 ClientServerWorld &App_World();
@@ -113,6 +120,8 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 /// @overload
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 
+#ifdef __CLIENT__
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
+#endif
 
 #endif  // DENG_MAIN_H

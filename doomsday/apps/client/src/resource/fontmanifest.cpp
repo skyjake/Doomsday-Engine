@@ -58,7 +58,7 @@ FontScheme &FontManifest::scheme() const
 {
     LOG_AS("FontManifest");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
-    foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+    foreach(FontScheme *scheme, App_Resources().allFontSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }

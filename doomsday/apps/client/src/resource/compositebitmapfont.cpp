@@ -24,7 +24,7 @@
 #include <doomsday/res/Textures>
 
 #include "api_resource.h" // R_GetPatchInfo
-#include "dd_main.h" // App_ResourceSystem(), isDedicated
+#include "dd_main.h" // App_Resources(), isDedicated
 #include "sys_system.h" // novideo
 #include "gl/gl_texmanager.h" // GL_TextureVariantSpec
 
