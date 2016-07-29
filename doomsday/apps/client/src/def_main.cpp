@@ -1139,7 +1139,7 @@ static void interpretMaterialDef(Record const &definition)
                 catch (Resources::MissingResourceManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
-                    LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer 0 stage 0): %s")
+                    LOG_RES_MSG("Ignoring unknown texture \"%s\" in Material \"%s\" (layer 0 stage 0): %s")
                         << textureUri
                         << materialUri
                         << er.asText();

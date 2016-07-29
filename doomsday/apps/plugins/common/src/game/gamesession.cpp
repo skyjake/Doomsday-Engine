@@ -626,8 +626,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             ST_CloseAll(i, true/*fast*/);
         }
 
-        // Delete raw images to conserve texture memory.
-        DD_Executef(true, "texreset raw");
+        if (!IS_SERVER)
+        {
+            // Delete raw images to conserve texture memory.
+            DD_Executef(true, "texreset raw");
+        }
 
         // Are we playing a briefing? (No, if we've already visited this map).
         if (revisit)

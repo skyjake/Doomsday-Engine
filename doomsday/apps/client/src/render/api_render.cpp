@@ -19,6 +19,10 @@
 
 #define DENG_NO_API_MACROS_RENDER
 
+#ifndef __CLIENT__
+#  error "api_render.cpp is for the client only"
+#endif
+
 #include "de_platform.h"
 #include "api_render.h"
 
@@ -38,10 +42,7 @@
 #include "render/rend_model.h"
 
 #include "resource/clientresources.h"
-
-#ifdef __CLIENT__
-#  include "MaterialVariantSpec"
-#endif
+#include "MaterialVariantSpec"
 
 using namespace de;
 
@@ -52,12 +53,10 @@ DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 #undef Models_CacheForState
 DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
-#ifdef __CLIENT__
     if (FrameModelDef *modelDef = App_Resources().modelDefForState(stateIndex))
     {
         App_Resources().cache(modelDef);
     }
-#endif
 }
 
 // r_draw.cpp
@@ -125,13 +124,11 @@ DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 #undef R_SkyParams
 DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
-#ifdef __CLIENT__
 static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 {
     return App_Resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              0, 1, -1, false, true, true, false);
 }
-#endif
 
 #undef R_GetSpriteInfo
 DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
@@ -163,7 +160,6 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 
     if (::novideo) return true;  // We can't prepare the material.
 
-#ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialAnimator &matAnimator = reinterpret_cast<world::Material *>(info->material)->as<ClientMaterial>()
             .getAnimator(pspriteMaterialSpec_GetSpriteInfo());
@@ -180,14 +176,6 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
     info->geometry.size.height = matDimensions.y + texBorder * 2;
 
     tex->glCoords(&info->texCoord[0], &info->texCoord[1]);
-#else
-    Texture &tex = *info->material->layer(0).stage(0).texture;
-
-    info->geometry.origin.x    = -tex.origin().x;
-    info->geometry.origin.y    = -tex.origin().y;
-    info->geometry.size.width  = info->material->width();
-    info->geometry.size.height = info->material->height();
-#endif
 
     return true;
 }

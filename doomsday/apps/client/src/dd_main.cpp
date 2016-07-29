@@ -994,9 +994,9 @@ static void initialize()
     GL_Init();
     GL_InitRefresh();
     App_Resources().clearAllTextureSpecs();
-    App_Resources().initSystemTextures();
     LensFx_Init();
 #endif
+    App_Resources().initSystemTextures();
 
 #ifdef __CLIENT__
     // Do deferred uploads.
@@ -1373,9 +1373,9 @@ static dint DD_UpdateEngineStateWorker(void *context)
     {
         GL_InitRefresh();
         App_Resources().clearAllTextureSpecs();
-        App_Resources().initSystemTextures();
     }
 #endif
+    App_Resources().initSystemTextures();
 
     if (initiatedBusyMode)
     {

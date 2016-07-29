@@ -22,7 +22,7 @@
 #include "ui/joystick.h"
 
 #ifndef __CLIENT__
-#  error "joystick_win32.cpp is only the client"
+#  error "joystick_win32.cpp is only for the client"
 #endif
 
 #include <doomsday/console/var.h>
@@ -119,7 +119,7 @@ bool Joystick_Init()
     }
 
     // Show some info.
-    joyName = ddi.tszProductName; /// @todo unicode? -jk        
+    joyName = ddi.tszProductName; /// @todo unicode? -jk
     LOG_INPUT_MSG("Joystick name: %s") << joyName;
 
     // Create the joystick device.

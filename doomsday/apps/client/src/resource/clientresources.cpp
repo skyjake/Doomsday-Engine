@@ -26,31 +26,29 @@
 #include <QtAlgorithms>
 
 #include <de/memory.h>
-#include <de/stack.h>  /// @todo remove me
 #include <de/App>
 #include <de/ArrayValue>
+#include <de/ByteOrder>
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/Function>
 #include <de/Log>
 #include <de/Loop>
 #include <de/Module>
+#include <de/NativePath>
 #include <de/NumberValue>
 #include <de/PackageLoader>
 #include <de/Reader>
-#include <de/ScriptSystem>
+#include <de/RecordValue>
+#include <de/StringPool>
 #include <de/Task>
 #include <de/TaskPool>
 #include <de/Time>
-#include <de/ByteOrder>
-#include <de/NativePath>
-#include <de/RecordValue>
-#include <de/StringPool>
 
-#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/music.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>
@@ -70,91 +68,35 @@
 #include "dd_main.h"
 #include "dd_def.h"
 
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#  include "ui/progress.h"
-#  include "sys_system.h"  // novideo
-#  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h"
-#  include "gl/svg.h"
-#  include "resource/clienttexture.h"
-#  include "render/rend_model.h"
-#  include "render/rend_particle.h"  // Rend_ParticleReleaseSystemTextures
+#include "clientapp.h"
+#include "ui/progress.h"
+#include "sys_system.h"  // novideo
+#include "gl/gl_tex.h"
+#include "gl/gl_texmanager.h"
+#include "gl/svg.h"
+#include "resource/clienttexture.h"
+#include "render/rend_model.h"
+#include "render/rend_particle.h"  // Rend_ParticleReleaseSystemTextures
 
 // For smart caching logics:
-#  include "network/net_demo.h"  // playback
-#  include "render/rend_main.h"  // Rend_MapSurfaceMaterialSpec
-#  include "render/billboard.h"  // Rend_SpriteMaterialSpec
-#  include "render/skydrawable.h"
+#include "network/net_demo.h"  // playback
+#include "render/rend_main.h"  // Rend_MapSurfaceMaterialSpec
+#include "render/billboard.h"  // Rend_SpriteMaterialSpec
+#include "render/skydrawable.h"
 
-#  include "world/clientserverworld.h"
-#  include "world/map.h"
-#  include "world/p_object.h"
-#  include "world/sky.h"
-#  include "world/thinkers.h"
-#  include "Sector"
-#  include "Surface"
-#endif
+#include "world/clientserverworld.h"
+#include "world/map.h"
+#include "world/p_object.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
+#include "Sector"
+#include "Surface"
 
-#ifdef __CLIENT__
-namespace de {
-namespace internal
-{
-    static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
-    {
-        return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
-    }
-
-    static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
-        texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-        int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
-    {
-        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
-
-        flags &= ~TSF_INTERNAL_MASK;
-
-        spec.context         = tc;
-        spec.flags           = flags;
-        spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
-        spec.mipmapped       = mipmapped;
-        spec.wrapS           = wrapS;
-        spec.wrapT           = wrapT;
-        spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
-        spec.magFilter       = de::clamp(-3, magFilter, 1);
-        spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
-        spec.gammaCorrection = gammaCorrection;
-        spec.noStretch       = noStretch;
-        spec.toAlpha         = toAlpha;
-
-        if (tClass || tMap)
-        {
-            spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
-            spec.tClass      = de::max(0, tClass);
-            spec.tMap        = de::max(0, tMap);
-        }
-
-        return spec;
-    }
-
-    static detailvariantspecification_t &configureDetailTextureSpec(
-        detailvariantspecification_t &spec, float contrast)
-    {
-        int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
-
-        spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
-        return spec;
-    }
-
-} // namespace internal
-} // namespace de
-#endif // __CLIENT__
+using namespace de;
 
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
-
-using namespace de;
 
 // Console variables (globals).
 byte precacheMapMaterials = true;
@@ -166,15 +108,12 @@ ClientResources &ClientResources::get() // static
 }
 
 DENG2_PIMPL(ClientResources)
-#ifdef __CLIENT__
 , DENG2_OBSERVES(FontScheme,         ManifestDefined)
 , DENG2_OBSERVES(FontManifest,       Deletion)
 , DENG2_OBSERVES(AbstractFont,       Deletion)
 , DENG2_OBSERVES(res::ColorPalettes, Addition)
 , DENG2_OBSERVES(res::ColorPalette,  ColorTableChange)
-#endif
 {
-#ifdef __CLIENT__
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
 
@@ -235,20 +174,16 @@ DENG2_PIMPL(ClientResources)
     /// the material is destroyed in the mean time.
     typedef QList<CacheTask *> CacheQueue;
     CacheQueue cacheQueue;
-#endif
 
     Impl(Public *i)
         : Base(i)
-#ifdef __CLIENT__
         , fontManifestCount        (0)
         , fontManifestIdMapSize    (0)
         , fontManifestIdMap        (0)
         , modelRepository          (0)
-#endif
     {
         LOG_AS("ClientResources");
 
-#ifdef __CLIENT__
         res::TextureManifest::setTextureConstructor([] (res::TextureManifest &m) -> res::Texture * {
             return new ClientTexture(m);
         });
@@ -258,12 +193,10 @@ DENG2_PIMPL(ClientResources)
         createFontScheme("Game");
 
         self.colorPalettes().audienceForAddition() += this;
-#endif
     }
 
     ~Impl()
     {
-#ifdef __CLIENT__
         self.clearAllFontSchemes();
         clearFontManifests();
         self.clearAllRawTextures();
@@ -273,10 +206,8 @@ DENG2_PIMPL(ClientResources)
         clearMaterialSpecs();
 
         clearModels();
-#endif
     }
 
-#ifdef __CLIENT__
     inline de::FS1 &fileSys() { return App_FileSystem(); }
 
     void clearFontManifests()
@@ -374,6 +305,52 @@ DENG2_PIMPL(ClientResources)
         return *findMaterialSpec(tpl, true);
     }
 
+    static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
+    {
+        return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
+    }
+
+    static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
+        texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+        int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
+    {
+        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+
+        flags &= ~TSF_INTERNAL_MASK;
+
+        spec.context         = tc;
+        spec.flags           = flags;
+        spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+        spec.mipmapped       = mipmapped;
+        spec.wrapS           = wrapS;
+        spec.wrapT           = wrapT;
+        spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
+        spec.magFilter       = de::clamp(-3, magFilter, 1);
+        spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
+        spec.gammaCorrection = gammaCorrection;
+        spec.noStretch       = noStretch;
+        spec.toAlpha         = toAlpha;
+
+        if (tClass || tMap)
+        {
+            spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
+            spec.tClass      = de::max(0, tClass);
+            spec.tMap        = de::max(0, tMap);
+        }
+
+        return spec;
+    }
+
+    static detailvariantspecification_t &configureDetailTextureSpec(
+        detailvariantspecification_t &spec, float contrast)
+    {
+        int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+
+        spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
+        return spec;
+    }
+
     TextureVariantSpec &linkTextureSpec(TextureVariantSpec *spec)
     {
         DENG2_ASSERT(spec != 0);
@@ -384,7 +361,7 @@ DENG2_PIMPL(ClientResources)
             textureSpecs.append(spec);
             break;
         case TST_DETAIL: {
-            int hash = internal::hashDetailTextureSpec(spec->detailVariant);
+            int hash = hashDetailTextureSpec(spec->detailVariant);
             detailTextureSpecs[hash].append(spec);
             break; }
         }
@@ -408,7 +385,7 @@ DENG2_PIMPL(ClientResources)
             break; }
 
         case TST_DETAIL: {
-            int hash = internal::hashDetailTextureSpec(tpl.detailVariant);
+            int hash = hashDetailTextureSpec(tpl.detailVariant);
             foreach (TextureVariantSpec *varSpec, detailTextureSpecs[hash])
             {
                 if (*varSpec == tpl)
@@ -437,7 +414,7 @@ DENG2_PIMPL(ClientResources)
         static TextureVariantSpec tpl;
         tpl.type = TST_GENERAL;
 
-        internal::configureTextureSpec(tpl.variant, tc, flags, border, tClass, tMap, wrapS,
+        configureTextureSpec(tpl.variant, tc, flags, border, tClass, tMap, wrapS,
             wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
             noStretch, toAlpha);
 
@@ -450,7 +427,7 @@ DENG2_PIMPL(ClientResources)
         static TextureVariantSpec tpl;
 
         tpl.type = TST_DETAIL;
-        internal::configureDetailTextureSpec(tpl.detailVariant, contrast);
+        configureDetailTextureSpec(tpl.detailVariant, contrast);
         return findTextureSpec(tpl, true);
     }
 
@@ -795,7 +772,7 @@ DENG2_PIMPL(ClientResources)
                 << NativePath(modelFilePath).pretty();
         }
 
-#ifdef DENG2_DEBUG
+#ifdef DENG_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
         dint skinIdx = 0;
         for (FrameModelSkin const &skin : mdl.skins())
@@ -825,7 +802,7 @@ DENG2_PIMPL(ClientResources)
         // Find the top and bottom heights.
         dfloat top, bottom;
         dfloat height = self.model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
-        if (!height) height = 1;
+        if (fequal(height, 0.f)) height = 1;
 
         dfloat scale = destHeight / height;
 
@@ -1231,13 +1208,10 @@ DENG2_PIMPL(ClientResources)
             }
         }
     }
-#endif // __CLIENT__
 };
 
 ClientResources::ClientResources() : d(new Impl(this))
 {}
-
-#ifdef __CLIENT__
 
 void ClientResources::clear()
 {
@@ -1265,6 +1239,8 @@ void ClientResources::clearAllSystemResources()
 void ClientResources::initSystemTextures()
 {
     Resources::initSystemTextures();
+
+    if (novideo) return;
 
     LOG_AS("ClientResources");
 
@@ -1559,7 +1535,7 @@ FontManifest &ClientResources::toFontManifest(fontid_t id) const
         {
             return *d->fontManifestIdMap[idx];
         }
-        DENG2_ASSERT(!"Bookeeping error");
+        DENG2_ASSERT(!"Bookkeeping error");
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
@@ -2188,5 +2164,3 @@ void ClientResources::consoleRegister() // static
     C_CMD("fontstats",      NULL,   PrintFontStats)
 #endif
 }
-
-#endif // __CLIENT__

@@ -2212,7 +2212,10 @@ String G_MapDescription(String episodeId, de::Uri const &mapUri)
  */
 void G_StopDemo()
 {
-    DD_Execute(true, "stopdemo");
+    if (!IS_SERVER)
+    {
+        DD_Execute(true, "stopdemo");
+    }
 }
 
 int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)

@@ -127,8 +127,6 @@ void Shard::updateBiasAfterMove()
 
 void Shard::consoleRegister() // static
 {
-#ifdef __CLIENT__
     // Development variables.
     C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
-#endif
 }
