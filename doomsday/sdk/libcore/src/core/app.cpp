@@ -221,7 +221,11 @@ DENG2_PIMPL(App)
         fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
                 DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing | DirectoryFeed::DefaultFlags));
 
+        // Loaded packages (as links).
         fs.makeFolder("/packs").attach(new PackageFeed(packageLoader));
+
+        // Internal data (for runtime use only, thus writable).
+        fs.makeFolder("/sys").setMode(File::Write);
 
         // Populate the file system.
         fs.refresh();
