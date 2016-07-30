@@ -304,7 +304,7 @@ $(document).ready(function () {
         dataType: 'json',
         clearOnSuccess: false,
         useGoogleApi: true,
-        maxItems: 1,
+        maxItems: 2,
         generateItemHtml: function (n, t) {
             var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
 
