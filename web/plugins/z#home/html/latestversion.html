@@ -27,7 +27,7 @@ var deferred = $.ajax({
                 else break;
             }
             var cleanVersion = components.join('.');
-            var html = '<h1><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine ' + cleanVersion + ' (latest stable) for my platform">' + cleanVersion + '</a></h1>';
+            var html = '<div class="download-button"><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine now for my platform">Download <span class="downarrow">&#x21E3;</span></a></div> <h1><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine ' + cleanVersion + ' (latest stable) for my platform">' + cleanVersion + '</a></h1>';
             ob.append(html);
         }
     }

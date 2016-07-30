@@ -299,7 +299,7 @@ $(document).ready(function () {
         }
     });*/
 
-    $('#column1').interpretFeed({
+    $('#column2').interpretFeed({
         feedUri: 'http://dengine.net/blog/category/news/feed',
         dataType: 'json',
         clearOnSuccess: false,
@@ -320,7 +320,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#column2').interpretFeed({
+    $('#column1').interpretFeed({
         feedUri: 'http://dengine.net/blog/category/dev/feed', 
         dataType: 'json',
         clearOnSuccess: false,

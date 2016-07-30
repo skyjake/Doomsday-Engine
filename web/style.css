@@ -782,7 +782,10 @@ a.paddle_left_select, a.paddle_right_select {
 }
 
 #pageheading h1 { margin-left: .4em; }
-#latestversion h1 { margin-right: .4em; }
+#latestversion h1 { 
+    margin-right: .4em; 
+    display: inline;
+}
 
 #latestversion a { color: white; }
 #latestversion a:hover { color: #FFCB0F; }
@@ -793,6 +796,10 @@ a.paddle_left_select, a.paddle_right_select {
 #pageheading, #latestversion { margin-top: -7.5em; }
 #pageheading h1, #latestversion h1 { font-size: 2.5em; }
 #panorama { background-position-y: 0; }
+}
+
+@media only screen and (max-width: 767px) {
+    .download-button { display: none !important; }    
 }
 
 #contentbox, #contentbox2 {
@@ -963,6 +970,9 @@ div.clear {
     margin-top: 1ex;
     margin-bottom: 1.3em;
     font-weight: 300;
+    display: inline;
+    position: relative;
+    bottom: 0.4ex;
 }
 
 .download-button a {
