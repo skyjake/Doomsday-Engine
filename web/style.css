@@ -783,7 +783,6 @@ a.paddle_left_select, a.paddle_right_select {
 
 #pageheading h1 { margin-left: .4em; }
 #latestversion h1 { 
-    margin-right: .4em; 
     display: inline;
 }
 
@@ -800,6 +799,7 @@ a.paddle_left_select, a.paddle_right_select {
 
 @media only screen and (max-width: 767px) {
     .download-button { display: none !important; }    
+    #latestversion h1 { margin-right: .4em; }
 }
 
 #contentbox, #contentbox2 {
