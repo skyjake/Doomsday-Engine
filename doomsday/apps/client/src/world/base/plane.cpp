@@ -20,20 +20,22 @@
 
 #include "world/plane.h"
 
-#include "dd_loop.h"  // frameTimePos
-#include "dd_main.h"  // App_Resources()
-
 #include "world/map.h"
 #include "world/thinkers.h"
 #include "world/clientserverworld.h"  // ddMapSetup
 #include "Surface"
 #include "Sector"
-
 #ifdef __CLIENT__
 #  include "MaterialAnimator"
 #  include "render/rend_main.h"
 #endif
 
+#include "dd_loop.h"  // frameTimePos
+#include "dd_main.h"  // App_Resources()
+
+#ifdef __CLIENT__
+#  include <doomsday/world/materialmanifest.h>
+#endif
 #include <de/Log>
 #include <array>
 
@@ -41,6 +43,9 @@ using namespace de;
 using namespace world;
 
 DENG2_PIMPL(Plane)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(Surface, MaterialChange)
+#endif
 {
     Surface surface;
     ThinkerT<SoundEmitter> soundEmitter;
@@ -61,7 +66,11 @@ DENG2_PIMPL(Plane)
     Impl(Public *i)
         : Base(i)
         , surface(dynamic_cast<MapElement &>(*i))
-    {}
+    {
+#ifdef __CLIENT__
+        surface.audienceForMaterialChange() += this;
+#endif
+    }
 
     ~Impl()
     {
@@ -97,14 +106,6 @@ DENG2_PIMPL(Plane)
         {
             // Update the sound emitter origin for the plane.
             self.updateSoundEmitterOrigin();
-
-#ifdef __CLIENT__
-            // We need the decorations updated.
-            /// @todo optimize: Translation on the world up axis would be a
-            /// trivial operation to perform, which, would not require plotting
-            /// decorations again. This frequent case should be designed for.
-            surface.markForDecorationUpdate();
-#endif
         }
 
         notifyHeightChanged();
@@ -146,6 +147,17 @@ DENG2_PIMPL(Plane)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self);
     }
+
+    void surfaceMaterialChanged(Surface &suf)
+    {
+        DENG2_ASSERT(&suf == &surface);
+        DENG2_UNUSED(suf);
+        if (!::ddMapSetup && surface.hasMaterial())
+        {
+            de::Uri uri = surface.material().manifest().composeUri();
+            self.spawnParticleGen(Def_GetGenerator(reinterpret_cast<uri_s *>(&uri)));
+        }
+    }
 #endif
 
     DENG2_PIMPL_AUDIENCE(Deletion)
@@ -171,12 +183,9 @@ Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
 
 String Plane::description() const
 {
-    String const name =   isSectorFloor()   ? "Floor"
-                        : isSectorCeiling() ? "Ceiling"
-                        : "Plane #" + String::number(indexInSector());
     return String(_E(D) "%1:\n" _E(.)
                   _E(l) "Height: " _E(.)_E(i) "%2" _E(.))
-               .arg(name)
+               .arg(Sector::planeIdAsText(indexInSector()).upperFirstChar())
                .arg(height())
            + " " + surface().description();
 }
@@ -219,6 +228,16 @@ Surface &Plane::surface()
 Surface const &Plane::surface() const
 {
     return d->surface;
+}
+
+Surface *Plane::surfacePtr()
+{
+    return &surface();
+}
+
+Surface const *Plane::surfacePtr() const
+{
+    return &surface();
 }
 
 void Plane::setNormal(Vector3f const &newNormal)
@@ -283,7 +302,6 @@ void Plane::lerpSmoothedHeight()
     {
         d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged();
-        d->surface.markForDecorationUpdate();
     }
 }
 
@@ -297,7 +315,6 @@ void Plane::resetSmoothedHeight()
     {
         d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged();
-        d->surface.markForDecorationUpdate();
     }
 }
 
@@ -313,7 +330,6 @@ void Plane::updateHeightTracking()
             // Too fast: make an instantaneous jump.
             d->oldHeight[0] = d->oldHeight[1];
         }
-        d->surface.markForDecorationUpdate();
     }
 }
 

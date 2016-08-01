@@ -25,14 +25,19 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/surface.h"
 
 #include "render/rend_main.h" // Rend_SkyLightColor(), useBias
 #include "BiasIllum"
 #include "BiasTracker"
+#include "LightDecoration"
+#include "MaterialAnimator"
 #include "Shard"
+#include "WallEdge"
 
 #include "Face"
 
+#include <doomsday/world/material.h>
 #include <QtAlgorithms>
 #include <QHash>
 #include <QMap>
@@ -42,7 +47,7 @@
 
 using namespace de;
 
-namespace internal {
+namespace world {
 
 /// Classification flags:
 enum SubsectorFlag
@@ -57,29 +62,62 @@ enum SubsectorFlag
 Q_DECLARE_FLAGS(SubsectorFlags, SubsectorFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(SubsectorFlags)
 
+#ifdef DENG2_DEBUG
+/**
+ * Returns a textual, map-relative path for the given @a surface.
+ */
+static DotPath composeSurfacePath(Surface const &surface)
+{
+    DENG2_ASSERT(surface.hasParent());
+    MapElement const &owner = surface.parent();
+
+    switch (owner.type())
+    {
+    case DMU_PLANE:
+        return String("sector#%1.%2")
+                 .arg(owner.as<Plane>().sector().indexInMap())
+                 .arg(Sector::planeIdAsText(owner.as<Plane>().indexInSector()));
+
+    case DMU_SIDE:
+        return String("line#%1.%2.%3")
+                 .arg(owner.as<LineSide>().line().indexInMap())
+                 .arg(Line::sideIdAsText(owner.as<LineSide>().isBack()))
+                 .arg(LineSide::sectionIdAsText(  &surface == &owner.as<LineSide>().middle() ? LineSide::Middle
+                                                : &surface == &owner.as<LineSide>().bottom() ? LineSide::Bottom
+                                                : LineSide::Top));
+
+    default: return "";
+    }
+}
+#endif // DENG2_DEBUG
+
 static QRectF qrectFromAABox(AABoxd const &b)
 {
     return QRectF(QPointF(b.minX, b.maxY), QPointF(b.maxX, b.minY));
 }
 
-}  // namespace internal
-using namespace ::internal;
-
-namespace world {
-
+/**
+ * @todo optimize: Translation of decorations on the world up axis would be a trivial
+ * operation to perform, which, would not require plotting decorations again. This
+ * frequent case should be designed for. -ds
+ */
 DENG2_PIMPL(ClientSubsector)
 , DENG2_OBSERVES(Subsector, Deletion)
 , DENG2_OBSERVES(Plane,     Deletion)
-, DENG2_OBSERVES(Plane,     HeightChange)
-, DENG2_OBSERVES(Plane,     HeightSmoothedChange)
-, DENG2_OBSERVES(Sector,    LightColorChange)
-, DENG2_OBSERVES(Sector,    LightLevelChange)
-{
-    bool needClassify = true;  ///< @c true= (Re)classification is necessary.
-    SubsectorFlags flags = 0;
-    ClientSubsector *mappedVisFloor   = nullptr;
-    ClientSubsector *mappedVisCeiling = nullptr;
 
+, DENG2_OBSERVES(Sector, LightColorChange)
+, DENG2_OBSERVES(Sector, LightLevelChange)
+
+, DENG2_OBSERVES(Line,    FlagsChange)
+, DENG2_OBSERVES(Plane,   HeightChange)
+, DENG2_OBSERVES(Plane,   HeightSmoothedChange)
+, DENG2_OBSERVES(Surface, MaterialChange)
+, DENG2_OBSERVES(Surface, OriginChange)
+, DENG2_OBSERVES(Surface, OriginSmoothedChange)
+
+, DENG2_OBSERVES(Material,         DimensionsChange)
+, DENG2_OBSERVES(MaterialAnimator, DecorationStageChange)
+{
     struct BoundaryData
     {
         /// Lists of unique exterior subsectors which share a boundary edge with
@@ -87,7 +125,6 @@ DENG2_PIMPL(ClientSubsector)
         QList<HEdge *> uniqueInnerEdges; /// not owned.
         QList<HEdge *> uniqueOuterEdges; /// not owned.
     };
-    std::unique_ptr<BoundaryData> boundaryData;
 
     struct GeometryData
     {
@@ -104,16 +141,33 @@ DENG2_PIMPL(ClientSubsector)
     typedef QMap<dint, GeometryData *> Shards;
     struct GeometryGroups : public QMap<MapElement *, Shards>
     {
-        ~GeometryGroups()
+        ~GeometryGroups() { DENG2_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g); }
+    };
+
+    struct DecoratedSurface
+    {
+        struct Decorations : public QList<Decoration *>
         {
-            DENG2_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g);
+            ~Decorations() { qDeleteAll(*this); }
+        };
+        Decorations decorations;
+        bool needUpdate = true;
+
+        void markForUpdate(bool yes = true) {
+            if (::ddMapSetup) return;
+            needUpdate = yes;
         }
     };
-    GeometryGroups geomGroups;
 
-    /// Reverse lookup hash from Shard => GeometryData.
-    typedef QHash<Shard *, GeometryData *> ShardGeometryMap;
-    ShardGeometryMap shardGeomMap;
+    bool needClassify = true;  ///< @c true= (Re)classification is necessary.
+    SubsectorFlags flags = 0;
+    ClientSubsector *mappedVisFloor   = nullptr;
+    ClientSubsector *mappedVisCeiling = nullptr;
+
+    std::unique_ptr<BoundaryData> boundaryData;
+
+    GeometryGroups geomGroups;
+    QHash<Shard *, GeometryData *> shardToGeomData; ///< Reverse lookup.
 
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
@@ -123,17 +177,14 @@ DENG2_PIMPL(ClientSubsector)
     AudioEnvironment reverb;
     bool needReverbUpdate = true;
 
+    /// Per surface lists of light decoration info and state.
+    QMap<Surface *, DecoratedSurface> decorSurfaces;
+
     Impl(Public *i) : Base(i)
     {}
 
     ~Impl()
     {
-        //observePlane(&sector().floor(), false);
-        //observePlane(&sector().ceiling(), false);
-
-        //sector().audienceForLightLevelChange() -= this;
-        //sector().audienceForLightColorChange() -= this;
-
         clearMapping(Sector::Floor);
         clearMapping(Sector::Ceiling);
     }
@@ -160,23 +211,49 @@ DENG2_PIMPL(ClientSubsector)
         return nullptr;
     }
 
-    inline Plane *mappedPlane(dint planeIdx)
+    Plane *mappedPlane(dint planeIdx)
     {
         ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
         if (subsecAdr && *subsecAdr)
         {
-            return &(*subsecAdr)->plane(planeIdx);
+            return &(*subsecAdr)->sector().plane(planeIdx);
         }
         return nullptr;
     }
 
-    void observeSubsector(ClientSubsector *subsec, bool yes = true)
+    void observeMaterial(Material *material, bool yes = true)
     {
-        if (!subsec || subsec == thisPublic)
-            return;
+        if (!material) return;
 
-        if (yes) subsec->audienceForDeletion += this;
-        else     subsec->audienceForDeletion -= this;
+        MaterialAnimator &materialAnimator = material->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
+        if (yes)
+        {
+            material->audienceForDimensionsChange() += this;
+            materialAnimator.audienceForDecorationStageChange += this;
+        }
+        else
+        {
+            materialAnimator.audienceForDecorationStageChange -= this;
+            material->audienceForDimensionsChange() -= this;
+        }
+    }
+
+    void observeSurface(Surface *surface, bool yes = true)
+    {
+        if (!surface) return;
+
+        if (yes)
+        {
+            surface->audienceForMaterialChange      () += this;
+            surface->audienceForOriginChange        () += this;
+            surface->audienceForOriginSmoothedChange() += this;
+        }
+        else
+        {
+            surface->audienceForOriginSmoothedChange() -= this;
+            surface->audienceForOriginChange        () -= this;
+            surface->audienceForMaterialChange      () -= this;
+        }
     }
 
     void observePlane(Plane *plane, bool yes = true, bool observeHeight = true)
@@ -188,16 +265,25 @@ DENG2_PIMPL(ClientSubsector)
             plane->audienceForDeletion() += this;
             if (observeHeight)
             {
-                plane->audienceForHeightChange()         += this;
+                plane->audienceForHeightChange        () += this;
                 plane->audienceForHeightSmoothedChange() += this;
             }
         }
         else
         {
-            plane->audienceForDeletion()             -= this;
-            plane->audienceForHeightChange()         -= this;
             plane->audienceForHeightSmoothedChange() -= this;
+            plane->audienceForHeightChange        () -= this;
+            plane->audienceForDeletion            () -= this;
         }
+    }
+
+    void observeSubsector(ClientSubsector *subsec, bool yes = true)
+    {
+        if (!subsec || subsec == thisPublic)
+            return;
+
+        if (yes) subsec->audienceForDeletion += this;
+        else     subsec->audienceForDeletion -= this;
     }
 
     void map(dint planeIdx, ClientSubsector *newSubsector, bool permanent = false)
@@ -208,7 +294,12 @@ DENG2_PIMPL(ClientSubsector)
 
         if (*subsecAdr != thisPublic)
         {
-            observePlane(mappedPlane(planeIdx), false);
+            if (Plane *oldPlane = mappedPlane(planeIdx))
+            {
+                observeMaterial(oldPlane->surface().materialPtr(), false);
+                observeSurface(&oldPlane->surface(), false);
+                observePlane(oldPlane, false);
+            }
         }
         observeSubsector(*subsecAdr, false);
 
@@ -217,7 +308,12 @@ DENG2_PIMPL(ClientSubsector)
         observeSubsector(*subsecAdr);
         if (*subsecAdr != thisPublic)
         {
-            observePlane(mappedPlane(planeIdx), true, !permanent);
+            if (Plane *newPlane = mappedPlane(planeIdx))
+            {
+                observePlane(newPlane, true, !permanent);
+                observeSurface(&newPlane->surface(), true);
+                observeMaterial(newPlane->surface().materialPtr(), true);
+            }
         }
     }
 
@@ -319,15 +415,14 @@ DENG2_PIMPL(ClientSubsector)
                         flags &= ~AllMissingTop;
                     }
 
-                    auto const &backSubsec = backSpace.subsector().as<ClientSubsector>();
-                    if (backSubsec.floor().height() < self.sector().floor().height() &&
-                        backSide.bottom().hasDrawableNonFixMaterial())
+                    if (backSpace.subsector().sector().floor().height() < self.sector().floor().height()
+                        && backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if (backSubsec.ceiling().height() > self.sector().ceiling().height() &&
-                        backSide.top().hasDrawableNonFixMaterial())
+                    if (backSpace.subsector().sector().ceiling().height() > self.sector().ceiling().height()
+                        && backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
                     }
@@ -577,77 +672,6 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
-    void markAllSurfacesForDecorationUpdate(Line &line)
-    {
-        LineSide &front = line.front();
-        DENG2_ASSERT(front.hasSections());
-        {
-            front.middle().markForDecorationUpdate();
-            front.bottom().markForDecorationUpdate();
-            front.   top().markForDecorationUpdate();
-        }
-
-        LineSide &back = line.back();
-        if (back.hasSections())
-        {
-            back.middle().markForDecorationUpdate();
-            back.bottom().markForDecorationUpdate();
-            back   .top().markForDecorationUpdate();
-        }
-    }
-
-    /**
-     * To be called when the height changes to update the plotted decoration
-     * origins for surfaces whose material offset is dependant upon this.
-     */
-    void markDependantSurfacesForDecorationUpdate()
-    {
-        if (ddMapSetup) return;
-
-        initBoundaryDataIfNeeded();
-
-        // Mark surfaces of the outer edge loop.
-        /// @todo What about the special case of a subsector with no outer neighbors? -ds
-        if (!boundaryData->uniqueOuterEdges.isEmpty())
-        {
-            HEdge *base = boundaryData->uniqueOuterEdges.first();
-            SubsectorCirculator it(base);
-            do
-            {
-                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-                {
-                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
-                }
-            } while (&it.next() != base);
-        }
-
-        // Mark surfaces of the inner edge loop(s).
-        for (HEdge *base : boundaryData->uniqueInnerEdges)
-        {
-            SubsectorCirculator it(base);
-            do
-            {
-                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-                {
-                    markAllSurfacesForDecorationUpdate(it->mapElementAs<LineSideSegment>().line());
-                }
-            } while (&it.next() != base);
-        }
-    }
-
-    /// Observes Subsector Deletion.
-    void subsectorBeingDeleted(Subsector const &subsec)
-    {
-        if (  mappedVisFloor == &subsec) clearMapping(Sector::Floor);
-        if (mappedVisCeiling == &subsec) clearMapping(Sector::Ceiling);
-    }
-
-    /// Observes Plane Deletion.
-    void planeBeingDeleted(Plane const &plane)
-    {
-        clearMapping(plane.indexInSector());
-    }
-
     void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
     {
         if (!hedge) return;
@@ -666,65 +690,6 @@ DENG2_PIMPL(ClientSubsector)
         {
             shard->updateBiasAfterMove();
         }
-    }
-
-    /// Observes Plane HeightChange.
-    void planeHeightChanged(Plane &plane)
-    {
-        if (&plane == mappedPlane(plane.indexInSector()))
-        {
-            // Check if there are any camera players in this sector. If their height
-            // is now above the ceiling/below the floor they are now in the void.
-            DoomsdayApp::players().forAll([this] (Player &plr)
-            {
-                ddplayer_t const &ddpl = plr.publicData();
-                if (plr.isInGame()
-                    && (ddpl.flags & DDPF_CAMERA)
-                    && Mobj_SubsectorPtr(*ddpl.mo) == thisPublic
-                    && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
-                        || ddpl.mo->origin[2] < self.visFloor  ().height()))
-                {
-                    plr.as<ClientPlayer>().inVoid = true;
-                }
-                return LoopContinue;
-            });
-
-            // We'll need to recalculate environmental audio characteristics.
-            needReverbUpdate = true;
-
-            if (!ddMapSetup && useBias)
-            {
-                // Inform bias surfaces of changed geometry.
-                self.forAllSubspaces([this, &plane] (ConvexSubspace &subspace)
-                {
-                    if (Shard *shard = self.findShard(subspace, plane.indexInSector()))
-                    {
-                        shard->updateBiasAfterMove();
-                    }
-
-                    HEdge *base = subspace.poly().hedge();
-                    HEdge *hedge = base;
-                    do
-                    {
-                        updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    } while ((hedge = &hedge->next()) != base);
-
-                    return subspace.forAllExtraMeshes([this] (Mesh &mesh)
-                    {
-                        for (HEdge *hedge : mesh.hedges())
-                        {
-                            updateBiasForWallSectionsAfterGeometryMove(hedge);
-                        }
-                        return LoopContinue;
-                    });
-                });
-            }
-
-            markDependantSurfacesForDecorationUpdate();
-        }
-
-        // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
     }
 
     /**
@@ -765,9 +730,8 @@ DENG2_PIMPL(ClientSubsector)
     {
         if (shard && shard->subsector() == thisPublic)
         {
-            ShardGeometryMap::const_iterator found = shardGeomMap.find(shard);
-            if (found != shardGeomMap.end())
-                return *found;
+            auto found = shardToGeomData.find(shard);
+            if (found != shardToGeomData.end()) return *found;
         }
         return nullptr;
     }
@@ -907,20 +871,441 @@ DENG2_PIMPL(ClientSubsector)
             reverb.volume = 1;
     }
 
-    /// Observes Plane HeightSmoothedChange.
-    void planeHeightSmoothedChanged(Plane &plane)
+    bool prepareGeometry(Surface &surface, Vector3d &topLeft, Vector3d &bottomRight,
+                         Vector2f &materialOrigin) const
     {
-        markDependantSurfacesForDecorationUpdate();
+        if (surface.parent().type() == DMU_SIDE)
+        {
+            auto &side = surface.parent().as<LineSide>();
+            dint section = &side.middle() == &surface ? LineSide::Middle
+                         : &side.bottom() == &surface ? LineSide::Bottom
+                         :                              LineSide::Top;
+
+            if (!side.hasSections()) return false;
+
+            HEdge *leftHEdge = side.leftHEdge();
+            HEdge *rightHEdge = side.rightHEdge();
+
+            if (!leftHEdge || !rightHEdge) return false;
+
+            // Is the wall section potentially visible?
+            WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+            WallEdge leftEdge(wallSpec, *leftHEdge, Line::From);
+            WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
+
+            if (!leftEdge.isValid() || !rightEdge.isValid()
+                || de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
+                return false;
+
+            topLeft = leftEdge.top().origin();
+            bottomRight = rightEdge.bottom().origin();
+            materialOrigin = -leftEdge.materialOrigin();
+
+            return true;
+        }
+
+        if (surface.parent().type() == DMU_PLANE)
+        {
+            auto &plane = surface.parent().as<Plane>();
+            AABoxd const &sectorBounds = plane.sector().bounds();
+
+            topLeft = Vector3d(sectorBounds.minX,
+                               plane.isSectorFloor() ? sectorBounds.maxY : sectorBounds.minY,
+                               plane.heightSmoothed());
+
+            bottomRight = Vector3d(sectorBounds.maxX,
+                                   plane.isSectorFloor() ? sectorBounds.minY : sectorBounds.maxY,
+                                   plane.heightSmoothed());
+
+            materialOrigin = Vector2f(-fmod(sectorBounds.minX, 64), -fmod(sectorBounds.minY, 64))
+                           - surface.originSmoothed();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void projectDecorations(Surface &suf, MaterialAnimator &matAnimator,
+                            Vector2f const &materialOrigin, Vector3d const &topLeft,
+                            Vector3d const &bottomRight)
+    {
+        Vector3d delta = bottomRight - topLeft;
+        if (de::fequal(delta.length(), 0)) return;
+
+        ClientMaterial &material = matAnimator.material();
+        dint const axis = suf.normal().maxAxis();
+
+        Vector2d sufDimensions;
+        if (axis == 0 || axis == 1)
+        {
+            sufDimensions.x = std::sqrt(de::squared(delta.x) + de::squared(delta.y));
+            sufDimensions.y = delta.z;
+        }
+        else
+        {
+            sufDimensions.x = std::sqrt(de::squared(delta.x));
+            sufDimensions.y = delta.y;
+        }
+
+        if (sufDimensions.x < 0) sufDimensions.x = -sufDimensions.x;
+        if (sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
+
+        // Generate a number of decorations.
+        dint decorIndex = 0;
+
+        material.forAllDecorations([this, &suf, &matAnimator, &materialOrigin
+                                   , &topLeft, &bottomRight
+                                   , &delta, &axis, &sufDimensions, &decorIndex]
+                                   (MaterialDecoration &decor)
+        {
+            Vector2ui const &matDimensions = matAnimator.material().dimensions();
+            MaterialAnimator::Decoration const &decorSS = matAnimator.decoration(decorIndex);
+
+            // Skip values must be at least one.
+            Vector2i skip = Vector2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
+                .max(Vector2i(1, 1));
+
+            Vector2f repeat = skip.toVector2ui() * matDimensions;
+            if (repeat == Vector2f(0, 0))
+                return LoopAbort;
+
+            Vector3d origin = topLeft + suf.normal() * decorSS.elevation();
+
+            dfloat s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
+                                0.f, repeat.x);
+
+            // Plot decorations.
+            for (; s < sufDimensions.x; s += repeat.x)
+            {
+                // Determine the topmost point for this row.
+                dfloat t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
+                                    0.f, repeat.y);
+
+                for (; t < sufDimensions.y; t += repeat.y)
+                {
+                    auto const offset = Vector2f(s, t) / sufDimensions;
+                    Vector3d patternOffset(offset.x,
+                                           axis == 2 ? offset.y : offset.x,
+                                           axis == 2 ? offset.x : offset.y);
+
+                    Vector3d decorOrigin = origin + delta * patternOffset;
+                    // The point must be in the correct subsector.
+                    if (suf.map().subsectorAt(decorOrigin) == &self)
+                    {
+                        std::unique_ptr<LightDecoration> decor(new LightDecoration(decorSS, decorOrigin));
+                        decor->setSurface(&suf);
+                        if (self.sector().hasMap()) decor->setMap(&self.sector().map());
+                        decorSurfaces[&suf].decorations.append(decor.get()); // take ownership.
+                        decor.release();
+                    }
+                }
+            }
+
+            decorIndex += 1;
+            return LoopContinue;
+        });
+    }
+
+    void decorate(Surface &surface)
+    {
+        DecoratedSurface &ds = decorSurfaces[&surface];
+
+        if (!ds.needUpdate) return;
+
+        LOGDEV_MAP_XVERBOSE_DEBUGONLY("  decorating %s%s",
+            composeSurfacePath(surface)
+            << (surface.parent().type() == DMU_PLANE
+                && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
+        );
+
+        ds.markForUpdate(false);
+
+        // Clear any existing decorations.
+        qDeleteAll(ds.decorations);
+        ds.decorations.clear();
+
+        if (surface.hasMaterial())
+        {
+            Vector2f materialOrigin;
+            Vector3d bottomRight, topLeft;
+            if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
+            {
+                MaterialAnimator &animator =
+                    surface.material().as<ClientMaterial>()
+                                      .getAnimator(Rend_MapSurfaceMaterialSpec());
+
+                projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
+            }
+        }
+    }
+
+    void markDependentSurfacesForRedecoration(Plane &plane, bool yes = true)
+    {
+        if (::ddMapSetup) return;
+
+        bool const planeIsInterior  = (&plane == &self.visPlane(plane.indexInSector()));
+
+        LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
+                                      , thisPublic << self.sector().indexInMap());
+
+        initBoundaryDataIfNeeded();
+
+        // Mark surfaces of the outer edge loop.
+        /// @todo What about the special case of a subsector with no outer neighbors? -ds
+        if (!boundaryData->uniqueOuterEdges.isEmpty())
+        {
+            HEdge *base = boundaryData->uniqueOuterEdges.first();
+            SubsectorCirculator it(base);
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    if (planeIsInterior
+                        || (&plane == (it->hasTwin() && it->twin().hasFace()
+                                       ? &it->twin().face().mapElementAs<ConvexSubspace>()
+                                             .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
+                                       : nullptr)))
+                    {
+                        LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                        side.forAllSurfaces([this, &yes] (Surface &surface)
+                        {
+                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
+                            decorSurfaces[&surface].markForUpdate(yes);
+                            return LoopContinue;
+                        });
+                    }
+                }
+            } while (&it.next() != base);
+        }
+        // Mark surfaces of the inner edge loop(s).
+        for (HEdge *base : boundaryData->uniqueInnerEdges)
+        {
+            SubsectorCirculator it(base);
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    if (planeIsInterior
+                        || (&plane == (it->hasTwin() && it->twin().hasFace()
+                                       ? &it->twin().face().mapElementAs<ConvexSubspace>()
+                                             .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
+                                       : nullptr)))
+                    {
+                        LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                        side.forAllSurfaces([this, &yes] (Surface &surface)
+                        {
+                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
+                            decorSurfaces[&surface].markForUpdate(yes);
+                            return LoopContinue;
+                        });
+                    }
+                }
+            } while (&it.next() != base);
+        }
+
+        if (planeIsInterior)
+        {
+            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(plane.surface()));
+            decorSurfaces[&plane.surface()].markForUpdate(yes);
+        }
+    }
+
+    void markDependentSurfacesForRedecoration(Material &material, bool yes = true)
+    {
+        if (::ddMapSetup) return;
+
+        LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
+                                      , thisPublic << self.sector().indexInMap());
+
+        initBoundaryDataIfNeeded();
+
+        // Surfaces of the outer edge loop.
+        /// @todo What about the special case of a subsector with no outer neighbors? -ds
+        if (!boundaryData->uniqueOuterEdges.isEmpty())
+        {
+            HEdge *base = boundaryData->uniqueOuterEdges.first();
+            SubsectorCirculator it(base);
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
+                    {
+                        if (surface.materialPtr() == &material)
+                        {
+                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
+                            decorSurfaces[&surface].markForUpdate(yes);
+                        }
+                        return LoopContinue;
+                    });
+                }
+            } while (&it.next() != base);
+        }
+        // Surfaces of the inner edge loop(s).
+        for (HEdge *base : boundaryData->uniqueInnerEdges)
+        {
+            SubsectorCirculator it(base);
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
+                    {
+                        if (surface.materialPtr() == &material)
+                        {
+                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
+                            decorSurfaces[&surface].markForUpdate(yes);
+                        }
+                        return LoopContinue;
+                    });
+                }
+            } while (&it.next() != base);
+        }
+        // Surfaces of the visual planes.
+        Plane &floor = self.visFloor();
+        if (floor.surface().materialPtr() == &material)
+        {
+            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(floor.surface()));
+            decorSurfaces[&floor.surface()].markForUpdate(yes);
+        }
+        Plane &ceiling = self.visCeiling();
+        if (ceiling.surface().materialPtr() == &material)
+        {
+            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(ceiling.surface()));
+            decorSurfaces[&ceiling.surface()].markForUpdate(yes);
+        }
+    }
+
+    /// Observes Line FlagsChange
+    void lineFlagsChanged(Line &line, dint oldFlags)
+    {
+        LOG_AS("ClientSubsector");
+        line.forAllSides([this, &oldFlags] (LineSide &side)
+        {
+            if (side.sectorPtr() == &self.sector())
+            {
+                if ((side.line().flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
+                {
+                    decorSurfaces[&side.top()].markForUpdate();
+                }
+                if ((side.line().flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
+                {
+                    decorSurfaces[&side.bottom()].markForUpdate();
+                }
+            }
+            return LoopContinue;
+        });
+    }
+
+    /// Observes Material DimensionsChange
+    void materialDimensionsChanged(Material &material)
+    {
+        LOG_AS("ClientSubsector");
+        markDependentSurfacesForRedecoration(material);
+    }
+
+    /// Observes MaterialAnimator DecorationStageChange
+    void materialAnimatorDecorationStageChanged(MaterialAnimator &animator)
+    {
+        LOG_AS("ClientSubsector");
+        markDependentSurfacesForRedecoration(animator.material());
+    }
+
+    /// Observes Plane Deletion.
+    void planeBeingDeleted(Plane const &plane)
+    {
+        LOG_AS("ClientSubsector");
+        if (&plane == &self.visPlane(plane.indexInSector()))
+        {
+            clearMapping(plane.indexInSector());
+            decorSurfaces.remove(&self.visPlane(plane.indexInSector()).surface());
+        }
+    }
+
+    /// Observes Plane HeightChange.
+    void planeHeightChanged(Plane &plane)
+    {
+        LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
+
+        // We may need to project new decorations.
+        markDependentSurfacesForRedecoration(plane);
+
+        bool const planeIsInterior = (&plane == &self.visPlane(plane.indexInSector()));
+        if (planeIsInterior)
+        {
+            // We'll need to recalculate environmental audio characteristics.
+            needReverbUpdate = true;
+
+            // Check if there are any camera players in the subsector. If their height
+            // is now above the ceiling/below the floor they are now in the void.
+            DoomsdayApp::players().forAll([this] (Player &plr)
+            {
+                ddplayer_t const &ddpl = plr.publicData();
+                if (plr.isInGame()
+                    && (ddpl.flags & DDPF_CAMERA)
+                    && Mobj_SubsectorPtr(*ddpl.mo) == thisPublic
+                    && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
+                        || ddpl.mo->origin[2] < self.visFloor  ().height()))
+                {
+                    plr.as<ClientPlayer>().inVoid = true;
+                }
+                return LoopContinue;
+            });
+
+            // Inform bias surfaces of changed geometry?
+            if (!::ddMapSetup && ::useBias)
+            {
+                self.forAllSubspaces([this, &plane] (ConvexSubspace &subspace)
+                {
+                    if (Shard *shard = self.findShard(subspace, plane.indexInSector()))
+                    {
+                        shard->updateBiasAfterMove();
+                    }
+
+                    HEdge *base = subspace.poly().hedge();
+                    HEdge *hedge = base;
+                    do
+                    {
+                        updateBiasForWallSectionsAfterGeometryMove(hedge);
+                    } while ((hedge = &hedge->next()) != base);
+
+                    return subspace.forAllExtraMeshes([this] (Mesh &mesh)
+                    {
+                        for (HEdge *hedge : mesh.hedges())
+                        {
+                            updateBiasForWallSectionsAfterGeometryMove(hedge);
+                        }
+                        return LoopContinue;
+                    });
+                });
+            }
+        }
+    }
+
+    /// Observes Plane HeightSmoothedChange.
+    void planeHeightSmoothedChanged(Plane &plane)
+    {
+        LOG_AS("ClientSubsector");
+
+        // We may need to update one or both mapped planes.
+        maybeInvalidateMapping(plane.indexInSector());
+
+        // We may need to project new decorations.
+        markDependentSurfacesForRedecoration(plane);
     }
 
     /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &changed)
+    void sectorLightLevelChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
         DENG2_ASSERT(&changed == &self.sector());
-        DENG2_UNUSED(changed);
+
+        LOG_AS("ClientSubsector");
         if (self.sector().map().hasLightGrid())
         {
             self.sector().map().lightGrid().blockLightSourceChanged(thisPublic);
@@ -928,14 +1313,59 @@ DENG2_PIMPL(ClientSubsector)
     }
 
     /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &changed)
+    void sectorLightColorChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
         DENG2_ASSERT(&changed == &self.sector());
-        DENG2_UNUSED(changed);
+
+        LOG_AS("ClientSubsector");
         if (self.sector().map().hasLightGrid())
         {
             self.sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
+    }
+
+    /// Observes Surface MaterialChange
+    void surfaceMaterialChanged(Surface &surface)
+    {
+        LOG_AS("ClientSubsector");
+        DecoratedSurface &ds = decorSurfaces[&surface];
+
+        // Clear any existing decorations (now invalid).
+        qDeleteAll(ds.decorations);
+        ds.decorations.clear();
+        ds.markForUpdate();
+
+        // Begin observing the new material (if any).
+        /// @todo fixme: stop observing the old one!? -ds
+        observeMaterial(surface.materialPtr());
+    }
+
+    /// Observes Surface OriginChange
+    void surfaceOriginChanged(Surface &surface)
+    {
+        LOG_AS("ClientSubsector");
+        if (surface.hasMaterial())
+        {
+            decorSurfaces[&surface].markForUpdate();
+        }
+    }
+
+    /// Observes Surface OriginChange
+    void surfaceOriginSmoothedChanged(Surface &surface)
+    {
+        LOG_AS("ClientSubsector");
+        if (surface.hasMaterial())
+        {
+            decorSurfaces[&surface].markForUpdate();
+        }
+    }
+
+    /// Observes Subsector Deletion.
+    void subsectorBeingDeleted(Subsector const &subsec)
+    {
+        //LOG_AS("ClientSubsector");
+        if (  mappedVisFloor == &subsec) clearMapping(Sector::Floor);
+        if (mappedVisCeiling == &subsec) clearMapping(Sector::Ceiling);
     }
 };
 
@@ -943,13 +1373,58 @@ ClientSubsector::ClientSubsector(QList<ConvexSubspace *> const &subspaces)
     : Subsector(subspaces)
     , d(new Impl(this))
 {
-    // Observe changes to plane heights in "this" sector.
-    d->observePlane(&sector().floor  ());
-    d->observePlane(&sector().ceiling());
+    // Observe changes to surfaces in the subsector.
+    forAllSubspaces([this] (ConvexSubspace &subspace)
+    {
+        HEdge *hedge = subspace.poly().hedge();
+        do
+        {
+            if (hedge->hasMapElement())
+            {
+                LineSide &front = hedge->mapElementAs<LineSideSegment>().lineSide();
 
-    // Observe changes to sector lighting properties.
+                // Line flags affect material offsets so observe those, too.
+                front.line().audienceForFlagsChange += d;
+
+                front.forAllSurfaces([this] (Surface &surface)
+                {
+                    d->observeSurface(&surface);
+                    d->observeMaterial(surface.materialPtr());
+                    return LoopContinue;
+                });
+
+                /// @todo Ignorant of mappings -ds
+                if (front.back().hasSector())
+                {
+                    Sector &backsec = front.back().sector();
+                    d->observePlane(&backsec.floor());
+                    d->observePlane(&backsec.ceiling());
+                }
+            }
+        } while ((hedge = &hedge->next()) != subspace.poly().hedge());
+
+        return LoopContinue;
+    });
+
+    // Observe changes to planes in the sector.
+    Plane *floor = &sector().floor();
+    d->observePlane(floor);
+    d->observeSurface(&floor->surface());
+    d->observeMaterial(floor->surface().materialPtr());
+
+    Plane *ceiling = &sector().ceiling();
+    d->observePlane(ceiling);
+    d->observeSurface(&ceiling->surface());
+    d->observeMaterial(ceiling->surface().materialPtr());
+
+    // Observe changes to lighting properties in the sector.
     sector().audienceForLightLevelChange() += d;
     sector().audienceForLightColorChange() += d;
+}
+
+dint ClientSubsector::visPlaneCount() const
+{
+    return sector().planeCount();
 }
 
 Plane &ClientSubsector::visPlane(dint planeIndex)
@@ -976,6 +1451,26 @@ Plane const &ClientSubsector::visPlane(dint planeIndex) const
     }
     // Not mapped.
     return sector().plane(planeIndex);
+}
+
+LoopResult ClientSubsector::forAllVisPlanes(std::function<LoopResult (Plane &)> func)
+{
+    for (dint i = 0; i < visPlaneCount(); ++i)
+    {
+        if (auto result = func(visPlane(i)))
+            return result;
+    }
+    return LoopContinue;
+}
+
+LoopResult ClientSubsector::forAllVisPlanes(std::function<LoopResult (Plane const &)> func) const
+{
+    for (dint i = 0; i < visPlaneCount(); ++i)
+    {
+        if (auto result = func(visPlane(i)))
+            return result;
+    }
+    return LoopContinue;
 }
 
 bool ClientSubsector::isHeightInVoid(ddouble height) const
@@ -1014,7 +1509,7 @@ bool ClientSubsector::hasWorldVolume(bool useSmoothedHeights) const
     }
     else
     {
-        return ceiling().height() - floor().height() > 0;
+        return sector().ceiling().height() - sector().floor().height() > 0;
     }
 }
 
@@ -1095,19 +1590,20 @@ dint ClientSubsector::blockLightSourceZBias()
 
 void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
 {
-    Impl::ShardGeometryMap::const_iterator it = d->shardGeomMap.constBegin();
-    while (it != d->shardGeomMap.constEnd())
+    DENG2_FOR_EACH(Impl::GeometryGroups, g, d->geomGroups)
     {
-        it.key()->biasTracker().applyChanges(allChanges);
-        ++it;
+        for (Impl::GeometryData *gdata : g.value())
+        {
+            DENG2_ASSERT(bool(gdata->shard));
+            gdata->shard->biasTracker().applyChanges(allChanges);
+        }
     }
 }
 
 // Determine the number of bias illumination points needed for this geometry.
 // Presently we define a 1:1 mapping to geometry vertices.
-static dint countIlluminationPoints(MapElement &mapElement, dint group)
+static dint countIlluminationPoints(MapElement &mapElement, dint DENG2_DEBUG_ONLY(group))
 {
-    DENG2_UNUSED(group); // just assert
     switch (mapElement.type())
     {
     case DMU_SUBSPACE: {
@@ -1238,6 +1734,77 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
 duint ClientSubsector::biasLastChangeOnFrame() const
 {
     return sector().map().biasLastChangeOnFrame();
+}
+
+void ClientSubsector::decorate()
+{
+    LOG_AS("ClientSubsector::decorate");
+
+    d->initBoundaryDataIfNeeded();
+    // Surfaces of the outer edge loop.
+    /// @todo What about the special case of a subsector with no outer neighbors? -ds
+    if (!d->boundaryData->uniqueOuterEdges.isEmpty())
+    {
+        HEdge *base = d->boundaryData->uniqueOuterEdges.first();
+        SubsectorCirculator it(base);
+        do
+        {
+            if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+            {
+                LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                side.forAllSurfaces([this] (Surface &surface)
+                {
+                    d->decorate(surface);
+                    return LoopContinue;
+                });
+            }
+        } while (&it.next() != base);
+    }
+    // Surfaces of the inner edge loop(s).
+    for (HEdge *base : d->boundaryData->uniqueInnerEdges)
+    {
+        SubsectorCirculator it(base);
+        do
+        {
+            if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+            {
+                LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                side.forAllSurfaces([this] (Surface &surface)
+                {
+                    d->decorate(surface);
+                    return LoopContinue;
+                });
+            }
+        } while (&it.next() != base);
+    }
+    // Surfaces of the visual planes.
+    d->decorate(visFloor  ().surface());
+    d->decorate(visCeiling().surface());
+}
+
+void ClientSubsector::generateLumobjs()
+{
+    world::Map &map = sector().map();
+    for (Impl::DecoratedSurface &surface : d->decorSurfaces)
+    for (Decoration *decor : surface.decorations)
+    {
+        if (auto const *lightDecor = decor->maybeAs<LightDecoration>())
+        {
+            std::unique_ptr<Lumobj> lum(lightDecor->generateLumobj());
+            if (lum)
+            {
+                map.addLumobj(*lum); // a copy is made.
+            }
+        }
+    }
+}
+
+void ClientSubsector::markForDecorationUpdate(bool yes)
+{
+    for (Impl::DecoratedSurface &surface : d->decorSurfaces)
+    {
+        surface.markForUpdate(yes);
+    }
 }
 
 } // namespace world

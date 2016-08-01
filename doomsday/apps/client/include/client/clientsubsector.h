@@ -23,6 +23,7 @@
 
 #include <QBitArray>
 #include <QList>
+#include <functional>
 #include "world/audioenvironment.h"
 #include "Line"
 #include "Plane"
@@ -131,6 +132,20 @@ public:
     */
     bool updateBiasContributors(Shard *shard);
 
+//- Decorations -------------------------------------------------------------------------
+
+    /**
+     * Mark the surface as needing a decoration update.
+     */
+    void markForDecorationUpdate(bool yes = true);
+
+    /**
+     * Perform scheduled decoration work.
+     */
+    void decorate();
+
+    void generateLumobjs();
+
 //- Light grid --------------------------------------------------------------------------
 
     /**
@@ -175,6 +190,19 @@ public:
     bool hasSkyMaskPlane() const;
 
     /**
+     * Returns the total number of @em visual planes in the subsector.
+     */
+    de::dint visPlaneCount() const;
+
+    /**
+     * Iterate the @em visual Planes of the subsector.
+     *
+     * @param callback  Function to call for each plane.
+     */
+    de::LoopResult forAllVisPlanes(std::function<de::LoopResult (Plane &)> func);
+    de::LoopResult forAllVisPlanes(std::function<de::LoopResult (Plane const &)> func) const;
+
+    /**
      * Returns the @em visual Plane of the subsector associated with @a planeIndex.
      *
      * @see visFloor(), visCeiling()
@@ -197,11 +225,6 @@ public:
      */
     inline Plane       &visCeiling()       { return visPlane(Sector::Ceiling); }
     inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
-
-    /**
-     * Returns the total number of @em visual planes in the subsector.
-     */
-    inline de::dint visPlaneCount() const { return sector().planeCount(); }
 
     /**
      * To be called to force re-evaluation of mapped visual planes. This is only necessary

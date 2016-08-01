@@ -23,29 +23,43 @@
 #include "world/clientserverworld.h" // ddMapSetup
 #include "world/map.h"
 #include "Plane"
-
 #ifdef __CLIENT__
 #  include "Decoration"
-#  include "render/rend_main.h"
-
-#  include "gl/gl_tex.h"
 #endif
 
-#include "misc/r_util.h"  // R_NameForBlendMode()
-#include "dd_loop.h" // frameTimePos
+#include "misc/r_util.h" // R_NameForBlendMode()
 
-#include <doomsday/res/TextureManifest>
-#include <doomsday/res/Textures>
+#ifdef __CLIENT__
+#  include "gl/gl_tex.h"
+#  include "render/rend_main.h"
+#  include "resource/clienttexture.h"
+
+#  include "dd_loop.h" // frameTimePos
+
+#  include <doomsday/resource/texturemanifest.h>
+#endif
 #include <doomsday/world/MaterialManifest>
+#include <doomsday/world/Material>
 #include <de/Log>
 #include <de/vector1.h>
-#ifdef __CLIENT__
-#  include <QList>
-#endif
-#include <QtAlgorithms>
 
 using namespace de;
 using namespace world;
+
+#ifdef DENG_DEBUG
+static inline bool Surface_isSideMiddle(Surface const &suf)
+{
+    return suf.parent().type() == DMU_SIDE
+           && &suf == &suf.parent().as<LineSide>().middle();
+}
+
+static inline bool Surface_isSectorExtraPlane(Surface const &suf)
+{
+    if (suf.parent().type() != DMU_PLANE) return false;
+    auto const &plane = suf.parent().as<Plane>();
+    return !(plane.isSectorFloor() || plane.isSectorCeiling());
+}
+#endif
 
 DENG2_PIMPL(Surface)
 {
@@ -56,52 +70,42 @@ DENG2_PIMPL(Surface)
 
     Material *material = nullptr;               ///< Currently bound material.
     bool materialIsMissingFix = false;          ///< @c true= @ref material is a "missing fix".
-    Vector2f materialOrigin;                    ///< @em sharp surface space material origin.
 
+    Vector2f origin;                            ///< @em sharp offset to surface-space origin.
     Vector3f color;
     dfloat opacity = 0;
     blendmode_t blendMode { BM_NORMAL };
 
 #ifdef __CLIENT__
-    typedef QList<Decoration *> Decorations;
-    Decorations decorations;                    ///< Surface (light) decorations (owned).
-    bool needDecorationUpdate = true;           ///< @c true= An update is needed.
-
-    Vector2f oldMaterialOrigin[2];              ///< Old @em sharp surface space material origins, for smoothing.
-    Vector2f materialOriginSmoothed;            ///< @em smoothed surface space material origin.
-    Vector2f materialOriginSmoothedDelta;       ///< Delta between @em sharp and @em smoothed.
+    Vector2f oldOrigin[2];                      ///< Old @em sharp surface space material origins, for smoothing.
+    Vector2f originSmoothed;                    ///< @em smoothed surface space material origin.
+    Vector2f originSmoothedDelta;               ///< Delta between @em sharp and @em smoothed.
 #endif
 
     Impl(Public *i) : Base(i)
     {}
 
+#ifdef __CLIENT__
     ~Impl()
     {
-#ifdef __CLIENT__
         // Stop scroll interpolation for this surface.
-        map().scrollingSurfaces().remove(&self);
-
-        // Stop material redecoration for this surface.
-        map().unlinkInMaterialLists(&self);
-
-        qDeleteAll(decorations);
-#endif
+        self.map().scrollingSurfaces().remove(&self);
     }
+#endif
 
-    inline Map &map() const { return self.map(); }
-    inline MapElement &parent() const { return self.parent(); }
+    inline MapElement &owner() const { return self.parent(); }
 
 #ifdef DENG_DEBUG
-    inline bool isSideMiddle() const
+    bool isSideMiddle() const
     {
-        return parent().type() == DMU_SIDE &&
-               &self == &parent().as<LineSide>().middle();
+        return owner().type() == DMU_SIDE
+               && &self == &owner().as<LineSide>().middle();
     }
 
-    inline bool isSectorExtraPlane() const
+    bool isSectorExtraPlane() const
     {
-        if(parent().type() != DMU_PLANE) return false;
-        auto const &plane = parent().as<Plane>();
+        if (owner().type() != DMU_PLANE) return false;
+        auto const &plane = owner().as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 #endif
@@ -118,44 +122,31 @@ DENG2_PIMPL(Surface)
         tangentMatrix = Matrix3f(values);
     }
 
-    void notifyColorChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(ColorChange, i) i->surfaceColorChanged(self);
-    }
-
-    void notifyMaterialOriginChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(MaterialOriginChange, i) i->surfaceMaterialOriginChanged(self);
-
 #ifdef __CLIENT__
-        if(!ddMapSetup)
-        {
-            needDecorationUpdate = true;
-            map().scrollingSurfaces().insert(&self);
-        }
+    void notifyOriginSmoothedChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self);
+    }
 #endif
-    }
-
-    void notifyNormalChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(NormalChange, i) i->surfaceNormalChanged(self);
-    }
-
-    void notifyOpacityChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(OpacityChange, i) i->surfaceOpacityChanged(self);
-    }
 
     DENG2_PIMPL_AUDIENCE(ColorChange)
-    DENG2_PIMPL_AUDIENCE(MaterialOriginChange)
+    DENG2_PIMPL_AUDIENCE(MaterialChange)
     DENG2_PIMPL_AUDIENCE(NormalChange)
     DENG2_PIMPL_AUDIENCE(OpacityChange)
+    DENG2_PIMPL_AUDIENCE(OriginChange)
+#ifdef __CLIENT__
+    DENG2_PIMPL_AUDIENCE(OriginSmoothedChange)
+#endif
 };
 
 DENG2_AUDIENCE_METHOD(Surface, ColorChange)
-DENG2_AUDIENCE_METHOD(Surface, MaterialOriginChange)
+DENG2_AUDIENCE_METHOD(Surface, MaterialChange)
 DENG2_AUDIENCE_METHOD(Surface, NormalChange)
 DENG2_AUDIENCE_METHOD(Surface, OpacityChange)
+DENG2_AUDIENCE_METHOD(Surface, OriginChange)
+#ifdef __CLIENT__
+DENG2_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
+#endif
 
 Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &color)
     : MapElement(DMU_SURFACE, &owner)
@@ -174,7 +165,7 @@ String Surface::description() const
                   _E(l) " Blend Mode: "      _E(.)_E(i) "%5" _E(.)
                   _E(l) " Tint Color: "      _E(.)_E(i) "%6" _E(.))
                .arg(hasMaterial() ? material().manifest().composeUri().asText() : "None")
-               .arg(materialOrigin().asText())
+               .arg(origin().asText())
                .arg(normal().asText())
                .arg(opacity())
                .arg(String(R_NameForBlendMode(blendMode())))
@@ -184,7 +175,7 @@ String Surface::description() const
 Matrix3f const &Surface::tangentMatrix() const
 {
     // Perform any scheduled update now.
-    if(d->needUpdateTangentMatrix)
+    if (d->needUpdateTangentMatrix)
     {
         d->updateTangentMatrix();
     }
@@ -195,16 +186,16 @@ Surface &Surface::setNormal(Vector3f const &newNormal)
 {
     Vector3f const oldNormal = normal();
     Vector3f const newNormalNormalized = newNormal.normalize();
-    if(oldNormal != newNormalNormalized)
+    if (oldNormal != newNormalNormalized)
     {
-        for(dint i = 0; i < 3; ++i)
+        for (dint i = 0; i < 3; ++i)
         {
             d->tangentMatrix.at(i, 2) = newNormalNormalized[i];
         }
 
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangentMatrix = true;
-        d->notifyNormalChanged();
+        DENG2_FOR_AUDIENCE2(NormalChange, i) i->surfaceNormalChanged(*this);
     }
     return *this;
 }
@@ -221,25 +212,25 @@ bool Surface::hasFixMaterial() const
 
 Material &Surface::material() const
 {
-    if(d->material) return *d->material;
+    if (d->material) return *d->material;
     /// @throw MissingMaterialError Attempted with no material bound.
     throw MissingMaterialError("Surface::material", "No material is bound");
 }
 
 Material *Surface::materialPtr() const
 {
-    return hasMaterial()? &material() : nullptr;
+    return hasMaterial() ? &material() : nullptr;
 }
 
 Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
-    if(d->material == newMaterial)
+    if (d->material == newMaterial)
         return *this;
 
     // Update the missing-material-fix state.
-    if(!d->material)
+    if (!d->material)
     {
-        if(newMaterial && isMissingFix)
+        if (newMaterial && isMissingFix)
         {
             d->materialIsMissingFix = true;
 
@@ -247,62 +238,46 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             DENG2_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
         }
     }
-    else if(newMaterial && d->materialIsMissingFix)
+    else if (newMaterial && d->materialIsMissingFix)
     {
         d->materialIsMissingFix = false;
     }
 
     d->material = newMaterial;
-
-#ifdef __CLIENT__
-    // When the material changes any existing decorations are cleared.
-    clearDecorations();
-    d->needDecorationUpdate = true;
-
-    if(!ddMapSetup)
-    {
-        map().unlinkInMaterialLists(this);
-
-        if(d->material)
-        {
-            map().linkInMaterialLists(this);
-
-            if(parent().type() == DMU_PLANE)
-            {
-                de::Uri uri = d->material->manifest().composeUri();
-                ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                parent().as<Plane>().spawnParticleGen(def);
-            }
-        }
-    }
-#endif // __CLIENT__
+    DENG2_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
 
     return *this;
 }
 
-Vector2f const &Surface::materialOrigin() const
+Vector2f const &Surface::origin() const
 {
-    return d->materialOrigin;
+    return d->origin;
 }
 
-Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
+Surface &Surface::setOrigin(Vector2f const &newOrigin)
 {
-    if(d->materialOrigin != newOrigin)
+    if (d->origin != newOrigin)
     {
-        d->materialOrigin = newOrigin;
-
+        d->origin = newOrigin;
 #ifdef __CLIENT__
-        // During map setup we'll apply this immediately to the visual origin also.
-        if(ddMapSetup)
+        if (::ddMapSetup)
         {
-            d->materialOriginSmoothed      = d->materialOrigin;
-            d->materialOriginSmoothedDelta = Vector2f();
+            // During map setup we'll apply this immediately to the visual origin also.
+            d->originSmoothed = d->origin;
+            d->originSmoothedDelta = Vector2f();
 
-            d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
+            d->oldOrigin[0] = d->oldOrigin[1] = d->origin;
         }
 #endif
 
-        d->notifyMaterialOriginChanged();
+        DENG2_FOR_AUDIENCE2(OriginChange, i) i->surfaceOriginChanged(*this);
+
+#ifdef __CLIENT__
+        if (!::ddMapSetup)
+        {
+            map().scrollingSurfaces().insert(this);
+        }
+#endif
     }
     return *this;
 }
@@ -324,66 +299,9 @@ Vector2f Surface::materialScale() const
 
 de::Uri Surface::composeMaterialUri() const
 {
-    if(!hasMaterial()) return de::Uri();
+    if (!hasMaterial()) return de::Uri();
     return material().manifest().composeUri();
 }
-
-#ifdef __CLIENT__
-
-Vector2f const &Surface::materialOriginSmoothed() const
-{
-    return d->materialOriginSmoothed;
-}
-
-Vector2f const &Surface::materialOriginSmoothedAsDelta() const
-{
-    return d->materialOriginSmoothedDelta;
-}
-
-void Surface::lerpSmoothedMaterialOrigin()
-{
-    // $smoothmaterialorigin
-    d->materialOriginSmoothedDelta = d->oldMaterialOrigin[0] * (1 - frameTimePos)
-        + d->materialOrigin * frameTimePos - d->materialOrigin;
-
-    // Visible material origin.
-    d->materialOriginSmoothed = d->materialOrigin + d->materialOriginSmoothedDelta;
-
-#ifdef __CLIENT__
-    markForDecorationUpdate();
-#endif
-}
-
-void Surface::resetSmoothedMaterialOrigin()
-{
-    // $smoothmaterialorigin
-    d->materialOriginSmoothed = d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1] = d->materialOrigin;
-    d->materialOriginSmoothedDelta = Vector2f();
-
-#ifdef __CLIENT__
-    markForDecorationUpdate();
-#endif
-}
-
-void Surface::updateMaterialOriginTracking()
-{
-    // $smoothmaterialorigin
-    d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1];
-    d->oldMaterialOrigin[1] = d->materialOrigin;
-
-    if(d->oldMaterialOrigin[0] != d->oldMaterialOrigin[1])
-    {
-        float moveDistance = de::abs(Vector2f(d->oldMaterialOrigin[1] - d->oldMaterialOrigin[0]).length());
-
-        if(moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            d->oldMaterialOrigin[0] = d->oldMaterialOrigin[1];
-        }
-    }
-}
-
-#endif  // __CLIENT__
 
 dfloat Surface::opacity() const
 {
@@ -392,13 +310,13 @@ dfloat Surface::opacity() const
 
 Surface &Surface::setOpacity(dfloat newOpacity)
 {
-    DENG2_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane());  // sanity check
+    DENG2_ASSERT(Surface_isSideMiddle(*this) || Surface_isSectorExtraPlane(*this));  // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if (!de::fequal(d->opacity, newOpacity))
     {
         d->opacity = newOpacity;
-        d->notifyOpacityChanged();
+        DENG2_FOR_AUDIENCE2(OpacityChange, i) i->surfaceOpacityChanged(*this);
     }
     return *this;
 }
@@ -417,7 +335,7 @@ Surface &Surface::setColor(Vector3f const &newColor)
     if (d->color != newColorClamped)
     {
         d->color = newColorClamped;
-        d->notifyColorChanged();
+        DENG2_FOR_AUDIENCE2(ColorChange, i) i->surfaceColorChanged(*this);
     }
     return *this;
 }
@@ -433,89 +351,26 @@ Surface &Surface::setBlendMode(blendmode_t newBlendMode)
     return *this;
 }
 
-#ifdef __CLIENT__
-dfloat Surface::glow(Vector3f &color) const
-{
-    if (!d->material || d->material->isSkyMasked())
-    {
-        color = Vector3f();
-        return 0;
-    }
-
-    MaterialAnimator &matAnimator = d->material->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
-
-    // Ensure we've up to date info about the material.
-    matAnimator.prepare();
-
-    TextureVariant *texture       = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
-    if (!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
-
-    color = Vector3f(avgColorAmplified->color.rgb);
-    return matAnimator.glowStrength() * glowFactor; // Global scale factor.
-}
-
-void Surface::addDecoration(Decoration *decoration)
-{
-    if (!decoration) return;
-    d->decorations.append(decoration);
-
-    decoration->setSurface(this);
-    if (hasMap()) decoration->setMap(&map());
-}
-
-void Surface::clearDecorations()
-{
-    qDeleteAll(d->decorations); d->decorations.clear();
-}
-
-LoopResult Surface::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
-{
-    for (Decoration *decor : d->decorations)
-    {
-        if (auto result = func(*decor)) return result;
-    }
-    return LoopContinue;
-}
-
-dint Surface::decorationCount() const
-{
-    return d->decorations.count();
-}
-
-void Surface::markForDecorationUpdate(bool yes)
-{
-    if (ddMapSetup) return;
-    d->needDecorationUpdate = yes;
-}
-
-bool Surface::needsDecorationUpdate() const
-{
-    return d->needDecorationUpdate;
-}
-
-#endif  // __CLIENT__
-
 dint Surface::property(DmuArgs &args) const
 {
     switch (args.prop)
     {
     case DMU_MATERIAL: {
-        Material *mat = (d->materialIsMissingFix? nullptr : d->material);
+        Material *mat = (d->materialIsMissingFix ? nullptr : d->material);
         args.setValue(DMT_SURFACE_MATERIAL, &mat, 0);
         break; }
 
     case DMU_OFFSET_X:
-        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->origin.x, 0);
         break;
 
     case DMU_OFFSET_Y:
-        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->origin.y, 0);
         break;
 
     case DMU_OFFSET_XY:
-        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.x, 0);
-        args.setValue(DMT_SURFACE_OFFSET, &d->materialOrigin.y, 1);
+        args.setValue(DMT_SURFACE_OFFSET, &d->origin.x, 0);
+        args.setValue(DMT_SURFACE_OFFSET, &d->origin.y, 1);
         break;
 
     case DMU_TANGENT_X:
@@ -663,22 +518,22 @@ dint Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_OFFSET_X: {
-        Vector2f newOrigin = d->materialOrigin;
+        Vector2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
-        setMaterialOrigin(newOrigin);
+        setOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_Y: {
-        Vector2f newOrigin = d->materialOrigin;
+        Vector2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 0);
-        setMaterialOrigin(newOrigin);
+        setOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_XY: {
-        Vector2f newOrigin = d->materialOrigin;
+        Vector2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
         args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 1);
-        setMaterialOrigin(newOrigin);
+        setOrigin(newOrigin);
         break; }
 
     default:
@@ -687,3 +542,77 @@ dint Surface::setProperty(DmuArgs const &args)
 
     return false;  // Continue iteration.
 }
+
+#ifdef __CLIENT__
+
+Vector2f const &Surface::originSmoothed() const
+{
+    return d->originSmoothed;
+}
+
+Vector2f const &Surface::originSmoothedAsDelta() const
+{
+    return d->originSmoothedDelta;
+}
+
+void Surface::lerpSmoothedOrigin()
+{
+    // $smoothmaterialorigin
+    d->originSmoothedDelta = d->oldOrigin[0] * (1 - ::frameTimePos)
+        + origin() * ::frameTimePos - origin();
+
+    // Visible material origin.
+    d->originSmoothed = origin() + d->originSmoothedDelta;
+
+    d->notifyOriginSmoothedChanged();
+}
+
+void Surface::resetSmoothedOrigin()
+{
+    // $smoothmaterialorigin
+    d->originSmoothed = d->oldOrigin[0] = d->oldOrigin[1] = origin();
+    d->originSmoothedDelta = Vector2f();
+
+    d->notifyOriginSmoothedChanged();
+}
+
+void Surface::updateOriginTracking()
+{
+    // $smoothmaterialorigin
+    d->oldOrigin[0] = d->oldOrigin[1];
+    d->oldOrigin[1] = origin();
+
+    if (d->oldOrigin[0] != d->oldOrigin[1])
+    {
+        dfloat moveDistance = de::abs(Vector2f(d->oldOrigin[1] - d->oldOrigin[0]).length());
+
+        if (moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
+        {
+            // Too fast: make an instantaneous jump.
+            d->oldOrigin[0] = d->oldOrigin[1];
+        }
+    }
+}
+
+dfloat Surface::glow(Vector3f &color) const
+{
+    if (!hasMaterial() || material().isSkyMasked())
+    {
+        color = Vector3f();
+        return 0;
+    }
+
+    MaterialAnimator &matAnimator = material().as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
+    if (!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
+
+    color = Vector3f(avgColorAmplified->color.rgb);
+    return matAnimator.glowStrength() * glowFactor; // Global scale factor.
+}
+
+#endif // __CLIENT__

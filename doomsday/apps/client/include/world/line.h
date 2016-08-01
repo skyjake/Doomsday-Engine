@@ -82,6 +82,8 @@ public:
     // Logical side identifiers:
     enum { Front, Back };
 
+    static de::String sideIdAsText(de::dint sideId);
+
     /**
      * Logical side of which there are always two (Front and Back).
      *
@@ -104,6 +106,8 @@ public:
             Bottom,
             Top
         };
+
+        static de::String sectionIdAsText(de::dint sectionId);
 
         /**
          * Flags used as Section identifiers:

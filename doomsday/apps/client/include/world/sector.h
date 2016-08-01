@@ -55,6 +55,8 @@ public:
     // Plane identifiers:
     enum { Floor, Ceiling };
 
+    static de::String planeIdAsText(de::dint planeId);
+
     /**
      * Construct a new sector.
      *
@@ -172,7 +174,8 @@ public:
      *
      * @param callback  Function to call for each Plane.
      */
-    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane &)> func) const;
+    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane &)> func);
+    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane const &)> func) const;
 
     /**
      * Add another Plane to the sector.

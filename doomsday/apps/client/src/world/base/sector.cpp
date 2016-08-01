@@ -309,7 +309,16 @@ Plane const &Sector::ceiling() const
     return plane(Ceiling);
 }
 
-LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
+LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
+{
+    for (Plane *plane : d->planes)
+    {
+        if(auto result = func(*plane)) return result;
+    }
+    return LoopContinue;
+}
+
+LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane const &)> func) const
 {
     for (Plane *plane : d->planes)
     {
@@ -407,13 +416,11 @@ void Sector::buildSides()
     {
         if (line.front().sectorPtr() == this)
         {
-            // Ownership of the side is not given to the sector.
-            d->sides.append(&line.front());
+            d->sides.append(&line.front()); // Ownership not given.
         }
         else if (line.back().sectorPtr()  == this)
         {
-            // Ownership of the side is not given to the sector.
-            d->sides.append(&line.back());
+            d->sides.append(&line.back()); // Ownership not given.
         }
         return LoopContinue;
     });
@@ -645,13 +652,24 @@ D_CMD(InspectSector)
                 _E(l) " Light Color: " _E(.)_E(i) "%s")
             << sec->lightLevel()
             << sec->lightColor().asText();
-    sec->forAllPlanes([](Plane &plane)
+    sec->forAllPlanes([] (Plane const &plane)
     {
         LOG_SCR_MSG("") << plane.description();
         return LoopContinue;
     });
 
     return true;
+}
+
+String Sector::planeIdAsText(dint planeId)
+{
+    switch (planeId)
+    {
+    case Floor:   return "floor";
+    case Ceiling: return "ceiling";
+
+    default:      return "plane-" + String::number(planeId);
+    }
 }
 
 void Sector::consoleRegister()  // static

@@ -407,11 +407,11 @@ dd_bool Mobj_OriginBehindVisPlane(mobj_t *mob)
 
     auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
 
-    if (&subsec.floor() != &subsec.visFloor()
+    if (&subsec.sector().floor() != &subsec.visFloor()
         && mob->origin[2] < subsec.visFloor().heightSmoothed())
         return true;
 
-    if (&subsec.ceiling() != &subsec.visCeiling()
+    if (&subsec.sector().ceiling() != &subsec.visCeiling()
         && mob->origin[2] > subsec.visCeiling().heightSmoothed())
         return true;
 
@@ -492,7 +492,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
                      - subsec.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
-    if (impacted < 0 && &subsec.visFloor() != &subsec.floor())
+    if (impacted < 0 && &subsec.visFloor() != &subsec.sector().floor())
         return;
 
     // Attempt to generate luminous object from the sprite.
@@ -980,14 +980,18 @@ D_CMD(InspectMobj)
 #ifdef __CLIENT__
     LOG_MAP_MSG("VisAngle:%x") << mob->visAngle;
 #endif
-    LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mob->floorZ << mob->ceilingZ;
+    LOG_MAP_MSG("%sZ:%f %sZ:%f")
+        << Sector::planeIdAsText(Sector::Floor  ).upperFirstChar() << mob->floorZ
+        << Sector::planeIdAsText(Sector::Ceiling).upperFirstChar() << mob->ceilingZ;
+
     if (Subsector *subsec = Mobj_SubsectorPtr(*mob))
     {
-        LOG_MAP_MSG("Sector:%i (FloorZ:%f CeilingZ:%f)")
+        LOG_MAP_MSG("Sector:%i (%sZ:%f %sZ:%f)")
                 << subsec->sector().indexInMap()
-                << subsec->floor().height()
-                << subsec->ceiling().height();
+                << Sector::planeIdAsText(Sector::Floor  ) << subsec->sector().floor  ().height()
+                << Sector::planeIdAsText(Sector::Ceiling) << subsec->sector().ceiling().height();
     }
+
     if (mob->onMobj)
     {
         LOG_MAP_MSG("onMobj:%i") << mob->onMobj->thinker.id;

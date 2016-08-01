@@ -23,11 +23,11 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Sector"
-#include "Surface"
 
 #include "world/lineowner.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
+#include "world/surface.h"
 #include "client/clientsubsector.h"
 
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
@@ -155,7 +155,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 lo = hi = subsec.visFloor().heightSmoothed();
             }
 
-            materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
+            materialOrigin = seg.lineSide().middle().originSmoothed();
             if (unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
@@ -195,7 +195,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         hi = lo;
                     }
 
-                    materialOrigin = seg.lineSide().middle().materialOriginSmoothed();
+                    materialOrigin = seg.lineSide().middle().originSmoothed();
                     if (!unpegTop)
                     {
                         // Align with normal middle texture.
@@ -237,7 +237,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                         lo = hi;
                     }
 
-                    materialOrigin = seg.lineSide().bottom().materialOriginSmoothed();
+                    materialOrigin = seg.lineSide().bottom().originSmoothed();
                     if (bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
                         materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
@@ -277,7 +277,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     hi = lineSide.back().sector().ceiling().heightSmoothed();
                 }
 
-                materialOrigin = Vector2f(middle.materialOriginSmoothed().x, 0);
+                materialOrigin = Vector2f(middle.originSmoothed().x, 0);
 
                 // Perform clipping.
                 if (middle.hasMaterial()
@@ -299,12 +299,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     {
                         if (unpegBottom)
                         {
-                            lo += middle.materialOriginSmoothed().y;
+                            lo += middle.originSmoothed().y;
                             hi = lo + middle.material().height();
                         }
                         else
                         {
-                            hi += middle.materialOriginSmoothed().y;
+                            hi += middle.originSmoothed().y;
                             lo = hi - middle.material().height();
                         }
 

@@ -32,9 +32,9 @@
 #include "Surface"
 #include "Vertex"
 #include "world/maputil.h"
-
 #ifdef __CLIENT__
 #  include "world/lineowner.h"
+
 #  include "render/r_main.h"  // levelFullBright
 #  include "render/rend_fakeradio.h"
 
@@ -128,9 +128,6 @@ void Line::Side::Segment::setFrontFacing(bool yes)
 #endif  // __CLIENT__
 
 DENG2_PIMPL_NOREF(Line::Side)
-#ifdef __CLIENT__
-, DENG2_OBSERVES(Line, FlagsChange)
-#endif
 {
     dint flags = 0;                 ///< @ref sdefFlags
     Sector *sector = nullptr;       ///< Attributed sector (not owned).
@@ -260,23 +257,7 @@ DENG2_PIMPL_NOREF(Line::Side)
             span.shift = span.length;
         }
     }
-
-    /// Observes Line FlagsChange
-    void lineFlagsChanged(Line &line, dint oldFlags)
-    {
-        if (sections)
-        {
-            if ((line.flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
-            {
-                sections->top.surface.markForDecorationUpdate();
-            }
-            if ((line.flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
-            {
-                sections->bottom.surface.markForDecorationUpdate();
-            }
-        }
-    }
-#endif
+#endif // __CLIENT__
 };
 
 Line::Side::Side(Line &line, Sector *sector)
@@ -284,9 +265,6 @@ Line::Side::Side(Line &line, Sector *sector)
     , d(new Impl)
 {
     d->sector = sector;
-#ifdef __CLIENT__
-    line.audienceForFlagsChange += d;
-#endif
 }
 
 Line &Line::Side::line()
@@ -306,8 +284,6 @@ bool Line::Side::isFront() const
 
 String Line::Side::description() const
 {
-    String const name = (isFront() ? "Front" : "Back");
-
     QStringList flagNames;
     if (flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
     if (flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
@@ -326,17 +302,18 @@ String Line::Side::description() const
                        _E(l)  "Sector: "    _E(.)_E(i) "%2" _E(.)
                        _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
                        "%4")
-                    .arg(name)
+                    .arg(Line::sideIdAsText(sideId()).upperFirstChar())
                     .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
                     .arg(DENG2_BOOL_YESNO(considerOneSided()))
                     .arg(flagsString);
+
     forAllSurfaces([this, &text] (Surface &suf)
     {
-        String const name =   &suf == &top   () ? "Top"
-                            : &suf == &middle() ? "Middle"
-                                                : "Bottom";
-        text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
-                + suf.description();
+        text += String("\n" _E(D) "%1:\n" _E(.))
+                  .arg(sectionIdAsText(  &suf == &top   () ? Side::Top
+                                       : &suf == &middle() ? Side::Middle
+                                       :                     Side::Bottom))
+              + suf.description();
         return LoopContinue;
     });
 
@@ -854,13 +831,14 @@ static void addMissingMaterial(LineSide &side, dint section)
     // During map setup we log missing materials.
     if (ddMapSetup && verbose)
     {
-        String path = surface.hasMaterial()? surface.material().manifest().composeUri().asText() : "<null>";
+        String const surfaceMaterialPath = surface.hasMaterial() ? surface.material().manifest().composeUri().asText() : "<null>";
 
-        LOG_WARNING("%s of Line #%d is missing a material for the %s section.\n"
-                    "  %s was chosen to complete the definition.")
-            << (side.isBack() ? "Back" : "Front") << side.line().indexInMap()
-            << (section == LineSide::Middle ? "middle" : section == LineSide::Top? "top" : "bottom")
-            << path;
+        LOG_WARNING(  "%s of Line #%d is missing a material for the %s section."
+                    "\n  %s was chosen to complete the definition.")
+            << Line::sideIdAsText(side.sideId()).upperFirstChar()
+            << side.line().indexInMap()
+            << LineSide::sectionIdAsText(section)
+            << surfaceMaterialPath;
     }
 }
 
@@ -1240,6 +1218,18 @@ dint Line::Side::setProperty(DmuArgs const &args)
         return MapElement::setProperty(args);
     }
     return false; // Continue iteration.
+}
+
+String Line::Side::sectionIdAsText(dint sectionId) // static
+{
+    switch (sectionId)
+    {
+    case Middle: return "middle";
+    case Bottom: return "bottom";
+    case Top:    return "top";
+
+    default:     return "(invalid)";
+    };
 }
 
 DENG2_PIMPL(Line)
@@ -1741,7 +1731,18 @@ D_CMD(InspectLine)
     return true;
 }
 
-void Line::consoleRegister()  // static
+void Line::consoleRegister() // static
 {
     C_CMD("inspectline", "i", InspectLine);
+}
+
+String Line::sideIdAsText(dint sideId) // static
+{
+    switch (sideId)
+    {
+    case Front: return "front";
+    case Back:  return "back";
+
+    default:    return "(invalid)";
+    };
 }

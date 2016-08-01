@@ -89,36 +89,6 @@ Sector const &Subsector::sector() const
     return *d->subspaces.first()->bspLeaf().sectorPtr();
 }
 
-Plane &Subsector::plane(dint planeIndex)
-{
-    return sector().plane(planeIndex);
-}
-
-Plane const &Subsector::plane(dint planeIndex) const
-{
-    return sector().plane(planeIndex);
-}
-
-Plane &Subsector::floor()
-{
-    return plane(Sector::Floor);
-}
-
-Plane const &Subsector::floor() const
-{
-    return plane(Sector::Floor);
-}
-
-Plane &Subsector::ceiling()
-{
-    return plane(Sector::Ceiling);
-}
-
-Plane const &Subsector::ceiling() const
-{
-    return plane(Sector::Ceiling);
-}
-
 dint Subsector::subspaceCount() const
 {
     return d->subspaces.count();

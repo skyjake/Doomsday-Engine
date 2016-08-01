@@ -27,7 +27,6 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_mobj.h"
-#  include "client/clientsubsector.h"
 #endif
 
 #include "api_console.h"
@@ -65,7 +64,6 @@
 #  include "BiasTracker"
 #  include "LightDecoration"
 #  include "Lumobj"
-#  include "SurfaceDecorator"
 #  include "WallEdge"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
@@ -307,8 +305,6 @@ DENG2_PIMPL(Map)
     } bias;
 
     QList<Lumobj *> lumobjs;  ///< All lumobjs (owned).
-
-    std::unique_ptr<SurfaceDecorator> decorator;
 
     coord_t skyFloorHeight   = DDMAXFLOAT;
     coord_t skyCeilingHeight = DDMINFLOAT;
@@ -1103,15 +1099,6 @@ DENG2_PIMPL(Map)
     }
 
 #ifdef __CLIENT__
-    SurfaceDecorator &surfaceDecorator()
-    {
-        if (!decorator)
-        {
-            decorator.reset(new SurfaceDecorator);
-        }
-        return *decorator;
-    }
-
     /**
      * Interpolate the smoothed height of planes.
      */
@@ -1157,7 +1144,7 @@ DENG2_PIMPL(Map)
             // Reset the surface material origin trackers.
             for (Surface *surface : scrollingSurfaces)
             {
-                surface->resetSmoothedMaterialOrigin();
+                surface->resetSmoothedOrigin();
             }
 
             // Tracked movement is now all done.
@@ -1170,11 +1157,9 @@ DENG2_PIMPL(Map)
             while (iter.hasNext())
             {
                 Surface *surface = iter.next();
-
-                surface->lerpSmoothedMaterialOrigin();
-
+                surface->lerpSmoothedOrigin();
                 // Has this material reached its destination?
-                if (surface->materialOriginSmoothed() == surface->materialOrigin())
+                if (surface->originSmoothed() == surface->origin())
                 {
                     iter.remove();
                 }
@@ -1232,22 +1217,6 @@ DENG2_PIMPL(Map)
         {
             R_AddContact(*iter);
         }
-    }
-
-    void generateLumobjs(Surface const &surface)
-    {
-        surface.forAllDecorations([this] (Decoration &decor)
-        {
-            if (auto const *decorLight = decor.maybeAs<LightDecoration>())
-            {
-                std::unique_ptr<Lumobj> lum(decorLight->generateLumobj());
-                if (lum)
-                {
-                    self.addLumobj(*lum);  // a copy is made.
-                }
-            }
-            return LoopContinue;
-        });
     }
 
     /**
@@ -1853,91 +1822,6 @@ void Map::initBias()
     }
 
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
-}
-
-void Map::unlinkInMaterialLists(Surface *surface)
-{
-    if (!surface) return;
-    if (!d->decorator) return;
-
-    d->surfaceDecorator().remove(surface);
-}
-
-void Map::linkInMaterialLists(Surface *surface)
-{
-    if (!surface) return;
-
-    // Only surfaces with a material will be linked.
-    if (!surface->hasMaterial()) return;
-
-    // Ignore surfaces not currently attributed to the map.
-    if (&surface->map() != this)
-    {
-        qDebug() << "Ignoring alien surface" << de::dintptr(surface) << "in Map::unlinkInMaterialLists";
-        return;
-    }
-
-    d->surfaceDecorator().add(surface);
-}
-
-void Map::buildMaterialLists()
-{
-    d->surfaceDecorator().reset();
-
-    for (ConvexSubspace const *subspace : d->subspaces)
-    {
-        HEdge *base  = subspace->poly().hedge();
-        HEdge *hedge = base;
-        do
-        {
-            if (hedge->hasMapElement())
-            {
-                LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
-                if (side.hasSections())
-                {
-                    linkInMaterialLists(&side.middle());
-                    linkInMaterialLists(&side.top());
-                    linkInMaterialLists(&side.bottom());
-                }
-                if (side.back().hasSections())
-                {
-                    linkInMaterialLists(&side.back().middle());
-                    linkInMaterialLists(&side.back().top());
-                    linkInMaterialLists(&side.back().bottom());
-                }
-            }
-        } while ((hedge = &hedge->next()) != base);
-
-        subspace->forAllExtraMeshes([this] (Mesh &mesh)
-        {
-            for (HEdge *hedge : mesh.hedges())
-            {
-                // Is this on the back of a one-sided line?
-                if (!hedge->hasMapElement()) continue;
-
-                LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
-                if (side.hasSections())
-                {
-                    linkInMaterialLists(&side.middle());
-                    linkInMaterialLists(&side.top());
-                    linkInMaterialLists(&side.bottom());
-                }
-                if (side.back().hasSections())
-                {
-                    linkInMaterialLists(&side.back().middle());
-                    linkInMaterialLists(&side.back().top());
-                    linkInMaterialLists(&side.back().bottom());
-                }
-            }
-            return LoopContinue;
-        });
-
-        subspace->subsector().sector().forAllPlanes([this] (Plane &plane)
-        {
-            linkInMaterialLists(&plane.surface());
-            return LoopContinue;
-        });
-    }
 }
 
 void Map::initRadio()
@@ -2781,7 +2665,7 @@ void Map::updateScrollingSurfaces()
 {
     for (Surface *surface : d->scrollingSurfaces)
     {
-        surface->updateMaterialOriginTracking();
+        surface->updateOriginTracking();
     }
 }
 
@@ -2873,16 +2757,16 @@ void Map::initSkyFix()
 
             if (edge.isValid() && edge.top().z() > edge.bottom().z())
             {
-                if (skyCeil && edge.top().z() + edge.materialOrigin().y > d->skyCeilingHeight)
+                if (skyCeil && edge.top().z() + edge.origin().y > d->skyCeilingHeight)
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = edge.top().z() + edge.materialOrigin().y;
+                    d->skyCeilingHeight = edge.top().z() + edge.origin().y;
                 }
 
-                if (skyFloor && edge.bottom().z() + edge.materialOrigin().y < d->skyFloorHeight)
+                if (skyFloor && edge.bottom().z() + edge.origin().y < d->skyFloorHeight)
                 {
                     // Must lower the skyfix floor.
-                    d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
+                    d->skyFloorHeight = edge.bottom().z() + edge.origin().y;
                 }
             }
             return LoopContinue;
@@ -3143,34 +3027,12 @@ void Map::update()
     // Update all surfaces.
     for (Sector *sector : d->sectors)
     {
-        sector->forAllPlanes([] (Plane &plane)
+        sector->forAllSubsectors([] (Subsector &subsector)
         {
-            plane.surface().markForDecorationUpdate();
+            subsector.as<ClientSubsector>().markForDecorationUpdate();
             return LoopContinue;
         });
     }
-
-    for (Line *line : d->lines)
-    for (dint i = 0; i < 2; ++i)
-    {
-        LineSide &side = line->side(i);
-        if (!side.hasSections()) continue;
-
-        side.top   ().markForDecorationUpdate();
-        side.middle().markForDecorationUpdate();
-        side.bottom().markForDecorationUpdate();
-    }
-
-    /// @todo Is this even necessary?
-    for (Polyobj *polyobj : d->polyobjs)
-    for (Line *line : polyobj->lines())
-    {
-        line->front().middle().markForDecorationUpdate();
-    }
-
-    // Rebuild the surface material lists.
-    buildMaterialLists();
-
 #endif // __CLIENT__
 
     // Reapply values defined in MapInfo (they may have changed).
@@ -3221,26 +3083,17 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
         // Generate surface decorations for the frame.
         if (useLightDecorations)
         {
-            // Perform scheduled redecoration.
-            d->surfaceDecorator().redecorate();
-
-            // Generate lumobjs for all decorations who want them.
-            for (Line *line : d->lines)
-            for (dint i = 0; i < 2; ++i)
-            {
-                LineSide &side = line->side(i);
-                if (!side.hasSections()) continue;
-
-                d->generateLumobjs(side.middle());
-                d->generateLumobjs(side.bottom());
-                d->generateLumobjs(side.top());
-            }
-
             for (Sector *sector : d->sectors)
             {
-                sector->forAllPlanes([this] (Plane &plane)
+                sector->forAllSubsectors([] (Subsector &ssec)
                 {
-                    d->generateLumobjs(plane.surface());
+                    auto &clSubsector = ssec.as<ClientSubsector>();
+
+                    // Perform scheduled redecoration.
+                    clSubsector.decorate();
+
+                    // Generate lumobjs for all decorations who want them.
+                    clSubsector.generateLumobjs();
                     return LoopContinue;
                 });
             }

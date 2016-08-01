@@ -79,32 +79,6 @@ public:
      */
     static bool isInternalEdge(de::HEdge *hedge);
 
-//- Planes ------------------------------------------------------------------------------
-
-    /**
-     * Returns the @em physical Plane of the subsector associated with @a planeIndex.
-     *
-     * @see floor(), ceiling()
-     */
-    Plane       &plane(de::dint planeIndex);
-    Plane const &plane(de::dint planeIndex) const;
-
-    /**
-     * Returns the @em physical floor Plane of the subsector.
-     *
-     * @see ceiling(), plane()
-     */
-    Plane       &floor();
-    Plane const &floor() const;
-
-    /**
-     * Returns the @em physical ceiling Plane of the subsector.
-     *
-     * @see floor(), plane()
-     */
-    Plane       &ceiling();
-    Plane const &ceiling() const;
-
 //- Subspaces ---------------------------------------------------------------------------
 
     /**

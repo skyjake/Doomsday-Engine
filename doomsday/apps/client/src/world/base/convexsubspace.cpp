@@ -441,7 +441,7 @@ bool ConvexSubspace::updateAudioEnvironment()
 
     // Space is the rough volume of the bounding box.
     AABoxd const &bounds = poly().bounds();
-    env.space = dint(subsector().ceiling().height() - subsector().floor().height())
+    env.space = dint(subsector().sector().ceiling().height() - subsector().sector().floor().height())
               * ((bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY));
 
     // The other reverb properties can be found out by taking a look at the

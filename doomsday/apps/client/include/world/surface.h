@@ -36,8 +36,7 @@ class Decoration;
 #endif
 
 /**
- * Models a "boundless" but otherwise geometric map surface. Boundless in the
- * sense that a surface has no edges.
+ * MapElement for modelling a "boundless" two-dimensional geometric plane (i.e., no edges).
  */
 class Surface : public world::MapElement
 {
@@ -45,25 +44,18 @@ class Surface : public world::MapElement
     DENG2_NO_ASSIGN(Surface)
 
 public:
-    /// Thrown when a required material is missing. @ingroup errors
-    DENG2_ERROR(MissingMaterialError);
-
     /// Notified whenever the tint color changes.
-    DENG2_DEFINE_AUDIENCE2(ColorChange,          void surfaceColorChanged(Surface &sector))
-
-    /// Notified when the @em sharp material origin changes.
-    DENG2_DEFINE_AUDIENCE2(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(ColorChange,   void surfaceColorChanged(Surface &sector))
 
     /// Notified whenever the normal vector changes.
-    DENG2_DEFINE_AUDIENCE2(NormalChange,         void surfaceNormalChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(NormalChange,  void surfaceNormalChanged(Surface &surface))
 
     /// Notified whenever the opacity changes.
-    DENG2_DEFINE_AUDIENCE2(OpacityChange,        void surfaceOpacityChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
 
-    /// Maximum speed for a smoothed material offset.
-    static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
+    /// Notified whenever the @em sharp origin changes.
+    DENG2_DEFINE_AUDIENCE2(OriginChange,  void surfaceOriginChanged(Surface &surface))
 
-public:
     /**
      * Construct a new surface.
      *
@@ -109,6 +101,12 @@ public:
     Surface &setOpacity(de::dfloat newOpacity);
 
     /**
+     * Returns the material origin offset for the surface.
+     */
+    de::Vector2f const &origin() const;
+    Surface &setOrigin(de::Vector2f const &newOrigin);
+
+    /**
      * Returns the tint color of the surface. The ColorChange audience is
      * notified whenever the tint color changes.
      *
@@ -123,53 +121,13 @@ public:
     blendmode_t blendMode() const;
     Surface &setBlendMode(blendmode_t newBlendMode);
 
-#ifdef __CLIENT__
-    /**
-     * Determine the glow properties of the surface, which, are derived from the
-     * bound material (averaged color).
-     *
-     * @param color  Amplified glow color is written here.
-     *
-     * @return  Glow strength/intensity or @c 0 if not presently glowing.
-     */
-    de::dfloat glow(de::Vector3f &color) const;
+//- Material ----------------------------------------------------------------------------
 
-public:  //- Decorations ----------------------------------------------------------------
+    /// Thrown when a required material is missing. @ingroup errors
+    DENG2_ERROR(MissingMaterialError);
 
-    /**
-     * Clear all surface decorations.
-     */
-    void clearDecorations();
-
-    /**
-     * Returns the total number of surface decorations.
-     */
-    de::dint decorationCount() const;
-
-    /**
-     * Add the specified decoration to the surface.
-     *
-     * @param decoration  Decoration to add. Ownership is given to the surface.
-     */
-    void addDecoration(Decoration *decoration);
-
-    /**
-     * Iterate through all the surface decorations.
-     */
-    de::LoopResult forAllDecorations(std::function<de::LoopResult (Decoration &)> func) const;
-
-    /**
-     * Mark the surface as needing a decoration update.
-     */
-    void markForDecorationUpdate(bool yes = true);
-
-    /**
-     * Returns @c true if the surface is marked for decoration update.
-     */
-    bool needsDecorationUpdate() const;
-#endif  // __CLIENT__
-
-public:  //- Material -------------------------------------------------------------------
+    /// Notified when the material changes.
+    DENG2_DEFINE_AUDIENCE2(MaterialChange, void surfaceMaterialChanged(Surface &surface))
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -216,9 +174,7 @@ public:  //- Material ----------------------------------------------------------
     world::Material *materialPtr() const;
 
     /**
-     * Change the material attributed to the surface. On client side, any existing
-     * decorations are cleared whenever the material changes and the surface is
-     * marked for redecoration.
+     * Change the material attributed to the surface.
      *
      * @param newMaterial   New material to apply. Use @c nullptr to clear.
      * @param isMissingFix  @c true= this is a fix for a "missing" material.
@@ -236,12 +192,6 @@ public:  //- Material ----------------------------------------------------------
     bool materialMirrorY() const;
 
     /**
-     * Returns the material origin offset for the surface.
-     */
-    de::Vector2f const &materialOrigin() const;
-    Surface &setMaterialOrigin(de::Vector2f const &newOrigin);
-
-    /**
      * Returns the material scale factors for the surface.
      */
     de::Vector2f materialScale() const;
@@ -255,42 +205,79 @@ public:  //- Material ----------------------------------------------------------
     de::Uri composeMaterialUri() const;
 
 #ifdef __CLIENT__
-public:  //- Material positioning -------------------------------------------------------
+//- Material origin smoothing -----------------------------------------------------------
+
+    /// Notified when the @em sharp material origin changes.
+    DENG2_DEFINE_AUDIENCE2(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
+
+    /// Maximum speed for a smoothed material offset.
+    static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
 
     /**
      * Returns the current smoothed (interpolated) material origin for the
      * surface in the map coordinate space.
      *
-     * @see setMaterialOrigin()
+     * @see setOrigin()
      */
-    de::Vector2f const &materialOriginSmoothed() const;
+    de::Vector2f const &originSmoothed() const;
 
     /**
      * Returns the delta between current and the smoothed material origin for
      * the surface in the map coordinate space.
      *
-     * @see setMaterialOrigin(), smoothMaterialOrigin()
+     * @see setOrigin(), smoothOrigin()
      */
-    de::Vector2f const &materialOriginSmoothedAsDelta() const;
+    de::Vector2f const &originSmoothedAsDelta() const;
 
     /**
      * Perform smoothed material origin interpolation.
      *
-     * @see materialOriginSmoothed()
+     * @see originSmoothed()
      */
-    void lerpSmoothedMaterialOrigin();
+    void lerpSmoothedOrigin();
 
     /**
      * Reset the surface's material origin tracking.
      *
-     * @see materialOriginSmoothed()
+     * @see originSmoothed()
      */
-    void resetSmoothedMaterialOrigin();
+    void resetSmoothedOrigin();
 
     /**
      * Roll the surface's material origin tracking buffer.
      */
-    void updateMaterialOriginTracking();
+    void updateOriginTracking();
+
+//- Decorations -------------------------------------------------------------------------
+
+    /**
+     * Clear all surface decorations.
+     */
+    void clearDecorations();
+
+    /**
+     * Returns the total number of surface decorations.
+     */
+    de::dint decorationCount() const;
+
+    /**
+     * Add the specified decoration to the surface.
+     *
+     * @param decoration  Decoration to add. Ownership is given to the surface.
+     */
+    void addDecoration(Decoration *decoration);
+
+//---------------------------------------------------------------------------------------
+
+    /**
+     * Determine the glow properties of the surface, which, are derived from the
+     * bound material (averaged color).
+     *
+     * @param color  Amplified glow color is written here.
+     *
+     * @return  Glow strength/intensity or @c 0 if not presently glowing.
+     */
+    de::dfloat glow(de::Vector3f &color) const;
 
 #endif // __CLIENT__
 

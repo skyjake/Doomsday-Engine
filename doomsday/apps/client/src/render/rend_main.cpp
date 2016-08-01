@@ -33,19 +33,18 @@
 #include "world/p_players.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
+#include "world/surface.h"
 #include "BspLeaf"
 #include "Contact"
 #include "ConvexSubspace"
 #include "Hand"
 #include "client/clientsubsector.h"
-#include "Surface"
 #include "BiasIllum"
 #include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
 #include "Shard"
 #include "SkyFixEdge"
-#include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
 
@@ -668,7 +667,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
-    coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &materialOrigin,
+    coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &origin,
     blendmode_t blendMode, duint lightListIdx, dfloat glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
@@ -676,8 +675,8 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     vis->pose.origin   = (rvertices[0] + rvertices[3]) / 2;
     vis->pose.distance = Rend_PointDist2D(vis->pose.origin);
 
-    VS_WALL(vis)->texOffset[0] = materialOrigin[0];
-    VS_WALL(vis)->texOffset[1] = materialOrigin[1];
+    VS_WALL(vis)->texOffset[0] = origin[0];
+    VS_WALL(vis)->texOffset[1] = origin[1];
 
     // Masked walls are sometimes used for special effects like arcs,
     // cobwebs and bottoms of sails. In order for them to look right,
@@ -1274,7 +1273,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     verts.color = !skyMaskedMaterial? R_AllocRendColors   (numVerts) : nullptr;
     verts.tex   = layer0RTU         ? R_AllocRendTexCoords(numVerts) : nullptr;
     verts.tex2  = layer0InterRTU    ? R_AllocRendTexCoords(numVerts) : nullptr;
-    if(p.isWall)
+    if (p.isWall)
     {
         makeWallGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight, p.wall.width,
                          *p.mapElement, p.geomGroup, *p.surfaceTangentMatrix,
@@ -1289,7 +1288,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                          !skyMaskedMaterial);
     }
 
-    if(drawAsVisSprite)
+    if (drawAsVisSprite)
     {
         DENG2_ASSERT(p.isWall);
 
@@ -1309,14 +1308,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     // Skip drawing dynamic light/shadow on surfaces too bright/dark to benefit.
     bool useLights  = (p.lightListIdx  && !skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1? true : false);
     bool useShadows = (p.shadowListIdx && !skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1? true : false);
-    if(useLights || useShadows)
+    if (useLights || useShadows)
     {
         dfloat const avg = averageLuminosity(verts.color, numVertices);
-        if(avg > 0.98f)  // Fully bright.
+        if (avg > 0.98f)  // Fully bright.
         {
             useLights = false;  // Skip lights.
         }
-        if(avg < 0.02f)  // Fully dark.
+        if (avg < 0.02f)  // Fully dark.
         {
             useShadows = false;  // Skip shadows.
         }
@@ -1326,7 +1325,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     // locate the projection data and use it for modulation.
     TexModulationData mod;
     Vector2f *modTexCoords = nullptr;
-    if(useLights && Rend_IsMTexLights())
+    if (useLights && Rend_IsMTexLights())
     {
         ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx, [&mod] (ProjectedTextureData const &dyn)
         {
@@ -1337,11 +1336,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             return LoopAbort;
         });
 
-        if(mod.texture)
+        if (mod.texture)
         {
             // Prepare modulation texture coordinates.
             modTexCoords = R_AllocRendTexCoords(numVerts);
-            if(p.isWall)
+            if (p.isWall)
             {
                 modTexCoords[0] = Vector2f(mod.topLeft.x, mod.bottomRight.y);
                 modTexCoords[1] = mod.topLeft;
@@ -1350,7 +1349,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             else
             {
-                for(duint i = 0; i < numVertices; ++i)
+                for (duint i = 0; i < numVertices; ++i)
                 {
                     modTexCoords[i] = (( Vector2f(*p.bottomRight) - Vector2f(rvertices[i]) ) / ( Vector2f(*p.bottomRight) - Vector2f(*p.topLeft) ) * mod.topLeft    )
                                     + (( Vector2f(rvertices[i]  ) - Vector2f(*p.topLeft  ) ) / ( Vector2f(*p.bottomRight) - Vector2f(*p.topLeft) ) * mod.bottomRight);
@@ -1360,7 +1359,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     }
 
     bool hasDynlights = false;
-    if(useLights)
+    if (useLights)
     {
         // Write projected lights.
         // Multitexturing can be used for the first light.
@@ -1371,7 +1370,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                                            [&p, &mustSubdivide, &rvertices, &numVertices
                                            , &skipFirst, &numProcessed] (ProjectedTextureData const &tp)
         {
-            if(!(skipFirst && numProcessed == 0))
+            if (!(skipFirst && numProcessed == 0))
             {
                 // Light texture determines the list to write to.
                 DrawListSpec listSpec;
@@ -1388,7 +1387,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 verts.pos   = R_AllocRendVertices (numVerts);
                 verts.color = R_AllocRendColors   (numVerts);
                 verts.tex   = R_AllocRendTexCoords(numVerts);
-                if(p.isWall)
+                if (p.isWall)
                 {
                     makeWallLightGeometry(verts, *p.topLeft, *p.bottomRight,
                                           numVertices, rvertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
@@ -1401,7 +1400,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
                 // Write geometry.
                 // Walls with edge divisions mean two trifans.
-                if(mustSubdivide)
+                if (mustSubdivide)
                 {
                     DENG2_ASSERT(p.isWall);
                     duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
@@ -1412,7 +1411,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         duint base = buffer.allocateVertices(numRightVerts);
                         DrawList::Indices indices;
                         indices.resize(numRightVerts);
-                        for(duint i = 0; i < numRightVerts; ++i)
+                        for (duint i = 0; i < numRightVerts; ++i)
                         {
                             indices[i] = base + i;
                             buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
@@ -1425,7 +1424,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         duint base = buffer.allocateVertices(numLeftVerts);
                         DrawList::Indices indices;
                         indices.resize(numLeftVerts);
-                        for(duint i = 0; i < numLeftVerts; ++i)
+                        for (duint i = 0; i < numLeftVerts; ++i)
                         {
                             indices[i] = base + i;
                             buffer.posCoords   [indices[i]] = verts.pos[i];
@@ -1441,7 +1440,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     duint base = buffer.allocateVertices(numVertices);
                     DrawList::Indices indices;
                     indices.resize(numVertices);
-                    for(duint i = 0; i < numVertices; ++i)
+                    for (duint i = 0; i < numVertices; ++i)
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[i];
@@ -1463,7 +1462,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         hasDynlights = (numProcessed > duint(skipFirst? 1 : 0));
     }
 
-    if(useShadows)
+    if (useShadows)
     {
         // Write projected shadows.
         // All shadows use the same texture (so use the same list).
@@ -1485,7 +1484,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             verts.pos   = R_AllocRendVertices (numVerts);
             verts.color = R_AllocRendColors   (numVerts);
             verts.tex   = R_AllocRendTexCoords(numVerts);
-            if(p.isWall)
+            if (p.isWall)
             {
                 makeWallShadowGeometry(verts, *p.topLeft, *p.bottomRight,
                                        numVertices, rvertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
@@ -1498,7 +1497,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
             // Write geometry.
             // Walls with edge divisions mean two trifans.
-            if(mustSubdivide)
+            if (mustSubdivide)
             {
                 DENG2_ASSERT(p.isWall);
                 duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
@@ -1509,7 +1508,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     duint base = buffer.allocateVertices(numRightVerts);
                     DrawList::Indices indices;
                     indices.resize(numRightVerts);
-                    for(duint i = 0; i < numRightVerts; ++i)
+                    for (duint i = 0; i < numRightVerts; ++i)
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
@@ -1522,7 +1521,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     duint base = buffer.allocateVertices(numLeftVerts);
                     DrawList::Indices indices;
                     indices.resize(numLeftVerts);
-                    for(duint i = 0; i < numLeftVerts; ++i)
+                    for (duint i = 0; i < numLeftVerts; ++i)
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[i];
@@ -1538,7 +1537,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 duint base = buffer.allocateVertices(numVerts);
                 DrawList::Indices indices;
                 indices.resize(numVerts);
-                for(duint i = 0; i < numVerts; ++i)
+                for (duint i = 0; i < numVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[i];
@@ -1559,7 +1558,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
     // Write geometry.
     // Walls with edge divisions mean two trifans.
-    if(mustSubdivide)
+    if (mustSubdivide)
     {
         DENG2_ASSERT(p.isWall);
         duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
@@ -1571,28 +1570,28 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         Vector3f origPos[4]; std::memcpy(origPos, verts.pos, sizeof(origPos));
         R_DivVerts(verts.pos, origPos, *p.wall.leftEdge, *p.wall.rightEdge);
 
-        if(verts.color)
+        if (verts.color)
         {
             Vector4f orig[4]; std::memcpy(orig, verts.color, sizeof(orig));
             R_DivVertColors(verts.color, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
-        if(verts.tex)
+        if (verts.tex)
         {
             Vector2f orig[4]; std::memcpy(orig, verts.tex, sizeof(orig));
             R_DivTexCoords(verts.tex, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
-        if(verts.tex2)
+        if (verts.tex2)
         {
             Vector2f orig[4]; std::memcpy(orig, verts.tex2, sizeof(orig));
             R_DivTexCoords(verts.tex2, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
-        if(modTexCoords)
+        if (modTexCoords)
         {
             Vector2f orig[4]; std::memcpy(orig, modTexCoords, sizeof(orig));
             R_DivTexCoords(modTexCoords, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
 
-        if(p.skyMasked)
+        if (p.skyMasked)
         {
             DrawList &skyMaskList = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
 
@@ -1601,7 +1600,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 duint base = buffer.allocateVertices(numRightVerts);
                 DrawList::Indices indices;
                 indices.resize(numRightVerts);
-                for(duint i = 0; i < numRightVerts; ++i)
+                for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
@@ -1612,7 +1611,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 duint base = buffer.allocateVertices(numLeftVerts);
                 DrawList::Indices indices;
                 indices.resize(numLeftVerts);
-                for(duint i = 0; i < numLeftVerts; ++i)
+                for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[i];
@@ -1623,44 +1622,44 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         else
         {
             DrawListSpec listSpec((mod.texture || hasDynlights)? LitGeom : UnlitGeom);
-            if(layer0RTU)
+            if (layer0RTU)
             {
                 listSpec.texunits[TU_PRIMARY] = *layer0RTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
                 }
-                if(p.materialScale)
+                if (p.materialScale)
                 {
                     listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
                     listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
                 }
             }
-            if(layer0InterRTU)
+            if (layer0InterRTU)
             {
                 listSpec.texunits[TU_INTER] = *layer0InterRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
                 }
-                if(p.materialScale)
+                if (p.materialScale)
                 {
                     listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
                     listSpec.texunits[TU_INTER].offset *= *p.materialScale;
                 }
             }
-            if(detailRTU)
+            if (detailRTU)
             {
                 listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
-            if(detailInterRTU)
+            if (detailInterRTU)
             {
                 listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
                 }
@@ -1669,11 +1668,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             // Is the geometry lit?
             bool oneLight   = false;
             bool manyLights = false;
-            if(mod.texture && !hasDynlights)
+            if (mod.texture && !hasDynlights)
             {
                 oneLight = true;  // Using modulation.
             }
-            else if(mod.texture || hasDynlights)
+            else if (mod.texture || hasDynlights)
             {
                 manyLights = true;
             }
@@ -1684,11 +1683,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 DrawList::Indices indices;
                 indices.resize(numRightVerts);
                 Vector4ub const white(255, 255, 255, 255);
-                for(duint i = 0; i < numRightVerts; ++i)
+                for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
-                    if(verts.color)
+                    if (verts.color)
                     {
                         buffer.colorCoords[indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
                     }
@@ -1696,15 +1695,15 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     {
                         buffer.colorCoords[indices[i]] = white;
                     }
-                    if(verts.tex)
+                    if (verts.tex)
                     {
                         buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                     }
-                    if(verts.tex2)
+                    if (verts.tex2)
                     {
                         buffer.texCoords[1][indices[i]] = verts.tex2[numLeftVerts + i];
                     }
-                    if((oneLight || manyLights) && Rend_IsMTexLights())
+                    if ((oneLight || manyLights) && Rend_IsMTexLights())
                     {
                         DENG2_ASSERT(modTexCoords);
                         buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
@@ -1722,11 +1721,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 DrawList::Indices indices;
                 indices.resize(numLeftVerts);
                 Vector4ub const white(255, 255, 255, 255);
-                for(duint i = 0; i < numLeftVerts; ++i)
+                for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[i];
-                    if(verts.color)
+                    if (verts.color)
                     {
                         buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
                     }
@@ -1734,15 +1733,15 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     {
                         buffer.colorCoords[indices[i]] = white;
                     }
-                    if(verts.tex)
+                    if (verts.tex)
                     {
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    if(verts.tex2)
+                    if (verts.tex2)
                     {
                         buffer.texCoords[1][indices[i]] = verts.tex2[i];
                     }
-                    if((oneLight || manyLights) && Rend_IsMTexLights())
+                    if ((oneLight || manyLights) && Rend_IsMTexLights())
                     {
                         DENG2_ASSERT(modTexCoords);
                         buffer.modCoords[indices[i]] = modTexCoords[i];
@@ -1759,61 +1758,62 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     }
     else
     {
-        if(p.skyMasked)
+        if (p.skyMasked)
         {
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVerts);
             DrawList::Indices indices;
             indices.resize(numVerts);
-            for(duint i = 0; i < numVerts; ++i)
+            for (duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
                 buffer.posCoords[indices[i]] = verts.pos[i];
             }
-            ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom))
-                          .write(buffer, p.isWall? gl::TriangleStrip : gl::TriangleFan, indices);
+            ClientApp::renderSystem()
+                .drawLists().find(DrawListSpec(SkyMaskGeom))
+                    .write(buffer, p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices);
         }
         else
         {
-            DrawListSpec listSpec((mod.texture || hasDynlights)? LitGeom : UnlitGeom);
-            if(layer0RTU)
+            DrawListSpec listSpec((mod.texture || hasDynlights) ? LitGeom : UnlitGeom);
+            if (layer0RTU)
             {
                 listSpec.texunits[TU_PRIMARY] = *layer0RTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
                 }
-                if(p.materialScale)
+                if (p.materialScale)
                 {
                     listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
                     listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
                 }
             }
-            if(layer0InterRTU)
+            if (layer0InterRTU)
             {
                 listSpec.texunits[TU_INTER] = *layer0InterRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
                 }
-                if(p.materialScale)
+                if (p.materialScale)
                 {
                     listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
                     listSpec.texunits[TU_INTER].offset *= *p.materialScale;
                 }
             }
-            if(detailRTU)
+            if (detailRTU)
             {
                 listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
-            if(detailInterRTU)
+            if (detailInterRTU)
             {
                 listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
-                if(p.materialOrigin)
+                if (p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
                 }
@@ -1822,11 +1822,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             // Is the geometry lit?
             bool oneLight   = false;
             bool manyLights = false;
-            if(mod.texture && !hasDynlights)
+            if (mod.texture && !hasDynlights)
             {
                 oneLight = true;  // Using modulation.
             }
-            else if(mod.texture || hasDynlights)
+            else if (mod.texture || hasDynlights)
             {
                 manyLights = true;
             }
@@ -1836,11 +1836,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             DrawList::Indices indices;
             indices.resize(numVertices);
             Vector4ub const white(255, 255, 255, 255);
-            for(duint i = 0; i < numVertices; ++i)
+            for (duint i = 0; i < numVertices; ++i)
             {
                 indices[i] = base + i;
                 buffer.posCoords[indices[i]] = verts.pos[i];
-                if(verts.color)
+                if (verts.color)
                 {
                     buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
                 }
@@ -1848,28 +1848,29 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 {
                     buffer.colorCoords[indices[i]] = white;
                 }
-                if(verts.tex)
+                if (verts.tex)
                 {
                     buffer.texCoords[0][indices[i]] = verts.tex[i];
                 }
-                if(verts.tex2)
+                if (verts.tex2)
                 {
                     buffer.texCoords[1][indices[i]] = verts.tex2[i];
                 }
-                if((oneLight || manyLights) && Rend_IsMTexLights())
+                if ((oneLight || manyLights) && Rend_IsMTexLights())
                 {
                     DENG2_ASSERT(modTexCoords);
                     buffer.modCoords[indices[i]] = modTexCoords[i];
                 }
             }
-            ClientApp::renderSystem().drawLists().find(listSpec)
-                          .write(buffer, p.isWall? gl::TriangleStrip : gl::TriangleFan, indices,
-                                 BM_NORMAL, oneLight, manyLights,
-                                 listSpec.unit(TU_PRIMARY       ).scale,
-                                 listSpec.unit(TU_PRIMARY       ).offset,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                                 mod.texture, mod.color);
+            ClientApp::renderSystem()
+                .drawLists().find(listSpec)
+                    .write(buffer, p.isWall ? gl::TriangleStrip : gl::TriangleFan,
+                           indices, BM_NORMAL, oneLight, manyLights,
+                           listSpec.unit(TU_PRIMARY       ).scale,
+                           listSpec.unit(TU_PRIMARY       ).offset,
+                           listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                           listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                           mod.texture, mod.color);
         }
     }
 
@@ -1888,7 +1889,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             shineVerts.color = R_AllocRendColors(numVerts);
             shineVerts.tex   = R_AllocRendTexCoords(numVerts);
 
-            if(p.isWall)
+            if (p.isWall)
             {
                 makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.width,
                                       shineColor, shineOpacity);
@@ -1903,14 +1904,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         // Write shine geometry.
         DrawListSpec listSpec(ShineGeom);
         listSpec.texunits[TU_PRIMARY] = *shineRTU;
-        if(shineMaskRTU)
+        if (shineMaskRTU)
         {
             listSpec.texunits[TU_INTER] = *shineMaskRTU;
-            if(p.materialOrigin)
+            if (p.materialOrigin)
             {
                 listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
             }
-            if(p.materialScale)
+            if (p.materialScale)
             {
                 listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
                 listSpec.texunits[TU_INTER].offset *= *p.materialScale;
@@ -1919,7 +1920,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         DrawList &shineList = ClientApp::renderSystem().drawLists().find(listSpec);
 
         // Walls with edge divisions mean two trifans.
-        if(mustSubdivide)
+        if (mustSubdivide)
         {
             DENG2_ASSERT(p.isWall);
             duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
@@ -1939,13 +1940,13 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 duint base = buffer.allocateVertices(numRightVerts);
                 DrawList::Indices indices;
                 indices.resize(numRightVerts);
-                for(duint i = 0; i < numRightVerts; ++i)
+                for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
                     buffer.colorCoords [indices[i]] = (shineVerts.color[numLeftVerts + i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = shineVerts.tex[numLeftVerts + i];
-                    if(shineMaskRTU)
+                    if (shineMaskRTU)
                     {
                         buffer.texCoords[1][indices[i]] = verts.tex[numLeftVerts + i];
                     }
@@ -1959,13 +1960,13 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 duint base = buffer.allocateVertices(numLeftVerts);
                 DrawList::Indices indices;
                 indices.resize(numLeftVerts);
-                for(duint i = 0; i < numLeftVerts; ++i)
+                for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[i];
                     buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
-                    if(shineMaskRTU)
+                    if (shineMaskRTU)
                     {
                         buffer.texCoords[1][indices[i]] = verts.tex[i];
                     }
@@ -1982,13 +1983,13 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             duint base = buffer.allocateVertices(numVertices);
             DrawList::Indices indices;
             indices.resize(numVertices);
-            for(duint i = 0; i < numVertices; ++i)
+            for (duint i = 0; i < numVertices; ++i)
             {
                 indices[i] = base + i;
                 buffer.posCoords   [indices[i]] = verts.pos[i];
                 buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
                 buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
-                if(shineMaskRTU)
+                if (shineMaskRTU)
                 {
                     buffer.texCoords[1][indices[i]] = verts.tex[i];
                 }
@@ -2012,8 +2013,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     R_FreeRendTexCoords(verts.tex);
     R_FreeRendTexCoords(verts.tex2);
 
-    return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
+    return (p.forceOpaque || skyMaskedMaterial
+            || !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
 }
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
@@ -2102,9 +2103,8 @@ static bool projectPlaneGlow(Vector3d const &topLeft, Vector3d const &bottomRigh
     if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
         return false;
 
-    Surface const &surface = plane.surface();
     Vector3f color;
-    dfloat intensity = surface.glow(color);
+    dfloat intensity = plane.surface().glow(color);
 
     // Is the material glowing at this moment?
     if(intensity < .05f)
@@ -2115,7 +2115,7 @@ static bool projectPlaneGlow(Vector3d const &topLeft, Vector3d const &bottomRigh
 
     // Calculate coords.
     dfloat bottom, top;
-    if(surface.normal().z < 0)
+    if(plane.surface().normal().z < 0)
     {
         // Cast downward.
               bottom = (pointOnPlane.z - topLeft.z) / glowHeight;
@@ -2750,8 +2750,7 @@ static void writeSubspacePlane(Plane &plane)
     MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
     Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
-                            + surface.materialOriginSmoothed();
-
+                            + surface.originSmoothed();
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.isSectorCeiling())
@@ -3170,7 +3169,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
 {
     LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
 
-    if(front.considerOneSided())
+    if (front.considerOneSided())
     {
         return wroteOpaqueMiddle;
     }
@@ -3178,7 +3177,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     /// @todo fixme: This additional test should not be necessary. For the obove
     /// test to fail and this to pass means that the geometry produced by the BSP
     /// builder is not correct (see: eternall.wad MAP10; note mapping errors).
-    if(!hedge.twin().hasFace())
+    if (!hedge.twin().hasFace())
     {
         return wroteOpaqueMiddle;
     }
@@ -3193,19 +3192,18 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     ddouble const bceil    = backSubsec.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
-    if(wroteOpaqueMiddle)
+    if (wroteOpaqueMiddle)
     {
         ddouble xbottom = de::max(bfloor, ffloor);
         ddouble xtop    = de::min(bceil,  fceil);
 
-        Surface const &middle = front.middle();
-        xbottom += middle.materialOriginSmoothed().y;
-        xtop    += middle.materialOriginSmoothed().y;
+        xbottom += front.middle().originSmoothed().y;
+        xtop    += front.middle().originSmoothed().y;
 
         middleCoversOpening = (middleTopZ >= xtop && middleBottomZ <= xbottom);
     }
 
-    if(wroteOpaqueMiddle && middleCoversOpening)
+    if (wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
     if(   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
@@ -3217,27 +3215,27 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         Surface const &bceilSurface  = backSubsec.visCeiling().surface();
 
         // A closed gap?
-        if(de::fequal(fceil, bfloor))
+        if (de::fequal(fceil, bfloor))
         {
-            return (bceil <= bfloor) ||
-                   !(fceilSurface.hasSkyMaskedMaterial() &&
-                     bceilSurface.hasSkyMaskedMaterial());
+            return (bceil <= bfloor)
+                   || !(   fceilSurface.hasSkyMaskedMaterial()
+                        && bceilSurface.hasSkyMaskedMaterial());
         }
 
-        if(de::fequal(ffloor, bceil))
+        if (de::fequal(ffloor, bceil))
         {
-            return (bfloor >= bceil) ||
-                   !(ffloorSurface.hasSkyMaskedMaterial() &&
-                     bfloorSurface.hasSkyMaskedMaterial());
+            return (bfloor >= bceil)
+                   || !(   ffloorSurface.hasSkyMaskedMaterial()
+                        && bfloorSurface.hasSkyMaskedMaterial());
         }
 
         return true;
     }
 
     /// @todo Is this still necessary?
-    if(bceil <= bfloor ||
-       (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil &&
-        front.top().hasMaterial() && front.bottom().hasMaterial()))
+    if (bceil <= bfloor
+        || (!(bceil - bfloor > 0) && bfloor > ffloor && bceil < fceil
+            && front.top().hasMaterial() && front.bottom().hasMaterial()))
     {
         // A zero height back segment
         return true;
@@ -5564,10 +5562,8 @@ static String labelForLineSideSection(LineSide &side, dint sectionId)
 {
     return String("Line #%1 (%2, %3)")
                .arg(side.line().indexInMap())
-               .arg(side.isFront() ? "front" : "back")
-               .arg(  sectionId == LineSide::Middle ? "middle"
-                    : sectionId == LineSide::Bottom ? "bottom"
-                                                    : "top");
+               .arg(Line::sideIdAsText(side.sideId()).upperFirstChar())
+               .arg(LineSide::sectionIdAsText(sectionId));
 }
 
 static String labelForSector(Sector &sector)
@@ -5577,9 +5573,9 @@ static String labelForSector(Sector &sector)
 
 static String labelForSectorPlane(Plane &plane)
 {
-    return String("Sector #%1 (pln:%2)")
+    return String("Sector #%1 (%2)")
                .arg(plane.sector().indexInMap())
-               .arg(plane.indexInSector());
+               .arg(Sector::planeIdAsText(plane.indexInSector()).upperFirstChar());
 }
 
 /**

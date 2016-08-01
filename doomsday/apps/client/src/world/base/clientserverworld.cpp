@@ -616,7 +616,6 @@ DENG2_PIMPL(ClientServerWorld)
 
         map->initLightGrid();
         map->initSkyFix();
-        map->buildMaterialLists();
         map->spawnPlaneParticleGens();
 
         // Precaching from 100 to 200.

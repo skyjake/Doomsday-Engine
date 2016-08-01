@@ -116,10 +116,16 @@ public:
     bool isSectorCeiling() const;
 
     /**
-     * Returns the Surface of the plane.
+     * Returns the Surface component of the plane.
      */
     Surface       &surface();
     Surface const &surface() const;
+
+    /**
+     * Returns a pointer to the Surface component of the plane (never @c nullptr).
+     */
+    Surface       *surfacePtr();
+    Surface const *surfacePtr() const;
 
     /**
      * Change the normal of the plane to @a newNormal (which if necessary will

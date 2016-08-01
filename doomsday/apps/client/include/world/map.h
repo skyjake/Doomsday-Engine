@@ -720,26 +720,6 @@ public:  //- Data structures ---------------------------------------------------
     void initLightGrid();
 
     /**
-     * Link the given @a surface in all material lists and surface sets which the map maintains
-     * to improve performance. Only surfaces attributed to the map will be linked (alien
-     * surfaces are ignored).
-     *
-     * @param surface  The surface to be linked.
-     */
-    void linkInMaterialLists(Surface *surface);
-
-    /**
-     * Unlink the given @a surface in all material lists and surface sets which the map
-     * maintains to improve performance.
-     *
-     * @note The material currently attributed to the surface does not matter for unlinking
-     * purposes and the surface will be unlinked from all lists regardless.
-     *
-     * @param surface  The surface to be unlinked.
-     */
-    void unlinkInMaterialLists(Surface *surface);
-
-    /**
      * Returns the set of scrolling surfaces for the map.
      */
     SurfaceSet /*const*/ &scrollingSurfaces();

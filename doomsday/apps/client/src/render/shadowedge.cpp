@@ -184,7 +184,7 @@ void ShadowEdge::prepare(dint planeIndex)
         if (planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backSubsec.plane(otherPlaneIndex).heightSmoothed();
+        coord_t bhz = backSubsec.sector().plane(otherPlaneIndex).heightSmoothed();
         if (planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
