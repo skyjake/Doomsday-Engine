@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/AbstractLineEditor"
@@ -194,7 +194,7 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     }
 
-    void doLeft()
+    bool doLeft()
     {
         acceptCompletion();
 
@@ -202,10 +202,12 @@ DENG2_PIMPL(AbstractLineEditor)
         {
             --cursor;
             self.cursorMoved();
+            return true;
         }
+        return false;
     }
 
-    void doRight()
+    bool doRight()
     {
         acceptCompletion();
 
@@ -213,7 +215,9 @@ DENG2_PIMPL(AbstractLineEditor)
         {
             ++cursor;
             self.cursorMoved();
+            return true;
         }
+        return false;
     }
 
     int wordJumpLeft(int pos) const
@@ -590,7 +594,7 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
         }
         else
         {
-            d->doLeft();
+            return d->doLeft();
         }
         return true;
 
@@ -608,7 +612,7 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
         }
         else
         {
-            d->doRight();
+            return d->doRight();
         }
         return true;
 

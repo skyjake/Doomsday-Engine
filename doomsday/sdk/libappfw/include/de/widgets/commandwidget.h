@@ -46,6 +46,8 @@ public:
     bool handleEvent(Event const &event) override;
     void update() override;
 
+    bool handleControlKey(int qtKey, KeyModifiers const &mods) override;
+
 public slots:
     /**
      * Moves the current contents of the command line to the history. The
