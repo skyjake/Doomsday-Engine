@@ -34,6 +34,7 @@ namespace de {
 
 class GuiRootWidget;
 class BlurWidget;
+class PopupWidget;
 
 /**
  * Base class for graphical widgets.
@@ -433,6 +434,12 @@ public:
 
     GuiWidget *guiFind(String const &name);
     GuiWidget const *guiFind(String const &name) const;
+
+    /**
+     * Finds the popup widget that this widget resides in.
+     * @return Popup, or @c nullptr if the widget is not inside a popup.
+     */
+    PopupWidget *findParentPopup() const;
 
 public slots:
     /**

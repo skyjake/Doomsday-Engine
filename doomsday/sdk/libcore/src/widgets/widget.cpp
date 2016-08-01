@@ -572,21 +572,22 @@ Widget *Widget::walkInOrder(WalkDirection dir, std::function<LoopResult (Widget 
         if (d->children.isEmpty()) return nullptr;
         if (dir == Forward)
         {
-            /*if (callback(*d->children.first()))
-            {
-                return d->children.first();
-            }*/
-            //return d->children.first()->walkInOrder(Forward, callback);
             return d->walkChildren(d->children.first(), Forward, callback, +1);
         }
         else
         {
-            // There is going back from the root.
+            // There is no going back from the root.
             return nullptr;
         }
     }
+    return d->parent->d->walkChildren(this, dir, callback); // allows ascending
+}
 
-    return d->parent->d->walkChildren(this, dir, callback);
+Widget *Widget::walkChildren(WalkDirection dir, std::function<LoopResult (Widget &)> callback)
+{
+    if (d->children.isEmpty()) return nullptr;
+    return d->walkChildren(dir == Forward? d->children.first() : d->children.last(),
+                           dir, callback, +1);
 }
 
 String Widget::uniqueName(String const &name) const

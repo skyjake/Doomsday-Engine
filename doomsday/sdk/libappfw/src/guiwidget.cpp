@@ -29,6 +29,7 @@
 #include <de/GLTexture>
 #include <de/GLTarget>
 #include <de/FocusWidget>
+#include <de/PopupWidget>
 
 #include <QList>
 
@@ -381,7 +382,7 @@ DENG2_PIMPL(GuiWidget)
             return -1;
         }
 
-        Vector2f const otherMiddle = widget.rule().rect().middle();
+        Vector2f const otherMiddle = widget.hitRule().rect().middle();
 
         Rectanglef const viewRect  = self.root().viewRule().rect();
         if (!viewRect.contains(otherMiddle))
@@ -389,24 +390,30 @@ DENG2_PIMPL(GuiWidget)
             return -1;
         }
 
-        Vector2f const middle      = self.rule().rect().middle();
+        Vector2f const middle      = self.hitRule().rect().middle();
         Vector2f const delta       = otherMiddle - middle;
         Vector2f const dirVector   = directionVector(dir);
-        auto dotProd = delta.dot(dirVector);
+        auto dotProd = delta.normalize().dot(dirVector);
         if (dotProd <= 0)
         {
             // On the wrong side.
             return -1;
         }
-        return 2 * delta.length() - dotProd;
+        // Prefer widgets that are nearby, particularly in the specified direction.
+        return delta.length() * (.1f + acos(dotProd));
     }
 
     GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
     {
         float bestScore = 0;
         GuiWidget *bestWidget = nullptr;
-        // Consider all the widgets in the tree.
-        self.root().walkInOrder(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
+
+        // Focus navigation is always contained within the popup where the focus is
+        // currently in.
+        Widget *walkRoot = self.findParentPopup();
+        if (!walkRoot) walkRoot = &self.root();
+
+        walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
         {
             if (GuiWidget *gui = widget.maybeAs<GuiWidget>())
             {
@@ -422,6 +429,7 @@ DENG2_PIMPL(GuiWidget)
             }
             return LoopContinue;
         });
+        // Consider all the widgets in the tree.
         /*if (bestWidget)
         {
             qDebug() << "Best:" << bestWidget
@@ -1024,6 +1032,18 @@ GuiWidget *GuiWidget::guiFind(String const &name)
 GuiWidget const *GuiWidget::guiFind(String const &name) const
 {
     return find(name)->maybeAs<GuiWidget>();
+}
+
+PopupWidget *GuiWidget::findParentPopup() const
+{
+    for (Widget *i = parentWidget(); i; i = i->parent())
+    {
+        if (PopupWidget *popup = i->maybeAs<PopupWidget>())
+        {
+            return popup;
+        }
+    }
+    return nullptr;
 }
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
