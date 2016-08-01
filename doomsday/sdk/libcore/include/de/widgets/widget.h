@@ -134,6 +134,7 @@ public:
     void setRoot(RootWidget *root);
 
     bool hasFocus() const;
+    virtual bool canBeFocused() const;
 
     void show(bool doShow = true);
     inline void hide() { show(false); }

@@ -214,6 +214,12 @@ public:
          */
         FocusCyclingDisabled = 0x80,
 
+        /**
+         * When the widget is in focus, this will prevent moving the focus with
+         * arrow keys.
+         */
+        FocusMoveWithArrowKeysDisabled = 0x100,
+
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
@@ -422,6 +428,8 @@ public:
     bool geometryRequested() const;
 
     bool isInitialized() const;
+
+    bool canBeFocused() const override;
 
     GuiWidget *guiFind(String const &name);
     GuiWidget const *guiFind(String const &name) const;

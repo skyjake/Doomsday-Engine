@@ -356,8 +356,7 @@ DENG2_PIMPL(GuiWidget)
         Rectanglei const viewRect = self.root().viewRule().recti();
         auto *widget = self.walkInOrder(dir, [this, &viewRect] (Widget &widget)
         {
-            if (widget.behavior().testFlag(Focusable) && widget.isEnabled() &&
-                widget.isVisible() && widget.is<GuiWidget>())
+            if (widget.canBeFocused() && widget.is<GuiWidget>())
             {
                 // The widget's center must be in view.
                 if (viewRect.contains(widget.as<GuiWidget>().rule().recti().middle()))
@@ -373,6 +372,65 @@ DENG2_PIMPL(GuiWidget)
             return widget->asPtr<GuiWidget>();
         }
         return nullptr;
+    }
+
+    float scoreForWidget(GuiWidget const &widget, ui::Direction dir) const
+    {
+        if (!widget.canBeFocused())
+        {
+            return -1;
+        }
+
+        Vector2f const otherMiddle = widget.rule().rect().middle();
+
+        Rectanglef const viewRect  = self.root().viewRule().rect();
+        if (!viewRect.contains(otherMiddle))
+        {
+            return -1;
+        }
+
+        Vector2f const middle      = self.rule().rect().middle();
+        Vector2f const delta       = otherMiddle - middle;
+        Vector2f const dirVector   = directionVector(dir);
+        auto dotProd = delta.dot(dirVector);
+        if (dotProd <= 0)
+        {
+            // On the wrong side.
+            return -1;
+        }
+        return 2 * delta.length() - dotProd;
+    }
+
+    GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
+    {
+        float bestScore = 0;
+        GuiWidget *bestWidget = nullptr;
+        // Consider all the widgets in the tree.
+        self.root().walkInOrder(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
+        {
+            if (GuiWidget *gui = widget.maybeAs<GuiWidget>())
+            {
+                float score = scoreForWidget(*gui, dir);
+                if (score >= 0)
+                {
+                    if (!bestWidget || score < bestScore)
+                    {
+                        bestWidget = gui;
+                        bestScore  = score;
+                    }
+                }
+            }
+            return LoopContinue;
+        });
+        /*if (bestWidget)
+        {
+            qDebug() << "Best:" << bestWidget
+                     << "focusable:" << bestWidget->behavior().testFlag(Focusable)
+                     << "rect:" << bestWidget->rule().recti().asText()
+                     << "opacity:" << bestWidget->visibleOpacity()
+                     << "visible:" << bestWidget->isVisible();
+        }*/
+        return bestWidget? bestWidget : &self;
     }
 
     static float toDevicePixels(double logicalPixels)
@@ -753,11 +811,11 @@ bool GuiWidget::handleEvent(Event const &event)
         }
     }
 
-    if (hasFocus() && event.isKey())
+    if (hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
-        if (key.isKeyDown() && key.ddKey() == DDKEY_TAB &&
-            !attributes().testFlag(FocusCyclingDisabled))
+
+        if (!attributes().testFlag(FocusCyclingDisabled) && key.ddKey() == DDKEY_TAB)
         {
             if (auto *focus = d->findNextWidgetToFocus(
                         key.modifiers().testFlag(KeyEvent::Shift)? Backward : Forward))
@@ -765,6 +823,19 @@ bool GuiWidget::handleEvent(Event const &event)
                 root().setFocus(focus);
                 return true;
             }
+        }
+        if (!attributes().testFlag(FocusMoveWithArrowKeysDisabled) &&
+            (key.ddKey() == DDKEY_LEFTARROW  ||
+             key.ddKey() == DDKEY_RIGHTARROW ||
+             key.ddKey() == DDKEY_UPARROW    ||
+             key.ddKey() == DDKEY_DOWNARROW))
+        {
+            root().setFocus(d->findAdjacentWidgetToFocus(
+                                key.ddKey() == DDKEY_LEFTARROW ? ui::Left  :
+                                key.ddKey() == DDKEY_RIGHTARROW? ui::Right :
+                                key.ddKey() == DDKEY_UPARROW   ? ui::Up    :
+                                                                 ui::Down));
+            return true;
         }
     }
 
@@ -932,6 +1003,17 @@ bool GuiWidget::geometryRequested() const
 bool GuiWidget::isInitialized() const
 {
     return d->inited;
+}
+
+bool GuiWidget::canBeFocused() const
+{
+    if (!Widget::canBeFocused() ||
+        fequal(visibleOpacity(), 0.f) ||
+        rule().recti().size() == Vector2ui())
+    {
+        return false;
+    }
+    return true;
 }
 
 GuiWidget *GuiWidget::guiFind(String const &name)

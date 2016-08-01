@@ -318,6 +318,11 @@ bool Widget::hasFocus() const
     return hasRoot() && root().focus() == this;
 }
 
+bool Widget::canBeFocused() const
+{
+    return behavior().testFlag(Focusable) && isVisible() && isEnabled();
+}
+
 bool Widget::hasFamilyBehavior(Behavior const &flags) const
 {
     for (Widget const *w = this; w != 0; w = w->d->parent)
