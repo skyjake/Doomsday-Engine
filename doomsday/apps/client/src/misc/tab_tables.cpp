@@ -20,6 +20,7 @@
  */
 
 #include <de/types.h> // FINEANGLES
+#include "dd_def.h"
 
 int finetangent[4096] =
 {

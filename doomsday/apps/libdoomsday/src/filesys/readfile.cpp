@@ -26,7 +26,6 @@
 #  include <direct.h>
 #  include <io.h>
 #  include <conio.h>
-#  define open _open
 #endif
 
 #if defined(UNIX)
@@ -46,6 +45,11 @@
 #include <de/memoryzone.h>
 #include <cstdlib>
 #include <cctype>
+
+#if defined(WIN32)
+// Must be defined after includes.
+#  define open _open
+#endif
 
 using namespace de;
 
@@ -258,4 +262,5 @@ static size_t FileReader(const char* name, char** buffer)
 #  undef close
 #  undef read
 #  undef write
+#  undef open
 #endif
