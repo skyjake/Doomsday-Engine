@@ -354,9 +354,17 @@ DENG2_PIMPL(GuiWidget)
 
     GuiWidget *findNextWidgetToFocus(WalkDirection dir)
     {
+        PopupWidget *parentPopup = self.findParentPopup();
         Rectanglei const viewRect = self.root().viewRule().recti();
-        auto *widget = self.walkInOrder(dir, [this, &viewRect] (Widget &widget)
+        bool escaped = false;
+        auto *widget = self.walkInOrder(dir, [this, &viewRect, parentPopup, &escaped] (Widget &widget)
         {
+            if (parentPopup && !widget.hasAncestor(*parentPopup))
+            {
+                // Cannot get out of the popup.
+                escaped = true;
+                return LoopAbort;
+            }
             if (widget.canBeFocused() && widget.is<GuiWidget>())
             {
                 // The widget's center must be in view.
@@ -368,7 +376,7 @@ DENG2_PIMPL(GuiWidget)
             }
             return LoopContinue;
         });
-        if (widget)
+        if (widget && !escaped)
         {
             return widget->asPtr<GuiWidget>();
         }
@@ -377,20 +385,22 @@ DENG2_PIMPL(GuiWidget)
 
     float scoreForWidget(GuiWidget const &widget, ui::Direction dir) const
     {
-        if (!widget.canBeFocused())
+        if (!widget.canBeFocused() || &widget == &self)
         {
             return -1;
         }
 
-        Vector2f const otherMiddle = widget.hitRule().rect().middle();
-
         Rectanglef const viewRect  = self.root().viewRule().rect();
+        Rectanglef const selfRect  = self.hitRule().rect();
+        Rectanglef const otherRect = widget.hitRule().rect();
+        Vector2f const otherMiddle = otherRect.middle();
+
         if (!viewRect.contains(otherMiddle))
         {
             return -1;
         }
 
-        Vector2f const middle      = self.hitRule().rect().middle();
+        Vector2f const middle      = selfRect.middle();
         Vector2f const delta       = otherMiddle - middle;
         Vector2f const dirVector   = directionVector(dir);
         auto dotProd = delta.normalize().dot(dirVector);
@@ -399,6 +409,35 @@ DENG2_PIMPL(GuiWidget)
             // On the wrong side.
             return -1;
         }
+
+        if ((isHorizontal(dir) && !selfRect.vertical()  .intersection(otherRect.vertical())  .isEmpty()) ||
+            (isVertical(dir)   && !selfRect.horizontal().intersection(otherRect.horizontal()).isEmpty()))
+        {
+            float edgeDistance;
+            switch (dir)
+            {
+            case ui::Right:
+                edgeDistance = otherRect.left() - selfRect.right();
+                break;
+
+            case ui::Left:
+                edgeDistance = selfRect.left() - otherRect.right();
+                break;
+
+            case ui::Up:
+                edgeDistance = otherRect.bottom() - selfRect.top();
+                break;
+
+            default:
+                edgeDistance = selfRect.bottom() - otherRect.top();
+                break;
+            }
+            if (edgeDistance >= 0 && edgeDistance < toDevicePixels(5))
+            {
+                return edgeDistance;
+            }
+        }
+
         // Prefer widgets that are nearby, particularly in the specified direction.
         return delta.length() * (.1f + acos(dotProd));
     }
