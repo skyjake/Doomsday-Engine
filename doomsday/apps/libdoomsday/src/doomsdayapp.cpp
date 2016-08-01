@@ -482,6 +482,7 @@ NativePath DoomsdayApp::steamBasePath()
         String path = st.value("InstallPath").toString();
         if (!path.isEmpty()) return path;
     }
+    return "";
 #elif MACOSX
     return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
 #else
