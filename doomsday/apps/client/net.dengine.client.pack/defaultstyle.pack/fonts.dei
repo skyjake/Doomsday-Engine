@@ -45,20 +45,20 @@ group {
         # Define mappings for native font styles and weights.
         import App
         App.addFontMapping("SF UI Text", {
-            ['regular', 25]: 'SFUIText-Light',
-            ['regular', 50]: 'SFUIText-Regular',
-            ['regular', 75]: 'SFUIText-Bold',
-            ['italic',  25]: 'SFUIText-LightItalic',
-            ['italic',  50]: 'SFUIText-Italic',
-            ['italic',  75]: 'SFUIText-BoldItalic'
+            ['regular', 25]: '.SFNSText-Light',
+            ['regular', 50]: '.SFNSText-Regular',
+            ['regular', 75]: '.SFNSText-Bold',
+            ['italic',  25]: '.SFNSText-LightItalic',
+            ['italic',  50]: '.SFNSText-Italic',
+            ['italic',  75]: '.SFNSText-BoldItalic'
         })
         App.addFontMapping("SF UI Display", {
-            ['regular', 25]: 'SFUIDisplay-Light',
-            ['regular', 50]: 'SFUIDisplay-Regular',
-            ['regular', 75]: 'SFUIDisplay-Bold',
-            ['italic',  25]: 'SFUIText-LightItalic',    # Only non-italic available.
-            ['italic',  50]: 'SFUIText-Italic',
-            ['italic',  75]: 'SFUIText-BoldItalic'
+            ['regular', 25]: '.SFNSDisplay-Light',
+            ['regular', 50]: '.SFNSDisplay-Regular',
+            ['regular', 75]: '.SFNSDisplay-Bold',
+            ['italic',  25]: '.SFNSText-LightItalic',    # Only non-italic available.
+            ['italic',  50]: '.SFNSText-Italic',
+            ['italic',  75]: '.SFNSText-BoldItalic'
         })
         App.addFontMapping("Menlo", {
             ['regular', 25]: 'Menlo-Regular',
