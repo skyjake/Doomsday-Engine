@@ -320,9 +320,7 @@ bool ButtonWidget::handleEvent(Event const &event)
         {
             if (key.isKeyDown())
             {
-                d->setState(Down);
                 trigger();
-                d->setState(Up);
             }
             return true;
         }
