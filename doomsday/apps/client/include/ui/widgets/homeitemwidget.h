@@ -69,6 +69,7 @@ public:
     HomeMenuWidget *parentMenu();
 
     // Events.
+    bool handleEvent(de::Event const &event) override;
     void focusGained() override;
     void focusLost() override;
 

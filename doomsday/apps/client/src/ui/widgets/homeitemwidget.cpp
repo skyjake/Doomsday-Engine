@@ -335,6 +335,22 @@ HomeMenuWidget *HomeItemWidget::parentMenu()
     return parentWidget()->maybeAs<HomeMenuWidget>();
 }
 
+bool HomeItemWidget::handleEvent(Event const &event)
+{
+    if (hasFocus() && event.isKey())
+    {
+        auto const &key = event.as<KeyEvent>();
+        if (key.ddKey() == DDKEY_LEFTARROW || key.ddKey() == DDKEY_RIGHTARROW ||
+            key.ddKey() == DDKEY_UPARROW   || key.ddKey() == DDKEY_DOWNARROW)
+        {
+            // Fall back to menu and HomeWidget for navigation.
+            return false;
+        }
+    }
+
+    return GuiWidget::handleEvent(event);
+}
+
 void HomeItemWidget::focusGained()
 {
     setSelected(true);
