@@ -162,10 +162,11 @@ DENG2_PIMPL(GuiWidget)
 
         if (self.isClipped())
         {
-            int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
+            int const CULL_SAFETY_WIDTH = 50; // avoid pop-in when scrolling
 
             // Clipped widgets are guaranteed to be within their rectangle.
-            return !visibleArea.overlaps(self.rule().recti().expanded(CULL_SAFETY_WIDTH));
+            return !visibleArea.overlaps(self.rule().recti().expanded(
+                                             GuiWidget::toDevicePixels(CULL_SAFETY_WIDTH)));
         }
         // Otherwise widgets may draw anywhere in the view.
         return visibleArea.isNull();

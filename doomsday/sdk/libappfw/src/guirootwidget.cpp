@@ -121,6 +121,7 @@ DENG2_PIMPL(GuiRootWidget)
     TextureBank texBank; ///< Bank for the atlas contents.
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
+    QList<SafeWidgetPtr<Widget> *> focusStack;
 
     Impl(Public *i, CanvasWindow *win)
         : Base(i)
@@ -139,6 +140,8 @@ DENG2_PIMPL(GuiRootWidget)
 
     ~Impl()
     {
+        qDeleteAll(focusStack);
+
         GuiWidget::recycleTrashedWidgets();
 
         // Tell all widgets to release their resource allocations. The base
@@ -364,6 +367,27 @@ GuiWidget const *GuiRootWidget::guiFind(String const &name) const
 FocusWidget &GuiRootWidget::focusIndicator()
 {
     return *d->focusIndicator;
+}
+
+void GuiRootWidget::pushFocus()
+{
+    if (!focus()) return;
+
+    d->focusStack.append(new SafeWidgetPtr<Widget>(focus()));
+}
+
+void GuiRootWidget::popFocus()
+{
+    while (!d->focusStack.isEmpty())
+    {
+        std::unique_ptr<SafeWidgetPtr<Widget>> ptr(d->focusStack.takeLast());
+        if (*ptr)
+        {
+            setFocus(*ptr);
+            return;
+        }
+    }
+    setFocus(nullptr);
 }
 
 void GuiRootWidget::update()

@@ -99,6 +99,14 @@ public:
 
     FocusWidget &focusIndicator();
 
+    /**
+     * Pushes a pointer to the current focused widget to a stack. It can later be
+     * restored with popFocus().
+     */
+    void pushFocus();
+
+    void popFocus();
+
     // Events.
     void update();
     void draw();

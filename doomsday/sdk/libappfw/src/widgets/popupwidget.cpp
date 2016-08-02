@@ -487,7 +487,15 @@ void PopupWidget::preparePanelForOpening()
 
     d->updateLayout();
 
+    root().pushFocus();
     offerFocus();
+}
+
+void PopupWidget::panelClosing()
+{
+    PanelWidget::panelClosing();
+
+    root().popFocus();
 }
 
 void PopupWidget::panelDismissed()
