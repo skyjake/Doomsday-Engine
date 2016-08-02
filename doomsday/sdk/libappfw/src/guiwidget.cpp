@@ -440,7 +440,7 @@ DENG2_PIMPL(GuiWidget)
         }
 
         // Prefer widgets that are nearby, particularly in the specified direction.
-        return delta.length() * (.1f + acos(dotProd));
+        return delta.length() * (.5f + acos(dotProd));
     }
 
     GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
