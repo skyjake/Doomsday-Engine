@@ -358,10 +358,10 @@ bool HomeItemWidget::handleEvent(Event const &event)
         if (key.ddKey() == DDKEY_LEFTARROW || key.ddKey() == DDKEY_RIGHTARROW ||
             key.ddKey() == DDKEY_UPARROW   || key.ddKey() == DDKEY_DOWNARROW)
         {
-            if ( not ((key.ddKey() == DDKEY_UPARROW    && isFirstChild()) ||
-                      (key.ddKey() == DDKEY_DOWNARROW  && isLastChild())  ||
-                      (key.ddKey() == DDKEY_LEFTARROW  && !d->hasColumnAncestor()) ||
-                      (key.ddKey() == DDKEY_RIGHTARROW && !d->hasColumnAncestor())) )
+            if ( ! ((key.ddKey() == DDKEY_UPARROW    && isFirstChild()) ||
+                    (key.ddKey() == DDKEY_DOWNARROW  && isLastChild())  ||
+                    (key.ddKey() == DDKEY_LEFTARROW  && !d->hasColumnAncestor()) ||
+                    (key.ddKey() == DDKEY_RIGHTARROW && !d->hasColumnAncestor())) )
             {
                 // Fall back to menu and HomeWidget for navigation.
                 return false;
