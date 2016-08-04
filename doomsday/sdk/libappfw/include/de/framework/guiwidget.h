@@ -102,6 +102,7 @@ public:
             None,               ///< No background, no solid fill.
             GradientFrame,      ///< Bold round corners, square background.
             GradientFrameWithRoundedFill, ///< Bold round corners with solid rounded background.
+            GradientFrameWithThinBorder,  ///< Bold round corners, black thin secondary border.
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,

@@ -113,8 +113,8 @@ public:
     State state() const;
 
     // Events.
-    void update();
-    bool handleEvent(Event const &event);
+    void update() override;
+    bool handleEvent(Event const &event) override;
 
 public slots:
     /**
@@ -126,8 +126,8 @@ signals:
     void pressed();
 
 protected:
-    void updateModelViewProjection(GLUniform &uMvp);
-    void updateStyle();
+    void updateModelViewProjection(GLUniform &uMvp) override;
+    void updateStyle() override;
 
 private:
     DENG2_PRIVATE(d)

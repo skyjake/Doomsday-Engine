@@ -401,7 +401,10 @@ DENG2_PIMPL(GuiWidget)
             return -1;
         }
 
-        Vector2f const middle      = selfRect.middle();
+        Vector2f const middle      = (dir == ui::Up?   selfRect.midTop()    :
+                                      dir == ui::Down? selfRect.midBottom() :
+                                      dir == ui::Left? selfRect.midLeft()   :
+                                                       selfRect.midRight() );
         Vector2f const delta       = otherMiddle - middle;
         Vector2f const dirVector   = directionVector(dir);
         auto dotProd = delta.normalize().dot(dirVector);
@@ -1117,6 +1120,14 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     {
     case Background::GradientFrame:
     case Background::GradientFrameWithRoundedFill:
+    case Background::GradientFrameWithThinBorder:
+        if (d->background.type == Background::GradientFrameWithThinBorder)
+        {
+            verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(2)),
+                                    thick,
+                                    Vector4f(0, 0, 0, 1),
+                                    rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
+        }
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
                                 thick,
                                 d->background.color,
