@@ -394,56 +394,85 @@ DENG2_PIMPL(GuiWidget)
         Rectanglef const viewRect  = self.root().viewRule().rect();
         Rectanglef const selfRect  = self.hitRule().rect();
         Rectanglef const otherRect = widget.hitRule().rect();
-        Vector2f const otherMiddle = otherRect.middle();
+        Vector2f const otherMiddle =
+                (dir == ui::Up?   otherRect.midBottom() :
+                 dir == ui::Down? otherRect.midTop()    :
+                 dir == ui::Left? otherRect.midRight()  :
+                                  otherRect.midLeft()  );
+                //otherRect.middle();
 
         if (!viewRect.contains(otherMiddle))
         {
             return -1;
         }
 
-        Vector2f const middle      = (dir == ui::Up?   selfRect.midTop()    :
-                                      dir == ui::Down? selfRect.midBottom() :
-                                      dir == ui::Left? selfRect.midLeft()   :
-                                                       selfRect.midRight() );
-        Vector2f const delta       = otherMiddle - middle;
-        Vector2f const dirVector   = directionVector(dir);
-        auto dotProd = delta.normalize().dot(dirVector);
-        if (dotProd <= 0)
-        {
-            // On the wrong side.
-            return -1;
-        }
+        bool const axisOverlap =
+                (isHorizontal(dir) && !selfRect.vertical()  .intersection(otherRect.vertical())  .isEmpty()) ||
+                (isVertical(dir)   && !selfRect.horizontal().intersection(otherRect.horizontal()).isEmpty());
 
-        if ((isHorizontal(dir) && !selfRect.vertical()  .intersection(otherRect.vertical())  .isEmpty()) ||
-            (isVertical(dir)   && !selfRect.horizontal().intersection(otherRect.horizontal()).isEmpty()))
+        // Check for contacting edges.
+        float edgeDistance = 0; // valid only if axisOverlap
+        if (axisOverlap)
         {
-            float edgeDistance;
             switch (dir)
             {
-            case ui::Right:
-                edgeDistance = otherRect.left() - selfRect.right();
-                break;
-
             case ui::Left:
                 edgeDistance = selfRect.left() - otherRect.right();
                 break;
 
             case ui::Up:
-                edgeDistance = otherRect.bottom() - selfRect.top();
+                edgeDistance = selfRect.top() - otherRect.bottom();
+                break;
+
+            case ui::Right:
+                edgeDistance = otherRect.left() - selfRect.right();
                 break;
 
             default:
-                edgeDistance = selfRect.bottom() - otherRect.top();
+                edgeDistance = otherRect.top() - selfRect.bottom();
                 break;
             }
+            // Very close edges are considered contacting.
             if (edgeDistance >= 0 && edgeDistance < toDevicePixels(5))
             {
                 return edgeDistance;
             }
         }
 
+        Vector2f const middle    = (dir == ui::Up?   selfRect.midTop()    :
+                                    dir == ui::Down? selfRect.midBottom() :
+                                    dir == ui::Left? selfRect.midLeft()   :
+                                                     selfRect.midRight() );
+        Vector2f const delta     = otherMiddle - middle;
+        Vector2f const dirVector = directionVector(dir);
+        auto dotProd = delta.normalize().dot(dirVector);
+        if (dotProd <= 0)
+        {
+            // On the wrong side.
+            return -1;
+        }
+        float distance = delta.length();
+        if (axisOverlap)
+        {
+            dotProd = 1.0;
+            if (edgeDistance > 0)
+            {
+                distance = de::min(distance, edgeDistance);
+            }
+        }
+
+        float favorability = 1;
+        if (widget.parentWidget() == self.parentWidget())
+        {
+            favorability = .1f; // Siblings are much preferred.
+        }
+        else if (self.hasAncestor(widget) || widget.hasAncestor(self))
+        {
+            favorability = .2f; // Ancestry is also good.
+        }
+
         // Prefer widgets that are nearby, particularly in the specified direction.
-        return delta.length() * (.5f + acos(dotProd));
+        return distance * (.5f + acos(dotProd)) * favorability;
     }
 
     GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
@@ -463,6 +492,11 @@ DENG2_PIMPL(GuiWidget)
                 float score = scoreForWidget(*gui, dir);
                 if (score >= 0)
                 {
+                    qDebug() << "Scored:" << gui
+                             << score
+                             << "rect:" << gui->rule().recti().asText()
+                             << (gui->is<LabelWidget>()? gui->as<LabelWidget>().text() : String());
+
                     if (!bestWidget || score < bestScore)
                     {
                         bestWidget = gui;
@@ -1125,7 +1159,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         {
             verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(2)),
                                     thick,
-                                    Vector4f(0, 0, 0, 1),
+                                    Vector4f(0, 0, 0, .666f),
                                     rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         }
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
