@@ -108,11 +108,16 @@ DENG2_PIMPL(Resources)
 
         // Determine the root directory of the saved session repository.
         auto &cmdLine = App::commandLine();
-        if (auto arg = cmdLine.check("-savedir", 1))
+        int pos = cmdLine.has("-savedir");
+        if (pos > 0)
         {
             // Using a custom root save directory.
-            cmdLine.makeAbsolutePath(arg.pos + 1);
-            nativeSavePath = cmdLine.at(arg.pos + 1);
+            cmdLine.makeAbsolutePath(pos + 1);
+            String arg;
+            if (cmdLine.getParameter("-savedir", arg))
+            {
+                nativeSavePath = arg;
+            }
         }
     }
 
