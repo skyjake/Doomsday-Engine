@@ -20,7 +20,9 @@
  */
 
 #include "render/decoration.h"
-#include "Surface"
+
+#include "world/surface.h"
+#include <doomsday/world/MaterialManifest>
 
 using namespace de;
 
@@ -39,6 +41,21 @@ Decoration::Decoration(MaterialAnimator::Decoration const &source, Vector3d cons
 
 Decoration::~Decoration()
 {}
+
+String Decoration::description() const
+{
+    auto desc = String(    _E(l) "Origin: "   _E(.)_E(i) "%1" _E(.)
+                       " " _E(l) "Material: " _E(.)_E(i) "%2" _E(.)
+                       " " _E(l) "Surface: "  _E(.)_E(i) "%3" _E(.))
+                  .arg(origin().asText())
+                  .arg(source().decor().material().manifest().composeUri().asText())
+                  .arg(String("[0x%1]").arg(de::dintptr(&surface()), 0, 16));
+
+#ifdef DENG2_DEBUG
+    desc.prepend(String("[Decoration 0x%1]\n").arg(de::dintptr(this), 0, 16));
+#endif
+    return desc;
+}
 
 MaterialAnimator::Decoration const &Decoration::source() const
 {

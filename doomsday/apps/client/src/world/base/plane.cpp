@@ -183,11 +183,19 @@ Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
 
 String Plane::description() const
 {
-    return String(_E(D) "%1:\n" _E(.)
-                  _E(l) "Height: " _E(.)_E(i) "%2" _E(.))
-               .arg(Sector::planeIdAsText(indexInSector()).upperFirstChar())
-               .arg(height())
-           + " " + surface().description();
+    auto desc = String    (_E(l) "Sector: "        _E(.)_E(i) "%1" _E(.)
+                       " " _E(l) "Height: "        _E(.)_E(i) "%2" _E(.)
+                       " " _E(l) "Height Target: " _E(.)_E(i) "%3" _E(.)
+                       " " _E(l) "Speed: "         _E(.)_E(i) "%4" _E(.))
+                  .arg(sector().indexInMap())
+                  .arg(height())
+                  .arg(heightTarget())
+                  .arg(speed());
+
+    DENG2_DEBUG_ONLY(
+        desc.prepend(String(_E(b) "Plane " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+    )
+    return desc + "\n" + surface().description();
 }
 
 Sector &Plane::sector()

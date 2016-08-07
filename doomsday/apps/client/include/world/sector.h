@@ -26,6 +26,7 @@
 #include <QList>
 #include <de/aabox.h>
 #include <de/Error>
+#include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
 #include <doomsday/world/MapElement>
@@ -189,6 +190,9 @@ public:
 
 //- Subsectors --------------------------------------------------------------------------
 
+    /// Thrown when the referenced subsector is missing/unknown.
+    DENG2_ERROR(MissingSubsectorError);
+
     typedef std::function<world::Subsector * (QList<world::ConvexSubspace *> const &)> SubsectorConstructor;
 
     static void setSubsectorConstructor(SubsectorConstructor func);
@@ -236,6 +240,12 @@ public:
      * @return  The newly constructed Subsector (ownership retained); otherwise @c nullptr
      */
     world::Subsector *addSubsector(QList<world::ConvexSubspace *> const &subspaces);
+
+    bool hasSubsector(de::Id id) const;
+
+    world::Subsector &findSubsector(de::Id id) const;
+
+    world::Subsector *tryFindSubsector(de::Id id) const;
 
 //- Sides -------------------------------------------------------------------------------
 

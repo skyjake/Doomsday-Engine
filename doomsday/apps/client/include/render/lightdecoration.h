@@ -40,6 +40,8 @@ public:
     LightDecoration(MaterialAnimator::Decoration const &source,
                     de::Vector3d const &origin = de::Vector3d());
 
+    de::String description() const;
+
     /**
      * To be called to register the commands and variables of this module.
      */

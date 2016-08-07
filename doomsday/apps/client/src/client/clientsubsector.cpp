@@ -1422,6 +1422,34 @@ ClientSubsector::ClientSubsector(QList<ConvexSubspace *> const &subspaces)
     sector().audienceForLightColorChange() += d;
 }
 
+String ClientSubsector::description() const
+{
+    auto desc = String(    _E(l) "%1: " _E(.) _E(i) "Sector %2%3" _E(.)
+                       " " _E(l) "%4: " _E(.) _E(i) "Sector %5%6" _E(.))
+                    .arg(Sector::planeIdAsText(Sector::Floor  ).upperFirstChar())
+                    .arg(visFloor  ().sector().indexInMap())
+                    .arg(&visFloor  () != &sector().floor  () ? " (mapped)" : "")
+                    .arg(Sector::planeIdAsText(Sector::Ceiling).upperFirstChar())
+                    .arg(visCeiling().sector().indexInMap())
+                    .arg(&visCeiling() != &sector().ceiling() ? " (mapped)" : "");
+    if (hasDecorations())
+    {
+        desc += String(_E(D) "\nDecorations:" _E(.));
+        dint decorIndex = 0;
+        for (Impl::DecoratedSurface &decorSurface : d->decorSurfaces)
+        for (Decoration *decor : decorSurface.decorations)
+        {
+            desc += String("\n[%1]: ").arg(decorIndex) + _E(>) + decor->description() + _E(<);
+            decorIndex += 1;
+        }
+    }
+
+    DENG2_DEBUG_ONLY(
+        desc.prepend(String("[ClientSubsector 0x%1]\n").arg(de::dintptr(this), 0, 16));
+    )
+    return Subsector::description() + "\n" + desc;
+}
+
 dint ClientSubsector::visPlaneCount() const
 {
     return sector().planeCount();
@@ -1780,6 +1808,15 @@ void ClientSubsector::decorate()
     // Surfaces of the visual planes.
     d->decorate(visFloor  ().surface());
     d->decorate(visCeiling().surface());
+}
+
+bool ClientSubsector::hasDecorations() const
+{
+    for (Impl::DecoratedSurface const &decorSurface : d->decorSurfaces)
+    {
+        if (!decorSurface.decorations.isEmpty()) return true;
+    }
+    return false;
 }
 
 void ClientSubsector::generateLumobjs()

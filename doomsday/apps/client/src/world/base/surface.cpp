@@ -158,18 +158,23 @@ Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &color)
 
 String Surface::description() const
 {
-    return String(_E(l)  "Material: "        _E(.)_E(i) "%1" _E(.)
-                  _E(l) " Material Origin: " _E(.)_E(i) "%2" _E(.)
-                  _E(l) " Normal: "          _E(.)_E(i) "%3" _E(.)
-                  _E(l) " Opacity: "         _E(.)_E(i) "%4" _E(.)
-                  _E(l) " Blend Mode: "      _E(.)_E(i) "%5" _E(.)
-                  _E(l) " Tint Color: "      _E(.)_E(i) "%6" _E(.))
-               .arg(hasMaterial() ? material().manifest().composeUri().asText() : "None")
-               .arg(origin().asText())
-               .arg(normal().asText())
-               .arg(opacity())
-               .arg(String(R_NameForBlendMode(blendMode())))
-               .arg(color().asText());
+    auto desc = String(    _E(l) "Material: "        _E(.)_E(i) "%1" _E(.)
+                       " " _E(l) "Material Origin: " _E(.)_E(i) "%2" _E(.)
+                       " " _E(l) "Normal: "          _E(.)_E(i) "%3" _E(.)
+                       " " _E(l) "Opacity: "         _E(.)_E(i) "%4" _E(.)
+                       " " _E(l) "Blend Mode: "      _E(.)_E(i) "%5" _E(.)
+                       " " _E(l) "Tint Color: "      _E(.)_E(i) "%6" _E(.))
+                  .arg(hasMaterial() ? material().manifest().composeUri().asText() : "None")
+                  .arg(origin().asText())
+                  .arg(normal().asText())
+                  .arg(opacity())
+                  .arg(String(R_NameForBlendMode(blendMode())))
+                  .arg(color().asText());
+
+    DENG2_DEBUG_ONLY(
+        desc.prepend(String("[Surface 0x%1]\n").arg(de::dintptr(this), 0, 16));
+    )
+    return desc;
 }
 
 Matrix3f const &Surface::tangentMatrix() const

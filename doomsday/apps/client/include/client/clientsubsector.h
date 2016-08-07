@@ -49,6 +49,11 @@ public:
     ClientSubsector(QList<ConvexSubspace *> const &subspaces);
 
     /**
+     * Returns a human-friendly, textual description of the subsector.
+     */
+    de::String description() const;
+
+    /**
      * Returns @c true if @a height (up-axis offset) lies above/below the ceiling/floor
      * height of the subsector.
      */
@@ -135,14 +140,19 @@ public:
 //- Decorations -------------------------------------------------------------------------
 
     /**
-     * Mark the surface as needing a decoration update.
+     * Returns @c true if the subsector has one or more decorations.
      */
-    void markForDecorationUpdate(bool yes = true);
+    bool hasDecorations() const;
 
     /**
      * Perform scheduled decoration work.
      */
     void decorate();
+
+    /**
+     * Mark the surface as needing a decoration update.
+     */
+    void markForDecorationUpdate(bool yes = true);
 
     void generateLumobjs();
 

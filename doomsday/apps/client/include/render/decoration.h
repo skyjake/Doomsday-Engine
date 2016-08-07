@@ -53,6 +53,8 @@ public:
                de::Vector3d const &origin = de::Vector3d());
     virtual ~Decoration();
 
+    de::String description() const;
+
     /**
      * Returns the source of the decoration.
      *

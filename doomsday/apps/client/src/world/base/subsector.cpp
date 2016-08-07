@@ -20,11 +20,14 @@
 
 #include "world/subsector.h"
 
+#include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Plane"
 #include "Surface"
 #include "Face"
+
+#include "dd_main.h"  // App_World()
 
 #include <de/aabox.h>
 #include <de/vector1.h>
@@ -37,6 +40,7 @@ DENG2_PIMPL_NOREF(Subsector)
 {
     QList<ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> bounds;
+    Id id;
 
     /**
      * Calculate the minimum bounding rectangle containing all the subspace geometries.
@@ -75,6 +79,26 @@ Subsector::Subsector(QList<ConvexSubspace *> const &subspaces) : d(new Impl)
 Subsector::~Subsector()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(*this);
+}
+
+String Subsector::description() const
+{
+    auto desc = String(    _E(l) "Id: "     _E(.) _E(i) "%1" _E(.)
+                       " " _E(l) "Sector: " _E(.) _E(i) "%2" _E(.)
+                       " " _E(l) "Bounds: " _E(.) _E(i) "%3" _E(.))
+                    .arg(d->id.asText())
+                    .arg(sector().indexInMap())
+                    .arg((Vector2d(bounds().max) - Vector2d(bounds().min)).asText());
+
+    DENG2_DEBUG_ONLY(
+        desc.prepend(String("[Subsector 0x%1]\n").arg(de::dintptr(this), 0, 16));
+    )
+    return desc;
+}
+
+Id Subsector::id() const
+{
+    return d->id;
 }
 
 Sector &Subsector::sector()

@@ -42,6 +42,15 @@ LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec
     , Source()
 {}
 
+String LightDecoration::description() const
+{
+    String desc;
+#ifdef DENG2_DEBUG
+    desc.prepend(String("[LightDecoration 0x%1]\n").arg(de::dintptr(this), 0, 16));
+#endif
+    return Decoration::description() + "\n" + desc;
+}
+
 dfloat LightDecoration::occlusion(Vector3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.

@@ -24,6 +24,7 @@
 #include <functional>
 #include <QList>
 #include <de/aabox.h>
+#include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
 #include "ConvexSubspace"
@@ -59,6 +60,16 @@ public:
     virtual ~Subsector();
 
     DENG2_AS_IS_METHODS()
+
+    /**
+     * Returns a humman-friendly, textual description of the subsector.
+     */
+    de::String description() const;
+
+    /**
+     * Returns the automatically generated, unique identifier of the subsector.
+     */
+    de::Id id() const;
 
     /**
      * Returns the Sector attributed to the subsector.

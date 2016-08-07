@@ -377,7 +377,32 @@ Subsector *Sector::addSubsector(QList<ConvexSubspace *> const &subspaces)
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
     std::unique_ptr<Subsector> subsec(subsectorConstructor(subspaces));
     d->subsectors << subsec.get();
+    LOG_MAP_XVERBOSE("New Subsector %s (sector-%s)") << subsec->id().asText() << indexInMap();
     return subsec.release();
+}
+
+bool Sector::hasSubsector(de::Id id) const
+{
+    for (Subsector *subsec : d->subsectors)
+    {
+        if (subsec->id() == id) return true;
+    }
+    return false;
+}
+
+Subsector *Sector::tryFindSubsector(de::Id id) const
+{
+    for (Subsector *subsec : d->subsectors)
+    {
+        if (subsec->id() == id) return subsec;
+    }
+    return nullptr;
+}
+
+Subsector &Sector::findSubsector(de::Id id) const
+{
+    if (Subsector *subsec = tryFindSubsector(id)) return *subsec;
+    throw MissingSubsectorError("Sector::findSubsector", "Unknown subsector \"" + id.asText() + "\"");
 }
 
 dint Sector::sideCount() const
@@ -652,11 +677,30 @@ D_CMD(InspectSector)
                 _E(l) " Light Color: " _E(.)_E(i) "%s")
             << sec->lightLevel()
             << sec->lightColor().asText();
-    sec->forAllPlanes([] (Plane const &plane)
+    if (sec->planeCount())
     {
-        LOG_SCR_MSG("") << plane.description();
-        return LoopContinue;
-    });
+        LOG_SCR_MSG(_E(D) "Planes (%i):") << sec->planeCount();
+        sec->forAllPlanes([] (Plane const &plane)
+        {
+            LOG_SCR_MSG("%s: " _E(>))
+                << Sector::planeIdAsText(plane.indexInSector()).upperFirstChar()
+                << plane.description();
+            return LoopContinue;
+        });
+    }
+    if (sec->subsectorCount())
+    {
+        LOG_SCR_MSG(_E(D) "Subsectors (%i):") << sec->subsectorCount();
+        dint subsectorIndex = 0;
+        sec->forAllSubsectors([&subsectorIndex] (Subsector const &subsec)
+        {
+            LOG_SCR_MSG("%s: " _E(>))
+                << subsectorIndex
+                << subsec.description();
+            subsectorIndex += 1;
+            return LoopContinue;
+        });
+    }
 
     return true;
 }
