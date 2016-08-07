@@ -117,9 +117,7 @@ public:
 #endif
 
     void setDoomsdayBasePath(de::NativePath const &path);
-    //void setDoomsdayRuntimePath(de::NativePath const &path);
     std::string const &doomsdayBasePath() const;
-    //std::string const &doomsdayRuntimePath() const;
 
     /**
      * Checks if the currently loaded packages are compatible with the provided list.

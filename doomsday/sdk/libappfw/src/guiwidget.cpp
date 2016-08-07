@@ -492,10 +492,10 @@ DENG2_PIMPL(GuiWidget)
                 float score = scoreForWidget(*gui, dir);
                 if (score >= 0)
                 {
-                    qDebug() << "Scored:" << gui
+                    /*qDebug() << "Scored:" << gui
                              << score
                              << "rect:" << gui->rule().recti().asText()
-                             << (gui->is<LabelWidget>()? gui->as<LabelWidget>().text() : String());
+                             << (gui->is<LabelWidget>()? gui->as<LabelWidget>().text() : String());*/
 
                     if (!bestWidget || score < bestScore)
                     {
