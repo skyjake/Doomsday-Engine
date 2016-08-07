@@ -27,6 +27,7 @@ public:
     PackagesColumnWidget();
 
     de::String tabHeading() const override;
+    void setHighlighted(bool highlighted) override;
 
 private:
     DENG2_PRIVATE(d)

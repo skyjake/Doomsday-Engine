@@ -41,7 +41,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         void acquireFocus()
         {
             owner.acquireFocus();
-            emit owner.mouseActivity();
+            //emit owner.mouseActivity();
         }
 
         bool handleEvent(GuiWidget &widget, Event const &event)
@@ -376,6 +376,7 @@ void HomeItemWidget::focusGained()
 {
     setSelected(true);
     emit selected();
+    emit mouseActivity();
 }
 
 void HomeItemWidget::focusLost()

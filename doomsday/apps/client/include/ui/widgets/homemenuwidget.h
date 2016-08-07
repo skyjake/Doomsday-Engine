@@ -22,6 +22,7 @@
 #include <de/MenuWidget>
 
 class HomeItemWidget;
+class ColumnWidget;
 
 /**
  * Menu for items in Home columns.
@@ -55,6 +56,8 @@ public:
     de::ui::Item const *actionItem() const;
     void setInteractedItem(de::ui::Item const *menuItem,
                            de::ui::Item const *actionItem);
+
+    ColumnWidget *parentColumn() const;
 
 signals:
     void selectedIndexChanged(int index);
