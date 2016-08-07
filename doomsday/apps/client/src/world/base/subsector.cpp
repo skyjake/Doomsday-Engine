@@ -88,7 +88,7 @@ String Subsector::description() const
                        " " _E(l) "Bounds: " _E(.) _E(i) "%3" _E(.))
                     .arg(d->id.asText())
                     .arg(sector().indexInMap())
-                    .arg((Vector2d(bounds().max) - Vector2d(bounds().min)).asText());
+                    .arg(Rectangled(bounds().min, bounds().max).asText());
 
     DENG2_DEBUG_ONLY(
         desc.prepend(String("[Subsector 0x%1]\n").arg(de::dintptr(this), 0, 16));

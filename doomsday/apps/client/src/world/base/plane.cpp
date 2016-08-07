@@ -183,7 +183,7 @@ Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
 
 String Plane::description() const
 {
-    auto desc = String    (_E(l) "Sector: "        _E(.)_E(i) "%1" _E(.)
+    auto desc = String(    _E(l) "Sector: "        _E(.)_E(i) "%1" _E(.)
                        " " _E(l) "Height: "        _E(.)_E(i) "%2" _E(.)
                        " " _E(l) "Height Target: " _E(.)_E(i) "%3" _E(.)
                        " " _E(l) "Speed: "         _E(.)_E(i) "%4" _E(.))
