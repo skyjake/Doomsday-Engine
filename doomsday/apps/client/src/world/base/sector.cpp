@@ -677,8 +677,8 @@ D_CMD(InspectSector)
                 " " _E(l) "Light Color: " _E(.)_E(i) "%s" _E(.)
                 " " _E(l) "Light Level: " _E(.)_E(i) "%f")
             << Rectangled(sec->bounds().min, sec->bounds().max).asText()
-            << sec->lightLevel()
-            << sec->lightColor().asText();
+            << sec->lightColor().asText()
+            << sec->lightLevel();
     if (sec->planeCount())
     {
         LOG_SCR_MSG(_E(D) "Planes (%i):") << sec->planeCount();
