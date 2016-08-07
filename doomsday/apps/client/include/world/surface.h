@@ -205,7 +205,7 @@ public:
     de::Uri composeMaterialUri() const;
 
 #ifdef __CLIENT__
-//- Material origin smoothing -----------------------------------------------------------
+//- Origin smoothing --------------------------------------------------------------------
 
     /// Notified when the @em sharp material origin changes.
     DENG2_DEFINE_AUDIENCE2(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
@@ -247,25 +247,6 @@ public:
      * Roll the surface's material origin tracking buffer.
      */
     void updateOriginTracking();
-
-//- Decorations -------------------------------------------------------------------------
-
-    /**
-     * Clear all surface decorations.
-     */
-    void clearDecorations();
-
-    /**
-     * Returns the total number of surface decorations.
-     */
-    de::dint decorationCount() const;
-
-    /**
-     * Add the specified decoration to the surface.
-     *
-     * @param decoration  Decoration to add. Ownership is given to the surface.
-     */
-    void addDecoration(Decoration *decoration);
 
 //---------------------------------------------------------------------------------------
 
