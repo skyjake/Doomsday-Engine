@@ -151,7 +151,7 @@ DENG2_PIMPL(ClientApp)
     InputSystem *inputSys;
     ::audio::System *audioSys;
     RenderSystem *rendSys;
-    ClientResources *resourceSys;
+    ClientResources *resources;
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
@@ -220,14 +220,14 @@ DENG2_PIMPL(ClientApp)
 
     Impl(Public *i)
         : Base(i)
-        , menuBar    (0)
-        , inputSys   (0)
-        , audioSys   (0)
-        , rendSys    (0)
-        , resourceSys(0)
-        , winSys     (0)
-        , svLink     (0)
-        , world      (0)
+        , menuBar  (0)
+        , inputSys (0)
+        , audioSys (0)
+        , rendSys  (0)
+        , resources(0)
+        , winSys   (0)
+        , svLink   (0)
+        , world    (0)
     {
         clientAppSingleton = thisPublic;
 
@@ -258,9 +258,8 @@ DENG2_PIMPL(ClientApp)
         }
 
         updater.reset();
-        //delete infineSys;
         delete inputSys;
-        delete resourceSys;
+        delete resources;
         delete winSys;
         delete audioSys;
         delete rendSys;
@@ -580,8 +579,8 @@ void ClientApp::initialize()
     d->setupAppMenu();
 
     // Create the resource system.
-    d->resourceSys = new ClientResources;
-    addSystem(*d->resourceSys);
+    d->resources = new ClientResources;
+    addSystem(*d->resources);
 
     plugins().loadAll();
 
@@ -592,9 +591,6 @@ void ClientApp::initialize()
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
     B_Init();
-
-    //d->infineSys = new InFineSystem;
-    //addSystem(*d->infineSys);
 
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
@@ -773,8 +769,8 @@ bool ClientApp::hasAudioSystem()
 ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->resourceSys != 0);
-    return *a.d->resourceSys;
+    DENG2_ASSERT(a.d->resources != 0);
+    return *a.d->resources;
 }
 
 ClientWindowSystem &ClientApp::windowSystem()
