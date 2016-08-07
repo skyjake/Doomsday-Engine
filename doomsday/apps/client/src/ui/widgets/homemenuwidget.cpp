@@ -18,6 +18,7 @@
 
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/homeitemwidget.h"
+#include "ui/home/columnwidget.h"
 
 using namespace de;
 
@@ -134,6 +135,18 @@ void HomeMenuWidget::setInteractedItem(ui::Item const *menuItem, ui::Item const 
     d->interactedAction = actionItem;
 }
 
+ColumnWidget *HomeMenuWidget::parentColumn() const
+{
+    for (Widget *i = parentWidget(); i; i = i->parent())
+    {
+        if (ColumnWidget *column = i->maybeAs<ColumnWidget>())
+        {
+            return column;
+        }
+    }
+    return nullptr;
+}
+
 ui::Item const *HomeMenuWidget::interactedItem() const
 {
     return d->interacted;
@@ -149,6 +162,11 @@ void HomeMenuWidget::mouseActivityInItem()
     if (auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
     {
         emit itemClicked(findItem(*clickedWidget));
+    }
+
+    if (auto *column = parentColumn())
+    {
+        emit column->mouseActivity(column);
     }
 }
 

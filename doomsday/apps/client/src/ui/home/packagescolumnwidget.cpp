@@ -162,3 +162,12 @@ String PackagesColumnWidget::tabHeading() const
 {
     return tr("Packages");
 }
+
+void PackagesColumnWidget::setHighlighted(bool highlighted)
+{
+    ColumnWidget::setHighlighted(highlighted);
+    if (highlighted)
+    {
+        root().setFocus(&d->packages->searchTermsEditor());
+    }
+}

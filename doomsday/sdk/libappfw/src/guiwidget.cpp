@@ -1159,7 +1159,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         {
             verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(2)),
                                     thick,
-                                    Vector4f(0, 0, 0, .666f),
+                                    Vector4f(0, 0, 0, .5f),
                                     rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         }
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),

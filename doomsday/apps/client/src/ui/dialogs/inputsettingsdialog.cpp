@@ -54,20 +54,22 @@ DENG_GUI_PIMPL(InputSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(syncMouse     = new VariableToggleWidget(App::config("input.mouse.syncSensitivity")));
-        area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
-        area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
-        area.add(mouseDisableX = new ToggleWidget);
-        area.add(mouseDisableY = new ToggleWidget);
-        area.add(mouseInvertX  = new ToggleWidget);
-        area.add(mouseInvertY  = new ToggleWidget);
-        area.add(mouseFilterX  = new ToggleWidget);
-        area.add(mouseFilterY  = new ToggleWidget);
-
         // Gamepad.
         area.add(joyEnable     = new CVarToggleWidget("input-joy"));
-        area.add(applyGamepad  = new ButtonWidget);
         area.add(gamepad       = new ChoiceWidget);
+        area.add(applyGamepad  = new ButtonWidget);
+
+        area.add(syncMouse     = new VariableToggleWidget(App::config("input.mouse.syncSensitivity")));
+
+        area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
+        area.add(mouseInvertX  = new ToggleWidget);
+        area.add(mouseFilterX  = new ToggleWidget);
+        area.add(mouseDisableX = new ToggleWidget);
+
+        area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
+        area.add(mouseInvertY  = new ToggleWidget);
+        area.add(mouseFilterY  = new ToggleWidget);
+        area.add(mouseDisableY = new ToggleWidget);
 
         gamepad->items() << new ChoiceItem(tr("None"), "");
         QStringList ids = ClientApp::inputSystem().gameControllerPresets().ids();
@@ -140,7 +142,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     d->syncInput->setText(tr("Vanilla 35Hz Input Rate"));
     d->syncMouse->setText(tr("Sync Axis Sensitivities"));
-    d->applyGamepad->setText(tr("Apply Preset"));
+    d->applyGamepad->setText(tr("Apply"));
     connect(d->applyGamepad, SIGNAL(pressed()), this, SLOT(applyControllerPreset()));
 
     LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Horizontal"), &area());
@@ -151,7 +153,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     mouseXLabel->margins().setTop("gap");
     mouseYLabel->margins().setTop("gap");
 
-    LabelWidget *applyNote = LabelWidget::newWithText(tr("Clicking " _E(b) "Apply Preset" _E(.) " will remove all "
+    LabelWidget *applyNote = LabelWidget::newWithText(tr("Clicking " _E(b) "Apply" _E(.) " will remove all "
                                                          "existing game controller bindings and apply "
                                                          "the selected preset."), &area());
     applyNote->margins().setTop("");
@@ -190,15 +192,16 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     //layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *LabelWidget::newWithText(tr("Game Controller:"), &area()) << *d->gamepad;
+    layout.append(*d->joyEnable, 2);
+    layout << *LabelWidget::newWithText(tr("Game Controller Preset:"), &area())
+           << *d->gamepad;
     d->applyGamepad->setSizePolicy(ui::Expand, ui::Expand);
     d->applyGamepad->rule()
             .setInput(Rule::Left, d->gamepad->rule().right())
             .setMidAnchorY(d->gamepad->rule().midY());
     layout.append(*applyNote, 2);
-    layout.append(*d->joyEnable, 2);
 
-    GridLayout layout2(area().contentRule().left(), d->joyEnable->rule().bottom());
+    GridLayout layout2(area().contentRule().left(), applyNote->rule().bottom());
     layout2.setGridSize(2, 0);
     layout2 << *mouseXLabel      << *mouseYLabel
             << *d->mouseSensiX   << *d->mouseSensiY;
