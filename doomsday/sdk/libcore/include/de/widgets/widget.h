@@ -134,6 +134,7 @@ public:
     void setRoot(RootWidget *root);
 
     bool hasFocus() const;
+    virtual bool canBeFocused() const;
 
     void show(bool doShow = true);
     inline void hide() { show(false); }
@@ -260,6 +261,20 @@ public:
      * were handled.
      */
     Widget *walkInOrder(WalkDirection dir, std::function<LoopResult (Widget &)> callback);
+
+    /**
+     * Calls the given callback on each child of this widget. The full subtree of each
+     * child is walked.
+     *
+     * @param dir       Walk direction: Forward or Backward.
+     * @param callback  Callback to call for each widget. Return LoopContinue to continue
+     *                  the walk, anything else will abort.
+     *
+     * @return If the walk was aborted, returns the widget at which the callback returned
+     * LoopAbort. Otherwise returns nullptr to indicate that all the available children
+     * were handled.
+     */
+    Widget *walkChildren(WalkDirection dir, std::function<LoopResult (Widget &)> callback);
 
     /**
      * Removes the widget from its parent, if it has a parent.

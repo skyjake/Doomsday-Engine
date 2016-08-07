@@ -14,13 +14,14 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_RECTANGLE_H
 #define LIBDENG2_RECTANGLE_H
 
 #include "../Vector"
+#include "../Range"
 #include "math.h"
 #include <QRect>
 
@@ -59,7 +60,7 @@ public:
     }
     static RectangleType fromQRect(QRect const &qr) {
         return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
-    }    
+    }
 
     // Automatic conversion to a Rectanglef.
     operator Rectangle<Vector2f, Vector2f> () const {
@@ -189,6 +190,12 @@ public:
     }
     Vector4<Type> xywh() const {
         return Vector4<Type>(topLeft.x, topLeft.y, Type(width()), Type(height()));
+    }
+    Range<Type> horizontal() const {
+        return Range<Type>(left(), right());
+    }
+    Range<Type> vertical() const {
+        return Range<Type>(top(), bottom());
     }
 
 public:

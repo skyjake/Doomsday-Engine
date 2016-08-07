@@ -23,6 +23,7 @@ namespace de {
 DENG2_PIMPL(PopupButtonWidget)
 , DENG2_OBSERVES(ButtonWidget, StateChange)
 , DENG2_OBSERVES(ButtonWidget, Press)
+, DENG2_OBSERVES(PanelWidget,  Close)
 {
     SafeWidgetPtr<PopupWidget> pop;
     Constructor constructor;
@@ -60,7 +61,17 @@ DENG2_PIMPL(PopupButtonWidget)
             {
                 pop->open();
             }
+
+            if (auto *parentPop = self.findParentPopup())
+            {
+                parentPop->audienceForClose() += this;
+            }
         }
+    }
+
+    void panelBeingClosed(PanelWidget &)
+    {
+        if (self.isOpen()) pop->close();
     }
 };
 

@@ -43,6 +43,9 @@ public:
 
     de::ButtonWidget &playButton();
 
+    // Events.
+    bool handleEvent(de::Event const &event) override;
+
 public slots:
     void play();
 

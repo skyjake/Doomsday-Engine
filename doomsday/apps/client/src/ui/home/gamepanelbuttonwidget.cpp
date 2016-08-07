@@ -310,6 +310,28 @@ ButtonWidget &GamePanelButtonWidget::playButton()
     return *d->playButton;
 }
 
+bool GamePanelButtonWidget::handleEvent(Event const &event)
+{
+    if (hasFocus() && event.isKey())
+    {
+        auto const &key = event.as<KeyEvent>();
+        if (event.isKeyDown() &&
+            (key.ddKey() == DDKEY_ENTER || key.ddKey() == DDKEY_RETURN || key.ddKey() == ' '))
+        {
+            if (playButton().isEnabled())
+            {
+                root().setFocus(&playButton());
+            }
+            else
+            {
+                root().setFocus(d->packagesButton);
+            }
+        }
+    }
+
+    return PanelButtonWidget::handleEvent(event);
+}
+
 void GamePanelButtonWidget::play()
 {
     d->playButtonPressed();

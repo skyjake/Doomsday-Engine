@@ -18,6 +18,7 @@
 
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
+#include "ui/home/columnwidget.h"
 #include "resource/idtech1image.h"
 
 #include <doomsday/LumpCatalog>
@@ -194,6 +195,19 @@ DENG_GUI_PIMPL(HomeItemWidget)
         background->set(bg);
         label->setTextColor(selected? selectedTextColor : textColor);
     }
+
+    /**
+     * Determines if this item is inside a Home column. This is not true if the item
+     * is used in a standalone dialog, for example.
+     */
+    bool hasColumnAncestor() const
+    {
+        for (Widget *i = self.parentWidget(); i; i = i->parent())
+        {
+            if (i->is<ColumnWidget>()) return true;
+        }
+        return false;
+    }
 };
 
 HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
@@ -333,6 +347,29 @@ void HomeItemWidget::acquireFocus()
 HomeMenuWidget *HomeItemWidget::parentMenu()
 {
     return parentWidget()->maybeAs<HomeMenuWidget>();
+}
+
+bool HomeItemWidget::handleEvent(Event const &event)
+{
+    if (hasFocus() && event.isKey())
+    {
+        auto const &key = event.as<KeyEvent>();
+
+        if (key.ddKey() == DDKEY_LEFTARROW || key.ddKey() == DDKEY_RIGHTARROW ||
+            key.ddKey() == DDKEY_UPARROW   || key.ddKey() == DDKEY_DOWNARROW)
+        {
+            if ( ! ((key.ddKey() == DDKEY_UPARROW    && isFirstChild()) ||
+                    (key.ddKey() == DDKEY_DOWNARROW  && isLastChild())  ||
+                    (key.ddKey() == DDKEY_LEFTARROW  && !d->hasColumnAncestor()) ||
+                    (key.ddKey() == DDKEY_RIGHTARROW && !d->hasColumnAncestor())) )
+            {
+                // Fall back to menu and HomeWidget for navigation.
+                return false;
+            }
+        }
+    }
+
+    return GuiWidget::handleEvent(event);
 }
 
 void HomeItemWidget::focusGained()

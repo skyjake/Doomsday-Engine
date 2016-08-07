@@ -23,7 +23,7 @@
 
 #include "../libappfw.h"
 #include <QFlags>
-#include <de/math.h>
+#include <de/Vector>
 
 namespace de {
 namespace ui {
@@ -56,6 +56,14 @@ inline bool isHorizontal(Direction dir) {
 
 inline bool isVertical(Direction dir) {
     return dir == ui::Up || dir == ui::Down;
+}
+
+inline Vector2f directionVector(Direction dir) {
+    return dir == ui::Left?  Vector2f(-1,  0) :
+           dir == ui::Right? Vector2f( 1,  0) :
+           dir == ui::Up?    Vector2f( 0, -1) :
+           dir == ui::Down?  Vector2f( 0,  1) :
+                             Vector2f();
 }
 
 /**

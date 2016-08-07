@@ -34,8 +34,8 @@ label {
 }
 
 focus {
-    color flash.on  { rgb $= gui.colorAlpha(accent.rgb, 0.8) }
-    color flash.off { rgb $= background.rgb }
+    color flash.on  { rgb $= accent.rgb }
+    color flash.off { rgb $= gui.colorAlpha(accent.rgb, 0.25) }
 }
 
 popup {

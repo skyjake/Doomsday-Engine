@@ -29,6 +29,7 @@
 #include <de/GLTexture>
 #include <de/GLTarget>
 #include <de/FocusWidget>
+#include <de/PopupWidget>
 
 #include <QList>
 
@@ -161,10 +162,11 @@ DENG2_PIMPL(GuiWidget)
 
         if (self.isClipped())
         {
-            int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
+            int const CULL_SAFETY_WIDTH = 50; // avoid pop-in when scrolling
 
             // Clipped widgets are guaranteed to be within their rectangle.
-            return !visibleArea.overlaps(self.rule().recti().expanded(CULL_SAFETY_WIDTH));
+            return !visibleArea.overlaps(self.rule().recti().expanded(
+                                             GuiWidget::toDevicePixels(CULL_SAFETY_WIDTH)));
         }
         // Otherwise widgets may draw anywhere in the view.
         return visibleArea.isNull();
@@ -353,11 +355,18 @@ DENG2_PIMPL(GuiWidget)
 
     GuiWidget *findNextWidgetToFocus(WalkDirection dir)
     {
+        PopupWidget *parentPopup = self.findParentPopup();
         Rectanglei const viewRect = self.root().viewRule().recti();
-        auto *widget = self.walkInOrder(dir, [this, &viewRect] (Widget &widget)
+        bool escaped = false;
+        auto *widget = self.walkInOrder(dir, [this, &viewRect, parentPopup, &escaped] (Widget &widget)
         {
-            if (widget.behavior().testFlag(Focusable) && widget.isEnabled() &&
-                widget.isVisible() && widget.is<GuiWidget>())
+            if (parentPopup && !widget.hasAncestor(*parentPopup))
+            {
+                // Cannot get out of the popup.
+                escaped = true;
+                return LoopAbort;
+            }
+            if (widget.canBeFocused() && widget.is<GuiWidget>())
             {
                 // The widget's center must be in view.
                 if (viewRect.contains(widget.as<GuiWidget>().rule().recti().middle()))
@@ -368,11 +377,145 @@ DENG2_PIMPL(GuiWidget)
             }
             return LoopContinue;
         });
-        if (widget)
+        if (widget && !escaped)
         {
             return widget->asPtr<GuiWidget>();
         }
         return nullptr;
+    }
+
+    float scoreForWidget(GuiWidget const &widget, ui::Direction dir) const
+    {
+        if (!widget.canBeFocused() || &widget == &self)
+        {
+            return -1;
+        }
+
+        Rectanglef const viewRect  = self.root().viewRule().rect();
+        Rectanglef const selfRect  = self.hitRule().rect();
+        Rectanglef const otherRect = widget.hitRule().rect();
+        Vector2f const otherMiddle =
+                (dir == ui::Up?   otherRect.midBottom() :
+                 dir == ui::Down? otherRect.midTop()    :
+                 dir == ui::Left? otherRect.midRight()  :
+                                  otherRect.midLeft()  );
+                //otherRect.middle();
+
+        if (!viewRect.contains(otherMiddle))
+        {
+            return -1;
+        }
+
+        bool const axisOverlap =
+                (isHorizontal(dir) && !selfRect.vertical()  .intersection(otherRect.vertical())  .isEmpty()) ||
+                (isVertical(dir)   && !selfRect.horizontal().intersection(otherRect.horizontal()).isEmpty());
+
+        // Check for contacting edges.
+        float edgeDistance = 0; // valid only if axisOverlap
+        if (axisOverlap)
+        {
+            switch (dir)
+            {
+            case ui::Left:
+                edgeDistance = selfRect.left() - otherRect.right();
+                break;
+
+            case ui::Up:
+                edgeDistance = selfRect.top() - otherRect.bottom();
+                break;
+
+            case ui::Right:
+                edgeDistance = otherRect.left() - selfRect.right();
+                break;
+
+            default:
+                edgeDistance = otherRect.top() - selfRect.bottom();
+                break;
+            }
+            // Very close edges are considered contacting.
+            if (edgeDistance >= 0 && edgeDistance < toDevicePixels(5))
+            {
+                return edgeDistance;
+            }
+        }
+
+        Vector2f const middle    = (dir == ui::Up?   selfRect.midTop()    :
+                                    dir == ui::Down? selfRect.midBottom() :
+                                    dir == ui::Left? selfRect.midLeft()   :
+                                                     selfRect.midRight() );
+        Vector2f const delta     = otherMiddle - middle;
+        Vector2f const dirVector = directionVector(dir);
+        auto dotProd = delta.normalize().dot(dirVector);
+        if (dotProd <= 0)
+        {
+            // On the wrong side.
+            return -1;
+        }
+        float distance = delta.length();
+        if (axisOverlap)
+        {
+            dotProd = 1.0;
+            if (edgeDistance > 0)
+            {
+                distance = de::min(distance, edgeDistance);
+            }
+        }
+
+        float favorability = 1;
+        if (widget.parentWidget() == self.parentWidget())
+        {
+            favorability = .1f; // Siblings are much preferred.
+        }
+        else if (self.hasAncestor(widget) || widget.hasAncestor(self))
+        {
+            favorability = .2f; // Ancestry is also good.
+        }
+
+        // Prefer widgets that are nearby, particularly in the specified direction.
+        return distance * (.5f + acos(dotProd)) * favorability;
+    }
+
+    GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
+    {
+        float bestScore = 0;
+        GuiWidget *bestWidget = nullptr;
+
+        // Focus navigation is always contained within the popup where the focus is
+        // currently in.
+        Widget *walkRoot = self.findParentPopup();
+        if (!walkRoot) walkRoot = &self.root();
+
+        walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
+        {
+            if (GuiWidget *gui = widget.maybeAs<GuiWidget>())
+            {
+                float score = scoreForWidget(*gui, dir);
+                if (score >= 0)
+                {
+                    /*qDebug() << "Scored:" << gui
+                             << score
+                             << "rect:" << gui->rule().recti().asText()
+                             << (gui->is<LabelWidget>()? gui->as<LabelWidget>().text() : String());*/
+
+                    if (!bestWidget || score < bestScore)
+                    {
+                        bestWidget = gui;
+                        bestScore  = score;
+                    }
+                }
+            }
+            return LoopContinue;
+        });
+        // Consider all the widgets in the tree.
+        /*if (bestWidget)
+        {
+            qDebug() << "Best:" << bestWidget
+                     << "focusable:" << bestWidget->behavior().testFlag(Focusable)
+                     << "rect:" << bestWidget->rule().recti().asText()
+                     << "opacity:" << bestWidget->visibleOpacity()
+                     << "visible:" << bestWidget->isVisible();
+        }*/
+        return bestWidget? bestWidget : &self;
     }
 
     static float toDevicePixels(double logicalPixels)
@@ -753,11 +896,11 @@ bool GuiWidget::handleEvent(Event const &event)
         }
     }
 
-    if (hasFocus() && event.isKey())
+    if (hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();
-        if (key.isKeyDown() && key.ddKey() == DDKEY_TAB &&
-            !attributes().testFlag(FocusCyclingDisabled))
+
+        if (!attributes().testFlag(FocusCyclingDisabled) && key.ddKey() == DDKEY_TAB)
         {
             if (auto *focus = d->findNextWidgetToFocus(
                         key.modifiers().testFlag(KeyEvent::Shift)? Backward : Forward))
@@ -765,6 +908,19 @@ bool GuiWidget::handleEvent(Event const &event)
                 root().setFocus(focus);
                 return true;
             }
+        }
+        if (!attributes().testFlag(FocusMoveWithArrowKeysDisabled) &&
+            (key.ddKey() == DDKEY_LEFTARROW  ||
+             key.ddKey() == DDKEY_RIGHTARROW ||
+             key.ddKey() == DDKEY_UPARROW    ||
+             key.ddKey() == DDKEY_DOWNARROW))
+        {
+            root().setFocus(d->findAdjacentWidgetToFocus(
+                                key.ddKey() == DDKEY_LEFTARROW ? ui::Left  :
+                                key.ddKey() == DDKEY_RIGHTARROW? ui::Right :
+                                key.ddKey() == DDKEY_UPARROW   ? ui::Up    :
+                                                                 ui::Down));
+            return true;
         }
     }
 
@@ -934,6 +1090,17 @@ bool GuiWidget::isInitialized() const
     return d->inited;
 }
 
+bool GuiWidget::canBeFocused() const
+{
+    if (!Widget::canBeFocused() ||
+        fequal(visibleOpacity(), 0.f) ||
+        rule().recti().size() == Vector2ui())
+    {
+        return false;
+    }
+    return true;
+}
+
 GuiWidget *GuiWidget::guiFind(String const &name)
 {
     return find(name)->maybeAs<GuiWidget>();
@@ -942,6 +1109,18 @@ GuiWidget *GuiWidget::guiFind(String const &name)
 GuiWidget const *GuiWidget::guiFind(String const &name) const
 {
     return find(name)->maybeAs<GuiWidget>();
+}
+
+PopupWidget *GuiWidget::findParentPopup() const
+{
+    for (Widget *i = parentWidget(); i; i = i->parent())
+    {
+        if (PopupWidget *popup = i->maybeAs<PopupWidget>())
+        {
+            return popup;
+        }
+    }
+    return nullptr;
 }
 
 void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
@@ -975,6 +1154,14 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     {
     case Background::GradientFrame:
     case Background::GradientFrameWithRoundedFill:
+    case Background::GradientFrameWithThinBorder:
+        if (d->background.type == Background::GradientFrameWithThinBorder)
+        {
+            verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(2)),
+                                    thick,
+                                    Vector4f(0, 0, 0, .666f),
+                                    rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
+        }
         verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
                                 thick,
                                 d->background.color,

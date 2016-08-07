@@ -121,12 +121,6 @@ bool CommandWidget::handleEvent(Event const &event)
         {
             return true;
         }
-
-        if (event.isKeyDown())
-        {
-            // Fall back to history navigation.
-            return d->history.handleControlKey(event.as<KeyEvent>().qtKey());
-        }
     }
     return false;
 }
@@ -136,6 +130,19 @@ void CommandWidget::update()
     LineEditWidget::update();
 
     setAttribute(FocusCyclingDisabled, !text().isEmpty());
+}
+
+bool CommandWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
+{
+    if (LineEditWidget::handleControlKey(qtKey, mods))
+    {
+        return true;
+    }
+    if (d->history.handleControlKey(qtKey))
+    {
+        return true;
+    }
+    return false;
 }
 
 void CommandWidget::dismissContentToHistory()

@@ -119,8 +119,9 @@ protected:
     void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
     void updateStyle() override;
 
-    virtual void preparePanelForOpening() override;
-    virtual void panelDismissed() override;
+    void preparePanelForOpening() override;
+    void panelClosing() override;
+    void panelDismissed() override;
 
 private:
     DENG2_PRIVATE(d)

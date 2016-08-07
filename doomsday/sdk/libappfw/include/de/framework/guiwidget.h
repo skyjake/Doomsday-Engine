@@ -34,6 +34,7 @@ namespace de {
 
 class GuiRootWidget;
 class BlurWidget;
+class PopupWidget;
 
 /**
  * Base class for graphical widgets.
@@ -101,6 +102,7 @@ public:
             None,               ///< No background, no solid fill.
             GradientFrame,      ///< Bold round corners, square background.
             GradientFrameWithRoundedFill, ///< Bold round corners with solid rounded background.
+            GradientFrameWithThinBorder,  ///< Bold round corners, black thin secondary border.
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
@@ -213,6 +215,12 @@ public:
          * When the widget is in focus, this will prevent cycling focus away with Tab.
          */
         FocusCyclingDisabled = 0x80,
+
+        /**
+         * When the widget is in focus, this will prevent moving the focus with
+         * arrow keys.
+         */
+        FocusMoveWithArrowKeysDisabled = 0x100,
 
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
@@ -423,8 +431,16 @@ public:
 
     bool isInitialized() const;
 
+    bool canBeFocused() const override;
+
     GuiWidget *guiFind(String const &name);
     GuiWidget const *guiFind(String const &name) const;
+
+    /**
+     * Finds the popup widget that this widget resides in.
+     * @return Popup, or @c nullptr if the widget is not inside a popup.
+     */
+    PopupWidget *findParentPopup() const;
 
 public slots:
     /**

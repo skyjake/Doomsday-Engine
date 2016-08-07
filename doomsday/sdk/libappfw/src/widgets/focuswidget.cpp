@@ -44,10 +44,12 @@ DENG2_PIMPL(FocusWidget)
     {
         if (color.target() > .5f)
         {
+            color.setStyle(Animation::EaseIn);
             color.setValue(0, FLASH_SPAN);
         }
         else
         {
+            color.setStyle(Animation::EaseOut);
             color.setValue(1, FLASH_SPAN);
         }
     }
@@ -86,7 +88,7 @@ void FocusWidget::stopFlashing()
 void FocusWidget::update()
 {
     setOpacity(d->reference? d->reference->visibleOpacity() : 0.f);
-    set(Background(Background::GradientFrame, d->currentColor(), 6));
+    set(Background(Background::GradientFrameWithThinBorder, d->currentColor(), 6));
 
     LabelWidget::update();
 }

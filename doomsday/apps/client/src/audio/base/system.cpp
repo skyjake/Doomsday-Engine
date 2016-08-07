@@ -679,12 +679,22 @@ DENG2_PIMPL(System)
         {
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
-            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (void *ifs)
+            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &path, &hndl, &looped] (void *ifs)
             {
                 auto *iMusic = (audiointerface_music_t *) ifs;
 
                 // Does this interface offer buffered playback?
-                if(iMusic->Play && iMusic->SongBuffer)
+                if(iMusic->PlayFile)
+                {
+                    // Write the data to disk and play from there.
+                    File &file = App::rootFolder().replaceFile(composeMusicBufferFilename(path.fileNameExtension()));
+                    Block buf(hndl->length());
+                    hndl->read(buf.data(), buf.size());
+                    file << buf;
+                    file.flush();
+                    return iMusic->PlayFile(file.as<NativeFile>().nativePath().toUtf8(), looped);
+                }
+                else if(iMusic->Play && iMusic->SongBuffer)
                 {
                     // Buffer the data using the driver's own facility.
                     dsize const len = hndl->length();
@@ -693,16 +703,7 @@ DENG2_PIMPL(System)
                     return iMusic->Play(looped);
                 }
                 // Does this interface offer playback from a native file?
-                else if(iMusic->PlayFile)
-                {
-                    // Write the data to disk and play from there.
-                    File &file = App::rootFolder().replaceFile(composeMusicBufferFilename());
-                    Block buf(hndl->length());
-                    hndl->read(buf.data(), buf.size());
-                    file << buf;
-                    file.flush();
-                    return iMusic->PlayFile(file.as<NativeFile>().nativePath().toUtf8(), looped);
-                }
+                else
                 return 0;  // Continue.
             });
 
