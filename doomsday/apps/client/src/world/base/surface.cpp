@@ -172,7 +172,7 @@ String Surface::description() const
                   .arg(color().asText());
 
     DENG2_DEBUG_ONLY(
-        desc.prepend(String("[Surface 0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String(_E(b) "Surface " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return desc;
 }

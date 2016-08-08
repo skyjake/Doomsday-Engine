@@ -64,7 +64,7 @@ public:
     /**
      * Returns a humman-friendly, textual description of the subsector.
      */
-    de::String description() const;
+    virtual de::String description() const;
 
     /**
      * Returns the automatically generated, unique identifier of the subsector.

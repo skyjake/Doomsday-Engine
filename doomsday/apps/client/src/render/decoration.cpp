@@ -52,7 +52,7 @@ String Decoration::description() const
                   .arg(String("[0x%1]").arg(de::dintptr(&surface()), 0, 16));
 
 #ifdef DENG2_DEBUG
-    desc.prepend(String("[Decoration 0x%1]\n").arg(de::dintptr(this), 0, 16));
+    desc.prepend(String(_E(b) "Decoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
 #endif
     return desc;
 }

@@ -91,7 +91,7 @@ String Subsector::description() const
                     .arg(Rectangled(bounds().min, bounds().max).asText());
 
     DENG2_DEBUG_ONLY(
-        desc.prepend(String("[Subsector 0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String(_E(b) "Subsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return desc;
 }

@@ -1445,7 +1445,7 @@ String ClientSubsector::description() const
     }
 
     DENG2_DEBUG_ONLY(
-        desc.prepend(String("[ClientSubsector 0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String(_E(b) "ClientSubsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return Subsector::description() + "\n" + desc;
 }

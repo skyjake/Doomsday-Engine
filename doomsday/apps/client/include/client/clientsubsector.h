@@ -51,7 +51,7 @@ public:
     /**
      * Returns a human-friendly, textual description of the subsector.
      */
-    de::String description() const;
+    de::String description() const override;
 
     /**
      * Returns @c true if @a height (up-axis offset) lies above/below the ceiling/floor

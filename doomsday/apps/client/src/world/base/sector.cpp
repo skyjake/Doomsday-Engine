@@ -671,8 +671,8 @@ D_CMD(InspectSector)
         return false;
     }
 
-    LOG_SCR_MSG(_E(b) "Sector %i" _E(.) " [%p]")
-            << sec->indexInMap() << sec;
+    LOG_SCR_MSG(_E(b) "Sector %s" _E(.) " [%p]")
+            << Id(sec->indexInMap()).asText() << sec;
     LOG_SCR_MSG(    _E(l) "Bounds: "      _E(.)_E(i) "%s" _E(.)
                 " " _E(l) "Light Color: " _E(.)_E(i) "%s" _E(.)
                 " " _E(l) "Light Level: " _E(.)_E(i) "%f")
