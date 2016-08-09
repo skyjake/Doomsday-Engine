@@ -214,23 +214,9 @@ DENG2_PIMPL(Sector)
         updateSideEmitterOrigins();
     }
 
-#ifdef __CLIENT__
-    void fixSurfacesMissingMaterials()
-    {
-        for (LineSide *side : sides)
-        {
-            side->fixSurfacesMissingMaterials();
-            side->back().fixSurfacesMissingMaterials();
-        }
-    }
-#endif
-
     void planeHeightChanged(Plane &)
     {
         updateAllSideEmitterOrigins();
-#ifdef __CLIENT__
-        fixSurfacesMissingMaterials();
-#endif
     }
 
     DENG2_PIMPL_AUDIENCE(LightLevelChange)

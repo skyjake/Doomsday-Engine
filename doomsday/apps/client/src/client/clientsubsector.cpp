@@ -1179,6 +1179,19 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
+    /**
+     * @todo Optimize: Target and process only the dependent surfaces -ds
+     */
+    void fixSurfacesMissingMaterials()
+    {
+        self.sector().forAllSides([] (LineSide &side)
+        {
+            side.fixSurfacesMissingMaterials();
+            side.back().fixSurfacesMissingMaterials();
+            return LoopContinue;
+        });
+    }
+
     /// Observes Line FlagsChange
     void lineFlagsChanged(Line &line, dint oldFlags)
     {
@@ -1232,6 +1245,9 @@ DENG2_PIMPL(ClientSubsector)
 
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
+
+        // We may need to fix newly revealed missing materials.
+        fixSurfacesMissingMaterials();
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
