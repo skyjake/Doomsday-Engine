@@ -180,6 +180,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void createTagButtons()
         {
+            if (!_item->file) return;
+            
             SequentialLayout layout(label().rule().left()   + label().margins().left(),
                                     label().rule().bottom() - label().margins().bottom(),
                                     ui::Right);
