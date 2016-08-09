@@ -31,6 +31,7 @@
 
 #include <de/aabox.h>
 #include <de/vector1.h>
+#include <de/Rectangle>
 
 using namespace de;
 

@@ -33,6 +33,7 @@
 #include <doomsday/console/cmd.h>
 #include <de/Log>
 #include <de/vector1.h>
+#include <de/Rectangle>
 #include <QList>
 #include <QtAlgorithms>
 
