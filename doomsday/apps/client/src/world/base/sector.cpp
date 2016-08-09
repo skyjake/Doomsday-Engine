@@ -208,7 +208,7 @@ DENG2_PIMPL(Sector)
         }
     }
 
-    void updateAllSideEmitterOrigins()
+    void updateAllEmitterOrigins()
     {
         updateEmitterOriginZ();
         updateSideEmitterOrigins();
@@ -216,7 +216,7 @@ DENG2_PIMPL(Sector)
 
     void planeHeightChanged(Plane &)
     {
-        updateAllSideEmitterOrigins();
+        updateAllEmitterOrigins();
     }
 
     DENG2_PIMPL_AUDIENCE(LightLevelChange)
@@ -366,30 +366,6 @@ Subsector *Sector::addSubsector(QList<ConvexSubspace *> const &subspaces)
     d->subsectors << subsec.get();
     LOG_MAP_XVERBOSE("New Subsector %s (sector-%s)") << subsec->id().asText() << indexInMap();
     return subsec.release();
-}
-
-bool Sector::hasSubsector(de::Id id) const
-{
-    for (Subsector *subsec : d->subsectors)
-    {
-        if (subsec->id() == id) return true;
-    }
-    return false;
-}
-
-Subsector *Sector::tryFindSubsector(de::Id id) const
-{
-    for (Subsector *subsec : d->subsectors)
-    {
-        if (subsec->id() == id) return subsec;
-    }
-    return nullptr;
-}
-
-Subsector &Sector::findSubsector(de::Id id) const
-{
-    if (Subsector *subsec = tryFindSubsector(id)) return *subsec;
-    throw MissingSubsectorError("Sector::findSubsector", "Unknown subsector \"" + id.asText() + "\"");
 }
 
 dint Sector::sideCount() const

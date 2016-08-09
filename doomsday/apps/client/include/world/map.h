@@ -30,6 +30,7 @@
 #include <doomsday/world/map.h>
 #include <doomsday/uri.h>
 #include <de/BinaryTree>
+#include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -521,6 +522,15 @@ public:  //- Polyobjects -------------------------------------------------------
      * @param callback  Function to call for each Sector.
      */
     de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
+
+    /// Thrown when the referenced subsector is missing/unknown.
+    DENG2_ERROR(MissingSubsectorError);
+
+    /**
+     * Lookup a Subsector in the map by it's unique identifier @a id.
+     */
+    Subsector &subsector   (de::Id id) const;
+    Subsector *subsectorPtr(de::Id id) const;
 
     /**
      * Determine the Subsector which contains @a point and which is on the back side of

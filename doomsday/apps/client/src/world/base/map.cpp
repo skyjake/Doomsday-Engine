@@ -165,6 +165,7 @@ DENG2_PIMPL(Map)
 
     Bsp bsp;
     QList<ConvexSubspace *> subspaces; ///< All player-traversable subspaces.
+    QHash<Id, Subsector *> subsectorsById; ///< Not owned.
 
     //
     // Map entities and element properties (things, line specials, etc...).
@@ -778,9 +779,18 @@ DENG2_PIMPL(Map)
         // Clustering complete.
 
         // Build subsectors.
+        dint needed = 0;
         for (Subspaces const &subspaceSet : subspaceSets)
         {
-            sector.addSubsector(subspaceSet);
+            needed += subspaceSet.count();
+        }
+        subsectorsById.clear();
+        subsectorsById.reserve(needed);
+        for (Subspaces const &subspaceSet : subspaceSets)
+        {
+            Subsector *subsec = sector.addSubsector(subspaceSet);
+            DENG2_ASSERT(subsec != nullptr);
+            subsectorsById.insert(subsec->id(), subsec);
         }
     }
 
@@ -2103,31 +2113,6 @@ dint Map::sectorCount() const
     return d->sectors.count();
 }
 
-Sector &Map::sector(dint index) const
-{
-    if (Sector *sec = sectorPtr(index)) return *sec;
-    /// @throw MissingElementError  Invalid Sector reference specified.
-    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::number(index));
-}
-
-Sector *Map::sectorPtr(dint index) const
-{
-    if (index >= 0 && index < d->sectors.count())
-    {
-        return d->sectors.at(index);
-    }
-    return nullptr;
-}
-
-LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
-{
-    for (Sector *sec : d->sectors)
-    {
-        if (auto result = func(*sec)) return result;
-    }
-    return LoopContinue;
-}
-
 #ifdef __CLIENT__
 bool Map::isPointInVoid(de::Vector3d const &point) const
 {
@@ -2293,6 +2278,58 @@ void Map::initNodePiles()
 
     // How much time did we spend?
     LOGDEV_MAP_MSG("Initialized node piles in %.2f seconds") << begunAt.since();
+}
+
+Sector &Map::sector(dint index) const
+{
+    if (Sector *sec = sectorPtr(index)) return *sec;
+    /// @throw MissingElementError  Invalid Sector reference specified.
+    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::number(index));
+}
+
+Sector *Map::sectorPtr(dint index) const
+{
+    if (index >= 0 && index < d->sectors.count())
+    {
+        return d->sectors.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
+{
+    for (Sector *sec : d->sectors)
+    {
+        if (auto result = func(*sec)) return result;
+    }
+    return LoopContinue;
+}
+
+Subsector *Map::subsectorAt(Vector2d const &point) const
+{
+    BspLeaf &bspLeaf = bspLeafAt(point);
+    if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
+    {
+        return bspLeaf.subspace().subsectorPtr();
+    }
+    return nullptr;
+}
+
+Subsector &Map::subsector(de::Id id) const
+{
+    if (Subsector *subsec = subsectorPtr(id)) return *subsec;
+    /// @throw MissingElementError  Invalid Sector reference specified.
+    throw MissingSubsectorError("Map::subsector", "Unknown Subsector \"" + id.asText() + "\"");
+}
+
+Subsector *Map::subsectorPtr(de::Id id) const
+{
+    auto found = d->subsectorsById.constFind(id);
+    if (found != d->subsectorsById.constEnd())
+    {
+        return found.value();
+    }
+    return nullptr;
 }
 
 Blockmap const &Map::mobjBlockmap() const
@@ -2647,16 +2684,6 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 
     // We've arrived at a leaf.
     return bspTree->userData()->as<BspLeaf>();
-}
-
-Subsector *Map::subsectorAt(Vector2d const &point) const
-{
-    BspLeaf &bspLeaf = bspLeafAt(point);
-    if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
-    {
-        return bspLeaf.subspace().subsectorPtr();
-    }
-    return nullptr;
 }
 
 #ifdef __CLIENT__
