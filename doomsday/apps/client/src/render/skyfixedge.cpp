@@ -32,40 +32,40 @@
 #include "render/rend_main.h"
 
 #include "client/clientsubsector.h"
+#include "client/clskyplane.h"
 
 using namespace world;
 
 namespace de {
 
-static coord_t skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
+static ddouble skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
     DENG_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->heightSmoothed();
-    return frontFloor->map().skyFixFloor();
+    return frontFloor->map().skyFloor().height();
 }
 
-static coord_t skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
+static ddouble skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 {
     DENG_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->heightSmoothed();
-    return frontCeil->map().skyFixCeiling();
+    return frontCeil->map().skyCeiling().height();
 }
 
 DENG2_PIMPL_NOREF(SkyFixEdge::Event)
 {
     SkyFixEdge &owner;
-    double distance;
-
-    Impl(SkyFixEdge &owner, double distance)
+    ddouble distance;
+    Impl(SkyFixEdge &owner, ddouble distance)
         : owner(owner), distance(distance)
     {}
 };
 
-SkyFixEdge::Event::Event(SkyFixEdge &owner, double distance)
-    : WorldEdge::Event(),
-      d(new Impl(owner, distance))
+SkyFixEdge::Event::Event(SkyFixEdge &owner, ddouble distance)
+    : WorldEdge::Event()
+    , d(new Impl(owner, distance))
 {}
 
 bool SkyFixEdge::Event::operator < (Event const &other) const
@@ -73,7 +73,7 @@ bool SkyFixEdge::Event::operator < (Event const &other) const
     return d->distance < other.distance();
 }
 
-double SkyFixEdge::Event::distance() const
+ddouble SkyFixEdge::Event::distance() const
 {
     return d->distance;
 }
@@ -87,7 +87,7 @@ DENG2_PIMPL(SkyFixEdge)
 {
     HEdge *hedge;
     FixType fixType;
-    int edge;
+    dint edge;
 
     Vector3d pOrigin;
     Vector3d pDirection;

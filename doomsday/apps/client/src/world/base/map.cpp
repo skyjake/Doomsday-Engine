@@ -55,6 +55,7 @@
 #include "Vertex"
 #ifdef __CLIENT__
 #  include "client/clientsubsector.h"
+#  include "client/clskyplane.h"
 #endif
 
 #ifdef __CLIENT__
@@ -152,87 +153,7 @@ DENG2_PIMPL(Map)
         }
     };
 
-    bool editingEnabled = true;
-    EditableElements editable;
-
-    AABoxd bounds;              ///< Boundary points which encompass the entire map
-
-    Mesh mesh;                  ///< All map geometries.
-
-    QList<Sector *> sectors;
-    QList<Line *> lines;
-    QList<Polyobj *> polyobjs;
-
-    Bsp bsp;
-    QList<ConvexSubspace *> subspaces; ///< All player-traversable subspaces.
-    QHash<Id, Subsector *> subsectorsById; ///< Not owned.
-
-    //
-    // Map entities and element properties (things, line specials, etc...).
-    //
-    std::unique_ptr<Thinkers> thinkers;
-    Sky sky;
-
-    std::unique_ptr<Blockmap> mobjBlockmap;
-    std::unique_ptr<Blockmap> polyobjBlockmap;
-    std::unique_ptr<LineBlockmap> lineBlockmap;
-    std::unique_ptr<Blockmap> subspaceBlockmap;
-
 #ifdef __CLIENT__
-    struct ContactBlockmap : public Blockmap
-    {
-        QBitArray spreadBlocks;  ///< Used to prevent repeat processing.
-
-        /**
-         * Construct a new contact blockmap.
-         *
-         * @param bounds    Map space boundary.
-         * @param cellSize  Width and height of a cell in map space units.
-         */
-        ContactBlockmap(AABoxd const &bounds, duint cellSize = 128)
-            : Blockmap(bounds, cellSize)
-            , spreadBlocks(width() * height())
-        {}
-
-        void clear()
-        {
-            spreadBlocks.fill(false);
-            unlinkAll();
-        }
-
-        /**
-         * @param contact  Contact to be linked. Note that if the object's origin
-         *                 lies outside the blockmap it will not be linked!
-         */
-        void link(Contact &contact)
-        {
-            bool outside;
-            BlockmapCell cell = toCell(contact.objectOrigin(), &outside);
-            if (!outside)
-            {
-                Blockmap::link(cell, &contact);
-            }
-        }
-
-        void spread(AABoxd const &region)
-        {
-            spreadContacts(*this, region, &spreadBlocks);
-        }
-    };
-    std::unique_ptr<ContactBlockmap> mobjContactBlockmap;  /// @todo Redundant?
-    std::unique_ptr<ContactBlockmap> lumobjContactBlockmap;
-#endif
-
-    nodepile_t mobjNodes;
-    nodepile_t lineNodes;
-    nodeindex_t *lineLinks = nullptr;  ///< Indices to roots.
-
-#ifdef __CLIENT__
-    PlaneSet trackedPlanes;
-    SurfaceSet scrollingSurfaces;
-
-    SkyDrawable::Animator skyAnimator;
-
     /**
      * All (particle) generators.
      */
@@ -292,28 +213,112 @@ DENG2_PIMPL(Map)
             return nullptr;
         }
     };
-    std::unique_ptr<Generators> generators;
 
-    std::unique_ptr<LightGrid> lightGrid;
+    struct ContactBlockmap : public Blockmap
+    {
+        QBitArray spreadBlocks;  ///< Used to prevent repeat processing.
 
-    /// Shadow Bias data.
-    struct Bias
+        /**
+         * Construct a new contact blockmap.
+         *
+         * @param bounds    Map space boundary.
+         * @param cellSize  Width and height of a cell in map space units.
+         */
+        ContactBlockmap(AABoxd const &bounds, duint cellSize = 128)
+            : Blockmap(bounds, cellSize)
+            , spreadBlocks(width() * height())
+        {}
+
+        void clear()
+        {
+            spreadBlocks.fill(false);
+            unlinkAll();
+        }
+
+        /**
+         * @param contact  Contact to be linked. Note that if the object's origin
+         *                 lies outside the blockmap it will not be linked!
+         */
+        void link(Contact &contact)
+        {
+            bool outside;
+            BlockmapCell cell = toCell(contact.objectOrigin(), &outside);
+            if (!outside)
+            {
+                Blockmap::link(cell, &contact);
+            }
+        }
+
+        void spread(AABoxd const &region)
+        {
+            spreadContacts(*this, region, &spreadBlocks);
+        }
+    };
+
+    struct BiasData
     {
         duint currentTime = 0;        ///< The "current" frame in milliseconds.
         duint lastChangeOnFrame = 0;
-
         QList<BiasSource *> sources;  ///< All bias light sources (owned).
-    } bias;
+    };
 
+#endif // __CLIENT__
+
+    bool editingEnabled = true;
+    EditableElements editable;
+
+    AABoxd bounds;              ///< Boundary points which encompass the entire map
+
+    Mesh mesh;                  ///< All map geometries.
+    QList<Sector *> sectors;
+    QList<Line *> lines;
+    QList<Polyobj *> polyobjs;
+
+    Bsp bsp;
+    QList<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
+    QHash<Id, Subsector *> subsectorsById; ///< Not owned.
+
+    //
+    // Map entities and element properties (things, line specials, etc...).
+    //
+    std::unique_ptr<Thinkers> thinkers;
+    Sky sky;
+
+    std::unique_ptr<Blockmap> mobjBlockmap;
+    std::unique_ptr<Blockmap> polyobjBlockmap;
+    std::unique_ptr<LineBlockmap> lineBlockmap;
+    std::unique_ptr<Blockmap> subspaceBlockmap;
+#ifdef __CLIENT__
+    std::unique_ptr<ContactBlockmap> mobjContactBlockmap;  /// @todo Redundant?
+    std::unique_ptr<ContactBlockmap> lumobjContactBlockmap;
+#endif
+
+    nodepile_t mobjNodes;
+    nodepile_t lineNodes;
+    nodeindex_t *lineLinks = nullptr;  ///< Indices to roots.
+
+#ifdef __CLIENT__
+    PlaneSet trackedPlanes;
+    SurfaceSet scrollingSurfaces;
+    SkyDrawable::Animator skyAnimator;
+    std::unique_ptr<Generators> generators;
+    std::unique_ptr<LightGrid> lightGrid;
+
+    BiasData bias;            ///< Map wide "global" data for Bias lighting.
     QList<Lumobj *> lumobjs;  ///< All lumobjs (owned).
 
-    coord_t skyFloorHeight   = DDMAXFLOAT;
-    coord_t skyCeilingHeight = DDMINFLOAT;
+    ClSkyPlane skyFloor;
+    ClSkyPlane skyCeiling;
 
     ClMobjHash clMobjHash;
 #endif
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i)
+        : Base(i)
+#ifdef __CLIENT__
+        , skyFloor  (Sector::Floor  , DDMAXFLOAT)
+        , skyCeiling(Sector::Ceiling, DDMINFLOAT)
+#endif
     {
         sky.setMap(thisPublic);
         sky.setIndexInMap(0);
@@ -2720,8 +2725,8 @@ void Map::initSkyFix()
 
     LOG_AS("Map::initSkyFix");
 
-    d->skyFloorHeight   = DDMAXFLOAT;
-    d->skyCeilingHeight = DDMINFLOAT;
+    d->skyFloor  .setHeight(DDMAXFLOAT);
+    d->skyCeiling.setHeight(DDMINFLOAT);
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     /// @todo Can't we defer this?
@@ -2737,20 +2742,20 @@ void Map::initSkyFix()
         if (skyCeil)
         {
             // Adjust for the plane height.
-            if (sector->ceiling().heightSmoothed() > d->skyCeilingHeight)
+            if (sector->ceiling().heightSmoothed() > d->skyCeiling.height())
             {
                 // Must raise the skyfix ceiling.
-                d->skyCeilingHeight = sector->ceiling().heightSmoothed();
+                d->skyCeiling.setHeight(sector->ceiling().heightSmoothed());
             }
 
             // Check that all the mobjs in the sector fit in.
             for (mobj_t *mob = sector->firstMobj(); mob; mob = mob->sNext)
             {
                 ddouble extent = mob->origin[2] + mob->height;
-                if (extent > d->skyCeilingHeight)
+                if (extent > d->skyCeiling.height())
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = extent;
+                    d->skyCeiling.setHeight(extent);
                 }
             }
         }
@@ -2758,10 +2763,10 @@ void Map::initSkyFix()
         if (skyFloor)
         {
             // Adjust for the plane height.
-            if (sector->floor().heightSmoothed() < d->skyFloorHeight)
+            if (sector->floor().heightSmoothed() < d->skyFloor.height())
             {
                 // Must lower the skyfix floor.
-                d->skyFloorHeight = sector->floor().heightSmoothed();
+                d->skyFloor.setHeight(sector->floor().heightSmoothed());
             }
         }
 
@@ -2784,16 +2789,16 @@ void Map::initSkyFix()
 
             if (edge.isValid() && edge.top().z() > edge.bottom().z())
             {
-                if (skyCeil && edge.top().z() + edge.origin().y > d->skyCeilingHeight)
+                if (skyCeil && edge.top().z() + edge.origin().y > d->skyCeiling.height())
                 {
                     // Must raise the skyfix ceiling.
-                    d->skyCeilingHeight = edge.top().z() + edge.origin().y;
+                    d->skyCeiling.setHeight(edge.top().z() + edge.origin().y);
                 }
 
-                if (skyFloor && edge.bottom().z() + edge.origin().y < d->skyFloorHeight)
+                if (skyFloor && edge.bottom().z() + edge.origin().y < d->skyFloor.height())
                 {
                     // Must lower the skyfix floor.
-                    d->skyFloorHeight = edge.bottom().z() + edge.origin().y;
+                    d->skyFloor.setHeight(edge.bottom().z() + edge.origin().y);
                 }
             }
             return LoopContinue;
@@ -2803,15 +2808,24 @@ void Map::initSkyFix()
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
-coord_t Map::skyFix(bool ceiling) const
+ClSkyPlane &Map::skyFloor()
 {
-    return ceiling ? d->skyCeilingHeight : d->skyFloorHeight;
+    return d->skyFloor;
 }
 
-void Map::setSkyFix(bool ceiling, coord_t newHeight)
+ClSkyPlane const &Map::skyFloor() const
 {
-    if (ceiling) d->skyCeilingHeight = newHeight;
-    else         d->skyFloorHeight   = newHeight;
+    return d->skyFloor;
+}
+
+ClSkyPlane &Map::skyCeiling()
+{
+    return d->skyCeiling;
+}
+
+ClSkyPlane const &Map::skyCeiling() const
+{
+    return d->skyCeiling;
 }
 
 Generator *Map::newGenerator()

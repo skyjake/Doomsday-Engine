@@ -23,7 +23,6 @@
 #define DENG_WORLD_SKY_H
 
 #include <functional>
-#include <QList>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>

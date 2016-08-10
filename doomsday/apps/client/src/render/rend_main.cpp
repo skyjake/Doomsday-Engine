@@ -39,6 +39,7 @@
 #include "ConvexSubspace"
 #include "Hand"
 #include "client/clientsubsector.h"
+#include "client/clskyplane.h"
 #include "BiasIllum"
 #include "HueCircleVisual"
 #include "LightDecoration"
@@ -3066,13 +3067,13 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 
 static ddouble skyPlaneZ(dint skyCap)
 {
-    auto const &subsec  = curSubspace->subsector().as<world::ClientSubsector>();
-    dint const relPlane = (skyCap & SKYCAP_UPPER) ? Sector::Ceiling : Sector::Floor;
+    auto const &subsec    = curSubspace->subsector().as<world::ClientSubsector>();
+    dint const planeIndex = (skyCap & SKYCAP_UPPER) ? Sector::Ceiling : Sector::Floor;
     if (!P_IsInVoid(viewPlayer))
     {
-        return subsec.sector().map().skyFix(relPlane == Sector::Ceiling);
+        return subsec.sector().map().skyPlane(planeIndex == Sector::Ceiling).height();
     }
-    return subsec.visPlane(relPlane).heightSmoothed();
+    return subsec.visPlane(planeIndex).heightSmoothed();
 }
 
 static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &primitive,
@@ -3563,11 +3564,12 @@ static void projectSubspaceSprites()
                                && mob.origin[2] <= subsec.visCeiling().heightSmoothed()
                                && mob.origin[2] >= subsec.visFloor  ().heightSmoothed())
                             {
-                                coord_t visibleTop = mob.origin[2] + material->height();
-                                if(visibleTop > subsec.sector().map().skyFixCeiling())
+                                world::ClSkyPlane &skyCeiling = subsec.sector().map().skyCeiling();
+                                ddouble visibleTop   = mob.origin[2] + material->height();
+                                if(visibleTop > skyCeiling.height())
                                 {
-                                    // Raise the skyfix ceiling.
-                                    subsec.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                    // Raise the ceiling!
+                                    skyCeiling.setHeight(visibleTop + 16/*leeway*/);
                                 }
                             }
                         }
@@ -5464,11 +5466,10 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
     {
         Plane const &plane = subsec.as<world::ClientSubsector>().visPlane(i);
         ddouble height     = 0;
-
         if (plane.surface().hasSkyMaskedMaterial()
             && (plane.isSectorFloor() || plane.isSectorCeiling()))
         {
-            height = plane.map().skyFix(plane.isSectorCeiling());
+            height = plane.map().skyPlane(plane.isSectorCeiling()).height();
         }
         else
         {

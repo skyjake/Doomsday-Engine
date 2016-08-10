@@ -26,6 +26,7 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/surface.h"
+#include "client/clskyplane.h"
 
 #include "render/rend_main.h" // Rend_SkyLightColor(), useBias
 #include "BiasIllum"
@@ -1522,8 +1523,8 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
     // Check the mapped planes.
     if (visCeiling().surface().hasSkyMaskedMaterial())
     {
-        ddouble const skyCeil = sector().map().skyFixCeiling();
-        if (skyCeil < DDMAXFLOAT && height > skyCeil)
+        ClSkyPlane const &skyCeil = sector().map().skyCeiling();
+        if (skyCeil.height() < DDMAXFLOAT && height > skyCeil.height())
             return true;
     }
     else if (height > visCeiling().heightSmoothed())
@@ -1533,8 +1534,8 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
 
     if (visFloor().surface().hasSkyMaskedMaterial())
     {
-        ddouble const skyFloor = sector().map().skyFixFloor();
-        if (skyFloor > DDMINFLOAT && height < skyFloor)
+        ClSkyPlane const &skyFloor = sector().map().skyFloor();
+        if (skyFloor.height() > DDMINFLOAT && height < skyFloor.height())
             return true;
     }
     else if (height < visFloor().heightSmoothed())

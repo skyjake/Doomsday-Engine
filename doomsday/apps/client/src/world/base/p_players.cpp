@@ -33,6 +33,7 @@
 #  include "ui/inputdevice.h"
 
 #  include "client/clientsubsector.h"
+#  include "client/clskyplane.h"
 #  include "clientapp.h"
 #endif
 
@@ -163,43 +164,42 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 
 bool P_IsInVoid(player_t *player)
 {
-    if(!player) return false;
+    if (!player) return false;
     ddplayer_t const *ddpl = &player->publicData();
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
-    if(ddpl->flags & DDPF_CAMERA)
+    if (ddpl->flags & DDPF_CAMERA)
     {
-        if(player->inVoid || !ddpl->mo)
+        if (player->inVoid || !ddpl->mo)
             return true;
 
         mobj_t const *mob = ddpl->mo;
-        if(!Mobj_HasSubsector(*mob))
+        if (!Mobj_HasSubsector(*mob))
             return true;
 
         auto const &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
-        if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
+        if (subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            ddouble const skyCeil = subsec.sector().map().skyFixCeiling();
-            if(skyCeil < DDMAXFLOAT && mob->origin[2] > skyCeil - 4)
+            world::ClSkyPlane const &skyCeiling = subsec.sector().map().skyCeiling();
+            if (skyCeiling.height() < DDMAXFLOAT && mob->origin[2] > skyCeiling.height() - 4)
                 return true;
         }
-        else if(mob->origin[2] > subsec.visCeiling().heightSmoothed() - 4)
+        else if (mob->origin[2] > subsec.visCeiling().heightSmoothed() - 4)
         {
             return true;
         }
-        if(subsec.visFloor().surface().hasSkyMaskedMaterial())
+        if (subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
-            ddouble const skyFloor = subsec.sector().map().skyFixFloor();
-            if(skyFloor > DDMINFLOAT && mob->origin[2] < skyFloor + 4)
+            world::ClSkyPlane const &skyFloor = subsec.sector().map().skyFloor();
+            if (skyFloor.height() > DDMINFLOAT && mob->origin[2] < skyFloor.height() + 4)
                 return true;
         }
-        else if(mob->origin[2] < subsec.visFloor().heightSmoothed() + 4)
+        else if (mob->origin[2] < subsec.visFloor().heightSmoothed() + 4)
         {
             return true;
         }
     }
-
     return false;
 }
 

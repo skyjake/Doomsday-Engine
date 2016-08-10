@@ -71,6 +71,9 @@ class LineBlockmap;
 class Subsector;
 class Sky;
 class Thinkers;
+#ifdef __CLIENT__
+class ClSkyPlane;
+#endif
 
 /**
  * World map.
@@ -554,19 +557,17 @@ public:  //- Polyobjects -------------------------------------------------------
 
     SkyDrawable::Animator &skyAnimator() const;
 
-    de::ddouble skyFix(bool ceiling) const;
+    ClSkyPlane       &skyFloor();
+    ClSkyPlane const &skyFloor()  const;
 
-    inline de::ddouble skyFixFloor  () const { return skyFix(false /*the floor*/);   }
-    inline de::ddouble skyFixCeiling() const { return skyFix(true  /*the ceiling*/); }
+    ClSkyPlane       &skyCeiling();
+    ClSkyPlane const &skyCeiling() const;
 
-    void setSkyFix(bool ceiling, de::ddouble newHeight);
-
-    inline void setSkyFixFloor(de::ddouble newHeight) {
-        setSkyFix(false /*the floor*/, newHeight);
+    inline ClSkyPlane       &skyPlane(bool ceiling) {
+        return ceiling ? skyCeiling() : skyFloor();
     }
-
-    inline void setSkyFixCeiling(de::ddouble newHeight) {
-        setSkyFix(true /*the ceiling*/, newHeight);
+    inline ClSkyPlane const &skyPlane(bool ceiling) const {
+        return ceiling ? skyCeiling() : skyFloor();
     }
 
 #endif
