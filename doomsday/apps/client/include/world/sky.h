@@ -22,6 +22,7 @@
 #ifndef DENG_WORLD_SKY_H
 #define DENG_WORLD_SKY_H
 
+#include <functional>
 #include <QList>
 #include <de/libcore.h>
 #include <de/Error>
@@ -50,6 +51,65 @@ public:
 
     /// Notified whenever the horizon offset changes.
     DENG2_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
+
+    explicit Sky(defn::Sky const *definition = nullptr);
+
+    /**
+     * Reconfigure according to the specified @a definition if not @c nullptr, otherwise,
+     * reconfigure using the default values.
+     *
+     * @see configureDefault()
+     */
+    void configure(defn::Sky const *definition = nullptr);
+
+    /**
+     * Reconfigure the sky, returning all values to their defaults.
+     *
+     * @see configure()
+     */
+    inline void configureDefault() { configure(); }
+
+    /**
+     * Returns the definition used to configure the sky, if any (may return @c nullptr).
+     */
+    de::Record const *def() const;
+
+    /**
+     * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
+     *
+     * @see setHeight()
+     */
+    de::dfloat height() const;
+
+    /**
+     * Change the height scale factor for the sky.
+     *
+     * @param newHeight  New height scale factor to apply (will be normalized).
+     *
+     * @see height()
+     */
+    void setHeight(de::dfloat newHeight);
+
+    /**
+     * Returns the horizon offset for the sky.
+     *
+     * @see setHorizonOffset()
+     */
+    de::dfloat horizonOffset() const;
+
+    /**
+     * Change the horizon offset for the sky.
+     *
+     * @param newOffset  New horizon offset to apply.
+     *
+     * @see horizonOffset()
+     */
+    void setHorizonOffset(de::dfloat newOffset);
+
+//- Layers ------------------------------------------------------------------------------
+
+    /// Thrown hen the required/referenced layer is missing. @ingroup errors
+    DENG2_ERROR(MissingLayerError);
 
     /**
      * Multiple layers can be used for parallax effects.
@@ -149,79 +209,34 @@ public:
         DENG2_PRIVATE(d)
     };
 
-    typedef QList<Layer *> Layers;
-
-public:
-    explicit Sky(defn::Sky const *definition = nullptr);
+    /**
+     * Returns the total number of layers defined for the sky (both active and inactive).
+     */
+    de::dint layerCount() const;
 
     /**
-     * Reconfigure according to the specified @a definition if not @c nullptr, otherwise,
-     * reconfigure using the default values.
+     * Returns @c true if @a layerIndex is a known layer index.
+     */
+    bool hasLayer(de::dint layerIndex) const;
+
+    /**
+     * Lookup a layer by it's unique @a layerIndex.
+     */
+    Layer &layer      (de::dint layerIndex);
+    Layer const &layer(de::dint layerIndex) const;
+
+    Layer *layerPtr(de::dint layerIndex) const;
+
+    /**
+     * Iterate Layers of the sky.
      *
-     * @see configureDefault()
+     * @param callback  Function to call for each Layer.
      */
-    void configure(defn::Sky const *definition = nullptr);
-
-    /**
-     * Reconfigure the sky, returning all values to their defaults.
-     *
-     * @see configure()
-     */
-    inline void configureDefault() { configure(); }
-
-    /**
-     * Returns the definition used to configure the sky, if any (may return @c nullptr).
-     */
-    de::Record const *def() const;
-
-    /**
-     * Provides access to the list of sky layers, for efficient traversal.
-     */
-    Layers const &layers() const;
-
-    /**
-     * Convenient method of returning a sky layer by unique @a index.
-     */
-    inline Layer *layer(de::dint index) const { return layers().at(index); }
-
-    /**
-     * Returns the total number of sky layers (both active and inactive).
-     */
-    inline de::dint layerCount() const { return layers().count(); }
-
-    /**
-     * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
-     *
-     * @see setHeight()
-     */
-    de::dfloat height() const;
-
-    /**
-     * Change the height scale factor for the sky.
-     *
-     * @param newHeight  New height scale factor to apply (will be normalized).
-     *
-     * @see height()
-     */
-    void setHeight(de::dfloat newHeight);
-
-    /**
-     * Returns the horizon offset for the sky.
-     *
-     * @see setHorizonOffset()
-     */
-    de::dfloat horizonOffset() const;
-
-    /**
-     * Change the horizon offset for the sky.
-     *
-     * @param newOffset  New horizon offset to apply.
-     *
-     * @see horizonOffset()
-     */
-    void setHorizonOffset(de::dfloat newOffset);
+    de::LoopResult forAllLayers(std::function<de::LoopResult (Layer &)> func);
+    de::LoopResult forAllLayers(std::function<de::LoopResult (Layer const &)> func) const;
 
 #ifdef __CLIENT__
+// --------------------------------------------------------------------------------------
 
     /**
      * Returns the ambient color of the sky. The ambient color is automatically calculated
@@ -240,7 +255,7 @@ public:
      */
     void setAmbientColor(de::Vector3f const &newColor);
 
-#endif  // __CLIENT__
+#endif // __CLIENT__
 
 protected:
     de::dint property(world::DmuArgs &args) const;
@@ -252,6 +267,6 @@ private:
 
 typedef Sky::Layer SkyLayer;
 
-}  // namespace world
+} // namespace world
 
-#endif  // DENG_WORLD_SKY_H
+#endif // DENG_WORLD_SKY_H

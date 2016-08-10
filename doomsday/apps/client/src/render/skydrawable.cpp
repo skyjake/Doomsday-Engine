@@ -91,9 +91,8 @@ struct Hemisphere
     /**
      * Determine the material to use for the given sky @a layer.
      */
-    static world::Material *chooseMaterialForSkyLayer(SkyLayer const *layer)
+    static world::Material *chooseMaterialForSkyLayer(SkyLayer const &layer)
     {
-        DENG2_ASSERT(layer);
         if(renderTextures == 0)
         {
             return nullptr;
@@ -102,7 +101,7 @@ struct Hemisphere
         {
             return world::Materials::get().materialPtr(de::Uri("System", Path("gray")));
         }
-        if(world::Material *mat = layer->material())
+        if(world::Material *mat = layer.material())
         {
             return mat;
         }
@@ -112,40 +111,37 @@ struct Hemisphere
     /**
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
-    static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const *layer,
+    static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const &layer,
                                    bool *needFadeOut = nullptr)
     {
-        DENG2_ASSERT(layer);
-
-        if(world::Material *mat = chooseMaterialForSkyLayer(layer))
+        if (world::Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
 
             // Ensure we've up to date info about the material.
             matAnimator.prepare();
 
             ClientTexture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
-                    (pTex.analysisDataPointer((hemisphere == UpperHemisphere? res::Texture::AverageTopColorAnalysis
-                                                                            : res::Texture::AverageBottomColorAnalysis)));
-            if(!avgColor)
+                    (pTex.analysisDataPointer((hemisphere == UpperHemisphere ? res::Texture::AverageTopColorAnalysis
+                                                                             : res::Texture::AverageBottomColorAnalysis)));
+            if (!avgColor)
             {
                 de::Uri const pTexUri = pTex.manifest().composeUri();
-                throw Error("Hemisphere::capColor", QString("Texture \"%1\" has no Average%2ColorAnalysis")
+                throw Error("Hemisphere::capColor", String("Texture \"%1\" has no Average%2ColorAnalysis")
                                                         .arg(pTexUri)
                                                         .arg(hemisphere == UpperHemisphere? "Top" : "Bottom"));
             }
 
             // Is the colored fadeout in use?
             Vector3f color(avgColor->color.rgb);
-            float const fadeOutLimit = layer->fadeOutLimit();
-            if(color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
+            dfloat const fadeOutLimit = layer.fadeOutLimit();
+            if (color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
             {
-                if(needFadeOut) *needFadeOut = true;
+                if (needFadeOut) *needFadeOut = true;
                 return color;
             }
         }
-
         return Vector3f(); // Default color is black.
     }
 
@@ -186,16 +182,16 @@ struct Hemisphere
         glEnd();
     }
 
-    void draw(SphereComponent hemisphere, Sky const &sky, int firstActiveLayer,
+    void draw(SphereComponent hemisphere, Sky const &sky, dint firstActiveLayer,
               LayerData const *layerData) const
     {
         DENG2_ASSERT(layerData);
 
-        if(verts.isEmpty()) return;
-        if(firstActiveLayer < 0) return;
+        if (verts.isEmpty()) return;
+        if (firstActiveLayer < 0) return;
 
         bool const yflip = (hemisphere == LowerHemisphere);
-        if(yflip)
+        if (yflip)
         {
             // The lower hemisphere must be flipped.
             glMatrixMode(GL_MODELVIEW);
@@ -207,18 +203,18 @@ struct Hemisphere
         bool drawFadeOut = true;
         drawCap(chooseCapColor(hemisphere, sky.layer(firstActiveLayer), &drawFadeOut), drawFadeOut);
 
-        for(int i = firstActiveLayer; i < MAX_LAYERS; ++i)
+        for (dint i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const *skyLayer = sky.layer(i);
+            SkyLayer const &skyLayer = sky.layer(i);
             LayerData const &ldata   = layerData[i];
 
-            if(!ldata.active) continue;
+            if (!ldata.active) continue;
 
             TextureVariant *layerTex = nullptr;
-            if(world::Material *mat = chooseMaterialForSkyLayer(skyLayer))
+            if (world::Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
                 MaterialAnimator &matAnimator = mat->as<ClientMaterial>()
-                        .getAnimator(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
+                        .getAnimator(SkyDrawable::layerMaterialSpec(skyLayer.isMasked()));
 
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
@@ -231,12 +227,12 @@ struct Hemisphere
                 glPushMatrix();
                 glLoadIdentity();
                 Vector2ui const &texSize = layerTex->base().dimensions();
-                if(texSize.x > 0)
+                if (texSize.x > 0)
                 {
                     glTranslatef(ldata.offset / texSize.x, 0, 0);
                     glScalef(1024.f / texSize.x, 1, 1);
                 }
-                if(yflip)
+                if (yflip)
                 {
                     glScalef(1, -1, 1);
                     glTranslatef(0, -1, 0);
@@ -249,30 +245,30 @@ struct Hemisphere
 
 #define WRITESKYVERTEX(r_, c_) { \
     svtx = &vertex(r_, c_); \
-    if(layerTex) \
+    if (layerTex) \
     { \
        glTexCoord2f((c_) / float(columns), (r_) / float(rows)); \
     } \
-    if(drawFadeOut) \
+    if (drawFadeOut) \
     { \
-        if((r_) == 0) glColor4f(1, 1, 1, 0); \
-        else          glColor3f(1, 1, 1); \
+        if ((r_) == 0) glColor4f(1, 1, 1, 0); \
+        else           glColor3f(1, 1, 1); \
     } \
     else \
     { \
-        if((r_) == 0) glColor3f(0, 0, 0); \
-        else          glColor3f(1, 1, 1); \
+        if ((r_) == 0) glColor3f(0, 0, 0); \
+        else           glColor3f(1, 1, 1); \
     } \
     glVertex3f(svtx->x, svtx->y, svtx->z); \
 }
 
             Vector3f const *svtx;
-            for(int r = 0; r < rows; ++r)
+            for (dint r = 0; r < rows; ++r)
             {
                 glBegin(GL_TRIANGLE_STRIP);
                 WRITESKYVERTEX(r, 0);
                 WRITESKYVERTEX(r + 1, 0);
-                for(int c = 1; c <= columns; ++c)
+                for (dint c = 1; c <= columns; ++c)
                 {
                     WRITESKYVERTEX(r, c);
                     WRITESKYVERTEX(r + 1, c);
@@ -280,7 +276,7 @@ struct Hemisphere
                 glEnd();
             }
 
-            if(layerTex)
+            if (layerTex)
             {
                 glMatrixMode(GL_TEXTURE);
                 glPopMatrix();
@@ -290,7 +286,7 @@ struct Hemisphere
 #undef WRITESKYVERTEX
         }
 
-        if(yflip)
+        if (yflip)
         {
             glMatrixMode(GL_MODELVIEW);
             glPopMatrix();
@@ -388,12 +384,12 @@ DENG2_PIMPL(SkyDrawable)
         // Determine the layer configuration. Note that this is also used for sky
         // models, even if the sphere is not being drawn.
         firstActiveLayer = -1;
-        for(int i = 0; i < MAX_LAYERS; ++i)
+        for (dint i = 0; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const *skyLayer = sky->layer(i);
+            SkyLayer const &skyLayer = sky->layer(i);
 
-            layers[i].active = skyLayer->isActive();
-            layers[i].offset = skyLayer->offset() + animator->layer(i).offset;
+            layers[i].active = skyLayer.isActive();
+            layers[i].offset = skyLayer.offset() + animator->layer(i).offset;
 
             if(firstActiveLayer == -1 && layers[i].active)
             {
@@ -636,23 +632,23 @@ Sky const *SkyDrawable::sky() const
 
 void SkyDrawable::cacheAssets()
 {
-    if(!d->sky) return;
+    if (!d->sky) return;
 
-    for(int i = 0; i < MAX_LAYERS; ++i)
+    d->sky->forAllLayers([] (SkyLayer const &layer)
     {
-        SkyLayer const *layer = d->sky->layer(i);
-        if(world::Material *mat = layer->material())
+        if (world::Material *mat = layer.material())
         {
-            ClientApp::resources().cache(mat->as<ClientMaterial>(), layerMaterialSpec(layer->isMasked()));
+            ClientApp::resources().cache(mat->as<ClientMaterial>(), layerMaterialSpec(layer.isMasked()));
         }
-    }
+        return LoopContinue;
+    });
 
     if(!d->haveModels) return;
 
-    for(int i = 0; i < MAX_MODELS; ++i)
+    for (dint i = 0; i < MAX_MODELS; ++i)
     {
         // Is this model in use?
-        if(FrameModelDef *modef = d->models[i].modef)
+        if (FrameModelDef *modef = d->models[i].modef)
         {
             ClientApp::resources().cache(modef);
         }

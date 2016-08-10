@@ -145,10 +145,14 @@ DENG2_PIMPL(Sky)
 , DENG2_OBSERVES(Layer, MaskedChange)
 #endif
 {
+    struct Layers : public QList<Layer *>
+    {
+        ~Layers() { qDeleteAll(*this); }
+    };
+
     Layers layers;
 
-    Record const *def   = nullptr; ///< Sky definition.
-
+    Record const *def    = nullptr; ///< Sky definition.
     dfloat height        = 1;
     dfloat horizonOffset = 0;
 
@@ -157,7 +161,6 @@ DENG2_PIMPL(Sky)
         for(dint i = 0; i < NUM_LAYERS; ++i)
         {
             layers.append(new Layer(self));
-
 #ifdef __CLIENT__
             Layer *layer = layers.last();
             layer->audienceForActiveChange()   += this;
@@ -170,8 +173,6 @@ DENG2_PIMPL(Sky)
     ~Impl()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self);
-
-        qDeleteAll(layers);
     }
 
 #ifdef __CLIENT__
@@ -383,9 +384,52 @@ Record const *Sky::def() const
     return d->def;
 }
 
-Sky::Layers const &Sky::layers() const
+dint Sky::layerCount() const
 {
-    return d->layers;
+    return d->layers.count();
+}
+
+bool Sky::hasLayer(dint layerIndex) const
+{
+    return !d->layers.isEmpty() && layerIndex < d->layers.count();
+}
+
+Sky::Layer *Sky::layerPtr(dint layerIndex) const
+{
+    if (hasLayer(layerIndex)) return d->layers.at(layerIndex);
+    return nullptr;
+}
+
+Sky::Layer &Sky::layer(dint layerIndex)
+{
+    if (Layer *layer = layerPtr(layerIndex)) return *layer;
+    /// @throw MissingLayerError Unknown layerIndex specified,
+    throw MissingLayerError("Sky::layer", "Unknown layer #" + QString::number(layerIndex));
+}
+
+Sky::Layer const &Sky::layer(dint layerIndex) const
+{
+    if (Layer *layer = layerPtr(layerIndex)) return *layer;
+    /// @throw MissingLayerError Unknown layerIndex specified,
+    throw MissingLayerError("Sky::layer", "Unknown layer #" + QString::number(layerIndex));
+}
+
+LoopResult Sky::forAllLayers(std::function<LoopResult (Layer &)> func)
+{
+    for (Layer *layer : d->layers)
+    {
+        if (auto result = func(*layer)) return result;
+    }
+    return LoopContinue;
+}
+
+LoopResult Sky::forAllLayers(std::function<LoopResult (Layer const &)> func) const
+{
+    for (Layer const *layer : d->layers)
+    {
+        if (auto result = func(*layer)) return result;
+    }
+    return LoopContinue;
 }
 
 dfloat Sky::height() const
@@ -425,8 +469,8 @@ dint Sky::property(DmuArgs &args) const
     {
     case DMU_FLAGS: {
         dint flags = 0;
-        if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
-        if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
+        if(layer(0).isActive()) flags |= SKYF_LAYER0_ENABLED;
+        if(layer(1).isActive()) flags |= SKYF_LAYER1_ENABLED;
 
         args.setValue(DDVT_INT, &flags, 0);
         break; }
@@ -453,13 +497,13 @@ dint Sky::setProperty(DmuArgs const &args)
     {
     case DMU_FLAGS: {
         dint flags = 0;
-        if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
-        if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
+        if(layer(0).isActive()) flags |= SKYF_LAYER0_ENABLED;
+        if(layer(1).isActive()) flags |= SKYF_LAYER1_ENABLED;
 
         args.value(DDVT_INT, &flags, 0);
 
-        layer(0)->setActive(flags & SKYF_LAYER0_ENABLED);
-        layer(1)->setActive(flags & SKYF_LAYER1_ENABLED);
+        layer(0).setActive(flags & SKYF_LAYER0_ENABLED);
+        layer(1).setActive(flags & SKYF_LAYER1_ENABLED);
         break; }
 
     case DMU_HEIGHT: {

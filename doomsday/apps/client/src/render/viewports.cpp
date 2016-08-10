@@ -1142,25 +1142,23 @@ void R_ClearViewData()
 DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         LOG_GL_WARNING("No map currently loaded, ignoring");
         return;
     }
-
     Sky &sky = ClientApp::world().map().sky();
-    if(layerIndex >= 0 && layerIndex < sky.layerCount())
+    if (layerIndex >= 0 && layerIndex < sky.layerCount())
     {
-        SkyLayer *layer = sky.layer(layerIndex);
-        switch(param)
+        SkyLayer &layer = sky.layer(layerIndex);
+        switch (param)
         {
-        case DD_ENABLE:  layer->enable();  break;
-        case DD_DISABLE: layer->disable(); break;
+        case DD_ENABLE:  layer.enable();  break;
+        case DD_DISABLE: layer.disable(); break;
 
-        default:
-            // Log but otherwise ignore this error.
+        default: // Log but otherwise ignore this error.
             LOG_GL_WARNING("Failed configuring layer #%i: bad parameter %i")
-                    << layerIndex << param;
+                << layerIndex << param;
         }
         return;
     }
