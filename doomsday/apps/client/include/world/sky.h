@@ -108,7 +108,7 @@ public:
 
 //- Layers ------------------------------------------------------------------------------
 
-    /// Thrown hen the required/referenced layer is missing. @ingroup errors
+    /// Thrown when the required/referenced layer is missing. @ingroup errors
     DENG2_ERROR(MissingLayerError);
 
     /**
@@ -220,12 +220,15 @@ public:
     bool hasLayer(de::dint layerIndex) const;
 
     /**
+     * Returns a pointer to the layer associated with @a layerIndex if known; otherwise @c nullptr.
+     */
+    Layer *layerPtr(de::dint layerIndex) const;
+
+    /**
      * Lookup a layer by it's unique @a layerIndex.
      */
-    Layer &layer      (de::dint layerIndex);
+    Layer       &layer(de::dint layerIndex);
     Layer const &layer(de::dint layerIndex) const;
-
-    Layer *layerPtr(de::dint layerIndex) const;
 
     /**
      * Iterate Layers of the sky.
