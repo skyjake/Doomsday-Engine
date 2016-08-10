@@ -44,7 +44,7 @@ public:
     bool isCeiling() const;
 
     /**
-     * Returns @c true if this sky plane is configured as the "ceiling".
+     * Returns @c true if this sky plane is configured as the "floor".
      *
      * @see isCeiling()
      */
@@ -52,12 +52,16 @@ public:
 
     /**
      * Returns the current height of the sky plane.
+     *
+     * @see setHeight()
      */
     de::ddouble height() const;
 
     /**
      * Change the height of the sky plane to @a newHeight. The HeightChange audience will
      * be notified if a change occurs.
+     *
+     * @see height()
      */
     void setHeight(de::ddouble newHeight);
 

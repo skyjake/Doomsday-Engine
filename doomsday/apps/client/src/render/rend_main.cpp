@@ -3565,7 +3565,7 @@ static void projectSubspaceSprites()
                                && mob.origin[2] >= subsec.visFloor  ().heightSmoothed())
                             {
                                 world::ClSkyPlane &skyCeiling = subsec.sector().map().skyCeiling();
-                                ddouble visibleTop   = mob.origin[2] + material->height();
+                                ddouble visibleTop = mob.origin[2] + material->height();
                                 if(visibleTop > skyCeiling.height())
                                 {
                                     // Raise the ceiling!
