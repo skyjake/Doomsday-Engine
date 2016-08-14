@@ -292,7 +292,7 @@
  */
 #define DENG2_AS_IS_METHODS() \
     template <typename T_> \
-    bool is() const { return dynamic_cast<T_ const *>(this) != 0; } \
+    bool is() const { return dynamic_cast<T_ const *>(this) != nullptr; } \
     template <typename T_> \
     T_ &as() { \
         DENG2_ASSERT(is<T_>()); \

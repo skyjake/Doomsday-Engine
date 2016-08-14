@@ -47,7 +47,7 @@ dfloat const FLOAT_EPSILON = 1.0e-5f;
 /// Absolute value.
 template <typename Type>
 inline Type abs(Type const &a) {
-    if (a < 0.0) {
+    if (a < Type(0)) {
         return -a;
     }
     return a;

@@ -158,8 +158,8 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
     short step = 0;
     if(mo->turnTime)
     {
-        if(mo->tics) step = abs(diff) / mo->tics;
-        else         step = abs(diff);
+        if(mo->tics) step = de::abs(diff) / mo->tics;
+        else         step = de::abs(diff);
 
         if(!step) step = 1;
     }
@@ -170,14 +170,14 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
         int hgt = (int) mo->height;
         hgt = MINMAX_OF(30, hgt, 60);
 
-        int lstep = abs(diff) * 8 / hgt;
+        int lstep = de::abs(diff) * 8 / hgt;
         lstep = MINMAX_OF(MIN_STEP, lstep, MAX_STEP);
 
         step = lstep;
     }
 
     // Do the step.
-    if(abs(diff) <= step)
+    if(de::abs(diff) <= step)
         mo->visAngle  = target;
     else if(diff > 0)
         mo->visAngle += step;
