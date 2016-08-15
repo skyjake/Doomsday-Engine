@@ -61,7 +61,7 @@ DENG2_PIMPL(Environment)
         World::get().audienceForMapChange() += this;
 
         // Reflection cube maps use mipmapping for blurred reflections.
-        for(auto &tex : reflectionTextures)
+        for (auto &tex : reflectionTextures)
         {
             tex.setMinFilter(gl::Linear, gl::MipLinear);
             tex.setWrap(gl::ClampToEdge, gl::ClampToEdge);
@@ -77,12 +77,12 @@ DENG2_PIMPL(Environment)
                                   filesys::AssetObserver::Event event)
     {
         LOG_RES_MSG("Texture asset \"%s\" is now %s")
-                << identifier
-                << (event == filesys::AssetObserver::Added? "available" :
-                                                            "unavailable");
+            << identifier
+            << (event == filesys::AssetObserver::Added ? "available" : "unavailable");
+
         // Register available reflection maps.
         String const mapId = identifier.substr(16).toLower();
-        switch(event)
+        switch (event)
         {
         case filesys::AssetObserver::Added:
             addMapsFromAsset(mapId, App::asset(identifier));
@@ -98,15 +98,15 @@ DENG2_PIMPL(Environment)
     {
         EnvMaps env;
 
-        if(asset.has(DEF_PATH))
+        if (asset.has(DEF_PATH))
         {
             env.interior = env.exterior = asset.absolutePath(DEF_PATH);
         }
-        if(asset.has(DEF_INTERIOR_PATH))
+        if (asset.has(DEF_INTERIOR_PATH))
         {
             env.interior = asset.absolutePath(DEF_INTERIOR_PATH);
         }
-        if(asset.has(DEF_EXTERIOR_PATH))
+        if (asset.has(DEF_EXTERIOR_PATH))
         {
             env.exterior = asset.absolutePath(DEF_EXTERIOR_PATH);
         }
@@ -117,7 +117,7 @@ DENG2_PIMPL(Environment)
 
     void release()
     {
-        for(auto &tex : reflectionTextures)
+        for (auto &tex : reflectionTextures)
         {
             tex.clear();
         }
@@ -141,10 +141,10 @@ DENG2_PIMPL(Environment)
             tex.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
             tex.generateMipmap();
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_GL_WARNING("Failed to load reflection cube map from path \"%s\": %s")
-                    << path << er.asText();
+                << path << er.asText();
         }
     }
 
@@ -163,7 +163,7 @@ DENG2_PIMPL(Environment)
 
         // Check which reflection maps are available for the new map.
         auto found = maps.constFind(mapId);
-        if(found != maps.constEnd())
+        if (found != maps.constEnd())
         {
             loadEnvMaps(found.value());
         }
@@ -171,7 +171,7 @@ DENG2_PIMPL(Environment)
         {
             // Maybe the default maps, then?
             found = maps.constFind(ID_DEFAULT);
-            if(found != maps.constEnd())
+            if (found != maps.constEnd())
             {
                 loadEnvMaps(found.value());
             }
@@ -181,7 +181,7 @@ DENG2_PIMPL(Environment)
     void loadEnvMaps(EnvMaps const &env)
     {
         DENG2_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
-        if(!env.exterior.isEmpty())
+        if (!env.exterior.isEmpty())
         {
             loadCubeMap(reflectionTextures[Exterior], env.exterior);
         }
@@ -189,8 +189,7 @@ DENG2_PIMPL(Environment)
     }
 };
 
-Environment::Environment()
-    : d(new Impl(this))
+Environment::Environment() : d(new Impl(this))
 {}
 
 GLTexture const &Environment::defaultReflection() const
@@ -200,11 +199,11 @@ GLTexture const &Environment::defaultReflection() const
 
 GLTexture const &Environment::reflectionInSubsector(world::Subsector const *subsec) const
 {
-    if(!subsec)
+    if (!subsec)
     {
         return defaultReflection();
     }
-    if(subsec->as<world::ClientSubsector>().hasSkyMaskPlane())
+    if (subsec->as<world::ClientSubsector>().hasSkyPlane())
     {
         return d->reflectionTextures[Impl::Exterior];
     }

@@ -189,15 +189,35 @@ public:
      */
     de::dint blockLightSourceZBias();
 
-//- Visual plane mapping ----------------------------------------------------------------
+//- Sky Planes --------------------------------------------------------------------------
 
     /**
-     * Returns @c true if at least one of the @em visual Planes of the subsector is using
-     * a sky-masked Material.
+     * Determines whether at least one of the referenced plane Surfaces has a sky-masked
+     * Material currently bound (@ref Surface::hasSkyMaskedMaterial()).
      *
-     * @see Surface::hasSkyMaskedMaterial()
+     * @param planeIndex  Index of the plane to examine, or @c -1 to check all planes.
+     *
+     * @see hasSkyFloor(), hasSkyCeiling()
      */
-    bool hasSkyMaskPlane() const;
+    bool hasSkyPlane(de::dint planeIndex = -1) const;
+
+    /**
+     * Determines whether the Surface of the @em floor plane has a sky-masked Material
+     * currently bound.
+     *
+     * @see hasSkyPlane(), hasSkyCeiling()
+     */
+    bool hasSkyFloor() const;
+
+    /**
+     * Determines whether the Surface of the @em ceiling plane has a sky-masked Material
+     * currently bound.
+     *
+     * @see hasSkyPlane(), hasSkyFloor()
+     */
+    bool hasSkyCeiling() const;
+
+//- Visual Planes (mapped) --------------------------------------------------------------
 
     /**
      * Returns the total number of @em visual planes in the subsector.

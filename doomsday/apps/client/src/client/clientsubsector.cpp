@@ -850,7 +850,7 @@ DENG2_PIMPL(ClientSubsector)
         if (reverb.space > .99)
             reverb.space = .99f;
 
-        if (self.hasSkyMaskPlane())
+        if (self.hasSkyPlane())
         {
             // An "exterior" space.
             // It can still be small, in which case; reverb is diminished a bit.
@@ -1467,6 +1467,33 @@ String ClientSubsector::description() const
     return Subsector::description() + "\n" + desc;
 }
 
+bool ClientSubsector::hasSkyPlane(dint planeIndex) const
+{
+    if (planeIndex < 0)
+    {
+        for (dint i = 0; i < sector().planeCount(); ++i)
+        {
+            if (visPlane(i).surface().hasSkyMaskedMaterial())
+                return true;
+        }
+        return false;
+    }
+    else
+    {
+        return visPlane(planeIndex).surface().hasSkyMaskedMaterial();
+    }
+}
+
+bool ClientSubsector::hasSkyFloor() const
+{
+    return hasSkyPlane(Sector::Floor);
+}
+
+bool ClientSubsector::hasSkyCeiling() const
+{
+    return hasSkyPlane(Sector::Ceiling);
+}
+
 dint ClientSubsector::visPlaneCount() const
 {
     return sector().planeCount();
@@ -1579,16 +1606,6 @@ void ClientSubsector::markVisPlanesDirty()
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
-bool ClientSubsector::hasSkyMaskPlane() const
-{
-    for (dint i = 0; i < sector().planeCount(); ++i)
-    {
-        if (visPlane(i).surface().hasSkyMaskedMaterial())
-            return true;
-    }
-    return false;
-}
-
 ClientSubsector::LightId ClientSubsector::lightSourceId() const
 {
     /// @todo Need unique ClientSubsector ids.
@@ -1597,7 +1614,7 @@ ClientSubsector::LightId ClientSubsector::lightSourceId() const
 
 Vector3f ClientSubsector::lightSourceColorf() const
 {
-    if (Rend_SkyLightIsEnabled() && hasSkyMaskPlane())
+    if (Rend_SkyLightIsEnabled() && hasSkyPlane())
     {
         return Rend_SkyLightColor();
     }

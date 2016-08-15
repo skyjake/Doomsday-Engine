@@ -3065,17 +3065,6 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 #define SKYCAP_UPPER        0x2
 ///@}
 
-static ddouble skyPlaneZ(dint skyCap)
-{
-    auto const &subsec    = curSubspace->subsector().as<world::ClientSubsector>();
-    dint const planeIndex = (skyCap & SKYCAP_UPPER) ? Sector::Ceiling : Sector::Floor;
-    if (!P_IsInVoid(viewPlayer))
-    {
-        return subsec.sector().map().skyPlane(planeIndex == Sector::Ceiling).height();
-    }
-    return subsec.visPlane(planeIndex).heightSmoothed();
-}
-
 static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &primitive,
     ConvexSubspace const &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
 {
@@ -3118,49 +3107,61 @@ static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &pr
 /// @param skyCap  @ref skyCapFlags
 static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 {
-    DENG2_ASSERT(curSubspace);
+    DENG2_ASSERT(::curSubspace);
 
     // No work to do?
-    if(!skyCap) return;
+    if (!skyCap) return;
 
     auto &subsec = curSubspace->subsector().as<world::ClientSubsector>();
-    DrawList &skyMaskList = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
+    world::Map &map = subsec.sector().map();
+
+    DrawList &dlist = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
 
     // Lower?
-    if ((skyCap & SKYCAP_LOWER) && subsec.visFloor().surface().hasSkyMaskedMaterial())
+    if ((skyCap & SKYCAP_LOWER) && subsec.hasSkyFloor())
     {
+        world::ClSkyPlane &skyFloor = map.skyFloor();
+
         writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
 
         // Draw a cap? (handled as a regular plane in sky-debug mode).
         if (!::devRendSkyMode)
         {
+            ddouble const height =
+                P_IsInVoid(::viewPlayer) ? subsec.visFloor().heightSmoothed() : skyFloor.height();
+
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
             gl::Primitive primitive;
             DrawList::Indices indices =
-                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, skyPlaneZ(skyCap), Clockwise);
+                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, height, Clockwise);
 
             // Write geometry.
-            skyMaskList.write(verts, primitive, indices);
+            dlist.write(verts, primitive, indices);
         }
     }
 
     // Upper?
-    if ((skyCap & SKYCAP_UPPER) && subsec.visCeiling().surface().hasSkyMaskedMaterial())
+    if ((skyCap & SKYCAP_UPPER) && subsec.hasSkyCeiling())
     {
+        world::ClSkyPlane &skyCeiling = map.skyCeiling();
+
         writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
 
         // Draw a cap? (handled as a regular plane in sky-debug mode).
         if (!::devRendSkyMode)
         {
+            ddouble const height =
+                P_IsInVoid(::viewPlayer) ? subsec.visCeiling().heightSmoothed() : skyCeiling.height();
+
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
             gl::Primitive primitive;
             DrawList::Indices indices =
-                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, skyPlaneZ(skyCap), Anticlockwise);
+                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, height, Anticlockwise);
 
             // Write geometry.
-            skyMaskList.write(verts, primitive, indices);
+            dlist.write(verts, primitive, indices);
         }
     }
 }
@@ -3248,12 +3249,12 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
 static void writeAllWalls(HEdge &hedge)
 {
     // Edges without a map line segment implicitly have no surfaces.
-    if(!hedge.hasMapElement())
+    if (!hedge.hasMapElement())
         return;
 
     // We are only interested in front facing segments with sections.
     auto &seg = hedge.mapElementAs<LineSideSegment>();
-    if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
+    if (!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
     // Done here because of the logic of doom.exe wrt the automap.
@@ -3274,7 +3275,7 @@ static void writeAllWalls(HEdge &hedge)
     // We can occlude the angle range defined by the X|Y origins of the
     // line segment if the open range has been covered (when the viewer
     // is not in the void).
-    if(!P_IsInVoid(viewPlayer) && coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
+    if (!P_IsInVoid(viewPlayer) && coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
         ClientApp::renderSystem().angleClipper().addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
