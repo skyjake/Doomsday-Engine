@@ -119,6 +119,8 @@ public:
      */
     de::LoopResult forAllEdgeRings(std::function<de::LoopResult (EdgeRing const &)> func) const;
 
+    void fixSurfacesMissingMaterials();
+
 //- Audio environment -------------------------------------------------------------------
 
     /**

@@ -94,6 +94,9 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/p_players.h"
+#  ifdef __CLIENT__
+#  include "client/clientsubsector.h"
+#endif
 
 #include "ui/infine/infinesystem.h"
 #include "ui/nativeui.h"
@@ -2370,9 +2373,9 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
     /// @todo Refactor away.
     map.forAllSectors([] (Sector &sector)
     {
-        sector.forAllSides([] (LineSide &side)
+        sector.forAllSubsectors([] (world::Subsector &subsec)
         {
-            side.fixSurfacesMissingMaterials();
+            subsec.as<world::ClientSubsector>().fixSurfacesMissingMaterials();
             return LoopContinue;
         });
         return LoopContinue;

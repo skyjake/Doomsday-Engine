@@ -20,9 +20,9 @@
 
 #include "client/clientsubsector.h"
 
-#include "Surface"
-#include "world/blockmap.h"
 #include "world/map.h"
+#include "world/maputil.h"
+#include "world/blockmap.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/surface.h"
@@ -37,8 +37,13 @@
 #include "WallEdge"
 
 #include "Face"
+#include "dd_main.h"  // verbose
 
-#include <doomsday/world/material.h>
+#include <doomsday/world/Material>
+#include <doomsday/world/Materials>
+#include <doomsday/world/detailtexturemateriallayer.h>
+#include <doomsday/world/shinetexturemateriallayer.h>
+
 #include <QtAlgorithms>
 #include <QHash>
 #include <QMap>
@@ -1173,15 +1178,223 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
+    static bool materialHasAnimatedTextureLayers(Material const &mat)
+    {
+        for (dint i = 0; i < mat.layerCount(); ++i)
+        {
+            MaterialLayer const &layer = mat.layer(i);
+            if (!layer.is<DetailTextureMaterialLayer>() && !layer.is<ShineTextureMaterialLayer>())
+            {
+                if(layer.isAnimated()) return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * @todo Optimize: Target and process only the dependent surfaces -ds
+     * Given a side section, look at the neighbouring surfaces and pick the best choice of
+     * material used on those surfaces to be applied to "this" surface.
+     *
+     * Material on back neighbour plane has priority. Non-animated materials are preferred.
+     * Sky materials are ignored.
+     */
+    static Material *chooseFixMaterial(LineSide &side, dint section)
+    {
+        Material *choice1 = nullptr, *choice2 = nullptr;
+
+        Sector *frontSec = side.sectorPtr();
+        Sector *backSec  = side.back().sectorPtr();
+
+        if (backSec)
+        {
+            // Our first choice is a material in the other sector.
+            if (section == LineSide::Bottom)
+            {
+                if (frontSec->floor().height() < backSec->floor().height())
+                {
+                    choice1 = backSec->floor().surface().materialPtr();
+                }
+            }
+            else if (section == LineSide::Top)
+            {
+                if (frontSec->ceiling().height() > backSec->ceiling().height())
+                {
+                    choice1 = backSec->ceiling().surface().materialPtr();
+                }
+            }
+
+            // In the special case of sky mask on the back plane, our best
+            // choice is always this material.
+            if (choice1 && choice1->isSkyMasked())
+            {
+                return choice1;
+            }
+        }
+        else
+        {
+            // Our first choice is a material on an adjacent wall section.
+            // Try the left neighbor first.
+            Line *other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()),
+                                             Clockwise, frontSec);
+            if (!other)
+            {
+                // Try the right neighbor.
+                other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
+                                           Anticlockwise, frontSec);
+            }
+
+            if (other)
+            {
+                if (!other->back().hasSector())
+                {
+                    // Our choice is clear - the middle material.
+                    choice1 = other->front().middle().materialPtr();
+                }
+                else
+                {
+                    // Compare the relative heights to decide.
+                    LineSide &otherSide = other->side(&other->front().sector() == frontSec ? Line::Front : Line::Back);
+                    Sector &otherSec    = other->side(&other->front().sector() == frontSec ? Line::Back  : Line::Front).sector();
+
+                    if (otherSec.ceiling().height() <= frontSec->floor().height())
+                        choice1 = otherSide.top().materialPtr();
+                    else if (otherSec.floor().height() >= frontSec->ceiling().height())
+                        choice1 = otherSide.bottom().materialPtr();
+                    else if (otherSec.ceiling().height() < frontSec->ceiling().height())
+                        choice1 = otherSide.top().materialPtr();
+                    else if (otherSec.floor().height() > frontSec->floor().height())
+                        choice1 = otherSide.bottom().materialPtr();
+                    // else we'll settle for a plane material.
+                }
+            }
+        }
+
+        // Our second choice is a material from this sector.
+        choice2 = frontSec->plane(section == LineSide::Bottom ? Sector::Floor : Sector::Ceiling)
+            .surface().materialPtr();
+
+        // Prefer a non-animated, non-masked material.
+        if (choice1 && !materialHasAnimatedTextureLayers(*choice1) && !choice1->isSkyMasked())
+            return choice1;
+        if (choice2 && !materialHasAnimatedTextureLayers(*choice2) && !choice2->isSkyMasked())
+            return choice2;
+
+        // Prefer a non-masked material.
+        if (choice1 && !choice1->isSkyMasked())
+            return choice1;
+        if (choice2 && !choice2->isSkyMasked())
+            return choice2;
+
+        // At this point we'll accept anything if it means avoiding HOM.
+        if (choice1) return choice1;
+        if (choice2) return choice2;
+
+        // We'll assign the special "missing" material...
+        return &Materials::get().material(de::Uri("System", Path("missing")));
+    }
+
+    static void addMissingMaterial(LineSide &side, dint section)
+    {
+        // Sides without sections need no fixing.
+        if (!side.hasSections()) return;
+        // ...nor those of self-referencing lines.
+        if (side.line().isSelfReferencing()) return;
+        // ...nor those of "one-way window" lines.
+        if (!side.back().hasSections() && side.back().hasSector()) return;
+
+        // A material must actually be missing to qualify for fixing.
+        Surface &surface = side.surface(section);
+        if (surface.hasMaterial() && !surface.hasFixMaterial())
+            return;
+
+        Material *oldMaterial = surface.materialPtr();
+
+        // Look for and apply a suitable replacement (if found).
+        surface.setMaterial(chooseFixMaterial(side, section), true/* is missing fix */);
+
+        if (oldMaterial == surface.materialPtr())
+            return;
+
+        // We'll need to recalculate reverb.
+        if (HEdge *hedge = side.leftHEdge())
+        {
+            if (hedge->hasFace() && hedge->face().hasMapElement())
+            {
+                auto &subsec = hedge->face().mapElementAs<ConvexSubspace>()
+                    .subsector().as<ClientSubsector>();
+                subsec.markReverbDirty();
+                subsec.markVisPlanesDirty();
+            }
+        }
+
+        // During map setup we log missing materials.
+        if (::ddMapSetup && ::verbose)
+        {
+            String const surfaceMaterialPath = surface.hasMaterial() ? surface.material().manifest().composeUri().asText() : "<null>";
+
+            LOG_WARNING(  "%s of Line #%d is missing a material for the %s section."
+                        "\n  %s was chosen to complete the definition.")
+                << Line::sideIdAsText(side.sideId()).upperFirstChar()
+                << side.line().indexInMap()
+                << LineSide::sectionIdAsText(section)
+                << surfaceMaterialPath;
+        }
+    }
+
+    /**
+     * Do as in the original DOOM if the texture has not been defined - extend the
+     * floor/ceiling to fill the space (unless it is skymasked).
+     *
+     * @todo Optimize: Process only the mapping-affected surfaces -ds
      */
     void fixSurfacesMissingMaterials()
     {
-        self.sector().forAllSides([] (LineSide &side)
+        self.forAllEdgeRings([this] (EdgeRing const &ring)
         {
-            side.fixSurfacesMissingMaterials();
-            side.back().fixSurfacesMissingMaterials();
+            ClientSubsector const &frontSubsec = ring.owner();
+            SubsectorCirculator it(&ring.firstHEdge());
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                    if (ring.hasBackSubsector())
+                    {
+                        auto const &backSubsec = ring.backSubsector().as<ClientSubsector>();
+
+                        // A potential bottom section fix?
+                        if (!(frontSubsec.hasSkyFloor() && backSubsec.hasSkyFloor()))
+                        {
+                            if (frontSubsec.visFloor().height() < backSubsec.visFloor().height())
+                            {
+                                addMissingMaterial(side, LineSide::Bottom);
+                            }
+                            else if (side.bottom().hasFixMaterial())
+                            {
+                                side.bottom().setMaterial(0);
+                            }
+                        }
+
+                        // A potential top section fix?
+                        if (!(frontSubsec.hasSkyCeiling() && backSubsec.hasSkyCeiling()))
+                        {
+                            if (frontSubsec.visCeiling().height() > backSubsec.visCeiling().height())
+                            {
+                                addMissingMaterial(side, LineSide::Top);
+                            }
+                            else if (side.top().hasFixMaterial())
+                            {
+                                side.top().setMaterial(0);
+                            }
+                        }
+                    }
+                    else if (!side.back().hasSector())
+                    {
+                        // A potential middle section fix.
+                        addMissingMaterial(side, LineSide::Middle);
+                    }
+                }
+            } while (&it.next() != &ring.firstHEdge());
             return LoopContinue;
         });
     }
@@ -1505,6 +1718,11 @@ LoopResult ClientSubsector::forAllEdgeRings(std::function<LoopResult (EdgeRing c
             return result;
     }
     return LoopContinue;
+}
+
+void ClientSubsector::fixSurfacesMissingMaterials()
+{
+    d->fixSurfacesMissingMaterials();
 }
 
 bool ClientSubsector::hasSkyPlane(dint planeIndex) const

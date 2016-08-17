@@ -588,9 +588,9 @@ DENG2_PIMPL(ClientServerWorld)
         /// @todo Refactor away:
         map->forAllSectors([] (Sector &sector)
         {
-            sector.forAllSides([] (LineSide &side)
+            sector.forAllSubsectors([] (Subsector &subsec)
             {
-                side.fixSurfacesMissingMaterials();
+                subsec.as<ClientSubsector>().fixSurfacesMissingMaterials();
                 return LoopContinue;
             });
             return LoopContinue;

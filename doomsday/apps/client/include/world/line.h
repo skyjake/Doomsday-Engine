@@ -360,12 +360,6 @@ public:
         de::LoopResult forAllSurfaces(std::function<de::LoopResult(Surface &)> func) const;
 
         /**
-         * Do as in the original DOOM if the texture has not been defined - extend the
-         * floor/ceiling to fill the space (unless it is skymasked).
-         */
-        void fixSurfacesMissingMaterials();
-
-        /**
          * Update the tangent space normals of the side's surfaces according to the points
          * defined by the Line's vertices. If no Sections are defined this is a no-op.
          */
