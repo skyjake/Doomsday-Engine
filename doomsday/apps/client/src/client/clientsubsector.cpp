@@ -92,9 +92,67 @@ static DotPath composeSurfacePath(Surface const &surface)
 }
 #endif // DENG2_DEBUG
 
-static QRectF qrectFromAABox(AABoxd const &b)
+DENG2_PIMPL_NOREF(ClientSubsector::EdgeRing)
 {
-    return QRectF(QPointF(b.minX, b.maxY), QPointF(b.maxX, b.minY));
+    ClientSubsector &owner;
+    HEdge *first = nullptr;
+    bool isInner = false;
+
+    Impl(ClientSubsector &owner) : owner(owner)
+    {}
+};
+
+ClientSubsector::EdgeRing::EdgeRing(ClientSubsector &owner, HEdge &first, dint edgeId)
+    : d(new Impl(owner))
+{
+    d->first   = &first;
+    d->isInner = edgeId == ClientSubsector::InnerRing;
+}
+
+ClientSubsector &ClientSubsector::EdgeRing::owner() const
+{
+    return d->owner;
+}
+
+String ClientSubsector::EdgeRing::description() const
+{
+    auto desc = String(    _E(l) "Ring: "       _E(.)_E(i) "%1" _E(.)
+                       " " _E(l) "Half edge: "  _E(.)_E(i) "%2" _E(.))
+                  .arg(isOuter() ? "Outer" : "Inner")
+                  .arg(String("[0x%1]").arg(de::dintptr(d->first), 0, 16));
+
+    DENG2_DEBUG_ONLY(
+        desc.prepend(String(_E(b) "EdgeRing " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+    )
+    return desc;
+}
+
+dint ClientSubsector::EdgeRing::ringId() const
+{
+    return d->isInner ? ClientSubsector::InnerRing : ClientSubsector::OuterRing;
+}
+
+HEdge &ClientSubsector::EdgeRing::firstHEdge() const
+{
+    DENG2_ASSERT(d->first);
+    return *d->first;
+}
+
+bool ClientSubsector::EdgeRing::isSelfReferencing() const
+{
+    return firstHEdge().mapElementAs<LineSideSegment>().line().isSelfReferencing();
+}
+
+bool ClientSubsector::EdgeRing::hasBackSubsector() const
+{
+    return firstHEdge().hasTwin()
+        && firstHEdge().twin().hasFace()
+        && firstHEdge().face().mapElementAs<ConvexSubspace>().hasSubsector();
+}
+
+Subsector &ClientSubsector::EdgeRing::backSubsector() const
+{
+    return firstHEdge().twin().face().mapElementAs<ConvexSubspace>().subsector();
 }
 
 /**
@@ -121,10 +179,44 @@ DENG2_PIMPL(ClientSubsector)
 {
     struct BoundaryData
     {
-        /// Lists of unique exterior subsectors which share a boundary edge with
-        /// "this" subsector (i.e., one edge per subsec).
-        QList<HEdge *> uniqueInnerEdges; /// not owned.
-        QList<HEdge *> uniqueOuterEdges; /// not owned.
+        struct EdgeRings : public QList<EdgeRing *>
+        {
+            ~EdgeRings() { clear(); }
+
+            void clear() 
+            {
+                qDeleteAll(*this);
+                QList<EdgeRing *>::clear();
+            }
+        };
+
+        std::unique_ptr<EdgeRing> outerRing;
+        EdgeRings innerRings;
+
+        void clear()
+        {
+            outerRing.release();
+            innerRings.clear();
+        }
+
+        /**
+         * Add @a edge to the data set (ownership is given).
+         */
+        BoundaryData &addEdgeRing(EdgeRing *edge)
+        {
+            if (edge)
+            {
+                if (edge->isOuter())
+                {
+                    outerRing.reset(edge);
+                }
+                else
+                {
+                    innerRings.append(edge);
+                }
+            }
+            return *this;
+        }
     };
 
     struct GeometryData
@@ -440,91 +532,46 @@ DENG2_PIMPL(ClientSubsector)
     {
         if (boundaryData) return;
 
-        QMap<ClientSubsector *, HEdge *> extSubsectorMap;
-        self.forAllSubspaces([this, &extSubsectorMap] (ConvexSubspace &subspace)
-        {
-            HEdge *base = subspace.poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                if (!hedge->hasMapElement())
-                    continue;
-
-                if (!hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
-                    continue;
-
-                auto &backSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>()
-                                       .subsector().as<ClientSubsector>();
-                if (&backSubsec == thisPublic)
-                    continue;
-
-                extSubsectorMap.insert(&backSubsec, hedge);
-
-            } while ((hedge = &hedge->next()) != base);
-
-            return LoopContinue;
-        });
-
         boundaryData.reset(new BoundaryData);
-        if (extSubsectorMap.isEmpty())
-            return;
-
-        QRectF boundingRect = qrectFromAABox(self.bounds());
-
-        // First try to quickly decide by comparing subsector bounding boxes.
-        QMutableMapIterator<ClientSubsector *, HEdge *> iter(extSubsectorMap);
-        while (iter.hasNext())
+        QList<HEdge *> neighbors = self.listUniqueBoundaryEdges();
+        if (neighbors.count() == 1)
         {
-            iter.next();
-            auto &extSubsec = iter.value()->twin().face().mapElementAs<ConvexSubspace>()
-                                  .subsector().as<ClientSubsector>();
-            if (!boundingRect.contains(qrectFromAABox(extSubsec.bounds())))
+            // Single neighbor => one implicit ring.
+            boundaryData->addEdgeRing(new EdgeRing(self, *neighbors.first()));
+        }
+        else
+        {
+            // Multiple neighbors require testing of bounding boxes.
+            DENG2_ASSERT(!neighbors.isEmpty());
+
+            QList<QRectF> boundaries;
+            for (HEdge *base : neighbors)
             {
-                boundaryData->uniqueOuterEdges.append(iter.value());
-                iter.remove();
+                QRectF bounds;
+                SubsectorCirculator it(base);
+                do
+                {
+                    bounds |= QRectF(QPointF(it->origin().x, it->origin().y),
+                                     QPointF(it->twin().origin().x, it->twin().origin().y))
+                        .normalized();
+                } while (&it.next() != base);
+
+                boundaries << bounds;
             }
-        }
 
-        if (extSubsectorMap.isEmpty())
-            return;
-
-        // More extensive tests are necessary. At this point we know that all
-        // subsectors which remain in the map are inside according to the bounding
-        // box of "this" subsector.
-        QList<HEdge *> const boundaryEdges = extSubsectorMap.values();
-        QList<QRectF> boundaries;
-        for (HEdge *base : boundaryEdges)
-        {
-            QRectF bounds;
-            SubsectorCirculator it(base);
-            do
+            QRectF const *largest = nullptr;
+            for (QRectF const &boundary : boundaries)
             {
-                bounds |= QRectF(QPointF(it->origin().x, it->origin().y),
-                                 QPointF(it->twin().origin().x, it->twin().origin().y))
-                              .normalized();
-            } while (&it.next() != base);
-
-            boundaries.append(bounds);
-        }
-
-        QRectF const *largest = nullptr;
-        for (QRectF const &boundary : boundaries)
-        {
-            if (!largest || boundary.contains(*largest))
-                largest = &boundary;
-        }
-
-        for (dint i = 0; i < boundaryEdges.count(); ++i)
-        {
-            HEdge *hedge = boundaryEdges[i];
-            QRectF const &boundary = boundaries[i];
-            if (&boundary == largest || (largest && boundary == *largest))
-            {
-                boundaryData->uniqueOuterEdges.append(hedge);
+                if (!largest || boundary.contains(*largest))
+                    largest = &boundary;
             }
-            else
+
+            for (dint i = 0; i < neighbors.count(); ++i)
             {
-                boundaryData->uniqueInnerEdges.append(hedge);
+                QRectF &boundary = boundaries[i];
+                HEdge *hedge     = neighbors[i];
+
+                boundaryData->addEdgeRing(new EdgeRing(self, *hedge, !(&boundary == largest || (largest && boundary == *largest))));
             }
         }
     }
@@ -541,54 +588,47 @@ DENG2_PIMPL(ClientSubsector)
         if (classification() & (AllSelfRef | PartSelfRef))
         {
             // Should we permanently map one or both planes to those of another sector?
-
-            initBoundaryDataIfNeeded();
-
-            for (HEdge *hedge : boundaryData->uniqueOuterEdges)
+            self.forAllEdgeRings([this] (EdgeRing const &ring)
             {
-                auto &extSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>()
-                                     .subsector().as<ClientSubsector>();
-
-                if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
-                    continue;
-
-                if (!(classification() & AllSelfRef)
-                    && (extSubsec.d->classification() & AllSelfRef))
-                    continue;
-
-                if (extSubsec.d->mappedVisFloor == thisPublic)
-                    continue;
-
-                // Setup the mapping and we're done.
-                map(Sector::Floor,   &extSubsec, true /*permanently*/);
-                map(Sector::Ceiling, &extSubsec, true /*permanently*/);
-                break;
-            }
+                auto &backSubsec = ring.backSubsector().as<ClientSubsector>();
+                if (ring.isSelfReferencing()
+                    && (classification() & AllSelfRef)
+                    && !(backSubsec.d->classification() & AllSelfRef)
+                    && backSubsec.d->mappedVisFloor != thisPublic)
+                {
+                    // Setup the mapping and we're done.
+                    map(Sector::Floor  , &backSubsec, true /*permanently*/);
+                    map(Sector::Ceiling, &backSubsec, true /*permanently*/);
+                    return LoopAbort;
+                }
+                else
+                {
+                    return LoopContinue;
+                }
+            });
 
             if (floorIsMapped())
             {
                 // Remove the mapping from all inner subsectors to this, forcing
                 // their re-evaluation (however next time a different subsector
                 // will be selected from the boundary).
-                for (HEdge *hedge : boundaryData->uniqueInnerEdges)
+                for (EdgeRing *ring : boundaryData->innerRings)
                 {
-                    auto &extSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>()
-                                         .subsector().as<ClientSubsector>();
-
-                    if (!hedge->mapElementAs<LineSideSegment>().line().isSelfReferencing())
-                        continue;
-
-                    if (!(classification() & AllSelfRef)
-                        && (extSubsec.d->classification() & AllSelfRef))
-                        continue;
-
-                    if (extSubsec.d->mappedVisFloor == thisPublic)
+                    if (ring->isSelfReferencing())
                     {
-                        extSubsec.d->clearMapping(Sector::Floor);
-                    }
-                    if (extSubsec.d->mappedVisCeiling == thisPublic)
-                    {
-                        extSubsec.d->clearMapping(Sector::Ceiling);
+                        auto &backSubsec = ring->backSubsector().as<ClientSubsector>();
+                        if ((classification() & AllSelfRef)
+                            && !(backSubsec.d->classification() & AllSelfRef))
+                        {
+                            if (backSubsec.d->mappedVisFloor == thisPublic)
+                            {
+                                backSubsec.d->clearMapping(Sector::Floor);
+                            }
+                            if (backSubsec.d->mappedVisCeiling == thisPublic)
+                            {
+                                backSubsec.d->clearMapping(Sector::Ceiling);
+                            }
+                        }
                     }
                 }
 
@@ -614,34 +654,35 @@ DENG2_PIMPL(ClientSubsector)
         if (!doFloor && !doCeiling)
             return;
 
-        initBoundaryDataIfNeeded();
-
         // Map "this" subsector to the first outer subsector found.
-        for (HEdge *hedge : boundaryData->uniqueOuterEdges)
+        initBoundaryDataIfNeeded();
+        if (boundaryData->outerRing)
         {
-            auto &extSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>()
-                                 .subsector().as<ClientSubsector>();
-
-            if (doFloor && !floorIsMapped())
+            EdgeRing const &ring = *boundaryData->outerRing;
+            if (ring.hasBackSubsector())
             {
-                Plane &extVisPlane = extSubsec.visFloor();
-                if (!extVisPlane.surface().hasSkyMaskedMaterial()
-                    && extVisPlane.height() > self.sector().floor().height())
+                auto &backSubsec = ring.backSubsector().as<ClientSubsector>();
+                SubsectorCirculator it(&ring.firstHEdge());
+                do
                 {
-                    map(Sector::Floor, &extSubsec);
-                    if (!doCeiling) break;
-                }
-            }
-
-            if (doCeiling && !ceilingIsMapped())
-            {
-                Plane &extVisPlane = extSubsec.visCeiling();
-                if (!extVisPlane.surface().hasSkyMaskedMaterial()
-                    && extSubsec.visCeiling().height() < self.sector().ceiling().height())
-                {
-                    map(Sector::Ceiling, &extSubsec);
-                    if (!doFloor) break;
-                }
+                    if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                    {
+                        if (doFloor && !floorIsMapped()
+                            && !backSubsec.hasSkyFloor()
+                            && backSubsec.visFloor().height() > self.sector().floor().height())
+                        {
+                            map(Sector::Floor, &backSubsec);
+                            if (!doCeiling) break;
+                        }
+                        if (doCeiling && !ceilingIsMapped()
+                            && !backSubsec.hasSkyCeiling()
+                            && backSubsec.visCeiling().height() < self.sector().ceiling().height())
+                        {
+                            map(Sector::Ceiling, &backSubsec);
+                            if (!doFloor) break;
+                        }
+                    }
+                } while (&it.next() != &ring.firstHEdge());
             }
         }
 
@@ -651,24 +692,29 @@ DENG2_PIMPL(ClientSubsector)
         // Clear mappings for all inner subsectors to force re-evaluation (which
         // may in turn lead to their inner subsectors being re-evaluated, producing
         // a "ripple effect" that will remap any deeply nested dependents).
-        for (HEdge *hedge : boundaryData->uniqueInnerEdges)
+        for (EdgeRing const *ring : boundaryData->innerRings)
         {
-            auto &extSubsec = hedge->twin().face().mapElementAs<ConvexSubspace>()
-                                 .subsector().as<ClientSubsector>();
-
-            if (extSubsec.d->classification() & NeverMapped)
-                continue;
-
-            if (doFloor && floorIsMapped()
-                && extSubsec.visFloor().height() >= self.sector().floor().height())
+            if (ring->hasBackSubsector())
             {
-                extSubsec.d->clearMapping(Sector::Floor);
-            }
-
-            if (doCeiling && ceilingIsMapped()
-                && extSubsec.visCeiling().height() <= self.sector().ceiling().height())
-            {
-                extSubsec.d->clearMapping(Sector::Ceiling);
+                auto &backSubsec = ring->backSubsector().as<ClientSubsector>();
+                SubsectorCirculator it(&ring->firstHEdge());
+                do
+                {
+                    if (it->hasMapElement() // BSP errors may fool the circulator wrt interior edges -ds
+                        && !(backSubsec.d->classification() & NeverMapped))
+                    {
+                        if (doFloor && floorIsMapped()
+                            && backSubsec.visFloor().height() >= self.sector().floor().height())
+                        {
+                            backSubsec.d->clearMapping(Sector::Floor);
+                        }
+                        if (doCeiling && ceilingIsMapped()
+                            && backSubsec.visCeiling().height() <= self.sector().ceiling().height())
+                        {
+                            backSubsec.d->clearMapping(Sector::Ceiling);
+                        }
+                    }
+                } while (&it.next() != &ring->firstHEdge());
             }
         }
     }
@@ -1045,28 +1091,22 @@ DENG2_PIMPL(ClientSubsector)
     {
         if (::ddMapSetup) return;
 
-        bool const planeIsInterior  = (&plane == &self.visPlane(plane.indexInSector()));
-
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
                                       , thisPublic << self.sector().indexInMap());
 
-        initBoundaryDataIfNeeded();
-
-        // Mark surfaces of the outer edge loop.
-        /// @todo What about the special case of a subsector with no outer neighbors? -ds
-        if (!boundaryData->uniqueOuterEdges.isEmpty())
+        // Mark surfaces of the edge rings.
+        self.forAllEdgeRings([this, &plane, &yes] (EdgeRing const &ring)
         {
-            HEdge *base = boundaryData->uniqueOuterEdges.first();
-            SubsectorCirculator it(base);
+            SubsectorCirculator it(&ring.firstHEdge());
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
-                    if (planeIsInterior
+                    if (    &plane == &self.visPlane(plane.indexInSector())
                         || (&plane == (it->hasTwin() && it->twin().hasFace()
-                                       ? &it->twin().face().mapElementAs<ConvexSubspace>()
-                                             .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
-                                       : nullptr)))
+                                        ? &it->twin().face().mapElementAs<ConvexSubspace>()
+                                                .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
+                                        : nullptr)))
                     {
                         LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
                         side.forAllSurfaces([this, &yes] (Surface &surface)
@@ -1077,35 +1117,11 @@ DENG2_PIMPL(ClientSubsector)
                         });
                     }
                 }
-            } while (&it.next() != base);
-        }
-        // Mark surfaces of the inner edge loop(s).
-        for (HEdge *base : boundaryData->uniqueInnerEdges)
-        {
-            SubsectorCirculator it(base);
-            do
-            {
-                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-                {
-                    if (planeIsInterior
-                        || (&plane == (it->hasTwin() && it->twin().hasFace()
-                                       ? &it->twin().face().mapElementAs<ConvexSubspace>()
-                                             .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
-                                       : nullptr)))
-                    {
-                        LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                        side.forAllSurfaces([this, &yes] (Surface &surface)
-                        {
-                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
-                            decorSurfaces[&surface].markForUpdate(yes);
-                            return LoopContinue;
-                        });
-                    }
-                }
-            } while (&it.next() != base);
-        }
+            } while (&it.next() != &ring.firstHEdge());
+            return LoopContinue;
+        });
 
-        if (planeIsInterior)
+        if (&plane == &self.visPlane(plane.indexInSector()))
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(plane.surface()));
             decorSurfaces[&plane.surface()].markForUpdate(yes);
@@ -1119,52 +1135,29 @@ DENG2_PIMPL(ClientSubsector)
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
                                       , thisPublic << self.sector().indexInMap());
 
-        initBoundaryDataIfNeeded();
+        // Surfaces of the edge rings.
+        self.forAllEdgeRings([this, &material, &yes] (EdgeRing const &ring)
+        {
+            SubsectorCirculator it(&ring.firstHEdge());
+            do
+            {
+                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
+                {
+                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
+                    {
+                        if (surface.materialPtr() == &material)
+                        {
+                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
+                            decorSurfaces[&surface].markForUpdate(yes);
+                        }
+                        return LoopContinue;
+                    });
+                }
+            } while (&it.next() != &ring.firstHEdge());
+            return LoopContinue;
+        });
 
-        // Surfaces of the outer edge loop.
-        /// @todo What about the special case of a subsector with no outer neighbors? -ds
-        if (!boundaryData->uniqueOuterEdges.isEmpty())
-        {
-            HEdge *base = boundaryData->uniqueOuterEdges.first();
-            SubsectorCirculator it(base);
-            do
-            {
-                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-                {
-                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
-                    {
-                        if (surface.materialPtr() == &material)
-                        {
-                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
-                            decorSurfaces[&surface].markForUpdate(yes);
-                        }
-                        return LoopContinue;
-                    });
-                }
-            } while (&it.next() != base);
-        }
-        // Surfaces of the inner edge loop(s).
-        for (HEdge *base : boundaryData->uniqueInnerEdges)
-        {
-            SubsectorCirculator it(base);
-            do
-            {
-                if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-                {
-                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
-                    {
-                        if (surface.materialPtr() == &material)
-                        {
-                            LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
-                            decorSurfaces[&surface].markForUpdate(yes);
-                        }
-                        return LoopContinue;
-                    });
-                }
-            } while (&it.next() != base);
-        }
         // Surfaces of the visual planes.
         Plane &floor = self.visFloor();
         if (floor.surface().materialPtr() == &material)
@@ -1232,10 +1225,10 @@ DENG2_PIMPL(ClientSubsector)
     void planeBeingDeleted(Plane const &plane)
     {
         LOG_AS("ClientSubsector");
-        if (&plane == &self.visPlane(plane.indexInSector()))
+        if (&plane == mappedPlane(plane.indexInSector()))
         {
             clearMapping(plane.indexInSector());
-            decorSurfaces.remove(&self.visPlane(plane.indexInSector()).surface());
+            decorSurfaces.remove(plane.surfacePtr());
         }
     }
 
@@ -1285,12 +1278,11 @@ DENG2_PIMPL(ClientSubsector)
                         shard->updateBiasAfterMove();
                     }
 
-                    HEdge *base = subspace.poly().hedge();
-                    HEdge *hedge = base;
+                    HEdge *hedge = subspace.poly().hedge();
                     do
                     {
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    } while ((hedge = &hedge->next()) != base);
+                    } while ((hedge = &hedge->next()) != subspace.poly().hedge());
 
                     return subspace.forAllExtraMeshes([this] (Mesh &mesh)
                     {
@@ -1449,6 +1441,19 @@ String ClientSubsector::description() const
                     .arg(Sector::planeIdAsText(Sector::Ceiling).upperFirstChar())
                     .arg(visCeiling().sector().indexInMap())
                     .arg(&visCeiling() != &sector().ceiling() ? " (mapped)" : "");
+
+    if (d->boundaryData)
+    {
+        desc += String(_E(D) "\nEdge rings (%1):" _E(.)).arg(edgeRingCount());
+        dint index = 0;
+        forAllEdgeRings([&desc, &index] (EdgeRing const &ring)
+        {
+            desc += String("\n[%1]: ").arg(index) + _E(>) + ring.description() + _E(<);
+            index += 1;
+            return LoopContinue;
+        });
+    }
+
     if (hasDecorations())
     {
         desc += String(_E(D) "\nDecorations:" _E(.));
@@ -1465,6 +1470,28 @@ String ClientSubsector::description() const
         desc.prepend(String(_E(b) "ClientSubsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return Subsector::description() + "\n" + desc;
+}
+
+dint ClientSubsector::edgeRingCount() const
+{
+    d->initBoundaryDataIfNeeded();
+    return (bool(d->boundaryData->outerRing) ? 1 : 0) + d->boundaryData->innerRings.count();
+}
+
+LoopResult ClientSubsector::forAllEdgeRings(std::function<LoopResult (EdgeRing const &)> func) const
+{
+    d->initBoundaryDataIfNeeded();
+    if (EdgeRing *ring = d->boundaryData->outerRing.get())
+    {
+        if (auto result = func(*ring))
+            return result;
+    }
+    for (EdgeRing *ring : d->boundaryData->innerRings)
+    {
+        if (auto result = func(*ring))
+            return result;
+    }
+    return LoopContinue;
 }
 
 bool ClientSubsector::hasSkyPlane(dint planeIndex) const
@@ -1802,13 +1829,10 @@ void ClientSubsector::decorate()
 {
     LOG_AS("ClientSubsector::decorate");
 
-    d->initBoundaryDataIfNeeded();
-    // Surfaces of the outer edge loop.
-    /// @todo What about the special case of a subsector with no outer neighbors? -ds
-    if (!d->boundaryData->uniqueOuterEdges.isEmpty())
+    // Surfaces of the edge rings.
+    forAllEdgeRings([this] (EdgeRing const &ring)
     {
-        HEdge *base = d->boundaryData->uniqueOuterEdges.first();
-        SubsectorCirculator it(base);
+        SubsectorCirculator it(&ring.firstHEdge());
         do
         {
             if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -1820,25 +1844,10 @@ void ClientSubsector::decorate()
                     return LoopContinue;
                 });
             }
-        } while (&it.next() != base);
-    }
-    // Surfaces of the inner edge loop(s).
-    for (HEdge *base : d->boundaryData->uniqueInnerEdges)
-    {
-        SubsectorCirculator it(base);
-        do
-        {
-            if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
-            {
-                LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                side.forAllSurfaces([this] (Surface &surface)
-                {
-                    d->decorate(surface);
-                    return LoopContinue;
-                });
-            }
-        } while (&it.next() != base);
-    }
+        } while (&it.next() != &ring.firstHEdge());
+        return LoopContinue;
+    });
+
     // Surfaces of the visual planes.
     d->decorate(visFloor  ().surface());
     d->decorate(visCeiling().surface());

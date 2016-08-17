@@ -238,14 +238,9 @@ Surface const &Plane::surface() const
     return d->surface;
 }
 
-Surface *Plane::surfacePtr()
+Surface *Plane::surfacePtr() const
 {
-    return &surface();
-}
-
-Surface const *Plane::surfacePtr() const
-{
-    return &surface();
+    return &d->surface;
 }
 
 void Plane::setNormal(Vector3f const &newNormal)

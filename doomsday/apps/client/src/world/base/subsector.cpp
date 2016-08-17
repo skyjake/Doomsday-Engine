@@ -104,19 +104,25 @@ Id Subsector::id() const
 
 Sector &Subsector::sector()
 {
-    DENG2_ASSERT(!d->subspaces.isEmpty());
-    return *d->subspaces.first()->bspLeaf().sectorPtr();
+    DENG2_ASSERT(firstSubspace().bspLeaf().sectorPtr());
+    return *firstSubspace().bspLeaf().sectorPtr();
 }
 
 Sector const &Subsector::sector() const
 {
-    DENG2_ASSERT(!d->subspaces.isEmpty());
-    return *d->subspaces.first()->bspLeaf().sectorPtr();
+    DENG2_ASSERT(firstSubspace().bspLeaf().sectorPtr());
+    return *firstSubspace().bspLeaf().sectorPtr();
 }
 
 dint Subsector::subspaceCount() const
 {
     return d->subspaces.count();
+}
+
+ConvexSubspace &Subsector::firstSubspace() const
+{
+    DENG2_ASSERT(!d->subspaces.isEmpty());
+    return *d->subspaces.first();
 }
 
 LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
@@ -128,13 +134,47 @@ LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &
     return LoopContinue;
 }
 
+QList<HEdge *> Subsector::listUniqueBoundaryEdges() const
+{
+    QList<HEdge *> list;
+    for (ConvexSubspace const *sub : d->subspaces)
+    {
+        HEdge *hedge = sub->poly().hedge();
+        do
+        {
+            if (hedge->hasMapElement() && !isInternalEdge(hedge))
+            {
+                bool unique = true;
+                for (HEdge *base : list)
+                {
+                    SubsectorCirculator subIt(base);
+                    do
+                    {
+                        HEdge &other = *subIt;
+                        if (&other == hedge)
+                        {
+                            unique = false;
+                            break;
+                        }
+                    } while (&subIt.next() != base);
+                }
+                if (unique)
+                {
+                    list << hedge;
+                }
+            }
+        } while ((hedge = &hedge->next()) != sub->poly().hedge());
+    }
+    return list;
+}
+
 AABoxd const &Subsector::bounds() const
 {
     // If the subsector is comprised of a single subspace we can use the bounding
     // box of the subspace geometry directly.
-    if (d->subspaces.count() == 1)
+    if (subspaceCount() == 1)
     {
-        return d->subspaces.first()->poly().bounds();
+        return firstSubspace().poly().bounds();
     }
 
     // Time to determine bounds?

@@ -33,6 +33,7 @@
 #include "render/lightgrid.h"
 
 class Shard;
+namespace de { class HEdge; }
 
 namespace world {
 
@@ -67,6 +68,56 @@ public:
      * the @em sharp heights.
      */
     bool hasWorldVolume(bool useSmoothedHeights = true) const;
+
+//- Edge rings --------------------------------------------------------------------------
+
+    // Edge ring identifiers:
+    enum
+    {
+        OuterRing,
+        InnerRing
+    };
+
+    static de::String ringIdAsText(de::dint ringId);
+
+    class EdgeRing
+    {
+    public:
+        EdgeRing(ClientSubsector &owner, de::HEdge &first,
+                 de::dint edgeId = ClientSubsector::OuterRing);
+
+        ClientSubsector &owner() const;
+
+        de::String description() const;
+
+        de::dint ringId() const;
+
+        inline bool isInner() const { return ringId() == InnerRing; }
+        inline bool isOuter() const { return ringId() == OuterRing; }
+
+        bool isSelfReferencing() const;
+
+        de::HEdge &firstHEdge() const;
+
+        bool hasBackSubsector() const;
+
+        Subsector &backSubsector() const;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
+    /**
+     * Returns the total number of EdgeRings for the subsector.
+     */
+    de::dint edgeRingCount() const;
+
+    /**
+     * Iterate the EdgeRings of the subsector.
+     *
+     * @param callback  Function to call for each edge ring.
+     */
+    de::LoopResult forAllEdgeRings(std::function<de::LoopResult (EdgeRing const &)> func) const;
 
 //- Audio environment -------------------------------------------------------------------
 

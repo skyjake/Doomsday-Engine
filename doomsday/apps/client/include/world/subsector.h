@@ -115,11 +115,22 @@ public:
     de::dint subspaceCount() const;
 
     /**
+     * Convenient method returning the first subspace in the subsector.
+     */
+    ConvexSubspace &firstSubspace() const;
+
+    /**
      * Iterate ConvexSubspaces of the subsector.
      *
      * @param callback  Function to call for each ConvexSubspace.
      */
     de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> func) const;
+
+    /**
+     * Returns a list containing the first half-edge from each of the edge loops described
+     * by the subspace geometry.
+     */
+    QList<de::HEdge *> listUniqueBoundaryEdges() const;
 
 private:
     DENG2_PRIVATE(d)

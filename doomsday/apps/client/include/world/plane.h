@@ -124,8 +124,7 @@ public:
     /**
      * Returns a pointer to the Surface component of the plane (never @c nullptr).
      */
-    Surface       *surfacePtr();
-    Surface const *surfacePtr() const;
+    Surface *surfacePtr() const;
 
     /**
      * Change the normal of the plane to @a newNormal (which if necessary will

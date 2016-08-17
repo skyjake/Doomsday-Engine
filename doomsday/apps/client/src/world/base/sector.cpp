@@ -115,28 +115,44 @@ DENG2_PIMPL(Sector)
 
     struct Planes : public QList<Plane *>
     {
-        ~Planes() { qDeleteAll(*this); }
+        ~Planes() { clear(); }
+
+        void clear() {
+            qDeleteAll(*this);
+            QList<Plane *>::clear();
+        }
     };
 
     struct Subsectors : public QList<Subsector *>
     {
-        ~Subsectors() { qDeleteAll(*this); }
+        ~Subsectors() { clear(); }
+
+        void clear() {
+            qDeleteAll(*this);
+            QList<Subsector *>::clear();
+        }
     };
 
-    Planes planes;                      ///< Planes of the sector.
-    MapObjects mapObjects;              ///< All map-objects "in" one of the subsectors (not owned).
-    QList<LineSide *> sides;            ///< All line sides referencing the sector (not owned).
-    Subsectors subsectors;              ///< Traversable subsectors of the sector.
-    ThinkerT<SoundEmitter> emitter;     ///< Head of the sound emitter chain.
+    Planes planes;                   ///< Planes of the sector.
+    MapObjects mapObjects;           ///< All map-objects "in" one of the subsectors (not owned).
+    QList<LineSide *> sides;         ///< All line sides referencing the sector (not owned).
+    Subsectors subsectors;           ///< Traversable subsectors of the sector.
+    ThinkerT<SoundEmitter> emitter;  ///< Head of the sound emitter chain.
 
-    dfloat lightLevel = 0;              ///< Ambient light level.
-    Vector3f lightColor;                ///< Ambient light color.
+    dfloat lightLevel = 0;           ///< Ambient light level.
+    Vector3f lightColor;             ///< Ambient light color.
 
-    std::unique_ptr<GeomData> gdata;    ///< Additional geometry info/metrics (cache).
+    std::unique_ptr<GeomData> gdata; ///< Additional geometry info/metrics (cache).
 
-    dint validCount = 0;                ///< Used by legacy algorithms to prevent repeated processing.
+    dint validCount = 0;             ///< Used by legacy algorithms to prevent repeated processing.
 
     Impl(Public *i) : Base(i) {}
+
+    ~Impl()
+    {
+        // Ensure planes are cleared first (subsectors may include mappings).
+        planes.clear();
+    }
 
     /**
      * Returns the additional geometry info/metrics from the cache.
@@ -659,7 +675,7 @@ D_CMD(InspectSector)
         dint subsectorIndex = 0;
         sec->forAllSubsectors([&subsectorIndex] (Subsector const &subsec)
         {
-            LOG_SCR_MSG("%s: " _E(>))
+            LOG_SCR_MSG("%i: " _E(>))
                 << subsectorIndex
                 << subsec.description();
             subsectorIndex += 1;
