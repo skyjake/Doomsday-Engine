@@ -118,8 +118,8 @@ String ClientSubsector::EdgeRing::description() const
 {
     auto desc = String(    _E(l) "Ring: "       _E(.)_E(i) "%1" _E(.)
                        " " _E(l) "Half edge: "  _E(.)_E(i) "%2" _E(.))
-                  .arg(isOuter() ? "Outer" : "Inner")
-                  .arg(String("[0x%1]").arg(de::dintptr(d->first), 0, 16));
+                  .arg(ClientSubsector::ringIdAsText(ringId()).upperFirstChar())
+                  .arg(String("[0x%1]").arg(de::dintptr(&firstHEdge()), 0, 16));
 
     DENG2_DEBUG_ONLY(
         desc.prepend(String(_E(b) "EdgeRing " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
@@ -1470,6 +1470,19 @@ String ClientSubsector::description() const
         desc.prepend(String(_E(b) "ClientSubsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return Subsector::description() + "\n" + desc;
+}
+
+String ClientSubsector::ringIdAsText(dint ringId) // static
+{
+    switch (ringId)
+    {
+    case OuterRing: return "outer";
+    case InnerRing: return "inner";
+
+    default:
+        DENG2_ASSERT(!"ClientSubsector::ringIdAsText: Invalid ringId");
+        throw Error("ClientSubsector::ringIdAsText", "Unknown ring ID " + QString::number(ringId));
+    }
 }
 
 dint ClientSubsector::edgeRingCount() const
