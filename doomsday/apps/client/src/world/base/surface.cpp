@@ -229,26 +229,39 @@ Material *Surface::materialPtr() const
 
 Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
+    // Sides of selfreferencing map lines should never receive fix materials.
+    DENG2_ASSERT(!(isMissingFix && (parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing())));
+
     if (d->material == newMaterial)
         return *this;
 
-    // Update the missing-material-fix state.
-    if (!d->material)
+    d->materialIsMissingFix = false;
+    d->material = newMaterial;
+    if (d->material && isMissingFix)
     {
-        if (newMaterial && isMissingFix)
-        {
-            d->materialIsMissingFix = true;
+        d->materialIsMissingFix = true;
+    }
 
-            // Sides of selfreferencing map lines should never receive fix materials.
-            DENG2_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
+    // During map setup we log missing material fixes.
+    if (::ddMapSetup && d->materialIsMissingFix && d->material)
+    {
+        if (d->owner().type() == DMU_SIDE)
+        {
+            auto &side = d->owner().as<LineSide>();
+            dint section = (  this == &side.middle() ? LineSide::Middle
+                            : this == &side.bottom() ? LineSide::Bottom
+                            :                          LineSide::Top);
+
+            LOG_MAP_WARNING(  "%s of Line #%d is missing a material for the %s section."
+                            "\n  %s was chosen to complete the definition.")
+                << Line::sideIdAsText(side.sideId()).upperFirstChar()
+                << side.line().indexInMap()
+                << LineSide::sectionIdAsText(section)
+                << d->material->manifest().composeUri().asText();
         }
     }
-    else if (newMaterial && d->materialIsMissingFix)
-    {
-        d->materialIsMissingFix = false;
-    }
 
-    d->material = newMaterial;
+    // Notify interested parties.
     DENG2_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
 
     return *this;

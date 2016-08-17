@@ -18,6 +18,7 @@
  */
 
 #include "doomsday/world/material.h"
+
 #include "doomsday/console/cmd.h"
 #include "doomsday/res/Textures"
 #include "doomsday/resource/resources.h"
@@ -283,6 +284,20 @@ void Material::clearAllLayers()
     d->maybeCancelTextureDimensionsChangeNotification();
 
     qDeleteAll(d->layers); d->layers.clear();
+}
+
+bool Material::hasAnimatedTextureLayers() const
+{
+    for (Layer const *layer : d->layers)
+    {
+        if (   !layer->is<DetailTextureMaterialLayer>()
+            && !layer->is<ShineTextureMaterialLayer>())
+        {
+            if (layer->isAnimated())
+                return true;
+        }
+    }
+    return false;
 }
 
 int Material::layerCount() const

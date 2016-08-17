@@ -21,7 +21,6 @@
 #include "client/clientsubsector.h"
 
 #include "world/map.h"
-//#include "world/maputil.h"
 #include "world/blockmap.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -39,11 +38,6 @@
 
 #include "misc/face.h"
 #include "dd_main.h"  // verbose
-
-//#include <doomsday/world/Material>
-//#include <doomsday/world/Materials>
-//#include <doomsday/world/detailtexturemateriallayer.h>
-//#include <doomsday/world/shinetexturemateriallayer.h>
 
 #include <QtAlgorithms>
 #include <QHash>
@@ -87,7 +81,7 @@ static DotPath composeSurfacePath(Surface const &surface)
     case DMU_SIDE:
         return String("line#%1.%2.%3")
                  .arg(owner.as<LineSide>().line().indexInMap())
-                 .arg(Line::sideIdAsText(owner.as<LineSide>().isBack()))
+                 .arg(Line::sideIdAsText(owner.as<LineSide>().sideId()))
                  .arg(LineSide::sectionIdAsText(  &surface == &owner.as<LineSide>().middle() ? LineSide::Middle
                                                 : &surface == &owner.as<LineSide>().bottom() ? LineSide::Bottom
                                                 : LineSide::Top));
@@ -148,14 +142,8 @@ DENG2_PIMPL(ClientSubsector)
         {
             if (loop)
             {
-                if (loop->isOuter())
-                {
-                    outerLoop.reset(loop);
-                }
-                else
-                {
-                    innerLoops.append(loop);
-                }
+                if (loop->isOuter()) outerLoop.reset(loop);
+                else                 innerLoops.append(loop);
             }
             return *this;
         }
@@ -1162,6 +1150,7 @@ DENG2_PIMPL(ClientSubsector)
     }
 
     /// Observes Plane HeightChange.
+    /// @todo Optimize: Process only the mapping-affected surfaces -ds
     void planeHeightChanged(Plane &plane)
     {
         LOG_AS("ClientSubsector");

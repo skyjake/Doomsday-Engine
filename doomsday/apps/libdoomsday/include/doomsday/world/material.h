@@ -226,6 +226,8 @@ public:
      */
     void addLayerAt(Layer *layer, int index);
 
+    bool hasAnimatedTextureLayers() const;
+
     /**
      * Lookup a Layer by it's unique @a index.
      */
