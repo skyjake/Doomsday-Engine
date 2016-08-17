@@ -123,14 +123,6 @@ void Line::Side::Segment::setFrontFacing(bool yes)
 
 DENG2_PIMPL_NOREF(Line::Side)
 {
-    dint flags = 0;                 ///< @ref sdefFlags
-    Sector *sector = nullptr;       ///< Attributed sector (not owned).
-
-    QList<Segment *> segments;      ///< On "this" side, sorted.
-    bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
-
-    dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
-
     /**
      * Line side section of which there are three (middle, bottom and top).
      */
@@ -150,7 +142,6 @@ DENG2_PIMPL_NOREF(Line::Side)
 
         Sections(Side &side) : middle(side), bottom(side), top(side) {}
     };
-    std::unique_ptr<Sections> sections;
 
 #ifdef __CLIENT__
     /**
@@ -164,10 +155,21 @@ DENG2_PIMPL_NOREF(Line::Side)
         std::array<shadowcorner_t, 2> sideCorners;    ///< { left, right }
         de::dint updateFrame = 0;
     };
-    RadioData radioData;
 #endif
 
-    ~Impl() { qDeleteAll(segments); }
+    dint flags = 0;                 ///< @ref sdefFlags
+    Sector *sector = nullptr;       ///< Attributed sector (not owned).
+
+    QList<Segment *> segments;      ///< On "this" side, sorted.
+    bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
+
+    dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
+
+    std::unique_ptr<Sections> sections;
+
+#ifdef __CLIENT__
+    RadioData radioData;
+#endif
 
     /**
      * Retrieve the Section associated with @a sectionId.

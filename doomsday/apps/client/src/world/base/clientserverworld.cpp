@@ -52,7 +52,6 @@
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
-#  include "client/clientsubsector.h"
 #  include "gl/gl_main.h"
 #endif
 
@@ -75,6 +74,9 @@
 #include "Surface"
 #ifdef __CLIENT__
 #  include "world/contact.h"
+#  include "client/cledgeloop.h"
+#  include "client/clientsubsector.h"
+
 #  include "Hand"
 #  include "HueCircle"
 #  include "Lumobj"
@@ -588,12 +590,14 @@ DENG2_PIMPL(ClientServerWorld)
         /// @todo Refactor away:
         map->forAllSectors([] (Sector &sector)
         {
-            sector.forAllSubsectors([] (Subsector &subsec)
+            return sector.forAllSubsectors([] (Subsector &subsec)
             {
-                subsec.as<ClientSubsector>().fixSurfacesMissingMaterials();
-                return LoopContinue;
+                return subsec.as<ClientSubsector>().forAllEdgeLoops([] (ClEdgeLoop &loop)
+                {
+                    loop.fixSurfacesMissingMaterials();
+                    return LoopContinue;
+                });
             });
-            return LoopContinue;
         });
 #endif
 

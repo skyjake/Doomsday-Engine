@@ -94,7 +94,8 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/p_players.h"
-#  ifdef __CLIENT__
+#ifdef __CLIENT__
+#  include "client/cledgeloop.h"
 #  include "client/clientsubsector.h"
 #endif
 
@@ -2373,12 +2374,14 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
     /// @todo Refactor away.
     map.forAllSectors([] (Sector &sector)
     {
-        sector.forAllSubsectors([] (world::Subsector &subsec)
+        return sector.forAllSubsectors([] (world::Subsector &subsec)
         {
-            subsec.as<world::ClientSubsector>().fixSurfacesMissingMaterials();
-            return LoopContinue;
+            return subsec.as<world::ClientSubsector>().forAllEdgeLoops([] (world::ClEdgeLoop &loop)
+            {
+                loop.fixSurfacesMissingMaterials();
+                return LoopContinue;
+            });
         });
-        return LoopContinue;
     });
 #endif
 

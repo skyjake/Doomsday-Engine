@@ -21,21 +21,22 @@
 #ifndef DENG_WORLD_CLIENTSUBSECTOR_H
 #define DENG_WORLD_CLIENTSUBSECTOR_H
 
+#include <functional>
 #include <QBitArray>
 #include <QList>
-#include <functional>
 #include "world/audioenvironment.h"
-#include "Line"
-#include "Plane"
-#include "Sector"
-#include "Subsector"
+#include "world/line.h"
+#include "world/plane.h"
+#include "world/sector.h"
+#include "world/subsector.h"
 
 #include "render/lightgrid.h"
 
 class Shard;
-namespace de { class HEdge; }
 
 namespace world {
+
+class ClEdgeLoop;
 
 class ClientSubsector : public Subsector, public de::LightGrid::IBlockLightSource
 {
@@ -69,57 +70,29 @@ public:
      */
     bool hasWorldVolume(bool useSmoothedHeights = true) const;
 
-//- Edge rings --------------------------------------------------------------------------
+//- Edge loops --------------------------------------------------------------------------
 
-    // Edge ring identifiers:
+    // Edge loop identifiers:
     enum
     {
-        OuterRing,
-        InnerRing
+        OuterLoop,
+        InnerLoop
     };
 
-    static de::String ringIdAsText(de::dint ringId);
-
-    class EdgeRing
-    {
-    public:
-        EdgeRing(ClientSubsector &owner, de::HEdge &first,
-                 de::dint edgeId = ClientSubsector::OuterRing);
-
-        ClientSubsector &owner() const;
-
-        de::String description() const;
-
-        de::dint ringId() const;
-
-        inline bool isInner() const { return ringId() == InnerRing; }
-        inline bool isOuter() const { return ringId() == OuterRing; }
-
-        bool isSelfReferencing() const;
-
-        de::HEdge &firstHEdge() const;
-
-        bool hasBackSubsector() const;
-
-        Subsector &backSubsector() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
+    static de::String edgeLoopIdAsText(de::dint loopId);
 
     /**
-     * Returns the total number of EdgeRings for the subsector.
+     * Returns the total number of EdgeLoops for the subsector.
      */
-    de::dint edgeRingCount() const;
+    de::dint edgeLoopCount() const;
 
     /**
-     * Iterate the EdgeRings of the subsector.
+     * Iterate the EdgeLoops of the subsector.
      *
-     * @param callback  Function to call for each edge ring.
+     * @param callback  Function to call for each edge loop.
      */
-    de::LoopResult forAllEdgeRings(std::function<de::LoopResult (EdgeRing const &)> func) const;
-
-    void fixSurfacesMissingMaterials();
+    de::LoopResult forAllEdgeLoops(std::function<de::LoopResult (ClEdgeLoop       &)> func);
+    de::LoopResult forAllEdgeLoops(std::function<de::LoopResult (ClEdgeLoop const &)> func) const;
 
 //- Audio environment -------------------------------------------------------------------
 
