@@ -462,7 +462,7 @@ def handleCompletedTasks():
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('source', forClient='ubuntu')
+            newTask('source', forClient='master')
 
         elif task == 'source':
             newTask('sign', forClient='master')
@@ -476,7 +476,7 @@ def handleCompletedTasks():
             newTask('update_feed', forClient='master')
             
         elif task == 'update_feed':
-            newTask('mirror_files', forClient='ubuntu')
+            newTask('mirror_files', forClient='master')
     
     
 def autobuild(cmd):
