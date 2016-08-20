@@ -37,7 +37,7 @@ DENG2_PIMPL(ClEdgeLoop)
 {
     ClientSubsector &owner;
     HEdge *firstHEdge = nullptr;
-    bool isInner = false;
+    dint loopId = 0;
 
     Impl(Public *i, ClientSubsector &owner)
         : Base(i)
@@ -186,7 +186,7 @@ ClEdgeLoop::ClEdgeLoop(ClientSubsector &owner, HEdge &first, dint loopId)
     : d(new Impl(this, owner))
 {
     d->firstHEdge = &first;
-    d->isInner    = loopId == ClientSubsector::InnerLoop;
+    d->loopId     = loopId;
 }
 
 ClientSubsector &ClEdgeLoop::owner() const
@@ -197,10 +197,9 @@ ClientSubsector &ClEdgeLoop::owner() const
 String ClEdgeLoop::description() const
 {
     auto desc = String(    _E(l) "Loop: "       _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Half edge: "  _E(.)_E(i) "%2" _E(.))
+                       " " _E(l) "Half-edge: "  _E(.)_E(i) "%2" _E(.))
                   .arg(ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar())
-                  .arg(String("[0x%1]").arg(de::dintptr(&firstHEdge()), 0, 16));
-
+                  .arg(String("[0x%1]").arg(de::dintptr(d->firstHEdge), 0, 16));
     DENG2_DEBUG_ONLY(
         desc.prepend(String(_E(b) "ClEdgeLoop " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
@@ -209,10 +208,20 @@ String ClEdgeLoop::description() const
 
 dint ClEdgeLoop::loopId() const
 {
-    return d->isInner ? ClientSubsector::InnerLoop : ClientSubsector::OuterLoop;
+    return d->loopId;
 }
 
-HEdge &ClEdgeLoop::firstHEdge() const
+bool ClEdgeLoop::isInner() const
+{
+    return d->loopId == ClientSubsector::InnerLoop;
+}
+
+bool ClEdgeLoop::isOuter() const
+{
+    return d->loopId == ClientSubsector::OuterLoop;
+}
+
+HEdge &ClEdgeLoop::first() const
 {
     DENG2_ASSERT(d->firstHEdge);
     return *d->firstHEdge;
@@ -220,23 +229,27 @@ HEdge &ClEdgeLoop::firstHEdge() const
 
 bool ClEdgeLoop::isSelfReferencing() const
 {
-    return firstHEdge().mapElementAs<LineSideSegment>().line().isSelfReferencing();
+    DENG2_ASSERT(d->firstHEdge);
+    return d->firstHEdge->mapElementAs<LineSideSegment>().line().isSelfReferencing();
 }
 
 bool ClEdgeLoop::hasBackSubsector() const
 {
-    return firstHEdge().hasTwin()
-        && firstHEdge().twin().hasFace()
-        && firstHEdge().twin().face().mapElementAs<ConvexSubspace>().hasSubsector();
+    DENG2_ASSERT(d->firstHEdge);
+    return d->firstHEdge->hasTwin()
+        && d->firstHEdge->twin().hasFace()
+        && d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().hasSubsector();
 }
 
 ClientSubsector &ClEdgeLoop::backSubsector() const
 {
-    return firstHEdge().twin().face().mapElementAs<ConvexSubspace>().subsector().as<ClientSubsector>();
+    DENG2_ASSERT(d->firstHEdge);
+    return d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().subsector().as<ClientSubsector>();
 }
 
 void ClEdgeLoop::fixSurfacesMissingMaterials()
 {
+    DENG2_ASSERT(d->firstHEdge);
     SubsectorCirculator it(d->firstHEdge);
     do
     {

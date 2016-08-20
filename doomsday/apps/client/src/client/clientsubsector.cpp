@@ -592,7 +592,7 @@ DENG2_PIMPL(ClientSubsector)
             if (loop.hasBackSubsector())
             {
                 auto &backSubsec = loop.backSubsector().as<ClientSubsector>();
-                SubsectorCirculator it(&loop.firstHEdge());
+                SubsectorCirculator it(&loop.first());
                 do
                 {
                     if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -612,7 +612,7 @@ DENG2_PIMPL(ClientSubsector)
                             if (!doFloor) break;
                         }
                     }
-                } while (&it.next() != &loop.firstHEdge());
+                } while (&it.next() != &loop.first());
             }
         }
 
@@ -627,7 +627,7 @@ DENG2_PIMPL(ClientSubsector)
             if (loop->hasBackSubsector())
             {
                 auto &backSubsec = loop->backSubsector().as<ClientSubsector>();
-                SubsectorCirculator it(&loop->firstHEdge());
+                SubsectorCirculator it(&loop->first());
                 do
                 {
                     if (it->hasMapElement() // BSP errors may fool the circulator wrt interior edges -ds
@@ -644,7 +644,7 @@ DENG2_PIMPL(ClientSubsector)
                             backSubsec.d->clearMapping(Sector::Ceiling);
                         }
                     }
-                } while (&it.next() != &loop->firstHEdge());
+                } while (&it.next() != &loop->first());
             }
         }
     }
@@ -990,10 +990,10 @@ DENG2_PIMPL(ClientSubsector)
 
         if (!ds.needUpdate) return;
 
-        LOGDEV_MAP_XVERBOSE_DEBUGONLY("  decorating %s%s",
-            composeSurfacePath(surface)
-            << (surface.parent().type() == DMU_PLANE
-                && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
+        LOGDEV_MAP_XVERBOSE_DEBUGONLY("  decorating %s%s"
+            , composeSurfacePath(surface)
+                << (surface.parent().type() == DMU_PLANE
+                    && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
         );
 
         ds.markForUpdate(false);
@@ -1022,21 +1022,22 @@ DENG2_PIMPL(ClientSubsector)
         if (::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
-                                      , thisPublic << self.sector().indexInMap());
+            , thisPublic << self.sector().indexInMap()
+        );
 
         // Mark surfaces of the edge loops.
         self.forAllEdgeLoops([this, &plane, &yes] (ClEdgeLoop const &loop)
         {
-            SubsectorCirculator it(&loop.firstHEdge());
+            SubsectorCirculator it(&loop.first());
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
                     if (    &plane == &self.visPlane(plane.indexInSector())
                         || (&plane == (it->hasTwin() && it->twin().hasFace()
-                                        ? &it->twin().face().mapElementAs<ConvexSubspace>()
-                                                .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
-                                        : nullptr)))
+                                       ? &it->twin().face().mapElementAs<ConvexSubspace>()
+                                                  .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
+                                       : nullptr)))
                     {
                         LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
                         side.forAllSurfaces([this, &yes] (Surface &surface)
@@ -1047,7 +1048,7 @@ DENG2_PIMPL(ClientSubsector)
                         });
                     }
                 }
-            } while (&it.next() != &loop.firstHEdge());
+            } while (&it.next() != &loop.first());
             return LoopContinue;
         });
 
@@ -1063,12 +1064,13 @@ DENG2_PIMPL(ClientSubsector)
         if (::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
-                                      , thisPublic << self.sector().indexInMap());
+            , thisPublic << self.sector().indexInMap()
+        );
 
         // Surfaces of the edge loops.
         self.forAllEdgeLoops([this, &material, &yes] (ClEdgeLoop const &loop)
         {
-            SubsectorCirculator it(&loop.firstHEdge());
+            SubsectorCirculator it(&loop.first());
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -1084,7 +1086,7 @@ DENG2_PIMPL(ClientSubsector)
                         return LoopContinue;
                     });
                 }
-            } while (&it.next() != &loop.firstHEdge());
+            } while (&it.next() != &loop.first());
             return LoopContinue;
         });
 
@@ -1235,7 +1237,6 @@ DENG2_PIMPL(ClientSubsector)
     void sectorLightLevelChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
         DENG2_ASSERT(&changed == &self.sector());
-
         LOG_AS("ClientSubsector");
         if (self.sector().map().hasLightGrid())
         {
@@ -1247,7 +1248,6 @@ DENG2_PIMPL(ClientSubsector)
     void sectorLightColorChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
         DENG2_ASSERT(&changed == &self.sector());
-
         LOG_AS("ClientSubsector");
         if (self.sector().map().hasLightGrid())
         {
@@ -1783,7 +1783,7 @@ void ClientSubsector::decorate()
     // Surfaces of the edge loops.
     forAllEdgeLoops([this] (ClEdgeLoop const &loop)
     {
-        SubsectorCirculator it(&loop.firstHEdge());
+        SubsectorCirculator it(&loop.first());
         do
         {
             if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
@@ -1795,7 +1795,7 @@ void ClientSubsector::decorate()
                     return LoopContinue;
                 });
             }
-        } while (&it.next() != &loop.firstHEdge());
+        } while (&it.next() != &loop.first());
         return LoopContinue;
     });
 

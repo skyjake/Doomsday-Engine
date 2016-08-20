@@ -31,7 +31,7 @@ class ClEdgeLoop
 {
 public:
     ClEdgeLoop(ClientSubsector &owner, de::HEdge &first,
-               de::dint edgeId = ClientSubsector::OuterLoop);
+               de::dint loopId = ClientSubsector::OuterLoop);
 
     ClientSubsector &owner() const;
 
@@ -39,16 +39,16 @@ public:
 
     de::dint loopId() const;
 
-    inline bool isInner() const { return loopId() == ClientSubsector::InnerLoop; }
-    inline bool isOuter() const { return loopId() == ClientSubsector::OuterLoop; }
+    bool isInner() const;
+    bool isOuter() const;
 
     bool isSelfReferencing() const;
-
-    de::HEdge &firstHEdge() const;
 
     bool hasBackSubsector() const;
 
     ClientSubsector &backSubsector() const;
+
+    de::HEdge &first() const;
 
     /**
      * Do as in the original DOOM if the texture has not been defined - extend the
