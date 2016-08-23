@@ -1,4 +1,4 @@
-/** @file inputdevicehatcontrol.cpp  Hat control for a logical input device.
+/** @file buttoninputcontrol.cpp  Button control for a logical input device.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,47 +18,67 @@
  * 02110-1301 USA</small>
  */
 
-#include "ui/inputdevicehatcontrol.h"
+#include "ui/buttoninputcontrol.h"
 #include <de/timer.h> // Timer_RealMilliseconds()
 
 using namespace de;
 
-InputDeviceHatControl::InputDeviceHatControl(String const &name)
+ButtonInputControl::ButtonInputControl(String const &name)
 {
     setName(name);
 }
 
-InputDeviceHatControl::~InputDeviceHatControl()
+ButtonInputControl::~ButtonInputControl()
 {}
 
-dint InputDeviceHatControl::position() const
+bool ButtonInputControl::isDown() const
 {
-    return _pos;
+    return _isDown;
 }
 
-void InputDeviceHatControl::setPosition(dint newPosition)
+void ButtonInputControl::setDown(bool yes)
 {
-    _pos  = newPosition;
-    _time = Timer_RealMilliseconds(); // Remember when the change occured.
+    bool const oldDown = _isDown;
 
-    // We can clear the expiration when centered.
-    if (_pos < 0)
+    _isDown = yes;
+
+    if (_isDown != oldDown)
     {
+        // Remember when the change occurred.
+        _time = Timer_RealMilliseconds();
+    }
+
+    if (_isDown)
+    {
+        // This will get cleared after the state is checked by someone.
+        setBindContextAssociation(Triggered);
+    }
+    else
+    {
+        // We can clear the expiration when the key is released.
         setBindContextAssociation(Expired, UnsetFlags);
     }
+
 }
 
-duint InputDeviceHatControl::time() const
+String ButtonInputControl::description() const
+{
+    return String(_E(b) "%1 " _E(.) "(Button)").arg(fullName());
+}
+
+bool ButtonInputControl::inDefaultState() const
+{
+    return !_isDown; // Not depressed?
+}
+
+void ButtonInputControl::reset()
+{
+    setBindContextAssociation(Triggered | Expired, UnsetFlags);
+    _isDown = false;
+    _time   = 0;
+}
+
+duint ButtonInputControl::time() const
 {
     return _time;
-}
-
-String InputDeviceHatControl::description() const
-{
-    return String(_E(b) "%1 " _E(.) "(Hat)").arg(fullName());
-}
-
-bool InputDeviceHatControl::inDefaultState() const
-{
-    return _pos < 0; // Centered?
 }

@@ -52,9 +52,9 @@
 #include "ui/clientwindowsystem.h"
 #include "ui/inputdebug.h"  // Debug visualization.
 #include "ui/inputdevice.h"
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
+#include "ui/axisinputcontrol.h"
+#include "ui/buttoninputcontrol.h"
+#include "ui/hatinputcontrol.h"
 #include "ui/controllerpresets.h"
 #include "ui/sys_input.h"
 
@@ -62,7 +62,8 @@
 
 using namespace de;
 
-#define DEFAULT_JOYSTICK_DEADZONE  .05f  ///< 5%
+#define DEFAULT_STICK_DEADZONE  .05f  ///< 5%
+#define DEFAULT_STICK_FACTOR    1.0
 
 #define MAX_AXIS_FILTER  40
 
@@ -77,7 +78,13 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
     // DDKEYs are used as button indices.
     for (int i = 0; i < 256; ++i)
     {
-        keyboard->addButton(new InputDeviceButtonControl);
+        char const *shortName = B_ShortNameForKey(i, true);
+        String keyName(shortName? shortName : "");
+        if (keyName.isEmpty())
+        {
+            keyName = String::format("unbindable%03i", i);
+        }
+        keyboard->addButton(new ButtonInputControl(keyName));
     }
 
     return keyboard;
@@ -91,7 +98,7 @@ static InputDevice *makeMouse(String const &name, String const &title = "")
 
     for (int i = 0; i < IMB_MAXBUTTONS; ++i)
     {
-        mouse->addButton(new InputDeviceButtonControl);
+        mouse->addButton(new ButtonInputControl);
     }
 
     // Some of the mouse buttons have symbolic names.
@@ -105,14 +112,14 @@ static InputDevice *makeMouse(String const &name, String const &title = "")
 
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
-    InputDeviceAxisControl *axis;
-    mouse->addAxis(axis = new InputDeviceAxisControl("x", InputDeviceAxisControl::Pointer));
+    AxisInputControl *axis;
+    mouse->addAxis(axis = new AxisInputControl("x", AxisInputControl::Pointer));
     //axis->setFilter(1); // On by default.
-    axis->setScale(1.f/1000);
+    axis->setScale(10); //1.f/1000);
 
-    mouse->addAxis(axis = new InputDeviceAxisControl("y", InputDeviceAxisControl::Pointer));
+    mouse->addAxis(axis = new AxisInputControl("y", AxisInputControl::Pointer));
     //axis->setFilter(1); // On by default.
-    axis->setScale(1.f/1000);
+    axis->setScale(10); //1.f/1000);
 
     return mouse;
 }
@@ -125,7 +132,7 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
 
     for (int i = 0; i < IJOY_MAXBUTTONS; ++i)
     {
-        joy->addButton(new InputDeviceButtonControl);
+        joy->addButton(new ButtonInputControl(String::format("button%i", i + 1)));
     }
 
     for (int i = 0; i < IJOY_MAXAXES; ++i)
@@ -139,15 +146,15 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
         {
             sprintf(name, "axis%02i", i + 1);
         }
-        auto *axis = new InputDeviceAxisControl(name, InputDeviceAxisControl::Stick);
+        auto *axis = new AxisInputControl(name, AxisInputControl::Stick);
         joy->addAxis(axis);
-        axis->setScale(1.0f / IJOY_AXISMAX);
-        axis->setDeadZone(DEFAULT_JOYSTICK_DEADZONE);
+        //axis->setScale(1.0f / IJOY_AXISMAX);
+        axis->setDeadZone(DEFAULT_STICK_DEADZONE);
     }
 
     for (int i = 0; i < IJOY_MAXHATS; ++i)
     {
-        joy->addHat(new InputDeviceHatControl);
+        joy->addHat(new HatInputControl(String::format("hat%i", i + 1)));
     }
 
     return joy;
@@ -159,14 +166,14 @@ static InputDevice *makeHeadTracker(String const &name, String const &title)
 
     head->setTitle(title);
 
-    auto *axis = new InputDeviceAxisControl("yaw", InputDeviceAxisControl::Stick);
+    auto *axis = new AxisInputControl("yaw", AxisInputControl::Stick);
     head->addAxis(axis);
     axis->setRawInput();
 
-    head->addAxis(axis = new InputDeviceAxisControl("pitch", InputDeviceAxisControl::Stick));
+    head->addAxis(axis = new AxisInputControl("pitch", AxisInputControl::Stick));
     axis->setRawInput();
 
-    head->addAxis(axis = new InputDeviceAxisControl("roll", InputDeviceAxisControl::Stick));
+    head->addAxis(axis = new AxisInputControl("roll", AxisInputControl::Stick));
     axis->setRawInput();
 
     return head;
@@ -336,10 +343,11 @@ DENG2_PIMPL(InputSystem)
 
         // Initialize script bindings.
         binder.initNew()
-                << DENG2_FUNC(InputSystem_BindEvent, "bindEvent", "event" << "command")
+                << DENG2_FUNC(InputSystem_BindEvent,   "bindEvent",   "event" << "command")
                 << DENG2_FUNC(InputSystem_BindControl, "bindControl", "control" << "impulse");
 
-        binder.module().addNumber("DEADZONE_DEFAULT", DEFAULT_JOYSTICK_DEADZONE).setReadOnly();
+        binder.module().addNumber("DEFAULT_STICK_DEADZONE", DEFAULT_STICK_DEADZONE).setReadOnly();
+        binder.module().addNumber("DEFAULT_STICK_FACTOR",   DEFAULT_STICK_FACTOR).setReadOnly();
 
         App::scriptSystem().addNativeModule("Input", binder.module());
 
@@ -487,9 +495,9 @@ DENG2_PIMPL(InputSystem)
             // An event may have modified device-control state: update the axis positions.
             for (InputDevice *device : devices)
             {
-                device->forAllControls([&ticLength] (InputDeviceControl &ctrl)
+                device->forAllControls([&ticLength] (InputControl &ctrl)
                 {
-                    if (auto *axis = ctrl.maybeAs<InputDeviceAxisControl>())
+                    if (auto *axis = ctrl.maybeAs<AxisInputControl>())
                     {
                         axis->update(ticLength);
                     }
@@ -800,7 +808,7 @@ DENG2_PIMPL(InputSystem)
         // Clear all existing associations.
         for (InputDevice *device : devices)
         {
-            device->forAllControls([] (InputDeviceControl &ctrl)
+            device->forAllControls([] (InputControl &ctrl)
             {
                 ctrl.clearBindContextAssociation();
                 return LoopContinue;
@@ -818,7 +826,7 @@ DENG2_PIMPL(InputSystem)
             {
                 CommandBinding bind(rec);
 
-                InputDeviceControl *ctrl = nullptr;
+                InputControl *ctrl = nullptr;
                 switch (bind.geti("type"))
                 {
                 case E_AXIS:   ctrl = &self.device(bind.geti("deviceId")).axis  (bind.geti("controlId")); break;
@@ -846,7 +854,7 @@ DENG2_PIMPL(InputSystem)
                 ImpulseBinding bind(rec);
                 InputDevice &dev = self.device(bind.geti("deviceId"));
 
-                InputDeviceControl *ctrl = nullptr;
+                InputControl *ctrl = nullptr;
                 switch (bind.geti("type"))
                 {
                 case IBD_AXIS:   ctrl = &dev.axis  (bind.geti("controlId")); break;
@@ -874,7 +882,7 @@ DENG2_PIMPL(InputSystem)
 
                 if (device->isActive() && context->willAcquire(deviceId))
                 {
-                    device->forAllControls([&context] (InputDeviceControl &ctrl)
+                    device->forAllControls([&context] (InputControl &ctrl)
                     {
                         if (!ctrl.hasBindContext())
                         {
@@ -890,7 +898,7 @@ DENG2_PIMPL(InputSystem)
         // the devices and see if any of the states need to be expired.
         for (InputDevice *device : devices)
         {
-            device->forAllControls([] (InputDeviceControl &ctrl)
+            device->forAllControls([] (InputControl &ctrl)
             {
                 if (!ctrl.inDefaultState())
                 {
@@ -987,9 +995,9 @@ void InputSystem::initAllDevices()
 
     d->addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
 
-    d->addDevice(makeJoystick("joy", "Joystick"))->activate(Joystick_IsPresent()); // A joystick may not be present.
+    d->addDevice(makeJoystick("joy", "Controller"))->activate(Joystick_IsPresent()); // A joystick may not be present.
 
-    /// @todo: Add support for multiple joysticks (just some generics, for now).
+    /// @todo: Add support for multiple game controllers (just some generics, for now).
     d->addDevice(new InputDevice("joy2"));
     d->addDevice(new InputDevice("joy3"));
     d->addDevice(new InputDevice("joy4"));

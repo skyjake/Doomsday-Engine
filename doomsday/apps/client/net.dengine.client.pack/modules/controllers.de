@@ -25,7 +25,13 @@ record Gamepad()
     
     def resetDeadzones()
         for var in Console.listVars('input-joy-.*-deadzone')
-            Console.set(var, Input.DEADZONE_DEFAULT)
+            Console.set(var, Input.DEFAULT_STICK_DEADZONE)
+        end
+        for var in Console.listVars('input-joy-.*-factor')
+            Console.set(var, Input.DEFAULT_STICK_FACTOR)
+        end
+        for var in Console.listVars('input-joy-.*-offset')
+            Console.set(var, 0)
         end
     end
 end
@@ -79,7 +85,7 @@ record PlaystationGamepad(Gamepad)
         rightVert = 'joy-w'
         
         # Common controls, suitable for all games.
-        event('shortcut', select, 'menu')
+        event('shortcut', play, 'menu')
 
         event('menu', o, 'menuback')
         event('menu', x, 'menuselect')
@@ -88,16 +94,15 @@ record PlaystationGamepad(Gamepad)
         event('menu', left, 'menuleft', repeat=True)
         event('menu', right, 'menuright', repeat=True)
 
-        event('game', play, 'pause')
+        event('game', L1, 'pause')
         event('game', o, 'impulse jump')
         event('game', sqr, 'impulse use')
-        event('game', x, 'impulse use')
         event('game', up, 'impulse nextweapon')
         event('game', down, 'impulse prevweapon')
         event('game', rightPress, 'impulse lookcenter', condition='modifier-2-up')
-        event('game', L1, 'impulse automap')        
+        event('game', select, 'impulse automap')        
 
-        control(R2, 'flymode') # modifier 2
+        control(R1, 'flymode') # modifier 2
         control(rightVert, 'zfly', inverse=True, condition='modifier-2-down')
         event('game', rightPress, 'impulse falldown', condition='modifier-2-down')
 
@@ -105,7 +110,8 @@ record PlaystationGamepad(Gamepad)
         control(leftVert, 'walk', inverse=True)
         control(rightHoriz, 'turn')
         control(rightVert, 'look', inverse=True, condition='modifier-2-up')
-        control(R1, 'attack')
+        control(x, 'attack')
+        control(R2, 'attack')
         control(L2, 'speed')
 
         event('map', rightPress, 'impulse follow')
@@ -118,10 +124,12 @@ record PlaystationGamepad(Gamepad)
                 
         # Inventory controls for Heretic and Hexen.
         if App.gamePlugin() in ['heretic', 'hexen']
-            event('game', left, 'impulse previtem')
+            event('game', left,  'impulse previtem')
             event('game', right, 'impulse nextitem')
-            event('game', tri, 'impulse useitem')
+            event('game', tri,   'impulse useitem')
         end
+        
+        self.resetDeadzones()
         
         # Deadzones.
         for axis in ['x', 'y', 'z', 'w']
@@ -130,5 +138,93 @@ record PlaystationGamepad(Gamepad)
     end
 end
 
-GenericGamepad().register()
-PlaystationGamepad('PS3', ['PLAYSTATION\(R\)3 Controller']).register()
+record XboxOneGamepad(Gamepad)
+    def __init__(id, regex): self.Gamepad->__init__(id, regex)
+    def bind()               
+        # Names for buttons and other controls.
+        a = 'joy-button1'
+        b = 'joy-button2'
+        x = 'joy-button3'
+        y = 'joy-button4'
+        leftPress  = 'joy-button7'
+        rightPress = 'joy-button8'
+        menu  = 'joy-button9'
+        view  = 'joy-button10'
+        xbox  = 'joy-button11'
+        up    = 'joy-button12'
+        down  = 'joy-button13'
+        left  = 'joy-button14'
+        right = 'joy-button15'
+        LB = 'joy-button5'
+        RB = 'joy-button6'
+        LT = 'joy-z' 
+        RT = 'joy-axis06'
+        leftHoriz  = 'joy-x'
+        leftVert   = 'joy-y'
+        rightHoriz = 'joy-w'
+        rightVert  = 'joy-axis05'
+        
+        # Common controls, suitable for all games.
+        event('shortcut', menu, 'menu')
+        event('shortcut', xbox, 'menu')
+
+        event('menu', b, 'menuback')
+        event('menu', a, 'menuselect')
+        event('menu', up, 'menuup', repeat=True)
+        event('menu', down, 'menudown', repeat=True)
+        event('menu', left, 'menuleft', repeat=True)
+        event('menu', right, 'menuright', repeat=True)
+
+        event('game', LB, 'pause')
+        event('game', view, 'impulse automap')
+        event('game', b, 'impulse jump')
+        event('game', x, 'impulse use')
+        event('game', up, 'impulse nextweapon')
+        event('game', down, 'impulse prevweapon')
+        event('game', rightPress, 'impulse lookcenter', condition='modifier-2-up')
+
+        control(RB, 'flymode') # modifier 2
+        control(rightVert, 'zfly', inverse=True, condition='modifier-2-down')
+        event('game', rightPress, 'impulse falldown', condition='modifier-2-down')
+
+        control(leftHoriz, 'sidestep')
+        control(leftVert, 'walk', inverse=True)
+        control(rightHoriz, 'turn')
+        control(rightVert, 'look', inverse=True, condition='modifier-2-up')
+        control(a, 'attack')
+        control(RT, 'attack')
+        control(LT, 'speed')
+
+        event('map', rightPress, 'impulse follow')
+        event('map', leftPress, 'impulse rotate')
+
+        control(rightHoriz, 'mappanx')
+        control(rightVert, 'mappany', inverse=True)
+        control(RT, 'mapzoom')
+        control(RB, 'mapzoom', inverse=True)
+
+        # Inventory controls for Heretic and Hexen.
+        if App.gamePlugin() in ['heretic', 'hexen']
+            event('game', left,  'impulse previtem')
+            event('game', right, 'impulse nextitem')
+            event('game', y,     'impulse useitem')
+        end
+
+        self.resetDeadzones()
+
+        # Deadzones.
+        for axis in ['x', 'y', 'w', 'axis05']
+            Console.set('input-joy-%s-deadzone' % axis, 0.15)
+        end
+        
+        # Thrusters are stick axes, but we want them to go from 0 to 1.
+        Console.set('input-%s-factor' % LT, Input.DEFAULT_STICK_FACTOR/2)
+        Console.set('input-%s-offset' % LT, 0.5)
+        Console.set('input-%s-factor' % RT, Input.DEFAULT_STICK_FACTOR/2)
+        Console.set('input-%s-offset' % RT, 0.5)
+    end
+end
+
+GenericGamepad    ().register()
+PlaystationGamepad('PS3',      ['PLAYSTATION\(R\)3 Controller']).register()
+XboxOneGamepad    ('Xbox One', ['.*Xbox One.*']).register()

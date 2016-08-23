@@ -19,106 +19,15 @@
  */
 
 #include "ui/inputdevice.h"
+#include "ui/joystick.h"
+#include "ui/axisinputcontrol.h"
+#include "ui/buttoninputcontrol.h"
+#include "ui/hatinputcontrol.h"
 #include <QList>
 #include <QtAlgorithms>
 #include <de/Log>
 
-/// @todo: remove:
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
-/// end todo
-
 using namespace de;
-
-DENG2_PIMPL_NOREF(InputDevice::Control)
-{
-    String name;  ///< Symbolic
-    InputDevice *device = nullptr;
-    BindContextAssociation flags = DefaultFlags;
-    BindContext *bindContext     = nullptr;
-    BindContext *prevBindContext = nullptr;
-};
-
-InputDevice::Control::Control(InputDevice *device) : d(new Impl)
-{
-    setDevice(device);
-}
-
-InputDevice::Control::~Control()
-{}
-
-String InputDevice::Control::name() const
-{
-    return d->name;
-}
-
-void InputDevice::Control::setName(String const &newName)
-{
-    d->name = newName;
-}
-
-String InputDevice::Control::fullName() const
-{
-    String desc;
-    if (hasDevice()) desc += device().name() + "-";
-    desc += (d->name.isEmpty()? "<unnamed>" : d->name);
-    return desc;
-}
-
-InputDevice &InputDevice::Control::device() const
-{
-    if (d->device) return *d->device;
-    /// @throw MissingDeviceError  Missing InputDevice attribution.
-    throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
-}
-
-bool InputDevice::Control::hasDevice() const
-{
-    return d->device != nullptr;
-}
-
-void InputDevice::Control::setDevice(InputDevice *newDevice)
-{
-    d->device = newDevice;
-}
-
-BindContext *InputDevice::Control::bindContext() const
-{
-    return d->bindContext;
-}
-
-void InputDevice::Control::setBindContext(BindContext *newContext)
-{
-    d->bindContext = newContext;
-}
-
-InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
-{
-    return d->flags;
-}
-
-void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
-{
-    applyFlagOperation(d->flags, flagsToChange, op);
-}
-
-void InputDevice::Control::clearBindContextAssociation()
-{
-    d->prevBindContext = d->bindContext;
-    d->bindContext     = nullptr;
-    setBindContextAssociation(Triggered, UnsetFlags);
-}
-
-void InputDevice::Control::expireBindContextAssociationIfChanged()
-{
-    // No change?
-    if (d->bindContext == d->prevBindContext) return;
-
-    // No longer valid.
-    setBindContextAssociation(Expired);
-    setBindContextAssociation(Triggered, UnsetFlags); // Not any more.
-}
 
 DENG2_PIMPL(InputDevice)
 {
@@ -126,14 +35,9 @@ DENG2_PIMPL(InputDevice)
     String title;         ///< Human-friendly title.
     String name;          ///< Symbolic name.
 
-    typedef QList<InputDeviceAxisControl *> Axes;
-    Axes axes;
-
-    typedef QList<InputDeviceButtonControl *> Buttons;
-    Buttons buttons;
-
-    typedef QList<InputDeviceHatControl *> Hats;
-    Hats hats;
+    QList<  AxisInputControl *> axes;
+    QList<ButtonInputControl *> buttons;
+    QList<   HatInputControl *> hats;
 
     Impl(Public *i) : Base(i) {}
 
@@ -189,7 +93,6 @@ void InputDevice::setTitle(String const &newTitle)
     d->title = newTitle;
 }
 
-/// @todo: Device title should be updated to include the product name if known (joysticks).
 String InputDevice::description() const
 {
     String desc;
@@ -305,14 +208,14 @@ bool InputDevice::hasAxis(de::dint id) const
     return (id >= 0 && id < d->axes.count());
 }
 
-InputDeviceAxisControl &InputDevice::axis(dint id) const
+AxisInputControl &InputDevice::axis(dint id) const
 {
     if (hasAxis(id)) return *d->axes.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
 }
 
-void InputDevice::addAxis(InputDeviceAxisControl *axis)
+void InputDevice::addAxis(AxisInputControl *axis)
 {
     if (!axis) return;
     d->axes.append(axis);
@@ -329,14 +232,14 @@ bool InputDevice::hasButton(de::dint id) const
     return (id >= 0 && id < d->buttons.count());
 }
 
-InputDeviceButtonControl &InputDevice::button(dint id) const
+ButtonInputControl &InputDevice::button(dint id) const
 {
     if (hasButton(id)) return *d->buttons.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
 }
 
-void InputDevice::addButton(InputDeviceButtonControl *button)
+void InputDevice::addButton(ButtonInputControl *button)
 {
     if (!button) return;
     d->buttons.append(button);
@@ -353,14 +256,14 @@ bool InputDevice::hasHat(de::dint id) const
     return (id >= 0 && id < d->hats.count());
 }
 
-InputDeviceHatControl &InputDevice::hat(dint id) const
+HatInputControl &InputDevice::hat(dint id) const
 {
     if (hasHat(id)) return *d->hats.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
 }
 
-void InputDevice::addHat(InputDeviceHatControl *hat)
+void InputDevice::addHat(HatInputControl *hat)
 {
     if (!hat) return;
     d->hats.append(hat);
@@ -386,4 +289,95 @@ void InputDevice::consoleRegister()
     {
         hat->consoleRegister();
     }
+}
+
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(InputDevice::Control)
+{
+    String name;  ///< Symbolic
+    InputDevice *device = nullptr;
+    BindContextAssociation flags = DefaultFlags;
+    BindContext *bindContext     = nullptr;
+    BindContext *prevBindContext = nullptr;
+};
+
+InputDevice::Control::Control(InputDevice *device) : d(new Impl)
+{
+    setDevice(device);
+}
+
+InputDevice::Control::~Control()
+{}
+
+String InputDevice::Control::name() const
+{
+    return d->name;
+}
+
+void InputDevice::Control::setName(String const &newName)
+{
+    d->name = newName;
+}
+
+String InputDevice::Control::fullName() const
+{
+    String desc;
+    if (hasDevice()) desc += device().name() + "-";
+    desc += (d->name.isEmpty()? "<unnamed>" : d->name);
+    return desc;
+}
+
+InputDevice &InputDevice::Control::device() const
+{
+    if (d->device) return *d->device;
+    /// @throw MissingDeviceError  Missing InputDevice attribution.
+    throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
+}
+
+bool InputDevice::Control::hasDevice() const
+{
+    return d->device != nullptr;
+}
+
+void InputDevice::Control::setDevice(InputDevice *newDevice)
+{
+    d->device = newDevice;
+}
+
+BindContext *InputDevice::Control::bindContext() const
+{
+    return d->bindContext;
+}
+
+void InputDevice::Control::setBindContext(BindContext *newContext)
+{
+    d->bindContext = newContext;
+}
+
+InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
+{
+    return d->flags;
+}
+
+void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
+{
+    applyFlagOperation(d->flags, flagsToChange, op);
+}
+
+void InputDevice::Control::clearBindContextAssociation()
+{
+    d->prevBindContext = d->bindContext;
+    d->bindContext     = nullptr;
+    setBindContextAssociation(Triggered, UnsetFlags);
+}
+
+void InputDevice::Control::expireBindContextAssociationIfChanged()
+{
+    // No change?
+    if (d->bindContext == d->prevBindContext) return;
+
+    // No longer valid.
+    setBindContextAssociation(Expired);
+    setBindContextAssociation(Triggered, UnsetFlags); // Not any more.
 }

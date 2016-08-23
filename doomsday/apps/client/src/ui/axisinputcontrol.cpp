@@ -1,4 +1,4 @@
-/** @file inputdeviceaxiscontrol.cpp  Axis control for a logical input device.
+/** @file axisinputcontrol.cpp  Axis control for a logical input device.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,16 +18,19 @@
  * 02110-1301 USA</small>
  */
 
-#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/axisinputcontrol.h"
 #include <de/smoother.h>
 #include <de/timer.h> // SECONDSPERTIC
 #include <de/Block>
 #include <doomsday/console/var.h>
+#include "ui/joystick.h"
 #include "dd_loop.h" // DD_LatestRunTicsStartTime()
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(InputDeviceAxisControl)
+static dfloat const AXIS_NORMALIZE = 1.f / float(IJOY_AXISMAX); // Normalize from SDL's range
+
+DENG2_PIMPL_NOREF(AxisInputControl)
 {
     Type type = Pointer;
     dint flags = 0;
@@ -35,6 +38,7 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
     ddouble position     = 0;      ///< Current translated position (-1..1) including any filtering.
     ddouble realPosition = 0;      ///< The actual latest position (-1..1).
 
+    dfloat offset   = 0;           ///< Offset to add to real input value.
     dfloat scale    = 1;           ///< Scaling factor for real input values.
     dfloat deadZone = 0;           ///< Dead zone in (0..1) range.
 
@@ -94,37 +98,37 @@ DENG2_PIMPL_NOREF(InputDeviceAxisControl)
 #endif
 };
 
-InputDeviceAxisControl::InputDeviceAxisControl(String const &name, Type type) : d(new Impl)
+AxisInputControl::AxisInputControl(String const &name, Type type) : d(new Impl)
 {
     setName(name);
     d->type = type;
 }
 
-InputDeviceAxisControl::~InputDeviceAxisControl()
+AxisInputControl::~AxisInputControl()
 {}
 
-InputDeviceAxisControl::Type InputDeviceAxisControl::type() const
+AxisInputControl::Type AxisInputControl::type() const
 {
     return d->type;
 }
 
-void InputDeviceAxisControl::setRawInput(bool yes)
+void AxisInputControl::setRawInput(bool yes)
 {
     if (yes) d->flags |= IDA_RAW;
     else    d->flags &= ~IDA_RAW;
 }
 
-bool InputDeviceAxisControl::isActive() const
+bool AxisInputControl::isActive() const
 {
     return (d->flags & IDA_DISABLED) == 0;
 }
 
-bool InputDeviceAxisControl::isInverted() const
+bool AxisInputControl::isInverted() const
 {
     return (d->flags & IDA_INVERT) != 0;
 }
 
-void InputDeviceAxisControl::update(timespan_t ticLength)
+void AxisInputControl::update(timespan_t ticLength)
 {
     Smoother_Advance(d->smoother, ticLength);
 
@@ -163,17 +167,17 @@ void InputDeviceAxisControl::update(timespan_t ticLength)
     setBindContextAssociation(Expired, UnsetFlags);
 }
 
-ddouble InputDeviceAxisControl::position() const
+ddouble AxisInputControl::position() const
 {
     return d->position;
 }
 
-void InputDeviceAxisControl::setPosition(ddouble newPosition)
+void AxisInputControl::setPosition(ddouble newPosition)
 {
     d->position = newPosition;
 }
 
-void InputDeviceAxisControl::applyRealPosition(dfloat pos)
+void AxisInputControl::applyRealPosition(dfloat pos)
 {
     dfloat const oldRealPos  = d->realPosition;
     dfloat const transformed = translateRealPosition(pos);
@@ -200,16 +204,18 @@ void InputDeviceAxisControl::applyRealPosition(dfloat pos)
     Smoother_AddPosXY(d->smoother, DD_LatestRunTicsStartTime(), d->sharpPosition, 0);
 }
 
-dfloat InputDeviceAxisControl::translateRealPosition(dfloat realPos) const
+dfloat AxisInputControl::translateRealPosition(dfloat realPos) const
 {
     // An inactive axis is always zero.
     if (!isActive()) return 0;
 
     // Apply scaling, deadzone and clamping.
-    float outPos = realPos * d->scale;
+    float outPos = realPos * AXIS_NORMALIZE * d->scale;
     if (d->type == Stick) // Only stick axes are dead-zoned and clamped.
     {
-        if (fabs(outPos) <= d->deadZone)
+        outPos += d->offset;
+
+        if (std::abs(outPos) <= d->deadZone)
         {
             outPos = 0;
         }
@@ -230,32 +236,42 @@ dfloat InputDeviceAxisControl::translateRealPosition(dfloat realPos) const
     return outPos;
 }
 
-dfloat InputDeviceAxisControl::deadZone() const
+dfloat AxisInputControl::deadZone() const
 {
     return d->deadZone;
 }
 
-void InputDeviceAxisControl::setDeadZone(dfloat newDeadZone)
+void AxisInputControl::setDeadZone(dfloat newDeadZone)
 {
     d->deadZone = newDeadZone;
 }
 
-dfloat InputDeviceAxisControl::scale() const
+dfloat AxisInputControl::scale() const
 {
     return d->scale;
 }
 
-void InputDeviceAxisControl::setScale(dfloat newScale)
+void AxisInputControl::setScale(dfloat newScale)
 {
     d->scale = newScale;
 }
 
-duint InputDeviceAxisControl::time() const
+dfloat AxisInputControl::offset() const
+{
+    return d->offset;
+}
+
+void AxisInputControl::setOffset(dfloat newOffset)
+{
+    d->offset = newOffset;
+}
+
+duint AxisInputControl::time() const
 {
     return d->time;
 }
 
-String InputDeviceAxisControl::description() const
+String AxisInputControl::description() const
 {
     QStringList flags;
     if (!isActive()) flags << "disabled";
@@ -268,25 +284,27 @@ String InputDeviceAxisControl::description() const
         flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
     }
 
-    return String(_E(b) "%1 " _E(.) "(Axis-%2)"
-                  //_E(l) " Filter: "    _E(.)_E(i) "%3" _E(.)
-                  _E(l) " Dead Zone: " _E(.)_E(i) "%3" _E(.)
-                  _E(l) " Scale: "     _E(.)_E(i) "%4" _E(.)
-                  "%5")
+    return String(_E(b) "%1 " _E(.) "(%2)"
+                  _E(l) " Current value: " _E(.) "%3"
+                  _E(l) " Deadzone: " _E(.) "%4"
+                  _E(l) " Scale: "     _E(.) "%5"
+                  _E(l) " Offset: "     _E(.) "%6"
+                  "%7")
                .arg(fullName())
                .arg(d->type == Stick? "Stick" : "Pointer")
-               //.arg(d->filter)
+               .arg(position())
                .arg(d->deadZone)
                .arg(d->scale)
+               .arg(d->offset)
                .arg(flagsString);
 }
 
-bool InputDeviceAxisControl::inDefaultState() const
+bool AxisInputControl::inDefaultState() const
 {
     return d->position == 0; // Centered?
 }
 
-void InputDeviceAxisControl::reset()
+void AxisInputControl::reset()
 {
     if (d->type == Pointer)
     {
@@ -298,12 +316,12 @@ void InputDeviceAxisControl::reset()
     Smoother_Clear(d->smoother);
 }
 
-void InputDeviceAxisControl::consoleRegister()
+void AxisInputControl::consoleRegister()
 {
     DENG2_ASSERT(hasDevice() && !name().isEmpty());
     String controlName = String("input-%1-%2").arg(device().name()).arg(name());
 
-    Block scale = (controlName + "-scale").toUtf8();
+    Block scale = (controlName + "-factor").toUtf8();
     C_VAR_FLOAT(scale.constData(), &d->scale, CVF_NO_MAX, 0, 0);
 
     Block flags = (controlName + "-flags").toUtf8();
@@ -313,5 +331,8 @@ void InputDeviceAxisControl::consoleRegister()
     {
         Block deadzone = (controlName + "-deadzone").toUtf8();
         C_VAR_FLOAT(deadzone.constData(), &d->deadZone, 0, 0, 1);
+
+        Block offset = (controlName + "-offset").toUtf8();
+        C_VAR_FLOAT(offset.constData(), &d->offset, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
     }
 }

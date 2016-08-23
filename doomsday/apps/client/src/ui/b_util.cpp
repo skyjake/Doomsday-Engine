@@ -26,9 +26,9 @@
 #include "CommandBinding"
 #include "ImpulseBinding"
 #include "ui/inputdevice.h"
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
+#include "ui/axisinputcontrol.h"
+#include "ui/buttoninputcontrol.h"
+#include "ui/hatinputcontrol.h"
 #include "network/net_main.h" // netGame
 
 using namespace de;
@@ -437,7 +437,7 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         break;
 
     case Binding::AxisState: {
-        InputDeviceAxisControl const &axis = InputSystem::get().device(cond->geti("device")).axis(cond->geti("id"));
+        AxisInputControl const &axis = InputSystem::get().device(cond->geti("device")).axis(cond->geti("id"));
         if (B_CheckAxisPosition(Binding::ControlTest(cond->geti("test")), cond->getf("pos"), axis.position()))
         {
             return fulfilled;
@@ -445,17 +445,17 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         break; }
 
     case Binding::ButtonState: {
-        InputDeviceButtonControl const &button = InputSystem::get().device(cond->geti("device")).button(cond->geti("id"));
+        ButtonInputControl const &button = InputSystem::get().device(cond->geti("device")).button(cond->geti("id"));
         bool isDown = button.isDown();
         if (( isDown && cond->geti("test") == Binding::ButtonStateDown) ||
-           (!isDown && cond->geti("test") == Binding::ButtonStateUp))
+            (!isDown && cond->geti("test") == Binding::ButtonStateUp))
         {
             return fulfilled;
         }
         break; }
 
     case Binding::HatState: {
-        InputDeviceHatControl const &hat = InputSystem::get().device(cond->geti("device")).hat(cond->geti("id"));
+        HatInputControl const &hat = InputSystem::get().device(cond->geti("device")).hat(cond->geti("id"));
         if (hat.position() == cond->getf("pos"))
         {
             return fulfilled;
@@ -469,7 +469,7 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
             float pos = 0, relative = 0;
             B_EvaluateImpulseBindings(context, localNum, cond->geti("id"), &pos, &relative, false /*no triggered*/);
             if ((cond->geti("test") == Binding::ButtonStateDown && fabs(pos) > .5) ||
-               (cond->geti("test") == Binding::ButtonStateUp && fabs(pos) < .5))
+                (cond->geti("test") == Binding::ButtonStateUp && fabs(pos) < .5))
             {
                 return fulfilled;
             }
@@ -534,7 +534,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
             return LoopContinue; // Not available.
 
         // Get the control.
-        InputDeviceControl *ctrl = nullptr;
+        InputControl *ctrl = nullptr;
         switch (bind.geti("type"))
         {
         case IBD_AXIS:   ctrl = &device->axis  (bind.geti("controlId")); break;
@@ -548,14 +548,14 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         float deviceOffset = 0;
         uint deviceTime = 0;
 
-        if (auto *axis = ctrl->maybeAs<InputDeviceAxisControl>())
+        if (auto *axis = ctrl->maybeAs<AxisInputControl>())
         {
             if (context && axis->bindContext() != context)
             {
                 if (axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.geti("deviceId"), IBD_AXIS, bind.geti("controlId")))
                 {
                     // The overriding context doesn't bind to the axis, though.
-                    if (axis->type() == InputDeviceAxisControl::Pointer)
+                    if (axis->type() == AxisInputControl::Pointer)
                     {
                         // Reset the relative accumulation.
                         axis->setPosition(0);
@@ -565,9 +565,9 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
             }
 
             // Expired?
-            if (!(axis->bindContextAssociation() & InputDeviceControl::Expired))
+            if (!(axis->bindContextAssociation() & InputControl::Expired))
             {
-                if (axis->type() == InputDeviceAxisControl::Pointer)
+                if (axis->type() == AxisInputControl::Pointer)
                 {
                     deviceOffset = axis->position();
                     axis->setPosition(0);
@@ -579,29 +579,29 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
                 deviceTime = axis->time();
             }
         }
-        if (auto *button = ctrl->maybeAs<InputDeviceButtonControl>())
+        if (auto *button = ctrl->maybeAs<ButtonInputControl>())
         {
             if (context && button->bindContext() != context)
                 return LoopContinue; // Shadowed by a more important active context.
 
             // Expired?
-            if (!(button->bindContextAssociation() & InputDeviceControl::Expired))
+            if (!(button->bindContextAssociation() & InputControl::Expired))
             {
                 devicePos  = (button->isDown() ||
-                              (allowTriggered && (button->bindContextAssociation() & InputDeviceControl::Triggered))? 1.0f : 0.0f);
+                              (allowTriggered && (button->bindContextAssociation() & InputControl::Triggered))? 1.0f : 0.0f);
                 deviceTime = button->time();
 
                 // We've checked it, so clear the flag.
-                button->setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
+                button->setBindContextAssociation(InputControl::Triggered, UnsetFlags);
             }
         }
-        if (auto *hat = ctrl->maybeAs<InputDeviceHatControl>())
+        if (auto *hat = ctrl->maybeAs<HatInputControl>())
         {
             if (context && hat->bindContext() != context)
                 return LoopContinue; // Shadowed by a more important active class.
 
             // Expired?
-            if (!(hat->bindContextAssociation() & InputDeviceControl::Expired))
+            if (!(hat->bindContextAssociation() & InputControl::Expired))
             {
                 devicePos  = (hat->position() == bind.getf("angle")? 1.0f : 0.0f);
                 deviceTime = hat->time();
@@ -668,7 +668,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
     {
     case E_TOGGLE: {
         DENG2_ASSERT(device);
-        InputDeviceButtonControl &button = device->button(id);
+        ButtonInputControl &button = device->button(id);
         if (!button.name().isEmpty())
         {
             str += button.name();
@@ -917,7 +917,7 @@ char const *B_ShortNameForKey(int ddKey, bool forceLowercase)
             return keyNames[idx].name;
     }
 
-    if (isalnum(ddKey))
+    if (ddKey < 127 && isprint(ddKey))
     {
         // Printable character, fabricate a single-character name.
         nameBuffer[0] = forceLowercase? tolower(ddKey) : ddKey;
@@ -938,7 +938,7 @@ int B_KeyForShortName(char const *key)
             return keyNames[idx].key;
     }
 
-    if (qstrlen(key) == 1 && isalnum(key[0]))
+    if (qstrlen(key) == 1 && key[0] < 127 && isprint(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);

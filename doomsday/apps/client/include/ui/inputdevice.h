@@ -27,12 +27,9 @@
 #include <de/String>
 
 class BindContext;
-
-/// @todo remove:
-class InputDeviceAxisControl;
-class InputDeviceButtonControl;
-class InputDeviceHatControl;
-/// end todo
+class AxisInputControl;
+class ButtonInputControl;
+class HatInputControl;
 
 /**
  * Base class for modelling a "physical" input device.
@@ -237,7 +234,7 @@ public:
     /**
      * Returns information about the device as styled text.
      */
-    de::String description() const;
+    virtual de::String description() const;
 
     /**
      * Reset the state of all controls to their "initial" positions (i.e., buttons
@@ -269,14 +266,14 @@ public:
      *
      * @return  Axis control associated with the given @a id.
      */
-    InputDeviceAxisControl &axis(de::dint id) const;
+    AxisInputControl &axis(de::dint id) const;
 
     /**
      * Add an @a axis control to the input device.
      *
      * @param axis  Axis control to add. Ownership is given to the device.
      */
-    void addAxis(InputDeviceAxisControl *axis);
+    void addAxis(AxisInputControl *axis);
 
     /**
      * Returns the number of axis controls of the device.
@@ -302,14 +299,14 @@ public:
      *
      * @return  Button control associated with the given @a id.
      */
-    InputDeviceButtonControl &button(de::dint id) const;
+    ButtonInputControl &button(de::dint id) const;
 
     /**
      * Add a @a button control to the input device.
      *
      * @param button  Button control to add. Ownership is given to the device.
      */
-    void addButton(InputDeviceButtonControl *button);
+    void addButton(ButtonInputControl *button);
 
     /**
      * Returns the number of button controls of the device.
@@ -328,14 +325,14 @@ public:
      *
      * @return  Hat control associated with the given @a id.
      */
-    InputDeviceHatControl &hat(de::dint id) const;
+    HatInputControl &hat(de::dint id) const;
 
     /**
      * Add a @a hat control to the input device.
      *
      * @param hat  Hat control to add. Ownership is given to the device.
      */
-    void addHat(InputDeviceHatControl *hat);
+    void addHat(HatInputControl *hat);
 
     /**
      * Returns the number of hat controls of the device.
@@ -353,6 +350,6 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(InputDevice::Control::BindContextAssociation)
 
-typedef InputDevice::Control InputDeviceControl;
+typedef InputDevice::Control InputControl;
 
 #endif // CLIENT_INPUTSYSTEM_INPUTDEVICE_H

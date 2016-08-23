@@ -1,4 +1,4 @@
-/** @file inputdeviceaxiscontrol.h  Axis control for a logical input device.
+/** @file axisinputcontrol.h  Axis control for a logical input device.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_INPUTDEVICEAXISCONTROL_H
-#define CLIENT_INPUTSYSTEM_INPUTDEVICEAXISCONTROL_H
+#ifndef CLIENT_UI_AXISINPUTCONTROL_H
+#define CLIENT_UI_AXISINPUTCONTROL_H
 
 #include <de/types.h>
 #include <de/String>
@@ -34,7 +34,7 @@
  *
  * @ingroup ui
  */
-class InputDeviceAxisControl : public InputDeviceControl
+class AxisInputControl : public InputDevice::Control
 {
 public:
     enum Type {
@@ -47,8 +47,8 @@ public:
      * @param name  Symbolic name of the axis.
      * @param type  Logical axis type.
      */
-    InputDeviceAxisControl(de::String const &name, Type type);
-    virtual ~InputDeviceAxisControl();
+    AxisInputControl(de::String const &name, Type type);
+    virtual ~AxisInputControl();
 
     Type type() const;
     void setRawInput(bool yes = true);
@@ -83,6 +83,9 @@ public:
     de::dfloat scale() const;
     void setScale(de::dfloat newScale);
 
+    de::dfloat offset() const;
+    void setOffset(de::dfloat newOffset);
+
     /**
      * When the state of the control last changed, in milliseconds since app init.
      */
@@ -99,4 +102,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_INPUTSYSTEM_INPUTDEVICEAXISCONTROL_H
+#endif // CLIENT_UI_AXISINPUTCONTROL_H

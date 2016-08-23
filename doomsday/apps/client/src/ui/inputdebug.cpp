@@ -45,9 +45,9 @@
 #include "ui/joystick.h"
 #include "ui/infine/finale.h"
 #include "ui/inputdevice.h"
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
+#include "ui/axisinputcontrol.h"
+#include "ui/buttoninputcontrol.h"
+#include "ui/hatinputcontrol.h"
 #include "ui/sys_input.h"
 #include "ui/ui_main.h"
 
@@ -175,7 +175,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
         geometry->size.width = geometry->size.height = 0;
     }
 
-    InputDeviceButtonControl const &button = device.button(buttonID);
+    ButtonInputControl const &button = device.button(buttonID);
 
     Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
@@ -232,7 +232,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     glDisable(GL_TEXTURE_2D);
 
     // Mark expired?
-    if (button.bindContextAssociation() & InputDeviceControl::Expired)
+    if (button.bindContextAssociation() & InputControl::Expired)
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
@@ -245,7 +245,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     }
 
     // Mark triggered?
-    if (button.bindContextAssociation() & InputDeviceControl::Triggered)
+    if (button.bindContextAssociation() & InputControl::Triggered)
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 

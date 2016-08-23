@@ -29,9 +29,9 @@
 #include "world/p_players.h" // P_ConsoleToLocal
 
 #include "ui/b_util.h"
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
+#include "ui/axisinputcontrol.h"
+#include "ui/buttoninputcontrol.h"
+#include "ui/hatinputcontrol.h"
 
 using namespace de;
 
@@ -344,7 +344,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
             return nullptr;
 
         DENG2_ASSERT(dev);
-        InputDeviceButtonControl &button = dev->button(geti("controlId"));
+        ButtonInputControl &button = dev->button(geti("controlId"));
 
         if (respectHigherContexts)
         {
@@ -353,7 +353,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         }
 
         // We're checking it, so clear the triggered flag.
-        button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
+        button.setBindContextAssociation(InputControl::Triggered, UnsetFlags);
 
         // Is the state as required?
         switch (ControlTest(geti("test")))

@@ -20,7 +20,7 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/keygrabberwidget.h"
-#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/axisinputcontrol.h"
 #include "ui/controllerpresets.h"
 #include "clientapp.h"
 #include "api_console.h"
@@ -61,12 +61,12 @@ DENG_GUI_PIMPL(InputSettingsDialog)
 
         area.add(syncMouse     = new VariableToggleWidget(App::config("input.mouse.syncSensitivity")));
 
-        area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
+        area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-factor"));
         area.add(mouseInvertX  = new ToggleWidget);
         area.add(mouseFilterX  = new ToggleWidget);
         area.add(mouseDisableX = new ToggleWidget);
 
-        area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
+        area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-factor"));
         area.add(mouseInvertY  = new ToggleWidget);
         area.add(mouseFilterY  = new ToggleWidget);
         area.add(mouseDisableY = new ToggleWidget);
@@ -162,10 +162,10 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     applyNote->setTextLineAlignment(ui::AlignLeft);
 
     // The sensitivity cvars are unlimited.
-    d->mouseSensiX->setRange(Rangef(.00005f, .0075f));
-    d->mouseSensiX->setDisplayFactor(1000);
-    d->mouseSensiY->setRange(Rangef(.00005f, .0075f));
-    d->mouseSensiY->setDisplayFactor(1000);
+    d->mouseSensiX->setRange(Rangef(.5f, 75.f));
+    d->mouseSensiX->setDisplayFactor(0.1);
+    d->mouseSensiY->setRange(Rangef(.5f, 75.f));
+    d->mouseSensiY->setDisplayFactor(0.1);
 
     connect(d->mouseSensiX, SIGNAL(valueChangedByUser(double)), this, SLOT(mouseSensitivityChanged(double)));
     connect(d->mouseSensiY, SIGNAL(valueChangedByUser(double)), this, SLOT(mouseSensitivityChanged(double)));

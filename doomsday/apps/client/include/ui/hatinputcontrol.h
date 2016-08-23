@@ -1,4 +1,4 @@
-/** @file inputdevicebuttoncontrol.h  Button control for a logical input device.
+/** @file hatinputcontrol.h  Hat control for a logical input device.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -17,32 +17,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_INPUTDEVICEBUTTONCONTROL_H
-#define CLIENT_INPUTSYSTEM_INPUTDEVICEBUTTONCONTROL_H
+#ifndef CLIENT_UI_HATINPUTCONTROL_H
+#define CLIENT_UI_HATINPUTCONTROL_H
 
-#include <de/String>
 #include "inputdevice.h"
 
 /**
- * Models a button control on a "physical" input device (e.g., key on a keyboard).
+ * Models a hat control on a "physical" input device (such as that found on joysticks).
  *
  * @ingroup ui
  */
-class InputDeviceButtonControl : public InputDeviceControl
+class HatInputControl : public InputDevice::Control
 {
 public:
-    explicit InputDeviceButtonControl(de::String const &name = de::String());
-    virtual ~InputDeviceButtonControl();
+    explicit HatInputControl(de::String const &name = de::String());
+    virtual ~HatInputControl();
 
     /**
-     * Returns @c true if the button is currently in the down (i.e., pressed) state.
+     * Returns the current position of the hat.
      */
-    bool isDown() const;
+    de::dint position() const;
 
     /**
-     * Change the "down" state of the button.
+     * @param newPosition  @c -1= centered.
      */
-    void setDown(bool yes);
+    void setPosition(de::dint newPosition);
 
     /**
      * When the state of the control last changed, in milliseconds since app init.
@@ -51,11 +50,10 @@ public:
 
     de::String description() const;
     bool inDefaultState() const;
-    void reset();
 
 private:
-    bool _isDown = false; ///< @c true= currently depressed.
-    de::duint _time = 0;
+    de::dint _pos   = -1;  ///< Current position. @c -1= centered.
+    de::duint _time = 0;   ///< Timestamp of the latest change.
 };
 
-#endif // CLIENT_INPUTSYSTEM_INPUTDEVICEBUTTONCONTROL_H
+#endif // CLIENT_UI_HATINPUTCONTROL_H
