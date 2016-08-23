@@ -67,6 +67,17 @@ dsize TextValue::size() const
     return _value.size();
 }
 
+bool TextValue::contains(Value const &value) const
+{
+    // We are able to look for substrings within the text, without applying automatic
+    // type conversions.
+    if (value.is<TextValue>())
+    {
+        return _value.indexOf(value.asText(), Qt::CaseSensitive) >= 0;
+    }
+    return Value::contains(value);
+}
+
 bool TextValue::isTrue() const
 {
     // If there is at least one nonwhite character, this is considered a truth.

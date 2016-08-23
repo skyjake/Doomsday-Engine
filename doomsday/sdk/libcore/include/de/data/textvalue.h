@@ -50,6 +50,7 @@ public:
     Text asText() const;
     Record *memberScope() const;
     dsize size() const;
+    bool contains(Value const &value) const;
     bool isTrue() const;
     dint compare(Value const &value) const;
     void sum(Value const &value);
