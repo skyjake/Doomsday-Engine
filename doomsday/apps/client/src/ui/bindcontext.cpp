@@ -100,8 +100,12 @@ DENG2_PIMPL(BindContext)
                     matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
                     matchCmd.equalConditions(bind))
                 {
-                    *cmdResult = const_cast<Record *>(rec);
-                    return true;
+                    if (bind.geti(VAR_TYPE) != E_ANGLE ||
+                        (matchCmd.geti("pos") == bind.geti("pos"))) // Hat angles must also match.
+                    {
+                        *cmdResult = const_cast<Record *>(rec);
+                        return true;
+                    }
                 }
             }
             if (matchImp)

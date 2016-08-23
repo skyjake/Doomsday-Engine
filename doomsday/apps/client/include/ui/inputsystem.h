@@ -87,6 +87,8 @@ public: // Input devices -----------------------------------------------------
      */
     InputDevice *devicePtr(int id) const;
 
+    InputDevice *findDevice(de::String const &name) const;
+
     /**
      * Iterate through all the InputDevices.
      */

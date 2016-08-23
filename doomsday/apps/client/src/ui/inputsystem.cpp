@@ -225,7 +225,10 @@ bool altDown;
 #ifdef OLD_FILTER
 static uint mouseFreq;
 #endif
-static float oldPOV = IJOY_POV_CENTER;
+static float oldPOV[IJOY_MAXHATS] =
+{
+    IJOY_POV_CENTER, IJOY_POV_CENTER, IJOY_POV_CENTER, IJOY_POV_CENTER
+};
 
 static char *eventStrings[MAXEVENTS];
 
@@ -414,7 +417,7 @@ DENG2_PIMPL(InputSystem)
             float const pos = device.axis(ev.axis.id).translateRealPosition(ev.axis.pos);
 
             if ((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
-               (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
+                (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
                 return; // Not significant enough.
             }
@@ -721,24 +724,28 @@ DENG2_PIMPL(InputSystem)
         if (state.numHats > 0)
         {
             // Check for a POV change.
-            /// @todo: Some day it would be nice to support multiple hats here. -jk
-            if (state.hatAngle[0] != oldPOV)
+            for (int i = 0; i < state.numHats; ++i)
             {
-                ev.type = E_ANGLE;
-                ev.angle.id = 0;
-
-                if (state.hatAngle[0] < 0)
+                if (!fequal(state.hatAngle[i], oldPOV[i]))
                 {
-                    ev.angle.pos = -1;
-                }
-                else
-                {
-                    // The new angle becomes active.
-                    ev.angle.pos = ROUND(state.hatAngle[0] / 45);
-                }
-                self.postEvent(&ev);
+                    ev.type = E_ANGLE;
+                    ev.angle.id = i;
 
-                oldPOV = state.hatAngle[0];
+                    if (state.hatAngle[i] < 0)
+                    {
+                        ev.angle.pos = -1;
+                    }
+                    else
+                    {
+                        // The new angle becomes active.
+                        ev.angle.pos = de::roundf(state.hatAngle[i] / 45);
+                    }
+                    LOG_INPUT_XVERBOSE("Joy hat %i angle %f") << i << ev.angle.pos;
+
+                    self.postEvent(&ev);
+
+                    oldPOV[i] = state.hatAngle[i];
+                }
             }
         }
 
@@ -968,6 +975,18 @@ InputDevice *InputSystem::devicePtr(int id) const
     if (id >= 0 && id < d->devices.count())
     {
         return d->devices.at(id);
+    }
+    return nullptr;
+}
+
+InputDevice *InputSystem::findDevice(String const &name) const
+{
+    for (auto *device : d->devices)
+    {
+        if (device->name() == name)
+        {
+            return device;
+        }
     }
     return nullptr;
 }
@@ -1552,6 +1571,20 @@ D_CMD(ListDevices)
     return true;
 }
 
+D_CMD(InspectDevice)
+{
+    DENG2_UNUSED2(src, argc);
+    if (InputDevice const *device = ClientApp::inputSystem().findDevice(argv[1]))
+    {
+        LOG_INPUT_MSG("") << device->description();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -1748,6 +1781,7 @@ void InputSystem::consoleRegister() // static
     C_CMD_FLAGS("listbcontexts",        nullptr,    ListContexts,       PROTECTED_FLAGS);
     C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,       PROTECTED_FLAGS);
     C_CMD      ("listinputdevices",     "",         ListDevices);
+    C_CMD      ("inspectinputdevice",   "s",        InspectDevice);
     C_CMD      ("releasemouse",         "",         ReleaseMouse);
     //C_CMD_FLAGS("setaxis",            "s",        AxisPrintConfig,  CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
