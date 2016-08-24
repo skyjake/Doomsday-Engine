@@ -255,46 +255,42 @@ void ClEdgeLoop::fixSurfacesMissingMaterials()
     {
         if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
         {
-            if (hasBackSubsector())
+            LineSide &lineSide = it->mapElementAs<LineSideSegment>().lineSide();
+            if (lineSide.hasSections()) // Not a "one-way window" -ds
             {
-                auto const &backSubsec = backSubsector().as<ClientSubsector>();
-
-                // A potential bottom section fix?
-                if (!d->owner.hasSkyFloor() && !backSubsec.hasSkyFloor())
+                if (hasBackSubsector())
                 {
-                    if (d->owner.visFloor().height() < backSubsec.visFloor().height())
+                    auto const &backSubsec = backSubsector().as<ClientSubsector>();
+
+                    // Potential bottom section fix?
+                    if (!d->owner.hasSkyFloor() && !backSubsec.hasSkyFloor())
                     {
-                        d->fixMissingMaterial(*it, LineSide::Bottom);
+                        if (d->owner.visFloor().height() < backSubsec.visFloor().height())
+                        {
+                            d->fixMissingMaterial(*it, LineSide::Bottom);
+                        }
+                        else if (lineSide.bottom().hasFixMaterial())
+                        {
+                            lineSide.bottom().setMaterial(nullptr);
+                        }
                     }
-                    else
+
+                    // Potential top section fix?
+                    if (!d->owner.hasSkyCeiling() && !backSubsec.hasSkyCeiling())
                     {
-                        Surface &surface = it->mapElementAs<LineSideSegment>().lineSide().bottom();
-                        if (surface.hasFixMaterial())
-                            surface.setMaterial(nullptr);
+                        if (d->owner.visCeiling().height() > backSubsec.visCeiling().height())
+                        {
+                            d->fixMissingMaterial(*it, LineSide::Top);
+                        }
+                        else if (lineSide.top().hasFixMaterial())
+                        {
+                            lineSide.top().setMaterial(nullptr);
+                        }
                     }
                 }
-
-                // A potential top section fix?
-                if (!d->owner.hasSkyCeiling() && !backSubsec.hasSkyCeiling())
+                // Potential middle section fix?
+                else if (!lineSide.back().hasSector())
                 {
-                    if (d->owner.visCeiling().height() > backSubsec.visCeiling().height())
-                    {
-                        d->fixMissingMaterial(*it, LineSide::Top);
-                    }
-                    else
-                    {
-                        Surface &surface = it->mapElementAs<LineSideSegment>().lineSide().top();
-                        if (surface.hasFixMaterial())
-                            surface.setMaterial(nullptr);
-                    }
-                }
-            }
-            else
-            {
-                LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                if (!side.back().hasSector())
-                {
-                    // A potential middle section fix.
                     d->fixMissingMaterial(*it, LineSide::Middle);
                 }
             }
