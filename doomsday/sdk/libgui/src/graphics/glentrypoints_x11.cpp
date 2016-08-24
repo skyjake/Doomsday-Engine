@@ -28,6 +28,7 @@
 
 #undef None
 #undef Always
+#undef Status
 
 PFNGLXSWAPINTERVALEXTPROC   glXSwapIntervalEXT;
 

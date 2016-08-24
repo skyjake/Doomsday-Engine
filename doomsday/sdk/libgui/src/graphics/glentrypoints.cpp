@@ -25,6 +25,7 @@
 #  include <GL/glx.h>
 #  undef Always
 #  undef None
+#  undef Status
 #endif
 
 #ifdef LIBGUI_FETCH_GL_1_3
