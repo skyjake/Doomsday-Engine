@@ -8,7 +8,7 @@ usings = set()
 code = []
 
 # Read and process all input source files.
-for fn in sys.argv[2:]:
+for fn in sorted(sys.argv[2:]):
     preamble = True
     in_body = False
     if_level = 0
