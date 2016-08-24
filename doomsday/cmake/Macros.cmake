@@ -227,7 +227,8 @@ macro (deng_merge_sources srcName globbing)
         set (_turbo ${CMAKE_CURRENT_BINARY_DIR}/src_${srcName}_turbo.cpp)
         add_custom_command (
             OUTPUT  ${_turbo}
-            COMMAND ${PYTHON_EXECUTABLE} "${DENG_CMAKE_DIR}/merge_sources.py" ${_turbo} ${_mergingSources}
+            COMMAND ${PYTHON_EXECUTABLE} "${DENG_CMAKE_DIR}/merge_sources.py" 
+                    ${_turbo} ${_mergingSources}
             DEPENDS ${_mergingSources}
             COMMENT "Merging sources ${globbing}"
         )

@@ -50,6 +50,18 @@
 #  define LIBGUI_FETCH_GL_1_3
 #endif
 
+#if defined(DENG_X11)
+#  if defined(Status)
+#    undef Status
+#  endif
+#  if defined(True)
+#    undef True
+#  endif
+#  if defined(False)
+#    undef False
+#  endif
+#endif
+
 #ifdef LIBGUI_FETCH_GL_1_3
 LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLACTIVETEXTUREPROC            glActiveTexture;
 LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLBLENDEQUATIONPROC            glBlendEquation;
