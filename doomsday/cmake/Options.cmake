@@ -1,7 +1,20 @@
-option (DENG_ENABLE_TURBO "Enable/disable Turbo mode (source merging)" ON)
+# Source merging by default is enabled only for debug builds, or never with
+# multiconfiguration projects because all configurations must use the 
+# same set of source files.
+if (MSVC OR XCODE_VERSION)
+    set (DENG_ENABLE_TURBO_DEFAULT OFF) # multiconfiguration projects
+else ()
+    if (CMAKE_BUILD_TYPE MATCHES "^[DdEeBb].*")
+        set (DENG_ENABLE_TURBO_DEFAULT OFF) # debug builds shouldn't use merging
+    else ()
+        set (DENG_ENABLE_TURBO_DEFAULT ON)
+    endif ()
+endif ()
 
-option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functionality" ON)
-option (DENG_ENABLE_SDK "Enable/disable installation of the Doomsday 2 SDK" ON)
+option (DENG_ENABLE_TURBO "Enable/disable Turbo mode (source merging)" 
+        ${DENG_ENABLE_TURBO_DEFAULT})
+option (DENG_ENABLE_GUI   "Enable/disable the client and all GUI related functionality" ON)
+option (DENG_ENABLE_SDK   "Enable/disable installation of the Doomsday 2 SDK" ON)
 option (DENG_ENABLE_TOOLS "Compile the Doomsday tools" ON)
 
 if (CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
