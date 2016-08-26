@@ -1,14 +1,32 @@
 # Gamepad Controller Presets
 
-import App, Input, Console
+import App, Input, Console, Version
+
+def event(context, button, command, repeat=False, condition=None)
+    # Bind an event to a console command.
+    if condition: condition = ' + ' + condition
+    else: condition = ''
+    if 'hat' in button
+        Input.bindEvent('%s:%s%s' % [context, button, condition], command)        
+    else
+        Input.bindEvent('%s:%s-down%s' % [context, button, condition], command)
+        if repeat: Input.bindEvent('%s:%s-repeat%s' % [context, button, condition], command)
+    end
+end
+
+def control(ctl, impulse, inverse=False, condition=None)
+    # Bind a control to a player impulse.
+    if inverse: ctl += '-inverse'
+    if condition: ctl += ' + ' + condition
+    Input.bindControl(ctl, 'local1-%s' % impulse)
+end
 
 record Gamepad()        
     def __init__(id, regex)
-        """Arguments:
-            id:     Identifier of the controller.
-            regex:  One or more regexes (Text, or Array of Texts)
-                    for matching against the joystick name.
-        """
+        # Arguments:
+        #    id:     Identifier of the controller.
+        #    regex:  One or more regexes (Text, or Array of Texts)
+        #            for matching against the joystick name.
         self.id = id        
         self.regex = regex
     end
@@ -36,25 +54,6 @@ record Gamepad()
     end
 end
 
-def event(context, button, command, repeat=False, condition=None)
-    """Bind an event to a console command."""
-    if condition: condition = ' + ' + condition
-    else: condition = ''
-    if 'hat' in button
-        Input.bindEvent('%s:%s%s' % [context, button, condition], command)        
-    else
-        Input.bindEvent('%s:%s-down%s' % [context, button, condition], command)
-        if repeat: Input.bindEvent('%s:%s-repeat%s' % [context, button, condition], command)
-    end
-end
-
-def control(ctl, impulse, inverse=False, condition=None)
-    """Bind a control to a player impulse."""
-    if inverse: ctl += '-inverse'
-    if condition: ctl += ' + ' + condition
-    Input.bindControl(ctl, 'local1-%s' % impulse)
-end
-       
 record GenericGamepad(Gamepad)
     def __init__(): self.Gamepad->__init__('Generic', '')
     def bind()
@@ -223,7 +222,89 @@ record PS4Gamepad(Gamepad)
     end
 end
 
-record XboxGamepad(Gamepad)
+record XboxWindowsGamepad(Gamepad)
+    # Xbox One controller with default Windows game controller setup.
+    def __init__(id, regex): self.Gamepad->__init__(id, regex)
+    def bind()               
+        # Names for buttons and other controls.
+        a = 'joy-button1'
+        b = 'joy-button2'
+        x = 'joy-button3'
+        y = 'joy-button4'
+        leftPress  = 'joy-button9'
+        rightPress = 'joy-button10'
+        menu  = 'joy-button8'
+        view  = 'joy-button7'
+        up    = 'joy-hat1-angle0'
+        down  = 'joy-hat1-angle4'
+        left  = 'joy-hat1-angle6'
+        right = 'joy-hat1-angle2'
+        LB = 'joy-button5'
+        RB = 'joy-button6'
+        thruster = 'joy-z' 
+        leftHoriz  = 'joy-x'
+        leftVert   = 'joy-y'
+        rightHoriz = 'joy-w'
+        rightVert  = 'joy-axis05'
+        
+        # Common controls, suitable for all games.
+        event('shortcut', menu, 'menu')
+
+        event('menu', b, 'menuback')
+        event('menu', a, 'menuselect')
+        event('menu', up, 'menuup', repeat=True)
+        event('menu', down, 'menudown', repeat=True)
+        event('menu', left, 'menuleft', repeat=True)
+        event('menu', right, 'menuright', repeat=True)
+
+        event('game', leftPress, 'pause')
+        event('game', view, 'impulse automap')
+        event('game', b, 'impulse jump')
+        event('game', x, 'impulse use')
+        event('game', up, 'impulse nextweapon')
+        event('game', down, 'impulse prevweapon')
+        event('game', rightPress, 'impulse lookcenter', condition='modifier-2-up')
+
+        control(RB, 'flymode') # modifier 2
+        control(rightVert, 'zfly', inverse=True, condition='modifier-2-down')
+        event('game', rightPress, 'impulse falldown', condition='modifier-2-down')
+
+        control(leftHoriz, 'sidestep')
+        control(leftVert, 'walk', inverse=True)
+        control(rightHoriz, 'turn')
+        control(rightVert, 'look', inverse=True, condition='modifier-2-up')
+        control(a, 'attack')
+        control(thruster, 'attack')
+        control(LB, 'speed')
+
+        event('map', rightPress, 'impulse follow')
+        event('map', leftPress,  'impulse rotate')
+
+        control(rightHoriz, 'mappanx')
+        control(rightVert,  'mappany', inverse=True)
+        control(thruster, 'mapzoom')
+        #control(RB, 'mapzoom', inverse=True)
+
+        # Inventory controls for Heretic and Hexen.
+        if App.gamePlugin() in ['heretic', 'hexen']
+            event('game', left,  'impulse previtem')
+            event('game', right, 'impulse nextitem')
+            event('game', y,     'impulse useitem')
+        end
+
+        self.resetDeadzones()
+
+        # Deadzones.
+        for axis in ['x', 'y', 'w', 'axis05']
+            Console.set('input-joy-%s-deadzone' % axis, 0.15)
+        end
+    end
+end
+
+record XboxMacGamepad(Gamepad)
+    # Configures presets suitable for the Xbox One controller used with
+    # the "360Controller" driver on macOS (driver defaults):
+    # https://github.com/360Controller/360Controller
     def __init__(id, regex): self.Gamepad->__init__(id, regex)
     def bind()               
         # Names for buttons and other controls.
@@ -310,7 +391,14 @@ record XboxGamepad(Gamepad)
     end
 end
 
+# Platform-independent controllers:
 GenericGamepad().register()
-PS3Gamepad    ('PS3',          ['PLAYSTATION\(R\)3 Controller']).register()
-PS4Gamepad    ('PS4',          ['Wireless Controller']).register()
-XboxGamepad   ('Xbox 360/One', ['.*Xbox (360|One).*']).register()
+PS3Gamepad('PS3', ['PLAYSTATION\(R\)3 Controller']).register()
+PS4Gamepad('PS4', ['Wireless Controller']).register()
+
+# Platform-specific configs:
+if Version.OS == 'windows'
+    XboxWindowsGamepad('Xbox One', ['.*Xbox One For Windows.*']).register()
+elsif Version.OS == 'macx'
+    XboxMacGamepad('Xbox One/360 (360Controller)', ['.*Xbox (360|One).*']).register()
+end
