@@ -54,9 +54,9 @@ class Event:
                          ('OS X 10.8+',                    ('.dmg', 'macx8.dmg'),        'macx8-64bit'),
                          ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
                          ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
-                         ('Ubuntu (64-bit)',               'amd64.deb',      'linux2-64bit'),
-                         ('Ubuntu (32-bit)',               'i386.deb',       'linux2-32bit'),
-                         ('Fedora (64-bit)',               '.rpm',           'fedora-64bit'),
+                         ('Ubuntu 16.04 (64-bit)',         'amd64.deb',      'linux2-64bit'),
+                         ('Ubuntu 16.04 (32-bit)',         'i386.deb',       'linux2-32bit'),
+                         ('Fedora 23 (64-bit)',            '.rpm',           'fedora-64bit'),
                          ('Source',                        '.tar.gz',        'source')]
 
             # Obsolete Linux versions.
