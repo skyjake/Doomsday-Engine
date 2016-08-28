@@ -76,6 +76,15 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
         self.setPopup(*choices, ui::Right);
 
+        QObject::connect(choices, &PanelWidget::opened, [this] ()
+        {
+            // Focus the selected item when the popup menu is opened.
+            if (auto *w = choices->menu().itemWidget<GuiWidget>(selected))
+            {
+                root().setFocus(w);
+            }
+        });
+
         updateButtonWithSelection();
         updateStyle();
     }
