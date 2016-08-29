@@ -653,6 +653,33 @@ Image Image::multiplied(Image const &factorImage) const
     return multiplied;
 }
 
+Image Image::multiplied(Color const &color) const
+{
+    if (color == Color(255, 255, 255, 255)) return *this; // No change.
+
+    QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
+
+    for (duint y = 0; y < height(); ++y)
+    {
+        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
+        for (duint x = 0; x < width(); ++x)
+        {
+            duint16 b =  *ptr & 0xff;
+            duint16 g = (*ptr & 0xff00) >> 8;
+            duint16 r = (*ptr & 0xff0000) >> 16;
+            duint16 a = (*ptr & 0xff000000) >> 24;
+
+            QColor const mult((color.x + 1) * r >> 8,
+                              (color.y + 1) * g >> 8,
+                              (color.z + 1) * b >> 8,
+                              (color.w + 1) * a >> 8);
+
+            *ptr++ = mult.rgba();
+        }
+    }
+    return copy;
+}
+
 Image Image::colorized(Color const &color) const
 {
     QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
@@ -671,13 +698,6 @@ Image Image::colorized(Color const &color) const
             duint16 a = (*ptr & 0xff000000) >> 24;
 
             QColor rgba(r, g, b, a);
-
-            /*int value = rgba.value();
-            r = color.x * value >> 8;
-            g = color.y * value >> 8;
-            b = color.z * value >> 8;
-            a = color.w * a >> 8;*/
-
             QColor colorized;
             colorized.setHsv(targetHue, rgba.saturation(), rgba.value(), color.w * a >> 8);
 

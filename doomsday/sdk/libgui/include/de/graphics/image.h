@@ -149,6 +149,7 @@ public:
     void draw(Image const &image, Vector2i const &topLeft);
     void drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft);
     Image multiplied(Image const &factorImage) const;
+    Image multiplied(Color const &color) const;
     Image colorized(Color const &color) const;
 
     // Implements ISerializable.
