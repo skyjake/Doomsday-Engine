@@ -22,6 +22,7 @@
 
 #include "de/FontLineWrapping"
 #include "de/BaseGuiApp"
+#include <de/Image>
 
 #include <QMap>
 
@@ -64,6 +65,11 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     typedef QList<Line *> Lines;
     Lines lines;
 
+    struct RasterizedLine {
+        QList<Image> segmentImages;
+    };
+    QList<RasterizedLine> rasterized;
+
     int maxWidth;
     String text;                ///< Plain text.
     Font::RichFormat format;
@@ -90,6 +96,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         qDeleteAll(lines);
         lines.clear();
+        rasterized.clear();
     }
 
     String rangeText(Rangei const &range) const
@@ -504,6 +511,12 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
 
         return lineRange.end + extraLinesProduced;
     }
+
+    Image rasterizeSegment(LineInfo::Segment const &segment)
+    {
+        return font->rasterize(text  .substr  (segment.range),
+                               format.subRange(segment.range));
+    }
 };
 
 FontLineWrapping::FontLineWrapping() : d(new Impl)
@@ -578,7 +591,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     // When tabs are used, we must first determine the maximum width of each tab stop.
     if (d->containsTabs(Rangei(0, text.size())))
     {
-        d->indent = 0;
+        d->indent  = 0;
         d->tabStop = 0;
 
         // Divide the content into lines by newlines.
@@ -750,8 +763,51 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 
 FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
+    DENG2_ASSERT(line >= 0 && line < d->lines.size());
     return d->lines[index]->info;
 }
+
+void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
+{
+    d->rasterized.clear();
+
+    for (int i = 0; i < height(); ++i)
+    {
+        Impl::RasterizedLine rasterLine;
+        if (lineRange.contains(i))
+        {
+            LineInfo const &line = lineInfo(i);
+            for (int k = 0; k < line.segs.size(); ++k)
+            {
+                rasterLine.segmentImages << d->rasterizeSegment(line.segs.at(k));
+            }
+        }
+        d->rasterized << rasterLine;
+    }
+}
+
+void FontLineWrapping::clearRasterizedLines() const
+{
+    d->rasterized.clear();
+}
+
+Image FontLineWrapping::rasterizedSegment(int line, int segment) const
+{
+    DENG2_ASSERT(line >= 0);
+    if (line >= 0 && line < d->rasterized.size())
+    {
+        auto const &rasterLine = d->rasterized.at(line);
+        if (!rasterLine.segmentImages.isEmpty())
+        {
+            DENG2_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.size());
+            return rasterLine.segmentImages.at(segment);
+        }
+    }
+    // Rasterize now, since it wasn't previously rasterized.
+    return d->rasterizeSegment(lineInfo(line).segs.at(segment));
+}
+
+//---------------------------------------------------------------------------------------
 
 int FontLineWrapping::LineInfo::highestTabStop() const
 {

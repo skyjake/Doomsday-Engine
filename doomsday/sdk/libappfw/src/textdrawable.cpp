@@ -175,6 +175,11 @@ DENG2_PIMPL(TextDrawable)
             // This is where most of the time will be spent:
             _wrapper->wrapTextToWidth(_wrapper->plainText, _wrapper->format, _width);
 
+            // Pre-rasterize the first lines of the text. The assumption is that
+            // longer text will only be visible after scrolling, so it will be
+            // rasterized as needed.
+            _wrapper->rasterizeLines(Rangei(0, 10)); // May also take a while...
+
             // Pass the finished wrapping to the owner.
             {
                 DENG2_GUARD(d);

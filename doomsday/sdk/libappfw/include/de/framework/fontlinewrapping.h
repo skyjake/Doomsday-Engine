@@ -23,6 +23,7 @@
 
 #include <de/String>
 #include <de/Font>
+#include <de/Image>
 #include <de/Lockable>
 #include <de/shell/ILineWrapping>
 
@@ -64,6 +65,9 @@ public:
 
     void wrapTextToWidth(String const &text, int maxWidth);
     void wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth);
+
+    void rasterizeLines(Rangei const &lineRange);
+    void clearRasterizedLines() const;
 
     /**
      * Cancels the ongoing wrapping operation. This is useful when doing long wrapping
@@ -128,6 +132,16 @@ public:
      * @param index  Wrapped line number.
      */
     LineInfo const &lineInfo(int index) const;
+
+    /**
+     * Returns a rasterized version of a segment.
+     * Before calling this, segments must first be rasterized by calling
+     * rasterizeAllSegments().
+     *
+     * @param line     Line index.
+     * @param segment  Segment on the line.
+     */
+    Image rasterizedSegment(int line, int segment) const;
 
 private:
     DENG2_PRIVATE(d)

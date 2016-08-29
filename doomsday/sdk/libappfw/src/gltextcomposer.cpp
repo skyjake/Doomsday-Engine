@@ -195,13 +195,8 @@ DENG2_PIMPL(GLTextComposer)
                         fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
                     }
 
-                    // Set up the background color to be transparent with no
-                    // change of color in the alphablended smooth edges.
-                    Vector4ub bgColor = fgColor;
-                    bgColor.w = 0;
-
-                    seg.id = atlas->alloc(font->rasterize(seg.text, format.subRange(seg.range),
-                                                          fgColor, bgColor));
+                    Image const segmentImage = wraps->rasterizedSegment(i, k);
+                    seg.id = atlas->alloc(segmentImage.multiplied(fgColor));
                 }
                 line.segs << seg;
             }
@@ -216,6 +211,8 @@ DENG2_PIMPL(GLTextComposer)
             lines.removeLast();
             changed = true;
         }
+
+        wraps->clearRasterizedLines();
 
         DENG2_ASSERT(wraps->height() == lines.size());
 
