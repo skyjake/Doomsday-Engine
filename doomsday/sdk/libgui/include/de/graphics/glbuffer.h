@@ -313,6 +313,9 @@ public:
      */
     dsize count() const;
 
+    static duint drawCount();
+    static void resetDrawCount();
+
 protected:
     void setFormat(internal::AttribSpecs const &format);
 

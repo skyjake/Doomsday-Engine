@@ -22,6 +22,7 @@
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
+#include <de/GLBuffer>
 #include <de/GLState>
 
 namespace de {
@@ -105,6 +106,8 @@ bool BaseWindow::shouldRepaintManually() const
 
 bool BaseWindow::prepareForDraw()
 {
+    GLBuffer::resetDrawCount();
+
     // Don't run the main loop until after the paint event has been dealt with.
     DENG2_GUI_APP->loop().pause();
     return true; // Go ahead.
@@ -185,6 +188,8 @@ void BaseWindow::postDraw()
 
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
+
+    //qDebug() << "Draw count:" << GLBuffer::drawCount();
 }
 
 } // namespace de

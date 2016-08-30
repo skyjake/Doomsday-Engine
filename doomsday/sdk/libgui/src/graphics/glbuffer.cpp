@@ -119,6 +119,8 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTangentTex, 14 * sizeof(float))
 
 //----------------------------------------------------------------------------
 
+static duint drawCounter = 0;
+
 DENG2_PIMPL(GLBuffer)
 {
     GLuint name;
@@ -371,6 +373,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
             LIBGUI_ASSERT_GL_OK();
         }
     }
+    ++drawCounter;
 
     d->enableArrays(false);
 }
@@ -436,6 +439,16 @@ dsize GLBuffer::count() const
 void GLBuffer::setFormat(AttribSpecs const &format)
 {
     d->specs = format;
+}
+
+duint GLBuffer::drawCount() // static
+{
+    return drawCounter;
+}
+
+void GLBuffer::resetDrawCount() // static
+{
+    drawCounter = 0;
 }
 
 } // namespace de
