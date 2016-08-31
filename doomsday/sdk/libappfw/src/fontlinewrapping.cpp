@@ -77,7 +77,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     QList<int> prevIndents;
     int tabStop;
     volatile bool cancelled = false;
-    
+
     DENG2_ERROR(CancelError);
 
     Impl() : font(0), maxWidth(0), indent(0), tabStop(0) {}
@@ -86,7 +86,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     {
         clearLines();
     }
-    
+
     inline void checkCancel() const
     {
         if (cancelled) throw CancelError("FontLineWrapping::checkCancel", "Cancelled");
@@ -164,7 +164,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Line *makeLine(Rangei const &range, int width = -1)
     {
         checkCancel();
-        
+
         if (width < 0)
         {
             // Determine the full width now.
@@ -576,7 +576,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
     DENG2_GUARD(this);
-    
+
     String newText = text;
 
     clear();
@@ -645,7 +645,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
     }
 #endif
 }
-    
+
 void FontLineWrapping::cancel()
 {
     d->cancelled = true;
@@ -763,7 +763,7 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 
 FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
-    DENG2_ASSERT(line >= 0 && line < d->lines.size());
+    DENG2_ASSERT(index >= 0 && index < d->lines.size());
     return d->lines[index]->info;
 }
 
