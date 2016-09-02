@@ -526,6 +526,8 @@ enum { MX, MY, MZ };
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 
+#define DD_SCREENSHOT_CHECK_EXISTS  0x1
+
 /**
  * @defgroup alignmentFlags  Alignment Flags
  * @ingroup apiFlags

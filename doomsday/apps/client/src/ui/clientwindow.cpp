@@ -1314,10 +1314,8 @@ void GL_AssertContextActive()
 #endif
 
 #undef M_ScreenShot
-DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
+DENG_EXTERN_C int M_ScreenShot(char const *name, int flags)
 {
-    DENG2_UNUSED(bits);
-
     de::String fullName(name);
     if(fullName.fileNameExtension().isEmpty())
     {
@@ -1325,5 +1323,12 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
     }
 
     // By default, place the file in the runtime folder.
-    return ClientWindow::main().grabToFile(App::app().nativeHomePath()/fullName)? 1 : 0;
+    NativePath const shotPath(App::app().nativeHomePath() / fullName);
+
+    if (flags & DD_SCREENSHOT_CHECK_EXISTS)
+    {
+        return (shotPath.exists() ? 1 : 0);
+    }
+
+    return ClientWindow::main().grabToFile(shotPath)? 1 : 0;
 }

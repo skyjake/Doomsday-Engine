@@ -1476,14 +1476,14 @@ static void runGameAction()
             // Find an unused screenshot file name.
             String fileName = COMMON_GAMESESSION->gameId() + "-";
             int const numPos = fileName.length();
-            for(int i = 0; i < 1e6; ++i) // Stop eventually...
+            for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {
                 fileName += String("%1.png").arg(i, 3, 10, QChar('0'));
-                if(!F_FileExists(fileName.toUtf8().constData())) break;
+                if (!M_ScreenShot(fileName.toUtf8(), DD_SCREENSHOT_CHECK_EXISTS)) break; // Check only.
                 fileName.truncate(numPos);
             }
 
-            if(M_ScreenShot(fileName.toUtf8().constData(), 24))
+            if (M_ScreenShot(fileName.toUtf8(), 0))
             {
                 /// @todo Do not use the console player's message log for this notification.
                 ///       The engine should implement it's own notification UI system for

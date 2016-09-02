@@ -143,8 +143,10 @@ DENG_API_TYPEDEF(Rend)
      * Will create/overwrite as necessary.
      *
      * @param filename  Local file path to write to.
+     * @param flags     Mode flags (DD_SCREENSHOT_*).
+     *                  - DD_SCREENSHOT_CHECK_EXISTS: returns 1 if the file exists.
      */
-    int (*ScreenShot)(const char* filename, int bits);
+    int (*ScreenShot)(const char* filename, int flags);
 }
 DENG_API_T(Rend);
 

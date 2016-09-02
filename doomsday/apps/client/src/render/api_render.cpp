@@ -48,7 +48,7 @@ using namespace de;
 
 // m_misc.c
 #undef M_ScreenShot
-DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
+DENG_EXTERN_C dint M_ScreenShot(char const *name, dint flags);
 
 #undef Models_CacheForState
 DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
