@@ -25,7 +25,7 @@
 
 namespace de {
 
-class GLFramebuffer;
+class GLTextureFramebuffer;
 
 /**
  * Window content transformation for virtual reality.
@@ -45,7 +45,7 @@ public:
 
     void drawTransformed();
 
-    GLFramebuffer &unwarpedFramebuffer();
+    GLTextureFramebuffer &unwarpedFramebuffer();
 
 private:
     DENG2_PRIVATE(d)

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/VRWindowTransform"
@@ -24,7 +24,8 @@
 #include "de/GuiWidget"
 
 #include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/GLInfo>
+#include <de/GLTextureFramebuffer>
 
 namespace de {
 
@@ -32,7 +33,7 @@ DENG2_PIMPL(VRWindowTransform)
 {
     VRConfig &vrCfg;
 
-    GLFramebuffer unwarpedFB;
+    GLTextureFramebuffer unwarpedFB;
 
     Impl(Public *i)
         : Base(i)
@@ -49,7 +50,7 @@ DENG2_PIMPL(VRWindowTransform)
         return self.window().canvas();
     }
 
-    GLTarget &target() const
+    GLFramebuffer &target() const
     {
         return canvas().renderTarget();
     }
@@ -101,12 +102,12 @@ DENG2_PIMPL(VRWindowTransform)
 
         // Set render target to offscreen temporarily.
         GLState::push()
-                .setTarget(unwarpedFB.target())
+                .setTarget(unwarpedFB)
                 .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
                 .apply();
-        unwarpedFB.target().unsetActiveRect(true);
+        unwarpedFB.unsetActiveRect(true);
 
-        GLFramebuffer::Size const fbSize = unwarpedFB.size();
+        GLTextureFramebuffer::Size const fbSize = unwarpedFB.size();
 
         // Left eye view on left side of screen.
         for (int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
@@ -115,17 +116,17 @@ DENG2_PIMPL(VRWindowTransform)
             if (ovr.currentEye() == OculusRift::LeftEye)
             {
                 // Left eye on the left side of the screen.
-                unwarpedFB.target().setActiveRect(Rectangleui(0, 0, fbSize.x/2, fbSize.y), true);
+                unwarpedFB.setActiveRect(Rectangleui(0, 0, fbSize.x/2, fbSize.y), true);
             }
             else
             {
                 // Right eye on the right side of screen.
-                unwarpedFB.target().setActiveRect(Rectangleui(fbSize.x/2, 0, fbSize.x/2, fbSize.y), true);
+                unwarpedFB.setActiveRect(Rectangleui(fbSize.x/2, 0, fbSize.x/2, fbSize.y), true);
             }
             drawContent();
         }
 
-        unwarpedFB.target().unsetActiveRect(true);
+        unwarpedFB.unsetActiveRect(true);
         GLState::pop().apply();
 
         vrCfg.enableFrustumShift(); // restore default
@@ -233,12 +234,12 @@ DENG2_PIMPL(VRWindowTransform)
                 // Left eye view
                 vrCfg.setCurrentEye(VRConfig::LeftEye);
                 drawContent();
-                canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoLeftBuffer);
+                //canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoLeftBuffer);
 
                 // Right eye view
                 vrCfg.setCurrentEye(VRConfig::RightEye);
                 drawContent();
-                canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoRightBuffer);
+                //canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoRightBuffer);
             }
             else
             {
@@ -379,7 +380,7 @@ void VRWindowTransform::drawTransformed()
     d->draw();
 }
 
-GLFramebuffer &VRWindowTransform::unwarpedFramebuffer()
+GLTextureFramebuffer &VRWindowTransform::unwarpedFramebuffer()
 {
     return d->unwarpedFB;
 }

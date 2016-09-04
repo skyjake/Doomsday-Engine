@@ -26,7 +26,7 @@
 #include <de/CanvasWindow>
 #include <de/TextureBank>
 #include <de/GLUniform>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 #include <de/GLState>
 
 #include <QImage>
@@ -413,7 +413,7 @@ void GuiRootWidget::draw()
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.
-        window().canvas().renderTarget().clear(GLTarget::Color);
+        window().canvas().renderTarget().clear(GLFramebuffer::Color);
 
         d->noFramesDrawnYet = false;
     }

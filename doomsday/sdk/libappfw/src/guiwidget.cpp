@@ -27,7 +27,7 @@
 #include <de/MouseEvent>
 #include <de/Drawable>
 #include <de/GLTexture>
-#include <de/GLTarget>
+#include <de/GLTextureFramebuffer>
 #include <de/FocusWidget>
 #include <de/PopupWidget>
 
@@ -64,7 +64,7 @@ DENG2_PIMPL(GuiWidget)
     struct BlurState
     {
         Vector2ui size;
-        QScopedPointer<GLFramebuffer> fb[2];
+        QScopedPointer<GLTextureFramebuffer> fb[2];
         Drawable drawable;
         GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
         GLUniform uColor     { "uColor",     GLUniform::Vec4 };
@@ -184,7 +184,7 @@ DENG2_PIMPL(GuiWidget)
         for (int i = 0; i < 2; ++i)
         {
             // Multisampling is disabled in the blurs for now.
-            blur->fb[i].reset(new GLFramebuffer(Image::RGB_888, blur->size, 1));
+            blur->fb[i].reset(new GLTextureFramebuffer(Image::RGB_888, blur->size, 1));
             blur->fb[i]->glInit();
             blur->fb[i]->colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
         }
@@ -269,16 +269,16 @@ DENG2_PIMPL(GuiWidget)
         // Pass 1: render all the widgets behind this one onto the first blur
         // texture, downsampled.
         GLState::push()
-                .setTarget(blur->fb[0]->target())
+                .setTarget(*blur->fb[0])
                 .setViewport(Rectangleui::fromSize(blur->size));
-        blur->fb[0]->target().clear(GLTarget::Depth);
+        blur->fb[0]->clear(GLFramebuffer::Depth);
         self.root().drawUntil(self);
         GLState::pop();
 
         // Pass 2: apply the horizontal blur filter to draw the background
         // contents onto the second blur texture.
         GLState::push()
-                .setTarget(blur->fb[1]->target())
+                .setTarget(*blur->fb[1])
                 .setViewport(Rectangleui::fromSize(blur->size));
         blur->uTex = blur->fb[0]->colorTexture();
         blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);

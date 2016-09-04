@@ -130,6 +130,12 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
 
+void BaseGuiApp::glDeinit()
+{
+    d->vr.oculusRift().deinit();
+    d->shaders.clear();
+}
+
 double BaseGuiApp::dpiFactor() const
 {
     return d->dpiFactor;

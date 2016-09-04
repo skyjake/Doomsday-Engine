@@ -85,7 +85,7 @@ public:
 
     void canvasGLDraw(Canvas &);
 
-    void swapBuffers();
+    //void swapBuffers();
 
 protected:
     /**

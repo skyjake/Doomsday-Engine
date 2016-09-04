@@ -21,7 +21,7 @@
 #include "de/BaseWindow"
 #include "de/VRWindowTransform"
 
-#include <de/GLFramebuffer>
+#include <de/GLTextureFramebuffer>
 #include <de/GLState>
 #include <de/Lockable>
 #include <de/Guard>
@@ -135,7 +135,7 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
     /// Returns the offscreen framebuffer where the Oculus Rift raw frame is drawn.
     /// This is passed to LibOVR as a texture.
-    GLFramebuffer &framebuffer()
+    GLTextureFramebuffer &framebuffer()
     {
         DENG2_ASSERT(window);
         return window->transform().as<VRWindowTransform>().unwarpedFramebuffer();
@@ -177,7 +177,7 @@ DENG2_PIMPL(OculusRift)
 
         LOGDEV_GL_MSG("Clip FOV: %.2f degrees") << fovXDegrees;
 
-        framebuffer().resize(GLFramebuffer::Size(size[0].w + size[1].w,
+        framebuffer().resize(GLTextureFramebuffer::Size(size[0].w + size[1].w,
                                                  max(size[0].h, size[1].h)));
         uint const w = framebuffer().size().x;
         uint const h = framebuffer().size().y;

@@ -137,7 +137,7 @@ void BaseWindow::draw()
         vr.oculusRift().deinit();
     }
 
-    if (shouldRepaintManually())
+    /*if (shouldRepaintManually())
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
@@ -145,7 +145,7 @@ void BaseWindow::draw()
         canvas().makeCurrent();
         canvas().updateGL();
     }
-    else
+    else*/
     {
         // Request update at the earliest convenience.
         canvas().update();
@@ -161,13 +161,13 @@ void BaseWindow::canvasGLDraw(Canvas &cv)
     PersistentCanvasWindow::canvasGLDraw(cv);
 }
 
-void BaseWindow::swapBuffers()
+/*void BaseWindow::swapBuffers()
 {
     DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
 
     PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
                                             gl::SwapStereoBuffers : gl::SwapMonoBuffer);
-}
+}*/
 
 void BaseWindow::preDraw()
 {
@@ -189,7 +189,7 @@ void BaseWindow::postDraw()
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
 
-    //qDebug() << "Draw count:" << GLBuffer::drawCount();
+    qDebug() << "Draw count:" << GLBuffer::drawCount();
 }
 
 } // namespace de

@@ -18,6 +18,7 @@
 
 #include "testapp.h"
 #include "mainwindow.h"
+#include <de/EscapeParser>
 #include <QMessageBox>
 #include <QDebug>
 
@@ -33,8 +34,10 @@ int main(int argc, char **argv)
     }
     catch (Error const &er)
     {
-        qWarning() << "App init failed:\n" << er.asText();
-        QMessageBox::critical(0, "test_appfw", "App init failed:\n" + er.asText());
+        EscapeParser esc;
+        esc.parse(er.asText());
+        qWarning() << "App init failed:\n" << esc.plainText();
+        QMessageBox::critical(0, "test_appfw", "App init failed:\n" + esc.plainText());
         return -1;
     }
 

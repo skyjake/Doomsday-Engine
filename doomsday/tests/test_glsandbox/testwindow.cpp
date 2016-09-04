@@ -21,15 +21,16 @@
 
 #include <QMessageBox>
 #include <QPainter>
-#include <QGLFormat>
+#include <QToolBar>
 
 #include <de/AtlasTexture>
 #include <de/Drawable>
 #include <de/FileSystem>
 #include <de/GLBuffer>
+#include <de/GLInfo>
 #include <de/GLShader>
 #include <de/GLState>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 #include <de/GLTexture>
 #include <de/GuiApp>
 #include <de/ImageBank>
@@ -70,7 +71,7 @@ DENG2_OBSERVES(Bank, Load)
     GLUniform uModelTex;
     GLProgram modelProgram;
     QScopedPointer<AtlasTexture> atlas;
-    QScopedPointer<GLTarget> frameTarget;
+    QScopedPointer<GLFramebuffer> frameTarget;
     Time startedAt;
     Time lastAtlasAdditionAt;
     bool eraseAtlas;
@@ -156,7 +157,7 @@ DENG2_OBSERVES(Bank, Load)
 
         // Prepare the custom target.
         frameTex.setUndefinedImage(Vector2ui(512, 256), Image::RGBA_8888);
-        frameTarget.reset(new GLTarget(frameTex));
+        frameTarget.reset(new GLFramebuffer(frameTex));
 
         // 3D cube.
         VertexBuf *buf = new VertexBuf;
@@ -401,7 +402,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawRttFrame()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
         // The left cube.
         uTex = testpic;
@@ -420,7 +421,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawAtlasFrame()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
         uTex = *atlas;
         atlasOb.draw();
     }
@@ -433,7 +434,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawModel()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
         uMvpMatrix = projMatrix * modelMatrix;
 
@@ -546,7 +547,6 @@ void TestWindow::canvasGLDraw(Canvas &canvas)
     LIBGUI_ASSERT_GL_OK();
 
     d->draw(canvas);
-    canvas.swapBuffers();
 
     CanvasWindow::canvasGLDraw(canvas);
 }

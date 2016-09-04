@@ -19,6 +19,7 @@
 
 #include <de/GuiApp>
 #include <de/LogBuffer>
+#include <QTimer>
 #include <QDebug>
 
 #include "testwindow.h"
@@ -29,6 +30,8 @@ int main(int argc, char **argv)
 {
     try
     {
+        GuiApp::setDefaultOpenGLFormat();
+
         GuiApp app(argc, argv);
         app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems(App::DisablePlugins);
@@ -44,5 +47,5 @@ int main(int argc, char **argv)
     }
 
     qDebug("Exiting main()...");
-    return 0;        
+    return 0;
 }

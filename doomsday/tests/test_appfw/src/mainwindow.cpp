@@ -230,7 +230,7 @@ Vector2f MainWindow::windowContentSize() const
 
 void MainWindow::drawWindowContent()
 {
-    GLState::current().target().clear(GLTarget::ColorDepth);
+    GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
     d->updateCompositor();
     d->root.draw();
@@ -266,10 +266,10 @@ void MainWindow::preDraw()
 
 void MainWindow::postDraw()
 {
-    if (TestApp::vr().mode() != VRConfig::OculusRift)
+    /*if (TestApp::vr().mode() != VRConfig::OculusRift)
     {
         swapBuffers();
-    }
+    }*/
     BaseWindow::postDraw();
 
     Garbage_Recycle();
