@@ -87,7 +87,7 @@ dint sfxBits = 8;
 dint sfxRate = 11025;
 
 #ifdef __CLIENT__
-#  ifdef MACOSX
+#  if defined(MACOSX) && defined(MACOS_HAVE_QTKIT)
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
 DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
@@ -391,7 +391,7 @@ DENG2_PIMPL(System)
             ifs.i.any = &defaultDriver.iMusic();
             activeInterfaces << ifs;  // a copy is made
         }
-#ifdef MACOSX
+#if defined(MACOSX) && defined(MACOS_HAVE_QTKIT)
         else if(defaultDriverId != AUDIOD_DUMMY)
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.

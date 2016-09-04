@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef MACOS_HAVE_QTKIT
+
 #import "MusicPlayer.h"
 
 static MusicPlayer* musicPlayer;
@@ -209,3 +211,4 @@ audiointerface_music_t audiodQuickTimeMusic = { {
     DM_Ext_PlayFile,
 };
 
+#endif // MACOS_HAVE_QTKIT

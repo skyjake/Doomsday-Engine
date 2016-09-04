@@ -18,14 +18,21 @@ execute_process (COMMAND sw_vers -productVersion
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-if (NOT MACOS_VERSION VERSION_LESS 10.7)
-    add_definitions (-DMACOS_10_7=1)
-endif ()
 add_definitions (
     -DMACOSX=1
     # Fallback basedir for command line apps.
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )
+if (NOT MACOS_VERSION VERSION_LESS 10.7)
+    add_definitions (-DMACOS_10_7=1)
+endif ()
+if (MACOS_VERSION VERSION_LESS 10.12)
+    # QTKit has been deprecated; should use AVFoundation instead.
+    set (DENG_HAVE_QTKIT YES CACHE INTERNAL "")
+    add_definitions (-DMACOS_HAVE_QTKIT=1)
+else ()
+    set (DENG_HAVE_QTKIT NO CACHE INTERNAL "")
+endif ()
 
 # Check compiler version.
 if (NOT DEFINED CLANG_VERSION_STRING AND ${CMAKE_CXX_COMPILER_ID} MATCHES ".*Clang.*")
