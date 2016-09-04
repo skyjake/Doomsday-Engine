@@ -51,7 +51,7 @@ namespace de {
 
 DENG2_PIMPL(Canvas)
 {
-    GLTextureFramebuffer framebuf;
+    GLTextureFramebuffer backing;
 
     CanvasWindow *parent;
     bool readyNotified;
@@ -193,19 +193,20 @@ DENG2_PIMPL(Canvas)
 
     void reconfigureFramebuffer()
     {
-        framebuf.setColorFormat(Image::RGB_888);
-        framebuf.resize(currentSize);
+        backing.setColorFormat(Image::RGB_888);
+        backing.resize(currentSize);
     }
 
     void glInit()
     {
         DENG2_ASSERT(parent != 0);
-        framebuf.glInit();
+        GLInfo::glInit();
+        backing.glInit();
     }
 
     void glDeinit()
     {
-        framebuf.glDeinit();
+        backing.glDeinit();
         GLInfo::glDeinit();
     }
 
@@ -343,14 +344,9 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
     audienceForMouseEvent()       = other.audienceForMouseEvent();
 }
 
-GLFramebuffer &Canvas::renderTarget() const
+GLTextureFramebuffer &Canvas::framebuffer() const
 {
-    return d->framebuf;
-}
-
-GLTextureFramebuffer &Canvas::framebuffer()
-{
-    return d->framebuf;
+    return d->backing;
 }
 
 /*void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
@@ -361,11 +357,9 @@ GLTextureFramebuffer &Canvas::framebuffer()
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_NOTE("Notifying GL init (during paint)");
+    LOGDEV_GL_NOTE("Initializing OpenGL window");
 
-    GLInfo::glInit();
-
-    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
+    d->glInit();
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -391,20 +385,25 @@ void Canvas::updateSize()
     LOGDEV_GL_MSG("Canvas %p resizing now") << this;
 #endif
 
-    makeCurrent();
     d->currentSize = d->pendingSize;
-    d->reconfigureFramebuffer();
+
+    if (d->readyNotified)
+    {
+        makeCurrent();
+        d->reconfigureFramebuffer();
+    }
 
     DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);
 }
 
+#if 0
 void Canvas::showEvent(QShowEvent* ev)
 {
     LOG_AS("Canvas");
 
     QOpenGLWidget::showEvent(ev);
 
-    // The first time the window is shown, run the initialization callback. On
+    /*// The first time the window is shown, run the initialization callback. On
     // some platforms, OpenGL is not fully ready to be used before the window
     // actually appears on screen.
     if (isVisible() && !d->readyNotified)
@@ -417,8 +416,9 @@ void Canvas::showEvent(QShowEvent* ev)
 #endif
         GLInfo::glInit();
         QTimer::singleShot(1, this, SLOT(notifyReady()));
-    }
+    }*/
 }
+#endif
 
 void Canvas::notifyReady()
 {
@@ -426,55 +426,53 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    d->glInit();
+    makeCurrent();
+
     d->reconfigureFramebuffer();
+
+    // Everybody can perform GL init now.
+    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
 
     // Print some information.
     QSurfaceFormat const fmt = format();
 
-    /*if (fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
-        LOG_GL_NOTE("OpenGL 3.3 supported");
-    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
-        LOG_GL_NOTE("OpenGL 3.2 supported");
-    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
-        LOG_GL_NOTE("OpenGL 3.1 supported");
-    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
-        LOG_GL_NOTE("OpenGL 3.0 supported");
-    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
-        LOG_GL_NOTE("OpenGL 2.1 supported");
-    else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
-        LOG_GL_NOTE("OpenGL 2.0 supported");
-    else
-        LOG_GL_WARNING("OpenGL 2.0 is not supported!");*/
-
-    LOG_GL_NOTE("OpenGL %i.%i supported (%s)")
+    LOG_GL_NOTE("OpenGL %i.%i supported%s")
             << fmt.majorVersion() << fmt.minorVersion()
-            << (fmt.profile() == QSurfaceFormat::CompatibilityProfile? "Compatibility" : "Core");
+            << (fmt.majorVersion() > 2?
+                    (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
+                                                                          : " (Core)") : "");
 
     LOGDEV_GL_XVERBOSE("Notifying GL ready");
     DENG2_FOR_AUDIENCE2(GLReady, i) i->canvasGLReady(*this);
 
-    // This Canvas instance might have been destroyed now.
+    doneCurrent();
 }
 
 void Canvas::paintGL()
 {
     if (!d->parent/* || d->parent->isRecreationInProgress()*/) return;
 
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
-
     GLFramebuffer::setDefaultFramebuffer(defaultFramebufferObject());
+
+    if (!d->readyNotified)
+    {
+        QTimer::singleShot(1, this, SLOT(notifyReady()));
+        return;
+    }
+
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
     LIBGUI_ASSERT_GL_OK();
 
     // Make sure any changes to the state stack are in effect.
     GLState::current().apply();
+    GLState::current().target().glBind();
 
     DENG2_FOR_AUDIENCE2(GLDraw, i) i->canvasGLDraw(*this);
 
     LIBGUI_ASSERT_GL_OK();
 
-    d->framebuf.blit();
+    d->backing.blit();
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

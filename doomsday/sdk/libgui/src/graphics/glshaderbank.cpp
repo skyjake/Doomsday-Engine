@@ -176,6 +176,11 @@ DENG2_PIMPL(GLShaderBank)
 GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Impl(this))
 {}
 
+void GLShaderBank::clear()
+{
+    d->clearShaders();
+}
+
 void GLShaderBank::addFromInfo(File const &file)
 {
     LOG_AS("GLShaderBank");

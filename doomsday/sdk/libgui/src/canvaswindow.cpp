@@ -41,7 +41,7 @@ static CanvasWindow *mainWindow = 0;
 
 DENG2_PIMPL(CanvasWindow)
 {
-    Canvas* canvas; ///< Drawing surface for the contents of the window.
+    Canvas *canvas; ///< Drawing surface for the contents of the window.
     //Canvas* recreated;
     Canvas::FocusChangeAudience canvasFocusAudience; ///< Stored here during recreation.
     bool ready;

@@ -45,6 +45,8 @@ public:
 public:
     GLShaderBank();
 
+    void clear();
+
     void addFromInfo(File const &file);
 
     GLShader &shader(DotPath const &path, GLShader::Type type) const;

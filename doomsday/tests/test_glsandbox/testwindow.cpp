@@ -251,7 +251,7 @@ DENG2_OBSERVES(Bank, Load)
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
-        cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+        cv.framebuffer().setClearColor(Vector4f(.2f, .2f, .2f, 0));
 
         modelProgram.build(
                     ByteRefArray::fromCStr(

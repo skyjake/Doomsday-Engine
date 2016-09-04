@@ -517,7 +517,11 @@ void GLFramebuffer::glBind() const
 {
     LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT(isReady());
-    if (!isReady()) return;
+    if (!isReady())
+    {
+        //qWarning() << "GLFramebuffer: Trying to bind a not-ready FBO";
+        return;
+    }
 
     GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
 
@@ -535,8 +539,8 @@ void GLFramebuffer::glBind() const
         //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
         if (fbo && !GLInfo::EXT_framebuffer_object()->glIsFramebufferEXT(fbo))
         {
-            qDebug() << "GLFramebuffer: WARNING! Attempting to bind FBO" << fbo
-                     << "that is not a valid OpenGL FBO";
+            qWarning() << "[GLFramebuffer] WARNING! Attempting to bind FBO" << fbo
+                       << "that is not a valid OpenGL FBO";
         }
 
         //qDebug() << "GLFramebuffer: binding FBO" << d->fbo;
@@ -674,6 +678,8 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
+    //qDebug() << "Blitting from" << d->fbo << "to" << defaultFramebuffer << size().asText();
+
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, defaultFramebuffer);
 
@@ -703,6 +709,7 @@ GLFramebuffer::Size GLFramebuffer::size() const
     {
         return d->size;
     }
+    //qDebug() << "FBO" << d->fbo << "size" << CanvasWindow::main().canvas().size().asText();
     return CanvasWindow::main().canvas().size();
 }
 

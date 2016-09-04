@@ -604,7 +604,7 @@ GLFramebuffer &GLState::target() const
     {
         return *d->target;
     }
-    return CanvasWindow::main().canvas().renderTarget();
+    return CanvasWindow::main().canvas().framebuffer();
 }
 
 Rectangleui GLState::viewport() const
@@ -661,7 +661,7 @@ void GLState::apply() const
         }
 
         internal::currentTarget = newTarget;
-        internal::currentTarget.get()->glBind();
+        newTarget->glBind();
 
         if ((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
         {

@@ -368,7 +368,7 @@ void GL_SetMultisample(dd_bool on)
     else  glDisable(GL_MULTISAMPLE);
 #endif*/
 
-    /// @todo Do this via QSurfaceFormat.
+    /// @todo Do this via GLFramebuffer.
     qDebug() << "GL_SetMultisample:" << on << "(not implemented)";
 }
 

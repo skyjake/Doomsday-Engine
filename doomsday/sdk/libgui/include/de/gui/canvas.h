@@ -168,9 +168,7 @@ public:
      *
      * @return GL render target.
      */
-    GLFramebuffer &renderTarget() const;
-
-    GLTextureFramebuffer &framebuffer();
+    GLTextureFramebuffer &framebuffer() const;
 
     /**
      * Copies or swaps the back buffer to the front, making it visible.
@@ -192,7 +190,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *ev);
     void mouseMoveEvent(QMouseEvent *ev);
     void wheelEvent(QWheelEvent *ev);
-    void showEvent(QShowEvent *ev);
+    //void showEvent(QShowEvent *ev);
 
 protected slots:
     void notifyReady();

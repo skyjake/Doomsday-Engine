@@ -37,6 +37,8 @@ DENG2_PIMPL(GLTextureFramebuffer)
     int _samples; ///< don't touch directly (0 == default)
     GLTexture color;
     GLTexture depthStencil;
+    //GLFramebuffer framebuf;
+    Asset texFboState;
 
     /*Drawable bufSwap;
     GLUniform uMvpMatrix;
@@ -126,7 +128,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
 
     void reconfigure()
     {
-        if (!self.isReady() || size == Size()) return;
+        if (!texFboState.isReady() || size == Size()) return;
 
         LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
                 << size.asText() << sampleCount();
@@ -163,28 +165,28 @@ DENG2_PIMPL(GLTextureFramebuffer)
                 case 1:
                     failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
                               "Trying again without stencil";
-                    self.configure(Color, color, DepthStencil);
+                    self.configure(GLFramebuffer::Color, color, GLFramebuffer::DepthStencil);
                     LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
                     break;
 
                 case 2:
                     failMsg = "Color texture with depth renderbuffer failed: %s\n"
                               "Trying again without texture buffers";
-                    self.configure(Color, color, Depth);
+                    self.configure(GLFramebuffer::Color, color, GLFramebuffer::Depth);
                     LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
                     break;
 
                 case 3:
                     failMsg = "Renderbuffer-based framebuffer failed: %s\n"
                               "Trying again without stencil";
-                    self.configure(size, ColorDepthStencil);
+                    self.configure(size, GLFramebuffer::ColorDepthStencil);
                     LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
                     break;
 
                 case 4:
                     // Final fallback: simple FBO with just color+depth renderbuffers.
                     // No postfx, no access from shaders, no sky mask.
-                    self.configure(size, ColorDepth);
+                    self.configure(size, GLFramebuffer::ColorDepth);
                     LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
                     break;
 
@@ -193,14 +195,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
                 }
                 break; // success!
             }
-            catch (ConfigError const &er)
+            catch (GLFramebuffer::ConfigError const &er)
             {
                 if (failMsg.isEmpty()) throw er; // Can't handle it.
                 LOG_GL_NOTE(failMsg) << er.asText();
             }
         }
 
-        self.clear(ColorDepthStencil);
+        self.clear(GLFramebuffer::ColorDepthStencil);
 
         /*if (isMultisampled())
         {
@@ -321,7 +323,7 @@ GLTextureFramebuffer::GLTextureFramebuffer(Image::Format const &colorFormat, Siz
 
 void GLTextureFramebuffer::glInit()
 {
-    if (isReady()) return;
+    if (d->texFboState.isReady()) return;
 
 /*#ifdef LIBGUI_USE_GLENTRYPOINTS
     if (!glBindFramebuffer) return;
@@ -340,16 +342,37 @@ void GLTextureFramebuffer::glInit()
     }
 
     d->alloc();
-    setState(Ready);
+    d->texFboState.setState(Ready);
 
     d->reconfigure();
 }
 
 void GLTextureFramebuffer::glDeinit()
 {
-    setState(NotReady);
+    d->texFboState.setState(NotReady);
     d->release();
 }
+
+/*
+GLFramebuffer &GLTextureFramebuffer::framebuffer()
+{
+    return d->framebuf;
+}
+
+GLFramebuffer const &GLTextureFramebuffer::framebuffer() const
+{
+    return d->framebuf;
+}
+
+GLTextureFramebuffer::operator GLFramebuffer &()
+{
+    return framebuffer();
+}
+
+GLTextureFramebuffer::operator const GLFramebuffer &() const
+{
+    return framebuffer();
+}*/
 
 void GLTextureFramebuffer::setSampleCount(int sampleCount)
 {
@@ -400,6 +423,11 @@ int GLTextureFramebuffer::sampleCount() const
 {
     return d->sampleCount();
 }
+
+/*void GLTextureFramebuffer::clear(GLFramebuffer::Flags const &attachments)
+{
+    d->framebuf.clear(attachments);
+}*/
 
 /*void GLTextureFramebuffer::blit(GLFramebuffer const &target) const
 {

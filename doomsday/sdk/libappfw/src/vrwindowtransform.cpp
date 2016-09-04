@@ -52,7 +52,7 @@ DENG2_PIMPL(VRWindowTransform)
 
     GLFramebuffer &target() const
     {
-        return canvas().renderTarget();
+        return canvas().framebuffer();
     }
 
     int width() const

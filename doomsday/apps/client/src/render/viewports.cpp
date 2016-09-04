@@ -1004,7 +1004,7 @@ static void clearViewPorts()
 
     if(fx::Bloom::isEnabled() ||
        (App_InFineSystem().finaleInProgess() && !GameUIWidget::finaleStretch()) ||
-       ClientApp::vr().mode() == VRConfig::OculusRift)
+        ClientApp::vr().mode() == VRConfig::OculusRift)
     {
         // Parts of the previous frame might leak in the bloom unless we clear the color
         // buffer. Not doing this would result in very bright HOMs in map holes and game

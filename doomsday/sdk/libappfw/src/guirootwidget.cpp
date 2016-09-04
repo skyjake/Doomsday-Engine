@@ -413,7 +413,7 @@ void GuiRootWidget::draw()
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.
-        window().canvas().renderTarget().clear(GLFramebuffer::Color);
+        window().canvas().framebuffer().clear(GLFramebuffer::Color);
 
         d->noFramesDrawnYet = false;
     }
