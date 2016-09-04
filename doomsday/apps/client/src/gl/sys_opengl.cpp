@@ -40,10 +40,12 @@
 
 gl_state_t GL_state;
 
+/*
 #ifdef WIN32
 //PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 #endif
+*/
 
 /*
 #ifdef LIBGUI_USE_GLENTRYPOINTS
@@ -109,16 +111,16 @@ static void initialize(void)
         GL_state.features.genMipmap = false;
     }
 
-#ifdef WIN32
+/*#ifdef WIN32
     if(ext.Windows_EXT_swap_control)
     {
         GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
     }
     if(!ext.Windows_EXT_swap_control || !wglSwapIntervalEXT)
         GL_state.features.vsync = false;
-#else
+#else*/
     GL_state.features.vsync = true;
-#endif
+//#endif
 }
 
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
@@ -397,8 +399,14 @@ static void printExtensions(QStringList extensions)
 void Sys_GLPrintExtensions(void)
 {
     LOG_GL_MSG(_E(b) "OpenGL Extensions:");
-    printExtensions(QString((char const *) LIBGUI_GL.glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
+    QStringList exts;
+    foreach (QByteArray extName, QOpenGLContext::currentContext()->extensions())
+    {
+        exts << extName;
+    }
+    printExtensions(exts);
 
+    /*
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtensionsStringARB)
@@ -413,6 +421,7 @@ void Sys_GLPrintExtensions(void)
     LOG_GL_MSG("  Extensions (GLX):");
     printExtensions(QString(getGLXExtensionsString()).split(" ", QString::SkipEmptyParts));
 #endif
+    */
 }
 
 dd_bool Sys_GLCheckError()

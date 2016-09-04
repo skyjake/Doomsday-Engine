@@ -122,11 +122,11 @@ extern "C" {
 
 extern gl_state_t GL_state;
 
-#ifdef WIN32
+/*#ifdef WIN32
 //extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 #endif
-
+*/
 /*
 #if defined(LIBGUI_USE_GLENTRYPOINTS)
 extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;

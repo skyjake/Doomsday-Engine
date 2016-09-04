@@ -41,6 +41,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
     std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
     std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
+    std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
 
     Impl()
     {
@@ -187,6 +188,11 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             EXT_framebuffer_object.reset(new QOpenGLExtension_EXT_framebuffer_object);
             EXT_framebuffer_object->initializeOpenGLFunctions();
         }
+        if (ext.NV_framebuffer_multisample_coverage)
+        {
+            NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
+            NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
+        }
 
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
@@ -271,6 +277,12 @@ QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
 {
     DENG2_ASSERT(info.d->inited);
     return info.d->EXT_framebuffer_object.get();
+}
+
+QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->NV_framebuffer_multisample_coverage.get();
 }
 
 GLInfo::Extensions const &GLInfo::extensions()

@@ -54,15 +54,16 @@ DENG2_PIMPL(Canvas)
     GLTextureFramebuffer backing;
 
     CanvasWindow *parent;
-    bool readyNotified;
+    bool readyPending = false;
+    bool readyNotified = false;
     Size currentSize;
     Size pendingSize;
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     QTimer resizeTimer;
 #endif
-    bool mouseGrabbed;
+    bool mouseGrabbed = false;
 #ifdef WIN32
-    bool altIsDown;
+    bool altIsDown = false;
 #endif
     QPoint prevMousePos;
     QTime prevWheelAt;
@@ -72,14 +73,9 @@ DENG2_PIMPL(Canvas)
     Impl(Public *i, CanvasWindow *parentWindow)
         : Base(i)
         , parent(parentWindow)
-        , readyNotified(false)
-        , mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
 
-#ifdef WIN32
-        altIsDown = false;
-#endif
         //mouseDisabled = App::commandLine().has("-nomouse");
 
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
@@ -424,7 +420,7 @@ void Canvas::notifyReady()
 {
     if (d->readyNotified) return;
 
-    d->readyNotified = true;
+    d->readyPending = false;
 
     makeCurrent();
 
@@ -446,6 +442,8 @@ void Canvas::notifyReady()
     DENG2_FOR_AUDIENCE2(GLReady, i) i->canvasGLReady(*this);
 
     doneCurrent();
+
+    d->readyNotified = true;
 }
 
 void Canvas::paintGL()
@@ -456,7 +454,11 @@ void Canvas::paintGL()
 
     if (!d->readyNotified)
     {
-        QTimer::singleShot(1, this, SLOT(notifyReady()));
+        if (!d->readyPending)
+        {
+            d->readyPending = true;
+            QTimer::singleShot(1, this, SLOT(notifyReady()));
+        }
         return;
     }
 

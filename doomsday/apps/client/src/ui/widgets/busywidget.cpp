@@ -184,6 +184,8 @@ void BusyWidget::renderTransitionFrame()
 
     LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
 
+    /// @todo This breaks Qt's QOpenGLWidget FBO for some reason!
+#if 0
     d->transitionFrame.resize(grabRect.size());
     if (!d->transitionFrame.isReady())
     {
@@ -200,6 +202,7 @@ void BusyWidget::renderTransitionFrame()
     GLState::pop().apply();
 
     d->uTex = d->transitionFrame.colorTexture();
+#endif
 }
 
 void BusyWidget::releaseTransitionFrame()
