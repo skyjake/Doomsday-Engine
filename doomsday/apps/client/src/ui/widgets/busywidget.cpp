@@ -225,7 +225,7 @@ GLTexture const *BusyWidget::transitionFrame() const
     {
         return &d->transitionFrame.colorTexture();
     }
-    return 0;
+    return nullptr;
 }
 
 void BusyWidget::glInit()

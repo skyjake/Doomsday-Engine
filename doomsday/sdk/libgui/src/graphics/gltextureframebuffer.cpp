@@ -83,9 +83,9 @@ DENG2_PIMPL(GLTextureFramebuffer)
         reconfigure();
     }
 
+    /*
     void alloc()
     {
-        /*
         // Prepare the fallback blit method.
         VBuf *buf = new VBuf;
         bufSwap.addBuffer(buf);
@@ -114,16 +114,18 @@ DENG2_PIMPL(GLTextureFramebuffer)
         uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
         uBufTex = color;
         uColor = Vector4f(1, 1, 1, 1);
-        */
     }
+        */
 
     void release()
     {
         //bufSwap.clear();
         color.clear();
         depthStencil.clear();
-        self.configure();
+        self.deinit();
         //multisampleTarget.configure();
+
+        texFboState.setState(NotReady);
     }
 
     void reconfigure()
@@ -341,7 +343,7 @@ void GLTextureFramebuffer::glInit()
         LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
     }
 
-    d->alloc();
+    //d->alloc();
     d->texFboState.setState(Ready);
 
     d->reconfigure();
@@ -349,7 +351,6 @@ void GLTextureFramebuffer::glInit()
 
 void GLTextureFramebuffer::glDeinit()
 {
-    d->texFboState.setState(NotReady);
     d->release();
 }
 

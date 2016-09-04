@@ -513,6 +513,12 @@ void GLFramebuffer::configure(Flags const &attachment, GLTexture &texture, Flags
     d->alloc();
 }
 
+void GLFramebuffer::deinit()
+{
+    LOG_AS("GLFramebuffer");
+    d->releaseAndReset();
+}
+
 void GLFramebuffer::glBind() const
 {
     LIBGUI_ASSERT_GL_OK();
@@ -537,13 +543,15 @@ void GLFramebuffer::glBind() const
     else*/
     {
         //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+        /*
         if (fbo && !GLInfo::EXT_framebuffer_object()->glIsFramebufferEXT(fbo))
         {
             qWarning() << "[GLFramebuffer] WARNING! Attempting to bind FBO" << fbo
                        << "that is not a valid OpenGL FBO";
-        }
+        }*/
 
         //qDebug() << "GLFramebuffer: binding FBO" << d->fbo;
+
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fbo);
         LIBGUI_ASSERT_GL_OK();
     }
@@ -570,7 +578,7 @@ QImage GLFramebuffer::toImage() const
         // Read the contents of the color attachment.
         Size imgSize = size();
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, d->fbo);
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
         LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
         LIBGUI_GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                                (GLvoid *) img.constBits());
@@ -652,7 +660,7 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filt
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
     LIBGUI_ASSERT_GL_OK();
 
     Flags common = d->flags & dest.flags() & attachments;
@@ -678,9 +686,9 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
-    //qDebug() << "Blitting from" << d->fbo << "to" << defaultFramebuffer << size().asText();
+    qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, defaultFramebuffer);
 
     GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
@@ -696,7 +704,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
 GLuint GLFramebuffer::glName() const
 {
-    return d->fbo;
+    return d->fbo? d->fbo : defaultFramebuffer;
 }
 
 GLFramebuffer::Size GLFramebuffer::size() const

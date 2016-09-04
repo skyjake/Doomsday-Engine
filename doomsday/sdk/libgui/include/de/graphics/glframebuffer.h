@@ -210,6 +210,12 @@ public:
                    Flags const &otherAttachments = NoAttachments);
 
     /**
+     * Release all GL resources for the framebuffer. This is the opposite to configure().
+     * The object is in an unusable state after the call, ready to be destroyed.
+     */
+    void deinit();
+
+    /**
      * Activates this render target as the one where GL drawing is being done.
      */
     void glBind() const;

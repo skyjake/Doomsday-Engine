@@ -1131,6 +1131,13 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setSwapInterval(1);
     }
 //#endif
+
+    /*if (CanvasWindow::mainExists())
+    {
+        // Testing: does this actually do anything?
+        CanvasWindow::main().canvas().setFormat(fmt);
+    }*/
+
 /*
     int sampleCount = 1;
     bool configured = App::config().getb("window.main.fsaa");
