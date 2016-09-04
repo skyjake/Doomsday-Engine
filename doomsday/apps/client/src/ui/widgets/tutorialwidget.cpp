@@ -33,6 +33,8 @@
 #include <de/NotificationAreaWidget>
 #include <de/StyleProceduralImage>
 
+#include <QTimer>
+
 using namespace de;
 
 static TimeDelta const FLASH_SPAN = 0.6;

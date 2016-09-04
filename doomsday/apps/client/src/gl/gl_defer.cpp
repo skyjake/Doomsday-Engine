@@ -26,6 +26,7 @@
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <doomsday/doomsdayapp.h>
+#include <de/GLInfo>
 #include "dd_main.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 
@@ -329,7 +330,7 @@ void GL_ReserveNames(void)
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
+        LIBGUI_GL.glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
         reservedCount = NUM_RESERVED_TEXTURENAMES;
     }
@@ -345,7 +346,7 @@ void GL_ReleaseReservedNames(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
-    glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
+    LIBGUI_GL.glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
     memset(reservedTextureNames, 0, sizeof(reservedTextureNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);

@@ -106,16 +106,17 @@ dd_bool GL_IsFullyInited()
     return initFullGLOk;
 }
 
-#if defined(WIN32) || defined(MACOSX)
+//#if defined(WIN32) || defined(MACOSX)
 void GL_AssertContextActive()
 {
-#ifdef WIN32
+/*#ifdef WIN32
     DENG2_ASSERT(wglGetCurrentContext() != 0);
 #else
     DENG2_ASSERT(CGLGetCurrentContext() != 0);
-#endif
+#endif*/
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 }
-#endif
+//#endif
 
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
@@ -219,11 +220,11 @@ void GL_DoUpdate()
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    glFlush();
-    DD_WaitForOptimalUpdateTime();
+    //glFlush();
+    //DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    ClientWindow::main().swapBuffers();
+    //ClientWindow::main().swapBuffers();
 }
 
 static void printConfiguration()
@@ -336,7 +337,7 @@ void GL_Shutdown()
         dint i = 0;
         do
         {
-            glClear(GL_COLOR_BUFFER_BIT);
+            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
             GL_DoUpdate();
         } while(++i < 3);
     }
@@ -380,9 +381,9 @@ void GL_Init2DState()
     //glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
 
     // The projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, 320, 200, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, 320, 200, 0, -1, 1);
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
@@ -408,10 +409,10 @@ void GL_SwitchTo3DState(dd_bool pushState, viewport_t const *port, viewdata_t co
     if(pushState)
     {
         // Push the 2D matrices on the stack.
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPushMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPushMatrix();
     }
 
     //glEnable(GL_CULL_FACE);
@@ -449,12 +450,12 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
                                            port->geometry.width(), port->geometry.height(),
                                            scalemode_t(weaponScaleMode));
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glLoadIdentity();
 
         if(SCALEMODE_STRETCH == sm)
         {
-            glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
         }
         else
         {
@@ -462,14 +463,14 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
             // translate and scale the projection to produce an aspect
             // corrected coordinate space at 4:3, aligned vertically to
             // the bottom and centered horizontally in the window.
-            glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
-            glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
+            LIBGUI_GL.glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
+            LIBGUI_GL.glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
 
             if(port->geometry.width() >= port->geometry.height())
-                glScalef(dfloat( port->geometry.height() ) / SCREENHEIGHT,
+                LIBGUI_GL.glScalef(dfloat( port->geometry.height() ) / SCREENHEIGHT,
                          dfloat( port->geometry.height() ) / SCREENHEIGHT, 1);
             else
-                glScalef(dfloat( port->geometry.width() ) / SCREENWIDTH,
+                LIBGUI_GL.glScalef(dfloat( port->geometry.width() ) / SCREENWIDTH,
                          dfloat( port->geometry.width() ) / SCREENWIDTH, 1);
 
             // Special case: viewport height is greater than width.
@@ -478,15 +479,15 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
             if(port->geometry.height() > port->geometry.width())
             {
                 dfloat extraScale = (dfloat(port->geometry.height() * 2) / port->geometry.width()) / 2;
-                glScalef(extraScale, extraScale, 1);
+                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
             }
 
-            glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
-            glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
+            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
         }
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glLoadIdentity();
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
@@ -496,10 +497,10 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
         ClientWindow::main().game().glApplyViewport(currentView.geometry);
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPopMatrix();
         //glDisable(GL_CULL_FACE);
         //glDisable(GL_DEPTH_TEST);
         GLState::current()
@@ -535,8 +536,8 @@ void GL_ProjectionMatrix()
 
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(GL_GetProjectionMatrix().values());
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)
@@ -588,7 +589,7 @@ void GL_SelectTexUnits(dint count)
 
     for(dint i = numTexUnits - 1; i >= count; i--)
     {
-        glActiveTexture(GL_TEXTURE0 + i);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
         glDisable(GL_TEXTURE_2D);
     }
 
@@ -597,7 +598,7 @@ void GL_SelectTexUnits(dint count)
     {
         if(i >= numTexUnits) continue;
 
-        glActiveTexture(GL_TEXTURE0 + i);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
         glEnable(GL_TEXTURE_2D);
     }
 }
@@ -967,20 +968,20 @@ void GL_BindTexture(TextureVariant *vtexture)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, glTexName);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     TextureVariantSpec const &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
     }
@@ -1000,15 +1001,15 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, glName);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
 }
 
@@ -1039,7 +1040,7 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    glActiveTexture(GL_TEXTURE0 + dbyte(unit));
+    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + dbyte(unit));
     GL_Bind(glTU);
 }
 
@@ -1052,7 +1053,7 @@ void GL_SetNoTexture()
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
-    glBindTexture(GL_TEXTURE_2D, 0);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)

@@ -123,15 +123,17 @@ extern "C" {
 extern gl_state_t GL_state;
 
 #ifdef WIN32
-extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
+//extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 #endif
 
+/*
 #if defined(LIBGUI_USE_GLENTRYPOINTS)
 extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
 #endif
+*/
 
 #ifndef GL_ATI_texture_env_combine3
 #define GL_MODULATE_ADD_ATI             0x8744

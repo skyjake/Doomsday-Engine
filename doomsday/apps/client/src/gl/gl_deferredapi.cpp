@@ -24,11 +24,17 @@
 #include "de_platform.h"
 
 #include <de/concurrency.h>
+#include <de/GLInfo>
 #include "gl/gl_defer.h"
 
 static dd_bool __inline mustDefer(void)
 {
     return !Sys_InMainThread();
+}
+
+static QOpenGLContext &context()
+{
+    return *ClientWindow::main().canvas().context();
 }
 
 #define GL_CALL1(form, func, x) \
@@ -38,30 +44,30 @@ static dd_bool __inline mustDefer(void)
 
 DENG_EXTERN_C void Deferred_glEnable(GLenum e)
 {
-    GL_CALL1(e, glEnable, e);
+    GL_CALL1(e, reinterpret_cast<void (*)(GLenum)>(context().getProcAddress("glEnable")), e);
 }
 
 DENG_EXTERN_C void Deferred_glDisable(GLenum e)
 {
-    GL_CALL1(e, glDisable, e);
+    GL_CALL1(e, reinterpret_cast<void (*)(GLenum)>(context().getProcAddress("glDisable")), e);
 }
 
-DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, const GLuint* names)
+DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
 {
-    GL_CALL2(uintArray, glDeleteTextures, num, names);
+    GL_CALL2(uintArray, reinterpret_cast<void (*)(GLsizei, GLuint const *)>(context().getProcAddress("glDeleteTextures")), num, names);
 }
 
 DENG_EXTERN_C void Deferred_glFogi(GLenum p, GLint v)
 {
-    GL_CALL2(i, glFogi, p, v);
+    GL_CALL2(i, reinterpret_cast<void (*)(GLenum, GLint)>(context().getProcAddress("glFogi")), p, v);
 }
 
 DENG_EXTERN_C void Deferred_glFogf(GLenum p, GLfloat v)
 {
-    GL_CALL2(f, glFogf, p, v);
+    GL_CALL2(f, reinterpret_cast<void (*)(GLenum, GLfloat)>(context().getProcAddress("glFogf")), p, v);
 }
 
-DENG_EXTERN_C void Deferred_glFogfv(GLenum p, const GLfloat* v)
+DENG_EXTERN_C void Deferred_glFogfv(GLenum p, GLfloat const *v)
 {
-    GL_CALL2(fv4, glFogfv, p, v);
+    GL_CALL2(fv4, reinterpret_cast<void (*)(GLenum, GLfloat const *)>(context().getProcAddress("glFogfv")), p, v);
 }

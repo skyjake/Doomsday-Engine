@@ -25,6 +25,7 @@
 #include "dd_main.h" // App_Resources()
 
 #ifdef __CLIENT__
+#  include <de/GLInfo>
 #  include <de/GLState>
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
@@ -148,17 +149,17 @@ void FinalePageWidget::draw() const
     }
 
     // Now lets go into 3D mode for drawing the p objects.
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
     //glLoadIdentity();
 
     GL_SetMultisample(true);
 
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
-    glClear(GL_DEPTH_BUFFER_BIT);
+    LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
     if (renderWireframe > 1)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_ALPHA_TEST);
     GLState::push().setAlphaTest(true).apply();
 
@@ -176,7 +177,7 @@ void FinalePageWidget::draw() const
     GLState::pop().apply();
     // Back from wireframe mode?
     if (renderWireframe > 1)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Filter on top of everything. Only draw if necessary.
     if (d->filter[3].value > 0)
@@ -186,8 +187,8 @@ void FinalePageWidget::draw() const
 
     GL_SetMultisample(false);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 }
 #endif
 

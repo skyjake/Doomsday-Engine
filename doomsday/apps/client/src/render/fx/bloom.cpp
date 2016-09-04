@@ -38,7 +38,7 @@ DENG2_PIMPL(Bloom)
     typedef GLBufferT<Vertex2Tex> VBuf;
 
     Drawable bloom;
-    GLFramebuffer workFB;
+    GLTextureFramebuffer workFB;
     GLUniform uMvpMatrix;
     GLUniform uTex;
     GLUniform uColor;
@@ -96,8 +96,8 @@ DENG2_PIMPL(Bloom)
      */
     void draw()
     {
-        GLTarget &target = GLState::current().target();
-        GLTexture *colorTex = target.attachedTexture(GLTarget::Color);
+        GLFramebuffer &target = GLState::current().target();
+        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
 
         // Must have access to the color texture containing the frame buffer contents.
         if(!colorTex) return;
@@ -160,13 +160,13 @@ DENG2_PIMPL(Bloom)
         uIntensity = bloomIntensity * weight;
 
         // Initialize the work buffer for this pass.
-        workFB.target().clear(GLTarget::Color);
+        workFB.clear(GLFramebuffer::Color);
 
         // Divert rendering to the work area (full or partial area used).
-        GLTarget &target = GLState::current().target();
+        GLFramebuffer &target = GLState::current().target();
         Vector2ui const workSize = workFB.size() * bloomSize;
         GLState::push()
-                .setTarget(workFB.target())
+                .setTarget(workFB)
                 .setViewport(Rectangleui::fromSize(workSize));
 
         // Normalized active rectangle of the target.

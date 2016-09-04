@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/concurrency.h>
+#include <de/GLInfo>
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"
@@ -44,17 +45,17 @@ dd_bool GL_NewList(DGLuint list, int mode)
 
     // We enter a New/End list section.
 #ifdef _DEBUG
-if(inList)
-    App_Error("GL_NewList: Already in list");
-Sys_GLCheckError();
+    if(inList)
+        App_Error("GL_NewList: Already in list");
+    Sys_GLCheckError();
 #endif
 
     if(list)
     {   // A specific list id was requested. Is it free?
-        if(glIsList(list))
+        if(LIBGUI_GL.glIsList(list))
         {
 #if _DEBUG
-App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
+            App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
 #endif
             return false;
         }
@@ -62,10 +63,10 @@ App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
     else
     {
         // Just get a new list id, it doesn't matter.
-        list = glGenLists(1);
+        list = LIBGUI_GL.glGenLists(1);
     }
 
-    glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
+    LIBGUI_GL.glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
     inList = list;
     return true;
 }
@@ -77,7 +78,7 @@ DGLuint GL_EndList(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glEndList();
+    LIBGUI_GL.glEndList();
 #ifdef _DEBUG
     inList = 0;
     Sys_GLCheckError();
@@ -93,7 +94,7 @@ void GL_CallList(DGLuint list)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glCallList(list);
+    LIBGUI_GL.glCallList(list);
 }
 
 void GL_DeleteLists(DGLuint list, int range)
@@ -101,7 +102,7 @@ void GL_DeleteLists(DGLuint list, int range)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glDeleteLists(list, range);
+    LIBGUI_GL.glDeleteLists(list, range);
 }
 
 #undef DGL_Color3ub
@@ -110,7 +111,7 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor3ub(r, g, b);
+    LIBGUI_GL.glColor3ub(r, g, b);
 }
 
 #undef DGL_Color3ubv
@@ -119,7 +120,7 @@ DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor3ubv(vec);
+    LIBGUI_GL.glColor3ubv(vec);
 }
 
 #undef DGL_Color4ub
@@ -128,7 +129,7 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4ub(r, g, b, a);
+    LIBGUI_GL.glColor4ub(r, g, b, a);
 }
 
 #undef DGL_Color4ubv
@@ -137,7 +138,7 @@ DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4ubv(vec);
+    LIBGUI_GL.glColor4ubv(vec);
 }
 
 #undef DGL_Color3f
@@ -146,7 +147,7 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor3f(r, g, b);
+    LIBGUI_GL.glColor3f(r, g, b);
 }
 
 #undef DGL_Color3fv
@@ -155,7 +156,7 @@ DENG_EXTERN_C void DGL_Color3fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor3fv(vec);
+    LIBGUI_GL.glColor3fv(vec);
 }
 
 #undef DGL_Color4f
@@ -164,7 +165,7 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4f(r, g, b, a);
+    LIBGUI_GL.glColor4f(r, g, b, a);
 }
 
 #undef DGL_Color4fv
@@ -173,7 +174,7 @@ DENG_EXTERN_C void DGL_Color4fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4fv(vec);
+    LIBGUI_GL.glColor4fv(vec);
 }
 
 #undef DGL_TexCoord2f
@@ -182,7 +183,7 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
+    LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
 }
 
 #undef DGL_TexCoord2fv
@@ -191,7 +192,7 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
+    LIBGUI_GL.glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
 }
 
 #undef DGL_Vertex2f
@@ -200,7 +201,7 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glVertex2f(x, y);
+    LIBGUI_GL.glVertex2f(x, y);
 }
 
 #undef DGL_Vertex2fv
@@ -209,7 +210,7 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glVertex2fv(vec);
+    LIBGUI_GL.glVertex2fv(vec);
 }
 
 #undef DGL_Vertex3f
@@ -218,7 +219,7 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glVertex3f(x, y, z);
+    LIBGUI_GL.glVertex3f(x, y, z);
 }
 
 #undef DGL_Vertex3fv
@@ -227,7 +228,7 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glVertex3fv(vec);
+    LIBGUI_GL.glVertex3fv(vec);
 }
 
 #undef DGL_Vertices2ftv
@@ -238,8 +239,8 @@ DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        glTexCoord2fv(vec->tex);
-        glVertex2fv(vec->pos);
+        LIBGUI_GL.glTexCoord2fv(vec->tex);
+        LIBGUI_GL.glVertex2fv(vec->pos);
     }
 }
 
@@ -251,8 +252,8 @@ DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        glTexCoord2fv(vec->tex);
-        glVertex3fv(vec->pos);
+        LIBGUI_GL.glTexCoord2fv(vec->tex);
+        LIBGUI_GL.glVertex3fv(vec->pos);
     }
 }
 
@@ -264,9 +265,9 @@ DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        glColor4fv(vec->color);
-        glTexCoord2fv(vec->tex);
-        glVertex3fv(vec->pos);
+        LIBGUI_GL.glColor4fv(vec->color);
+        LIBGUI_GL.glTexCoord2fv(vec->tex);
+        LIBGUI_GL.glVertex3fv(vec->pos);
     }
 }
 
@@ -289,7 +290,7 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
     Sys_GLCheckError();
 #endif
 
-    glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
+    LIBGUI_GL.glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
             DGL_LINES ? GL_LINES : mode ==
             DGL_TRIANGLES ? GL_TRIANGLES : mode ==
             DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
@@ -314,7 +315,7 @@ DENG_EXTERN_C void DGL_End(void)
     if(primLevel > 0)
     {
         primLevel--;
-        glEnd();
+        LIBGUI_GL.glEnd();
     }
 
 #ifdef _DEBUG
@@ -386,7 +387,7 @@ DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, f
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4f(r, g, b, a);
+    LIBGUI_GL.glColor4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
@@ -420,12 +421,12 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(color) DGL_Color4fv(color);
-    glBegin(GL_LINE_LOOP);
-        glVertex2iv((const GLint*)tl->xy);
-        glVertex2iv((const GLint*)tr->xy);
-        glVertex2iv((const GLint*)br->xy);
-        glVertex2iv((const GLint*)bl->xy);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_LINE_LOOP);
+        LIBGUI_GL.glVertex2iv((const GLint*)tl->xy);
+        LIBGUI_GL.glVertex2iv((const GLint*)tr->xy);
+        LIBGUI_GL.glVertex2iv((const GLint*)br->xy);
+        LIBGUI_GL.glVertex2iv((const GLint*)bl->xy);
+    LIBGUI_GL.glEnd();
 }
 
 #undef DGL_DrawQuad2Outline

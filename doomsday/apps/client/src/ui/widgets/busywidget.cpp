@@ -28,7 +28,7 @@
 
 #include <de/concurrency.h>
 #include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/GLTextureFramebuffer>
 #include <de/GuiRootWidget>
 #include <de/ProgressWidget>
 
@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(BusyWidget)
 
     ProgressWidget *progress;
     Time frameDrawnAt;
-    GLFramebuffer transitionFrame;
+    GLTextureFramebuffer transitionFrame;
     Drawable drawable;
     GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4      };
@@ -191,7 +191,7 @@ void BusyWidget::renderTransitionFrame()
     }
 
     GLState::push()
-            .setTarget(d->transitionFrame.target())
+            .setTarget(d->transitionFrame)
             .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
             .apply();
 
@@ -215,7 +215,7 @@ void BusyWidget::clearTransitionFrameToBlack()
 {
     if (d->haveTransitionFrame())
     {
-        d->transitionFrame.target().clear(GLTarget::Color);
+        d->transitionFrame.clear(GLFramebuffer::Color);
     }
 }
 

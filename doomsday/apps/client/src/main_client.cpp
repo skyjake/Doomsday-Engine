@@ -57,6 +57,8 @@ int main(int argc, char** argv)
 {
     int exitCode = 0;
     {
+        ClientApp::setDefaultOpenGLFormat();
+
         ClientApp clientApp(argc, argv);
 
         /**

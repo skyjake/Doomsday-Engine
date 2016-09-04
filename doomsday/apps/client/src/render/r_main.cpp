@@ -22,6 +22,7 @@
 #include "render/r_main.h"
 
 #include <de/vector1.h>
+#include <de/GLInfo>
 #include <de/GLState>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/Materials>
@@ -168,7 +169,7 @@ void Rend_Draw2DPlayerSprites()
 
     if(fogParams.usingFog)
     {
-        glEnable(GL_FOG);
+        LIBGUI_GL.glEnable(GL_FOG);
     }
 
     // Draw HUD vissprites.
@@ -196,7 +197,7 @@ void Rend_Draw2DPlayerSprites()
 
     if(fogParams.usingFog)
     {
-        glDisable(GL_FOG);
+        LIBGUI_GL.glDisable(GL_FOG);
     }
 }
 
@@ -250,8 +251,8 @@ void Rend_Draw3DPlayerSprites()
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     static GLTexture localDepth;  // note: static!
-    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
-                                         GLTarget::DepthStencil);
+    GLFramebuffer::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
+                                         GLFramebuffer::DepthStencil);
 
     // Draw HUD vissprites.
     for(vispsprite_t const &spr : visPSprites)
@@ -263,7 +264,7 @@ void Rend_Draw3DPlayerSprites()
         if(altDepth.init())
         {
             // Clear the depth before first use.
-            altDepth.target().clear(GLTarget::DepthStencil);
+            altDepth.target().clear(GLFramebuffer::DepthStencil);
         }
 
         if(spr.type == VPSPR_MODEL)

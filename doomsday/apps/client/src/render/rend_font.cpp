@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <de/concurrency.h>
 #include <de/GLState>
+#include <de/GLInfo>
 
 #include "BitmapFont"
 #include "CompositeBitmapFont"
@@ -572,7 +573,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
     if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
@@ -582,10 +583,10 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                     gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-            glMatrixMode(GL_TEXTURE);
-            glPushMatrix();
-            glLoadIdentity();
-            glScalef(1.f / bmapFont->textureDimensions().x,
+            LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+            LIBGUI_GL.glPushMatrix();
+            LIBGUI_GL.glLoadIdentity();
+            LIBGUI_GL.glScalef(1.f / bmapFont->textureDimensions().x,
                      1.f / bmapFont->textureDimensions().y, 1.f);
         }
     }
@@ -695,7 +696,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     if(!noCharacter)
                     {
                         // The character itself.
-                        glColor4fv(sat->rgba);
+                        LIBGUI_GL.glColor4fv(sat->rgba);
                         drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
                     }
 
@@ -708,7 +709,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                         origin.y = cy + yoff;
                         size.width  = w;
                         size.height = h;
-                        glColor4f(flashColor[CR], flashColor[CG], flashColor[CB], glitter * glitterMul);
+                        LIBGUI_GL.glColor4f(flashColor[CR], flashColor[CG], flashColor[CB], glitter * glitterMul);
                         drawFlash(&origin, &size, true);
                     }
                 }
@@ -720,7 +721,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     origin.y = cy + yoff;
                     size.width  = w;
                     size.height = h;
-                    glColor4f(1, 1, 1, shadow * shadowMul);
+                    LIBGUI_GL.glColor4f(1, 1, 1, shadow * shadowMul);
                     drawFlash(&origin, &size, false);
                 }
             }
@@ -734,15 +735,15 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     {
         if(bmapFont->textureGLName())
         {
-            glMatrixMode(GL_TEXTURE);
-            glPopMatrix();
+            LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+            LIBGUI_GL.glPopMatrix();
         }
     }
     if(renderWireframe > 1)
     {
         /// @todo do not assume previous state.
         glEnable(GL_TEXTURE_2D);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }
 
@@ -769,8 +770,8 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         y -= (topToAscent(font) + lineHeight) / 2;
     }
 
-    glMatrixMode(GL_MODELVIEW);
-    glTranslatef(x, y, 0);
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glTranslatef(x, y, 0);
 
     Rectanglei geometry = font->glyphPosCoords(ch);
 
@@ -801,8 +802,8 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         GL_SetNoTexture();
     }
 
-    glMatrixMode(GL_MODELVIEW);
-    glTranslatef(-x, -y, 0);
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glTranslatef(-x, -y, 0);
 }
 
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright)
@@ -827,16 +828,16 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
                                 bright? gl::One : gl::OneMinusSrcAlpha)
                       .apply();
 
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_QUADS);
+        LIBGUI_GL.glTexCoord2f(0, 0);
+        LIBGUI_GL.glVertex2f(x, y);
+        LIBGUI_GL.glTexCoord2f(1, 0);
+        LIBGUI_GL.glVertex2f(x + w, y);
+        LIBGUI_GL.glTexCoord2f(1, 1);
+        LIBGUI_GL.glVertex2f(x + w, y + h);
+        LIBGUI_GL.glTexCoord2f(0, 1);
+        LIBGUI_GL.glVertex2f(x, y + h);
+    LIBGUI_GL.glEnd();
 
     GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
                       .apply();
@@ -1267,7 +1268,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We need to change the current color, so remember for restore.
-    glGetFloatv(GL_CURRENT_COLOR, origColor);
+    LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, origColor);
 
     for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
@@ -1404,8 +1405,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 }
 
                 // Setup the scaling.
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
+                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+                LIBGUI_GL.glPushMatrix();
 
                 // Rotate.
                 if(state.angle != 0)
@@ -1414,16 +1415,16 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
                     /// @todo Do not assume the aspect ratio and therefore whether
                     // correction is even needed.
-                    glTranslatef((float)origin.x, (float)origin.y, 0);
-                    glScalef(1, 200.0f / 240.0f, 1);
-                    glRotatef(state.angle, 0, 0, 1);
-                    glScalef(1, 240.0f / 200.0f, 1);
-                    glTranslatef(-(float)origin.x, -(float)origin.y, 0);
+                    LIBGUI_GL.glTranslatef((float)origin.x, (float)origin.y, 0);
+                    LIBGUI_GL.glScalef(1, 200.0f / 240.0f, 1);
+                    LIBGUI_GL.glRotatef(state.angle, 0, 0, 1);
+                    LIBGUI_GL.glScalef(1, 240.0f / 200.0f, 1);
+                    LIBGUI_GL.glTranslatef(-(float)origin.x, -(float)origin.y, 0);
                 }
 
-                glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
+                LIBGUI_GL.glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
                 extraScale = (FR_CaseScale() ? state.caseMod[curCase].scale : 1);
-                glScalef(state.scaleX, state.scaleY * extraScale, 1);
+                LIBGUI_GL.glScalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
                 if(fr.fontNum)
@@ -1446,8 +1447,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
                 }
 
-                glMatrixMode(GL_MODELVIEW);
-                glPopMatrix();
+                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+                LIBGUI_GL.glPopMatrix();
             }
         }
 
@@ -1457,7 +1458,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     freeTextBuffer();
 
     FR_SetFont(origFont);
-    glColor4fv(origColor);
+    LIBGUI_GL.glColor4fv(origColor);
 }
 
 #undef FR_DrawText2

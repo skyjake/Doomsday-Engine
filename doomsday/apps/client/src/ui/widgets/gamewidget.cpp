@@ -68,7 +68,7 @@ DENG2_PIMPL(GameWidget)
         {
             // When rendering is wireframe mode, we must clear the screen
             // before rendering a frame.
-            glClear(GL_COLOR_BUFFER_BIT);
+            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         }
 
         if (cannotDraw) return;

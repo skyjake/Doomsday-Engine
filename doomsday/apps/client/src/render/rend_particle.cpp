@@ -49,6 +49,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <de/concurrency.h>
 #include <de/vector1.h>
+#include <de/GLInfo>
 #include <cstdlib>
 
 using namespace de;
@@ -535,11 +536,11 @@ static void drawParticles(dint rtype, bool withBlend)
         glEnable(GL_TEXTURE_2D);
 
         //glDepthFunc(GL_LEQUAL);
-        glBegin(primType = GL_QUADS);
+        LIBGUI_GL.glBegin(primType = GL_QUADS);
     }
     else
     {
-        glBegin(primType = GL_LINES);
+        LIBGUI_GL.glBegin(primType = GL_LINES);
     }
 
     // How many particles will be drawn?
@@ -587,9 +588,9 @@ static void drawParticles(dint rtype, bool withBlend)
 
             if(newMode != mode)
             {
-                glEnd();
+                LIBGUI_GL.glEnd();
                 GL_BlendMode(mode = newMode);
-                glBegin(primType);
+                LIBGUI_GL.glBegin(primType);
             }
         }
 
@@ -654,7 +655,7 @@ static void drawParticles(dint rtype, bool withBlend)
         if(color.w <= 0)
             continue;
 
-        glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
 
         bool const nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
 
@@ -702,17 +703,17 @@ static void drawParticles(dint rtype, bool withBlend)
             // Should the particle be flat against a plane?
             if(flatOnPlane)
             {
-                glTexCoord2f(0, 0);
-                glVertex3f(center.x - size, center.y, center.z - size);
+                LIBGUI_GL.glTexCoord2f(0, 0);
+                LIBGUI_GL.glVertex3f(center.x - size, center.y, center.z - size);
 
-                glTexCoord2f(1, 0);
-                glVertex3f(center.x + size, center.y, center.z - size);
+                LIBGUI_GL.glTexCoord2f(1, 0);
+                LIBGUI_GL.glVertex3f(center.x + size, center.y, center.z - size);
 
-                glTexCoord2f(1, 1);
-                glVertex3f(center.x + size, center.y, center.z + size);
+                LIBGUI_GL.glTexCoord2f(1, 1);
+                LIBGUI_GL.glVertex3f(center.x + size, center.y, center.z + size);
 
-                glTexCoord2f(0, 1);
-                glVertex3f(center.x - size, center.y, center.z + size);
+                LIBGUI_GL.glTexCoord2f(0, 1);
+                LIBGUI_GL.glVertex3f(center.x - size, center.y, center.z + size);
             }
             // Flat against a wall, then?
             else if(flatOnWall)
@@ -745,49 +746,49 @@ static void drawParticles(dint rtype, bool withBlend)
 
                 Vector2f unitVec = lineUnitVector(*pinfo.contact);
 
-                glTexCoord2f(0, 0);
-                glVertex3d(projected[0] - size * unitVec.x, center.y - size,
+                LIBGUI_GL.glTexCoord2f(0, 0);
+                LIBGUI_GL.glVertex3d(projected[0] - size * unitVec.x, center.y - size,
                            projected[1] - size * unitVec.y);
 
-                glTexCoord2f(1, 0);
-                glVertex3d(projected[0] - size * unitVec.x, center.y + size,
+                LIBGUI_GL.glTexCoord2f(1, 0);
+                LIBGUI_GL.glVertex3d(projected[0] - size * unitVec.x, center.y + size,
                            projected[1] - size * unitVec.y);
 
-                glTexCoord2f(1, 1);
-                glVertex3d(projected[0] + size * unitVec.x, center.y + size,
+                LIBGUI_GL.glTexCoord2f(1, 1);
+                LIBGUI_GL.glVertex3d(projected[0] + size * unitVec.x, center.y + size,
                            projected[1] + size * unitVec.y);
 
-                glTexCoord2f(0, 1);
-                glVertex3d(projected[0] + size * unitVec.x, center.y - size,
+                LIBGUI_GL.glTexCoord2f(0, 1);
+                LIBGUI_GL.glVertex3d(projected[0] + size * unitVec.x, center.y - size,
                            projected[1] + size * unitVec.y);
             }
             else
             {
-                glTexCoord2f(0, 0);
-                glVertex3f(center.x + size * leftoff.x,
+                LIBGUI_GL.glTexCoord2f(0, 0);
+                LIBGUI_GL.glVertex3f(center.x + size * leftoff.x,
                            center.y + size * leftoff.y / 1.2f,
                            center.z + size * leftoff.z);
 
-                glTexCoord2f(1, 0);
-                glVertex3f(center.x + size * rightoff.x,
+                LIBGUI_GL.glTexCoord2f(1, 0);
+                LIBGUI_GL.glVertex3f(center.x + size * rightoff.x,
                            center.y + size * rightoff.y / 1.2f,
                            center.z + size * rightoff.z);
 
-                glTexCoord2f(1, 1);
-                glVertex3f(center.x - size * leftoff.x,
+                LIBGUI_GL.glTexCoord2f(1, 1);
+                LIBGUI_GL.glVertex3f(center.x - size * leftoff.x,
                            center.y - size * leftoff.y / 1.2f,
                            center.z - size * leftoff.z);
 
-                glTexCoord2f(0, 1);
-                glVertex3f(center.x - size * rightoff.x,
+                LIBGUI_GL.glTexCoord2f(0, 1);
+                LIBGUI_GL.glVertex3f(center.x - size * rightoff.x,
                            center.y - size * rightoff.y / 1.2f,
                            center.z - size * rightoff.z);
             }
         }
         else  // It's a line.
         {
-            glVertex3f(center.x, center.y, center.z);
-            glVertex3f(center.x - FIX2FLT(pinfo.mov[0]),
+            LIBGUI_GL.glVertex3f(center.x, center.y, center.z);
+            LIBGUI_GL.glVertex3f(center.x - FIX2FLT(pinfo.mov[0]),
                        center.y - FIX2FLT(pinfo.mov[2]),
                        center.z - FIX2FLT(pinfo.mov[1]));
         }
@@ -795,7 +796,7 @@ static void drawParticles(dint rtype, bool withBlend)
 
     if(rtype != PTC_MODEL)
     {
-        glEnd();
+        LIBGUI_GL.glEnd();
 
         if(tex != 0)
         {

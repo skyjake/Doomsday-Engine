@@ -22,7 +22,8 @@
 
 #include <de/Animation>
 #include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/GLInfo>
+#include <de/GLTextureFramebuffer>
 
 #include <QList>
 
@@ -32,7 +33,7 @@ namespace fx {
 
 DENG2_PIMPL(PostProcessing)
 {
-    GLFramebuffer framebuf;
+    GLTextureFramebuffer framebuf;
     Drawable frame;
     GLUniform uMvpMatrix;
     GLUniform uFrame;
@@ -133,7 +134,7 @@ DENG2_PIMPL(PostProcessing)
     void update()
     {
         framebuf.resize(GLState::current().target().rectInUse().size());
-        framebuf.setSampleCount(GLFramebuffer::defaultMultisampling());
+        framebuf.setSampleCount(GLTextureFramebuffer::defaultMultisampling());
     }
 
     void checkQueue()
@@ -164,11 +165,11 @@ DENG2_PIMPL(PostProcessing)
         update();
 
         GLState::push()
-                .setTarget(framebuf.target())
+                .setTarget(framebuf)
                 .setViewport(Rectangleui::fromSize(framebuf.size()))
                 .setColorMask(gl::WriteAll)
                 .apply();
-        framebuf.target().clear(GLTarget::ColorDepthStencil);
+        framebuf.clear(GLFramebuffer::ColorDepthStencil);
     }
 
     void end()
@@ -182,7 +183,7 @@ DENG2_PIMPL(PostProcessing)
     {
         if(!isActive()) return;
 
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
         //glDisable(GL_ALPHA_TEST);
 
         Rectanglef const vp = GLState::current().viewport();
@@ -206,7 +207,7 @@ DENG2_PIMPL(PostProcessing)
         GLState::pop().apply();
 
         //glEnable(GL_ALPHA_TEST);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         //glEnable(GL_BLEND);
     }
 };

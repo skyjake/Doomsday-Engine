@@ -12,7 +12,6 @@ find_package (DengAppfw)
 find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 find_package (SDL2)
-include (OpenGL)
 if (WIN32)
     find_package (DirectX)
 endif ()
@@ -105,10 +104,12 @@ deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 relaxed_warnings (client)
 
 # Libraries.
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday opengl)
+target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 if (APPLE)
     link_framework (client PUBLIC Cocoa)
-    link_framework (client PUBLIC QTKit) # MusicPlayer
+    if (DENG_HAVE_QTKIT)
+        link_framework (client PUBLIC QTKit) # MusicPlayer
+    endif ()
 endif ()
 if (TARGET SDL2)
     target_link_libraries (client PUBLIC SDL2)

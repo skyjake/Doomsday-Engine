@@ -19,7 +19,7 @@
 
 #include "de_base.h"
 #include "render/huecirclevisual.h"
-#include "gl/sys_opengl.h"
+#include <de/GLInfo>
 
 #include <de/mathutil.h>  // M_HSVToRGB(), remove me (use QColor)
 #include "HueCircle"
@@ -37,7 +37,7 @@ void HueCircleVisual::draw(HueCircle &hueCircle, Vector3d const &viewOrigin,
     Vector3d center = hueCircle.origin(viewOrigin);
 
     // Draw the circle.
-    glBegin(GL_QUAD_STRIP);
+    LIBGUI_GL.glBegin(GL_QUAD_STRIP);
     for(int i = 0; i <= steps; ++i)
     {
         Vector3f off = hueCircle.offset(float(2 * de::PI) * i/steps);
@@ -45,14 +45,14 @@ void HueCircleVisual::draw(HueCircle &hueCircle, Vector3d const &viewOrigin,
         // Determine the RGB color for this angle.
         float color[3]; M_HSVToRGB(color, i/steps, 1, 1);
 
-        glColor4f(color[0], color[1], color[2], .5f);
-        glVertex3f(center.x + outer * off.x, center.y + outer * off.y, center.z + outer * off.z);
+        LIBGUI_GL.glColor4f(color[0], color[1], color[2], .5f);
+        LIBGUI_GL.glVertex3f(center.x + outer * off.x, center.y + outer * off.y, center.z + outer * off.z);
 
         // Saturation decreases toward the center.
-        glColor4f(1, 1, 1, .15f);
-        glVertex3f(center.x + inner * off.x, center.y + inner * off.y, center.z + inner * off.z);
+        LIBGUI_GL.glColor4f(1, 1, 1, .15f);
+        LIBGUI_GL.glVertex3f(center.x + inner * off.x, center.y + inner * off.y, center.z + inner * off.z);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
     // Draw the current hue.
     float hue, saturation;
@@ -60,12 +60,12 @@ void HueCircleVisual::draw(HueCircle &hueCircle, Vector3d const &viewOrigin,
 
     Vector3f off = hueCircle.offset(float(2 * de::PI) * hue);
 
-    glBegin(GL_LINES);
+    LIBGUI_GL.glBegin(GL_LINES);
     if(saturation > 0)
     {
-        glColor4f(sel.x, sel.y, sel.z, 1.f);
-        glVertex3f(center.x + outer * off.x, center.y + outer * off.y, center.z + outer * off.z);
-        glVertex3f(center.x + inner * off.x, center.y + inner * off.y, center.z + inner * off.z);
+        LIBGUI_GL.glColor4f(sel.x, sel.y, sel.z, 1.f);
+        LIBGUI_GL.glVertex3f(center.x + outer * off.x, center.y + outer * off.y, center.z + outer * off.z);
+        LIBGUI_GL.glVertex3f(center.x + inner * off.x, center.y + inner * off.y, center.z + inner * off.z);
     }
 
     // Draw the edges.
@@ -77,18 +77,18 @@ void HueCircleVisual::draw(HueCircle &hueCircle, Vector3d const &viewOrigin,
         // Determine the RGB color for this angle.
         float color[3]; M_HSVToRGB(color, i/steps, 1, 1);
 
-        glColor4f(color[0], color[1], color[2], 1.f);
-        glVertex3f(center.x + outer * off.x,  center.y + outer * off.y,  center.z + outer * off.z);
-        glVertex3f(center.x + outer * off2.x, center.y + outer * off2.y, center.z + outer * off2.z);
+        LIBGUI_GL.glColor4f(color[0], color[1], color[2], 1.f);
+        LIBGUI_GL.glVertex3f(center.x + outer * off.x,  center.y + outer * off.y,  center.z + outer * off.z);
+        LIBGUI_GL.glVertex3f(center.x + outer * off2.x, center.y + outer * off2.y, center.z + outer * off2.z);
 
         // Saturation decreases in the center.
         float alpha = (de::fequal(saturation, 0)? 0
                        : 1 - de::abs(M_CycleIntoRange(hue - i/steps + .5f, 1) - .5f) * 2.5f);
 
-        glColor4f(sel.x, sel.y, sel.z, alpha);
+        LIBGUI_GL.glColor4f(sel.x, sel.y, sel.z, alpha);
         float s = inner + (outer - inner) * saturation;
-        glVertex3f(center.x + s * off.x,  center.y + s * off.y,  center.z + s * off.z);
-        glVertex3f(center.x + s * off2.x, center.y + s * off2.y, center.z + s * off2.z);
+        LIBGUI_GL.glVertex3f(center.x + s * off.x,  center.y + s * off.y,  center.z + s * off.z);
+        LIBGUI_GL.glVertex3f(center.x + s * off2.x, center.y + s * off2.y, center.z + s * off2.z);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 }

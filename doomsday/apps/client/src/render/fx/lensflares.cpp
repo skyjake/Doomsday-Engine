@@ -527,8 +527,8 @@ void LensFlares::draw()
     }
 
     // Depth information is required for occlusion.
-    GLTarget &target = GLState::current().target();
-    GLTexture *depthTex = target.attachedTexture(GLTarget::Depth);
+    GLFramebuffer &target = GLState::current().target();
+    GLTexture *depthTex = target.attachedTexture(GLFramebuffer::Depth);
     /**
      * @todo Handle the situation when depth information is not available in the target.
      */

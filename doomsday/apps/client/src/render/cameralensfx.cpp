@@ -55,7 +55,7 @@
 #include <de/libcore.h>
 #include <de/Rectangle>
 #include <de/Drawable>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 #include <QList>
 
 using namespace de;

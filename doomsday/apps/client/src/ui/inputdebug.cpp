@@ -29,6 +29,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/KeyEvent>
+#include <de/GLInfo>
 #include "clientapp.h"
 #include "dd_def.h"
 #include "dd_main.h"
@@ -97,9 +98,9 @@ static void initDrawStateForVisual(Point2Raw const *origin)
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
     {
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glTranslatef(origin->x, origin->y, 0);
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPushMatrix();
+        LIBGUI_GL.glTranslatef(origin->x, origin->y, 0);
     }
 }
 
@@ -108,8 +109,8 @@ static void endDrawStateForVisual(Point2Raw const *origin)
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
     {
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPopMatrix();
     }
 
     FR_PopAttrib();
@@ -222,7 +223,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
                                                          textSize.height + BORDER * 2));
 
     // Draw a background.
-    glColor4fv(button.isDown()? downColor : upColor);
+    LIBGUI_GL.glColor4fv(button.isDown()? downColor : upColor);
     GL_DrawRect(textGeom);
 
     // Draw the text.
@@ -236,12 +237,12 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
-        glColor3fv(expiredMarkColor);
-        glBegin(GL_TRIANGLES);
-        glVertex2i(textGeom.width(), 0);
-        glVertex2i(textGeom.width(), markSize);
-        glVertex2i(textGeom.width() - markSize, 0);
-        glEnd();
+        LIBGUI_GL.glColor3fv(expiredMarkColor);
+        LIBGUI_GL.glBegin(GL_TRIANGLES);
+        LIBGUI_GL.glVertex2i(textGeom.width(), 0);
+        LIBGUI_GL.glVertex2i(textGeom.width(), markSize);
+        LIBGUI_GL.glVertex2i(textGeom.width() - markSize, 0);
+        LIBGUI_GL.glEnd();
     }
 
     // Mark triggered?
@@ -249,12 +250,12 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
-        glColor3fv(triggeredMarkColor);
-        glBegin(GL_TRIANGLES);
-        glVertex2i(0, 0);
-        glVertex2i(markSize, 0);
-        glVertex2i(0, markSize);
-        glEnd();
+        LIBGUI_GL.glColor3fv(triggeredMarkColor);
+        LIBGUI_GL.glBegin(GL_TRIANGLES);
+        LIBGUI_GL.glVertex2i(0, 0);
+        LIBGUI_GL.glVertex2i(markSize, 0);
+        LIBGUI_GL.glVertex2i(0, markSize);
+        LIBGUI_GL.glEnd();
     }
 
     endDrawStateForVisual(&origin);
@@ -768,10 +769,10 @@ void I_DebugDrawer()
     // Disabled?
     if (!devRendKeyState && !devRendMouseState && !devRendJoyState) return;
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     if (devRendKeyState)
     {
@@ -790,8 +791,8 @@ void I_DebugDrawer()
         Rend_RenderInputDeviceStateVisual(InputSystem::get().device(IDEV_JOY1), &joyLayout, &origin, &dimensions);
     }
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 
 #undef NUMITEMS
 #undef SPACING

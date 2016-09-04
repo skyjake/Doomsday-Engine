@@ -27,7 +27,8 @@
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
-#include <QGLFormat>
+#include <QSurfaceFormat>
+#include <QTimer>
 #include <QCloseEvent>
 #include <de/CompositorWidget>
 #include <de/Config>
@@ -35,8 +36,9 @@
 #include <de/DisplayMode>
 #include <de/Drawable>
 #include <de/FadeToBlackWidget>
-#include <de/GLFramebuffer>
+#include <de/GLTextureFramebuffer>
 #include <de/GLState>
+#include <de/GLInfo>
 #include <de/NotificationAreaWidget>
 #include <de/NumberValue>
 #include <de/SignalAction>
@@ -75,9 +77,9 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(Canvas,   GLResize)
 , DENG2_OBSERVES(Variable, Change)
 {
-    bool needMainInit       = true;
-    bool needRecreateCanvas = false;
-    bool needRootSizeUpdate = false;
+    bool needMainInit            = true;
+    bool needSurfaceFormatUpdate = false;
+    bool needRootSizeUpdate      = false;
 
     Mode mode = Normal;
 
@@ -692,12 +694,13 @@ DENG2_PIMPL(ClientWindow)
 
         // The canvas needs to be recreated when the GL format has changed
         // (e.g., multisampling).
-        if (needRecreateCanvas)
+        if (needSurfaceFormatUpdate)
         {
-            needRecreateCanvas = false;
+            needSurfaceFormatUpdate = false;
             if (self.setDefaultGLFormat())
             {
-                self.recreateCanvas();
+                qDebug() << "Canvas surface format needs changing! (not implemented)";
+                //self.recreateCanvas();
                 // Wait until the new Canvas is ready (note: loop remains paused!).
                 return AbortFrame;
             }
@@ -1022,7 +1025,7 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
     // Update the capability flags.
-    GL_state.features.multisample = GLFramebuffer::defaultMultisampling() > 1;
+    GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if (vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
@@ -1099,11 +1102,13 @@ bool ClientWindow::setDefaultGLFormat() // static
 {
     LOG_AS("DefaultGLFormat");
 
+    QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
+
     // Configure the GL settings for all subsequently created canvases.
-    QGLFormat fmt;
+    /*QGLFormat fmt;
     fmt.setProfile(QGLFormat::CompatibilityProfile);
     fmt.setVersion(2, 1);
-    fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
+    fmt.setDepth(false); // depth and stencil handled in GLTextureFramebuffer
     fmt.setStencil(false);
     //fmt.setDepthBufferSize(16);
     //fmt.setStencilBufferSize(8);
@@ -1114,9 +1119,9 @@ bool ClientWindow::setDefaultGLFormat() // static
         // Only use a stereo format for modes that require it.
         LOG_GL_MSG("Using a stereoscopic frame buffer format");
         fmt.setStereo(true);
-    }
+    }*/
 
-#ifdef WIN32
+//#ifdef WIN32
     if (CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
         fmt.setSwapInterval(0);
@@ -1125,8 +1130,8 @@ bool ClientWindow::setDefaultGLFormat() // static
     {
         fmt.setSwapInterval(1);
     }
-#endif
-
+//#endif
+/*
     int sampleCount = 1;
     bool configured = App::config().getb("window.main.fsaa");
     if (CommandLine_Exists("-nofsaa") || !configured)
@@ -1138,12 +1143,16 @@ bool ClientWindow::setDefaultGLFormat() // static
         sampleCount = 4; // four samples is fine?
         LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
-    GLFramebuffer::setDefaultMultisampling(sampleCount);
+    fmt.setSamples(sampleCount);
+    GLTextureFramebuffer::setDefaultMultisampling(sampleCount);*/
 
-    if (fmt != QGLFormat::defaultFormat())
+    /// @todo Multisampling should only be enabled on the game view FBO. The rest of
+    /// the UI is always single-sampled.
+
+    if (fmt != QSurfaceFormat::defaultFormat())
     {
         LOG_GL_VERBOSE("Applying new format...");
-        QGLFormat::setDefaultFormat(fmt);
+        QSurfaceFormat::setDefaultFormat(fmt);
         return true;
     }
     else
@@ -1206,7 +1215,7 @@ void ClientWindow::drawGameContent()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::current().target().clear(GLTarget::ColorDepthStencil);
+    GLState::current().target().clear(GLFramebuffer::ColorDepthStencil);
 
     d->root.drawUntil(*d->home);
 }
@@ -1239,7 +1248,8 @@ void ClientWindow::hideTaskBarBlur()
 
 void ClientWindow::updateCanvasFormat()
 {
-    d->needRecreateCanvas = true;
+    //d->needSurfaceFormatUpdate = true;
+    /// @todo Update Canvas surface format.
 }
 
 void ClientWindow::updateRootSize()

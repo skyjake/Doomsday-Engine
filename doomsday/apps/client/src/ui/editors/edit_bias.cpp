@@ -24,6 +24,7 @@
 
 #include <de/concurrency.h>
 #include <de/Log>
+#include <de/GLInfo>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/filesys/fs_util.h>
@@ -539,7 +540,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
 
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     drawBoxBackground(origin, size, &color);
     origin.x += 8;
@@ -575,7 +576,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     drawText(text5, origin, UI_Color(UIC_TEXT), alpha);
     origin.y += th;
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static void drawLightGauge(Vector2i const &origin, dint height = 255)
@@ -615,25 +616,25 @@ static void drawLightGauge(Vector2i const &origin, dint height = 255)
 
     int minY = 0, maxY = 0;
 
-    glBegin(GL_LINES);
-    glColor4f(1, 1, 1, .5f);
-    glVertex2f(origin.x + off, origin.y);
-    glVertex2f(origin.x + off, origin.y + height);
+    LIBGUI_GL.glBegin(GL_LINES);
+    LIBGUI_GL.glColor4f(1, 1, 1, .5f);
+    LIBGUI_GL.glVertex2f(origin.x + off, origin.y);
+    LIBGUI_GL.glVertex2f(origin.x + off, origin.y + height);
     // Normal light level.
     int secY = origin.y + height * (1.0f - lightLevel);
-    glVertex2f(origin.x + off - 4, secY);
-    glVertex2f(origin.x + off, secY);
+    LIBGUI_GL.glVertex2f(origin.x + off - 4, secY);
+    LIBGUI_GL.glVertex2f(origin.x + off, secY);
     if(maxLevel != minLevel)
     {
         // Max light level.
         maxY = origin.y + height * (1.0f - maxLevel);
-        glVertex2f(origin.x + off + 4, maxY);
-        glVertex2f(origin.x + off, maxY);
+        LIBGUI_GL.glVertex2f(origin.x + off + 4, maxY);
+        LIBGUI_GL.glVertex2f(origin.x + off, maxY);
 
         // Min light level.
         minY = origin.y + height * (1.0f - minLevel);
-        glVertex2f(origin.x + off + 4, minY);
-        glVertex2f(origin.x + off, minY);
+        LIBGUI_GL.glVertex2f(origin.x + off + 4, minY);
+        LIBGUI_GL.glVertex2f(origin.x + off, minY);
     }
 
     // Current min/max bias sector level.
@@ -641,19 +642,19 @@ static void drawLightGauge(Vector2i const &origin, dint height = 255)
     source->lightLevels(minLight, maxLight);
     if(minLight > 0 || maxLight > 0)
     {
-        glColor3f(1, 0, 0);
+        LIBGUI_GL.glColor3f(1, 0, 0);
         int p = origin.y + height * (1.0f - minLight);
-        glVertex2f(origin.x + off + 2, p);
-        glVertex2f(origin.x + off - 2, p);
+        LIBGUI_GL.glVertex2f(origin.x + off + 2, p);
+        LIBGUI_GL.glVertex2f(origin.x + off - 2, p);
 
-        glColor3f(0, 1, 0);
+        LIBGUI_GL.glColor3f(0, 1, 0);
         p = origin.y + height * (1.0f - maxLight);
-        glVertex2f(origin.x + off + 2, p);
-        glVertex2f(origin.x + off - 2, p);
+        LIBGUI_GL.glVertex2f(origin.x + off + 2, p);
+        LIBGUI_GL.glVertex2f(origin.x + off - 2, p);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     // The number values.
     drawText(String::number(int(255.0f * lightLevel)),
@@ -668,7 +669,7 @@ static void drawLightGauge(Vector2i const &origin, dint height = 255)
                  Vector2i(origin.x + 2*off, minY), UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
     }
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 void SBE_DrawGui()
@@ -685,12 +686,12 @@ void SBE_DrawGui()
     DENG_ASSERT_IN_MAIN_THREAD();
 
     // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     // Overall stats: numSources / MAX (left)
     String text = String("%1 / %2 (%3 free)")
@@ -719,7 +720,7 @@ void SBE_DrawGui()
     String label = (map.hasManifest() ? map.manifest().composeUniqueId(App_CurrentGame()) : "(unknown map)");
     drawText(label, origin, UI_Color(UIC_TITLE), opacity);
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     if(map.biasSourceCount())
     {
@@ -736,8 +737,8 @@ void SBE_DrawGui()
         drawLightGauge(Vector2i(20, DENG_GAMEVIEW_HEIGHT/2 - 255/2));
     }
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }
 
 #endif // __CLIENT__

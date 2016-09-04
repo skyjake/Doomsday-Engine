@@ -42,6 +42,8 @@
 #include <de/ui/SubwidgetItem>
 #include <de/ui/VariableToggleItem>
 #include <doomsday/doomsdayapp.h>
+
+#include <QApplication>
 #include <QCursor>
 #include <QClipboard>
 

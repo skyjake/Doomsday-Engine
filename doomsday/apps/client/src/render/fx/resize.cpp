@@ -22,7 +22,8 @@
 
 #include <de/VRConfig>
 #include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/GLInfo>
+#include <de/GLTextureFramebuffer>
 #include <de/Variable>
 
 #include <QList>
@@ -38,7 +39,7 @@ DENG2_PIMPL(Resize)
     mutable Variable const *pixelDensity = nullptr;
     mutable Variable const *resizeFactor = nullptr;
 
-    GLFramebuffer framebuf;
+    GLTextureFramebuffer framebuf;
     Drawable frame;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uFrame     { "uTex",       GLUniform::Sampler2D };
@@ -108,7 +109,7 @@ DENG2_PIMPL(Resize)
     void update()
     {
         framebuf.resize(GLState::current().target().rectInUse().size() * factor());
-        framebuf.setSampleCount(GLFramebuffer::defaultMultisampling());
+        framebuf.setSampleCount(GLTextureFramebuffer::defaultMultisampling());
     }
 
     void begin()
@@ -118,11 +119,11 @@ DENG2_PIMPL(Resize)
         update();
 
         GLState::push()
-                .setTarget(framebuf.target())
+                .setTarget(framebuf)
                 .setViewport(Rectangleui::fromSize(framebuf.size()))
                 .setColorMask(gl::WriteAll)
                 .apply();
-        framebuf.target().clear(GLTarget::ColorDepthStencil);
+        framebuf.clear(GLFramebuffer::ColorDepthStencil);
     }
 
     void end()
@@ -136,7 +137,7 @@ DENG2_PIMPL(Resize)
     {
         if(!isActive()) return;
 
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
         //glDisable(GL_ALPHA_TEST);
 
         Rectanglef const vp = GLState::current().viewport();
@@ -158,7 +159,7 @@ DENG2_PIMPL(Resize)
         GLState::pop().apply();
 
         //glEnable(GL_ALPHA_TEST);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         //glEnable(GL_BLEND);
     }
 };

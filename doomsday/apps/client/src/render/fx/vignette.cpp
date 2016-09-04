@@ -25,6 +25,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
+#include <de/GLInfo>
 #include <de/vector1.h>
 #include <doomsday/console/var.h>
 #include <cmath>
@@ -77,22 +78,22 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
                             gl::ClampToEdge);
     glEnable(GL_TEXTURE_2D);
 
-    glBegin(GL_TRIANGLE_STRIP);
+    LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
     for(i = 0; i <= DIVS; ++i)
     {
         float ang = (float)(2 * de::PI * i) / (float)DIVS;
         float dx = cos(ang);
         float dy = sin(ang);
 
-        glColor4f(0, 0, 0, alpha);
-        glTexCoord2f(0, 1);
-        glVertex2f(cx + outer * dx, cy + outer * dy);
+        LIBGUI_GL.glColor4f(0, 0, 0, alpha);
+        LIBGUI_GL.glTexCoord2f(0, 1);
+        LIBGUI_GL.glVertex2f(cx + outer * dx, cy + outer * dy);
 
-        glColor4f(0, 0, 0, 0);
-        glTexCoord2f(0, 0);
-        glVertex2f(cx + inner * dx, cy + inner * dy);
+        LIBGUI_GL.glColor4f(0, 0, 0, 0);
+        LIBGUI_GL.glTexCoord2f(0, 0);
+        LIBGUI_GL.glVertex2f(cx + inner * dx, cy + inner * dy);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
     glDisable(GL_TEXTURE_2D);
 }

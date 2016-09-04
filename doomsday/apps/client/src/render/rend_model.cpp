@@ -44,6 +44,7 @@
 #include <doomsday/world/Materials>
 #include <de/Log>
 #include <de/ArrayValue>
+#include <de/GLInfo>
 #include <de/binangle.h>
 #include <de/memory.h>
 #include <de/concurrency.h>
@@ -242,7 +243,7 @@ static inline void enableTexUnit(byte id)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glActiveTexture(GL_TEXTURE0 + id);
+    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
 }
 
@@ -251,7 +252,7 @@ static inline void disableTexUnit(byte id)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glActiveTexture(GL_TEXTURE0 + id);
+    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
@@ -319,19 +320,19 @@ static void drawArrayElement(int index)
         if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
 
         Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
-        glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
+        LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
     }
 
     if(arrays[AR_COLOR].enabled)
     {
         Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
-        glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
+        LIBGUI_GL.glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
     }
 
     if(arrays[AR_VERTEX].enabled)
     {
         Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
-        glVertex3f(posCoord.x, posCoord.y, posCoord.z);
+        LIBGUI_GL.glVertex3f(posCoord.x, posCoord.y, posCoord.z);
     }
 }
 
@@ -392,20 +393,20 @@ static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primiti
     foreach(FrameModel::Primitive const &prim, primitives)
     {
         // The type of primitive depends on the sign.
-        glBegin(prim.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
+        LIBGUI_GL.glBegin(prim.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
 
         foreach(FrameModel::Primitive::Element const &elem, prim.elements)
         {
             if(mode != RC_OTHER_COORDS)
             {
-                glTexCoord2f(elem.texCoord.x, elem.texCoord.y);
+                LIBGUI_GL.glTexCoord2f(elem.texCoord.x, elem.texCoord.y);
             }
 
             drawArrayElement(elem.index);
         }
 
         // The primitive is complete.
-        glEnd();
+        LIBGUI_GL.glEnd();
     }
 }
 
@@ -743,11 +744,11 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // Setup transformation.
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
 
     // Model space => World space
-    glTranslatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
+    LIBGUI_GL.glTranslatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
                  spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
@@ -757,26 +758,26 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if(spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
     {
         // Sky models have an extra rotation.
-        glScalef(1, 200 / 240.0f, 1);
-        glRotatef(spr.pose.extraYawAngle, 1, 0, 0);
-        glRotatef(spr.pose.extraPitchAngle, 0, 0, 1);
-        glScalef(1, 240 / 200.0f, 1);
+        LIBGUI_GL.glScalef(1, 200 / 240.0f, 1);
+        LIBGUI_GL.glRotatef(spr.pose.extraYawAngle, 1, 0, 0);
+        LIBGUI_GL.glRotatef(spr.pose.extraPitchAngle, 0, 0, 1);
+        LIBGUI_GL.glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset   : spr.pose.yaw,   0, 1, 0);
-    glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch, 0, 0, 1);
+    LIBGUI_GL.glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset   : spr.pose.yaw,   0, 1, 0);
+    LIBGUI_GL.glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch, 0, 0, 1);
 
     // Scaling and model space offset.
-    glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
+    LIBGUI_GL.glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
     if(spr.pose.extraScale)
     {
         // Particle models have an extra scale.
-        glScalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
+        LIBGUI_GL.glScalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
     }
-    glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
+    LIBGUI_GL.glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
     // Determine the suitable LOD.
     if(mdl.lodCount() > 1 && rend_model_lod != 0)
@@ -931,7 +932,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // If we mirror the model, triangles have a different orientation.
     if(zSign < 0)
     {
-        glFrontFace(GL_CCW);
+        LIBGUI_GL.glFrontFace(GL_CCW);
     }
 
     // Twosided models won't use backface culling.
@@ -983,10 +984,10 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
                 selectTexUnits(2);
                 GL_ModulateTexture(11);
 
-                glActiveTexture(GL_TEXTURE1);
+                LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                glActiveTexture(GL_TEXTURE0);
+                LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
                 drawPrimitives(RC_BOTH_COORDS, primitives,
@@ -1016,14 +1017,14 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
 
-        glActiveTexture(GL_TEXTURE1);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
         float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
+        LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
 
-        glActiveTexture(GL_TEXTURE0);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
         drawPrimitives(RC_BOTH_COORDS, primitives,
@@ -1035,8 +1036,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     // We're done!
     glDisable(GL_TEXTURE_2D);
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 
     // Normally culling is always enabled.
     if(smf.testFlag(MFF_TWO_SIDED))
@@ -1047,7 +1048,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     if(zSign < 0)
     {
-        glFrontFace(GL_CW);
+        LIBGUI_GL.glFrontFace(GL_CW);
     }
     //glDepthFunc(GL_LESS);
     GLState::current().setDepthFunc(gl::Less).apply();
@@ -1099,10 +1100,10 @@ void Rend_DrawModel(vissprite_t const &spr)
                 .setCull(gl::None)
                 .apply();
 
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPushMatrix();
 
-        glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
+        LIBGUI_GL.glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
@@ -1114,8 +1115,8 @@ void Rend_DrawModel(vissprite_t const &spr)
             return LoopContinue;
         });
 
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPopMatrix();
 
         //glEnable(GL_CULL_FACE);
         //glEnable(GL_DEPTH_TEST);

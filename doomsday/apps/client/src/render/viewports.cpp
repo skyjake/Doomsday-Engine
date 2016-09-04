@@ -24,6 +24,7 @@
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/vector1.h>
+#include <de/GLInfo>
 #include <de/GLState>
 #include <doomsday/filesys/fs_util.h>
 
@@ -893,7 +894,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
        ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
-        GLState::current().target().clear(GLTarget::Color);
+        GLState::current().target().clear(GLFramebuffer::Color);
         return;
     }
 
@@ -908,7 +909,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // Go to wireframe mode?
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
     // GL is in 3D transformation state only during the frame.
@@ -925,14 +926,14 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
     // Do we need to render any 3D psprites?
@@ -948,7 +949,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // Back from wireframe mode?
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     // Now we can show the viewPlayer's mobj again.
@@ -1040,7 +1041,7 @@ static void clearViewPorts()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // This is all the clearing we'll do.
-    glClear(bits);
+    LIBGUI_GL.glClear(bits);
 }
 
 void R_RenderViewPorts(ViewPortLayer layer)
@@ -1071,12 +1072,12 @@ void R_RenderViewPorts(ViewPortLayer layer)
             continue;
         }
 
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPushMatrix();
+        LIBGUI_GL.glLoadIdentity();
 
         // Use an orthographic projection in real pixel dimensions.
-        glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+        LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
         viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1105,8 +1106,8 @@ void R_RenderViewPorts(ViewPortLayer layer)
 
         restoreDefaultGLState();
 
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPopMatrix();
     }
 
     if(layer == Player3DViewLayer)
