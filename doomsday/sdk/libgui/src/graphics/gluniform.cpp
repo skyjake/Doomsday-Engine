@@ -19,7 +19,7 @@
 #include "de/GLUniform"
 #include "de/GLTexture"
 #include "de/GLProgram"
-#include "de/graphics/opengl.h"
+#include "de/GLInfo"
 #include <de/Block>
 #include <de/Log>
 #include <cstring>
@@ -486,49 +486,49 @@ void GLUniform::applyInProgram(GLProgram &program) const
     switch (d->type)
     {
     case Int:
-        glUniform1i(loc, d->value.int32);
+        LIBGUI_GL.glUniform1i(loc, d->value.int32);
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case UInt:
-        glUniform1i(loc, d->value.uint32);
+        LIBGUI_GL.glUniform1i(loc, d->value.uint32);
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Float:
-        glUniform1f(loc, d->value.float32);
+        LIBGUI_GL.glUniform1f(loc, d->value.float32);
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec2:
-        glUniform2f(loc, d->value.vector->x, d->value.vector->y);
+        LIBGUI_GL.glUniform2f(loc, d->value.vector->x, d->value.vector->y);
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3:
-        glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
+        LIBGUI_GL.glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3Array:
-        glUniform3fv(loc, d->elemCount, &d->value.vec3array->x); // sequentially laid out
+        LIBGUI_GL.glUniform3fv(loc, d->elemCount, &d->value.vec3array->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec4:
     case Vec4Array:
-        glUniform4fv(loc, d->elemCount, &d->value.vector->x); // sequentially laid out
+        LIBGUI_GL.glUniform4fv(loc, d->elemCount, &d->value.vector->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat3:
-        glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
+        LIBGUI_GL.glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat4:
     case Mat4Array:
-        glUniformMatrix4fv(loc, d->elemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
+        LIBGUI_GL.glUniformMatrix4fv(loc, d->elemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 

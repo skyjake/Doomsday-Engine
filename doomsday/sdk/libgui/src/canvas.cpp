@@ -26,7 +26,8 @@
 #include <de/Log>
 #include <de/Drawable>
 #include <de/GLInfo>
-#include <de/GLFramebuffer>
+#include <de/GLState>
+#include <de/GLTextureFramebuffer>
 
 #include <QApplication>
 #include <QKeyEvent>
@@ -42,13 +43,15 @@
 
 namespace de {
 
+/*
 #ifdef DENG_X11
 #  define LIBGUI_CANVAS_USE_DEFERRED_RESIZE
 #endif
+*/
 
 DENG2_PIMPL(Canvas)
 {
-    GLFramebuffer framebuf;
+    GLTextureFramebuffer framebuf;
 
     CanvasWindow *parent;
     bool readyNotified;
@@ -87,7 +90,9 @@ DENG2_PIMPL(Canvas)
 
     ~Impl()
     {
+        self.makeCurrent();
         glDeinit();
+        self.doneCurrent();
     }
 
     void grabMouse()
@@ -201,9 +206,10 @@ DENG2_PIMPL(Canvas)
     void glDeinit()
     {
         framebuf.glDeinit();
+        GLInfo::glDeinit();
     }
 
-    void swapBuffers(gl::SwapBufferMode mode)
+    /*void swapBuffers(gl::SwapBufferMode mode)
     {
         if (mode == gl::SwapStereoBuffers && !self.format().stereo())
         {
@@ -212,8 +218,8 @@ DENG2_PIMPL(Canvas)
         }
 
         /// @todo Double buffering is not really needed in manual FB mode.
-        framebuf.swapBuffers(self, mode);
-    }
+        //framebuf.swapBuffers(self, mode);
+    }*/
 
     template <typename QtEventType>
     Vector2i translatePosition(QtEventType const *ev) const
@@ -238,15 +244,16 @@ DENG2_AUDIENCE_METHOD(Canvas, GLResize)
 DENG2_AUDIENCE_METHOD(Canvas, GLDraw)
 DENG2_AUDIENCE_METHOD(Canvas, FocusChange)
 
-Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
-    : QGLWidget(parent, shared), d(new Impl(this, parent))
+Canvas::Canvas(CanvasWindow *parent)
+    : QOpenGLWidget(parent)
+    , d(new Impl(this, parent))
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
-    LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    //LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
+    //LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLTextureFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
-    setAutoBufferSwap(false);
+    //setAutoBufferSwap(false);
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -269,14 +276,14 @@ QImage Canvas::grabImage(QSize const &outputSize)
 QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
 {
     // We will be grabbing the visible, latest complete frame.
-    glReadBuffer(GL_FRONT);
-    QImage grabbed = grabFrameBuffer(); // no alpha
+    //LIBGUI_GL.glReadBuffer(GL_FRONT);
+    QImage grabbed = grabFramebuffer(); // no alpha
     if (area.size() != grabbed.size())
     {
         // Just take a portion of the full image.
         grabbed = grabbed.copy(area);
     }
-    glReadBuffer(GL_BACK);
+    //LIBGUI_GL.glReadBuffer(GL_BACK);
     if (outputSize.isValid())
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -284,7 +291,7 @@ QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
     return grabbed;
 }
 
-GLuint Canvas::grabAsTexture(QSize const &outputSize)
+/*GLuint Canvas::grabAsTexture(QSize const &outputSize)
 {
     return grabAsTexture(rect(), outputSize);
 }
@@ -293,7 +300,7 @@ GLuint Canvas::grabAsTexture(QRect const &area, QSize const &outputSize)
 {
     return bindTexture(grabImage(area, outputSize), GL_TEXTURE_2D, GL_RGB,
                        QGLContext::LinearFilteringBindOption);
-}
+}*/
 
 Canvas::Size Canvas::size() const
 {
@@ -336,29 +343,26 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
     audienceForMouseEvent()       = other.audienceForMouseEvent();
 }
 
-GLTarget &Canvas::renderTarget() const
-{
-    return d->framebuf.target();
-}
-
-GLFramebuffer &Canvas::framebuffer()
+GLFramebuffer &Canvas::renderTarget() const
 {
     return d->framebuf;
 }
 
-void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
+GLTextureFramebuffer &Canvas::framebuffer()
+{
+    return d->framebuf;
+}
+
+/*void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
 {
     d->swapBuffers(swapMode);
-}
+}*/
 
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
     LOGDEV_GL_NOTE("Notifying GL init (during paint)");
 
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-    getAllOpenGLEntryPoints();
-#endif
     GLInfo::glInit();
 
     DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
@@ -366,7 +370,7 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    d->pendingSize = Size(max(0, w), max(0, h));
+    d->pendingSize = Size(max(0, w), max(0, h)) * qApp->devicePixelRatio();
 
     // Only react if this is actually a resize.
     if (d->currentSize != d->pendingSize)
@@ -398,7 +402,7 @@ void Canvas::showEvent(QShowEvent* ev)
 {
     LOG_AS("Canvas");
 
-    QGLWidget::showEvent(ev);
+    QOpenGLWidget::showEvent(ev);
 
     // The first time the window is shown, run the initialization callback. On
     // some platforms, OpenGL is not fully ready to be used before the window
@@ -426,8 +430,9 @@ void Canvas::notifyReady()
     d->reconfigureFramebuffer();
 
     // Print some information.
-    QGLFormat const fmt = format();
-    if (fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
+    QSurfaceFormat const fmt = format();
+
+    /*if (fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
         LOG_GL_NOTE("OpenGL 3.3 supported");
     else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
         LOG_GL_NOTE("OpenGL 3.2 supported");
@@ -440,7 +445,11 @@ void Canvas::notifyReady()
     else if ((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
         LOG_GL_NOTE("OpenGL 2.0 supported");
     else
-        LOG_GL_WARNING("OpenGL 2.0 is not supported!");
+        LOG_GL_WARNING("OpenGL 2.0 is not supported!");*/
+
+    LOG_GL_NOTE("OpenGL %i.%i supported (%s)")
+            << fmt.majorVersion() << fmt.minorVersion()
+            << (fmt.profile() == QSurfaceFormat::CompatibilityProfile? "Compatibility" : "Core");
 
     LOGDEV_GL_XVERBOSE("Notifying GL ready");
     DENG2_FOR_AUDIENCE2(GLReady, i) i->canvasGLReady(*this);
@@ -450,21 +459,22 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
-    if (!d->parent || d->parent->isRecreationInProgress()) return;
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif
+    if (!d->parent/* || d->parent->isRecreationInProgress()*/) return;
 
-    DENG2_ASSERT(QGLContext::currentContext() != 0);
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
+    GLFramebuffer::setDefaultFramebuffer(defaultFramebufferObject());
 
     LIBGUI_ASSERT_GL_OK();
 
-    // Make sure any changes to the state stack become effective.
+    // Make sure any changes to the state stack are in effect.
     GLState::current().apply();
 
     DENG2_FOR_AUDIENCE2(GLDraw, i) i->canvasGLDraw(*this);
 
     LIBGUI_ASSERT_GL_OK();
+
+    d->framebuf.blit();
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

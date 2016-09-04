@@ -52,7 +52,7 @@
 #endif
 
 // Assertion specific to GL errors.
-#if 1 //|| defined(DENG_X11) || defined(WIN32)
+#if 0 //|| defined(DENG_X11) || defined(WIN32)
 #  define LIBGUI_ASSERT_GL(cond) // just logged, no abort
 #else
 #  define LIBGUI_ASSERT_GL(cond) DENG2_ASSERT(cond)
@@ -68,16 +68,6 @@
      error == GL_OUT_OF_MEMORY?     "GL_OUT_OF_MEMORY" : \
      error == GL_INVALID_FRAMEBUFFER_OPERATION? "GL_INVALID_FRAMEBUFFER_OPERATION" : \
                                     "?")
-
-#ifndef NDEBUG
-#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
-    _er = glGetError(); if (_er != GL_NO_ERROR) { \
-    LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x (%s)", __LINE__, _er, \
-    LIBGUI_GL_ERROR_STR(_er)); LIBGUI_ASSERT_GL(!"OpenGL operation failed"); \
-    }} while (_er != GL_NO_ERROR);}
-#else
-#  define LIBGUI_ASSERT_GL_OK()
-#endif
 
 #ifdef __cplusplus
 #  define LIBGUI_EXTERN_C extern "C"

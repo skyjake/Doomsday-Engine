@@ -27,11 +27,11 @@
 #include <de/Rectangle>
 #include <utility>
 
-#include "../gui/libgui.h"
+#include "../GLInfo"
 
 namespace de {
 
-class GLTarget;
+class GLFramebuffer;
 
 namespace gl /// OpenGL constants, flags, and other definitions.
 {
@@ -121,7 +121,7 @@ public:
     GLState &setBlendFunc(gl::BlendFunc func);
     GLState &setBlendOp(gl::BlendOp op);
     GLState &setColorMask(gl::ColorMask mask);
-    GLState &setTarget(GLTarget &target);
+    GLState &setTarget(GLFramebuffer &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
 
@@ -159,7 +159,7 @@ public:
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
     gl::ColorMask colorMask() const;
-    GLTarget &target() const;
+    GLFramebuffer &target() const;
     Rectangleui viewport() const;
     Rectanglef normalizedViewport() const;
     bool scissor() const;

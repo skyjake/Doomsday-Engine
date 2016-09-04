@@ -1,0 +1,452 @@
+/** @file glframebuffer.cpp  GL frame buffer.
+ *
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#include "de/GLTextureFramebuffer"
+#include "de/GuiApp"
+
+#include <de/Log>
+#include <de/Canvas>
+#include <de/Drawable>
+#include <de/GLInfo>
+#include <de/Property>
+
+namespace de {
+
+DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
+
+DENG2_PIMPL(GLTextureFramebuffer)
+, DENG2_OBSERVES(DefaultSampleCount, Change)
+{
+    Image::Format colorFormat;
+    Size size;
+    int _samples; ///< don't touch directly (0 == default)
+    GLTexture color;
+    GLTexture depthStencil;
+
+    /*Drawable bufSwap;
+    GLUniform uMvpMatrix;
+    GLUniform uBufTex;
+    GLUniform uColor;
+    typedef GLBufferT<Vertex2Tex> VBuf;*/
+
+    Impl(Public *i)
+        : Base(i)
+        , colorFormat(Image::RGB_888)
+        , _samples(0)
+        /*, uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uBufTex   ("uTex",       GLUniform::Sampler2D)
+        , uColor    ("uColor",     GLUniform::Vec4)*/
+    {
+        pDefaultSampleCount.audienceForChange() += this;
+    }
+
+    ~Impl()
+    {
+        release();
+    }
+
+    int sampleCount() const
+    {
+        if (_samples <= 0) return pDefaultSampleCount;
+        return _samples;
+    }
+
+    bool isMultisampled() const
+    {
+        /*if (!GLInfo::extensions().EXT_framebuffer_multisample)
+        {
+            // Not supported.
+            return false;
+        }*/
+        return sampleCount() > 1;
+    }
+
+    void valueOfDefaultSampleCountChanged()
+    {
+        reconfigure();
+    }
+
+    void alloc()
+    {
+        /*
+        // Prepare the fallback blit method.
+        VBuf *buf = new VBuf;
+        bufSwap.addBuffer(buf);
+        bufSwap.program().build(// Vertex shader:
+                                Block("uniform highp mat4 uMvpMatrix; "
+                                      "attribute highp vec4 aVertex; "
+                                      "attribute highp vec2 aUV; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) {"
+                                          "gl_Position = uMvpMatrix * aVertex; "
+                                          "vUV = aUV; }"),
+                                // Fragment shader:
+                                Block("uniform sampler2D uTex; "
+                                      "uniform highp vec4 uColor; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) { "
+                                          "gl_FragColor = uColor * texture2D(uTex, vUV); }"))
+                << uMvpMatrix
+                << uBufTex
+                << uColor;
+
+        buf->setVertices(gl::TriangleStrip,
+                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                         gl::Static);
+
+        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uBufTex = color;
+        uColor = Vector4f(1, 1, 1, 1);
+        */
+    }
+
+    void release()
+    {
+        //bufSwap.clear();
+        color.clear();
+        depthStencil.clear();
+        self.configure();
+        //multisampleTarget.configure();
+    }
+
+    void reconfigure()
+    {
+        if (!self.isReady() || size == Size()) return;
+
+        LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
+                << size.asText() << sampleCount();
+
+        // Configure textures for the framebuffer.
+        color.setUndefinedImage(size, colorFormat);
+        color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+        color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
+
+        DENG2_ASSERT(color.isReady());
+
+        depthStencil.setDepthStencilContent(size);
+        depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+        depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
+        DENG2_ASSERT(depthStencil.isReady());
+
+        // Try a couple of different ways to set up the FBO.
+        for (int attempt = 0; ; ++attempt)
+        {
+            String failMsg;
+            try
+            {
+                switch (attempt)
+                {
+                case 0:
+                    // Most preferred: render both color and depth+stencil to textures.
+                    // Allows shaders to access contents of the entire framebuffer.
+                    failMsg = "Texture-based framebuffer failed: %s\n"
+                              "Trying again without depth/stencil texture";
+                    self.configure(&color, &depthStencil);
+                    break;
+
+                case 1:
+                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
+                              "Trying again without stencil";
+                    self.configure(Color, color, DepthStencil);
+                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
+                    break;
+
+                case 2:
+                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
+                              "Trying again without texture buffers";
+                    self.configure(Color, color, Depth);
+                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
+                    break;
+
+                case 3:
+                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
+                              "Trying again without stencil";
+                    self.configure(size, ColorDepthStencil);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
+                    break;
+
+                case 4:
+                    // Final fallback: simple FBO with just color+depth renderbuffers.
+                    // No postfx, no access from shaders, no sky mask.
+                    self.configure(size, ColorDepth);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
+                    break;
+
+                default:
+                    break;
+                }
+                break; // success!
+            }
+            catch (ConfigError const &er)
+            {
+                if (failMsg.isEmpty()) throw er; // Can't handle it.
+                LOG_GL_NOTE(failMsg) << er.asText();
+            }
+        }
+
+        self.clear(ColorDepthStencil);
+
+        /*if (isMultisampled())
+        {
+            try
+            {
+                // Set up the multisampled target with suitable renderbuffers.
+                multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
+                multisampleTarget.clear(GLTarget::ColorDepthStencil);
+
+                // Actual drawing occurs in the multisampled target that is then
+                // blitted to the main target.
+                target.setProxy(&multisampleTarget);
+            }
+            catch (GLTarget::ConfigError const &er)
+            {
+                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
+                _samples = 1;
+                goto noMultisampling;
+            }
+        }
+        else
+        {
+noMultisampling:
+            multisampleTarget.configure();
+        }*/
+    }
+
+    void resize(Size const &newSize)
+    {
+        if (size != newSize)
+        {
+            size = newSize;
+            reconfigure();
+        }
+    }
+
+/*    void drawSwap()
+    {
+        if (isMultisampled())
+        {
+            target.updateFromProxy();
+        }
+        bufSwap.draw();
+    }*/
+
+    /*void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
+    {
+        GLTarget defaultTarget;
+
+        GLState::push()
+                .setTarget(defaultTarget)
+                .setViewport(Rectangleui::fromSize(size))
+                .apply();
+
+        if (!color.isReady())
+        {
+            // If the frame buffer hasn't been configured yet, just clear the canvas.
+            glClear(GL_COLOR_BUFFER_BIT);
+            canvas.QGLWidget::swapBuffers();
+            GLState::pop().apply();
+            return;
+        }
+
+        switch (swapMode)
+        {
+        case gl::SwapMonoBuffer:
+            if (GLInfo::extensions().EXT_framebuffer_blit)
+            {
+                if (isMultisampled())
+                {
+                    multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
+                }
+                else
+                {
+                    target.blit(defaultTarget);  // copy to system backbuffer
+                }
+            }
+            else
+            {
+                // Fallback: draw the back buffer texture to the main framebuffer.
+                drawSwap();
+            }
+            canvas.QGLWidget::swapBuffers();
+            break;
+
+        case gl::SwapWithAlpha:
+            drawSwap();
+            break;
+
+        case gl::SwapStereoLeftBuffer:
+            glDrawBuffer(GL_BACK_LEFT);
+            drawSwap();
+            glDrawBuffer(GL_BACK);
+            break;
+
+        case gl::SwapStereoRightBuffer:
+            glDrawBuffer(GL_BACK_RIGHT);
+            drawSwap();
+            glDrawBuffer(GL_BACK);
+            break;
+
+        case gl::SwapStereoBuffers:
+            canvas.QGLWidget::swapBuffers();
+            break;
+        }
+
+        GLState::pop().apply();
+    }*/
+};
+
+GLTextureFramebuffer::GLTextureFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
+    : d(new Impl(this))
+{
+    d->colorFormat = colorFormat;
+    d->size        = initialSize;
+    d->_samples    = sampleCount;
+}
+
+void GLTextureFramebuffer::glInit()
+{
+    if (isReady()) return;
+
+/*#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if (!glBindFramebuffer) return;
+#endif*/
+
+    LOG_AS("GLFramebuffer");
+
+    // Check for some integral OpenGL functionality.
+    /*if (!GLInfo::extensions().EXT_framebuffer_object)
+    {
+        LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
+    }*/
+    if (!GLInfo::extensions().EXT_packed_depth_stencil)
+    {
+        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
+    }
+
+    d->alloc();
+    setState(Ready);
+
+    d->reconfigure();
+}
+
+void GLTextureFramebuffer::glDeinit()
+{
+    setState(NotReady);
+    d->release();
+}
+
+void GLTextureFramebuffer::setSampleCount(int sampleCount)
+{
+    /*if (!GLInfo::isFramebufferMultisamplingSupported())
+    {
+        sampleCount = 1;
+    }*/
+
+    if (d->_samples != sampleCount)
+    {
+        LOG_AS("GLFramebuffer");
+
+        d->_samples = sampleCount;
+        d->reconfigure();
+    }
+}
+
+void GLTextureFramebuffer::setColorFormat(Image::Format const &colorFormat)
+{
+    if (d->colorFormat != colorFormat)
+    {
+        d->colorFormat = colorFormat;
+        d->reconfigure();
+    }
+}
+
+void GLTextureFramebuffer::resize(Size const &newSize)
+{
+    d->resize(newSize);
+}
+
+GLTextureFramebuffer::Size GLTextureFramebuffer::size() const
+{
+    return d->size;
+}
+
+GLTexture &GLTextureFramebuffer::colorTexture() const
+{
+    return d->color;
+}
+
+GLTexture &GLTextureFramebuffer::depthStencilTexture() const
+{
+    return d->depthStencil;
+}
+
+int GLTextureFramebuffer::sampleCount() const
+{
+    return d->sampleCount();
+}
+
+/*void GLTextureFramebuffer::blit(GLFramebuffer const &target) const
+{
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, target.glName());
+
+    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
+                0, 0, size().x, size().y,
+                0, 0, target.size().x, target.size().y,
+                GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
+}*/
+
+/*void GLTextureFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
+{
+    d->swapBuffers(canvas, swapMode);
+}*/
+
+/*void GLTextureFramebuffer::drawBuffer(float opacity)
+{
+    d->uColor = Vector4f(1, 1, 1, opacity);
+    GLState::push()
+            .setCull(gl::None)
+            .setDepthTest(false)
+            .setDepthWrite(false);
+    d->drawSwap();
+    GLState::pop();
+    d->uColor = Vector4f(1, 1, 1, 1);
+}*/
+
+bool GLTextureFramebuffer::setDefaultMultisampling(int sampleCount)
+{
+    LOG_AS("GLFramebuffer");
+
+    int const newCount = max(1, sampleCount);
+    if (pDefaultSampleCount != newCount)
+    {
+        pDefaultSampleCount = newCount;
+        return true;
+    }
+    return false;
+}
+
+int GLTextureFramebuffer::defaultMultisampling()
+{
+    return pDefaultSampleCount;
+}
+
+} // namespace de

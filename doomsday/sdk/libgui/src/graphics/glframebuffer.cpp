@@ -1,4 +1,7 @@
-/** @file glframebuffer.cpp  GL frame buffer.
+/** @file gltarget.cpp  GL render target.
+ *
+ * Implementation does not use QGLFrameBufferObject because it does not allow
+ * attaching manually created textures.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,440 +20,759 @@
  */
 
 #include "de/GLFramebuffer"
-#include "de/GuiApp"
-
-#include <de/Log>
-#include <de/Canvas>
-#include <de/Drawable>
-#include <de/GLInfo>
-#include <de/Property>
+#include "de/GLTexture"
+#include "de/GLState"
+#include "de/GLInfo"
+#include "de/CanvasWindow"
+#include <de/Asset>
 
 namespace de {
 
-DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
+static Vector2ui const nullSize;
+static GLuint defaultFramebuffer = 0;
 
-DENG2_PIMPL(GLFramebuffer)
-, DENG2_OBSERVES(DefaultSampleCount, Change)
-, DENG2_OBSERVES(GuiApp, GLContextChange)
+DENG2_PIMPL(GLFramebuffer),
+DENG2_OBSERVES(Asset, Deletion)
 {
-    Image::Format colorFormat;
-    Size size;
-    int _samples; ///< don't touch directly (0 == default)
-    GLTarget target;
-    GLTexture color;
-    GLTexture depthStencil;
+    enum AttachmentId {
+        ColorBuffer,
+        DepthBuffer,
+        StencilBuffer,
+        MAX_ATTACHMENTS
+    };
 
-    GLTarget multisampleTarget;
+    static AttachmentId attachmentToId(GLenum atc)
+    {
+        switch (atc)
+        {
+        case GL_COLOR_ATTACHMENT0:
+            return ColorBuffer;
 
-    Drawable bufSwap;
-    GLUniform uMvpMatrix;
-    GLUniform uBufTex;
-    GLUniform uColor;
-    typedef GLBufferT<Vertex2Tex> VBuf;
+        case GL_DEPTH_ATTACHMENT:
+            return DepthBuffer;
+
+        case GL_STENCIL_ATTACHMENT:
+            return StencilBuffer;
+
+        case GL_DEPTH_STENCIL_ATTACHMENT:
+            return DepthBuffer;
+
+        default:
+            DENG2_ASSERT(false);
+            break;
+        }
+        return ColorBuffer; // should not be reached
+    }
+
+    static GLenum flagsToGLAttachment(Flags const &flags)
+    {
+        DENG2_ASSERT(!flags.testFlag(ColorDepth));
+        DENG2_ASSERT(!flags.testFlag(ColorDepthStencil));
+
+        return flags == Color?   GL_COLOR_ATTACHMENT0  :
+               flags == Depth?   GL_DEPTH_ATTACHMENT   :
+               flags == Stencil? GL_STENCIL_ATTACHMENT :
+                                 GL_DEPTH_STENCIL_ATTACHMENT;
+    }
+
+    GLuint fbo;
+    GLuint renderBufs[MAX_ATTACHMENTS];
+    GLTexture *bufTextures[MAX_ATTACHMENTS];
+    Flags flags;
+    Flags textureAttachment;    ///< Where to attach @a texture.
+    GLTexture *texture;
+    Vector2ui size;
+    Vector4f clearColor;
+    Rectangleui activeRect; ///< Initially null.
+    int sampleCount;
+    //GLFramebuffer const *proxy;
 
     Impl(Public *i)
         : Base(i)
-        , colorFormat(Image::RGB_888)
-        , _samples(0)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uBufTex   ("uTex",       GLUniform::Sampler2D)
-        , uColor    ("uColor",     GLUniform::Vec4)
+        , fbo(0)
+        , flags(DefaultFlags)
+        , textureAttachment(NoAttachments)
+        , texture(0)
+        , sampleCount(0)
+        //, proxy(0)
     {
-        pDefaultSampleCount.audienceForChange() += this;
+        zap(renderBufs);
+        zap(bufTextures);
+    }
+
+    Impl(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
+        : Base(i)
+        , fbo(0)
+        , flags(texAttachment | otherAtm)
+        , textureAttachment(texAttachment)
+        , texture(&colorTexture)
+        , size(colorTexture.size())
+        , sampleCount(0)
+        //, proxy(0)
+    {
+        zap(renderBufs);
+        zap(bufTextures);
+    }
+
+    Impl(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
+        : Base(i)
+        , fbo(0)
+        , flags(fboFlags)
+        , textureAttachment(NoAttachments)
+        , texture(0)
+        , size(targetSize)
+        , sampleCount(0)
+        //, proxy(0)
+    {
+        zap(renderBufs);
+        zap(bufTextures);
     }
 
     ~Impl()
     {
-        //pDefaultSampleCount.audienceForChange() -= this;
-
         release();
     }
 
-    void appGLContextChanged()
+    bool isDefault() const
     {
-        /*
-        qDebug() << "rebooting FB" << thisPublic << self.isReady() << target.glName() << target.isReady() << size.asText();
-        self.glDeinit();
-        self.glInit();
-        */
+        return !texture && size == nullSize;
     }
 
-    int sampleCount() const
+    GLTexture *bufferTexture(Flags const &flags) const
     {
-        if (_samples <= 0) return pDefaultSampleCount;
-        return _samples;
-    }
-
-    bool isMultisampled() const
-    {
-        if (!GLInfo::extensions().EXT_framebuffer_multisample)
+        if (flags == Color)
         {
-            // Not supported.
-            return false;
+            return bufTextures[ColorBuffer];
         }
-        return sampleCount() > 1;
-    }
-
-    void valueOfDefaultSampleCountChanged()
-    {
-        reconfigure();
-    }
-
-    void alloc()
-    {
-        // Prepare the fallback blit method.
-        VBuf *buf = new VBuf;
-        bufSwap.addBuffer(buf);
-        bufSwap.program().build(// Vertex shader:
-                                Block("uniform highp mat4 uMvpMatrix; "
-                                      "attribute highp vec4 aVertex; "
-                                      "attribute highp vec2 aUV; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) {"
-                                          "gl_Position = uMvpMatrix * aVertex; "
-                                          "vUV = aUV; }"),
-                                // Fragment shader:
-                                Block("uniform sampler2D uTex; "
-                                      "uniform highp vec4 uColor; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) { "
-                                          "gl_FragColor = uColor * texture2D(uTex, vUV); }"))
-                << uMvpMatrix
-                << uBufTex
-                << uColor;
-
-        buf->setVertices(gl::TriangleStrip,
-                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
-                         gl::Static);
-
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uBufTex = color;
-        uColor = Vector4f(1, 1, 1, 1);
-    }
-
-    void release()
-    {
-        bufSwap.clear();
-        color.clear();
-        depthStencil.clear();
-        target.configure();
-        multisampleTarget.configure();
-    }
-
-    void reconfigure()
-    {
-        if (!self.isReady() || size == Size()) return;
-
-        LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
-                << size.asText() << sampleCount();
-
-        // Configure textures for the framebuffer.
-        color.setUndefinedImage(size, colorFormat);
-        color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
-
-        DENG2_ASSERT(color.isReady());
-
-        depthStencil.setDepthStencilContent(size);
-        depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-
-        DENG2_ASSERT(depthStencil.isReady());
-
-        // Try a couple of different ways to set up the FBO.
-        for (int attempt = 0; ; ++attempt)
+        if (flags == DepthStencil || flags == Depth)
         {
-            String failMsg;
-            try
-            {
-                switch (attempt)
-                {
-                case 0:
-                    // Most preferred: render both color and depth+stencil to textures.
-                    // Allows shaders to access contents of the entire framebuffer.
-                    failMsg = "Texture-based framebuffer failed: %s\n"
-                              "Trying again without depth/stencil texture";
-                    target.configure(&color, &depthStencil);
-                    break;
-
-                case 1:
-                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
-                              "Trying again without stencil";
-                    target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
-                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
-                    break;
-
-                case 2:
-                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
-                              "Trying again without texture buffers";
-                    target.configure(GLTarget::Color, color, GLTarget::Depth);
-                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
-                    break;
-
-                case 3:
-                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
-                              "Trying again without stencil";
-                    target.configure(size, GLTarget::ColorDepthStencil);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
-                    break;
-
-                case 4:
-                    // Final fallback: simple FBO with just color+depth renderbuffers.
-                    // No postfx, no access from shaders, no sky mask.
-                    target.configure(size, GLTarget::ColorDepth);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
-                    break;
-
-                default:
-                    break;
-                }
-                break; // success!
-            }
-            catch (GLTarget::ConfigError const &er)
-            {
-                if (failMsg.isEmpty()) throw er; // Can't handle it.
-                LOG_GL_NOTE(failMsg) << er.asText();
-            }
+            return bufTextures[DepthBuffer];
         }
-
-        target.clear(GLTarget::ColorDepthStencil);
-
-        if (isMultisampled())
+        if (flags == Stencil)
         {
-            try
-            {
-                // Set up the multisampled target with suitable renderbuffers.
-                multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
-                multisampleTarget.clear(GLTarget::ColorDepthStencil);
+            return bufTextures[StencilBuffer];
+        }
+        return 0;
+    }
 
-                // Actual drawing occurs in the multisampled target that is then
-                // blitted to the main target.
-                target.setProxy(&multisampleTarget);
-            }
-            catch (GLTarget::ConfigError const &er)
+    void allocFBO()
+    {
+        if (isDefault() || fbo) return;
+
+        GLInfo::EXT_framebuffer_object()->glGenFramebuffersEXT(1, &fbo);
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+
+        LOG_GL_XVERBOSE("Creating FBO %i") << fbo;
+    }
+
+    void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
+    {
+        DENG2_ASSERT(tex.isReady());
+
+        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i")
+                << fbo << tex.glName() << level << attachmentToId(attachment);
+
+        GLInfo::EXT_framebuffer_object()->glFramebufferTexture2DEXT(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
+        LIBGUI_ASSERT_GL_OK();
+
+        bufTextures[attachmentToId(attachment)] = &tex;
+    }
+
+    void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
+    {
+        DENG2_ASSERT(size != Vector2ui(0, 0));
+
+        GLInfo::EXT_framebuffer_object()->glGenRenderbuffersEXT(1, &renderBufs[id]);
+        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, renderBufs[id]);
+
+        if (sampleCount > 1)
+        {
+#ifdef GL_NV_framebuffer_multisample_coverage
+            if (GLInfo::extensions().NV_framebuffer_multisample_coverage)
             {
-                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
-                _samples = 1;
-                goto noMultisampling;
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i CSAA samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
+
+                glRenderbufferStorageMultisampleCoverageNV(GL_RENDERBUFFER, 8, sampleCount, type, size.x, size.y);
+            }
+            else
+#endif
+            {
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
+
+                //DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+                GLInfo::EXT_framebuffer_multisample()->glRenderbufferStorageMultisampleEXT(
+                            GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
             }
         }
         else
         {
-noMultisampling:
-            multisampleTarget.configure();
+            GLInfo::EXT_framebuffer_object()->glRenderbufferStorageEXT(GL_RENDERBUFFER, type, size.x, size.y);
         }
+
+        GLInfo::EXT_framebuffer_object()->glFramebufferRenderbufferEXT(
+                    GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBufs[id]);
+        LIBGUI_ASSERT_GL_OK();
     }
 
-    void resize(Size const &newSize)
+    void alloc()
     {
-        if (size != newSize)
+        allocFBO();
+
+        if (texture)
         {
-            size = newSize;
-            reconfigure();
+            // The texture's attachment point must be unambiguously defined.
+            DENG2_ASSERT(textureAttachment == Color   ||
+                         textureAttachment == Depth   ||
+                         textureAttachment == Stencil ||
+                         textureAttachment == DepthStencil);
+
+            attachTexture(*texture,
+                          textureAttachment == Color?   GL_COLOR_ATTACHMENT0  :
+                          textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
+                          textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
+                                                        GL_DEPTH_STENCIL_ATTACHMENT);
         }
+
+        if (size != nullSize) // A non-default target: size must be specified.
+        {
+            allocRenderBuffers();
+        }
+
+        validate();
     }
 
-    void drawSwap()
+    void allocRenderBuffers()
     {
-        if (isMultisampled())
+        DENG2_ASSERT(size != nullSize);
+
+        // Fill in all the other requested attachments.
+        if (flags.testFlag(Color) && !textureAttachment.testFlag(Color))
         {
-            target.updateFromProxy();
+            /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
+            LOG_GL_VERBOSE("FBO %i: color renderbuffer %s") << fbo << size.asText();
+            attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
-        bufSwap.draw();
+
+        if ( flags.testFlag(DepthStencil) &&
+           !flags.testFlag(SeparateDepthAndStencil) &&
+           (!texture || textureAttachment == Color))
+        {
+            // We can use a combined depth/stencil buffer.
+            LOG_GL_VERBOSE("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
+            attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+        }
+        else
+        {
+            // Separate depth and stencil, then.
+            if (flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
+            {
+                LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
+                attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
+            }
+            if (flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
+            {
+                LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
+                attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
+            }
+        }
+
+        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, 0);
     }
 
-    void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
+    void releaseRenderBuffers()
     {
-        GLTarget defaultTarget;
+        GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(MAX_ATTACHMENTS, renderBufs);
+        zap(renderBufs);
+        zap(bufTextures);
+    }
 
-        GLState::push()
-                .setTarget(defaultTarget)
-                .setViewport(Rectangleui::fromSize(size))
-                .apply();
-
-        if (!color.isReady())
+    void release()
+    {
+        self.setState(NotReady);
+        if (fbo)
         {
-            // If the frame buffer hasn't been configured yet, just clear the canvas.
-            glClear(GL_COLOR_BUFFER_BIT);
-            canvas.QGLWidget::swapBuffers();
-            GLState::pop().apply();
+            releaseRenderBuffers();
+            GLInfo::EXT_framebuffer_object()->glDeleteFramebuffersEXT(1, &fbo);
+            fbo = 0;
+        }
+        zap(bufTextures);
+        texture = 0;
+        size = nullSize;
+    }
+
+    void releaseAndReset()
+    {
+        release();
+
+        textureAttachment = NoAttachments;
+        flags = NoAttachments;
+        sampleCount = 0;
+        //proxy = 0;
+    }
+
+    void resizeRenderBuffers(Size const &newSize)
+    {
+        size = newSize;
+
+        releaseRenderBuffers();
+        allocRenderBuffers();
+    }
+
+    void replace(GLenum attachment, GLTexture &newTexture)
+    {
+        DENG2_ASSERT(self.isReady());       // must already be inited
+        DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
+
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+        attachTexture(newTexture, attachment);
+
+        // Restore previous target.
+        GLState::current().target().glBind();
+    }
+
+    void validate()
+    {
+        if (isDefault())
+        {
+            self.setState(Ready);
             return;
         }
 
-        switch (swapMode)
+        DENG2_ASSERT(fbo != 0);
+
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+        GLenum status = GLInfo::EXT_framebuffer_object()->glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
+
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
+        GLState::considerNativeStateUndefined(); // state was manually changed
+
+        if (status != GL_FRAMEBUFFER_COMPLETE)
         {
-        case gl::SwapMonoBuffer:
-            if (GLInfo::extensions().EXT_framebuffer_blit)
-            {
-                if (isMultisampled())
-                {
-                    multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
-                }
-                else
-                {
-                    target.blit(defaultTarget);  // copy to system backbuffer
-                }
-            }
-            else
-            {
-                // Fallback: draw the back buffer texture to the main framebuffer.
-                drawSwap();
-            }
-            canvas.QGLWidget::swapBuffers();
-            break;
+            releaseAndReset();
 
-        case gl::SwapWithAlpha:
-            drawSwap();
-            break;
-
-        case gl::SwapStereoLeftBuffer:
-            glDrawBuffer(GL_BACK_LEFT);
-            drawSwap();
-            glDrawBuffer(GL_BACK);
-            break;
-
-        case gl::SwapStereoRightBuffer:
-            glDrawBuffer(GL_BACK_RIGHT);
-            drawSwap();
-            glDrawBuffer(GL_BACK);
-            break;
-
-        case gl::SwapStereoBuffers:
-            canvas.QGLWidget::swapBuffers();
-            break;
+            throw ConfigError("GLFramebuffer::validate",
+                status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
+                status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS? "Mismatch with dimensions" :
+                status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT? "No images attached" :
+                                                                        QString("Unsupported (0x%1)").arg(status, 0, 16));
         }
-
-        GLState::pop().apply();
+        self.setState(Ready);
     }
+
+    void assetBeingDeleted(Asset &asset)
+    {
+        if (texture == &asset)
+        {
+            release();
+        }
+    }
+
+#if 0
+    void updateFromProxy()
+    {
+        if (!proxy) return;
+
+        /// @todo Ensure this only occurs iff the target contents have changed. -jk
+
+#ifdef _DEBUG
+        if (!flags.testFlag(Changed))
+        {
+            //qDebug() << "GLFramebuffer: " << fbo << "being updated from proxy without Changed flag (!)";
+        }
+#endif
+
+        //if (flags.testFlag(Changed))
+        {
+            proxy->blit(self, ColorDepth);
+            flags &= ~Changed;
+        }
+    }
+#endif
 };
 
-GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
-    : d(new Impl(this))
+void GLFramebuffer::setDefaultFramebuffer(GLuint defaultFBO)
 {
-    d->colorFormat = colorFormat;
-    d->size        = initialSize;
-    d->_samples    = sampleCount;
+    defaultFramebuffer = defaultFBO;
 }
 
-void GLFramebuffer::glInit()
+GLFramebuffer::GLFramebuffer() : d(new Impl(this))
 {
-    if (isReady()) return;
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif
+    setState(Ready);
+}
+
+GLFramebuffer::GLFramebuffer(GLTexture &colorTarget, Flags const &otherAttachments)
+    : d(new Impl(this, Color, colorTarget, otherAttachments))
+{
+    LOG_AS("GLFramebuffer");
+    d->alloc();
+}
+
+GLFramebuffer::GLFramebuffer(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
+    : d(new Impl(this, attachment, texture, otherAttachments))
+{
+    LOG_AS("GLFramebuffer");
+    d->alloc();
+}
+
+GLFramebuffer::GLFramebuffer(Vector2ui const &size, Flags const &flags)
+    : d(new Impl(this, size, flags))
+{
+    LOG_AS("GLFramebuffer");
+    d->alloc();
+}
+
+GLFramebuffer::Flags GLFramebuffer::flags() const
+{
+    return d->flags;
+}
+
+void GLFramebuffer::markAsChanged()
+{
+    d->flags |= Changed;
+}
+
+void GLFramebuffer::configure()
+{
+    LOG_AS("GLFramebuffer");
+
+    d->releaseAndReset();
+    setState(Ready);
+}
+
+void GLFramebuffer::configure(Vector2ui const &size, Flags const &flags, int sampleCount)
+{
+    LOG_AS("GLFramebuffer");
+
+    d->releaseAndReset();
+
+    d->flags = flags;
+    d->size = size;
+    d->sampleCount = (sampleCount > 1? sampleCount : 0);
+
+    d->allocFBO();
+    d->allocRenderBuffers();
+    d->validate();
+}
+
+void GLFramebuffer::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
+{
+    DENG2_ASSERT(colorTex || depthStencilTex);
 
     LOG_AS("GLFramebuffer");
 
-    // Check for some integral OpenGL functionality.
-    if (!GLInfo::extensions().EXT_framebuffer_object)
+    d->releaseAndReset();
+
+    d->flags = ColorDepthStencil;
+    d->size = (colorTex? colorTex->size() : depthStencilTex->size());
+
+    d->allocFBO();
+
+    // The color attachment.
+    if (colorTex)
     {
-        LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
+        DENG2_ASSERT(colorTex->isReady());
+        DENG2_ASSERT(d->size == colorTex->size());
+        d->attachTexture(*colorTex, GL_COLOR_ATTACHMENT0);
     }
-    if (!GLInfo::extensions().EXT_packed_depth_stencil)
+    else
     {
-        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
+        d->attachRenderbuffer(Impl::ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
     }
+
+    // The depth attachment.
+    if (depthStencilTex)
+    {
+        DENG2_ASSERT(depthStencilTex->isReady());
+        DENG2_ASSERT(d->size == depthStencilTex->size());
+        d->attachTexture(*depthStencilTex, GL_DEPTH_STENCIL_ATTACHMENT);
+    }
+    else
+    {
+        d->attachRenderbuffer(Impl::DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+    }
+
+    d->validate();
+}
+
+void GLFramebuffer::configure(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
+{
+    LOG_AS("GLFramebuffer");
+
+    d->releaseAndReset();
+
+    // Set new configuration.
+    d->texture = &texture;
+    d->textureAttachment = attachment;
+    d->flags = attachment | otherAttachments;
+    d->size = texture.size();
 
     d->alloc();
-    setState(Ready);
-
-    d->reconfigure();
 }
 
-void GLFramebuffer::glDeinit()
+void GLFramebuffer::glBind() const
 {
-    setState(NotReady);
-    d->release();
-}
+    LIBGUI_ASSERT_GL_OK();
+    DENG2_ASSERT(isReady());
+    if (!isReady()) return;
 
-void GLFramebuffer::setSampleCount(int sampleCount)
-{
-    if (!GLInfo::isFramebufferMultisamplingSupported())
+    GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
+
+/*#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if (!glBindFramebuffer) return;
+#endif*/
+
+    /*if (d->proxy)
     {
-        sampleCount = 1;
+        //qDebug() << "GLFramebuffer: binding proxy of" << d->fbo << "=>";
+        d->proxy->glBind();
     }
-
-    if (d->_samples != sampleCount)
+    else*/
     {
-        LOG_AS("GLFramebuffer");
+        //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+        if (fbo && !GLInfo::EXT_framebuffer_object()->glIsFramebufferEXT(fbo))
+        {
+            qDebug() << "GLFramebuffer: WARNING! Attempting to bind FBO" << fbo
+                     << "that is not a valid OpenGL FBO";
+        }
 
-        d->_samples = sampleCount;
-        d->reconfigure();
-    }
-}
-
-void GLFramebuffer::setColorFormat(Image::Format const &colorFormat)
-{
-    if (d->colorFormat != colorFormat)
-    {
-        d->colorFormat = colorFormat;
-        d->reconfigure();
+        //qDebug() << "GLFramebuffer: binding FBO" << d->fbo;
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fbo);
+        LIBGUI_ASSERT_GL_OK();
     }
 }
 
-void GLFramebuffer::resize(Size const &newSize)
+void GLFramebuffer::glRelease() const
 {
-    d->resize(newSize);
+    LIBGUI_ASSERT_GL_OK();
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+    LIBGUI_ASSERT_GL_OK();
+
+    //d->updateFromProxy();
+}
+
+QImage GLFramebuffer::toImage() const
+{
+    if (!d->fbo)
+    {
+        return CanvasWindow::main().canvas().grabImage();
+    }
+    else if (d->flags & Color)
+    {
+        // Read the contents of the color attachment.
+        Size imgSize = size();
+        QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, d->fbo);
+        LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        LIBGUI_GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
+                               (GLvoid *) img.constBits());
+        // Restore the stack's target.
+        GLState::current().target().glBind();
+        return img;
+    }
+    return QImage();
+}
+
+void GLFramebuffer::setClearColor(Vector4f const &color)
+{
+    d->clearColor = color;
+}
+
+void GLFramebuffer::clear(Flags const &attachments)
+{
+    DENG2_ASSERT(isReady());
+
+    markAsChanged();
+
+    GLState::current().apply();
+    glBind();
+
+    // Only clear what we have.
+    Flags which = attachments & d->flags;
+
+    LIBGUI_GL.glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
+    LIBGUI_GL.glClear((which & Color?   GL_COLOR_BUFFER_BIT   : 0) |
+                      (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
+                      (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
+
+    GLState::current().target().glBind();
+}
+
+void GLFramebuffer::resize(Size const &size)
+{
+    // The default target resizes itself automatically with the canvas.
+    if (d->size == size || d->isDefault()) return;
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, d->fbo);
+    if (d->texture)
+    {
+        d->texture->setUndefinedImage(size, d->texture->imageFormat());
+    }
+    d->resizeRenderBuffers(size);
+    GLState::current().target().glBind();
+}
+
+GLTexture *GLFramebuffer::attachedTexture(Flags const &attachment) const
+{
+    return d->bufferTexture(attachment);
+}
+
+void GLFramebuffer::replaceAttachment(Flags const &attachment, GLTexture &texture)
+{
+    DENG2_ASSERT(!d->isDefault());
+
+    d->replace(d->flagsToGLAttachment(attachment), texture);
+}
+
+/*void GLFramebuffer::setProxy(GLFramebuffer const *proxy)
+{
+    d->proxy = proxy;
+}
+
+void GLFramebuffer::updateFromProxy()
+{
+    d->updateFromProxy();
+}*/
+
+void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filter filtering) const
+{
+    LIBGUI_ASSERT_GL_OK();
+
+/*    DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
+    if (!GLInfo::extensions().EXT_framebuffer_blit) return;*/
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    LIBGUI_ASSERT_GL_OK();
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    LIBGUI_ASSERT_GL_OK();
+
+    Flags common = d->flags & dest.flags() & attachments;
+
+    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
+                0, 0, size().x, size().y,
+                0, 0, dest.size().x, dest.size().y,
+                (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
+                (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
+                (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0),
+                filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
+    LIBGUI_ASSERT_GL_OK();
+
+    //GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
+    //LIBGUI_ASSERT_GL_OK();
+
+    dest.markAsChanged();
+
+    GLState::current().target().glBind();
+}
+
+void GLFramebuffer::blit(gl::Filter filtering) const
+{
+    LIBGUI_ASSERT_GL_OK();
+
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, defaultFramebuffer);
+
+    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
+                0, 0, size().x, size().y,
+                0, 0, size().x, size().y,
+                GL_COLOR_BUFFER_BIT,
+                filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
+
+    LIBGUI_ASSERT_GL_OK();
+
+    GLState::current().target().glBind();
+}
+
+GLuint GLFramebuffer::glName() const
+{
+    return d->fbo;
 }
 
 GLFramebuffer::Size GLFramebuffer::size() const
 {
-    return d->size;
-}
-
-GLTarget &GLFramebuffer::target() const
-{
-    return d->target;
-}
-
-GLTexture &GLFramebuffer::colorTexture() const
-{
-    return d->color;
-}
-
-GLTexture &GLFramebuffer::depthStencilTexture() const
-{
-    return d->depthStencil;
-}
-
-int GLFramebuffer::sampleCount() const
-{
-    return d->sampleCount();
-}
-
-void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
-{
-    d->swapBuffers(canvas, swapMode);
-}
-
-void GLFramebuffer::drawBuffer(float opacity)
-{
-    d->uColor = Vector4f(1, 1, 1, opacity);
-    GLState::push()
-            .setCull(gl::None)
-            .setDepthTest(false)
-            .setDepthWrite(false);
-    d->drawSwap();
-    GLState::pop();
-    d->uColor = Vector4f(1, 1, 1, 1);
-}
-
-bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
-{
-    LOG_AS("GLFramebuffer");
-
-    int const newCount = max(1, sampleCount);
-    if (pDefaultSampleCount != newCount)
+    if (d->texture)
     {
-        pDefaultSampleCount = newCount;
-        return true;
+        return d->texture->size();
     }
-    return false;
+    else if (d->size != nullSize)
+    {
+        return d->size;
+    }
+    return CanvasWindow::main().canvas().size();
 }
 
-int GLFramebuffer::defaultMultisampling()
+void GLFramebuffer::setActiveRect(Rectangleui const &rect, bool applyGLState)
 {
-    return pDefaultSampleCount;
+    d->activeRect = rect;
+    if (applyGLState)
+    {
+        // Forcibly update viewport and scissor (and other GL state).
+        GLState::considerNativeStateUndefined();
+        GLState::current().apply();
+    }
+}
+
+void GLFramebuffer::unsetActiveRect(bool applyGLState)
+{
+    setActiveRect(Rectangleui(), applyGLState);
+}
+
+Vector2f GLFramebuffer::activeRectScale() const
+{
+    if (!hasActiveRect())
+    {
+        return Vector2f(1, 1);
+    }
+    return Vector2f(d->activeRect.size()) / size();
+}
+
+Vector2f GLFramebuffer::activeRectNormalizedOffset() const
+{
+    if (!hasActiveRect())
+    {
+        return Vector2f(0, 0);
+    }
+    return Vector2f(d->activeRect.topLeft) / size();
+}
+
+Rectangleui GLFramebuffer::scaleToActiveRect(Rectangleui const &rectInTarget) const
+{
+    // If no sub rectangle is defined, do nothing.
+    if (!hasActiveRect())
+    {
+        return rectInTarget;
+    }
+
+    Vector2f const scaling = activeRectScale();
+
+    return Rectangleui(d->activeRect.left()  + scaling.x * rectInTarget.left(),
+                       d->activeRect.top()   + scaling.y * rectInTarget.top(),
+                       rectInTarget.width()  * scaling.x,
+                       rectInTarget.height() * scaling.y);
+}
+
+Rectangleui const &GLFramebuffer::activeRect() const
+{
+    return d->activeRect;
+}
+
+bool GLFramebuffer::hasActiveRect() const
+{
+    return !d->activeRect.isNull();
+}
+
+Rectangleui GLFramebuffer::rectInUse() const
+{
+    if (hasActiveRect())
+    {
+        return activeRect();
+    }
+    return Rectangleui::fromSize(size());
 }
 
 } // namespace de

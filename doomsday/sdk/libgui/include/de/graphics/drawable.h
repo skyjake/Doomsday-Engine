@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_DRAWABLE_H
@@ -35,7 +35,7 @@ namespace de {
 /**
  * Drawable object with buffers, programs and states.
  *
- * This is the higher level, flexible, user-friendly combination of the lower
+ * This is the higher level, flexible and user-friendly combination of the lower
  * level GL classes. It is not mandatory to use this class for drawing; one can
  * always use the lower level classes directly.
  *

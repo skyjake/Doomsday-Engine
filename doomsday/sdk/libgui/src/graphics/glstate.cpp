@@ -23,6 +23,7 @@
 #include "de/GLState"
 #include "de/PersistentCanvasWindow"
 #include "de/graphics/opengl.h"
+#include <de/GLInfo>
 #include <de/BitField>
 
 namespace de {
@@ -93,7 +94,7 @@ namespace internal
     /// Observes the current target and clears the pointer if it happens to get
     /// deleted.
     class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
-        GLTarget *_target;
+        GLFramebuffer *_target;
         void assetBeingDeleted(Asset &asset) {
             if (&asset == _target) {
                 LOG_AS("GLState");
@@ -106,7 +107,7 @@ namespace internal
         ~CurrentTarget() {
             set(0);
         }
-        void set(GLTarget *trg) {
+        void set(GLFramebuffer *trg) {
             if (_target) {
                 _target->audienceForDeletion() -= this;
             }
@@ -115,17 +116,17 @@ namespace internal
                 _target->audienceForDeletion() += this;
             }
         }
-        CurrentTarget &operator = (GLTarget *trg) {
+        CurrentTarget &operator = (GLFramebuffer *trg) {
             set(trg);
             return *this;
         }
-        bool operator != (GLTarget *trg) const {
+        bool operator != (GLFramebuffer *trg) const {
             return _target != trg;
         }
-        GLTarget *get() const {
+        GLFramebuffer *get() const {
             return _target;
         }
-        operator GLTarget *() const {
+        operator GLFramebuffer *() const {
             return _target;
         }
     };
@@ -135,7 +136,7 @@ namespace internal
 DENG2_PIMPL(GLState)
 {
     BitField props;
-    GLTarget *target;
+    GLFramebuffer *target;
 
     Impl(Public *i)
         : Base(i)
@@ -209,73 +210,73 @@ DENG2_PIMPL(GLState)
             switch (self.cull())
             {
             case gl::None:
-                glDisable(GL_CULL_FACE);
+                LIBGUI_GL.glDisable(GL_CULL_FACE);
                 break;
             case gl::Front:
-                glEnable(GL_CULL_FACE);
-                glCullFace(GL_FRONT);
+                LIBGUI_GL.glEnable(GL_CULL_FACE);
+                LIBGUI_GL.glCullFace(GL_FRONT);
                 break;
             case gl::Back:
-                glEnable(GL_CULL_FACE);
-                glCullFace(GL_BACK);
+                LIBGUI_GL.glEnable(GL_CULL_FACE);
+                LIBGUI_GL.glCullFace(GL_BACK);
                 break;
             }
             break;
 
         case internal::DepthTest:
             if (self.depthTest())
-                glEnable(GL_DEPTH_TEST);
+                LIBGUI_GL.glEnable(GL_DEPTH_TEST);
             else
-                glDisable(GL_DEPTH_TEST);
+                LIBGUI_GL.glDisable(GL_DEPTH_TEST);
             break;
 
         case internal::DepthFunc:
-            glDepthFunc(glComp(self.depthFunc()));
+            LIBGUI_GL.glDepthFunc(glComp(self.depthFunc()));
             break;
 
         case internal::DepthWrite:
             if (self.depthWrite())
-                glDepthMask(GL_TRUE);
+                LIBGUI_GL.glDepthMask(GL_TRUE);
             else
-                glDepthMask(GL_FALSE);
+                LIBGUI_GL.glDepthMask(GL_FALSE);
             break;
 
         case internal::AlphaTest:
             if (self.alphaTest())
-                glEnable(GL_ALPHA_TEST);
+                LIBGUI_GL.glEnable(GL_ALPHA_TEST);
             else
-                glDisable(GL_ALPHA_TEST);
+                LIBGUI_GL.glDisable(GL_ALPHA_TEST);
             break;
 
         case internal::AlphaLimit:
-            glAlphaFunc(GL_GREATER, self.alphaLimit());
+            LIBGUI_GL.glAlphaFunc(GL_GREATER, self.alphaLimit());
             break;
 
         case internal::Blend:
             if (self.blend())
-                glEnable(GL_BLEND);
+                LIBGUI_GL.glEnable(GL_BLEND);
             else
-                glDisable(GL_BLEND);
+                LIBGUI_GL.glDisable(GL_BLEND);
             break;
 
         case internal::BlendFuncSrc:
         case internal::BlendFuncDest:
             //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
-            glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
-                                GL_ONE, GL_ONE);
+            LIBGUI_GL.glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
+                                          GL_ONE, GL_ONE);
             break;
 
         case internal::BlendOp:
             switch (self.blendOp())
             {
             case gl::Add:
-                glBlendEquation(GL_FUNC_ADD);
+                LIBGUI_GL.glBlendEquation(GL_FUNC_ADD);
                 break;
             case gl::Subtract:
-                glBlendEquation(GL_FUNC_SUBTRACT);
+                LIBGUI_GL.glBlendEquation(GL_FUNC_SUBTRACT);
                 break;
             case gl::ReverseSubtract:
-                glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+                LIBGUI_GL.glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 break;
             }
             break;
@@ -283,10 +284,10 @@ DENG2_PIMPL(GLState)
         case internal::ColorMask:
         {
             gl::ColorMask const mask = self.colorMask();
-            glColorMask((mask & gl::WriteRed)   != 0,
-                        (mask & gl::WriteGreen) != 0,
-                        (mask & gl::WriteBlue)  != 0,
-                        (mask & gl::WriteAlpha) != 0);
+            LIBGUI_GL.glColorMask((mask & gl::WriteRed)   != 0,
+                                  (mask & gl::WriteGreen) != 0,
+                                  (mask & gl::WriteBlue)  != 0,
+                                  (mask & gl::WriteAlpha) != 0);
             break;
         }
 
@@ -298,7 +299,7 @@ DENG2_PIMPL(GLState)
         {
             if (self.scissor() || self.target().hasActiveRect())
             {
-                glEnable(GL_SCISSOR_TEST);
+                LIBGUI_GL.glEnable(GL_SCISSOR_TEST);
 
                 Rectangleui origScr;
                 if (self.scissor())
@@ -311,12 +312,12 @@ DENG2_PIMPL(GLState)
                 }
 
                 Rectangleui const scr = self.target().scaleToActiveRect(origScr);
-                glScissor(scr.left(), self.target().size().y - scr.bottom(),
-                          scr.width(), scr.height());
+                LIBGUI_GL.glScissor(scr.left(), self.target().size().y - scr.bottom(),
+                                    scr.width(), scr.height());
             }
             else
             {
-                glDisable(GL_SCISSOR_TEST);
+                LIBGUI_GL.glDisable(GL_SCISSOR_TEST);
             }
             break;
         }
@@ -329,8 +330,8 @@ DENG2_PIMPL(GLState)
             Rectangleui const vp = self.target().scaleToActiveRect(self.viewport());
             //qDebug() << "glViewport" << vp.asText();
 
-            glViewport(vp.left(), self.target().size().y - vp.bottom(),
-                       vp.width(), vp.height());
+            LIBGUI_GL.glViewport(vp.left(), self.target().size().y - vp.bottom(),
+                                 vp.width(), vp.height());
             break;
         }
 
@@ -461,7 +462,7 @@ GLState &GLState::setColorMask(gl::ColorMask mask)
     return *this;
 }
 
-GLState &GLState::setTarget(GLTarget &target)
+GLState &GLState::setTarget(GLFramebuffer &target)
 {
     d->target = &target;
     return *this;
@@ -484,7 +485,7 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
 
 GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
 {
-    GLTarget::Size const size = target().size();
+    GLFramebuffer::Size const size = target().size();
     Rectangleui vp(Vector2ui(normViewportRect.left() * size.x,
                              normViewportRect.top()  * size.y),
                    Vector2ui(std::ceil(normViewportRect.right()  * size.x),
@@ -597,7 +598,7 @@ gl::ColorMask GLState::colorMask() const
     return d->props.valueAs<gl::ColorMask>(internal::ColorMask);
 }
 
-GLTarget &GLState::target() const
+GLFramebuffer &GLState::target() const
 {
     if (d->target)
     {
@@ -616,7 +617,7 @@ Rectangleui GLState::viewport() const
 
 Rectanglef GLState::normalizedViewport() const
 {
-    GLTarget::Size const size = target().size();
+    GLFramebuffer::Size const size = target().size();
     Rectangleui const vp = viewport();
     return Rectanglef(float(vp.left())   / float(size.x),
                       float(vp.top())    / float(size.y),
@@ -640,19 +641,20 @@ Rectangleui GLState::scissorRect() const
 void GLState::apply() const
 {
     LIBGUI_ASSERT_GL_OK();
-#ifdef LIBGUI_USE_GLENTRYPOINTS
+
+/*#ifdef LIBGUI_USE_GLENTRYPOINTS
     if (!glBindFramebuffer) return;
-#endif
+#endif*/
 
     bool forceViewportAndScissor = false;
 
     // Update the render target.
-    GLTarget *newTarget = &target();
+    GLFramebuffer *newTarget = &target();
     DENG2_ASSERT(newTarget != 0);
 
     if (internal::currentTarget != newTarget)
     {
-        GLTarget const *oldTarget = internal::currentTarget;
+        GLFramebuffer const *oldTarget = internal::currentTarget;
         if (oldTarget)
         {
             oldTarget->glRelease();

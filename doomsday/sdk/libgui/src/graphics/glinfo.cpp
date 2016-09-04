@@ -30,19 +30,25 @@ namespace de {
 
 static GLInfo info;
 
-DENG2_PIMPL_NOREF(GLInfo)
+DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 {
-    bool inited;
+    bool inited = false;
     Extensions ext;
     Limits lim;
 
+    std::unique_ptr<QOpenGLExtension_ARB_draw_instanced>          ARB_draw_instanced;
+    std::unique_ptr<QOpenGLExtension_ARB_instanced_arrays>        ARB_instanced_arrays;
+    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
+    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
+    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
+
     Impl()
-        : inited(false)
     {
         zap(ext);
         zap(lim);
     }
 
+#if 0
     /**
      * This routine is based on the method used by David Blythe and Tom
      * McReynolds in the book "Advanced Graphics Programming Using OpenGL"
@@ -83,11 +89,12 @@ DENG2_PIMPL_NOREF(GLInfo)
 
         return false;
     }
+#endif
 
     bool doQuery(char const *ext)
     {
         DENG2_ASSERT(ext);
-
+#if 0
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
         if (wglGetExtensionsStringARB != nullptr &&
@@ -102,6 +109,10 @@ DENG2_PIMPL_NOREF(GLInfo)
 #endif
 
         return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
+#endif
+        DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
+        return QOpenGLContext::currentContext()->hasExtension(ext);
     }
 
     bool query(char const *ext)
@@ -116,6 +127,11 @@ DENG2_PIMPL_NOREF(GLInfo)
         LOG_AS("GLInfo");
 
         if (inited) return;
+
+        if (!initializeOpenGLFunctions())
+        {
+            throw InitError("GLInfo::init", "Failed to initialize OpenGL");
+        }
 
         // Extensions.
         ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
@@ -146,6 +162,32 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
 #endif
 
+        if (ext.ARB_draw_instanced)
+        {
+            ARB_draw_instanced.reset(new QOpenGLExtension_ARB_draw_instanced);
+            ARB_draw_instanced->initializeOpenGLFunctions();
+        }
+        if (ext.ARB_instanced_arrays)
+        {
+            ARB_instanced_arrays.reset(new QOpenGLExtension_ARB_instanced_arrays);
+            ARB_instanced_arrays->initializeOpenGLFunctions();
+        }
+        if (ext.EXT_framebuffer_blit)
+        {
+            EXT_framebuffer_blit.reset(new QOpenGLExtension_EXT_framebuffer_blit);
+            EXT_framebuffer_blit->initializeOpenGLFunctions();
+        }
+        if (ext.EXT_framebuffer_multisample)
+        {
+            EXT_framebuffer_multisample.reset(new QOpenGLExtension_EXT_framebuffer_multisample);
+            EXT_framebuffer_multisample->initializeOpenGLFunctions();
+        }
+        if (ext.EXT_framebuffer_object)
+        {
+            EXT_framebuffer_object.reset(new QOpenGLExtension_EXT_framebuffer_object);
+            EXT_framebuffer_object->initializeOpenGLFunctions();
+        }
+
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint *) &lim.maxTexUnits);
@@ -165,19 +207,17 @@ DENG2_PIMPL_NOREF(GLInfo)
         }
 
         // Check default OpenGL format attributes.
-        QGLContext const *ctx = QGLContext::currentContext();
-        QGLFormat form = ctx->format();
+        QOpenGLContext const *ctx = QOpenGLContext::currentContext();
+        QSurfaceFormat form = ctx->format();
 
         LOGDEV_GL_MSG("Initial OpenGL format:");
-        LOGDEV_GL_MSG(" - OpenGL supported: %b") << form.hasOpenGL();
         LOGDEV_GL_MSG(" - version: %i.%i") << form.majorVersion() << form.minorVersion();
-        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QGLFormat::CompatibilityProfile? "Compatibility" : "Core");
-        LOGDEV_GL_MSG(" - samples: %b %i") << form.sampleBuffers() << form.samples();
-        LOGDEV_GL_MSG(" - color: %i %i %i %i") << form.redBufferSize() << form.greenBufferSize() << form.blueBufferSize() << form.alphaBufferSize();
-        LOGDEV_GL_MSG(" - depth: %b %i") << form.depth() << form.depthBufferSize();
-        LOGDEV_GL_MSG(" - stencil: %b %i") << form.stencil() << form.stencilBufferSize();
-        LOGDEV_GL_MSG(" - accum: %b %i") << form.accum() << form.accumBufferSize();
-        LOGDEV_GL_MSG(" - double buffering: %b") << form.doubleBuffer();
+        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QSurfaceFormat::CompatibilityProfile? "Compatibility" : "Core");
+        LOGDEV_GL_MSG(" - color: R%i G%i B%i A%i bits") << form.redBufferSize() << form.greenBufferSize() << form.blueBufferSize() << form.alphaBufferSize();
+        LOGDEV_GL_MSG(" - depth: %i bits") << form.depthBufferSize();
+        LOGDEV_GL_MSG(" - stencil: %i bits") << form.stencilBufferSize();
+        LOGDEV_GL_MSG(" - samples: %i") << form.samples();
+        LOGDEV_GL_MSG(" - swap behavior: %i") << form.swapBehavior();
 
         inited = true;
     }
@@ -189,6 +229,48 @@ GLInfo::GLInfo() : d(new Impl)
 void GLInfo::glInit()
 {
     info.d->init();
+}
+
+void GLInfo::glDeinit()
+{
+    info.d.reset();
+}
+
+QOpenGLFunctions_Doomsday &GLInfo::api() // static
+{
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    DENG2_ASSERT(info.d->inited);
+    return *info.d;
+}
+
+QOpenGLExtension_ARB_draw_instanced *GLInfo::ARB_draw_instanced()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->ARB_draw_instanced.get();
+}
+
+QOpenGLExtension_ARB_instanced_arrays *GLInfo::ARB_instanced_arrays()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->ARB_instanced_arrays.get();
+}
+
+QOpenGLExtension_EXT_framebuffer_blit *GLInfo::EXT_framebuffer_blit()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->EXT_framebuffer_blit.get();
+}
+
+QOpenGLExtension_EXT_framebuffer_multisample *GLInfo::EXT_framebuffer_multisample()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->EXT_framebuffer_multisample.get();
+}
+
+QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->EXT_framebuffer_object.get();
 }
 
 GLInfo::Extensions const &GLInfo::extensions()
@@ -203,10 +285,10 @@ GLInfo::Limits const &GLInfo::limits()
     return info.d->lim;
 }
 
-bool GLInfo::isFramebufferMultisamplingSupported()
+/*bool GLInfo::isFramebufferMultisamplingSupported()
 {
     return extensions().EXT_framebuffer_multisample &&
            extensions().EXT_framebuffer_blit;
-}
+}*/
 
 } // namespace de

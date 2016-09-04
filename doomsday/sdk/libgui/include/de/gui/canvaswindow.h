@@ -26,7 +26,7 @@
 #include <de/Rectangle>
 #include <de/NativePath>
 
-#include "../GLFramebuffer"
+#include "../GLTextureFramebuffer"
 
 #ifdef WIN32
 #  undef min
@@ -89,7 +89,7 @@ public:
      * Recreates the contained Canvas with an updated GL format. The context is
      * shared with the old Canvas.
      */
-    void recreateCanvas();
+    //void recreateCanvas();
 
     Canvas& canvas() const;
 
@@ -135,9 +135,9 @@ public:
      *
      * @return OpenGL texture name. Caller is reponsible for deleting the texture.
      */
-    duint grabAsTexture(GrabMode grabMode = GrabNormal) const;
+    //duint grabAsTexture(GrabMode grabMode = GrabNormal) const;
 
-    duint grabAsTexture(de::Rectanglei const &area, GrabMode mode = GrabNormal) const;
+    //duint grabAsTexture(de::Rectanglei const &area, GrabMode mode = GrabNormal) const;
 
     /**
      * Grabs the contents of the window and saves it into a native image file.
@@ -150,7 +150,7 @@ public:
      */
     bool grabToFile(NativePath const &path) const;
 
-    void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer) const;
+    //void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer) const;
 
     /**
      * Activates the window's GL context so that OpenGL API calls can be made.
@@ -171,10 +171,10 @@ public:
      */
     void *nativeHandle() const;
 
-    bool isRecreationInProgress() const;
+    //bool isRecreationInProgress() const;
 
 protected slots:
-    void finishCanvasRecreation();
+    //void finishCanvasRecreation();
 
 public:
     static bool mainExists();

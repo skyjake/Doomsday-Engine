@@ -22,12 +22,12 @@
 #include <de/Observers>
 #include <de/libcore.h>
 #include <de/Vector>
-#include <QGLWidget>
+#include <QOpenGLWidget>
 
 #include "../KeyEventSource"
 #include "../MouseEventSource"
-#include "../GLTarget"
 #include "../GLFramebuffer"
+#include "../GLTextureFramebuffer"
 
 namespace de {
 
@@ -43,7 +43,7 @@ class CanvasWindow;
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC Canvas : public QGLWidget, public KeyEventSource, public MouseEventSource
+class LIBGUI_PUBLIC Canvas : public QOpenGLWidget, public KeyEventSource, public MouseEventSource
 {
     Q_OBJECT
 
@@ -82,7 +82,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
 
 public:
-    explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);
+    explicit Canvas(CanvasWindow *parent);
 
     /**
      * Sets or changes the CanvasWindow that owns this Canvas.
@@ -121,9 +121,9 @@ public:
      *
      * @return  OpenGL texture name. Caller is responsible for deleting the texture.
      */
-    GLuint grabAsTexture(QSize const &outputSize = QSize());
+    //GLuint grabAsTexture(QSize const &outputSize = QSize());
 
-    GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
+    //GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
 
     /**
      * Returns the size of the canvas in device pixels.
@@ -168,14 +168,14 @@ public:
      *
      * @return GL render target.
      */
-    GLTarget &renderTarget() const;
+    GLFramebuffer &renderTarget() const;
 
-    GLFramebuffer &framebuffer();
+    GLTextureFramebuffer &framebuffer();
 
     /**
      * Copies or swaps the back buffer to the front, making it visible.
      */
-    void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
+    //void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
 
 protected:
     void initializeGL();

@@ -22,8 +22,8 @@
 #include "de/GuiApp"
 
 #include <QApplication>
-#include <QGLFormat>
 #include <QMoveEvent>
+#include <QSurfaceFormat>
 #include <QThread>
 #include <QTimer>
 
@@ -42,7 +42,7 @@ static CanvasWindow *mainWindow = 0;
 DENG2_PIMPL(CanvasWindow)
 {
     Canvas* canvas; ///< Drawing surface for the contents of the window.
-    Canvas* recreated;
+    //Canvas* recreated;
     Canvas::FocusChangeAudience canvasFocusAudience; ///< Stored here during recreation.
     bool ready;
     bool mouseWasTrapped;
@@ -52,7 +52,7 @@ DENG2_PIMPL(CanvasWindow)
     Impl(Public *i)
         : Base(i),
           canvas(0),
-          recreated(0),
+          //recreated(0),
           ready(false),
           mouseWasTrapped(false),
           frameCount(0),
@@ -86,6 +86,7 @@ DENG2_PIMPL(CanvasWindow)
         }
     }
 
+#if 0
     void finishCanvasRecreation()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
@@ -110,13 +111,13 @@ DENG2_PIMPL(CanvasWindow)
             i->canvasGLInit(*canvas);
         }
 
-        DENG2_GUI_APP->notifyGLContextChanged();
+        //DENG2_GUI_APP->notifyGLContextChanged();
 
-#ifdef DENG_X11
+/*#ifdef DENG_X11
         canvas->update();
 #else
         canvas->updateGL();
-#endif
+#endif*/
         LIBGUI_ASSERT_GL_OK();
 
         // Reacquire the focus.
@@ -131,10 +132,12 @@ DENG2_PIMPL(CanvasWindow)
 
         LOGDEV_GL_MSG("Canvas replaced with %p") << de::dintptr(canvas);
     }
+#endif
 };
 
 CanvasWindow::CanvasWindow()
-    : QMainWindow(0), d(new Impl(this))
+    : QMainWindow()
+    , d(new Impl(this))
 {
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
@@ -156,6 +159,7 @@ float CanvasWindow::frameRate() const
     return d->fps;
 }
 
+/*
 void CanvasWindow::recreateCanvas()
 {
     DENG2_ASSERT_IN_MAIN_THREAD();
@@ -196,7 +200,7 @@ void CanvasWindow::recreateCanvas()
 bool CanvasWindow::isRecreationInProgress() const
 {
     return d->recreated != 0;
-}
+}*/
 
 Canvas &CanvasWindow::canvas() const
 {
@@ -207,7 +211,7 @@ Canvas &CanvasWindow::canvas() const
 bool CanvasWindow::ownsCanvas(Canvas *c) const
 {
     if (!c) return false;
-    return (d->canvas == c || d->recreated == c);
+    return (d->canvas == c/* || d->recreated == c*/);
 }
 
 #ifdef WIN32
@@ -232,10 +236,11 @@ void CanvasWindow::hideEvent(QHideEvent *ev)
     LOG_GL_VERBOSE("Hide event (hidden:%b)") << isHidden();
 }
 
-void CanvasWindow::canvasGLReady(Canvas &canvas)
+void CanvasWindow::canvasGLReady(Canvas &/*canvas*/)
 {
     d->ready = true;
 
+#if 0
     if (d->recreated == &canvas)
     {
 #ifndef DENG_X11
@@ -246,6 +251,7 @@ void CanvasWindow::canvasGLReady(Canvas &canvas)
         QTimer::singleShot(100, this, SLOT(finishCanvasRecreation()));
 #endif
     }
+#endif
 }
 
 void CanvasWindow::canvasGLDraw(Canvas &)
@@ -253,6 +259,7 @@ void CanvasWindow::canvasGLDraw(Canvas &)
     d->updateFrameRateStatistics();
 }
 
+/*
 duint CanvasWindow::grabAsTexture(GrabMode mode) const
 {
     return d->canvas->grabAsTexture(
@@ -268,18 +275,18 @@ duint CanvasWindow::grabAsTexture(Rectanglei const &area, GrabMode mode) const
     }
     return d->canvas->grabAsTexture(
                 QRect(area.left(), area.top(), area.width(), area.height()), size);
-}
+}*/
 
 bool CanvasWindow::grabToFile(NativePath const &path) const
 {
     return d->canvas->grabImage().save(path.toString());
 }
 
-void CanvasWindow::swapBuffers(gl::SwapBufferMode swapMode) const
+/*void CanvasWindow::swapBuffers(gl::SwapBufferMode swapMode) const
 {
     // Force a swapbuffers right now.
     d->canvas->swapBuffers(swapMode);
-}
+}*/
 
 void CanvasWindow::glActivate()
 {
@@ -296,10 +303,12 @@ void *CanvasWindow::nativeHandle() const
     return reinterpret_cast<void *>(winId());
 }
 
+/*
 void CanvasWindow::finishCanvasRecreation()
 {
     d->finishCanvasRecreation();
 }
+*/
 
 bool CanvasWindow::mainExists()
 {

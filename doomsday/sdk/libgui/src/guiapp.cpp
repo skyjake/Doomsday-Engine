@@ -23,6 +23,8 @@
 #include <de/Log>
 #include <de/NativePath>
 
+#include <QSurfaceFormat>
+
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
 #else
@@ -39,11 +41,19 @@ DENG2_PIMPL(GuiApp)
     {
         loop.audienceForIteration() += self;
     }
-
-    DENG2_PIMPL_AUDIENCE(GLContextChange)
 };
 
-DENG2_AUDIENCE_METHOD(GuiApp, GLContextChange)
+void GuiApp::setDefaultOpenGLFormat() // static
+{
+    QSurfaceFormat fmt;
+    fmt.setRenderableType(QSurfaceFormat::OpenGL);
+    fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
+    fmt.setVersion(2, 1);
+    fmt.setDepthBufferSize(24);
+    fmt.setStencilBufferSize(8);
+    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    QSurfaceFormat::setDefaultFormat(fmt);
+}
 
 GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
@@ -89,12 +99,6 @@ bool GuiApp::notify(QObject *receiver, QEvent *event)
 void GuiApp::notifyDisplayModeChanged()
 {
     emit displayModeChanged();
-}
-
-void GuiApp::notifyGLContextChanged()
-{
-    qDebug() << "notifying GL context change" << audienceForGLContextChange().size();
-    DENG2_FOR_AUDIENCE2(GLContextChange, i) i->appGLContextChanged();
 }
 
 int GuiApp::execLoop()
