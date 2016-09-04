@@ -179,6 +179,7 @@ GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Impl(this))
 void GLShaderBank::clear()
 {
     d->clearShaders();
+    InfoBank::clear();
 }
 
 void GLShaderBank::addFromInfo(File const &file)

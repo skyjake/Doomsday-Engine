@@ -685,7 +685,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
-    qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
+    //qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
 
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, defaultFramebuffer);
