@@ -297,10 +297,6 @@ void Sys_GLConfigureDefaultState(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glFrontFace(GL_CW);
-    //glDisable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
-    //glDisable(GL_DEPTH_TEST);
-    //glDepthFunc(GL_LESS);
     de::GLState::current()
             .setCull(de::gl::None)
             .setDepthTest(false)
@@ -322,14 +318,6 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_GL.glMatrixMode(GL_TEXTURE);
     LIBGUI_GL.glLoadIdentity();
 
-#if DRMESA
-    glDisable(GL_DITHER);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_POINT_SMOOTH);
-    glDisable(GL_POLYGON_SMOOTH);
-    LIBGUI_GL.glShadeModel(GL_FLAT);
-#else
     // Setup for antialiased lines/points.
     glEnable(GL_LINE_SMOOTH);
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -340,13 +328,6 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
 
     LIBGUI_GL.glShadeModel(GL_SMOOTH);
-#endif
-
-    // Alpha blending is a go!
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glEnable(GL_ALPHA_TEST);
-    //glAlphaFunc(GL_GREATER, 0);
 
     // Default state for the white fog is off.
     glDisable(GL_FOG);
@@ -354,11 +335,7 @@ void Sys_GLConfigureDefaultState(void)
     glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
 
-#if DRMESA
-    LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-#else
     LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-#endif
 
     // Prefer good quality in texture compression.
     LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);

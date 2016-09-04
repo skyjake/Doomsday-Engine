@@ -601,9 +601,7 @@ int DGL_Enable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-#ifndef DRMESA
         glEnable(GL_TEXTURE_2D);
-#endif
         break;
 
     case DGL_FOG:
