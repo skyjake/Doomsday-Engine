@@ -115,6 +115,9 @@
 #  if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
 #    define DENG2_QT_5_6_OR_NEWER
 #  endif
+#  if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+#    define DENG2_QT_5_7_OR_NEWER
+#  endif
 #endif
 
 #ifndef _MSC_VER
