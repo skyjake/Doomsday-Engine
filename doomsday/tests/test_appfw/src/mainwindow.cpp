@@ -32,6 +32,7 @@
 using namespace de;
 
 DENG2_PIMPL(MainWindow)
+, DENG2_OBSERVES(Canvas, GLInit)
 , DENG2_OBSERVES(Canvas, GLResize)
 {
     AppRootWidget root;
@@ -60,6 +61,7 @@ DENG2_PIMPL(MainWindow)
         , cursorY(new ConstantRule(0))
     {
         self.setTransform(contentXf);
+        self.canvas().audienceForGLInit()   += this;
         self.canvas().audienceForGLResize() += this;
     }
 
@@ -128,12 +130,8 @@ DENG2_PIMPL(MainWindow)
         }
     }
 
-    void glInit()
+    void canvasGLInit(Canvas &)
     {
-        GLState::current()
-                .setBlend(true)
-                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
-
         contentXf.glInit();
 
         self.raise();
@@ -234,20 +232,6 @@ void MainWindow::drawWindowContent()
 
     d->updateCompositor();
     d->root.draw();
-}
-
-void MainWindow::canvasGLReady(Canvas &canvas)
-{
-    BaseWindow::canvasGLReady(canvas);
-
-    // Configure a viewport immediately.
-    GLState::current()
-            .setViewport(Rectangleui(0, 0, canvas.width(), canvas.height()))
-            .setDepthTest(true);
-
-    LOGDEV_MSG("MainWindow GL ready");
-
-    d->glInit();
 }
 
 void MainWindow::preDraw()

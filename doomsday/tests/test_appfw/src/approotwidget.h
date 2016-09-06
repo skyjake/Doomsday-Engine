@@ -38,8 +38,6 @@ public:
     void dispatchLatestMousePosition();
     void handleEventAsFallback(de::Event const &event);
 
-    void update();
-
 private:
     DENG2_PRIVATE(d)
 };

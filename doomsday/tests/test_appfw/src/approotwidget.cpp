@@ -51,11 +51,3 @@ void AppRootWidget::handleEventAsFallback(Event const &/*event*/)
 {
     // Handle event at global level, if applicable.
 }
-
-void AppRootWidget::update()
-{
-    GuiRootWidget::update();
-
-    // Tell the window to redraw itself as soon as possible.
-    window().draw();
-}

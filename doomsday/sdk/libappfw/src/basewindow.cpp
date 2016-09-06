@@ -1,6 +1,6 @@
 /** @file basewindow.cpp  Abstract base class for application windows.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -25,23 +25,76 @@
 #include <de/GLBuffer>
 #include <de/GLState>
 
+#include <QElapsedTimer>
+#include <QOpenGLTimerQuery>
+#include <QVector>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
+, DENG2_OBSERVES(Canvas,           GLInit)
+, DENG2_OBSERVES(Canvas,           GLSwapped)
 , DENG2_OBSERVES(KeyEventSource,   KeyEvent)
 , DENG2_OBSERVES(MouseEventSource, MouseEvent)
 {
     WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
     WindowTransform *xf;
+    QOpenGLTimerQuery timerQuery;
+    bool timerQueryPending = false;
+    QElapsedTimer gpuTimeRecordingStartedAt;
+    QVector<TimeDelta> recordedGpuTimes;
 
     Impl(Public *i)
         : Base(i)
         , defaultXf(self)
         , xf(&defaultXf)
     {
+        self.canvas().audienceForGLInit()     += this;
+        self.canvas().audienceForGLSwapped()  += this;
+
         // Listen to input.
         self.canvas().audienceForKeyEvent()   += this;
         self.canvas().audienceForMouseEvent() += this;
+    }
+
+    void canvasGLInit(Canvas &)
+    {
+        // The framework widgets expect basic alpha blending.
+        GLState::current()
+                .setBlend(true)
+                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+    }
+
+    void canvasGLSwapped(Canvas &)
+    {
+        // Measure how long it takes to render a frame on average.
+        if (GLInfo::extensions().EXT_timer_query &&
+            timerQueryPending &&
+            timerQuery.isResultAvailable())
+        {
+            timerQueryPending = false;
+            recordedGpuTimes.append(double(timerQuery.waitForResult()) / 1.0e9);
+
+            if (!gpuTimeRecordingStartedAt.isValid())
+            {
+                gpuTimeRecordingStartedAt.start();
+            }
+
+            // There are minor time variations rendering the same frame, so average over
+            // a second to find out a reasonable value.
+            if (gpuTimeRecordingStartedAt.elapsed() > 1000)
+            {
+                TimeDelta average = 0;
+                for (auto dt : recordedGpuTimes) average += dt;
+                average = average / recordedGpuTimes.size();
+                recordedGpuTimes.clear();
+
+                qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
+                qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
+
+                gpuTimeRecordingStartedAt.restart();
+            }
+        }
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -75,6 +128,12 @@ DENG2_PIMPL(BaseWindow)
             self.handleFallbackEvent(ev);
         }
     }
+
+    bool timerQueryReady() const
+    {
+        if (!GLInfo::extensions().EXT_timer_query) return false;
+        return timerQuery.isCreated() && !timerQueryPending;
+    }
 };
 
 BaseWindow::BaseWindow(String const &id)
@@ -98,12 +157,6 @@ WindowTransform &BaseWindow::transform()
     return *d->xf;
 }
 
-bool BaseWindow::shouldRepaintManually() const
-{
-    // By default always prefer updates that are "nice" to the rest of the system.
-    return false;
-}
-
 bool BaseWindow::prepareForDraw()
 {
     GLBuffer::resetDrawCount();
@@ -113,7 +166,7 @@ bool BaseWindow::prepareForDraw()
     return true; // Go ahead.
 }
 
-void BaseWindow::draw()
+void BaseWindow::requestDraw()
 {
     if (!prepareForDraw())
     {
@@ -137,40 +190,36 @@ void BaseWindow::draw()
         vr.oculusRift().deinit();
     }
 
-    /*if (shouldRepaintManually())
-    {
-        DENG2_ASSERT_IN_MAIN_THREAD();
-
-        // Perform the drawing manually right away.
-        canvas().makeCurrent();
-        canvas().updateGL();
-    }
-    else*/
-    {
-        // Request update at the earliest convenience.
-        canvas().update();
-    }
+    canvas().update();
 }
 
-void BaseWindow::canvasGLDraw(Canvas &cv)
+void BaseWindow::draw()
 {
     preDraw();
     d->xf->drawTransformed();
     postDraw();
 
-    PersistentCanvasWindow::canvasGLDraw(cv);
+    PersistentCanvasWindow::draw();
 }
-
-/*void BaseWindow::swapBuffers()
-{
-    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
-
-    PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
-                                            gl::SwapStereoBuffers : gl::SwapMonoBuffer);
-}*/
 
 void BaseWindow::preDraw()
 {
+    if (GLInfo::extensions().EXT_timer_query)
+    {
+        if (!d->timerQuery.isCreated())
+        {
+            if (!d->timerQuery.create())
+            {
+                LOG_GL_ERROR("Failed to create timer query object");
+            }
+        }
+
+        if (d->timerQueryReady())
+        {
+            d->timerQuery.begin();
+        }
+    }
+
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
@@ -186,10 +235,14 @@ void BaseWindow::postDraw()
         vr.oculusRift().endFrame();
     }
 
+    if (d->timerQueryReady())
+    {
+        d->timerQuery.end();
+        d->timerQueryPending = true;
+    }
+
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
-
-    qDebug() << "Draw count:" << GLBuffer::drawCount();
 }
 
 } // namespace de

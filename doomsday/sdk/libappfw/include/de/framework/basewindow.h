@@ -1,6 +1,6 @@
 /** @file basewindow.h  Abstract base class for application windows.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -70,22 +70,18 @@ public:
     virtual Vector2f windowContentSize() const = 0;
 
     /**
+     * Request drawing the contents of the window as soon as possible.
+     */
+    virtual void requestDraw();
+
+    void draw() override;
+
+    /**
      * Causes the contents of the window to be drawn. The contents are drawn immediately
      * and the method does not return until everything has been drawn. The method should
      * draw an entire frame using the non-transformed logical size of the view.
      */
     virtual void drawWindowContent() = 0;
-
-    virtual bool shouldRepaintManually() const;
-
-    /**
-     * Request drawing the contents of the window as soon as possible.
-     */
-    virtual void draw();
-
-    void canvasGLDraw(Canvas &);
-
-    //void swapBuffers();
 
 protected:
     /**

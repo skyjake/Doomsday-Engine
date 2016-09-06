@@ -140,6 +140,8 @@ DENG2_PIMPL(GuiRootWidget)
 
     ~Impl()
     {
+        if (window) window->glActivate();
+
         qDeleteAll(focusStack);
 
         GuiWidget::recycleTrashedWidgets();
@@ -401,7 +403,7 @@ void GuiRootWidget::update()
         d->focusIndicator->update();
 
         // Request a window draw so that the updated content becomes visible.
-        window().as<BaseWindow>().draw();
+        window().as<BaseWindow>().requestDraw();
     }
 }
 
