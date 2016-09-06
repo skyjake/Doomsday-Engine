@@ -201,6 +201,8 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     delete d->eventLoop;
     d->eventLoop = nullptr;
 
+    ClientWindow::main().glActivate(); // after processing other events
+
     // Teardown.
     if (d->busyWillAnimateTransition)
     {

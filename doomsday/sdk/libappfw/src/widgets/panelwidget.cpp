@@ -362,6 +362,8 @@ void PanelWidget::dismiss()
 {
     if (isHidden()) return;
 
+    root().window().glActivate();
+
     hide();
     d->opened = false;
     d->dismissTimer.stop();
