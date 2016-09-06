@@ -1,7 +1,7 @@
 /** @file canvaswindow.cpp Canvas window implementation.
  * @ingroup base
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -40,23 +40,20 @@ namespace de {
 static CanvasWindow *mainWindow = 0;
 
 DENG2_PIMPL(CanvasWindow)
+, DENG2_OBSERVES(Canvas, GLInit)
 {
     Canvas *canvas; ///< Drawing surface for the contents of the window.
-    //Canvas* recreated;
     Canvas::FocusChangeAudience canvasFocusAudience; ///< Stored here during recreation.
-    bool ready;
     bool mouseWasTrapped;
     unsigned int frameCount;
     float fps;
 
     Impl(Public *i)
-        : Base(i),
-          canvas(0),
-          //recreated(0),
-          ready(false),
-          mouseWasTrapped(false),
-          frameCount(0),
-          fps(0)
+        : Base(i)
+        , canvas(0)
+        , mouseWasTrapped(false)
+        , frameCount(0)
+        , fps(0)
     {}
 
     ~Impl()
@@ -65,6 +62,11 @@ DENG2_PIMPL(CanvasWindow)
         {
             mainWindow = 0;
         }
+    }
+
+    void canvasGLInit(Canvas &)
+    {
+        self.setState(Ready);
     }
 
     void updateFrameRateStatistics(void)
@@ -85,54 +87,6 @@ DENG2_PIMPL(CanvasWindow)
             frameCount = 0;
         }
     }
-
-#if 0
-    void finishCanvasRecreation()
-    {
-        DENG2_ASSERT_IN_MAIN_THREAD();
-
-        LOGDEV_GL_MSG("About to replace Canvas %p with %p")
-                << de::dintptr(canvas) << de::dintptr(recreated);
-
-        // Copy the audiences of the old canvas.
-        recreated->copyAudiencesFrom(*canvas);
-
-        // Switch the central widget. This will delete the old canvas automatically.
-        self.setCentralWidget(recreated);
-        canvas = recreated;
-        recreated = 0;
-
-        // Set up the basic GL state for the new canvas.
-        canvas->makeCurrent();
-        LIBGUI_ASSERT_GL_OK();
-
-        DENG2_FOR_EACH_OBSERVER(Canvas::GLInitAudience, i, canvas->audienceForGLInit())
-        {
-            i->canvasGLInit(*canvas);
-        }
-
-        //DENG2_GUI_APP->notifyGLContextChanged();
-
-/*#ifdef DENG_X11
-        canvas->update();
-#else
-        canvas->updateGL();
-#endif*/
-        LIBGUI_ASSERT_GL_OK();
-
-        // Reacquire the focus.
-        canvas->setFocus();
-        if (mouseWasTrapped)
-        {
-            canvas->trapMouse();
-        }
-
-        // Restore the old focus change audience.
-        canvas->audienceForFocusChange() = canvasFocusAudience;
-
-        LOGDEV_GL_MSG("Canvas replaced with %p") << de::dintptr(canvas);
-    }
-#endif
 };
 
 CanvasWindow::CanvasWindow()
@@ -142,65 +96,16 @@ CanvasWindow::CanvasWindow()
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas(this)); // takes ownership
 
-    d->canvas->audienceForGLReady() += this;
-    d->canvas->audienceForGLDraw() += this;
+    d->canvas->audienceForGLInit() += d;
 
     // All input goes to the canvas.
     d->canvas->setFocus();
-}
-
-bool CanvasWindow::isReady() const
-{
-    return d->ready;
 }
 
 float CanvasWindow::frameRate() const
 {
     return d->fps;
 }
-
-/*
-void CanvasWindow::recreateCanvas()
-{
-    DENG2_ASSERT_IN_MAIN_THREAD();
-
-    GLState::considerNativeStateUndefined();
-
-    d->ready = false;
-
-    // Steal the focus change audience temporarily so no spurious focus
-    // notifications are sent.
-    d->canvasFocusAudience = canvas().audienceForFocusChange();
-    canvas().audienceForFocusChange().clear();
-
-    // We'll re-trap the mouse after the new canvas is ready.
-    d->mouseWasTrapped = canvas().isMouseTrapped();
-    canvas().trapMouse(false);
-    canvas().setParent(0);
-    canvas().hide();
-
-    // Create the replacement Canvas. Once it's created and visible, we'll
-    // finish the switch-over.
-    d->recreated = new Canvas(this, d->canvas);
-    d->recreated->audienceForGLReady() += this;
-
-    //d->recreated->setGeometry(d->canvas->geometry());
-    d->recreated->show();
-    d->recreated->update();
-
-    LIBGUI_ASSERT_GL_OK();
-
-    LOGDEV_GL_MSG("Canvas recreated, old one still exists");
-#ifdef DENG2_DEBUG
-    qDebug() << "old Canvas" << &canvas();
-    qDebug() << "new Canvas" << d->recreated;
-#endif
-}
-
-bool CanvasWindow::isRecreationInProgress() const
-{
-    return d->recreated != 0;
-}*/
 
 Canvas &CanvasWindow::canvas() const
 {
@@ -236,57 +141,15 @@ void CanvasWindow::hideEvent(QHideEvent *ev)
     LOG_GL_VERBOSE("Hide event (hidden:%b)") << isHidden();
 }
 
-void CanvasWindow::canvasGLReady(Canvas &/*canvas*/)
-{
-    d->ready = true;
-
-#if 0
-    if (d->recreated == &canvas)
-    {
-#ifndef DENG_X11
-        d->finishCanvasRecreation();
-#else
-        // Need to defer the finalization.
-        qDebug() << "defer recreation";
-        QTimer::singleShot(100, this, SLOT(finishCanvasRecreation()));
-#endif
-    }
-#endif
-}
-
-void CanvasWindow::canvasGLDraw(Canvas &)
+void CanvasWindow::draw()
 {
     d->updateFrameRateStatistics();
 }
-
-/*
-duint CanvasWindow::grabAsTexture(GrabMode mode) const
-{
-    return d->canvas->grabAsTexture(
-                mode == GrabHalfSized? QSize(width()/2, height()/2) : QSize());
-}
-
-duint CanvasWindow::grabAsTexture(Rectanglei const &area, GrabMode mode) const
-{
-    QSize size;
-    if (mode == GrabHalfSized)
-    {
-        size = QSize(area.width()/2, area.height()/2);
-    }
-    return d->canvas->grabAsTexture(
-                QRect(area.left(), area.top(), area.width(), area.height()), size);
-}*/
 
 bool CanvasWindow::grabToFile(NativePath const &path) const
 {
     return d->canvas->grabImage().save(path.toString());
 }
-
-/*void CanvasWindow::swapBuffers(gl::SwapBufferMode swapMode) const
-{
-    // Force a swapbuffers right now.
-    d->canvas->swapBuffers(swapMode);
-}*/
 
 void CanvasWindow::glActivate()
 {
@@ -302,13 +165,6 @@ void *CanvasWindow::nativeHandle() const
 {
     return reinterpret_cast<void *>(winId());
 }
-
-/*
-void CanvasWindow::finishCanvasRecreation()
-{
-    d->finishCanvasRecreation();
-}
-*/
 
 bool CanvasWindow::mainExists()
 {

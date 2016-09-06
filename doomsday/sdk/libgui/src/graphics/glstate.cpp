@@ -712,23 +712,23 @@ void GLState::apply() const
         int val;
         switch (elem.id)
         {
-        case Blend:
-            glGetIntegerv(GL_BLEND, &val);
+        case internal::Blend:
+            LIBGUI_GL.glGetIntegerv(GL_BLEND, &val);
             DENG2_ASSERT(!val == !d->props.asBool(elem.id));
             break;
 
-        case BlendFuncSrc:
-            glGetIntegerv(GL_BLEND_SRC_RGB, &val);
+        case internal::BlendFuncSrc:
+            LIBGUI_GL.glGetIntegerv(GL_BLEND_SRC_RGB, &val);
             DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
-        case BlendFuncDest:
-            glGetIntegerv(GL_BLEND_DST_RGB, &val);
+        case internal::BlendFuncDest:
+            LIBGUI_GL.glGetIntegerv(GL_BLEND_DST_RGB, &val);
             DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
-        case BlendOp:
-            glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
+        case internal::BlendOp:
+            LIBGUI_GL.glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
             val = (val == GL_FUNC_ADD? gl::Add :
                    val == GL_FUNC_SUBTRACT? gl::Subtract :
                    val == GL_FUNC_REVERSE_SUBTRACT? gl::ReverseSubtract : 0);

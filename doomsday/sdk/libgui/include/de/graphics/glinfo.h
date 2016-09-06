@@ -62,6 +62,7 @@ public:
         duint32 EXT_packed_depth_stencil : 1;
         duint32 EXT_texture_compression_s3tc : 1;
         duint32 EXT_texture_filter_anisotropic : 1;
+        duint32 EXT_timer_query : 1;
 
         // Vendor-specific extensions:
         duint32 ATI_texture_env_combine3 : 1;

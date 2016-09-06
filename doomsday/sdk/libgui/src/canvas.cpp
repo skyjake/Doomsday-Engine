@@ -1,6 +1,6 @@
 /** @file canvas.cpp  OpenGL drawing surface (QWidget).
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -43,12 +43,6 @@
 
 namespace de {
 
-/*
-#ifdef DENG_X11
-#  define LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-#endif
-*/
-
 DENG2_PIMPL(Canvas)
 {
     GLTextureFramebuffer backing;
@@ -58,30 +52,20 @@ DENG2_PIMPL(Canvas)
     bool readyNotified = false;
     Size currentSize;
     Size pendingSize;
-#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-    QTimer resizeTimer;
-#endif
     bool mouseGrabbed = false;
-#ifdef WIN32
-    bool altIsDown = false;
-#endif
     QPoint prevMousePos;
     QTime prevWheelAt;
     QPoint wheelAngleAccum;
     int wheelDir[2];
+#ifdef WIN32
+    bool altIsDown = false;
+#endif
 
     Impl(Public *i, CanvasWindow *parentWindow)
         : Base(i)
         , parent(parentWindow)
     {
         wheelDir[0] = wheelDir[1] = 0;
-
-        //mouseDisabled = App::commandLine().has("-nomouse");
-
-#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-        resizeTimer.setSingleShot(true);
-        QObject::connect(&resizeTimer, SIGNAL(timeout()), thisPublic, SLOT(updateSize()));
-#endif
     }
 
     ~Impl()
@@ -93,7 +77,7 @@ DENG2_PIMPL(Canvas)
 
     void grabMouse()
     {
-        if (!self.isVisible()/* || mouseDisabled*/) return;
+        if (!self.isVisible()) return;
 
         if (!mouseGrabbed)
         {
@@ -110,7 +94,7 @@ DENG2_PIMPL(Canvas)
 
     void ungrabMouse()
     {
-        if (!self.isVisible()/* || mouseDisabled*/) return;
+        if (!self.isVisible()) return;
 
         if (mouseGrabbed)
         {
@@ -206,18 +190,6 @@ DENG2_PIMPL(Canvas)
         GLInfo::glDeinit();
     }
 
-    /*void swapBuffers(gl::SwapBufferMode mode)
-    {
-        if (mode == gl::SwapStereoBuffers && !self.format().stereo())
-        {
-            // The canvas is not using a stereo format, must do a normal swap.
-            mode = gl::SwapMonoBuffer;
-        }
-
-        /// @todo Double buffering is not really needed in manual FB mode.
-        //framebuf.swapBuffers(self, mode);
-    }*/
-
     template <typename QtEventType>
     Vector2i translatePosition(QtEventType const *ev) const
     {
@@ -228,17 +200,15 @@ DENG2_PIMPL(Canvas)
 #endif
     }
 
-    DENG2_PIMPL_AUDIENCE(GLReady)
     DENG2_PIMPL_AUDIENCE(GLInit)
     DENG2_PIMPL_AUDIENCE(GLResize)
-    DENG2_PIMPL_AUDIENCE(GLDraw)
+    DENG2_PIMPL_AUDIENCE(GLSwapped)
     DENG2_PIMPL_AUDIENCE(FocusChange)
 };
 
-DENG2_AUDIENCE_METHOD(Canvas, GLReady)
 DENG2_AUDIENCE_METHOD(Canvas, GLInit)
 DENG2_AUDIENCE_METHOD(Canvas, GLResize)
-DENG2_AUDIENCE_METHOD(Canvas, GLDraw)
+DENG2_AUDIENCE_METHOD(Canvas, GLSwapped)
 DENG2_AUDIENCE_METHOD(Canvas, FocusChange)
 
 Canvas::Canvas(CanvasWindow *parent)
@@ -246,28 +216,16 @@ Canvas::Canvas(CanvasWindow *parent)
     , d(new Impl(this, parent))
 {
     LOG_AS("Canvas");
-    //LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
-    //LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLTextureFramebuffer::defaultMultisampling() > 1);
 
-    // We will be doing buffer swaps manually (for timing purposes).
-    //setAutoBufferSwap(false);
+    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 }
 
-void Canvas::setParent(CanvasWindow *parent)
-{
-    d->parent = parent;
-}
-
 QImage Canvas::grabImage(QSize const &outputSize)
 {
-#ifdef DENG2_QT_5_0_OR_NEWER
     return grabImage(QRect(QPoint(0, 0), rect().size() * qApp->devicePixelRatio()), outputSize);
-#else
-    return grabImage(rect(), outputSize);
-#endif
 }
 
 QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
@@ -287,17 +245,6 @@ QImage Canvas::grabImage(QRect const &area, QSize const &outputSize)
     }
     return grabbed;
 }
-
-/*GLuint Canvas::grabAsTexture(QSize const &outputSize)
-{
-    return grabAsTexture(rect(), outputSize);
-}
-
-GLuint Canvas::grabAsTexture(QRect const &area, QSize const &outputSize)
-{
-    return bindTexture(grabImage(area, outputSize), GL_TEXTURE_2D, GL_RGB,
-                       QGLContext::LinearFilteringBindOption);
-}*/
 
 Canvas::Size Canvas::size() const
 {
@@ -326,29 +273,10 @@ bool Canvas::isGLReady() const
     return d->readyNotified;
 }
 
-void Canvas::copyAudiencesFrom(Canvas const &other)
-{
-    d->audienceForGLReady         = other.d->audienceForGLReady;
-    d->audienceForGLInit          = other.d->audienceForGLInit;
-    d->audienceForGLResize        = other.d->audienceForGLResize;
-    d->audienceForGLDraw          = other.d->audienceForGLDraw;
-    d->audienceForFocusChange     = other.d->audienceForFocusChange;
-
-    audienceForKeyEvent()         = other.audienceForKeyEvent();
-
-    audienceForMouseStateChange() = other.audienceForMouseStateChange();
-    audienceForMouseEvent()       = other.audienceForMouseEvent();
-}
-
 GLTextureFramebuffer &Canvas::framebuffer() const
 {
     return d->backing;
 }
-
-/*void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
-{
-    d->swapBuffers(swapMode);
-}*/
 
 void Canvas::initializeGL()
 {
@@ -365,56 +293,24 @@ void Canvas::resizeGL(int w, int h)
     // Only react if this is actually a resize.
     if (d->currentSize != d->pendingSize)
     {
-#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-        LOGDEV_GL_MSG("Canvas %p triggered size to %ix%i from %s")
-                << this << w << h << d->currentSize.asText();
-        d->resizeTimer.start(100);
-#else
-        updateSize();
-#endif
+        d->currentSize = d->pendingSize;
+
+        if (d->readyNotified)
+        {
+            makeCurrent();
+            d->reconfigureFramebuffer();
+        }
+
+        DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);
     }
 }
 
-void Canvas::updateSize()
+void Canvas::frameWasSwapped()
 {
-#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-    LOGDEV_GL_MSG("Canvas %p resizing now") << this;
-#endif
-
-    d->currentSize = d->pendingSize;
-
-    if (d->readyNotified)
-    {
-        makeCurrent();
-        d->reconfigureFramebuffer();
-    }
-
-    DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);
+    makeCurrent();
+    DENG2_FOR_AUDIENCE2(GLSwapped, i) i->canvasGLSwapped(*this);
+    doneCurrent();
 }
-
-#if 0
-void Canvas::showEvent(QShowEvent* ev)
-{
-    LOG_AS("Canvas");
-
-    QOpenGLWidget::showEvent(ev);
-
-    /*// The first time the window is shown, run the initialization callback. On
-    // some platforms, OpenGL is not fully ready to be used before the window
-    // actually appears on screen.
-    if (isVisible() && !d->readyNotified)
-    {
-        LOGDEV_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
-
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        makeCurrent();
-        getAllOpenGLEntryPoints();
-#endif
-        GLInfo::glInit();
-        QTimer::singleShot(1, this, SLOT(notifyReady()));
-    }*/
-}
-#endif
 
 void Canvas::notifyReady()
 {
@@ -426,9 +322,6 @@ void Canvas::notifyReady()
 
     d->reconfigureFramebuffer();
 
-    // Everybody can perform GL init now.
-    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
-
     // Print some information.
     QSurfaceFormat const fmt = format();
 
@@ -438,8 +331,8 @@ void Canvas::notifyReady()
                     (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
                                                                           : " (Core)") : "");
 
-    LOGDEV_GL_XVERBOSE("Notifying GL ready");
-    DENG2_FOR_AUDIENCE2(GLReady, i) i->canvasGLReady(*this);
+    // Everybody can perform GL init now.
+    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
 
     doneCurrent();
 
@@ -448,10 +341,12 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
-    if (!d->parent/* || d->parent->isRecreationInProgress()*/) return;
+    if (!d->parent) return;
 
     GLFramebuffer::setDefaultFramebuffer(defaultFramebufferObject());
 
+    // Do not proceed with painting until after the application has completed
+    // GL initialization.
     if (!d->readyNotified)
     {
         if (!d->readyPending)
@@ -459,6 +354,7 @@ void Canvas::paintGL()
             d->readyPending = true;
             QTimer::singleShot(1, this, SLOT(notifyReady()));
         }
+        update(); // Try again next frame.
         return;
     }
 
@@ -470,7 +366,8 @@ void Canvas::paintGL()
     GLState::current().apply();
     GLState::current().target().glBind();
 
-    DENG2_FOR_AUDIENCE2(GLDraw, i) i->canvasGLDraw(*this);
+    // Window is responsible for drawing.
+    d->parent->draw();
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -509,11 +406,7 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
 static MouseEvent::Button translateButton(Qt::MouseButton btn)
 {
     if (btn == Qt::LeftButton)   return MouseEvent::Left;
-#ifdef DENG2_QT_4_7_OR_NEWER
     if (btn == Qt::MiddleButton) return MouseEvent::Middle;
-#else
-    if (btn == Qt::MidButton)    return MouseEvent::Middle;
-#endif
     if (btn == Qt::RightButton)  return MouseEvent::Right;
     if (btn == Qt::XButton1)     return MouseEvent::XButton1;
     if (btn == Qt::XButton2)     return MouseEvent::XButton2;
@@ -573,7 +466,6 @@ void Canvas::wheelEvent(QWheelEvent *ev)
 {
     ev->accept();
 
-#ifdef DENG2_QT_5_0_OR_NEWER
     float const devicePixels = d->parent->devicePixelRatio();
 
     QPoint numPixels = ev->pixelDelta();
@@ -615,35 +507,6 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         }
         d->wheelAngleAccum -= steps * 15;
     }
-
-#else
-    static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
-
-    bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
-    int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
-    int dir = (ev->delta() < 0? -1 : 1);
-
-    DENG2_FOR_AUDIENCE2(MouseEvent, i)
-    {
-        i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
-                                 axis == 0? Vector2i(ev->delta(), 0) :
-                                            Vector2i(0, ev->delta()),
-                                 d->translatePosition(ev)));
-    }
-
-    if (!continuousMovement || d->wheelDir[axis] != dir)
-    {
-        d->wheelDir[axis] = dir;
-
-        DENG2_FOR_AUDIENCE2(MouseEvent, i)
-        {
-            i->mouseEvent(MouseEvent(MouseEvent::Step,
-                                     axis == 0? Vector2i(dir, 0) :
-                                     axis == 1? Vector2i(0, dir) : Vector2i(),
-                                     !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
-        }
-    }
-#endif
 
     d->prevWheelAt.start();
 }

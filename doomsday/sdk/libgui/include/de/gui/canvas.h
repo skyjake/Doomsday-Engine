@@ -1,6 +1,6 @@
 /** @file canvas.h  OpenGL drawing surface (QWidget).
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -35,8 +35,9 @@ class CanvasWindow;
 
 /**
  * Drawing canvas with an OpenGL context and window surface. Each CanvasWindow
- * creates one Canvas instance on which to draw. Buffer swapping must be done
- * manually when appropriate.
+ * creates one Canvas instance on which to draw. Buffer swapping occurs automatically
+ * after the canvas has been painted. The GLSwapped audience is notified whenever a
+ * swap is completed.
  *
  * As Canvas is derived from KeyEventSource and MouseEventSource so that it
  * can submit user input to interested parties.
@@ -51,17 +52,9 @@ public:
     typedef Vector2ui Size;
 
     /**
-     * Notified when the canvas is ready for GL operations. The OpenGL context
-     * and drawing surface are not ready to be used before that. The
-     * notification occurs soon after the widget first becomes visible on
-     * screen. Note that the notification comes straight from the event loop
-     * (timer signal) instead of during a paint event.
-     */
-    DENG2_DEFINE_AUDIENCE2(GLReady, void canvasGLReady(Canvas &))
-
-    /**
-     * Notified when the canvas's GL state needs to be initialized. This is
-     * called immediately before drawing the contents of the canvas for the
+     * Notified when the canvas's GL state needs to be initialized. The OpenGL
+     * context and drawing surface are not ready before this occurs. This gets
+     * called immediately before drawing the contents of the Canvas for the
      * first time (during a paint event).
      */
     DENG2_DEFINE_AUDIENCE2(GLInit, void canvasGLInit(Canvas &))
@@ -72,9 +65,10 @@ public:
     DENG2_DEFINE_AUDIENCE2(GLResize, void canvasGLResized(Canvas &))
 
     /**
-     * Notified when drawing of the canvas contents has been requested.
+     * Notified when the contents of the canvas have been swapped to the window front
+     * buffer and are thus visible to the user.
      */
-    DENG2_DEFINE_AUDIENCE2(GLDraw, void canvasGLDraw(Canvas &))
+    DENG2_DEFINE_AUDIENCE2(GLSwapped, void canvasGLSwapped(Canvas &))
 
     /**
      * Notified when the canvas gains or loses input focus.
@@ -83,13 +77,6 @@ public:
 
 public:
     explicit Canvas(CanvasWindow *parent);
-
-    /**
-     * Sets or changes the CanvasWindow that owns this Canvas.
-     *
-     * @param parent  Canvas window instance.
-     */
-    void setParent(CanvasWindow *parent);
 
     /**
      * Grabs the contents of the canvas framebuffer.
@@ -111,19 +98,6 @@ public:
      * @return  Framebuffer contents (no alpha channel).
      */
     QImage grabImage(QRect const &area, QSize const &outputSize = QSize());
-
-    /**
-     * Grabs the contents of the canvas framebuffer and creates an OpenGL
-     * texture out of it.
-     *
-     * @param outputSize  If specified, the contents will be scaled to this size before
-     *                    the image is returned.
-     *
-     * @return  OpenGL texture name. Caller is responsible for deleting the texture.
-     */
-    //GLuint grabAsTexture(QSize const &outputSize = QSize());
-
-    //GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
 
     /**
      * Returns the size of the canvas in device pixels.
@@ -156,24 +130,11 @@ public:
     bool isGLReady() const;
 
     /**
-     * Replaces the current audiences of this canvas with another canvas's
-     * audiences.
-     *
-     * @param other  Canvas instance.
-     */
-    void copyAudiencesFrom(Canvas const &other);
-
-    /**
      * Returns a render target that renders to this canvas.
      *
      * @return GL render target.
      */
     GLTextureFramebuffer &framebuffer() const;
-
-    /**
-     * Copies or swaps the back buffer to the front, making it visible.
-     */
-    //void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
 
 protected:
     void initializeGL();
@@ -190,11 +151,10 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *ev);
     void mouseMoveEvent(QMouseEvent *ev);
     void wheelEvent(QWheelEvent *ev);
-    //void showEvent(QShowEvent *ev);
 
 protected slots:
     void notifyReady();
-    void updateSize();
+    void frameWasSwapped();
 
 private:
     DENG2_PRIVATE(d)

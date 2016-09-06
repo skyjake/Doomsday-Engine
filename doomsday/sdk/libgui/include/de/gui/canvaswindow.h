@@ -1,6 +1,6 @@
 /** @file canvaswindow.h  Top-level window with a Canvas.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -47,9 +47,7 @@ namespace de {
  *
  * @see Canvas
  */
-class LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
-                                   DENG2_OBSERVES(Canvas, GLReady),
-                                   DENG2_OBSERVES(Canvas, GLDraw)
+class LIBGUI_PUBLIC CanvasWindow : public QMainWindow, public Asset
 {
     Q_OBJECT
 
@@ -60,11 +58,6 @@ public:
 
 public:
     CanvasWindow();
-
-    /**
-     * Determines if the canvas is ready for GL drawing.
-     */
-    bool isReady() const;
 
     float frameRate() const;
 
@@ -85,12 +78,6 @@ public:
      */
     inline int height() const { return canvas().height(); }
 
-    /**
-     * Recreates the contained Canvas with an updated GL format. The context is
-     * shared with the old Canvas.
-     */
-    //void recreateCanvas();
-
     Canvas& canvas() const;
 
     /**
@@ -108,36 +95,11 @@ public:
 #endif
     void hideEvent(QHideEvent *);
 
-    /**
-     * Called when the Canvas is ready for OpenGL drawing (and visible).
-     * Overriding methods must call this.
-     *
-     * @param canvas  Canvas.
-     */
-    virtual void canvasGLReady(Canvas &canvas);
-
-    /**
-     * Called from Canvas when a GL draw is requested. Overriding methods
-     * must call this as the last operation (updates frame rate statistics).
-     */
-    virtual void canvasGLDraw(Canvas &);
-
     enum GrabMode
     {
         GrabNormal,
         GrabHalfSized
     };
-
-    /**
-     * Grab the contents of the window into an OpenGL texture.
-     *
-     * @param grabMode  How to do the grabbing.
-     *
-     * @return OpenGL texture name. Caller is reponsible for deleting the texture.
-     */
-    //duint grabAsTexture(GrabMode grabMode = GrabNormal) const;
-
-    //duint grabAsTexture(de::Rectanglei const &area, GrabMode mode = GrabNormal) const;
 
     /**
      * Grabs the contents of the window and saves it into a native image file.
@@ -149,8 +111,6 @@ public:
      * @return @c true if successful, otherwise @c false.
      */
     bool grabToFile(NativePath const &path) const;
-
-    //void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer) const;
 
     /**
      * Activates the window's GL context so that OpenGL API calls can be made.
@@ -171,10 +131,7 @@ public:
      */
     void *nativeHandle() const;
 
-    //bool isRecreationInProgress() const;
-
-protected slots:
-    //void finishCanvasRecreation();
+    virtual void draw();
 
 public:
     static bool mainExists();

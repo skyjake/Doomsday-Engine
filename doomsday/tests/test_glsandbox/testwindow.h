@@ -29,7 +29,7 @@ class TestWindow : public de::CanvasWindow
 public:
     TestWindow();
 
-    void canvasGLDraw(de::Canvas &canvas);
+    void draw() override;
 
 public slots:
     void testRenderToTexture();

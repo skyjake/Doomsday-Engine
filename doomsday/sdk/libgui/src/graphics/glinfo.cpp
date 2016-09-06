@@ -147,6 +147,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
+        ext.EXT_timer_query                = query("GL_EXT_timer_query");
 
         ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
         ext.NV_framebuffer_multisample_coverage

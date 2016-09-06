@@ -118,6 +118,7 @@ DENG2_OBSERVES(Bank, Load)
 
     ~Impl()
     {
+        self.glActivate();
         model.glDeinit();
     }
 
@@ -448,6 +449,8 @@ DENG2_OBSERVES(Bank, Load)
 
     void timeChanged(Clock const &clock)
     {
+        self.glActivate();
+
         if (!startedAt.isValid())
         {
             startedAt = clock.time();
@@ -478,6 +481,7 @@ DENG2_OBSERVES(Bank, Load)
             break;
         }
 
+        self.glDone();
         self.canvas().update();
     }
 
@@ -542,13 +546,13 @@ TestWindow::TestWindow() : d(new Impl(this))
     //d->modelChoice->hide();
 }
 
-void TestWindow::canvasGLDraw(Canvas &canvas)
+void TestWindow::draw()
 {
     LIBGUI_ASSERT_GL_OK();
 
-    d->draw(canvas);
+    d->draw(canvas());
 
-    CanvasWindow::canvasGLDraw(canvas);
+    CanvasWindow::draw();
 }
 
 void TestWindow::testRenderToTexture()
@@ -568,12 +572,16 @@ void TestWindow::testModel()
 
 void TestWindow::loadMD2Model()
 {
+    glActivate();
     d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/marine.md2"));
     d->initModelAnimation();
+    glDone();
 }
 
 void TestWindow::loadMD5Model()
 {
+    glActivate();
     d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/boblampclean.md5mesh"));
     d->initModelAnimation();
+    glDone();
 }

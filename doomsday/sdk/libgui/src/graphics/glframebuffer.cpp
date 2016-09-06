@@ -346,9 +346,6 @@ DENG2_OBSERVES(Asset, Deletion)
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
         GLenum status = GLInfo::EXT_framebuffer_object()->glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
 
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
-        GLState::considerNativeStateUndefined(); // state was manually changed
-
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
             releaseAndReset();
@@ -360,6 +357,8 @@ DENG2_OBSERVES(Asset, Deletion)
                                                                         QString("Unsupported (0x%1)").arg(status, 0, 16));
         }
         self.setState(Ready);
+
+        GLState::current().target().glBind();
     }
 
     void assetBeingDeleted(Asset &asset)
@@ -551,7 +550,7 @@ void GLFramebuffer::glBind() const
 
         //qDebug() << "GLFramebuffer: binding FBO" << d->fbo;
 
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fbo);
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
         LIBGUI_ASSERT_GL_OK();
     }
 }
