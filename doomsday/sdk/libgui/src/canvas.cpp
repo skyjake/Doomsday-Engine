@@ -24,6 +24,7 @@
 
 #include <de/App>
 #include <de/Log>
+#include <de/Loop>
 #include <de/Drawable>
 #include <de/GLInfo>
 #include <de/GLState>
@@ -47,6 +48,8 @@ namespace de {
 
 DENG2_PIMPL(Canvas)
 {
+    LoopCallback mainCall;
+
     GLTextureFramebuffer backing;
 
     CanvasWindow *parent;
@@ -197,6 +200,39 @@ DENG2_PIMPL(Canvas)
         GLInfo::glDeinit();
     }
 
+    void notifyReady()
+    {
+        if (readyNotified) return;
+
+        readyPending = false;
+
+        self.makeCurrent();
+
+        DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
+        reconfigureFramebuffer();
+
+        // Print some information.
+        QSurfaceFormat const fmt = self.format();
+
+        LOG_GL_NOTE("OpenGL %i.%i supported%s")
+                << fmt.majorVersion() << fmt.minorVersion()
+                << (fmt.majorVersion() > 2?
+                        (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
+                                                                              : " (Core)") : "");
+
+        // Everybody can perform GL init now.
+        DENG2_FOR_PUBLIC_AUDIENCE2(GLInit, i) i->canvasGLInit(self);
+
+        readyNotified = true;
+
+        //update(); // Try again next frame.
+        self.doneCurrent();
+
+        // Now we can paint.
+        mainCall.enqueue([this] () { self.update(); });
+    }
+
     bool timerQueryReady() const
     {
         if (!GLInfo::extensions().EXT_timer_query) return false;
@@ -238,11 +274,7 @@ DENG2_PIMPL(Canvas)
     template <typename QtEventType>
     Vector2i translatePosition(QtEventType const *ev) const
     {
-#ifdef DENG2_QT_5_1_OR_NEWER
         return Vector2i(ev->pos().x(), ev->pos().y()) * self.devicePixelRatio();
-#else
-        return Vector2i(ev->pos().x(), ev->pos().y());
-#endif
     }
 
     DENG2_PIMPL_AUDIENCE(GLInit)
@@ -357,35 +389,6 @@ void Canvas::frameWasSwapped()
     doneCurrent();
 }
 
-void Canvas::notifyReady()
-{
-    if (d->readyNotified) return;
-
-    d->readyPending = false;
-
-    makeCurrent();
-
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
-
-    d->reconfigureFramebuffer();
-
-    // Print some information.
-    QSurfaceFormat const fmt = format();
-
-    LOG_GL_NOTE("OpenGL %i.%i supported%s")
-            << fmt.majorVersion() << fmt.minorVersion()
-            << (fmt.majorVersion() > 2?
-                    (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
-                                                                          : " (Core)") : "");
-
-    // Everybody can perform GL init now.
-    DENG2_FOR_AUDIENCE2(GLInit, i) i->canvasGLInit(*this);
-
-    doneCurrent();
-
-    d->readyNotified = true;
-}
-
 void Canvas::paintGL()
 {
     if (!d->parent) return;
@@ -399,9 +402,8 @@ void Canvas::paintGL()
         if (!d->readyPending)
         {
             d->readyPending = true;
-            QTimer::singleShot(1, this, SLOT(notifyReady()));
+            d->mainCall.enqueue([this] () { d->notifyReady(); });
         }
-        update(); // Try again next frame.
         return;
     }
 

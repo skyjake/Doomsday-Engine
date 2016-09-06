@@ -153,7 +153,6 @@ protected:
     void wheelEvent(QWheelEvent *ev);
 
 protected slots:
-    void notifyReady();
     void frameWasSwapped();
 
 private:
