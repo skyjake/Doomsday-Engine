@@ -40,6 +40,8 @@
 #include <QTimer>
 #include <QTime>
 #include <QDebug>
+#include <QOpenGLTimerQuery>
+#include <QElapsedTimer>
 
 namespace de {
 
@@ -60,6 +62,11 @@ DENG2_PIMPL(Canvas)
 #ifdef WIN32
     bool altIsDown = false;
 #endif
+
+    QOpenGLTimerQuery *timerQuery = nullptr;
+    bool timerQueryPending = false;
+    QElapsedTimer gpuTimeRecordingStartedAt;
+    QVector<TimeDelta> recordedGpuTimes;
 
     Impl(Public *i, CanvasWindow *parentWindow)
         : Base(i)
@@ -188,6 +195,44 @@ DENG2_PIMPL(Canvas)
     {
         backing.glDeinit();
         GLInfo::glDeinit();
+    }
+
+    bool timerQueryReady() const
+    {
+        if (!GLInfo::extensions().EXT_timer_query) return false;
+        return timerQuery && !timerQueryPending;
+    }
+
+    void checkTimerQueryResult()
+    {
+        // Measure how long it takes to render a frame on average.
+        if (GLInfo::extensions().EXT_timer_query &&
+            timerQueryPending &&
+            timerQuery->isResultAvailable())
+        {
+            timerQueryPending = false;
+            recordedGpuTimes.append(double(timerQuery->waitForResult()) / 1.0e9);
+
+            if (!gpuTimeRecordingStartedAt.isValid())
+            {
+                gpuTimeRecordingStartedAt.start();
+            }
+
+            // There are minor time variations rendering the same frame, so average over
+            // a second to find out a reasonable value.
+            if (gpuTimeRecordingStartedAt.elapsed() > 1000)
+            {
+                TimeDelta average = 0;
+                for (auto dt : recordedGpuTimes) average += dt;
+                average = average / recordedGpuTimes.size();
+                recordedGpuTimes.clear();
+
+                qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
+                qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
+
+                gpuTimeRecordingStartedAt.restart();
+            }
+        }
     }
 
     template <typename QtEventType>
@@ -320,6 +365,8 @@ void Canvas::notifyReady()
 
     makeCurrent();
 
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
     d->reconfigureFramebuffer();
 
     // Print some information.
@@ -360,6 +407,27 @@ void Canvas::paintGL()
 
     DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
+    if (GLInfo::extensions().EXT_timer_query)
+    {
+        d->checkTimerQueryResult();
+
+        if (!d->timerQuery)
+        {
+            d->timerQuery = new QOpenGLTimerQuery(this);
+            if (!d->timerQuery->create())
+            {
+                LOG_GL_ERROR("Failed to create timer query object");
+            }
+        }
+
+        if (d->timerQueryReady())
+        {
+            d->timerQuery->begin();
+        }
+    }
+
+    GLBuffer::resetDrawCount();
+
     LIBGUI_ASSERT_GL_OK();
 
     // Make sure any changes to the state stack are in effect.
@@ -372,6 +440,12 @@ void Canvas::paintGL()
     LIBGUI_ASSERT_GL_OK();
 
     d->backing.blit();
+
+    if (d->timerQueryReady())
+    {
+        d->timerQuery->end();
+        d->timerQueryPending = true;
+    }
 }
 
 void Canvas::focusInEvent(QFocusEvent*)
