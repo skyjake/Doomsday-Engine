@@ -5,7 +5,7 @@
  * MacWindowBehavior. This would make the code easier to follow and more adaptable
  * to the quirks of each platform.
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -75,6 +75,7 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(Canvas,   FocusChange)
 , DENG2_OBSERVES(Canvas,   GLInit)
 , DENG2_OBSERVES(Canvas,   GLResize)
+, DENG2_OBSERVES(Canvas,   GLSwapped)
 , DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit            = true;
@@ -85,7 +86,6 @@ DENG2_PIMPL(ClientWindow)
 
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
-    //CompositorWidget *compositor = nullptr;
     GameWidget *game = nullptr;
     GameUIWidget *gameUI = nullptr;
     LabelWidget *nowPlaying = nullptr;
@@ -438,10 +438,51 @@ DENG2_PIMPL(ClientWindow)
         mode = newMode;
     }
 
-    void canvasGLInit(Canvas &)
+    void canvasGLInit(Canvas &canvas)
     {
         Sys_GLConfigureDefaultState();
         GL_Init2DState();
+
+        // Update the capability flags.
+        GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
+        LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+
+        if (vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
+        {
+            LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
+        }
+
+        // Now that the Canvas is ready for drawing we can enable the GameWidget.
+        game->enable();
+        gameUI->enable();
+
+        // Configure a viewport immediately.
+        GLState::current().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
+
+        LOG_DEBUG("GameWidget enabled");
+
+        if (needMainInit)
+        {
+            needMainInit = false;
+
+            self.raise();
+            self.activateWindow();
+
+            self.canvas().audienceForFocusChange() += this;
+
+#ifdef WIN32
+            if (self.isFullScreen())
+            {
+                // It would seem we must manually give our canvas focus. Bug in Qt?
+                self.canvas().setFocus();
+            }
+#endif
+
+            DD_FinishInitializationAfterWindowReady();
+
+            vrCfg().oculusRift().glPreInit();
+            contentXf.glInit();
+        }
     }
 
     void canvasGLResized(Canvas &canvas)
@@ -459,6 +500,21 @@ DENG2_PIMPL(ClientWindow)
         showOrHideQuitButton();
     }
 
+    void canvasGLSwapped(Canvas &)
+    {
+        ClientApp::app().postFrame(); /// @todo what about multiwindow?
+
+        // Frame has been shown, now we can do post-frame updates.
+        updateFpsNotification(self.frameRate());
+        completeFade();
+
+        if (needSurfaceFormatUpdate)
+        {
+            qDebug() << "-------- OpenGL surface format needs updating! --------";
+            needSurfaceFormatUpdate = false;
+        }
+    }
+
     void showOrHideQuitButton()
     {
         TimeDelta const SPAN = 0.6;
@@ -470,51 +526,6 @@ DENG2_PIMPL(ClientWindow)
         {
             quitX->set(0, SPAN);
         }
-    }
-
-    /**
-     * Completes the initialization of the main window. This is called only after the
-     * window is created and visible, so that OpenGL operations and actions on the native
-     * window can be performed without restrictions.
-     */
-    void finishMainWindowInit()
-    {
-#ifdef MACOSX
-        if (self.isFullScreen())
-        {
-            // The window must be manually raised above the shielding window put up by
-            // the fullscreen display capture.
-            DisplayMode_Native_Raise(self.nativeHandle());
-        }
-#endif
-
-        self.raise();
-        self.activateWindow();
-
-        /*
-        // Automatically grab the mouse from the get-go if in fullscreen mode.
-        if (Mouse_IsPresent() && self.isFullScreen())
-        {
-            self.canvas().trapMouse();
-        }
-        */
-
-        self.canvas().audienceForFocusChange() += this;
-
-#ifdef WIN32
-        if (self.isFullScreen())
-        {
-            // It would seem we must manually give our canvas focus. Bug in Qt?
-            self.canvas().setFocus();
-        }
-#endif
-
-        self.canvas().makeCurrent();
-
-        DD_FinishInitializationAfterWindowReady();
-
-        vrCfg().oculusRift().glPreInit();
-        contentXf.glInit();
     }
 
     void mouseStateChanged(MouseEventSource::State state)
@@ -679,36 +690,6 @@ DENG2_PIMPL(ClientWindow)
         sidebar = 0;
     }
 
-    enum DeferredTaskResult {
-        Continue,
-        AbortFrame
-    };
-
-    DeferredTaskResult performDeferredTasks()
-    {
-        if (BusyMode_Active())
-        {
-            // Let's not do anything risky in busy mode.
-            return Continue;
-        }
-
-        // The canvas needs to be recreated when the GL format has changed
-        // (e.g., multisampling).
-        if (needSurfaceFormatUpdate)
-        {
-            needSurfaceFormatUpdate = false;
-            if (self.setDefaultGLFormat())
-            {
-                qDebug() << "Canvas surface format needs changing! (not implemented)";
-                //self.recreateCanvas();
-                // Wait until the new Canvas is ready (note: loop remains paused!).
-                return AbortFrame;
-            }
-        }
-
-        return Continue;
-    }
-
     void updateRootSize()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
@@ -720,122 +701,6 @@ DENG2_PIMPL(ClientWindow)
         // Tell the widgets.
         root.setViewSize(size);
     }
-
-/*    void enableCompositor(bool enable)
-    {
-        DENG_ASSERT_IN_MAIN_THREAD();
-
-        if ((enable && compositor) || (!enable && !compositor))
-        {
-            return;
-        }
-
-        // All the children of the compositor need to be relocated.
-        container().remove(*gameUI);
-        container().remove(*home);
-        if (sidebar) container().remove(*sidebar);
-        container().remove(*notifications);
-        container().remove(*taskBarBlur);
-        container().remove(*taskBar);
-        container().remove(*privLog);
-        container().remove(*cursor);
-
-        Widget::Children additional;
-
-        // Relocate all popups to the new container (which need to stay on top).
-        foreach (Widget *w, container().children())
-        {
-            if (PopupWidget *pop = w->maybeAs<PopupWidget>())
-            {
-                additional.append(pop);
-                container().remove(*pop);
-            }
-        }
-
-        if (enable && !compositor)
-        {
-            LOG_GL_VERBOSE("Offscreen UI composition enabled");
-
-            compositor = new CompositorWidget;
-            compositor->rule().setRect(root.viewRule());
-            root.add(compositor);
-        }
-        else
-        {
-            DENG2_ASSERT(compositor != 0);
-            DENG2_ASSERT(!compositor->childCount());
-
-            root.remove(*compositor);
-            compositor->guiDeleteLater();
-            compositor = 0;
-
-            LOG_GL_VERBOSE("Offscreen UI composition disabled");
-        }
-
-        container().add(gameUI);
-
-        if (&container() == &root)
-        {
-            // Make sure the game UI doesn't show up over the busy transition.
-            container().moveChildBefore(gameUI, *busy);
-        }
-
-        container().add(home);
-        //container().add(gameSelMenu);
-        //container().add(iwadNotice);
-        if (sidebar) container().add(sidebar);
-        container().add(notifications);
-        container().add(taskBarBlur);
-        container().add(taskBar);
-        container().add(privLog);
-
-        // Also the other widgets.
-        foreach (Widget *w, additional)
-        {
-            container().add(w);
-        }
-
-        // Fake cursor must be on top.
-        container().add(cursor);
-
-        if (mode == Normal)
-        {
-            root.update();
-        }
-    }
-
-    void updateCompositor()
-    {
-        DENG_ASSERT_IN_MAIN_THREAD();
-
-        if (!compositor) return;
-
-        if (vrCfg().mode() == VRConfig::OculusRift)
-        {
-            /// @todo Adjustable compositor depth/size.
-            float uiDistance = 40;
-            float uiSize = 50;
-
-            auto const &ovr = vrCfg().oculusRift();
-            Vector3f const pry = ovr.headOrientation();
-
-            compositor->setCompositeProjection(
-                        GL_GetProjectionMatrix()
-                        * Matrix4f::rotate(radianToDegree(pry[1]), Vector3f(0, 0, -1))
-                        * Matrix4f::rotate(radianToDegree(pry[0]), Vector3f(1, 0, 0))
-                        * Matrix4f::rotate(radianToDegree(pry[2]), Vector3f(0, 1, 0))
-                        * Matrix4f::translate(swizzle(ovr.headPosition() *
-                                                      vrCfg().mapUnitsPerMeter(),
-                                                      AxisNegX, AxisNegY, AxisZ))
-                        * Matrix4f::scale(Vector3f(uiSize, -uiSize/ovr.aspect(), 1.f))
-                        * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
-        }
-        else
-        {
-            // We'll simply cover the entire view.
-            compositor->useDefaultCompositeProjection();
-        }
-    }*/
 
     void minimizeGame(bool mini)
     {
@@ -916,8 +781,9 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
-    canvas().audienceForGLResize() += d;
-    canvas().audienceForGLInit() += d;
+    canvas().audienceForGLInit()    += d;
+    canvas().audienceForGLResize()  += d;
+    canvas().audienceForGLSwapped() += d;
 
 #ifdef WIN32
     // Set an icon for the window.
@@ -933,11 +799,6 @@ ClientWindow::ClientWindow(String const &id)
     {
         mainWindow = this;
     }
-}
-
-Vector2f ClientWindow::windowContentSize() const
-{
-    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -1022,36 +883,6 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
     ev->ignore(); // don't close
 }
 
-void ClientWindow::canvasGLReady(Canvas &canvas)
-{
-    // Update the capability flags.
-    GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
-    LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
-
-    if (vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
-    {
-        LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
-    }
-
-    BaseWindow::canvasGLReady(canvas);
-
-    // Now that the Canvas is ready for drawing we can enable the GameWidget.
-    d->game->enable();
-    d->gameUI->enable();
-
-    // Configure a viewport immediately.
-    GLState::current().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
-
-    LOG_DEBUG("GameWidget enabled");
-
-    if (d->needMainInit)
-    {
-        d->needMainInit = false;
-        d->finishMainWindowInit();
-    }
-}
-
-
 void ClientWindow::preDraw()
 {
     // NOTE: This occurs during the Canvas paintGL event.
@@ -1072,9 +903,13 @@ void ClientWindow::preDraw()
     BaseWindow::preDraw();
 }
 
+Vector2f ClientWindow::windowContentSize() const
+{
+    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
+}
+
 void ClientWindow::drawWindowContent()
 {
-    //d->updateCompositor();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
@@ -1092,10 +927,6 @@ void ClientWindow::postDraw()
     }
 
     BaseWindow::postDraw();
-
-    ClientApp::app().postFrame(); /// @todo what about multiwindow?
-    d->updateFpsNotification(frameRate());
-    d->completeFade();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -1167,33 +998,6 @@ bool ClientWindow::setDefaultGLFormat() // static
         LOG_GL_XVERBOSE("New format is the same as before");
         return false;
     }
-}
-
-bool ClientWindow::prepareForDraw()
-{
-    if (!BaseWindow::prepareForDraw())
-    {
-        return false;
-    }
-
-    // Offscreen composition is only needed in Oculus Rift mode.
-    //d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
-
-    if (d->performDeferredTasks() == Impl::AbortFrame)
-    {
-        // Shouldn't draw right now.
-        return false;
-    }
-
-    return true; // Go ahead.
-}
-
-bool ClientWindow::shouldRepaintManually() const
-{
-    // When the mouse is not trapped, allow the system to regulate window
-    // updates (e.g., for window manipulation).
-    if (isFullScreen()) return true;
-    return !Mouse_IsPresent() || canvas().isMouseTrapped();
 }
 
 void ClientWindow::grab(image_t &img, bool halfSized) const
