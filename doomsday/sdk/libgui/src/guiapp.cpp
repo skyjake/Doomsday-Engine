@@ -35,7 +35,7 @@ namespace de {
 
 DENG2_PIMPL(GuiApp)
 {
-    Loop loop;
+    GuiLoop loop;
 
     Impl(Public *i) : Base(i)
     {
@@ -120,7 +120,7 @@ void GuiApp::stopLoop(int code)
     return QApplication::exit(code);
 }
 
-Loop &GuiApp::loop()
+GuiLoop &GuiApp::loop()
 {
     return d->loop;
 }

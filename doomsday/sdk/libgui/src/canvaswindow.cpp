@@ -60,7 +60,8 @@ DENG2_PIMPL(CanvasWindow)
     {
         if (thisPublic == mainWindow)
         {
-            mainWindow = 0;
+            GuiLoop::get().setWindow(nullptr);
+            mainWindow = nullptr;
         }
     }
 
@@ -180,6 +181,7 @@ CanvasWindow &CanvasWindow::main()
 void CanvasWindow::setMain(CanvasWindow *window)
 {
     mainWindow = window;
+    GuiLoop::get().setWindow(window);
 }
 
 } // namespace de

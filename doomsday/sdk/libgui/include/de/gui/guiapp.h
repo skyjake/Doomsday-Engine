@@ -22,7 +22,7 @@
 #include "libgui.h"
 #include <QApplication>
 #include <de/App>
-#include <de/Loop>
+#include <de/GuiLoop>
 
 /**
  * Macro for conveniently accessing the de::GuiApp singleton instance.
@@ -66,7 +66,7 @@ public:
     int execLoop();
     void stopLoop(int code);
 
-    Loop &loop();
+    GuiLoop &loop();
 
 protected:
     NativePath appDataPath() const;
