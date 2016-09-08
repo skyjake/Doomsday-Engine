@@ -40,7 +40,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
         // Use a native dialog to select the IWAD folder.
         DENG2_BASE_GUI_APP->beginNativeUIMode();
 
-        QFileDialog dlg(&BaseWindow::main(),
+        QFileDialog dlg(nullptr,
                         tr("Select Folder"),
                         ".", "");
         dlg.setFileMode(QFileDialog::Directory);

@@ -30,7 +30,7 @@
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
-, DENG2_OBSERVES(Canvas,           GLInit)
+, DENG2_OBSERVES(GLWindow,         Init)
 , DENG2_OBSERVES(KeyEventSource,   KeyEvent)
 , DENG2_OBSERVES(MouseEventSource, MouseEvent)
 {
@@ -42,14 +42,14 @@ DENG2_PIMPL(BaseWindow)
         , defaultXf(self)
         , xf(&defaultXf)
     {
-        self.canvas().audienceForGLInit()     += this;
+        self.audienceForInit() += this;
 
         // Listen to input.
-        self.canvas().audienceForKeyEvent()   += this;
-        self.canvas().audienceForMouseEvent() += this;
+        self.eventHandler().audienceForKeyEvent()   += this;
+        self.eventHandler().audienceForMouseEvent() += this;
     }
 
-    void canvasGLInit(Canvas &)
+    void windowInit(GLWindow &)
     {
         // The framework widgets expect basic alpha blending.
         GLState::current()
@@ -91,7 +91,7 @@ DENG2_PIMPL(BaseWindow)
 };
 
 BaseWindow::BaseWindow(String const &id)
-    : PersistentCanvasWindow(id)
+    : PersistentGLWindow(id)
     , d(new Impl(this))
 {}
 
@@ -130,19 +130,19 @@ void BaseWindow::requestDraw()
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
-        if (canvas().isGLReady())
+        if (isGLReady())
         {
-            canvas().makeCurrent();
+            makeCurrent();
             vr.oculusRift().init();
         }
     }
     else
     {
-        canvas().makeCurrent();
+        makeCurrent();
         vr.oculusRift().deinit();
     }
 
-    canvas().update();
+    update();
 }
 
 void BaseWindow::draw()
@@ -150,8 +150,6 @@ void BaseWindow::draw()
     preDraw();
     d->xf->drawTransformed();
     postDraw();
-
-    PersistentCanvasWindow::draw();
 }
 
 void BaseWindow::preDraw()

@@ -40,7 +40,7 @@ public:
     void glInit();
     void glDeinit();
 
-    Vector2ui logicalRootSize(Vector2ui const &physicalCanvasSize) const;
+    Vector2ui logicalRootSize(Vector2ui const &physicalWindowSize) const;
     Vector2f windowToLogicalCoords(Vector2i const &pos) const;
 
     void drawTransformed();

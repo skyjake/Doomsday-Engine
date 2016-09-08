@@ -22,15 +22,15 @@ namespace de {
 
 DENG2_PIMPL(Untrapper)
 {
-    CanvasWindow &window;
+    GLWindow &window;
     bool wasTrapped;
 
-    Impl(Public *i, CanvasWindow &w) : Base(i), window(w)
+    Impl(Public *i, GLWindow &w) : Base(i), window(w)
     {
-        wasTrapped = window.canvas().isMouseTrapped();
+        wasTrapped = window.eventHandler().isMouseTrapped();
         if (wasTrapped)
         {
-            window.canvas().trapMouse(false);
+            window.eventHandler().trapMouse(false);
         }
     }
 
@@ -38,12 +38,12 @@ DENG2_PIMPL(Untrapper)
     {
         if (wasTrapped)
         {
-            window.canvas().trapMouse();
+            window.eventHandler().trapMouse();
         }
     }
 };
 
-Untrapper::Untrapper(CanvasWindow &window) : d(new Impl(this, window))
+Untrapper::Untrapper(GLWindow &window) : d(new Impl(this, window))
 {}
 
 } // namespace de

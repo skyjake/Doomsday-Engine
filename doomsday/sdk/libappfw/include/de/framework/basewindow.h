@@ -21,9 +21,8 @@
 
 #include "../libappfw.h"
 
-#include <de/Canvas>
+#include <de/PersistentGLWindow>
 #include <de/Vector>
-#include <de/PersistentCanvasWindow>
 
 namespace de {
 
@@ -39,7 +38,7 @@ class WindowTransform;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC BaseWindow : public PersistentCanvasWindow
+class LIBAPPFW_PUBLIC BaseWindow : public PersistentGLWindow
 {
 public:
     BaseWindow(String const &id);

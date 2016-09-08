@@ -45,24 +45,19 @@ DENG2_PIMPL(VRWindowTransform)
         vrCfg.oculusRift().deinit();
     }
 
-    Canvas &canvas() const
-    {
-        return self.window().canvas();
-    }
-
     GLFramebuffer &target() const
     {
-        return canvas().framebuffer();
+        return self.window().framebuffer();
     }
 
     int width() const
     {
-        return canvas().width();
+        return self.window().pixelWidth();
     }
 
     int height() const
     {
-        return canvas().height();
+        return self.window().pixelHeight();
     }
 
     float displayModeDependentUIScalingFactor() const
@@ -71,8 +66,8 @@ DENG2_PIMPL(VRWindowTransform)
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
-        return 1.f / Rangef(.5f, 1.0f).clamp((self.window().width() - GuiWidget::toDevicePixels(256.f)) /
-                                             GuiWidget::toDevicePixels(768.f));
+        return 1.f / Rangef(.5f, 1.0f).clamp((width() - GuiWidget::toDevicePixels(256.f)) /
+                                              GuiWidget::toDevicePixels(768.f));
     }
 
     void drawContent() const
@@ -229,7 +224,7 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::QuadBuffered:
-            if (canvas().format().stereo())
+            if (self.window().format().stereo())
             {
                 // Left eye view
                 vrCfg.setCurrentEye(VRConfig::LeftEye);
@@ -253,7 +248,7 @@ DENG2_PIMPL(VRWindowTransform)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
             QPoint ulCorner(0, 0);
-            ulCorner = canvas().mapToGlobal(ulCorner); // widget to screen coordinates
+            ulCorner = self.window().mapToGlobal(ulCorner); // widget to screen coordinates
             bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
             DENG2_UNUSED(rowParityIsEven);
             /// @todo - use row parity in shader or stencil, to actually interleave rows.
@@ -296,9 +291,9 @@ void VRWindowTransform::glDeinit()
     //d->deinit();
 }
 
-Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
+Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalWindowSize) const
 {
-    Canvas::Size size = physicalCanvasSize;
+    GLWindow::Size size = physicalWindowSize;
 
     switch (d->vrCfg.mode())
     {
@@ -336,7 +331,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
     Vector2f pos = winPos;
 
-    Vector2f const size = window().canvas().size();
+    Vector2f const size = window().pixelSize();
     Vector2f viewSize = window().windowContentSize();
 
     switch (d->vrCfg.mode())

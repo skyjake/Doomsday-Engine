@@ -32,8 +32,8 @@
 using namespace de;
 
 DENG2_PIMPL(MainWindow)
-, DENG2_OBSERVES(Canvas, GLInit)
-, DENG2_OBSERVES(Canvas, GLResize)
+, DENG2_OBSERVES(GLWindow, Init)
+, DENG2_OBSERVES(GLWindow, Resize)
 {
     AppRootWidget root;
     bool needRootSizeUpdate;
@@ -61,8 +61,8 @@ DENG2_PIMPL(MainWindow)
         , cursorY(new ConstantRule(0))
     {
         self.setTransform(contentXf);
-        self.canvas().audienceForGLInit()   += this;
-        self.canvas().audienceForGLResize() += this;
+        self.audienceForInit()   += this;
+        self.audienceForResize() += this;
     }
 
     ~Impl()
@@ -130,13 +130,13 @@ DENG2_PIMPL(MainWindow)
         }
     }
 
-    void canvasGLInit(Canvas &)
+    void windowInit(GLWindow &)
     {
         contentXf.glInit();
 
         self.raise();
-        self.activateWindow();
-        self.canvas().setFocus();
+        self.requestActivate();
+        //self.canvas().setFocus();
     }
 
     void updateMouseCursor()
@@ -153,7 +153,7 @@ DENG2_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+        Vector2ui const size = contentXf.logicalRootSize(self.pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -181,12 +181,12 @@ DENG2_PIMPL(MainWindow)
         }
     }
 
-    void canvasGLResized(Canvas &canvas)
+    void windowResized(GLWindow &)
     {
         LOG_AS("MainWindow");
 
-        Canvas::Size size = canvas.size();
-        LOG_TRACE("Canvas resized to ") << size.asText();
+        Size size = self.pixelSize();
+        LOG_TRACE("Window resized to %s pixels") << size.asText();
 
         // Update viewport.
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
@@ -210,7 +210,7 @@ MainWindow::MainWindow(String const &id)
         setCursor(Qt::BlankCursor);
     }
 
-    setWindowTitle("test_appfw");
+    setTitle("test_appfw");
 
     d->setupUI();
 }

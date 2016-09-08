@@ -46,7 +46,7 @@ Vector3f quaternionToPRYAngles(Quatf const &q)
 #endif
 
 DENG2_PIMPL(OculusRift)
-, DENG2_OBSERVES(Canvas, KeyEvent)
+, DENG2_OBSERVES(KeyEventSource, KeyEvent)
 #ifdef DENG_HAVE_OCULUS_API
 , DENG2_OBSERVES(Variable, Change)
 #endif
@@ -239,7 +239,7 @@ DENG2_PIMPL(OculusRift)
         LOG_GL_MSG("Initializing Oculus Rift for rendering");
 
         // We will be rendering into the main window.
-        window = &CanvasWindow::main().as<BaseWindow>();
+        window = &GLWindow::main().as<BaseWindow>();
         DENG2_ASSERT(window->isVisible());
 
         DENG2_ASSERT(QGLContext::currentContext() != 0);
