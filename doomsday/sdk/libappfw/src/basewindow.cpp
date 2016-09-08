@@ -113,8 +113,11 @@ WindowTransform &BaseWindow::transform()
 
 bool BaseWindow::prepareForDraw()
 {
-    // Don't run the main loop until after the paint event has been dealt with.
-    DENG2_GUI_APP->loop().pause();
+    if (isGLReady())
+    {
+        // Don't run the main loop until after the paint event has been dealt with.
+        DENG2_GUI_APP->loop().pause();
+    }
     return true; // Go ahead.
 }
 
