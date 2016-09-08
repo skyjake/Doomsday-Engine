@@ -380,7 +380,7 @@ DENG2_PIMPL(ClientApp)
         if (newGame.isNull())
         {
             // The mouse is free while in the Home.
-            ClientWindow::main().canvas().trapMouse(false);
+            ClientWindow::main().eventHandler().trapMouse(false);
         }
 
         ClientWindow::main().console().zeroLogHeight();
@@ -585,7 +585,7 @@ void ClientApp::initialize()
     plugins().loadAll();
 
     // Create the main window.
-    d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
+    d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;
@@ -809,7 +809,7 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
     DoomsdayApp::unloadGame(upcomingGame);
 
     // Game has been set to null, update window.
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 
     if (!upcomingGame.game().isEmpty())
     {
@@ -819,7 +819,7 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
         // Trap the mouse automatically when loading a game in fullscreen.
         if (mainWin.isFullScreen())
         {
-            mainWin.canvas().trapMouse();
+            mainWin.eventHandler().trapMouse();
         }
     }
 
@@ -834,7 +834,7 @@ void ClientApp::makeGameCurrent(GameProfile const &newGame)
     DoomsdayApp::makeGameCurrent(newGame);
 
     // Game has been changed, update window.
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 }
 
 void ClientApp::reset()

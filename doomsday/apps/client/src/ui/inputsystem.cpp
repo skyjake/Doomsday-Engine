@@ -1590,7 +1590,7 @@ D_CMD(ReleaseMouse)
     DENG2_UNUSED3(src, argc, argv);
     if (WindowSystem::mainExists())
     {
-        ClientWindowSystem::main().canvas().trapMouse(false);
+        ClientWindowSystem::main().eventHandler().trapMouse(false);
         return true;
     }
     return false;

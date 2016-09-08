@@ -512,10 +512,10 @@ void LensFlares::draw()
     Rectanglef const rect = viewRect();
     float const aspect = rect.height() / rect.width();
 
-    Canvas &canvas = ClientWindow::main().canvas();
+    GLWindow &window = ClientWindow::main();
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
-    d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());
+    d->uPixelAsUv = Vector2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
     d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     DENG2_ASSERT(console() == displayPlayer);

@@ -34,7 +34,7 @@ static dd_bool __inline mustDefer(void)
 
 static QOpenGLContext &context()
 {
-    return *ClientWindow::main().canvas().context();
+    return *ClientWindow::main().context();
 }
 
 #define GL_CALL1(form, func, x) \

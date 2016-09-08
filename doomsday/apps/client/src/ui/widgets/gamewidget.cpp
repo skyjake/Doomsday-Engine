@@ -203,7 +203,7 @@ bool GameWidget::handleEvent(Event const &event)
 
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if (event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
+    if (event.type() == Event::MouseButton && !root().window().eventHandler().isMouseTrapped() &&
         rule().recti().contains(event.as<MouseEvent>().pos()))
     {
         if (!window.hasSidebar() && !window.isGameMinimized())
@@ -219,7 +219,7 @@ bool GameWidget::handleEvent(Event const &event)
         {
         case MouseClickFinished:
             // Click completed on the widget, trap the mouse.
-            window.canvas().trapMouse();
+            window.eventHandler().trapMouse();
             window.taskBar().close();
             root().setFocus(0); // Allow input to reach here.
             break;

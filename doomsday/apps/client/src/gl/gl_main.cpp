@@ -1496,7 +1496,7 @@ D_CMD(DisplayModeInfo)
                   "\n  windowed origin:%3 size:%4"
                   "\n  fullscreen size:%5")
                .arg(win->pos().asText())
-               .arg(win->size().asText())
+               .arg(win->pointSize().asText())
                .arg(win->windowRect().topLeft.asText())
                .arg(win->windowRect().size().asText())
                .arg(win->fullscreenSize().asText());

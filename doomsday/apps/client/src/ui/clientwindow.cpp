@@ -69,13 +69,13 @@ using namespace de;
 static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
 
 DENG2_PIMPL(ClientWindow)
-, DENG2_OBSERVES(App,      StartupComplete)
+, DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(Canvas,   FocusChange)
-, DENG2_OBSERVES(Canvas,   GLInit)
-, DENG2_OBSERVES(Canvas,   GLResize)
-, DENG2_OBSERVES(Canvas,   GLSwapped)
+, DENG2_OBSERVES(WindowEventHandler, FocusChange)
+, DENG2_OBSERVES(GLWindow, Init)
+, DENG2_OBSERVES(GLWindow, Resize)
+, DENG2_OBSERVES(GLWindow, Swap)
 , DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit            = true;
@@ -137,7 +137,7 @@ DENG2_PIMPL(ClientWindow)
         App::app().audienceForStartupComplete() += this;
 
         // Listen to input.
-        self.canvas().audienceForMouseStateChange() += this;
+        self.eventHandler().audienceForMouseStateChange() += this;
 
         foreach (String s, configVariableNames())
         {
@@ -438,8 +438,10 @@ DENG2_PIMPL(ClientWindow)
         mode = newMode;
     }
 
-    void canvasGLInit(Canvas &canvas)
+    void windowInit(GLWindow &)
     {
+        qDebug() << "Client: windowInit";
+
         Sys_GLConfigureDefaultState();
         GL_Init2DState();
 
@@ -447,17 +449,17 @@ DENG2_PIMPL(ClientWindow)
         GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
         LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
-        if (vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
+        if (vrCfg().needsStereoGLFormat() && !self.format().stereo())
         {
             LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
         }
 
-        // Now that the Canvas is ready for drawing we can enable the GameWidget.
+        // Now that the window is ready for drawing we can enable the GameWidget.
         game->enable();
         gameUI->enable();
 
         // Configure a viewport immediately.
-        GLState::current().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
+        GLState::current().setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight())).apply();
 
         LOG_DEBUG("GameWidget enabled");
 
@@ -466,9 +468,9 @@ DENG2_PIMPL(ClientWindow)
             needMainInit = false;
 
             self.raise();
-            self.activateWindow();
+            self.requestActivate();
 
-            self.canvas().audienceForFocusChange() += this;
+            self.eventHandler().audienceForFocusChange() += this;
 
 #ifdef WIN32
             if (self.isFullScreen())
@@ -485,12 +487,12 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void canvasGLResized(Canvas &canvas)
+    void windowResized(GLWindow &)
     {
         LOG_AS("ClientWindow");
 
-        Canvas::Size size = canvas.size();
-        LOG_TRACE("Canvas resized to ") << size.asText();
+        Size size = self.pixelSize();
+        LOG_TRACE("Window resized to %s pixels") << size.asText();
 
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
@@ -500,7 +502,7 @@ DENG2_PIMPL(ClientWindow)
         showOrHideQuitButton();
     }
 
-    void canvasGLSwapped(Canvas &)
+    void windowSwapped(GLWindow &)
     {
         ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
@@ -579,9 +581,9 @@ DENG2_PIMPL(ClientWindow)
         return false;
     }
 
-    void canvasFocusChanged(Canvas &canvas, bool hasFocus)
+    void windowFocusChanged(GLWindow &, bool hasFocus)
     {
-        LOG_DEBUG("canvasFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
+        LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
                 << hasFocus << self.isFullScreen() << self.isHidden() << self.isMinimized();
 
         if (!hasFocus)
@@ -593,12 +595,12 @@ DENG2_PIMPL(ClientWindow)
             });
             InputSystem::get().clearEvents();
 
-            canvas.trapMouse(false);
+            self.eventHandler().trapMouse(false);
         }
         else if (self.isFullScreen() && !taskBar->isOpen() && DoomsdayApp::isGameLoaded())
         {
             // Trap the mouse again in fullscreen mode.
-            canvas.trapMouse();
+            self.eventHandler().trapMouse();
         }
 
         // Generate an event about this.
@@ -696,7 +698,7 @@ DENG2_PIMPL(ClientWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+        Vector2ui const size = contentXf.logicalRootSize(self.pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -730,7 +732,7 @@ DENG2_PIMPL(ClientWindow)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
+        cursor->show(!self.eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
         // Show or hide the native mouse cursor.
         if (cursor->isVisible())
@@ -781,9 +783,9 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
-    canvas().audienceForGLInit()    += d;
-    canvas().audienceForGLResize()  += d;
-    canvas().audienceForGLSwapped() += d;
+    audienceForInit()   += d;
+    audienceForResize() += d;
+    audienceForSwap()   += d;
 
 #ifdef WIN32
     // Set an icon for the window.
@@ -868,6 +870,7 @@ bool ClientWindow::isGameMinimized() const
     return d->isGameMini;
 }
 
+/*
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
     if (!BusyMode_Active())
@@ -881,7 +884,7 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
     ev->ignore(); // don't close
-}
+}*/
 
 void ClientWindow::preDraw()
 {
@@ -963,10 +966,10 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
 //#endif
 
-    /*if (CanvasWindow::mainExists())
+    /*if (GLWindow::mainExists())
     {
         // Testing: does this actually do anything?
-        CanvasWindow::main().canvas().setFormat(fmt);
+        GLWindow::main().canvas().setFormat(fmt);
     }*/
 
 /*
@@ -1004,8 +1007,8 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    QSize outputSize = (halfSized? QSize(width()/2, height()/2) : QSize());
-    QImage grabbed = canvas().grabImage(outputSize);
+    QSize outputSize = (halfSized? QSize(pixelWidth()/2, pixelHeight()/2) : QSize());
+    QImage grabbed = grabImage(outputSize);
 
     Image_Init(img);
     img.size      = Vector2ui(grabbed.width(), grabbed.height());

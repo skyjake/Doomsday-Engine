@@ -491,7 +491,7 @@ void App_Error(char const *error, ...)
     va_list argptr;
 
 #ifdef __CLIENT__
-    ClientWindow::main().canvas().trapMouse(false);
+    ClientWindow::main().eventHandler().trapMouse(false);
 #endif
 
     // Already in an error?
@@ -1206,7 +1206,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
     else
     {
-        ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+        ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
     }
 #endif
 

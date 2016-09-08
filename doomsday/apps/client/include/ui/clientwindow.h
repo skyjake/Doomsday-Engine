@@ -21,7 +21,7 @@
 #ifndef CLIENT_CLIENTWINDOW_H
 #define CLIENT_CLIENTWINDOW_H
 
-#include <de/PersistentCanvasWindow>
+#include <de/PersistentGLWindow>
 #include <de/BaseWindow>
 #include <de/NotificationAreaWidget>
 #include <de/FadeToBlackWidget>
@@ -168,7 +168,7 @@ public:
     bool isFPSCounterVisible() const;
 
     // Events.
-    void closeEvent(QCloseEvent *) override;
+    //void closeEvent(QCloseEvent *) override;
 
     // Implements BaseWindow.
     de::Vector2f windowContentSize() const override;

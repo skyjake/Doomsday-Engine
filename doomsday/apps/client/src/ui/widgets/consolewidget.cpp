@@ -158,7 +158,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
-                self.root().window().canvas().setCursor(Qt::SizeHorCursor);
+                self.root().window().setCursor(Qt::SizeHorCursor);
             }
         }
         else
@@ -171,13 +171,13 @@ DENG_GUI_PIMPL(ConsoleWidget)
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
-                    self.root().window().canvas().setCursor(Qt::SizeVerCursor);
+                    self.root().window().setCursor(Qt::SizeVerCursor);
                 }
             }
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
-                self.root().window().canvas().setCursor(Qt::ArrowCursor);
+                self.root().window().setCursor(Qt::ArrowCursor);
             }
         }
 

@@ -22,7 +22,7 @@
 
 using namespace de;
 
-ClientRootWidget::ClientRootWidget(CanvasWindow *window)
+ClientRootWidget::ClientRootWidget(GLWindow *window)
     : GuiRootWidget(window)
 {}
 

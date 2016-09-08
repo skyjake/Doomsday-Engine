@@ -572,11 +572,12 @@ void TaskBarWidget::drawContent()
 
 bool TaskBarWidget::handleEvent(Event const &event)
 {
-    Canvas &canvas = root().window().canvas();
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if (!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-        !window.hasSidebar() && !window.isGameMinimized())
+    if (!window.eventHandler().isMouseTrapped()
+            && event.type() == Event::MouseButton
+            && !window.hasSidebar()
+            && !window.isGameMinimized())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -593,7 +594,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             if (App_GameLoaded())
             {
                 // Allow game to use the mouse.
-                canvas.trapMouse();
+                window.eventHandler().trapMouse();
             }
 
             window.taskBar().close();
@@ -680,11 +681,11 @@ void TaskBarWidget::open()
     // Untrap the mouse if it is trapped.
     if (hasRoot())
     {
-        Canvas &canvas = root().window().canvas();
-        d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-        if (canvas.isMouseTrapped())
+        auto &handler = root().window().eventHandler();
+        d->mouseWasTrappedWhenOpening = handler.isMouseTrapped();
+        if (handler.isMouseTrapped())
         {
-            canvas.trapMouse(false);
+            handler.trapMouse(false);
         }
 
         if (!App_GameLoaded())
@@ -732,7 +733,7 @@ void TaskBarWidget::close()
             {
                 if (d->mouseWasTrappedWhenOpening)
                 {
-                    window.canvas().trapMouse();
+                    window.eventHandler().trapMouse();
                 }
             }
         }
