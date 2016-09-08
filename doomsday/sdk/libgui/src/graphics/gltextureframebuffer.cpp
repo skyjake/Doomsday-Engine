@@ -20,7 +20,6 @@
 #include "de/GuiApp"
 
 #include <de/Log>
-#include <de/Canvas>
 #include <de/Drawable>
 #include <de/GLInfo>
 #include <de/Property>

@@ -144,7 +144,7 @@ public:
      * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
     GLFramebuffer(Flags const &attachment, GLTexture &texture,
-             Flags const &otherAttachments = NoAttachments);
+                  Flags const &otherAttachments = NoAttachments);
 
     //GLFramebuffer(GLTexture *color, GLTexture *depth = 0, GLTexture *stencil = 0);
 

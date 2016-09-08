@@ -17,20 +17,20 @@
  */
 
 #include "de/GuiLoop"
-#include "de/CanvasWindow"
+#include "de/GLWindow"
 
 namespace de {
 
 DENG2_PIMPL_NOREF(GuiLoop)
 {
-    CanvasWindow *window = nullptr;
+    GLWindow *window = nullptr;
 };
 
 GuiLoop::GuiLoop()
     : d(new Impl)
 {}
 
-void GuiLoop::setWindow(CanvasWindow *window)
+void GuiLoop::setWindow(GLWindow *window)
 {
     d->window = window;
 }

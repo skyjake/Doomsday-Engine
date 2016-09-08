@@ -23,7 +23,7 @@
 
 namespace de {
 
-class CanvasWindow;
+class GLWindow;
 
 /**
  * Continually triggered loop that activates a window when triggering iterations.
@@ -33,7 +33,7 @@ class GuiLoop : public Loop
 public:
     GuiLoop();
 
-    void setWindow(CanvasWindow *window);
+    void setWindow(GLWindow *window);
 
     static GuiLoop &get();
 

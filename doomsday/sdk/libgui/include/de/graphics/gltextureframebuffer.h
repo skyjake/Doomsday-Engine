@@ -38,8 +38,6 @@ namespace de {
     };
 }*/
 
-class Canvas;
-
 /**
  * OpenGL framebuffer object that stores color, depth, and stencil values in GL textures.
  * Automatically sets up and updates a render target where the textures are attached.
@@ -77,26 +75,6 @@ public:
     GLTexture &colorTexture() const;
     GLTexture &depthStencilTexture() const;
     int sampleCount() const;
-
-    /**
-     * Swaps buffers.
-     *
-     * @param canvas    Canvas where to swap.
-     * @param swapMode  Stereo swapping mode:
-     *      - gl::SwapMonoBuffer: swap is done normally into the Canvas's framebuffer
-     *      - gl::SwapStereoLeftBuffer: swap updates the back/left stereo buffer
-     *      - gl::SwapStereoRightBuffer: swap updates the back/right stereo buffer
-     */
-    //void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
-
-    /**
-     * Blits the contents of the framebuffer to another framebuffer.
-     *
-     * @param targetFBO  Destination framebuffer object.
-     */
-    //void blit(GLFramebuffer const &target) const;
-
-    //void drawBuffer(float opacity);
 
 public:
     /**

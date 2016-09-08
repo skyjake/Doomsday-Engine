@@ -23,7 +23,7 @@
 #include "de/GLTexture"
 #include "de/GLState"
 #include "de/GLInfo"
-#include "de/CanvasWindow"
+#include "de/GLWindow"
 #include <de/Asset>
 
 namespace de {
@@ -569,7 +569,7 @@ QImage GLFramebuffer::toImage() const
 {
     if (!d->fbo)
     {
-        return CanvasWindow::main().canvas().grabImage();
+        return GLWindow::main().grabImage();
     }
     else if (d->flags & Color)
     {
@@ -715,8 +715,8 @@ GLFramebuffer::Size GLFramebuffer::size() const
     {
         return d->size;
     }
-    //qDebug() << "FBO" << d->fbo << "size" << CanvasWindow::main().canvas().size().asText();
-    return CanvasWindow::main().canvas().size();
+    //qDebug() << "FBO" << d->fbo << "size" << GLWindow::main().canvas().size().asText();
+    return GLWindow::main().pixelSize();
 }
 
 void GLFramebuffer::setActiveRect(Rectangleui const &rect, bool applyGLState)

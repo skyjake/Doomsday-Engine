@@ -21,7 +21,7 @@
  */
 
 #include "de/GLState"
-#include "de/PersistentCanvasWindow"
+#include "de/PersistentGLWindow"
 #include "de/graphics/opengl.h"
 #include <de/GLInfo>
 #include <de/BitField>
@@ -604,7 +604,7 @@ GLFramebuffer &GLState::target() const
     {
         return *d->target;
     }
-    return CanvasWindow::main().canvas().framebuffer();
+    return GLWindow::main().framebuffer();
 }
 
 Rectangleui GLState::viewport() const
