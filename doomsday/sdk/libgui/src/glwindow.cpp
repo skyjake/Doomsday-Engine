@@ -82,7 +82,12 @@ DENG2_PIMPL(GLWindow)
         self.setState(NotReady);
         readyNotified = false;
         readyPending = false;
-        if (timerQuery) timerQuery->destroy();
+        if (timerQuery)
+        {
+            timerQuery->destroy();
+            delete timerQuery;
+            timerQuery = nullptr;
+        }
         GLInfo::glDeinit();
     }
 
@@ -386,6 +391,7 @@ void GLWindow::paintGL()
     // Do not proceed with painting until after the application has completed
     // GL initialization. This is done via timer callback because we don't
     // want to perform a long-running operation during a paint event.
+
     if (!d->readyNotified)
     {
         if (!d->readyPending)
