@@ -79,10 +79,11 @@ DENG2_PIMPL(GLWindow)
 
     void glDeinit()
     {
-        GLInfo::glDeinit();
         self.setState(NotReady);
         readyNotified = false;
         readyPending = false;
+        if (timerQuery) timerQuery->destroy();
+        GLInfo::glDeinit();
     }
 
     void notifyReady()

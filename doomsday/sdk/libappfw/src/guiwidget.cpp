@@ -816,6 +816,8 @@ void GuiWidget::deinitialize()
 
     try
     {
+        GLWindow::main().glActivate(); // This may be called via deferred destructors.
+
         if (d->attribs.testFlag(RetainStatePersistently))
         {
             d->saveState();

@@ -132,6 +132,11 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
 
 void BaseGuiApp::glDeinit()
 {
+    if (GLWindow::mainExists())
+    {
+        GLWindow::main().glActivate();
+    }
+
     d->vr.oculusRift().deinit();
     d->shaders.clear();
 }

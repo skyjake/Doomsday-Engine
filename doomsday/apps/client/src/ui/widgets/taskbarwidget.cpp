@@ -775,10 +775,14 @@ void TaskBarWidget::unloadGame()
 
 void TaskBarWidget::showAbout()
 {
+    root().window().glActivate();
+
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
     root().addOnTop(about);
     about->open();
+
+    root().window().glDone();
 }
 
 void TaskBarWidget::showUpdaterSettings()

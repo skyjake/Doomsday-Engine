@@ -325,16 +325,19 @@ void GuiRootWidget::dispatchLatestMousePosition()
 
 bool GuiRootWidget::processEvent(Event const &event)
 {
-    if (!RootWidget::processEvent(event))
-    {
-        if (event.type() == Event::MouseButton)
-        {
-            // Button events that no one handles will relinquish input focus.
-            //setFocus(0);
-        }
-        return false;
-    }
-    return true;
+    window().glActivate();
+    bool const wasProcessed = RootWidget::processEvent(event);
+//    {
+//        if (event.type() == Event::MouseButton)
+//        {
+//            // Button events that no one handles will relinquish input focus.
+//            //setFocus(0);
+//        }
+    window().glDone();
+    return wasProcessed;
+//    }
+//    window().glDone();
+//    return true;
 }
 
 void GuiRootWidget::handleEventAsFallback(Event const &)

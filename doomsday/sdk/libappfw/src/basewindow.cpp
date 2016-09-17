@@ -117,12 +117,15 @@ bool BaseWindow::prepareForDraw()
     {
         // Don't run the main loop until after the paint event has been dealt with.
         DENG2_GUI_APP->loop().pause();
+        return true; // Go ahead.
     }
-    return true; // Go ahead.
+    return false;
 }
 
 void BaseWindow::requestDraw()
 {
+    update();
+
     if (!prepareForDraw())
     {
         // Not right now, please.
@@ -144,8 +147,6 @@ void BaseWindow::requestDraw()
         makeCurrent();
         vr.oculusRift().deinit();
     }
-
-    update();
 }
 
 void BaseWindow::draw()
