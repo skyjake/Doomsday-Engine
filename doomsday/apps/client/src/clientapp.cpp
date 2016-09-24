@@ -77,6 +77,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/styledlogsinkformatter.h"
+#include "ui/viewcompositor.h"
 #include "render/rend_particle.h"
 #include "render/r_draw.h"
 #include "network/net_demo.h"
@@ -244,8 +245,15 @@ DENG2_PIMPL(ClientApp)
     {
         try
         {
+            ClientWindow::main().glActivate(); // for GL deinit
+
             LogBuffer::get().removeSink(logAlarm);
 
+            self.players().forAll([] (Player &p)
+            {
+                p.as<ClientPlayer>().viewCompositor().glDeinit();
+                return LoopContinue;
+            });
             self.glDeinit();
 
             Sys_Shutdown();
@@ -535,6 +543,12 @@ void ClientApp::initialize()
     addInitPackage("net.dengine.client");
     initSubsystems(); // loads Config
     DoomsdayApp::initialize();
+
+    // Initialize players.
+    for (int i = 0; i < players().count(); ++i)
+    {
+        players().at(i).as<ClientPlayer>().viewCompositor().setPlayerNumber(i);
+    }
 
     // Set up the log alerts (observes Config variables).
     d->logAlarm.alertMask.init();

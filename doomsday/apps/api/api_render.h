@@ -23,6 +23,7 @@
 
 #include "apis.h"
 #include "api_gl.h"
+#include "dd_share.h"
 
 DENG_API_TYPEDEF(Rend)
 {

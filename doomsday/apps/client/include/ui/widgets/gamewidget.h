@@ -47,10 +47,13 @@ public:
     void pause();
 
     // Events.
-    void viewResized();
-    void update();
-    void drawContent();
-    bool handleEvent(de::Event const &event);
+    void viewResized() override;
+    void update() override;
+    void drawContent() override;
+    bool handleEvent(de::Event const &event) override;
+
+protected:
+    void glDeinit() override;
 
 private:
     DENG2_PRIVATE(d)

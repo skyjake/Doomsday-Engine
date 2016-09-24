@@ -80,13 +80,12 @@ DENG2_PIMPL(GLWindow)
     void glDeinit()
     {
         self.setState(NotReady);
-        readyNotified = false;
-        readyPending = false;
         if (timerQuery)
         {
-            timerQuery->destroy();
-            delete timerQuery;
             timerQuery = nullptr;
+
+            readyNotified = false;
+            readyPending = false;
         }
         GLInfo::glDeinit();
     }

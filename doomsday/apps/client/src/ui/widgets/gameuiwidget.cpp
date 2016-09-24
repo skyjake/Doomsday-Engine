@@ -57,7 +57,7 @@ DENG2_PIMPL(GameUIWidget)
     {
         if (App_GameLoaded())
         {
-            R_RenderViewPorts(HUDLayer);
+            //R_RenderViewPorts(HUDLayer);
 
             // Draw finales.
             if (App_InFineSystem().finaleInProgess())

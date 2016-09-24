@@ -24,6 +24,7 @@
 //#include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
+class ViewCompositor;
 namespace render { class PlayerWeaponAnimator; }
 
 /**
@@ -73,6 +74,8 @@ public:
 
 public:
     ClientPlayer();
+
+    ViewCompositor &viewCompositor();
 
     viewdata_t &viewport();
     viewdata_t const &viewport() const;

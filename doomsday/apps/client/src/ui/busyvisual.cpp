@@ -151,6 +151,8 @@ static void sampleDoomWipe(void)
 
 void Con_DrawTransition(void)
 {
+    return; // TODO: re-enable with copied GameWidget FBO contents
+
     if (isDedicated) return;
     if (!Con_TransitionInProgress()) return;
 

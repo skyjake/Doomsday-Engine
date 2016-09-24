@@ -50,9 +50,6 @@ namespace de {
 class LIBGUI_PUBLIC GLTextureFramebuffer : public GLFramebuffer
 {
 public:
-    typedef Vector2ui Size;
-
-public:
     GLTextureFramebuffer(Image::Format const &colorFormat = Image::RGB_888,
                          Size          const &initialSize = Size(),
                          int                  sampleCount = 0 /*default*/);

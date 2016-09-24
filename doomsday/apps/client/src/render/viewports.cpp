@@ -699,17 +699,17 @@ void R_UseViewPort(viewport_t const *vp)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!vp)
+    if (!vp)
     {
         currentViewport = nullptr;
-        ClientWindow::main().game().glApplyViewport(
+        /*ClientWindow::main().game().glApplyViewport(
                 Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));
+                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
         currentViewport = const_cast<viewport_t *>(vp);
-        ClientWindow::main().game().glApplyViewport(vp->geometry);
+        //ClientWindow::main().game().glApplyViewport(vp->geometry);
     }
 }
 
@@ -1044,6 +1044,87 @@ static void clearViewPorts()
     LIBGUI_GL.glClear(bits);
 }
 
+void R_RenderViewPort(int playerNum)
+{
+    int localNum = P_ConsoleToLocal(playerNum);
+    if (localNum < 0) return;
+
+    viewport_t const *vp = &viewportOfLocalPlayer[localNum];
+
+    DENG2_ASSERT(vp->console == playerNum);
+
+    dint const oldDisplay = displayPlayer;
+    displayPlayer = vp->console;
+    R_UseViewPort(vp);
+
+    if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
+    {
+//        if(layer == Player3DViewLayer)
+        {
+            R_RenderBlankView();
+        }
+        return;
+    }
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+
+    // Use an orthographic projection in real pixel dimensions.
+    LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+
+    viewdata_t const *vd = &DD_Player(vp->console)->viewport();
+    RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
+                       vp->geometry.width(), vp->geometry.height());
+
+    RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
+                     vd->window.width(), vd->window.height());
+
+    //switch(layer)
+    //{
+    //case Player3DViewLayer:
+
+    R_UpdateViewer(vp->console);
+    //LensFx_BeginFrame(vp->console);
+
+    gx.DrawViewPort(localNum, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
+
+        //LensFx_EndFrame();
+        //break;
+
+#if 0
+    case ViewBorderLayer:
+        R_RenderPlayerViewBorder();
+        break;
+
+    case HUDLayer:
+        gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
+        break;
+    }
+#endif
+
+    restoreDefaultGLState();
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
+//}
+
+//if(layer == Player3DViewLayer)
+//{
+    // Increment the internal frame count. This does not
+    // affect the window's FPS counter.
+    frameCount++;
+
+    // Keep reseting until a new sharp world has arrived.
+    if(resetNextViewer > 1) resetNextViewer = 0;
+//}
+
+    // Restore things back to normal.
+    displayPlayer = oldDisplay;
+    R_UseViewPort(nullptr);
+}
+
+#if 0
 void R_RenderViewPorts(ViewPortLayer layer)
 {
     dint oldDisplay = displayPlayer;
@@ -1090,9 +1171,9 @@ void R_RenderViewPorts(ViewPortLayer layer)
         {
         case Player3DViewLayer:
             R_UpdateViewer(vp->console);
-            LensFx_BeginFrame(vp->console);
+            //LensFx_BeginFrame(vp->console);
             gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
-            LensFx_EndFrame();
+            //LensFx_EndFrame();
             break;
 
         case ViewBorderLayer:
@@ -1125,6 +1206,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
     displayPlayer = oldDisplay;
     R_UseViewPort(nullptr);
 }
+#endif
 
 void R_ClearViewData()
 {

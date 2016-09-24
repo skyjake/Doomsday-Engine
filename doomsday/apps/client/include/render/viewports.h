@@ -112,7 +112,9 @@ void R_ResetFrameCount();
 /**
  * Render all view ports in the viewport grid.
  */
-void R_RenderViewPorts(ViewPortLayer layer);
+//void R_RenderViewPorts(ViewPortLayer layer);
+
+void R_RenderViewPort(int playerNum);
 
 /**
  * Render a blank view for the specified player.

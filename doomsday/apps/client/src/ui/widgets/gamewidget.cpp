@@ -18,6 +18,7 @@
  */
 
 #include "de_platform.h" // must be included first
+#include "api_render.h"
 
 #include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
@@ -26,6 +27,7 @@
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "dd_def.h"
@@ -34,6 +36,7 @@
 #include "sys_system.h"
 #include "ui/editors/edit_bias.h"
 #include "world/map.h"
+#include "world/p_players.h"
 #include "network/net_main.h"
 #include "client/cl_def.h" // clientPaused
 #include "render/r_main.h"
@@ -46,6 +49,7 @@
 
 #include <doomsday/console/exec.h>
 #include <de/GLState>
+#include <de/GLTextureFramebuffer>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
@@ -60,6 +64,49 @@ DENG2_PIMPL(GameWidget)
 {
     Impl(Public *i) : Base(i) {}
 
+    void renderGameViews()
+    {
+        auto const &players = DoomsdayApp::players();
+
+        for (int i = 0; i < players.count(); ++i)
+        {
+            ClientPlayer &player = players.at(i).as<ClientPlayer>();
+            auto &viewComp = player.viewCompositor();
+
+            if (player.isInGame() &&
+                player.publicData().flags & DDPF_LOCAL)
+            {
+                viewComp.renderGameView([] (int playerNum) {
+                    R_RenderViewPort(playerNum);
+                });
+            }
+            else
+            {
+                viewComp.glDeinit();
+            }
+        }
+    }
+
+    /*void initializeFramebuffers()
+    {
+        auto const &players = DoomsdayApp::players();
+
+        for (int i = 0; i < players.count(); ++i)
+        {
+            if (players.at(i).isInGame() &&
+                players.at(i).publicData().flags & DDPF_LOCAL)
+            {
+                initializePlayerFramebuffer(i);
+                playerFbos[i]->resize(framebufferSize(i));
+            }
+            else if (playerFbos[i])
+            {
+                delete playerFbos[i];
+                playerFbos[i] = nullptr;
+            }
+        }
+    }*/
+
     void draw()
     {
         bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
@@ -70,16 +117,22 @@ DENG2_PIMPL(GameWidget)
             // before rendering a frame.
             LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         }
-
         if (cannotDraw) return;
 
         if (App_GameLoaded())
         {
+            // Each players' view is rendered into an FBO first. What is seen on screen
+            // is then composited using the player view as a texture with additional layers
+            // and effects.
+            //initializeFramebuffers();
+
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-            R_RenderViewPorts(Player3DViewLayer);
-            R_RenderViewPorts(ViewBorderLayer);
+            renderGameViews();
+
+            //R_RenderViewPorts(Player3DViewLayer);
+            //R_RenderViewPorts(ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();
@@ -99,12 +152,12 @@ DENG2_PIMPL(GameWidget)
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if (!App_GameLoaded())
+        /*if (!App_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
-        }
-        UI_LoadFonts();
+        }*/
+        //UI_LoadFonts();
     }
 };
 
@@ -242,4 +295,11 @@ bool GameWidget::handleEvent(Event const &event)
     }
 
     return false;
+}
+
+void GameWidget::glDeinit()
+{
+    GuiWidget::glDeinit();
+
+    //d->glDeinit();
 }
