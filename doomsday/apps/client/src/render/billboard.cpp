@@ -539,7 +539,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
             {
                 // Restricted view plane alignment.
                 // This'll do, for now... Really it should notice both the
-                // sprite anLIBGUI_GL.gle and vpitch.
+                // sprite angle and vpitch.
                 LIBGUI_GL.glRotatef(vpitch * .5f, s_dx, 0, s_dy);
             }
         }
@@ -661,7 +661,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
 void Rend_SpriteRegister()
 {
     C_VAR_INT   ("rend-sprite-align",       &alwaysAlign,       0, 0, 3);
-    C_VAR_FLOAT ("rend-sprite-align-anLIBGUI_GL.gle", &maxSpriteAngle,    0, 0, 90);
+    C_VAR_FLOAT ("rend-sprite-align-angle", &maxSpriteAngle,    0, 0, 90);
     C_VAR_INT   ("rend-sprite-alpha",       &useSpriteAlpha,    0, 0, 1);
     C_VAR_INT   ("rend-sprite-blend",       &useSpriteBlend,    0, 0, 1);
     C_VAR_INT   ("rend-sprite-lights",      &spriteLight,       0, 0, 10);
