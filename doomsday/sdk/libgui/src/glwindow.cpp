@@ -80,12 +80,14 @@ DENG2_PIMPL(GLWindow)
     void glDeinit()
     {
         self.setState(NotReady);
+        readyNotified = false;
+        readyPending = false;
         if (timerQuery)
         {
+            if (timerQueryPending) timerQuery->waitForResult();
+            delete timerQuery;
             timerQuery = nullptr;
-
-            readyNotified = false;
-            readyPending = false;
+            timerQueryPending = false;
         }
         GLInfo::glDeinit();
     }
@@ -409,7 +411,7 @@ void GLWindow::paintGL()
 
         if (!d->timerQuery)
         {
-            d->timerQuery = new QOpenGLTimerQuery(this);
+            d->timerQuery = new QOpenGLTimerQuery();
             if (!d->timerQuery->create())
             {
                 LOG_GL_ERROR("Failed to create timer query object");
