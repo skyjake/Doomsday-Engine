@@ -418,7 +418,7 @@ void GuiRootWidget::draw()
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.
-        window().framebuffer().clear(GLFramebuffer::Color);
+        window().framebuffer().clear(GLFramebuffer::ColorDepthStencil);
 
         d->noFramesDrawnYet = false;
     }
