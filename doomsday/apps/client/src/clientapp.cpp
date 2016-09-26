@@ -678,6 +678,24 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
+LoopResult ClientApp::forLocalPlayers(std::function<LoopResult (ClientPlayer &)> func)
+{
+    auto const &players = DoomsdayApp::players();
+    for (int i = 0; i < players.count(); ++i)
+    {
+        ClientPlayer &player = players.at(i).as<ClientPlayer>();
+        if (player.isInGame() &&
+            player.publicData().flags & DDPF_LOCAL)
+        {
+            if (auto result = func(player))
+            {
+                return result;
+            }
+        }
+    }
+    return LoopContinue;
+}
+
 void ClientApp::alert(String const &msg, LogEntry::Level level)
 {
     if (ClientWindow::mainExists())

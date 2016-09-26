@@ -62,73 +62,60 @@ using namespace de;
 
 DENG2_PIMPL(GameWidget)
 {
+    bool needFrames = true; // Rendering a new frame is necessary.
+
     Impl(Public *i) : Base(i) {}
 
+    /**
+     * Render the 3D game view of each local player. The results are stored in each
+     * players' ViewCompositor as a texture. This is a slow operation and should only
+     * be done once after each time game tics have been run.
+     */
     void renderGameViews()
     {
-        auto const &players = DoomsdayApp::players();
-
-        for (int i = 0; i < players.count(); ++i)
+        ClientApp::app().forLocalPlayers([] (ClientPlayer &player)
         {
-            ClientPlayer &player = players.at(i).as<ClientPlayer>();
-            auto &viewComp = player.viewCompositor();
-
-            if (player.isInGame() &&
-                player.publicData().flags & DDPF_LOCAL)
-            {
-                viewComp.renderGameView([] (int playerNum) {
-                    R_RenderViewPort(playerNum);
-                });
-            }
-            else
-            {
-                viewComp.glDeinit();
-            }
-        }
+            player.viewCompositor().renderGameView([] (int playerNum) {
+                R_RenderViewPort(playerNum);
+            });
+            return LoopContinue;
+        });
     }
 
-    /*void initializeFramebuffers()
+    /**
+     * Draw the game widget's contents by compositing the various layers: game view,
+     * border, HUD, finale, intermission, and engine/debug overlays. This is generally
+     * a quick operation and can be done multiple times per window paint.
+     */
+    void drawCompositedFrames()
     {
-        auto const &players = DoomsdayApp::players();
-
-        for (int i = 0; i < players.count(); ++i)
+        ClientApp::app().forLocalPlayers([this] (ClientPlayer &player)
         {
-            if (players.at(i).isInGame() &&
-                players.at(i).publicData().flags & DDPF_LOCAL)
-            {
-                initializePlayerFramebuffer(i);
-                playerFbos[i]->resize(framebufferSize(i));
-            }
-            else if (playerFbos[i])
-            {
-                delete playerFbos[i];
-                playerFbos[i] = nullptr;
-            }
-        }
-    }*/
+            player.viewCompositor().drawCompositedLayers(self.rule().recti());
+            return LoopContinue;
+        });
+    }
 
     void draw()
     {
-        bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
+        //bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
 
-        if (renderWireframe || cannotDraw)
+        /*if (renderWireframe || cannotDraw)
         {
             // When rendering is wireframe mode, we must clear the screen
             // before rendering a frame.
             LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
-        }
-        if (cannotDraw) return;
+        }*/
+        //if (cannotDraw) return;
 
-        if (App_GameLoaded())
+        if (needFrames)
         {
-            // Each players' view is rendered into an FBO first. What is seen on screen
-            // is then composited using the player view as a texture with additional layers
-            // and effects.
-            //initializeFramebuffers();
-
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
+            // Each players' view is rendered into an FBO first. What is seen on screen
+            // is then composited using the player view as a texture with additional layers
+            // and effects.
             renderGameViews();
 
             //R_RenderViewPorts(Player3DViewLayer);
@@ -139,10 +126,11 @@ DENG2_PIMPL(GameWidget)
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();
+
+            needFrames = false;
         }
 
-        // End any open DGL sequence.
-        DGL_End();
+        drawCompositedFrames();
     }
 
     void updateSize()
@@ -208,10 +196,12 @@ void GameWidget::update()
     // Run at least one (fractional) tic.
     Loop_RunTics();
 
+    // Time has progressed, so game views need rendering.
+    d->needFrames = true;
+
     // We may have received a Quit message from the windowing system
     // during events/tics processing.
-    if (Sys_IsShuttingDown())
-        return;
+    if (Sys_IsShuttingDown()) return;
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
@@ -225,7 +215,7 @@ void GameWidget::update()
 
 void GameWidget::drawContent()
 {
-    if (isDisabled() || !GL_IsFullyInited())
+    if (isDisabled() || !GL_IsFullyInited() || !App_GameLoaded())
         return;
 
     GLState::push();

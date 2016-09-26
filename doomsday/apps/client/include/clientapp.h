@@ -35,6 +35,8 @@
 #include "busyrunner.h"
 #include "world/clientserverworld.h"
 
+class ClientPlayer;
+
 /**
  * The client application.
  */
@@ -60,6 +62,9 @@ public:
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) override;
 
+    de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
+
+public:
     /**
      * Reports a new alert to the user.
      *
@@ -68,7 +73,6 @@ public:
      */
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
-public:
     static ClientApp &          app();
     static BusyRunner &         busyRunner();
     static Updater &            updater();

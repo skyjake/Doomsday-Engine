@@ -17,9 +17,15 @@
  */
 
 #include "ui/viewcompositor.h"
+#include "ui/clientwindow.h"
+#include "render/viewports.h"
+#include "world/p_players.h"
 #include "api_render.h"
+#include "clientapp.h"
 
 #include <de/GLState>
+#include <de/GLShaderBank>
+#include <de/Drawable>
 
 using namespace de;
 
@@ -32,10 +38,19 @@ DENG2_PIMPL(ViewCompositor)
     /// game HUD.
     GLTextureFramebuffer viewFramebuf;
 
+    Drawable frameDrawable;
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uFrameTex  { "uTex", GLUniform::Sampler2D };
+
     Impl(Public *i)
         : Base(i)
         , viewFramebuf(Image::RGBA_8888)
     {}
+
+    ~Impl()
+    {
+        DENG2_ASSERT(!frameDrawable.isReady()); // deinited earlier
+    }
 
     GLFramebuffer::Size framebufferSize() const
     {
@@ -50,6 +65,28 @@ DENG2_PIMPL(ViewCompositor)
     {
         viewFramebuf.resize(framebufferSize());
         viewFramebuf.glInit();
+
+        if (!frameDrawable.isReady())
+        {
+            ClientApp::shaders().build(frameDrawable.program(), "generic.texture")
+                    << uMvpMatrix
+                    << uFrameTex;
+
+            using VBuf = GuiWidget::DefaultVertexBuf;
+
+            auto *vbuf = new VBuf;
+            frameDrawable.addBuffer(vbuf);
+
+            VBuf::Builder verts;
+            verts.makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1));
+            vbuf->setVertices(gl::TriangleStrip, verts, gl::Static);
+        }
+    }
+
+    void glDeinit()
+    {
+        viewFramebuf.glDeinit();
+        frameDrawable.clear();
     }
 };
 
@@ -64,7 +101,7 @@ void ViewCompositor::setPlayerNumber(int playerNum)
 
 void ViewCompositor::glDeinit()
 {
-    d->viewFramebuf.glDeinit();
+    d->glDeinit();
 }
 
 void ViewCompositor::renderGameView(std::function<void (int)> renderFunc)
@@ -76,8 +113,9 @@ void ViewCompositor::renderGameView(std::function<void (int)> renderFunc)
             .setViewport(Rectangleui::fromSize(d->viewFramebuf.size()))
             .apply();
 
-    d->viewFramebuf.clear(GLFramebuffer::ColorDepth);
+    d->viewFramebuf.clear(GLFramebuffer::ColorDepthStencil);
 
+    // Rendering is done by the caller-provided callback.
     renderFunc(d->playerNum);
 
     GLState::pop()
@@ -94,7 +132,39 @@ GLTextureFramebuffer const &ViewCompositor::gameView() const
     return d->viewFramebuf;
 }
 
-void ViewCompositor::drawCompositedLayers()
+void ViewCompositor::drawCompositedLayers(Rectanglei const &rect)
 {
+    DENG2_ASSERT(d->frameDrawable.isReady());
 
+    GLState::push()
+            .setBlend    (false)
+            .setDepthTest(false)
+            .setCull     (gl::None);
+
+    // First the game view (using the previously rendered texture).
+    d->uFrameTex  = d->viewFramebuf.colorTexture();
+    d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
+                    Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
+    d->frameDrawable.draw();
+
+    // View border around the game view.
+    auto const oldDisplayPlayer = displayPlayer;
+    displayPlayer = d->playerNum;
+
+    R_UseViewPort(d->playerNum);
+
+    //R_RenderPlayerViewBorder();
+
+    // Game HUD.
+
+    // Finale.
+
+    // Non-map game screens.
+
+    // Legacy engine/debug UIs (stuff from the old Net_Drawer).
+
+    R_UseViewPort(nullptr);
+    displayPlayer = oldDisplayPlayer;
+
+    GLState::pop().apply();
 }

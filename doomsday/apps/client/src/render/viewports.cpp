@@ -702,14 +702,14 @@ void R_UseViewPort(viewport_t const *vp)
     if (!vp)
     {
         currentViewport = nullptr;
-        /*ClientWindow::main().game().glApplyViewport(
+        ClientWindow::main().game().glApplyViewport(
                 Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
+                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));
     }
     else
     {
         currentViewport = const_cast<viewport_t *>(vp);
-        //ClientWindow::main().game().glApplyViewport(vp->geometry);
+        ClientWindow::main().game().glApplyViewport(vp->geometry);
     }
 }
 
@@ -1056,6 +1056,7 @@ void R_RenderViewPort(int playerNum)
     dint const oldDisplay = displayPlayer;
     displayPlayer = vp->console;
     R_UseViewPort(vp);
+    //currentViewport = vp;
 
     if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
     {
@@ -1085,9 +1086,10 @@ void R_RenderViewPort(int playerNum)
     //case Player3DViewLayer:
 
     R_UpdateViewer(vp->console);
+
     //LensFx_BeginFrame(vp->console);
 
-    gx.DrawViewPort(localNum, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
+    gx.DrawViewPort(localNum, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 0);
 
         //LensFx_EndFrame();
         //break;
@@ -1098,7 +1100,7 @@ void R_RenderViewPort(int playerNum)
         break;
 
     case HUDLayer:
-        gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
+        gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 1);
         break;
     }
 #endif
@@ -1122,6 +1124,8 @@ void R_RenderViewPort(int playerNum)
     // Restore things back to normal.
     displayPlayer = oldDisplay;
     R_UseViewPort(nullptr);
+
+    //currentViewport = nullptr;
 }
 
 #if 0
@@ -1488,4 +1492,17 @@ void Viewports_Register()
     //C_VAR_INT ("rend-info-tris",            &rendInfoTris,          0, 0, 1); // not implemented atm
 
     C_CMD("viewgrid", "ii", ViewGrid);
+}
+
+void R_UseViewPort(int consoleNum)
+{
+    int local = P_ConsoleToLocal(consoleNum);
+    if (local >= 0)
+    {
+        R_UseViewPort(&viewportOfLocalPlayer[local]);
+    }
+    else
+    {
+        R_UseViewPort(nullptr);
+    }
 }

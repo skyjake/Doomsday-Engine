@@ -76,9 +76,9 @@ public:
      * Note that the existing contents of the game view framebuffer are used as-is; the
      * game view needs to be redrawn separately beforehand, if needed.
      *
-     * @param playerNum  Player number.
+     * @param rect  Rectangle in which to draw the layers.
      */
-    void drawCompositedLayers();
+    void drawCompositedLayers(de::Rectanglei const &rect);
 
 private:
     DENG2_PRIVATE(d)
