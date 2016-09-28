@@ -23,14 +23,20 @@
 #include "api_render.h"
 #include "clientapp.h"
 
+#include <de/Config>
 #include <de/GLState>
 #include <de/GLShaderBank>
 #include <de/Drawable>
 
 using namespace de;
 
+static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
+
 DENG2_PIMPL(ViewCompositor)
 {
+    mutable Variable const *pixelDensity = nullptr;
+    mutable Variable const *resizeFactor = nullptr;
+
     int playerNum = 0;
 
     /// Game view framebuffer. The latest game view is kept around for accessing at
@@ -40,7 +46,7 @@ DENG2_PIMPL(ViewCompositor)
 
     Drawable frameDrawable;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    GLUniform uFrameTex  { "uTex", GLUniform::Sampler2D };
+    GLUniform uFrameTex  { "uTex",       GLUniform::Sampler2D };
 
     Impl(Public *i)
         : Base(i)
@@ -52,13 +58,36 @@ DENG2_PIMPL(ViewCompositor)
         DENG2_ASSERT(!frameDrawable.isReady()); // deinited earlier
     }
 
+    void getConfig() const
+    {
+        if (!pixelDensity)
+        {
+            // Config variables.
+            pixelDensity = &App::config("render.pixelDensity");
+            resizeFactor = &App::config("render.fx.resize.factor");
+        }
+    }
+
+    double scaleFactor() const
+    {
+        getConfig();
+
+        double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
+        return FACTOR_RANGE.clamp(*pixelDensity * rf);
+    }
+
     GLFramebuffer::Size framebufferSize() const
     {
-        // TODO: Factor in pixel density and scaled-down window size.
-
         RectRaw geom;
         R_ViewPortGeometry(playerNum, &geom);
-        return GLFramebuffer::Size(geom.size.width, geom.size.height);
+        GLFramebuffer::Size size { uint(geom.size.width), uint(geom.size.height) };
+
+        // Apply game view scaling.
+
+        // Apply pixel density.
+        size *= scaleFactor();
+
+        return size;
     }
 
     void glInit()
@@ -137,6 +166,7 @@ void ViewCompositor::drawCompositedLayers(Rectanglei const &rect)
     DENG2_ASSERT(d->frameDrawable.isReady());
 
     GLState::push()
+            .setAlphaTest(false)
             .setBlend    (false)
             .setDepthTest(false)
             .setCull     (gl::None);
