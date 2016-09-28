@@ -91,7 +91,7 @@ DENG2_PIMPL(GameWidget)
     {
         ClientApp::app().forLocalPlayers([this] (ClientPlayer &player)
         {
-            player.viewCompositor().drawCompositedLayers(self.rule().recti());
+            player.viewCompositor().drawCompositedLayers();
             return LoopContinue;
         });
     }
@@ -157,7 +157,6 @@ GameWidget::GameWidget(String const &name)
 
 void GameWidget::glApplyViewport(Rectanglei const &rect)
 {
-    qDebug() << "glApplyViewport:" << rect.asText();
     GLState::current()
             .setNormalizedViewport(normalizedRect(rect))
             .apply();

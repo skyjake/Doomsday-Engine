@@ -157,7 +157,7 @@ GLTextureFramebuffer const &ViewCompositor::gameView() const
     return d->viewFramebuf;
 }
 
-void ViewCompositor::drawCompositedLayers(Rectanglei const &rect)
+void ViewCompositor::drawCompositedLayers()
 {
     DENG2_ASSERT(d->frameDrawable.isReady());
 
@@ -168,31 +168,79 @@ void ViewCompositor::drawCompositedLayers(Rectanglei const &rect)
             .setCull     (gl::None);
 
     Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
-
-    // First the game view (using the previously rendered texture).
-    d->uFrameTex  = d->viewFramebuf.colorTexture();
-    d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
-                    Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft);
-    d->frameDrawable.draw();
+    auto const oldDisplayPlayer = displayPlayer;
 
     // View border around the game view.
-    auto const oldDisplayPlayer = displayPlayer;
     displayPlayer = d->playerNum;
 
     R_UseViewPort(d->playerNum);
 
-    //R_RenderPlayerViewBorder();
+    // 3D world view (using the previously rendered texture).
+    {
+        d->uFrameTex  = d->viewFramebuf.colorTexture();
+        d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
+                        Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft);
+        d->frameDrawable.draw();
+    }
+
+    // Some of the layers use OpenGL 2 drawing code.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    LIBGUI_GL.glLoadMatrixf(ClientWindow::main().root().projMatrix2D().values());
+
+    // Fill around a scaled-down 3D view. The border is not visible if the 3D view
+    // covers the entire area.
+    {
+        R_RenderPlayerViewBorder();
+    }
 
     // Game HUD.
+    {
+        /// @todo HUD rendering probably doesn't need the vdWindow.
+
+        auto const *vp = R_CurrentViewPort();
+        RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
+                           vp->geometry.width(), vp->geometry.height());
+
+        viewdata_t const *vd = &DD_Player(d->playerNum)->viewport();
+        RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
+                         vd->window.width(), vd->window.height());
+
+        if (gx.DrawViewPort)
+        {
+            GLState::current()
+                    .setBlend(true)
+                    .apply();
+
+            gx.DrawViewPort(P_ConsoleToLocal(d->playerNum),
+                            &vpGeometry,
+                            &vdWindow,
+                            displayPlayer,
+                            /* layer: */ 1);
+        }
+    }
 
     // Finale.
+    {
+
+    }
 
     // Non-map game screens.
+    {
+
+    }
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
+    {
 
+    }
+
+    // Restore the default drawing state.
     R_UseViewPort(nullptr);
     displayPlayer = oldDisplayPlayer;
+
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     GLState::pop().apply();
 }

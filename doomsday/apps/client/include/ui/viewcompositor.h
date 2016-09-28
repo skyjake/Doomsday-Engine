@@ -78,7 +78,7 @@ public:
      *
      * @param rect  Rectangle in which to draw the layers.
      */
-    void drawCompositedLayers(de::Rectanglei const &rect);
+    void drawCompositedLayers();
 
 private:
     DENG2_PRIVATE(d)
