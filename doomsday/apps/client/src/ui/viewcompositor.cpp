@@ -78,17 +78,7 @@ DENG2_PIMPL(ViewCompositor)
 
     GLFramebuffer::Size framebufferSize() const
     {
-        //RectRaw geom;
-        //R_ViewPortGeometry(playerNum, &geom);
-        Rectanglei const playerView = R_ConsoleViewRect(playerNum);
-        GLFramebuffer::Size size = playerView.size();
-
-        // Game view scaling for vanilla emulation.
-        //viewdata_t const &vd = DD_Player(playerNum)->viewport();
-
-        /*Rectanglei vdWindow(vd.window.topLeft.x, vd.window.topLeft.y,
-                            vd.window.width(), vd.window.height());*/
-        //qDebug() << vdWindow.asText();
+        GLFramebuffer::Size size = R_Console3DViewRect(playerNum).size();
 
         // Pixel density.
         size *= scaleFactor();
@@ -177,12 +167,12 @@ void ViewCompositor::drawCompositedLayers(Rectanglei const &rect)
             .setDepthTest(false)
             .setCull     (gl::None);
 
-    Rectanglei const playerView = R_ConsoleViewRect(d->playerNum);
+    Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
 
     // First the game view (using the previously rendered texture).
     d->uFrameTex  = d->viewFramebuf.colorTexture();
     d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
-                    Matrix4f::scaleThenTranslate(playerView.size(), playerView.topLeft);
+                    Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft);
     d->frameDrawable.draw();
 
     // View border around the game view.

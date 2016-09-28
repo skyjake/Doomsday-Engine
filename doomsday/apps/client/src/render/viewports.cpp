@@ -726,18 +726,28 @@ void R_UseViewPort(int consoleNum)
     }
 }
 
-Rectanglei R_ConsoleViewRect(int console)
+Rectanglei R_ConsoleRect(int console)
 {
     int local = P_ConsoleToLocal(console);
     if (local < 0) return Rectanglei();
 
-    auto const &pv = DD_Player(console)->viewport();
     auto const &port = viewportOfLocalPlayer[local];
 
-    return Rectanglei(port.geometry.topLeft.x + pv.window.topLeft.x,
-                      port.geometry.topLeft.y + pv.window.topLeft.y,
-                      de::min(port.geometry.width(),  pv.window.width()),
-                      de::min(port.geometry.height(), pv.window.height()));
+    return Rectanglei(port.geometry.topLeft.x,
+                      port.geometry.topLeft.y,
+                      port.geometry.width(),
+                      port.geometry.height());
+}
+
+Rectanglei R_Console3DViewRect(int console)
+{
+    Rectanglei rect = R_ConsoleRect(console);
+
+    auto const &pv = DD_Player(console)->viewport();
+    return Rectanglei(rect.left() + pv.window.topLeft.x,
+                      rect.top()  + pv.window.topLeft.y,
+                      de::min(rect.width(),  pv.window.width()),
+                      de::min(rect.height(), pv.window.height()));
 }
 
 viewport_t const *R_CurrentViewPort()

@@ -137,11 +137,19 @@ void R_UseViewPort(viewport_t const *vp);
 void R_UseViewPort(int consoleNum);
 
 /**
- * Determines the location of the viewport of a player.
+ * Determines the location of the game view of a player. This is the area where
+ * the game view, border and game HUD will be drawn.
  * @param console  Player number.
- * @return View rectangle in UI coordinates.
+ * @return Console rectangle in UI coordinates.
  */
-de::Rectanglei R_ConsoleViewRect(int console);
+de::Rectanglei R_ConsoleRect(int console);
+
+/**
+ * Determines the location of the 3D viewport of a player.
+ * @param console  Player number.
+ * @return Player's 3D world view rectangle in UI coordinates.
+ */
+de::Rectanglei R_Console3DViewRect(int console);
 
 void R_UpdateViewer(int consoleNum);
 
