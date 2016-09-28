@@ -713,6 +713,33 @@ void R_UseViewPort(viewport_t const *vp)
     }
 }
 
+void R_UseViewPort(int consoleNum)
+{
+    int local = P_ConsoleToLocal(consoleNum);
+    if (local >= 0)
+    {
+        R_UseViewPort(&viewportOfLocalPlayer[local]);
+    }
+    else
+    {
+        R_UseViewPort(nullptr);
+    }
+}
+
+Rectanglei R_ConsoleViewRect(int console)
+{
+    int local = P_ConsoleToLocal(console);
+    if (local < 0) return Rectanglei();
+
+    auto const &pv = DD_Player(console)->viewport();
+    auto const &port = viewportOfLocalPlayer[local];
+
+    return Rectanglei(port.geometry.topLeft.x + pv.window.topLeft.x,
+                      port.geometry.topLeft.y + pv.window.topLeft.y,
+                      de::min(port.geometry.width(),  pv.window.width()),
+                      de::min(port.geometry.height(), pv.window.height()));
+}
+
 viewport_t const *R_CurrentViewPort()
 {
     return currentViewport;
@@ -1492,17 +1519,4 @@ void Viewports_Register()
     //C_VAR_INT ("rend-info-tris",            &rendInfoTris,          0, 0, 1); // not implemented atm
 
     C_CMD("viewgrid", "ii", ViewGrid);
-}
-
-void R_UseViewPort(int consoleNum)
-{
-    int local = P_ConsoleToLocal(consoleNum);
-    if (local >= 0)
-    {
-        R_UseViewPort(&viewportOfLocalPlayer[local]);
-    }
-    else
-    {
-        R_UseViewPort(nullptr);
-    }
 }

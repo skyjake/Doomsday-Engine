@@ -136,6 +136,13 @@ void R_UseViewPort(viewport_t const *vp);
 
 void R_UseViewPort(int consoleNum);
 
+/**
+ * Determines the location of the viewport of a player.
+ * @param console  Player number.
+ * @return View rectangle in UI coordinates.
+ */
+de::Rectanglei R_ConsoleViewRect(int console);
+
 void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer();

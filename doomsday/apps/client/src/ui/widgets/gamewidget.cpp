@@ -157,6 +157,7 @@ GameWidget::GameWidget(String const &name)
 
 void GameWidget::glApplyViewport(Rectanglei const &rect)
 {
+    qDebug() << "glApplyViewport:" << rect.asText();
     GLState::current()
             .setNormalizedViewport(normalizedRect(rect))
             .apply();

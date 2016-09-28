@@ -424,13 +424,16 @@ void GL_SwitchTo3DState(dd_bool pushState, viewport_t const *port, viewdata_t co
 
     std::memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
-    viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
+    //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
+    //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
+
+    viewpx = 0;
+    viewpy = 0;
     viewpw = de::min(port->geometry.width(), viewData->window.width());
     viewph = de::min(port->geometry.height(), viewData->window.height());
 
-    ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
-                                                                     Vector2ui(viewpw, viewph)));
+    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
+                                                                     Vector2ui(viewpw, viewph)));*/
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -496,7 +499,7 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
         break; }
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        ClientWindow::main().game().glApplyViewport(currentView.geometry);
+        //ClientWindow::main().game().glApplyViewport(currentView.geometry);
         LIBGUI_GL.glMatrixMode(GL_PROJECTION);
         LIBGUI_GL.glPopMatrix();
         LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
