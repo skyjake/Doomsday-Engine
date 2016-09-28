@@ -18,10 +18,17 @@
 
 #include "ui/viewcompositor.h"
 #include "ui/clientwindow.h"
+#include "ui/infine/finaleinterpreter.h"
+#include "ui/infine/finalepagewidget.h"
+#include "ui/editors/edit_bias.h"
+#include "render/rend_main.h"
 #include "render/viewports.h"
 #include "world/p_players.h"
+#include "world/map.h"
+#include "api_console.h"
 #include "api_render.h"
 #include "clientapp.h"
+#include "dd_main.h"
 
 #include <de/Config>
 #include <de/GLState>
@@ -113,6 +120,15 @@ DENG2_PIMPL(ViewCompositor)
         viewFramebuf.glDeinit();
         frameDrawable.clear();
     }
+
+    static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
+    {
+        GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP |
+                                       (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
+                                       SCREENWIDTH, SCREENHEIGHT,
+                                       DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                       scalemode_t(Con_GetByte("rend-finale-stretch")));
+    }
 };
 
 ViewCompositor::ViewCompositor()
@@ -196,7 +212,7 @@ void ViewCompositor::drawCompositedLayers()
 
     // Game HUD.
     {
-        /// @todo HUD rendering probably doesn't need the vdWindow.
+        /// @todo HUD rendering probably doesn't need the vdWindow (maybe for the automap?).
 
         auto const *vp = R_CurrentViewPort();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -220,27 +236,53 @@ void ViewCompositor::drawCompositedLayers()
         }
     }
 
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
+
     // Finale.
     {
-
+        if (App_InFineSystem().finaleInProgess())
+        {
+            dgl_borderedprojectionstate_t bp;
+            d->setupProjectionForFinale(&bp);
+            GL_BeginBorderedProjection(&bp);
+            for (Finale *finale : App_InFineSystem().finales())
+            {
+                finale->interpreter().page(FinaleInterpreter::Anims).draw();
+                finale->interpreter().page(FinaleInterpreter::Texts).draw();
+            }
+            GL_EndBorderedProjection(&bp);
+        }
     }
 
     // Non-map game screens.
     {
-
+        // Draw any full window game graphics.
+        if (gx.DrawWindow)
+        {
+            Size2Raw const dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+            gx.DrawWindow(&dimensions);
+        }
     }
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
+        // Draw the widgets of the Shadow Bias Editor (if active).
+        SBE_DrawGui();
 
+        // Debug visualizations.
+        if (App_World().hasMap() && App_World().map().hasLightGrid())
+        {
+            Rend_LightGridVisual(App_World().map().lightGrid());
+        }
+        Net_Drawer();
+        Sfx_ChannelDrawer();
     }
 
     // Restore the default drawing state.
     R_UseViewPort(nullptr);
     displayPlayer = oldDisplayPlayer;
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
-
+    GLState::considerNativeStateUndefined();
     GLState::pop().apply();
 }

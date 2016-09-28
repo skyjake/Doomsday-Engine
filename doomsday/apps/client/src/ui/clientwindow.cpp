@@ -50,7 +50,6 @@
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
 #include "ui/widgets/gamewidget.h"
-#include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -87,7 +86,6 @@ DENG2_PIMPL(ClientWindow)
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
     GameWidget *game = nullptr;
-    GameUIWidget *gameUI = nullptr;
     LabelWidget *nowPlaying = nullptr;
     TaskBarWidget *taskBar = nullptr;
     LabelWidget *taskBarBlur = nullptr; ///< Blur everything below the task bar.
@@ -184,10 +182,10 @@ DENG2_PIMPL(ClientWindow)
         game->disable();
         root.add(game);
 
-        gameUI = new GameUIWidget;
+        /*gameUI = new GameUIWidget;
         gameUI->rule().setRect(game->rule());
         gameUI->disable();
-        root.add(gameUI);
+        root.add(gameUI);*/
 
         auto *miniGameControls = new LabelWidget;
         {
@@ -415,8 +413,8 @@ DENG2_PIMPL(ClientWindow)
         case Busy:
             game->hide();
             game->disable();
-            gameUI->hide();
-            gameUI->disable();
+            //gameUI->hide();
+            //gameUI->disable();
             taskBar->disable();
 
             busy->show();
@@ -429,8 +427,8 @@ DENG2_PIMPL(ClientWindow)
 
             game->show();
             game->enable();
-            gameUI->show();
-            gameUI->enable();
+            //gameUI->show();
+            //gameUI->enable();
             taskBar->enable();
             break;
         }
@@ -456,7 +454,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Now that the window is ready for drawing we can enable the GameWidget.
         game->enable();
-        gameUI->enable();
+        //gameUI->enable();
 
         // Configure a viewport immediately.
         GLState::current().setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight())).apply();

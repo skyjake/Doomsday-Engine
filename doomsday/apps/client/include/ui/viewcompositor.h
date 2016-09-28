@@ -75,8 +75,6 @@ public:
      *
      * Note that the existing contents of the game view framebuffer are used as-is; the
      * game view needs to be redrawn separately beforehand, if needed.
-     *
-     * @param rect  Rectangle in which to draw the layers.
      */
     void drawCompositedLayers();
 

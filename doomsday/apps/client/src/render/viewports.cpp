@@ -63,7 +63,7 @@
 
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
-#include "ui/widgets/gameuiwidget.h"
+//#include "ui/widgets/gameuiwidget.h"
 
 using namespace de;
 using namespace world;
@@ -1035,6 +1035,7 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_POINT_SMOOTH);
 }
 
+#if 0
 static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
@@ -1080,6 +1081,7 @@ static void clearViewPorts()
     // This is all the clearing we'll do.
     LIBGUI_GL.glClear(bits);
 }
+#endif
 
 void R_RenderViewPort(int playerNum)
 {
