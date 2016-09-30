@@ -299,9 +299,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_psprite_state_changed_t *) data;
-                self.players().at(args->player)
-                        .as<ClientPlayer>()
-                        .weaponStateChanged(args->state);
+                self.player(args->player).weaponStateChanged(args->state);
             }
             break;
 
@@ -309,9 +307,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_player_weapon_changed_t *) data;
-                self.players().at(args->player)
-                        .as<ClientPlayer>()
-                        .setWeaponAssetId(args->weaponId);
+                self.player(args->player).setWeaponAssetId(args->weaponId);
             }
             break;
 
@@ -547,7 +543,7 @@ void ClientApp::initialize()
     // Initialize players.
     for (int i = 0; i < players().count(); ++i)
     {
-        players().at(i).as<ClientPlayer>().viewCompositor().setPlayerNumber(i);
+        player(i).viewCompositor().setPlayerNumber(i);
     }
 
     // Set up the log alerts (observes Config variables).
@@ -678,7 +674,12 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-LoopResult ClientApp::forLocalPlayers(std::function<LoopResult (ClientPlayer &)> func)
+ClientPlayer &ClientApp::player(int console) // static
+{
+    return DoomsdayApp::players().at(console).as<ClientPlayer>();
+}
+
+LoopResult ClientApp::forLocalPlayers(std::function<LoopResult (ClientPlayer &)> func) // static
 {
     auto const &players = DoomsdayApp::players();
     for (int i = 0; i < players.count(); ++i)

@@ -62,8 +62,6 @@ public:
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) override;
 
-    de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
-
 public:
     /**
      * Reports a new alert to the user.
@@ -72,6 +70,9 @@ public:
      * @param level  Importance of the message.
      */
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
+
+    static ClientPlayer &player(int console);
+    static de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
 
     static ClientApp &          app();
     static BusyRunner &         busyRunner();
