@@ -44,8 +44,6 @@
 #include "render/fx/bloom.h"
 #include "render/fx/colorfilter.h"
 #include "render/fx/lensflares.h"
-#include "render/fx/postprocessing.h"
-#include "render/fx/resize.h"
 #include "render/fx/vignette.h"
 #include "world/p_players.h"
 
@@ -63,46 +61,7 @@ using namespace de;
 static int fxFramePlayerNum; ///< Player view currently being drawn.
 
 #define IDX_LENS_FLARES         3
-#define IDX_POST_PROCESSING     5
-
-D_CMD(PostFx)
-{
-    DENG2_UNUSED(src);
-
-    int console = String(argv[1]).toInt();
-    String const shader = argv[2];
-    TimeDelta const span = (argc == 4? String(argv[3]).toFloat() : 0);
-
-    if(console < 0 || console >= DDMAXPLAYERS)
-    {
-        LOG_SCR_WARNING("Invalid console %i") << console;
-        return false;
-    }
-
-    fx::PostProcessing *post =
-            static_cast<fx::PostProcessing *>(DD_Player(console)->fxStack().effects[IDX_POST_PROCESSING]);
-
-    // Special case to clear out the current shader.
-    if(shader == "none")
-    {
-        post->fadeOut(span);
-        return true;
-    }
-    else if(shader == "opacity") // Change opacity.
-    {
-        post->setOpacity(span);
-        return true;
-    }
-
-    post->fadeInShader(shader, span);
-    return true;
-}
-
-void LensFx_Register()
-{
-    C_CMD("postfx", "is",  PostFx);
-    C_CMD("postfx", "isf", PostFx);
-}
+//#define IDX_POST_PROCESSING     5
 
 void LensFx_Init()
 {
@@ -110,12 +69,11 @@ void LensFx_Init()
     {
         ConsoleEffectStack &stack = DD_Player(i)->fxStack();
         stack.effects
-                << new fx::Resize(i)
                 << new fx::Bloom(i)
                 << new fx::Vignette(i)
                 << new fx::LensFlares(i)        // IDX_LENS_FLARES
-                << new fx::ColorFilter(i)
-                << new fx::PostProcessing(i);   // IDX_POST_PROCESSING
+                << new fx::ColorFilter(i);
+                //<< new fx::PostProcessing(i);   // IDX_POST_PROCESSING
     }
 }
 

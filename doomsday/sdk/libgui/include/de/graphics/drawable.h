@@ -236,6 +236,7 @@ public:
      */
     void setProgram(GLProgram &program);
 
+    void setProgram(Id programId);
     void setProgram(Name const &programName);
 
     /**

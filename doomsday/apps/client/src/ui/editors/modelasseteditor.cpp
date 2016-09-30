@@ -224,7 +224,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         int const idNum = idNumber();
         if (isWeaponAsset())
         {
-            auto &weaponAnim = ClientApp::players().at(idNum).as<ClientPlayer>().playerWeaponAnimator();
+            auto &weaponAnim = ClientApp::player(idNum).playerWeaponAnimator();
             if (weaponAnim.hasModel())
             {
                 return &weaponAnim.animator();
@@ -485,7 +485,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         {
             for (int idx = 0; idx < ClientApp::players().count(); ++idx)
             {
-                auto &client = ClientApp::players().at(idx).as<ClientPlayer>();
+                auto &client = ClientApp::player(idx);
                 auto &anim = client.playerWeaponAnimator();
                 if (anim.hasModel())
                 {
@@ -572,7 +572,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         if (isWeaponAsset())
         {
-            auto &weapon = ClientApp::players().at(data.mobjId).as<ClientPlayer>().playerWeaponAnimator();
+            auto &weapon = ClientApp::player(data.mobjId).playerWeaponAnimator();
             if (weapon.hasModel()) animator = &weapon.animator();
         }
         else

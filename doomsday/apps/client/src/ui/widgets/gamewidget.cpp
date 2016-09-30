@@ -73,7 +73,7 @@ DENG2_PIMPL(GameWidget)
      */
     void renderGameViews()
     {
-        ClientApp::app().forLocalPlayers([] (ClientPlayer &player)
+        ClientApp::forLocalPlayers([] (ClientPlayer &player)
         {
             player.viewCompositor().renderGameView([] (int playerNum) {
                 R_RenderViewPort(playerNum);
@@ -89,11 +89,19 @@ DENG2_PIMPL(GameWidget)
      */
     void drawCompositedFrames()
     {
-        ClientApp::app().forLocalPlayers([this] (ClientPlayer &player)
+        int numLocal = 0;
+        ClientApp::forLocalPlayers([this, &numLocal] (ClientPlayer &player)
         {
             player.viewCompositor().drawCompositedLayers();
+            ++numLocal;
             return LoopContinue;
         });
+
+        // Nobody is playing right now?
+        if (numLocal == 0)
+        {
+            ClientApp::player(0).viewCompositor().drawCompositedLayers();
+        }
     }
 
     void draw()

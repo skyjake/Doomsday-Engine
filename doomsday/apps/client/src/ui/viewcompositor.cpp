@@ -18,6 +18,7 @@
 
 #include "ui/viewcompositor.h"
 #include "ui/clientwindow.h"
+#include "ui/postprocessing.h"
 #include "ui/infine/finaleinterpreter.h"
 #include "ui/infine/finalepagewidget.h"
 #include "ui/editors/edit_bias.h"
@@ -51,19 +52,15 @@ DENG2_PIMPL(ViewCompositor)
     /// game HUD.
     GLTextureFramebuffer viewFramebuf;
 
-    Drawable frameDrawable;
-    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    GLUniform uFrameTex  { "uTex",       GLUniform::Sampler2D };
+    PostProcessing postProcessing;
+    //Drawable frameDrawable;
+    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    //GLUniform uFrameTex  { "uTex",       GLUniform::Sampler2D };
 
     Impl(Public *i)
         : Base(i)
         , viewFramebuf(Image::RGBA_8888)
     {}
-
-    ~Impl()
-    {
-        DENG2_ASSERT(!frameDrawable.isReady()); // deinited earlier
-    }
 
     void getConfig() const
     {
@@ -98,7 +95,9 @@ DENG2_PIMPL(ViewCompositor)
         viewFramebuf.resize(framebufferSize());
         viewFramebuf.glInit();
 
-        if (!frameDrawable.isReady())
+        postProcessing.glInit();
+
+        /*if (!frameDrawable.isReady())
         {
             ClientApp::shaders().build(frameDrawable.program(), "generic.texture")
                     << uMvpMatrix
@@ -112,22 +111,13 @@ DENG2_PIMPL(ViewCompositor)
             VBuf::Builder verts;
             verts.makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1));
             vbuf->setVertices(gl::TriangleStrip, verts, gl::Static);
-        }
+        }*/
     }
 
     void glDeinit()
     {
         viewFramebuf.glDeinit();
-        frameDrawable.clear();
-    }
-
-    static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
-    {
-        GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP |
-                                       (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
-                                       SCREENWIDTH, SCREENHEIGHT,
-                                       DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
-                                       scalemode_t(Con_GetByte("rend-finale-stretch")));
+        postProcessing.glDeinit();
     }
 };
 
@@ -175,8 +165,6 @@ GLTextureFramebuffer const &ViewCompositor::gameView() const
 
 void ViewCompositor::drawCompositedLayers()
 {
-    DENG2_ASSERT(d->frameDrawable.isReady());
-
     GLState::push()
             .setAlphaTest(false)
             .setBlend    (false)
@@ -192,12 +180,21 @@ void ViewCompositor::drawCompositedLayers()
     R_UseViewPort(d->playerNum);
 
     // 3D world view (using the previously rendered texture).
-    {
+    //if (d->frameDrawable.isReady())
+    //{
+        // Set up the appropriate post-processing shader.
+
+/*
         d->uFrameTex  = d->viewFramebuf.colorTexture();
         d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
                         Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft);
-        d->frameDrawable.draw();
-    }
+        d->frameDrawable.draw();*/
+//    }
+
+    d->postProcessing.update();
+    d->postProcessing.draw(ClientWindow::main().root().projMatrix2D() *
+                           Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
+                           d->viewFramebuf.colorTexture());
 
     // Some of the layers use OpenGL 2 drawing code.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -206,6 +203,7 @@ void ViewCompositor::drawCompositedLayers()
 
     // Fill around a scaled-down 3D view. The border is not visible if the 3D view
     // covers the entire area.
+    //if (d->frameDrawable.isReady())
     {
         R_RenderPlayerViewBorder();
     }
@@ -244,7 +242,11 @@ void ViewCompositor::drawCompositedLayers()
         if (App_InFineSystem().finaleInProgess())
         {
             dgl_borderedprojectionstate_t bp;
-            d->setupProjectionForFinale(&bp);
+            GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_CLIP |
+                                           (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
+                                           SCREENWIDTH, SCREENHEIGHT,
+                                           DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                           scalemode_t(Con_GetByte("rend-finale-stretch")));
             GL_BeginBorderedProjection(&bp);
             for (Finale *finale : App_InFineSystem().finales())
             {
@@ -285,4 +287,9 @@ void ViewCompositor::drawCompositedLayers()
 
     GLState::considerNativeStateUndefined();
     GLState::pop().apply();
+}
+
+PostProcessing &ViewCompositor::postProcessing()
+{
+    return d->postProcessing;
 }

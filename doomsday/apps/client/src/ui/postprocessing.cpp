@@ -16,9 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "render/fx/postprocessing.h"
+#include "ui/postprocessing.h"
 #include "ui/clientwindow.h"
+#include "ui/viewcompositor.h"
 #include "clientapp.h"
+#include "clientplayer.h"
 
 #include <de/Animation>
 #include <de/Drawable>
@@ -29,17 +31,19 @@
 
 using namespace de;
 
-namespace fx {
+D_CMD(PostFx);
 
 DENG2_PIMPL(PostProcessing)
 {
-    GLTextureFramebuffer framebuf;
+    enum { PassThroughProgram = 0, ActiveProgram = 1 };
+
+    //GLTextureFramebuffer framebuf;
     Drawable frame;
-    GLUniform uMvpMatrix;
-    GLUniform uFrame;
-    GLUniform uFadeInOut;
-    Animation fade;
-    float opacity;
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uFrame     { "uTex",       GLUniform::Sampler2D };
+    GLUniform uFadeInOut { "uFadeInOut", GLUniform::Float };
+    Animation fade       { 0, Animation::Linear };
+    float opacity        { 1.f };
 
     struct QueueEntry {
         String shaderName;
@@ -54,44 +58,37 @@ DENG2_PIMPL(PostProcessing)
 
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Impl(Public *i)
-        : Base(i)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uFrame    ("uTex",       GLUniform::Sampler2D)
-        , uFadeInOut("uFadeInOut", GLUniform::Float)
-        , fade(0, Animation::Linear)
-        , opacity(1.f)
+    Impl(Public *i) : Base(i)
     {}
 
-    GuiRootWidget &root() const
+    ~Impl()
     {
-        return ClientWindow::main().game().root();
+        DENG2_ASSERT(!frame.isReady()); // deinited earlier
     }
 
-#if 0
-    Vector2ui consoleSize() const
+    /*GuiRootWidget &root() const
     {
-        /**
-         * @todo The offscreen target should simply use the viewport area, not
-         * the full canvas size. This way the shader could, for instance,
-         * easily mirror texture coordinates. However, this would require
-         * drawing the frame without applying a further GL viewport in the game
-         * widgets. -jk
-         */
-        //return self.viewRect().size();
-        return root().window().canvas().size();
+        return ClientWindow::main().game().root();
+    }*/
+
+    void attachUniforms(GLProgram &program)
+    {
+        program << uMvpMatrix << uFrame << uFadeInOut;
     }
-#endif
 
     bool setShader(String const &name)
     {
         try
         {
-            self.shaders().build(frame.program(), "fx.post." + name);
+            auto &shaders = ClientApp::shaders();
+            GLProgram &prog = frame.addProgram(ActiveProgram);
+            shaders.build(prog, "fx.post." + name);
+            attachUniforms(prog);
+            frame.setProgram(prog);
             LOG_GL_MSG("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_GL_WARNING("Failed to set shader to \"fx.post.%s\":\n%s")
                     << name << er.asText();
@@ -107,13 +104,15 @@ DENG2_PIMPL(PostProcessing)
 
     void glInit()
     {
+        if (frame.isReady()) return;
+
         //LOG_DEBUG("Allocating texture and target, size %s") << consoleSize().asText();
 
-        framebuf.glInit();
+        //framebuf.glInit();
         //framebuf.setColorFormat(Image::RGBA_8888);
         //framebuf.resize(consoleSize());
 
-        uFrame = framebuf.colorTexture();
+        //uFrame = framebuf.colorTexture();
 
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
@@ -122,32 +121,38 @@ DENG2_PIMPL(PostProcessing)
                                                   Rectanglef(0, 1, 1, -1)),
                          gl::Static);
         frame.addBuffer(buf);
-        frame.program() << uMvpMatrix << uFrame << uFadeInOut;
+
+        // The default program is a pass-through shader.
+        ClientApp::shaders().build(frame.program(), "generic.texture");
+        attachUniforms(frame.program());
     }
 
     void glDeinit()
     {
+        if (!frame.isReady()) return;
+
         LOGDEV_GL_XVERBOSE("Releasing GL resources");
-        framebuf.glDeinit();
+        //framebuf.glDeinit();
+        frame.clear();
     }
 
-    void update()
+    /*void update()
     {
         framebuf.resize(GLState::current().target().rectInUse().size());
         framebuf.setSampleCount(GLTextureFramebuffer::defaultMultisampling());
-    }
+    }*/
 
     void checkQueue()
     {
         // An ongoing fade?
-        if(!fade.done()) return; // Let's check back later.
+        if (!fade.done()) return; // Let's check back later.
 
-        if(!queue.isEmpty())
+        if (!queue.isEmpty())
         {
             QueueEntry entry = queue.takeFirst();
-            if(!entry.shaderName.isEmpty())
+            if (!entry.shaderName.isEmpty())
             {
-                if(!setShader(entry.shaderName))
+                if (!setShader(entry.shaderName))
                 {
                     fade = 0;
                     return;
@@ -158,9 +163,9 @@ DENG2_PIMPL(PostProcessing)
         }
     }
 
-    void begin()
+/*    void begin()
     {
-        if(!isActive()) return;
+        if (!isActive()) return;
 
         update();
 
@@ -170,18 +175,24 @@ DENG2_PIMPL(PostProcessing)
                 .setColorMask(gl::WriteAll)
                 .apply();
         framebuf.clear(GLFramebuffer::ColorDepthStencil);
-    }
+    }*/
 
-    void end()
+    /*void end()
     {
-        if(!isActive()) return;
+        if (!isActive()) return;
 
         GLState::pop().apply();
-    }
+    }*/
 
     void draw()
     {
-        if(!isActive()) return;
+        if (isActive())
+        {
+            uFadeInOut = fade * opacity;
+        }
+        frame.draw();
+
+#if 0
 
         LIBGUI_GL.glEnable(GL_TEXTURE_2D);
         //glDisable(GL_ALPHA_TEST);
@@ -194,7 +205,6 @@ DENG2_PIMPL(PostProcessing)
                                      vp.top()    / targetSize.y,
                                      vp.bottom() / targetSize.y);
 
-        uFadeInOut = fade * opacity;
 
         GLState::push()
                 .setAlphaTest(false)
@@ -209,11 +219,12 @@ DENG2_PIMPL(PostProcessing)
         //glEnable(GL_ALPHA_TEST);
         LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         //glEnable(GL_BLEND);
+#endif
     }
 };
 
-PostProcessing::PostProcessing(int console)
-    : ConsoleEffect(console), d(new Impl(this))
+PostProcessing::PostProcessing()
+    : d(new Impl(this))
 {}
 
 bool PostProcessing::isActive() const
@@ -238,43 +249,72 @@ void PostProcessing::setOpacity(float opacity)
 
 void PostProcessing::glInit()
 {
-    if(!d->isActive()) return;
-
-    LOG_AS("fx::PostProcessing");
-
-    ConsoleEffect::glInit();
+    LOG_AS("PostProcessing");
     d->glInit();
 }
 
 void PostProcessing::glDeinit()
 {
-    LOG_AS("fx::PostProcessing");
-
+    LOG_AS("PostProcessing");
     d->glDeinit();
-    ConsoleEffect::glDeinit();
 }
 
-void PostProcessing::beginFrame()
+void PostProcessing::update()
 {
-    d->begin();
+    LOG_AS("PostProcessing");
+
+    if (d->isActive())
+    {
+        d->checkQueue();
+    }
+    else
+    {
+        d->frame.setProgram(Impl::PassThroughProgram);
+    }
 }
 
-void PostProcessing::draw()
+void PostProcessing::draw(Matrix4f const &mvpMatrix, GLTexture const &frame)
 {
-    d->end();
+    d->uMvpMatrix = mvpMatrix;
+    d->uFrame     = frame;
+
     d->draw();
 }
 
-void PostProcessing::endFrame()
+void PostProcessing::consoleRegister() // static
 {
-    LOG_AS("fx::PostProcessing");
-
-    if(!d->isActive() && isInited())
-    {
-        glDeinit();
-    }
-
-    d->checkQueue();
+    C_CMD("postfx", "is",  PostFx);
+    C_CMD("postfx", "isf", PostFx);
 }
 
-} // namespace fx
+D_CMD(PostFx)
+{
+    DENG2_UNUSED(src);
+
+    int console = String(argv[1]).toInt();
+    String const shader = argv[2];
+    TimeDelta const span = (argc == 4? String(argv[3]).toDouble() : 0);
+
+    if (console < 0 || console >= DDMAXPLAYERS)
+    {
+        LOG_SCR_WARNING("Invalid console %i") << console;
+        return false;
+    }
+
+    PostProcessing &post = ClientApp::player(console).viewCompositor().postProcessing();
+
+    // Special case to clear out the current shader.
+    if (shader == "none")
+    {
+        post.fadeOut(span);
+        return true;
+    }
+    else if (shader == "opacity") // Change opacity.
+    {
+        post.setOpacity(float(span));
+        return true;
+    }
+
+    post.fadeInShader(shader, span);
+    return true;
+}

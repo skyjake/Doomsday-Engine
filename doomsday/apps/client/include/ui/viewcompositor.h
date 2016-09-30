@@ -21,6 +21,8 @@
 
 #include <de/GLTextureFramebuffer>
 
+class PostProcessing;
+
 /**
  * Compositor for the game view.
  *
@@ -77,6 +79,8 @@ public:
      * game view needs to be redrawn separately beforehand, if needed.
      */
     void drawCompositedLayers();
+
+    PostProcessing &postProcessing();
 
 private:
     DENG2_PRIVATE(d)

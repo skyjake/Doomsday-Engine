@@ -79,6 +79,7 @@
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
+#include "ui/postprocessing.h"
 
 #include "ui/editors/edit_bias.h"
 
@@ -6412,7 +6413,7 @@ void Rend_Register()
 
     Rend_RadioRegister();
     Rend_SpriteRegister();
-    LensFx_Register();
+    PostProcessing::consoleRegister();
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();

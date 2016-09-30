@@ -2571,7 +2571,7 @@ void Map::link(mobj_t &mob, dint flags)
     // If this is a player - perform additional tests to see if they have either entered or exited the void.
     if (mob.dPlayer && mob.dPlayer->mo)
     {
-        auto &client = ClientApp::players().at(P_GetDDPlayerIdx(mob.dPlayer)).as<ClientPlayer>();
+        auto &client = ClientApp::player(P_GetDDPlayerIdx(mob.dPlayer));
         client.inVoid = true;
         if (Mobj_HasSubsector(mob))
         {
