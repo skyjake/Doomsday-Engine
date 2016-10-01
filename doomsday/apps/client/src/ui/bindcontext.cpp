@@ -30,6 +30,7 @@
 #include "CommandBinding"
 #include "ImpulseBinding"
 #include "ui/inputdevice.h"
+#include "ui/inputsystem.h"
 
 using namespace de;
 

@@ -19,6 +19,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "ui/clientwindowsystem.h"
 #include "clientapp.h"
 
 #include <de/App>

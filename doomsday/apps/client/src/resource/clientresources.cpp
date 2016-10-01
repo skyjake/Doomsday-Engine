@@ -70,6 +70,7 @@
 
 #include "clientapp.h"
 #include "ui/progress.h"
+#include "ui/clientwindowsystem.h"
 #include "sys_system.h"  // novideo
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
@@ -77,6 +78,7 @@
 #include "resource/clienttexture.h"
 #include "render/rend_model.h"
 #include "render/rend_particle.h"  // Rend_ParticleReleaseSystemTextures
+#include "render/rendersystem.h"
 
 // For smart caching logics:
 #include "network/net_demo.h"  // playback

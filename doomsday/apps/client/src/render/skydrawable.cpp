@@ -25,6 +25,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 #include "MaterialVariantSpec"
+#include "resource/clientresources.h"
 #include "resource/framemodeldef.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"

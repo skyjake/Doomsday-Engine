@@ -22,6 +22,7 @@
 #include <de/timer.h>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__
+#  include "ui/inputsystem.h"
 #  include "clientapp.h"
 #endif
 

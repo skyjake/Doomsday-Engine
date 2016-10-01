@@ -58,6 +58,8 @@
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/inputdevice.h"
+#include "ui/inputsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
 #include "dd_main.h"

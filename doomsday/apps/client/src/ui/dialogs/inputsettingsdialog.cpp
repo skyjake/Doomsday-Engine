@@ -22,6 +22,7 @@
 #include "ui/widgets/keygrabberwidget.h"
 #include "ui/axisinputcontrol.h"
 #include "ui/controllerpresets.h"
+#include "ui/inputsystem.h"
 #include "clientapp.h"
 #include "api_console.h"
 

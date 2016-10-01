@@ -22,6 +22,7 @@
 #include "ui/infine/finaleinterpreter.h"
 #include "ui/infine/finalepagewidget.h"
 #include "ui/editors/edit_bias.h"
+#include "network/net_main.h" // Net_Drawer (get rid of this)
 #include "render/rend_main.h"
 #include "render/viewports.h"
 #include "world/p_players.h"

@@ -45,6 +45,7 @@
 #include "ui/clientwindow.h"
 #include "ui/joystick.h"
 #include "ui/infine/finale.h"
+#include "ui/inputsystem.h"
 #include "ui/inputdevice.h"
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"

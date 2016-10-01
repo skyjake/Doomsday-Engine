@@ -20,6 +20,7 @@
  */
 
 #include "ui/b_main.h"
+#include "ui/inputsystem.h"
 
 #include "dd_main.h" // App_GameLoaded
 #include "dd_def.h"

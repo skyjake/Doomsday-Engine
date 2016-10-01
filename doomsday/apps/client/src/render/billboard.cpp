@@ -27,6 +27,7 @@
 #include "MaterialVariantSpec"
 #include "misc/r_util.h"
 #include "render/rend_main.h"
+#include "render/rendersystem.h"
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 

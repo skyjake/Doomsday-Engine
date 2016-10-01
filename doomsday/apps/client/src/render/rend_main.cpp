@@ -66,6 +66,7 @@
 #include "render/modelrenderer.h"
 #include "render/r_main.h"
 #include "render/r_things.h"
+#include "render/rendersystem.h"
 #include "render/rend_fakeradio.h"
 #include "render/rend_halo.h"
 #include "render/rend_particle.h"

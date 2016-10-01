@@ -19,6 +19,8 @@
 #include "ui/home/multiplayerpanelbuttonwidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
+#include "network/net_main.h"
+#include "network/serverlink.h"
 #include "clientapp.h"
 #include "dd_share.h" // serverinfo_s
 #include "dd_main.h"

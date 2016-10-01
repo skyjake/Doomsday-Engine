@@ -40,7 +40,9 @@
 #include "WallEdge"
 
 #include "render/rend_main.h"
+#include "render/rendersystem.h"
 #include "render/r_main.h"  // levelFullBright
+#include "render/drawlist.h"
 #include "render/shadowedge.h"
 #include "render/viewports.h"  // R_FrameCount()
 #include "render/store.h"

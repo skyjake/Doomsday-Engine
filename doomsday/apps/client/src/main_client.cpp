@@ -44,6 +44,7 @@
 
 #include "clientapp.h"
 #include "dd_loop.h"
+#include "dd_version.h"
 
 #include <QDebug>
 #include <QMessageBox>

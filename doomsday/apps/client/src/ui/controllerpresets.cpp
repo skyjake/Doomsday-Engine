@@ -18,9 +18,11 @@
 
 #include "ui/controllerpresets.h"
 #include "ui/joystick.h"
+#include "ui/inputsystem.h"
 #include "clientapp.h"
 
 #include <de/App>
+#include <de/DictionaryValue>
 #include <de/Process>
 #include <de/RecordValue>
 #include <de/Script>

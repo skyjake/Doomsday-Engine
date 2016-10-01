@@ -24,6 +24,7 @@
 #include "BindContext"
 #include "CommandBinding"
 // #include "ImpulseBinding"
+#include "ui/inputsystem.h"
 #include "ui/b_util.h"
 
 using namespace de;

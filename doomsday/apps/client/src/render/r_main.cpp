@@ -19,23 +19,25 @@
  */
 
 #include "de_platform.h"
-#include "render/r_main.h"
 
 #include <de/vector1.h>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/GLFramebuffer>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/Materials>
 #include <doomsday/res/Sprites>
+
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
-
 #include "render/billboard.h"
 #include "render/modelrenderer.h"
+#include "render/r_main.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
+#include "render/rendersystem.h"
 #include "render/vissprite.h"
-
+#include "resource/clientresources.h"
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"

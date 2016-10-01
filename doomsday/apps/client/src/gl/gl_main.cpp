@@ -59,6 +59,7 @@
 #include "render/rend_main.h"
 #include "render/r_main.h"
 #include "render/cameralensfx.h"
+#include "render/rendersystem.h"
 #include "render/rend_font.h"
 #include "render/rend_model.h"
 #include "render/rend_particle.h"

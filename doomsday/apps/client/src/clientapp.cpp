@@ -18,7 +18,6 @@
  */
 
 #include "de_platform.h"
-#include "clientapp.h"
 
 #include <cstdlib>
 #include <QAction>
@@ -47,42 +46,43 @@
 
 #include <doomsday/console/exec.h>
 
+#include "audio/system.h"
+#include "busyrunner.h"
+#include "clientapp.h"
 #include "clientplayer.h"
-#include "dd_main.h"
+#include "con_config.h"
 #include "dd_def.h"
 #include "dd_loop.h"
+#include "dd_main.h"
 #include "def_main.h"
-#include "sys_system.h"
-#include "con_config.h"
-
-#include "audio/system.h"
-
+#include "gl/gl_defer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "gl/gl_defer.h"
 #include "gl/svg.h"
-
-#include "world/map.h"
-#include "world/contact.h"
-#include "world/p_players.h"
-
+#include "network/net_demo.h"
+#include "network/net_main.h"
+#include "network/serverlink.h"
+#include "render/r_draw.h"
+#include "render/rend_particle.h"
+#include "render/rendersystem.h"
+#include "sys_system.h"
 #include "ui/alertmask.h"
-#include "ui/inputsystem.h"
 #include "ui/b_main.h"
-#include "ui/sys_input.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
-#include "ui/progress.h"
-#include "ui/widgets/taskbarwidget.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
+#include "ui/inputsystem.h"
+#include "ui/progress.h"
 #include "ui/styledlogsinkformatter.h"
+#include "ui/sys_input.h"
 #include "ui/viewcompositor.h"
-#include "render/rend_particle.h"
-#include "render/r_draw.h"
-#include "network/net_demo.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
+#include "world/contact.h"
+#include "world/map.h"
+#include "world/p_players.h"
 
 #if WIN32
 #  include "dd_winit.h"

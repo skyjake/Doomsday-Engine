@@ -20,6 +20,7 @@
 #include "clientapp.h"
 #include "ui/ddevent.h"
 #include "ui/b_util.h"
+#include "ui/inputsystem.h"
 
 #include <de/KeyEvent>
 #include <de/ddstring.h>

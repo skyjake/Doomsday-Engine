@@ -28,6 +28,7 @@
 #include "clientapp.h"
 #include "gl/gl_defer.h"
 #include "ui/busyvisual.h"
+#include "ui/inputsystem.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/clientwindow.h"
 #include "ui/progress.h"

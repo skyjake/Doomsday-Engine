@@ -34,6 +34,7 @@
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
 #include "render/viewports.h"
+#include "resource/clientresources.h"
 #include "resource/lightmaterialdecoration.h"
 
 using namespace de;

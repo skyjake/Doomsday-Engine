@@ -29,29 +29,23 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 
+#include "network/net_event.h"
 #include "sys_system.h"
+#include "world/p_ticker.h"
 
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#  include "client/cl_def.h"
-#endif
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #endif
 
 #ifdef __CLIENT__
+#  include "client/cl_def.h"
+#  include "clientapp.h"
 #  include "network/net_demo.h"
-#endif
-#include "network/net_event.h"
-
-#include "world/p_ticker.h"
-
-#ifdef __CLIENT__
 #  include "render/rend_font.h"
 #  include "render/viewports.h"
-
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"
+#  include "ui/inputsystem.h"
 #endif
 
 using namespace de;

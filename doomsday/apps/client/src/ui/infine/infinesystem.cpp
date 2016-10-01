@@ -25,13 +25,14 @@
 
 #include "de_base.h"
 #include "ui/infine/infinesystem.h"
-
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#endif
 #include "BindContext"
 #include "ui/infine/finale.h"
 #include "ui/infine/finaleinterpreter.h"
+
+#ifdef __CLIENT__
+#  include "ui/inputsystem.h"
+#  include "clientapp.h"
+#endif
 
 using namespace de;
 

@@ -18,6 +18,8 @@
 
 #include "ui/clientrootwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/clientwindowsystem.h"
+#include "ui/inputsystem.h"
 #include "clientapp.h"
 
 using namespace de;

@@ -22,6 +22,7 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 
+#include "ConfigProfiles"
 #include "clientapp.h"
 
 #include <de/SignalAction>

@@ -35,9 +35,6 @@
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/world/MaterialArchive>
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#endif
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #endif
@@ -61,12 +58,12 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "network/net_demo.h"
-
 #  include "render/r_draw.h"
 #  include "render/r_main.h"
 #  include "render/rend_main.h"
-
+#  include "render/rendersystem.h"
 #  include "updater.h"
 #endif
 

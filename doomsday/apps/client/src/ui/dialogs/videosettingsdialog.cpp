@@ -20,7 +20,9 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/clientwindow.h"
+#include "ui/clientwindowsystem.h"
 #include "CommandAction"
+#include "ConfigProfiles"
 #include "clientapp.h"
 #include "dd_main.h"
 

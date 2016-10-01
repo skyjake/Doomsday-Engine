@@ -42,18 +42,16 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#endif
-#include "dd_main.h"
-#include "dd_loop.h"
-
-#include "api_base.h"
-
-#ifdef __CLIENT__
+#  include "ui/inputsystem.h"
 #  include "gl/gl_main.h"
 #endif
+
+#include "dd_main.h"
+#include "dd_loop.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "ui/nativeui.h"
+#include "api_base.h"
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS

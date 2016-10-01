@@ -26,6 +26,7 @@
 #include "world/clientmobjthinkerdata.h"
 #include "clientplayer.h"
 #include "render/rend_main.h"
+#include "render/rendersystem.h"
 #include "render/stateanimator.h"
 #include "render/playerweaponanimator.h"
 

@@ -18,6 +18,7 @@
 
 #include "ui/dialogs/uisettingsdialog.h"
 #include "clientapp.h"
+#include "ConfigProfiles"
 
 #include <de/GridLayout>
 #include <de/CallbackAction>

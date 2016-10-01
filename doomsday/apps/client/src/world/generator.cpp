@@ -33,6 +33,7 @@
 #include "render/rend_particle.h"
 
 #include "client/clientsubsector.h"
+#include "network/net_main.h"
 
 #include "api_sound.h"
 

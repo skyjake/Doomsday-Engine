@@ -27,6 +27,7 @@
 #include "sys_system.h"
 #include "render/r_main.h"
 #include "render/r_draw.h"
+#include "resource/clientresources.h"
 #include "gl/gl_draw.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"

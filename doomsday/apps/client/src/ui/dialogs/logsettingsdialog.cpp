@@ -18,6 +18,7 @@
 
 #include "ui/dialogs/logsettingsdialog.h"
 #include "clientapp.h"
+#include "ConfigProfiles"
 
 #include <de/Config>
 #include <de/FoldPanelWidget>

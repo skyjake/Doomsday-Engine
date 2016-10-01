@@ -22,6 +22,7 @@
 #include <de/KeyEvent>
 #include <doomsday/console/knownword.h>
 #include <doomsday/console/exec.h>
+#include "ui/inputsystem.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "BindContext"

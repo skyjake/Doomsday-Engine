@@ -27,6 +27,7 @@
 #include "audio/system.h"
 
 #include "clientapp.h"
+#include "ConfigProfiles"
 
 #include <de/SignalAction>
 #include <de/GridPopupWidget>

@@ -37,12 +37,13 @@
 #include "gl/gl_main.h"
 
 #include "api_render.h"
-#include "render/r_draw.h"
-#include "render/r_main.h"
-#include "render/fx/bloom.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/fx/bloom.h"
 #include "render/playerweaponanimator.h"
+#include "render/r_draw.h"
+#include "render/r_main.h"
+#include "render/rendersystem.h"
 #include "render/rendpoly.h"
 #include "render/skydrawable.h"
 #include "render/vissprite.h"
@@ -1110,8 +1111,10 @@ void R_RenderViewPort(int playerNum)
     LIBGUI_GL.glPushMatrix();
     LIBGUI_GL.glLoadIdentity();
 
+    Rectanglei viewRect = R_Console3DViewRect(playerNum);
+
     // Use an orthographic projection in real pixel dimensions.
-    LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+    LIBGUI_GL.glOrtho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
 
     viewdata_t const *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1132,6 +1135,11 @@ void R_RenderViewPort(int playerNum)
 
         //LensFx_EndFrame();
         //break;
+
+    LensFx_Draw(vp->console);
+
+    // Apply camera lens effects on the rendered view.
+
 
 #if 0
     case ViewBorderLayer:

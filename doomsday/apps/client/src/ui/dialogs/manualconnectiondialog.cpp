@@ -19,11 +19,13 @@
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/widgets/multiplayerservermenuwidget.h"
 #include "ui/home/multiplayerpanelbuttonwidget.h"
+#include "network/serverlink.h"
 #include "clientapp.h"
 
 #include <de/SignalAction>
 #include <de/FoldPanelWidget>
 #include <de/PersistentState>
+#include <de/ProgressWidget>
 
 using namespace de;
 
