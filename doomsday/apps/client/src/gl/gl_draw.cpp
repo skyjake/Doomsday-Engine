@@ -39,9 +39,6 @@
 
 using namespace de;
 
-static bool drawFilter = false;
-static Vector4f filterColor;
-
 void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -291,59 +288,12 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     LIBGUI_GL.glEnd();
 }
 
-dd_bool GL_FilterIsVisible()
-{
-    return (drawFilter && filterColor.w > 0);
-}
-
-#undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
-{
-    drawFilter = CPP_BOOL(enabled);
-}
-
 #undef GL_ResetViewEffects
 DENG_EXTERN_C void GL_ResetViewEffects()
 {
     GL_SetFilter(false);
     Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
     DD_SetInteger(DD_FULLBRIGHT, false);
-}
-
-#undef GL_SetFilterColor
-DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
-{
-    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
-                             de::clamp(0.f, g, 1.f),
-                             de::clamp(0.f, b, 1.f),
-                             de::clamp(0.f, a, 1.f));
-
-    if(filterColor != newColorClamped)
-    {
-        filterColor = newColorClamped;
-
-        LOG_AS("GL_SetFilterColor");
-        LOGDEV_GL_XVERBOSE("%s") << filterColor.asText();
-    }
-}
-
-/**
- * @return              Non-zero if the filter was drawn.
- */
-void GL_DrawFilter(void)
-{
-    viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    LIBGUI_GL.glColor4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
-    LIBGUI_GL.glBegin(GL_QUADS);
-        LIBGUI_GL.glVertex2f(vd->window.topLeft.x, vd->window.topLeft.y);
-        LIBGUI_GL.glVertex2f(vd->window.topRight().x, vd->window.topRight().y);
-        LIBGUI_GL.glVertex2f(vd->window.bottomRight.x, vd->window.bottomRight.y);
-        LIBGUI_GL.glVertex2f(vd->window.bottomLeft().x, vd->window.bottomLeft().y);
-    LIBGUI_GL.glEnd();
 }
 
 #undef GL_ConfigureBorderedProjection2

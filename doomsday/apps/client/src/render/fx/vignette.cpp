@@ -20,11 +20,12 @@
 
 #include "de_platform.h"
 #include "render/fx/vignette.h"
-
 #include "clientapp.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
+#include "world/clientserverworld.h"
+
 #include <de/GLInfo>
 #include <de/vector1.h>
 #include <doomsday/console/var.h>
@@ -46,7 +47,7 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     float alpha;
     int i;
 
-    if(!vignetteEnabled) return;
+    if (!vignetteEnabled) return;
 
     // Center point.
     cx = viewRect.left() + viewRect.width()  / 2.f;
@@ -55,20 +56,20 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     // Radius.
     V2f_Set(vec, viewRect.width() / 2.f, viewRect.height() / 2.f);
     outer = V2f_Length(vec) + 1; // Extra pixel to account for a possible gap.
-    if(fov < 100)
+    if (fov < 100)
     {
         // Small FOV angles cause the vignette to be thinner/lighter.
         outer *= (1 + 100.f/fov) / 2;
     }
     inner = outer * vignetteWidth * .32f;
-    if(fov > 100)
+    if (fov > 100)
     {
         // High FOV angles cause the vignette to be wider.
         inner *= 100.f/fov;
     }
 
     alpha = vignetteDarkness * .6f;
-    if(fov > 100)
+    if (fov > 100)
     {
         // High FOV angles cause the vignette to be darker.
         alpha *= fov/100.f;
@@ -79,7 +80,7 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     glEnable(GL_TEXTURE_2D);
 
     LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
-    for(i = 0; i <= DIVS; ++i)
+    for (i = 0; i <= DIVS; ++i)
     {
         float ang = (float)(2 * de::PI * i) / (float)DIVS;
         float dx = cos(ang);
@@ -103,7 +104,7 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         return;
     }

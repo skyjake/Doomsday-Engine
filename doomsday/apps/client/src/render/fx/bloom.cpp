@@ -18,9 +18,11 @@
 
 #include "render/fx/bloom.h"
 #include "clientapp.h"
+#include "world/clientserverworld.h"
 
 #include <doomsday/console/var.h>
 #include <de/Drawable>
+#include <de/GLTextureFramebuffer>
 #include <de/WindowTransform>
 
 using namespace de;
@@ -100,7 +102,7 @@ DENG2_PIMPL(Bloom)
         GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
 
         // Must have access to the color texture containing the frame buffer contents.
-        if(!colorTex) return;
+        if (!colorTex) return;
 
         // Determine the dimensions of the viewport and the target.
         Rectanglef const rectf = GLState::current().normalizedViewport();
@@ -119,7 +121,7 @@ DENG2_PIMPL(Bloom)
                 .setDepthWrite(false) // don't mess with depth information
                 .setDepthTest(false);
 
-        switch(bloomComplexity)
+        switch (bloomComplexity)
         {
         case 1:
             // Two passes result in a better glow effect: combining multiple Gaussian curves
@@ -234,12 +236,12 @@ void Bloom::glDeinit()
 
 void Bloom::draw()
 {
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         return;
     }
 
-    if(!bloomEnabled || bloomIntensity <= 0)
+    if (!bloomEnabled || bloomIntensity <= 0)
     {
         return;
     }

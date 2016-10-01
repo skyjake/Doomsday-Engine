@@ -18,6 +18,7 @@
 
 #include "render/consoleeffect.h"
 #include "render/viewports.h"
+#include "render/rendersystem.h"
 #include "world/p_players.h"
 #include "clientapp.h"
 
@@ -45,9 +46,9 @@ int ConsoleEffect::console() const
     return d->console;
 }
 
-Rectanglei const &ConsoleEffect::viewRect() const
+Rectanglei ConsoleEffect::viewRect() const
 {
-    return DD_Player(d->console)->viewport().window;
+    return Rectanglei::fromSize(R_Console3DViewRect(d->console).size());
 }
 
 bool ConsoleEffect::isInited() const

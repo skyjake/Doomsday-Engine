@@ -20,6 +20,7 @@
 #include "render/ilightsource.h"
 #include "render/viewports.h"
 #include "render/rend_main.h"
+#include "world/clientserverworld.h"
 #include "world/p_players.h"
 #include "gl/gl_main.h"
 #include "clientapp.h"
@@ -85,7 +86,7 @@ struct FlareData
             flare[Ring]     = atlas.alloc(flareImage("ring"));
             flare[Burst]    = atlas.alloc(flareImage("burst"));
         }
-        catch(Error const &er)
+        catch (Error const &er)
         {
             LOG_GL_ERROR("Failed to initialize shared lens flare resources: %s")
                     << er.asText();
@@ -113,7 +114,7 @@ struct FlareData
     Vector2f flareCorner(FlareId id, Corner corner) const
     {
         Vector2f p;
-        switch(corner)
+        switch (corner)
         {
         case TopLeft:     p = Vector2f(-1, -1); break;
         case TopRight:    p = Vector2f( 1, -1); break;
@@ -121,7 +122,7 @@ struct FlareData
         case BottomLeft:  p = Vector2f(-1,  1); break;
         }
 
-        if(id == Burst)
+        if (id == Burst)
         {
             // Non-square.
             p *= Vector2f(4, .25f);
@@ -167,15 +168,15 @@ D_CMD(TestLight)
     String prop = argv[1];
     float value = String(argv[2]).toFloat();
 
-    if(!prop.compareWithoutCase("rd"))
+    if (!prop.compareWithoutCase("rd"))
     {
         fx::testLight.radius = value;
     }
-    else if(!prop.compareWithoutCase("in"))
+    else if (!prop.compareWithoutCase("in"))
     {
         fx::testLight.intensity = value;
     }
-    else if(!prop.compareWithoutCase("cl") && argc >= 5)
+    else if (!prop.compareWithoutCase("cl") && argc >= 5)
     {
         fx::testLight.color = ILightSource::Colorf(value, String(argv[3]).toFloat(), String(argv[4]).toFloat());
     }
@@ -190,25 +191,25 @@ D_CMD(TestLight)
 
 static float linearRangeFactor(float value, Rangef const &low, Rangef const &high)
 {
-    if(low.size() > 0)
+    if (low.size() > 0)
     {
-        if(value < low.start)
+        if (value < low.start)
         {
             return 0;
         }
-        if(low.contains(value))
+        if (low.contains(value))
         {
             return (value - low.start) / low.size();
         }
     }
 
-    if(high.size() > 0)
+    if (high.size() > 0)
     {
-        if(value > high.end)
+        if (value > high.end)
         {
             return 0;
         }
-        if(high.contains(value))
+        if (high.contains(value))
         {
             return 1 - (value - high.start) / high.size();
         }
@@ -300,7 +301,7 @@ DENG2_PIMPL(LensFlares)
     void addToPvs(IPointLightSource const *light)
     {
         PVSet::iterator found = pvs.find(light->lightSourceId());
-        if(found == pvs.end())
+        if (found == pvs.end())
         {
             found = pvs.insert(light->lightSourceId(), new PVLight);
         }
@@ -356,13 +357,13 @@ DENG2_PIMPL(LensFlares)
         VBuf::Indices idx;
         VBuf::Type vtx;
 
-        for(PVSet::const_iterator i = pvs.constBegin(); i != pvs.constEnd(); ++i)
+        for (PVSet::const_iterator i = pvs.constBegin(); i != pvs.constEnd(); ++i)
         {
             PVLight const *pvl = i.value();
 
             // Skip lights that are not visible right now.
             /// @todo If so, it might be time to purge it from the PVS.
-            if(pvl->seenFrame != thisFrame) continue;
+            if (pvl->seenFrame != thisFrame) continue;
 
             coord_t const distanceSquared = (Rend_EyeOrigin() - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
             coord_t const distance = std::sqrt(distanceSquared);
@@ -420,7 +421,7 @@ DENG2_PIMPL(LensFlares)
                 {  -.2f,    FlareData::Circle,   Vector4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
             };
 
-            for(uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)
+            for (uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)
             {
                 Spec const &spec = specs[i];
 
@@ -498,13 +499,13 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         // Flares are not visbile unless a map is loaded.
         return;
     }
 
-    if(!viewPlayer) return; /// @todo How'd we get here? -ds
+    if (!viewPlayer) return; /// @todo How'd we get here? -ds
 
     viewdata_t const *viewData = &DD_Player(console())->viewport();
     d->eyeFront = Vector3f(viewData->frontVec);
@@ -520,7 +521,7 @@ void LensFlares::draw()
 
     DENG2_ASSERT(console() == displayPlayer);
     //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
-    if(DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
+    if (DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
     {
         qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
         return;

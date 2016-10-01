@@ -47,7 +47,9 @@
 #include "render/fx/vignette.h"
 #include "world/p_players.h"
 
+#include "clientapp.h"
 #include "ui/clientwindow.h"
+#include "ui/viewcompositor.h"
 
 #include <doomsday/console/cmd.h>
 #include <de/libcore.h>
@@ -60,12 +62,11 @@ using namespace de;
 
 static int fxFramePlayerNum; ///< Player view currently being drawn.
 
-#define IDX_LENS_FLARES         3
-//#define IDX_POST_PROCESSING     5
+#define IDX_LENS_FLARES         2
 
 void LensFx_Init()
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = DD_Player(i)->fxStack();
         stack.effects
@@ -73,7 +74,6 @@ void LensFx_Init()
                 << new fx::Vignette(i)
                 << new fx::LensFlares(i)        // IDX_LENS_FLARES
                 << new fx::ColorFilter(i);
-                //<< new fx::PostProcessing(i);   // IDX_POST_PROCESSING
     }
 }
 
@@ -81,7 +81,7 @@ void LensFx_Shutdown()
 {
     LensFx_GLRelease();
 
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         DD_Player(i)->fxStack().clear();
     }
@@ -89,11 +89,11 @@ void LensFx_Shutdown()
 
 void LensFx_GLRelease()
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        foreach(ConsoleEffect *effect, DD_Player(i)->fxStack().effects)
+        foreach (ConsoleEffect *effect, DD_Player(i)->fxStack().effects)
         {
-            if(effect->isInited())
+            if (effect->isInited())
             {
                 effect->glDeinit();
             }
@@ -101,37 +101,33 @@ void LensFx_GLRelease()
     }
 }
 
-void LensFx_BeginFrame(int playerNum)
+void LensFx_Draw(int playerNum)
 {
+    ClientPlayer &player = ClientApp::player(playerNum);
     fxFramePlayerNum = playerNum;
 
-    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
+    auto const &effects = player.fxStack().effects;
 
     // Initialize these effects if they currently are not.
-    foreach(ConsoleEffect *effect, effects)
+    foreach (ConsoleEffect *effect, effects)
     {
-        if(!effect->isInited())
+        if (!effect->isInited())
         {
             effect->glInit();
         }
     }
 
-    foreach(ConsoleEffect *effect, effects)
+    foreach (ConsoleEffect *effect, effects)
     {
         effect->beginFrame();
     }
-}
 
-void LensFx_EndFrame()
-{
-    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
-
-    foreach(ConsoleEffect *effect, effects)
+    foreach (ConsoleEffect *effect, effects)
     {
         effect->draw();
     }
 
-    for(int i = effects.size() - 1; i >= 0; --i)
+    for (int i = effects.size() - 1; i >= 0; --i)
     {
         effects.at(i)->endFrame();
     }

@@ -23,6 +23,11 @@
 
 namespace fx {
 
+/**
+ * Color filter effect.
+ *
+ * @todo Refactor: Color filters should be console-specific (see implementation).
+ */
 class ColorFilter : public ConsoleEffect
 {
 public:
