@@ -69,11 +69,6 @@
 using namespace de;
 using namespace world;
 
-#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-dfloat devCameraMovementStartTime;          ///< sysTime
-dfloat devCameraMovementStartTimeRealSecs;
-#endif
-
 dd_bool firstFrameAfterLoad;
 
 static dint loadInStartupMode;
@@ -703,14 +698,14 @@ void R_UseViewPort(viewport_t const *vp)
     if (!vp)
     {
         currentViewport = nullptr;
-        ClientWindow::main().game().glApplyViewport(
+        /*ClientWindow::main().game().glApplyViewport(
                 Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));
+                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
         currentViewport = const_cast<viewport_t *>(vp);
-        ClientWindow::main().game().glApplyViewport(vp->geometry);
+        //ClientWindow::main().game().glApplyViewport(vp->geometry);
     }
 }
 
@@ -897,6 +892,118 @@ Matrix4f const &Viewer_Matrix()
     return frameViewMatrix;
 }
 
+enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
+
+static void changeViewState(ViewState viewState) //, viewport_t const *port, viewdata_t const *viewData)
+{
+    //DENG2_ASSERT(port && viewData);
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    switch (viewState)
+    {
+    case PlayerView3D:
+        GLState::current()
+                .setCull(gl::Back)
+                .setDepthTest(true)
+                .apply();
+        // The 3D projection matrix.
+        GL_ProjectionMatrix();
+        break;
+
+    case PlayerSprite2D:
+    {
+        auto const conRect  = R_ConsoleRect(displayPlayer);
+        auto const viewRect = R_Console3DViewRect(displayPlayer);
+
+        dint const height = dint(SCREENHEIGHT
+                * ( float(conRect.width()) * float(viewRect.height())
+                                           / float(viewRect.width()) )
+                / float(conRect.height()));
+
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
+                                           conRect.width(), conRect.height(),
+                                           scalemode_t(weaponScaleMode));
+
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glLoadIdentity();
+
+        if(sm == SCALEMODE_STRETCH)
+        {
+            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+        }
+        else
+        {
+            // Use an orthographic projection in native screenspace. Then
+            // translate and scale the projection to produce an aspect
+            // corrected coordinate space at 4:3, aligned vertically to
+            // the bottom and centered horizontally in the window.
+            LIBGUI_GL.glOrtho(0, conRect.width(), conRect.height(), 0, -1, 1);
+            LIBGUI_GL.glTranslatef(conRect.width()/2, conRect.height(), 0);
+
+            if(conRect.width() >= conRect.height())
+            {
+                LIBGUI_GL.glScalef(dfloat( conRect.height() ) / SCREENHEIGHT,
+                                   dfloat( conRect.height() ) / SCREENHEIGHT, 1);
+            }
+            else
+            {
+                LIBGUI_GL.glScalef(dfloat( conRect.width() ) / SCREENWIDTH,
+                                   dfloat( conRect.width() ) / SCREENWIDTH, 1);
+            }
+
+            // Special case: viewport height is greater than width.
+            // Apply an additional scaling factor to prevent player sprites
+            // looking too small.
+            if(conRect.height() > conRect.width())
+            {
+                dfloat extraScale = (dfloat(conRect.height() * 2) / conRect.width()) / 2;
+                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
+            }
+
+            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
+        }
+
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glLoadIdentity();
+
+        // Depth testing must be disabled so that psprite 1 will be drawn
+        // on top of psprite 0 (Doom plasma rifle fire).
+        GLState::current().setDepthTest(false).apply();
+
+        break;
+    }
+
+    case Default2D:
+        GLState::current()
+                .setCull(gl::None)
+                .setDepthTest(false)
+                .apply();
+        break;
+    }
+
+
+    //std::memcpy(&currentView, port, sizeof(currentView));
+
+    //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
+    //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
+
+    /*auto const viewRect = R_Console3DViewRect(displayPlayer);
+    viewpx = 0;
+    viewpy = 0;
+    viewpw = int(viewRect.width());
+    viewph = int(viewRect.height());*/
+
+    //viewpw = de::min(port->geometry.width(), viewData->window.width());
+    //viewph = de::min(port->geometry.height(), viewData->window.height());
+
+    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
+                                                                     Vector2ui(viewpw, viewph)));*/
+
+}
+
 #undef R_RenderPlayerView
 DENG_EXTERN_C void R_RenderPlayerView(dint num)
 {
@@ -950,8 +1057,14 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
+
     // GL is in 3D transformation state only during the frame.
-    GL_SwitchTo3DState(true, currentViewport, vd);
+    //switchTo3DState(true); //, currentViewport, vd);
+    changeViewState(PlayerView3D);
 
     if(ClientApp::world().hasMap())
     {
@@ -959,7 +1072,8 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1, currentViewport, vd);
+    //restore2DState(1); //, currentViewport, vd);
+    changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
@@ -977,12 +1091,19 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
-        GL_SwitchTo3DState(false, currentViewport, vd);
+        //switchTo3DState(false); //, currentViewport, vd);
+        changeViewState(PlayerView3D);
         Rend_Draw3DPlayerSprites();
     }
 
     // Restore fullscreen viewport, original matrices and state: back to normal 2D.
-    GL_Restore2DState(2, currentViewport, vd);
+    //restore2DState(2); //, currentViewport, vd);
+    changeViewState(Default2D);
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 
     // Back from wireframe mode?
     if(renderWireframe)
@@ -997,26 +1118,6 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     R_PrintRendPoolInfo();
-
-#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-    {
-        static dfloat prevPos[3] = { 0, 0, 0 };
-        static dfloat prevSpeed = 0;
-        static dfloat prevTime;
-        dfloat delta[2] = { vd->current.pos[0] - prevPos[0],
-                            vd->current.pos[1] - prevPos[1] };
-        dfloat speed   = V2f_Length(delta);
-        dfloat time    = sysTime - devCameraMovementStartTime;
-        dfloat elapsed = time - prevTime;
-
-        LOGDEV_MSG("%f,%f,%f,%f,%f") << Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs
-                                     << time << elapsed << speed/elapsed << speed/elapsed - prevSpeed;
-
-        V3f_Copy(prevPos, vd->current.pos);
-        prevSpeed = speed/elapsed;
-        prevTime = time;
-    }
-#endif
 }
 
 /**
@@ -1095,15 +1196,13 @@ void R_RenderViewPort(int playerNum)
 
     dint const oldDisplay = displayPlayer;
     displayPlayer = vp->console;
-    R_UseViewPort(vp);
+    //R_UseViewPort(vp);
     //currentViewport = vp;
 
     if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
     {
-//        if(layer == Player3DViewLayer)
-        {
-            R_RenderBlankView();
-        }
+        R_RenderBlankView();
+        displayPlayer = oldDisplay;
         return;
     }
 
@@ -1170,8 +1269,8 @@ void R_RenderViewPort(int playerNum)
 
     // Restore things back to normal.
     displayPlayer = oldDisplay;
-    R_UseViewPort(nullptr);
 
+    //R_UseViewPort(nullptr);
     //currentViewport = nullptr;
 }
 

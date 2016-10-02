@@ -163,12 +163,14 @@ GameWidget::GameWidget(String const &name)
     requestGeometry(false);
 }
 
+/*
 void GameWidget::glApplyViewport(Rectanglei const &rect)
 {
     GLState::current()
             .setNormalizedViewport(normalizedRect(rect))
             .apply();
 }
+*/
 
 void GameWidget::pause()
 {
@@ -182,14 +184,11 @@ void GameWidget::viewResized()
 {
     GuiWidget::viewResized();
 
-    /*
-    if (BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
-       !ClientApp::windowSystem().hasMain())
+    if (!BusyMode_Active() && !isDisabled() && !Sys_IsShuttingDown() &&
+        ClientWindow::mainExists())
     {
-        return;
+        d->updateSize();
     }
-
-    d->updateSize();*/
 }
 
 void GameWidget::update()

@@ -36,6 +36,7 @@
 #include <de/GLState>
 #include <de/GLShaderBank>
 #include <de/Drawable>
+#include <de/VRConfig>
 
 using namespace de;
 
@@ -84,6 +85,22 @@ DENG2_PIMPL(ViewCompositor)
     GLFramebuffer::Size framebufferSize() const
     {
         GLFramebuffer::Size size = R_Console3DViewRect(playerNum).size();
+
+        // Stereo splits warrant halving the resolution because each eye uses up half of
+        // the window.
+        switch (ClientApp::vr().mode())
+        {
+        case VRConfig::SideBySide:
+            size.x /= 2;
+            break;
+
+        case VRConfig::TopBottom:
+            size.y /= 2;
+            break;
+
+        default:
+            break;
+        }
 
         // Pixel density.
         size *= scaleFactor();
@@ -166,12 +183,7 @@ GLTextureFramebuffer const &ViewCompositor::gameView() const
 
 void ViewCompositor::drawCompositedLayers()
 {
-    GLState::push()
-            .setAlphaTest(false)
-            .setBlend    (false)
-            .setDepthTest(false)
-            .setCull     (gl::None);
-
+    //Rectanglei const conRect = R_ConsoleRect(d->playerNum);
     Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
     auto const oldDisplayPlayer = displayPlayer;
 
@@ -179,6 +191,19 @@ void ViewCompositor::drawCompositedLayers()
     displayPlayer = d->playerNum;
 
     R_UseViewPort(d->playerNum);
+
+    //ClientWindow::main().transform().
+
+    /*Rectangleui(de::max<duint>(0, conRect.left()),
+                                          de::max<duint>(0, conRect.top()),
+                                          conRect.width(),
+                                          conRect.height())    */
+    GLState::push()
+            .setAlphaTest(false)
+            .setBlend    (false)
+            .setDepthTest(false)
+            .setCull     (gl::None);
+            //.setViewport ();
 
     // 3D world view (using the previously rendered texture).
     //if (d->frameDrawable.isReady())

@@ -66,11 +66,6 @@ DENG2_PIMPL(PostProcessing)
         DENG2_ASSERT(!frame.isReady()); // deinited earlier
     }
 
-    /*GuiRootWidget &root() const
-    {
-        return ClientWindow::main().game().root();
-    }*/
-
     void attachUniforms(GLProgram &program)
     {
         program << uMvpMatrix << uFrame << uFadeInOut;
@@ -106,14 +101,6 @@ DENG2_PIMPL(PostProcessing)
     {
         if (frame.isReady()) return;
 
-        //LOG_DEBUG("Allocating texture and target, size %s") << consoleSize().asText();
-
-        //framebuf.glInit();
-        //framebuf.setColorFormat(Image::RGBA_8888);
-        //framebuf.resize(consoleSize());
-
-        //uFrame = framebuf.colorTexture();
-
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
         buf->setVertices(gl::TriangleStrip,
@@ -132,15 +119,8 @@ DENG2_PIMPL(PostProcessing)
         if (!frame.isReady()) return;
 
         LOGDEV_GL_XVERBOSE("Releasing GL resources");
-        //framebuf.glDeinit();
         frame.clear();
     }
-
-    /*void update()
-    {
-        framebuf.resize(GLState::current().target().rectInUse().size());
-        framebuf.setSampleCount(GLTextureFramebuffer::defaultMultisampling());
-    }*/
 
     void checkQueue()
     {
@@ -163,27 +143,6 @@ DENG2_PIMPL(PostProcessing)
         }
     }
 
-/*    void begin()
-    {
-        if (!isActive()) return;
-
-        update();
-
-        GLState::push()
-                .setTarget(framebuf)
-                .setViewport(Rectangleui::fromSize(framebuf.size()))
-                .setColorMask(gl::WriteAll)
-                .apply();
-        framebuf.clear(GLFramebuffer::ColorDepthStencil);
-    }*/
-
-    /*void end()
-    {
-        if (!isActive()) return;
-
-        GLState::pop().apply();
-    }*/
-
     void draw()
     {
         if (isActive())
@@ -191,35 +150,6 @@ DENG2_PIMPL(PostProcessing)
             uFadeInOut = fade * opacity;
         }
         frame.draw();
-
-#if 0
-
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
-        //glDisable(GL_ALPHA_TEST);
-
-        Rectanglef const vp = GLState::current().viewport();
-        Vector2f targetSize = GLState::current().target().size();
-
-        uMvpMatrix = Matrix4f::ortho(vp.left()   / targetSize.x,
-                                     vp.right()  / targetSize.x,
-                                     vp.top()    / targetSize.y,
-                                     vp.bottom() / targetSize.y);
-
-
-        GLState::push()
-                .setAlphaTest(false)
-                .setBlend(false)
-                .setDepthTest(false)
-                .apply();
-
-        frame.draw();
-
-        GLState::pop().apply();
-
-        //glEnable(GL_ALPHA_TEST);
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-        //glEnable(GL_BLEND);
-#endif
     }
 };
 

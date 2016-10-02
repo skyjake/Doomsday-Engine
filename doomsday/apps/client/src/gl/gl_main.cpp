@@ -45,6 +45,7 @@
 
 #include "world/map.h"
 #include "world/p_object.h"
+#include "world/p_players.h"
 
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
@@ -90,7 +91,7 @@ static dfloat oldgamma, oldcontrast, oldbright;
 
 static dint fogModeDefault;
 
-static viewport_t currentView;
+//static viewport_t currentView;
 
 static inline ClientResources &resSys()
 {
@@ -401,124 +402,6 @@ void GL_Init2DState()
     glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
-void GL_SwitchTo3DState(dd_bool pushState, viewport_t const *port, viewdata_t const *viewData)
-{
-    DENG2_ASSERT(port && viewData);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    if(pushState)
-    {
-        // Push the 2D matrices on the stack.
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
-    }
-
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_DEPTH_TEST);
-    GLState::current()
-            .setCull(gl::Back)
-            .setDepthTest(true)
-            .apply();
-
-    std::memcpy(&currentView, port, sizeof(currentView));
-
-    //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
-    //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
-
-    viewpx = 0;
-    viewpy = 0;
-    viewpw = de::min(port->geometry.width(), viewData->window.width());
-    viewph = de::min(port->geometry.height(), viewData->window.height());
-
-    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
-                                                                     Vector2ui(viewpw, viewph)));*/
-
-    // The 3D projection matrix.
-    GL_ProjectionMatrix();
-}
-
-void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *viewData)
-{
-    DENG2_ASSERT(port && viewData);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    switch(step)
-    {
-    case 1: { // After Restore Step 1 normal player sprites are rendered.
-        dint height = dfloat( port->geometry.width() * viewData->window.height() / viewData->window.width() ) / port->geometry.height() * SCREENHEIGHT;
-        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
-                                           port->geometry.width(), port->geometry.height(),
-                                           scalemode_t(weaponScaleMode));
-
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glLoadIdentity();
-
-        if(SCALEMODE_STRETCH == sm)
-        {
-            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
-        }
-        else
-        {
-            // Use an orthographic projection in native screenspace. Then
-            // translate and scale the projection to produce an aspect
-            // corrected coordinate space at 4:3, aligned vertically to
-            // the bottom and centered horizontally in the window.
-            LIBGUI_GL.glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
-            LIBGUI_GL.glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
-
-            if(port->geometry.width() >= port->geometry.height())
-                LIBGUI_GL.glScalef(dfloat( port->geometry.height() ) / SCREENHEIGHT,
-                         dfloat( port->geometry.height() ) / SCREENHEIGHT, 1);
-            else
-                LIBGUI_GL.glScalef(dfloat( port->geometry.width() ) / SCREENWIDTH,
-                         dfloat( port->geometry.width() ) / SCREENWIDTH, 1);
-
-            // Special case: viewport height is greater than width.
-            // Apply an additional scaling factor to prevent player sprites
-            // looking too small.
-            if(port->geometry.height() > port->geometry.width())
-            {
-                dfloat extraScale = (dfloat(port->geometry.height() * 2) / port->geometry.width()) / 2;
-                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
-            }
-
-            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
-            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
-        }
-
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glLoadIdentity();
-
-        // Depth testing must be disabled so that psprite 1 will be drawn
-        // on top of psprite 0 (Doom plasma rifle fire).
-        //glDisable(GL_DEPTH_TEST);
-        GLState::current().setDepthTest(false).apply();
-        break; }
-
-    case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        //ClientWindow::main().game().glApplyViewport(currentView.geometry);
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPopMatrix();
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
-        //glDisable(GL_CULL_FACE);
-        //glDisable(GL_DEPTH_TEST);
-        GLState::current()
-                .setCull(gl::None)
-                .setDepthTest(false)
-                .apply();
-        break;
-
-    default:
-        App_Error("GL_Restore2DState: Invalid value, step = %i.", step);
-        break;
-    }
-}
-
 Rangef GL_DepthClipRange()
 {
     return Rangef(glNearClip, glFarClip);
@@ -527,7 +410,8 @@ Rangef GL_DepthClipRange()
 Matrix4f GL_GetProjectionMatrix()
 {
     dfloat const fov = Rend_FieldOfView();
-    Vector2f const size(viewpw, viewph);
+    //Vector2f const size(viewpw, viewph);
+    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
     yfov = vrCfg().verticalFieldOfView(fov, size);
     return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
            Matrix4f::scale(Vector3f(1, 1, -1));

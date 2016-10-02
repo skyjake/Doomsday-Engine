@@ -238,8 +238,8 @@ dbyte devRendSkyAlways;
 // for convenience (since we would have to recalculate the matrix anyway).
 dint rAmbient, ambientLight;
 
-dint viewpw, viewph;  ///< Viewport size, in pixels.
-dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
+//dint viewpw, viewph;  ///< Viewport size, in pixels.
+//dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
 
 dfloat yfov;
 
@@ -377,12 +377,14 @@ dfloat Rend_FieldOfView()
     }
     else
     {
+        auto const viewRect = R_Console3DViewRect(displayPlayer);
+
         // Correction is applied for wide screens so that when the FOV is kept
         // at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
         // than a 4:3, but not just scaled linearly since that would go too far
         // into the fish eye territory.
-        dfloat widescreenCorrection = dfloat(viewpw) / dfloat(viewph) / (4.f / 3.f);
-        if (widescreenCorrection < 1.5)  // up to ~16:9
+        dfloat widescreenCorrection = dfloat(viewRect.width()) / dfloat(viewRect.height()) / (4.f / 3.f);
+        if (widescreenCorrection < 1.5f)  // up to ~16:9
         {
             widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
             return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);

@@ -1073,18 +1073,6 @@ void InputSystem::postEvent(ddevent_t *ev)
     }
 
     postToQueue(q, ev);
-
-#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-    if (ev->device == IDEV_KEYBOARD && ev->type == E_TOGGLE && ev->toggle.state == ETOG_DOWN)
-    {
-        extern float devCameraMovementStartTime;
-        extern float devCameraMovementStartTimeRealSecs;
-
-        // Restart timer on each key down.
-        devCameraMovementStartTime         = sysTime;
-        devCameraMovementStartTimeRealSecs = Sys_GetRealSeconds();
-    }
-#endif
 }
 
 void InputSystem::processEvents(timespan_t ticLength)

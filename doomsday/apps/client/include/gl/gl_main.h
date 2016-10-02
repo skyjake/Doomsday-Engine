@@ -51,7 +51,7 @@ namespace world { class Material; }
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C dd_bool  envModAdd;
-DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
+//DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
@@ -125,9 +125,9 @@ void GL_TotalRestore();
  */
 void GL_Init2DState();
 
-void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData);
+//void GL_SwitchTo3DState(dd_bool push_state) //, viewport_t const *port, viewdata_t const *viewData);
 
-void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
+//void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_ProjectionMatrix();
 
