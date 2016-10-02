@@ -50,6 +50,7 @@
 #include <doomsday/console/exec.h>
 #include <de/GLState>
 #include <de/GLTextureFramebuffer>
+#include <de/VRconfig>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
@@ -63,6 +64,7 @@ using namespace de;
 DENG2_PIMPL(GameWidget)
 {
     bool needFrames = true; // Rendering a new frame is necessary.
+    VRConfig::Eye lastFrameEye = VRConfig::NeitherEye;
 
     Impl(Public *i) : Base(i) {}
 
@@ -73,6 +75,8 @@ DENG2_PIMPL(GameWidget)
      */
     void renderGameViews()
     {
+        lastFrameEye = ClientApp::vr().currentEye();
+
         ClientApp::forLocalPlayers([] (ClientPlayer &player)
         {
             player.viewCompositor().renderGameView([] (int playerNum) {
@@ -106,15 +110,11 @@ DENG2_PIMPL(GameWidget)
 
     void draw()
     {
-        //bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
-
-        /*if (renderWireframe || cannotDraw)
+        // If the eye changes, we will need to redraw the view.
+        if (ClientApp::vr().currentEye() != lastFrameEye)
         {
-            // When rendering is wireframe mode, we must clear the screen
-            // before rendering a frame.
-            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
-        }*/
-        //if (cannotDraw) return;
+            needFrames = true;
+        }
 
         if (needFrames)
         {
@@ -125,9 +125,6 @@ DENG2_PIMPL(GameWidget)
             // is then composited using the player view as a texture with additional layers
             // and effects.
             renderGameViews();
-
-            //R_RenderViewPorts(Player3DViewLayer);
-            //R_RenderViewPorts(ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();

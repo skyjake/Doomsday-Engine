@@ -115,6 +115,8 @@ public:
      */
     void setCurrentEye(Eye eye);
 
+    Eye currentEye() const;
+
     /**
      * Enables or disables projection frustum shifting.
      *

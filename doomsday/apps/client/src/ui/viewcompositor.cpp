@@ -183,7 +183,6 @@ GLTextureFramebuffer const &ViewCompositor::gameView() const
 
 void ViewCompositor::drawCompositedLayers()
 {
-    //Rectanglei const conRect = R_ConsoleRect(d->playerNum);
     Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
     auto const oldDisplayPlayer = displayPlayer;
 
@@ -192,31 +191,13 @@ void ViewCompositor::drawCompositedLayers()
 
     R_UseViewPort(d->playerNum);
 
-    //ClientWindow::main().transform().
-
-    /*Rectangleui(de::max<duint>(0, conRect.left()),
-                                          de::max<duint>(0, conRect.top()),
-                                          conRect.width(),
-                                          conRect.height())    */
     GLState::push()
             .setAlphaTest(false)
             .setBlend    (false)
             .setDepthTest(false)
             .setCull     (gl::None);
-            //.setViewport ();
 
     // 3D world view (using the previously rendered texture).
-    //if (d->frameDrawable.isReady())
-    //{
-        // Set up the appropriate post-processing shader.
-
-/*
-        d->uFrameTex  = d->viewFramebuf.colorTexture();
-        d->uMvpMatrix = ClientWindow::main().root().projMatrix2D() *
-                        Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft);
-        d->frameDrawable.draw();*/
-//    }
-
     d->postProcessing.update();
     d->postProcessing.draw(ClientWindow::main().root().projMatrix2D() *
                            Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
