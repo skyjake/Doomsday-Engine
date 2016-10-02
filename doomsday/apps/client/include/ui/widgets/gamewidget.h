@@ -46,6 +46,8 @@ public:
      */
     void pause();
 
+    void drawComposited();
+
     // Events.
     void viewResized() override;
     void update() override;

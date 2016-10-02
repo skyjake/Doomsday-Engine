@@ -39,6 +39,7 @@ DENG_GUI_PIMPL(BusyWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     ProgressWidget *progress;
+    GameWidget *gameWidget = nullptr;
     Time frameDrawnAt;
     GLTextureFramebuffer transitionFrame;
     Drawable drawable;
@@ -93,10 +94,15 @@ ProgressWidget &BusyWidget::progress()
     return *d->progress;
 }
 
-void BusyWidget::viewResized()
+void BusyWidget::setGameWidget(GameWidget &gameWidget)
+{
+    d->gameWidget = &gameWidget;
+}
+
+/*void BusyWidget::viewResized()
 {
     GuiWidget::viewResized();
-}
+}*/
 
 void BusyWidget::update()
 {
@@ -134,8 +140,6 @@ void BusyWidget::drawContent()
 
     if (d->haveTransitionFrame())
     {
-        //glDisable(GL_ALPHA_TEST); /// @todo get rid of these
-        //glDisable(GL_BLEND);
         GLState::push()
                 .setAlphaTest(false)
                 .setBlend(false)
@@ -150,9 +154,6 @@ void BusyWidget::drawContent()
         d->drawable.draw();
 
         GLState::pop().apply();
-
-        //glEnable(GL_ALPHA_TEST);
-        //glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     }
 }
@@ -179,13 +180,14 @@ void BusyWidget::renderTransitionFrame()
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT(d->gameWidget);
 
-    Rectanglei grabRect = Rectanglei::fromSize(root().window().pixelSize());
+    Rectanglei grabRect = Rectanglei::fromSize(rule().recti().size());
 
     LOGDEV_GL_VERBOSE("Rendering transition frame, size %s pixels") << grabRect.size().asText();
 
+#if 1
     /// @todo This breaks Qt's QOpenGLWidget FBO for some reason!
-#if 0
     d->transitionFrame.resize(grabRect.size());
     if (!d->transitionFrame.isReady())
     {
@@ -197,7 +199,9 @@ void BusyWidget::renderTransitionFrame()
             .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
             .apply();
 
-    root().window().as<ClientWindow>().drawGameContent();
+    d->gameWidget->drawComposited();
+
+    //root().window().as<ClientWindow>().drawGameContent();
 
     GLState::pop().apply();
 

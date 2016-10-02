@@ -226,6 +226,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Busy widget shows progress indicator and frozen game content.
         busy = new BusyWidget;
+        busy->setGameWidget(*game);
         busy->hide(); // normally hidden
         busy->rule().setRect(root.viewRule());
         root.add(busy);
@@ -1024,6 +1025,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
+/*
 void ClientWindow::drawGameContent()
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -1033,6 +1035,7 @@ void ClientWindow::drawGameContent()
 
     d->root.drawUntil(*d->home);
 }
+*/
 
 void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
 {

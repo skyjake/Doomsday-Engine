@@ -91,7 +91,7 @@ DENG2_PIMPL(GameWidget)
      * border, HUD, finale, intermission, and engine/debug overlays. This is generally
      * a quick operation and can be done multiple times per window paint.
      */
-    void drawCompositedFrames()
+    void drawComposited()
     {
         int numLocal = 0;
         ClientApp::forLocalPlayers([this, &numLocal] (ClientPlayer &player)
@@ -135,7 +135,7 @@ DENG2_PIMPL(GameWidget)
             needFrames = false;
         }
 
-        drawCompositedFrames();
+        drawComposited();
     }
 
     void updateSize()
@@ -175,6 +175,11 @@ void GameWidget::pause()
     {
         Con_Execute(CMDS_DDAY, "pause", true, false);
     }
+}
+
+void GameWidget::drawComposited()
+{
+    d->drawComposited();
 }
 
 void GameWidget::viewResized()
