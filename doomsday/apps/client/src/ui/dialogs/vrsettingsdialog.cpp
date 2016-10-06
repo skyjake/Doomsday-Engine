@@ -64,7 +64,9 @@ DENG_GUI_PIMPL(VRSettingsDialog)
                 << new ChoiceItem(tr("Side-by-side"),             VRConfig::SideBySide)
                 << new ChoiceItem(tr("Parallel"),                 VRConfig::Parallel)
                 << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
-                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered);
+                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered)
+                << new ChoiceItem(tr("Row interleaved"),          VRConfig::RowInterleaved)
+                ;
 
         if (vrCfg().oculusRift().isEnabled())
         {

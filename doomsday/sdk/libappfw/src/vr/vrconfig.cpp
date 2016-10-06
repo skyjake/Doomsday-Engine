@@ -271,6 +271,7 @@ bool VRConfig::modeAppliesDisplacement(StereoMode mode)
     case LeftOnly:
     case RightOnly:
     case QuadBuffered:
+    case RowInterleaved:
         return false;
 
     default:
