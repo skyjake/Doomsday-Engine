@@ -152,8 +152,8 @@ DENG2_PIMPL(GLWindow)
                 average = average / recordedGpuTimes.size();
                 recordedGpuTimes.clear();
 
-                qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
-                qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
+                //qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
+                //qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
 
                 gpuTimeRecordingStartedAt.restart();
             }
