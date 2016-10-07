@@ -37,6 +37,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
     GLTexture color;
     GLTexture depthStencil;
     //GLFramebuffer framebuf;
+    GLFramebuffer resolvedFbo;
     Asset texFboState;
 
     /*Drawable bufSwap;
@@ -122,9 +123,69 @@ DENG2_PIMPL(GLTextureFramebuffer)
         color.clear();
         depthStencil.clear();
         self.deinit();
+        resolvedFbo.deinit();
         //multisampleTarget.configure();
 
         texFboState.setState(NotReady);
+    }
+
+    void configureTexturesWithFallback(GLFramebuffer &fbo)
+    {
+        // Try a couple of different ways to set up the FBO.
+        for (int attempt = 0; ; ++attempt)
+        {
+            String failMsg;
+            try
+            {
+                switch (attempt)
+                {
+                case 0:
+                    // Most preferred: render both color and depth+stencil to textures.
+                    // Allows shaders to access contents of the entire framebuffer.
+                    failMsg = "Texture-based framebuffer failed: %s\n"
+                              "Trying again without depth/stencil texture";
+                    fbo.configure(&color, &depthStencil);
+                    break;
+
+                case 1:
+                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
+                              "Trying again without stencil";
+                    fbo.configure(GLFramebuffer::Color, color, GLFramebuffer::DepthStencil);
+                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
+                    break;
+
+                case 2:
+                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
+                              "Trying again without texture buffers";
+                    fbo.configure(GLFramebuffer::Color, color, GLFramebuffer::Depth);
+                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
+                    break;
+
+                case 3:
+                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
+                              "Trying again without stencil";
+                    fbo.configure(size, GLFramebuffer::ColorDepthStencil);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
+                    break;
+
+                case 4:
+                    // Final fallback: simple FBO with just color+depth renderbuffers.
+                    // No postfx, no access from shaders, no sky mask.
+                    fbo.configure(size, GLFramebuffer::ColorDepth);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
+                    break;
+
+                default:
+                    break;
+                }
+                break; // success!
+            }
+            catch (GLFramebuffer::ConfigError const &er)
+            {
+                if (failMsg.isEmpty()) throw er; // Can't handle it.
+                LOG_GL_NOTE(failMsg) << er.asText();
+            }
+        }
     }
 
     void reconfigure()
@@ -147,60 +208,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
 
         DENG2_ASSERT(depthStencil.isReady());
 
-        // Try a couple of different ways to set up the FBO.
-        for (int attempt = 0; ; ++attempt)
+        if (isMultisampled())
         {
-            String failMsg;
-            try
-            {
-                switch (attempt)
-                {
-                case 0:
-                    // Most preferred: render both color and depth+stencil to textures.
-                    // Allows shaders to access contents of the entire framebuffer.
-                    failMsg = "Texture-based framebuffer failed: %s\n"
-                              "Trying again without depth/stencil texture";
-                    self.configure(&color, &depthStencil);
-                    break;
-
-                case 1:
-                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
-                              "Trying again without stencil";
-                    self.configure(GLFramebuffer::Color, color, GLFramebuffer::DepthStencil);
-                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
-                    break;
-
-                case 2:
-                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
-                              "Trying again without texture buffers";
-                    self.configure(GLFramebuffer::Color, color, GLFramebuffer::Depth);
-                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
-                    break;
-
-                case 3:
-                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
-                              "Trying again without stencil";
-                    self.configure(size, GLFramebuffer::ColorDepthStencil);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
-                    break;
-
-                case 4:
-                    // Final fallback: simple FBO with just color+depth renderbuffers.
-                    // No postfx, no access from shaders, no sky mask.
-                    self.configure(size, GLFramebuffer::ColorDepth);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
-                    break;
-
-                default:
-                    break;
-                }
-                break; // success!
-            }
-            catch (GLFramebuffer::ConfigError const &er)
-            {
-                if (failMsg.isEmpty()) throw er; // Can't handle it.
-                LOG_GL_NOTE(failMsg) << er.asText();
-            }
+            self.configure(size, ColorDepthStencil, sampleCount());
+            configureTexturesWithFallback(resolvedFbo);
+        }
+        else
+        {
+            configureTexturesWithFallback(self);
         }
 
         self.clear(GLFramebuffer::ColorDepthStencil);
@@ -239,79 +254,6 @@ noMultisampling:
             reconfigure();
         }
     }
-
-/*    void drawSwap()
-    {
-        if (isMultisampled())
-        {
-            target.updateFromProxy();
-        }
-        bufSwap.draw();
-    }*/
-
-    /*void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
-    {
-        GLTarget defaultTarget;
-
-        GLState::push()
-                .setTarget(defaultTarget)
-                .setViewport(Rectangleui::fromSize(size))
-                .apply();
-
-        if (!color.isReady())
-        {
-            // If the frame buffer hasn't been configured yet, just clear the canvas.
-            glClear(GL_COLOR_BUFFER_BIT);
-            canvas.QGLWidget::swapBuffers();
-            GLState::pop().apply();
-            return;
-        }
-
-        switch (swapMode)
-        {
-        case gl::SwapMonoBuffer:
-            if (GLInfo::extensions().EXT_framebuffer_blit)
-            {
-                if (isMultisampled())
-                {
-                    multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
-                }
-                else
-                {
-                    target.blit(defaultTarget);  // copy to system backbuffer
-                }
-            }
-            else
-            {
-                // Fallback: draw the back buffer texture to the main framebuffer.
-                drawSwap();
-            }
-            canvas.QGLWidget::swapBuffers();
-            break;
-
-        case gl::SwapWithAlpha:
-            drawSwap();
-            break;
-
-        case gl::SwapStereoLeftBuffer:
-            glDrawBuffer(GL_BACK_LEFT);
-            drawSwap();
-            glDrawBuffer(GL_BACK);
-            break;
-
-        case gl::SwapStereoRightBuffer:
-            glDrawBuffer(GL_BACK_RIGHT);
-            drawSwap();
-            glDrawBuffer(GL_BACK);
-            break;
-
-        case gl::SwapStereoBuffers:
-            canvas.QGLWidget::swapBuffers();
-            break;
-        }
-
-        GLState::pop().apply();
-    }*/
 };
 
 GLTextureFramebuffer::GLTextureFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
@@ -320,6 +262,11 @@ GLTextureFramebuffer::GLTextureFramebuffer(Image::Format const &colorFormat, Siz
     d->colorFormat = colorFormat;
     d->size        = initialSize;
     d->_samples    = sampleCount;
+}
+
+bool GLTextureFramebuffer::areTexturesReady() const
+{
+    return d->texFboState.isReady();
 }
 
 void GLTextureFramebuffer::glInit()
@@ -404,6 +351,24 @@ void GLTextureFramebuffer::resize(Size const &newSize)
     d->resize(newSize);
 }
 
+void GLTextureFramebuffer::resolveSamples()
+{
+    if (d->isMultisampled())
+    {
+        // Copy the framebuffer contents to the textures (that have no multisampling).
+        blit(d->resolvedFbo, ColorDepthStencil);
+    }
+}
+
+GLFramebuffer &GLTextureFramebuffer::resolvedFramebuffer()
+{
+    if (d->isMultisampled())
+    {
+        return d->resolvedFbo;
+    }
+    return *this;
+}
+
 GLTextureFramebuffer::Size GLTextureFramebuffer::size() const
 {
     return d->size;
@@ -422,6 +387,15 @@ GLTexture &GLTextureFramebuffer::depthStencilTexture() const
 int GLTextureFramebuffer::sampleCount() const
 {
     return d->sampleCount();
+}
+
+GLTexture *GLTextureFramebuffer::attachedTexture(Flags const &attachment) const
+{
+    if (d->isMultisampled())
+    {
+        return d->resolvedFbo.attachedTexture(attachment);
+    }
+    return GLFramebuffer::attachedTexture(attachment);
 }
 
 /*void GLTextureFramebuffer::clear(GLFramebuffer::Flags const &attachments)

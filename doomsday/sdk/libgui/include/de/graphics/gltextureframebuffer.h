@@ -54,6 +54,8 @@ public:
                          Size          const &initialSize = Size(),
                          int                  sampleCount = 0 /*default*/);
 
+    bool areTexturesReady() const;
+
     void glInit();
     void glDeinit();
 
@@ -68,10 +70,20 @@ public:
      */
     void resize(Size const &newSize);
 
+    /**
+     * Updates the color and depth textures by blitting from the multisampled
+     * renderbuffers.
+     */
+    void resolveSamples();
+
+    GLFramebuffer &resolvedFramebuffer();
+
     Size size() const;
     GLTexture &colorTexture() const;
     GLTexture &depthStencilTexture() const;
     int sampleCount() const;
+
+    GLTexture *attachedTexture(Flags const &attachment) const override;
 
 public:
     /**

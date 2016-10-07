@@ -263,7 +263,7 @@ public:
      * @param attachment  Which attachment.
      * @return
      */
-    GLTexture *attachedTexture(Flags const &attachment) const;
+    virtual GLTexture *attachedTexture(Flags const &attachment) const;
 
     /**
      * Replaces a currently attached texture with another.
