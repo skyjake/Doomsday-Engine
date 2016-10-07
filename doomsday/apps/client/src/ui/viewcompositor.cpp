@@ -33,6 +33,7 @@
 #include "dd_main.h"
 
 #include <de/Config>
+#include <de/CommandLine>
 #include <de/GLState>
 #include <de/GLShaderBank>
 #include <de/Drawable>
@@ -43,6 +44,7 @@ using namespace de;
 static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 
 DENG2_PIMPL(ViewCompositor)
+, DENG2_OBSERVES(Variable, Change)
 {
     mutable Variable const *pixelDensity = nullptr;
     mutable Variable const *resizeFactor = nullptr;
@@ -108,12 +110,42 @@ DENG2_PIMPL(ViewCompositor)
         return size;
     }
 
+    void updateSampleCount()
+    {
+        int sampleCount = 1;
+
+        bool configured = App::config().getb("window.main.fsaa");
+        if (App::commandLine().has("-nofsaa") || !configured)
+        {
+            LOG_GL_VERBOSE("Multisampling off");
+        }
+        else
+        {
+            sampleCount = 4; // four samples is fine?
+            LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
+        }
+
+        viewFramebuf.setSampleCount(sampleCount);
+    }
+
+    void variableValueChanged(Variable &, Value const &) override
+    {
+        updateSampleCount();
+    }
+
     void glInit()
     {
         viewFramebuf.resize(framebufferSize());
-        viewFramebuf.glInit();
+        if (!viewFramebuf.areTexturesReady())
+        {
+            App::config("window.main.fsaa").audienceForChange() += this;
+            updateSampleCount();
+
+            viewFramebuf.glInit();
+        }
 
         postProcessing.glInit();
+
 
         /*if (!frameDrawable.isReady())
         {

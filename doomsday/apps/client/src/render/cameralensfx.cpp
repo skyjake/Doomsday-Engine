@@ -106,6 +106,19 @@ void LensFx_Draw(int playerNum)
     ClientPlayer &player = ClientApp::player(playerNum);
     fxFramePlayerNum = playerNum;
 
+    // Must first resolve multisampling because everything except the 3D world itself
+    // is drawn without multisampling. This will make the attached textures available
+    // for use in effects.
+    player.viewCompositor().gameView().resolveSamples();
+
+    // TODO: Refactor the MS/resolved switch; it should encapsulate only the 3D world
+    // rendering section.
+
+    // Now that we've resolved multisampling, further rendering must be done without it.
+    GLState::push()
+            .setTarget(player.viewCompositor().gameView().resolvedFramebuffer())
+            .apply();
+
     auto const &effects = player.fxStack().effects;
 
     // Initialize these effects if they currently are not.
@@ -131,6 +144,8 @@ void LensFx_Draw(int playerNum)
     {
         effects.at(i)->endFrame();
     }
+
+    GLState::pop().apply();
 }
 
 void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
