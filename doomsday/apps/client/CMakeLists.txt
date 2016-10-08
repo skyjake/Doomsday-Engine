@@ -98,6 +98,12 @@ set (MACX_RESOURCES
     doomsday.pk3
 )
 
+# Windows: Use Qt resources.
+if (WIN32)
+    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
+    list (APPEND src ${RCC_SOURCES})
+endif ()
+
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
 # There's some old code here so relax the warnings a bit.

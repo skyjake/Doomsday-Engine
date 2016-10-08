@@ -790,9 +790,7 @@ ClientWindow::ClientWindow(String const &id)
 
 #ifdef WIN32
     // Set an icon for the window.
-    Path iconPath = DENG2_APP->nativeBasePath() / "data\\graphics\\doomsday.ico";
-    LOG_DEBUG("Window icon: ") << NativePath(iconPath).pretty();
-    setWindowIcon(QIcon(iconPath));
+    setIcon(QIcon(":/doomsday.ico"));
 #endif
 
     d->setupUI();
