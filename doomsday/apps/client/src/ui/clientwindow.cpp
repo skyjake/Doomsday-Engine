@@ -473,13 +473,13 @@ DENG2_PIMPL(ClientWindow)
 
             self.eventHandler().audienceForFocusChange() += this;
 
-#ifdef WIN32
+/*#ifdef WIN32
             if (self.isFullScreen())
             {
                 // It would seem we must manually give our canvas focus. Bug in Qt?
                 self.canvas().setFocus();
             }
-#endif
+#endif*/
 
             DD_FinishInitializationAfterWindowReady();
 

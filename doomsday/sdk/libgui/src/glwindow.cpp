@@ -323,14 +323,14 @@ void GLWindow::wheelEvent(QWheelEvent *ev)
 
 bool GLWindow::event(QEvent *ev)
 {
-#ifdef WIN32
+/*#ifdef WIN32
     if (ev->type() == QEvent::ActivationChange)
     {
         //LOG_DEBUG("GLWindow: Forwarding QEvent::KeyRelease, Qt::Key_Alt");
         QKeyEvent keyEvent = QKeyEvent(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
         return QApplication::sendEvent(&canvas(), &keyEvent);
     }
-#endif
+#endif*/
     return QOpenGLWindow::event(ev);
 }
 

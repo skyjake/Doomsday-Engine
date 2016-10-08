@@ -37,6 +37,36 @@ static QOpenGLContext &context()
     return *ClientWindow::main().context();
 }
 
+static void deng_glEnable(GLenum e)
+{
+    LIBGUI_GL.glEnable(e);
+}
+
+static void deng_glDisable(GLenum e)
+{
+    LIBGUI_GL.glDisable(e);
+}
+
+static void deng_glDeleteTextures(GLsizei num, GLuint const *names)
+{
+    LIBGUI_GL.glDeleteTextures(num, names);
+}
+
+static void deng_glFogi(GLenum p, GLint v)
+{
+    LIBGUI_GL.glFogi(p, v);
+}
+
+static void deng_glFogf(GLenum p, GLfloat v)
+{
+    LIBGUI_GL.glFogf(p, v);
+}
+
+static void deng_glFogfv(GLenum p, GLfloat const *v)
+{
+    LIBGUI_GL.glFogfv(p, v);
+}
+
 #define GL_CALL1(form, func, x) \
     if(mustDefer()) GL_Defer_##form(func, x); else func(x);
 #define GL_CALL2(form, func, x, y) \
@@ -44,30 +74,30 @@ static QOpenGLContext &context()
 
 DENG_EXTERN_C void Deferred_glEnable(GLenum e)
 {
-    GL_CALL1(e, reinterpret_cast<void (*)(GLenum)>(context().getProcAddress("glEnable")), e);
+    GL_CALL1(e, deng_glEnable, e);
 }
 
 DENG_EXTERN_C void Deferred_glDisable(GLenum e)
 {
-    GL_CALL1(e, reinterpret_cast<void (*)(GLenum)>(context().getProcAddress("glDisable")), e);
+    GL_CALL1(e, deng_glDisable, e);
 }
 
 DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
 {
-    GL_CALL2(uintArray, reinterpret_cast<void (*)(GLsizei, GLuint const *)>(context().getProcAddress("glDeleteTextures")), num, names);
+    GL_CALL2(uintArray, deng_glDeleteTextures, num, names);
 }
 
 DENG_EXTERN_C void Deferred_glFogi(GLenum p, GLint v)
 {
-    GL_CALL2(i, reinterpret_cast<void (*)(GLenum, GLint)>(context().getProcAddress("glFogi")), p, v);
+    GL_CALL2(i, deng_glFogi, p, v);
 }
 
 DENG_EXTERN_C void Deferred_glFogf(GLenum p, GLfloat v)
 {
-    GL_CALL2(f, reinterpret_cast<void (*)(GLenum, GLfloat)>(context().getProcAddress("glFogf")), p, v);
+    GL_CALL2(f, deng_glFogf, p, v);
 }
 
 DENG_EXTERN_C void Deferred_glFogfv(GLenum p, GLfloat const *v)
 {
-    GL_CALL2(fv4, reinterpret_cast<void (*)(GLenum, GLfloat const *)>(context().getProcAddress("glFogfv")), p, v);
+    GL_CALL2(fv4, deng_glFogfv, p, v);
 }

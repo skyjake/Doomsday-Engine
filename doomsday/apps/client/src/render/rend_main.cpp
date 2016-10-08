@@ -81,12 +81,12 @@
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
 #include "ui/postprocessing.h"
-
 #include "ui/editors/edit_bias.h"
 
 #include "sys_system.h"
 #include "dd_main.h"
 #include "clientapp.h"
+#include "network/net_main.h"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>

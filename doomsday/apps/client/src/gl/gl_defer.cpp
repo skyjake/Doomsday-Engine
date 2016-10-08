@@ -157,6 +157,8 @@ static deferredtask_t* nextTask(void)
 
 LIBDENG_GL_DEFER1(e, GLenum e)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_e = ptr;
     api->param.e = e;
@@ -166,6 +168,8 @@ LIBDENG_GL_DEFER1(e, GLenum e)
 
 LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ei = ptr;
     api->param.ei.e = e;
@@ -175,6 +179,8 @@ LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 
 LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ef = ptr;
     api->param.ef.e = e;
@@ -184,6 +190,8 @@ LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 
 LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_efv4 = ptr;
     api->param.efv4.e = e;
@@ -193,6 +201,8 @@ LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 
 LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
     api->param.uintArray.count = s;

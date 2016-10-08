@@ -120,9 +120,9 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
-#ifndef MACOSX
+/*#ifndef MACOSX
     de::Canvas &canvas = ClientWindowSystem::main().canvas();
-#endif
+#endif*/
 
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
@@ -133,7 +133,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
 #ifdef MACOSX
         Cursor_Show(false);
 #else
-        canvas.setCursor(QCursor(Qt::BlankCursor));
+        //canvas.setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 #endif
     }
@@ -144,7 +144,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
         Cursor_Show(true);
 #else
         qApp->restoreOverrideCursor();
-        canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+        //canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
 #endif
     }
 }
