@@ -246,7 +246,7 @@ static inline void enableTexUnit(byte id)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 }
 
 static inline void disableTexUnit(byte id)
@@ -255,7 +255,7 @@ static inline void disableTexUnit(byte id)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
     disableArrays(0, 0, 1 << id);
@@ -943,7 +943,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         //glDisable(GL_CULL_FACE);
         GLState::current().setCull(gl::None).apply();
     }
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FrameModel::Primitives const &primitives =
         activeLod? activeLod->primitives : mdl.primitives();
@@ -1037,7 +1037,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // We're done!
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
     LIBGUI_GL.glPopMatrix();
 

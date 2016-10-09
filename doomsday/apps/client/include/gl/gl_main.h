@@ -56,7 +56,7 @@ DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
 #ifdef _DEBUG
-#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
+#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);}
 #else
 #  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif

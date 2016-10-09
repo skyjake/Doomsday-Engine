@@ -100,8 +100,6 @@ void H_SetupState(bool dosetup)
 
     if(dosetup)
     {
-        //glDepthMask(GL_FALSE);
-        //glDisable(GL_DEPTH_TEST);
         GLState::current()
                 .setDepthWrite(false)
                 .setDepthTest(false)
@@ -111,8 +109,6 @@ void H_SetupState(bool dosetup)
     else
     {
         GL_BlendMode(BM_NORMAL);
-        //glEnable(GL_DEPTH_TEST);
-        //glDepthMask(GL_TRUE);
         GLState::current()
                 .setDepthWrite(true)
                 .setDepthTest(true)
@@ -324,7 +320,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         }
 
         GL_BindTextureUnmanaged(renderTextures? tex : 0, gl::ClampToEdge, gl::ClampToEdge);
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         float const radX = radius * fl->size;
         float const radY = radX / 1.2f; // Aspect correction.
@@ -349,7 +345,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
                        pos.z - radX * rightOff.z);
         LIBGUI_GL.glEnd();
 
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 
     LIBGUI_GL.glMatrixMode(GL_TEXTURE);

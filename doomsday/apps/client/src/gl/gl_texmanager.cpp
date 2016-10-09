@@ -141,7 +141,7 @@ void GL_ReleaseAllLightingSystemTextures()
 {
     if (novideo || !initedOk) return;
 
-    glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
+    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     zap(lightingTextures);
 }
 
@@ -207,7 +207,7 @@ void GL_ReleaseAllFlareTextures()
 {
     if (novideo || !initedOk) return;
 
-    glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
+    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     zap(sysFlareTextures);
 }
 
@@ -394,7 +394,7 @@ void GL_ReleaseTexturesForRawImages()
     {
         if (raw->tex)
         {
-            glDeleteTextures(1, (GLuint const *) &raw->tex);
+            Deferred_glDeleteTextures(1, (GLuint const *) &raw->tex);
             raw->tex = 0;
         }
     }

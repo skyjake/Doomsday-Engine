@@ -208,7 +208,7 @@ void Rend_ParticleReleaseSystemTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(1, (GLuint const *) &pointTex);
+    Deferred_glDeleteTextures(1, (GLuint const *) &pointTex);
     pointTex = 0;
 }
 
@@ -216,7 +216,7 @@ void Rend_ParticleReleaseExtraTextures()
 {
     if(novideo) return;
 
-    glDeleteTextures(NUM_TEX_NAMES, (GLuint const *) ptctexname);
+    Deferred_glDeleteTextures(NUM_TEX_NAMES, (GLuint const *) ptctexname);
     de::zap(ptctexname);
 }
 
@@ -533,7 +533,7 @@ static void drawParticles(dint rtype, bool withBlend)
                 .apply();
 
         GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         //glDepthFunc(GL_LEQUAL);
         LIBGUI_GL.glBegin(primType = GL_QUADS);
@@ -809,7 +809,7 @@ static void drawParticles(dint rtype, bool withBlend)
                     .setDepthFunc(gl::Less)
                     .apply();
 
-            glDisable(GL_TEXTURE_2D);
+            LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         }
     }
 

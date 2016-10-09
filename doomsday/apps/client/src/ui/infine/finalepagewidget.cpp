@@ -126,7 +126,7 @@ void FinalePageWidget::draw() const
                 matAnimator.prepare();
 
                 GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-                glEnable(GL_TEXTURE_2D);
+                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
             }
 
             if (d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)

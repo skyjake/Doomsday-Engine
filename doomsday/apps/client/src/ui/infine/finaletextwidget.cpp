@@ -162,7 +162,7 @@ void FinaleTextWidget::draw(Vector3f const &offset)
     }
 
     LIBGUI_GL.glScalef(scale()[0].value, scale()[1].value, scale()[2].value);
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(d->pageFont? page()->predefinedFont(d->pageFont - 1) : d->fontNum);
 
@@ -241,7 +241,7 @@ void FinaleTextWidget::draw(Vector3f const &offset)
         ++cnt;
     }
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
     LIBGUI_GL.glPopMatrix();

@@ -224,7 +224,7 @@ struct Hemisphere
                 layerTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 GL_BindTexture(layerTex);
 
-                glEnable(GL_TEXTURE_2D);
+                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
                 LIBGUI_GL.glMatrixMode(GL_TEXTURE);
                 LIBGUI_GL.glPushMatrix();
                 LIBGUI_GL.glLoadIdentity();
@@ -282,7 +282,7 @@ struct Hemisphere
             {
                 LIBGUI_GL.glMatrixMode(GL_TEXTURE);
                 LIBGUI_GL.glPopMatrix();
-                glDisable(GL_TEXTURE_2D);
+                LIBGUI_GL.glDisable(GL_TEXTURE_2D);
             }
 
 #undef WRITESKYVERTEX
@@ -678,12 +678,12 @@ void SkyDrawable::draw(Animator const *animator) const
     // Only drawn when at least one layer is active.
     if(d->firstActiveLayer < 0) return;
 
-    if(fogParams.usingFog) glEnable(GL_FOG);
+    if(fogParams.usingFog) LIBGUI_GL.glEnable(GL_FOG);
 
     d->drawSphere();
     d->drawModels(animator);
 
-    if(fogParams.usingFog) glDisable(GL_FOG);
+    if(fogParams.usingFog) LIBGUI_GL.glDisable(GL_FOG);
 }
 
 MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static

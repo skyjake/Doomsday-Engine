@@ -360,14 +360,6 @@ void GL_SetMultisample(dd_bool on)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-/*#if defined(WIN32)
-    if(on) glEnable(GL_MULTISAMPLE_ARB);
-    else  glDisable(GL_MULTISAMPLE_ARB);
-#else
-    if(on) glEnable(GL_MULTISAMPLE);
-    else  glDisable(GL_MULTISAMPLE);
-#endif*/
-
     /// @todo Do this via GLFramebuffer.
     qDebug() << "GL_SetMultisample:" << on << "(not implemented)";
 }
@@ -601,11 +593,11 @@ int DGL_Enable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        glEnable(GL_TEXTURE_2D);
+        Deferred_glEnable(GL_TEXTURE_2D);
         break;
 
     case DGL_FOG:
-        glEnable(GL_FOG);
+        Deferred_glEnable(GL_FOG);
         GL_state.currentUseFog = true;
         break;
 
@@ -614,11 +606,11 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_LINE_SMOOTH:
-        glEnable(GL_LINE_SMOOTH);
+        Deferred_glEnable(GL_LINE_SMOOTH);
         break;
 
     case DGL_POINT_SMOOTH:
-        glEnable(GL_POINT_SMOOTH);
+        Deferred_glEnable(GL_POINT_SMOOTH);
         break;
 
     default:
@@ -638,11 +630,11 @@ void DGL_Disable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        glDisable(GL_TEXTURE_2D);
+        Deferred_glDisable(GL_TEXTURE_2D);
         break;
 
     case DGL_FOG:
-        glDisable(GL_FOG);
+        Deferred_glDisable(GL_FOG);
         GL_state.currentUseFog = false;
         break;
 
@@ -652,11 +644,11 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_LINE_SMOOTH:
-        glDisable(GL_LINE_SMOOTH);
+        Deferred_glDisable(GL_LINE_SMOOTH);
         break;
 
     case DGL_POINT_SMOOTH:
-        glDisable(GL_POINT_SMOOTH);
+        Deferred_glDisable(GL_POINT_SMOOTH);
         break;
 
     default:
@@ -866,7 +858,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
 {
     if(!num || !names) return;
 
-    glDeleteTextures(num, (GLuint const *) names);
+    Deferred_glDeleteTextures(num, (GLuint const *) names);
 }
 
 #undef DGL_Bind

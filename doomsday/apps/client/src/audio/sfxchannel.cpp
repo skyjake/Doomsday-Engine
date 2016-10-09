@@ -454,7 +454,7 @@ void Sfx_ChannelDrawer()
     LIBGUI_GL.glLoadIdentity();
     LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -464,7 +464,7 @@ void Sfx_ChannelDrawer()
     if(!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         return;
     }
 
@@ -532,7 +532,7 @@ void Sfx_ChannelDrawer()
         return LoopContinue;
     });
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // Back to the original.
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);

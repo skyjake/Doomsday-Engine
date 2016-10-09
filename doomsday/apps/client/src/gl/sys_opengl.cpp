@@ -304,9 +304,8 @@ void Sys_GLConfigureDefaultState(void)
             .setDepthTest(false)
             .setDepthFunc(de::gl::Less);
 
-    //glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_CUBE_MAP);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);
@@ -321,21 +320,21 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_GL.glLoadIdentity();
 
     // Setup for antialiased lines/points.
-    glEnable(GL_LINE_SMOOTH);
+    LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     LIBGUI_GL.glLineWidth(GL_state.currentLineWidth);
 
-    glEnable(GL_POINT_SMOOTH);
+    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
     LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
 
     LIBGUI_GL.glShadeModel(GL_SMOOTH);
 
     // Default state for the white fog is off.
-    glDisable(GL_FOG);
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
-    glFogfv(GL_FOG_COLOR, fogcol);
+    LIBGUI_GL.glDisable(GL_FOG);
+    LIBGUI_GL.glFogi(GL_FOG_MODE, GL_LINEAR);
+    LIBGUI_GL.glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
+    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogcol);
 
     LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 

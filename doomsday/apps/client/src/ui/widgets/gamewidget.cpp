@@ -50,7 +50,7 @@
 #include <doomsday/console/exec.h>
 #include <de/GLState>
 #include <de/GLTextureFramebuffer>
-#include <de/VRconfig>
+#include <de/VRConfig>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning

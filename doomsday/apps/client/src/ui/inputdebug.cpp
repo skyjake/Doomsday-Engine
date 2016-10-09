@@ -228,10 +228,10 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     GL_DrawRect(textGeom);
 
     // Draw the text.
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
     Point2Raw const textOffset(BORDER, BORDER);
     FR_DrawText(label.toUtf8().constData(), &textOffset);
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // Mark expired?
     if (button.bindContextAssociation() & InputControl::Expired)
@@ -424,10 +424,10 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     {
         Size2Raw size;
 
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
         Block const fullName(device.title().toUtf8());
         FR_DrawText(fullName.constData(), nullptr/*no offset*/);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
         FR_TextSize(&size, fullName.constData());
         visualGeom = Rect_NewWithOriginSize2(offset.x, offset.y, size.width, size.height);

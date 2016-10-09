@@ -31,7 +31,7 @@
 #  include "render/r_draw.h"    // Rend_PatchTextureSpec()
 #  include "render/rend_main.h" // filterUI
 #  include "MaterialAnimator"
-#  include <de/GLinfo>
+#  include <de/GLInfo>
 #endif
 
 using namespace de;
@@ -235,7 +235,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                                         (filterUI ? gl::Linear : gl::Nearest));
                 if (glName)
                 {
-                    glEnable(GL_TEXTURE_2D);
+                    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
                     textureEnabled = true;
                 }
             }
@@ -249,7 +249,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                                     (filterUI ? gl::Linear : gl::Nearest));
             if (f->texRef.tex)
             {
-                glEnable(GL_TEXTURE_2D);
+                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
             }
             break;
@@ -268,7 +268,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 int const texBorder            = tex->spec().variant.border;
 
                 GL_BindTexture(tex);
-                glEnable(GL_TEXTURE_2D);
+                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
                 V3f_Set(dimensions, matDimensions.x + texBorder * 2, matDimensions.y + texBorder * 2, 0);
@@ -298,7 +298,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                     Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                             | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
-                glEnable(GL_TEXTURE_2D);
+                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
                 V3f_Set(offset, tex.origin().x, tex.origin().y, 0);

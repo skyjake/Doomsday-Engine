@@ -108,18 +108,6 @@ dd_bool GL_IsFullyInited()
     return initFullGLOk;
 }
 
-//#if defined(WIN32) || defined(MACOSX)
-void GL_AssertContextActive()
-{
-/*#ifdef WIN32
-    DENG2_ASSERT(wglGetCurrentContext() != 0);
-#else
-    DENG2_ASSERT(CGLGetCurrentContext() != 0);
-#endif*/
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
-}
-//#endif
-
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
     if(!gamma_support) return;
@@ -368,19 +356,14 @@ void GL_Init2DState()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
-    //glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
     GLState::current()
             .setCull(gl::None)
             .setDepthTest(false)
             .apply();
 
     //glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_CUBE_MAP);
-
-    // Default, full area viewport.
-    //glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);
@@ -389,17 +372,17 @@ void GL_Init2DState()
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
-    glDisable(GL_FOG);
-    glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                         fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
-    glFogf(GL_FOG_START, DEFAULT_FOG_START);
-    glFogf(GL_FOG_END, DEFAULT_FOG_END);
-    glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    LIBGUI_GL.glDisable(GL_FOG);
+    LIBGUI_GL.glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
+                                   fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
+    LIBGUI_GL.glFogf(GL_FOG_START, DEFAULT_FOG_START);
+    LIBGUI_GL.glFogf(GL_FOG_END, DEFAULT_FOG_END);
+    LIBGUI_GL.glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
     fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
     fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
     fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
     fogParams.fogColor[3] = 1;
-    glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
 Rangef GL_DepthClipRange()
@@ -478,7 +461,7 @@ void GL_SelectTexUnits(dint count)
     for(dint i = numTexUnits - 1; i >= count; i--)
     {
         LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 
     // Enable the selected units.
@@ -487,7 +470,7 @@ void GL_SelectTexUnits(dint count)
         if(i >= numTexUnits) continue;
 
         LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -1464,7 +1447,7 @@ D_CMD(Fog)
         }
         fogParams.fogColor[3] = 1;
 
-        glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         LOG_GL_VERBOSE("Fog color set");
         return true;
     }
@@ -1472,20 +1455,20 @@ D_CMD(Fog)
     {
         fogParams.fogStart = (GLfloat) strtod(argv[2], nullptr);
 
-        glFogf(GL_FOG_START, fogParams.fogStart);
+        Deferred_glFogf(GL_FOG_START, fogParams.fogStart);
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         fogParams.fogEnd = (GLfloat) strtod(argv[2], nullptr);
-        glFogf(GL_FOG_END, fogParams.fogEnd);
+        Deferred_glFogf(GL_FOG_END, fogParams.fogEnd);
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
-        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
+        Deferred_glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog density set");
         return true;
     }
@@ -1493,19 +1476,19 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            glFogi(GL_FOG_MODE, GL_LINEAR);
+            Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
             LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
-            glFogi(GL_FOG_MODE, GL_EXP);
+            Deferred_glFogi(GL_FOG_MODE, GL_EXP);
             LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
-            glFogi(GL_FOG_MODE, GL_EXP2);
+            Deferred_glFogi(GL_FOG_MODE, GL_EXP2);
             LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }

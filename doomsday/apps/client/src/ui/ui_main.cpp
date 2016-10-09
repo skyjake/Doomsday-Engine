@@ -366,7 +366,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     GLState::push();
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     if (alpha < 1.0)
     {
         GL_BlendMode(BM_NORMAL);
@@ -396,7 +396,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     //glEnable(GL_BLEND);
     GLState::pop().apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 /**

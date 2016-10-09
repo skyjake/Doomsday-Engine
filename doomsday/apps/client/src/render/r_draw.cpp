@@ -223,7 +223,7 @@ void R_DrawViewBorder()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     LIBGUI_GL.glMatrixMode(GL_TEXTURE);
     LIBGUI_GL.glPushMatrix();
@@ -283,5 +283,5 @@ void R_DrawViewBorder()
         R_DrawPatch(borderTexture(BG_BOTTOMLEFT),  vd->window.bottomLeft().x - border, vd->window.bottomRight.y, border, border, false);
     }
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }

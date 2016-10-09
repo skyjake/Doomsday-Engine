@@ -1131,13 +1131,6 @@ FadeToBlackWidget *ClientWindow::contentFade()
     return d->fader;
 }
 
-#if defined(UNIX) && !defined(MACOSX)
-void GL_AssertContextActive()
-{
-    DENG_ASSERT(QGLContext::currentContext() != 0);
-}
-#endif
-
 #undef M_ScreenShot
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 {

@@ -31,9 +31,6 @@
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 
-#undef glEnable
-#undef glDisable
-
 #include <de/vector1.h>
 #include <de/concurrency.h>
 #include <de/GLInfo>

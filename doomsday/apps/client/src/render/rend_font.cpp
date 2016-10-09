@@ -574,7 +574,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
     if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
@@ -742,7 +742,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     if(renderWireframe > 1)
     {
         /// @todo do not assume previous state.
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }

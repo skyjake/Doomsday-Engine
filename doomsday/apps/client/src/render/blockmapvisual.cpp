@@ -89,7 +89,7 @@ static void drawSubspace(ConvexSubspace const &subspace)
             Vector2d const normal(-unit.y, unit.x);
 
             GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
-            glEnable(GL_TEXTURE_2D);
+            LIBGUI_GL.glEnable(GL_TEXTURE_2D);
             GL_BlendMode(BM_ADD);
 
             LIBGUI_GL.glBegin(GL_QUADS);
@@ -103,7 +103,7 @@ static void drawSubspace(ConvexSubspace const &subspace)
                 LIBGUI_GL.glVertex2f(start.x - normal.x * width, start.y - normal.y * width);
             LIBGUI_GL.glEnd();
 
-            glDisable(GL_TEXTURE_2D);
+            LIBGUI_GL.glDisable(GL_TEXTURE_2D);
             GL_BlendMode(BM_NORMAL);
         }
 
@@ -240,7 +240,7 @@ static void drawBackground(Blockmap const &bmap)
 
 static void drawCellInfo(Vector2d const &origin_, char const *info)
 {
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -260,12 +260,12 @@ static void drawCellInfo(Vector2d const &origin_, char const *info)
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx2(info, &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
 {
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     Point2Raw origin(origin_.x, origin_.y);
 
@@ -306,7 +306,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
                          blockmap.bounds().maxX, blockmap.bounds().maxY);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static void drawCellInfoBox(Vector2d const &origin, Blockmap const &blockmap,

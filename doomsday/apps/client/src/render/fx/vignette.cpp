@@ -77,7 +77,7 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
                             gl::ClampToEdge);
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
     for (i = 0; i <= DIVS; ++i)
@@ -96,7 +96,7 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     }
     LIBGUI_GL.glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 Vignette::Vignette(int console) : ConsoleEffect(console)
