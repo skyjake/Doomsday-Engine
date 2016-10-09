@@ -348,7 +348,7 @@ void BitmapFont::glDeinit()
 
     if(d->texGLName)
     {
-        LIBGUI_GL.glDeleteTextures(1, (GLuint const *) &d->texGLName);
+        Deferred_glDeleteTextures(1, (GLuint const *) &d->texGLName);
     }
     d->texGLName = 0;
 }

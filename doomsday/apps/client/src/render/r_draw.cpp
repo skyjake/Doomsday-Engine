@@ -217,8 +217,9 @@ void R_DrawViewBorder()
     viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
     DENG2_ASSERT(port != 0 && vd != 0);
 
-    if(vd->window.isNull()) return;
-    if(vd->window.size() >= port->geometry.size()) return;
+    if (!borderGraphicsNames[BG_BACKGROUND]) return;
+    if (vd->window.isNull()) return;
+    if (vd->window.size() >= port->geometry.size()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
