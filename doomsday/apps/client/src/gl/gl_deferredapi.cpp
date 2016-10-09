@@ -32,37 +32,32 @@ static dd_bool __inline mustDefer(void)
     return !Sys_InMainThread();
 }
 
-static QOpenGLContext &context()
-{
-    return *ClientWindow::main().context();
-}
-
-static void deng_glEnable(GLenum e)
+static void GL_CALL deng_glEnable(GLenum e)
 {
     LIBGUI_GL.glEnable(e);
 }
 
-static void deng_glDisable(GLenum e)
+static void GL_CALL deng_glDisable(GLenum e)
 {
     LIBGUI_GL.glDisable(e);
 }
 
-static void deng_glDeleteTextures(GLsizei num, GLuint const *names)
+static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
 {
     LIBGUI_GL.glDeleteTextures(num, names);
 }
 
-static void deng_glFogi(GLenum p, GLint v)
+static void GL_CALL deng_glFogi(GLenum p, GLint v)
 {
     LIBGUI_GL.glFogi(p, v);
 }
 
-static void deng_glFogf(GLenum p, GLfloat v)
+static void GL_CALL deng_glFogf(GLenum p, GLfloat v)
 {
     LIBGUI_GL.glFogf(p, v);
 }
 
-static void deng_glFogfv(GLenum p, GLfloat const *v)
+static void GL_CALL deng_glFogfv(GLenum p, GLfloat const *v)
 {
     LIBGUI_GL.glFogfv(p, v);
 }
