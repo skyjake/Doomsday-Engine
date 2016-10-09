@@ -107,7 +107,7 @@ def mac_os_version():
 
 
 def mac_os_8_or_later():
-    return mac_os_version() in ['10.8', '10.9', '10.10', '10.11']
+    return mac_os_version() in ['10.8', '10.9', '10.10', '10.11', '10.12']
 
 
 def mac_target_ext():
