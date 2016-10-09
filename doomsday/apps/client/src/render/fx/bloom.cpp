@@ -18,9 +18,11 @@
 
 #include "render/fx/bloom.h"
 #include "clientapp.h"
+#include "world/clientserverworld.h"
 
 #include <doomsday/console/var.h>
 #include <de/Drawable>
+#include <de/GLTextureFramebuffer>
 #include <de/WindowTransform>
 
 using namespace de;
@@ -38,7 +40,7 @@ DENG2_PIMPL(Bloom)
     typedef GLBufferT<Vertex2Tex> VBuf;
 
     Drawable bloom;
-    GLFramebuffer workFB;
+    GLTextureFramebuffer workFB;
     GLUniform uMvpMatrix;
     GLUniform uTex;
     GLUniform uColor;
@@ -96,15 +98,17 @@ DENG2_PIMPL(Bloom)
      */
     void draw()
     {
-        GLTarget &target = GLState::current().target();
-        GLTexture *colorTex = target.attachedTexture(GLTarget::Color);
+        GLFramebuffer &target = GLState::current().target();
+        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
+
+        //qDebug() << "bloom with" << colorTex;
 
         // Must have access to the color texture containing the frame buffer contents.
-        if(!colorTex) return;
+        if (!colorTex) return;
 
         // Determine the dimensions of the viewport and the target.
-        Rectanglef const rectf = GLState::current().normalizedViewport();
-        Vector2ui const targetSize = (rectf.size() * target.rectInUse().size()).toVector2ui();
+        //Rectanglef const rectf(0, 0, 1, 1); //= GLState::current().normalizedViewport();
+        Vector2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVector2ui();
 
         // Quarter resolution is used for better efficiency (without significant loss
         // of quality).
@@ -119,18 +123,18 @@ DENG2_PIMPL(Bloom)
                 .setDepthWrite(false) // don't mess with depth information
                 .setDepthTest(false);
 
-        switch(bloomComplexity)
+        switch (bloomComplexity)
         {
         case 1:
             // Two passes result in a better glow effect: combining multiple Gaussian curves
             // ensures that the middle peak is higher/sharper.
-            drawBloomPass(rectf, targetSize, *colorTex, .5f, .75f);
-            drawBloomPass(rectf, targetSize, *colorTex, 1.f, 1.f);
+            drawBloomPass(*colorTex, .5f, .75f);
+            drawBloomPass(*colorTex, 1.f, 1.f);
             break;
 
         default:
             // Single-pass for HW with slow fill rate.
-            drawBloomPass(rectf, targetSize, *colorTex, 1.f, 1.75f);
+            drawBloomPass(*colorTex, 1.f, 1.75f);
             break;
         }
 
@@ -152,7 +156,7 @@ DENG2_PIMPL(Bloom)
      * @param weight       Weight factor for intensity.
      * @param targetOp     Blending factor (should be gl::One unless debugging).
      */
-    void drawBloomPass(Rectanglef const &rectf, Vector2ui const &/*targetSize*/,
+    void drawBloomPass(//Rectanglef const &rectf, //Vector2ui const &/*targetSize*/,
                        GLTexture &colorTarget, float bloomSize, float weight,
                        gl::Blend targetOp = gl::One)
     {
@@ -160,18 +164,18 @@ DENG2_PIMPL(Bloom)
         uIntensity = bloomIntensity * weight;
 
         // Initialize the work buffer for this pass.
-        workFB.target().clear(GLTarget::Color);
+        workFB.clear(GLFramebuffer::Color);
 
         // Divert rendering to the work area (full or partial area used).
-        GLTarget &target = GLState::current().target();
+        //GLFramebuffer &target = GLState::current().target();
         Vector2ui const workSize = workFB.size() * bloomSize;
         GLState::push()
-                .setTarget(workFB.target())
+                .setTarget(workFB)
                 .setViewport(Rectangleui::fromSize(workSize));
 
         // Normalized active rectangle of the target.
-        Vector4f const active(target.activeRectScale(),
-                              target.activeRectNormalizedOffset());
+        /*Vector4f const active(target.activeRectScale(),
+                              target.activeRectNormalizedOffset());*/
 
         /*
          * Draw step #1: thresholding and horizontal blur.
@@ -182,10 +186,10 @@ DENG2_PIMPL(Bloom)
         // be flipped because the shader uses the bottom left corner as UV origin.
         // Also need to apply the active rectangle as it affects where the viewport
         // ends up inside the frame buffer.
-        uWindow = Vector4f(rectf.left() * active.x        + active.z,
+        uWindow = Vector4f(0, 0, 1, 1); /*Vector4f(rectf.left() * active.x        + active.z,
                            1 - (rectf.bottom() * active.y + active.w),
                            rectf.width()  * active.x,
-                           rectf.height() * active.y);
+                           rectf.height() * active.y);*/
 
         // Spread out or contract the texture sampling of the Gaussian blur kernel.
         // If dispersion is too large, the quality of the blur will suffer.
@@ -234,12 +238,12 @@ void Bloom::glDeinit()
 
 void Bloom::draw()
 {
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         return;
     }
 
-    if(!bloomEnabled || bloomIntensity <= 0)
+    if (!bloomEnabled || bloomIntensity <= 0)
     {
         return;
     }

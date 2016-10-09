@@ -19,12 +19,14 @@
 #include "clientplayer.h"
 #include "render/consoleeffect.h"
 #include "render/playerweaponanimator.h"
+#include "ui/viewcompositor.h"
 #include "def_share.h"
 
 using namespace de;
 
 DENG2_PIMPL(ClientPlayer)
 {
+    ViewCompositor     viewCompositor;
     viewdata_t         viewport;
     ConsoleEffectStack effects;
     render::PlayerWeaponAnimator playerWeaponAnimator;
@@ -49,6 +51,11 @@ ClientPlayer::ClientPlayer()
     , recordPaused(false)
     , d(new Impl(this))
 {}
+
+ViewCompositor &ClientPlayer::viewCompositor()
+{
+    return d->viewCompositor;
+}
 
 viewdata_t &ClientPlayer::viewport()
 {

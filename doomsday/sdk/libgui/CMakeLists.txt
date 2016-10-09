@@ -51,6 +51,12 @@ set (CMAKE_C_FLAGS ${oldCFlags})
 # Apply Doomsday's configuration.
 include (../../cmake/Config.cmake)
 
+# libgui uses Qt 5.4 OpenGL APIs.
+qmake_query (QT_VERSION "QT_VERSION")
+if (QT_VERSION VERSION_LESS 5.4)
+    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DENG_ENABLE_GUI=OFF.")
+endif ()
+
 if (APPLE)
     # Don't change display modes on OS X. We'll instead resize the
     # frame buffer and scale up.
@@ -65,8 +71,6 @@ option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
 # Dependencies.
 find_package (DengCore)
 find_package (Assimp REQUIRED)
-include (OpenGL)
-
 if (DENG_X11)
     find_package (X11 REQUIRED)
 endif ()
@@ -97,9 +101,9 @@ deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui
     PUBLIC Deng::libcore
-    PRIVATE opengl libassimp
+    PRIVATE libassimp
 )
-deng_target_link_qt (libgui PUBLIC Gui OpenGL)
+deng_target_link_qt (libgui PUBLIC Gui OpenGLExtensions Widgets)
 
 if (UNIX AND NOT APPLE)
     # The assimp target may be linked to some system libraries that

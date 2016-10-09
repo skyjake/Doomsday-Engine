@@ -32,6 +32,12 @@ DENG2_PIMPL(TestApp)
 
     Impl(Public *i) : Base(i) {}
 
+    ~Impl()
+    {
+        // Windows will be closed; OpenGL context will be gone.
+        self.glDeinit();
+    }
+
     void loadAllShaders()
     {
         // Load all the shader program definitions.

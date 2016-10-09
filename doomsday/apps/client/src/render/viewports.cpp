@@ -24,6 +24,7 @@
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/vector1.h>
+#include <de/GLInfo>
 #include <de/GLState>
 #include <doomsday/filesys/fs_util.h>
 
@@ -36,12 +37,13 @@
 #include "gl/gl_main.h"
 
 #include "api_render.h"
-#include "render/r_draw.h"
-#include "render/r_main.h"
-#include "render/fx/bloom.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/fx/bloom.h"
 #include "render/playerweaponanimator.h"
+#include "render/r_draw.h"
+#include "render/r_main.h"
+#include "render/rendersystem.h"
 #include "render/rendpoly.h"
 #include "render/skydrawable.h"
 #include "render/vissprite.h"
@@ -62,15 +64,10 @@
 
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
-#include "ui/widgets/gameuiwidget.h"
+//#include "ui/widgets/gameuiwidget.h"
 
 using namespace de;
 using namespace world;
-
-#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-dfloat devCameraMovementStartTime;          ///< sysTime
-dfloat devCameraMovementStartTimeRealSecs;
-#endif
 
 dd_bool firstFrameAfterLoad;
 
@@ -698,18 +695,55 @@ void R_UseViewPort(viewport_t const *vp)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!vp)
+    if (!vp)
     {
         currentViewport = nullptr;
-        ClientWindow::main().game().glApplyViewport(
+        /*ClientWindow::main().game().glApplyViewport(
                 Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));
+                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
         currentViewport = const_cast<viewport_t *>(vp);
-        ClientWindow::main().game().glApplyViewport(vp->geometry);
+        //ClientWindow::main().game().glApplyViewport(vp->geometry);
     }
+}
+
+void R_UseViewPort(int consoleNum)
+{
+    int local = P_ConsoleToLocal(consoleNum);
+    if (local >= 0)
+    {
+        R_UseViewPort(&viewportOfLocalPlayer[local]);
+    }
+    else
+    {
+        R_UseViewPort(nullptr);
+    }
+}
+
+Rectanglei R_ConsoleRect(int console)
+{
+    int local = P_ConsoleToLocal(console);
+    if (local < 0) return Rectanglei();
+
+    auto const &port = viewportOfLocalPlayer[local];
+
+    return Rectanglei(port.geometry.topLeft.x,
+                      port.geometry.topLeft.y,
+                      port.geometry.width(),
+                      port.geometry.height());
+}
+
+Rectanglei R_Console3DViewRect(int console)
+{
+    Rectanglei rect = R_ConsoleRect(console);
+
+    auto const &pv = DD_Player(console)->viewport();
+    return Rectanglei(rect.left() + pv.window.topLeft.x,
+                      rect.top()  + pv.window.topLeft.y,
+                      de::min(rect.width(),  pv.window.width()),
+                      de::min(rect.height(), pv.window.height()));
 }
 
 viewport_t const *R_CurrentViewPort()
@@ -858,6 +892,118 @@ Matrix4f const &Viewer_Matrix()
     return frameViewMatrix;
 }
 
+enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
+
+static void changeViewState(ViewState viewState) //, viewport_t const *port, viewdata_t const *viewData)
+{
+    //DENG2_ASSERT(port && viewData);
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    switch (viewState)
+    {
+    case PlayerView3D:
+        GLState::current()
+                .setCull(gl::Back)
+                .setDepthTest(true)
+                .apply();
+        // The 3D projection matrix.
+        GL_ProjectionMatrix();
+        break;
+
+    case PlayerSprite2D:
+    {
+        auto const conRect  = R_ConsoleRect(displayPlayer);
+        auto const viewRect = R_Console3DViewRect(displayPlayer);
+
+        dint const height = dint(SCREENHEIGHT
+                * ( float(conRect.width()) * float(viewRect.height())
+                                           / float(viewRect.width()) )
+                / float(conRect.height()));
+
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
+                                           conRect.width(), conRect.height(),
+                                           scalemode_t(weaponScaleMode));
+
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glLoadIdentity();
+
+        if(sm == SCALEMODE_STRETCH)
+        {
+            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+        }
+        else
+        {
+            // Use an orthographic projection in native screenspace. Then
+            // translate and scale the projection to produce an aspect
+            // corrected coordinate space at 4:3, aligned vertically to
+            // the bottom and centered horizontally in the window.
+            LIBGUI_GL.glOrtho(0, conRect.width(), conRect.height(), 0, -1, 1);
+            LIBGUI_GL.glTranslatef(conRect.width()/2, conRect.height(), 0);
+
+            if(conRect.width() >= conRect.height())
+            {
+                LIBGUI_GL.glScalef(dfloat( conRect.height() ) / SCREENHEIGHT,
+                                   dfloat( conRect.height() ) / SCREENHEIGHT, 1);
+            }
+            else
+            {
+                LIBGUI_GL.glScalef(dfloat( conRect.width() ) / SCREENWIDTH,
+                                   dfloat( conRect.width() ) / SCREENWIDTH, 1);
+            }
+
+            // Special case: viewport height is greater than width.
+            // Apply an additional scaling factor to prevent player sprites
+            // looking too small.
+            if(conRect.height() > conRect.width())
+            {
+                dfloat extraScale = (dfloat(conRect.height() * 2) / conRect.width()) / 2;
+                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
+            }
+
+            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
+        }
+
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glLoadIdentity();
+
+        // Depth testing must be disabled so that psprite 1 will be drawn
+        // on top of psprite 0 (Doom plasma rifle fire).
+        GLState::current().setDepthTest(false).apply();
+
+        break;
+    }
+
+    case Default2D:
+        GLState::current()
+                .setCull(gl::None)
+                .setDepthTest(false)
+                .apply();
+        break;
+    }
+
+
+    //std::memcpy(&currentView, port, sizeof(currentView));
+
+    //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
+    //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
+
+    /*auto const viewRect = R_Console3DViewRect(displayPlayer);
+    viewpx = 0;
+    viewpy = 0;
+    viewpw = int(viewRect.width());
+    viewph = int(viewRect.height());*/
+
+    //viewpw = de::min(port->geometry.width(), viewData->window.width());
+    //viewph = de::min(port->geometry.height(), viewData->window.height());
+
+    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
+                                                                     Vector2ui(viewpw, viewph)));*/
+
+}
+
 #undef R_RenderPlayerView
 DENG_EXTERN_C void R_RenderPlayerView(dint num)
 {
@@ -893,7 +1039,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
        ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
-        GLState::current().target().clear(GLTarget::Color);
+        GLState::current().target().clear(GLFramebuffer::Color);
         return;
     }
 
@@ -908,11 +1054,17 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // Go to wireframe mode?
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
+
     // GL is in 3D transformation state only during the frame.
-    GL_SwitchTo3DState(true, currentViewport, vd);
+    //switchTo3DState(true); //, currentViewport, vd);
+    changeViewState(PlayerView3D);
 
     if(ClientApp::world().hasMap())
     {
@@ -920,35 +1072,43 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1, currentViewport, vd);
+    //restore2DState(1); //, currentViewport, vd);
+    changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
-        GL_SwitchTo3DState(false, currentViewport, vd);
+        //switchTo3DState(false); //, currentViewport, vd);
+        changeViewState(PlayerView3D);
         Rend_Draw3DPlayerSprites();
     }
 
     // Restore fullscreen viewport, original matrices and state: back to normal 2D.
-    GL_Restore2DState(2, currentViewport, vd);
+    //restore2DState(2); //, currentViewport, vd);
+    changeViewState(Default2D);
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 
     // Back from wireframe mode?
     if(renderWireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     // Now we can show the viewPlayer's mobj again.
@@ -958,26 +1118,6 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     R_PrintRendPoolInfo();
-
-#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-    {
-        static dfloat prevPos[3] = { 0, 0, 0 };
-        static dfloat prevSpeed = 0;
-        static dfloat prevTime;
-        dfloat delta[2] = { vd->current.pos[0] - prevPos[0],
-                            vd->current.pos[1] - prevPos[1] };
-        dfloat speed   = V2f_Length(delta);
-        dfloat time    = sysTime - devCameraMovementStartTime;
-        dfloat elapsed = time - prevTime;
-
-        LOGDEV_MSG("%f,%f,%f,%f,%f") << Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs
-                                     << time << elapsed << speed/elapsed << speed/elapsed - prevSpeed;
-
-        V3f_Copy(prevPos, vd->current.pos);
-        prevSpeed = speed/elapsed;
-        prevTime = time;
-    }
-#endif
 }
 
 /**
@@ -997,13 +1137,14 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_POINT_SMOOTH);
 }
 
+#if 0
 static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
     if(fx::Bloom::isEnabled() ||
        (App_InFineSystem().finaleInProgess() && !GameUIWidget::finaleStretch()) ||
-       ClientApp::vr().mode() == VRConfig::OculusRift)
+        ClientApp::vr().mode() == VRConfig::OculusRift)
     {
         // Parts of the previous frame might leak in the bloom unless we clear the color
         // buffer. Not doing this would result in very bright HOMs in map holes and game
@@ -1040,9 +1181,100 @@ static void clearViewPorts()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // This is all the clearing we'll do.
-    glClear(bits);
+    LIBGUI_GL.glClear(bits);
+}
+#endif
+
+void R_RenderViewPort(int playerNum)
+{
+    int localNum = P_ConsoleToLocal(playerNum);
+    if (localNum < 0) return;
+
+    viewport_t const *vp = &viewportOfLocalPlayer[localNum];
+
+    DENG2_ASSERT(vp->console == playerNum);
+
+    dint const oldDisplay = displayPlayer;
+    displayPlayer = vp->console;
+    //R_UseViewPort(vp);
+    //currentViewport = vp;
+
+    if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
+    {
+        R_RenderBlankView();
+        displayPlayer = oldDisplay;
+        return;
+    }
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+
+    Rectanglei viewRect = R_Console3DViewRect(playerNum);
+
+    // Use an orthographic projection in real pixel dimensions.
+    LIBGUI_GL.glOrtho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
+
+    viewdata_t const *vd = &DD_Player(vp->console)->viewport();
+    RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
+                       vp->geometry.width(), vp->geometry.height());
+
+    RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
+                     vd->window.width(), vd->window.height());
+
+    //switch(layer)
+    //{
+    //case Player3DViewLayer:
+
+    R_UpdateViewer(vp->console);
+
+    //LensFx_BeginFrame(vp->console);
+
+    gx.DrawViewPort(localNum, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 0);
+
+        //LensFx_EndFrame();
+        //break;
+
+    LensFx_Draw(vp->console);
+
+    // Apply camera lens effects on the rendered view.
+
+
+#if 0
+    case ViewBorderLayer:
+        R_RenderPlayerViewBorder();
+        break;
+
+    case HUDLayer:
+        gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 1);
+        break;
+    }
+#endif
+
+    restoreDefaultGLState();
+
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
+//}
+
+//if(layer == Player3DViewLayer)
+//{
+    // Increment the internal frame count. This does not
+    // affect the window's FPS counter.
+    frameCount++;
+
+    // Keep reseting until a new sharp world has arrived.
+    if(resetNextViewer > 1) resetNextViewer = 0;
+//}
+
+    // Restore things back to normal.
+    displayPlayer = oldDisplay;
+
+    //R_UseViewPort(nullptr);
+    //currentViewport = nullptr;
 }
 
+#if 0
 void R_RenderViewPorts(ViewPortLayer layer)
 {
     dint oldDisplay = displayPlayer;
@@ -1071,12 +1303,12 @@ void R_RenderViewPorts(ViewPortLayer layer)
             continue;
         }
 
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPushMatrix();
+        LIBGUI_GL.glLoadIdentity();
 
         // Use an orthographic projection in real pixel dimensions.
-        glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+        LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
         viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1089,9 +1321,9 @@ void R_RenderViewPorts(ViewPortLayer layer)
         {
         case Player3DViewLayer:
             R_UpdateViewer(vp->console);
-            LensFx_BeginFrame(vp->console);
+            //LensFx_BeginFrame(vp->console);
             gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
-            LensFx_EndFrame();
+            //LensFx_EndFrame();
             break;
 
         case ViewBorderLayer:
@@ -1105,8 +1337,8 @@ void R_RenderViewPorts(ViewPortLayer layer)
 
         restoreDefaultGLState();
 
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+        LIBGUI_GL.glPopMatrix();
     }
 
     if(layer == Player3DViewLayer)
@@ -1124,6 +1356,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
     displayPlayer = oldDisplay;
     R_UseViewPort(nullptr);
 }
+#endif
 
 void R_ClearViewData()
 {

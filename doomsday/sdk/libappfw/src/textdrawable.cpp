@@ -173,6 +173,7 @@ DENG2_PIMPL(TextDrawable)
             _wrapper->plainText = _wrapper->format.initFromStyledText(_text);
 
             // This is where most of the time will be spent:
+            //qDebug() << "wrapping" << _wrapper->plainText << "to" << _width;
             _wrapper->wrapTextToWidth(_wrapper->plainText, _wrapper->format, _width);
 
             // Pre-rasterize the first lines of the text. The assumption is that

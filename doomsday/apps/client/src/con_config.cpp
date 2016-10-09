@@ -18,6 +18,7 @@
  */
 
 #include "con_config.h"
+#include "ui/inputsystem.h"
 
 #include <de/App>
 #include <de/DirectoryFeed>

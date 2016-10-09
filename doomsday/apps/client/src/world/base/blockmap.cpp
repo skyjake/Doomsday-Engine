@@ -22,7 +22,7 @@
 #include "world/blockmap.h"
 
 #ifdef __CLIENT__
-#  include "gl/sys_opengl.h"
+#  include <de/GLInfo>
 #endif
 
 #include <de/Vector>
@@ -727,12 +727,12 @@ void Blockmap::drawDebugVisual() const
 #define UNIT_SIZE           1
 
     // We'll be changing the color, so query the current and restore later.
-    GLfloat oldColor[4]; glGetFloatv(GL_CURRENT_COLOR, oldColor);
+    GLfloat oldColor[4]; LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, oldColor);
 
     /*
      * Draw the Quadtree.
      */
-    glColor4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
+    LIBGUI_GL.glColor4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
     foreach(Impl::Node const &node, d->nodes)
     {
         // Only leafs with user data.
@@ -742,12 +742,12 @@ void Blockmap::drawDebugVisual() const
         Vector2f const topLeft     = node.cell * UNIT_SIZE;
         Vector2f const bottomRight = topLeft + Vector2f(UNIT_SIZE, UNIT_SIZE);
 
-        glBegin(GL_LINE_LOOP);
-            glVertex2f(topLeft.x,     topLeft.y);
-            glVertex2f(bottomRight.x, topLeft.y);
-            glVertex2f(bottomRight.x, bottomRight.y);
-            glVertex2f(topLeft.x,     bottomRight.y);
-        glEnd();
+        LIBGUI_GL.glBegin(GL_LINE_LOOP);
+            LIBGUI_GL.glVertex2f(topLeft.x,     topLeft.y);
+            LIBGUI_GL.glVertex2f(bottomRight.x, topLeft.y);
+            LIBGUI_GL.glVertex2f(bottomRight.x, bottomRight.y);
+            LIBGUI_GL.glVertex2f(topLeft.x,     bottomRight.y);
+        LIBGUI_GL.glEnd();
     }
 
     /*
@@ -756,23 +756,23 @@ void Blockmap::drawDebugVisual() const
     Vector2f start;
     Vector2f end = start + d->dimensions * UNIT_SIZE;
 
-    glColor3f(1, .5f, .5f);
-    glBegin(GL_LINES);
-        glVertex2f(start.x, start.y);
-        glVertex2f(  end.x, start.y);
+    LIBGUI_GL.glColor3f(1, .5f, .5f);
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glVertex2f(start.x, start.y);
+        LIBGUI_GL.glVertex2f(  end.x, start.y);
 
-        glVertex2f(  end.x, start.y);
-        glVertex2f(  end.x,   end.y);
+        LIBGUI_GL.glVertex2f(  end.x, start.y);
+        LIBGUI_GL.glVertex2f(  end.x,   end.y);
 
-        glVertex2f(  end.x,   end.y);
-        glVertex2f(start.x,   end.y);
+        LIBGUI_GL.glVertex2f(  end.x,   end.y);
+        LIBGUI_GL.glVertex2f(start.x,   end.y);
 
-        glVertex2f(start.x,   end.y);
-        glVertex2f(start.x, start.y);
-    glEnd();
+        LIBGUI_GL.glVertex2f(start.x,   end.y);
+        LIBGUI_GL.glVertex2f(start.x, start.y);
+    LIBGUI_GL.glEnd();
 
     // Restore GL state.
-    glColor4fv(oldColor);
+    LIBGUI_GL.glColor4fv(oldColor);
 
 #undef UNIT_SIZE
 }

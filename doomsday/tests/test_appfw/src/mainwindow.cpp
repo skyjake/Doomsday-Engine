@@ -32,7 +32,8 @@
 using namespace de;
 
 DENG2_PIMPL(MainWindow)
-, DENG2_OBSERVES(Canvas, GLResize)
+, DENG2_OBSERVES(GLWindow, Init)
+, DENG2_OBSERVES(GLWindow, Resize)
 {
     AppRootWidget root;
     bool needRootSizeUpdate;
@@ -60,7 +61,8 @@ DENG2_PIMPL(MainWindow)
         , cursorY(new ConstantRule(0))
     {
         self.setTransform(contentXf);
-        self.canvas().audienceForGLResize() += this;
+        self.audienceForInit()   += this;
+        self.audienceForResize() += this;
     }
 
     ~Impl()
@@ -128,17 +130,13 @@ DENG2_PIMPL(MainWindow)
         }
     }
 
-    void glInit()
+    void windowInit(GLWindow &)
     {
-        GLState::current()
-                .setBlend(true)
-                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
-
         contentXf.glInit();
 
         self.raise();
-        self.activateWindow();
-        self.canvas().setFocus();
+        self.requestActivate();
+        //self.canvas().setFocus();
     }
 
     void updateMouseCursor()
@@ -155,7 +153,7 @@ DENG2_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+        Vector2ui const size = contentXf.logicalRootSize(self.pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -183,12 +181,12 @@ DENG2_PIMPL(MainWindow)
         }
     }
 
-    void canvasGLResized(Canvas &canvas)
+    void windowResized(GLWindow &)
     {
         LOG_AS("MainWindow");
 
-        Canvas::Size size = canvas.size();
-        LOG_TRACE("Canvas resized to ") << size.asText();
+        Size size = self.pixelSize();
+        LOG_TRACE("Window resized to %s pixels") << size.asText();
 
         // Update viewport.
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
@@ -212,7 +210,7 @@ MainWindow::MainWindow(String const &id)
         setCursor(Qt::BlankCursor);
     }
 
-    setWindowTitle("test_appfw");
+    setTitle("test_appfw");
 
     d->setupUI();
 }
@@ -230,24 +228,10 @@ Vector2f MainWindow::windowContentSize() const
 
 void MainWindow::drawWindowContent()
 {
-    GLState::current().target().clear(GLTarget::ColorDepth);
+    GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
     d->updateCompositor();
     d->root.draw();
-}
-
-void MainWindow::canvasGLReady(Canvas &canvas)
-{
-    BaseWindow::canvasGLReady(canvas);
-
-    // Configure a viewport immediately.
-    GLState::current()
-            .setViewport(Rectangleui(0, 0, canvas.width(), canvas.height()))
-            .setDepthTest(true);
-
-    LOGDEV_MSG("MainWindow GL ready");
-
-    d->glInit();
 }
 
 void MainWindow::preDraw()
@@ -266,10 +250,10 @@ void MainWindow::preDraw()
 
 void MainWindow::postDraw()
 {
-    if (TestApp::vr().mode() != VRConfig::OculusRift)
+    /*if (TestApp::vr().mode() != VRConfig::OculusRift)
     {
         swapBuffers();
-    }
+    }*/
     BaseWindow::postDraw();
 
     Garbage_Recycle();

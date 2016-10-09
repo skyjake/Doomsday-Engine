@@ -20,7 +20,9 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/clientwindow.h"
+#include "ui/clientwindowsystem.h"
 #include "CommandAction"
+#include "ConfigProfiles"
 #include "clientapp.h"
 #include "dd_main.h"
 
@@ -42,7 +44,7 @@ using namespace de::ui;
 #endif
 
 DENG2_PIMPL(VideoSettingsDialog),
-DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
+DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 {
     ClientWindow &win;
     VariableToggleWidget *showFps;
@@ -126,7 +128,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         windowButton->enable(!win.isFullScreen() && !win.isMaximized());
 
         // Select the current resolution/size in the mode list.
-        Canvas::Size current = win.fullscreenSize();
+        GLWindow::Size current = win.fullscreenSize();
 
         // Update selected display mode.
         ui::Data::Pos closest = ui::Data::InvalidPos;
@@ -157,7 +159,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         }
     }
 
-    void windowAttributesChanged(PersistentCanvasWindow &)
+    void windowAttributesChanged(PersistentGLWindow &)
     {
         fetch();
     }

@@ -53,7 +53,7 @@ struct Garbage : public Lockable
         if (allocs.empty()) return;
 
 #ifdef DENG2_DEBUG
-        qDebug() << "[Garbage] Recycling" << allocs.size() << "allocs/objects";
+        //qDebug() << "[Garbage] Recycling" << allocs.size() << "allocs/objects";
 #endif
 
         for (Allocs::iterator i = allocs.begin(); i != allocs.end(); )

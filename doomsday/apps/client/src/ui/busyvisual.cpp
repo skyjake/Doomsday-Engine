@@ -26,6 +26,7 @@
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/GLState>
+#include <de/GLInfo>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/var.h>
 #include "gl/gl_main.h"
@@ -156,20 +157,19 @@ void Con_DrawTransition(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
     DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
     GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glDisable(GL_ALPHA_TEST);
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GLState::push().setAlphaTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     switch (transition.style)
     {
@@ -187,31 +187,31 @@ void Con_DrawTransition(void)
         x = 0;
         s = 0;
 
-        glBegin(GL_QUAD_STRIP);
+        LIBGUI_GL.glBegin(GL_QUAD_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i];
 
-            glColor4f(1, 1, 1, topAlpha);
-            glTexCoord2f(s, 1); glVertex2i(x, y);
-            glColor4f(1, 1, 1, 1);
-            glTexCoord2f(s, div); glVertex2i(x, y + h);
+            LIBGUI_GL.glColor4f(1, 1, 1, topAlpha);
+            LIBGUI_GL.glTexCoord2f(s, 1); LIBGUI_GL.glVertex2i(x, y);
+            LIBGUI_GL.glColor4f(1, 1, 1, 1);
+            LIBGUI_GL.glTexCoord2f(s, div); LIBGUI_GL.glVertex2i(x, y + h);
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
 
         x = 0;
         s = 0;
 
-        glColor4f(1, 1, 1, 1);
-        glBegin(GL_QUAD_STRIP);
+        LIBGUI_GL.glColor4f(1, 1, 1, 1);
+        LIBGUI_GL.glBegin(GL_QUAD_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i] + h;
 
-            glTexCoord2f(s, div); glVertex2i(x, y);
-            glTexCoord2f(s, 0); glVertex2i(x, y + (SCREENHEIGHT - h));
+            LIBGUI_GL.glTexCoord2f(s, div); LIBGUI_GL.glVertex2i(x, y);
+            LIBGUI_GL.glTexCoord2f(s, 0); LIBGUI_GL.glVertex2i(x, y + (SCREENHEIGHT - h));
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
         break;
       }
     case TS_DOOM: {
@@ -221,36 +221,35 @@ void Con_DrawTransition(void)
 
         sampleDoomWipe();
 
-        glColor4f(1, 1, 1, 1);
-        glBegin(GL_QUADS);
+        LIBGUI_GL.glColor4f(1, 1, 1, 1);
+        LIBGUI_GL.glBegin(GL_QUADS);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s+= colWidth)
         {
             y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 1); glVertex2i(x, y);
-            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y);
-            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y+SCREENHEIGHT);
-            glTexCoord2f(s, 0); glVertex2i(x, y+SCREENHEIGHT);
+            LIBGUI_GL.glTexCoord2f(s, 1); LIBGUI_GL.glVertex2i(x, y);
+            LIBGUI_GL.glTexCoord2f(s+colWidth, 1); LIBGUI_GL.glVertex2i(x+1, y);
+            LIBGUI_GL.glTexCoord2f(s+colWidth, 0); LIBGUI_GL.glVertex2i(x+1, y+SCREENHEIGHT);
+            LIBGUI_GL.glTexCoord2f(s, 0); LIBGUI_GL.glVertex2i(x, y+SCREENHEIGHT);
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
         break;
       }
     case TS_CROSSFADE:
-        glColor4f(1, 1, 1, 1 - transition.position);
+        LIBGUI_GL.glColor4f(1, 1, 1, 1 - transition.position);
 
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 1); glVertex2f(0, 0);
-            glTexCoord2f(0, 0); glVertex2f(0, SCREENHEIGHT);
-            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, 0);
-        glEnd();
+        LIBGUI_GL.glBegin(GL_QUADS);
+            LIBGUI_GL.glTexCoord2f(0, 1); LIBGUI_GL.glVertex2f(0, 0);
+            LIBGUI_GL.glTexCoord2f(0, 0); LIBGUI_GL.glVertex2f(0, SCREENHEIGHT);
+            LIBGUI_GL.glTexCoord2f(1, 0); LIBGUI_GL.glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            LIBGUI_GL.glTexCoord2f(1, 1); LIBGUI_GL.glVertex2f(SCREENWIDTH, 0);
+        LIBGUI_GL.glEnd();
         break;
     }
 
     GL_SetNoTexture();
-    //glEnable(GL_ALPHA_TEST);
     GLState::pop().apply();
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }

@@ -18,7 +18,6 @@
  */
 
 #include "de_platform.h"
-#include "clientapp.h"
 
 #include <cstdlib>
 #include <QAction>
@@ -47,41 +46,43 @@
 
 #include <doomsday/console/exec.h>
 
+#include "audio/system.h"
+#include "busyrunner.h"
+#include "clientapp.h"
 #include "clientplayer.h"
-#include "dd_main.h"
+#include "con_config.h"
 #include "dd_def.h"
 #include "dd_loop.h"
+#include "dd_main.h"
 #include "def_main.h"
-#include "sys_system.h"
-#include "con_config.h"
-
-#include "audio/system.h"
-
+#include "gl/gl_defer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "gl/gl_defer.h"
 #include "gl/svg.h"
-
-#include "world/map.h"
-#include "world/contact.h"
-#include "world/p_players.h"
-
+#include "network/net_demo.h"
+#include "network/net_main.h"
+#include "network/serverlink.h"
+#include "render/r_draw.h"
+#include "render/rend_particle.h"
+#include "render/rendersystem.h"
+#include "sys_system.h"
 #include "ui/alertmask.h"
-#include "ui/inputsystem.h"
 #include "ui/b_main.h"
-#include "ui/sys_input.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
-#include "ui/progress.h"
-#include "ui/widgets/taskbarwidget.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
+#include "ui/inputsystem.h"
+#include "ui/progress.h"
 #include "ui/styledlogsinkformatter.h"
-#include "render/rend_particle.h"
-#include "render/r_draw.h"
-#include "network/net_demo.h"
+#include "ui/sys_input.h"
+#include "ui/viewcompositor.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
+#include "world/contact.h"
+#include "world/map.h"
+#include "world/p_players.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -244,9 +245,16 @@ DENG2_PIMPL(ClientApp)
     {
         try
         {
+            ClientWindow::main().glActivate(); // for GL deinit
+
             LogBuffer::get().removeSink(logAlarm);
 
-            self.vr().oculusRift().deinit();
+            self.players().forAll([] (Player &p)
+            {
+                p.as<ClientPlayer>().viewCompositor().glDeinit();
+                return LoopContinue;
+            });
+            self.glDeinit();
 
             Sys_Shutdown();
             DD_Shutdown();
@@ -254,7 +262,7 @@ DENG2_PIMPL(ClientApp)
         catch (Error const &er)
         {
             qWarning() << "Exception during ~ClientApp:" << er.asText();
-            DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
+            DENG2_ASSERT("Unclean shutdown: exception in ~ClientApp"!=0);
         }
 
         updater.reset();
@@ -291,9 +299,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_psprite_state_changed_t *) data;
-                self.players().at(args->player)
-                        .as<ClientPlayer>()
-                        .weaponStateChanged(args->state);
+                self.player(args->player).weaponStateChanged(args->state);
             }
             break;
 
@@ -301,9 +307,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_player_weapon_changed_t *) data;
-                self.players().at(args->player)
-                        .as<ClientPlayer>()
-                        .setWeaponAssetId(args->weaponId);
+                self.player(args->player).setWeaponAssetId(args->weaponId);
             }
             break;
 
@@ -380,7 +384,7 @@ DENG2_PIMPL(ClientApp)
         if (newGame.isNull())
         {
             // The mouse is free while in the Home.
-            ClientWindow::main().canvas().trapMouse(false);
+            ClientWindow::main().eventHandler().trapMouse(false);
         }
 
         ClientWindow::main().console().zeroLogHeight();
@@ -536,6 +540,12 @@ void ClientApp::initialize()
     initSubsystems(); // loads Config
     DoomsdayApp::initialize();
 
+    // Initialize players.
+    for (int i = 0; i < players().count(); ++i)
+    {
+        player(i).viewCompositor().setPlayerNumber(i);
+    }
+
     // Set up the log alerts (observes Config variables).
     d->logAlarm.alertMask.init();
 
@@ -585,7 +595,7 @@ void ClientApp::initialize()
     plugins().loadAll();
 
     // Create the main window.
-    d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
+    d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;
@@ -662,6 +672,29 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
             delete dlg;
         }
     }
+}
+
+ClientPlayer &ClientApp::player(int console) // static
+{
+    return DoomsdayApp::players().at(console).as<ClientPlayer>();
+}
+
+LoopResult ClientApp::forLocalPlayers(std::function<LoopResult (ClientPlayer &)> func) // static
+{
+    auto const &players = DoomsdayApp::players();
+    for (int i = 0; i < players.count(); ++i)
+    {
+        ClientPlayer &player = players.at(i).as<ClientPlayer>();
+        if (player.isInGame() &&
+            player.publicData().flags & DDPF_LOCAL)
+        {
+            if (auto result = func(player))
+            {
+                return result;
+            }
+        }
+    }
+    return LoopContinue;
 }
 
 void ClientApp::alert(String const &msg, LogEntry::Level level)
@@ -809,7 +842,7 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
     DoomsdayApp::unloadGame(upcomingGame);
 
     // Game has been set to null, update window.
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 
     if (!upcomingGame.game().isEmpty())
     {
@@ -819,7 +852,7 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
         // Trap the mouse automatically when loading a game in fullscreen.
         if (mainWin.isFullScreen())
         {
-            mainWin.canvas().trapMouse();
+            mainWin.eventHandler().trapMouse();
         }
     }
 
@@ -834,7 +867,7 @@ void ClientApp::makeGameCurrent(GameProfile const &newGame)
     DoomsdayApp::makeGameCurrent(newGame);
 
     // Game has been changed, update window.
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 }
 
 void ClientApp::reset()

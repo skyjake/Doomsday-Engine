@@ -21,6 +21,7 @@
 
 #include "updater/updatersettingsdialog.h"
 #include "updater/updatersettings.h"
+#include "updater.h"
 #include "clientapp.h"
 #include <de/LabelWidget>
 #include <de/ChoiceWidget>

@@ -21,11 +21,13 @@
 #include <de/concurrency.h>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
+#include <de/GLInfo>
 
 #include "clientapp.h"
 #include "sys_system.h"
 #include "render/r_main.h"
 #include "render/r_draw.h"
+#include "resource/clientresources.h"
 #include "gl/gl_draw.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
@@ -221,27 +223,27 @@ void R_DrawViewBorder()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+    LIBGUI_GL.glPushMatrix();
 
     // Scale from viewport space to fixed 320x200 space.
     int border;
     if(port->geometry.width() >= port->geometry.height())
     {
-        glScalef(float(SCREENHEIGHT) / port->geometry.height(),
+        LIBGUI_GL.glScalef(float(SCREENHEIGHT) / port->geometry.height(),
                  float(SCREENHEIGHT) / port->geometry.height(), 1);
         border = float(borderSize) / SCREENHEIGHT * port->geometry.height();
     }
     else
     {
-        glScalef(float(SCREENWIDTH) / port->geometry.width(),
+        LIBGUI_GL.glScalef(float(SCREENWIDTH) / port->geometry.width(),
                  float(SCREENWIDTH) / port->geometry.width(), 1);
         border = float(borderSize) / SCREENWIDTH * port->geometry.width();
     }
 
-    glColor4f(1, 1, 1, 1);
+    LIBGUI_GL.glColor4f(1, 1, 1, 1);
 
     // View background.
     try
@@ -270,8 +272,8 @@ void R_DrawViewBorder()
         R_DrawPatchTiled(borderTexture(BG_RIGHT),  vd->window.topRight().x, vd->window.topRight().y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
     }
 
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+    LIBGUI_GL.glPopMatrix();
 
     if(border)
     {
@@ -281,5 +283,5 @@ void R_DrawViewBorder()
         R_DrawPatch(borderTexture(BG_BOTTOMLEFT),  vd->window.bottomLeft().x - border, vd->window.bottomRight.y, border, border, false);
     }
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }

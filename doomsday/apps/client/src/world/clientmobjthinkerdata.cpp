@@ -22,6 +22,7 @@
 #include "clientapp.h"
 #include "world/generator.h"
 #include "world/clientmobjthinkerdata.h"
+#include "render/rendersystem.h"
 #include "render/modelrenderer.h"
 #include "render/stateanimator.h"
 

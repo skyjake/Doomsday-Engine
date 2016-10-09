@@ -12,7 +12,6 @@ find_package (DengAppfw)
 find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 find_package (SDL2)
-include (OpenGL)
 if (WIN32)
     find_package (DirectX)
 endif ()
@@ -99,16 +98,24 @@ set (MACX_RESOURCES
     doomsday.pk3
 )
 
+# Windows: Use Qt resources.
+if (WIN32)
+    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
+    list (APPEND src ${RCC_SOURCES})
+endif ()
+
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)
 
 # Libraries.
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday opengl)
+target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 if (APPLE)
     link_framework (client PUBLIC Cocoa)
-    link_framework (client PUBLIC QTKit) # MusicPlayer
+    if (DENG_HAVE_QTKIT)
+        link_framework (client PUBLIC QTKit) # MusicPlayer
+    endif ()
 endif ()
 if (TARGET SDL2)
     target_link_libraries (client PUBLIC SDL2)

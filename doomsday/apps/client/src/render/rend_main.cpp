@@ -66,6 +66,7 @@
 #include "render/modelrenderer.h"
 #include "render/r_main.h"
 #include "render/r_things.h"
+#include "render/rendersystem.h"
 #include "render/rend_fakeradio.h"
 #include "render/rend_halo.h"
 #include "render/rend_particle.h"
@@ -79,12 +80,13 @@
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
-
+#include "ui/postprocessing.h"
 #include "ui/editors/edit_bias.h"
 
 #include "sys_system.h"
 #include "dd_main.h"
 #include "clientapp.h"
+#include "network/net_main.h"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -96,6 +98,7 @@
 #include <de/timer.h>
 #include <de/texgamma.h>
 #include <de/vector1.h>
+#include <de/GLInfo>
 #include <de/GLState>
 #include <QtAlgorithms>
 #include <QBitArray>
@@ -235,8 +238,8 @@ dbyte devRendSkyAlways;
 // for convenience (since we would have to recalculate the matrix anyway).
 dint rAmbient, ambientLight;
 
-dint viewpw, viewph;  ///< Viewport size, in pixels.
-dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
+//dint viewpw, viewph;  ///< Viewport size, in pixels.
+//dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
 
 dfloat yfov;
 
@@ -374,12 +377,14 @@ dfloat Rend_FieldOfView()
     }
     else
     {
+        auto const viewRect = R_Console3DViewRect(displayPlayer);
+
         // Correction is applied for wide screens so that when the FOV is kept
         // at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
         // than a 4:3, but not just scaled linearly since that would go too far
         // into the fish eye territory.
-        dfloat widescreenCorrection = dfloat(viewpw) / dfloat(viewph) / (4.f / 3.f);
-        if (widescreenCorrection < 1.5)  // up to ~16:9
+        dfloat widescreenCorrection = dfloat(viewRect.width()) / dfloat(viewRect.height()) / (4.f / 3.f);
+        if (widescreenCorrection < 1.5f)  // up to ~16:9
         {
             widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
             return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
@@ -471,8 +476,8 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
 static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
@@ -3808,7 +3813,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
+            LIBGUI_GL.glEnable(GL_FOG);
         }
         // All of the surfaces are opaque.
         GLState::current().setBlend(false).apply();
@@ -3838,7 +3843,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
+            LIBGUI_GL.glEnable(GL_FOG);
         }
         // All of the surfaces are opaque.
         GLState::current().setBlend(false).apply();
@@ -3895,8 +3900,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, black);
+            LIBGUI_GL.glEnable(GL_FOG);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
         }
 
         GLState::current().setBlend(true).apply();
@@ -3933,7 +3938,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
+            LIBGUI_GL.glEnable(GL_FOG);
         }
         break;
 
@@ -3967,9 +3972,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
+            LIBGUI_GL.glEnable(GL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            glFogfv(GL_FOG_COLOR, midGray);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
 
@@ -3990,9 +3995,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
+            LIBGUI_GL.glEnable(GL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            glFogfv(GL_FOG_COLOR, midGray);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
 
@@ -4009,8 +4014,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Set normal fog, if it's enabled.
         if(fogParams.usingFog)
         {
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+            LIBGUI_GL.glEnable(GL_FOG);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_NORMAL);
@@ -4028,8 +4033,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, black);
+            LIBGUI_GL.glEnable(GL_FOG);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
@@ -4048,8 +4053,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, black);
+            LIBGUI_GL.glEnable(GL_FOG);
+            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
@@ -4080,7 +4085,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         GLState::current().setBlend(true).apply();
         break;
@@ -4093,7 +4098,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         GLState::current().setBlend(true).apply();
         break;
@@ -4123,7 +4128,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4142,7 +4147,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlend(true).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         break;
 
@@ -4159,7 +4164,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         break;
 
@@ -4171,7 +4176,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         break;
 
@@ -4179,7 +4184,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         break;
 
@@ -4188,7 +4193,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4200,7 +4205,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            glDisable(GL_FOG);
+            LIBGUI_GL.glDisable(GL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4243,9 +4248,9 @@ static void drawSky()
             .apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
-    glEnable(GL_STENCIL_TEST);
-    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-    glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
+    LIBGUI_GL.glEnable(GL_STENCIL_TEST);
+    LIBGUI_GL.glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+    LIBGUI_GL.glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
 
     if(!devRendSkyAlways)
     {
@@ -4253,28 +4258,28 @@ static void drawSky()
     }
     else
     {
-        glClearStencil(1);
-        glClear(GL_STENCIL_BUFFER_BIT);
+        LIBGUI_GL.glClearStencil(1);
+        LIBGUI_GL.glClear(GL_STENCIL_BUFFER_BIT);
     }
 
     // Restore previous GL state.
     GLState::pop().apply();
-    glDisable(GL_STENCIL_TEST);
+    LIBGUI_GL.glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 1, 0xffffffff);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    LIBGUI_GL.glEnable(GL_STENCIL_TEST);
+    LIBGUI_GL.glStencilFunc(GL_EQUAL, 1, 0xffffffff);
+    LIBGUI_GL.glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     ClientApp::renderSystem().sky().draw(&ClientApp::world().map().skyAnimator());
 
     if(!devRendSkyAlways)
     {
-        glClearStencil(0);
+        LIBGUI_GL.glClearStencil(0);
     }
 
     // Return GL state to normal.
-    glDisable(GL_STENCIL_TEST);
+    LIBGUI_GL.glDisable(GL_STENCIL_TEST);
 }
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
@@ -4569,7 +4574,7 @@ static void drawAllLists(Map &map)
 
     renderTextures = oldRenderTextures;
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // The draw lists do not modify these states -ds
     GLState::current().setBlend(true).apply();
@@ -4580,8 +4585,8 @@ static void drawAllLists(Map &map)
     GLState::current().setAlphaLimit(0).apply();
     if(fogParams.usingFog)
     {
-        glEnable(GL_FOG);
-        glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        LIBGUI_GL.glEnable(GL_FOG);
+        LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
     }
 
     // Draw masked walls, sprites and models.
@@ -4592,7 +4597,7 @@ static void drawAllLists(Map &map)
 
     if(fogParams.usingFog)
     {
-        glDisable(GL_FOG);
+        LIBGUI_GL.glDisable(GL_FOG);
     }
 
     DENG2_ASSERT(!Sys_GLCheckError());
@@ -4664,47 +4669,47 @@ static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    glBegin(GL_LINES);
-        glColor4fv(black);
-        glVertex3f(origin.x - size, origin.z, origin.y);
-        glColor4f(color.x, color.y, color.z, color.w);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glColor4fv(black);
-        glVertex3f(origin.x + size, origin.z, origin.y);
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x - size, origin.z, origin.y);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x + size, origin.z, origin.y);
 
-        glVertex3f(origin.x, origin.z - size, origin.y);
-        glColor4f(color.x, color.y, color.z, color.w);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glColor4fv(black);
-        glVertex3f(origin.x, origin.z + size, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z - size, origin.y);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z + size, origin.y);
 
-        glVertex3f(origin.x, origin.z, origin.y - size);
-        glColor4f(color.x, color.y, color.z, color.w);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glColor4fv(black);
-        glVertex3f(origin.x, origin.z, origin.y + size);
-    glEnd();
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y - size);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y + size);
+    LIBGUI_GL.glEnd();
 }
 
 static void drawLabel(String const &label, Vector3d const &origin, dfloat scale, dfloat opacity)
 {
     if(label.isEmpty()) return;
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(origin.x, origin.z, origin.y);
-    glRotatef(-vang + 180, 0, 1, 0);
-    glRotatef(vpitch, 1, 0, 0);
-    glScalef(-scale, -scale, 1);
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
+    LIBGUI_GL.glRotatef(-vang + 180, 0, 1, 0);
+    LIBGUI_GL.glRotatef(vpitch, 1, 0, 0);
+    LIBGUI_GL.glScalef(-scale, -scale, 1);
 
     Point2Raw offset(2, 2);
     UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), opacity);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 }
 
 static void drawLabel(String const &label, Vector3d const &origin, ddouble maxDistance = 2000)
@@ -4737,42 +4742,42 @@ static void drawSource(BiasSource *s)
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     drawLabel(labelForSource(s), s->origin());
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
 {
-    glColor4f(1, 1, 1, 1);
+    LIBGUI_GL.glColor4f(1, 1, 1, 1);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
 
-    glTranslatef(origin.x, origin.z, origin.y);
+    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
 
-    glRotatef(t / 2,  0, 0, 1);
-    glRotatef(t,      1, 0, 0);
-    glRotatef(t * 15, 0, 1, 0);
+    LIBGUI_GL.glRotatef(t / 2,  0, 0, 1);
+    LIBGUI_GL.glRotatef(t,      1, 0, 0);
+    LIBGUI_GL.glRotatef(t * 15, 0, 1, 0);
 
-    glBegin(GL_LINES);
-        glVertex3f(-unit, 0, -unit);
-        glVertex3f(+unit, 0, -unit);
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glVertex3f(-unit, 0, -unit);
+        LIBGUI_GL.glVertex3f(+unit, 0, -unit);
 
-        glVertex3f(+unit, 0, -unit);
-        glVertex3f(+unit, 0, +unit);
+        LIBGUI_GL.glVertex3f(+unit, 0, -unit);
+        LIBGUI_GL.glVertex3f(+unit, 0, +unit);
 
-        glVertex3f(+unit, 0, +unit);
-        glVertex3f(-unit, 0, +unit);
+        LIBGUI_GL.glVertex3f(+unit, 0, +unit);
+        LIBGUI_GL.glVertex3f(-unit, 0, +unit);
 
-        glVertex3f(-unit, 0, +unit);
-        glVertex3f(-unit, 0, -unit);
-    glEnd();
+        LIBGUI_GL.glVertex3f(-unit, 0, +unit);
+        LIBGUI_GL.glVertex3f(-unit, 0, -unit);
+    LIBGUI_GL.glEnd();
 
-    glPopMatrix();
+    LIBGUI_GL.glPopMatrix();
 }
 
 static void drawBiasEditingVisuals(Map &map)
@@ -4793,17 +4798,17 @@ static void drawBiasEditingVisuals(Map &map)
         //glDisable(GL_CULL_FACE);
         GLState::push().setCull(gl::None).apply();
 
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPushMatrix();
 
-        glTranslatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
-        glScalef(1, 1.0f/1.2f, 1);
-        glTranslatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
+        LIBGUI_GL.glTranslatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
+        LIBGUI_GL.glScalef(1, 1.0f/1.2f, 1);
+        LIBGUI_GL.glTranslatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
 
         HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
 
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPopMatrix();
 
         GLState::current().setDepthTest(true).apply();
         //glEnable(GL_CULL_FACE);
@@ -4843,12 +4848,12 @@ static void drawBiasEditingVisuals(Map &map)
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     drawLabel(labelForSource(nearSource), nearSource->origin());
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
@@ -4864,12 +4869,12 @@ static void drawBiasEditingVisuals(Map &map)
         drawStar(s->origin(), 10000, grabbedColor);
 
         GLState::current().setDepthTest(false).apply();
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         drawLabel(labelForSource(s), s->origin());
 
         GLState::current().setDepthTest(true).apply();
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
         if(s->isLocked())
             drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
@@ -4987,43 +4992,43 @@ void Rend_DrawLightModMatrix()
     // Disabled?
     if(!devLightModRange) return;
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    glTranslatef(BORDER, BORDER, 0);
+    LIBGUI_GL.glTranslatef(BORDER, BORDER, 0);
 
     // Draw an outside border.
-    glColor4f(1, 1, 0, 1);
-    glBegin(GL_LINES);
-        glVertex2f(-1, -1);
-        glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, BLOCK_HEIGHT + 1);
-        glVertex2f(-1, -1);
-    glEnd();
+    LIBGUI_GL.glColor4f(1, 1, 0, 1);
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glVertex2f(-1, -1);
+        LIBGUI_GL.glVertex2f(255 + 1, -1);
+        LIBGUI_GL.glVertex2f(255 + 1, -1);
+        LIBGUI_GL.glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        LIBGUI_GL.glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        LIBGUI_GL.glVertex2f(-1, BLOCK_HEIGHT + 1);
+        LIBGUI_GL.glVertex2f(-1, BLOCK_HEIGHT + 1);
+        LIBGUI_GL.glVertex2f(-1, -1);
+    LIBGUI_GL.glEnd();
 
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
     dfloat c = 0;
     for(dint i = 0; i < 255; ++i, c += (1.0f/255.0f))
     {
         // Get the result of the source light level + offset.
         dfloat off = lightModRange[i];
 
-        glColor4f(c + off, c + off, c + off, 1);
-        glVertex2f(i * BLOCK_WIDTH, 0);
-        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
-        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
-        glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
+        LIBGUI_GL.glColor4f(c + off, c + off, c + off, 1);
+        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH, 0);
+        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
+        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
+        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 
 #undef BORDER
 #undef BLOCK_HEIGHT
@@ -5034,40 +5039,40 @@ static DGLuint constructBBox(DGLuint name, dfloat br)
 {
     if(GL_NewList(name, GL_COMPILE))
     {
-        glBegin(GL_QUADS);
+        LIBGUI_GL.glBegin(GL_QUADS);
         {
             // Top
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
             // Bottom
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
             // Front
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
             // Back
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
             // Left
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
             // Right
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
+            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
+            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
+            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
+            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
         return GL_EndList();
     }
     return 0;
@@ -5090,26 +5095,26 @@ static DGLuint constructBBox(DGLuint name, dfloat br)
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
     dfloat a, dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase)
 {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
 
     if(alignToBase)
         // The Z coordinate is to the bottom of the object.
-        glTranslated(pos.x, pos.z + h, pos.y);
+        LIBGUI_GL.glTranslated(pos.x, pos.z + h, pos.y);
     else
-        glTranslated(pos.x, pos.z, pos.y);
+        LIBGUI_GL.glTranslated(pos.x, pos.z, pos.y);
 
-    glRotatef(0, 0, 0, 1);
-    glRotatef(0, 1, 0, 0);
-    glRotatef(a, 0, 1, 0);
+    LIBGUI_GL.glRotatef(0, 0, 0, 1);
+    LIBGUI_GL.glRotatef(0, 1, 0, 0);
+    LIBGUI_GL.glRotatef(a, 0, 1, 0);
 
-    glScaled(w - br - br, h - br - br, l - br - br);
-    glColor4f(color[0], color[1], color[2], alpha);
+    LIBGUI_GL.glScaled(w - br - br, h - br - br, l - br - br);
+    LIBGUI_GL.glColor4f(color[0], color[1], color[2], alpha);
 
     GL_CallList(dlBBox);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 }
 
 /**
@@ -5125,35 +5130,35 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
 void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[3],
     dfloat alpha)
 {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
 
-    glTranslated(pos.x, pos.z, pos.y);
+    LIBGUI_GL.glTranslated(pos.x, pos.z, pos.y);
 
-    glRotatef(0, 0, 0, 1);
-    glRotatef(0, 1, 0, 0);
-    glRotatef(a, 0, 1, 0);
+    LIBGUI_GL.glRotatef(0, 0, 0, 1);
+    LIBGUI_GL.glRotatef(0, 1, 0, 0);
+    LIBGUI_GL.glRotatef(a, 0, 1, 0);
 
-    glScalef(s, 0, s);
+    LIBGUI_GL.glScalef(s, 0, s);
 
-    glBegin(GL_TRIANGLES);
+    LIBGUI_GL.glBegin(GL_TRIANGLES);
     {
-        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex3f( 1.0f, 1.0f,-1.0f);  // L
+        LIBGUI_GL.glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+        LIBGUI_GL.glTexCoord2f(1.0f, 1.0f);
+        LIBGUI_GL.glVertex3f( 1.0f, 1.0f,-1.0f);  // L
 
-        glColor4f(color[0], color[1], color[2], alpha);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-1.0f, 1.0f,-1.0f);  // Point
+        LIBGUI_GL.glColor4f(color[0], color[1], color[2], alpha);
+        LIBGUI_GL.glTexCoord2f(0.0f, 1.0f);
+        LIBGUI_GL.glVertex3f(-1.0f, 1.0f,-1.0f);  // Point
 
-        glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-1.0f, 1.0f, 1.0f);  // R
+        LIBGUI_GL.glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+        LIBGUI_GL.glTexCoord2f(0.0f, 0.0f);
+        LIBGUI_GL.glVertex3f(-1.0f, 1.0f, 1.0f);  // R
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 }
 
 static void drawMobjBBox(mobj_t &mob)
@@ -5214,7 +5219,7 @@ static void drawMobjBoundingBoxes(Map &map)
         dlBBox = constructBBox(0, .08f);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
     //glDisable(GL_CULL_FACE);
     GLState::push().setCull(gl::None).apply();
 
@@ -5272,70 +5277,30 @@ static void drawMobjBoundingBoxes(Map &map)
 
     GL_BlendMode(BM_NORMAL);
 
-    //glEnable(GL_CULL_FACE);
     GLState::pop().apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     GLState::current().setDepthTest(true).apply();
 }
 
 static void drawPoint(Vector3d const &origin, Vector4f const &color = Vector4f(1, 1, 1, 1))
 {
-    glBegin(GL_POINTS);
-        glColor4f(color.x, color.y, color.z, color.w);
-        glVertex3f(origin.x, origin.z, origin.y);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_POINTS);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+    LIBGUI_GL.glEnd();
 }
 
 static void drawVector(Vector3f const &vector, dfloat scalar, Vector4f const &color = Vector4f(1, 1, 1, 1))
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    glBegin(GL_LINES);
-        glColor4fv(black);
-        glVertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
-        glColor4f(color.x, color.y, color.z, color.w);
-        glVertex3f(0, 0, 0);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        LIBGUI_GL.glVertex3f(0, 0, 0);
+    LIBGUI_GL.glEnd();
 }
-
-#if 0
-static void drawFakeRadioShadowPoints(Map &map)
-{
-    static Vector4f const red   ( 1.f, .2f, .2f, 1.f );
-    static Vector4f const yellow( .7f, .7f, .2f, 1.f );
-
-    glEnable(GL_POINT_SMOOTH);
-    dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
-    DGL_SetFloat(DGL_POINT_SIZE, 6);
-    GLState::current().setDepthTest(false).apply();
-    glDisable(GL_CULL_FACE);
-
-    /// @todo fixme: Should use the visual plane heights of subsectors.
-    map.forAllLines([] (Line &line)
-    {
-        return line.forAllVertexs([] (Vertex &vtx)
-        {
-            LineOwner const *base = vtx.firstLineOwner();
-            LineOwner const *own  = base;
-            do
-            {
-                coord_t const z = own->line().front().sector().floor().heightSmoothed();
-
-                drawPoint(Vector3d(vtx.origin() + own->extendedShadowOffset(), z), yellow);
-                drawPoint(Vector3d(vtx.origin() + own->innerShadowOffset   (), z), red);
-
-                own = &own->next();
-            } while(own != base);
-            return LoopContinue;
-        });
-    });
-
-    glEnable(GL_CULL_FACE);
-    GLState::current().setDepthTest(true).apply();
-    DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
-    glDisable(GL_POINT_SMOOTH);
-}
-#endif
 
 static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
 {
@@ -5344,16 +5309,16 @@ static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &ori
     static Vector4f const green( 0, 1, 0, 1);
     static Vector4f const blue ( 0, 0, 1, 1);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(origin.x, origin.z, origin.y);
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
 
     if(::devSurfaceVectors & SVF_TANGENT)   drawVector(suf.tangent(),   VISUAL_LENGTH, red);
     if(::devSurfaceVectors & SVF_BITANGENT) drawVector(suf.bitangent(), VISUAL_LENGTH, green);
     if(::devSurfaceVectors & SVF_NORMAL)    drawVector(suf.normal(),    VISUAL_LENGTH, blue);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 }
 
 /**
@@ -5519,39 +5484,39 @@ static void drawLumobjs(Map &map)
         if (rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
             return LoopContinue;
 
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPushMatrix();
 
-        glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
+        LIBGUI_GL.glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
 
-        glBegin(GL_LINES);
+        LIBGUI_GL.glBegin(GL_LINES);
         {
-            glColor4fv(black);
-            glVertex3f(-lob.radius(), 0, 0);
-            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            glVertex3f(0, 0, 0);
-            glVertex3f(0, 0, 0);
-            glColor4fv(black);
-            glVertex3f(lob.radius(), 0, 0);
+            LIBGUI_GL.glColor4fv(black);
+            LIBGUI_GL.glVertex3f(-lob.radius(), 0, 0);
+            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glColor4fv(black);
+            LIBGUI_GL.glVertex3f(lob.radius(), 0, 0);
 
-            glVertex3f(0, -lob.radius(), 0);
-            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            glVertex3f(0, 0, 0);
-            glVertex3f(0, 0, 0);
-            glColor4fv(black);
-            glVertex3f(0, lob.radius(), 0);
+            LIBGUI_GL.glVertex3f(0, -lob.radius(), 0);
+            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glColor4fv(black);
+            LIBGUI_GL.glVertex3f(0, lob.radius(), 0);
 
-            glVertex3f(0, 0, -lob.radius());
-            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            glVertex3f(0, 0, 0);
-            glVertex3f(0, 0, 0);
-            glColor4fv(black);
-            glVertex3f(0, 0, lob.radius());
+            LIBGUI_GL.glVertex3f(0, 0, -lob.radius());
+            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glVertex3f(0, 0, 0);
+            LIBGUI_GL.glColor4fv(black);
+            LIBGUI_GL.glVertex3f(0, 0, lob.radius());
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
 
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+        LIBGUI_GL.glPopMatrix();
         return LoopContinue;
     });
 
@@ -5595,7 +5560,7 @@ static void drawSoundEmitters(Map &map)
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     if(devSoundEmitters & SOF_SIDE)
     {
@@ -5643,7 +5608,7 @@ static void drawSoundEmitters(Map &map)
     }
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
@@ -5651,12 +5616,13 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
     if(alpha < .0001f) return;
 
     dfloat const unitLength = 100;
-    glBegin(GL_LINES);
-        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
-        glVertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
-        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
-        glVertex3f(0, 0, 0);
-    glEnd();
+
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
+        LIBGUI_GL.glVertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
+        LIBGUI_GL.glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
+        LIBGUI_GL.glVertex3f(0, 0, 0);
+    LIBGUI_GL.glEnd();
 }
 
 static String labelForGenerator(Generator const &gen)
@@ -5693,7 +5659,7 @@ static void drawGenerators(Map &map)
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     map.forAllGenerators([] (Generator &gen)
     {
@@ -5702,7 +5668,7 @@ static void drawGenerators(Map &map)
     });
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
@@ -5710,17 +5676,17 @@ static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
     static dint const EXTEND_DIST = 64;
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    glBegin(GL_LINES);
-        glColor4fv(black);
-        glVertex3f(origin.x, origin.z - EXTEND_DIST, origin.y);
-        glColor4f(1, 1, 1, opacity);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glVertex3f(origin.x, origin.z, origin.y);
-        glVertex3f(origin.x, origin.z + height, origin.y);
-        glVertex3f(origin.x, origin.z + height, origin.y);
-        glColor4fv(black);
-        glVertex3f(origin.x, origin.z + height + EXTEND_DIST, origin.y);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z - EXTEND_DIST, origin.y);
+        LIBGUI_GL.glColor4f(1, 1, 1, opacity);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z + height, origin.y);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z + height, origin.y);
+        LIBGUI_GL.glColor4fv(black);
+        LIBGUI_GL.glVertex3f(origin.x, origin.z + height + EXTEND_DIST, origin.y);
+    LIBGUI_GL.glEnd();
 }
 
 static String labelForVertex(Vertex const *vtx)
@@ -5775,12 +5741,12 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     if(parms.drawLabel)
     {
         GLState::current().setDepthTest(false).apply();
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
 
         GLState::current().setDepthTest(true).apply();
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -5902,7 +5868,7 @@ static void drawVertexes(Map &map)
     {
         GLState::current().setDepthTest(false).apply();
 
-        glEnable(GL_LINE_SMOOTH);
+        LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
@@ -5930,7 +5896,7 @@ static void drawVertexes(Map &map)
     // Draw the vertex origins.
     dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
-    glEnable(GL_POINT_SMOOTH);
+    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
     GLState::current().setDepthTest(false).apply();
@@ -5982,10 +5948,10 @@ static void drawVertexes(Map &map)
     if (devVertexBars)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
-        glDisable(GL_LINE_SMOOTH);
+        LIBGUI_GL.glDisable(GL_LINE_SMOOTH);
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
-    glDisable(GL_POINT_SMOOTH);
+    LIBGUI_GL.glDisable(GL_POINT_SMOOTH);
 
 #undef MAX_VERTEX_POINT_DIST
 }
@@ -6010,7 +5976,7 @@ static void drawSectors(Map &map)
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     // Draw a sector label at the center of each subsector:
     map.forAllSectors([] (Sector &sec)
@@ -6029,7 +5995,7 @@ static void drawSectors(Map &map)
     });
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 static String labelForThinker(thinker_t *thinker)
@@ -6053,7 +6019,7 @@ static void drawThinkers(Map &map)
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     GLState::current().setDepthTest(false).apply();
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
@@ -6072,7 +6038,7 @@ static void drawThinkers(Map &map)
     });
 
     GLState::current().setDepthTest(true).apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 void Rend_LightGridVisual(LightGrid &lg)
@@ -6095,14 +6061,14 @@ void Rend_LightGridVisual(LightGrid &lg)
     }
 
     // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     for(dint y = 0; y < lg.dimensions().y; ++y)
     {
-        glBegin(GL_QUADS);
+        LIBGUI_GL.glBegin(GL_QUADS);
         for(dint x = 0; x < lg.dimensions().x; ++x)
         {
             LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
@@ -6120,19 +6086,19 @@ void Rend_LightGridVisual(LightGrid &lg)
 
             if(!color) continue;
 
-            glColor3f(color->x, color->y, color->z);
+            LIBGUI_GL.glColor3f(color->x, color->y, color->z);
 
-            glVertex2f(x * devLightGridSize, y * devLightGridSize);
-            glVertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
-            glVertex2f(x * devLightGridSize + devLightGridSize,
+            LIBGUI_GL.glVertex2f(x * devLightGridSize, y * devLightGridSize);
+            LIBGUI_GL.glVertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
+            LIBGUI_GL.glVertex2f(x * devLightGridSize + devLightGridSize,
                        y * devLightGridSize + devLightGridSize);
-            glVertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
+            LIBGUI_GL.glVertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
         }
-        glEnd();
+        LIBGUI_GL.glEnd();
     }
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
@@ -6411,7 +6377,7 @@ void Rend_Register()
 
     Rend_RadioRegister();
     Rend_SpriteRegister();
-    LensFx_Register();
+    PostProcessing::consoleRegister();
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();

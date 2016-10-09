@@ -20,16 +20,17 @@
 #ifndef GLSANDBOX_TESTWINDOW_H
 #define GLSANDBOX_TESTWINDOW_H
 
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 
-class TestWindow : public de::CanvasWindow
+class TestWindow : public de::GLWindow
 {
     Q_OBJECT
 
 public:
     TestWindow();
 
-    void canvasGLDraw(de::Canvas &canvas);
+    void draw() override;
+    void keyPressEvent(QKeyEvent *ev) override;
 
 public slots:
     void testRenderToTexture();

@@ -17,6 +17,7 @@
  */
 
 #include "de/GLShader"
+#include "de/GLInfo"
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
 #include <de/Block>
@@ -25,7 +26,6 @@
 namespace de {
 
 DENG2_PIMPL(GLShader)
-, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     GLuint name;
     Type type;
@@ -43,7 +43,7 @@ DENG2_PIMPL(GLShader)
     {
         if (!name)
         {
-            name = glCreateShader(type == Vertex? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+            name = LIBGUI_GL.glCreateShader(type == Vertex? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
             LIBGUI_ASSERT_GL_OK();
             if (!name)
             {
@@ -56,19 +56,10 @@ DENG2_PIMPL(GLShader)
     {
         if (name)
         {
-            glDeleteShader(name);
+            LIBGUI_GL.glDeleteShader(name);
             name = 0;
         }
         self.setState(Asset::NotReady);
-    }
-
-    void appGLContextChanged()
-    {
-        /*
-        qDebug() << "Recompiling shader" << name;
-
-        self.recompile();
-        */
     }
 };
 
@@ -154,21 +145,21 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     Block src = prefixToSource(source, prefix + predefs);
 
     char const *srcPtr = src.constData();
-    glShaderSource(d->name, 1, &srcPtr, 0);
+    LIBGUI_GL.glShaderSource(d->name, 1, &srcPtr, 0);
 
-    glCompileShader(d->name);
+    LIBGUI_GL.glCompileShader(d->name);
 
     // Check the compilation status.
     GLint status;
-    glGetShaderiv(d->name, GL_COMPILE_STATUS, &status);
+    LIBGUI_GL.glGetShaderiv(d->name, GL_COMPILE_STATUS, &status);
     if (!status)
     {
         dint32 logSize = 0;
         dint32 count = 0;
-        glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
+        LIBGUI_GL.glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
 
         Block log(logSize);
-        glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+        LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
         throw CompilerError("GLShader::compile",
                             "Compilation of " + String(d->type == Fragment? "fragment" : "vertex") +

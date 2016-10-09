@@ -24,6 +24,7 @@
 #include "dd_main.h"     // remove me
 #include "def_main.h"    // ::defs
 #include <de/Log>
+#include <de/GLInfo>
 #include <de/timer.h>    // TICSPERSEC
 #include <de/vector1.h>  // remove me
 #include <QList>
@@ -448,12 +449,12 @@ void Sfx_ChannelDrawer()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -463,7 +464,7 @@ void Sfx_ChannelDrawer()
     if(!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
         return;
     }
 
@@ -531,9 +532,9 @@ void Sfx_ChannelDrawer()
         return LoopContinue;
     });
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // Back to the original.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }

@@ -20,19 +20,19 @@
 #define DENG_CLIENT_FX_POSTPROCESSING_H
 
 #include "render/consoleeffect.h"
+#include <de/Matrix>
 #include <de/Time>
-
-namespace fx {
+#include <de/GLTexture>
 
 /**
  * Post-processing of rendered camera lens frames. Maintains an offscreen
  * render target and provides a way to draw it back to the regular target
  * with shader effects applied.
  */
-class PostProcessing : public ConsoleEffect
+class PostProcessing
 {
 public:
-    PostProcessing(int console);
+    PostProcessing();
 
     /**
      * Determines whether the effect is active. If it isn't, it can be skipped
@@ -64,14 +64,17 @@ public:
     void glInit();
     void glDeinit();
 
-    void beginFrame();
-    void draw();
-    void endFrame();
+    void update();
+
+    //void beginFrame();
+    void draw(de::Matrix4f const &mvpMatrix, de::GLTexture const &frame);
+    //void endFrame();
+
+public:
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
 };
-
-} // namespace fx
 
 #endif // DENG_CLIENT_FX_POSTPROCESSING_H

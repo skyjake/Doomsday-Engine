@@ -18,6 +18,7 @@
  */
 
 #include "de_platform.h" // must be included first
+#include "api_render.h"
 
 #include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
@@ -26,6 +27,7 @@
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "dd_def.h"
@@ -34,6 +36,7 @@
 #include "sys_system.h"
 #include "ui/editors/edit_bias.h"
 #include "world/map.h"
+#include "world/p_players.h"
 #include "network/net_main.h"
 #include "client/cl_def.h" // clientPaused
 #include "render/r_main.h"
@@ -46,6 +49,8 @@
 
 #include <doomsday/console/exec.h>
 #include <de/GLState>
+#include <de/GLTextureFramebuffer>
+#include <de/VRConfig>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
@@ -58,38 +63,79 @@ using namespace de;
 
 DENG2_PIMPL(GameWidget)
 {
+    bool needFrames = true; // Rendering a new frame is necessary.
+    VRConfig::Eye lastFrameEye = VRConfig::NeitherEye;
+
     Impl(Public *i) : Base(i) {}
+
+    /**
+     * Render the 3D game view of each local player. The results are stored in each
+     * players' ViewCompositor as a texture. This is a slow operation and should only
+     * be done once after each time game tics have been run.
+     */
+    void renderGameViews()
+    {
+        lastFrameEye = ClientApp::vr().currentEye();
+
+        ClientApp::forLocalPlayers([] (ClientPlayer &player)
+        {
+            player.viewCompositor().renderGameView([] (int playerNum) {
+                R_RenderViewPort(playerNum);
+            });
+            return LoopContinue;
+        });
+    }
+
+    /**
+     * Draw the game widget's contents by compositing the various layers: game view,
+     * border, HUD, finale, intermission, and engine/debug overlays. This is generally
+     * a quick operation and can be done multiple times per window paint.
+     */
+    void drawComposited()
+    {
+        int numLocal = 0;
+        ClientApp::forLocalPlayers([this, &numLocal] (ClientPlayer &player)
+        {
+            player.viewCompositor().drawCompositedLayers();
+            ++numLocal;
+            return LoopContinue;
+        });
+
+        // Nobody is playing right now?
+        if (numLocal == 0)
+        {
+            ClientApp::player(0).viewCompositor().drawCompositedLayers();
+        }
+    }
 
     void draw()
     {
-        bool cannotDraw = (self.isDisabled() || !GL_IsFullyInited());
-
-        if (renderWireframe || cannotDraw)
+        // If the eye changes, we will need to redraw the view.
+        if (ClientApp::vr().currentEye() != lastFrameEye)
         {
-            // When rendering is wireframe mode, we must clear the screen
-            // before rendering a frame.
-            glClear(GL_COLOR_BUFFER_BIT);
+            needFrames = true;
         }
 
-        if (cannotDraw) return;
-
-        if (App_GameLoaded())
+        if (needFrames)
         {
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-            R_RenderViewPorts(Player3DViewLayer);
-            R_RenderViewPorts(ViewBorderLayer);
+            // Each players' view is rendered into an FBO first. What is seen on screen
+            // is then composited using the player view as a texture with additional layers
+            // and effects.
+            renderGameViews();
 
             // End any open DGL sequence.
             DGL_End();
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();
+
+            needFrames = false;
         }
 
-        // End any open DGL sequence.
-        DGL_End();
+        drawComposited();
     }
 
     void updateSize()
@@ -99,12 +145,12 @@ DENG2_PIMPL(GameWidget)
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if (!App_GameLoaded())
+        /*if (!App_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
-        }
-        UI_LoadFonts();
+        }*/
+        //UI_LoadFonts();
     }
 };
 
@@ -114,12 +160,14 @@ GameWidget::GameWidget(String const &name)
     requestGeometry(false);
 }
 
+/*
 void GameWidget::glApplyViewport(Rectanglei const &rect)
 {
     GLState::current()
             .setNormalizedViewport(normalizedRect(rect))
             .apply();
 }
+*/
 
 void GameWidget::pause()
 {
@@ -129,18 +177,20 @@ void GameWidget::pause()
     }
 }
 
+void GameWidget::drawComposited()
+{
+    d->drawComposited();
+}
+
 void GameWidget::viewResized()
 {
     GuiWidget::viewResized();
 
-    /*
-    if (BusyMode_Active() || isDisabled() || Sys_IsShuttingDown() ||
-       !ClientApp::windowSystem().hasMain())
+    if (!BusyMode_Active() && !isDisabled() && !Sys_IsShuttingDown() &&
+        ClientWindow::mainExists())
     {
-        return;
+        d->updateSize();
     }
-
-    d->updateSize();*/
 }
 
 void GameWidget::update()
@@ -155,10 +205,12 @@ void GameWidget::update()
     // Run at least one (fractional) tic.
     Loop_RunTics();
 
+    // Time has progressed, so game views need rendering.
+    d->needFrames = true;
+
     // We may have received a Quit message from the windowing system
     // during events/tics processing.
-    if (Sys_IsShuttingDown())
-        return;
+    if (Sys_IsShuttingDown()) return;
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
@@ -172,7 +224,7 @@ void GameWidget::update()
 
 void GameWidget::drawContent()
 {
-    if (isDisabled() || !GL_IsFullyInited())
+    if (isDisabled() || !GL_IsFullyInited() || !App_GameLoaded())
         return;
 
     GLState::push();
@@ -203,7 +255,7 @@ bool GameWidget::handleEvent(Event const &event)
 
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if (event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
+    if (event.type() == Event::MouseButton && !root().window().eventHandler().isMouseTrapped() &&
         rule().recti().contains(event.as<MouseEvent>().pos()))
     {
         if (!window.hasSidebar() && !window.isGameMinimized())
@@ -219,7 +271,7 @@ bool GameWidget::handleEvent(Event const &event)
         {
         case MouseClickFinished:
             // Click completed on the widget, trap the mouse.
-            window.canvas().trapMouse();
+            window.eventHandler().trapMouse();
             window.taskBar().close();
             root().setFocus(0); // Allow input to reach here.
             break;
@@ -242,4 +294,11 @@ bool GameWidget::handleEvent(Event const &event)
     }
 
     return false;
+}
+
+void GameWidget::glDeinit()
+{
+    GuiWidget::glDeinit();
+
+    //d->glDeinit();
 }

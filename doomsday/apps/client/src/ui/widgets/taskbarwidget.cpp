@@ -17,29 +17,32 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/multiplayerstatuswidget.h"
-#include "ui/widgets/tutorialwidget.h"
-#include "ui/widgets/packagessidebarwidget.h"
-#include "ui/home/homewidget.h"
+
+#include "CommandAction"
+#include "clientapp.h"
+#include "dd_main.h"
+#include "network/serverlink.h"
+#include "ui/clientrootwidget.h"
+#include "ui/clientwindow.h"
 #include "ui/dialogs/aboutdialog.h"
-#include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
 #include "ui/dialogs/inputsettingsdialog.h"
-#include "ui/dialogs/networksettingsdialog.h"
-#include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/manualconnectiondialog.h"
-#include "ui/dialogs/uisettingsdialog.h"
-#include "ui/dialogs/vrsettingsdialog.h"
+#include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/packagesdialog.h"
-#include "updater/updatersettingsdialog.h"
-#include "ui/clientwindow.h"
-#include "ui/clientrootwidget.h"
-#include "clientapp.h"
-#include "CommandAction"
-#include "ui/ui_main.h"
+#include "ui/dialogs/renderersettingsdialog.h"
+#include "ui/dialogs/uisettingsdialog.h"
+#include "ui/dialogs/videosettingsdialog.h"
+#include "ui/dialogs/vrsettingsdialog.h"
+#include "ui/home/homewidget.h"
+#include "ui/inputsystem.h"
 #include "ui/progress.h"
-#include "dd_main.h"
+#include "ui/ui_main.h"
+#include "ui/widgets/consolecommandwidget.h"
+#include "ui/widgets/multiplayerstatuswidget.h"
+#include "ui/widgets/packagessidebarwidget.h"
+#include "ui/widgets/tutorialwidget.h"
+#include "updater/updatersettingsdialog.h"
 
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
@@ -572,11 +575,12 @@ void TaskBarWidget::drawContent()
 
 bool TaskBarWidget::handleEvent(Event const &event)
 {
-    Canvas &canvas = root().window().canvas();
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if (!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-        !window.hasSidebar() && !window.isGameMinimized())
+    if (!window.eventHandler().isMouseTrapped()
+            && event.type() == Event::MouseButton
+            && !window.hasSidebar()
+            && !window.isGameMinimized())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -593,7 +597,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             if (App_GameLoaded())
             {
                 // Allow game to use the mouse.
-                canvas.trapMouse();
+                window.eventHandler().trapMouse();
             }
 
             window.taskBar().close();
@@ -680,11 +684,11 @@ void TaskBarWidget::open()
     // Untrap the mouse if it is trapped.
     if (hasRoot())
     {
-        Canvas &canvas = root().window().canvas();
-        d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-        if (canvas.isMouseTrapped())
+        auto &handler = root().window().eventHandler();
+        d->mouseWasTrappedWhenOpening = handler.isMouseTrapped();
+        if (handler.isMouseTrapped())
         {
-            canvas.trapMouse(false);
+            handler.trapMouse(false);
         }
 
         if (!App_GameLoaded())
@@ -732,7 +736,7 @@ void TaskBarWidget::close()
             {
                 if (d->mouseWasTrappedWhenOpening)
                 {
-                    window.canvas().trapMouse();
+                    window.eventHandler().trapMouse();
                 }
             }
         }
@@ -774,10 +778,14 @@ void TaskBarWidget::unloadGame()
 
 void TaskBarWidget::showAbout()
 {
+    root().window().glActivate();
+
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
     root().addOnTop(about);
     about->open();
+
+    root().window().glDone();
 }
 
 void TaskBarWidget::showUpdaterSettings()

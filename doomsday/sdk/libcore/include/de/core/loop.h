@@ -85,7 +85,7 @@ public:
     static Loop &get();
 
 public slots:
-    void nextLoopIteration();
+    virtual void nextLoopIteration();
 
 private:
     DENG2_PRIVATE(d)

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLTextComposer"
@@ -27,7 +27,7 @@ using namespace ui;
 static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
 
 DENG2_PIMPL(GLTextComposer)
-{    
+{
     Font const *font = nullptr;
     Atlas *atlas = nullptr;
     String text;
@@ -49,7 +49,7 @@ DENG2_PIMPL(GLTextComposer)
             Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
         };
-        QList<Segment> segs;       
+        QList<Segment> segs;
     };
     typedef QList<Line> Lines;
     Lines lines;
@@ -195,6 +195,8 @@ DENG2_PIMPL(GLTextComposer)
                         fgColor = format.style().richStyleColor(Font::RichFormat::NormalColor);
                     }
 
+                    //qDebug() << "allocating" << seg.text << seg.range.asText();
+
                     Image const segmentImage = wraps->rasterizedSegment(i, k);
                     seg.id = atlas->alloc(segmentImage.multiplied(fgColor));
                 }
@@ -311,7 +313,7 @@ DENG2_PIMPL(GLTextComposer)
             {
                 if (i >= visibleLineRange.end) break;
 
-                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);                                               
+                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
 
                 DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
                 for (int k = 0; k < info.segs.size(); ++k)
@@ -372,7 +374,8 @@ void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
     if (d->wraps != &wrappedLines)
     {
         d->wraps = &wrappedLines;
-        forceUpdate();
+        //forceUpdate();
+        setState(false);
     }
 }
 

@@ -31,6 +31,7 @@
 #  include "BindContext"
 #  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
+#  include "ui/inputsystem.h"
 
 #  include "client/clientsubsector.h"
 #  include "client/clskyplane.h"

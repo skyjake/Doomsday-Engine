@@ -47,6 +47,8 @@ class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
 public:
     BaseGuiApp(int &argc, char **argv);
 
+    virtual void glDeinit();
+
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
     double dpiFactor() const;
 

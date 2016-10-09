@@ -24,6 +24,7 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/clientwindow.h"
+#include "render/rendersystem.h"
 #include "clientapp.h"
 
 #include <de/ButtonWidget>

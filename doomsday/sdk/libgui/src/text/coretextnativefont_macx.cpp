@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "../src/text/coretextnativefont_macx.h"
@@ -339,6 +339,8 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
     DENG2_ASSERT(fequal(fontCache.fontSize(d->font), size()));
     DENG2_ASSERT(fontCache.fontWeight(d->font) == weight());
 #endif
+
+    //qDebug() << "CoreTextNativeFont: Rasterizing" << text;
 
     // Text color.
     Vector4d const fg = foreground.zyxw().toVector4f() / 255.f;

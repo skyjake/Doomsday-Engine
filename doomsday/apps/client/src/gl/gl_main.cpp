@@ -45,6 +45,7 @@
 
 #include "world/map.h"
 #include "world/p_object.h"
+#include "world/p_players.h"
 
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"
@@ -59,6 +60,7 @@
 #include "render/rend_main.h"
 #include "render/r_main.h"
 #include "render/cameralensfx.h"
+#include "render/rendersystem.h"
 #include "render/rend_font.h"
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
@@ -89,7 +91,7 @@ static dfloat oldgamma, oldcontrast, oldbright;
 
 static dint fogModeDefault;
 
-static viewport_t currentView;
+//static viewport_t currentView;
 
 static inline ClientResources &resSys()
 {
@@ -105,17 +107,6 @@ dd_bool GL_IsFullyInited()
 {
     return initFullGLOk;
 }
-
-#if defined(WIN32) || defined(MACOSX)
-void GL_AssertContextActive()
-{
-#ifdef WIN32
-    DENG2_ASSERT(wglGetCurrentContext() != 0);
-#else
-    DENG2_ASSERT(CGLGetCurrentContext() != 0);
-#endif
-}
-#endif
 
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
@@ -219,11 +210,11 @@ void GL_DoUpdate()
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    glFlush();
-    DD_WaitForOptimalUpdateTime();
+    //glFlush();
+    //DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    ClientWindow::main().swapBuffers();
+    //ClientWindow::main().swapBuffers();
 }
 
 static void printConfiguration()
@@ -336,7 +327,7 @@ void GL_Shutdown()
         dint i = 0;
         do
         {
-            glClear(GL_COLOR_BUFFER_BIT);
+            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
             GL_DoUpdate();
         } while(++i < 3);
     }
@@ -365,153 +356,33 @@ void GL_Init2DState()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
-    //glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
     GLState::current()
             .setCull(gl::None)
             .setDepthTest(false)
             .apply();
 
     //glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_CUBE_MAP);
-
-    // Default, full area viewport.
-    //glViewport(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, 320, 200, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, 320, 200, 0, -1, 1);
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
-    glDisable(GL_FOG);
-    glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                         fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
-    glFogf(GL_FOG_START, DEFAULT_FOG_START);
-    glFogf(GL_FOG_END, DEFAULT_FOG_END);
-    glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    LIBGUI_GL.glDisable(GL_FOG);
+    LIBGUI_GL.glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
+                                   fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
+    LIBGUI_GL.glFogf(GL_FOG_START, DEFAULT_FOG_START);
+    LIBGUI_GL.glFogf(GL_FOG_END, DEFAULT_FOG_END);
+    LIBGUI_GL.glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
     fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
     fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
     fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
     fogParams.fogColor[3] = 1;
-    glFogfv(GL_FOG_COLOR, fogParams.fogColor);
-}
-
-void GL_SwitchTo3DState(dd_bool pushState, viewport_t const *port, viewdata_t const *viewData)
-{
-    DENG2_ASSERT(port && viewData);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    if(pushState)
-    {
-        // Push the 2D matrices on the stack.
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-    }
-
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_DEPTH_TEST);
-    GLState::current()
-            .setCull(gl::Back)
-            .setDepthTest(true)
-            .apply();
-
-    std::memcpy(&currentView, port, sizeof(currentView));
-
-    viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
-    viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
-    viewpw = de::min(port->geometry.width(), viewData->window.width());
-    viewph = de::min(port->geometry.height(), viewData->window.height());
-
-    ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
-                                                                     Vector2ui(viewpw, viewph)));
-
-    // The 3D projection matrix.
-    GL_ProjectionMatrix();
-}
-
-void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *viewData)
-{
-    DENG2_ASSERT(port && viewData);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    switch(step)
-    {
-    case 1: { // After Restore Step 1 normal player sprites are rendered.
-        dint height = dfloat( port->geometry.width() * viewData->window.height() / viewData->window.width() ) / port->geometry.height() * SCREENHEIGHT;
-        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
-                                           port->geometry.width(), port->geometry.height(),
-                                           scalemode_t(weaponScaleMode));
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-        if(SCALEMODE_STRETCH == sm)
-        {
-            glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
-        }
-        else
-        {
-            // Use an orthographic projection in native screenspace. Then
-            // translate and scale the projection to produce an aspect
-            // corrected coordinate space at 4:3, aligned vertically to
-            // the bottom and centered horizontally in the window.
-            glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
-            glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
-
-            if(port->geometry.width() >= port->geometry.height())
-                glScalef(dfloat( port->geometry.height() ) / SCREENHEIGHT,
-                         dfloat( port->geometry.height() ) / SCREENHEIGHT, 1);
-            else
-                glScalef(dfloat( port->geometry.width() ) / SCREENWIDTH,
-                         dfloat( port->geometry.width() ) / SCREENWIDTH, 1);
-
-            // Special case: viewport height is greater than width.
-            // Apply an additional scaling factor to prevent player sprites
-            // looking too small.
-            if(port->geometry.height() > port->geometry.width())
-            {
-                dfloat extraScale = (dfloat(port->geometry.height() * 2) / port->geometry.width()) / 2;
-                glScalef(extraScale, extraScale, 1);
-            }
-
-            glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
-            glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
-        }
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-
-        // Depth testing must be disabled so that psprite 1 will be drawn
-        // on top of psprite 0 (Doom plasma rifle fire).
-        //glDisable(GL_DEPTH_TEST);
-        GLState::current().setDepthTest(false).apply();
-        break; }
-
-    case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        ClientWindow::main().game().glApplyViewport(currentView.geometry);
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-        //glDisable(GL_CULL_FACE);
-        //glDisable(GL_DEPTH_TEST);
-        GLState::current()
-                .setCull(gl::None)
-                .setDepthTest(false)
-                .apply();
-        break;
-
-    default:
-        App_Error("GL_Restore2DState: Invalid value, step = %i.", step);
-        break;
-    }
+    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
 Rangef GL_DepthClipRange()
@@ -522,7 +393,8 @@ Rangef GL_DepthClipRange()
 Matrix4f GL_GetProjectionMatrix()
 {
     dfloat const fov = Rend_FieldOfView();
-    Vector2f const size(viewpw, viewph);
+    //Vector2f const size(viewpw, viewph);
+    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
     yfov = vrCfg().verticalFieldOfView(fov, size);
     return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
            Matrix4f::scale(Vector3f(1, 1, -1));
@@ -535,8 +407,8 @@ void GL_ProjectionMatrix()
 
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(GL_GetProjectionMatrix().values());
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)
@@ -588,8 +460,8 @@ void GL_SelectTexUnits(dint count)
 
     for(dint i = numTexUnits - 1; i >= count; i--)
     {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 
     // Enable the selected units.
@@ -597,8 +469,8 @@ void GL_SelectTexUnits(dint count)
     {
         if(i >= numTexUnits) continue;
 
-        glActiveTexture(GL_TEXTURE0 + i);
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -967,20 +839,20 @@ void GL_BindTexture(TextureVariant *vtexture)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, glTexName);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     TextureVariantSpec const &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
     }
@@ -1000,15 +872,15 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, glName);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
 }
 
@@ -1039,7 +911,7 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    glActiveTexture(GL_TEXTURE0 + dbyte(unit));
+    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + dbyte(unit));
     GL_Bind(glTU);
 }
 
@@ -1052,7 +924,7 @@ void GL_SetNoTexture()
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
-    glBindTexture(GL_TEXTURE_2D, 0);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)
@@ -1495,7 +1367,7 @@ D_CMD(DisplayModeInfo)
                   "\n  windowed origin:%3 size:%4"
                   "\n  fullscreen size:%5")
                .arg(win->pos().asText())
-               .arg(win->size().asText())
+               .arg(win->pointSize().asText())
                .arg(win->windowRect().topLeft.asText())
                .arg(win->windowRect().size().asText())
                .arg(win->fullscreenSize().asText());
@@ -1575,7 +1447,7 @@ D_CMD(Fog)
         }
         fogParams.fogColor[3] = 1;
 
-        glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         LOG_GL_VERBOSE("Fog color set");
         return true;
     }
@@ -1583,20 +1455,20 @@ D_CMD(Fog)
     {
         fogParams.fogStart = (GLfloat) strtod(argv[2], nullptr);
 
-        glFogf(GL_FOG_START, fogParams.fogStart);
+        Deferred_glFogf(GL_FOG_START, fogParams.fogStart);
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         fogParams.fogEnd = (GLfloat) strtod(argv[2], nullptr);
-        glFogf(GL_FOG_END, fogParams.fogEnd);
+        Deferred_glFogf(GL_FOG_END, fogParams.fogEnd);
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
-        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
+        Deferred_glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog density set");
         return true;
     }
@@ -1604,19 +1476,19 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            glFogi(GL_FOG_MODE, GL_LINEAR);
+            Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
             LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
-            glFogi(GL_FOG_MODE, GL_EXP);
+            Deferred_glFogi(GL_FOG_MODE, GL_EXP);
             LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
-            glFogi(GL_FOG_MODE, GL_EXP2);
+            Deferred_glFogi(GL_FOG_MODE, GL_EXP2);
             LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }

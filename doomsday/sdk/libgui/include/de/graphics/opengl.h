@@ -1,4 +1,4 @@
-/** @file opengl.h  Headers for OpenGL (ES) 2.
+/** @file opengl.h  Headers for OpenGL 2.1.
  *
  * @ingroup gl
  *
@@ -25,13 +25,10 @@
 #  error "glDeleteTextures defined as a macro! (would be undefined by Qt)"
 #endif
 
-#ifdef MACOSX
-#  include <OpenGL/gl.h>
-#else
-#  include "glentrypoints.h"
-#endif
+#include <QOpenGLFunctions_2_1>
+#include <QOpenGLExtensions>
 
-#include <QtOpenGL>
+#define QOpenGLFunctions_Doomsday   QOpenGLFunctions_2_1
 
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
@@ -43,8 +40,8 @@
  */
 //#define LIBGUI_GLES2
 
-#ifndef GL_VERSION_2_0
-#  error "OpenGL 2.0 (or newer) headers not found"
+#ifndef GL_VERSION_2_1
+#  error "OpenGL 2.1 (or newer) headers not found"
 #endif
 
 #endif // LIBGUI_SYSTEM_OPENGL_H

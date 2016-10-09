@@ -20,7 +20,7 @@
 #define APPROOTWIDGET_H
 
 #include <de/GuiRootWidget>
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 
 class MainWindow;
 
@@ -30,15 +30,13 @@ class MainWindow;
 class AppRootWidget : public de::GuiRootWidget
 {
 public:
-    AppRootWidget(de::CanvasWindow *window = 0);
+    AppRootWidget(de::GLWindow *window = 0);
 
     MainWindow &window();
 
     void addOnTop(de::GuiWidget *widget);
     void dispatchLatestMousePosition();
     void handleEventAsFallback(de::Event const &event);
-
-    void update();
 
 private:
     DENG2_PRIVATE(d)

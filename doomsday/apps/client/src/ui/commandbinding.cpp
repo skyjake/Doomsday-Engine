@@ -28,6 +28,7 @@
 
 #include "world/p_players.h" // P_ConsoleToLocal
 
+#include "ui/inputsystem.h"
 #include "ui/b_util.h"
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"

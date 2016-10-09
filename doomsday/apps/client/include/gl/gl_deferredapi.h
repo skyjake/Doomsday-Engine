@@ -43,12 +43,12 @@
 extern "C" {
 #endif
 
-#define glEnable(x)             Deferred_glEnable(x)
-#define glDisable(x)            Deferred_glDisable(x)
-#define glDeleteTextures(x, y)  Deferred_glDeleteTextures(x, y)
-#define glFogi(x, y)            Deferred_glFogi(x, y)
-#define glFogf(x, y)            Deferred_glFogf(x, y)
-#define glFogfv(x, y)           Deferred_glFogfv(x, y)
+//#define glEnable(x)             Deferred_glEnable(x)
+//#define glDisable(x)            Deferred_glDisable(x)
+//#define glDeleteTextures(x, y)  Deferred_glDeleteTextures(x, y)
+//#define glFogi(x, y)            Deferred_glFogi(x, y)
+//#define glFogf(x, y)            Deferred_glFogf(x, y)
+//#define glFogfv(x, y)           Deferred_glFogfv(x, y)
 
 void Deferred_glEnable(GLenum e);
 void Deferred_glDisable(GLenum e);

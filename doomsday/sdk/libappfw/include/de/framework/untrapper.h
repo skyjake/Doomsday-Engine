@@ -20,7 +20,7 @@
 #define LIBAPPFW_UNTRAPPER_H
 
 #include "../libappfw.h"
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 
 namespace de {
 
@@ -38,7 +38,7 @@ public:
      * Mouse is untrapped if it has been trapped in @a window.
      * @param window  Window where (un)trapping is done.
      */
-    Untrapper(CanvasWindow &window);
+    Untrapper(GLWindow &window);
 
 private:
     DENG2_PRIVATE(d)

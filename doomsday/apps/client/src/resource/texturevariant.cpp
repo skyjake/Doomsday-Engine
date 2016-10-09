@@ -592,7 +592,7 @@ void ClientTexture::Variant::release()
 {
     if (isPrepared())
     {
-        glDeleteTextures(1, (GLuint const *) &d->glTexName);
+        Deferred_glDeleteTextures(1, (GLuint const *) &d->glTexName);
         d->glTexName = 0;
     }
 }

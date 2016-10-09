@@ -1,4 +1,4 @@
-/** @file svg.cpp  Scalable Vector Graphic (SVG) implementation. 
+/** @file svg.cpp  Scalable Vector Graphic (SVG) implementation.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -22,6 +22,7 @@
 #include "gl/svg.h"
 
 #include <de/concurrency.h>
+#include <de/GLInfo>
 #include "sys_system.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
@@ -100,11 +101,11 @@ static void draw(const Svg* svg)
             // Do we need to end the current primitive?
             if(primType == GL_LINES)
             {
-                glEnd(); // 2-vertex set ends.
+                LIBGUI_GL.glEnd(); // 2-vertex set ends.
             }
 
             // A new n-vertex primitive begins.
-            glBegin(nextPrimType);
+            LIBGUI_GL.glBegin(nextPrimType);
         }
         else
         {
@@ -112,7 +113,7 @@ static void draw(const Svg* svg)
             if(primType != GL_LINES)
             {
                 primType = GL_LINES;
-                glBegin(GL_LINES);
+                LIBGUI_GL.glBegin(GL_LINES);
             }
         }
 
@@ -123,21 +124,21 @@ static void draw(const Svg* svg)
             do
             {
                 /// @todo Use TexGen?
-                glTexCoord2dv((const GLdouble*)pIt->coords.xy);
-                glVertex2dv((const GLdouble*)pIt->coords.xy);
+                LIBGUI_GL.glTexCoord2dv((const GLdouble*)pIt->coords.xy);
+                LIBGUI_GL.glVertex2dv((const GLdouble*)pIt->coords.xy);
             } while(NULL != (pIt = pIt->next) && pIt != lIt->head);
         }
 
         if(lIt->numPoints != 2)
         {
-            glEnd(); // N-vertex primitive ends.
+            LIBGUI_GL.glEnd(); // N-vertex primitive ends.
         }
     }
 
     if(primType == GL_LINES)
     {
         // Close any remaining open 2-vertex set.
-        glEnd();
+        LIBGUI_GL.glEnd();
     }
 }
 

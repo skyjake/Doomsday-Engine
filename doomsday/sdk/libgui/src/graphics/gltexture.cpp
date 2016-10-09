@@ -72,7 +72,7 @@ DENG2_PIMPL(GLTexture)
     {
         if (!name)
         {
-            glGenTextures(1, &name);
+            LIBGUI_GL.glGenTextures(1, &name);
         }
     }
 
@@ -80,7 +80,7 @@ DENG2_PIMPL(GLTexture)
     {
         if (name)
         {
-            glDeleteTextures(1, &name);
+            LIBGUI_GL.glDeleteTextures(1, &name);
             name = 0;
         }
     }
@@ -147,12 +147,12 @@ DENG2_PIMPL(GLTexture)
     void glBind() const
     {
         //DENG2_ASSERT(name != 0);
-        glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
+        LIBGUI_GL.glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
     void glUnbind() const
     {
-        glBindTexture(texTarget, 0);
+        LIBGUI_GL.glBindTexture(texTarget, 0);
     }
 
     /**
@@ -161,15 +161,15 @@ DENG2_PIMPL(GLTexture)
      */
     void glUpdateParamsOfBoundTexture()
     {
-        glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
-        glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
-        glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
-        glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
-        glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
+        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
+        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
+        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
+        LIBGUI_GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
 
         if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
-            glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+            LIBGUI_GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
         LIBGUI_ASSERT_GL_OK();
@@ -192,8 +192,8 @@ DENG2_PIMPL(GLTexture)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
-        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
-        glTexImage2D(isCube()? glFace(face) : texTarget,
+        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
+        LIBGUI_GL.glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
 
@@ -203,8 +203,8 @@ DENG2_PIMPL(GLTexture)
     void glSubImage(int level, Vector2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
-        glTexSubImage2D(isCube()? glFace(face) : texTarget,
+        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
+        LIBGUI_GL.glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);
 
@@ -216,18 +216,18 @@ DENG2_PIMPL(GLTexture)
     {
         auto const &glFormat = image.glFormat();
 
-        glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowAlignment));
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
+        LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowAlignment));
+        LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
 
         int const bytesPerPixel = image.depth() / 8;
 
-        glTexSubImage2D(isCube()? glFace(face) : texTarget,
-                        level, rect.left(), rect.top(), rect.width(), rect.height(),
-                        glFormat.format, glFormat.type,
-                        static_cast<dbyte const *>(image.bits()) +
-                        bytesPerPixel * rect.left() + image.stride() * rect.top());
+        LIBGUI_GL.glTexSubImage2D(isCube()? glFace(face) : texTarget,
+                                  level, rect.left(), rect.top(), rect.width(), rect.height(),
+                                  glFormat.format, glFormat.type,
+                                  static_cast<dbyte const *>(image.bits()) +
+                                  bytesPerPixel * rect.left() + image.stride() * rect.top());
 
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
         LIBGUI_ASSERT_GL_OK();
     }
@@ -508,7 +508,7 @@ void GLTexture::generateMipmap()
     if (d->name)
     {
         d->glBind();
-        glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
+        GLInfo::EXT_framebuffer_object()->glGenerateMipmapEXT(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;
@@ -539,7 +539,7 @@ GLuint GLTexture::glName() const
 
 void GLTexture::glBindToUnit(int unit) const
 {
-    glActiveTexture(GL_TEXTURE0 + unit);
+    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + unit);
 
     aboutToUse();
 
@@ -569,7 +569,7 @@ Image::Format GLTexture::imageFormat() const
 GLTexture::Size GLTexture::maximumSize()
 {
     int v = 0;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
+    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
     return Size(v, v);
 }
 

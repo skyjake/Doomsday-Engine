@@ -32,7 +32,6 @@
 #include <QWidget>
 #include <QPoint>
 #include <QCursor>
-#include <de/Canvas>
 
 #ifdef MACOSX
 #  include "cursor_macx.h"
@@ -81,10 +80,7 @@ static void Mouse_Qt_Poll()
             Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
             // Keep the cursor centered.
-            QPoint mid(win->width() / 2, win->height() / 2);
-#ifdef DENG2_QT_5_0_OR_NEWER
-            mid /= qApp->devicePixelRatio();
-#endif
+            QPoint mid(win->pointWidth() / 2, win->pointHeight() / 2);
             QCursor::setPos(win->mapToGlobal(mid));
             prevMousePos = mid;
         }
@@ -124,9 +120,9 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
-#ifndef MACOSX
+/*#ifndef MACOSX
     de::Canvas &canvas = ClientWindowSystem::main().canvas();
-#endif
+#endif*/
 
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
@@ -137,7 +133,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
 #ifdef MACOSX
         Cursor_Show(false);
 #else
-        canvas.setCursor(QCursor(Qt::BlankCursor));
+        //canvas.setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 #endif
     }
@@ -148,24 +144,27 @@ static void Mouse_Qt_ShowCursor(bool yes)
         Cursor_Show(true);
 #else
         qApp->restoreOverrideCursor();
-        canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+        //canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
 #endif
     }
 }
 
 static void Mouse_Qt_InitTrap()
 {
-    de::Canvas &canvas = ClientWindowSystem::main().canvas();
+    auto &window = ClientWindowSystem::main();
 
-    QCursor::setPos(canvas.mapToGlobal(canvas.rect().center()));
-    canvas.grabMouse();
+    QCursor::setPos(window.mapToGlobal(window.geometry().center()));
+    window.setMouseGrabEnabled(true);
+    window.setKeyboardGrabEnabled(true);
 
     Mouse_Qt_ShowCursor(false);
 }
 
 static void Mouse_Qt_DeinitTrap()
 {
-    ClientWindowSystem::main().canvas().releaseMouse();
+    auto &window = ClientWindowSystem::main();
+    window.setMouseGrabEnabled(false);
+    window.setKeyboardGrabEnabled(false);
 
     Mouse_Qt_ShowCursor(true);
 }

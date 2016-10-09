@@ -92,6 +92,8 @@ public:
             return *this;
         }
 
+        duint64 asMicroSeconds() const;
+
         /**
          * Convert the delta to milliseconds.
          *

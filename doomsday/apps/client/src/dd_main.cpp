@@ -77,12 +77,10 @@
 #include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
 
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#endif
 #ifdef __SERVER__
 #  include "serverapp.h"
 #endif
+
 #include "dd_loop.h"
 #include "def_main.h"
 #include "busyrunner.h"
@@ -94,16 +92,17 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/p_players.h"
-#ifdef __CLIENT__
-#  include "client/cledgeloop.h"
-#  include "client/clientsubsector.h"
-#endif
 
 #include "ui/infine/infinesystem.h"
 #include "ui/nativeui.h"
 #include "ui/progress.h"
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
+#  include "ui/clientwindowsystem.h"
+
+#  include "client/cledgeloop.h"
+#  include "client/clientsubsector.h"
 #  include "client/cl_def.h"
 #  include "client/cl_infine.h"
 
@@ -111,12 +110,14 @@
 #  include "gl/gl_defer.h"
 #  include "gl/gl_texmanager.h"
 
+#  include "network/net_main.h"
 #  include "network/net_demo.h"
 
-#  include "render/rend_main.h"
+#  include "render/rendersystem.h"
 #  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
 #  include "render/r_main.h" // pspOffset
+#  include "render/rend_main.h"
 #  include "render/rend_font.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #  include "render/vr.h"
@@ -126,6 +127,7 @@
 #  include "Sector"
 
 #  include "ui/ui_main.h"
+#  include "ui/inputsystem.h"
 #  include "ui/busyvisual.h"
 #  include "ui/sys_input.h"
 #  include "ui/widgets/taskbarwidget.h"
@@ -491,7 +493,7 @@ void App_Error(char const *error, ...)
     va_list argptr;
 
 #ifdef __CLIENT__
-    ClientWindow::main().canvas().trapMouse(false);
+    ClientWindow::main().eventHandler().trapMouse(false);
 #endif
 
     // Already in an error?
@@ -1206,7 +1208,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
     else
     {
-        ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+        ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
     }
 #endif
 

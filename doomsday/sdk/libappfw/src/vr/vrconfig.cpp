@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/VRConfig"
@@ -25,6 +25,7 @@ namespace de {
 DENG2_PIMPL(VRConfig)
 {
     StereoMode mode;
+    Eye currentEye = NeitherEye;
     de::OculusRift ovr;
     float screenDistance;
     float ipd;
@@ -95,11 +96,17 @@ void VRConfig::setCurrentEye(Eye eye)
 {
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
+    d->currentEye = eye;
     d->eyeShift = d->mapUnitsPerMeter() * (eyePos - d->dominantEye) * 0.5 * d->ipd;
     if (d->swapEyes)
     {
         d->eyeShift *= -1;
     }
+}
+
+VRConfig::Eye VRConfig::currentEye() const
+{
+    return d->currentEye;
 }
 
 void VRConfig::enableFrustumShift(bool enable)

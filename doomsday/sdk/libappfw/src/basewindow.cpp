@@ -1,6 +1,6 @@
 /** @file basewindow.cpp  Abstract base class for application windows.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -25,9 +25,12 @@
 #include <de/GLBuffer>
 #include <de/GLState>
 
+#include <QVector>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
+, DENG2_OBSERVES(GLWindow,         Init)
 , DENG2_OBSERVES(KeyEventSource,   KeyEvent)
 , DENG2_OBSERVES(MouseEventSource, MouseEvent)
 {
@@ -39,9 +42,19 @@ DENG2_PIMPL(BaseWindow)
         , defaultXf(self)
         , xf(&defaultXf)
     {
+        self.audienceForInit() += this;
+
         // Listen to input.
-        self.canvas().audienceForKeyEvent()   += this;
-        self.canvas().audienceForMouseEvent() += this;
+        self.eventHandler().audienceForKeyEvent()   += this;
+        self.eventHandler().audienceForMouseEvent() += this;
+    }
+
+    void windowInit(GLWindow &)
+    {
+        // The framework widgets expect basic alpha blending.
+        GLState::current()
+                .setBlend(true)
+                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -78,7 +91,7 @@ DENG2_PIMPL(BaseWindow)
 };
 
 BaseWindow::BaseWindow(String const &id)
-    : PersistentCanvasWindow(id)
+    : PersistentGLWindow(id)
     , d(new Impl(this))
 {}
 
@@ -98,23 +111,21 @@ WindowTransform &BaseWindow::transform()
     return *d->xf;
 }
 
-bool BaseWindow::shouldRepaintManually() const
+bool BaseWindow::prepareForDraw()
 {
-    // By default always prefer updates that are "nice" to the rest of the system.
+    if (isGLReady())
+    {
+        // Don't run the main loop until after the paint event has been dealt with.
+        DENG2_GUI_APP->loop().pause();
+        return true; // Go ahead.
+    }
     return false;
 }
 
-bool BaseWindow::prepareForDraw()
+void BaseWindow::requestDraw()
 {
-    GLBuffer::resetDrawCount();
+    update();
 
-    // Don't run the main loop until after the paint event has been dealt with.
-    DENG2_GUI_APP->loop().pause();
-    return true; // Go ahead.
-}
-
-void BaseWindow::draw()
-{
     if (!prepareForDraw())
     {
         // Not right now, please.
@@ -125,48 +136,24 @@ void BaseWindow::draw()
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
-        if (canvas().isGLReady())
+        if (isGLReady())
         {
-            canvas().makeCurrent();
+            makeCurrent();
             vr.oculusRift().init();
         }
     }
     else
     {
-        canvas().makeCurrent();
+        makeCurrent();
         vr.oculusRift().deinit();
-    }
-
-    if (shouldRepaintManually())
-    {
-        DENG2_ASSERT_IN_MAIN_THREAD();
-
-        // Perform the drawing manually right away.
-        canvas().makeCurrent();
-        canvas().updateGL();
-    }
-    else
-    {
-        // Request update at the earliest convenience.
-        canvas().update();
     }
 }
 
-void BaseWindow::canvasGLDraw(Canvas &cv)
+void BaseWindow::draw()
 {
     preDraw();
     d->xf->drawTransformed();
     postDraw();
-
-    PersistentCanvasWindow::canvasGLDraw(cv);
-}
-
-void BaseWindow::swapBuffers()
-{
-    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
-
-    PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
-                                            gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 }
 
 void BaseWindow::preDraw()
@@ -188,8 +175,6 @@ void BaseWindow::postDraw()
 
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
-
-    //qDebug() << "Draw count:" << GLBuffer::drawCount();
 }
 
 } // namespace de

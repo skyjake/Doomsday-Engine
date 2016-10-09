@@ -17,12 +17,12 @@
  */
 
 #include "de/GLProgram"
+#include "de/GLInfo"
 #include "de/GLUniform"
 #include "de/GLBuffer"
 #include "de/GLShader"
 #include "de/GLTexture"
 #include "de/GuiApp"
-#include "de/graphics/opengl.h"
 #include <de/Block>
 #include <de/Log>
 
@@ -79,7 +79,7 @@ DENG2_PIMPL(GLProgram)
     {
         if (!name)
         {
-            name = glCreateProgram();
+            name = LIBGUI_GL.glCreateProgram();
             if (!name)
             {
                 throw AllocError("GLProgram::alloc", "Failed to create program");
@@ -93,7 +93,7 @@ DENG2_PIMPL(GLProgram)
         detachAllShaders();
         if (name)
         {
-            glDeleteProgram(name);
+            LIBGUI_GL.glDeleteProgram(name);
             name = 0;
         }
     }
@@ -108,7 +108,7 @@ DENG2_PIMPL(GLProgram)
     {
         DENG2_ASSERT(shader->isReady());
         alloc();
-        glAttachShader(name, shader->glName());
+        LIBGUI_GL.glAttachShader(name, shader->glName());
         LIBGUI_ASSERT_GL_OK();
         shaders.insert(holdRef(shader));
     }
@@ -117,7 +117,7 @@ DENG2_PIMPL(GLProgram)
     {
         if (shader->isReady())
         {
-            glDetachShader(name, shader->glName());
+            LIBGUI_GL.glDetachShader(name, shader->glName());
         }
         shaders.remove(shader);
         shader->release();
@@ -195,7 +195,7 @@ DENG2_PIMPL(GLProgram)
         // Look up where the attributes ended up being linked.
         for (uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
-            attribLocation[names[i].semantic] = glGetAttribLocation(name, names[i].varName);
+            attribLocation[names[i].semantic] = LIBGUI_GL.glGetAttribLocation(name, names[i].varName);
         }
     }
 
@@ -203,19 +203,19 @@ DENG2_PIMPL(GLProgram)
     {
         DENG2_ASSERT(name != 0);
 
-        glLinkProgram(name);
+        LIBGUI_GL.glLinkProgram(name);
 
         // Was linking successful?
         GLint ok;
-        glGetProgramiv(name, GL_LINK_STATUS, &ok);
+        LIBGUI_GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
         if (!ok)
         {
             dint32 logSize;
             dint32 count;
-            glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
+            LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
 
             Block log(logSize);
-            glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+            LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
             throw LinkerError("GLProgram::link", "Linking failed:\n" + log);
         }
@@ -251,7 +251,7 @@ DENG2_PIMPL(GLProgram)
                 int loc = self.glUniformLocation(textures[unit]->name());
                 if (loc >= 0)
                 {
-                    glUniform1i(loc, unit);
+                    LIBGUI_GL.glUniform1i(loc, unit);
                     LIBGUI_ASSERT_GL_OK();
                 }
             }
@@ -278,7 +278,7 @@ DENG2_PIMPL(GLProgram)
     {
         if (name)
         {
-            glDeleteProgram(name);
+            LIBGUI_GL.glDeleteProgram(name);
             name = 0;
         }
 
@@ -286,7 +286,7 @@ DENG2_PIMPL(GLProgram)
 
         foreach (GLShader const *shader, shaders)
         {
-            glAttachShader(name, shader->glName());
+            LIBGUI_GL.glAttachShader(name, shader->glName());
             LIBGUI_ASSERT_GL_OK();
         }
 
@@ -452,7 +452,7 @@ void GLProgram::beginUse() const
 {
     LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT_IN_MAIN_THREAD();
-    DENG2_ASSERT(QGLContext::currentContext() != 0);
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
 
@@ -462,13 +462,13 @@ void GLProgram::beginUse() const
         const_cast<GLProgram *>(this)->rebuild();
     }
 
-    DENG2_ASSERT(glIsProgram(d->name));
+    DENG2_ASSERT(LIBGUI_GL.glIsProgram(d->name));
 
     d->inUse = true;
     currentProgram = this;
 
     // The program is now ready for use.
-    glUseProgram(d->name);
+    LIBGUI_GL.glUseProgram(d->name);
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -484,7 +484,7 @@ void GLProgram::endUse() const
 
     d->inUse = false;
     currentProgram = 0;
-    glUseProgram(0);
+    LIBGUI_GL.glUseProgram(0);
 }
 
 GLProgram const *GLProgram::programInUse() // static
@@ -499,7 +499,7 @@ GLuint GLProgram::glName() const
 
 int GLProgram::glUniformLocation(char const *uniformName) const
 {
-    return glGetUniformLocation(d->name, uniformName);
+    return LIBGUI_GL.glGetUniformLocation(d->name, uniformName);
 }
 
 bool GLProgram::glHasUniform(char const *uniformName) const

@@ -130,6 +130,17 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
 
+void BaseGuiApp::glDeinit()
+{
+    if (GLWindow::mainExists())
+    {
+        GLWindow::main().glActivate();
+    }
+
+    d->vr.oculusRift().deinit();
+    d->shaders.clear();
+}
+
 double BaseGuiApp::dpiFactor() const
 {
     return d->dpiFactor;
@@ -191,7 +202,7 @@ void BaseGuiApp::beginNativeUIMode()
     // Switch temporarily to windowed mode. Not needed on OS X because the display mode
     // is never changed on that platform.
 #ifndef MACOSX
-    auto &win = static_cast<BaseWindow &>(CanvasWindow::main());
+    auto &win = static_cast<BaseWindow &>(GLWindow::main());
     win.saveState();
     int const windowedMode[] = {
         BaseWindow::Fullscreen, false,
@@ -204,7 +215,7 @@ void BaseGuiApp::beginNativeUIMode()
 void BaseGuiApp::endNativeUIMode()
 {
 #ifndef MACOSX
-    static_cast<BaseWindow &>(CanvasWindow::main()).restoreState();
+    static_cast<BaseWindow &>(GLWindow::main()).restoreState();
 #endif
 }
 } // namespace de

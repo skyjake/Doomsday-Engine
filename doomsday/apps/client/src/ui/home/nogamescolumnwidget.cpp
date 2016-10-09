@@ -64,7 +64,7 @@ void NoGamesColumnWidget::browseForDataFiles()
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
 
-    QFileDialog dlg(&ClientWindow::main(),
+    QFileDialog dlg(nullptr,
                     tr("Select IWAD Folder"),
                     App::config().gets("resource.iwadFolder", ""));
     dlg.setFileMode(QFileDialog::Directory);

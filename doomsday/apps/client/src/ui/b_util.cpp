@@ -19,12 +19,14 @@
 
 #include "ui/b_util.h"
 #include <de/timer.h>
+#include <de/input/ddkey.h>
 #include <de/RecordValue>
 #include "clientapp.h"
 
 #include "BindContext"
 #include "CommandBinding"
 #include "ImpulseBinding"
+#include "ui/inputsystem.h"
 #include "ui/inputdevice.h"
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"

@@ -21,15 +21,16 @@
 
 #include <QMessageBox>
 #include <QPainter>
-#include <QGLFormat>
+#include <QToolBar>
 
 #include <de/AtlasTexture>
 #include <de/Drawable>
 #include <de/FileSystem>
 #include <de/GLBuffer>
+#include <de/GLInfo>
 #include <de/GLShader>
 #include <de/GLState>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 #include <de/GLTexture>
 #include <de/GuiApp>
 #include <de/ImageBank>
@@ -38,13 +39,11 @@
 using namespace de;
 
 DENG2_PIMPL(TestWindow),
-DENG2_OBSERVES(Canvas, GLInit),
-DENG2_OBSERVES(Canvas, GLResize),
+DENG2_OBSERVES(GLWindow, Init),
+DENG2_OBSERVES(GLWindow, Resize),
 DENG2_OBSERVES(Clock, TimeChange),
 DENG2_OBSERVES(Bank, Load)
 {
-    QToolBar *modelChoice;
-
     enum Mode
     {
         TestRenderToTexture,
@@ -70,7 +69,7 @@ DENG2_OBSERVES(Bank, Load)
     GLUniform uModelTex;
     GLProgram modelProgram;
     QScopedPointer<AtlasTexture> atlas;
-    QScopedPointer<GLTarget> frameTarget;
+    QScopedPointer<GLFramebuffer> frameTarget;
     Time startedAt;
     Time lastAtlasAdditionAt;
     bool eraseAtlas;
@@ -95,8 +94,8 @@ DENG2_OBSERVES(Bank, Load)
         // Use this as the main window.
         setMain(i);
 
-        self.canvas().audienceForGLInit() += this;
-        self.canvas().audienceForGLResize() += this;
+        self.audienceForInit() += this;
+        self.audienceForResize() += this;
         Clock::get().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
@@ -117,26 +116,27 @@ DENG2_OBSERVES(Bank, Load)
 
     ~Impl()
     {
+        self.glActivate();
         model.glDeinit();
     }
 
-    void canvasGLInit(Canvas &cv)
+    void windowInit(GLWindow &)
     {
         try
         {
             LOG_DEBUG("GLInit");
-            glInit(cv);
+            glInit();
         }
         catch (Error const &er)
         {
             qWarning() << er.asText();
 
-            QMessageBox::critical(thisPublic, "GL Init Error", er.asText());
+            QMessageBox::critical(nullptr, "GL Init Error", er.asText());
             exit(1);
         }
     }
 
-    void glInit(Canvas &cv)
+    void glInit()
     {
         // Set up the default state.
         GLState &st = GLState::current();
@@ -156,7 +156,7 @@ DENG2_OBSERVES(Bank, Load)
 
         // Prepare the custom target.
         frameTex.setUndefinedImage(Vector2ui(512, 256), Image::RGBA_8888);
-        frameTarget.reset(new GLTarget(frameTex));
+        frameTarget.reset(new GLFramebuffer(frameTex));
 
         // 3D cube.
         VertexBuf *buf = new VertexBuf;
@@ -223,10 +223,10 @@ DENG2_OBSERVES(Bank, Load)
         // The atlas objects.
         Vertex2Buf *buf2 = new Vertex2Buf;
         Vertex2Buf::Type verts2[4] = {
-            { Vector2f(0, 0),     Vector2f(0, 0) },
+            { Vector2f(0,   0),   Vector2f(0, 0) },
             { Vector2f(100, 0),   Vector2f(1, 0) },
             { Vector2f(100, 100), Vector2f(1, 1) },
-            { Vector2f(0, 100),   Vector2f(0, 1) }
+            { Vector2f(0,   100), Vector2f(0, 1) }
         };
         buf2->setVertices(gl::TriangleFan, verts2, 4, gl::Static);
         atlasOb.addBuffer(buf2);
@@ -250,7 +250,7 @@ DENG2_OBSERVES(Bank, Load)
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
-        cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+        self.framebuffer().setClearColor(Vector4f(.2f, .2f, .2f, 0));
 
         modelProgram.build(
                     ByteRefArray::fromCStr(
@@ -302,7 +302,7 @@ DENG2_OBSERVES(Bank, Load)
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
 
-            self.canvas().makeCurrent();
+            self.glActivate();
             testpic.setImage(imageBank.image(path));
             //self.canvas().doneCurrent();
 
@@ -310,39 +310,38 @@ DENG2_OBSERVES(Bank, Load)
         }
     }
 
-    void canvasGLResized(Canvas &cv)
+    void windowResized(GLWindow &)
     {
-        LOG_GL_VERBOSE("GLResized: %i x %i") << cv.width() << cv.height();
+        LOG_GL_VERBOSE("GLResized: %i x %i pixels") << self.pixelWidth() << self.pixelHeight();
 
         GLState &st = GLState::current();
         //st.setViewport(Rectangleui::fromSize(cv.size()));
-        st.setViewport(Rectangleui(0, 0, cv.width(), cv.height()));
+        st.setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight()));
 
-        updateProjection(cv);
+        updateProjection();
     }
 
-    void updateProjection(Canvas &cv)
+    void updateProjection()
     {
         switch (mode)
         {
         case TestRenderToTexture:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+            projMatrix = Matrix4f::perspective(40, float(self.pixelWidth())/float(self.pixelHeight())) *
                          Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
             break;
 
         case TestDynamicAtlas:
             // 2D projection.
-            uMvpMatrix = projMatrix =
-                    Matrix4f::ortho(-cv.width()/2,  cv.width()/2,
-                                    -cv.height()/2, cv.height()/2) *
-                    Matrix4f::scale(cv.height()/150.f) *
-                    Matrix4f::translate(Vector2f(-50, -50));
+            projMatrix = Matrix4f::ortho(-self.pointWidth()/2,  self.pointWidth()/2,
+                                         -self.pointHeight()/2, self.pointHeight()/2) *
+                         Matrix4f::scale(self.pointHeight()/150.f) *
+                         Matrix4f::translate(Vector2f(-50, -50));
             break;
 
         case TestModel:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+            projMatrix = Matrix4f::perspective(40, float(self.pixelWidth())/float(self.pixelHeight())) *
                          Matrix4f::lookAt(Vector3f(), Vector3f(0, -3, 0), Vector3f(0, 0, 1));
             break;
         }
@@ -351,9 +350,7 @@ DENG2_OBSERVES(Bank, Load)
     void setMode(Mode newMode)
     {
         mode = newMode;
-        updateProjection(self.canvas());
-
-        modelChoice->hide();
+        updateProjection();
 
         switch (mode)
         {
@@ -363,7 +360,6 @@ DENG2_OBSERVES(Bank, Load)
             break;
 
         case TestModel:
-            modelChoice->show();
             break;
 
         default:
@@ -371,7 +367,7 @@ DENG2_OBSERVES(Bank, Load)
         }
     }
 
-    void draw(Canvas &)
+    void draw()
     {
         switch (mode)
         {
@@ -401,7 +397,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawRttFrame()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
         // The left cube.
         uTex = testpic;
@@ -420,8 +416,9 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawAtlasFrame()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
         uTex = *atlas;
+        uMvpMatrix = projMatrix;
         atlasOb.draw();
     }
 
@@ -433,7 +430,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawModel()
     {
-        GLState::current().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLFramebuffer::ColorDepth);
 
         uMvpMatrix = projMatrix * modelMatrix;
 
@@ -447,6 +444,8 @@ DENG2_OBSERVES(Bank, Load)
 
     void timeChanged(Clock const &clock)
     {
+        self.glActivate();
+
         if (!startedAt.isValid())
         {
             startedAt = clock.time();
@@ -477,7 +476,8 @@ DENG2_OBSERVES(Bank, Load)
             break;
         }
 
-        self.canvas().update();
+        self.glDone();
+        self.update();
     }
 
     void nextAtlasAlloc()
@@ -526,29 +526,61 @@ TestWindow::TestWindow() : d(new Impl(this))
 {
     qsrand(Time().asDateTime().toTime_t());
 
-    setWindowTitle("libgui GL Sandbox");
-    setMinimumSize(640, 480);
+    setTitle("libgui GL Sandbox");
+    setMinimumSize(QSize(640, 480));
 
-    QToolBar *tools = addToolBar(tr("Tests"));
+    QToolBar *tools = new QToolBar(tr("Tests"));
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
     tools->addAction("Model", this, SLOT(testModel()));
+    tools->addSeparator();
+    tools->addAction("MD2", this, SLOT(loadMD2Model()));
+    tools->addAction("MD5", this, SLOT(loadMD5Model()));
 
-    d->modelChoice = addToolBar(tr("Models"));
-    d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
-    d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
-    //addToolBar(Qt::TopToolBarArea, d->modelChoice);
-    //d->modelChoice->hide();
+    tools->show();
+
+    tools->setGeometry(25, 75, tools->width(), tools->height());
 }
 
-void TestWindow::canvasGLDraw(Canvas &canvas)
+void TestWindow::draw()
 {
     LIBGUI_ASSERT_GL_OK();
+    d->draw();
+    LIBGUI_ASSERT_GL_OK();
+}
 
-    d->draw(canvas);
-    canvas.swapBuffers();
+void TestWindow::keyPressEvent(QKeyEvent *ev)
+{
+    if (ev->modifiers() & Qt::ControlModifier)
+    {
+        ev->accept();
 
-    CanvasWindow::canvasGLDraw(canvas);
+        switch (ev->key())
+        {
+        case Qt::Key_1:
+            testRenderToTexture();
+            break;
+
+        case Qt::Key_2:
+            testDynamicAtlas();
+            break;
+
+        case Qt::Key_3:
+            testModel();
+            break;
+
+        case Qt::Key_4:
+            loadMD2Model();
+            break;
+
+        case Qt::Key_5:
+            loadMD5Model();
+            break;
+        }
+        return;
+    }
+
+    GLWindow::keyPressEvent(ev);
 }
 
 void TestWindow::testRenderToTexture()
@@ -568,12 +600,16 @@ void TestWindow::testModel()
 
 void TestWindow::loadMD2Model()
 {
+    glActivate();
     d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/marine.md2"));
     d->initModelAnimation();
+    glDone();
 }
 
 void TestWindow::loadMD5Model()
 {
+    glActivate();
     d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/boblampclean.md5mesh"));
     d->initModelAnimation();
+    glDone();
 }

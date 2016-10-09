@@ -25,7 +25,7 @@
 
 namespace de {
 
-class GLFramebuffer;
+class GLTextureFramebuffer;
 
 /**
  * Window content transformation for virtual reality.
@@ -40,12 +40,12 @@ public:
     void glInit();
     void glDeinit();
 
-    Vector2ui logicalRootSize(Vector2ui const &physicalCanvasSize) const;
+    Vector2ui logicalRootSize(Vector2ui const &physicalWindowSize) const;
     Vector2f windowToLogicalCoords(Vector2i const &pos) const;
 
     void drawTransformed();
 
-    GLFramebuffer &unwarpedFramebuffer();
+    GLTextureFramebuffer &unwarpedFramebuffer();
 
 private:
     DENG2_PRIVATE(d)

@@ -499,17 +499,17 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
 
     // Automatic mipmap generation?
     if(GLInfo::extensions().SGIS_generate_mipmap && genMipmaps)
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
-    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-    glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
-    glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
-    glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
-    glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+    LIBGUI_GL.glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    LIBGUI_GL.glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
+    LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
+    LIBGUI_GL.glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
+    LIBGUI_GL.glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
+    LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
+    LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
+    LIBGUI_GL.glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
+    LIBGUI_GL.glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
 
     if(genMipmaps && !GLInfo::extensions().SGIS_generate_mipmap)
     {   // Build all mipmap levels.
@@ -539,7 +539,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
 
         for(;;)
         {
-            glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
+            LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
                 GL_UNSIGNED_BYTE, image);
 
             if(w == 1 && h == 1)
@@ -568,11 +568,11 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     }
     else
     {
-        glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, (GLsizei)width,
+        LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, (GLsizei)width,
             (GLsizei)height, 0, (GLint)loadFormat, GL_UNSIGNED_BYTE, pixels);
     }
 
-    glPopClientAttrib();
+    LIBGUI_GL.glPopClientAttrib();
     DENG_ASSERT(!Sys_GLCheckError());
 
     return true;
@@ -634,7 +634,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
     }
 
     // Upload the first level right away.
-    glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
+    LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
         GL_UNSIGNED_BYTE, image);
 
     // Generate all mipmaps levels.
@@ -650,7 +650,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
         if(h > 1)
             h /= 2;
 
-        glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
+        LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
             GL_UNSIGNED_BYTE, faded);
     }
 
@@ -860,13 +860,13 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBindTexture(GL_TEXTURE_2D, content.name);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
+    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, content.name);
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
+    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
     if(GL_state.features.texFilterAniso)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
+        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
 
     if(!(content.flags & TXCF_GRAY_MIPMAP))
     {

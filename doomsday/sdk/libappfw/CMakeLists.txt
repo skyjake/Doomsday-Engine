@@ -9,7 +9,6 @@ find_package (DengCore)
 find_package (DengGui)
 find_package (DengShell)
 find_package (OculusVR QUIET)
-include (OpenGL)
 
 # Definitions.
 add_definitions (-D__LIBAPPFW__=1)
@@ -27,7 +26,6 @@ deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
 target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell
-    PRIVATE opengl
 )
 deng_target_link_qt (libappfw PUBLIC Widgets OpenGL)
 if (TARGET LibOVR)

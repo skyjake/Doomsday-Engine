@@ -1,6 +1,6 @@
 /** @file clientwindow.h  Top-level window with UI widgets.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -21,7 +21,7 @@
 #ifndef CLIENT_CLIENTWINDOW_H
 #define CLIENT_CLIENTWINDOW_H
 
-#include <de/PersistentCanvasWindow>
+#include <de/PersistentGLWindow>
 #include <de/BaseWindow>
 #include <de/NotificationAreaWidget>
 #include <de/FadeToBlackWidget>
@@ -139,13 +139,6 @@ public:
     static bool setDefaultGLFormat();
 
     /**
-     * Determines whether the contents of a window should be drawn during the
-     * execution of the main loop callback, or should we wait for an update event
-     * from the windowing system.
-     */
-    bool shouldRepaintManually() const override;
-
-    /**
      * Grab the contents of the window into the supplied @a image. Ownership of
      * the image passes to the window for the duration of this call.
      *
@@ -154,13 +147,13 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
-    /**
+    /*
      * Draws the untransformed game-related contents of the window. The drawing
      * is done immediately; this must be called from the main/UI thread.
      *
      * The current render target is cleared before drawing.
      */
-    void drawGameContent();
+    //void drawGameContent();
 
     void fadeContentFromBlack(de::TimeDelta const &duration);
     de::FadeToBlackWidget *contentFade();
@@ -175,8 +168,7 @@ public:
     bool isFPSCounterVisible() const;
 
     // Events.
-    void closeEvent(QCloseEvent *) override;
-    void canvasGLReady(de::Canvas &) override;
+    //void closeEvent(QCloseEvent *) override;
 
     // Implements BaseWindow.
     de::Vector2f windowContentSize() const override;
@@ -187,9 +179,6 @@ public:
 
     static ClientWindow &main();
     static bool mainExists();
-
-protected:
-    bool prepareForDraw() override;
 
 public slots:
     void toggleFPSCounter();

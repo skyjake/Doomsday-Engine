@@ -28,6 +28,7 @@
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/GLInfo>
 #include <doomsday/res/Textures>
 #include <doomsday/filesys/fs_main.h>
 
@@ -140,7 +141,7 @@ void GL_ReleaseAllLightingSystemTextures()
 {
     if (novideo || !initedOk) return;
 
-    glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
+    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     zap(lightingTextures);
 }
 
@@ -206,7 +207,7 @@ void GL_ReleaseAllFlareTextures()
 {
     if (novideo || !initedOk) return;
 
-    glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
+    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     zap(sysFlareTextures);
 }
 
@@ -381,8 +382,8 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
             DENG_ASSERT_IN_MAIN_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-            glBindTexture(GL_TEXTURE_2D, raw->tex);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
+            LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, raw->tex);
+            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
         }
     }
 }
@@ -393,7 +394,7 @@ void GL_ReleaseTexturesForRawImages()
     {
         if (raw->tex)
         {
-            glDeleteTextures(1, (GLuint const *) &raw->tex);
+            Deferred_glDeleteTextures(1, (GLuint const *) &raw->tex);
             raw->tex = 0;
         }
     }

@@ -28,7 +28,7 @@
 
 #include <de/concurrency.h>
 #include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/GLTextureFramebuffer>
 #include <de/GuiRootWidget>
 #include <de/ProgressWidget>
 
@@ -39,8 +39,9 @@ DENG_GUI_PIMPL(BusyWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     ProgressWidget *progress;
+    GameWidget *gameWidget = nullptr;
     Time frameDrawnAt;
-    GLFramebuffer transitionFrame;
+    GLTextureFramebuffer transitionFrame;
     Drawable drawable;
     GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4      };
@@ -93,10 +94,15 @@ ProgressWidget &BusyWidget::progress()
     return *d->progress;
 }
 
-void BusyWidget::viewResized()
+void BusyWidget::setGameWidget(GameWidget &gameWidget)
+{
+    d->gameWidget = &gameWidget;
+}
+
+/*void BusyWidget::viewResized()
 {
     GuiWidget::viewResized();
-}
+}*/
 
 void BusyWidget::update()
 {
@@ -134,13 +140,11 @@ void BusyWidget::drawContent()
 
     if (d->haveTransitionFrame())
     {
-        //glDisable(GL_ALPHA_TEST); /// @todo get rid of these
-        //glDisable(GL_BLEND);
         GLState::push()
                 .setAlphaTest(false)
                 .setBlend(false)
                 .apply();
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
@@ -150,10 +154,7 @@ void BusyWidget::drawContent()
         d->drawable.draw();
 
         GLState::pop().apply();
-
-        //glEnable(GL_ALPHA_TEST);
-        //glEnable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -179,11 +180,14 @@ void BusyWidget::renderTransitionFrame()
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT(d->gameWidget);
 
-    Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
+    Rectanglei grabRect = Rectanglei::fromSize(rule().recti().size());
 
-    LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
+    LOGDEV_GL_VERBOSE("Rendering transition frame, size %s pixels") << grabRect.size().asText();
 
+#if 1
+    /// @todo This breaks Qt's QOpenGLWidget FBO for some reason!
     d->transitionFrame.resize(grabRect.size());
     if (!d->transitionFrame.isReady())
     {
@@ -191,15 +195,18 @@ void BusyWidget::renderTransitionFrame()
     }
 
     GLState::push()
-            .setTarget(d->transitionFrame.target())
+            .setTarget(d->transitionFrame)
             .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
             .apply();
 
-    root().window().as<ClientWindow>().drawGameContent();
+    d->gameWidget->drawComposited();
+
+    //root().window().as<ClientWindow>().drawGameContent();
 
     GLState::pop().apply();
 
     d->uTex = d->transitionFrame.colorTexture();
+#endif
 }
 
 void BusyWidget::releaseTransitionFrame()
@@ -215,7 +222,7 @@ void BusyWidget::clearTransitionFrameToBlack()
 {
     if (d->haveTransitionFrame())
     {
-        d->transitionFrame.target().clear(GLTarget::Color);
+        d->transitionFrame.clear(GLFramebuffer::Color);
     }
 }
 
@@ -225,7 +232,7 @@ GLTexture const *BusyWidget::transitionFrame() const
     {
         return &d->transitionFrame.colorTexture();
     }
-    return 0;
+    return nullptr;
 }
 
 void BusyWidget::glInit()

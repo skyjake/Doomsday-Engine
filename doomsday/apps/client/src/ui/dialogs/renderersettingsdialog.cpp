@@ -23,8 +23,9 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/widgets/profilepickerwidget.h"
-#include "clientapp.h"
 #include "ui/clientwindow.h"
+#include "render/rendersystem.h"
+#include "clientapp.h"
 
 #include <de/GridPopupWidget>
 #include <de/GridLayout>

@@ -20,11 +20,13 @@
 
 #include "de_platform.h"
 #include "render/fx/vignette.h"
-
 #include "clientapp.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
+#include "world/clientserverworld.h"
+
+#include <de/GLInfo>
 #include <de/vector1.h>
 #include <doomsday/console/var.h>
 #include <cmath>
@@ -45,7 +47,7 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     float alpha;
     int i;
 
-    if(!vignetteEnabled) return;
+    if (!vignetteEnabled) return;
 
     // Center point.
     cx = viewRect.left() + viewRect.width()  / 2.f;
@@ -54,20 +56,20 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
     // Radius.
     V2f_Set(vec, viewRect.width() / 2.f, viewRect.height() / 2.f);
     outer = V2f_Length(vec) + 1; // Extra pixel to account for a possible gap.
-    if(fov < 100)
+    if (fov < 100)
     {
         // Small FOV angles cause the vignette to be thinner/lighter.
         outer *= (1 + 100.f/fov) / 2;
     }
     inner = outer * vignetteWidth * .32f;
-    if(fov > 100)
+    if (fov > 100)
     {
         // High FOV angles cause the vignette to be wider.
         inner *= 100.f/fov;
     }
 
     alpha = vignetteDarkness * .6f;
-    if(fov > 100)
+    if (fov > 100)
     {
         // High FOV angles cause the vignette to be darker.
         alpha *= fov/100.f;
@@ -75,26 +77,26 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
                             gl::ClampToEdge);
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
-    glBegin(GL_TRIANGLE_STRIP);
-    for(i = 0; i <= DIVS; ++i)
+    LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
+    for (i = 0; i <= DIVS; ++i)
     {
         float ang = (float)(2 * de::PI * i) / (float)DIVS;
         float dx = cos(ang);
         float dy = sin(ang);
 
-        glColor4f(0, 0, 0, alpha);
-        glTexCoord2f(0, 1);
-        glVertex2f(cx + outer * dx, cy + outer * dy);
+        LIBGUI_GL.glColor4f(0, 0, 0, alpha);
+        LIBGUI_GL.glTexCoord2f(0, 1);
+        LIBGUI_GL.glVertex2f(cx + outer * dx, cy + outer * dy);
 
-        glColor4f(0, 0, 0, 0);
-        glTexCoord2f(0, 0);
-        glVertex2f(cx + inner * dx, cy + inner * dy);
+        LIBGUI_GL.glColor4f(0, 0, 0, 0);
+        LIBGUI_GL.glTexCoord2f(0, 0);
+        LIBGUI_GL.glVertex2f(cx + inner * dx, cy + inner * dy);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 Vignette::Vignette(int console) : ConsoleEffect(console)
@@ -102,7 +104,7 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
-    if(!ClientApp::world().hasMap())
+    if (!ClientApp::world().hasMap())
     {
         return;
     }

@@ -22,18 +22,21 @@
 
 #include <de/BaseGuiApp>
 #include <doomsday/doomsdayapp.h>
+#include <QUrl>
 
-#include "ConfigProfiles"
-#include "network/serverlink.h"
-#include "audio/system.h"
-#include "ui/inputsystem.h"
-#include "ui/clientwindowsystem.h"
-#include "ui/infine/infinesystem.h"
-#include "render/rendersystem.h"
-#include "resource/clientresources.h"
-#include "updater.h"
-#include "busyrunner.h"
-#include "world/clientserverworld.h"
+class BusyRunner;
+class ClientPlayer;
+class ClientResources;
+class ClientServerWorld;
+class ClientWindowSystem;
+class ConfigProfiles;
+class InFineSystem;
+class InputSystem;
+class RenderSystem;
+class ServerLink;
+class Updater;
+
+namespace audio { class System; }
 
 /**
  * The client application.
@@ -60,6 +63,7 @@ public:
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) override;
 
+public:
     /**
      * Reports a new alert to the user.
      *
@@ -68,7 +72,9 @@ public:
      */
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
-public:
+    static ClientPlayer &player(int console);
+    static de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
+
     static ClientApp &          app();
     static BusyRunner &         busyRunner();
     static Updater &            updater();

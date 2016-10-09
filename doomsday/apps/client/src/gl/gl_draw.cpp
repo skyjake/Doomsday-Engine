@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <de/GLState>
+#include <de/GLInfo>
 #include <de/Vector>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
@@ -38,31 +39,28 @@
 
 using namespace de;
 
-static bool drawFilter = false;
-static Vector4f filterColor;
-
 void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
         // Top left.
-        if(coords) glTexCoord2i(coords[0].x, coords[0].y);
-        glVertex2f(rect.topLeft.x, rect.topLeft.y);
+        if(coords) LIBGUI_GL.glTexCoord2i(coords[0].x, coords[0].y);
+        LIBGUI_GL.glVertex2f(rect.topLeft.x, rect.topLeft.y);
 
         // Top Right.
-        if(coords) glTexCoord2i(coords[1].x, coords[1].y);
-        glVertex2f(rect.topRight().x, rect.topRight().y);
+        if(coords) LIBGUI_GL.glTexCoord2i(coords[1].x, coords[1].y);
+        LIBGUI_GL.glVertex2f(rect.topRight().x, rect.topRight().y);
 
         // Bottom right.
-        if(coords) glTexCoord2i(coords[2].x, coords[2].y);
-        glVertex2f(rect.bottomRight.x, rect.bottomRight.y);
+        if(coords) LIBGUI_GL.glTexCoord2i(coords[2].x, coords[2].y);
+        LIBGUI_GL.glVertex2f(rect.bottomRight.x, rect.bottomRight.y);
 
         // Bottom left.
-        if(coords) glTexCoord2i(coords[3].x, coords[3].y);
-        glVertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
-    glEnd();
+        if(coords) LIBGUI_GL.glTexCoord2i(coords[3].x, coords[3].y);
+        LIBGUI_GL.glVertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
+    LIBGUI_GL.glEnd();
 }
 
 void GL_DrawRect(Rectanglei const &rect)
@@ -84,23 +82,23 @@ void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
         // Upper left.
-        if(coords) glTexCoord2dv((GLdouble*)coords[0].xy);
-        glVertex2d(rect->origin.x, rect->origin.y);
+        if(coords) LIBGUI_GL.glTexCoord2dv((GLdouble*)coords[0].xy);
+        LIBGUI_GL.glVertex2d(rect->origin.x, rect->origin.y);
 
         // Upper Right.
-        if(coords) glTexCoord2dv((GLdouble*)coords[1].xy);
-        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
+        if(coords) LIBGUI_GL.glTexCoord2dv((GLdouble*)coords[1].xy);
+        LIBGUI_GL.glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
 
         // Lower right.
-        if(coords) glTexCoord2dv((GLdouble*)coords[2].xy);
-        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+        if(coords) LIBGUI_GL.glTexCoord2dv((GLdouble*)coords[2].xy);
+        LIBGUI_GL.glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
 
         // Lower left.
-        if(coords) glTexCoord2dv((GLdouble*)coords[3].xy);
-        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
-    glEnd();
+        if(coords) LIBGUI_GL.glTexCoord2dv((GLdouble*)coords[3].xy);
+        LIBGUI_GL.glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
+    LIBGUI_GL.glEnd();
 }
 
 void GL_DrawRectf(const RectRawf* rect)
@@ -129,7 +127,7 @@ void GL_DrawRectf2(double x, double y, double w, double h)
 
 void GL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
-    glColor4f(r, g, b, a);
+    LIBGUI_GL.glColor4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
@@ -142,21 +140,21 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
         // Top color.
-        glColor4f(topColor[0], topColor[1], topColor[2], topAlpha);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(width / (float) texW, 0);
-        glVertex2f(x + width, y);
+        LIBGUI_GL.glColor4f(topColor[0], topColor[1], topColor[2], topAlpha);
+        LIBGUI_GL.glTexCoord2f(0, 0);
+        LIBGUI_GL.glVertex2f(x, y);
+        LIBGUI_GL.glTexCoord2f(width / (float) texW, 0);
+        LIBGUI_GL.glVertex2f(x + width, y);
 
         // Bottom color.
-        glColor4f(bottomColor[0], bottomColor[1], bottomColor[2], bottomAlpha);
-        glTexCoord2f(width / (float) texW, height / (float) texH);
-        glVertex2f(x + width, y + height);
-        glTexCoord2f(0, height / (float) texH);
-        glVertex2f(x, y + height);
-    glEnd();
+        LIBGUI_GL.glColor4f(bottomColor[0], bottomColor[1], bottomColor[2], bottomAlpha);
+        LIBGUI_GL.glTexCoord2f(width / (float) texW, height / (float) texH);
+        LIBGUI_GL.glVertex2f(x + width, y + height);
+        LIBGUI_GL.glTexCoord2f(0, height / (float) texH);
+        LIBGUI_GL.glVertex2f(x, y + height);
+    LIBGUI_GL.glEnd();
 }
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
@@ -164,16 +162,16 @@ void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2d(x, y);
-        glTexCoord2f(w / (float) tw, 0);
-        glVertex2d(x + w, y);
-        glTexCoord2f(w / (float) tw, h / (float) th);
-        glVertex2d(x + w, y + h);
-        glTexCoord2f(0, h / (float) th);
-        glVertex2d(x, y + h);
-    glEnd();
+    LIBGUI_GL.glBegin(GL_QUADS);
+        LIBGUI_GL.glTexCoord2f(0, 0);
+        LIBGUI_GL.glVertex2d(x, y);
+        LIBGUI_GL.glTexCoord2f(w / (float) tw, 0);
+        LIBGUI_GL.glVertex2d(x + w, y);
+        LIBGUI_GL.glTexCoord2f(w / (float) tw, h / (float) th);
+        LIBGUI_GL.glVertex2d(x + w, y + h);
+        LIBGUI_GL.glTexCoord2f(0, h / (float) th);
+        LIBGUI_GL.glVertex2d(x, y + h);
+    LIBGUI_GL.glEnd();
 }
 
 void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
@@ -193,18 +191,18 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
     if(toph > 0)
     {
         // The top rectangle.
-        glTexCoord2f(txo, tyo);
-        glVertex2f(rect->origin.x, rect->origin.y);
-        glTexCoord2f(txo + (rect->size.width / ftw), tyo);
-        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
-        glTexCoord2f(txo + (rect->size.width / ftw), tyo + (toph / fth));
-        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + toph);
-        glTexCoord2f(txo, tyo + (toph / fth));
-        glVertex2f(rect->origin.x, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(txo, tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x, rect->origin.y);
+        LIBGUI_GL.glTexCoord2f(txo + (rect->size.width / ftw), tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+        LIBGUI_GL.glTexCoord2f(txo + (rect->size.width / ftw), tyo + (toph / fth));
+        LIBGUI_GL.glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(txo, tyo + (toph / fth));
+        LIBGUI_GL.glVertex2f(rect->origin.x, rect->origin.y + toph);
     }
 
     if(lefth > 0 && sideh > 0)
@@ -212,14 +210,14 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
         float yoff = toph / fth;
 
         // The left rectangle.
-        glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(rect->origin.x, rect->origin.y + toph);
-        glTexCoord2f(txo + (lefth / ftw), yoff + tyo);
-        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph);
-        glTexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
-        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph + sideh);
-        glTexCoord2f(txo, yoff + tyo + sideh / fth);
-        glVertex2f(rect->origin.x, rect->origin.y + toph + sideh);
+        LIBGUI_GL.glTexCoord2f(txo, yoff + tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(txo + (lefth / ftw), yoff + tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x + lefth, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
+        LIBGUI_GL.glVertex2f(rect->origin.x + lefth, rect->origin.y + toph + sideh);
+        LIBGUI_GL.glTexCoord2f(txo, yoff + tyo + sideh / fth);
+        LIBGUI_GL.glVertex2f(rect->origin.x, rect->origin.y + toph + sideh);
     }
 
     if(righth > 0 && sideh > 0)
@@ -229,14 +227,14 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
         float yoff = toph / fth;
 
         // The left rectangle.
-        glTexCoord2f(xoff + txo, yoff + tyo);
-        glVertex2f(ox, rect->origin.y + toph);
-        glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
-        glVertex2f(ox + righth, rect->origin.y + toph);
-        glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
-        glVertex2f(ox + righth, rect->origin.y + toph + sideh);
-        glTexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
-        glVertex2f(ox, rect->origin.y + toph + sideh);
+        LIBGUI_GL.glTexCoord2f(xoff + txo, yoff + tyo);
+        LIBGUI_GL.glVertex2f(ox, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
+        LIBGUI_GL.glVertex2f(ox + righth, rect->origin.y + toph);
+        LIBGUI_GL.glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
+        LIBGUI_GL.glVertex2f(ox + righth, rect->origin.y + toph + sideh);
+        LIBGUI_GL.glTexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
+        LIBGUI_GL.glVertex2f(ox, rect->origin.y + toph + sideh);
     }
 
     if(bottomh > 0)
@@ -244,16 +242,16 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
         float oy = rect->origin.y + toph + sideh;
         float yoff = (toph + sideh) / fth;
 
-        glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(rect->origin.x, oy);
-        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo);
-        glVertex2f(rect->origin.x + rect->size.width, oy);
-        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo + bottomh / fth);
-        glVertex2f(rect->origin.x + rect->size.width, oy + bottomh);
-        glTexCoord2f(txo, yoff + tyo + bottomh / fth);
-        glVertex2f(rect->origin.x, oy + bottomh);
+        LIBGUI_GL.glTexCoord2f(txo, yoff + tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x, oy);
+        LIBGUI_GL.glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo);
+        LIBGUI_GL.glVertex2f(rect->origin.x + rect->size.width, oy);
+        LIBGUI_GL.glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo + bottomh / fth);
+        LIBGUI_GL.glVertex2f(rect->origin.x + rect->size.width, oy + bottomh);
+        LIBGUI_GL.glTexCoord2f(txo, yoff + tyo + bottomh / fth);
+        LIBGUI_GL.glVertex2f(rect->origin.x, oy + bottomh);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 }
 
 void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
@@ -283,22 +281,11 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glColor4f(r, g, b, a);
-    glBegin(GL_LINES);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-    glEnd();
-}
-
-dd_bool GL_FilterIsVisible()
-{
-    return (drawFilter && filterColor.w > 0);
-}
-
-#undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
-{
-    drawFilter = CPP_BOOL(enabled);
+    LIBGUI_GL.glColor4f(r, g, b, a);
+    LIBGUI_GL.glBegin(GL_LINES);
+        LIBGUI_GL.glVertex2f(x1, y1);
+        LIBGUI_GL.glVertex2f(x2, y2);
+    LIBGUI_GL.glEnd();
 }
 
 #undef GL_ResetViewEffects
@@ -307,42 +294,6 @@ DENG_EXTERN_C void GL_ResetViewEffects()
     GL_SetFilter(false);
     Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
     DD_SetInteger(DD_FULLBRIGHT, false);
-}
-
-#undef GL_SetFilterColor
-DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
-{
-    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
-                             de::clamp(0.f, g, 1.f),
-                             de::clamp(0.f, b, 1.f),
-                             de::clamp(0.f, a, 1.f));
-
-    if(filterColor != newColorClamped)
-    {
-        filterColor = newColorClamped;
-
-        LOG_AS("GL_SetFilterColor");
-        LOGDEV_GL_XVERBOSE("%s") << filterColor.asText();
-    }
-}
-
-/**
- * @return              Non-zero if the filter was drawn.
- */
-void GL_DrawFilter(void)
-{
-    viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glColor4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
-    glBegin(GL_QUADS);
-        glVertex2f(vd->window.topLeft.x, vd->window.topLeft.y);
-        glVertex2f(vd->window.topRight().x, vd->window.topRight().y);
-        glVertex2f(vd->window.bottomRight.x, vd->window.bottomRight.y);
-        glVertex2f(vd->window.bottomLeft().x, vd->window.bottomLeft().y);
-    glEnd();
 }
 
 #undef GL_ConfigureBorderedProjection2
@@ -393,13 +344,13 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
      * an aspect-corrected space of availWidth x availHeight and centered
      * on the larger of the horizontal and vertical axes.
      */
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
     DGL_Ortho(0, 0, bp->availWidth, bp->availHeight, -1, 1);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPushMatrix();
 
     GLState::push();
 
@@ -413,8 +364,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
                             int(bp->scaleFactor * bp->width), bp->availHeight);
         }
 
-        glTranslatef(offset, 0, 0);
-        glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
+        LIBGUI_GL.glTranslatef(offset, 0, 0);
+        LIBGUI_GL.glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
     }
     else
     {
@@ -426,8 +377,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
                             bp->availWidth, int(bp->scaleFactor * 1.2f * bp->height));
         }
 
-        glTranslatef(0, offset, 0);
-        glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
+        LIBGUI_GL.glTranslatef(0, offset, 0);
+        LIBGUI_GL.glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
     }
 }
 
@@ -444,8 +395,8 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     GLState::pop().apply();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glPopMatrix();
 
     if(bp->flags & BPF_OVERDRAW_MASK)
     {
@@ -454,7 +405,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
         // isn't cleaned up until drawing control returns to the engine we
         // must explicitly disable it here.
         GL_SetNoTexture();
-        glColor4f(0, 0, 0, 1);
+        LIBGUI_GL.glColor4f(0, 0, 0, 1);
 
         if(bp->isPillarBoxed)
         {
@@ -472,6 +423,6 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
         }
     }
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }

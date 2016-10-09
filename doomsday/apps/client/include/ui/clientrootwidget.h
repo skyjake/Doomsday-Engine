@@ -20,7 +20,7 @@
 #define DENG_CLIENTROOTWIDGET_H
 
 #include <de/GuiRootWidget>
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 
 class ClientWindow;
 
@@ -30,7 +30,7 @@ class ClientWindow;
 class ClientRootWidget : public de::GuiRootWidget
 {
 public:
-    ClientRootWidget(de::CanvasWindow *window = 0);
+    ClientRootWidget(de::GLWindow *window = 0);
 
     ClientWindow &window();
 

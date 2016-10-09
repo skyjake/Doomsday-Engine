@@ -23,6 +23,8 @@
 #include <de/Log>
 #include <de/NativePath>
 
+#include <QSurfaceFormat>
+
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
 #else
@@ -33,17 +35,25 @@ namespace de {
 
 DENG2_PIMPL(GuiApp)
 {
-    Loop loop;
+    GuiLoop loop;
 
     Impl(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self;
     }
-
-    DENG2_PIMPL_AUDIENCE(GLContextChange)
 };
 
-DENG2_AUDIENCE_METHOD(GuiApp, GLContextChange)
+void GuiApp::setDefaultOpenGLFormat() // static
+{
+    QSurfaceFormat fmt;
+    fmt.setRenderableType(QSurfaceFormat::OpenGL);
+    fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
+    fmt.setVersion(2, 1);
+    fmt.setDepthBufferSize(24);
+    fmt.setStencilBufferSize(8);
+    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    QSurfaceFormat::setDefaultFormat(fmt);
+}
 
 GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
@@ -91,12 +101,6 @@ void GuiApp::notifyDisplayModeChanged()
     emit displayModeChanged();
 }
 
-void GuiApp::notifyGLContextChanged()
-{
-    qDebug() << "notifying GL context change" << audienceForGLContextChange().size();
-    DENG2_FOR_AUDIENCE2(GLContextChange, i) i->appGLContextChanged();
-}
-
 int GuiApp::execLoop()
 {
     LOGDEV_NOTE("Starting GuiApp event loop...");
@@ -116,7 +120,7 @@ void GuiApp::stopLoop(int code)
     return QApplication::exit(code);
 }
 
-Loop &GuiApp::loop()
+GuiLoop &GuiApp::loop()
 {
     return d->loop;
 }

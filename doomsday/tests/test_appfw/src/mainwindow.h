@@ -32,16 +32,15 @@ public:
 
     AppRootWidget &root();
 
-    de::Vector2f windowContentSize() const;
+    de::Vector2f windowContentSize() const override;
 
-    void canvasGLReady(de::Canvas &canvas);
     void addOnTop(de::GuiWidget *widget);
-    void drawWindowContent();
-    void preDraw();
-    void postDraw();
+    void drawWindowContent() override;
+    void preDraw() override;
+    void postDraw() override;
 
 protected:
-    bool handleFallbackEvent(de::Event const &event);
+    bool handleFallbackEvent(de::Event const &event) override;
 
 private:
     DENG2_PRIVATE(d)

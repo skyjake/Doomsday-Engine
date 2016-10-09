@@ -112,7 +112,9 @@ void R_ResetFrameCount();
 /**
  * Render all view ports in the viewport grid.
  */
-void R_RenderViewPorts(ViewPortLayer layer);
+//void R_RenderViewPorts(ViewPortLayer layer);
+
+void R_RenderViewPort(int playerNum);
 
 /**
  * Render a blank view for the specified player.
@@ -131,6 +133,23 @@ viewport_t const *R_CurrentViewPort();
  * Set the current GL viewport.
  */
 void R_UseViewPort(viewport_t const *vp);
+
+void R_UseViewPort(int consoleNum);
+
+/**
+ * Determines the location of the game view of a player. This is the area where
+ * the game view, border and game HUD will be drawn.
+ * @param console  Player number.
+ * @return Console rectangle in UI coordinates.
+ */
+de::Rectanglei R_ConsoleRect(int console);
+
+/**
+ * Determines the location of the 3D viewport of a player.
+ * @param console  Player number.
+ * @return Player's 3D world view rectangle in UI coordinates.
+ */
+de::Rectanglei R_Console3DViewRect(int console);
 
 void R_UpdateViewer(int consoleNum);
 

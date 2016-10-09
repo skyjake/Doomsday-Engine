@@ -21,7 +21,7 @@
 #define LIBGUI_PERSISTENTCANVASWINDOW_H
 
 #include <de/Error>
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 #include <de/Rectangle>
 
 namespace de {
@@ -37,7 +37,7 @@ namespace de {
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC PersistentCanvasWindow : public CanvasWindow
+class LIBGUI_PUBLIC PersistentGLWindow : public GLWindow
 {
     Q_OBJECT
 
@@ -82,7 +82,7 @@ public:
      * changes are queued, the notification is made only after all the changes
      * have been applied.
      */
-    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentCanvasWindow &))
+    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentGLWindow &))
 
 public:
     /**
@@ -95,7 +95,7 @@ public:
      *
      * @param id  Identifier of the window.
      */
-    PersistentCanvasWindow(String const &id);
+    PersistentGLWindow(String const &id);
 
     String id() const;
 
@@ -157,11 +157,11 @@ public:
      */
     void restoreState();
 
-    static PersistentCanvasWindow &main();
+    static PersistentGLWindow &main();
 
     // Events.
-    void moveEvent(QMoveEvent *);
-    void resizeEvent(QResizeEvent *);
+    void moveEvent(QMoveEvent *) override;
+    void resizeEvent(QResizeEvent *) override;
 
 protected slots:
     void performQueuedTasks();

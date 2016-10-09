@@ -19,9 +19,21 @@
 #ifndef LIBGUI_GLINFO_H
 #define LIBGUI_GLINFO_H
 
-#include "../gui/libgui.h"
-
 #include <de/libcore.h>
+#include "../gui/libgui.h"
+#include "de/graphics/opengl.h"
+
+#define LIBGUI_GL  de::GLInfo::api()
+
+#ifndef NDEBUG
+#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
+    _er = LIBGUI_GL.glGetError(); if (_er != GL_NO_ERROR) { \
+    LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x (%s)", __LINE__, _er, \
+    LIBGUI_GL_ERROR_STR(_er)); LIBGUI_ASSERT_GL(0!="OpenGL operation failed"); \
+    }} while (_er != GL_NO_ERROR);}
+#else
+#  define LIBGUI_ASSERT_GL_OK()
+#endif
 
 namespace de {
 
@@ -33,6 +45,8 @@ namespace de {
 class LIBGUI_PUBLIC GLInfo
 {
 public:
+    DENG2_ERROR(InitError);
+
     /// Extension availability bits.
     struct Extensions
     {
@@ -48,6 +62,7 @@ public:
         duint32 EXT_packed_depth_stencil : 1;
         duint32 EXT_texture_compression_s3tc : 1;
         duint32 EXT_texture_filter_anisotropic : 1;
+        duint32 EXT_timer_query : 1;
 
         // Vendor-specific extensions:
         duint32 ATI_texture_env_combine3 : 1;
@@ -78,13 +93,25 @@ public:
     static Extensions const &extensions();
     static Limits const &limits();
 
-    static bool isFramebufferMultisamplingSupported();
+    //static bool isFramebufferMultisamplingSupported();
 
     /**
      * Initializes the static instance of GLInfo. Cannot be called before there
      * is a current OpenGL context. Canvas will call this after initialization.
      */
     static void glInit();
+
+    static void glDeinit();
+
+    static QOpenGLFunctions_Doomsday &api();
+
+    // Extensions:
+    static QOpenGLExtension_ARB_draw_instanced          *ARB_draw_instanced();
+    static QOpenGLExtension_ARB_instanced_arrays        *ARB_instanced_arrays();
+    static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
+    static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
+    static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
+    static QOpenGLExtension_NV_framebuffer_multisample_coverage *NV_framebuffer_multisample_coverage();
 
 private:
     DENG2_PRIVATE(d)

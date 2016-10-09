@@ -51,12 +51,12 @@ namespace world { class Material; }
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C dd_bool  envModAdd;
-DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
+//DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
 #ifdef _DEBUG
-#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
+#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);}
 #else
 #  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
@@ -125,9 +125,9 @@ void GL_TotalRestore();
  */
 void GL_Init2DState();
 
-void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData);
+//void GL_SwitchTo3DState(dd_bool push_state) //, viewport_t const *port, viewdata_t const *viewData);
 
-void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
+//void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_ProjectionMatrix();
 

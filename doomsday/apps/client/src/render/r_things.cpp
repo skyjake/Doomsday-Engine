@@ -40,6 +40,7 @@
 
 #include "network/net_main.h"  // clients[]
 
+#include "render/rendersystem.h"
 #include "render/r_main.h"
 #include "render/angleclipper.h"
 #include "render/stateanimator.h"

@@ -24,6 +24,7 @@
 #include "client/cl_def.h"
 #include "def_main.h"
 #include "render/r_main.h"
+#include "render/rendersystem.h"
 
 #include <de/timer.h>
 #include <de/Garbage>

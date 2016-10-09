@@ -40,16 +40,20 @@
 
 gl_state_t GL_state;
 
+/*
 #ifdef WIN32
-PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
+//PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 #endif
+*/
 
+/*
 #ifdef LIBGUI_USE_GLENTRYPOINTS
 PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT = NULL;
 PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
+*/
 
 static dd_bool doneEarlyInit = false;
 static dd_bool sysOpenGLInited = false;
@@ -89,8 +93,8 @@ static void initialize(void)
     if(ext.EXT_texture_compression_s3tc)
     {
         GLint iVal;
-        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        if(iVal == 0 || glGetError() != GL_NO_ERROR)
+        LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        if(iVal == 0 || LIBGUI_GL.glGetError() != GL_NO_ERROR)
             GL_state.features.texCompression = false;
     }
 #else
@@ -107,16 +111,16 @@ static void initialize(void)
         GL_state.features.genMipmap = false;
     }
 
-#ifdef WIN32
+/*#ifdef WIN32
     if(ext.Windows_EXT_swap_control)
     {
         GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
     }
     if(!ext.Windows_EXT_swap_control || !wglSwapIntervalEXT)
         GL_state.features.vsync = false;
-#else
+#else*/
     GL_state.features.vsync = true;
-#endif
+//#endif
 }
 
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
@@ -131,9 +135,9 @@ de::String Sys_GLDescription()
 
     os << _E(b) "OpenGL information:\n" << _E(.);
 
-    os << TABBED("Version:",  (char const *) glGetString(GL_VERSION));
-    os << TABBED("Renderer:", (char const *) glGetString(GL_RENDERER));
-    os << TABBED("Vendor:",   (char const *) glGetString(GL_VENDOR));
+    os << TABBED("Version:",  (char const *) LIBGUI_GL.glGetString(GL_VERSION));
+    os << TABBED("Renderer:", (char const *) LIBGUI_GL.glGetString(GL_RENDERER));
+    os << TABBED("Vendor:",   (char const *) LIBGUI_GL.glGetString(GL_VENDOR));
 
     os << _E(T`) "Capabilities:\n";
 
@@ -142,19 +146,19 @@ de::String Sys_GLDescription()
 #ifdef USE_TEXTURE_COMPRESSION_S3
     if(de::GLInfo::extensions().EXT_texture_compression_s3tc)
     {
-        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
 
     os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
+    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
     os << TABBED("Available texture units:", iVal);
 
     if(de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
+        LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
         os << TABBED("Maximum texture anisotropy:", iVal);
     }
     else
@@ -162,14 +166,14 @@ de::String Sys_GLDescription()
         os << _E(Ta) "  Variable texture anisotropy unavailable.";
     }
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
+    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
     os << TABBED("Maximum texture size:", iVal);
 
     GLfloat fVals[2];
-    glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
+    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
     os << TABBED("Line width granularity:", fVals[0]);
 
-    glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
+    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
     os << TABBED("Line width range:", fVals[0] << "..." << fVals[1]);
 
     return str.rightStrip();
@@ -223,12 +227,12 @@ dd_bool Sys_GLInitialize(void)
 
     if(firstTimeInit)
     {
-        const GLubyte* versionStr = glGetString(GL_VERSION);
+        const GLubyte* versionStr = LIBGUI_GL.glGetString(GL_VERSION);
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
         {
             LOG_GL_WARNING("Failed to determine OpenGL version; driver reports: %s")
-                    << glGetString(GL_VERSION);
+                    << LIBGUI_GL.glGetString(GL_VERSION);
         }
         else if(version < 2.0)
         {
@@ -237,13 +241,13 @@ dd_bool Sys_GLInitialize(void)
                 Sys_CriticalMessagef("Your OpenGL is too old!\n"
                                      "  Driver version: %s\n"
                                      "  The minimum supported version is 2.0",
-                                     glGetString(GL_VERSION));
+                                     LIBGUI_GL.glGetString(GL_VERSION));
                 return false;
             }
             else
             {
                 LOG_GL_WARNING("OpenGL may be too old (2.0+ required, "
-                               "but driver reports %s)") << glGetString(GL_VERSION);
+                               "but driver reports %s)") << LIBGUI_GL.glGetString(GL_VERSION);
             }
         }
 
@@ -263,7 +267,7 @@ dd_bool Sys_GLInitialize(void)
 
     // Use nice quality for mipmaps please.
     if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
-        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+        LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 
     assert(!Sys_GLCheckError());
 
@@ -294,72 +298,48 @@ void Sys_GLConfigureDefaultState(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glFrontFace(GL_CW);
-    //glDisable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
-    //glDisable(GL_DEPTH_TEST);
-    //glDepthFunc(GL_LESS);
+    LIBGUI_GL.glFrontFace(GL_CW);
     de::GLState::current()
             .setCull(de::gl::None)
             .setDepthTest(false)
             .setDepthFunc(de::gl::Less);
 
-    //glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_CUBE_MAP);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glLoadIdentity();
 
     // Initialize the modelview matrix.
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    LIBGUI_GL.glLoadIdentity();
 
     // Also clear the texture matrix.
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
+    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+    LIBGUI_GL.glLoadIdentity();
 
-#if DRMESA
-    glDisable(GL_DITHER);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_POINT_SMOOTH);
-    glDisable(GL_POLYGON_SMOOTH);
-    glShadeModel(GL_FLAT);
-#else
     // Setup for antialiased lines/points.
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glLineWidth(GL_state.currentLineWidth);
+    LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+    LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    LIBGUI_GL.glLineWidth(GL_state.currentLineWidth);
 
-    glEnable(GL_POINT_SMOOTH);
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    glPointSize(GL_state.currentPointSize);
+    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
+    LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    LIBGUI_GL.glPointSize(GL_state.currentPointSize);
 
-    glShadeModel(GL_SMOOTH);
-#endif
-
-    // Alpha blending is a go!
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glEnable(GL_ALPHA_TEST);
-    //glAlphaFunc(GL_GREATER, 0);
+    LIBGUI_GL.glShadeModel(GL_SMOOTH);
 
     // Default state for the white fog is off.
-    glDisable(GL_FOG);
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
-    glFogfv(GL_FOG_COLOR, fogcol);
+    LIBGUI_GL.glDisable(GL_FOG);
+    LIBGUI_GL.glFogi(GL_FOG_MODE, GL_LINEAR);
+    LIBGUI_GL.glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
+    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogcol);
 
-#if DRMESA
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-#else
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-#endif
+    LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     // Prefer good quality in texture compression.
-    glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+    LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Configure the default GLState (bottom of the stack).
     de::GLState::current()
@@ -418,8 +398,14 @@ static void printExtensions(QStringList extensions)
 void Sys_GLPrintExtensions(void)
 {
     LOG_GL_MSG(_E(b) "OpenGL Extensions:");
-    printExtensions(QString((char const *) glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
+    QStringList exts;
+    foreach (QByteArray extName, QOpenGLContext::currentContext()->extensions())
+    {
+        exts << extName;
+    }
+    printExtensions(exts);
 
+    /*
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtensionsStringARB)
@@ -434,6 +420,7 @@ void Sys_GLPrintExtensions(void)
     LOG_GL_MSG("  Extensions (GLX):");
     printExtensions(QString(getGLXExtensionsString()).split(" ", QString::SkipEmptyParts));
 #endif
+    */
 }
 
 dd_bool Sys_GLCheckError()
@@ -441,7 +428,7 @@ dd_bool Sys_GLCheckError()
 #ifdef DENG_DEBUG
     if(!novideo)
     {
-        GLenum error = glGetError();
+        GLenum error = LIBGUI_GL.glGetError();
         if(error != GL_NO_ERROR)
         {
             LOGDEV_GL_ERROR("OpenGL error: 0x%x") << error;

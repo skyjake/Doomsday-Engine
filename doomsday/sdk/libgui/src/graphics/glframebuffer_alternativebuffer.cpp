@@ -1,4 +1,4 @@
-/** @file gltarget_alternativebuffer.cpp  Alternative buffer attachment for GLTarget.
+/** @file gltarget_alternativebuffer.cpp  Alternative buffer attachment for GLFramebuffer.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,27 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/GLTarget"
+#include "de/GLFramebuffer"
 #include "de/GLTexture"
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GLTarget::AlternativeBuffer)
+DENG2_PIMPL_NOREF(GLFramebuffer::AlternativeBuffer)
 {
-    GLTarget *target;
+    GLFramebuffer *target;
     GLTexture *texture;
-    GLTarget::Flags attachment;
+    GLFramebuffer::Flags attachment;
     GLTexture *original;
 
     Impl()
         : target(0)
         , texture(0)
-        , attachment(GLTarget::NoAttachments)
+        , attachment(GLFramebuffer::NoAttachments)
         , original(0)
     {}
 };
 
-GLTarget::AlternativeBuffer::AlternativeBuffer(GLTarget &target, GLTexture &texture, Flags const &attachment)
+GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, GLTexture &texture, Flags const &attachment)
     : d(new Impl)
 {
     d->target = &target;
@@ -44,12 +44,12 @@ GLTarget::AlternativeBuffer::AlternativeBuffer(GLTarget &target, GLTexture &text
     d->attachment = attachment;
 }
 
-GLTarget::AlternativeBuffer::~AlternativeBuffer()
+GLFramebuffer::AlternativeBuffer::~AlternativeBuffer()
 {
     deinit();
 }
 
-bool GLTarget::AlternativeBuffer::init()
+bool GLFramebuffer::AlternativeBuffer::init()
 {
     if (d->original)
     {
@@ -64,20 +64,20 @@ bool GLTarget::AlternativeBuffer::init()
     // Resize the alternative buffer to match current target size.
     if (d->texture->size() != d->target->size())
     {
-        if (d->attachment == GLTarget::DepthStencil)
+        if (d->attachment == GLFramebuffer::DepthStencil)
         {
             d->texture->setDepthStencilContent(d->target->size());
         }
         else
         {
-            DENG2_ASSERT(!"GLTarget::AlternativeBuffer does not support resizing specified attachment type");
+            DENG2_ASSERT(!"GLFramebuffer::AlternativeBuffer does not support resizing specified attachment type");
         }
     }
     d->target->replaceAttachment(d->attachment, *d->texture);
     return true;
 }
 
-bool GLTarget::AlternativeBuffer::deinit()
+bool GLFramebuffer::AlternativeBuffer::deinit()
 {
     if (!d->original) return false; // Not inited.
 
@@ -85,7 +85,7 @@ bool GLTarget::AlternativeBuffer::deinit()
     return true;
 }
 
-GLTarget &GLTarget::AlternativeBuffer::target() const
+GLFramebuffer &GLFramebuffer::AlternativeBuffer::target() const
 {
     return *d->target;
 }

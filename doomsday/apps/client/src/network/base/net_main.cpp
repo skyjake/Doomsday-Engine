@@ -57,6 +57,7 @@
 
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
+#  include <de/GLInfo>
 
 #  include "render/rend_main.h"
 #  include "render/blockmapvisual.h"
@@ -578,23 +579,23 @@ void Net_DrawDemoOverlay()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
+    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    glEnable(GL_TEXTURE_2D);
+    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(::fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 
     // Restore original matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
+    LIBGUI_GL.glPopMatrix();
 }
 
 #endif  // __CLIENT__

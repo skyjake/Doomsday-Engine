@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Drawable"
@@ -197,6 +197,7 @@ GLProgram &Drawable::program(Name const &programName) const
 
 Drawable::Id Drawable::programId(Name const &programName) const
 {
+    if (programName.isEmpty()) return 0; // Default program.
     DENG2_ASSERT(d->programNames.contains(programName));
     return d->programNames[programName];
 }
@@ -409,6 +410,11 @@ void Drawable::setProgram(GLProgram &program)
     {
         setProgram(id, program);
     }
+}
+
+void Drawable::setProgram(Id programId)
+{
+    setProgram(program(programId));
 }
 
 void Drawable::setProgram(Name const &programName)

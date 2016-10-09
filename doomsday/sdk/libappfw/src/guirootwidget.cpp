@@ -23,10 +23,10 @@
 #include "de/BaseWindow"
 #include "de/FocusWidget"
 
-#include <de/CanvasWindow>
+#include <de/GLWindow>
 #include <de/TextureBank>
 #include <de/GLUniform>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 #include <de/GLState>
 
 #include <QImage>
@@ -115,7 +115,7 @@ DENG2_PIMPL(GuiRootWidget)
         }
     };
 
-    CanvasWindow *window;
+    GLWindow *window;
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
@@ -123,7 +123,7 @@ DENG2_PIMPL(GuiRootWidget)
     bool noFramesDrawnYet;
     QList<SafeWidgetPtr<Widget> *> focusStack;
 
-    Impl(Public *i, CanvasWindow *win)
+    Impl(Public *i, GLWindow *win)
         : Base(i)
         , window(win)
         , atlas(0)
@@ -140,6 +140,8 @@ DENG2_PIMPL(GuiRootWidget)
 
     ~Impl()
     {
+        if (window) window->glActivate();
+
         qDeleteAll(focusStack);
 
         GuiWidget::recycleTrashedWidgets();
@@ -217,16 +219,16 @@ DENG2_PIMPL(GuiRootWidget)
     }
 };
 
-GuiRootWidget::GuiRootWidget(CanvasWindow *window)
+GuiRootWidget::GuiRootWidget(GLWindow *window)
     : d(new Impl(this, window))
 {}
 
-void GuiRootWidget::setWindow(CanvasWindow *window)
+void GuiRootWidget::setWindow(GLWindow *window)
 {
     d->window = window;
 }
 
-CanvasWindow &GuiRootWidget::window()
+GLWindow &GuiRootWidget::window()
 {
     DENG2_ASSERT(d->window != 0);
     return *d->window;
@@ -323,16 +325,19 @@ void GuiRootWidget::dispatchLatestMousePosition()
 
 bool GuiRootWidget::processEvent(Event const &event)
 {
-    if (!RootWidget::processEvent(event))
-    {
-        if (event.type() == Event::MouseButton)
-        {
-            // Button events that no one handles will relinquish input focus.
-            //setFocus(0);
-        }
-        return false;
-    }
-    return true;
+    window().glActivate();
+    bool const wasProcessed = RootWidget::processEvent(event);
+//    {
+//        if (event.type() == Event::MouseButton)
+//        {
+//            // Button events that no one handles will relinquish input focus.
+//            //setFocus(0);
+//        }
+    window().glDone();
+    return wasProcessed;
+//    }
+//    window().glDone();
+//    return true;
 }
 
 void GuiRootWidget::handleEventAsFallback(Event const &)
@@ -392,17 +397,17 @@ void GuiRootWidget::popFocus()
 
 void GuiRootWidget::update()
 {
-    if (window().canvas().isGLReady())
+    if (window().isGLReady())
     {
         // Allow GL operations.
-        window().canvas().makeCurrent();
+        window().glActivate();
 
         RootWidget::update();
         d->focusIndicator->update();
-
-        // Request a window draw so that the updated content becomes visible.
-        window().as<BaseWindow>().draw();
     }
+
+    // Request a window draw so that the updated content becomes visible.
+    window().as<BaseWindow>().requestDraw();
 }
 
 void GuiRootWidget::draw()
@@ -413,7 +418,7 @@ void GuiRootWidget::draw()
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.
-        window().canvas().renderTarget().clear(GLTarget::Color);
+        window().framebuffer().clear(GLFramebuffer::ColorDepthStencil);
 
         d->noFramesDrawnYet = false;
     }

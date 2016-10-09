@@ -26,6 +26,7 @@
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <doomsday/doomsdayapp.h>
+#include <de/GLInfo>
 #include "dd_main.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 
@@ -156,6 +157,8 @@ static deferredtask_t* nextTask(void)
 
 LIBDENG_GL_DEFER1(e, GLenum e)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_e = ptr;
     api->param.e = e;
@@ -165,6 +168,8 @@ LIBDENG_GL_DEFER1(e, GLenum e)
 
 LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ei = ptr;
     api->param.ei.e = e;
@@ -174,6 +179,8 @@ LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
 
 LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ef = ptr;
     api->param.ef.e = e;
@@ -183,6 +190,8 @@ LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
 
 LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_efv4 = ptr;
     api->param.efv4.e = e;
@@ -192,6 +201,8 @@ LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 
 LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
+    DENG2_ASSERT(ptr != nullptr);
+
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
     api->param.uintArray.count = s;
@@ -329,7 +340,7 @@ void GL_ReserveNames(void)
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
+        LIBGUI_GL.glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
         reservedCount = NUM_RESERVED_TEXTURENAMES;
     }
@@ -345,7 +356,7 @@ void GL_ReleaseReservedNames(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
-    glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
+    LIBGUI_GL.glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
     memset(reservedTextureNames, 0, sizeof(reservedTextureNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);

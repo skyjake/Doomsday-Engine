@@ -27,7 +27,7 @@ DENG_GUI_PIMPL(CompositorWidget)
     Drawable drawable;
     struct Buffer {
         GLTexture texture;
-        QScopedPointer<GLTarget> offscreen;
+        QScopedPointer<GLFramebuffer> offscreen;
 
         void clear() {
             texture.clear();
@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(CompositorWidget)
         {
             //qDebug() << "buffer texture defined" << size.asText();
             buf->texture.setUndefinedImage(size, Image::RGBA_8888);
-            buf->offscreen.reset(new GLTarget(buf->texture));
+            buf->offscreen.reset(new GLFramebuffer(buf->texture));
         }
         nextBufIndex++;
         return buf;
@@ -149,7 +149,7 @@ void CompositorWidget::preDrawChildren()
             .setTarget(*buf->offscreen)
             .setViewport(Rectangleui::fromSize(buf->texture.size()));
 
-    buf->offscreen->clear(GLTarget::Color);
+    buf->offscreen->clear(GLFramebuffer::Color);
 }
 
 void CompositorWidget::postDrawChildren()
@@ -182,7 +182,7 @@ void CompositorWidget::drawComposite()
 {
     if (!d->shouldBeDrawn()) return;
 
-    glEnable(GL_TEXTURE_2D);
+    //LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
     DENG2_ASSERT(d->nextBufIndex > 0);
 

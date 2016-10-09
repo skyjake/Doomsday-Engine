@@ -33,21 +33,23 @@ void LensFx_Shutdown();
 void LensFx_GLRelease();
 
 /**
- * Notifies camera lens FX that the rendering of a world view frame will begin.
- * All graphics until LensFx_EndFrame() are considered part of the the frame.
- * The render target may change during this call if additional post-procesing
- * effects will require it.
+ * Draws all camera lens effects into the player's latest game view texture.
+ *
+ * The order of operations:
+ * - All effects are notified of the start of the draw operation.
+ * - All effects are drawn.
+ * - All effects are notified of the end of the draw operation in reverse order.
  *
  * @param playerNum  Player/console number.
  */
-void LensFx_BeginFrame(int playerNum);
+void LensFx_Draw(int playerNum);
 
-/**
+/*
  * Finishes camera lens FX rendering of a frame. The drawn frame may be
  * post-processed, and any additional effects (vignette, flares) are added on
  * top.
  */
-void LensFx_EndFrame();
+//void LensFx_EndFrame();
 
 /**
  * Marks a light potentially visible in the current frame.

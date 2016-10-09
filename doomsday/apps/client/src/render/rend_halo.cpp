@@ -28,6 +28,7 @@
 
 #include <de/concurrency.h>
 #include <de/GLState>
+#include <de/GLInfo>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/doomsdayapp.h>
@@ -99,8 +100,6 @@ void H_SetupState(bool dosetup)
 
     if(dosetup)
     {
-        //glDepthMask(GL_FALSE);
-        //glDisable(GL_DEPTH_TEST);
         GLState::current()
                 .setDepthWrite(false)
                 .setDepthTest(false)
@@ -110,8 +109,6 @@ void H_SetupState(bool dosetup)
     else
     {
         GL_BlendMode(BM_NORMAL);
-        //glEnable(GL_DEPTH_TEST);
-        //glDepthMask(GL_TRUE);
         GLState::current()
                 .setDepthWrite(true)
                 .setDepthTest(true)
@@ -215,13 +212,13 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
+    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+    LIBGUI_GL.glPushMatrix();
+    LIBGUI_GL.glLoadIdentity();
     // Rotate around the center of the texture.
-    glTranslatef(0.5f, 0.5f, 0);
-    glRotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
-    glTranslatef(-0.5f, -0.5f, 0);
+    LIBGUI_GL.glTranslatef(0.5f, 0.5f, 0);
+    LIBGUI_GL.glRotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
+    LIBGUI_GL.glTranslatef(-0.5f, -0.5f, 0);
 
     flare_t *fl = flares;
     for(int i = 0; i < haloMode && i < NUM_FLARES; ++i, fl++)
@@ -323,36 +320,36 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         }
 
         GL_BindTextureUnmanaged(renderTextures? tex : 0, gl::ClampToEdge, gl::ClampToEdge);
-        glEnable(GL_TEXTURE_2D);
+        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 
         float const radX = radius * fl->size;
         float const radY = radX / 1.2f; // Aspect correction.
 
-        glColor4f(color.x, color.y, color.z, alpha);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex3f(pos.x + radX * leftOff.x,
+        LIBGUI_GL.glColor4f(color.x, color.y, color.z, alpha);
+        LIBGUI_GL.glBegin(GL_QUADS);
+            LIBGUI_GL.glTexCoord2f(0, 0);
+            LIBGUI_GL.glVertex3f(pos.x + radX * leftOff.x,
                        pos.y + radY * leftOff.y,
                        pos.z + radX * leftOff.z);
-            glTexCoord2f(1, 0);
-            glVertex3f(pos.x + radX * rightOff.x,
+            LIBGUI_GL.glTexCoord2f(1, 0);
+            LIBGUI_GL.glVertex3f(pos.x + radX * rightOff.x,
                        pos.y + radY * rightOff.y,
                        pos.z + radX * rightOff.z);
-            glTexCoord2f(1, 1);
-            glVertex3f(pos.x - radX * leftOff.x,
+            LIBGUI_GL.glTexCoord2f(1, 1);
+            LIBGUI_GL.glVertex3f(pos.x - radX * leftOff.x,
                        pos.y - radY * leftOff.y,
                        pos.z - radX * leftOff.z);
-            glTexCoord2f(0, 1);
-            glVertex3f(pos.x - radX * rightOff.x,
+            LIBGUI_GL.glTexCoord2f(0, 1);
+            LIBGUI_GL.glVertex3f(pos.x - radX * rightOff.x,
                        pos.y - radY * rightOff.y,
                        pos.z - radX * rightOff.z);
-        glEnd();
+        LIBGUI_GL.glEnd();
 
-        glDisable(GL_TEXTURE_2D);
+        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     }
 
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
+    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
+    LIBGUI_GL.glPopMatrix();
 
     // Restore previous GL state.
     if(doPrimary)

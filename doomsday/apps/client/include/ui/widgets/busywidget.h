@@ -22,6 +22,8 @@
 #include <de/ProgressWidget>
 #include <de/GLTexture>
 
+class GameWidget;
+
 /**
  * Widget that takes care of the UI while busy mode is active.
  */
@@ -32,13 +34,15 @@ public:
 
     de::ProgressWidget &progress();
 
+    void setGameWidget(GameWidget &gameWidget);
+
     void renderTransitionFrame();
     void releaseTransitionFrame();
     void clearTransitionFrameToBlack();
     de::GLTexture const *transitionFrame() const;
 
     // Events.
-    void viewResized();
+    //void viewResized();
     void update();
     void drawContent();
     bool handleEvent(de::Event const &event);

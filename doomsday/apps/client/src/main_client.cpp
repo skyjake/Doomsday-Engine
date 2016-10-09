@@ -44,6 +44,7 @@
 
 #include "clientapp.h"
 #include "dd_loop.h"
+#include "dd_version.h"
 
 #include <QDebug>
 #include <QMessageBox>
@@ -57,6 +58,8 @@ int main(int argc, char** argv)
 {
     int exitCode = 0;
     {
+        ClientApp::setDefaultOpenGLFormat();
+
         ClientApp clientApp(argc, argv);
 
         /**

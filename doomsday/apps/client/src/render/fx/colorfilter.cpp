@@ -1,5 +1,7 @@
 /** @file colorfilter.cpp
  *
+ * @todo Refactor: Color filters should be console-specific.
+ *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -19,7 +21,35 @@
 #include "render/fx/colorfilter.h"
 #include "gl/gl_draw.h"
 
+#include <de/GLInfo>
+
 using namespace de;
+
+static bool drawFilter = false;
+static Vector4f filterColor;
+
+#undef GL_SetFilter
+DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
+{
+    drawFilter = CPP_BOOL(enabled);
+}
+
+#undef GL_SetFilterColor
+DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
+{
+    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
+                             de::clamp(0.f, g, 1.f),
+                             de::clamp(0.f, b, 1.f),
+                             de::clamp(0.f, a, 1.f));
+
+    if (filterColor != newColorClamped)
+    {
+        filterColor = newColorClamped;
+
+        LOG_AS("GL_SetFilterColor");
+        LOGDEV_GL_XVERBOSE("%s") << filterColor.asText();
+    }
+}
 
 namespace fx {
 
@@ -28,12 +58,17 @@ ColorFilter::ColorFilter(int console) : ConsoleEffect(console)
 
 void ColorFilter::draw()
 {
-    /// @todo Color filter should be console-specific.
-
-    // The colored filter.
-    if(GL_FilterIsVisible())
+    if (drawFilter && filterColor.w > 0)
     {
-        GL_DrawFilter();
+        Rectanglei const rect = viewRect();
+
+        LIBGUI_GL.glColor4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
+        LIBGUI_GL.glBegin(GL_QUADS);
+            LIBGUI_GL.glVertex2f(rect.topLeft.x,      rect.topLeft.y);
+            LIBGUI_GL.glVertex2f(rect.topRight().x,   rect.topRight().y);
+            LIBGUI_GL.glVertex2f(rect.bottomRight.x,  rect.bottomRight.y);
+            LIBGUI_GL.glVertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
+        LIBGUI_GL.glEnd();
     }
 }
 

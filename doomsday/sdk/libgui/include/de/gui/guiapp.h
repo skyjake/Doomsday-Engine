@@ -22,7 +22,7 @@
 #include "libgui.h"
 #include <QApplication>
 #include <de/App>
-#include <de/Loop>
+#include <de/GuiLoop>
 
 /**
  * Macro for conveniently accessing the de::GuiApp singleton instance.
@@ -45,12 +45,8 @@ class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
     Q_OBJECT
 
 public:
-    /**
-     * Notified when a Canvas is recreated.
-     */
-    DENG2_DEFINE_AUDIENCE2(GLContextChange, void appGLContextChanged())
+    static void setDefaultOpenGLFormat(); // call before constructing GuiApp
 
-public:
     GuiApp(int &argc, char **argv);
 
     void setMetadata(String const &orgName, String const &orgDomain,
@@ -67,12 +63,10 @@ public:
      */
     void notifyDisplayModeChanged();
 
-    void notifyGLContextChanged();
-
     int execLoop();
     void stopLoop(int code);
 
-    Loop &loop();
+    GuiLoop &loop();
 
 protected:
     NativePath appDataPath() const;

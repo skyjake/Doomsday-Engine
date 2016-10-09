@@ -51,6 +51,11 @@ public:
 
 } // namespace internal
 
+duint64 Time::Delta::asMicroSeconds() const
+{
+    return duint64(_seconds * 1000000);
+}
+
 duint64 TimeDelta::asMilliSeconds() const
 {
     return duint64(_seconds * 1000);

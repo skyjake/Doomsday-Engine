@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <de/GLState>
+#include <de/GLInfo>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/world/Materials>
@@ -187,12 +188,12 @@ void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount)
 
 void UI_SetColorA(ui_color_t* color, float alpha)
 {
-    glColor4f(color->red, color->green, color->blue, alpha);
+    LIBGUI_GL.glColor4f(color->red, color->green, color->blue, alpha);
 }
 
 void UI_SetColor(ui_color_t* color)
 {
-    glColor3f(color->red, color->green, color->blue);
+    LIBGUI_GL.glColor3f(color->red, color->green, color->blue);
 }
 
 void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* topColor,
@@ -255,98 +256,98 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
     GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 
     // The fill comes first, if there's one.
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glBegin(GL_QUADS);
     if (filled)
     {
-        glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
-        glVertex2f(origin->x + border, origin->y + border);
-        glVertex2f(origin->x + size->width - border, origin->y + border);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
         UI_SetColorA(bottomColor, bottomAlpha);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        glVertex2f(origin->x + border, origin->y + size->height - border);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
     }
 
     if (!filled || border > 0)
     {
         // Top Left.
         UI_SetColorA(topColor, alpha);
-        glTexCoord2f(s[0], t[0]);
-        glVertex2f(origin->x, origin->y);
-        glTexCoord2f(0.5f, t[0]);
-        glVertex2f(origin->x + border, origin->y);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + border);
-        glTexCoord2f(s[0], 0.5f);
-        glVertex2f(origin->x, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(s[0], t[0]);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y + border);
         // Top.
-        glTexCoord2f(0.5f, t[0]);
-        glVertex2f(origin->x + border, origin->y);
-        glTexCoord2f(0.5f, t[0]);
-        glVertex2f(origin->x + size->width - border, origin->y);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
         // Top Right.
-        glTexCoord2f(0.5f, t[0]);
-        glVertex2f(origin->x + size->width - border, origin->y);
-        glTexCoord2f(s[1], t[0]);
-        glVertex2f(origin->x + size->width, origin->y);
-        glTexCoord2f(s[1], 0.5f);
-        glVertex2f(origin->x + size->width, origin->y + border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y);
+        LIBGUI_GL.glTexCoord2f(s[1], t[0]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y);
+        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
         // Right.
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + border);
-        glTexCoord2f(s[1], 0.5f);
-        glVertex2f(origin->x + size->width, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + border);
         UI_SetColorA(bottomColor, bottomAlpha);
-        glTexCoord2f(s[1], 0.5f);
-        glVertex2f(origin->x + size->width, origin->y + size->height - border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         // Bottom Right.
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        glTexCoord2f(s[1], 0.5f);
-        glVertex2f(origin->x + size->width, origin->y + size->height - border);
-        glTexCoord2f(s[1], t[1]);
-        glVertex2f(origin->x + size->width, origin->y + size->height);
-        glTexCoord2f(0.5f, t[1]);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(s[1], t[1]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height);
         // Bottom.
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + size->height - border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        glTexCoord2f(0.5f, t[1]);
-        glVertex2f(origin->x + size->width - border, origin->y + size->height);
-        glTexCoord2f(0.5f, t[1]);
-        glVertex2f(origin->x + border, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
+        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height);
         // Bottom Left.
-        glTexCoord2f(s[0], 0.5f);
-        glVertex2f(origin->x, origin->y + size->height - border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + size->height - border);
-        glTexCoord2f(0.5f, t[1]);
-        glVertex2f(origin->x + border, origin->y + size->height);
-        glTexCoord2f(s[0], t[1]);
-        glVertex2f(origin->x, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height);
+        LIBGUI_GL.glTexCoord2f(s[0], t[1]);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height);
         // Left.
         UI_SetColorA(topColor, alpha);
-        glTexCoord2f(s[0], 0.5f);
-        glVertex2f(origin->x, origin->y + border);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y + border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
         UI_SetColorA(bottomColor, bottomAlpha);
-        glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(origin->x + border, origin->y + size->height - border);
-        glTexCoord2f(s[0], 0.5f);
-        glVertex2f(origin->x, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
+        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
+        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height - border);
     }
-    glEnd();
+    LIBGUI_GL.glEnd();
 }
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
@@ -365,7 +366,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     GLState::push();
 
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     if (alpha < 1.0)
     {
         GL_BlendMode(BM_NORMAL);
@@ -376,26 +377,26 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
         GLState::current().setBlend(false).apply();
     }
 
-    glColor4f(0, 0, 0, alpha);
-    glBegin(GL_QUADS);
+    LIBGUI_GL.glColor4f(0, 0, 0, alpha);
+    LIBGUI_GL.glBegin(GL_QUADS);
         // Top color.
         //glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
         //glTexCoord2f(0, 0);
-        glVertex2f(origin.x, origin.y);
+        LIBGUI_GL.glVertex2f(origin.x, origin.y);
         //glTexCoord2f(1, 0);
-        glVertex2f(origin.x + dimensions.width, origin.y);
+        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y);
 
         // Bottom color.
         //glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
         //glTexCoord2f(1, 1);
-        glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
+        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
         //glTexCoord2f(0, 1);
-        glVertex2f(0, origin.y + dimensions.height);
-    glEnd();
+        LIBGUI_GL.glVertex2f(0, origin.y + dimensions.height);
+    LIBGUI_GL.glEnd();
 
     //glEnable(GL_BLEND);
     GLState::pop().apply();
-    glDisable(GL_TEXTURE_2D);
+    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
 /**
