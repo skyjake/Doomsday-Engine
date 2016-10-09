@@ -34,14 +34,20 @@ DENG2_PIMPL(VRWindowTransform)
 
     GLFramebuffer unwarpedFB;
 
+    GLFramebuffer stereoFBRight;
+    Drawable      rowInterDrawable;
+    GLUniform     rowInterUniformTex;
+
     Impl(Public *i)
         : Base(i)
         , vrCfg(DENG2_BASE_GUI_APP->vr())
+        , rowInterUniformTex("uTex", GLUniform::Sampler2D)
     {}
 
     ~Impl()
     {
         vrCfg.oculusRift().deinit();
+        stereoFBRight.glDeinit();
     }
 
     Canvas &canvas() const
@@ -131,6 +137,39 @@ DENG2_PIMPL(VRWindowTransform)
         vrCfg.enableFrustumShift(); // restore default
     }
 
+    /**
+     * Initialize drawable for row-interleaved stereo.
+     */
+    void vrInitRowInterleaved()
+    {
+        if (rowInterDrawable.isReady())
+        {
+            return;
+        }
+
+        typedef GLBufferT<Vertex2Tex> VBuf;
+        VBuf *buf = new VBuf;
+        rowInterDrawable.addBuffer(buf);
+        rowInterDrawable.program().build(// Vertex shader:
+                                          Block("attribute highp vec4 aVertex; "
+                                                "attribute highp vec2 aUV; "
+                                                "varying highp vec2 vUV; "
+                                                "void main(void) {"
+                                                "gl_Position = aVertex; "
+                                                "vUV = aUV; }"),
+                                          // Fragment shader:
+                                          Block("uniform sampler2D uTex; "
+                                                "varying highp vec2 vUV; "
+                                                "void main(void) { "
+                                                "if(int(mod(gl_FragCoord.y - 1023.5, 2.0)) != 1) { discard; }\n"
+                                                "gl_FragColor = texture2D(uTex, vUV); }"))
+          << rowInterUniformTex;
+        buf->setVertices(gl::TriangleStrip,
+                         VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
+                         gl::Static);
+    }
+
+    bool toReleaseFBRight = true;
     void draw()
     {
         switch (vrCfg.mode())
@@ -253,15 +292,30 @@ DENG2_PIMPL(VRWindowTransform)
             // first scan line is odd or even.
             QPoint ulCorner(0, 0);
             ulCorner = canvas().mapToGlobal(ulCorner); // widget to screen coordinates
-            bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
-            DENG2_UNUSED(rowParityIsEven);
-            /// @todo - use row parity in shader or stencil, to actually interleave rows.
-            // Left eye view
-            vrCfg.setCurrentEye(VRConfig::LeftEye);
+            bool rowParityIsEven = ((ulCorner.y() % 2) == 0);
+
+            // Draw left eye view directly to the screen
+            vrCfg.setCurrentEye(rowParityIsEven ? VRConfig::LeftEye : VRConfig::RightEye);
             drawContent();
-            // Right eye view
-            vrCfg.setCurrentEye(VRConfig::RightEye);
+
+            // Draw right eye view to FBO
+            toReleaseFBRight = false;
+            stereoFBRight.glInit();
+            stereoFBRight.resize(GLFramebuffer::Size(width(), height()));
+            stereoFBRight.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            stereoFBRight.colorTexture().glApplyParameters();
+            GLState::push()
+              .setTarget(stereoFBRight.target())
+              .setViewport(Rectangleui::fromSize(stereoFBRight.size()))
+              .apply();
+            vrCfg.setCurrentEye(rowParityIsEven ? VRConfig::RightEye : VRConfig::LeftEye);
             drawContent();
+            GLState::pop().apply();
+
+            // Draw right eye view to the screen from FBO color texture
+            vrInitRowInterleaved();
+            rowInterUniformTex = stereoFBRight.colorTexture();
+            rowInterDrawable.draw();
             break;
         }
 
@@ -271,6 +325,12 @@ DENG2_PIMPL(VRWindowTransform)
             // Non-stereoscopic frame.
             drawContent();
             break;
+        }
+
+        if(toReleaseFBRight)
+        {
+            // release unused FBOs
+            stereoFBRight.glDeinit();
         }
 
         // Restore default VR dynamic parameters
