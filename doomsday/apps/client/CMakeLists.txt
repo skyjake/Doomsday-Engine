@@ -113,6 +113,7 @@ relaxed_warnings (client)
 target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 if (APPLE)
     link_framework (client PUBLIC Cocoa)
+    link_framework (client PUBLIC OpenGL)
     if (DENG_HAVE_QTKIT)
         link_framework (client PUBLIC QTKit) # MusicPlayer
     endif ()

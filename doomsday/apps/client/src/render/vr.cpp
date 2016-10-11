@@ -84,12 +84,12 @@ static void vrModeChanged()
 
     vrCfg().setMode(VRConfig::StereoMode(vrMode));
 
-    if(ClientWindow::mainExists())
+    if (ClientWindow::mainExists())
     {
         // The logical UI size may need to be changed.
         ClientWindow &win = ClientWindow::main();
         win.updateRootSize();
-        win.updateCanvasFormat(); // possibly changes pixel format
+        //win.updateCanvasFormat(); // possibly changes pixel format
     }
 
     /*

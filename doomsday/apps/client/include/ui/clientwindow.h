@@ -161,7 +161,7 @@ public:
     void fadeInTaskBarBlur(de::TimeDelta span);
     void fadeOutTaskBarBlur(de::TimeDelta span);
 
-    void updateCanvasFormat();
+    //void updateCanvasFormat();
     void updateRootSize();
 
     // Notifications.

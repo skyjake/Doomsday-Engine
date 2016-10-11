@@ -321,36 +321,36 @@ void GL_ModulateTexture(int mode)
 void GL_SetVSync(dd_bool on)
 {
     // Outside the main thread we'll need to defer the call.
-    if(!Sys_InMainThread())
+    if (!Sys_InMainThread())
     {
         GL_DeferSetVSync(on);
         return;
     }
 
-    if(!GL_state.features.vsync) return;
+    if (!GL_state.features.vsync) return;
 
-    /// @todo Manage vsync via QSurfaceFormat.
-    qDebug() << "GL_SetVSync:" << on << "(not implemented)";
-/*
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
 #ifdef WIN32
-    wglSwapIntervalEXT(on? 1 : 0);
-
-#elif defined(MACOSX)
+    {
+        //wglSwapIntervalEXT(on? 1 : 0);
+    }
+#elif defined (MACOSX)
     {
         // Tell CGL to wait for vertical refresh.
         CGLContextObj context = CGLGetCurrentContext();
-        assert(context != 0);
-        if(context)
+        DENG_ASSERT(context != nullptr);
+        if (context)
         {
             GLint params[1] = { on? 1 : 0 };
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
-
-#elif defined(Q_WS_X11)
-    setXSwapInterval(on? 1 : 0);
+#elif defined (Q_WS_X11)
+    {
+        //setXSwapInterval(on? 1 : 0);
+    }
 #endif
-*/
 }
 
 void GL_SetMultisample(dd_bool on)

@@ -628,16 +628,16 @@ DENG2_PIMPL(ClientWindow)
     {
         if (variable.name() == "fsaa")
         {
-            self.updateCanvasFormat();
+            //self.updateCanvasFormat();
         }
         else if (variable.name() == "vsync")
         {
-#ifdef WIN32
+/*#ifdef WIN32
             self.updateCanvasFormat();
             DENG2_UNUSED(newValue);
-#else
+#else*/
             GL_SetVSync(newValue.isTrue());
-#endif
+//#endif
         }
     }
 
@@ -1061,11 +1061,11 @@ void ClientWindow::hideTaskBarBlur()
     }
 }
 
-void ClientWindow::updateCanvasFormat()
+/*void ClientWindow::updateCanvasFormat()
 {
     //d->needSurfaceFormatUpdate = true;
     /// @todo Update Canvas surface format.
-}
+}*/
 
 void ClientWindow::updateRootSize()
 {
