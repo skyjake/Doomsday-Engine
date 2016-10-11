@@ -31,9 +31,9 @@ DENG2_PIMPL(ClientWindowSystem)
     ConfigProfiles settings;
 
     struct ClientStyle : public Style {
-        bool isBlurringAllowed() const {
+        /*bool isBlurringAllowed() const {
             return !App_GameLoaded();
-        }
+        }*/
         GuiWidget *sharedBlurWidget() const {
             if (!ClientWindow::mainExists()) return nullptr;
             return &ClientWindow::main().taskBarBlur();
