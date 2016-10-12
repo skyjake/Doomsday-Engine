@@ -18,6 +18,7 @@
  */
 
 #include "de/GLInfo"
+#include "de/GLWindow"
 #include "de/graphics/opengl.h"
 
 #include <cstring>
@@ -25,6 +26,15 @@
 #include <de/Log>
 #include <de/math.h>
 #include <de/c_wrapper.h>
+
+#if defined (DENG_X11)
+#  include <QX11Info>
+#  include <GL/glx.h>
+#  include <GL/glxext.h>
+#  undef None
+#  undef Always
+#  undef Status
+#endif
 
 namespace de {
 
@@ -47,25 +57,29 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
 #endif
 
+#ifdef DENG_X11
+    PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
+#endif
+
+
     Impl()
     {
         zap(ext);
         zap(lim);
     }
 
-#if 0
     /**
      * This routine is based on the method used by David Blythe and Tom
      * McReynolds in the book "Advanced Graphics Programming Using OpenGL"
      * ISBN: 1-55860-659-9.
      */
-    bool checkExtensionString(char const *name, GLubyte const *extensions)
+    bool checkExtensionString(char const *name, char const *extensions)
     {
         GLubyte const *start;
-        GLubyte *c, *terminator;
+        GLubyte const *c, *terminator;
 
         // Extension names should not have spaces.
-        c = (GLubyte *) strchr(name, ' ');
+        c = (GLubyte const *) strchr(name, ' ');
         if (c || *name == '\0')
             return false;
 
@@ -74,10 +88,10 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         // It takes a bit of care to be fool-proof about parsing the
         // OpenGL extensions string. Don't be fooled by sub-strings, etc.
-        start = extensions;
+        start = (GLubyte const *) extensions;
         for (;;)
         {
-            c = (GLubyte*) strstr((char const *) start, name);
+            c = (GLubyte const *) strstr((char const *) start, name);
             if (!c)
                 break;
 
@@ -94,11 +108,12 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         return false;
     }
-#endif
 
     bool doQuery(char const *ext)
     {
         DENG2_ASSERT(ext);
+        DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
 #if 0
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
@@ -106,16 +121,17 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
            checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
             return true;
 #endif
+#endif
 
 #ifdef DENG_X11
         // Check GLX specific extensions.
-        if (checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
+        if (checkExtensionString(ext, glXQueryExtensionsString(QX11Info::display(),
+                                                               QX11Info::appScreen())))
             return true;
 #endif
 
-        return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
-#endif
-        DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+//        return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
+//#endif
 
         return QOpenGLContext::currentContext()->hasExtension(ext);
     }
@@ -172,6 +188,12 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
 #ifdef DENG_X11
         ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+
+        if (ext.X11_EXT_swap_control)
+        {
+            glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
+                (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+        }
 #endif
 
         if (ext.ARB_draw_instanced)
@@ -319,9 +341,12 @@ void GLInfo::setSwapInterval(int interval)
     }
 #endif
 
-#if defined (Q_WS_X11)
+#if defined (DENG_X11)
+    if (extensions().X11_EXT_swap_control)
     {
-        //setXSwapInterval(on? 1 : 0);
+        info.d->glXSwapIntervalEXT(QX11Info::display(),
+                                   GLWindow::main().winId(),
+                                   interval);
     }
 #endif
 }
