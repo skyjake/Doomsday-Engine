@@ -277,10 +277,20 @@ void ViewCompositor::drawCompositedLayers()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
+    // The console rectangles are defined in logical UI coordinates. We need to map to
+    // normalized window coordinates first because the rendering target may not be
+    // the window (the target may thus have any resolution).
+
+    Rectanglef const normRect = GuiWidget::normalizedRect(
+                R_ConsoleRect(d->playerNum),
+                Rectanglei::fromSize(ClientWindow::main().root().viewSize()));
+
+    auto const targetSize = GLState::current().target().size();
+    Rectanglef const vp { normRect.topLeft     * targetSize,
+                          normRect.bottomRight * targetSize };
+
     GLState::push()
-            .setViewport(ClientWindow::main().transform()
-                         .logicalToWindowCoords(R_ConsoleRect(d->playerNum))
-                         .toRectangleui())
+            .setViewport(vp.toRectangleui())
             .apply();
 
     // Finale.
