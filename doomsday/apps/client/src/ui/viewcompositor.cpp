@@ -277,12 +277,10 @@ void ViewCompositor::drawCompositedLayers()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
-    GLFramebuffer &target = GLState::current().target();
-    auto &win = ClientWindow::main();
-
     GLState::push()
-            .setViewport(win.transform().logicalToWindowCoords(R_ConsoleRect(d->playerNum))
-                             .toRectangleui())
+            .setViewport(ClientWindow::main().transform()
+                         .logicalToWindowCoords(R_ConsoleRect(d->playerNum))
+                         .toRectangleui())
             .apply();
 
     // Finale.
