@@ -27,6 +27,10 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
+#if defined (MACOSX)
+#  include <OpenGL/OpenGL.h>
+#endif
+
 #if defined (DENG_X11)
 #  include <QX11Info>
 #  include <GL/glx.h>
