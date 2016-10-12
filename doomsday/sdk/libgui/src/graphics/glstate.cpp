@@ -474,6 +474,11 @@ GLState &GLState::setDefaultTarget()
     return *this;
 }
 
+GLState &GLState::setViewport(Rectanglei const &viewportRect)
+{
+    return setViewport(viewportRect.toRectangleui());
+}
+
 GLState &GLState::setViewport(Rectangleui const &viewportRect)
 {
     d->props.set(internal::ViewportX,      viewportRect.left());

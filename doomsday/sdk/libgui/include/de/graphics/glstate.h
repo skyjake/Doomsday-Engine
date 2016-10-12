@@ -123,6 +123,7 @@ public:
     GLState &setColorMask(gl::ColorMask mask);
     GLState &setTarget(GLFramebuffer &target);
     GLState &setDefaultTarget();
+    GLState &setViewport(Rectanglei  const &viewportRect);
     GLState &setViewport(Rectangleui const &viewportRect);
 
     /**
