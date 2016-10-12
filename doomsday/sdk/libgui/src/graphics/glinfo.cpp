@@ -43,6 +43,10 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
     std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
 
+#ifdef WIN32
+    BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
+#endif
+
     Impl()
     {
         zap(ext);
@@ -158,6 +162,12 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 #ifdef WIN32
         ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
         ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
+
+        if (ext.Windows_EXT_swap_control)
+        {
+            wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
+                (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
+        }
 #endif
 
 #ifdef DENG_X11
@@ -284,6 +294,36 @@ QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_mul
 {
     DENG2_ASSERT(info.d->inited);
     return info.d->NV_framebuffer_multisample_coverage.get();
+}
+
+void GLInfo::setSwapInterval(int interval)
+{
+    DENG2_ASSERT(info.d->inited);
+
+#if defined (WIN32)
+    if (extensions().Windows_EXT_swap_control)
+    {
+        info.d->wglSwapIntervalEXT(interval);
+    }
+#endif
+
+#if defined (MACOSX)
+    {
+        CGLContextObj context = CGLGetCurrentContext();
+        DENG2_ASSERT(context != nullptr);
+        if (context)
+        {
+            GLint params[1] = { interval };
+            CGLSetParameter(context, kCGLCPSwapInterval, params);
+        }
+    }
+#endif
+
+#if defined (Q_WS_X11)
+    {
+        //setXSwapInterval(on? 1 : 0);
+    }
+#endif
 }
 
 GLInfo::Extensions const &GLInfo::extensions()

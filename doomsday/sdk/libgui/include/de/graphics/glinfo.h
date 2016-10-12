@@ -111,7 +111,10 @@ public:
     static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
     static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
     static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
-    static QOpenGLExtension_NV_framebuffer_multisample_coverage *NV_framebuffer_multisample_coverage();
+    static QOpenGLExtension_NV_framebuffer_multisample_coverage 
+                                                        *NV_framebuffer_multisample_coverage();
+
+    static void setSwapInterval(int interval);
 
 private:
     DENG2_PRIVATE(d)

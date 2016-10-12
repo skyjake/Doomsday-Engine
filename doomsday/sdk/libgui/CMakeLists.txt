@@ -115,6 +115,7 @@ endif ()
 
 if (APPLE)
     link_framework (libgui PRIVATE Cocoa)
+    link_framework (libgui PRIVATE OpenGL)
 endif ()
 
 if (DENG_X11)
