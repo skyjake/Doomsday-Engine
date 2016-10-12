@@ -38,6 +38,7 @@
 #include <de/GLShaderBank>
 #include <de/Drawable>
 #include <de/VRConfig>
+#include <de/WindowTransform>
 
 using namespace de;
 
@@ -276,6 +277,14 @@ void ViewCompositor::drawCompositedLayers()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
+    GLFramebuffer &target = GLState::current().target();
+    auto &win = ClientWindow::main();
+
+    GLState::push()
+            .setViewport(win.transform().logicalToWindowCoords(R_ConsoleRect(d->playerNum))
+                             .toRectangleui())
+            .apply();
+
     // Finale.
     {
         if (App_InFineSystem().finaleInProgess())
@@ -305,6 +314,8 @@ void ViewCompositor::drawCompositedLayers()
             gx.DrawWindow(&dimensions);
         }
     }
+
+    GLState::pop().apply();
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
