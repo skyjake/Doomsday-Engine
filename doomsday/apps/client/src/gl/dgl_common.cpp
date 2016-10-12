@@ -327,10 +327,11 @@ void GL_SetVSync(dd_bool on)
         return;
     }
 
-    if (!GL_state.features.vsync) return;
-
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    GLInfo::setSwapInterval(on ? 1 : 0);
+
+#if 0
 #ifdef WIN32
     {
         //wglSwapIntervalEXT(on? 1 : 0);
@@ -350,6 +351,7 @@ void GL_SetVSync(dd_bool on)
     {
         //setXSwapInterval(on? 1 : 0);
     }
+#endif
 #endif
 }
 
