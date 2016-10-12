@@ -434,6 +434,19 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     return pos;
 }
 
+Vector2f VRWindowTransform::logicalToWindowCoords(Vector2i const &logicalPos) const
+{
+    Vector2f pos = logicalPos;
+
+    Vector2f const size = window().pixelSize();
+    Vector2f viewSize = window().windowContentSize();
+
+    // Scale to pixel size.
+    pos = pos / viewSize * size;
+
+    return pos;
+}
+
 void VRWindowTransform::drawTransformed()
 {
     d->draw();

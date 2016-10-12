@@ -19,6 +19,7 @@
 #ifndef LIBAPPFW_WINDOWTRANSFORM_H
 #define LIBAPPFW_WINDOWTRANSFORM_H
 
+#include <de/Rectangle>
 #include <de/Vector>
 
 namespace de {
@@ -46,21 +47,26 @@ public:
 
     /**
      * Determines how large the root widget should be for a particular canvas size.
-     *
      * @param physicalCanvasSize  Canvas size (pixels).
-     *
      * @return Logical size (UI units).
      */
     virtual Vector2ui logicalRootSize(Vector2ui const &physicalCanvasSize) const;
 
     /**
      * Translate a point in physical window coordinates to logical coordinates.
-     *
      * @param pos  Window coordinates (pixels).
-     *
      * @return Logical coordinates inside the root widget's area.
      */
     virtual Vector2f windowToLogicalCoords(Vector2i const &pos) const;
+
+    /**
+     * Translate a point in logical coordinates to window coordinates.
+     * @param rect  Logical coordinates.
+     * @return Window coordinates (pixels).
+     */
+    virtual Vector2f logicalToWindowCoords(Vector2i const &pos) const;
+
+    Rectanglef logicalToWindowCoords(Rectanglei const &rect) const;
 
     /**
      * Applies the appropriate transformation state and tells the window to draw its

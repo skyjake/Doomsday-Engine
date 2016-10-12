@@ -37,13 +37,14 @@ class LIBAPPFW_PUBLIC VRWindowTransform : public WindowTransform
 public:
     VRWindowTransform(BaseWindow &window);
 
-    void glInit();
-    void glDeinit();
+    void glInit() override;
+    void glDeinit() override;
 
-    Vector2ui logicalRootSize(Vector2ui const &physicalWindowSize) const;
-    Vector2f windowToLogicalCoords(Vector2i const &pos) const;
+    Vector2ui logicalRootSize(Vector2ui const &physicalWindowSize) const override;
+    Vector2f windowToLogicalCoords(Vector2i const &pos) const override;
+    Vector2f logicalToWindowCoords(Vector2i const &pos) const override;
 
-    void drawTransformed();
+    void drawTransformed() override;
 
     GLTextureFramebuffer &unwarpedFramebuffer();
 

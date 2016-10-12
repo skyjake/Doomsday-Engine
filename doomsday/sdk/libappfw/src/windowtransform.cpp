@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/WindowTransform"
@@ -56,6 +56,17 @@ Vector2ui WindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) 
 Vector2f WindowTransform::windowToLogicalCoords(Vector2i const &pos) const
 {
     return pos;
+}
+
+Vector2f WindowTransform::logicalToWindowCoords(Vector2i const &pos) const
+{
+    return pos;
+}
+
+Rectanglef WindowTransform::logicalToWindowCoords(Rectanglei const &rect) const
+{
+    return Rectanglef(logicalToWindowCoords(rect.topLeft),
+                      logicalToWindowCoords(rect.bottomRight));
 }
 
 void WindowTransform::drawTransformed()
