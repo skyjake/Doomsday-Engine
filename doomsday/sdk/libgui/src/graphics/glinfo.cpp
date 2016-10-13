@@ -62,7 +62,9 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 #endif
 
 #ifdef DENG_X11
-    PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
+    PFNGLXSWAPINTERVALEXTPROC  glXSwapIntervalEXT  = nullptr;
+    PFNGLXSWAPINTERVALSGIPROC  glXSwapIntervalSGI  = nullptr;
+    PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
 #endif
 
 
@@ -192,11 +194,23 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
 #ifdef DENG_X11
         ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+        ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
+        ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
 
         if (ext.X11_EXT_swap_control)
         {
             glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-                (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+        }
+        if (ext.X11_SGI_swap_control)
+        {
+            glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
+        }
+        if (ext.X11_MESA_swap_control)
+        {
+            glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
         }
 #endif
 
@@ -346,7 +360,15 @@ void GLInfo::setSwapInterval(int interval)
 #endif
 
 #if defined (DENG_X11)
-    if (extensions().X11_EXT_swap_control)
+    if (extensions().X11_SGI_swap_control)
+    {
+        info.d->glXSwapIntervalSGI(interval);
+    }
+    else if (extensions().X11_MESA_swap_control)
+    {
+        info.d->glXSwapIntervalMESA(uint(interval));
+    }
+    else if (extensions().X11_EXT_swap_control)
     {
         info.d->glXSwapIntervalEXT(QX11Info::display(),
                                    GLWindow::main().winId(),

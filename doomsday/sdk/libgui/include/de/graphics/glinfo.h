@@ -77,6 +77,8 @@ public:
 
 #ifdef DENG_X11
         duint32 X11_EXT_swap_control : 1;
+        duint32 X11_SGI_swap_control : 1;
+        duint32 X11_MESA_swap_control : 1;
 #endif
     };
 
