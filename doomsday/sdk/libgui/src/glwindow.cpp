@@ -192,6 +192,10 @@ GLWindow::GLWindow()
     : QOpenGLWindow()
     , d(new Impl(this))
 {
+#ifdef MACOSX
+    setFlags(flags() | Qt::WindowFullscreenButtonHint);
+#endif
+
     connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
     // Create the drawing canvas for this window.
