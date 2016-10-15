@@ -110,6 +110,8 @@ gamefilter {
 #
 
 home {
+    color background.tint { rgb <0.48, 0.50, 0.49> }
+    
     color icon.shadow  { rgb $= label.shadow.rgb }
     color icon.doom    { rgb <1.0, 0.7, 0.2> }
     color icon.heretic { rgb <0.4, 0.7, 0.25> }

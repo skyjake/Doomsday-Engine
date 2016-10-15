@@ -96,5 +96,34 @@ generic {
                     gl_FragColor = vColor * texture2D(uTex, vUV);
                 }"
         }
+        
+        shader hsv.color_ucolor inherits generic.textured.color_ucolor {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                uniform highp vec4 uColor;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                attribute highp vec4 aColor;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+        
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                    vColor = aColor * uColor;
+                }"
+            include.fragment <include/hsv.glsl>
+            fragment = "
+                uniform sampler2D uTex;
+                uniform highp float uSaturation;                
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+
+                void main(void) {
+                    highp vec4 hsv = rgbToHsv(texture2D(uTex, vUV));
+                    hsv.y *= uSaturation;
+                    gl_FragColor = vColor * hsvToRgb(hsv);
+                }"
+        }        
     }
 }

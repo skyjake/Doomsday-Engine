@@ -50,9 +50,13 @@ public:
     // Events.
     bool dispatchEvent(de::Event const &event,
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
+    void update() override;
 
 signals:
     void mouseActivity(QObject const *columnWidget);
+
+protected:
+    void updateStyle() override;
 
 private:
     DENG2_PRIVATE(d)

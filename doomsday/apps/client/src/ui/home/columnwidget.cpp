@@ -18,10 +18,11 @@
 
 #include "ui/home/columnwidget.h"
 
-#include <de/LabelWidget>
-#include <de/StyleProceduralImage>
-#include <de/Range>
 #include <de/App>
+#include <de/GLProgram>
+#include <de/LabelWidget>
+#include <de/Range>
+#include <de/StyleProceduralImage>
 #include <de/math.h>
 
 #include <QColor>
@@ -35,7 +36,7 @@ DENG_GUI_PIMPL(ColumnWidget)
      */
     struct BackgroundImage : public StyleProceduralImage
     {
-        Animation colorAnim { 0, Animation::Linear };
+        AnimationVector3 colorAnim { Animation::Linear };
         bool needUpdate = false;
 
         BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
@@ -45,7 +46,7 @@ DENG_GUI_PIMPL(ColumnWidget)
         void setColor(Color const &color)
         {
             StyleProceduralImage::setColor(color);
-            colorAnim.setValue(color.x, 0.5);
+            colorAnim.setValue(color, 0.5);
         }
 
         bool update() override
@@ -73,7 +74,7 @@ DENG_GUI_PIMPL(ColumnWidget)
 
                 Rectanglef const norm = owner().normalizedRect();
                 verts.makeQuad(rect,
-                               Vector4f(colorAnim, colorAnim, colorAnim, 1.f),
+                               Vector4f(colorAnim.value(), 1.f),
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
 
@@ -94,10 +95,16 @@ DENG_GUI_PIMPL(ColumnWidget)
     ScrollAreaWidget *scrollArea;
     HeaderWidget *header;
     Rule const *maxContentWidth = nullptr;
+    Vector4f backTintColor;
+
+    GLUniform uSaturation { "uSaturation", GLUniform::Float }; // background saturation
+    Animation backSaturation { 0.f, Animation::Linear };
 
     Impl(Public *i) : Base(i)
     {
         back = new LabelWidget;
+        back->setShaderId("generic.textured.hsv.color_ucolor");
+        back->shaderProgram() << uSaturation;
         back->margins().setZero();
 
         scrollArea = new ScrollAreaWidget;
@@ -136,6 +143,8 @@ ColumnWidget::ColumnWidget(String const &name)
     add(d->back);
     add(d->scrollArea);
 
+    updateStyle();
+
     setBackgroundImage("home.background.column");
     setBehavior(ChildVisibilityClipping);
 }
@@ -143,7 +152,7 @@ ColumnWidget::ColumnWidget(String const &name)
 void ColumnWidget::setBackgroundImage(DotPath const &imageId)
 {
     auto *img = new Impl::BackgroundImage(imageId, *this);
-    img->setColor(Vector4f(.5f, .5f, .5f, 1.f));
+    img->setColor(d->backTintColor);
     d->back->setImage(img);
 }
 
@@ -181,13 +190,29 @@ void ColumnWidget::setHighlighted(bool highlighted)
         d->highlighted = highlighted;
 
         auto &img = d->back->image()->as<Impl::BackgroundImage>();
-        img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
+        img.setColor(highlighted? Vector4f(1, 1, 1, 1) : d->backTintColor);
+
+        d->backSaturation.setValue(highlighted? 1.f : 0.f, 0.5);
     }
 }
 
 bool ColumnWidget::isHighlighted() const
 {
     return d->highlighted;
+}
+
+void ColumnWidget::update()
+{
+    GuiWidget::update();
+
+    d->uSaturation = d->backSaturation;
+}
+
+void ColumnWidget::updateStyle()
+{
+    GuiWidget::updateStyle();
+
+    d->backTintColor = Vector4f(style().colors().colorf("home.background.tint"), 1.f);
 }
 
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
