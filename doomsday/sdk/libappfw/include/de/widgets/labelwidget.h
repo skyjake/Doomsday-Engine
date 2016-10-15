@@ -175,7 +175,7 @@ public:
 
     void setMaximumTextWidth(Rule const &pixels);
 
-    void setMinimumContentHeight(Rule const &minHeight);
+    void setMinimumHeight(Rule const &minHeight);
 
     /**
      * Sets an alternative style for text. By default, the rich text styling comes

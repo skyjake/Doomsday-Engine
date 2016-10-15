@@ -739,7 +739,7 @@ void LabelWidget::setMaximumTextWidth(Rule const &pixels)
     requestGeometry();
 }
 
-void LabelWidget::setMinimumContentHeight(Rule const &minHeight)
+void LabelWidget::setMinimumHeight(Rule const &minHeight)
 {
     d->minHeight->setSource(minHeight);
 }
