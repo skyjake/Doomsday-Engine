@@ -251,6 +251,10 @@ public:
      */
     void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
 
+    void setShaderId(DotPath const &shaderId);
+
+    GLProgram &shaderProgram();
+
     // Events.
     void viewResized();
     void update();

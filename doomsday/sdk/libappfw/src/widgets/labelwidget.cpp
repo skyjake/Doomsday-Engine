@@ -62,6 +62,7 @@ public Font::RichFormat::IStyle
 
     // Style.
     DotPath gapId;
+    DotPath shaderId;
     int gap;
     ColorBank::Color highlightColor;
     ColorBank::Color dimmedColor;
@@ -98,6 +99,7 @@ public Font::RichFormat::IStyle
         , appearType  (AppearInstantly)
         , appearSpan  (0.0)
         , gapId       ("label.gap")
+        , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
         , wasVisible  (true)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
@@ -196,7 +198,7 @@ public Font::RichFormat::IStyle
     void glInit()
     {
         drawable.addBuffer(new VertexBuf);
-        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+        shaders().build(drawable.program(), shaderId)
                 << uMvpMatrix << uColor << uAtlas();
 
         glText.init(atlas(), self.font(), this);
@@ -908,6 +910,16 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
     {
         rule().setInput(Rule::Height, *h);
     }
+}
+
+void LabelWidget::setShaderId(DotPath const &shaderId)
+{
+    d->shaderId = shaderId;
+}
+
+GLProgram &LabelWidget::shaderProgram()
+{
+    return d->drawable.program();
 }
 
 LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
