@@ -56,6 +56,8 @@ public Font::RichFormat::IStyle
 
     ConstantRule *width;
     ConstantRule *height;
+    IndirectRule *minHeight;
+    Rule const *outHeight;
     AnimationRule *appearSize;
     LabelWidget::AppearanceAnimation appearType;
     TimeDelta appearSpan;
@@ -105,8 +107,10 @@ public Font::RichFormat::IStyle
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
         , uColor      ("uColor",     GLUniform::Vec4)
     {
-        width  = new ConstantRule(0);
-        height = new ConstantRule(0);
+        width     = new ConstantRule(0);
+        height    = new ConstantRule(0);
+        minHeight = new IndirectRule;
+        outHeight = new OperatorRule(OperatorRule::Maximum, *height, *minHeight);
 
         uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
@@ -119,6 +123,8 @@ public Font::RichFormat::IStyle
     {
         releaseRef(width);
         releaseRef(height);
+        releaseRef(minHeight);
+        releaseRef(outHeight);
         releaseRef(appearSize);
         releaseRef(maxTextWidth);
     }
@@ -568,7 +574,7 @@ public Font::RichFormat::IStyle
         {
         case AppearInstantly:
         case AppearGrowHorizontally:
-            if (vertPolicy == Expand) return height;
+            if (vertPolicy == Expand) return outHeight;
             break;
 
         case AppearGrowVertically:
@@ -731,6 +737,11 @@ void LabelWidget::setMaximumTextWidth(Rule const &pixels)
 {
     changeRef(d->maxTextWidth, pixels);
     requestGeometry();
+}
+
+void LabelWidget::setMinimumContentHeight(Rule const &minHeight)
+{
+    d->minHeight->setSource(minHeight);
 }
 
 void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
