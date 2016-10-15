@@ -160,6 +160,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                 .setMidAnchorY(self.label().rule().midY());
         packagesCounter->hide();
         self.label().add(packagesCounter);
+        self.label().setMinimumContentHeight(style().fonts().font("default").lineSpacing() * 3 +
+                                             self.label().margins().height());
 
         self.panel().setContent(saves);
         self.panel().open();
