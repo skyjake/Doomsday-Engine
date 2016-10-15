@@ -17,14 +17,16 @@
  */
 
 #include "de/MenuWidget"
-#include "de/PopupMenuWidget"
-#include "de/PopupButtonWidget"
-#include "de/VariableToggleWidget"
+
 #include "de/ChildWidgetOrganizer"
+#include "de/FocusWidget"
 #include "de/GridLayout"
+#include "de/PopupButtonWidget"
+#include "de/PopupMenuWidget"
 #include "de/StyleProceduralImage"
-#include "de/ui/ListData"
+#include "de/VariableToggleWidget"
 #include "de/ui/ActionItem"
+#include "de/ui/ListData"
 #include "de/ui/SubwidgetItem"
 #include "de/ui/VariantActionItem"
 
@@ -682,6 +684,8 @@ bool MenuWidget::handleEvent(Event const &event)
         KeyEvent const &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
         {
+            root().focusIndicator().fadeIn();
+
             auto const children = childWidgets();
 
             for (int ordinal = children.indexOf(root().focus());

@@ -907,6 +907,7 @@ bool GuiWidget::handleEvent(Event const &event)
             if (auto *focus = d->findNextWidgetToFocus(
                         key.modifiers().testFlag(KeyEvent::Shift)? Backward : Forward))
             {
+                root().focusIndicator().fadeIn();
                 root().setFocus(focus);
                 return true;
             }
@@ -917,6 +918,7 @@ bool GuiWidget::handleEvent(Event const &event)
              key.ddKey() == DDKEY_UPARROW    ||
              key.ddKey() == DDKEY_DOWNARROW))
         {
+            root().focusIndicator().fadeIn();
             root().setFocus(d->findAdjacentWidgetToFocus(
                                 key.ddKey() == DDKEY_LEFTARROW ? ui::Left  :
                                 key.ddKey() == DDKEY_RIGHTARROW? ui::Right :

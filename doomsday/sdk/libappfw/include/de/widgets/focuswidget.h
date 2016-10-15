@@ -39,6 +39,9 @@ public:
     void startFlashing(GuiWidget const *reference = nullptr);
     void stopFlashing();
 
+    void fadeIn();
+    void fadeOut();
+
     // Events.
     void update() override;
 

@@ -30,6 +30,7 @@ DENG2_PIMPL(FocusWidget)
     SafeWidgetPtr<GuiWidget const> reference;
     Animation color { 0.f, Animation::Linear };
     Vector4f flashColors[2];
+    float fadeOpacity = 0.f;
 
     Impl(Public *i) : Base(i)
     {
@@ -85,9 +86,19 @@ void FocusWidget::stopFlashing()
     hide();
 }
 
+void FocusWidget::fadeIn()
+{
+    d->fadeOpacity = 1.f;
+}
+
+void FocusWidget::fadeOut()
+{
+    d->fadeOpacity = 0.f;
+}
+
 void FocusWidget::update()
 {
-    setOpacity(d->reference? d->reference->visibleOpacity() : 0.f);
+    setOpacity(d->fadeOpacity * (d->reference? d->reference->visibleOpacity() : 0.f));
     set(Background(Background::GradientFrameWithThinBorder, d->currentColor(), 6));
 
     LabelWidget::update();

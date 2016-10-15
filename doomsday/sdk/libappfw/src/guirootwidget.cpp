@@ -326,6 +326,13 @@ void GuiRootWidget::dispatchLatestMousePosition()
 bool GuiRootWidget::processEvent(Event const &event)
 {
     window().glActivate();
+
+    if (event.type() == Event::MouseButton &&
+        event.as<MouseEvent>().state() != MouseEvent::Released)
+    {
+        d->focusIndicator->fadeOut();
+    }
+
     bool const wasProcessed = RootWidget::processEvent(event);
 //    {
 //        if (event.type() == Event::MouseButton)

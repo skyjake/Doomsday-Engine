@@ -20,6 +20,7 @@
 #include "de/GuiRootWidget"
 #include "de/CallbackAction"
 
+#include <de/FocusWidget>
 #include <de/MouseEvent>
 #include <de/Animation>
 
@@ -320,6 +321,7 @@ bool ButtonWidget::handleEvent(Event const &event)
         {
             if (key.isKeyDown())
             {
+                root().focusIndicator().fadeIn();
                 trigger();
             }
             return true;
