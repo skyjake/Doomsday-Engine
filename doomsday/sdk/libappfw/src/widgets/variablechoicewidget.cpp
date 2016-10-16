@@ -41,7 +41,14 @@ DENG2_OBSERVES(Variable, Change  )
     {
         if (!var) return;
 
-        self.setSelected(self.items().findData(var->value().asNumber()));
+        if (var->value().is<TextValue>())
+        {
+            self.setSelected(self.items().findData(var->value().asText()));
+        }
+        else
+        {
+            self.setSelected(self.items().findData(var->value().asNumber()));
+        }
     }
 
     void setVariableFromWidget()
@@ -49,7 +56,14 @@ DENG2_OBSERVES(Variable, Change  )
         if (!var) return;
 
         var->audienceForChange() -= this;
-        var->set(NumberValue(self.selectedItem().data().toDouble()));
+        if (var->value().is<TextValue>())
+        {
+            var->set(TextValue(self.selectedItem().data().toString()));
+        }
+        else
+        {
+            var->set(NumberValue(self.selectedItem().data().toDouble()));
+        }
         var->audienceForChange() += this;
     }
 
