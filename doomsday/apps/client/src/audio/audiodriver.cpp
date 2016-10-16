@@ -78,10 +78,10 @@ DENG2_PIMPL(AudioDriver)
         DENG2_ASSERT(!initialized);
 
         library = nullptr;
-        std::memcpy(&iBase, &::audiod_dummy,     sizeof(iBase));
-        std::memcpy(&iSfx,  &::audiod_dummy_sfx, sizeof(iSfx));
-        zap(iMusic);
-        zap(iCd);
+        std::memcpy(&iBase,  &::audiod_dummy,       sizeof(iBase));
+        std::memcpy(&iSfx,   &::audiod_dummy_sfx,   sizeof(iSfx));
+        std::memcpy(&iMusic, &::audiod_dummy_music, sizeof(iMusic));
+        std::memcpy(&iCd,    &::audiod_dummy_cd,    sizeof(iCd));
     }
 
 #ifndef DENG_DISABLE_SDLMIXER
@@ -93,7 +93,7 @@ DENG2_PIMPL(AudioDriver)
         std::memcpy(&iBase,  &::audiod_sdlmixer,       sizeof(iBase));
         std::memcpy(&iSfx,   &::audiod_sdlmixer_sfx,   sizeof(iSfx));
         std::memcpy(&iMusic, &::audiod_sdlmixer_music, sizeof(iMusic));
-        zap(iCd);
+        std::memcpy(&iCd,    &::audiod_dummy_cd,       sizeof(iCd));
     }
 #endif
 

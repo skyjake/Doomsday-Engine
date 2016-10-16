@@ -284,7 +284,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
         itemWidget(configMenu, POS_3D_VR_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
-        itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
+        //itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_DATA_FILES)       .show(game.isNull());
 

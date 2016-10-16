@@ -436,16 +436,19 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::IntCVar,        "net-dev",             0);
 
         audioSettings
-                .define(Prof::IntCVar,    "sound-volume",        255 * 2/3)
-                .define(Prof::IntCVar,    "music-volume",        255 * 2/3)
-                .define(Prof::FloatCVar,  "sound-reverb-volume", 0.5f)
-                .define(Prof::IntCVar,    "sound-info",          0)
-                .define(Prof::IntCVar,    "sound-rate",          11025)
-                .define(Prof::IntCVar,    "sound-16bit",         0)
-                .define(Prof::IntCVar,    "sound-3d",            0)
-                .define(Prof::IntCVar,    "sound-overlap-stop",  0)
-                .define(Prof::IntCVar,    "music-source",        ::audio::System::MUSP_EXT)
-                .define(Prof::StringCVar, "music-soundfont",     "");
+                .define(Prof::IntCVar,        "sound-volume",        255 * 2/3)
+                .define(Prof::IntCVar,        "music-volume",        255 * 2/3)
+                .define(Prof::FloatCVar,      "sound-reverb-volume", 0.5f)
+                .define(Prof::IntCVar,        "sound-info",          0)
+                .define(Prof::IntCVar,        "sound-rate",          11025)
+                .define(Prof::IntCVar,        "sound-16bit",         0)
+                .define(Prof::IntCVar,        "sound-3d",            0)
+                .define(Prof::IntCVar,        "sound-overlap-stop",  0)
+                .define(Prof::IntCVar,        "music-source",        ::audio::System::MUSP_EXT)
+                .define(Prof::StringCVar,     "music-soundfont",     "")
+                .define(Prof::ConfigVariable, "audio.soundPlugin")
+                .define(Prof::ConfigVariable, "audio.musicPlugin")
+                .define(Prof::ConfigVariable, "audio.cdPlugin");
     }
 
 #ifdef UNIX

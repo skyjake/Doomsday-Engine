@@ -111,5 +111,16 @@ def setDefaults(d)
     record d.vr
     record d.vr.oculusRift
     d.vr.oculusRift.pixelDensity = 1.0
+    
+    # Audio settings.
+    record d.audio
+    d.audio.soundPlugin = 'fmod'
+    if Version.OS == 'macx'
+        d.audio.musicPlugin = 'fluidsynth'
+        d.audio.cdPlugin    = 'dummy'
+    else
+        d.audio.musicPlugin = 'fmod'
+        d.audio.cdPlugin    = 'fmod'
+    end
 end
 

@@ -32,7 +32,7 @@ void        DS_DummyShutdown(void);
 void        DS_DummyEvent(int type);
 
 int         DS_Dummy_SFX_Init(void);
-sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
+sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
 void        DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf);
 void        DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
 void        DS_Dummy_SFX_Reset(sfxbuffer_t* buf);
@@ -45,8 +45,10 @@ void        DS_Dummy_SFX_Listener(int prop, float value);
 void        DS_Dummy_SFX_Listenerv(int prop, float* values);
 int         DS_Dummy_SFX_Getv(int prop, void* values);
 
-DENG_EXTERN_C audiodriver_t        audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
+DENG_EXTERN_C audiodriver_t          audiod_dummy;
+DENG_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
+DENG_EXTERN_C audiointerface_music_t audiod_dummy_music;
+DENG_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
 
 audiodriver_t audiod_dummy = {
     DS_DummyInit,
@@ -55,21 +57,23 @@ audiodriver_t audiod_dummy = {
     0
 };
 
-audiointerface_sfx_t audiod_dummy_sfx = { {
-    DS_Dummy_SFX_Init,
-    DS_Dummy_SFX_CreateBuffer,
-    DS_Dummy_SFX_DestroyBuffer,
-    DS_Dummy_SFX_Load,
-    DS_Dummy_SFX_Reset,
-    DS_Dummy_SFX_Play,
-    DS_Dummy_SFX_Stop,
-    DS_Dummy_SFX_Refresh,
-    DS_Dummy_SFX_Set,
-    DS_Dummy_SFX_Setv,
-    DS_Dummy_SFX_Listener,
-    DS_Dummy_SFX_Listenerv,
-    DS_Dummy_SFX_Getv
-} };
+audiointerface_sfx_t audiod_dummy_sfx = {
+    {
+        DS_Dummy_SFX_Init,
+        DS_Dummy_SFX_CreateBuffer,
+        DS_Dummy_SFX_DestroyBuffer,
+        DS_Dummy_SFX_Load,
+        DS_Dummy_SFX_Reset,
+        DS_Dummy_SFX_Play,
+        DS_Dummy_SFX_Stop,
+        DS_Dummy_SFX_Refresh,
+        DS_Dummy_SFX_Set,
+        DS_Dummy_SFX_Setv,
+        DS_Dummy_SFX_Listener,
+        DS_Dummy_SFX_Listenerv,
+        DS_Dummy_SFX_Getv
+    }
+};
 
 static dd_bool inited;
 
@@ -321,3 +325,123 @@ int DS_Dummy_SFX_Getv(int prop, void* values)
     }
     return true;
 }
+
+//---------------------------------------------------------------------------------------
+
+int DS_Dummy_Music_Init(void)
+{
+    return true;
+}
+
+void DS_Dummy_Music_Shutdown(void)
+{}
+
+void DS_Dummy_Music_Set(int /*prop*/, float /*value*/)
+{}
+
+int DS_Dummy_Music_Get(int prop, void * ptr)
+{
+    switch (prop)
+    {
+    case MUSIP_ID:
+        strcpy(reinterpret_cast<char *>(ptr), "Disabled");
+        return true;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+void DS_Dummy_Music_Update(void)
+{}
+
+void DS_Dummy_Music_Stop(void)
+{}
+
+int DS_Dummy_Music_Play(int)
+{
+    return true;
+}
+
+void DS_Dummy_Music_Pause(int)
+{}
+
+void *DS_Dummy_Music_SongBuffer(unsigned int length)
+{
+    return malloc(length);
+}
+
+int DS_Dummy_Music_PlayFile(char const *, int)
+{
+    return true;
+}
+
+//---------------------------------------------------------------------------------------
+
+int DS_Dummy_CD_Init(void)
+{
+    return true;
+}
+
+void DS_Dummy_CD_Shutdown(void)
+{}
+
+void DS_Dummy_CD_Set(int /*prop*/, float /*value*/)
+{}
+
+int DS_Dummy_CD_Get(int prop, void *ptr)
+{
+    switch (prop)
+    {
+    case MUSIP_ID:
+        strcpy(reinterpret_cast<char *>(ptr), "Disabled");
+        return true;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+void DS_Dummy_CD_Update(void)
+{}
+
+void DS_Dummy_CD_Stop(void)
+{}
+
+void DS_Dummy_CD_Pause(int)
+{}
+
+int DS_Dummy_CD_PlayTrack(int, int)
+{
+    return true;
+}
+
+audiointerface_music_t audiod_dummy_music = {
+    {
+        DS_Dummy_Music_Init,
+        DS_Dummy_Music_Shutdown,
+        DS_Dummy_Music_Update,
+        DS_Dummy_Music_Set,
+        DS_Dummy_Music_Get,
+        DS_Dummy_Music_Pause,
+        DS_Dummy_Music_Stop
+    },
+    DS_Dummy_Music_SongBuffer,
+    DS_Dummy_Music_Play,
+    DS_Dummy_Music_PlayFile
+};
+
+audiointerface_cd_t audiod_dummy_cd = {
+    {
+        DS_Dummy_CD_Init,
+        DS_Dummy_CD_Shutdown,
+        DS_Dummy_CD_Update,
+        DS_Dummy_CD_Set,
+        DS_Dummy_CD_Get,
+        DS_Dummy_CD_Pause,
+        DS_Dummy_CD_Stop
+    },
+    DS_Dummy_CD_PlayTrack
+};

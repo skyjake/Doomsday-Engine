@@ -107,14 +107,16 @@ updateWithDefaults()
 if '__oldversion__' in locals()
     # Check for a new build.    
     if __version__[3] > __oldversion__[3]
-        print 'Detected new build:', __oldversion__[3], '=>', __version__[3]
+        oldBuild = __oldversion__[3]
+        newBuild = __version__[3]
+        print 'Detected new build:', oldBuild, '=>', newBuild
         
         # Cleanup: get rid of some old stuff.
         try
-            if __version__[3] >= 826: del window.main.normalRect
+            if newBuild >= 826: del window.main.normalRect
         catch: pass
         try
-            if __version__[3] >= 1101
+            if newBuild >= 1101
                 del log.level
                 # Log constants were moved to the Log module.
                 del log.TRACE
@@ -135,6 +137,15 @@ if '__oldversion__' in locals()
                 del updater.CHANNEL_UNSTABLE
             end
         catch: pass
+        try
+            if newBuild >= 2116 and oldBuild < 2116
+                del audio
+                updateWithDefaults()
+            end
+        catch: pass
+        
+        del newBuild
+        del oldBuild
     end
     
     # Check for a new release.

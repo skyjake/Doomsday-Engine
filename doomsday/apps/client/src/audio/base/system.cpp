@@ -366,6 +366,28 @@ DENG2_PIMPL(System)
     };
     QList<AudioInterface> activeInterfaces;
 
+    bool isPrimaryInterface(audiointerfacetype_t type, void *ptr)
+    {
+        for (int i = activeInterfaces.size() - 1; i >= 0; --i)
+        {
+            auto const &intf = activeInterfaces.at(i);
+            if (intf.type != type) continue;
+            return intf.i.any == ptr;
+        }
+        return false;
+    }
+
+    void addPrimaryInterface(audiointerfacetype_t type, void *ptr)
+    {
+        if (!isPrimaryInterface(type, ptr)) // check if already there
+        {
+            AudioInterface ifs; zap(ifs);
+            ifs.type  = type;
+            ifs.i.any = ptr;
+            activeInterfaces << ifs;  // a copy is made
+        }
+    }
+
     /**
      * Choose the SFX, Music, and CD audio interfaces to use.
      *
@@ -376,7 +398,7 @@ DENG2_PIMPL(System)
         AudioDriver &defaultDriver = driverById(defaultDriverId);
 
         // The default driver goes on the bottom of the stack.
-        if(defaultDriver.hasSfx())
+        if (defaultDriver.hasSfx())
         {
             AudioInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ISFX;
@@ -384,7 +406,7 @@ DENG2_PIMPL(System)
             activeInterfaces << ifs;  // a copy is made
         }
 
-        if(defaultDriver.hasMusic())
+        if (defaultDriver.hasMusic())
         {
             AudioInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
@@ -392,7 +414,7 @@ DENG2_PIMPL(System)
             activeInterfaces << ifs;  // a copy is made
         }
 #if defined(MACOSX) && defined(MACOS_HAVE_QTKIT)
-        else if(defaultDriverId != AUDIOD_DUMMY)
+        else if (defaultDriverId != AUDIOD_DUMMY)
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             AudioInterface ifs; zap(ifs);
@@ -402,10 +424,10 @@ DENG2_PIMPL(System)
         }
 #endif
 
-#ifndef WIN32
+/*#ifndef WIN32
         // At the moment, dsFMOD supports streaming samples so we can
         // automatically load dsFluidSynth for MIDI music.
-        if(defaultDriverId == AUDIOD_FMOD)
+        if (defaultDriverId == AUDIOD_FMOD)
         {
             initDriverIfNeeded("fluidsynth");
             AudioDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
@@ -417,9 +439,9 @@ DENG2_PIMPL(System)
                 activeInterfaces << ifs;  // a copy is made
             }
         }
-#endif
+#endif*/
 
-        if(defaultDriver.hasCd())
+        if (defaultDriver.hasCd())
         {
             AudioInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ICD;
@@ -427,7 +449,55 @@ DENG2_PIMPL(System)
             activeInterfaces << ifs;  // a copy is made
         }
 
+        String userSfx   = App::config("audio.soundPlugin").value().asText();
+        String userMusic = App::config("audio.musicPlugin").value().asText();
+        String userCD    = App::config("audio.cdPlugin")   .value().asText();
+
+        // Command line options may also be used to specify which plugin to use.
         CommandLine &cmdLine = App::commandLine();
+        if (auto arg = cmdLine.check("-isfx", 1))
+        {
+            userSfx = arg.params.at(0);
+        }
+        if (auto arg = cmdLine.check("-imusic", 1))
+        {
+            userMusic = arg.params.at(0);
+        }
+        if (auto arg = cmdLine.check("-icd", 1))
+        {
+            userCD = arg.params.at(0);
+        }
+
+        // Activate the user's preferred interfaces.
+        {
+            AudioDriver &driver = driverById(initDriverIfNeeded(userSfx));
+            if (!driver.hasSfx())
+            {
+                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                            "' does not provide an SFX interface");
+            }
+            addPrimaryInterface(AUDIO_ISFX, &driver.iSfx());
+        }
+        {
+            AudioDriver &driver = driverById(initDriverIfNeeded(userMusic));
+            if (!driver.hasMusic())
+            {
+                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                            "' does not provide a Music interface");
+            }
+            addPrimaryInterface(AUDIO_IMUSIC, &driver.iMusic());
+        }
+        {
+            AudioDriver &driver = driverById(initDriverIfNeeded(userCD));
+            if (!driver.hasCd())
+            {
+                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                            "' does not provide a CD interface");
+            }
+            addPrimaryInterface(AUDIO_ICD, &driver.iCd());
+        }
+
+#if 0
         for(dint p = 1; p < cmdLine.count() - 1; ++p)
         {
             if(!cmdLine.isOption(p)) continue;
@@ -474,6 +544,7 @@ DENG2_PIMPL(System)
                 continue;
             }
         }
+#endif
 
         // Let the music driver(s) know of the primary sfx interface, in case they
         // want to play audio through it.
