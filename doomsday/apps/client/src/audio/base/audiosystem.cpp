@@ -1,6 +1,6 @@
-/** @file system.cpp  Audio subsystem module.
+/** @file audiosystem.cpp  Audio subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au> *
  *
@@ -20,7 +20,7 @@
 
 #define DENG_NO_API_MACROS_SOUND
 
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 
 #include "dd_share.h"      // SF_* flags
 #include "dd_main.h"       // ::isDedicated
@@ -92,8 +92,6 @@ dint sfxRate = 11025;
 DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
 #endif
-
-namespace audio {
 
 static AudioSystem *theAudioSystem;
 
@@ -200,7 +198,7 @@ static bool recognizeMus(de::File1 &file)
 DENG2_PIMPL(AudioSystem)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(SfxSampleCache, SampleRemove)
+, DENG2_OBSERVES(audio::SfxSampleCache, SampleRemove)
 #endif
 {
 #ifdef __CLIENT__
@@ -666,10 +664,10 @@ DENG2_PIMPL(AudioSystem)
     bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
     mobj_t *sfxListener = nullptr;
     world::Subsector *sfxListenerSubsector = nullptr;
-    std::unique_ptr<SfxChannels> sfxChannels;
+    std::unique_ptr<audio::SfxChannels> sfxChannels;
 #endif
 
-    SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
+    audio::SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
     LogicSoundHash sfxLogicHash;
     duint sfxLogicLastPurge = 0;
     bool sfxLogicOneSoundPerEmitter = false;  ///< set at the start of the frame
@@ -1063,7 +1061,7 @@ DENG2_PIMPL(AudioSystem)
         if(!sfxAvail) return;
 
         self.allowSfxRefresh(false);
-        sfxChannels->forAll([this, &id] (SfxChannel &ch)
+        sfxChannels->forAll([this, &id] (audio::SfxChannel &ch)
         {
             if(ch.hasBuffer())
             {
@@ -1085,7 +1083,7 @@ DENG2_PIMPL(AudioSystem)
     void destroySfxChannels()
     {
         self.allowSfxRefresh(false);
-        sfxChannels->forAll([this] (SfxChannel &ch)
+        sfxChannels->forAll([this] (audio::SfxChannel &ch)
         {
             ch.stop();
             if(ch.hasBuffer())
@@ -1112,7 +1110,7 @@ DENG2_PIMPL(AudioSystem)
 
         // Create sample buffers for the channels.
         dint idx = 0;
-        sfxChannels->forAll([this, &num2D, &bits, &rate, &idx] (SfxChannel &ch)
+        sfxChannels->forAll([this, &num2D, &bits, &rate, &idx] (audio::SfxChannel &ch)
         {
             ch.setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
             if(!ch.hasBuffer())
@@ -1136,7 +1134,7 @@ DENG2_PIMPL(AudioSystem)
         }
 
         // Allocate and init the channels.
-        sfxChannels.reset(new SfxChannels(numChannels));
+        sfxChannels.reset(new audio::SfxChannels(numChannels));
         createSfxChannels();
     }
 
@@ -1163,7 +1161,7 @@ DENG2_PIMPL(AudioSystem)
         if(!prios) return;
 
         dint idx = 0;
-        sfxChannels->forAll([&prios, &idx] (SfxChannel &ch)
+        sfxChannels->forAll([&prios, &idx] (audio::SfxChannel &ch)
         {
             prios[idx++] = ch.priority();
             return LoopContinue;
@@ -1470,21 +1468,21 @@ DENG2_PIMPL(AudioSystem)
     }
 };
 
-System::System() : d(new Impl(this))
+AudioSystem::AudioSystem() : d(new Impl(this))
 {}
 
-AudioSystem &System::get()
+AudioSystem &AudioSystem::get()
 {
     DENG2_ASSERT(theAudioSystem);
     return *theAudioSystem;
 }
 
-void System::timeChanged(Clock const &)
+void AudioSystem::timeChanged(Clock const &)
 {
     // Nothing to do.
 }
 
-String System::description() const
+String AudioSystem::description() const
 {
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << (B) << "\n"
 
@@ -1529,7 +1527,7 @@ String System::description() const
 }
 
 #ifdef __CLIENT__
-void System::reset()
+void AudioSystem::reset()
 {
     LOG_AS("audio::System");
     LOG_AUDIO_VERBOSE("Reseting...");
@@ -1539,7 +1537,7 @@ void System::reset()
         d->sfxListenerSubsector = nullptr;
 
         // Stop all channels.
-        d->sfxChannels->forAll([] (SfxChannel &ch)
+        d->sfxChannels->forAll([] (audio::SfxChannel &ch)
         {
             ch.stop();
             return LoopContinue;
@@ -1556,7 +1554,7 @@ void System::reset()
 /**
  * @todo Do this in timeChanged()
  */
-void System::startFrame()
+void AudioSystem::startFrame()
 {
     LOG_AS("audio::System");
 
@@ -1595,7 +1593,7 @@ void System::startFrame()
 }
 
 #ifdef __CLIENT__
-void System::endFrame()
+void AudioSystem::endFrame()
 {
     LOG_AS("audio::System");
 
@@ -1609,7 +1607,7 @@ void System::endFrame()
             d->sfxListener = S_GetListenerMobj();
 
             // Update channels.
-            d->sfxChannels->forAll([] (SfxChannel &ch)
+            d->sfxChannels->forAll([] (audio::SfxChannel &ch)
             {
                 if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
                 {
@@ -1628,7 +1626,7 @@ void System::endFrame()
 }
 #endif
 
-void System::initPlayback()
+void AudioSystem::initPlayback()
 {
     LOG_AS("audio::System");
 
@@ -1679,7 +1677,7 @@ void System::initPlayback()
 
 #ifdef __CLIENT__
 
-void System::deinitPlayback()
+void AudioSystem::deinitPlayback()
 {
     LOG_AS("audio::System");
 
@@ -1689,7 +1687,7 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
-String System::musicSourceAsText(MusicSource source)  // static
+String AudioSystem::musicSourceAsText(MusicSource source)  // static
 {
     static char const *sourceNames[3] = {
         /* MUSP_MUS */ "MUS lumps",
@@ -1701,12 +1699,12 @@ String System::musicSourceAsText(MusicSource source)  // static
     return "(invalid)";
 }
 
-bool System::musicIsAvailable() const
+bool AudioSystem::musicIsAvailable() const
 {
     return d->musAvail;
 }
 
-bool System::musicIsPlaying() const
+bool AudioSystem::musicIsPlaying() const
 {
     //LOG_AS("audio::System");
     return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
@@ -1716,7 +1714,7 @@ bool System::musicIsPlaying() const
     });
 }
 
-void System::stopMusic()
+void AudioSystem::stopMusic()
 {
     if(!d->musAvail) return;
 
@@ -1732,7 +1730,7 @@ void System::stopMusic()
     });
 }
 
-void System::pauseMusic(bool doPause)
+void AudioSystem::pauseMusic(bool doPause)
 {
     if(!d->musAvail) return;
 
@@ -1748,12 +1746,12 @@ void System::pauseMusic(bool doPause)
     });
 }
 
-bool System::musicIsPaused() const
+bool AudioSystem::musicIsPaused() const
 {
     return d->musPaused;
 }
 
-dint System::playMusic(Record const &definition, bool looped)
+dint AudioSystem::playMusic(Record const &definition, bool looped)
 {
     if(!d->musAvail) return false;
 
@@ -1835,28 +1833,28 @@ dint System::playMusic(Record const &definition, bool looped)
     return false;
 }
 
-dint System::playMusicLump(lumpnum_t lumpNum, bool looped)
+dint AudioSystem::playMusicLump(lumpnum_t lumpNum, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
     return d->playMusicLump(lumpNum, looped);
 }
 
-dint System::playMusicFile(String const &filePath, bool looped)
+dint AudioSystem::playMusicFile(String const &filePath, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
     return d->playMusicFile(filePath, looped);
 }
 
-dint System::playMusicCDTrack(dint cdTrack, bool looped)
+dint AudioSystem::playMusicCDTrack(dint cdTrack, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
     return d->playMusicCDTrack(cdTrack, looped);
 }
 
-void System::updateMusicMidiFont()
+void AudioSystem::updateMusicMidiFont()
 {
     LOG_AS("audio::System");
 
@@ -1872,12 +1870,12 @@ void System::updateMusicMidiFont()
     d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
 }
 
-bool System::sfxIsAvailable() const
+bool AudioSystem::sfxIsAvailable() const
 {
     return d->sfxAvail;
 }
 
-bool System::mustUpsampleToSfxRate() const
+bool AudioSystem::mustUpsampleToSfxRate() const
 {
     dint anyRateAccepted = 0;
     if(sfx()->Getv)
@@ -1887,19 +1885,19 @@ bool System::mustUpsampleToSfxRate() const
     return (anyRateAccepted ? false : true);
 }
 
-mobj_t *System::sfxListener()
+mobj_t *AudioSystem::sfxListener()
 {
     return d->sfxListener;
 }
 
-void System::setSfxListener(mobj_t *newListener)
+void AudioSystem::setSfxListener(mobj_t *newListener)
 {
     d->sfxListener = newListener;
 }
 
 #endif  // __CLIENT__
 
-bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
+bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
     //LOG_AS("audio::System");
 
@@ -1938,7 +1936,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
     // being played currently.
     if(!d->sfxAvail) return false;
 
-    return d->sfxChannels->forAll([&id, &emitter] (SfxChannel &ch)
+    return d->sfxChannels->forAll([&id, &emitter] (audio::SfxChannel &ch)
     {
         if(ch.hasSample())
         {
@@ -1968,11 +1966,11 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 
 #ifdef __CLIENT__
 
-void System::stopSoundGroup(dint group, mobj_t *emitter)
+void AudioSystem::stopSoundGroup(dint group, mobj_t *emitter)
 {
     if(!d->sfxAvail) return;
     LOG_AS("audio::System");
-    d->sfxChannels->forAll([this, &group, &emitter] (SfxChannel &ch)
+    d->sfxChannels->forAll([this, &group, &emitter] (audio::SfxChannel &ch)
     {
         if(ch.hasBuffer())
         {
@@ -1988,13 +1986,13 @@ void System::stopSoundGroup(dint group, mobj_t *emitter)
     });
 }
 
-dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
+dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
 {
     if(!d->sfxAvail) return false;
 
     LOG_AS("audio::System");
     dint stopCount = 0;
-    d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (SfxChannel &ch)
+    d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (audio::SfxChannel &ch)
     {
         if(!ch.hasBuffer()) return LoopContinue;
         sfxbuffer_t &sbuf = ch.buffer();
@@ -2037,7 +2035,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
 
 #endif  // __CLIENT__
 
-void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
+void AudioSystem::stopSound(dint soundId, mobj_t *emitter, dint flags)
 {
     LOG_AS("audio::System");
 
@@ -2079,7 +2077,7 @@ void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
 }
 
 #ifdef __CLIENT__
-dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
+dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
     coord_t *fixedOrigin, dint flags)
 {
     DENG2_ASSERT(sample);
@@ -2127,9 +2125,9 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
             // Stop the lowest priority sound of the playing instances, again
             // noting sounds that are more important than us.
             dint idx = 0;
-            SfxChannel *selCh = nullptr;
+            audio::SfxChannel *selCh = nullptr;
             d->sfxChannels->forAll([&sample, &myPrio, &channelPrios,
-                                    &selCh, &lowPrio, &idx] (SfxChannel &ch)
+                                    &selCh, &lowPrio, &idx] (audio::SfxChannel &ch)
             {
                 dfloat const chPriority = channelPrios[idx++];
 
@@ -2179,8 +2177,8 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
 
     // First look through the stopped channels. At this stage we're very picky:
     // only the perfect choice will be good enough.
-    SfxChannel *selCh = d->sfxChannels->tryFindVacant(play3D, sample->bytesPer,
-                                                      sample->rate, sample->id);
+    audio::SfxChannel *selCh = d->sfxChannels->tryFindVacant(play3D, sample->bytesPer,
+                                                             sample->rate, sample->id);
 
     if(!selCh)
     {
@@ -2207,10 +2205,10 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
         }
 
         // All channels with a priority less than or equal to ours can be stopped.
-        SfxChannel *prioCh = nullptr;
+        audio::SfxChannel *prioCh = nullptr;
         dint idx = 0;
         d->sfxChannels->forAll([&play3D, &myPrio, &channelPrios,
-                                &selCh, &prioCh, &lowPrio, &idx] (SfxChannel &ch)
+                                &selCh, &prioCh, &lowPrio, &idx] (audio::SfxChannel &ch)
         {
             dfloat const chPriority = channelPrios[idx++];
 
@@ -2340,7 +2338,7 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
     return true;
 }
 
-dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
+dfloat AudioSystem::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
     dint startTic)
 {
     // In five seconds all priority of a sound is gone.
@@ -2367,7 +2365,7 @@ dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat v
     return 1000 * volume - Mobj_ApproxPointDistance(d->sfxListener, origin) / 2 - timeoff;
 }
 
-audiointerface_sfx_generic_t *System::sfx() const
+audiointerface_sfx_generic_t *AudioSystem::sfx() const
 {
     // The primary interface is the first one.
     audiointerface_sfx_generic_t *found = nullptr;
@@ -2379,7 +2377,7 @@ audiointerface_sfx_generic_t *System::sfx() const
     return found;
 }
 
-audiointerface_cd_t *System::cd() const
+audiointerface_cd_t *AudioSystem::cd() const
 {
     // The primary interface is the first one.
     audiointerface_cd_t *found = nullptr;
@@ -2391,7 +2389,7 @@ audiointerface_cd_t *System::cd() const
     return found;
 }
 
-audiodriverid_t System::toDriverId(AudioDriver const *driver) const
+audiodriverid_t AudioSystem::toDriverId(AudioDriver const *driver) const
 {
     if(driver && driver >= &d->drivers[0] && driver <= &d->drivers[AUDIODRIVER_COUNT])
     {
@@ -2401,24 +2399,24 @@ audiodriverid_t System::toDriverId(AudioDriver const *driver) const
 }
 #endif
 
-SfxSampleCache /*const*/ &System::sfxSampleCache() const
+audio::SfxSampleCache /*const*/ &AudioSystem::sfxSampleCache() const
 {
     return d->sfxSampleCache;
 }
 
 #ifdef __CLIENT__
-bool System::hasSfxChannels()
+bool AudioSystem::hasSfxChannels()
 {
     return bool( d->sfxChannels );
 }
 
-SfxChannels &System::sfxChannels() const
+audio::SfxChannels &AudioSystem::sfxChannels() const
 {
     DENG2_ASSERT(d->sfxChannels.get() != nullptr);
     return *d->sfxChannels;
 }
 
-void System::allowSfxRefresh(bool allow)
+void AudioSystem::allowSfxRefresh(bool allow)
 {
     if(!d->sfxAvail) return;
     if(allowRefresh == allow) return; // No change.
@@ -2438,7 +2436,7 @@ void System::allowSfxRefresh(bool allow)
     // Sys_SuspendThread(::refreshHandle, !allow);
 }
 
-void System::requestSfxListenerUpdate()
+void AudioSystem::requestSfxListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
     d->sfxListenerSubsector = nullptr;
@@ -2446,12 +2444,12 @@ void System::requestSfxListenerUpdate()
 
 #endif  // __CLIENT__
 
-void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
+void AudioSystem::startLogical(dint soundIdAndFlags, mobj_t *emitter)
 {
     d->sfxStartLogical(soundIdAndFlags, emitter);
 }
 
-void System::aboutToUnloadMap()
+void AudioSystem::aboutToUnloadMap()
 {
     LOG_AS("audio::System");
     LOG_AUDIO_VERBOSE("Cleaning for map unload...");
@@ -2460,7 +2458,7 @@ void System::aboutToUnloadMap()
 
 #ifdef __CLIENT__
     // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
-    d->sfxChannels->forAll([] (SfxChannel &ch)
+    d->sfxChannels->forAll([] (audio::SfxChannel &ch)
     {
         if(ch.emitter())
         {
@@ -2476,7 +2474,7 @@ void System::aboutToUnloadMap()
 }
 
 #ifdef __CLIENT__
-void System::worldMapChanged()
+void AudioSystem::worldMapChanged()
 {
     // Update who is listening now.
     setSfxListener(S_GetListenerMobj());
@@ -2628,7 +2626,7 @@ static void musicMidiFontChanged()
 }
 #endif
 
-void System::consoleRegister()  // static
+void AudioSystem::consoleRegister()  // static
 {
     // Sound effects:
 #ifdef __CLIENT__
@@ -2656,10 +2654,6 @@ void System::consoleRegister()  // static
     C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);
 #endif
 }
-
-}  // namespace audio
-
-using namespace audio;
 
 // Music: ---------------------------------------------------------------------------
 

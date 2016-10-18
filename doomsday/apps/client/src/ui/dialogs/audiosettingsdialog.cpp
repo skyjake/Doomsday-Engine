@@ -24,7 +24,7 @@
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarnativepathwidget.h"
 
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 
 #include "clientapp.h"
 #include "ConfigProfiles"

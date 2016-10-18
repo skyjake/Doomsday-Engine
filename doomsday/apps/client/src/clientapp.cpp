@@ -46,7 +46,7 @@
 
 #include <doomsday/console/exec.h>
 
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 #include "busyrunner.h"
 #include "clientapp.h"
 #include "clientplayer.h"
