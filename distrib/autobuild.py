@@ -286,7 +286,7 @@ def rebuild_apt_repository():
         # Never mind.
         pass
     os.system("gpg --output Release.gpg -ba Release")
-    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
+    os.system("~/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
 
 
 def write_html_page(outPath, title, content):
@@ -486,7 +486,7 @@ def generate_apidoc():
 def generate_wiki():
     """Automatically generate wiki pages."""
     git_pull()
-    sys.path += ['/Users/jaakko/Dropbox/Scripts']
+    sys.path += ['/Users/jaakko/Scripts']
     import dew
     dew.login()
     # Today's event data.

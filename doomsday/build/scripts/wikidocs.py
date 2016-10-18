@@ -2,7 +2,7 @@ import sys, os, subprocess
 
 isDryRun = '--dry-run' in sys.argv
 
-sys.path += ['/Users/jaakko/Dropbox/Scripts']
+sys.path += ['/Users/jaakko/Scripts']
 import dew
 
 comment     = 'Generated from Amethyst source by wikidocs.py'
