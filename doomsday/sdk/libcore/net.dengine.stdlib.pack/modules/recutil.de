@@ -24,7 +24,8 @@ def copyMissingMembers(src, dest)
     # the missing members to 'dest'. Private keys in 'src' are ignored.
     # - src:  Source record.
     # - dest: Destination record.
-    
+        
+    if typeof(dest) != 'Record': return  # Hmm?
     srcSub = subrecords(src)
     
     for name in dir(src)
