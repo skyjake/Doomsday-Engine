@@ -26,7 +26,7 @@
 #include <doomsday/resource/resources.h>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 #include "world/clientserverworld.h"
 
 /**
@@ -53,12 +53,12 @@ protected:
     void unloadGame(GameProfile const &upcomingGame) override;
 
 public:
-    static ServerApp &app();
-    static ServerSystem &serverSystem();
-    static InFineSystem &infineSystem();
-    static audio::System &audioSystem();
-    static Resources &resources();
-    static ClientServerWorld &world();
+    static ServerApp &          app();
+    static ServerSystem &       serverSystem();
+    static InFineSystem &       infineSystem();
+    static AudioSystem &        audioSystem();
+    static Resources &          resources();
+    static ClientServerWorld &  world();
 
 protected:
     void reset() override;

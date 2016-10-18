@@ -22,22 +22,17 @@
 
 #include "dd_types.h"  // lumpnum_t
 #include "api_sound.h"
-#ifdef __CLIENT__
-#  include "api_audiod_sfx.h"  // sfxsample_t
-
-#  include "audio/audiodriver.h"
-#endif
 #include "audio/s_cache.h"
 #ifdef __CLIENT__
+#  include "api_audiod_sfx.h"  // sfxsample_t
+#  include "audio/audiodriver.h"
 #  include "audio/sfxchannel.h"
-#  include <de/Record>
-#  include <de/String>
 #endif
+#include <de/Record>
+#include <de/String>
 #include <de/System>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
-
-namespace audio {
 
 /**
  * Client audio subsystem.
@@ -46,10 +41,10 @@ namespace audio {
  *
  * @ingroup audio
  */
-class System : public de::System
+class AudioSystem : public de::System
 {
 public:
-    static System &get();
+    static AudioSystem &get();
 
     /**
      * Register the console commands and variables of this module.
@@ -57,7 +52,7 @@ public:
     static void consoleRegister();
 
 public:
-    System();
+    AudioSystem();
 
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
@@ -246,7 +241,7 @@ public:  /// @todo make private:
     /**
      * Provides mutable access to the sound sample cache (waveforms).
      */
-    SfxSampleCache /*const*/ &sfxSampleCache() const;
+    audio::SfxSampleCache /*const*/ &sfxSampleCache() const;
 
 #ifdef __CLIENT__
     /// @todo refactor away.
@@ -255,7 +250,7 @@ public:  /// @todo make private:
     /**
      * Provides mutable access to the sound channels.
      */
-    SfxChannels &sfxChannels() const;
+    audio::SfxChannels &sfxChannels() const;
 
     /**
      * Enabling refresh is simple: the refresh thread is resumed. When
@@ -282,8 +277,6 @@ public:  /// @todo make private:
 private:
     DENG2_PRIVATE(d)
 };
-
-}  // namespace audio
 
 // Music: ---------------------------------------------------------------------------
 

@@ -30,9 +30,9 @@
 #include <doomsday/Games>
 
 #ifdef __CLIENT__
-#include "resource/clientresources.h"
+#  include "resource/clientresources.h"
 #endif
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 #include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
@@ -57,7 +57,7 @@ DENG2_NORETURN void App_Error(char const *error, ...);
 DENG2_NORETURN void App_AbnormalShutdown(char const *error);
 
 /// Returns the application's global audio::System.
-audio::System &App_AudioSystem();
+AudioSystem &App_AudioSystem();
 
 /// Returns the application's global InFineSystem.
 InFineSystem &App_InFineSystem();

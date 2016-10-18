@@ -95,7 +95,7 @@ DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 
 namespace audio {
 
-static audio::System *theAudioSystem;
+static AudioSystem *theAudioSystem;
 
 static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 #ifdef __CLIENT__
@@ -120,7 +120,7 @@ static dfloat sfxReverbStrength = 0.5f;
 
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
-static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
+static AudioSystem::MusicSource musSourcePreference = AudioSystem::MUSP_EXT;
 
 /**
  * This is a high-priority thread that periodically checks if the channels need
@@ -197,7 +197,7 @@ static bool recognizeMus(de::File1 &file)
 }
 #endif
 
-DENG2_PIMPL(System)
+DENG2_PIMPL(AudioSystem)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(SfxSampleCache, SampleRemove)
@@ -419,7 +419,7 @@ DENG2_PIMPL(System)
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             AudioInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
-            ifs.i.any = &::audiodQuickTimeMusic;
+            ifs.i.any = &audiodQuickTimeMusic;
             activeInterfaces << ifs;  // a copy is made
         }
 #endif
@@ -1473,7 +1473,7 @@ DENG2_PIMPL(System)
 System::System() : d(new Impl(this))
 {}
 
-audio::System &System::get()
+AudioSystem &System::get()
 {
     DENG2_ASSERT(theAudioSystem);
     return *theAudioSystem;

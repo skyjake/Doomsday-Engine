@@ -26,7 +26,7 @@ deng_merge_sources (server src/server/*.cpp)
 # TODO: Get rid of these, shared code should be in libdoomsday.
 set (src ../client)
 set (SHARED_WITH_CLIENT
-    ${src}/include/audio/system.h
+    ${src}/include/audio/audiosystem.h
     ${src}/include/audio/s_cache.h
     ${src}/include/audio/s_environ.h
     ${src}/include/con_config.h

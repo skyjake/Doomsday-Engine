@@ -174,9 +174,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
         auto *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
 
         d->musicSource->items()
-                << new ChoiceItem(tr("MUS lumps"),      ::audio::System::MUSP_MUS)
-                << new ChoiceItem(tr("External files"), ::audio::System::MUSP_EXT)
-                << new ChoiceItem(tr("CD"),             ::audio::System::MUSP_CD);
+                << new ChoiceItem(tr("MUS lumps"),      AudioSystem::MUSP_MUS)
+                << new ChoiceItem(tr("External files"), AudioSystem::MUSP_EXT)
+                << new ChoiceItem(tr("CD"),             AudioSystem::MUSP_CD);
 
         auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
 

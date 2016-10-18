@@ -594,7 +594,7 @@ void App_AbnormalShutdown(char const *message)
     exit(1);
 }
 
-::audio::System &App_AudioSystem()
+AudioSystem &App_AudioSystem()
 {
     if (App::appExists())
     {
@@ -2312,7 +2312,7 @@ void DD_ConsoleRegister()
     Con_Register();
     Games::consoleRegister();
     DH_Register();
-    ::audio::System::consoleRegister();
+    AudioSystem::consoleRegister();
 
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);

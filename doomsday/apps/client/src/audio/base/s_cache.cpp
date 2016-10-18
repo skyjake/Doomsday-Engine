@@ -22,7 +22,7 @@
 
 #include "dd_main.h"  // App_AudioSystem()
 #include "def_main.h"  // Def_Get*()
-#include "audio/system.h"
+#include "audio/audiosystem.h"
 
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>

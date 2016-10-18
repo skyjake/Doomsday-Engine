@@ -24,6 +24,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <QUrl>
 
+class AudioSystem;
 class BusyRunner;
 class ClientPlayer;
 class ClientResources;
@@ -35,8 +36,6 @@ class InputSystem;
 class RenderSystem;
 class ServerLink;
 class Updater;
-
-namespace audio { class System; }
 
 /**
  * The client application.
@@ -86,7 +85,7 @@ public:
     static InFineSystem &       infineSystem();
     static InputSystem &        inputSystem();
     static ClientWindowSystem & windowSystem();
-    static ::audio::System &    audioSystem();
+    static AudioSystem &        audioSystem();
     static RenderSystem &       renderSystem();
     static ClientResources &    resources();
     static ClientServerWorld &  world();

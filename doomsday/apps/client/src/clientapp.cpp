@@ -150,7 +150,7 @@ DENG2_PIMPL(ClientApp)
     ConfigProfiles uiSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    ::audio::System *audioSys;
+    AudioSystem *audioSys;
     RenderSystem *rendSys;
     ClientResources *resources;
     ClientWindowSystem *winSys;
@@ -444,7 +444,7 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::IntCVar,        "sound-16bit",         0)
                 .define(Prof::IntCVar,        "sound-3d",            0)
                 .define(Prof::IntCVar,        "sound-overlap-stop",  0)
-                .define(Prof::IntCVar,        "music-source",        ::audio::System::MUSP_EXT)
+                .define(Prof::IntCVar,        "music-source",        AudioSystem::MUSP_EXT)
                 .define(Prof::StringCVar,     "music-soundfont",     "")
                 .define(Prof::ConfigVariable, "audio.soundPlugin")
                 .define(Prof::ConfigVariable, "audio.musicPlugin")
@@ -579,7 +579,7 @@ void ClientApp::initialize()
     addSystem(*d->rendSys);
 
     // Create the audio system.
-    d->audioSys = new ::audio::System;
+    d->audioSys = new AudioSystem;
     addSystem(*d->audioSys);
 
     // Create the window system.
@@ -790,7 +790,7 @@ bool ClientApp::hasRenderSystem()
     return ClientApp::app().d->rendSys != nullptr;
 }
 
-::audio::System &ClientApp::audioSystem()
+AudioSystem &ClientApp::audioSystem()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(hasAudioSystem());
