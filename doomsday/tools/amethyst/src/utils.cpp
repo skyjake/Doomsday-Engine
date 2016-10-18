@@ -722,7 +722,7 @@ ArgType interpretArgType(const String& types, int index)
     return ArgShard;
 }
 
-static struct { const char *condition; int flag; } gemFlags[] =
+static struct { const char *condition; uint32_t flag; } gemFlags[] =
 {
     { "em", GSF_EMPHASIZE },
     { "def", GSF_DEFINITION },
@@ -767,9 +767,9 @@ int styleForName(const String& name)
     return 0;
 }
 
-String nameForStyle(int flag)
+String nameForStyle(uint32_t flag)
 {
-    for (int i = 0; gemFlags[i].flag; i++)
+    for (uint32_t i = 0; gemFlags[i].flag; i++)
         if (flag == gemFlags[i].flag)
             return gemFlags[i].condition;
     return String();

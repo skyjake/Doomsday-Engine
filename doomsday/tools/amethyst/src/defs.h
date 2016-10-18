@@ -19,7 +19,7 @@
 #define __AMETHYST_COMMON_DEFS_H__
 
 #define VERSION_STR     "1.1.2"
-#define BUILD_STR       "Version "VERSION_STR" ("__DATE__")"
+#define BUILD_STR       "Version " VERSION_STR " (" __DATE__ ")"
 #define MAX_COLUMNS     40
 
 #define IS_BREAK(c)     ((c)=='@' || (c)=='{' || (c)=='}' || (c)=='$')

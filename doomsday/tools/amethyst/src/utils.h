@@ -57,7 +57,7 @@ String romanFilter(const String& src, bool upperCase = true);
 String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem *gem);
 ArgType interpretArgType(const String& types, int index);
 int styleForName(const String& name);
-String nameForStyle(int flag);
+String nameForStyle(uint32_t flag);
 String replace(const String& str, QChar ch, QChar withCh);
 String trimLeft(const String& str);
 String trimRight(const String& str);
