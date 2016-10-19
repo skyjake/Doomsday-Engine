@@ -208,8 +208,8 @@ def build_source_package():
     print "Creating source tarball for build %i." % ev.number()
     
     # Check distribution.
-    #system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
-    #distros = [file('/tmp/distroname', 'rt').read()]
+    system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
+    hostDistro = file('/tmp/distroname', 'rt').read()
     distros = ['xenial', 'yakkety']
 
     for distro in distros:
@@ -261,8 +261,8 @@ def build_source_package():
 
         # Figure out the name of the distribution.
         dsub = ''
-        if distro:
-            dsub = 's/) precise;/) %s;/' % distro
+        if distro != hostDistro:
+            dsub = 's/) %s;/) %s;/' % (hostDistro, distro)
         if pkgName != 'doomsday':
             if dsub: dsub += ';'
             dsub += 's/^doomsday /%s /' % pkgName
