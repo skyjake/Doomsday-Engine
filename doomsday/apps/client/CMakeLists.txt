@@ -137,6 +137,14 @@ else ()
     set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
 endif ()
 
+if (UNIX AND NOT APPLE)
+    configure_file (doomsday-engine.desktop.in net.dengine.Doomsday.desktop)
+    install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
+        DESTINATION share/applications)
+    install (FILES res/linux/deng-logo-256.png
+        DESTINATION ${DENG_INSTALL_DATA_DIR})
+endif ()
+
 if (WIN32)
     # WIX generator requires setting this manually.
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"

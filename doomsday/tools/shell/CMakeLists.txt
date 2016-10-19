@@ -44,6 +44,14 @@ deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
 deng_install_deployqt (shell)
 deng_codesign (shell)
 
+if (UNIX AND NOT APPLE)
+    configure_file (doomsday-shell.desktop.in net.dengine.Shell.desktop)
+    install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Shell.desktop
+        DESTINATION share/applications)
+    install (FILES res/linux/deng-shell-logo-256.png
+        DESTINATION ${DENG_INSTALL_DATA_DIR})
+endif ()
+
 if (WIN32)
     # WIX generator requires setting this manually.
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:shell>"
