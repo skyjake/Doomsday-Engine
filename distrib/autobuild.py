@@ -206,70 +206,74 @@ def build_source_package():
     git_pull()
     ev = builder.Event(latestAvailable=True)
     print "Creating source tarball for build %i." % ev.number()
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR))
-    remkdir('srcwork')
-    os.chdir('srcwork')
-    pkgName = 'doomsday'
-    if ev.release_type() == 'stable':
-        print 'Stable packages will be prepared'
-        system_command('deng_package_source.sh ' + ev.version_base())
-        pkgName += '-stable'
-    else:
-        system_command('deng_package_source.sh build %i %s' % (ev.number(), 
-                                                               ev.version_base()))
-    for fn in os.listdir('.'):
-        if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz' and ev.version_base() in fn:
-            remote_copy(fn, ev.file_path(fn))
-            break
-
-    # Check distribution.
-    system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
-    distro = file('/tmp/distroname', 'rt').read()
-
-    # Create a source Debian package and upload it to Launchpad.
-    pkgVer = '%s.%i+%s' % (ev.version_base(), ev.number(), distro)
-    pkgDir = pkgName + '-%s' % pkgVer
-
-    print "Extracting", fn
-    system_command('tar xzf %s' % fn)
-    print "Renaming", fn[:-7], 'to', pkgDir + '.orig'
-    os.rename(fn[:-7], pkgDir + '.orig')
-
-    origName = pkgName + '_%s' % ev.version_base() + '.orig.tar.gz'
-    print "Symlink to", origName
-    system_command('ln %s %s' % (fn, origName))
-
-    print "Extracting", fn
-    system_command('tar xzf %s' % fn)
-    print "Renaming", fn[:-7], 'to', pkgDir
-    os.rename(fn[:-7], pkgDir)
-    os.chdir(pkgDir)
-    system_command('echo "" | dh_make --yes -s -c gpl2 --file ../%s' % fn)
-    os.chdir('debian')
-    for fn in os.listdir('.'):
-        if fn[-3:].lower() == '.ex': os.remove(fn)
-    os.remove('README.Debian')
-    os.remove('README.source')
     
-    def gen_changelog(src, dst, extraSub=''):
-        system_command("sed 's/%s-build%i/%s/;%s' %s > %s" % (
-                ev.version_base(), ev.number(), pkgVer, extraSub, src, dst))
+    # Check distribution.
+    #system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
+    #distros = [file('/tmp/distroname', 'rt').read()]
+    distros = ['xenial', 'yakkety']
 
-    # Figure out the name of the distribution.
-    dsub = ''
-    if distro:
-        dsub = 's/) precise;/) %s;/' % distro
-    if pkgName != 'doomsday':
-        if dsub: dsub += ';'
-        dsub += 's/^doomsday /%s /' % pkgName
+    for distro in distros:
+        os.chdir(os.path.join(builder.config.DISTRIB_DIR))
+        remkdir('srcwork')
+        os.chdir('srcwork')
+    
+        pkgName = 'doomsday'
+        if ev.release_type() == 'stable':
+            print 'Stable packages will be prepared'
+            system_command('deng_package_source.sh ' + ev.version_base())
+            pkgName += '-stable'
+        else:
+            system_command('deng_package_source.sh build %i %s' % (ev.number(), 
+                                                                   ev.version_base()))
+        for fn in os.listdir('.'):
+            if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz' and ev.version_base() in fn:
+                remote_copy(fn, ev.file_path(fn))
+                break
 
-    gen_changelog('../../../debian/changelog', 'changelog', dsub)
-    system_command("sed 's/${Arch}/i386 amd64/;s/${Package}/%s/' ../../../debian/control.template > control" % pkgName)
-    system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
-    os.chdir('..')
-    system_command('debuild -S')
-    os.chdir('..')
-    system_command('dput ppa:sjke/doomsday %s_%s_source.changes' % (pkgName, pkgVer))
+        # Create a source Debian package and upload it to Launchpad.
+        pkgVer = '%s.%i+%s' % (ev.version_base(), ev.number(), distro)
+        pkgDir = pkgName + '-%s' % pkgVer
+
+        print "Extracting", fn
+        system_command('tar xzf %s' % fn)
+        print "Renaming", fn[:-7], 'to', pkgDir + '.orig'
+        os.rename(fn[:-7], pkgDir + '.orig')
+
+        origName = pkgName + '_%s' % ev.version_base() + '.orig.tar.gz'
+        print "Symlink to", origName
+        system_command('ln %s %s' % (fn, origName))
+
+        print "Extracting", fn
+        system_command('tar xzf %s' % fn)
+        print "Renaming", fn[:-7], 'to', pkgDir
+        os.rename(fn[:-7], pkgDir)
+        os.chdir(pkgDir)
+        system_command('echo "" | dh_make --yes -s -c gpl2 --file ../%s' % fn)
+        os.chdir('debian')
+        for fn in os.listdir('.'):
+            if fn[-3:].lower() == '.ex': os.remove(fn)
+        os.remove('README.Debian')
+        os.remove('README.source')
+    
+        def gen_changelog(src, dst, extraSub=''):
+            system_command("sed 's/%s-build%i/%s/;%s' %s > %s" % (
+                    ev.version_base(), ev.number(), pkgVer, extraSub, src, dst))
+
+        # Figure out the name of the distribution.
+        dsub = ''
+        if distro:
+            dsub = 's/) precise;/) %s;/' % distro
+        if pkgName != 'doomsday':
+            if dsub: dsub += ';'
+            dsub += 's/^doomsday /%s /' % pkgName
+
+        gen_changelog('../../../debian/changelog', 'changelog', dsub)
+        system_command("sed 's/${Arch}/i386 amd64/;s/${Package}/%s/' ../../../debian/control.template > control" % pkgName)
+        system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
+        os.chdir('..')
+        system_command('debuild -S')
+        os.chdir('..')
+        system_command('dput ppa:sjke/doomsday %s_%s_source.changes' % (pkgName, pkgVer))
 
 
 def rebuild_apt_repository():
