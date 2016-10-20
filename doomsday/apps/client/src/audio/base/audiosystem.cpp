@@ -469,30 +469,30 @@ DENG2_PIMPL(AudioSystem)
         // Activate the user's preferred interfaces.
         {
             AudioDriver &driver = driverById(initDriverIfNeeded(userSfx));
-            if (!driver.hasSfx())
+            if (driver.hasSfx())
             {
-                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
-                            "' does not provide an SFX interface");
+                addPrimaryInterface(AUDIO_ISFX, &driver.iSfx());
+                /*throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                           "' does not provide an SFX interface");*/
             }
-            addPrimaryInterface(AUDIO_ISFX, &driver.iSfx());
         }
         {
             AudioDriver &driver = driverById(initDriverIfNeeded(userMusic));
-            if (!driver.hasMusic())
+            if (driver.hasMusic())
             {
-                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
-                            "' does not provide a Music interface");
+                addPrimaryInterface(AUDIO_IMUSIC, &driver.iMusic());
+                /*throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                           "' does not provide a Music interface");*/
             }
-            addPrimaryInterface(AUDIO_IMUSIC, &driver.iMusic());
         }
         {
             AudioDriver &driver = driverById(initDriverIfNeeded(userCD));
-            if (!driver.hasCd())
+            if (driver.hasCd())
             {
-                throw Error("selectInterfaces", "Audio driver '" + driver.name() +
-                            "' does not provide a CD interface");
+                addPrimaryInterface(AUDIO_ICD, &driver.iCd());
+                /*throw Error("selectInterfaces", "Audio driver '" + driver.name() +
+                            "' does not provide a CD interface");*/
             }
-            addPrimaryInterface(AUDIO_ICD, &driver.iCd());
         }
 
 #if 0
