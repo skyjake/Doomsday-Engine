@@ -12,3 +12,10 @@ add_definitions (
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
     -DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
 )
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+    # The tree FRE optimization causes crashes with GCC 6 (Yakkety).
+    append_unique (CMAKE_CXX_FLAGS_RELEASE        -fno-tree-fre)
+    append_unique (CMAKE_CXX_FLAGS_RELWITHDEBINFO -fno-tree-fre)
+    append_unique (CMAKE_CXX_FLAGS_MINSIZEREL     -fno-tree-fre)
+endif ()
