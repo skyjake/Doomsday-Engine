@@ -164,6 +164,11 @@ private:
     DENG2_PRIVATE(d)
 };
 
+#if defined (__GNUC__)
+template <>
+inline bool Player::is<Player>() const { return true; }
+#endif
+
 #endif // __cplusplus
 
 #endif // LIBDOOMSDAY_PLAYER_H

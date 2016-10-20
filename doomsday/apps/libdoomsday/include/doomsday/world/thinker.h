@@ -241,6 +241,11 @@ public:
     MemberDelegate<thid_t> id;
 };
 
+#if defined (__GNUC__)
+template <>
+inline bool Thinker::IData::is<Thinker::IData>() const { return true; }
+#endif
+
 #ifdef _MSC_VER
 // MSVC needs some hand-holding.
 template class LIBDOOMSDAY_PUBLIC Thinker::MemberDelegate<thinker_s *>;
