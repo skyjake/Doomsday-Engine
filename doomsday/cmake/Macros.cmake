@@ -470,13 +470,11 @@ macro (deng_codesign target)
             foreach (fn IN LISTS fw)
                 message (STATUS \"Signing \${fn}...\")
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-					--keychain /Users/jaakko/dengbuild.keychain 
                     -s \"${DENG_CODESIGN_APP_CERT}\" \"\${fn}\"
                 )
             endforeach (fn)
             message (STATUS \"Signing ${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
             execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-				--keychain /Users/jaakko/dengbuild.keychain 
                 --force -s \"${DENG_CODESIGN_APP_CERT}\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
