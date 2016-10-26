@@ -45,7 +45,7 @@ String DoomsdayPackage::defsPath() const
     return _pkg.objectNamespace().gets(PACKAGE_DEFS_PATH, "");
 }
 
-Uri DoomsdayPackage::loadableUri() const
+de::Uri DoomsdayPackage::loadableUri() const
 {
     return loadableUri(_pkg.file());
 }
@@ -60,13 +60,13 @@ String DoomsdayPackage::defsPath(File const &packageFile) // static
     return packageFile.objectNamespace().gets(PACKAGE_DEFS_PATH, "");
 }
 
-Uri DoomsdayPackage::loadableUri(File const &packageFile) // static
+de::Uri DoomsdayPackage::loadableUri(File const &packageFile) // static
 {
     if (NativeFile const *nativeSrc = packageFile.source()->maybeAs<NativeFile>())
     {
-        return Uri::fromNativePath(nativeSrc->nativePath());
+        return de::Uri::fromNativePath(nativeSrc->nativePath());
     }
-    return Uri();
+    return de::Uri();
 }
 
 } // namespace res
