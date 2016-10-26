@@ -30,7 +30,7 @@ namespace res {
  *
  * The static methods can be used to access the contents of unloaded package files.
  */
-class DoomsdayPackage
+class LIBDOOMSDAY_PUBLIC DoomsdayPackage
 {
 public:
     DoomsdayPackage(de::Package const &package);
