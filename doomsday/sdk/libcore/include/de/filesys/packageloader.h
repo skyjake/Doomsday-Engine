@@ -115,6 +115,8 @@ public:
      */
     LoadedPackages const &loadedPackages() const;
 
+    QList<Package *> loadedPackagesInOrder() const;
+
     FileSystem::FoundFiles loadedPackagesAsFilesInPackageOrder() const;
 
     enum IdentifierType { NonVersioned, Versioned };
@@ -125,7 +127,7 @@ public:
      *
      * @return Versioned package IDs.
      */
-    StringList loadedPackagesInOrder(IdentifierType type = Versioned) const;
+    StringList loadedPackageIdsInOrder(IdentifierType type = Versioned) const;
 
     /**
      * Retrieves a specific loaded package. The package must already be loaded

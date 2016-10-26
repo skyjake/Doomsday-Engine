@@ -212,7 +212,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         meta.add("gameRules",       self.rules().toRecord());  // Takes ownership.
 
         auto *loadedPackages = new ArrayValue;
-        for (String id : PackageLoader::get().loadedPackagesInOrder())
+        for (String id : PackageLoader::get().loadedPackageIdsInOrder())
         {
             if (SavedSession::isIncludedInSavegames(id))
             {

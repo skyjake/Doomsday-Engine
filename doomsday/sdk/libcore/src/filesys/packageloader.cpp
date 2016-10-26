@@ -471,6 +471,11 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
     return d->loaded;
 }
 
+QList<Package *> PackageLoader::loadedPackagesInOrder() const
+{
+    return d->loadedInOrder();
+}
+
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
     QList<Package *> pkgs = d->loadedInOrder();
@@ -482,7 +487,7 @@ FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
     return sorted;
 }
 
-StringList PackageLoader::loadedPackagesInOrder(IdentifierType idType) const
+StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
 {
     QList<Package *> pkgs = d->loadedInOrder();
     StringList ids;

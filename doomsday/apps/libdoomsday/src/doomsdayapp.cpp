@@ -539,7 +539,7 @@ bool DoomsdayApp::isGameLoaded()
 
 StringList DoomsdayApp::loadedPackagesIncludedInSavegames() // static
 {
-    StringList ids = PackageLoader::get().loadedPackagesInOrder();
+    StringList ids = PackageLoader::get().loadedPackageIdsInOrder();
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
@@ -666,7 +666,7 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     if (!newGame.isNull())
     {
         // Remember what was loaded beforehand.
-        d->preGamePackages = PackageLoader::get().loadedPackagesInOrder(PackageLoader::NonVersioned);
+        d->preGamePackages = PackageLoader::get().loadedPackageIdsInOrder(PackageLoader::NonVersioned);
     }
 
     profile.loadPackages();
