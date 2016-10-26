@@ -69,6 +69,7 @@
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/resources.h>
+#include <doomsday/res/DoomsdayPackage>
 #include <doomsday/res/MapManifests>
 #include <doomsday/res/Sprites>
 #include <doomsday/res/Textures>
@@ -1288,7 +1289,7 @@ static dint DD_StartupWorker(void * /*context*/)
         // Since we're loading with FS1, we need to look up the native path.
         // The data file is an interpreter in /local/wads, whose source is the native file.
         File1::tryLoad(File1::LoadAsVanillaFile,
-                       de::Uri::fromNativePath(basePack->source()->as<NativeFile>().nativePath()));
+                       res::DoomsdayPackage::loadableUri(*basePack));
     }
 
     // No more files or packages will be loaded in "startup mode" after this point.

@@ -107,7 +107,7 @@ public:
                     std::function<int (void *)> gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
-    //bool isUsingUserDir() const;
+    static bool isGameBeingChanged();
 
     bool isShuttingDown() const;
     void setShuttingDown(bool shuttingDown);

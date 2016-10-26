@@ -1269,6 +1269,15 @@ void ClientResources::initSystemTextures()
     textures().deriveAllTexturesInScheme("System");
 }
 
+void ClientResources::reloadAllResources()
+{
+    DENG2_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+
+    Resources::reloadAllResources();
+    DD_UpdateEngineState();
+}
+
 rawtex_t *ClientResources::rawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ClientResources::rawTexture");

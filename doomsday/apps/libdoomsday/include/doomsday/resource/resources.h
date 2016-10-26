@@ -77,6 +77,8 @@ public:
 
     virtual void initSystemTextures();
 
+    virtual void reloadAllResources();
+
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */

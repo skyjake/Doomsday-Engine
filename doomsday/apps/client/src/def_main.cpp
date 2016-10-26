@@ -47,6 +47,7 @@
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/animgroups.h>
 #include <doomsday/res/Bundles>
+#include <doomsday/res/DoomsdayPackage>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
 #include <doomsday/world/MaterialManifest>
@@ -618,12 +619,35 @@ static void readAllDefinitions()
         }
     }
 
+    // Definitions from loaded packages.
+    for (Package *pkg : App::packageLoader().loadedPackagesInOrder())
+    {
+        res::DoomsdayPackage ddPkg(*pkg);
+        if (ddPkg.hasDefinitions())
+        {
+            // Relative to package root.
+            Folder const &defsFolder = pkg->root().locate<Folder const>(ddPkg.defsPath());
+
+            // Read all the DED files found in this folder, in alphabetical order.
+            // Subfolders are not checked -- the DED files need to manually `Include`
+            // any files from subfolders.
+            defsFolder.forContents([] (String name, File &file)
+            {
+                if (!name.fileNameExtension().compareWithoutCase(".ded"))
+                {
+                    readDefinitionFile(file.path());
+                }
+                return LoopContinue;
+            });
+        }
+    }
+
     // Next are any definition files specified on the command line.
     for (dint p = 0; p < CommandLine_Count(); ++p)
     {
         char const *arg = CommandLine_At(p);
-        if (!CommandLine_IsMatchingAlias("-def", arg) &&
-           !CommandLine_IsMatchingAlias("-defs", arg)) continue;
+        if (!CommandLine_IsMatchingAlias("-def",  arg) &&
+            !CommandLine_IsMatchingAlias("-defs", arg)) continue;
 
         while (++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
@@ -659,7 +683,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
     // Reference to a "built-in" flaremap?
     String const &resourcePathStr = resourceUri.path().toStringRef();
     if (resourcePathStr.length() == 1 &&
-       resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
+        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
 
     res::Textures::get().defineTexture("Flaremaps", resourceUri);

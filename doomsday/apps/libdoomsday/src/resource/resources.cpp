@@ -28,9 +28,12 @@
 #include "doomsday/world/Materials"
 #include "doomsday/DoomsdayApp"
 #include "doomsday/SaveGames"
+#include "doomsday/DataBundle"
+#include "doomsday/res/DoomsdayPackage"
 
 #include <de/App>
 #include <de/CommandLine>
+#include <de/Loop>
 #include <de/PackageLoader>
 #include <de/Config>
 
@@ -78,6 +81,8 @@ static String resolveUriSymbol(String const &symbol)
 }
 
 DENG2_PIMPL(Resources)
+, DENG2_OBSERVES(PackageLoader, Load)
+, DENG2_OBSERVES(PackageLoader, Unload)
 {
     typedef QList<ResourceClass *> ResourceClasses;
 
@@ -89,12 +94,17 @@ DENG2_PIMPL(Resources)
     res::Textures       textures;
     res::AnimGroups     animGroups;
     res::Sprites        sprites;
+    LoopCallback        deferredReset;
 
     Impl(Public *i)
         : Base(i)
         , nativeSavePath(App::app().nativeHomePath() / "savegames") // default
     {
         theResources = thisPublic;
+
+        // Observe when resources need loading or unloading.
+        App::packageLoader().audienceForLoad()   += this;
+        App::packageLoader().audienceForUnload() += this;
 
         de::Uri::setResolverFunc(resolveUriSymbol);
 
@@ -127,6 +137,45 @@ DENG2_PIMPL(Resources)
         textures.clear();
 
         theResources = nullptr;
+    }
+
+    void packageLoaded(String const &packageId)
+    {
+        maybeScheduleResourceReset(App::packageLoader().package(packageId), true);
+    }
+
+    void aboutToUnloadPackage(String const &packageId)
+    {
+        maybeScheduleResourceReset(App::packageLoader().package(packageId), false);
+    }
+
+    void maybeScheduleResourceReset(res::DoomsdayPackage ddPkg, bool loading)
+    {
+        if (!DoomsdayApp::isGameLoaded() || DoomsdayApp::isGameBeingChanged())
+        {
+            // Resources will be loaded when a game is loaded, so we don't need to
+            // do anything at this time.
+            return;
+        }
+
+        bool needReset = ddPkg.hasDefinitions();
+        File const &sourceFile = ddPkg.sourceFile();
+
+        if (sourceFile.is<DataBundle>())
+        {
+            // We can try load the data file manually right now.
+            // Data files are currently loaded via FS1.
+            if (   ( loading && File1::tryLoad(File1::LoadAsCustomFile, ddPkg.loadableUri()))
+                || (!loading && File1::tryUnload(ddPkg.loadableUri())))
+            {
+                needReset = true;
+            }
+        }
+
+        if (!deferredReset && needReset)
+        {
+            deferredReset.enqueue([this] () { self.reloadAllResources(); });
+        }
     }
 };
 
@@ -171,6 +220,9 @@ void Resources::initSystemTextures()
     textures().declareSystemTexture("unknown", de::Uri("Graphics", "unknown"));
     textures().declareSystemTexture("missing", de::Uri("Graphics", "missing"));
 }
+
+void Resources::reloadAllResources()
+{}
 
 Resources &Resources::get()
 {

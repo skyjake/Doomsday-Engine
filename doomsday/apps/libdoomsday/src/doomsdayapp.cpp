@@ -76,6 +76,7 @@ DENG2_PIMPL(DoomsdayApp)
     std::string ddBasePath; // Doomsday root directory is at...?
 
     bool initialized = false;
+    bool gameBeingChanged = false;
     bool shuttingDown = false;
     Plugins plugins;
     Games games;
@@ -697,6 +698,8 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
         }
     }
 
+    d->gameBeingChanged = true;
+
     // The current game will now be unloaded.
     DENG2_FOR_AUDIENCE2(GameUnload, i) i->aboutToUnloadGame(game());
     unloadGame(profile);
@@ -765,12 +768,19 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
 
     DENG_ASSERT(plugins().activePluginId() == 0);
 
+    d->gameBeingChanged = false;
+
     // Game change is complete.
     DENG2_FOR_AUDIENCE2(GameChange, i)
     {
         i->currentGameChanged(game());
     }
     return true;
+}
+
+bool DoomsdayApp::isGameBeingChanged() // static
+{
+    return app().d->gameBeingChanged;
 }
 
 bool App_GameLoaded()

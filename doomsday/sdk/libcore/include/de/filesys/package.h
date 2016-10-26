@@ -94,6 +94,13 @@ public:
 
     virtual ~Package();
 
+    /**
+     * Returns the ".pack" file of the Package. In practice, this may be a ZIP folder,
+     * an regular folder, or a link to a DataBundle. You should use sourceFile() to
+     * access the file where the package's contents are stored in.
+     *
+     * @return Package file.
+     */
     File const &file() const;
 
     /**
