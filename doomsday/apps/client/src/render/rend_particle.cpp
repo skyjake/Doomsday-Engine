@@ -49,7 +49,9 @@
 #include <doomsday/filesys/fs_main.h>
 #include <de/concurrency.h>
 #include <de/vector1.h>
+#include <de/Folder>
 #include <de/GLInfo>
+#include <de/ImageFile>
 #include <cstdlib>
 
 using namespace de;
@@ -127,20 +129,45 @@ static dbyte loadParticleTexture(duint particleTex)
 {
     DENG2_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
-    auto particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
-    Path foundPath = tryFindImage(particleImageName);
-    if(foundPath.isEmpty())
-        return 0;
-
     image_t image;
-    if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
+
+    try
     {
-        LOG_RES_WARNING("Failed to load \"%s\"") << NativePath(foundPath).pretty();
+        // First check if there is a texture asset for this particle.
+        String const assetId = QStringLiteral("texture.particle.%1").arg(particleTex, 2, 10, QChar('0'));
+        if (App::assetExists(assetId))
+        {
+            auto asset = App::asset(assetId);
+
+            ImageFile const &img = App::rootFolder().locate<ImageFile const>
+                    (asset.absolutePath(QStringLiteral("path")));
+
+            Image_InitFromImage(image, img.image());
+        }
+        else
+        {
+            // Fallback: look in the Textures scheme.
+            auto particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
+            Path foundPath = tryFindImage(particleImageName);
+            if (foundPath.isEmpty())
+                return 0;
+
+            if (!GL_LoadImage(image, foundPath.toUtf8().constData()))
+            {
+                LOG_RES_WARNING("Failed to load \"%s\"") << NativePath(foundPath).pretty();
+                return 0;
+            }
+        }
+    }
+    catch (Error const &er)
+    {
+        LOG_RES_ERROR("Failed to load texture for particle %i: %s")
+                << particleTex << er.asText();
         return 0;
     }
 
     // If 8-bit with no alpha, generate alpha automatically.
-    if(image.pixelSize == 1)
+    if (image.pixelSize == 1)
         Image_ConvertToAlpha(image, true);
 
     // Create a new texture and upload the image.

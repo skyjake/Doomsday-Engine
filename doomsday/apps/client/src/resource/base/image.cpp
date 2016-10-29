@@ -162,6 +162,18 @@ void Image_Init(image_t &img)
     img.pixels    = 0;
 }
 
+#ifdef __CLIENT__
+void Image_InitFromImage(image_t &img, Image const &guiImage)
+{
+    img.size      = guiImage.size();
+    img.pixelSize = guiImage.depth() / 8;
+    img.flags     = 0;
+    img.paletteId = 0;
+    img.pixels    = reinterpret_cast<uint8_t *>(M_Malloc(guiImage.byteCount()));
+    std::memcpy(img.pixels, guiImage.bits(), guiImage.byteCount());
+}
+#endif
+
 void Image_ClearPixelData(image_t &img)
 {
     M_Free(img.pixels); img.pixels = 0;

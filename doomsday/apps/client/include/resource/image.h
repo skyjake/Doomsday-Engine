@@ -29,6 +29,10 @@
 #include <de/Vector>
 #include <de/size.h>
 
+#ifdef __CLIENT__
+#  include <de/Image>
+#endif
+
 /// @todo Should not depend on texture-level stuff here.
 class TextureVariantSpec;
 class ClientTexture;
@@ -85,6 +89,10 @@ struct image_t
  * @param image  Image instance.
  */
 void Image_Init(image_t &image);
+
+#ifdef __CLIENT__
+void Image_InitFromImage(image_t &image, de::Image const &guiImage);
+#endif
 
 /**
  * Releases image pixel data, but does not delete @a image.
