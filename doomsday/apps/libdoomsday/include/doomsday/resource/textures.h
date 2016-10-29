@@ -1,5 +1,6 @@
 /** @file textures.h
  *
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
