@@ -476,10 +476,9 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
     if (!sprite.hasView(0)) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
-    ClientMaterial *mat = &world::Materials::get().materialPtr(
-                de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL))->as<ClientMaterial>();
-    if (!mat) return;
-    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+    Material *sprMat = world::Materials::get().materialPtr(sprite.viewMaterial(0));
+    if (!sprMat) return;
+    MaterialAnimator &matAnimator = sprMat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
     TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
@@ -626,7 +625,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
             defn::Sprite sprite(*spriteRec);
             if (sprite.hasView(0))  // Always use the front view for lighting.
             {
-                if (Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL)))
+                if (Material *mat = world::Materials::get().materialPtr(sprite.viewMaterial(0)))
                 {
                     MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
                     matAnimator.prepare();  // Ensure we have up-to-date info.

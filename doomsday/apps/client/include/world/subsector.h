@@ -55,7 +55,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting subsector.
      */
-    Subsector(QList<ConvexSubspace *> const &subspaces);
+    Subsector(QVector<ConvexSubspace *> const &subspaces);
 
     virtual ~Subsector();
 
@@ -165,7 +165,7 @@ public:
     SubsectorCirculator(de::HEdge *hedge = nullptr)
         : _hedge(hedge)
         , _current(hedge)
-        , _subsec(hedge? getSubsector(*hedge) : nullptr)
+        , _subsec(hedge? hedge->subsector() : nullptr)
     {}
 
     /**
@@ -176,7 +176,7 @@ public:
      */
     static de::HEdge &findBackNeighbor(de::HEdge const &hedge, de::ClockDirection direction)
     {
-        return getNeighbor(hedge, direction, getSubsector(hedge)).twin();
+        return getNeighbor(hedge, direction, hedge.subsector()).twin();
     }
 
     /**
@@ -220,7 +220,7 @@ public:
     /// Makes the circulator operate on @a hedge.
     SubsectorCirculator &operator = (de::HEdge &hedge) {
         _hedge   = _current = &hedge;
-        _subsec = getSubsector(hedge);
+        _subsec = hedge.subsector();
         return *this;
     }
 
@@ -239,7 +239,7 @@ public:
     de::HEdge *operator -> () { return _current; }
 
 private:
-    static Subsector *getSubsector(de::HEdge const &hedge);
+    //static Subsector *getSubsector(de::HEdge const &hedge);
 
     static de::HEdge &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
                                   Subsector const *subsector = nullptr);

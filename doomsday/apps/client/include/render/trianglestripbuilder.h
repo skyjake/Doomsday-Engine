@@ -25,8 +25,6 @@
 #include <de/libcore.h>
 #include <de/Vector>
 
-namespace de {
-
 /**
  * Abstract interface for a component that can be interpreted as an "edge"
  * geometry.
@@ -58,10 +56,6 @@ public:
     virtual IEvent const &last() const = 0;
 };
 
-} // namespace de
-
-namespace de {
-
 /**
  * @ingroup render
  */
@@ -78,7 +72,7 @@ public:
     public:
         virtual ~Event() {}
 
-        virtual Vector3d origin() const = 0;
+        virtual de::Vector3d origin() const = 0;
     };
 
 public:
@@ -88,14 +82,10 @@ public:
 
     virtual Event const &last() const = 0;
 
-    virtual Vector2f materialOrigin() const { return Vector2f(); }
+    virtual de::Vector2f materialOrigin() const { return de::Vector2f(); }
 
-    virtual Vector3f normal() const { return Vector3f(); }
+    virtual de::Vector3f normal() const { return de::Vector3f(); }
 };
-
-} // namespace de
-
-namespace de {
 
 /**
  * @ingroup world
@@ -107,14 +97,12 @@ public:
     {
     public:
         virtual ~Event() {}
-
-        virtual Vector3d origin() const = 0;
-
+        virtual de::Vector3d origin() const = 0;
         inline double z() const { return origin().z; }
     };
 
 public:
-    WorldEdge(Vector2d origin_) : AbstractEdge(), _origin(origin_)
+    WorldEdge(de::Vector2d origin_) : AbstractEdge(), _origin(origin_)
     {}
 
     virtual ~WorldEdge() {}
@@ -122,7 +110,7 @@ public:
     /**
      * Returns the X|Y origin of the edge in the map coordinate space.
      */
-    Vector2d const &origin() const { return _origin; }
+    de::Vector2d const &origin() const { return _origin; }
 
     virtual Event const &first() const = 0;
 
@@ -137,15 +125,11 @@ public:
     virtual EventIndex lastDivision() const { return InvalidIndex; }
 
 private:
-    Vector2d _origin;
+    de::Vector2d _origin;
 };
 
-} // namespace de
-
-namespace de {
-
-typedef QVarLengthArray<Vector3f, 24> PositionBuffer;
-typedef QVarLengthArray<Vector2f, 24> TexCoordBuffer;
+typedef QVarLengthArray<de::Vector3f, 24> PositionBuffer;
+typedef QVarLengthArray<de::Vector2f, 24> TexCoordBuffer;
 
 /**
  * Abstract triangle strip geometry builder.
@@ -187,7 +171,7 @@ public:
      *  by minimizing dynamic memory allocations. If the estimate is off the only
      *  side effect is reduced performance.
      */
-    void begin(ClockDirection direction, int reserveElements = 0);
+    void begin(de::ClockDirection direction, int reserveElements = 0);
 
     /**
      * Submit an edge geometry to extend the current triangle strip geometry.
@@ -231,7 +215,5 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-} // namespace de
 
 #endif // DENG_RENDER_TRIANGLE_STRIP_BUILDER

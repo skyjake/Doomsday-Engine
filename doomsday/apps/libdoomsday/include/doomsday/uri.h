@@ -50,7 +50,7 @@ namespace de {
  * Universal resource identifiers (URIs) are a way to identify specific
  * entities in a hierarchy.
  */
-class LIBDOOMSDAY_PUBLIC Uri : public LogEntry::Arg::Base
+class LIBDOOMSDAY_PUBLIC Uri : public ISerializable
 {
 public:
     /// Base class for resolve-related errors. @ingroup errors
@@ -322,12 +322,9 @@ public:
      */
     String asText() const;
 
-    // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
-
     // Implements ISerializable.
-    void operator >> (Writer &to) const;
-    void operator << (de::Reader &from);
+    void operator >> (Writer &to) const override;
+    void operator << (Reader &from) override;
 
     // Legacy Reader/Writer.
     void readUri(reader_s *reader, de::String defaultScheme = "");

@@ -330,7 +330,8 @@ protected:
         BLOCK,
         FUNCTION,
         RECORD,
-        TIME
+        TIME,
+        URI
     };
 };
 

@@ -119,13 +119,12 @@ duint32 crc32(IByteArray const &data)
         0x2d02ef8dL
     };
 
-    Reader reader(data);
     IByteArray::Byte element;
     unsigned long crc32 = 0;
 
     for (IByteArray::Offset i = 0; i < data.size(); ++i)
     {
-        reader >> element;
+        data.get(i, &element, 1);
         crc32 = crc32_tab[(crc32 ^ element) & 0xff] ^ (crc32 >> 8);
     }
     return crc32;

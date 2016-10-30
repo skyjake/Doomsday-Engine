@@ -277,7 +277,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
     return output;
 }
 
-Uri::Uri(Uri const &other) : LogEntry::Arg::Base(), d(new Impl(*other.d))
+Uri::Uri(Uri const &other) : d(new Impl(*other.d))
 {}
 
 Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourceClass)

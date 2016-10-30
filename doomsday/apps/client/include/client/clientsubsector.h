@@ -48,7 +48,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting subsector.
      */
-    ClientSubsector(QList<ConvexSubspace *> const &subspaces);
+    ClientSubsector(QVector<ConvexSubspace *> const &subspaces);
 
     /**
      * Returns a human-friendly, textual description of the subsector.

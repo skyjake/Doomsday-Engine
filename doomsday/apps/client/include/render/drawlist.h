@@ -154,7 +154,7 @@ public:
      * @param modTexture       GL-name of the modulation texture; otherwise @c 0.
      * @param modColor         Modulation color.
      */
-    DrawList &write(Store const &buffer, de::gl::Primitive primitive, Indices const &indices,
+    DrawList &write(Store const &buffer, de::gl::Primitive primitive, de::duint const *indices, int indexCount,
         blendmode_t blendMode               = BM_NORMAL,
         bool oneLight                       = false,
         bool manyLights                     = false,
@@ -164,6 +164,17 @@ public:
         de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
         GLuint modTexture                   = 0,
         de::Vector3f const &modColor        = de::Vector3f());
+
+    DrawList &write(Store const &buffer, de::gl::Primitive primitive, Indices const &indices,
+        blendmode_t blendMode = BM_NORMAL,
+        bool oneLight = false,
+        bool manyLights = false,
+        de::Vector2f const &texScale = de::Vector2f(1, 1),
+        de::Vector2f const &texOffset = de::Vector2f(0, 0),
+        de::Vector2f const &detailTexScale = de::Vector2f(1, 1),
+        de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
+        GLuint modTexture = 0,
+        de::Vector3f const &modColor = de::Vector3f());
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

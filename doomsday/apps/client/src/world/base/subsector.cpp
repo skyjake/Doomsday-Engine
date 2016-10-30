@@ -39,9 +39,10 @@ namespace world {
 
 DENG2_PIMPL_NOREF(Subsector)
 {
-    QList<ConvexSubspace *> subspaces;
+    QVector<ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> bounds;
     Id id;
+    Sector *sector = nullptr;
 
     /**
      * Calculate the minimum bounding rectangle containing all the subspace geometries.
@@ -67,7 +68,7 @@ DENG2_PIMPL_NOREF(Subsector)
     }
 };
 
-Subsector::Subsector(QList<ConvexSubspace *> const &subspaces) : d(new Impl)
+Subsector::Subsector(QVector<ConvexSubspace *> const &subspaces) : d(new Impl)
 {
     d->subspaces.append(subspaces);
     for (ConvexSubspace *subspace : subspaces)
@@ -104,14 +105,17 @@ Id Subsector::id() const
 
 Sector &Subsector::sector()
 {
-    DENG2_ASSERT(firstSubspace().bspLeaf().sectorPtr());
-    return *firstSubspace().bspLeaf().sectorPtr();
+    if (!d->sector)
+    {
+        d->sector = firstSubspace().bspLeaf().sectorPtr();
+        DENG2_ASSERT(d->sector);
+    }
+    return *d->sector;
 }
 
 Sector const &Subsector::sector() const
 {
-    DENG2_ASSERT(firstSubspace().bspLeaf().sectorPtr());
-    return *firstSubspace().bspLeaf().sectorPtr();
+    return const_cast<Subsector *>(this)->sector();
 }
 
 dint Subsector::subspaceCount() const
@@ -211,6 +215,7 @@ bool Subsector::isInternalEdge(HEdge *hedge) // static
 
 //- SubsectorCirculator -----------------------------------------------------------------
 
+#if 0
 Subsector *SubsectorCirculator::getSubsector(HEdge const &hedge) // static
 {
     if (!hedge.hasFace()) return nullptr;
@@ -218,6 +223,7 @@ Subsector *SubsectorCirculator::getSubsector(HEdge const &hedge) // static
     if (hedge.face().mapElement().type() != DMU_SUBSPACE) return nullptr;
     return hedge.face().mapElementAs<ConvexSubspace>().subsectorPtr();
 }
+#endif
 
 HEdge &SubsectorCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
     Subsector const *subsec) // static
@@ -226,7 +232,7 @@ HEdge &SubsectorCirculator::getNeighbor(HEdge const &hedge, ClockDirection direc
     // Skip over interior edges.
     if (subsec)
     {
-        while (neighbor->hasTwin() && subsec == getSubsector(neighbor->twin()))
+        while (neighbor->hasTwin() && subsec == neighbor->twin().subsector())
         {
             neighbor = &neighbor->twin().neighbor(direction);
         }

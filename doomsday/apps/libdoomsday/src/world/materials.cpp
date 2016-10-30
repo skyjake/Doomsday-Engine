@@ -236,19 +236,16 @@ MaterialManifest *Materials::materialManifestPtr(de::Uri const &uri) const
     if (!uri.scheme().isEmpty())
     {
         MaterialScheme &specifiedScheme = materialScheme(uri.scheme());
-        if (specifiedScheme.has(uri.path()))
-        {
-            return &specifiedScheme.find(uri.path());
-        }
+        return specifiedScheme.tryFind(uri.path());
     }
     else
     {
         // No, check each scheme in priority order.
         foreach (MaterialScheme *scheme, d->materialSchemeCreationOrder)
         {
-            if (scheme->has(uri.path()))
+            if (auto *manifest = scheme->tryFind(uri.path()))
             {
-                return &scheme->find(uri.path());
+                return manifest;
             }
         }
     }

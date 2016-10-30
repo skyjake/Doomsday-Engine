@@ -24,8 +24,6 @@
 
 #include "Line"
 
-namespace de {
-
 /**
  * Wall geometry specification. The members are public for convenient access.
  */
@@ -81,7 +79,7 @@ public:
     /**
      * Construct a default wall geometry specification for the specifed @a section.
      */
-    WallSpec(int section, Flags flags = DefaultFlags) : flags(flags), section(section)
+    WallSpec(int section = 0, Flags flags = DefaultFlags) : flags(flags), section(section)
     {}
 
     /**
@@ -93,7 +91,5 @@ public:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
-
-} // namespace de
 
 #endif // DENG_RENDER_WALLSPEC

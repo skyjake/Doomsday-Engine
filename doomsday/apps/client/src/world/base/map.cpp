@@ -275,7 +275,7 @@ DENG2_PIMPL(Map)
     QList<Polyobj *> polyobjs;
 
     Bsp bsp;
-    QList<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
+    QVector<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
     QHash<Id, Subsector *> subsectorsById; ///< Not owned.
 
     //
@@ -723,7 +723,7 @@ DENG2_PIMPL(Map)
         // this by starting with a set per subspace and then keep merging the sets until
         // no two sets share a common edge ("clustering").
 
-        typedef QList<ConvexSubspace *> Subspaces;
+        typedef QVector<ConvexSubspace *> Subspaces;
         typedef QList<Subspaces> SubspaceSets;
         SubspaceSets subspaceSets;
 

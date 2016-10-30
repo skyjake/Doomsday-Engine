@@ -22,78 +22,137 @@
 
 #include "doomsday/defs/sprite.h"
 #include "doomsday/defs/ded.h"
+#include "doomsday/UriValue"
 
 #include <de/Record>
 #include <de/RecordValue>
+#include <de/DictionaryValue>
 
 using namespace de;
 
 namespace defn {
+
+static QString const VAR_VIEWS     ("views");
+static QString const VAR_FRONT_ONLY("frontOnly");
+static QString const VAR_MATERIAL  ("material"); // UriValue
+static QString const VAR_MIRROR_X  ("mirrorX");
 
 void Sprite::resetToDefaults()
 {
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addBoolean("frontOnly", true);        ///< @c true= only use the front View.
-    def().addArray  ("views", new ArrayValue);
+    def().addBoolean(VAR_FRONT_ONLY, true);        ///< @c true= only use the front View.
+    def().addDictionary(VAR_VIEWS);
+}
+
+DictionaryValue &Sprite::viewsDict()
+{
+    return def()[VAR_VIEWS].value().as<DictionaryValue>();
+}
+
+DictionaryValue const &Sprite::viewsDict() const
+{
+    return def().getdt(VAR_VIEWS);
 }
 
 Record &Sprite::addView(String material, dint angle, bool mirrorX)
 {
-    auto *view = new Record;
-    view->addNumber ("angle",    de::max(0, angle - 1));  // Make 0-based.
-    view->addText   ("material", material);
-    view->addBoolean("mirrorX",  mirrorX);
-
     if (angle <= 0)
     {
-        def()["views"] = new ArrayValue;
+        def().addDictionary(VAR_VIEWS);
     }
+    def().set(VAR_FRONT_ONLY, angle <= 0);
 
-    def()["frontOnly"].set(NumberValue(angle <= 0));
-    def()["views"    ].array().add(new RecordValue(view, RecordValue::OwnsRecord));
-
+    auto *view = new Record;
+    view->add(VAR_MATERIAL).set(new UriValue(de::Uri(material, RC_NULL)));
+    view->addBoolean(VAR_MIRROR_X, mirrorX);
+    viewsDict().add(new NumberValue(de::max(0, angle - 1)), new RecordValue(view, RecordValue::OwnsRecord));
     return *view;
 }
 
 dint Sprite::viewCount() const
 {
-    return geta("views").size();
+    return viewsDict().size();
 }
 
 bool Sprite::hasView(dint angle) const
 {
-    if (getb("frontOnly")) angle = 0;
+    if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
 
-    for (Value const *val : geta("views").elements())
+    return viewsDict().contains(NumberValue(angle));
+
+    /*for (Value const *val : geta("views").elements())
     {
         Record const &view = val->as<RecordValue>().dereference();
         if (view.geti("angle") == angle)
             return true;
     }
-    return false;
+    return false;*/
 }
 
-Record &Sprite::view(dint angle)
+Record &Sprite::findView(dint angle)
 {
-    if (getb("frontOnly")) angle = 0;
+    if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
 
-    for (Value *val : def().geta("views").elements())
+    return viewsDict().element(NumberValue(angle)).as<RecordValue>().dereference();
+
+    /*for (Value *val : def().geta("views").elements())
     {
         Record &view = val->as<RecordValue>().dereference();
         if (view.geti("angle") == angle)
             return view;
     }
     /// @throw MissingViewError  Invalid angle specified.
-    throw MissingViewError("Sprite::view", "Unknown view:" + String::number(angle));
+    throw MissingViewError("Sprite::view", "Unknown view:" + String::number(angle));*/
 }
 
-Record &Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation)
+Record const *Sprite::tryFindView(dint angle) const
+{
+    if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
+
+    NumberValue const ang(angle);
+    auto const &elems = viewsDict().elements();
+    auto found = elems.find(&ang);
+    if (found != elems.end())
+    {
+        return found->second->as<RecordValue>().record();
+    }
+    return nullptr;
+}
+
+static de::Uri const nullUri;
+
+Sprite::View Sprite::view(de::dint angle) const
+{
+    View v;
+    if (Record const *rec = tryFindView(angle))
+    {
+        v.material = &rec->get(VAR_MATERIAL).as<UriValue>().uri();
+        v.mirrorX  = rec->getb(VAR_MIRROR_X);
+    }
+    else
+    {
+        v.material = &nullUri;
+        v.mirrorX  = false;
+    }
+    return v;
+}
+
+de::Uri const &Sprite::viewMaterial(de::dint angle) const
+{
+    if (Record const *rec = tryFindView(angle))
+    {
+        return rec->get(VAR_MATERIAL).as<UriValue>().uri();
+    }
+    return nullUri;
+}
+
+Sprite::View Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation) const
 {
     dint angle = 0;  // Use the front view (default).
 
-    if (!noRotation && !def().getb("frontOnly"))
+    if (!noRotation && !def().getb(VAR_FRONT_ONLY))
     {
         // Choose a view according to the relative angle with viewer (the eye).
         angle = ((angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) - (unsigned) (ANGLE_180 / 16)) >> 28;

@@ -102,6 +102,11 @@ MaterialManifest &MaterialScheme::find(Path const &path)
     return const_cast<Index::Node &>(found);
 }
 
+MaterialManifest *MaterialScheme::tryFind(Path const & path) const
+{
+    return d->index.tryFind(path, Index::NoBranch | Index::MatchFull);
+}
+
 MaterialScheme::Index const &MaterialScheme::index() const
 {
     return d->index;

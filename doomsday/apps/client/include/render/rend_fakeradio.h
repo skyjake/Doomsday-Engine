@@ -75,7 +75,7 @@ DENG2_EXTERN_C byte devFakeRadioUpdate;
  * @param rightEdge     Geometry for the right edge of the wall section.
  * @param ambientLight  Ambient light level/luminosity.
  */
-void Rend_DrawWallRadio(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge, de::dfloat ambientLight);
+void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, de::dfloat ambientLight);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,

@@ -26,6 +26,8 @@
 #include "Mesh"
 #include "Vertex"
 
+namespace world { class Subsector; }
+
 namespace de {
 
 /**
@@ -189,6 +191,8 @@ public:
      * @see setNeighbor(), prev()
      */
     inline void setPrev(HEdge *newPrev) { setNeighbor(Anticlockwise, newPrev); }
+
+    world::Subsector *subsector() const;
 
 private:
     DENG2_PRIVATE(d)

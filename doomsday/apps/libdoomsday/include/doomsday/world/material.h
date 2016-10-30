@@ -205,6 +205,8 @@ public:
          */
         Stage &stage(int index) const;
 
+        int nextStageIndex(int index) const;
+
     protected:
         typedef QList<Stage *> Stages;
         Stages _stages;
