@@ -3561,10 +3561,10 @@ static void projectSubspaceSprites()
                 if(Record *spriteRec = Mobj_SpritePtr(mob))
                 {
                     defn::Sprite const sprite(*spriteRec);
-                    String const viewMaterial = sprite.viewMaterial(0);
+                    de::Uri const &viewMaterial = sprite.viewMaterial(0);
                     if(!viewMaterial.isEmpty())
                     {
-                        if(world::Material *material = world::Materials::get().materialPtr(de::Uri(viewMaterial, RC_NULL)))
+                        if(world::Material *material = world::Materials::get().materialPtr(viewMaterial))
                         {
                             if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
                                && mob.origin[2] <= subsec.visCeiling().heightSmoothed()
@@ -3733,10 +3733,10 @@ static void generateDecorationFlares(Map &map)
 ddouble Rend_VisualRadius(Record const &spriteRec)
 {
     defn::Sprite const sprite(spriteRec);
-    String const viewMaterial = sprite.viewMaterial(0);
+    de::Uri const &viewMaterial = sprite.viewMaterial(0);
     if(!viewMaterial.isEmpty())
     {
-        if(world::Material *mat = world::Materials::get().materialPtr(de::Uri(viewMaterial, RC_NULL)))
+        if(world::Material *mat = world::Materials::get().materialPtr(viewMaterial))
         {
             MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
             matAnimator.prepare();  // Ensure we've up to date info.
@@ -3751,13 +3751,13 @@ Lumobj *Rend_MakeLumobj(Record const &spriteRec)
     LOG_AS("Rend_MakeLumobj");
 
     defn::Sprite const sprite(spriteRec);
-    String const viewMaterial = sprite.viewMaterial(0);
+    de::Uri const &viewMaterial = sprite.viewMaterial(0);
 
     // Always use the front view.
     /// @todo We could do better here...
     if(viewMaterial.isEmpty()) return nullptr;
 
-    world::Material *mat = world::Materials::get().materialPtr(de::Uri(viewMaterial, RC_NULL));
+    world::Material *mat = world::Materials::get().materialPtr(viewMaterial);
     if(!mat) return nullptr;
 
     MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());

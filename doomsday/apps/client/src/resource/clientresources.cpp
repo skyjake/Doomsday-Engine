@@ -564,8 +564,8 @@ DENG2_PIMPL(ClientResources)
                 auto const &views = spriteDef.viewsDict().elements();
                 for (auto iter = views.begin(); iter != views.end(); ++iter)
                 {
-                    String const viewMaterial = spriteDef.viewMaterial(iter->first.value->asInt());
-                    if (world::Material *material = world::Materials::get().materialPtr(de::Uri(viewMaterial, RC_NULL)))
+                    de::Uri const &viewMaterial = spriteDef.viewMaterial(iter->first.value->asInt());
+                    if (world::Material *material = world::Materials::get().materialPtr(viewMaterial))
                     {
                         queueCacheTasksForMaterial(material->as<ClientMaterial>(),
                                                    contextSpec, cacheGroups);
@@ -821,7 +821,7 @@ DENG2_PIMPL(ClientResources)
         defn::Sprite sprite(*spriteRec);
         if (!sprite.hasView(0)) return;
 
-        world::Material *mat = world::Materials::get().materialPtr(de::Uri(sprite.viewMaterial(0), RC_NULL));
+        world::Material *mat = world::Materials::get().materialPtr(sprite.viewMaterial(0));
         if (!mat) return;
 
         MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());

@@ -218,7 +218,7 @@ void R_ProjectSprite(mobj_t &mob)
     defn::Sprite const sprite(*spriteRec);
     defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
     {
-        if (auto *sprMat = world::Materials::get().materialPtr(de::Uri(spriteView.material, RC_NULL)))
+        if (auto *sprMat = world::Materials::get().materialPtr(*spriteView.material))
         {
             mat = &sprMat->as<ClientMaterial>();
         }
@@ -474,7 +474,7 @@ void R_ProjectSprite(mobj_t &mob)
             //defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
             // Lookup the Material for this Sprite and prepare the animator.
-            MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.material, RC_NULL))
+            MaterialAnimator &matAnimator = ClientMaterial::find(*spriteView.material)
                     .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 

@@ -22,6 +22,7 @@
 
 #include "doomsday/defs/sprite.h"
 #include "doomsday/defs/ded.h"
+#include "doomsday/UriValue"
 
 #include <de/Record>
 #include <de/RecordValue>
@@ -33,7 +34,7 @@ namespace defn {
 
 static QString const VAR_VIEWS     ("views");
 static QString const VAR_FRONT_ONLY("frontOnly");
-static QString const VAR_MATERIAL  ("material");
+static QString const VAR_MATERIAL  ("material"); // UriValue
 static QString const VAR_MIRROR_X  ("mirrorX");
 
 void Sprite::resetToDefaults()
@@ -64,8 +65,7 @@ Record &Sprite::addView(String material, dint angle, bool mirrorX)
     def().set(VAR_FRONT_ONLY, angle <= 0);
 
     auto *view = new Record;
-    //view->addNumber (VAR_ANGLE, de::max(0, angle - 1)); // Make 0-based.
-    view->addText   (VAR_MATERIAL, material);
+    view->add(VAR_MATERIAL).set(new UriValue(de::Uri(material, RC_NULL)));
     view->addBoolean(VAR_MIRROR_X, mirrorX);
     viewsDict().add(new NumberValue(de::max(0, angle - 1)), new RecordValue(view, RecordValue::OwnsRecord));
     return *view;
@@ -121,28 +121,31 @@ Record const *Sprite::tryFindView(dint angle) const
     return nullptr;
 }
 
+static de::Uri const nullUri;
+
 Sprite::View Sprite::view(de::dint angle) const
 {
     View v;
     if (Record const *rec = tryFindView(angle))
     {
-        v.material = rec->gets(VAR_MATERIAL);
+        v.material = &rec->get(VAR_MATERIAL).as<UriValue>().uri();
         v.mirrorX  = rec->getb(VAR_MIRROR_X);
     }
     else
     {
-        v.mirrorX = false;
+        v.material = &nullUri;
+        v.mirrorX  = false;
     }
     return v;
 }
 
-String Sprite::viewMaterial(de::dint angle) const
+de::Uri const &Sprite::viewMaterial(de::dint angle) const
 {
     if (Record const *rec = tryFindView(angle))
     {
-        return rec->gets(VAR_MATERIAL);
+        return rec->get(VAR_MATERIAL).as<UriValue>().uri();
     }
-    return String();
+    return nullUri;
 }
 
 Sprite::View Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation) const

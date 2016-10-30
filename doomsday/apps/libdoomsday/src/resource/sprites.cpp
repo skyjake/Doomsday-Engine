@@ -254,12 +254,12 @@ static Sprites::SpriteSet buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
             if (!sprite.hasView(angle * 2 + 1) && sprite.hasView(angle * 2))
             {
                 auto src = sprite.view(angle * 2);
-                sprite.addView(src.material, angle * 2 + 2, src.mirrorX);
+                sprite.addView(src.material->asText(), angle * 2 + 2, src.mirrorX);
             }
             if (!sprite.hasView(angle * 2) && sprite.hasView(angle * 2 + 1))
             {
                 auto src = sprite.view(angle * 2 + 1);
-                sprite.addView(src.material, angle * 2 + 1, src.mirrorX);
+                sprite.addView(src.material->asText(), angle * 2 + 1, src.mirrorX);
             }
         }
     }
