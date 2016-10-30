@@ -741,12 +741,26 @@ DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, DrawList
     Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
     GLuint modTexture, Vector3f const &modColor)
 {
+    if (indices.isEmpty()) return *this;
+    return write(buffer, primitive, 
+                 indices.constData(), indices.size(),
+                 blendMode, oneLight, manyLights, texScale, texOffset, detailTexScale, detailTexOffset,
+                 modTexture, modColor);
+}
+
+DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, 
+    duint const *indices, int indexCount,
+    blendmode_t blendMode, bool oneLight, bool manyLights,
+    Vector2f const &texScale, Vector2f const &texOffset,
+    Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
+    GLuint modTexture, Vector3f const &modColor)
+{
     // Sanity check usage.
     DENG2_ASSERT(!(spec().group == LightGeom  && (oneLight || manyLights || modTexture)));
     DENG2_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && (oneLight || modTexture)));
     DENG2_ASSERT(!(spec().group == ShadowGeom && (oneLight || manyLights || modTexture)));
 
-    if(indices.isEmpty()) return *this;  // Huh?
+    if(!indexCount) return *this;  // Huh?
 
     // This becomes the new last element.
     d->last = (Impl::Element *) d->allocateData(sizeof(Impl::Element));
@@ -756,7 +770,7 @@ DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, DrawList
     /// @note That 'last' may be reallocated during allocateData() - use a temporary variable.
     d->last->data.buffer     = &buffer;
     d->last->data.type       = primitive;
-    d->last->data.numIndices = indices.count();
+    d->last->data.numIndices = indexCount;
     auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);
     d->last->data.indices = lti;
     for(duint i = 0; i < d->last->data.numIndices; ++i)

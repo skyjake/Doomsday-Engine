@@ -754,6 +754,9 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(tp.texture), gl::ClampToEdge, gl::ClampToEdge);
     DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
+    static DrawList::Indices indices;
+    if (indices.size() < 64) indices.resize(64);
+
     // Walls with edge divisions mean two trifans.
     if(leftEdge.divisionCount() || rightEdge.divisionCount())
     {
@@ -762,8 +765,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         {
             duint const numVerts = 3 + rightEdge.divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            DrawList::Indices indices;
-            indices.resize(numVerts);
+            if (indices.size() < numVerts) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -796,15 +798,14 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, gl::TriangleFan, indices);
+                shadowList.write(buffer, gl::TriangleFan, indices.constData(), numVerts);
             }
         }
         // Left fan.
         {
             duint const numVerts = 3 + leftEdge .divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            DrawList::Indices indices;
-            indices.resize(numVerts);
+            if (indices.size() < numVerts) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -837,7 +838,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, gl::TriangleFan, indices);
+                shadowList.write(buffer, gl::TriangleFan, indices.constData(), numVerts);
             }
         }
     }
@@ -845,8 +846,6 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     {
         Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(4);
-        DrawList::Indices indices;
-        indices.resize(4);
         for(duint i = 0; i < 4; ++i)
         {
             indices[i] = base + i;
@@ -865,7 +864,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         // Write the geometry?
         if(::rendFakeRadio != 2)
         {
-            shadowList.write(buffer, gl::TriangleStrip, indices);
+            shadowList.write(buffer, gl::TriangleStrip, indices.constData(), 4);
         }
     }
 }
