@@ -589,7 +589,9 @@ enum ProtocolVersion {
     DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier = 3,
     DENG2_PROTOCOL_1_15_0 = 3,
 
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_15_0
+    DENG2_PROTOCOL_2_0_0  = 3,
+
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_2_0_0
 };
 
 //@{
