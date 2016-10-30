@@ -461,8 +461,6 @@ struct WallEdge::Impl : public IHPlane
     // Implements IHPlane
     Event const &at(EventIndex index) const
     {
-        DENG2_ASSERT(events);
-
         if(index >= 0 && index < interceptCount())
         {
             return events.at(index);
@@ -600,7 +598,7 @@ struct WallEdge::Impl : public IHPlane
 
     void prepareEvents()
     {
-        DENG2_ASSERT(self.isValid());
+        DENG2_ASSERT(self->isValid());
         DENG2_ASSERT(events.isEmpty());
 
         //clearIntercepts();
