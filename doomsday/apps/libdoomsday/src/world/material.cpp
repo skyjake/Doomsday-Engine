@@ -64,13 +64,18 @@ Material::Layer::~Layer()
 
 Material::Layer::Stage &Material::Layer::stage(int index) const
 {
-    if (stageCount())
+    if (!stageCount())
     {
-        index = de::wrap(index, 0, _stages.count());
-        return *_stages[index];
+        /// @throw MissingStageError  No stages are defined.
+        throw MissingStageError("Material::Layer::stage", "Layer has no stages");
     }
-    /// @throw MissingStageError  No stages are defined.
-    throw MissingStageError("Material::Layer::stage", "Layer has no stages");
+    return *_stages[de::wrap(index, 0, _stages.count())];
+}
+
+int Material::Layer::nextStageIndex(int index) const
+{
+    if (!stageCount()) return -1;
+    return de::wrap(index + 1, 0, _stages.count());
 }
 
 String Material::Layer::describe() const

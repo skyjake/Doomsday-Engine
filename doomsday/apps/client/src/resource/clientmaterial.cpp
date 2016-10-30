@@ -86,13 +86,12 @@ int ClientMaterial::Decoration::stageCount() const
 
 ClientMaterial::Decoration::Stage &ClientMaterial::Decoration::stage(int index) const
 {
-    if (stageCount())
+    if (!stageCount())
     {
-        index = de::wrap(index, 0, _stages.count());
-        return *_stages[index];
+        /// @throw MissingStageError  No stages are defined.
+        throw MissingStageError("ClientMaterial::Decoration::stage", "Decoration has no stages");
     }
-    /// @throw MissingStageError  No stages are defined.
-    throw MissingStageError("ClientMaterial::Decoration::stage", "Decoration has no stages");
+    return *_stages[de::wrap(index, 0, _stages.count())];
 }
 
 String ClientMaterial::Decoration::describe() const
