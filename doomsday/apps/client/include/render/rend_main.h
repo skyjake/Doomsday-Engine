@@ -37,10 +37,13 @@ class Lumobj;
 class Sector;
 struct VectorLightData;
 class ClientMaterial;
-namespace de { class LightGrid; }
+class MaterialAnimator;
+namespace de {
+    class LightGrid;
+}
 namespace world {
-class ConvexSubspace;
-class Subsector;
+    class ConvexSubspace;
+    class Subsector;
 }
 
 // Multiplicative blending for dynamic lights?
@@ -141,6 +144,9 @@ DENG_EXTERN_C byte freezeRLs;
 void Rend_Register();
 
 void Rend_Reset();
+
+/// Reset any cached state that gets normally reused between frames.
+void Rend_ResetLookups();
 
 /// @return @c true iff multitexturing is currently enabled for lights.
 bool Rend_IsMTexLights();
@@ -258,6 +264,8 @@ de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
     bool starkLight = false);
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);
+
+MaterialAnimator *Rend_SpriteMaterialAnimator(de::Record const &spriteDef);
 
 /**
  * Returns the radius of the given @a sprite, as it would visually appear to be.

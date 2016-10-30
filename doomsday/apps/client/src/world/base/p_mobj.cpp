@@ -472,22 +472,23 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
     // Always use the front view of the Sprite when determining light properties.
     Record *spriteRec = Mobj_SpritePtr(*mob);
     if (!spriteRec) return;
-    defn::Sprite sprite(*spriteRec);
-    if (!sprite.hasView(0)) return;
+    //defn::Sprite sprite(*spriteRec);
+    //if (!sprite.hasView(0)) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
-    Material *sprMat = world::Materials::get().materialPtr(sprite.viewMaterial(0));
-    if (!sprMat) return;
-    MaterialAnimator &matAnimator = sprMat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
-    matAnimator.prepare();  // Ensure we have up-to-date info.
+    //Material *sprMat = world::Materials::get().materialPtr(sprite.viewMaterial(0));
+    //if (!sprMat) return;
+    MaterialAnimator *matAnimator = Rend_SpriteMaterialAnimator(*spriteRec) ;//sprMat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
+    if (!matAnimator) return;
+    matAnimator->prepare();  // Ensure we have up-to-date info.
 
-    TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    TextureVariant *tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!tex) return;  // Unloadable texture?
     Vector2i const &texOrigin = tex->base().origin();
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mob->origin[2] + -texOrigin.y - matAnimator.dimensions().y
+    coord_t impacted = mob->origin[2] + -texOrigin.y - matAnimator->dimensions().y
                      - subsec.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
@@ -495,7 +496,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
         return;
 
     // Attempt to generate luminous object from the sprite.
-    std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(sprite.def()));
+    std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(*spriteRec));
     if (!lum) return;
 
     lum->setSourceMobj(mob);

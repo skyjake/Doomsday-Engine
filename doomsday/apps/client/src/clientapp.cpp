@@ -63,6 +63,7 @@
 #include "network/net_main.h"
 #include "network/serverlink.h"
 #include "render/r_draw.h"
+#include "render/rend_main.h"
 #include "render/rend_particle.h"
 #include "render/rendersystem.h"
 #include "sys_system.h"
@@ -876,6 +877,8 @@ void ClientApp::makeGameCurrent(GameProfile const &newGame)
 void ClientApp::reset()
 {
     DoomsdayApp::reset();
+
+    Rend_ResetLookups();
 
     if (App_GameLoaded())
     {

@@ -315,6 +315,16 @@ static Vector3f curSectorLightColor;
 static dfloat curSectorLightLevel;
 static bool firstSubspace;            ///< No range checking for the first one.
 
+// State lookup (for speed):
+static MaterialVariantSpec const *lookupMapSurfaceMaterialSpec = nullptr;
+static QHash<Record const *, MaterialAnimator *> lookupSpriteMaterialAnimators;
+
+void Rend_ResetLookups()
+{
+    lookupMapSurfaceMaterialSpec = nullptr;
+    lookupSpriteMaterialAnimators.clear();
+}
+
 static void reportWallDrawn(Line &line)
 {
     // Already been here?
@@ -3730,44 +3740,68 @@ static void generateDecorationFlares(Map &map)
     });
 }
 
-ddouble Rend_VisualRadius(Record const &spriteRec)
+MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
 {
-    defn::Sprite const sprite(spriteRec);
-    de::Uri const &viewMaterial = sprite.viewMaterial(0);
-    if(!viewMaterial.isEmpty())
+    MaterialAnimator *matAnimator = nullptr;
+
+    // Check the cache first.
+    auto found = lookupSpriteMaterialAnimators.constFind(&spriteDef);
+    if (found != lookupSpriteMaterialAnimators.constEnd())
     {
-        if(world::Material *mat = world::Materials::get().materialPtr(viewMaterial))
+        matAnimator = found.value();
+    }
+    else
+    {
+        // Look it up...
+        defn::Sprite const sprite(spriteDef);
+        de::Uri const &viewMaterial = sprite.viewMaterial(0);
+        if (!viewMaterial.isEmpty())
         {
-            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
-            matAnimator.prepare();  // Ensure we've up to date info.
-            return matAnimator.dimensions().x / 2;
+            if(world::Material *mat = world::Materials::get().materialPtr(viewMaterial))
+            {
+                matAnimator = &mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
+            }
         }
+        lookupSpriteMaterialAnimators.insert(&spriteDef, matAnimator);
+    }
+    return matAnimator;
+}
+
+ddouble Rend_VisualRadius(Record const &spriteDef)
+{
+    if (auto *anim = Rend_SpriteMaterialAnimator(spriteDef))
+    {
+        anim->prepare();  // Ensure we've up to date info.
+        return anim->dimensions().x / 2;
     }
     return 0;
 }
 
-Lumobj *Rend_MakeLumobj(Record const &spriteRec)
+Lumobj *Rend_MakeLumobj(Record const &spriteDef)
 {
     LOG_AS("Rend_MakeLumobj");
 
-    defn::Sprite const sprite(spriteRec);
-    de::Uri const &viewMaterial = sprite.viewMaterial(0);
+    //defn::Sprite const sprite(spriteRec);
+    //de::Uri const &viewMaterial = sprite.viewMaterial(0);
 
     // Always use the front view.
     /// @todo We could do better here...
-    if(viewMaterial.isEmpty()) return nullptr;
+    //if(viewMaterial.isEmpty()) return nullptr;
 
-    world::Material *mat = world::Materials::get().materialPtr(viewMaterial);
-    if(!mat) return nullptr;
+    //world::Material *mat = world::Materials::get().materialPtr(viewMaterial);
+    //if(!mat) return nullptr;
 
-    MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
-    matAnimator.prepare();  // Ensure we have up-to-date info.
+    MaterialAnimator *matAnimator = Rend_SpriteMaterialAnimator(spriteDef); //mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
+    if (!matAnimator) return nullptr;
 
-    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    if(!texture) return nullptr;  // Unloadable texture?
+    matAnimator->prepare();  // Ensure we have up-to-date info.
 
-    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
-    if(!pl)
+    TextureVariant *texture = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if (!texture) return nullptr;  // Unloadable texture?
+
+    auto const *pl = (pointlight_analysis_t const *)
+            texture->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
+    if (!pl)
     {
         LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")
                 << texture->base().manifest().composeUri();
@@ -3776,7 +3810,7 @@ Lumobj *Rend_MakeLumobj(Record const &spriteRec)
 
     // Apply the auto-calculated color.
     return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
-                    ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator.dimensions().y);
+            ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator->dimensions().y);
 }
 
 /**
@@ -6106,12 +6140,16 @@ void Rend_LightGridVisual(LightGrid &lg)
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
 {
     return ClientApp::resources().materialSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
-                                 -1, -1, -1, true, true, false, false);
+                                               -1, -1, -1, true, true, false, false);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 {
-    return Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+    if (!lookupMapSurfaceMaterialSpec)
+    {
+        lookupMapSurfaceMaterialSpec = &Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+    }
+    return *lookupMapSurfaceMaterialSpec;
 }
 
 /// Returns the texture variant specification for lightmaps.

@@ -765,7 +765,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         {
             duint const numVerts = 3 + rightEdge.divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < numVerts) indices.resize(numVerts);
+            if (indices.size() < int(numVerts)) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -805,7 +805,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         {
             duint const numVerts = 3 + leftEdge .divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < numVerts) indices.resize(numVerts);
+            if (indices.size() < int(numVerts)) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;

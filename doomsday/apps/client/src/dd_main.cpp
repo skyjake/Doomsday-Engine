@@ -1442,6 +1442,7 @@ void DD_UpdateEngineState()
     BusyMode_FreezeGameForBusyMode();
     GL_SetFilter(false);
     Demo_StopPlayback();
+    Rend_ResetLookups();
 #endif
 
     //App_FileSystem().resetFileIds();
