@@ -23,6 +23,9 @@
 #include <de/String>
 #include "Face"
 
+#include "world/subsector.h"
+#include "world/convexsubspace.h"
+
 namespace de {
 
 DENG2_PIMPL_NOREF(HEdge)
@@ -30,13 +33,11 @@ DENG2_PIMPL_NOREF(HEdge)
     Vertex *vertex = nullptr;
     HEdge *twin = nullptr;     ///< Linked @em twin half-edge (that on the other side of "this" half-edge).
     Face *face = nullptr;      ///< Face geometry to which the half-edge is attributed (if any).
-    HEdge *next = nullptr;     ///< Next half-edge (clockwise) around the @em face.
-    HEdge *prev = nullptr;     ///< Previous half-edge (anticlockwise) around the @em face.
+    HEdge *neighbors[2] { nullptr, nullptr }; ///< Previous (anticlockwise) and next half-edge (clockwise) around the @em face.
 
-    inline HEdge **neighborAdr(ClockDirection direction)
-    {
-        return direction == Clockwise? &next : &prev;
-    }
+    // For quicker lookups:
+    bool subsectorMissing = false;
+    world::Subsector *subsector = nullptr;
 };
 
 HEdge::HEdge(Mesh &mesh, Vertex *vertex) : MeshElement(mesh), d(new Impl)
@@ -97,20 +98,37 @@ void HEdge::setFace(Face *newFace)
 
 bool HEdge::hasNeighbor(ClockDirection direction) const
 {
-    return (*d->neighborAdr(direction)) != nullptr;
+    return d->neighbors[int(direction)] != nullptr;
 }
 
 HEdge &HEdge::neighbor(ClockDirection direction) const
 {
-    HEdge **neighborAdr = d->neighborAdr(direction);
-    if(*neighborAdr) return **neighborAdr;
+    HEdge *neighbor = d->neighbors[int(direction)];
+    if(neighbor) return *neighbor;
     /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
     throw MissingNeighborError("HEdge::neighbor", String("No ") + (direction == Clockwise? "Clockwise" : "Anticlockwise") + " neighbor is attributed");
 }
 
 void HEdge::setNeighbor(ClockDirection direction, HEdge *newNeighbor)
 {
-    *d->neighborAdr(direction) = newNeighbor;
+    d->neighbors[int(direction)] = newNeighbor;
+}
+
+world::Subsector *HEdge::subsector() const
+{
+    if (d->subsectorMissing) return nullptr;
+    if (!d->subsector)
+    {
+        if (d->face && d->face->hasMapElement() && d->face->mapElement().type() == DMU_SUBSPACE)
+        {
+            d->subsector = d->face->mapElementAs<world::ConvexSubspace>().subsectorPtr();
+        }
+        else
+        {
+            d->subsectorMissing = true;
+        }
+    }
+    return d->subsector;
 }
 
 }  // namespace de

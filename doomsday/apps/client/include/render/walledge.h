@@ -20,7 +20,7 @@
 #ifndef RENDER_WALLEDGE
 #define RENDER_WALLEDGE
 
-#include <QList>
+#include <QVector>
 #include <QQueue>
 
 #include <de/Error>
@@ -69,7 +69,7 @@ public:
         WallEdge *_owner;
     };
 
-    typedef QList<Event> Events;
+    typedef QVector<Event> Events;
 
 public:
     /**

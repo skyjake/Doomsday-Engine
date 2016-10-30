@@ -1300,7 +1300,7 @@ DENG2_PIMPL(ClientSubsector)
     }
 };
 
-ClientSubsector::ClientSubsector(QList<ConvexSubspace *> const &subspaces)
+ClientSubsector::ClientSubsector(QVector<ConvexSubspace *> const &subspaces)
     : Subsector(subspaces)
     , d(new Impl(this))
 {

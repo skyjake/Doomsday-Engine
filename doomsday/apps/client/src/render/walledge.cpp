@@ -601,11 +601,12 @@ struct WallEdge::Impl : public IHPlane
     void prepareEvents()
     {
         DENG2_ASSERT(self.isValid());
+        DENG2_ASSERT(events.isEmpty());
 
-        clearIntercepts();
-
+        //clearIntercepts();
         //events = new Events;
-        events.reserve(2 + 2);
+        //events.reserve(2 + 2);
+        needSortEvents = false;
 
         // The first event is the bottom termination event.
         events.append(bottom);

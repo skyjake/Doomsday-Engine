@@ -190,7 +190,7 @@ public:
 
 //- Subsectors --------------------------------------------------------------------------
 
-    typedef std::function<world::Subsector * (QList<world::ConvexSubspace *> const &)> SubsectorConstructor;
+    typedef std::function<world::Subsector * (QVector<world::ConvexSubspace *> const &)> SubsectorConstructor;
 
     static void setSubsectorConstructor(SubsectorConstructor func);
 
@@ -236,7 +236,7 @@ public:
      *
      * @return  The newly constructed Subsector (ownership retained); otherwise @c nullptr
      */
-    world::Subsector *addSubsector(QList<world::ConvexSubspace *> const &subspaces);
+    world::Subsector *addSubsector(QVector<world::ConvexSubspace *> const &subspaces);
 
 //- Sides -------------------------------------------------------------------------------
 

@@ -326,14 +326,14 @@ DENG2_PIMPL(ClientServerWorld)
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
-        Sector::setSubsectorConstructor([] (QList<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+        Sector::setSubsectorConstructor([] (QVector<world::ConvexSubspace *> const &sl) -> world::Subsector * {
             return new ClientSubsector(sl);
         });
 #else
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new world::Material(m);
         });
-        Sector::setSubsectorConstructor([] (QList<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+        Sector::setSubsectorConstructor([] (QVector<world::ConvexSubspace *> const &sl) -> world::Subsector * {
             return new Subsector(sl);
         });
 #endif

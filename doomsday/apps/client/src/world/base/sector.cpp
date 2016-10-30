@@ -374,7 +374,7 @@ LoopResult Sector::forAllSubsectors(std::function<LoopResult(Subsector &)> callb
     return LoopContinue;
 }
 
-Subsector *Sector::addSubsector(QList<ConvexSubspace *> const &subspaces)
+Subsector *Sector::addSubsector(QVector<ConvexSubspace *> const &subspaces)
 {
     DENG2_ASSERT(subsectorConstructor);
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
