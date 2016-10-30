@@ -135,7 +135,7 @@ Material &MaterialManifest::material() const
 
 Material *MaterialManifest::materialPtr() const
 {
-    return hasMaterial()? &material() : nullptr;
+    return d->material.get();
 }
 
 void MaterialManifest::setMaterial(Material *newMaterial)

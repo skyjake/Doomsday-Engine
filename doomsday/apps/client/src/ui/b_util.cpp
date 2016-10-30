@@ -515,11 +515,11 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
     {
         // Wrong impulse?
         ImpulseBinding bind(rec);
-        if (bind.geti("impulseId") != impulseId) return LoopContinue;
+        if (bind.geti(QStringLiteral("impulseId")) != impulseId) return LoopContinue;
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        ArrayValue const &conds = bind.geta("condition");
+        ArrayValue const &conds = bind.geta(QStringLiteral("condition"));
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
         {
             if (!B_CheckCondition((*i)->as<RecordValue>().record(), localNum, context))
@@ -531,7 +531,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         if (skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = InputSystem::get().devicePtr(bind.geti("deviceId"));
+        InputDevice const *device = InputSystem::get().devicePtr(bind.geti(QStringLiteral("deviceId")));
         if (!device || !device->isActive())
             return LoopContinue; // Not available.
 
@@ -539,9 +539,9 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         InputControl *ctrl = nullptr;
         switch (bind.geti("type"))
         {
-        case IBD_AXIS:   ctrl = &device->axis  (bind.geti("controlId")); break;
-        case IBD_TOGGLE: ctrl = &device->button(bind.geti("controlId")); break;
-        case IBD_ANGLE:  ctrl = &device->hat   (bind.geti("controlId")); break;
+        case IBD_AXIS:   ctrl = &device->axis  (bind.geti(QStringLiteral("controlId"))); break;
+        case IBD_TOGGLE: ctrl = &device->button(bind.geti(QStringLiteral("controlId"))); break;
+        case IBD_ANGLE:  ctrl = &device->hat   (bind.geti(QStringLiteral("controlId"))); break;
 
         default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
@@ -554,7 +554,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         {
             if (context && axis->bindContext() != context)
             {
-                if (axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.geti("deviceId"), IBD_AXIS, bind.geti("controlId")))
+                if (axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.geti(QStringLiteral("deviceId")), IBD_AXIS, bind.geti(QStringLiteral("controlId"))))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if (axis->type() == AxisInputControl::Pointer)
@@ -605,18 +605,20 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
             // Expired?
             if (!(hat->bindContextAssociation() & InputControl::Expired))
             {
-                devicePos  = (hat->position() == bind.getf("angle")? 1.0f : 0.0f);
+                devicePos  = (hat->position() == bind.getf(QStringLiteral("angle"))? 1.0f : 0.0f);
                 deviceTime = hat->time();
             }
         }
 
+        int const bflags = bind.geti(QStringLiteral("flags"));
+
         // Apply further modifications based on flags.
-        if (bind.geti("flags") & IBDF_INVERSE)
+        if (bflags & IBDF_INVERSE)
         {
             devicePos    = -devicePos;
             deviceOffset = -deviceOffset;
         }
-        if (bind.geti("flags") & IBDF_TIME_STAGED)
+        if (bflags & IBDF_TIME_STAGED)
         {
             if (nowTime - deviceTime < STAGE_THRESHOLD * 1000)
             {
@@ -630,14 +632,16 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         // Is this state contributing to the outcome?
         if (!de::fequal(devicePos, 0.f))
         {
-            if (appliedState[bind.geti("type")])
+            int const btype = bind.geti(QStringLiteral("type"));
+
+            if (appliedState[btype])
             {
                 // Another binding already influenced this; we have a conflict.
-                conflicted[bind.geti("type")] = true;
+                conflicted[btype] = true;
             }
 
             // We've found one effective binding that influences this control.
-            appliedState[bind.geti("type")] = true;
+            appliedState[btype] = true;
         }
         return LoopContinue;
     });

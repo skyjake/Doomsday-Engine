@@ -56,15 +56,20 @@ static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDi
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
+WallEdge::Event::Event()
+    : IHPlane::IIntercept(0)
+    , _owner(nullptr)
+{}
+
 WallEdge::Event::Event(WallEdge &owner, ddouble distance)
     : WorldEdge::Event()
     , IHPlane::IIntercept(distance)
-    , _owner(owner)
+    , _owner(&owner)
 {}
 
 WallEdge::Event &WallEdge::Event::operator = (Event const &other)
 {
-    DENG_ASSERT(&_owner == &other._owner);
+    _owner    = other._owner;
     _distance = other._distance;
     return *this;
 }
@@ -81,7 +86,7 @@ ddouble WallEdge::Event::distance() const
 
 Vector3d WallEdge::Event::origin() const
 {
-    return _owner.pOrigin() + _owner.pDirection() * distance();
+    return _owner->pOrigin() + _owner->pDirection() * distance();
 }
 
 static bool eventSorter(WorldEdge::Event const &a, WorldEdge::Event const &b)
@@ -94,8 +99,12 @@ static inline coord_t lineSideOffset(LineSideSegment &seg, dint edge)
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
 
-DENG2_PIMPL(WallEdge), public IHPlane
+QQueue<WallEdge::Impl *> WallEdge::recycledImpls;
+
+struct WallEdge::Impl : public IHPlane
 {
+    WallEdge *self = nullptr;
+
     WallSpec spec;
     dint edge = 0;
 
@@ -122,14 +131,29 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3f normal;
     bool needUpdateNormal = true;
 
-    Impl(Public *i, WallSpec const &spec, HEdge &hedge, dint edge)
-        : Base(i)
-        , spec(spec)
-        , edge(edge)
-        , wallHEdge(&hedge)
-        , bottom(*i, 0)
-        , top   (*i, 1)
+    Impl() {}
+
+    void deinit()
     {
+        self = nullptr;
+        edge = 0;
+        wallHEdge = nullptr;
+        lo = hi = 0;
+        events.clear();
+        needSortEvents = false;
+        needUpdateNormal = true;
+    }
+
+    void init(WallEdge *i, WallSpec const &wallSpec, HEdge &hedge, dint edge)
+    {
+        self = i;
+
+        spec       = wallSpec;
+        this->edge = edge;
+        wallHEdge  = &hedge;
+        bottom     = Event(*self, 0);
+        top        = Event(*self, 1);
+
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
         Line const &line       = seg.line();
@@ -335,13 +359,8 @@ DENG2_PIMPL(WallEdge), public IHPlane
         }
         materialOrigin += Vector2f(::lineSideOffset(seg, edge), 0);
 
-        pOrigin    = Vector3d(self.origin(), lo);
+        pOrigin    = Vector3d(self->origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
-    }
-
-    ~Impl()
-    {
-        clearIntercepts();
     }
 
     inline LineSideSegment &lineSideSegment()
@@ -351,7 +370,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     void verifyValid() const
     {
-        if(!self.isValid())
+        if(!self->isValid())
         {
             /// @throw InvalidError  Invalid range geometry was specified.
             throw InvalidError("WallEdge::verifyValid", "Range geometry is not valid (top < bottom)");
@@ -397,7 +416,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         //DENG2_ASSERT(events);
 
-        events.append(Event(self, distance));
+        events.append(Event(*self, distance));
 
         // We'll need to resort the events.
         needSortEvents = true;
@@ -551,7 +570,6 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     if(!haveEvent(distance))
                     {
                         createEvent(distance);
-
                         return; // All clipped away.
                     }
                 }
@@ -689,10 +707,17 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, dint edge)
+WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin())
-    , d(new Impl(this, spec, hedge, edge))
-{}
+    , d(getRecycledImpl())
+{
+    d->init(this, spec, hedge, edge);
+}
+
+WallEdge::~WallEdge()
+{
+    recycleImpl(d);
+}
 
 Vector3d const &WallEdge::pOrigin() const
 {
@@ -750,7 +775,7 @@ WallEdge::EventIndex WallEdge::firstDivision() const
 
 WallEdge::EventIndex WallEdge::lastDivision() const
 {
-    return divisionCount()? d->interceptCount() - 2 : InvalidIndex;
+    return divisionCount()? (d->interceptCount() - 2) : InvalidIndex;
 }
 
 WallEdge::Events const &WallEdge::events() const
@@ -781,4 +806,19 @@ WallEdge::Event const &WallEdge::first() const
 WallEdge::Event const &WallEdge::last() const
 {
     return d->top;
+}
+
+WallEdge::Impl *WallEdge::getRecycledImpl() // static
+{
+    if (recycledImpls.isEmpty())
+    {
+        return new Impl;
+    }
+    return recycledImpls.dequeue();
+}
+
+void WallEdge::recycleImpl(Impl *d) // static
+{
+    d->deinit();
+    recycledImpls.enqueue(d);
 }

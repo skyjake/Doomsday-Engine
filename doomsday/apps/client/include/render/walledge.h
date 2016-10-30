@@ -21,6 +21,7 @@
 #define RENDER_WALLEDGE
 
 #include <QList>
+#include <QQueue>
 
 #include <de/Error>
 #include <de/Vector>
@@ -36,9 +37,7 @@ class Surface;
 /// Maximum number of intercepts in a WallEdge.
 #define WALLEDGE_MAX_INTERCEPTS          64
 
-namespace de {
-
-class HEdge;
+namespace de { class HEdge; }
 
 /**
  * Helper/utility class intended to simplify the process of generating sections of wall
@@ -55,18 +54,19 @@ public:
     /// Invalid range geometry was found during prepare() @ingroup errors
     DENG2_ERROR(InvalidError);
 
-    class Event : public WorldEdge::Event, public IHPlane::IIntercept
+    class Event : public WorldEdge::Event, public de::IHPlane::IIntercept
     {
     public:
-        Event(WallEdge &owner, ddouble distance = 0);
+        Event();
+        Event(WallEdge &owner, de::ddouble distance = 0);
 
         Event &operator = (Event const &other);
         bool operator < (Event const &other) const;
-        ddouble distance() const;
-        Vector3d origin() const;
+        de::ddouble distance() const;
+        de::Vector3d origin() const;
 
     private:
-        WallEdge &_owner;
+        WallEdge *_owner;
     };
 
     typedef QList<Event> Events;
@@ -77,18 +77,20 @@ public:
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      */
-    WallEdge(WallSpec const &spec, HEdge &hedge, dint edge);
+    WallEdge(WallSpec const &spec, de::HEdge &hedge, int edge);
+
+    virtual ~WallEdge();
 
     inline Event const &operator [] (EventIndex index) const {
         return at(index);
     }
 
-    Vector3d const &pOrigin() const;
-    Vector3d const &pDirection() const;
+    de::Vector3d const &pOrigin() const;
+    de::Vector3d const &pDirection() const;
 
-    Vector2f materialOrigin() const;
+    de::Vector2f materialOrigin() const;
 
-    Vector3f normal() const;
+    de::Vector3f normal() const;
 
     WallSpec const &spec() const;
 
@@ -109,7 +111,7 @@ public:
     /// Implement IEdge.
     Event const &last() const;
 
-    dint divisionCount() const;
+    int divisionCount() const;
 
     EventIndex firstDivision() const;
 
@@ -123,9 +125,12 @@ public:
     Event const &at(EventIndex index) const;
 
 private:
-    DENG2_PRIVATE(d)
-};
+    struct Impl;
+    Impl *d;
 
-}  // namespace de
+    static QQueue<WallEdge::Impl *> recycledImpls;    
+    static Impl *getRecycledImpl();
+    static void recycleImpl(Impl *d);
+};
 
 #endif  // RENDER_WALLEDGE

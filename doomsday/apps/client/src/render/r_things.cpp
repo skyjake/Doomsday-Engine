@@ -214,19 +214,22 @@ void R_ProjectSprite(mobj_t &mob)
     bool matFlipS = false;
     bool matFlipT = false;
 
-    defn::Sprite sprite(*spriteRec);
-    try
+    //try
+    defn::Sprite const sprite(*spriteRec);
+    defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
     {
-        Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
-        mat      = &world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL))->as<ClientMaterial>();
-        matFlipS = spriteView.getb("mirrorX");
+        if (auto *sprMat = world::Materials::get().materialPtr(de::Uri(spriteView.material, RC_NULL)))
+        {
+            mat = &sprMat->as<ClientMaterial>();
+        }
+        matFlipS = spriteView.mirrorX;
     }
-    catch(defn::Sprite::MissingViewError const &er)
+    /*catch(defn::Sprite::MissingViewError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
                 << mob.sprite << mob.frame << er.asText();
-    }
+    }*/
     if(!mat) return;
     MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
 
@@ -468,10 +471,10 @@ void R_ProjectSprite(mobj_t &mob)
         /// @todo mark this light source visible for LensFx
         try
         {
-            Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
+            //defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
             // Lookup the Material for this Sprite and prepare the animator.
-            MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))
+            MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.material, RC_NULL))
                     .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 

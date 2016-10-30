@@ -24,6 +24,7 @@
 #include "definition.h"
 #include <de/Error>
 #include <de/RecordAccessor>
+#include <de/DictionaryValue>
 
 namespace defn {
 
@@ -47,6 +48,12 @@ public:
     /// Required view is missing. @ingroup errors
     DENG2_ERROR(MissingViewError);
 
+    struct LIBDOOMSDAY_PUBLIC View
+    {
+        de::String material;
+        bool mirrorX;
+    };
+
 public:
     Sprite()                    : Definition() {}
     Sprite(Sprite const &other) : Definition(other) {}
@@ -65,6 +72,9 @@ public:
      */
     de::dint viewCount() const;
 
+    de::DictionaryValue &viewsDict();
+    de::DictionaryValue const &viewsDict() const;
+
     /**
      * Returns @c true if a View is defined for the specified @a angle.
      *
@@ -77,7 +87,13 @@ public:
      *
      * @param angle  View angle/rotation index/identifier to lookup.
      */
-    de::Record &view(de::dint angle);
+    de::Record &findView(de::dint angle);
+
+    de::Record const *tryFindView(de::dint angle) const;
+
+    View view(de::dint angle) const;
+
+    de::String viewMaterial(de::dint angle) const;
 
     /**
      * Select an appropriate View for visualizing the entity, given a mobj angle and the
@@ -89,7 +105,7 @@ public:
      *
      * @return  View associated with the closest angle.
      */
-    de::Record &nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation = false);
+    View nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation = false) const;
 };
 
 }  // namespace defn

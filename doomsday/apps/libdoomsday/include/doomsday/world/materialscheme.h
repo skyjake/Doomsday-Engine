@@ -102,6 +102,8 @@ public:
     /// @copydoc find()
     Manifest &find(de::Path const &path);
 
+    Manifest *tryFind(de::Path const &path) const;
+
     /**
      * Provides access to the manifest index for efficient traversal.
      */

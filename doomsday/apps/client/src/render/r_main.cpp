@@ -77,10 +77,10 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     DENG2_ASSERT(psp.statePtr);
     state_t const &state = *psp.statePtr;
 
-    Record const &spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
+    defn::Sprite::View const spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
-    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.gets("material"), RC_NULL))
+    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri(spriteView.material, RC_NULL))
             .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
@@ -98,7 +98,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 
     tex.glCoords(&parm.texOffset[0], &parm.texOffset[1]);
 
-    parm.texFlip[0] = spriteView.getb("mirrorX");
+    parm.texFlip[0] = spriteView.mirrorX;
     parm.texFlip[1] = false;
     parm.mat        = &matAnimator.material();
 

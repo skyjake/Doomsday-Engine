@@ -154,9 +154,9 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
         return false;
     }
 
-    Record const &spriteView = sprite.view(0);
-    info->material = world::Materials::get().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
-    info->flip     = spriteView.getb("mirrorX");
+    defn::Sprite::View const spriteView = sprite.view(0);
+    info->material = world::Materials::get().materialPtr(de::Uri(spriteView.material, RC_NULL));
+    info->flip     = spriteView.mirrorX;
 
     if (::novideo) return true;  // We can't prepare the material.
 

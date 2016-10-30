@@ -21,7 +21,7 @@
 
 #include "render/trianglestripbuilder.h"
 
-namespace de {
+using namespace de;
 
 DENG2_PIMPL(TriangleStripBuilder)
 {
@@ -115,5 +115,3 @@ int TriangleStripBuilder::take(PositionBuffer **positions, TexCoordBuffer **texc
     }
     return retNumElements;
 }
-
-} // namespace de
