@@ -60,17 +60,16 @@ public:
     public:
         Event(WallEdge &owner, ddouble distance = 0);
 
+        Event &operator = (Event const &other);
         bool operator < (Event const &other) const;
-
         ddouble distance() const;
-
         Vector3d origin() const;
 
     private:
-        DENG2_PRIVATE(d)
+        WallEdge &_owner;
     };
 
-    typedef QList<Event *> Events;
+    typedef QList<Event> Events;
 
 public:
     /**
