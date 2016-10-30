@@ -789,10 +789,9 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
 
     Rend_ApplyLightAdaptation(lightLevel);
 
-    for(dint i = 0; i < 3; ++i)
-    {
-        color[i] = lightLevel * ambientColor[i];
-    }
+    color.x = lightLevel * ambientColor.x;
+    color.y = lightLevel * ambientColor.y;
+    color.z = lightLevel * ambientColor.z;
 }
 
 /**
