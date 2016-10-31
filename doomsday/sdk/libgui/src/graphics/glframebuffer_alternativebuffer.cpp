@@ -13,11 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLFramebuffer"
 #include "de/GLTexture"
+#include "de/GLInfo"
 
 namespace de {
 
@@ -27,12 +28,14 @@ DENG2_PIMPL_NOREF(GLFramebuffer::AlternativeBuffer)
     GLTexture *texture;
     GLFramebuffer::Flags attachment;
     GLTexture *original;
+    GLuint originalRendBuf;
 
     Impl()
-        : target(0)
-        , texture(0)
+        : target(nullptr)
+        , texture(nullptr)
         , attachment(GLFramebuffer::NoAttachments)
-        , original(0)
+        , original(nullptr)
+        , originalRendBuf(0)
     {}
 };
 
@@ -44,6 +47,13 @@ GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, GLTex
     d->attachment = attachment;
 }
 
+GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, Flags const &attachment)
+    : d(new Impl)
+{
+    d->target = &target;
+    d->attachment = attachment;
+}
+
 GLFramebuffer::AlternativeBuffer::~AlternativeBuffer()
 {
     deinit();
@@ -51,37 +61,69 @@ GLFramebuffer::AlternativeBuffer::~AlternativeBuffer()
 
 bool GLFramebuffer::AlternativeBuffer::init()
 {
-    if (d->original)
+    if (d->attachment != GLFramebuffer::DepthStencil)
+    {
+        DENG2_ASSERT(!"GLFramebuffer::AlternativeBuffer only supports DepthStencil attachments");
+        return false;
+    }
+
+    if (d->original || d->originalRendBuf)
     {
         // Already done.
         return false;
     }
 
-    // Remember the original attachment.
-    d->original = d->target->attachedTexture(d->attachment);
-    DENG2_ASSERT(d->original != 0);
-
-    // Resize the alternative buffer to match current target size.
-    if (d->texture->size() != d->target->size())
+    if (d->texture)
     {
-        if (d->attachment == GLFramebuffer::DepthStencil)
+        // Remember the original attachment.
+        d->original = d->target->attachedTexture(d->attachment);
+        DENG2_ASSERT(d->original != 0);
+
+        // Resize the alternative buffer to match current target size.
+        if (d->texture->size() != d->target->size())
         {
             d->texture->setDepthStencilContent(d->target->size());
         }
-        else
-        {
-            DENG2_ASSERT(!"GLFramebuffer::AlternativeBuffer does not support resizing specified attachment type");
-        }
+        d->target->replaceAttachment(d->attachment, *d->texture);
     }
-    d->target->replaceAttachment(d->attachment, *d->texture);
+    else
+    {
+        // Remember the original attachment.
+        d->originalRendBuf = d->target->attachedRenderBuffer(d->attachment);
+        if (d->originalRendBuf == 0)
+        {
+            // Currently using a texture attachment.
+            d->original = d->target->attachedTexture(d->attachment);
+        }
+
+        /// @todo What about separate depth+stencil (if that even works at all)?
+
+        d->target->replaceWithNewRenderBuffer(d->attachment);
+    }
+
     return true;
 }
 
 bool GLFramebuffer::AlternativeBuffer::deinit()
 {
-    if (!d->original) return false; // Not inited.
+    if (!d->original && !d->originalRendBuf) return false; // Not inited.
 
-    d->target->replaceAttachment(d->attachment, *d->original);
+    if (!d->texture)
+    {
+        // Delete the temporary render buffer that was created in init().
+        d->target->releaseAttachment(d->attachment);
+    }
+
+    // Replace the original attachment.
+    if (d->original)
+    {
+        d->target->replaceAttachment(d->attachment, *d->original);
+    }
+    else if (d->originalRendBuf)
+    {
+        d->target->replaceAttachment(d->attachment, d->originalRendBuf);
+    }
+
     return true;
 }
 

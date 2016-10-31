@@ -252,9 +252,8 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    static GLTexture localDepth;  // note: static!
-    GLFramebuffer::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
-                                         GLFramebuffer::DepthStencil);
+    GLFramebuffer::AlternativeBuffer altDepth
+            (GLState::current().target(), GLFramebuffer::DepthStencil);
 
     // Draw HUD vissprites.
     for(vispsprite_t const &spr : visPSprites)

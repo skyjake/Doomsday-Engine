@@ -36,23 +36,13 @@ DENG2_PIMPL(GLTextureFramebuffer)
     int _samples; ///< don't touch directly (0 == default)
     GLTexture color;
     GLTexture depthStencil;
-    //GLFramebuffer framebuf;
     GLFramebuffer resolvedFbo;
     Asset texFboState;
-
-    /*Drawable bufSwap;
-    GLUniform uMvpMatrix;
-    GLUniform uBufTex;
-    GLUniform uColor;
-    typedef GLBufferT<Vertex2Tex> VBuf;*/
 
     Impl(Public *i)
         : Base(i)
         , colorFormat(Image::RGB_888)
         , _samples(0)
-        /*, uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uBufTex   ("uTex",       GLUniform::Sampler2D)
-        , uColor    ("uColor",     GLUniform::Vec4)*/
     {
         pDefaultSampleCount.audienceForChange() += this;
     }
@@ -70,11 +60,6 @@ DENG2_PIMPL(GLTextureFramebuffer)
 
     bool isMultisampled() const
     {
-        /*if (!GLInfo::extensions().EXT_framebuffer_multisample)
-        {
-            // Not supported.
-            return false;
-        }*/
         return sampleCount() > 1;
     }
 
@@ -83,48 +68,12 @@ DENG2_PIMPL(GLTextureFramebuffer)
         reconfigure();
     }
 
-    /*
-    void alloc()
-    {
-        // Prepare the fallback blit method.
-        VBuf *buf = new VBuf;
-        bufSwap.addBuffer(buf);
-        bufSwap.program().build(// Vertex shader:
-                                Block("uniform highp mat4 uMvpMatrix; "
-                                      "attribute highp vec4 aVertex; "
-                                      "attribute highp vec2 aUV; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) {"
-                                          "gl_Position = uMvpMatrix * aVertex; "
-                                          "vUV = aUV; }"),
-                                // Fragment shader:
-                                Block("uniform sampler2D uTex; "
-                                      "uniform highp vec4 uColor; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) { "
-                                          "gl_FragColor = uColor * texture2D(uTex, vUV); }"))
-                << uMvpMatrix
-                << uBufTex
-                << uColor;
-
-        buf->setVertices(gl::TriangleStrip,
-                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
-                         gl::Static);
-
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uBufTex = color;
-        uColor = Vector4f(1, 1, 1, 1);
-    }
-        */
-
     void release()
     {
-        //bufSwap.clear();
         color.clear();
         depthStencil.clear();
         self.deinit();
         resolvedFbo.deinit();
-        //multisampleTarget.configure();
 
         texFboState.setState(NotReady);
     }
@@ -219,31 +168,6 @@ DENG2_PIMPL(GLTextureFramebuffer)
         }
 
         self.clear(GLFramebuffer::ColorDepthStencil);
-
-        /*if (isMultisampled())
-        {
-            try
-            {
-                // Set up the multisampled target with suitable renderbuffers.
-                multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
-                multisampleTarget.clear(GLTarget::ColorDepthStencil);
-
-                // Actual drawing occurs in the multisampled target that is then
-                // blitted to the main target.
-                target.setProxy(&multisampleTarget);
-            }
-            catch (GLTarget::ConfigError const &er)
-            {
-                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
-                _samples = 1;
-                goto noMultisampling;
-            }
-        }
-        else
-        {
-noMultisampling:
-            multisampleTarget.configure();
-        }*/
     }
 
     void resize(Size const &newSize)
@@ -273,23 +197,14 @@ void GLTextureFramebuffer::glInit()
 {
     if (d->texFboState.isReady()) return;
 
-/*#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif*/
-
     LOG_AS("GLFramebuffer");
 
     // Check for some integral OpenGL functionality.
-    /*if (!GLInfo::extensions().EXT_framebuffer_object)
-    {
-        LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
-    }*/
     if (!GLInfo::extensions().EXT_packed_depth_stencil)
     {
         LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
     }
 
-    //d->alloc();
     d->texFboState.setState(Ready);
 
     d->reconfigure();
@@ -300,33 +215,12 @@ void GLTextureFramebuffer::glDeinit()
     d->release();
 }
 
-/*
-GLFramebuffer &GLTextureFramebuffer::framebuffer()
-{
-    return d->framebuf;
-}
-
-GLFramebuffer const &GLTextureFramebuffer::framebuffer() const
-{
-    return d->framebuf;
-}
-
-GLTextureFramebuffer::operator GLFramebuffer &()
-{
-    return framebuffer();
-}
-
-GLTextureFramebuffer::operator const GLFramebuffer &() const
-{
-    return framebuffer();
-}*/
-
 void GLTextureFramebuffer::setSampleCount(int sampleCount)
 {
-    /*if (!GLInfo::isFramebufferMultisamplingSupported())
+    if (!GLInfo::isFramebufferMultisamplingSupported())
     {
         sampleCount = 1;
-    }*/
+    }
 
     if (d->_samples != sampleCount)
     {

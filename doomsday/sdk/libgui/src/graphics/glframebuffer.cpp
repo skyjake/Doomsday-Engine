@@ -138,19 +138,40 @@ DENG2_OBSERVES(Asset, Deletion)
         return !texture && size == nullSize;
     }
 
-    GLTexture *bufferTexture(Flags const &flags) const
+    static AttachmentId flagsToAttachmentId(Flags const &flags)
     {
         if (flags == Color)
         {
-            return bufTextures[ColorBuffer];
+            return ColorBuffer;
         }
         if (flags == DepthStencil || flags == Depth)
         {
-            return bufTextures[DepthBuffer];
+            return DepthBuffer;
         }
         if (flags == Stencil)
         {
-            return bufTextures[StencilBuffer];
+            return StencilBuffer;
+        }
+        DENG2_ASSERT(!"Invalid attachment flags");
+        return MAX_ATTACHMENTS;
+    }
+
+    GLTexture *bufferTexture(Flags const &flags) const
+    {
+        auto attachId = flagsToAttachmentId(flags);
+        if (attachId != MAX_ATTACHMENTS)
+        {
+            return bufTextures[attachId];
+        }
+        return nullptr;
+    }
+
+    GLuint renderBuffer(Flags const &flags) const
+    {
+        auto attachId = flagsToAttachmentId(flags);
+        if (attachId != MAX_ATTACHMENTS)
+        {
+            return renderBufs[attachId];
         }
         return 0;
     }
@@ -256,9 +277,15 @@ DENG2_OBSERVES(Asset, Deletion)
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
-        if ( flags.testFlag(DepthStencil) &&
-           !flags.testFlag(SeparateDepthAndStencil) &&
-           (!texture || textureAttachment == Color))
+        allocDepthStencilRenderBuffers();
+
+        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, 0);
+    }
+
+    void allocDepthStencilRenderBuffers()
+    {
+        if (flags.testFlag(DepthStencil) && !flags.testFlag(SeparateDepthAndStencil) &&
+            (!texture || textureAttachment == Color))
         {
             // We can use a combined depth/stencil buffer.
             LOG_GL_VERBOSE("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
@@ -278,8 +305,6 @@ DENG2_OBSERVES(Asset, Deletion)
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
             }
         }
-
-        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, 0);
     }
 
     void releaseRenderBuffers()
@@ -323,11 +348,42 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replace(GLenum attachment, GLTexture &newTexture)
     {
-        DENG2_ASSERT(self.isReady());       // must already be inited
+        DENG2_ASSERT(self.isReady()); // must already be inited
         DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
 
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
         attachTexture(newTexture, attachment);
+
+        validate();
+    }
+
+    void replaceWithNewRenderBuffer(Flags const &attachment)
+    {
+        DENG2_ASSERT(self.isReady()); // must already be inited
+        if (attachment == DepthStencil) // this supported only
+        {
+            GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+
+            allocDepthStencilRenderBuffers();
+
+            validate();
+        }
+    }
+
+    void replaceWithExistingRenderBuffer(Flags const &attachment, GLuint renderBufId)
+    {
+        DENG2_ASSERT(self.isReady());       // must already be inited
+
+        auto id = flagsToAttachmentId(attachment);
+
+        renderBufs[id] = renderBufId;
+
+        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+        GLInfo::EXT_framebuffer_object()->glFramebufferRenderbufferEXT(
+                    GL_FRAMEBUFFER, flagsToGLAttachment(attachment),
+                    GL_RENDERBUFFER, renderBufs[id]);
+
+        LIBGUI_ASSERT_GL_OK();
 
         // Restore previous target.
         GLState::current().target().glBind();
@@ -631,39 +687,67 @@ GLTexture *GLFramebuffer::attachedTexture(Flags const &attachment) const
     return d->bufferTexture(attachment);
 }
 
+GLuint GLFramebuffer::attachedRenderBuffer(Flags const &attachment) const
+{
+    return d->renderBuffer(attachment);
+}
+
 void GLFramebuffer::replaceAttachment(Flags const &attachment, GLTexture &texture)
 {
-    DENG2_ASSERT(!d->isDefault());
-
     d->replace(d->flagsToGLAttachment(attachment), texture);
 }
 
-/*void GLFramebuffer::setProxy(GLFramebuffer const *proxy)
+void GLFramebuffer::replaceAttachment(Flags const &attachment, GLuint renderBufferId)
 {
-    d->proxy = proxy;
+    d->replaceWithExistingRenderBuffer(attachment, renderBufferId);
 }
 
-void GLFramebuffer::updateFromProxy()
+void GLFramebuffer::replaceWithNewRenderBuffer(Flags const &attachment)
 {
-    d->updateFromProxy();
-}*/
+    d->replaceWithNewRenderBuffer(attachment);
+}
+
+void GLFramebuffer::releaseAttachment(Flags const &attachment)
+{
+    if (attachment & Depth)
+    {
+        if (d->renderBufs[Impl::DepthBuffer])
+        {
+            GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(1, &d->renderBufs[Impl::DepthBuffer]);
+            d->renderBufs[Impl::DepthBuffer] = 0;
+        }
+    }
+    if (attachment & Stencil)
+    {
+        if (d->renderBufs[Impl::StencilBuffer])
+        {
+            GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(1, &d->renderBufs[Impl::StencilBuffer]);
+            d->renderBufs[Impl::StencilBuffer] = 0;
+        }
+    }
+}
 
 void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
-/*    DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
-    if (!GLInfo::extensions().EXT_framebuffer_blit) return;*/
+    auto *fb_obj  = GLInfo::EXT_framebuffer_object();
+    auto *fb_blit = GLInfo::EXT_framebuffer_blit();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    if (!fb_obj || !fb_blit)
+    {
+        return;
+    }
+
+    fb_obj->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
+    fb_obj->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
     LIBGUI_ASSERT_GL_OK();
 
     Flags common = d->flags & dest.flags() & attachments;
 
-    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
+    fb_blit->glBlitFramebufferEXT(
                 0, 0, size().x, size().y,
                 0, 0, dest.size().x, dest.size().y,
                 (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |

@@ -88,6 +88,14 @@ public:
         AlternativeBuffer(GLFramebuffer &target, GLTexture &texture, Flags const &attachment);
 
         /**
+         * Prepares an alternative render buffer attachment.
+         *
+         * @param target      The rendering target this is for.
+         * @param attachment  Which attachment (only DepthStencil supported).
+         */
+        AlternativeBuffer(GLFramebuffer &target, Flags const &attachment);
+
+        /**
          * Automatically deinitialize the alternative buffer, if it was taken
          * into use.
          */
@@ -266,6 +274,15 @@ public:
     virtual GLTexture *attachedTexture(Flags const &attachment) const;
 
     /**
+     * Returns the render buffer attachment, if one exists.
+     *
+     * @param attachment  Which attachment.
+     *
+     * @return GL name of the render buffer.
+     */
+    GLuint attachedRenderBuffer(Flags const &attachment) const;
+
+    /**
      * Replaces a currently attached texture with another.
      *
      * @param attachment  Which attachment.
@@ -273,15 +290,17 @@ public:
      */
     void replaceAttachment(Flags const &attachment, GLTexture &texture);
 
-    /*
-     * Sets the target that is actually bound when this GLFramebuffer is bound.
-     * Intended to be used with multisampled buffers.
+    /**
+     * Replaces an attachment with a render buffer.
      *
-     * @param proxy  Proxy target.
+     * @param attachment      Which attachment.
+     * @param renderBufferId  GL name of a render buffer.
      */
-    //void setProxy(GLFramebuffer const *proxy);
+    void replaceAttachment(Flags const &attachment, GLuint renderBufferId);
 
-    //void updateFromProxy();
+    void replaceWithNewRenderBuffer(Flags const &attachment);
+
+    void releaseAttachment(Flags const &attachment);
 
     /**
      * Blits this target's contents to the @a copy target.
