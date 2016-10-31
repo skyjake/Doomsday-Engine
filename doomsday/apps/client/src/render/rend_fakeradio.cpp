@@ -798,7 +798,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, gl::TriangleFan, indices.constData(), numVerts);
+                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
             }
         }
         // Left fan.
@@ -838,7 +838,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, gl::TriangleFan, indices.constData(), numVerts);
+                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
             }
         }
     }
@@ -864,7 +864,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         // Write the geometry?
         if(::rendFakeRadio != 2)
         {
-            shadowList.write(buffer, gl::TriangleStrip, indices.constData(), 4);
+            shadowList.write(buffer, indices.constData(), 4, gl::TriangleStrip);
         }
     }
 }
@@ -1062,7 +1062,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
                         if (::rendFakeRadio == 2) continue;
 
                         // Write the geometry.
-                        shadowList.write(buffer, primitive, indices);
+                        shadowList.write(buffer, indices, primitive);
                     }
                 }
             }

@@ -124,6 +124,37 @@ public:
 
     typedef QVector<de::duint> Indices;
 
+    struct PrimitiveParams
+    {
+        de::gl::Primitive type;
+
+        // GL state and flags.
+        enum Flag {
+            Unlit      = 0,
+            OneLight   = 0x1000,
+            ManyLights = 0x2000
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+        de::duint32  flags_blendMode;
+        de::Vector2f texScale;
+        de::Vector2f texOffset;
+        de::Vector2f detailTexScale;
+        de::Vector2f detailTexOffset;
+        DGLuint      modTexture;    ///< GL-name of the modulation texture; otherwise @c 0.
+        de::Vector3f modColor;      ///< Modulation color.
+
+        PrimitiveParams(de::gl::Primitive type,
+                        de::Vector2f texScale        = de::Vector2f(1, 1),
+                        de::Vector2f texOffset       = de::Vector2f(0, 0),
+                        de::Vector2f detailTexScale  = de::Vector2f(1, 1),
+                        de::Vector2f detailTexOffset = de::Vector2f(0, 0),
+                        Flags        flags           = Unlit,
+                        blendmode_t  blendMode       = BM_NORMAL,
+                        DGLuint      modTexture      = 0,
+                        de::Vector3f modColor        = de::Vector3f());
+    };
+
 public:
     /**
      * Construct a new draw list.
@@ -135,46 +166,25 @@ public:
     /**
      * Write indices for a (buffered) geometry primitive to the list.
      *
-     * Primitive geometry:
-     * @param buffer           Geometry buffer containing the primitive to write. It is the caller's
-     *                         responsibility to ensure this data remains accessible and valid while
-     *                         this DrawList is used (i.e., until a @ref clear(), rewind() or the
+     * @param buffer           Geometry buffer containing the primitive to write.
+     *                         It is the caller's responsibility to ensure this data
+     *                         remains accessible and valid while this DrawList is used
+     *                         (i.e., until a @ref clear(), rewind() or the
      *                         list itself is destroyed).
-     * @param primitive        Type identifier for the GL primitive being written.
+     * @param primParams       GL primitive parameters.
      * @param indices          Indices for the vertex elements in @a buffer. A copy is made.
-     *
-     * Primitive-specific GL attribute/state to apply when drawing:
-     * @param blendMode
-     * @param oneLight
-     * @param manyLights
-     * @param texScale
-     * @param texOffset
-     * @param detailTexScale
-     * @param detailTexOffset
-     * @param modTexture       GL-name of the modulation texture; otherwise @c 0.
-     * @param modColor         Modulation color.
      */
-    DrawList &write(Store const &buffer, de::gl::Primitive primitive, de::duint const *indices, int indexCount,
-        blendmode_t blendMode               = BM_NORMAL,
-        bool oneLight                       = false,
-        bool manyLights                     = false,
-        de::Vector2f const &texScale        = de::Vector2f(1, 1),
-        de::Vector2f const &texOffset       = de::Vector2f(0, 0),
-        de::Vector2f const &detailTexScale  = de::Vector2f(1, 1),
-        de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
-        GLuint modTexture                   = 0,
-        de::Vector3f const &modColor        = de::Vector3f());
+    DrawList &write(Store const &buffer,
+                    de::duint const *indices, int indexCount,
+                    PrimitiveParams const &primParms);
 
-    DrawList &write(Store const &buffer, de::gl::Primitive primitive, Indices const &indices,
-        blendmode_t blendMode = BM_NORMAL,
-        bool oneLight = false,
-        bool manyLights = false,
-        de::Vector2f const &texScale = de::Vector2f(1, 1),
-        de::Vector2f const &texOffset = de::Vector2f(0, 0),
-        de::Vector2f const &detailTexScale = de::Vector2f(1, 1),
-        de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
-        GLuint modTexture = 0,
-        de::Vector3f const &modColor = de::Vector3f());
+    DrawList &write(Store const &buffer,
+                    Indices const &indices,
+                    de::gl::Primitive primitiveType); // using default parameters
+
+    DrawList &write(Store const &buffer,
+                    Indices const &indices,
+                    PrimitiveParams const &primParms);
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
@@ -189,16 +199,17 @@ public:
     void clear();
 
     /**
-     * Return the read/write cursor to the beginning of the list, retaining all allocated storage for
-     * buffered GL commands so that it can be reused.
+     * Return the read/write cursor to the beginning of the list, retaining all allocated
+     * storage for buffered GL commands so that it can be reused.
      *
-     * To be called at the beginning of a new render frame before any geometry is written to the list.
+     * To be called at the beginning of a new render frame before any geometry is written
+     * to the list.
      */
     void rewind();
 
     /**
-     * Provides mutable access to the list's specification. Note that any changes to this configuration
-     * will affect @em all geometry in the list.
+     * Provides mutable access to the list's specification. Note that any changes to this
+     * configuration will affect @em all geometry in the list.
      */
     Spec &spec();
 
@@ -212,5 +223,7 @@ private:
 };
 
 typedef DrawList::Spec DrawListSpec;
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(DrawList::PrimitiveParams::Flags)
 
 #endif  // CLIENT_RENDER_DRAWLIST_H

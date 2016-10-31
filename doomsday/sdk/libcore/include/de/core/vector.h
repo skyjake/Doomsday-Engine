@@ -134,6 +134,9 @@ public:
     ByteRefArray data() {
         return ByteRefArray(&x, size() * sizeof(ValueType));
     }
+    ValueType const *constPtr() const {
+        return &x;
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
         Type *ptrs[] = { &x, &y };
