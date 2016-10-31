@@ -113,29 +113,29 @@ DENG2_PIMPL(Sector)
         }
     };
 
-    struct Planes : public QList<Plane *>
+    struct Planes : public QVector<Plane *>
     {
         ~Planes() { clear(); }
 
         void clear() {
             qDeleteAll(*this);
-            QList<Plane *>::clear();
+            QVector<Plane *>::clear();
         }
     };
 
-    struct Subsectors : public QList<Subsector *>
+    struct Subsectors : public QVector<Subsector *>
     {
         ~Subsectors() { clear(); }
 
         void clear() {
             qDeleteAll(*this);
-            QList<Subsector *>::clear();
+            QVector<Subsector *>::clear();
         }
     };
 
     Planes planes;                   ///< Planes of the sector.
     MapObjects mapObjects;           ///< All map-objects "in" one of the subsectors (not owned).
-    QList<LineSide *> sides;         ///< All line sides referencing the sector (not owned).
+    QVector<LineSide *> sides;       ///< All line sides referencing the sector (not owned).
     Subsectors subsectors;           ///< Traversable subsectors of the sector.
     ThinkerT<SoundEmitter> emitter;  ///< Head of the sound emitter chain.
 
@@ -282,34 +282,17 @@ dint Sector::planeCount() const
 
 Plane &Sector::plane(dint planeIndex)
 {
-    if (planeIndex >= 0 && planeIndex < d->planes.count()) return *d->planes.at(planeIndex);
+    DENG2_ASSERT(planeIndex >= 0 && planeIndex < d->planes.count());
+    return *d->planes.at(planeIndex);
+    //if (planeIndex >= 0 && planeIndex < d->planes.count()) return *d->planes.at(planeIndex);
     /// @throw MissingPlaneError The referenced plane does not exist.
-    throw MissingPlaneError("Sector::plane", "Unknown plane #" + String::number(planeIndex));
+    //throw MissingPlaneError("Sector::plane", "Unknown plane #" + String::number(planeIndex));
 }
 
 Plane const &Sector::plane(dint planeIndex) const
 {
-    return const_cast<Sector *>(this)->plane(planeIndex);
-}
-
-Plane &Sector::floor()
-{
-    return plane(Floor);
-}
-
-Plane const &Sector::floor() const
-{
-    return plane(Floor);
-}
-
-Plane &Sector::ceiling()
-{
-    return plane(Ceiling);
-}
-
-Plane const &Sector::ceiling() const
-{
-    return plane(Ceiling);
+    DENG2_ASSERT(planeIndex >= 0 && planeIndex < d->planes.count());
+    return *d->planes.at(planeIndex);
 }
 
 LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)

@@ -40,6 +40,7 @@
 using namespace de;
 
 static String const VAR_GLOW_STRENGTH("glowStrength");
+static String const VAR_MIN_COLOR("minColor");
 static String const VAR_OPACITY("opacity");
 static String const VAR_ORIGIN("origin");
 static String const VAR_SCALE("scale");
@@ -492,7 +493,7 @@ DENG2_PIMPL(MaterialAnimator)
         for (int i = 0; i < material->layerCount(); ++i)
         {
             world::MaterialLayer const &layer = material->layer(i);
-            LayerState const &ls       = *layers[i];
+            LayerState const &ls = *layers[i];
 
             if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
             {
@@ -531,19 +532,15 @@ DENG2_PIMPL(MaterialAnimator)
                     world::TextureMaterialLayer::AnimationStage const &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = layer.as<world::TextureMaterialLayer>().stage(ls.nextStage);
 
-                    Vector2f origin;
-                    for (int k = 0; k < 2; ++k)
-                    {
-                        origin[k] = de::lerp(stage.geta("origin")[k].asNumber(), next.geta("origin")[k].asNumber(), ls.inter);
-                    }
+                    Vector2f origin = de::lerp(vectorFromValue<Vector2f>(stage.get(VAR_ORIGIN)),
+                                               vectorFromValue<Vector2f>(next.get(VAR_ORIGIN)), 
+                                               ls.inter);
 
-                    Vector3f minColor;
-                    for (int k = 0; k < 3; ++k)
-                    {
-                        minColor[k] = de::lerp(stage.geta("minColor")[k].asNumber(), next.geta("minColor")[k].asNumber(), ls.inter);
-                    }
+                    Vector3f minColor = de::lerp(vectorFromValue<Vector3f>(stage.get(VAR_MIN_COLOR)), 
+                                                 vectorFromValue<Vector3f>(next.get(VAR_MIN_COLOR)),
+                                                 ls.inter);
 
-                    float const opacity = de::lerp(stage.getf("opacity"), next.getf("opacity"), ls.inter);
+                    float const opacity = de::lerp(stage.getf(VAR_OPACITY), next.getf(VAR_OPACITY), ls.inter);
 
                     snapshot->shineBlendMode = blendmode_t( stage.geti("blendMode") );
                     snapshot->shineMinColor  = minColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
@@ -567,11 +564,11 @@ DENG2_PIMPL(MaterialAnimator)
                     world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.nextStage);
 
                     Vector2f const scale = Vector2f(1, 1) / snapshot->dimensions;
-                    Vector2f origin;
-                    for (int k = 0; k < 2; ++k)
-                    {
-                        origin[k] = de::lerp(stage.geta(VAR_ORIGIN)[k].asNumber(), next.geta(VAR_ORIGIN)[k].asNumber(), ls.inter);
-                    }
+
+                    Vector2f origin = de::lerp(vectorFromValue<Vector2f>(stage.get(VAR_ORIGIN)),
+                                               vectorFromValue<Vector2f>(next.get(VAR_ORIGIN)),
+                                               ls.inter);
+
                     float const opacity = de::lerp(stage.getf(VAR_OPACITY), next.getf(VAR_OPACITY), ls.inter);
 
                     snapshot->units[TU_LAYER0 + texLayerIndex] = GLTextureUnit(*tex, scale, origin, de::clamp(0.0f, opacity, 1.0f));

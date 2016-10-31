@@ -152,7 +152,7 @@ Sprite::View Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noR
 {
     dint angle = 0;  // Use the front view (default).
 
-    if (!noRotation && !def().getb(VAR_FRONT_ONLY))
+    if (!noRotation)
     {
         // Choose a view according to the relative angle with viewer (the eye).
         angle = ((angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) - (unsigned) (ANGLE_180 / 16)) >> 28;
