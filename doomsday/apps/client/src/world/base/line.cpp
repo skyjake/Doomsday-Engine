@@ -1048,7 +1048,7 @@ DENG2_PIMPL(Line)
         slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
         AABoxd bounds;          ///< Axis-aligned bounding box.
 
-        GeomData(Vertex &from, Vertex &to)
+        GeomData(Vertex const &from, Vertex const &to)
             : direction(to.origin() - from.origin())
             , length   (direction.length())
             , angle    (bamsAtan2(dint(direction.y), dint(direction.x)))
@@ -1056,6 +1056,11 @@ DENG2_PIMPL(Line)
         {
             V2d_InitBoxXY (bounds.arvec2, from.x(), from.y());
             V2d_AddToBoxXY(bounds.arvec2, to  .x(), to  .y());
+        }
+
+        static ddouble calcLength(Vertex const &from, Vertex const &to)
+        {
+            return (to.origin() - from.origin()).length();
         }
     };
     std::unique_ptr<GeomData> gdata;
@@ -1259,7 +1264,8 @@ Vector2d const &Line::direction() const
 
 ddouble Line::length() const
 {
-    return d->geom().length;
+    if (d->gdata) return d->gdata->length;
+    return Impl::GeomData::calcLength(*d->from, *d->to);
 }
 
 slopetype_t Line::slopeType() const

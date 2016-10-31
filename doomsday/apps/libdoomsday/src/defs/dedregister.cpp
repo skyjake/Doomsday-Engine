@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/defs/dedregister.h"
+#include "doomsday/defs/definition.h"
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
@@ -142,7 +143,7 @@ DENG2_PIMPL(DEDRegister)
         Record *sub = new Record;
 
         // Let each subrecord know their ordinal.
-        sub->set("__order__", int(order().size())).setReadOnly();
+        sub->set(defn::Definition::VAR_ORDER, int(order().size())).setReadOnly();
 
         // Observe what goes into this record.
         //sub->audienceForDeletion() += this;

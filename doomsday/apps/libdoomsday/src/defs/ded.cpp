@@ -101,14 +101,14 @@ int ded_s::addFlag(String const &id, int value)
     Record &def = flags.append();
     def.addText("id", id);
     def.addNumber("value", value);
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addEpisode()
 {
     Record &def = episodes.append();
     defn::Episode(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addThing(String const &id)
@@ -116,7 +116,7 @@ int ded_s::addThing(String const &id)
     Record &def = things.append();
     defn::Thing(def).resetToDefaults();
     def.set("id", id);
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addState(String const &id)
@@ -124,56 +124,56 @@ int ded_s::addState(String const &id)
     Record &def = states.append();
     defn::State(def).resetToDefaults();
     def.set("id", id);
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addDecoration()
 {
     Record &def = decorations.append();
     defn::Decoration(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addFinale()
 {
     Record &def = finales.append();
     defn::Finale(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addMapInfo()
 {
     Record &def = mapInfos.append();
     defn::MapInfo(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addMaterial()
 {
     Record &def = materials.append();
     defn::Material(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addModel()
 {
     Record &def = models.append();
     defn::Model(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addMusic()
 {
     Record &def = musics.append();
     defn::Music(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 int ded_s::addSky()
 {
     Record &def = skies.append();
     defn::Sky(def).resetToDefaults();
-    return def.geti("__order__");
+    return def.geti(defn::Definition::VAR_ORDER);
 }
 
 void ded_s::release()
@@ -362,7 +362,7 @@ int ded_s::getMobjNum(String const &id) const
 {
     if (Record const *def = things.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     /*
     for (i = 0; i < mobjs.size(); ++i)
@@ -383,7 +383,7 @@ int ded_s::getMobjNumForName(const char *name) const
             return i;*/
     if (Record const *def = things.tryFind("name", name))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
 
     return -1;
@@ -400,7 +400,7 @@ int ded_s::getStateNum(String const &id) const
 {
     if (Record const *def = states.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 }
@@ -440,7 +440,7 @@ int ded_s::getEpisodeNum(String const &id) const
 {
     if (Record const *def = episodes.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 }
@@ -449,7 +449,7 @@ int ded_s::getMapInfoNum(de::Uri const &uri) const
 {
     if (Record const *def = mapInfos.tryFind("id", uri.compose()))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;  // Not found.
 }
@@ -478,7 +478,7 @@ int ded_s::getMaterialNum(de::Uri const &uri) const
 
     if (Record const *def = materials.tryFind("id", uri.compose()))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;  // Not found.
 }
@@ -487,7 +487,7 @@ int ded_s::getModelNum(const char *id) const
 {
     if (Record const *def = models.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 
@@ -506,7 +506,7 @@ int ded_s::getSkyNum(char const *id) const
 {
     if (Record const *def = skies.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 
@@ -572,7 +572,7 @@ int ded_s::getMusicNum(char const *id) const
 {
     if (Record const *def = musics.tryFind("id", id))
     {
-        return def->geti("__order__");
+        return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 

@@ -185,8 +185,6 @@ DENG2_PIMPL(Record), public Lockable
 
     Variable const *findMemberByPath(String const &name) const
     {
-        DENG2_GUARD(this);
-
         // Path notation allows looking into subrecords.
         int pos = name.indexOf('.');
         if (pos >= 0)
@@ -197,6 +195,8 @@ DENG2_PIMPL(Record), public Lockable
             if (!self.hasRecord(subName)) return 0;
             return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
+
+        DENG2_GUARD(this);
 
         Members::const_iterator found = members.constFind(name);
         if (found != members.constEnd())

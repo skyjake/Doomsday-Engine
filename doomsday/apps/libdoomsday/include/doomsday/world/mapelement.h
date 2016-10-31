@@ -44,9 +44,6 @@ class LIBDOOMSDAY_PUBLIC MapElement
     DENG2_NO_ASSIGN(MapElement)
 
 public:
-    /// No parent map element is configured. @ingroup errors
-    DENG2_ERROR(MissingParentError);
-
     /// Attempted to configure an invalid parent element. @ingroup errors
     DENG2_ERROR(InvalidParentError);
 
@@ -85,15 +82,22 @@ public:
      *
      * @see parent(), setParent()
      */
-    bool hasParent() const;
+    inline bool hasParent() const { return _parent != nullptr; }
 
     /**
      * Returns the parent of the map element.
      *
      * @see hasParent(), setParent()
      */
-    MapElement       &parent();
-    MapElement const &parent() const;
+    inline MapElement &parent() {
+        DENG2_ASSERT(_parent);
+        return *_parent;
+    }
+
+    inline MapElement const &parent() const {
+        DENG2_ASSERT(_parent);
+        return *_parent;
+    }
 
     /**
      * Change the parent of the map element.
@@ -197,6 +201,8 @@ public:
 
 private:
     DENG2_PRIVATE(d)
+
+    MapElement *_parent = nullptr;
 };
 
 } // namespace world

@@ -119,7 +119,7 @@ DENG2_PIMPL(ClientSubsector)
         {
             ~EdgeLoops() { clear(); }
 
-            void clear() 
+            void clear()
             {
                 qDeleteAll(*this);
                 QList<ClEdgeLoop *>::clear();
@@ -201,7 +201,7 @@ DENG2_PIMPL(ClientSubsector)
     bool needReverbUpdate = true;
 
     /// Per surface lists of light decoration info and state.
-    QMap<Surface *, DecoratedSurface> decorSurfaces;
+    QHash<Surface *, DecoratedSurface> decorSurfaces;
 
     Impl(Public *i) : Base(i)
     {}

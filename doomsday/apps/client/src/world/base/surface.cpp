@@ -224,7 +224,7 @@ Material &Surface::material() const
 
 Material *Surface::materialPtr() const
 {
-    return hasMaterial() ? &material() : nullptr;
+    return d->material;
 }
 
 Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)

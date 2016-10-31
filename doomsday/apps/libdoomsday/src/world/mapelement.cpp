@@ -28,7 +28,6 @@ namespace world {
 DENG2_PIMPL_NOREF(MapElement)
 {
     dint type;
-    MapElement *parent  = nullptr;
     Map *map            = nullptr;
     dint indexInMap     = NoIndex;
     dint indexInArchive = NoIndex;
@@ -50,23 +49,6 @@ dint MapElement::type() const
     return d->type;
 }
 
-bool MapElement::hasParent() const
-{
-    return d->parent != nullptr;
-}
-
-MapElement &MapElement::parent()
-{
-    return const_cast<MapElement &>(const_cast<MapElement const *>(this)->parent());
-}
-
-MapElement const &MapElement::parent() const
-{
-    if (d->parent) return *d->parent;
-    /// @throw MissingParentError  Attempted with no parent element is attributed.
-    throw MissingParentError("MapElement::parent", "No parent map element is attributed");
-}
-
 void MapElement::setParent(MapElement *newParent)
 {
     if (newParent == this)
@@ -74,15 +56,15 @@ void MapElement::setParent(MapElement *newParent)
         /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
         throw InvalidParentError("MapElement::setParent", "Cannot attribute 'this' map element as a parent of itself");
     }
-    d->parent = newParent;
+    _parent = newParent;
 }
 
 bool MapElement::hasMap() const
 {
     // If a parent is configured this property is delegated to the parent.
-    if (d->parent)
+    if (_parent)
     {
-        return d->parent->hasMap();
+        return _parent->hasMap();
     }
     return d->map != nullptr;
 }
@@ -90,9 +72,9 @@ bool MapElement::hasMap() const
 Map &MapElement::map() const
 {
     // If a parent is configured this property is delegated to the parent.
-    if (d->parent)
+    if (_parent)
     {
-        return d->parent->map();
+        return _parent->map();
     }
     if (d->map)
     {
@@ -105,7 +87,7 @@ Map &MapElement::map() const
 void MapElement::setMap(Map *newMap)
 {
     // If a parent is configured this property is delegated to the parent.
-    if (!d->parent)
+    if (!_parent)
     {
         d->map = newMap;
         return;

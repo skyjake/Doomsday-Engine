@@ -24,6 +24,8 @@ using namespace de;
 
 namespace defn {
 
+String const Definition::VAR_ORDER("__order__");
+
 Record &Definition::def()
 {
     return const_cast<Record &>(accessedRecord());
@@ -37,7 +39,7 @@ Record const &Definition::def() const
 int Definition::order() const
 {
     if (!accessedRecordPtr()) return -1;
-    return geti("__order__");
+    return geti(VAR_ORDER);
 }
 
 Definition::operator bool() const

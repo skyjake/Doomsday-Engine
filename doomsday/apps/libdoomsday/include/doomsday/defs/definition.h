@@ -59,6 +59,8 @@ public:
      * call this before inserting their own members.
      */
     virtual void resetToDefaults();
+
+    static de::String const VAR_ORDER; // __order__
 };
 
 } // namespace defn

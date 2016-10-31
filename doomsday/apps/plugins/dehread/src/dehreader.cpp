@@ -796,7 +796,7 @@ public:
     {
         LOG_AS("parseThing");
 
-        int const thingNum = mobj.geti("__order__");
+        int const thingNum = mobj.geti(defn::Definition::VAR_ORDER);
         bool hadHeight     = false, checkHeight = false;
 
         for(; lineInCurrentSection(); skipToNextLine())
@@ -1043,7 +1043,7 @@ public:
     void parseFrame(defn::State state, bool ignore = false)
     {
         LOG_AS("parseFrame");
-        int const stateNum = state.geti("__order__");
+        int const stateNum = state.geti(defn::Definition::VAR_ORDER);
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1390,7 +1390,7 @@ public:
     void parsePointer(defn::State state, bool ignore)
     {
         LOG_AS("parsePointer");
-        int const stateNum = state.geti("__order__");
+        int const stateNum = state.geti(defn::Definition::VAR_ORDER);
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
