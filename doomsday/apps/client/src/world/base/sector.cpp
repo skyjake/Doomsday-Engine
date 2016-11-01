@@ -292,7 +292,7 @@ Plane &Sector::plane(dint planeIndex)
 Plane const &Sector::plane(dint planeIndex) const
 {
     DENG2_ASSERT(planeIndex >= 0 && planeIndex < d->planes.count());
-    return *d->planes.at(planeIndex);
+    return *d.getConst()->planes.at(planeIndex);
 }
 
 LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
@@ -306,7 +306,7 @@ LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
 
 LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane const &)> func) const
 {
-    for (Plane *plane : d->planes)
+    for (Plane const *plane : d->planes)
     {
         if(auto result = func(*plane)) return result;
     }

@@ -179,13 +179,17 @@ public:
                     PrimitiveParams const &primParms);
 
     DrawList &write(Store const &buffer,
-                    Indices const &indices,
+                    de::duint const *indices, int indexCount,
                     de::gl::Primitive primitiveType); // using default parameters
 
     DrawList &write(Store const &buffer,
                     Indices const &indices,
                     PrimitiveParams const &primParms);
 
+    DrawList &write(Store const &buffer,
+                    Indices const &indices,
+                    de::gl::Primitive primitiveType); // using default parameters
+    
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
     /**

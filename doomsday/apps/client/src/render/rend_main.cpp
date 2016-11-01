@@ -1254,12 +1254,19 @@ struct rendworldpoly_params_t
     } wall;
 };
 
+static void reserveSpace(DrawList::Indices &indices, uint count)
+{
+    if (indices.size() < int(count)) indices.resize(int(count));
+}
+
 static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
     using Parm = DrawList::PrimitiveParams;
 
     DENG2_ASSERT(rvertices);
+
+    static DrawList::Indices indices;
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
@@ -1426,8 +1433,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     Store &buffer = ClientApp::renderSystem().buffer();
                     {
                         duint base = buffer.allocateVertices(numRightVerts);
-                        DrawList::Indices indices;
-                        indices.resize(numRightVerts);
+                        reserveSpace(indices, numRightVerts);
                         for (duint i = 0; i < numRightVerts; ++i)
                         {
                             indices[i] = base + i;
@@ -1435,12 +1441,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                         }
-                        lightList.write(buffer, indices, gl::TriangleFan);
+                        lightList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
                     }
                     {
                         duint base = buffer.allocateVertices(numLeftVerts);
-                        DrawList::Indices indices;
-                        indices.resize(numLeftVerts);
+                        reserveSpace(indices, numLeftVerts);
                         for (duint i = 0; i < numLeftVerts; ++i)
                         {
                             indices[i] = base + i;
@@ -1448,15 +1453,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[i];
                         }
-                        lightList.write(buffer, indices, gl::TriangleFan);
+                        lightList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
                     }
                 }
                 else
                 {
                     Store &buffer = ClientApp::renderSystem().buffer();
                     duint base = buffer.allocateVertices(numVertices);
-                    DrawList::Indices indices;
-                    indices.resize(numVertices);
+                    reserveSpace(indices, numVertices);
                     for (duint i = 0; i < numVertices; ++i)
                     {
                         indices[i] = base + i;
@@ -1464,7 +1468,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    lightList.write(buffer, indices, p.isWall? gl::TriangleStrip : gl::TriangleFan);
+                    lightList.write(buffer, indices.constData(), numVertices, p.isWall? gl::TriangleStrip : gl::TriangleFan);
                 }
 
                 // We're done with the geometry.
@@ -1523,8 +1527,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 Store &buffer = ClientApp::renderSystem().buffer();
                 {
                     duint base = buffer.allocateVertices(numRightVerts);
-                    DrawList::Indices indices;
-                    indices.resize(numRightVerts);
+                    reserveSpace(indices, numRightVerts);
                     for (duint i = 0; i < numRightVerts; ++i)
                     {
                         indices[i] = base + i;
@@ -1532,12 +1535,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                     }
-                    shadowList.write(buffer, indices, gl::TriangleFan);
+                    shadowList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
                 }
                 {
                     duint base = buffer.allocateVertices(numLeftVerts);
-                    DrawList::Indices indices;
-                    indices.resize(numLeftVerts);
+                    reserveSpace(indices, numLeftVerts);
                     for (duint i = 0; i < numLeftVerts; ++i)
                     {
                         indices[i] = base + i;
@@ -1545,15 +1547,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    shadowList.write(buffer, indices, gl::TriangleFan);
+                    shadowList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
                 }
             }
             else
             {
                 Store &buffer = ClientApp::renderSystem().buffer();
                 duint base = buffer.allocateVertices(numVerts);
-                DrawList::Indices indices;
-                indices.resize(numVerts);
+                reserveSpace(indices, numVerts);
                 for (duint i = 0; i < numVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1561,7 +1562,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = verts.tex[i];
                 }
-                shadowList.write(buffer, indices, p.isWall ? gl::TriangleStrip : gl::TriangleFan);
+                shadowList.write(buffer, indices.constData(), numVerts, p.isWall ? gl::TriangleStrip : gl::TriangleFan);
             }
 
             // We're done with the geometry.
@@ -1615,25 +1616,23 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                DrawList::Indices indices;
-                indices.resize(numRightVerts);
+                reserveSpace(indices, numRightVerts);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
                 }
-                skyMaskList.write(buffer, indices, gl::TriangleFan);
+                skyMaskList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                DrawList::Indices indices;
-                indices.resize(numLeftVerts);
+                reserveSpace(indices, numLeftVerts);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[i];
                 }
-                skyMaskList.write(buffer, indices, gl::TriangleFan);
+                skyMaskList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
             }
         }
         else
@@ -1699,9 +1698,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                DrawList::Indices indices;
-                indices.resize(numRightVerts);
-                Vector4ub const white(255, 255, 255, 255);
+                reserveSpace(indices, numRightVerts);
+                static Vector4ub const white(255, 255, 255, 255);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1728,7 +1726,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
                     }
                 }
-                drawList.write(buffer, indices,
+                drawList.write(buffer, indices.constData(), numRightVerts,
                                Parm(gl::TriangleFan,
                                     listSpec.unit(TU_PRIMARY       ).scale,
                                     listSpec.unit(TU_PRIMARY       ).offset,
@@ -1739,9 +1737,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                DrawList::Indices indices;
-                indices.resize(numLeftVerts);
-                Vector4ub const white(255, 255, 255, 255);
+                reserveSpace(indices, numLeftVerts);
+                static Vector4ub const white(255, 255, 255, 255);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1768,7 +1765,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[i];
                     }
                 }
-                drawList.write(buffer, indices,
+                drawList.write(buffer, indices.constData(), numLeftVerts,
                                Parm(gl::TriangleFan,
                                     listSpec.unit(TU_PRIMARY       ).scale,
                                     listSpec.unit(TU_PRIMARY       ).offset,
@@ -1785,8 +1782,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         {
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVerts);
-            DrawList::Indices indices;
-            indices.resize(numVerts);
+            reserveSpace(indices, numVerts);
             for (duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -1794,7 +1790,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             ClientApp::renderSystem()
                 .drawLists().find(DrawListSpec(SkyMaskGeom))
-                    .write(buffer, indices, p.isWall? gl::TriangleStrip : gl::TriangleFan);
+                    .write(buffer, indices.constData(), numVerts, p.isWall? gl::TriangleStrip : gl::TriangleFan);
         }
         else
         {
@@ -1857,9 +1853,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVertices);
-            DrawList::Indices indices;
-            indices.resize(numVertices);
-            Vector4ub const white(255, 255, 255, 255);
+            reserveSpace(indices, numVertices);
+            static Vector4ub const white(255, 255, 255, 255);
             for (duint i = 0; i < numVertices; ++i)
             {
                 indices[i] = base + i;
@@ -1888,7 +1883,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             ClientApp::renderSystem()
                 .drawLists().find(listSpec)
-                    .write(buffer, indices,
+                    .write(buffer, indices.constData(), numVertices,
                            Parm(p.isWall? gl::TriangleStrip  : gl::TriangleFan,
                                 listSpec.unit(TU_PRIMARY       ).scale,
                                 listSpec.unit(TU_PRIMARY       ).offset,
@@ -1971,8 +1966,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                DrawList::Indices indices;
-                indices.resize(numRightVerts);
+                reserveSpace(indices, numRightVerts);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1984,12 +1978,11 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[numLeftVerts + i];
                     }
                 }
-                shineList.write(buffer, indices, shineParams);
+                shineList.write(buffer, indices.constData(), numRightVerts, shineParams);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                DrawList::Indices indices;
-                indices.resize(numLeftVerts);
+                reserveSpace(indices, numLeftVerts);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -2001,15 +1994,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[i];
                     }
                 }
-                shineList.write(buffer, indices, shineParams);
+                shineList.write(buffer, indices.constData(), numLeftVerts, shineParams);
             }
         }
         else
         {
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVertices);
-            DrawList::Indices indices;
-            indices.resize(numVertices);
+            reserveSpace(indices, numVertices);
             for (duint i = 0; i < numVertices; ++i)
             {
                 indices[i] = base + i;
@@ -2022,7 +2014,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 }
             }
             shineParams.type = p.isWall? gl::TriangleStrip : gl::TriangleFan;
-            shineList.write(buffer, indices, shineParams);
+            shineList.write(buffer, indices.constData(), numVertices, shineParams);
         }
 
         // We're done with the shine geometry.
@@ -2895,19 +2887,20 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
 {
     DENG2_ASSERT(posCoords);
 
+    static DrawList::Indices indices;
+
     if(!devRendSkyMode)
     {
         Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(vertCount);
-        DrawList::Indices indices;
-        indices.resize(vertCount);
+        reserveSpace(indices, vertCount);
         for(dint i = 0; i < vertCount; ++i)
         {
             indices[i] = base + i;
             buffer.posCoords[indices[i]] = posCoords[i];
         }
         ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom))
-                      .write(buffer, indices, gl::TriangleStrip);
+                      .write(buffer, indices.constData(), vertCount, gl::TriangleStrip);
     }
     else
     {
@@ -2932,8 +2925,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
 
         Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(vertCount);
-        DrawList::Indices indices;
-        indices.resize(vertCount);
+        reserveSpace(indices, vertCount);
         for(dint i = 0; i < vertCount; ++i)
         {
             indices[i] = base + i;
@@ -2943,7 +2935,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
         }
 
         ClientApp::renderSystem().drawLists().find(listSpec)
-                      .write(buffer, indices,
+                      .write(buffer, indices.constData(), vertCount,
                              DrawList::PrimitiveParams(gl::TriangleStrip,
                                                        listSpec.unit(TU_PRIMARY       ).scale,
                                                        listSpec.unit(TU_PRIMARY       ).offset,
@@ -3089,7 +3081,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 #define SKYCAP_UPPER        0x2
 ///@}
 
-static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &primitive,
+static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts, gl::Primitive &primitive,
     ConvexSubspace const &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
 {
     Face const &poly = subspace.poly();
@@ -3098,8 +3090,7 @@ static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &pr
     // Assign indices.
     duint const vertCount = poly.hedgeCount() + (!fanBase? 2 : 0);
     duint const base      = verts.allocateVertices(vertCount);
-    DrawList::Indices indices;
-    indices.resize(vertCount);
+    reserveSpace(indices, vertCount);
     for(duint i = 0; i < vertCount; ++i)
     {
         indices[i] = base + i;
@@ -3125,7 +3116,7 @@ static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &pr
         verts.posCoords[indices[n  ]] = Vector3f(node->origin(), worldZPosition);
     }
 
-    return indices;
+    return vertCount;
 }
 
 /// @param skyCap  @ref skyCapFlags
@@ -3140,6 +3131,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     world::Map &map = subsec.sector().map();
 
     DrawList &dlist = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
+    static DrawList::Indices indices;
 
     // Lower?
     if ((skyCap & SKYCAP_LOWER) && subsec.hasSkyFloor())
@@ -3157,11 +3149,10 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
             gl::Primitive primitive;
-            DrawList::Indices indices =
-                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, height, Clockwise);
+            uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Clockwise);
 
             // Write geometry.
-            dlist.write(verts, indices, primitive);
+            dlist.write(verts, indices.constData(), vertCount, primitive);
         }
     }
 
@@ -3181,11 +3172,10 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
             gl::Primitive primitive;
-            DrawList::Indices indices =
-                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, height, Anticlockwise);
+            uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Anticlockwise);
 
             // Write geometry.
-            dlist.write(verts, indices, primitive);
+            dlist.write(verts, indices.constData(), vertCount, primitive);
         }
     }
 }

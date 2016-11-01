@@ -759,10 +759,15 @@ DrawList &DrawList::write(Store const &buffer,
 
 DrawList &DrawList::write(Store const &buffer, Indices const &indices, gl::Primitive primitiveType)
 {
+    return write(buffer, indices.constData(), indices.size(), primitiveType);
+}
+
+DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount, gl::Primitive primitiveType)
+{
     static PrimitiveParams defaultParams(gl::TriangleFan); // NOTE: rendering is single-threaded atm
 
     defaultParams.type = primitiveType;
-    return write(buffer, indices.constData(), indices.size(), defaultParams);
+    return write(buffer, indices, indexCount, defaultParams);
 }
 
 DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount,
