@@ -47,8 +47,10 @@ ShineTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture
     Vector3f const &minColor, Vector2f const &maskDimensions)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vector2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
+    , minColor(minColor)
 {
-    set("minColor", new ArrayValue(minColor));
+    //set("minColor", new ArrayValue(minColor));
+
 }
 
 ShineTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
@@ -61,7 +63,8 @@ ShineTextureMaterialLayer::AnimationStage::~AnimationStage()
 void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     TextureMaterialLayer::AnimationStage::resetToDefaults();
-    addArray("minColor", new ArrayValue(Vector3f(0, 0, 0)));
+    //addArray("minColor", new ArrayValue(Vector3f(0, 0, 0)));
+    minColor = Vector3f();
 }
 
 ShineTextureMaterialLayer::AnimationStage *

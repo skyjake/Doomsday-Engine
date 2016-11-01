@@ -21,7 +21,6 @@
 #define LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H
 
 #include <de/String>
-#include <de/Record>
 #include "../defs/dedtypes.h"
 #include "Material"
 
@@ -38,7 +37,7 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    class LIBDOOMSDAY_PUBLIC AnimationStage : public de::Record, public Stage
+    class LIBDOOMSDAY_PUBLIC AnimationStage : public Stage
     {
     public:
         AnimationStage(de::Uri const &texture, int tics,
@@ -61,6 +60,16 @@ public:
         static AnimationStage *fromDef(de::Record const &stageDef);
 
         de::String description() const;
+
+    public:
+        de::Uri      texture;
+        float        glowStrength;
+        float        glowStrengthVariance;
+        de::Vector2f origin;
+        de::Uri      maskTexture;
+        de::Vector2f maskDimensions;
+        blendmode_t  blendMode;
+        float        opacity;
     };
 
 public:
@@ -90,7 +99,14 @@ public:
      *
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
-    AnimationStage &stage(int index) const;
+    AnimationStage const &stage(int index) const;
+
+    /**
+     * Lookup an AnimationStage by it's unique @a index.
+     *
+     * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
+     */
+    AnimationStage &stage(int index);
 
     de::String describe() const;
 };

@@ -26,6 +26,9 @@ namespace defn {
 
 String const Definition::VAR_ORDER("__order__");
 
+Definition::~Definition()
+{}
+
 Record &Definition::def()
 {
     return const_cast<Record &>(accessedRecord());

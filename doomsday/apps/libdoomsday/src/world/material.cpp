@@ -51,7 +51,7 @@ namespace internal
     Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
 }
-    
+
 int Material::Layer::stageCount() const
 {
     return _stages.count();
@@ -145,7 +145,7 @@ DENG2_PIMPL(Material)
             {
                 try
                 {
-                    return &res::Textures::get().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
+                    return &res::Textures::get().texture(texLayer->stage(0).texture);
                 }
                 catch (res::TextureManifest::MissingTextureError &)
                 {}
@@ -190,7 +190,7 @@ DENG2_PIMPL(Material)
         DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
         /// @todo kludge: Clear the association so we don't try to cancel notifications later.
-        firstTextureLayer()->stage(0).set("texture", "");
+        firstTextureLayer()->stage(0).texture = de::Uri();
 
 #if !defined(DENG2_DEBUG)
         DENG2_UNUSED(texture);

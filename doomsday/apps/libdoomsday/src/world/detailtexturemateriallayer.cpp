@@ -45,10 +45,13 @@ static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
 DetailTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, float scale, float strength, float maxDistance)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance)
+    , scale(scale)
+    , strength(strength)
+    , maxDistance(maxDistance)
 {
-    set("scale", scale);
-    set("strength", strength);
-    set("maxDistance", maxDistance);
+//    set("scale", scale);
+//    set("strength", strength);
+//    set("maxDistance", maxDistance);
 }
 
 DetailTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
@@ -61,9 +64,12 @@ DetailTextureMaterialLayer::AnimationStage::~AnimationStage()
 void DetailTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     TextureMaterialLayer::AnimationStage::resetToDefaults();
-    addNumber("scale", 1);
-    addNumber("strength", 1);
-    addNumber("maxDistance", 0);
+//    addNumber("scale", 1);
+//    addNumber("strength", 1);
+//    addNumber("maxDistance", 0);
+    scale = 1;
+    strength = 1;
+    maxDistance = 0;
 }
 
 DetailTextureMaterialLayer::AnimationStage *

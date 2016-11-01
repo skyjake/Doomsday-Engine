@@ -55,6 +55,9 @@ public:
         static AnimationStage *fromDef(ded_shine_stage_t const &definition);
 
         void resetToDefaults();
+
+    public:
+        de::Vector3f minColor;
     };
 
 public:

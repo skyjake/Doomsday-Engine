@@ -54,6 +54,11 @@ public:
         static AnimationStage *fromDef(ded_detail_stage_t const &definition);
 
         void resetToDefaults();
+
+    public:
+        float scale;
+        float strength;
+        float maxDistance;
     };
 
 public:

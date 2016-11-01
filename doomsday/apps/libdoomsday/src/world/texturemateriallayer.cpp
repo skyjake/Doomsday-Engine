@@ -27,12 +27,20 @@ namespace world {
 TextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin,
     de::Uri const &maskTexture, Vector2f const &maskDimensions, blendmode_t blendMode, float opacity)
-    : Record()
-    , Stage(tics, variance)
+    : /*Record()
+    , */ Stage(tics, variance)
+    , texture(texture)
+    , glowStrength(glowStrength)
+    , glowStrengthVariance(glowStrengthVariance)
+    , origin(origin)
+    , maskTexture(maskTexture)
+    , maskDimensions(maskDimensions)
+    , blendMode(blendMode)
+    , opacity(opacity)
 {
-    resetToDefaults();
+    //resetToDefaults();
 
-    set("origin", new ArrayValue(origin));
+    /*set("origin", new ArrayValue(origin));
     set("texture", texture.compose());
     set("maskTexture", maskTexture.compose());
     set("maskDimensions", new ArrayValue(maskDimensions));
@@ -40,12 +48,12 @@ TextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int
     set("opacity", opacity);
 
     set("glowStrength", glowStrength);
-    set("glowStrengthVariance", glowStrengthVariance);
+    set("glowStrengthVariance", glowStrengthVariance);*/
 }
 
 TextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
-    : Record(other)
-    , Stage(other)
+    : /*Record(other)
+    , */Stage(other)
 {}
 
 TextureMaterialLayer::AnimationStage::~AnimationStage()
@@ -53,21 +61,31 @@ TextureMaterialLayer::AnimationStage::~AnimationStage()
 
 void TextureMaterialLayer::AnimationStage::resetToDefaults()
 {
-    addArray ("origin", new ArrayValue(Vector2f(0, 0)));
+    origin = Vector2f();
+    texture = de::Uri();
+    maskTexture = de::Uri();
+    maskDimensions = Vector2f();
+    blendMode = BM_NORMAL;
+    opacity = 1;
+    glowStrength = 0;
+    glowStrengthVariance = 0;
+
+    /*addArray ("origin", new ArrayValue(Vector2f(0, 0)));
     addText  ("texture", "");
     addText  ("maskTexture", "");
     addArray ("maskDimensions", new ArrayValue(Vector2f(0, 0)));
     addNumber("blendMode", BM_NORMAL);
     addNumber("opacity", 1);
     addNumber("glowStrength", 0);
-    addNumber("glowStrengthVariance", 0);
+    addNumber("glowStrengthVariance", 0);*/
 }
 
 TextureMaterialLayer::AnimationStage *
 TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
 {
     return new AnimationStage(de::Uri(stageDef.gets("texture"), RC_NULL),
-                              stageDef.geti("tics"), stageDef.getf("variance"),
+                              stageDef.geti("tics"),
+                              stageDef.getf("variance"),
                               stageDef.getf("glowStrength"),
                               stageDef.getf("glowStrengthVariance"),
                               Vector2f(stageDef.geta("texOrigin")));
@@ -75,8 +93,8 @@ TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
 
 String TextureMaterialLayer::AnimationStage::description() const
 {
-    /// @todo Record::asText() formatting is not intended for end users.
-    return asText();
+    /// @todo Write something useful here. -jk
+    return "AnimationStage";
 }
 
 // ------------------------------------------------------------------------------------
@@ -98,7 +116,12 @@ int TextureMaterialLayer::addStage(TextureMaterialLayer::AnimationStage const &s
     return _stages.count() - 1;
 }
 
-TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index) const
+TextureMaterialLayer::AnimationStage const &TextureMaterialLayer::stage(int index) const
+{
+    return static_cast<AnimationStage const &>(Layer::stage(index));
+}
+
+TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index)
 {
     return static_cast<AnimationStage &>(Layer::stage(index));
 }
@@ -107,7 +130,7 @@ bool TextureMaterialLayer::hasGlow() const
 {
     for (int i = 0; i < stageCount(); ++i)
     {
-        if (stage(i).getf("glowStrength") > .0001f)
+        if (stage(i).glowStrength > .0001f)
             return true;
     }
     return false;
@@ -115,7 +138,8 @@ bool TextureMaterialLayer::hasGlow() const
 
 String TextureMaterialLayer::describe() const
 {
-    return "Texture layer";
+    /// @todo Write something useful here. -jk
+    return "TextureMaterialLayer";
 }
 
 } // namespace world
