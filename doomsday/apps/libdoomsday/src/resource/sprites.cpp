@@ -94,7 +94,7 @@ bool Sprites::hasSprite(spritenum_t id, dint frame) const
     return false;
 }
 
-Record &Sprites::sprite(spritenum_t id, dint frame)
+defn::CompiledSpriteRecord &Sprites::sprite(spritenum_t id, dint frame)
 {
     return d->findSpriteSet(id).find(frame).value();
 }
@@ -219,22 +219,21 @@ static Sprites::SpriteSet buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
 {
     static de::dint const MAX_ANGLES = 16;
 
+    Sprites::SpriteSet frames;
+
     // Build initial Sprites and add views.
-    QMap<dint, Record> frames;
     for (auto it = frameDefs.constBegin(); it != frameDefs.constEnd(); ++it)
     {
-        Record *rec = nullptr;
-        if (frames.contains(it.key()))
+        defn::CompiledSpriteRecord *rec = nullptr;
+        auto found = frames.find(it.key());
+        if (found != frames.end())
         {
-            rec = &frames.find(it.key()).value();
+            rec = &found.value();
         }
         else
         {
-            Record temp;
-            defn::Sprite sprite(temp);
-            sprite.resetToDefaults();
-            rec = &frames.insert(it.key(), sprite.def()) // A copy is made.
-                  .value();
+            rec = &frames[it.key()];
+            defn::Sprite(*rec).resetToDefaults();
         }
 
         SpriteFrameDef const &def = it.value();
@@ -242,7 +241,7 @@ static Sprites::SpriteSet buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
     }
 
     // Duplicate views to complete angle sets (if defined).
-    for (Record &rec : frames)
+    for (defn::CompiledSpriteRecord &rec : frames)
     {
         defn::Sprite sprite(rec);
 

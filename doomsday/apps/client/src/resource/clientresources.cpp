@@ -561,11 +561,10 @@ DENG2_PIMPL(ClientResources)
             for (Record const &sprite : *sprites)
             {
                 defn::Sprite const spriteDef(sprite);
-                auto const &views = spriteDef.viewsDict().elements();
-                for (auto iter = views.begin(); iter != views.end(); ++iter)
+                for (auto const &view : spriteDef.def().compiled().views)
                 {
-                    de::Uri const &viewMaterial = spriteDef.viewMaterial(iter->first.value->asInt());
-                    if (world::Material *material = world::Materials::get().materialPtr(viewMaterial))
+                    //de::Uri const &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
+                    if (world::Material *material = world::Materials::get().materialPtr(view.uri))
                     {
                         queueCacheTasksForMaterial(material->as<ClientMaterial>(),
                                                    contextSpec, cacheGroups);

@@ -22,6 +22,7 @@
 #define LIBDOOMSDAY_RESOURCE_SPRITES_H
 
 #include "../libdoomsday.h"
+#include "../defs/sprite.h"
 #include <de/types.h>
 #include <de/Record>
 
@@ -30,7 +31,7 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC Sprites
 {
 public:
-    typedef QMap<de::dint, de::Record> SpriteSet;  ///< frame => Sprite
+    typedef QHash<de::dint, defn::CompiledSpriteRecord> SpriteSet;  ///< frame => Sprite
 
     static Sprites &get();
 
@@ -53,14 +54,14 @@ public:
      *
      * @see hasSprite(), spritePtr()
      */
-    de::Record &sprite(spritenum_t id, de::dint frame);
+    defn::CompiledSpriteRecord &sprite(spritenum_t id, de::dint frame);
 
     /**
      * Returns a pointer to the identified Sprite.
      *
      * @see hasSprite()
      */
-    inline de::Record *spritePtr(spritenum_t id, de::dint frame) {
+    inline defn::CompiledSpriteRecord *spritePtr(spritenum_t id, de::dint frame) {
         return hasSprite(id, frame) ? &sprite(id, frame) : nullptr;
     }
 

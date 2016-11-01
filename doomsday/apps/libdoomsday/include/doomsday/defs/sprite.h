@@ -24,6 +24,7 @@
 #include "definition.h"
 #include "../uri.h"
 
+#include <de/CompiledRecord>
 #include <de/Error>
 #include <de/RecordAccessor>
 #include <de/DictionaryValue>
@@ -31,6 +32,24 @@
 namespace defn {
 
 typedef de::duint32 angle_t;
+
+struct LIBDOOMSDAY_PUBLIC CompiledSprite
+{
+    bool frontOnly = false;
+
+    struct View
+    {
+        de::Uri uri;
+        bool mirrorX = false;
+    };
+    QVector<View> views;    // missing ones have an empty Uri
+    int viewCount = 0;      // number of non-missing views
+
+    CompiledSprite();
+    CompiledSprite(de::Record const &spriteDef);
+};
+
+typedef de::CompiledRecordT<CompiledSprite> CompiledSpriteRecord;
 
 /**
  * Utility for handling sprite definitions.
@@ -62,6 +81,9 @@ public:
     Sprite(de::Record &d)       : Definition(d) {}
     Sprite(de::Record const &d) : Definition(d) {}
 
+    CompiledSpriteRecord &       def();
+    CompiledSpriteRecord const & def() const;
+
     void resetToDefaults();
 
     /**
@@ -75,7 +97,7 @@ public:
     de::dint viewCount() const;
 
     de::DictionaryValue &viewsDict();
-    de::DictionaryValue const &viewsDict() const;
+    //de::DictionaryValue const &viewsDict() const;
 
     /**
      * Returns @c true if a View is defined for the specified @a angle.
@@ -89,9 +111,9 @@ public:
      *
      * @param angle  View angle/rotation index/identifier to lookup.
      */
-    de::Record &findView(de::dint angle);
+    //de::Record &findView(de::dint angle);
 
-    de::Record const *tryFindView(de::dint angle) const;
+    //de::Record const *tryFindView(de::dint angle) const;
 
     View view(de::dint angle) const;
 

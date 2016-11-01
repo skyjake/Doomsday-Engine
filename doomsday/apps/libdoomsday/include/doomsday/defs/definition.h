@@ -37,6 +37,8 @@ public:
     Definition(de::Record &d)           : RecordAccessor(d) {}
     Definition(de::Record const &d)     : RecordAccessor(d) {}
 
+    virtual ~Definition();
+
     de::Record &def();
     de::Record const &def() const;
 

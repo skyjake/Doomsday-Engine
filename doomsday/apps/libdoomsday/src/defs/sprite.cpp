@@ -37,9 +37,49 @@ static QString const VAR_FRONT_ONLY("frontOnly");
 static QString const VAR_MATERIAL  ("material"); // UriValue
 static QString const VAR_MIRROR_X  ("mirrorX");
 
+//---------------------------------------------------------------------------------------
+
+CompiledSprite::CompiledSprite()
+{}
+
+CompiledSprite::CompiledSprite(Record const &spriteDef)
+{
+    frontOnly = spriteDef.getb(VAR_FRONT_ONLY);
+
+    // Compile the views into a vector.
+    auto const &viewsDict = spriteDef.getdt(VAR_VIEWS).elements();
+    for (auto iter = viewsDict.begin(); iter != viewsDict.end(); ++iter)
+    {
+        ++viewCount;
+
+        int angle = iter->first.value->asInt();
+        if (views.size() <= angle) views.resize(angle + 1);
+
+        Record const &viewDef = iter->second->as<RecordValue>().dereference();
+        auto &view = views[angle];
+
+        view.uri     = viewDef.get(VAR_MATERIAL).as<UriValue>().uri();
+        view.mirrorX = viewDef.getb(VAR_MIRROR_X);
+    }
+}
+
+//---------------------------------------------------------------------------------------
+
+CompiledSpriteRecord &Sprite::def()
+{
+    return static_cast<CompiledSpriteRecord &>(Definition::def());
+}
+
+CompiledSpriteRecord const &Sprite::def() const
+{
+    return static_cast<CompiledSpriteRecord const &>(Definition::def());
+}
+
 void Sprite::resetToDefaults()
 {
     Definition::resetToDefaults();
+
+    def().resetCompiled();
 
     // Add all expected fields with their default values.
     def().addBoolean(VAR_FRONT_ONLY, true);        ///< @c true= only use the front View.
@@ -51,13 +91,15 @@ DictionaryValue &Sprite::viewsDict()
     return def()[VAR_VIEWS].value().as<DictionaryValue>();
 }
 
-DictionaryValue const &Sprite::viewsDict() const
+/*DictionaryValue const &Sprite::viewsDict() const
 {
     return def().getdt(VAR_VIEWS);
-}
+}*/
 
 Record &Sprite::addView(String material, dint angle, bool mirrorX)
 {
+    def().resetCompiled();
+
     if (angle <= 0)
     {
         def().addDictionary(VAR_VIEWS);
@@ -73,14 +115,18 @@ Record &Sprite::addView(String material, dint angle, bool mirrorX)
 
 dint Sprite::viewCount() const
 {
-    return viewsDict().size();
+    return def().compiled().viewCount;
 }
 
 bool Sprite::hasView(dint angle) const
 {
-    if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
+    auto const &cmpl = def().compiled();
 
-    return viewsDict().contains(NumberValue(angle));
+    if (cmpl.frontOnly) angle = 0;
+
+    //return viewsDict().contains(NumberValue(angle));
+
+    return (angle < cmpl.views.size() && !cmpl.views.at(angle).uri.isEmpty());
 
     /*for (Value const *val : geta("views").elements())
     {
@@ -91,6 +137,7 @@ bool Sprite::hasView(dint angle) const
     return false;*/
 }
 
+#if 0
 Record &Sprite::findView(dint angle)
 {
     if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
@@ -120,16 +167,21 @@ Record const *Sprite::tryFindView(dint angle) const
     }
     return nullptr;
 }
+#endif
 
-static de::Uri const nullUri;
+static de::Uri nullUri;
 
 Sprite::View Sprite::view(de::dint angle) const
 {
+    auto const &cmpl = def().compiled();
+
+    if (cmpl.frontOnly) angle = 0;
+
     View v;
-    if (Record const *rec = tryFindView(angle))
+    if (angle < cmpl.views.size())
     {
-        v.material = &rec->get(VAR_MATERIAL).as<UriValue>().uri();
-        v.mirrorX  = rec->getb(VAR_MIRROR_X);
+        v.material = &cmpl.views.at(angle).uri;
+        v.mirrorX  = cmpl.views.at(angle).mirrorX;
     }
     else
     {
@@ -141,9 +193,10 @@ Sprite::View Sprite::view(de::dint angle) const
 
 de::Uri const &Sprite::viewMaterial(de::dint angle) const
 {
-    if (Record const *rec = tryFindView(angle))
+    auto const &cmpl = def().compiled();
+    if (angle < cmpl.views.size())
     {
-        return rec->get(VAR_MATERIAL).as<UriValue>().uri();
+        return cmpl.views.at(angle).uri;
     }
     return nullUri;
 }
@@ -152,7 +205,7 @@ Sprite::View Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noR
 {
     dint angle = 0;  // Use the front view (default).
 
-    if (!noRotation && !def().getb(VAR_FRONT_ONLY))
+    if (!noRotation)
     {
         // Choose a view according to the relative angle with viewer (the eye).
         angle = ((angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) - (unsigned) (ANGLE_180 / 16)) >> 28;
