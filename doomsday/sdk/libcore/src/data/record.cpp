@@ -32,6 +32,8 @@
 #include "de/Vector"
 #include "de/String"
 
+#include "de/CompiledRecord"
+
 #include <QTextStream>
 #include <functional>
 
@@ -910,5 +912,8 @@ QTextStream &operator << (QTextStream &os, Record const &record)
 {
     return os << record.asText();
 }
+
+CompiledRecord::~CompiledRecord()
+{}
 
 } // namespace de

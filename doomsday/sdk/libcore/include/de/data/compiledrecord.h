@@ -33,6 +33,8 @@ namespace de {
 class DENG2_PUBLIC CompiledRecord : public Record
 {
 public:
+    virtual ~CompiledRecord();
+
     inline bool isCompiled() const { return _compiled; }
     virtual void compile() const = 0;
 
@@ -47,8 +49,6 @@ template <typename NativeStruct>
 class CompiledRecordT : public CompiledRecord
 {
 public:
-    CompiledRecordT() {}
-
     void compile() const override
     {
         _compiled = NativeStruct(*this);

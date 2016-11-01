@@ -51,6 +51,11 @@ struct LIBDOOMSDAY_PUBLIC CompiledSprite
 
 typedef de::CompiledRecordT<CompiledSprite> CompiledSpriteRecord;
 
+#ifdef _MSC_VER
+// MSVC needs some hand-holding.
+template class LIBDOOMSDAY_PUBLIC de::CompiledRecordT<CompiledSprite>;
+#endif
+
 /**
  * Utility for handling sprite definitions.
  *
