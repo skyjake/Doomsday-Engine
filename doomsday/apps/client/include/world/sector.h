@@ -161,14 +161,14 @@ public:
     /**
      * Returns the @em floor Plane of the sector.
      */
-    Plane       &floor();
-    Plane const &floor() const;
+    inline Plane       &floor()         { return plane(Floor); }
+    inline Plane const &floor() const   { return plane(Floor); }
 
     /**
      * Returns the @em ceiling Plane of the sector.
      */
-    Plane       &ceiling();
-    Plane const &ceiling() const;
+    inline Plane       &ceiling()       { return plane(Ceiling); }
+    inline Plane const &ceiling() const { return plane(Ceiling); }
 
     /**
      * Iterate Planes of the sector.

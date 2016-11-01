@@ -492,7 +492,7 @@ DENG2_PIMPL(MaterialAnimator)
         for (int i = 0; i < material->layerCount(); ++i)
         {
             world::MaterialLayer const &layer = material->layer(i);
-            LayerState const &ls       = *layers[i];
+            LayerState const &ls = *layers[i];
 
             if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
             {
