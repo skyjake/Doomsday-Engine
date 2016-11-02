@@ -1011,9 +1011,9 @@ DENG2_PIMPL(ClientSubsector)
             Vector3d bottomRight, topLeft;
             if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
             {
-                MaterialAnimator &animator =
-                    surface.material().as<ClientMaterial>()
-                                      .getAnimator(Rend_MapSurfaceMaterialSpec());
+                MaterialAnimator &animator = *surface.materialAnimator();
+                    //surface.material().as<ClientMaterial>()
+//                                      .getAnimator(Rend_MapSurfaceMaterialSpec());
 
                 projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
             }

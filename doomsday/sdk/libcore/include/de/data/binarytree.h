@@ -144,7 +144,7 @@ public:
      */
     inline BinaryTree *parentPtr() const
     {
-        return hasParent()? &parent() : 0;
+        return _parent;
     }
 
     /**
@@ -284,7 +284,7 @@ public:
      */
     inline BinaryTree *childPtr(ChildId which) const
     {
-        return hasChild(which)? &child(which) : 0;
+        return which == Left? _leftChild : _rightChild;
     }
 
     /**

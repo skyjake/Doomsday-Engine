@@ -80,6 +80,7 @@ DENG2_PIMPL(Surface)
     Vector2f oldOrigin[2];                      ///< Old @em sharp surface space material origins, for smoothing.
     Vector2f originSmoothed;                    ///< @em smoothed surface space material origin.
     Vector2f originSmoothedDelta;               ///< Delta between @em sharp and @em smoothed.
+    MaterialAnimator *matAnimator = nullptr;
 #endif
 
     Impl(Public *i) : Base(i)
@@ -260,6 +261,10 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                 << d->material->manifest().composeUri().asText();
         }
     }
+
+#ifdef __CLIENT__
+    d->matAnimator = nullptr;
+#endif
 
     // Notify interested parties.
     DENG2_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
@@ -563,6 +568,23 @@ dint Surface::setProperty(DmuArgs const &args)
 
 #ifdef __CLIENT__
 
+MaterialAnimator *Surface::materialAnimator() const
+{
+    if (!d->material) return nullptr;
+
+    if (!d->matAnimator)
+    {
+        d->matAnimator = &d->material->as<ClientMaterial>()
+                .getAnimator(Rend_MapSurfaceMaterialSpec());
+    }
+    return d->matAnimator;
+}
+
+void Surface::resetLookups()
+{
+    d->matAnimator = nullptr;
+}
+
 Vector2f const &Surface::originSmoothed() const
 {
     return d->originSmoothed;
@@ -620,7 +642,7 @@ dfloat Surface::glow(Vector3f &color) const
         return 0;
     }
 
-    MaterialAnimator &matAnimator = material().as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = *materialAnimator(); //material().as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

@@ -115,7 +115,12 @@ Sector &Subsector::sector()
 
 Sector const &Subsector::sector() const
 {
-    return const_cast<Subsector *>(this)->sector();
+    if (!d->sector)
+    {
+        d->sector = firstSubspace().bspLeaf().sectorPtr();
+        DENG2_ASSERT(d->sector);
+    }
+    return *d->sector;
 }
 
 dint Subsector::subspaceCount() const
@@ -126,7 +131,7 @@ dint Subsector::subspaceCount() const
 ConvexSubspace &Subsector::firstSubspace() const
 {
     DENG2_ASSERT(!d->subspaces.isEmpty());
-    return *d->subspaces.first();
+    return *d->subspaces.constFirst();
 }
 
 LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const

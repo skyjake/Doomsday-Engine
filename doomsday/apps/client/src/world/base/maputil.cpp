@@ -153,15 +153,17 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     if(backSec.floor().heightSmoothed()   >= frontSec.ceiling().heightSmoothed()) return true;
 
     // Perhaps a middle material completely covers the opening?
-    if(side.middle().hasMaterial())
+    //if(side.middle().hasMaterial())
+
+    if (MaterialAnimator *matAnimator = side.middle().materialAnimator())
     {
-        MaterialAnimator &matAnimator = static_cast<ClientMaterial &>(side.middle().material())
-                .getAnimator(Rend_MapSurfaceMaterialSpec());
+        //MaterialAnimator &matAnimator = static_cast<ClientMaterial &>(side.middle().material())
+        //        .getAnimator(Rend_MapSurfaceMaterialSpec());
 
         // Ensure we have up to date info about the material.
-        matAnimator.prepare();
+        matAnimator->prepare();
 
-        if(ignoreOpacity || (matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
+        if(ignoreOpacity || (matAnimator->isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
         {
             // Stretched middles always cover the opening.
             if(side.isFlagged(SDF_MIDDLE_STRETCH))
@@ -171,7 +173,7 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
             {
                 coord_t openRange, openBottom, openTop;
                 openRange = visOpenRange(side, &openBottom, &openTop);
-                if(matAnimator.dimensions().y >= openRange)
+                if(matAnimator->dimensions().y >= openRange)
                 {
                     // Possibly; check the placement.
                     WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
@@ -233,25 +235,26 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(!side.hasSector()) return false; // Never.
 
     if(!side.hasSections()) return false;
-    if(!side.middle().hasMaterial()) return false;
+    //if(!side.middle().hasMaterial()) return false;
 
     // Stretched middles always cover the opening.
     if(side.isFlagged(SDF_MIDDLE_STRETCH))
         return true;
 
-    MaterialAnimator &matAnimator = side.middle().material()
-            .as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator *matAnimator = side.middle().materialAnimator();
+            //.as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
+    if (!matAnimator) return false;
 
     // Ensure we have up to date info about the material.
-    matAnimator.prepare();
+    matAnimator->prepare();
 
-    if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if(matAnimator->isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         if(side.leftHEdge())  // possibility of degenerate BSP leaf.
         {
             coord_t openRange, openBottom, openTop;
             openRange = visOpenRange(side, &openBottom, &openTop);
-            if(matAnimator.dimensions().y >= openRange)
+            if(matAnimator->dimensions().y >= openRange)
             {
                 // Possibly; check the placement.
                 WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle), *side.leftHEdge(), Line::From);

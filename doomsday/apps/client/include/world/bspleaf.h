@@ -87,8 +87,8 @@ public:
      * intended for legacy compatibility logics which don't care if a subspace exists at
      * the leaf, or not.
      */
-    Sector       *sectorPtr();
-    Sector const *sectorPtr() const;
+    inline Sector       *sectorPtr()       { return _sector; }
+    inline Sector const *sectorPtr() const { return _sector; }
 
     /**
      * Attribute this BSP leaf to the given world @a sector.

@@ -47,4 +47,3 @@ private:
 };
 
 #endif // DENG_CLIENT_RENDER_STORE_H
-

@@ -323,6 +323,33 @@ void Rend_ResetLookups()
 {
     lookupMapSurfaceMaterialSpec = nullptr;
     lookupSpriteMaterialAnimators.clear();
+
+    if (ClientApp::world().hasMap())
+    {
+        auto &map = ClientApp::world().map();
+
+        map.forAllSectors([] (Sector &sector)
+        {
+            sector.forAllPlanes([] (Plane &plane)
+            {
+                plane.surface().resetLookups();
+                return LoopContinue;
+            });
+            return LoopContinue;
+        });
+
+        map.forAllLines([] (Line &line)
+        {
+            auto resetFunc = [] (Surface &surface) {
+                surface.resetLookups();
+                return LoopContinue;
+            };
+
+            line.front().forAllSurfaces(resetFunc);
+            line.back() .forAllSurfaces(resetFunc);
+            return LoopContinue;
+        });
+    }
 }
 
 static void reportWallDrawn(Line &line)

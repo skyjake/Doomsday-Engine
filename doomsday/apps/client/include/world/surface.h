@@ -33,6 +33,7 @@
 
 #ifdef __CLIENT__
 class Decoration;
+class MaterialAnimator;
 #endif
 
 /**
@@ -205,6 +206,14 @@ public:
     de::Uri composeMaterialUri() const;
 
 #ifdef __CLIENT__
+
+    MaterialAnimator *materialAnimator() const;
+
+    /**
+     * Resets all lookups that are used for accelerating common operations.
+     */
+    void resetLookups();
+
 //- Origin smoothing --------------------------------------------------------------------
 
     /// Notified when the @em sharp material origin changes.

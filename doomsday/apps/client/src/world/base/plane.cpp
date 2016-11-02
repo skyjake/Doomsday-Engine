@@ -424,18 +424,15 @@ void Plane::removeMover(ClPlaneMover &mover)
 
 bool Plane::castsShadow() const
 {
-    if(surface().hasMaterial())
+    if (auto *matAnim = d->surface.materialAnimator())
     {
-        MaterialAnimator &matAnimator = surface().material().as<ClientMaterial>()
-                .getAnimator(Rend_MapSurfaceMaterialSpec());
-
         // Ensure we have up to date info about the material.
-        matAnimator.prepare();
+        matAnim->prepare();
 
-        if(!matAnimator.material().isDrawable()) return false;
-        if(matAnimator.material().isSkyMasked()) return false;
+        if (!matAnim->material().isDrawable()) return false;
+        if (matAnim->material().isSkyMasked()) return false;
 
-        return de::fequal(matAnimator.glowStrength(), 0);
+        return de::fequal(matAnim->glowStrength(), 0);
     }
     return false;
 }

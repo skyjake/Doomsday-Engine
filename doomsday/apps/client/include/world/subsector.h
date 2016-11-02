@@ -226,8 +226,7 @@ public:
 
     /// Returns the current half-edge of a non-empty sequence.
     de::HEdge &operator * () const {
-        if (!_current)
-        {
+        if (!_current) {
             /// @throw NullError Attempted to dereference a "null" circulator.
             throw NullError("SubsectorCirculator::operator *", "Circulator references an empty sequence");
         }

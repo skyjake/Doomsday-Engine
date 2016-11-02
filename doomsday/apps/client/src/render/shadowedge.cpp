@@ -93,16 +93,19 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if (!side.hasSector()) return false;  // Never.
 
     if (!side.hasSections()) return false;
-    if (!side.middle().hasMaterial()) return false;
+    //if (!side.middle().hasMaterial()) return false;
 
-    MaterialAnimator &matAnimator = side.middle().material().as<ClientMaterial>()
-            .getAnimator(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator *matAnimator = side.middle().materialAnimator();
+    /* material().as<ClientMaterial>()
+            .getAnimator(Rend_MapSurfaceMaterialSpec());*/
+
+    if (!matAnimator) return false;
 
     // Ensure we have up to date info about the material.
-    matAnimator.prepare();
+    matAnimator->prepare();
 
     // Might the material cover the opening?
-    if (matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if (matAnimator->isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         // Stretched middles always cover the opening.
         if (side.isFlagged(SDF_MIDDLE_STRETCH))
@@ -132,7 +135,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             openTop = frontSec.ceiling().heightSmoothed();
         }
 
-        if (matAnimator.dimensions().y >= openTop - openBottom)
+        if (matAnimator->dimensions().y >= openTop - openBottom)
         {
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf

@@ -38,14 +38,14 @@ bool BspLeaf::hasSubspace() const
 
 ConvexSubspace &BspLeaf::subspace() const
 {
-    if(hasSubspace()) return *_subspace;
+    if (hasSubspace()) return *_subspace;
     /// @throw MissingSubspaceError Attempted with no subspace attributed.
     throw MissingSubspaceError("BspLeaf::subspace", "No subspace is attributed");
 }
 
 ConvexSubspace *BspLeaf::subspacePtr() const
 {
-    return hasSubspace() ? &subspace() : nullptr;
+    return _subspace;
 }
 
 void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
@@ -63,16 +63,6 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
     {
         _subspace->setBspLeaf(this);
     }
-}
-
-Sector *BspLeaf::sectorPtr()
-{
-    return _sector;
-}
-
-Sector const *BspLeaf::sectorPtr() const
-{
-    return _sector;
 }
 
 void BspLeaf::setSector(Sector *newSector)
