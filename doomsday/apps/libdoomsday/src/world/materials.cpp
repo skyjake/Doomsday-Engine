@@ -153,7 +153,6 @@ Materials::Materials()
 
 MaterialScheme &Materials::materialScheme(String name) const
 {
-    LOG_AS("Materials::materialScheme");
     if (!name.isEmpty())
     {
         auto found = d->materialSchemes.find(name.toLower());
@@ -230,8 +229,6 @@ MaterialManifest &Materials::materialManifest(de::Uri const &uri) const
 
 MaterialManifest *Materials::materialManifestPtr(de::Uri const &uri) const
 {
-    LOG_AS("Materials::materialManifestPtr");
-
     // Does the user want a manifest in a specific scheme?
     if (!uri.scheme().isEmpty())
     {

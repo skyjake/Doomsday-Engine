@@ -504,11 +504,11 @@ static void performImageAnalyses(image_t const &image,
 
 uint ClientTexture::Variant::prepare()
 {
-    LOG_AS("TextureVariant::prepare");
-
     // Have we already prepared this?
     if(isPrepared())
         return d->glTexName;
+
+    LOG_AS("TextureVariant::prepare");
 
     // Load the source image data.
     image_t image;

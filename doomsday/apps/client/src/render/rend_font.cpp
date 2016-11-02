@@ -1267,8 +1267,10 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    auto &GL = LIBGUI_GL;
+
     // We need to change the current color, so remember for restore.
-    LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, origColor);
+    GL.glGetFloatv(GL_CURRENT_COLOR, origColor);
 
     for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
@@ -1405,8 +1407,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 }
 
                 // Setup the scaling.
-                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-                LIBGUI_GL.glPushMatrix();
+                GL.glMatrixMode(GL_MODELVIEW);
+                GL.glPushMatrix();
 
                 // Rotate.
                 if(state.angle != 0)
@@ -1415,16 +1417,16 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
                     /// @todo Do not assume the aspect ratio and therefore whether
                     // correction is even needed.
-                    LIBGUI_GL.glTranslatef((float)origin.x, (float)origin.y, 0);
-                    LIBGUI_GL.glScalef(1, 200.0f / 240.0f, 1);
-                    LIBGUI_GL.glRotatef(state.angle, 0, 0, 1);
-                    LIBGUI_GL.glScalef(1, 240.0f / 200.0f, 1);
-                    LIBGUI_GL.glTranslatef(-(float)origin.x, -(float)origin.y, 0);
+                    GL.glTranslatef((float)origin.x, (float)origin.y, 0);
+                    GL.glScalef(1, 200.0f / 240.0f, 1);
+                    GL.glRotatef(state.angle, 0, 0, 1);
+                    GL.glScalef(1, 240.0f / 200.0f, 1);
+                    GL.glTranslatef(-(float)origin.x, -(float)origin.y, 0);
                 }
 
-                LIBGUI_GL.glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
+                GL.glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
                 extraScale = (FR_CaseScale() ? state.caseMod[curCase].scale : 1);
-                LIBGUI_GL.glScalef(state.scaleX, state.scaleY * extraScale, 1);
+                GL.glScalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
                 if(fr.fontNum)
@@ -1447,8 +1449,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
                 }
 
-                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-                LIBGUI_GL.glPopMatrix();
+                GL.glMatrixMode(GL_MODELVIEW);
+                GL.glPopMatrix();
             }
         }
 
@@ -1458,7 +1460,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     freeTextBuffer();
 
     FR_SetFont(origFont);
-    LIBGUI_GL.glColor4fv(origColor);
+    GL.glColor4fv(origColor);
 }
 
 #undef FR_DrawText2

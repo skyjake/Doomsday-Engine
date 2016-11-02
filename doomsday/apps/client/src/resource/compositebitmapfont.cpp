@@ -141,10 +141,10 @@ static TextureVariantSpec const &glyphTextureSpec()
 
 void CompositeBitmapFont::glInit()
 {
-    LOG_AS("CompositeBitmapFont");
-
     if(!d->needGLInit) return;
     if(novideo || isDedicated || BusyMode_Active()) return;
+
+    LOG_AS("CompositeBitmapFont");
 
     glDeinit();
 

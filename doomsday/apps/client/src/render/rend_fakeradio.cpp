@@ -957,7 +957,7 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     return (edges[0].shadowStrength(shadowDark) >= .0001 && edges[1].shadowStrength(shadowDark) >= .0001);
 }
 
-static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &primitive,
+static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl::Primitive &primitive,
     ShadowEdge const edges[2], dfloat shadowDark, bool haveFloor)
 {
     static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
@@ -973,8 +973,7 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
 
     // Assign indices.
     duint base = verts.allocateVertices(4);
-    DrawList::Indices indices;
-    indices.resize(4);
+    DrawList::reserveSpace(indices, 4);
     for(duint i = 0; i < 4; ++i)
     {
         indices[i] = base + i;
@@ -1000,7 +999,7 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
         verts.colorCoords[indices[order[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
     }
 
-    return indices;
+    return 4;
 }
 
 void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
@@ -1018,6 +1017,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
+    static DrawList::Indices indices;
     static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
 
     // Can skip drawing for Planes that do not face the viewer - find the 2D vector to subspace center.
@@ -1056,13 +1056,13 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
                         // Build geometry.
                         Store &buffer = ClientApp::renderSystem().buffer();
                         gl::Primitive primitive;
-                        DrawList::Indices indices = makeFlatShadowGeometry(buffer, primitive, shadowEdges, shadowDark, haveFloor);
+                        uint vertCount = makeFlatShadowGeometry(indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);
 
                         // Skip drawing entirely?
                         if (::rendFakeRadio == 2) continue;
 
                         // Write the geometry.
-                        shadowList.write(buffer, indices, primitive);
+                        shadowList.write(buffer, indices.constData(), vertCount, primitive);
                     }
                 }
             }

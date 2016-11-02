@@ -33,7 +33,7 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(Sprites)
 {
-    QMap<spritenum_t, SpriteSet> sprites;
+    QHash<spritenum_t, SpriteSet> sprites;
 
     ~Impl()
     {
@@ -45,10 +45,10 @@ DENG2_PIMPL_NOREF(Sprites)
         return sprites.contains(id);
     }
 
-    SpriteSet *tryFindSpriteSet(spritenum_t id)
+    SpriteSet *tryFindSpriteSet(spritenum_t id) const
     {
-        auto found = sprites.find(id);
-        return (found != sprites.end()? &found.value() : nullptr);
+        auto found = sprites.constFind(id);
+        return (found != sprites.constEnd()? const_cast<SpriteSet *>(&found.value()) : nullptr);
     }
 
     SpriteSet &findSpriteSet(spritenum_t id)
@@ -87,7 +87,7 @@ dint Sprites::spriteCount() const
 
 bool Sprites::hasSprite(spritenum_t id, dint frame) const
 {
-    if (SpriteSet const *frames = d->tryFindSpriteSet(id))
+    if (SpriteSet const *frames = d.getConst()->tryFindSpriteSet(id))
     {
         return frames->contains(frame);
     }

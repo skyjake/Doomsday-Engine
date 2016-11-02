@@ -218,8 +218,6 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
 
 int DrawLists::findAll(GeomGroup group, FoundLists &found)
 {
-    LOG_AS("DrawLists::findAll");
-
     found.clear();
     if(group == SkyMaskGeom)
     {

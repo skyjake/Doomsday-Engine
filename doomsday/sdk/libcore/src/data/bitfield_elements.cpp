@@ -30,7 +30,7 @@ DENG2_PIMPL(BitField::Elements)
         int numBits;
         int firstBit;
     };
-    typedef QMap<Id, Element> Elements;
+    typedef QMap<Id, Element> Elements; // needs to be ordered
 
     Elements elements;
     dsize totalBits;
@@ -160,7 +160,7 @@ BitField::Ids BitField::Elements::ids() const
 
 BitField::Ids BitField::Elements::idsLaidOutOnByte(int index) const
 {
-    return d->lookup.at(index);
+    return d.getConst()->lookup.at(index);
 }
 
 } // namespace de

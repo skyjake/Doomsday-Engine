@@ -222,6 +222,9 @@ public:
      */
     Spec const &spec() const;
 
+public:
+    static void reserveSpace(Indices &idx, uint count);
+
 private:
     DENG2_PRIVATE(d)
 };

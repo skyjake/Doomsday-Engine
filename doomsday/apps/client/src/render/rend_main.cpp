@@ -1254,11 +1254,6 @@ struct rendworldpoly_params_t
     } wall;
 };
 
-static void reserveSpace(DrawList::Indices &indices, uint count)
-{
-    if (indices.size() < int(count)) indices.resize(int(count));
-}
-
 static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
@@ -1433,7 +1428,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     Store &buffer = ClientApp::renderSystem().buffer();
                     {
                         duint base = buffer.allocateVertices(numRightVerts);
-                        reserveSpace(indices, numRightVerts);
+                        DrawList::reserveSpace(indices, numRightVerts);
                         for (duint i = 0; i < numRightVerts; ++i)
                         {
                             indices[i] = base + i;
@@ -1445,7 +1440,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     }
                     {
                         duint base = buffer.allocateVertices(numLeftVerts);
-                        reserveSpace(indices, numLeftVerts);
+                        DrawList::reserveSpace(indices, numLeftVerts);
                         for (duint i = 0; i < numLeftVerts; ++i)
                         {
                             indices[i] = base + i;
@@ -1460,7 +1455,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 {
                     Store &buffer = ClientApp::renderSystem().buffer();
                     duint base = buffer.allocateVertices(numVertices);
-                    reserveSpace(indices, numVertices);
+                    DrawList::reserveSpace(indices, numVertices);
                     for (duint i = 0; i < numVertices; ++i)
                     {
                         indices[i] = base + i;
@@ -1527,7 +1522,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 Store &buffer = ClientApp::renderSystem().buffer();
                 {
                     duint base = buffer.allocateVertices(numRightVerts);
-                    reserveSpace(indices, numRightVerts);
+                    DrawList::reserveSpace(indices, numRightVerts);
                     for (duint i = 0; i < numRightVerts; ++i)
                     {
                         indices[i] = base + i;
@@ -1539,7 +1534,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 }
                 {
                     duint base = buffer.allocateVertices(numLeftVerts);
-                    reserveSpace(indices, numLeftVerts);
+                    DrawList::reserveSpace(indices, numLeftVerts);
                     for (duint i = 0; i < numLeftVerts; ++i)
                     {
                         indices[i] = base + i;
@@ -1554,7 +1549,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             {
                 Store &buffer = ClientApp::renderSystem().buffer();
                 duint base = buffer.allocateVertices(numVerts);
-                reserveSpace(indices, numVerts);
+                DrawList::reserveSpace(indices, numVerts);
                 for (duint i = 0; i < numVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1616,7 +1611,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                reserveSpace(indices, numRightVerts);
+                DrawList::reserveSpace(indices, numRightVerts);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1626,7 +1621,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                reserveSpace(indices, numLeftVerts);
+                DrawList::reserveSpace(indices, numLeftVerts);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1698,7 +1693,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                reserveSpace(indices, numRightVerts);
+                DrawList::reserveSpace(indices, numRightVerts);
                 static Vector4ub const white(255, 255, 255, 255);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
@@ -1737,7 +1732,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                reserveSpace(indices, numLeftVerts);
+                DrawList::reserveSpace(indices, numLeftVerts);
                 static Vector4ub const white(255, 255, 255, 255);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
@@ -1782,7 +1777,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         {
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVerts);
-            reserveSpace(indices, numVerts);
+            DrawList::reserveSpace(indices, numVerts);
             for (duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -1853,7 +1848,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVertices);
-            reserveSpace(indices, numVertices);
+            DrawList::reserveSpace(indices, numVertices);
             static Vector4ub const white(255, 255, 255, 255);
             for (duint i = 0; i < numVertices; ++i)
             {
@@ -1966,7 +1961,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             Store &buffer = ClientApp::renderSystem().buffer();
             {
                 duint base = buffer.allocateVertices(numRightVerts);
-                reserveSpace(indices, numRightVerts);
+                DrawList::reserveSpace(indices, numRightVerts);
                 for (duint i = 0; i < numRightVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -1982,7 +1977,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
-                reserveSpace(indices, numLeftVerts);
+                DrawList::reserveSpace(indices, numLeftVerts);
                 for (duint i = 0; i < numLeftVerts; ++i)
                 {
                     indices[i] = base + i;
@@ -2001,7 +1996,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         {
             Store &buffer = ClientApp::renderSystem().buffer();
             duint base = buffer.allocateVertices(numVertices);
-            reserveSpace(indices, numVertices);
+            DrawList::reserveSpace(indices, numVertices);
             for (duint i = 0; i < numVertices; ++i)
             {
                 indices[i] = base + i;
@@ -2893,7 +2888,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
     {
         Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(vertCount);
-        reserveSpace(indices, vertCount);
+        DrawList::reserveSpace(indices, vertCount);
         for(dint i = 0; i < vertCount; ++i)
         {
             indices[i] = base + i;
@@ -2925,7 +2920,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
 
         Store &buffer = ClientApp::renderSystem().buffer();
         duint base = buffer.allocateVertices(vertCount);
-        reserveSpace(indices, vertCount);
+        DrawList::reserveSpace(indices, vertCount);
         for(dint i = 0; i < vertCount; ++i)
         {
             indices[i] = base + i;
@@ -3090,7 +3085,7 @@ static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts, gl
     // Assign indices.
     duint const vertCount = poly.hedgeCount() + (!fanBase? 2 : 0);
     duint const base      = verts.allocateVertices(vertCount);
-    reserveSpace(indices, vertCount);
+    DrawList::reserveSpace(indices, vertCount);
     for(duint i = 0; i < vertCount; ++i)
     {
         indices[i] = base + i;
