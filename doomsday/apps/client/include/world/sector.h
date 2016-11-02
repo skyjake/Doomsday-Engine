@@ -155,8 +155,17 @@ public:
     /**
      * Lookup a Plane by it's sector-unique @a planeIndex.
      */
-    Plane       &plane(de::dint planeIndex);
-    Plane const &plane(de::dint planeIndex) const;
+    inline Plane &plane(de::dint planeIndex)
+    {
+        DENG2_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
+        return *_lookupPlanes[planeIndex];
+    }
+    
+    inline Plane const &plane(de::dint planeIndex) const
+    {
+        DENG2_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
+        return *_lookupPlanes[planeIndex];
+    }
 
     /**
      * Returns the @em floor Plane of the sector.
@@ -308,6 +317,8 @@ protected:
 
 private:
     DENG2_PRIVATE(d)
+
+    Plane **_lookupPlanes; // heavily used; visible for inline access
 };
 
 #endif  // DENG_WORLD_SECTOR_H

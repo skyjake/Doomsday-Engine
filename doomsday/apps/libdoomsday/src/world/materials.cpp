@@ -28,6 +28,21 @@ using namespace de;
 
 namespace world {
 
+struct SchemeHashKey
+{
+    String scheme;
+
+    SchemeHashKey(String const &s) : scheme(s) {}
+    bool operator == (SchemeHashKey const &other) const {
+        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
+    }
+};
+
+uint qHash(SchemeHashKey const &key)
+{
+    return key.scheme.at(1).toLower().unicode();
+}
+
 DENG2_PIMPL(Materials)
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
@@ -35,7 +50,7 @@ DENG2_PIMPL(Materials)
 , DENG2_OBSERVES(Material,         Deletion)
 {
     /// System subspace schemes containing the manifests/resources.
-    QMap<String, MaterialScheme *> materialSchemes;
+    QHash<SchemeHashKey, MaterialScheme *> materialSchemes;
     QList<MaterialScheme *> materialSchemeCreationOrder;
 
     QList<Material *> materials;       ///< From all schemes.
@@ -84,7 +99,7 @@ DENG2_PIMPL(Materials)
 
         // Create a new scheme.
         MaterialScheme *newScheme = new MaterialScheme(name);
-        materialSchemes.insert(name.toLower(), newScheme);
+        materialSchemes.insert(name, newScheme);
         materialSchemeCreationOrder.append(newScheme);
 
         // We want notification when a new manifest is defined in this scheme.
@@ -155,7 +170,7 @@ MaterialScheme &Materials::materialScheme(String name) const
 {
     if (!name.isEmpty())
     {
-        auto found = d->materialSchemes.find(name.toLower());
+        auto found = d->materialSchemes.find(name);
         if (found != d->materialSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
@@ -167,7 +182,7 @@ bool Materials::isKnownMaterialScheme(String name) const
 {
     if (!name.isEmpty())
     {
-        return d->materialSchemes.contains(name.toLower());
+        return d->materialSchemes.contains(name);
     }
     return false;
 }

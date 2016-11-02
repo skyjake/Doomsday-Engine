@@ -240,7 +240,7 @@ void R_ProjectSprite(mobj_t &mob)
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
     // A valid sprite texture in the "Sprites" scheme is required.
-    if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))
+    if(!tex || tex->base().manifest().schemeName().compareWithoutCase(QStringLiteral("Sprites")))
     {
         return;
     }
@@ -482,7 +482,7 @@ void R_ProjectSprite(mobj_t &mob)
             TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
             // A valid sprite texture in the "Sprites" scheme is required.
-            if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))
+            if(!tex || tex->base().manifest().schemeName().compareWithoutCase(QStringLiteral("Sprites")))
             {
                 return;
             }

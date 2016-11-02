@@ -152,6 +152,8 @@ DENG2_PIMPL(Sector)
     {
         // Ensure planes are cleared first (subsectors may include mappings).
         planes.clear();
+
+        delete [] self._lookupPlanes;
     }
 
     /**
@@ -235,6 +237,18 @@ DENG2_PIMPL(Sector)
         updateAllEmitterOrigins();
     }
 
+    void updatePlanesLookup()
+    {
+        delete [] self._lookupPlanes;
+
+        self._lookupPlanes = new Plane *[planes.size()];
+        Plane **ptr = self._lookupPlanes;
+        for (Plane *p : planes)
+        {
+            *ptr++ = p;
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(LightLevelChange)
     DENG2_PIMPL_AUDIENCE(LightColorChange)
 };
@@ -245,6 +259,7 @@ DENG2_AUDIENCE_METHOD(Sector, LightColorChange)
 Sector::Sector(dfloat lightLevel, Vector3f const &lightColor)
     : MapElement(DMU_SECTOR)
     , d(new Impl(this))
+    , _lookupPlanes(nullptr)
 {
     d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
@@ -280,21 +295,6 @@ dint Sector::planeCount() const
     return d->planes.count();
 }
 
-Plane &Sector::plane(dint planeIndex)
-{
-    DENG2_ASSERT(planeIndex >= 0 && planeIndex < d->planes.count());
-    return *d->planes.at(planeIndex);
-    //if (planeIndex >= 0 && planeIndex < d->planes.count()) return *d->planes.at(planeIndex);
-    /// @throw MissingPlaneError The referenced plane does not exist.
-    //throw MissingPlaneError("Sector::plane", "Unknown plane #" + String::number(planeIndex));
-}
-
-Plane const &Sector::plane(dint planeIndex) const
-{
-    DENG2_ASSERT(planeIndex >= 0 && planeIndex < d->planes.count());
-    return *d.getConst()->planes.at(planeIndex);
-}
-
 LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
 {
     for (Plane *plane : d->planes)
@@ -319,6 +319,7 @@ Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
 
     plane->setIndexInSector(d->planes.count());
     d->planes.append(plane);
+    d->updatePlanesLookup();
 
     if (plane->isSectorFloor() || plane->isSectorCeiling())
     {

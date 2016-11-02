@@ -360,7 +360,7 @@ Sector &Line::Side::sector() const
 
 Sector *Line::Side::sectorPtr() const
 {
-    return hasSector() ? &sector() : nullptr;
+    return d->sector;
 }
 
 bool Line::Side::hasSections() const
@@ -1037,6 +1037,9 @@ DENG2_PIMPL(Line)
 
     dint validCount  = 0;       ///< Used by legacy algorithms to prevent repeated processing.
 
+    enum SelfReferencing { Unknown, IsSelfRef, IsNotSelfRef };
+    SelfReferencing selfRef = Unknown;
+
     /**
      * POD: Additional metrics describing the geometry of the line (the vertices).
      */
@@ -1163,7 +1166,12 @@ void Line::setPolyobj(Polyobj *newPolyobj)
 
 bool Line::isSelfReferencing() const
 {
-    return front().hasSector() && front().sectorPtr() == back().sectorPtr();
+    if (d->selfRef == Impl::Unknown)
+    {
+        d->selfRef = (front().hasSector() && front().sectorPtr() == back().sectorPtr()) ?
+            Impl::IsSelfRef : Impl::IsNotSelfRef;
+    }
+    return d->selfRef == Impl::IsSelfRef;
 }
 
 Line::Side &Line::side(dint back)

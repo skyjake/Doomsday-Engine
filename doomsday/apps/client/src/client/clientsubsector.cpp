@@ -182,6 +182,9 @@ DENG2_PIMPL(ClientSubsector)
         }
     };
 
+    dint validFrame;
+    bool hasWorldVolumeInValidFrame;
+
     bool needClassify = true;  ///< @c true= (Re)classification is necessary.
     SubsectorFlags flags = 0;
     ClientSubsector *mappedVisFloor   = nullptr;
@@ -1553,14 +1556,20 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
 
 bool ClientSubsector::hasWorldVolume(bool useSmoothedHeights) const
 {
-    if (useSmoothedHeights)
+    auto const currentFrame = R_FrameCount();
+    if (d->validFrame != currentFrame)
     {
-        return visCeiling().heightSmoothed() - visFloor().heightSmoothed() > 0;
+        d->validFrame = currentFrame;
+        if (useSmoothedHeights)
+        {
+            d->hasWorldVolumeInValidFrame = visCeiling().heightSmoothed() - visFloor().heightSmoothed() > 0;
+        }
+        else
+        {
+            d->hasWorldVolumeInValidFrame = sector().ceiling().height() - sector().floor().height() > 0;
+        }
     }
-    else
-    {
-        return sector().ceiling().height() - sector().floor().height() > 0;
-    }
+    return d->hasWorldVolumeInValidFrame;
 }
 
 void ClientSubsector::markReverbDirty(bool yes)
