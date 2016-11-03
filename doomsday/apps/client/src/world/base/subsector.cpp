@@ -131,7 +131,7 @@ dint Subsector::subspaceCount() const
 ConvexSubspace &Subsector::firstSubspace() const
 {
     DENG2_ASSERT(!d->subspaces.isEmpty());
-    return *d->subspaces.constFirst();
+    return *d.getConst()->subspaces.first();
 }
 
 LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
