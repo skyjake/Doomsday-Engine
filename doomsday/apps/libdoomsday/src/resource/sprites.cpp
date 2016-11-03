@@ -99,6 +99,16 @@ defn::CompiledSpriteRecord &Sprites::sprite(spritenum_t id, dint frame)
     return d->findSpriteSet(id).find(frame).value();
 }
 
+defn::CompiledSpriteRecord const *Sprites::spritePtr(spritenum_t id, de::dint frame) const
+{
+    if (Sprites::SpriteSet const *sprSet = tryFindSpriteSet(id))
+    {
+        auto found = sprSet->find(frame);
+        if (found != sprSet->end()) return &found.value();
+    }
+    return nullptr;
+}
+
 Sprites::SpriteSet const *Sprites::tryFindSpriteSet(spritenum_t id) const
 {
     return d->tryFindSpriteSet(id);

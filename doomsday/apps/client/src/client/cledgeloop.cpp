@@ -22,6 +22,7 @@
 
 #include "world/maputil.h"
 #include "world/surface.h"
+#include "world/convexsubspace.h"
 
 #include "misc/face.h"
 

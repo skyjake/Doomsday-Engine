@@ -164,7 +164,7 @@ void R_ProjectSprite(mobj_t &mob)
     // ...in an invalid state?
     if(!mob.state || !runtimeDefs.states.indexOf(mob.state)) return;
     // ...no sprite frame is defined?
-    Record *spriteRec = Mobj_SpritePtr(mob);
+    Record const *spriteRec = Mobj_SpritePtr(mob);
     if(!spriteRec) return;
     // ...fully transparent?
     dfloat const alpha = Mobj_Alpha(mob);

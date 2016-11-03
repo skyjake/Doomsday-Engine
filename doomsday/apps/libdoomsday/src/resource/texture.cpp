@@ -34,7 +34,7 @@ using namespace de;
 
 namespace res {
 
-typedef QMap<Texture::AnalysisId, void *> Analyses;
+typedef QHash<Texture::AnalysisId, void *> Analyses;
 
 DENG2_PIMPL(Texture)
 {
@@ -169,8 +169,13 @@ void Texture::clearAnalyses()
 
 void *Texture::analysisDataPointer(AnalysisId analysisId) const
 {
-    if (!d->analyses.contains(analysisId)) return 0;
-    return d->analyses.value(analysisId);
+    auto const &analyses = d.getConst()->analyses;
+    auto found = analyses.find(analysisId);
+    if (found != analyses.end())
+    {
+        return found.value();
+    }
+    return nullptr;
 }
 
 void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)

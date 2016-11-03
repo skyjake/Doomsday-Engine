@@ -90,7 +90,7 @@ Vertex *Mesh::newVertex(Vector2d const &origin)
 
 HEdge *Mesh::newHEdge(Vertex &vertex)
 {
-    auto *hedge = new HEdge(*this, &vertex);
+    auto *hedge = new HEdge(*this, vertex);
     d->hedges.append(hedge);
     return hedge;
 }

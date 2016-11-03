@@ -46,6 +46,7 @@ public:
 
     /**
      * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
+     * Consider using spritePtr() if the sprite definition needs to be access as well.
      */
     bool hasSprite(spritenum_t id, de::dint frame) const;
 
@@ -55,16 +56,12 @@ public:
      * @see hasSprite(), spritePtr()
      */
     defn::CompiledSpriteRecord &sprite(spritenum_t id, de::dint frame);
-
+        
     /**
-     * Returns a pointer to the identified Sprite.
-     *
-     * @see hasSprite()
+     * Returns a pointer to the identified Sprite, or @c nullptr.
      */
-    inline defn::CompiledSpriteRecord *spritePtr(spritenum_t id, de::dint frame) {
-        return hasSprite(id, frame) ? &sprite(id, frame) : nullptr;
-    }
-
+    defn::CompiledSpriteRecord const *spritePtr(spritenum_t id, de::dint frame) const;
+    
     SpriteSet const *tryFindSpriteSet(spritenum_t id) const;
 
     /**

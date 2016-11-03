@@ -39,29 +39,29 @@ class HEdge : public MeshElement
 {
 public:
     /// Required vertex is missing. @ingroup errors
-    DENG2_ERROR(MissingVertexError);
+    //DENG2_ERROR(MissingVertexError);
 
     /// Required twin half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
     /// Required face is missing. @ingroup errors
-    DENG2_ERROR(MissingFaceError);
+    //DENG2_ERROR(MissingFaceError);
 
     /// Required neighbor half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingNeighborError);
 
 public:
-    HEdge(Mesh &mesh, Vertex *vertex = nullptr);
+    HEdge(Mesh &mesh, Vertex &vertex);
 
     /**
      * Returns @c true iff a vertex is linked to the half-edge.
      */
-    bool hasVertex() const;
+    //bool hasVertex() const;
 
     /**
      * Returns the vertex of the half-edge.
      */
-    Vertex &vertex() const;
+    inline Vertex &vertex() const { return *_vertex; }
 
     /**
      * Change the linked Vertex of the half-edge.
@@ -71,7 +71,7 @@ public:
      *
      * @see hasVertex(), vertex()
      */
-    void setVertex(Vertex *newVertex);
+    //void setVertex(Vertex &newVertex);
 
     /**
      * Convenient accessor returning the origin coordinates for the vertex of the half-edge.
@@ -103,14 +103,17 @@ public:
     /**
      * Returns @c true if the half-edge is part of some Face geometry.
      */
-    bool hasFace() const;
+    inline bool hasFace() const { return _face != nullptr; }
 
     /**
      * Returns the Face geometry the half-edge is a part of.
      *
      * @see hasFace()
      */
-    Face &face() const;
+    inline Face &face() const { 
+        DENG2_ASSERT(_face != nullptr);
+        return *_face;
+    }
 
     /**
      * Change the Face to which the half-edge is attributed.
@@ -196,6 +199,10 @@ public:
 
 private:
     DENG2_PRIVATE(d)
+
+    // Heavily used; visible for inline access:
+    Vertex *_vertex; 
+    Face *_face;     ///< Face geometry to which the half-edge is attributed (if any).
 };
 
 }  // namespace de

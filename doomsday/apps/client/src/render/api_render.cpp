@@ -133,20 +133,18 @@ static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 #undef R_GetSpriteInfo
 DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 {
-    LOG_AS("Rend.GetSpriteInfo");
-
     if (!info) return false;
 
     de::zapPtr(info);
 
-    if (!res::Sprites::get().hasSprite(id, frame))
+    auto const *sprDef = res::Sprites::get().spritePtr(id, frame);
+    if (!sprDef)
     {
-        LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i")
-            << id << frame;
+        LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i") << id << frame;
         return false;
     }
 
-    defn::Sprite sprite(res::Sprites::get().sprite(id, frame));
+    defn::Sprite sprite(*sprDef);
     if (!sprite.hasView(0))
     {
         LOG_RES_WARNING("Sprite id:%i frame:%i has no front view")

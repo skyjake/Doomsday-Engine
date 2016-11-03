@@ -22,6 +22,7 @@
 
 #include "world/map.h"
 #include "world/blockmap.h"
+#include "world/convexsubspace.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/surface.h"

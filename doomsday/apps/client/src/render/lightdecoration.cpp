@@ -21,6 +21,7 @@
 
 #include "render/lightdecoration.h"
 
+#include "world/convexsubspace.h"
 #include "world/map.h"
 #include "Surface"
 #include "client/clientsubsector.h"

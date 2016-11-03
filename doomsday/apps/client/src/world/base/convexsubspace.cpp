@@ -60,9 +60,6 @@ DENG2_PIMPL(ConvexSubspace)
     typedef QSet<polyobj_s *> Polyobjs;
     Polyobjs polyobjs;                     ///< Linked polyobjs (not owned).
 
-    Subsector *subsector = nullptr;        ///< Attributed subsector (if any, not owned).
-    BspLeaf *bspLeaf = nullptr;            ///< Attributed BSP leaf (if any, not owned).
-
 #ifdef __CLIENT__
     Vector2d worldGridOffset;              ///< For aligning the materials to the map space grid.
 
@@ -189,16 +186,9 @@ ConvexSubspace *ConvexSubspace::newFromConvexPoly(de::Face &poly, BspLeaf *bspLe
     return new ConvexSubspace(poly, bspLeaf);
 }
 
-BspLeaf &ConvexSubspace::bspLeaf() const
-{
-    if(d->bspLeaf) return *d->bspLeaf;
-    /// @throw MissingBspLeafError  Attempted with no BspLeaf attributed.
-    throw MissingBspLeafError("ConvexSubspace::bspLeaf", "No BSP leaf is attributed");
-}
-
 void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
 {
-    d->bspLeaf = newBspLeaf;
+    _bspLeaf = newBspLeaf;
 }
 
 Face &ConvexSubspace::poly() const
@@ -282,12 +272,7 @@ bool ConvexSubspace::unlink(Polyobj const &polyobj)
     return d->polyobjs.size() != sizeBefore;
 }
 
-bool ConvexSubspace::hasSubsector() const
-{
-    return d->subsector != nullptr;
-}
-
-Subsector &ConvexSubspace::subsector() const
+/*Subsector &ConvexSubspace::subsector() const
 {
     if(d->subsector) return *d->subsector;
     /// @throw MissingSubsectorError  Attempted with no subsector attributed.
@@ -297,16 +282,11 @@ Subsector &ConvexSubspace::subsector() const
 Subsector *ConvexSubspace::subsectorPtr() const
 {
     return hasSubsector() ? &subsector() : nullptr;
-}
+}*/
 
 void ConvexSubspace::setSubsector(Subsector *newSubsector)
 {
-    d->subsector = newSubsector;
-}
-
-Sector &ConvexSubspace::sector() const
-{
-    return subsector().sector();
+    _subsector = newSubsector;
 }
 
 dint ConvexSubspace::validCount() const
@@ -320,6 +300,7 @@ void ConvexSubspace::setValidCount(dint newValidCount)
 }
 
 #ifdef __CLIENT__
+
 Vector2d const &ConvexSubspace::worldGridOffset() const
 {
     return d->worldGridOffset;

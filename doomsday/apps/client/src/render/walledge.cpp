@@ -89,17 +89,12 @@ Vector3d WallEdge::Event::origin() const
     return _owner->pOrigin() + _owner->pDirection() * distance();
 }
 
-static bool eventSorter(WorldEdge::Event const &a, WorldEdge::Event const &b)
-{
-    return a < b;
-}
-
 static inline coord_t lineSideOffset(LineSideSegment &seg, dint edge)
 {
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
 
-QQueue<WallEdge::Impl *> WallEdge::recycledImpls;
+QList<WallEdge::Impl *> WallEdge::recycledImpls;
 
 struct WallEdge::Impl : public IHPlane
 {
@@ -122,8 +117,59 @@ struct WallEdge::Impl : public IHPlane
     Event bottom;
     Event top;
 
+    struct EventArray : private QVector<Event>
+    {
+        using Base = QVector<Event>;
+
+        int size = 0;
+
+        EventArray() {}
+
+        inline bool isEmpty() const
+        {
+            return size == 0;
+        }
+
+        inline void clear()
+        {
+            size = 0;
+        }
+
+        void append(Event const &event)
+        {
+            if (size < Base::size())
+            {
+                (*this)[size++] = event;
+            }
+            else
+            {
+                Base::append(event);
+                ++size;
+            }
+        }
+
+        using Base::at;
+
+        inline Event &last()
+        {
+            return (*this)[size - 1];
+        }
+
+        using Base::begin;
+
+        inline Base::iterator end()
+        {
+            return Base::begin() + size;
+        }
+
+        inline Base::const_iterator end() const
+        {
+            return Base::begin() + size;
+        }
+    };
+
     /// All events along the partition line.
-    Events events;
+    EventArray events;
     bool needSortEvents = false;
 
     Vector2f materialOrigin;
@@ -377,19 +423,17 @@ struct WallEdge::Impl : public IHPlane
         }
     }
 
-    EventIndex toEventIndex(ddouble distance)
+    EventIndex toEventIndex(ddouble distance) const
     {
-        //DENG_ASSERT(events != 0);
-
-        for(EventIndex i = 0; i < events.count(); ++i)
+        for (EventIndex i = 0; i < events.size; ++i)
         {
-            if(de::fequal(events.at(i).distance(), distance))
+            if (de::fequal(events.at(i).distance(), distance))
                 return i;
         }
         return InvalidIndex;
     }
 
-    inline bool haveEvent(ddouble distance)
+    inline bool haveEvent(ddouble distance) const
     {
         return toEventIndex(distance) != InvalidIndex;
     }
@@ -414,8 +458,6 @@ struct WallEdge::Impl : public IHPlane
     // Implements IHPlane
     Event *intercept(ddouble distance)
     {
-        //DENG2_ASSERT(events);
-
         events.append(Event(*self, distance));
 
         // We'll need to resort the events.
@@ -427,32 +469,19 @@ struct WallEdge::Impl : public IHPlane
     // Implements IHPlane
     void sortAndMergeIntercepts()
     {
-        //DENG2_ASSERT(events);
-
-        // Any work to do?
-        if(!needSortEvents) return;
-
-        qSort(events.begin(), events.end(), eventSorter);
-        needSortEvents = false;
+        if (needSortEvents)
+        {
+            qSort(events.begin(), events.end(), [] (WorldEdge::Event const &a, WorldEdge::Event const &b) {
+                return a < b;
+            });
+            needSortEvents = false;
+        }
     }
 
     // Implements IHPlane
     void clearIntercepts()
     {
         events.clear();
-#if 0
-        if(events)
-        {
-            /*while(!events->isEmpty())
-            {
-                Event *event = events->takeLast();
-                if(!(event == &bottom || event == &top))
-                    delete event;
-            }*/
-
-            delete events; events = nullptr;
-        }
-#endif
 
         // An empty event list is logically sorted.
         needSortEvents = false;
@@ -473,18 +502,14 @@ struct WallEdge::Impl : public IHPlane
     // Implements IHPlane
     dint interceptCount() const
     {
-        //DENG2_ASSERT(events);
-
-        return events.count();
+        return events.size;
     }
 
 #ifdef DENG2_DEBUG
     void printIntercepts() const
     {
-        //DENG2_ASSERT(events);
-
         EventIndex index = 0;
-        foreach(Event const &icpt, events)
+        foreach (Event const &icpt, events)
         {
             LOGDEV_MAP_MSG(" %u: >%1.2f ") << (index++) << icpt.distance();
         }
@@ -599,17 +624,12 @@ struct WallEdge::Impl : public IHPlane
     void prepareEvents()
     {
         DENG2_ASSERT(self->isValid());
-        DENG2_ASSERT(events.isEmpty());
 
-        //clearIntercepts();
-        //events = new Events;
-        //events.reserve(2 + 2);
         needSortEvents = false;
 
         // The first event is the bottom termination event.
-        events.append(bottom);
-
         // The last event is the top termination event.
+        events.append(bottom);
         events.append(top);
 
         // Add intecepts for neighbor planes?
@@ -625,8 +645,10 @@ struct WallEdge::Impl : public IHPlane
             sortAndMergeIntercepts();
         }
 
+#ifdef DENG2_DEBUG
         // Sanity check.
         assertInterceptsInRange(0, 1);
+#endif
     }
 
     /**
@@ -759,8 +781,8 @@ coord_t WallEdge::lineSideOffset() const
 
 dint WallEdge::divisionCount() const
 {
-    if(!isValid()) return 0;
-    if(d->events.isEmpty())
+    if (!isValid()) return 0;
+    if (d->events.isEmpty())
     {
         d->prepareEvents();
     }
@@ -777,19 +799,20 @@ WallEdge::EventIndex WallEdge::lastDivision() const
     return divisionCount()? (d->interceptCount() - 2) : InvalidIndex;
 }
 
+/*
 WallEdge::Events const &WallEdge::events() const
 {
     d->verifyValid();
-    if(d->events.isEmpty())
+    if (!d->events)
     {
         d->prepareEvents();
     }
-    return d->events;
-}
+    return *d->events;
+}*/
 
 WallEdge::Event const &WallEdge::at(EventIndex index) const
 {
-    return events().at(index);
+    return d->events.at(index);
 }
 
 bool WallEdge::isValid() const
@@ -813,11 +836,11 @@ WallEdge::Impl *WallEdge::getRecycledImpl() // static
     {
         return new Impl;
     }
-    return recycledImpls.dequeue();
+    return recycledImpls.takeLast();
 }
 
 void WallEdge::recycleImpl(Impl *d) // static
 {
     d->deinit();
-    recycledImpls.enqueue(d);
+    recycledImpls.append(d);
 }

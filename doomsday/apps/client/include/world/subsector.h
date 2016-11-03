@@ -27,11 +27,12 @@
 #include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
-#include "ConvexSubspace"
 #include "HEdge"
 #include "Sector"
 
 namespace world {
+
+class ConvexSubspace;
 
 /**
  * Top level map geometry component describing a cluster of adjacent map subspaces (one

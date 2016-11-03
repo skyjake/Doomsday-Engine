@@ -21,7 +21,6 @@
 #define RENDER_WALLEDGE
 
 #include <QVector>
-#include <QQueue>
 
 #include <de/Error>
 #include <de/Vector>
@@ -69,7 +68,7 @@ public:
         WallEdge *_owner;
     };
 
-    typedef QVector<Event> Events;
+    //typedef QVector<Event> Events;
 
 public:
     /**
@@ -120,7 +119,7 @@ public:
     inline Event const &bottom() const { return first(); }
     inline Event const &top   () const { return last();  }
 
-    Events const &events() const;
+    //Events const &events() const;
 
     Event const &at(EventIndex index) const;
 
@@ -128,7 +127,7 @@ private:
     struct Impl;
     Impl *d;
 
-    static QQueue<WallEdge::Impl *> recycledImpls;    
+    static QList<WallEdge::Impl *> recycledImpls;    
     static Impl *getRecycledImpl();
     static void recycleImpl(Impl *d);
 };

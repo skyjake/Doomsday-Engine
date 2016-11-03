@@ -470,15 +470,11 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
         return;
 
     // Always use the front view of the Sprite when determining light properties.
-    Record *spriteRec = Mobj_SpritePtr(*mob);
+    Record const *spriteRec = Mobj_SpritePtr(*mob);
     if (!spriteRec) return;
-    //defn::Sprite sprite(*spriteRec);
-    //if (!sprite.hasView(0)) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
-    //Material *sprMat = world::Materials::get().materialPtr(sprite.viewMaterial(0));
-    //if (!sprMat) return;
-    MaterialAnimator *matAnimator = Rend_SpriteMaterialAnimator(*spriteRec) ;//sprMat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
+    MaterialAnimator *matAnimator = Rend_SpriteMaterialAnimator(*spriteRec);
     if (!matAnimator) return;
     matAnimator->prepare();  // Ensure we have up-to-date info.
 
@@ -621,33 +617,26 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     dfloat strength = .65f;  ///< Default.
     if (!::useModels || !Mobj_ModelDef(mob))
     {
-        if (Record *spriteRec = Mobj_SpritePtr(mob))
+        if (Record const *spriteRec = Mobj_SpritePtr(mob))
         {
-            defn::Sprite sprite(*spriteRec);
-            if (sprite.hasView(0))  // Always use the front view for lighting.
+            auto &matAnimator = *Rend_SpriteMaterialAnimator(*spriteRec); // world::Materials::get().materialPtr(sprite.viewMaterial(0)))
+            matAnimator.prepare();  // Ensure we have up-to-date info.
+
+            if (TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                if (Material *mat = world::Materials::get().materialPtr(sprite.viewMaterial(0)))
-                {
-                    MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
-                    matAnimator.prepare();  // Ensure we have up-to-date info.
+                auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
+                DENG2_ASSERT(aa);
 
-                    if (TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
-                    {
-                        auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
-                        DENG2_ASSERT(aa);
+                // We use an average which factors in the coverage ratio of
+                // alpha:non-alpha pixels.
+                /// @todo Constant weights could stand some tweaking...
+                dfloat weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
-                        // We use an average which factors in the coverage ratio of
-                        // alpha:non-alpha pixels.
-                        /// @todo Constant weights could stand some tweaking...
-                        dfloat weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+                // Almost entirely translucent sprite? => no shadow.
+                if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
 
-                        // Almost entirely translucent sprite? => no shadow.
-                        if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
-
-                        // Apply this factor.
-                        strength *= de::min(1.f, .2f + weightedSpriteAlpha);
-                    }
-                }
+                // Apply this factor.
+                strength *= de::min(1.f, .2f + weightedSpriteAlpha);
             }
         }
     }
@@ -659,7 +648,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
-Record *Mobj_SpritePtr(mobj_t const &mob)
+Record const *Mobj_SpritePtr(mobj_t const &mob)
 {
     return res::Sprites::get().spritePtr(mob.sprite, mob.frame);
 }
@@ -915,7 +904,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mob)
     }
 
     // Is a sprite in effect?
-    if (Record *sprite = Mobj_SpritePtr(mob))
+    if (Record const *sprite = Mobj_SpritePtr(mob))
     {
         return Rend_VisualRadius(*sprite);
     }

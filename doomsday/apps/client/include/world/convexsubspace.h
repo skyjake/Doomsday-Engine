@@ -50,12 +50,11 @@ class AudioEnvironment;
 class ConvexSubspace : public MapElement
 {
 public:
-
     /// An invalid polygon was specified. @ingroup errors
     DENG2_ERROR(InvalidPolyError);
 
     /// Required BspLeaf attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingBspLeafError);
+    //DENG2_ERROR(MissingBspLeafError);
 
     /// Required subsector attribution is missing. @ingroup errors
     DENG2_ERROR(MissingSubsectorError);
@@ -109,15 +108,21 @@ public:
      * Returns @c true if a Subsector is attributed to the subspace. The only time that a
      * subsector might not be attributed is during initial map setup.
      */
-    bool hasSubsector() const;
+    inline bool hasSubsector() const { return _subsector != nullptr; }
 
     /**
      * Returns the Subsector attributed to the subspace.
      *
      * @see hasSubsector()
      */
-    Subsector &subsector   () const;
-    Subsector *subsectorPtr() const;
+    inline Subsector &subsector() const { 
+        DENG2_ASSERT(_subsector != nullptr); 
+        return *_subsector; 
+    }
+
+    inline Subsector *subsectorPtr() const { 
+        return _subsector; 
+    }
 
     /**
      * Change the subsector attributed to the subspace.
@@ -134,12 +139,18 @@ public:
      *
      * @see subsector()
      */
-    Sector &sector() const;
+    inline Sector &sector() const { return subsector().sector(); }
 
     /**
      * Returns the BspLeaf to which the subspace is assigned.
      */
-    BspLeaf &bspLeaf() const;
+    inline BspLeaf &bspLeaf() const {
+        DENG2_ASSERT(_bspLeaf != nullptr);
+        return *_bspLeaf;
+        // @throw MissingBspLeafError  Attempted with no BspLeaf attributed.
+        //throw MissingBspLeafError("ConvexSubspace::bspLeaf", "No BSP leaf is attributed");
+    }
+
     void setBspLeaf(BspLeaf *newBspLeaf);
 
 //- Poly objects ------------------------------------------------------------------------
@@ -292,6 +303,10 @@ private:
     ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
 
     DENG2_PRIVATE(d)
+
+    // Heavily used; visible for inline access:
+    Subsector *_subsector = nullptr;        ///< Attributed subsector (if any, not owned).
+    BspLeaf *_bspLeaf = nullptr;            ///< Attributed BSP leaf (if any, not owned).
 };
 
 }  // namespace world

@@ -30,9 +30,7 @@ namespace de {
 
 DENG2_PIMPL_NOREF(HEdge)
 {
-    Vertex *vertex = nullptr;
     HEdge *twin = nullptr;     ///< Linked @em twin half-edge (that on the other side of "this" half-edge).
-    Face *face = nullptr;      ///< Face geometry to which the half-edge is attributed (if any).
     HEdge *neighbors[2] { nullptr, nullptr }; ///< Previous (anticlockwise) and next half-edge (clockwise) around the @em face.
 
     // For quicker lookups:
@@ -40,27 +38,29 @@ DENG2_PIMPL_NOREF(HEdge)
     world::Subsector *subsector = nullptr;
 };
 
-HEdge::HEdge(Mesh &mesh, Vertex *vertex) : MeshElement(mesh), d(new Impl)
-{
-    setVertex(vertex);
-}
+HEdge::HEdge(Mesh &mesh, Vertex &vertex) 
+    : MeshElement(mesh)
+    , d(new Impl)
+    , _vertex(&vertex)
+    , _face(nullptr)
+{}
 
-bool HEdge::hasVertex() const
+/*bool HEdge::hasVertex() const
 {
     return d->vertex != nullptr;
-}
+}*/
 
-Vertex &HEdge::vertex() const
+/*Vertex &HEdge::vertex() const
 {
     if(d->vertex) return *d->vertex;
     /// @throw MissingVertexError Attempted with no Vertex attributed.
     throw MissingVertexError("HEdge::vertex", "No vertex is attributed");
-}
+}*/
 
-void HEdge::setVertex(Vertex *newVertex)
+/*void HEdge::setVertex(Vertex &newVertex)
 {
-    d->vertex = newVertex;
-}
+    d->vertex = &newVertex;
+}*/
 
 bool HEdge::hasTwin() const
 {
@@ -79,7 +79,7 @@ void HEdge::setTwin(HEdge *newTwin)
     d->twin = newTwin;
 }
 
-bool HEdge::hasFace() const
+/*bool HEdge::hasFace() const
 {
     return d->face != nullptr;
 }
@@ -89,11 +89,11 @@ Face &HEdge::face() const
     if(d->face) return *d->face;
     /// @throw MissingFaceError Attempted with no Face attributed.
     throw MissingFaceError("HEdge::face", "No face is attributed");
-}
+}*/
 
 void HEdge::setFace(Face *newFace)
 {
-    d->face = newFace;
+    _face = newFace;
 }
 
 bool HEdge::hasNeighbor(ClockDirection direction) const
@@ -119,9 +119,9 @@ world::Subsector *HEdge::subsector() const
     if (d->subsectorMissing) return nullptr;
     if (!d->subsector)
     {
-        if (d->face && d->face->hasMapElement() && d->face->mapElement().type() == DMU_SUBSPACE)
+        if (_face && _face->hasMapElement() && _face->mapElement().type() == DMU_SUBSPACE)
         {
-            d->subsector = d->face->mapElementAs<world::ConvexSubspace>().subsectorPtr();
+            d->subsector = _face->mapElementAs<world::ConvexSubspace>().subsectorPtr();
         }
         else
         {

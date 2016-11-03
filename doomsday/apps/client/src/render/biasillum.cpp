@@ -19,6 +19,7 @@
 
 #include "render/biasillum.h"
 
+#include "world/convexsubspace.h"
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"

@@ -3590,7 +3590,7 @@ static void projectSubspaceSprites()
             if(subsec.visCeiling().surface().hasSkyMaskedMaterial())
             {
                 /// @todo fixme: Consider 3D models, also. -ds
-                if(Record *spriteRec = Mobj_SpritePtr(mob))
+                if(Record const *spriteRec = Mobj_SpritePtr(mob))
                 {
                     defn::Sprite const sprite(*spriteRec);
                     de::Uri const &viewMaterial = sprite.viewMaterial(0);

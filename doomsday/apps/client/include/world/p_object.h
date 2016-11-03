@@ -191,7 +191,7 @@ de::dfloat Mobj_ShadowStrength(mobj_t const &mob);
  * Determines which of the available sprites is in effect for the current map-object state
  * and frame. May return @c nullptr if the state and/or frame is not valid.
  */
-de::Record *Mobj_SpritePtr(mobj_t const &mob);
+de::Record const *Mobj_SpritePtr(mobj_t const &mob);
 
 /**
  * Determines which of the available model definitions (if any), are in effect for the
