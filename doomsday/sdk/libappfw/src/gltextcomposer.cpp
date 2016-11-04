@@ -49,10 +49,9 @@ DENG2_PIMPL(GLTextComposer)
             Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
         };
-        QList<Segment> segs;
+        QVector<Segment> segs;
     };
-    typedef QList<Line> Lines;
-    Lines lines;
+    QVector<Line> lines;
 
     Impl(Public *i) : Base(i) {}
 

@@ -61,20 +61,19 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             return false;
         }
     };
-
-    typedef QList<Line *> Lines;
+    typedef QVector<Line *> Lines;
     Lines lines;
 
     struct RasterizedLine {
-        QList<Image> segmentImages;
+        QVector<Image> segmentImages;
     };
-    QList<RasterizedLine> rasterized;
+    QVector<RasterizedLine> rasterized;
 
     int maxWidth;
     String text;                ///< Plain text.
     Font::RichFormat format;
     int indent;                 ///< Current left indentation (in pixels).
-    QList<int> prevIndents;
+    QVector<int> prevIndents;
     int tabStop;
     volatile bool cancelled = false;
 

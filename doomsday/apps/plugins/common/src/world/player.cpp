@@ -1866,13 +1866,22 @@ void Player_UpdateStatusCVars(player_t const *player)
 {
     DENG2_ASSERT(player);
 
-    Con_SetInteger2("player-health", player->health, SVF_WRITE_OVERRIDE);
+    QChar const CVAR_DELIM('-');
+    
+    static Path const var_player_health("player-health", CVAR_DELIM);
+    static Path const var_player_armor ("player-armor",  CVAR_DELIM);
+
+    Con_SetVariable(var_player_health, player->health, SVF_WRITE_OVERRIDE);
 
 #if !__JHEXEN__
+    static Path const var_game_stats_kills  ("game-stats-kills",   CVAR_DELIM);
+    static Path const var_game_stats_items  ("game-stats-items",   CVAR_DELIM);
+    static Path const var_game_stats_secrets("game-stats-secrets", CVAR_DELIM);
+
     // Map stats.
-    Con_SetInteger2("game-stats-kills",   player->killCount,   SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("game-stats-items",   player->itemCount,   SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("game-stats-secrets", player->secretCount, SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_game_stats_kills,   player->killCount,   SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_game_stats_items,   player->itemCount,   SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_game_stats_secrets, player->secretCount, SVF_WRITE_OVERRIDE);
 #endif
 
     // Armor.
@@ -1882,36 +1891,36 @@ void Player_UpdateStatusCVars(player_t const *player)
                                      + player->armorPoints[ARMOR_SHIELD]
                                      + player->armorPoints[ARMOR_HELMET]
                                      + player->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
-    Con_SetInteger2("player-armor", armorPoints, SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_player_armor, armorPoints, SVF_WRITE_OVERRIDE);
 #else
-    Con_SetInteger2("player-armor", player->armorPoints, SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_player_armor, player->armorPoints, SVF_WRITE_OVERRIDE);
 #endif
 
     // Owned keys.
-    static char const *keyIds[NUM_KEY_TYPES] = {
+    static Path const keyIds[NUM_KEY_TYPES] = {
 #if __JDOOM__ || __JDOOM64__
-        /* KT_BLUECARD */    "blue",
-        /* KT_YELLOWCARD */  "yellow",
-        /* KT_REDCARD */     "red",
-        /* KT_BLUESKULL */   "blueskull",
-        /* KT_YELLOWSKULL */ "yellowskull",
-        /* KT_REDSKULL */    "redskull"
+        /* KT_BLUECARD */    { "player-key-blue", CVAR_DELIM },
+        /* KT_YELLOWCARD */  { "player-key-yellow", CVAR_DELIM },
+        /* KT_REDCARD */     { "player-key-red", CVAR_DELIM },
+        /* KT_BLUESKULL */   { "player-key-blueskull", CVAR_DELIM },
+        /* KT_YELLOWSKULL */ { "player-key-yellowskull", CVAR_DELIM },
+        /* KT_REDSKULL */    { "player-key-redskull", CVAR_DELIM },
 #elif __JHERETIC__
-        /* KT_YELLOW */      "yellow",
-        /* KT_GREEN */       "green",
-        /* KT_BLUE */        "blue"
+        /* KT_YELLOW */      { "player-key-yellow", CVAR_DELIM },
+        /* KT_GREEN */       { "player-key-green", CVAR_DELIM },
+        /* KT_BLUE */        { "player-key-blue" CVAR_DELIM },
 #elif __JHEXEN__
-        /* KT_KEY1 */        "steel",
-        /* KT_KEY2 */        "cave",
-        /* KT_KEY3 */        "axe",
-        /* KT_KEY4 */        "fire",
-        /* KT_KEY5 */        "emerald",
-        /* KT_KEY6 */        "dungeon",
-        /* KT_KEY7 */        "silver",
-        /* KT_KEY8 */        "rusted",
-        /* KT_KEY9 */        "horn",
-        /* KT_KEYA */        "swamp",
-        /* KT_KEYB */        "castle"
+        /* KT_KEY1 */        { "player-key-steel", CVAR_DELIM },
+        /* KT_KEY2 */        { "player-key-cave", CVAR_DELIM },
+        /* KT_KEY3 */        { "player-key-axe", CVAR_DELIM },
+        /* KT_KEY4 */        { "player-key-fire", CVAR_DELIM },
+        /* KT_KEY5 */        { "player-key-emerald", CVAR_DELIM },
+        /* KT_KEY6 */        { "player-key-dungeon", CVAR_DELIM },
+        /* KT_KEY7 */        { "player-key-silver", CVAR_DELIM },
+        /* KT_KEY8 */        { "player-key-rusted", CVAR_DELIM },
+        /* KT_KEY9 */        { "player-key-horn", CVAR_DELIM },
+        /* KT_KEYA */        { "player-key-swamp", CVAR_DELIM },
+        /* KT_KEYB */        { "player-key-castle", CVAR_DELIM },
 #endif
     };
     for(int i = 0; i < NUM_KEY_TYPES; ++i)
@@ -1921,54 +1930,53 @@ void Player_UpdateStatusCVars(player_t const *player)
 #else
         int ownedKeys = player->keys[i];
 #endif
-        String cvarName = String("player-key-%1").arg(keyIds[i]);
-        Con_SetInteger2(cvarName.toUtf8().constData(), ownedKeys, SVF_WRITE_OVERRIDE);
+        Con_SetVariable(keyIds[i], ownedKeys, SVF_WRITE_OVERRIDE);
     }
 
     // Current weapon
     Con_SetInteger2("player-weapon-current", player->readyWeapon, SVF_WRITE_OVERRIDE);
 
     // Owned weapons
-    static char const *weaponIds[NUM_WEAPON_TYPES] = {
+    static Path const weaponIds[NUM_WEAPON_TYPES] = {
 #if __JDOOM__ || __JDOOM64__
-        /* WT_FIRST */   "fist",
-        /* WT_SECOND */  "pistol",
-        /* WT_THIRD */   "shotgun",
-        /* WT_FOURTH */  "chaingun",
-        /* WT_FIFTH */   "mlauncher",
-        /* WT_SIXTH */   "plasmarifle",
-        /* WT_SEVENTH */ "bfg",
-        /* WT_EIGHTH */  "chainsaw",
-        /* WT_NINETH */  "sshotgun"
+        /* WT_FIRST */   { "player-weapon-fist", CVAR_DELIM },
+        /* WT_SECOND */  { "player-weapon-pistol", CVAR_DELIM },
+        /* WT_THIRD */   { "player-weapon-shotgun", CVAR_DELIM },
+        /* WT_FOURTH */  { "player-weapon-chaingun", CVAR_DELIM },
+        /* WT_FIFTH */   { "player-weapon-mlauncher", CVAR_DELIM },
+        /* WT_SIXTH */   { "player-weapon-plasmarifle", CVAR_DELIM },
+        /* WT_SEVENTH */ { "player-weapon-bfg", CVAR_DELIM },
+        /* WT_EIGHTH */  { "player-weapon-chainsaw", CVAR_DELIM },
+        /* WT_NINETH */  { "player-weapon-sshotgun", CVAR_DELIM },
 #elif __JHERETIC__
-        /* WT_FIRST */   "staff",
-        /* WT_SECOND */  "goldwand",
-        /* WT_THIRD */   "crossbow",
-        /* WT_FOURTH */  "dragonclaw",
-        /* WT_FIFTH */   "hellstaff",
-        /* WT_SIXTH */   "phoenixrod",
-        /* WT_SEVENTH */ "mace",
-        /* WT_EIGHTH */  "gauntlets"
+        /* WT_FIRST */   { "player-weapon-staff", CVAR_DELIM },
+        /* WT_SECOND */  { "player-weapon-goldwand", CVAR_DELIM },
+        /* WT_THIRD */   { "player-weapon-crossbow", CVAR_DELIM },
+        /* WT_FOURTH */  { "player-weapon-dragonclaw", CVAR_DELIM },
+        /* WT_FIFTH */   { "player-weapon-hellstaff", CVAR_DELIM },
+        /* WT_SIXTH */   { "player-weapon-phoenixrod", CVAR_DELIM },
+        /* WT_SEVENTH */ { "player-weapon-mace", CVAR_DELIM },
+        /* WT_EIGHTH */  { "player-weapon-gauntlets", CVAR_DELIM },
 #elif __JHEXEN__
-        /* WT_FIRST */   "first",
-        /* WT_SECOND */  "second",
-        /* WT_THIRD */   "third",
-        /* WT_FOURTH*/   "fourth"
+        /* WT_FIRST */   { "player-weapon-first", CVAR_DELIM },
+        /* WT_SECOND */  { "player-weapon-second", CVAR_DELIM },
+        /* WT_THIRD */   { "player-weapon-third", CVAR_DELIM },
+        /* WT_FOURTH*/   { "player-weapon-fourth" CVAR_DELIM },
 #endif
     };
     for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        Block cvarName = String("player-weapon-%1").arg(weaponIds[i]).toUtf8();
-        Con_SetInteger2(cvarName.constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
+        Con_SetVariable(weaponIds[i], player->weapons[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHEXEN__
     for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
-        Block cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
-        Con_SetInteger2(cvarName.constData(),  (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
+        Path const varPath { String("player-weapon-piece%1").arg(i + 1), CVAR_DELIM };
+        Con_Variable(varPath, (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
     }
-    Con_SetInteger2("player-weapon-allpieces", (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
+    static Path const var_player_weapon_allpieces("player-weapon-allpieces", CVAR_DELIM);
+    Con_SetInteger2(var_player_weapon_allpieces, (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
 #endif
 
     // Current ammo amounts.

@@ -541,19 +541,19 @@ void Con_AddVariableList(cvartemplate_t const *tplList)
     }
 }
 
+cvar_t *Con_FindVariable(Path const &path)
+{
+    if (CVarDirectory::Node const *node = 
+            cvarDirectory->tryFind(path, PathTree::NoBranch | PathTree::MatchFull))
+    {
+        return reinterpret_cast<cvar_t *>(node->userPointer());
+    }
+    return nullptr;
+}
+
 cvar_t *Con_FindVariable(char const *path)
 {
-    if (!path || !path[0]) return 0;
-
-    try
-    {
-        CVarDirectory::Node const &node = cvarDirectory->find(Path(path, CVARDIRECTORY_DELIMITER),
-                                                              PathTree::NoBranch | PathTree::MatchFull);
-        return (cvar_t*) node.userPointer();
-    }
-    catch (CVarDirectory::NotFoundError const&)
-    {} // Ignore this error.
-    return 0;
+    return Con_FindVariable(Path(path, CVARDIRECTORY_DELIMITER));
 }
 
 String Con_VarAsStyledText(cvar_t *var, char const *prefix)
@@ -614,6 +614,14 @@ void Con_AddKnownWordsForVariables()
 
     cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash,
                             addVariableToKnownWords);
+}
+
+void Con_SetVariable(Path const &varPath, int value, int svFlags = 0)
+{
+    if (cvar_t *var = Con_FindVariable(varPath))
+    {
+        CVar_SetInteger2(var, value, svFlags);
+    }
 }
 
 static Value *Function_Console_Get(Context &, Function::ArgumentValues const &args)

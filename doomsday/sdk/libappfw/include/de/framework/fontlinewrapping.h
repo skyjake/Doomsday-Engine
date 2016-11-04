@@ -117,7 +117,7 @@ public:
             Segment(Rangei const &r, int tab = 0) : range(r), tabStop(tab), width(0)
             {}
         };
-        typedef QList<Segment> Segments;
+        typedef QVector<Segment> Segments;
         Segments segs;
 
         int indent;         ///< Left indentation to apply to the entire line.
