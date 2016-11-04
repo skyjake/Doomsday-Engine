@@ -71,11 +71,11 @@ public:
 
     /**
      * Cancels the ongoing wrapping operation. This is useful when doing long wrapping
-     * operations in the background. An exception is thrown from the ongoing 
+     * operations in the background. An exception is thrown from the ongoing
      * wrapTextToWidth() call.
      */
-    void cancel();    
-    
+    void cancel();
+
     bool isEmpty() const;
     String const &text() const;
     shell::WrappedLine line(int index) const;
@@ -114,7 +114,7 @@ public:
             int tabStop;
             int width;
 
-            Segment(Rangei const &r, int tab = 0) : range(r), tabStop(tab), width(0)
+            Segment(Rangei const &r = Rangei(), int tab = 0) : range(r), tabStop(tab), width(0)
             {}
         };
         typedef QVector<Segment> Segments;
