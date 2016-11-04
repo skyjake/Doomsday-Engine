@@ -117,13 +117,24 @@ struct WallEdge::Impl : public IHPlane
     Event bottom;
     Event top;
 
+    /**
+     * Special-purpose array whose memory is never freed while the array exists.
+     * `WallEdge::Impl`s are recycled, so it would be a waste of time to keep 
+     * allocating and freeing the event arrays.
+     */
     struct EventArray : private QVector<Event>
     {
         using Base = QVector<Event>;
 
         int size = 0;
 
+    public:
         EventArray() {}
+
+        using Base::at;
+        using Base::begin;
+        using Base::iterator;
+        using Base::const_iterator;
 
         inline bool isEmpty() const
         {
@@ -148,14 +159,10 @@ struct WallEdge::Impl : public IHPlane
             }
         }
 
-        using Base::at;
-
         inline Event &last()
         {
             return (*this)[size - 1];
         }
-
-        using Base::begin;
 
         inline Base::iterator end()
         {
@@ -522,8 +529,7 @@ struct WallEdge::Impl : public IHPlane
     void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
 #ifdef DENG2_DEBUG
-        //DENG2_ASSERT(events);
-        foreach(Event const &icpt, events)
+        foreach (Event const &icpt, events)
         {
             DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
@@ -798,17 +804,6 @@ WallEdge::EventIndex WallEdge::lastDivision() const
 {
     return divisionCount()? (d->interceptCount() - 2) : InvalidIndex;
 }
-
-/*
-WallEdge::Events const &WallEdge::events() const
-{
-    d->verifyValid();
-    if (!d->events)
-    {
-        d->prepareEvents();
-    }
-    return *d->events;
-}*/
 
 WallEdge::Event const &WallEdge::at(EventIndex index) const
 {
