@@ -34,37 +34,43 @@
 #include "de/timer.h"
 #include "de/concurrency.h"
 
+#include <de/Time>
+
 static float ticksPerSecond = TICSPERSEC;
 static double timeOffset = 0;
-static mutex_t timerMutex;         // To prevent Data races in the timer
-static QTime startedAt;
-static uint timerOffset = 0;
+//static mutex_t timerMutex;         // To prevent Data races in the timer
+//static QTime startedAt;
+//static uint timerOffset = 0;
 
-static uint const TIMER_WARP_INTERVAL = 12*60*60*1000;
+static de::Time startedAt;
+
+//static uint const TIMER_WARP_INTERVAL = 12*60*60*1000;
 
 void Timer_Shutdown(void)
 {
 #ifdef WIN32
     timeEndPeriod(1);
 #endif
-    mutex_t m = timerMutex;
-    timerMutex = 0;
-    Sys_DestroyMutex(m);
+    //mutex_t m = timerMutex;
+    //timerMutex = 0;
+//    Sys_DestroyMutex(m);
 }
 
 void Timer_Init(void)
 {
-    assert(timerMutex == 0);
-    timerMutex = Sys_CreateMutex("TIMER_MUTEX");
+    //assert(timerMutex == 0);
+    //timerMutex = Sys_CreateMutex("TIMER_MUTEX");
 #ifdef WIN32
     timeBeginPeriod(1);
 #endif
-    startedAt.start();
-    timerOffset = 0;
+    //startedAt.start();
+    startedAt = de::Time::currentHighPerformanceTime();
+    //timerOffset = 0;
 }
 
 unsigned int Timer_RealMilliseconds(void)
 {
+#if 0
     static dd_bool first = true;
     static unsigned int start;
 #ifdef WIN32
@@ -115,6 +121,10 @@ unsigned int Timer_RealMilliseconds(void)
 
     Sys_Unlock(timerMutex);
     return return_time;
+#endif
+
+    de::TimeDelta const delta = de::Time::currentHighPerformanceTime() - startedAt;
+    return (unsigned int) delta.asMilliSeconds();
 }
 
 double Timer_Seconds(void)
@@ -139,7 +149,7 @@ int Timer_Ticks(void)
 
 void Timer_SetTicksPerSecond(float newTics)
 {
-    double  nowTime = Timer_RealMilliseconds() / 1000.0;
+    double nowTime = Timer_RealMilliseconds() / 1000.0;
 
     if (newTics <= 0)
         newTics = TICSPERSEC;
