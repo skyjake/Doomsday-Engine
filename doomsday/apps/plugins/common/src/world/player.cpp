@@ -1867,9 +1867,10 @@ void Player_UpdateStatusCVars(player_t const *player)
     DENG2_ASSERT(player);
 
     QChar const CVAR_DELIM('-');
-    
-    static Path const var_player_health("player-health", CVAR_DELIM);
-    static Path const var_player_armor ("player-armor",  CVAR_DELIM);
+
+    static Path const var_player_health        ("player-health",         CVAR_DELIM);
+    static Path const var_player_armor         ("player-armor",          CVAR_DELIM);
+    static Path const var_player_weapon_current("player-weapon-current", CVAR_DELIM);
 
     Con_SetVariable(var_player_health, player->health, SVF_WRITE_OVERRIDE);
 
@@ -1908,7 +1909,7 @@ void Player_UpdateStatusCVars(player_t const *player)
 #elif __JHERETIC__
         /* KT_YELLOW */      { "player-key-yellow", CVAR_DELIM },
         /* KT_GREEN */       { "player-key-green", CVAR_DELIM },
-        /* KT_BLUE */        { "player-key-blue" CVAR_DELIM },
+        /* KT_BLUE */        { "player-key-blue", CVAR_DELIM },
 #elif __JHEXEN__
         /* KT_KEY1 */        { "player-key-steel", CVAR_DELIM },
         /* KT_KEY2 */        { "player-key-cave", CVAR_DELIM },
@@ -1934,7 +1935,7 @@ void Player_UpdateStatusCVars(player_t const *player)
     }
 
     // Current weapon
-    Con_SetInteger2("player-weapon-current", player->readyWeapon, SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_player_weapon_current, player->readyWeapon, SVF_WRITE_OVERRIDE);
 
     // Owned weapons
     static Path const weaponIds[NUM_WEAPON_TYPES] = {
@@ -1961,7 +1962,7 @@ void Player_UpdateStatusCVars(player_t const *player)
         /* WT_FIRST */   { "player-weapon-first", CVAR_DELIM },
         /* WT_SECOND */  { "player-weapon-second", CVAR_DELIM },
         /* WT_THIRD */   { "player-weapon-third", CVAR_DELIM },
-        /* WT_FOURTH*/   { "player-weapon-fourth" CVAR_DELIM },
+        /* WT_FOURTH*/   { "player-weapon-fourth", CVAR_DELIM },
 #endif
     };
     for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -1973,100 +1974,100 @@ void Player_UpdateStatusCVars(player_t const *player)
     for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
         Path const varPath { String("player-weapon-piece%1").arg(i + 1), CVAR_DELIM };
-        Con_Variable(varPath, (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
+        Con_SetVariable(varPath, (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
     }
     static Path const var_player_weapon_allpieces("player-weapon-allpieces", CVAR_DELIM);
-    Con_SetInteger2(var_player_weapon_allpieces, (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
+    Con_SetVariable(var_player_weapon_allpieces, (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
 #endif
 
     // Current ammo amounts.
-    static char const *ammoIds[NUM_AMMO_TYPES] = {
+    static Path const ammoIds[NUM_AMMO_TYPES] = {
 #if __JDOOM__ || __JDOOM64__
-        /* AT_CLIP */      "bullets",
-        /* AT_SHELL */     "shells",
-        /* AT_CELL */      "cells",
-        /* AT_MISSILE */   "missiles"
+        /* AT_CLIP */      { "player-ammo-bullets", CVAR_DELIM },
+        /* AT_SHELL */     { "player-ammo-shells", CVAR_DELIM },
+        /* AT_CELL */      { "player-ammo-cells", CVAR_DELIM },
+        /* AT_MISSILE */   { "player-ammo-missiles", CVAR_DELIM },
 #elif __JHERETIC__
-        /* AT_CRYSTAL */   "goldwand",
-        /* AT_ARROW */     "crossbow",
-        /* AT_ORB */       "dragonclaw",
-        /* AT_RUNE */      "hellstaff",
-        /* AT_FIREORB */   "phoenixrod",
-        /* AT_MSPHERE */   "mace"
+        /* AT_CRYSTAL */   { "player-ammo-goldwand", CVAR_DELIM },
+        /* AT_ARROW */     { "player-ammo-crossbow", CVAR_DELIM },
+        /* AT_ORB */       { "player-ammo-dragonclaw", CVAR_DELIM },
+        /* AT_RUNE */      { "player-ammo-hellstaff", CVAR_DELIM },
+        /* AT_FIREORB */   { "player-ammo-phoenixrod", CVAR_DELIM },
+        /* AT_MSPHERE */   { "player-ammo-mace", CVAR_DELIM },
 #elif __JHEXEN__
-        /* AT_BLUEMANA */  "bluemana",
-        /* AT_GREENMANA */ "greenmana"
+        /* AT_BLUEMANA */  { "player-ammo-bluemana", CVAR_DELIM },
+        /* AT_GREENMANA */ { "player-ammo-greenmana", CVAR_DELIM },
 #endif
     };
     for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        Block cvarName = String("player-ammo-%1").arg(ammoIds[i]).toUtf8();
-        Con_SetInteger2(cvarName.constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
+        //Block cvarName = String("player-ammo-%1").arg(ammoIds[i]).toUtf8();
+        Con_SetVariable(ammoIds[i], player->ammo[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     // Inventory items.
-    static char const *invItemIds[NUM_INVENTORYITEM_TYPES] = {
+    static Path const invItemIds[NUM_INVENTORYITEM_TYPES] = {
 #  if __JDOOM64__
-        /* IIT_DEMONKEY1 */         "bluedemonkey",
-        /* IIT_DEMONKEY2 */         "yellowdemonkey",
-        /* IIT_DEMONKEY3 */         "reddemonkey"
+        /* IIT_DEMONKEY1 */         { "player-artifact-bluedemonkey", CVAR_DELIM },
+        /* IIT_DEMONKEY2 */         { "player-artifact-yellowdemonkey", CVAR_DELIM },
+        /* IIT_DEMONKEY3 */         { "player-artifact-reddemonkey", CVAR_DELIM },
 #  elif __JHERETIC__
-        /* IIT_INVULNERABILITY */   "ring",
-        /* IIT_INVISIBILITY */      "shadowsphere",
-        /* IIT_HEALTH */            "crystalvial",
-        /* IIT_SUPERHEALTH */       "mysticurn",
-        /* IIT_TOMBOFPOWER */       "tomeofpower",
-        /* IIT_TORCH */             "torch",
-        /* IIT_FIREBOMB */          "firebomb",
-        /* IIT_EGG */               "egg",
-        /* IIT_FLY */               "wings",
-        /* IIT_TELEPORT */          "chaosdevice"
+        /* IIT_INVULNERABILITY */   { "player-artifact-ring", CVAR_DELIM },
+        /* IIT_INVISIBILITY */      { "player-artifact-shadowsphere", CVAR_DELIM },
+        /* IIT_HEALTH */            { "player-artifact-crystalvial", CVAR_DELIM },
+        /* IIT_SUPERHEALTH */       { "player-artifact-mysticurn", CVAR_DELIM },
+        /* IIT_TOMBOFPOWER */       { "player-artifact-tomeofpower", CVAR_DELIM },
+        /* IIT_TORCH */             { "player-artifact-torch", CVAR_DELIM },
+        /* IIT_FIREBOMB */          { "player-artifact-firebomb", CVAR_DELIM },
+        /* IIT_EGG */               { "player-artifact-egg", CVAR_DELIM },
+        /* IIT_FLY */               { "player-artifact-wings", CVAR_DELIM },
+        /* IIT_TELEPORT */          { "player-artifact-chaosdevice", CVAR_DELIM },
 #  elif __JHEXEN__
-        /* IIT_INVULNERABILITY */   "defender",
-        /* IIT_HEALTH */            "quartzflask",
-        /* IIT_SUPERHEALTH */       "mysticurn",
-        /* IIT_HEALINGRADIUS */     "mysticambit",
-        /* IIT_SUMMON */            "darkservant",
-        /* IIT_TORCH */             "torch",
-        /* IIT_EGG */               "porkalator",
-        /* IIT_FLY */               "wings",
-        /* IIT_BLASTRADIUS */       "repulsion",
-        /* IIT_POISONBAG */         "flechette",
-        /* IIT_TELEPORTOTHER */     "banishment",
-        /* IIT_SPEED */             "speed",
-        /* IIT_BOOSTMANA */         "might",
-        /* IIT_BOOSTARMOR */        "bracers",
-        /* IIT_TELEPORT */          "chaosdevice",
-        /* IIT_PUZZSKULL */         "skull",
-        /* IIT_PUZZGEMBIG */        "heart",
-        /* IIT_PUZZGEMRED */        "ruby",
-        /* IIT_PUZZGEMGREEN1 */     "emerald1",
-        /* IIT_PUZZGEMGREEN2 */     "emerald2",
-        /* IIT_PUZZGEMBLUE1 */      "sapphire1",
-        /* IIT_PUZZGEMBLUE2 */      "sapphire2",
-        /* IIT_PUZZBOOK1 */         "daemoncodex",
-        /* IIT_PUZZBOOK2 */         "liberoscura",
-        /* IIT_PUZZSKULL2 */        "flamemask",
-        /* IIT_PUZZFWEAPON */       "glaiveseal",
-        /* IIT_PUZZCWEAPON */       "holyrelic",
-        /* IIT_PUZZMWEAPON */       "sigilmagus",
-        /* IIT_PUZZGEAR1 */         "gear1",
-        /* IIT_PUZZGEAR2 */         "gear2",
-        /* IIT_PUZZGEAR3 */         "gear3",
-        /* IIT_PUZZGEAR4 */         "gear4"
+        /* IIT_INVULNERABILITY */   { "player-artifact-defender", CVAR_DELIM },
+        /* IIT_HEALTH */            { "player-artifact-quartzflask", CVAR_DELIM },
+        /* IIT_SUPERHEALTH */       { "player-artifact-mysticurn", CVAR_DELIM },
+        /* IIT_HEALINGRADIUS */     { "player-artifact-mysticambit", CVAR_DELIM },
+        /* IIT_SUMMON */            { "player-artifact-darkservant", CVAR_DELIM },
+        /* IIT_TORCH */             { "player-artifact-torch", CVAR_DELIM },
+        /* IIT_EGG */               { "player-artifact-porkalator", CVAR_DELIM },
+        /* IIT_FLY */               { "player-artifact-wings", CVAR_DELIM },
+        /* IIT_BLASTRADIUS */       { "player-artifact-repulsion", CVAR_DELIM },
+        /* IIT_POISONBAG */         { "player-artifact-flechette", CVAR_DELIM },
+        /* IIT_TELEPORTOTHER */     { "player-artifact-banishment", CVAR_DELIM },
+        /* IIT_SPEED */             { "player-artifact-speed", CVAR_DELIM },
+        /* IIT_BOOSTMANA */         { "player-artifact-might", CVAR_DELIM },
+        /* IIT_BOOSTARMOR */        { "player-artifact-bracers", CVAR_DELIM },
+        /* IIT_TELEPORT */          { "player-artifact-chaosdevice", CVAR_DELIM },
+        /* IIT_PUZZSKULL */         { "player-artifact-skull", CVAR_DELIM },
+        /* IIT_PUZZGEMBIG */        { "player-artifact-heart", CVAR_DELIM },
+        /* IIT_PUZZGEMRED */        { "player-artifact-ruby", CVAR_DELIM },
+        /* IIT_PUZZGEMGREEN1 */     { "player-artifact-emerald1", CVAR_DELIM },
+        /* IIT_PUZZGEMGREEN2 */     { "player-artifact-emerald2", CVAR_DELIM },
+        /* IIT_PUZZGEMBLUE1 */      { "player-artifact-sapphire1", CVAR_DELIM },
+        /* IIT_PUZZGEMBLUE2 */      { "player-artifact-sapphire2", CVAR_DELIM },
+        /* IIT_PUZZBOOK1 */         { "player-artifact-daemoncodex", CVAR_DELIM },
+        /* IIT_PUZZBOOK2 */         { "player-artifact-liberoscura", CVAR_DELIM },
+        /* IIT_PUZZSKULL2 */        { "player-artifact-flamemask", CVAR_DELIM },
+        /* IIT_PUZZFWEAPON */       { "player-artifact-glaiveseal", CVAR_DELIM },
+        /* IIT_PUZZCWEAPON */       { "player-artifact-holyrelic", CVAR_DELIM },
+        /* IIT_PUZZMWEAPON */       { "player-artifact-sigilmagus", CVAR_DELIM },
+        /* IIT_PUZZGEAR1 */         { "player-artifact-gear1", CVAR_DELIM },
+        /* IIT_PUZZGEAR2 */         { "player-artifact-gear2", CVAR_DELIM },
+        /* IIT_PUZZGEAR3 */         { "player-artifact-gear3", CVAR_DELIM },
+        /* IIT_PUZZGEAR4 */         { "player-artifact-gear4", CVAR_DELIM },
 #  endif
     };
     int const plrNum = player - players;
     for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        String cvarName = String("player-artifact-%1").arg(invItemIds[i - 1]);
+        //String cvarName = String("player-artifact-%1").arg(invItemIds[i - 1]);
         int numItems = 0;
         if(player->plr->inGame && G_GameState() == GS_MAP)
         {
             numItems = P_InventoryCount(plrNum, inventoryitemtype_t(i));
         }
-        Con_SetInteger2(cvarName.toUtf8().constData(), numItems, SVF_WRITE_OVERRIDE);
+        Con_SetVariable(invItemIds[i - 1], numItems, SVF_WRITE_OVERRIDE);
     }
 #endif
 }

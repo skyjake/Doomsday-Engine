@@ -543,7 +543,7 @@ void Con_AddVariableList(cvartemplate_t const *tplList)
 
 cvar_t *Con_FindVariable(Path const &path)
 {
-    if (CVarDirectory::Node const *node = 
+    if (CVarDirectory::Node const *node =
             cvarDirectory->tryFind(path, PathTree::NoBranch | PathTree::MatchFull))
     {
         return reinterpret_cast<cvar_t *>(node->userPointer());
@@ -616,11 +616,15 @@ void Con_AddKnownWordsForVariables()
                             addVariableToKnownWords);
 }
 
-void Con_SetVariable(Path const &varPath, int value, int svFlags = 0)
+void Con_SetVariable(Path const &varPath, int value, int svFlags)
 {
     if (cvar_t *var = Con_FindVariable(varPath))
     {
         CVar_SetInteger2(var, value, svFlags);
+    }
+    else
+    {
+        DENG2_ASSERT(!"Con_SetVariable: Invalid console variable path");
     }
 }
 
