@@ -517,8 +517,8 @@ struct FlagOpArg {
 };
 
 template <typename FlagsType, typename FlagsCompatibleType>
-void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOp operation) {
-    switch (operation) {
+void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOpArg operation) {
+    switch (operation.op) {
     case SetFlags:     flags |=  newFlags; break;
     case UnsetFlags:   flags &= ~newFlags; break;
     case ReplaceFlags: flags  =  newFlags; break;
