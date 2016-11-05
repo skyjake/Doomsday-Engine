@@ -30,6 +30,8 @@
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
 
+class Surface;
+
 /**
  * World surface decoration.
  * @ingroup render
