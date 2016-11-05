@@ -68,8 +68,8 @@ public:
      * is assigned to the manifest (ownership is assumed).
      */
     Texture *derive();
-    
-    void setScheme(TextureScheme &ownerScheme);    
+
+    void setScheme(TextureScheme &ownerScheme);
 
     /**
      * Returns the owning scheme of the manifest.
@@ -213,9 +213,7 @@ public:
      *
      * @see hasTexture()
      */
-    inline Texture *texturePtr() const {
-        return hasTexture()? &texture() : 0;
-    }
+    Texture *texturePtr() const;
 
     /**
      * Change the logical Texture associated with the manifest.

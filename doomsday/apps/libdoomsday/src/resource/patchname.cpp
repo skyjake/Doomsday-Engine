@@ -34,7 +34,7 @@ PatchName::PatchName(String percentEncodedName, lumpnum_t lumpNum)
     , _lumpNum(lumpNum)
 {}
 
-lumpnum_t PatchName::lumpNum()
+lumpnum_t PatchName::lumpNum() const
 {
     // Have we already searched for this lump?
     if (_lumpNum == -2)

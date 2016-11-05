@@ -46,14 +46,14 @@ public:
 
     /// Returns the lump number of the associated patch.
     /// @pre The global patchNames data is available.
-    lumpnum_t lumpNum();
+    lumpnum_t lumpNum() const;
 
     /// Implements IReadable.
     void operator << (de::Reader &from);
 
 private:
     de::String _name;
-    lumpnum_t _lumpNum;
+    mutable lumpnum_t _lumpNum;
 };
 
 } // namespace res

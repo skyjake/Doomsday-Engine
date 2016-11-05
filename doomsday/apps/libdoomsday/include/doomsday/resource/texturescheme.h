@@ -106,10 +106,10 @@ public:
                       int uniqueId,
                       de::Uri const *resourceUri);
 
-    /**
+    /*
      * Returns @c true if a manifest exists on the given @a path.
      */
-    bool has(de::Path const &path) const;
+    //bool has(de::Path const &path) const;
 
     /**
      * Lookup a Manifest in the scheme with a matching @a path.
@@ -117,17 +117,23 @@ public:
     Manifest       &find(de::Path const &path);
     Manifest const &find(de::Path const &path) const;
 
+    Manifest *tryFind(de::Path const &path) const;
+
     /**
      * Lookup a Manifest in the scheme with an associated resource URI matching @a uri.
      */
     Manifest       &findByResourceUri(de::Uri const &uri);
     Manifest const &findByResourceUri(de::Uri const &uri) const;
 
+    Manifest *tryFindByResourceUri(de::Uri const &uri) const;
+
     /**
      * Lookup a Manifest in the scheme with an associated identifier matching @a uniqueId.
      */
     Manifest       &findByUniqueId(int uniqueId);
     Manifest const &findByUniqueId(int uniqueId) const;
+
+    Manifest *tryFindByUniqueId(int uniqueId) const;
 
     /**
      * Provides access to the manifest index for efficient traversal.

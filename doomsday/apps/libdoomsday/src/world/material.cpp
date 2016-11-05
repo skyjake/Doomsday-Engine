@@ -36,27 +36,6 @@ using namespace de;
 
 namespace world {
 
-namespace internal
-{
-    enum MaterialFlag
-    {
-        //Unused1      = MATF_UNUSED1,
-        DontDraw     = MATF_NO_DRAW,  ///< Map surfaces using the material should never be drawn.
-        SkyMasked    = MATF_SKYMASK,  ///< Apply sky masking for map surfaces using the material.
-
-        Valid        = 0x8,           ///< Marked as @em valid.
-        DefaultFlags = Valid
-    };
-
-    Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
-}
-
-int Material::Layer::stageCount() const
-{
-    return _stages.count();
-}
-
 Material::Layer::~Layer()
 {
     qDeleteAll(_stages);
@@ -102,16 +81,13 @@ DENG2_PIMPL(Material)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
-    internal::MaterialFlags flags = internal::DefaultFlags;
-
-    /// Layers (owned), from bottom-most to top-most draw order.
-    QList<Layer *> layers;
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-        self.clearAllLayers();
+        qDeleteAll(self._layers);
+        //self.clearAllLayers();
     }
 
     inline bool haveValidDimensions() const {
@@ -120,7 +96,7 @@ DENG2_PIMPL(Material)
 
     TextureMaterialLayer *firstTextureLayer() const
     {
-        for (Layer *layer : layers)
+        for (Layer *layer : self._layers)
         {
             if (layer->is<DetailTextureMaterialLayer>()) continue;
             if (layer->is<ShineTextureMaterialLayer>())  continue;
@@ -251,49 +227,32 @@ void Material::setWidth(int newWidth)
     setDimensions(Vector2ui(newWidth, height()));
 }
 
-bool Material::isDrawable() const
-{
-    return d->flags.testFlag(internal::DontDraw) == false;
-}
-
-bool Material::isSkyMasked() const
-{
-    return d->flags.testFlag(internal::SkyMasked);
-}
-
-bool Material::isValid() const
-{
-    return d->flags.testFlag(internal::Valid);
-}
-
 void Material::markDontDraw(bool yes)
 {
-    if (yes) d->flags |=  internal::DontDraw;
-    else     d->flags &= ~internal::DontDraw;
+    applyFlagOperation(_flags, DontDraw, yes);
 }
 
 void Material::markSkyMasked(bool yes)
 {
-    if (yes) d->flags |=  internal::SkyMasked;
-    else     d->flags &= ~internal::SkyMasked;
+    applyFlagOperation(_flags, SkyMasked, yes);
 }
 
 void Material::markValid(bool yes)
 {
-    if (yes) d->flags |=  internal::Valid;
-    else     d->flags &= ~internal::Valid;
+    applyFlagOperation(_flags, Valid, yes);
 }
 
 void Material::clearAllLayers()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    qDeleteAll(d->layers); d->layers.clear();
+    qDeleteAll(_layers);
+    _layers.clear();
 }
 
 bool Material::hasAnimatedTextureLayers() const
 {
-    for (Layer const *layer : d->layers)
+    for (Layer const *layer : _layers)
     {
         if (   !layer->is<DetailTextureMaterialLayer>()
             && !layer->is<ShineTextureMaterialLayer>())
@@ -305,21 +264,16 @@ bool Material::hasAnimatedTextureLayers() const
     return false;
 }
 
-int Material::layerCount() const
-{
-    return d->layers.count();
-}
-
 void Material::addLayerAt(Layer *layer, int position)
 {
     if (!layer) return;
-    if (d->layers.contains(layer)) return;
+    if (_layers.contains(layer)) return;
 
     position = de::clamp(0, position, layerCount());
 
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    d->layers.insert(position, layer);
+    _layers.insert(position, layer);
 
     if (!d->haveValidDimensions())
     {
@@ -331,18 +285,11 @@ void Material::addLayerAt(Layer *layer, int position)
     }
 }
 
-Material::Layer &Material::layer(int index) const
+/*Material::Layer &Material::layer(int index) const
 {
-    if (index >= 0 && index < layerCount()) return *d->layers[index];
     /// @throw Material::MissingLayerError  Invalid layer reference.
     throw MissingLayerError("Material::layer", "Unknown layer #" + String::number(index));
-}
-
-Material::Layer *Material::layerPtr(int index) const
-{
-    if (index >= 0 && index < layerCount()) return d->layers[index];
-    return nullptr;
-}
+}*/
 
 String Material::describe() const
 {
@@ -357,7 +304,7 @@ String Material::description() const
                + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
 
     // Add the layer config:
-    for (Layer const *layer : d->layers)
+    for (Layer const *layer : _layers)
     {
         str += "\n" + layer->description();
     }
@@ -370,7 +317,7 @@ int Material::property(DmuArgs &args) const
     switch (args.prop)
     {
     case DMU_FLAGS: {
-        short f = d->flags;
+        short f = _flags;
         args.setValue(DMT_MATERIAL_FLAGS, &f, 0);
         break; }
 

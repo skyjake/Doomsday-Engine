@@ -628,6 +628,15 @@ void Con_SetVariable(Path const &varPath, int value, int svFlags)
     }
 }
 
+int Con_GetVariableInteger(Path const &varPath)
+{
+    if (cvar_t *var = Con_FindVariable(varPath))
+    {
+        return CVar_Integer(var);
+    }
+    return 0;
+}
+
 static Value *Function_Console_Get(Context &, Function::ArgumentValues const &args)
 {
     String const name = args.at(0)->asText();

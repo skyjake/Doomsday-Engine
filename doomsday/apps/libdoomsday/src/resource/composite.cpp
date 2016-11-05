@@ -169,7 +169,7 @@ void Composite::setOrigIndex(int newIndex)
 }
 
 Composite *Composite::constructFrom(de::Reader &reader,
-                                    QList<PatchName> patchNames,
+                                    QVector<PatchName> const &patchNames,
                                     ArchiveFormat format)
 {
     Composite *pctex = new Composite;

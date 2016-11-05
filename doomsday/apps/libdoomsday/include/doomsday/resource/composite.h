@@ -116,7 +116,7 @@ public:
      * @return  The deserialized composite texture. Caller gets ownership.
      */
     static Composite *constructFrom(de::Reader &reader,
-                                    QList<PatchName> patchNames,
+                                    QVector<PatchName> const &patchNames,
                                     ArchiveFormat format = DoomFormat);
 
     /**

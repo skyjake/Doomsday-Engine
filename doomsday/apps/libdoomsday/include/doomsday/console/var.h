@@ -196,6 +196,7 @@ LIBDOOMSDAY_PUBLIC void CVar_SetFloat(cvar_t* var, float value);
 LIBDOOMSDAY_PUBLIC void CVar_SetFloat2(cvar_t* var, float value, int svFlags);
 
 LIBDOOMSDAY_PUBLIC void Con_SetVariable(de::Path const &varPath, int value, int svFlags = 0);
+LIBDOOMSDAY_PUBLIC int Con_GetVariableInteger(de::Path const &varPath);
 
 LIBDOOMSDAY_PUBLIC void Con_PrintCVar(cvar_t *cvar, char const *prefix);
 LIBDOOMSDAY_PUBLIC void CVar_PrintReadOnlyWarning(cvar_t const *var);

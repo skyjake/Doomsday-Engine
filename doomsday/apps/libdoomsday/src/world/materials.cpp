@@ -271,7 +271,7 @@ dint Materials::materialCount() const
 
 LoopResult Materials::forAllMaterials(std::function<LoopResult (Material &)> func) const
 {
-    for (Material *mat : d->materials)
+    for (Material *mat : d.getConst()->materials)
     {
         if (auto result = func(*mat))
         {

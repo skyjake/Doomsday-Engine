@@ -26,13 +26,28 @@
 
 #include <de/types.h>
 
+#include <QHash>
+#include <QSet>
+
 namespace res {
+
+struct TextureSchemeHashKey
+{
+    de::String scheme;
+
+    TextureSchemeHashKey(de::String const &s) : scheme(s) {}
+    bool operator == (TextureSchemeHashKey const &other) const {
+        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
+    }
+};
+
+LIBDOOMSDAY_PUBLIC uint qHash(TextureSchemeHashKey const &key);
 
 class LIBDOOMSDAY_PUBLIC Textures
 {
 public:
-    typedef QMap<de::String, TextureScheme *> TextureSchemes;
-    typedef QList<Texture *> AllTextures;
+    typedef QHash<TextureSchemeHashKey, TextureScheme *> TextureSchemes;
+    typedef QSet<Texture *> AllTextures;
 
     static Textures &get();
 
@@ -48,7 +63,8 @@ public:
 
     void initTextures();
 
-    /**
+#if 0
+    /*
      * Determines if a texture exists for @a path.
      *
      * @return @c true, if a texture exists; otherwise @a false.
@@ -56,9 +72,12 @@ public:
      * @see hasTextureManifest(), TextureManifest::hasTexture()
      */
     inline bool hasTexture(de::Uri const &path) const {
-        if (hasTextureManifest(path)) return textureManifest(path).hasTexture();
+        if (auto const *mft = textureManifestPtr(path)) {
+            return mft->hasTexture();
+        }
         return false;
     }
+#endif
 
     /**
      * Lookup a texture resource for the specified @a path.
@@ -73,13 +92,19 @@ public:
 
     /**
      * Returns a pointer to the identified Texture.
-     *
-     * @see hasTextureManifest(), TextureManifest::texturePtr()
+     * @param path  Texture path.
      */
-    inline Texture *texturePtr(de::Uri const &path) {
-        if (hasTextureManifest(path)) return textureManifest(path).texturePtr();
+    inline Texture *texturePtr(de::Uri const &path) const {
+        if (auto const *mft = textureManifestPtr(path)) {
+            return mft->texturePtr();
+        }
         return nullptr;
     }
+
+    /*inline Texture *texturePtr(de::Uri const &path) {
+        if (hasTextureManifest(path)) return textureManifest(path).texturePtr();
+        return nullptr;
+    }*/
 
     /**
      * Convenient method of searching the texture collection for a texture with
@@ -90,14 +115,16 @@ public:
      *
      * @return  The found texture; otherwise @c nullptr.
      */
-    Texture *texture(de::String schemeName, de::Uri const &resourceUri);
+    Texture *tryFindTextureByResourceUri(de::String const &schemeName, de::Uri const &resourceUri);
 
-    /**
+    /*
      * Determines if a texture manifest exists for a declared texture on @a path.
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    bool hasTextureManifest(de::Uri const &path) const;
+    /*inline bool hasTextureManifest(de::Uri const &path) const {
+        return tryFindTextureManifest(path) != nullptr;
+    }*/
 
     /**
      * Find the manifest for a declared texture.
@@ -107,6 +134,8 @@ public:
      */
     TextureManifest &textureManifest(de::Uri const &search) const;
 
+    TextureManifest *textureManifestPtr(de::Uri const &search) const;
+
     /**
      * Lookup a subspace scheme by symbolic name.
      *
@@ -115,12 +144,14 @@ public:
      *
      * @throws UnknownSchemeError If @a name is unknown.
      */
-    TextureScheme &textureScheme(de::String name) const;
+    TextureScheme &textureScheme(de::String const &name) const;
+
+    TextureScheme *textureSchemePtr(de::String const &name) const;
 
     /**
      * Returns @c true iff a Scheme exists with the symbolic @a name.
      */
-    bool isKnownTextureScheme(de::String name) const;
+    bool isKnownTextureScheme(de::String const &name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
@@ -182,8 +213,8 @@ public:
 
     TextureManifest &declareSystemTexture(de::Path const &texturePath, de::Uri const &resourceUri);
 
-    Texture *defineTexture(de::String schemeName,
-                           de::Uri const &resourceUri,
+    Texture *defineTexture(de::String    const &schemeName,
+                           de::Uri       const &resourceUri,
                            de::Vector2ui const &dimensions = de::Vector2ui());
 
     /**
@@ -195,7 +226,7 @@ public:
 
     void deriveAllTexturesInScheme(de::String schemeName);
 
-    patchid_t declarePatch(de::String encodedName);
+    patchid_t declarePatch(de::String const &encodedName);
 
 private:
     DENG2_PRIVATE(d)

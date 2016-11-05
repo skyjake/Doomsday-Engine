@@ -256,20 +256,23 @@ TextureManifest &TextureScheme::declare(Path const &path,
     return *newManifest;
 }
 
+#if 0
 bool TextureScheme::has(Path const &path) const
 {
     return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
+#endif
 
 TextureManifest const &TextureScheme::find(Path const &path) const
 {
-    if (has(path))
+    if (auto *mft = tryFind(path))
     {
-        return d->index.find(path, Index::NoBranch | Index::MatchFull);
+        return *mft;
     }
     /// @throw NotFoundError Failed to locate a matching manifest.
     throw NotFoundError("TextureScheme::find", "Failed to locate a manifest matching \"" +
                         path.asText() + "\"");
+
 }
 
 TextureManifest &TextureScheme::find(Path const &path)
@@ -278,7 +281,23 @@ TextureManifest &TextureScheme::find(Path const &path)
     return const_cast<TextureManifest &>(found);
 }
 
+TextureManifest *TextureScheme::tryFind(Path const &path) const
+{
+    return d->index.tryFind(path, Index::NoBranch | Index::MatchFull);
+}
+
 TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) const
+{
+    if (auto *mft = tryFindByResourceUri(uri))
+    {
+        return *mft;
+    }
+    /// @throw NotFoundError  No manifest was found with a matching resource URI.
+    throw NotFoundError("TextureScheme::findByResourceUri",
+                        "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
+}
+
+TextureManifest *TextureScheme::tryFindByResourceUri(de::Uri const &uri) const
 {
     if (!uri.isEmpty())
     {
@@ -290,14 +309,12 @@ TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) cons
             {
                 if (manifest.resourceUri() == uri)
                 {
-                    return manifest;
+                    return &manifest;
                 }
             }
         }
     }
-    /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("TextureScheme::findByResourceUri",
-                        "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
+    return nullptr;
 }
 
 TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)
@@ -308,12 +325,9 @@ TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)
 
 TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
 {
-    d->rebuildUniqueIdLut();
-
-    if (d->uniqueIdInLutRange(uniqueId))
+    if (auto *mft = tryFindByUniqueId(uniqueId))
     {
-        TextureManifest *manifest = d->uniqueIdLut[uniqueId - d->uniqueIdBase];
-        if (manifest) return *manifest;
+        return *mft;
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
     throw NotFoundError("TextureScheme::findByUniqueId",
@@ -324,6 +338,18 @@ TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
 {
     TextureManifest const &found = const_cast<TextureScheme const *>(this)->findByUniqueId(uniqueId);
     return const_cast<TextureManifest &>(found);
+}
+
+TextureManifest *TextureScheme::tryFindByUniqueId(int uniqueId) const
+{
+    d->rebuildUniqueIdLut();
+
+    if (d->uniqueIdInLutRange(uniqueId))
+    {
+        TextureManifest *manifest = d->uniqueIdLut[uniqueId - d->uniqueIdBase];
+        if (manifest) return manifest;
+    }
+    return nullptr;
 }
 
 TextureScheme::Index const &TextureScheme::index() const

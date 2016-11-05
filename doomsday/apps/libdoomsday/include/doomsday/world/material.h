@@ -85,12 +85,16 @@ public:
     /**
      * Returns @c true if the material is marked @em drawable.
      */
-    bool isDrawable() const;
+    inline bool isDrawable() const {
+        return (_flags & DontDraw) == 0;
+    }
 
     /**
      * Returns @c true if the material is marked @em sky-masked.
      */
-    bool isSkyMasked() const;
+    inline bool isSkyMasked() const {
+        return (_flags & SkyMasked) != 0;
+    }
 
     /**
      * Returns @c true if the material is marked @em valid.
@@ -103,7 +107,9 @@ public:
      * invalidated (disabled) and will be ignored until they can actually be destroyed
      * (e.g., the current game is reset or changed).
      */
-    bool isValid() const;
+    inline bool isValid() const {
+        return (_flags & Valid) != 0;
+    }
 
     /**
      * Change the do-not-draw property of the material according to @a yes.
@@ -133,7 +139,7 @@ public:
 //- Layers ------------------------------------------------------------------------------
 
     /// The referenced layer does not exist. @ingroup errors
-    DENG2_ERROR(MissingLayerError);
+    //DENG2_ERROR(MissingLayerError);
 
     /**
      * Base class for modelling a logical layer.
@@ -191,7 +197,7 @@ public:
         /**
          * Returns the total number of animation stages for the material layer.
          */
-        int stageCount() const;
+        inline int stageCount() const { return _stages.size(); }
 
         /**
          * Returns @c true if the material layer is animated; otherwise @c false.
@@ -208,14 +214,16 @@ public:
         int nextStageIndex(int index) const;
 
     protected:
-        typedef QList<Stage *> Stages;
+        typedef QVector<Stage *> Stages;
         Stages _stages;
     };
 
     /**
      * Returns the number of material layers.
      */
-    int layerCount() const;
+    inline int layerCount() const {
+        return _layers.count();
+    }
 
     /**
      * Add a new layer at the given layer stack position.
@@ -233,8 +241,15 @@ public:
     /**
      * Lookup a Layer by it's unique @a index.
      */
-    Layer &layer   (int index) const;
-    Layer *layerPtr(int index) const;
+    inline Layer &layer(int index) const {
+        DENG2_ASSERT(index >= 0 && index < layerCount());
+        return *_layers[index];
+    }
+
+    inline Layer *layerPtr(int index) const {
+        if (index >= 0 && index < layerCount()) return _layers[index];
+        return nullptr;
+    }
 
     /**
      * Destroys all the material's layers.
@@ -251,9 +266,27 @@ public:
     /// Register the console commands and variables of this module.
     static void consoleRegister();
 
+    enum Flag
+    {
+        //Unused1      = MATF_UNUSED1,
+        DontDraw     = MATF_NO_DRAW,  ///< Map surfaces using the material should never be drawn.
+        SkyMasked    = MATF_SKYMASK,  ///< Apply sky masking for map surfaces using the material.
+
+        Valid        = 0x8,           ///< Marked as @em valid.
+        DefaultFlags = Valid
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
 private:
+    // Heavily used; visible for inline access:
+    /// Layers (owned), from bottom-most to top-most draw order.
+    QVector<Layer *> _layers;
+    Flags _flags = DefaultFlags;
+
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
 typedef Material::Layer MaterialLayer;
 

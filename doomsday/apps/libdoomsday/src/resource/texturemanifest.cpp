@@ -37,7 +37,7 @@ DENG2_PIMPL(TextureManifest)
     Texture::Flags flags;            ///< Classification flags.
     std::unique_ptr<Texture> texture;///< Associated resource (if any).
     TextureScheme *ownerScheme = nullptr;
-    
+
     Impl(Public *i)
         : Base(i)
         , uniqueId(0)
@@ -92,7 +92,7 @@ void TextureManifest::setScheme(TextureScheme &ownerScheme)
     // that case this manifest will be deleted first anyway.
     d->ownerScheme = &ownerScheme;
 }
-    
+
 TextureScheme &TextureManifest::scheme() const
 {
     return *d->ownerScheme;
@@ -214,6 +214,11 @@ Texture &TextureManifest::texture() const
     }
     /// @throw MissingTextureError There is no texture associated with the manifest.
     throw MissingTextureError("TextureManifest::texture", "No texture is associated");
+}
+
+Texture *TextureManifest::texturePtr() const
+{
+    return d->texture.get();
 }
 
 void TextureManifest::setTexture(Texture *newTexture)
