@@ -392,13 +392,14 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
             return false;
         }
 
-        int found = bindContext->forAllImpulseBindings(localPlayer, [&isys, &impulseId] (Record &rec)
+        int found = bindContext->forAllImpulseBindings(localPlayer, [&isys, &impulseId] (CompiledImpulseBindingRecord &rec)
         {
-            ImpulseBinding bind(rec);
-            // Wrong impulse?
-            if(bind.geti("impulseId") != impulseId) return LoopContinue;
+            auto const &bind = rec.compiled();
 
-            if(InputDevice const *device = isys.devicePtr(bind.geti("deviceId")))
+            // Wrong impulse?
+            if(bind.impulseId != impulseId) return LoopContinue;
+
+            if(InputDevice const *device = isys.devicePtr(bind.deviceId))
             {
                 if(device->isActive())
                 {

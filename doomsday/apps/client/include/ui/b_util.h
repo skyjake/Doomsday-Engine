@@ -56,9 +56,7 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-bool B_CheckCondition(de::Record const *cond, int localNum, BindContext const *context);
-
-bool B_EqualConditions(de::Record const &a, de::Record const &b);
+bool B_CheckCondition(Binding::CompiledConditionRecord const *cond, int localNum, BindContext const *context);
 
 // ---------------------------------------------------------------------------------
 

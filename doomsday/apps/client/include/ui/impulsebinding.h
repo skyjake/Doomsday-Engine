@@ -21,6 +21,7 @@
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
 #include <de/String>
+#include <de/CompiledRecord>
 #include "Binding"
 #include "ddevent.h"
 
@@ -39,6 +40,23 @@ enum ibcontroltype_t
 #define IBDF_INVERSE        0x1
 #define IBDF_TIME_STAGED    0x2
 
+struct CompiledImpulseBinding
+{
+    int id = -1;
+    int deviceId = -1;
+    int controlId = -1;
+    ibcontroltype_t type = IBD_TOGGLE;  ///< Type of event.
+    float angle = 0;
+    int flags = 0;
+    int impulseId = 0;           ///< Identifier of the bound player impulse.
+    int localPlayer = -1;        ///< Local player number.
+
+    CompiledImpulseBinding() {}
+    CompiledImpulseBinding(de::Record const &bind);
+};
+
+typedef de::CompiledRecordT<CompiledImpulseBinding> CompiledImpulseBindingRecord;
+
 /**
  * Utility for handling input-device-control => impulse binding records.
  *
@@ -54,8 +72,12 @@ public:
 
     ImpulseBinding &operator = (de::Record const *d) {
         *static_cast<Binding *>(this) = d;
+        def().resetCompiled();
         return *this;
     }
+
+    CompiledImpulseBindingRecord &def();
+    CompiledImpulseBindingRecord const &def() const;
 
     void resetToDefaults();
 

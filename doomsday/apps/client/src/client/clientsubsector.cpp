@@ -175,13 +175,11 @@ DENG2_PIMPL(ClientSubsector)
 
         DecoratedSurface() {}
 
-        ~DecoratedSurface()
-        {
+        ~DecoratedSurface() {
             qDeleteAll(decorations);
         }
 
-        void markForUpdate(bool yes = true)
-        {
+        void markForUpdate(bool yes = true) {
             if (::ddMapSetup) return;
             needUpdate = yes;
         }

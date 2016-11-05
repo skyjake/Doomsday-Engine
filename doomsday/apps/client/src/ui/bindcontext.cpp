@@ -54,7 +54,7 @@ DENG2_PIMPL(BindContext)
     typedef QList<Record *> CommandBindings;
     CommandBindings commandBinds;
 
-    typedef QList<Record *> ImpulseBindings;
+    typedef QList<CompiledImpulseBindingRecord *> ImpulseBindings;
     ImpulseBindings impulseBinds[DDMAXPLAYERS];  ///< Group bindings for each local player.
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
@@ -123,30 +123,30 @@ DENG2_PIMPL(BindContext)
         }
 
         for (int i = 0; i < DDMAXPLAYERS; ++i)
-        for (Record const *rec : impulseBinds[i])
+        for (auto const *rec : impulseBinds[i])
         {
-            ImpulseBinding bind(*rec);
+            auto const &bind = rec->compiled();
 
             if (matchCmd)
             {
-                if (matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                    matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                    matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                    matchCmd.equalConditions(bind))
+                if (matchCmd.geti(VAR_TYPE)       == int(bind.type) &&
+                    matchCmd.geti(VAR_DEVICE_ID)  == bind.deviceId &&
+                    matchCmd.geti(VAR_CONTROL_ID) == bind.controlId &&
+                    matchCmd.equalConditions(ImpulseBinding(*rec)))
                 {
-                    *impResult = const_cast<Record *>(rec);
+                    *impResult = const_cast<CompiledImpulseBindingRecord *>(rec);
                     return true;
                 }
             }
 
-            if (matchImp && matchImp.geti(VAR_ID) != bind.geti(VAR_ID))
+            if (matchImp && matchImp.geti(VAR_ID) != bind.id)
             {
-                if (matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
-                    matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
-                    matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
-                    matchImp.equalConditions(bind))
+                if (matchImp.geti(VAR_TYPE)       == int(bind.type) &&
+                    matchImp.geti(VAR_DEVICE_ID)  == bind.deviceId &&
+                    matchImp.geti(VAR_CONTROL_ID) == bind.controlId &&
+                    matchImp.equalConditions(ImpulseBinding(*rec)))
                 {
-                    *impResult = const_cast<Record *>(rec);
+                    *impResult = const_cast<CompiledImpulseBindingRecord *>(rec);
                     return true;
                 }
             }
@@ -239,7 +239,7 @@ void BindContext::acquire(int deviceId, bool yes)
     int const countBefore = d->acquireDevices.count();
 
     if (yes) d->acquireDevices.insert(deviceId);
-    else    d->acquireDevices.remove(deviceId);
+    else     d->acquireDevices.remove(deviceId);
 
     if (countBefore != d->acquireDevices.count())
     {
@@ -305,11 +305,11 @@ void BindContext::clearBindingsForDevice(int deviceId)
         }
         return LoopContinue;
     });
-    forAllImpulseBindings([&ids, &deviceId] (Record const &bind)
+    forAllImpulseBindings([&ids, &deviceId] (CompiledImpulseBindingRecord const &bind)
     {
-        if (bind.geti(VAR_DEVICE_ID) == deviceId)
+        if (bind.compiled().deviceId == deviceId)
         {
-            ids.insert(bind.geti(VAR_ID));
+            ids.insert(deviceId);
         }
         return LoopContinue;
     });
@@ -357,15 +357,16 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
     LOG_AS("BindContext");
     try
     {
-        std::unique_ptr<Record> newBind(new Record);
+        std::unique_ptr<CompiledImpulseBindingRecord> newBind(new CompiledImpulseBindingRecord);
         ImpulseBinding bind(*newBind.get());
 
         bind.configure(ctrlDesc, impulse.id, localPlayer); // Assign a new unique identifier.
         d->impulseBinds[localPlayer].append(newBind.release());
 
-        LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
-                          " (id %i)")
-                << impulse.name << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti(VAR_ID);
+        LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in "
+                          _E(b) "'%s'" _E(.) " (id %i)")
+                << impulse.name << (localPlayer + 1) << bind.composeDescriptor()
+                << d->name << bind.def().compiled().id;
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
@@ -402,14 +403,14 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
 Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
-    for (Record const *rec : d->impulseBinds[i])
+    for (auto const *rec : d->impulseBinds[i])
     {
-        ImpulseBinding bind(*rec);
-        if (bind.geti(VAR_TYPE)       == bindType &&
-            bind.geti(VAR_DEVICE_ID)  == deviceId &&
-            bind.geti(VAR_CONTROL_ID) == controlId)
+        auto const &bind = rec->compiled();
+        if (bind.type      == bindType &&
+            bind.deviceId  == deviceId &&
+            bind.controlId == controlId)
         {
-            return const_cast<Record *>(rec);
+            return const_cast<CompiledImpulseBindingRecord *>(rec);
         }
     }
     return nullptr;
@@ -433,8 +434,8 @@ bool BindContext::deleteBinding(int id)
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     for (int k = 0; k < d->impulseBinds[i].count(); ++k)
     {
-        Record *rec = d->impulseBinds[i].at(k);
-        if (rec->geti(VAR_ID) == id)
+        auto *rec = d->impulseBinds[i].at(k);
+        if (rec->compiled().id == id)
         {
             d->impulseBinds[i].removeAt(k);
             delete rec;
@@ -498,13 +499,13 @@ LoopResult BindContext::forAllCommandBindings(
 }
 
 LoopResult BindContext::forAllImpulseBindings(int localPlayer,
-    std::function<de::LoopResult (Record &)> func) const
+    std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if ((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
-            for (Record *rec : d->impulseBinds[i])
+            for (auto *rec : d->impulseBinds[i])
             {
                 if (auto result = func(*rec)) return result;
             }
@@ -515,7 +516,7 @@ LoopResult BindContext::forAllImpulseBindings(int localPlayer,
 
 int BindContext::commandBindingCount() const
 {
-    return d->commandBinds.count();
+    return d.getConst()->commandBinds.count();
 }
 
 int BindContext::impulseBindingCount(int localPlayer) const
@@ -525,7 +526,7 @@ int BindContext::impulseBindingCount(int localPlayer) const
     {
         if ((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
-            count += d->impulseBinds[i].count();
+            count += d.getConst()->impulseBinds[i].count();
         }
     }
     return count;

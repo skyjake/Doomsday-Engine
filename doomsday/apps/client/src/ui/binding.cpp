@@ -20,11 +20,12 @@
 #include "ui/binding.h"
 
 #include <de/RecordValue>
-#include "ui/b_util.h" // B_EqualConditions
 
 using namespace de;
 
 static int idCounter = 0;
+
+static String const VAR_CONDITION("condition");
 
 Record &Binding::def()
 {
@@ -44,13 +45,12 @@ Binding::operator bool() const
 void Binding::resetToDefaults()
 {
     def().addNumber("id", 0);  ///< Unique identifier.
-    def().addArray("condition", new ArrayValue);
+    def().addArray(VAR_CONDITION, new ArrayValue);
 }
 
-Record &Binding::addCondition()
+Binding::CompiledConditionRecord &Binding::addCondition()
 {
-    Record *cond = new Record;
-
+    auto *cond = new CompiledConditionRecord;
     cond->addNumber("type", Invalid);
     cond->addNumber("test", None);
     cond->addNumber("device", -1);
@@ -58,15 +58,16 @@ Record &Binding::addCondition()
     cond->addNumber("pos", 0);
     cond->addBoolean("negate", false);
     cond->addBoolean("multiplayer", false);
+    def()[VAR_CONDITION].array().add(new RecordValue(cond, RecordValue::OwnsRecord));
 
-    def()["condition"].array().add(new RecordValue(cond, RecordValue::OwnsRecord));
+    cond->resetCompiled();
 
     return *cond;
 }
 
 int Binding::conditionCount() const
 {
-    return int(geta("condition").size());
+    return int(geta(VAR_CONDITION).size());
 }
 
 bool Binding::hasCondition(int index) const
@@ -74,35 +75,35 @@ bool Binding::hasCondition(int index) const
     return index >= 0 && index < conditionCount();
 }
 
-Record &Binding::condition(int index)
+Binding::CompiledConditionRecord &Binding::condition(int index)
 {
-    return *def().geta("condition")[index].as<RecordValue>().record();
+    return *static_cast<CompiledConditionRecord *>(def().geta(VAR_CONDITION)[index].as<RecordValue>().record());
 }
 
-Record const &Binding::condition(int index) const
+Binding::CompiledConditionRecord const &Binding::condition(int index) const
 {
-    return *geta("condition")[index].as<RecordValue>().record();
+    return *static_cast<CompiledConditionRecord const *>(geta(VAR_CONDITION)[index].as<RecordValue>().record());
 }
 
 bool Binding::equalConditions(Binding const &other) const
 {
     // Quick test (assumes there are no duplicated conditions).
-    if (def()["condition"].array().elements().count() != other.geta("condition").elements().count())
+    if (def()[VAR_CONDITION].array().elements().count() != other.geta(VAR_CONDITION).elements().count())
     {
         return false;
     }
 
-    ArrayValue const &conds = def().geta("condition");
+    ArrayValue const &conds = def().geta(VAR_CONDITION);
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        Record const &a = *(*i)->as<RecordValue>().record();
+        auto const &a = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
 
         bool found = false;
-        ArrayValue const &conds2 = other.geta("condition");
+        ArrayValue const &conds2 = other.geta(VAR_CONDITION);
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
         {
-            Record const &b = *(*i)->as<RecordValue>().record();
-            if (B_EqualConditions(a, b))
+            auto const &b = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
+            if (a.compiled() == b.compiled())
             {
                 found = true;
                 break;
@@ -124,4 +125,25 @@ int Binding::newIdentifier() // static
     int id = 0;
     while (!id) { id = ++idCounter; }
     return id;
+}
+
+Binding::CompiledCondition::CompiledCondition(Record const &rec)
+    : type(ConditionType(rec.geti("type")))
+    , test(ControlTest(rec.geti("test")))
+    , device(rec.geti("device"))
+    , id(rec.geti("id"))
+    , pos(rec.getf("pos"))
+    , negate(rec.getb("negate"))
+    , multiplayer(rec.getb("multiplayer"))
+{}
+
+bool Binding::CompiledCondition::operator == (CompiledCondition const &other) const
+{
+    return (type        == other.type &&
+            test        == other.test &&
+            device      == other.device &&
+            id          == other.id &&
+            de::fequal(pos, other.pos) &&
+            negate      == other.negate &&
+            multiplayer == other.multiplayer);
 }

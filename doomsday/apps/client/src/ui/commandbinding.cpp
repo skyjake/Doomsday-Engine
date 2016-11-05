@@ -427,7 +427,8 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     ArrayValue const &conds = def().geta("condition");
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        if (!B_CheckCondition((*i)->as<RecordValue>().record(), 0, &context))
+        if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
+                              ((*i)->as<RecordValue>().record()), 0, &context))
             return nullptr;
     }
 

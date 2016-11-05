@@ -21,7 +21,7 @@
 #define CLIENT_INPUTSYSTEM_BINDING_H
 
 #include <de/Error>
-#include <de/RecordAccessor>
+#include <de/CompiledRecord>
 
 /**
  * Base class for binding record accessors.
@@ -62,6 +62,23 @@ public:
         ButtonStateUp
     };
 
+    struct CompiledCondition
+    {
+        ConditionType type = Invalid;
+        ControlTest test = None;
+        int device = -1;
+        int id = -1;
+        float pos = 0;
+        bool negate = false;
+        bool multiplayer = false;
+
+        CompiledCondition() {}
+        CompiledCondition(de::Record const &rec);
+        bool operator == (CompiledCondition const &other) const;
+    };
+
+    typedef de::CompiledRecordT<CompiledCondition> CompiledConditionRecord;
+
 public:
     Binding()                     : RecordAccessor(0) {}
     Binding(Binding const &other) : RecordAccessor(other) {}
@@ -97,11 +114,11 @@ public:
      */
     virtual de::String composeDescriptor() = 0;
 
-    de::Record &addCondition();
+    CompiledConditionRecord &addCondition();
     int conditionCount() const;
     bool hasCondition(int index) const;
-    de::Record &condition(int index);
-    de::Record const &condition(int index) const;
+    CompiledConditionRecord &condition(int index);
+    CompiledConditionRecord const &condition(int index) const;
 
     /**
      * Compare the binding conditions with @a other and return @c true if equivalent.

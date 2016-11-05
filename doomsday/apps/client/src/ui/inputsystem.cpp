@@ -856,17 +856,18 @@ DENG2_PIMPL(InputSystem)
             });
 
             // Associate all the device bindings.
-            context->forAllImpulseBindings([this, &context] (Record &rec)
+            context->forAllImpulseBindings([this, &context] (CompiledImpulseBindingRecord &rec)
             {
-                ImpulseBinding bind(rec);
-                InputDevice &dev = self.device(bind.geti("deviceId"));
+                //ImpulseBinding bind(rec);
+                auto const &bind = rec.compiled();
+                InputDevice &dev = self.device(bind.deviceId);
 
                 InputControl *ctrl = nullptr;
-                switch (bind.geti("type"))
+                switch (bind.type)
                 {
-                case IBD_AXIS:   ctrl = &dev.axis  (bind.geti("controlId")); break;
-                case IBD_TOGGLE: ctrl = &dev.button(bind.geti("controlId")); break;
-                case IBD_ANGLE:  ctrl = &dev.hat   (bind.geti("controlId")); break;
+                case IBD_AXIS:   ctrl = &dev.axis  (bind.controlId); break;
+                case IBD_TOGGLE: ctrl = &dev.button(bind.controlId); break;
+                case IBD_ANGLE:  ctrl = &dev.hat   (bind.controlId); break;
 
                 default:
                     DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
@@ -1697,7 +1698,7 @@ D_CMD(ListBindings)
             LOG_INPUT_MSG("  " _E(b) "%i impulse bindings:") << impCount;
         }
         for (int pl = 0; pl < DDMAXPLAYERS; ++pl)
-        context.forAllImpulseBindings(pl, [&pl] (Record &rec)
+        context.forAllImpulseBindings(pl, [&pl] (CompiledImpulseBindingRecord &rec)
         {
             ImpulseBinding bind(rec);
             PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
@@ -1850,23 +1851,24 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
     int numFound = 0;
     isys.forAllContexts([&] (BindContext &context)
     {
-        context.forAllImpulseBindings(localPlayer, [&] (Record &rec)
+        context.forAllImpulseBindings(localPlayer, [&] (CompiledImpulseBindingRecord &rec)
         {
-            ImpulseBinding bind(rec);
-            DENG2_ASSERT(bind.geti("localPlayer") == localPlayer);
+            auto const &bind = rec.compiled();
+            DENG2_ASSERT(bind.localPlayer == localPlayer);
 
-            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
+            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.impulseId);
             DENG2_ASSERT(impulse);
 
             if (!impulse->name.compareWithoutCase(impulseName))
             {
                 if (inverse == BFCI_BOTH ||
-                   (inverse == BFCI_ONLY_NON_INVERSE && !(bind.geti("flags") & IBDF_INVERSE)) ||
-                   (inverse == BFCI_ONLY_INVERSE     &&  (bind.geti("flags") & IBDF_INVERSE)))
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(bind.flags & IBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE     &&  (bind.flags & IBDF_INVERSE)))
                 {
                     if (numFound) out += " ";
 
-                    out += String::number(bind.geti("id")) + "@" + context.name() + ":" + bind.composeDescriptor();
+                    out += String::number(bind.id) + "@" + context.name() + ":" +
+                            ImpulseBinding(rec).composeDescriptor();
                     numFound++;
                 }
             }

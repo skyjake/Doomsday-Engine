@@ -233,10 +233,10 @@ static bool writeBindingsState(Path const &filePath)
             });
 
             // Impulses.
-            context.forAllImpulseBindings([&out, &context] (Record &rec)
+            context.forAllImpulseBindings([&out, &context] (CompiledImpulseBindingRecord &rec)
             {
                 ImpulseBinding bind(rec);
-                PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
+                PlayerImpulse const *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);
                 DENG2_ASSERT(impulse);
 
                 out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",

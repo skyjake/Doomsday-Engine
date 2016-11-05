@@ -27,9 +27,32 @@
 
 using namespace de;
 
+CompiledImpulseBinding::CompiledImpulseBinding(Record const &bind)
+    : id            (bind.geti("id"))
+    , deviceId      (bind.geti("deviceId"))
+    , controlId     (bind.geti("controlId"))
+    , type          (ibcontroltype_t(bind.geti("type")))
+    , angle         (bind.getf("angle"))
+    , flags         (bind.geti("flags"))
+    , impulseId     (bind.geti("impulseId"))
+    , localPlayer   (bind.geti("localPlayer"))
+{}
+
+CompiledImpulseBindingRecord &ImpulseBinding::def()
+{
+    return static_cast<CompiledImpulseBindingRecord &>(Binding::def());
+}
+
+CompiledImpulseBindingRecord const &ImpulseBinding::def() const
+{
+    return static_cast<CompiledImpulseBindingRecord const &>(Binding::def());
+}
+
 void ImpulseBinding::resetToDefaults()
 {
     Binding::resetToDefaults();
+
+    def().resetCompiled();
 
     def().addNumber("deviceId", -1);
     def().addNumber("controlId", -1);
@@ -114,7 +137,7 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
         bind.def().set("type", int(EVTYPE_TO_IBDTYPE(type)));
     }
     else if (!Str_CompareIgnoreCase(str, "joy") ||
-            !Str_CompareIgnoreCase(str, "head"))
+             !Str_CompareIgnoreCase(str, "head"))
     {
         bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
 

@@ -161,9 +161,11 @@ public: // Binding management: -------------------------------------------------
      *
      * @param localPlayer  (@c < 0 || >= DDMAXPLAYERS) for all local players.
      */
-    de::LoopResult forAllImpulseBindings(int localPlayer, std::function<de::LoopResult (de::Record &)> func) const;
+    de::LoopResult forAllImpulseBindings(int localPlayer,
+            std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const;
 
-    inline de::LoopResult forAllImpulseBindings(std::function<de::LoopResult (de::Record &)> func) const {
+    inline de::LoopResult forAllImpulseBindings(
+            std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const {
         return forAllImpulseBindings(-1/*all local players*/, func);
     }
 

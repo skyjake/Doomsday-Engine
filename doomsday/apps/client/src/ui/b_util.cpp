@@ -426,39 +426,42 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos)
     return false;
 }
 
-bool B_CheckCondition(Record const *cond, int localNum, BindContext const *context)
+bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int localNum,
+                      BindContext const *context)
 {
-    DENG2_ASSERT(cond);
-    bool const fulfilled = !cond->getb("negate");
+    DENG2_ASSERT(condRec);
 
-    switch (cond->geti("type"))
+    auto const &cond = condRec->compiled();
+    bool const fulfilled = !cond.negate;
+
+    switch (cond.type)
     {
     case Binding::GlobalState:
-        if (cond->getb("multiplayer") && netGame)
+        if (cond.multiplayer && netGame)
             return fulfilled;
         break;
 
     case Binding::AxisState: {
-        AxisInputControl const &axis = InputSystem::get().device(cond->geti("device")).axis(cond->geti("id"));
-        if (B_CheckAxisPosition(Binding::ControlTest(cond->geti("test")), cond->getf("pos"), axis.position()))
+        AxisInputControl const &axis = InputSystem::get().device(cond.device).axis(cond.id);
+        if (B_CheckAxisPosition(cond.test, cond.pos, axis.position()))
         {
             return fulfilled;
         }
         break; }
 
     case Binding::ButtonState: {
-        ButtonInputControl const &button = InputSystem::get().device(cond->geti("device")).button(cond->geti("id"));
+        ButtonInputControl const &button = InputSystem::get().device(cond.device).button(cond.id);
         bool isDown = button.isDown();
-        if (( isDown && cond->geti("test") == Binding::ButtonStateDown) ||
-            (!isDown && cond->geti("test") == Binding::ButtonStateUp))
+        if (( isDown && cond.test == Binding::ButtonStateDown) ||
+            (!isDown && cond.test == Binding::ButtonStateUp))
         {
             return fulfilled;
         }
         break; }
 
     case Binding::HatState: {
-        HatInputControl const &hat = InputSystem::get().device(cond->geti("device")).hat(cond->geti("id"));
-        if (hat.position() == cond->getf("pos"))
+        HatInputControl const &hat = InputSystem::get().device(cond.device).hat(cond.id);
+        if (hat.position() == cond.pos)
         {
             return fulfilled;
         }
@@ -469,30 +472,19 @@ bool B_CheckCondition(Record const *cond, int localNum, BindContext const *conte
         {
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
-            B_EvaluateImpulseBindings(context, localNum, cond->geti("id"), &pos, &relative, false /*no triggered*/);
-            if ((cond->geti("test") == Binding::ButtonStateDown && fabs(pos) > .5) ||
-                (cond->geti("test") == Binding::ButtonStateUp && fabs(pos) < .5))
+            B_EvaluateImpulseBindings(context, localNum, cond.id, &pos, &relative, false /*no triggered*/);
+            if ((cond.test == Binding::ButtonStateDown && fabs(pos) > .5) ||
+                (cond.test == Binding::ButtonStateUp   && fabs(pos) < .5))
             {
                 return fulfilled;
             }
         }
         break;
 
-    default: DENG2_ASSERT(!"B_CheckCondition: Unknown cond->type"); break;
+    default: DENG2_ASSERT(!"B_CheckCondition: Unknown cond.type"); break;
     }
 
     return !fulfilled;
-}
-
-bool B_EqualConditions(Record const &a, Record const &b)
-{
-    return (a.geti("type")        == b.geti("type") &&
-            a.geti("test")        == b.geti("test") &&
-            a.geti("device")      == b.geti("device") &&
-            a.geti("id")          == b.geti("id") &&
-            de::fequal(a.getf("pos"), b.getf("pos")) &&
-            a.getb("negate")      == b.getb("negate") &&
-            a.getb("multiplayer") == b.getb("multiplayer"));
 }
 
 /// @todo: Belongs in BindContext? -ds
@@ -511,18 +503,20 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
     bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
     bool appliedState[NUM_IBD_TYPES]; de::zap(appliedState);
 
-    context->forAllImpulseBindings(localNum, [&] (Record &rec)
+    context->forAllImpulseBindings(localNum, [&] (CompiledImpulseBindingRecord &rec)
     {
         // Wrong impulse?
-        ImpulseBinding bind(rec);
-        if (bind.geti(QStringLiteral("impulseId")) != impulseId) return LoopContinue;
+        //ImpulseBinding bind(rec);
+        auto const &bind = rec.compiled();
+        if (bind.impulseId != impulseId) return LoopContinue;
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        ArrayValue const &conds = bind.geta(QStringLiteral("condition"));
+        ArrayValue const &conds = rec.geta(QStringLiteral("condition"));
         DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
         {
-            if (!B_CheckCondition((*i)->as<RecordValue>().record(), localNum, context))
+            if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
+                                  ((*i)->as<RecordValue>().record()), localNum, context))
             {
                 skip = true;
                 break;
@@ -531,17 +525,17 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         if (skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = InputSystem::get().devicePtr(bind.geti(QStringLiteral("deviceId")));
+        InputDevice const *device = InputSystem::get().devicePtr(bind.deviceId);
         if (!device || !device->isActive())
             return LoopContinue; // Not available.
 
         // Get the control.
         InputControl *ctrl = nullptr;
-        switch (bind.geti("type"))
+        switch (bind.type)
         {
-        case IBD_AXIS:   ctrl = &device->axis  (bind.geti(QStringLiteral("controlId"))); break;
-        case IBD_TOGGLE: ctrl = &device->button(bind.geti(QStringLiteral("controlId"))); break;
-        case IBD_ANGLE:  ctrl = &device->hat   (bind.geti(QStringLiteral("controlId"))); break;
+        case IBD_AXIS:   ctrl = &device->axis  (bind.controlId); break;
+        case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
+        case IBD_ANGLE:  ctrl = &device->hat   (bind.controlId); break;
 
         default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
@@ -554,7 +548,8 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         {
             if (context && axis->bindContext() != context)
             {
-                if (axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.geti(QStringLiteral("deviceId")), IBD_AXIS, bind.geti(QStringLiteral("controlId"))))
+                if (axis->hasBindContext() && !axis->bindContext()->
+                        findImpulseBinding(bind.deviceId, IBD_AXIS, bind.controlId))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if (axis->type() == AxisInputControl::Pointer)
@@ -605,12 +600,12 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
             // Expired?
             if (!(hat->bindContextAssociation() & InputControl::Expired))
             {
-                devicePos  = (hat->position() == bind.getf(QStringLiteral("angle"))? 1.0f : 0.0f);
+                devicePos  = (fequal(hat->position(), bind.angle)? 1.0f : 0.0f);
                 deviceTime = hat->time();
             }
         }
 
-        int const bflags = bind.geti(QStringLiteral("flags"));
+        int const bflags = bind.flags;
 
         // Apply further modifications based on flags.
         if (bflags & IBDF_INVERSE)
@@ -632,16 +627,14 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         // Is this state contributing to the outcome?
         if (!de::fequal(devicePos, 0.f))
         {
-            int const btype = bind.geti(QStringLiteral("type"));
-
-            if (appliedState[btype])
+            if (appliedState[bind.type])
             {
                 // Another binding already influenced this; we have a conflict.
-                conflicted[btype] = true;
+                conflicted[bind.type] = true;
             }
 
             // We've found one effective binding that influences this control.
-            appliedState[btype] = true;
+            appliedState[bind.type] = true;
         }
         return LoopContinue;
     });
