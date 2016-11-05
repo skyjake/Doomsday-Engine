@@ -59,10 +59,9 @@ struct Array : public std::vector<PODType>
     }
     /// Determine the index of element @a elem. Performance is O(1).
     int indexOf(PODType const *elem) const {
-        if(!elem) return 0;
+        if (!elem) return 0;
         int index = elem - elements();
-        DENG_ASSERT(index >= 0 && index < size());
-        //if(index < 0 || index >= size()) return 0;
+        if (index < 0 || index >= size()) return 0; // Not in this array.
         return index;
     }
     PODType *elements() {

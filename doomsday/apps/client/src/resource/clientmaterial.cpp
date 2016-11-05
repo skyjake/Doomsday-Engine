@@ -115,10 +115,10 @@ DENG2_PIMPL(ClientMaterial)
     AudioEnvironmentId audioEnvironment { AE_NONE };
 
     /// Decorations (owned), to be projected into the world (relative to a Surface).
-    QList<Decoration *> decorations;
+    QVector<Decoration *> decorations;
 
     /// Set of draw-context animators (owned).
-    QList<MaterialAnimator *> animators;
+    QVector<MaterialAnimator *> animators;
 
     Impl(Public *i) : Base(i) {}
 
@@ -130,11 +130,11 @@ DENG2_PIMPL(ClientMaterial)
 
     MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
     {
-        for (MaterialAnimator const *animator : animators)
+        for (auto iter = animators.constBegin(); iter != animators.constEnd(); ++iter)
         {
-            if (animator->variantSpec().compare(spec))
+            if ((*iter)->variantSpec().compare(spec))
             {
-                return const_cast<MaterialAnimator *>(animator);  // This will do fine.
+                return const_cast<MaterialAnimator *>(*iter);  // This will do fine.
             }
         }
 
@@ -170,7 +170,7 @@ int ClientMaterial::decorationCount() const
 
 LoopResult ClientMaterial::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
 {
-    for (Decoration *decor : d->decorations)
+    for (Decoration *decor : d.getConst()->decorations)
     {
         if (auto result = func(*decor)) return result;
     }
@@ -189,14 +189,19 @@ void ClientMaterial::addDecoration(Decoration *decor)
 void ClientMaterial::clearAllDecorations()
 {
     qDeleteAll(d->decorations); d->decorations.clear();
-    
+
     // Animators refer to decorations.
     clearAllAnimators();
 }
 
 int ClientMaterial::animatorCount() const
 {
-    return d->animators.count();
+    return d.getConst()->animators.count();
+}
+
+MaterialAnimator &ClientMaterial::animator(int index) const
+{
+    return *d.getConst()->animators[index];
 }
 
 bool ClientMaterial::hasAnimator(MaterialVariantSpec const &spec)
@@ -211,7 +216,7 @@ MaterialAnimator &ClientMaterial::getAnimator(MaterialVariantSpec const &spec)
 
 LoopResult ClientMaterial::forAllAnimators(std::function<LoopResult (MaterialAnimator &)> func) const
 {
-    for (MaterialAnimator *animator : d->animators)
+    for (MaterialAnimator *animator : d.getConst()->animators)
     {
         if (auto result = func(*animator)) return result;
     }

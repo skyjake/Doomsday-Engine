@@ -172,9 +172,9 @@ String Surface::description() const
                   .arg(String(R_NameForBlendMode(blendMode())))
                   .arg(color().asText());
 
-    DENG2_DEBUG_ONLY(
-        desc.prepend(String(_E(b) "Surface " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
-    )
+#ifdef DENG2_DEBUG
+    desc.prepend(String(_E(b) "Surface " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+#endif
     return desc;
 }
 
@@ -324,6 +324,11 @@ de::Uri Surface::composeMaterialUri() const
 {
     if (!hasMaterial()) return de::Uri();
     return material().manifest().composeUri();
+}
+
+void Surface::setDecorationState(IDecorationState *state)
+{
+    _decorationState.reset(state);
 }
 
 dfloat Surface::opacity() const
@@ -656,3 +661,6 @@ dfloat Surface::glow(Vector3f &color) const
 }
 
 #endif // __CLIENT__
+
+Surface::IDecorationState::~IDecorationState()
+{}

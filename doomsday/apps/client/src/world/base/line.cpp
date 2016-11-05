@@ -121,7 +121,7 @@ void Line::Side::Segment::setFrontFacing(bool yes)
 
 #endif  // __CLIENT__
 
-DENG2_PIMPL_NOREF(Line::Side)
+DENG2_PIMPL(Line::Side)
 {
     /**
      * Line side section of which there are three (middle, bottom and top).
@@ -136,11 +136,15 @@ DENG2_PIMPL_NOREF(Line::Side)
 
     struct Sections
     {
-        Section middle;
-        Section bottom;
-        Section top;
+        Section *sections[3];
 
-        Sections(Side &side) : middle(side), bottom(side), top(side) {}
+        inline Section &middle() { return *sections[Middle]; }
+        inline Section &bottom() { return *sections[Bottom]; }
+        inline Section &top()    { return *sections[Top];    }
+
+        Sections(Side &side)
+            : sections { new Section(side), new Section(side), new Section(side) }
+        {}
     };
 
 #ifdef __CLIENT__
@@ -158,7 +162,6 @@ DENG2_PIMPL_NOREF(Line::Side)
 #endif
 
     dint flags = 0;                 ///< @ref sdefFlags
-    Sector *sector = nullptr;       ///< Attributed sector (not owned).
 
     QList<Segment *> segments;      ///< On "this" side, sorted.
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
@@ -171,11 +174,14 @@ DENG2_PIMPL_NOREF(Line::Side)
     RadioData radioData;
 #endif
 
+    Impl(Public *i) : Base(i) {}
+
     /**
      * Retrieve the Section associated with @a sectionId.
      */
-    Section &sectionById(dint sectionId)
+    inline Section &sectionById(dint sectionId)
     {
+        /*
         if (sections)
         {
             switch (sectionId)
@@ -186,7 +192,11 @@ DENG2_PIMPL_NOREF(Line::Side)
             }
         }
         /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-        throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::number(sectionId));
+        throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::number(sectionId));*/
+
+        DENG2_ASSERT(sectionId >= Middle && sectionId <= Top);
+
+        return *sections->sections[sectionId];
     }
 
     void sortSegments(Vector2d lineSideOrigin)
@@ -208,14 +218,14 @@ DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
     void updateRadioCorner(shadowcorner_t &sc, dfloat openness, Plane *proximityPlane = nullptr, bool top = false)
     {
-        DENG2_ASSERT(sector);
+        DENG2_ASSERT(self._sector);
         sc.corner    = openness;
         sc.proximity = proximityPlane;
         if (sc.proximity)
         {
             // Determine relative height offsets (affects shadow map selection).
             sc.pHeight = sc.proximity->heightSmoothed();
-            sc.pOffset = sc.pHeight - sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
+            sc.pOffset = sc.pHeight - self._sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
         }
         else
         {
@@ -258,10 +268,9 @@ DENG2_PIMPL_NOREF(Line::Side)
 
 Line::Side::Side(Line &line, Sector *sector)
     : MapElement(DMU_SIDE, &line)
-    , d(new Impl)
-{
-    d->sector = sector;
-}
+    , d(new Impl(this))
+    , _sector(sector)
+{}
 
 Line &Line::Side::line()
 {
@@ -346,6 +355,7 @@ bool Line::Side::considerOneSided() const
     return false;
 }
 
+/*
 bool Line::Side::hasSector() const
 {
     return d->sector != nullptr;
@@ -362,6 +372,7 @@ Sector *Line::Side::sectorPtr() const
 {
     return d->sector;
 }
+*/
 
 bool Line::Side::hasSections() const
 {
@@ -383,7 +394,7 @@ Surface &Line::Side::surface(dint sectionId)
 
 Surface const &Line::Side::surface(dint sectionId) const
 {
-    return const_cast<Side *>(this)->surface(sectionId);
+    return d->sectionById(sectionId).surface;
 }
 
 Surface &Line::Side::middle()
@@ -529,9 +540,9 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
     emitter.origin[0] = lineCenter.x;
     emitter.origin[1] = lineCenter.y;
 
-    DENG2_ASSERT(d->sector);
-    ddouble const ffloor = d->sector->floor().height();
-    ddouble const fceil  = d->sector->ceiling().height();
+    DENG2_ASSERT(_sector);
+    ddouble const ffloor = _sector->floor().height();
+    ddouble const fceil  = _sector->ceiling().height();
 
     /// @todo fixme what if considered one-sided?
     switch (sectionId)
@@ -968,7 +979,7 @@ dint Line::Side::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_SECTOR:
-        args.setValue(DMT_SIDE_SECTOR, &d->sector, 0);
+        args.setValue(DMT_SIDE_SECTOR, &_sector, 0);
         break;
     case DMU_LINE: {
         Line const *lineAdr = &line();
@@ -990,7 +1001,7 @@ dint Line::Side::setProperty(DmuArgs const &args)
     case DMU_SECTOR: {
         if (P_IsDummy(&line()))
         {
-            args.value(DMT_SIDE_SECTOR, &d->sector, 0);
+            args.value(DMT_SIDE_SECTOR, &_sector, 0);
         }
         else
         {

@@ -221,6 +221,8 @@ public:
      */
     int animatorCount() const;
 
+    MaterialAnimator &animator(int index) const;
+
     /**
      * Determines if a MaterialAnimator exists for a material variant which fulfills @a spec.
      */

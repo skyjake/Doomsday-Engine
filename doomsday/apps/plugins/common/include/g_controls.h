@@ -29,6 +29,8 @@
 #ifndef LIBCOMMON_CONTROLS_H
 #define LIBCOMMON_CONTROLS_H
 
+#include <api_player.h>
+
 // Control identifiers.
 enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
@@ -150,6 +152,8 @@ void        G_ControlRegister(void);
 void        G_DefineControls(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
+
+dd_bool     G_UsingSharpInput();
 
 /**
  * Reset controls for all local players.

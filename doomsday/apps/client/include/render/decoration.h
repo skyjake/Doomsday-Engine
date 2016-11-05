@@ -27,8 +27,6 @@
 #include "MapObject"
 #include "MaterialAnimator"
 
-class Surface;
-
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
 

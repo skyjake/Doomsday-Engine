@@ -36,11 +36,12 @@ void P_Ticker(timespan_t elapsed)
     /// context should be driven separately).
     world::Materials::get().forAllMaterials([&elapsed] (world::Material &material)
     {
-        return material.as<ClientMaterial>().forAllAnimators([&elapsed] (MaterialAnimator &animator)
+        auto &mat = material.as<ClientMaterial>();
+        for (int i = mat.animatorCount() - 1; i >= 0; --i)
         {
-            animator.animate(elapsed);
-            return LoopContinue;
-        });
+            mat.animator(i).animate(elapsed);
+        }
+        return LoopContinue;
     });
 #endif
 

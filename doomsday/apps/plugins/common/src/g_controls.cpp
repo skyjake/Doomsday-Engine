@@ -35,6 +35,8 @@
 #  include "p_inventory.h"
 #endif
 
+#include <de/Path>
+
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 #  define GOTWPN(x)         (plr->weaponOwned[x])
 #  define ISWPN(x)          (plr->readyWeapon == x)
@@ -1109,4 +1111,10 @@ void G_ResetLookOffset(int pnum)
     cstate->lookOffset = 0;
     cstate->targetLookOffset = 0;
     cstate->lookheld = 0;
+}
+
+dd_bool G_UsingSharpInput()
+{
+    static de::Path const var_input_sharp("input-sharp", '-');
+    return Con_GetVariableInteger(var_input_sharp);
 }

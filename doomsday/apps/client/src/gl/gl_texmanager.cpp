@@ -264,7 +264,7 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if (auto *tex = res::Textures::get().texture("Flaremaps", resourceUri))
+    if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(QStringLiteral("Flaremaps"), resourceUri))
     {
         if (TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {

@@ -2913,18 +2913,19 @@ dint Map::lumobjCount() const
     return d->lumobjs.count();
 }
 
-Lumobj &Map::addLumobj(Lumobj const &lumobj)
+Lumobj &Map::addLumobj(Lumobj *lumobj)
 {
-    d->lumobjs.append(new Lumobj(lumobj));
-    Lumobj &lum = *d->lumobjs.last();
+    DENG2_ASSERT(lumobj != nullptr);
 
-    lum.setMap(this);
-    lum.setIndexInMap(d->lumobjs.count() - 1);
-    DENG2_ASSERT(lum.bspLeafAtOrigin().hasSubspace());
-    lum.bspLeafAtOrigin().subspace().link(lum);
-    R_AddContact(lum);  // For spreading purposes.
+    d->lumobjs.append(lumobj);
 
-    return lum;
+    lumobj->setMap(this);
+    lumobj->setIndexInMap(d->lumobjs.count() - 1);
+    DENG2_ASSERT(lumobj->bspLeafAtOrigin().hasSubspace());
+    lumobj->bspLeafAtOrigin().subspace().link(*lumobj);
+    R_AddContact(*lumobj);  // For spreading purposes.
+
+    return *lumobj;
 }
 
 void Map::removeLumobj(dint which)

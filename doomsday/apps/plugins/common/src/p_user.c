@@ -47,6 +47,7 @@
 #include "g_common.h"
 #include "hu_stuff.h"
 #include "r_common.h"
+#include "g_controls.h"
 
 #if __JHERETIC__ || __JHEXEN__
 #  include "p_inventory.h"
@@ -1895,7 +1896,7 @@ void P_PlayerThinkAssertions(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
-    int useSharpInput = Con_GetInteger("input-sharp");
+    int useSharpInput = G_UsingSharpInput();
 
     if(Pause_IsPaused())
         return;

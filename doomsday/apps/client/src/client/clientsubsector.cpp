@@ -1,6 +1,6 @@
 /** @file clientsubsector.cpp  Client-side world map subsector.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -168,16 +168,20 @@ DENG2_PIMPL(ClientSubsector)
         ~GeometryGroups() { DENG2_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g); }
     };
 
-    struct DecoratedSurface
+    struct DecoratedSurface : public Surface::IDecorationState
     {
-        struct Decorations : public QList<Decoration *>
-        {
-            ~Decorations() { qDeleteAll(*this); }
-        };
-        Decorations decorations;
+        QVector<Decoration *> decorations;
         bool needUpdate = true;
 
-        void markForUpdate(bool yes = true) {
+        DecoratedSurface() {}
+
+        ~DecoratedSurface()
+        {
+            qDeleteAll(decorations);
+        }
+
+        void markForUpdate(bool yes = true)
+        {
             if (::ddMapSetup) return;
             needUpdate = yes;
         }
@@ -204,8 +208,9 @@ DENG2_PIMPL(ClientSubsector)
     AudioEnvironment reverb;
     bool needReverbUpdate = true;
 
-    /// Per surface lists of light decoration info and state.
-    QHash<Surface *, DecoratedSurface> decorSurfaces;
+    // Per surface lists of light decoration info and state.
+    //QHash<Id::Type, DecoratedSurface> decorSurfaces;
+    QSet<Surface *> decorSurfaces;
 
     Impl(Public *i) : Base(i)
     {}
@@ -346,7 +351,7 @@ DENG2_PIMPL(ClientSubsector)
 
     void clearMapping(dint planeIdx)
     {
-        map(planeIdx , 0);
+        map(planeIdx, 0);
     }
 
     /**
@@ -977,7 +982,8 @@ DENG2_PIMPL(ClientSubsector)
                         std::unique_ptr<LightDecoration> decor(new LightDecoration(decorSS, decorOrigin));
                         decor->setSurface(&suf);
                         if (self.sector().hasMap()) decor->setMap(&self.sector().map());
-                        decorSurfaces[&suf].decorations.append(decor.get()); // take ownership.
+                        static_cast<DecoratedSurface *>(suf.decorationState())->
+                                decorations.append(decor.get()); // take ownership.
                         decor.release();
                     }
                 }
@@ -988,9 +994,20 @@ DENG2_PIMPL(ClientSubsector)
         });
     }
 
+    DecoratedSurface &allocDecorationState(Surface &surface)
+    {
+        auto *ds = static_cast<DecoratedSurface *>(surface.decorationState());
+        if (!ds)
+        {
+            surface.setDecorationState(ds = new DecoratedSurface);
+            decorSurfaces.insert(&surface);
+        }
+        return *ds;
+    }
+
     void decorate(Surface &surface)
     {
-        DecoratedSurface &ds = decorSurfaces[&surface];
+        auto &ds = allocDecorationState(surface);
 
         if (!ds.needUpdate) return;
 
@@ -1013,9 +1030,6 @@ DENG2_PIMPL(ClientSubsector)
             if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
             {
                 MaterialAnimator &animator = *surface.materialAnimator();
-                    //surface.material().as<ClientMaterial>()
-//                                      .getAnimator(Rend_MapSurfaceMaterialSpec());
-
                 projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
             }
         }
@@ -1047,7 +1061,10 @@ DENG2_PIMPL(ClientSubsector)
                         side.forAllSurfaces([this, &yes] (Surface &surface)
                         {
                             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
-                            decorSurfaces[&surface].markForUpdate(yes);
+                            if (auto *decor = surface.decorationState())
+                            {
+                                static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
+                            }
                             return LoopContinue;
                         });
                     }
@@ -1059,7 +1076,10 @@ DENG2_PIMPL(ClientSubsector)
         if (&plane == &self.visPlane(plane.indexInSector()))
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(plane.surface()));
-            decorSurfaces[&plane.surface()].markForUpdate(yes);
+            if (auto *decor = plane.surface().decorationState())
+            {
+                static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
+            }
         }
     }
 
@@ -1085,7 +1105,10 @@ DENG2_PIMPL(ClientSubsector)
                         if (surface.materialPtr() == &material)
                         {
                             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
-                            decorSurfaces[&surface].markForUpdate(yes);
+                            if (auto *decor = surface.decorationState())
+                            {
+                                static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
+                            }
                         }
                         return LoopContinue;
                     });
@@ -1099,13 +1122,19 @@ DENG2_PIMPL(ClientSubsector)
         if (floor.surface().materialPtr() == &material)
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(floor.surface()));
-            decorSurfaces[&floor.surface()].markForUpdate(yes);
+            if (auto *decor = floor.surface().decorationState())
+            {
+                static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
+            }
         }
         Plane &ceiling = self.visCeiling();
         if (ceiling.surface().materialPtr() == &material)
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(ceiling.surface()));
-            decorSurfaces[&ceiling.surface()].markForUpdate(yes);
+            if (auto *decor = ceiling.surface().decorationState())
+            {
+                static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
+            }
         }
     }
 
@@ -1119,11 +1148,17 @@ DENG2_PIMPL(ClientSubsector)
             {
                 if ((side.line().flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
                 {
-                    decorSurfaces[&side.top()].markForUpdate();
+                    if (auto *decor = side.top().decorationState())
+                    {
+                        static_cast<DecoratedSurface *>(decor)->markForUpdate();
+                    }
                 }
                 if ((side.line().flags() & DDLF_DONTPEGBOTTOM) != (oldFlags & DDLF_DONTPEGBOTTOM))
                 {
-                    decorSurfaces[&side.bottom()].markForUpdate();
+                    if (auto *decor = side.bottom().decorationState())
+                    {
+                        static_cast<DecoratedSurface *>(decor)->markForUpdate();
+                    }
                 }
             }
             return LoopContinue;
@@ -1263,7 +1298,9 @@ DENG2_PIMPL(ClientSubsector)
     void surfaceMaterialChanged(Surface &surface)
     {
         LOG_AS("ClientSubsector");
-        DecoratedSurface &ds = decorSurfaces[&surface];
+        //DecoratedSurface &ds = decorSurfaces[surface.uniqueId()];
+
+        DecoratedSurface &ds = allocDecorationState(surface);
 
         // Clear any existing decorations (now invalid).
         qDeleteAll(ds.decorations);
@@ -1281,7 +1318,7 @@ DENG2_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
         if (surface.hasMaterial())
         {
-            decorSurfaces[&surface].markForUpdate();
+            allocDecorationState(surface).markForUpdate();
         }
     }
 
@@ -1291,7 +1328,7 @@ DENG2_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
         if (surface.hasMaterial())
         {
-            decorSurfaces[&surface].markForUpdate();
+            allocDecorationState(surface).markForUpdate();
         }
     }
 
@@ -1384,11 +1421,14 @@ String ClientSubsector::description() const
     {
         desc += String(_E(D) "\nDecorations:" _E(.));
         dint decorIndex = 0;
-        for (Impl::DecoratedSurface &decorSurface : d->decorSurfaces)
-        for (Decoration *decor : decorSurface.decorations)
+        for (Surface *surface : d->decorSurfaces)
         {
-            desc += String("\n[%1]: ").arg(decorIndex) + _E(>) + decor->description() + _E(<);
-            decorIndex += 1;
+            for (Decoration *decor : static_cast<Impl::DecoratedSurface *>
+                                     (surface->decorationState())->decorations)
+            {
+                desc += String("\n[%1]: ").arg(decorIndex) + _E(>) + decor->description() + _E(<);
+                decorIndex += 1;
+            }
         }
     }
 
@@ -1790,8 +1830,14 @@ void ClientSubsector::decorate()
 {
     LOG_AS("ClientSubsector::decorate");
 
+    auto decorateFunc = [this] (Surface &surface)
+    {
+        d->decorate(surface);
+        return LoopContinue;
+    };
+
     // Surfaces of the edge loops.
-    forAllEdgeLoops([this] (ClEdgeLoop const &loop)
+    forAllEdgeLoops([this, &decorateFunc] (ClEdgeLoop const &loop)
     {
         SubsectorCirculator it(&loop.first());
         do
@@ -1799,13 +1845,16 @@ void ClientSubsector::decorate()
             if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
             {
                 LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                side.forAllSurfaces([this] (Surface &surface)
+                if (side.hasSections())
                 {
-                    d->decorate(surface);
-                    return LoopContinue;
-                });
+                    for (dint i = LineSide::Middle; i <= LineSide::Top; ++i)
+                    {
+                        d->decorate(side.surface(i));
+                    }
+                }
             }
-        } while (&it.next() != &loop.first());
+        }
+        while (&it.next() != &loop.first());
         return LoopContinue;
     });
 
@@ -1816,9 +1865,13 @@ void ClientSubsector::decorate()
 
 bool ClientSubsector::hasDecorations() const
 {
-    for (Impl::DecoratedSurface const &decorSurface : d->decorSurfaces)
+    for (Surface *surface : d.getConst()->decorSurfaces)
     {
-        if (!decorSurface.decorations.isEmpty()) return true;
+        if (!static_cast<Impl::DecoratedSurface const *>
+                (surface->decorationState())->decorations.isEmpty())
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -1826,15 +1879,16 @@ bool ClientSubsector::hasDecorations() const
 void ClientSubsector::generateLumobjs()
 {
     world::Map &map = sector().map();
-    for (Impl::DecoratedSurface &surface : d->decorSurfaces)
-    for (Decoration *decor : surface.decorations)
+    for (Surface *surface : d.getConst()->decorSurfaces)
     {
-        if (auto const *lightDecor = decor->maybeAs<LightDecoration>())
+        for (Decoration *decor : static_cast<Impl::DecoratedSurface *>(surface->decorationState())->decorations)
         {
-            std::unique_ptr<Lumobj> lum(lightDecor->generateLumobj());
-            if (lum)
+            if (auto const *lightDecor = decor->maybeAs<LightDecoration>())
             {
-                map.addLumobj(*lum); // a copy is made.
+                if (Lumobj *lum = lightDecor->generateLumobj())
+                {
+                    map.addLumobj(lum);
+                }
             }
         }
     }
@@ -1842,9 +1896,12 @@ void ClientSubsector::generateLumobjs()
 
 void ClientSubsector::markForDecorationUpdate(bool yes)
 {
-    for (Impl::DecoratedSurface &surface : d->decorSurfaces)
+    for (Surface *surface : d.getConst()->decorSurfaces)
     {
-        surface.markForUpdate(yes);
+        if (auto *decor = static_cast<Impl::DecoratedSurface *>(surface->decorationState()))
+        {
+            decor->markForUpdate(yes);
+        }
     }
 }
 

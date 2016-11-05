@@ -273,11 +273,11 @@ public:  //- Light sources -----------------------------------------------------
     de::dint lumobjCount() const;
 
     /**
-     * Add a new lumobj to the map (a copy is made).
+     * Add a new lumobj to the map.
      *
-     * @return  Reference to the newly added lumobj.
+     * @return  Lumobj instance. Ownership taken.
      */
-    Lumobj &addLumobj(Lumobj const &lumobj = Lumobj());
+    Lumobj &addLumobj(Lumobj *lumobj);
 
     /**
      * Removes the specified lumobj from the map.

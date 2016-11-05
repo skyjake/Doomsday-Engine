@@ -436,7 +436,8 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 static inline ClientTexture *lightmap(de::Uri const *textureUri)
 {
     if(!textureUri) return nullptr;
-    return static_cast<ClientTexture *>(res::Textures::get().texture("Lightmaps", *textureUri));
+    return static_cast<ClientTexture *>
+            (res::Textures::get().tryFindTextureByResourceUri(QStringLiteral("Lightmaps"), *textureUri));
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mob)
@@ -534,7 +535,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mob->lumIdx = subsec.sector().map().addLumobj(*lum).indexInMap();
+    mob->lumIdx = subsec.sector().map().addLumobj(lum.release()).indexInMap();
 }
 
 void Mobj_AnimateHaloOcclussion(mobj_t &mob)

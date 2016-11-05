@@ -98,13 +98,13 @@ public:
 
     public:
         /// Required sector attribution is missing. @ingroup errors
-        DENG2_ERROR(MissingSectorError);
+        //DENG2_ERROR(MissingSectorError);
 
         // Section identifiers:
         enum {
-            Middle,
-            Bottom,
-            Top
+            Middle = 0,
+            Bottom = 1,
+            Top    = 2
         };
 
         static de::String sectionIdAsText(de::dint sectionId);
@@ -274,21 +274,24 @@ public:
          *
          * @see sectorPtr(), sector(), considerOneSided()
          */
-        bool hasSector() const;
+        inline bool hasSector() const { return _sector != nullptr; }
 
         /**
          * Returns the Sector attributed to the side.
          *
          * @see hasSector(), sectorPtr()
          */
-        Sector &sector() const;
+        inline Sector &sector() const {
+            DENG2_ASSERT(_sector != nullptr);
+            return *_sector;
+        }
 
         /**
          * Returns a pointer to the Sector attributed to the side; otherwise @c nullptr.
          *
          * @see hasSector(), sector()
          */
-        Sector *sectorPtr() const;
+        inline Sector *sectorPtr() const { return _sector; }
 
         /**
          * Returns @c true iff Sections are defined for the side.
@@ -519,6 +522,9 @@ public:
 
     private:
         DENG2_PRIVATE(d)
+
+        // Heavily used; visible for inline access:
+        Sector *_sector;
     };
 
 public: /// @todo make private:

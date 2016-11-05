@@ -23,7 +23,7 @@
 #define DENG_WORLD_SURFACE_H
 
 #include <functional>
-#include <de/Error>
+#include <de/Id>
 #include <de/Matrix>
 #include <de/Observers>
 #include <de/String>
@@ -45,6 +45,13 @@ class Surface : public world::MapElement
     DENG2_NO_ASSIGN(Surface)
 
 public:
+    /// Interface for surface decoration state.
+    class IDecorationState
+    {
+    public:
+        virtual ~IDecorationState();
+    };
+
     /// Notified whenever the tint color changes.
     DENG2_DEFINE_AUDIENCE2(ColorChange,   void surfaceColorChanged(Surface &sector))
 
@@ -205,6 +212,12 @@ public:
      */
     de::Uri composeMaterialUri() const;
 
+    void setDecorationState(IDecorationState *state);
+
+    inline IDecorationState *decorationState() const {
+        return _decorationState.get();
+    }
+
 #ifdef __CLIENT__
 
     MaterialAnimator *materialAnimator() const;
@@ -276,6 +289,8 @@ protected:
     de::dint setProperty(world::DmuArgs const &args);
 
 private:
+    std::unique_ptr<IDecorationState> _decorationState;
+
     DENG2_PRIVATE(d)
 };
 

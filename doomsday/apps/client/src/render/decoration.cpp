@@ -22,6 +22,7 @@
 #include "render/decoration.h"
 
 #include "world/surface.h"
+#include "world/clientserverworld.h"
 #include <doomsday/world/MaterialManifest>
 
 using namespace de;
