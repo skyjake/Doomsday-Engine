@@ -226,7 +226,7 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
                                           String const &userMessageIfIncompatible,
                                           std::function<void ()> finalizeFunc)
 {
-    if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesIncludedInSavegames()))
+    if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
     {
         finalizeFunc();
     }

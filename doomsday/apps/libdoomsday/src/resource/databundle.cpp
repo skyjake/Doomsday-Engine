@@ -258,7 +258,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             if (lumpDir)
             {
                 meta.set(QStringLiteral("lumpDirCRC32"), lumpDir->crc32())
-                        .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
+                        .value<NumberValue>().setSemanticHints(NumberValue::Hex);
             }
 
             meta.set(Package::VAR_TITLE, matched.bestMatch->keyValue("info:title"));

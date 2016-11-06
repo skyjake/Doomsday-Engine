@@ -538,13 +538,13 @@ bool DoomsdayApp::isGameLoaded()
     return App::appExists() && !DoomsdayApp::game().isNull();
 }
 
-StringList DoomsdayApp::loadedPackagesIncludedInSavegames() // static
+StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
 {
     StringList ids = PackageLoader::get().loadedPackageIdsInOrder();
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }

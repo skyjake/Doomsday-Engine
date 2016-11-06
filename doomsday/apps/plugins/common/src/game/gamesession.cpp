@@ -214,7 +214,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         auto *loadedPackages = new ArrayValue;
         for (String id : PackageLoader::get().loadedPackageIdsInOrder())
         {
-            if (SavedSession::isIncludedInSavegames(id))
+            if (SavedSession::isPackageAffectingGameplay(id))
             {
                 *loadedPackages << new TextValue(id);
             }

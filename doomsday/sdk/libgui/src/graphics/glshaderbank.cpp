@@ -260,7 +260,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     if (def.has("include.vertex"))
     {
         // Including in reverse to retain order -- each one is prepended.
-        auto const &incs = def["include.vertex"].value().as<ArrayValue>().elements();
+        auto const &incs = def["include.vertex"].value<ArrayValue>().elements();
         for (int i = incs.size() - 1; i >= 0; --i)
         {
             vtx.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
@@ -269,7 +269,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     if (def.has("include.fragment"))
     {
         // Including in reverse to retain order -- each one is prepended.
-        auto const &incs = def["include.fragment"].value().as<ArrayValue>().elements();
+        auto const &incs = def["include.fragment"].value<ArrayValue>().elements();
         for (int i = incs.size() - 1; i >= 0; --i)
         {
             frag.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));

@@ -88,7 +88,7 @@ void Sprite::resetToDefaults()
 
 DictionaryValue &Sprite::viewsDict()
 {
-    return def()[VAR_VIEWS].value().as<DictionaryValue>();
+    return def()[VAR_VIEWS].value<DictionaryValue>();
 }
 
 /*DictionaryValue const &Sprite::viewsDict() const

@@ -176,7 +176,7 @@ StringList GameProfiles::Profile::packagesIncludedInSavegames() const
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }

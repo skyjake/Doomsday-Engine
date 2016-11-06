@@ -399,7 +399,7 @@ String SavedSession::stateFilePath(String const &path) //static
     return "";
 }
 
-bool SavedSession::isIncludedInSavegames(String const &packageId) // static
+bool SavedSession::isPackageAffectingGameplay(String const &packageId) // static
 {
     /**
      * @todo The rules here could be more sophisticated when it comes to checking what

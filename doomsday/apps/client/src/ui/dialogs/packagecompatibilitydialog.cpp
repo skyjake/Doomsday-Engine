@@ -101,7 +101,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             list->setActionsAlwaysShown(true);
             list->setFilterEditorMinimumY(self.area().rule().top());
 
-            StringList const loaded = DoomsdayApp::loadedPackagesIncludedInSavegames();
+            StringList const loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
             //qDebug() << "Currently loaded:" << loaded;
 
             if (!GameProfiles::arePackageListsCompatible(loaded, wanted))
@@ -161,7 +161,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         auto &pkgLoader = PackageLoader::get();
 
         // Unload excess packages.
-        StringList loaded = DoomsdayApp::loadedPackagesIncludedInSavegames();
+        StringList loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
 
         int goodUntil = -1;
 
@@ -205,7 +205,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             }
         }
 
-        qDebug() << DoomsdayApp::loadedPackagesIncludedInSavegames();
+        qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
 
         self.buttonsMenu().disable();
         updating->setOpacity(1, 0.3);

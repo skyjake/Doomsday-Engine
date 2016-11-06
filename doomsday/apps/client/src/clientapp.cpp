@@ -650,7 +650,7 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
                                           std::function<void ()> finalizeFunc)
 {
     if (packageIds.isEmpty() || // Metadata did not specify packages.
-        GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesIncludedInSavegames()))
+        GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
     {
         finalizeFunc();
     }
