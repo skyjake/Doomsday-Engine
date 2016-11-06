@@ -20,10 +20,10 @@
 #define LIBSHELL_SERVERFINDER_H
 
 #include "libshell.h"
+#include "ServerInfo"
 #include <QObject>
 #include <de/Error>
 #include <de/Address>
-#include <de/Record>
 
 namespace de {
 namespace shell {
@@ -59,10 +59,9 @@ public:
      *
      * @param address  Address of a found server.
      *
-     * @return Reference to a record. The reference is valid until start() is
-     * called.
+     * @return Server information.
      */
-    Record const &messageFromServer(Address const &address) const;
+    ServerInfo messageFromServer(Address const &address) const;
 
 protected slots:
     void found(de::Address address, de::Block info);

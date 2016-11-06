@@ -115,20 +115,20 @@ QList<Address> ServerFinder::foundServers() const
 
 String ServerFinder::name(Address const &server) const
 {
-    return messageFromServer(server).gets("name");
+    return messageFromServer(server).name();
 }
 
 int ServerFinder::playerCount(Address const &server) const
 {
-    return messageFromServer(server).geti("nump");
+    return messageFromServer(server).players().size();
 }
 
 int ServerFinder::maxPlayers(Address const &server) const
 {
-    return messageFromServer(server).geti("maxp");
+    return messageFromServer(server).maxPlayers();
 }
 
-Record const &ServerFinder::messageFromServer(Address const &address) const
+ServerInfo ServerFinder::messageFromServer(Address const &address) const
 {
     if (!d->servers.contains(address))
     {
@@ -136,7 +136,7 @@ Record const &ServerFinder::messageFromServer(Address const &address) const
         throw NotFoundError("ServerFinder::messageFromServer",
                             "No message from server " + address.asText());
     }
-    return *d->servers[address].message;
+    return ServerInfo(*d->servers[address].message);
 }
 
 void ServerFinder::found(Address host, Block block)

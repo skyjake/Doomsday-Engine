@@ -20,6 +20,7 @@
 #include "de_platform.h"
 
 #include <QNetworkProxyFactory>
+#include <QHostInfo>
 #include <QDebug>
 #include <stdlib.h>
 
@@ -40,6 +41,7 @@
 #include "con_config.h"
 #include "network/net_main.h"
 #include "world/map.h"
+#include "world/p_players.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -234,6 +236,80 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
     {
         LOG_RES_ERROR("%s") << userMessageIfIncompatible;
     }
+}
+
+shell::ServerInfo ServerApp::currentServerInfo()
+{
+    shell::ServerInfo info;
+
+    // Let's figure out what we want to tell about ourselves.
+    info.setCompatibilityVersion(DOOMSDAY_VERSION);
+    info.setPluginDescription(String::format("%s %s",
+                                             (char const *) gx.GetVariable(DD_PLUGIN_NAME),
+                                             (char const *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT)));
+
+    //dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", ;
+    info.setGameId(game().id();
+    info.setGameConfig((char const *) gx.GetVariable(DD_GAME_CONFIG));
+    info.setName(serverName);
+    info.setDescription(serverInfo);
+    //info->numPlayers = Sv_GetNumPlayers();
+
+    // The server player is there, it's just hidden.
+    info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
+
+    // Don't go over the limit.
+    //if (info->maxPlayers > ::svMaxPlayers)
+    //    info->maxPlayers = ::svMaxPlayers;
+
+    //info->canJoin = ;
+    shell::ServerInfo::Flags flags(0);
+    if (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers)
+    {
+        flags |= shell::ServerInfo::AllowJoin;
+    }
+
+    // Identifier of the current map.
+    if (world().hasMap())
+    {
+        auto &map = world().map();
+        String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
+        //qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
+        info.setMap(mapPath);
+    }
+
+    // These are largely unused at the moment... Mainly intended for the game's custom values.
+    //std::memcpy(info->data, ::serverData, sizeof(info->data));
+
+    QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
+    if (!host.addresses().isEmpty())
+    {
+        /// @todo Maybe check that it's not a loopback address?
+        info.setAddress(Address(host.addresses().at(0), duint16(nptIPPort)));
+    }
+
+    // Also include the port we're using.
+    //info->port = ::nptIPPort;
+
+    // Let's compile a list of client names.
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if (DD_Player(i)->isConnected())
+        {
+            //M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
+            info.addPlayer(DD_Player(i)->name);
+        }
+    }
+
+    info.setPackages(loadedPackagesAffectingGameplay());
+
+    // Some WAD names.
+    //composePWADFileList(info->pwads, sizeof(info->pwads), ";");
+
+    // This should be a CRC number that describes all the loaded data.
+    //info->loadedFilesCRC = App_FileSystem().loadedFilesCRC();;
+
+    return info;
 }
 
 void ServerApp::unloadGame(GameProfile const &upcomingGame)

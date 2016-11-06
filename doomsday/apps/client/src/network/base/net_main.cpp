@@ -85,7 +85,7 @@ char *serverName = (char *) "Doomsday";
 char *serverInfo = (char *) "Multiplayer Host";
 char *playerName = (char *) "Player";
 
-dint serverData[3];  ///< Some parameters passed to master server.
+//dint serverData[3];  ///< Some parameters passed to master server.
 
 dint netGame;   ///< @c true if a networked game is in progress.
 dint isServer;  ///< @c true if this computer is an open server.

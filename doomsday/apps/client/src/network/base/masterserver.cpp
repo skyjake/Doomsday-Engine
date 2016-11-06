@@ -23,6 +23,8 @@
 #include <QNetworkAccessManager>
 #include <de/Config>
 #include <de/Log>
+#include <de/shell/ServerInfo>
+#include <de/data/json.h>
 #include <de/memory.h>
 #include "de_platform.h"
 #include <vector>
@@ -31,6 +33,7 @@
 #include "network/net_main.h"
 #include "network/protocol.h"
 #ifdef __SERVER__
+#  include "serverapp.h"
 #  include "server/sv_def.h"
 #endif
 #include "dd_main.h"
@@ -44,10 +47,10 @@ using namespace de;
 
 typedef struct job_s {
     MasterWorker::Action act;
-    void* data;
+    Record data;
 } job_t;
 
-static String const DEFAULT_API_URL = "www.dengine.net/master.php";
+static String const DEFAULT_API_URL = "api.dengine.net/1/master_server";
 
 dd_bool masterAware = false; // cvar
 
@@ -68,7 +71,7 @@ DENG2_PIMPL_NOREF(MasterWorker)
     Jobs jobs;
     MasterWorker::Action currentAction;
 
-    typedef std::vector<serverinfo_t> Servers;
+    typedef QVector<de::shell::ServerInfo> Servers;
     Servers servers;
 
     Impl() : network(0), currentAction(NONE) {}
@@ -85,7 +88,7 @@ MasterWorker::MasterWorker() : d(new Impl)
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
 }
 
-void MasterWorker::newJob(Action action, void* data)
+void MasterWorker::newJob(Action action, Record const &data)
 {
     LOG_AS("MasterWorker");
 
@@ -112,10 +115,10 @@ bool MasterWorker::isOngoing() const
 
 int MasterWorker::serverCount() const
 {
-    return (int) d->servers.size();
+    return d->servers.size();
 }
 
-serverinfo_t MasterWorker::server(int index) const
+shell::ServerInfo MasterWorker::server(int index) const
 {
     assert(index >= 0 && index < serverCount());
     return d->servers[index];
@@ -140,18 +143,16 @@ void MasterWorker::nextJob()
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-deng-announce");
 
         // Include the server info.
-        ddstring_t* msg = Str_NewStd();
-        Sv_InfoToString((serverinfo_t*)job.data, msg);
+        Block const msg = composeJSON(job.data);
 
         LOGDEV_NET_VERBOSE("POST request ") << req.url().toString();
-        foreach(const QByteArray& hdr, req.rawHeaderList())
+        foreach (QByteArray const &hdr, req.rawHeaderList())
         {
             LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
-        LOGDEV_NET_VERBOSE("Request contents:\n%s") << Str_Text(msg);
+        LOGDEV_NET_VERBOSE("Request contents:\n%s") << msg;
 
-        d->network->post(req, QString(Str_Text(msg)).toUtf8());
-        Str_Delete(msg);
+        d->network->post(req, msg);
     }
     else
 #endif
@@ -164,9 +165,6 @@ void MasterWorker::nextJob()
 
         d->network->get(req);
     }
-
-    // Ownership of the data was given to us, so get rid of it now.
-    if(job.data) M_Free(job.data);
 }
 
 void MasterWorker::requestFinished(QNetworkReply* reply)
@@ -202,24 +200,49 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
  *
  * @return @c true, if successful.
  */
-bool MasterWorker::parseResponse(const QByteArray& response)
+bool MasterWorker::parseResponse(QByteArray const &response)
 {
-    ddstring_t msg;
-    ddstring_t line;
-    serverinfo_t* info = NULL;
+    //ddstring_t msg;
+    //ddstring_t line;
+    //serverinfo_t* info = NULL;
 
-    Str_InitStd(&msg);
-    Str_PartAppend(&msg, response.constData(), 0, response.size());
+    //Str_InitStd(&msg);
+    //Str_PartAppend(&msg, response.constData(), 0, response.size());
 
-    Str_InitStd(&line);
+    //Str_InitStd(&line);
 
-    d->servers.clear();
+    try
+    {
+        d->servers.clear();
 
-    // The syntax of the response is simple:
-    // label:value
-    // One or more empty lines separate servers.
+        // The syntax of the response is a JSON array containing server objects.
+        foreach (QVariant entry, parseJSON(String::fromUtf8(Block(response))).toList())
+        {
+            try
+            {
+                std::unique_ptr<Value> entryValue(Value::constructFrom(entry));
+                if (!entryValue->is<RecordValue>())
+                {
+                    LOG_NET_WARNING("Server information was in unexpected format");
+                    continue;
+                }
+                d->servers.append(*entryValue->as<RecordValue>().record());
+            }
+            catch (Error const &er)
+            {
+                LOG_NET_WARNING("Server information in master server response has "
+                                "an error: %s") << er.asText();
+            }
+        }
+    }
+    catch (Error const &er)
+    {
+        LOG_NET_WARNING("Failed to parse master server response: %s") << er.asText();
+    }
 
-    const char* pos = Str_Text(&msg);
+
+
+    /*const char* pos = Str_Text(&msg);
     while(*pos)
     {
         pos = Str_GetLine(&line, pos);
@@ -241,12 +264,12 @@ bool MasterWorker::parseResponse(const QByteArray& response)
         {
             ServerInfo_FromString(info, Str_Text(&line));
         }
-    }
+    }*/
 
     LOG_NET_MSG("Received %i servers from master") << serverCount();
 
-    Str_Free(&line);
-    Str_Free(&msg);
+    //Str_Free(&line);
+    //Str_Free(&msg);
     return true;
 }
 
@@ -266,15 +289,15 @@ void N_MasterShutdown(void)
     worker = 0;
 }
 
-void N_MasterAnnounceServer(dd_bool isOpen)
+void N_MasterAnnounceServer(bool isOpen)
 {
 #ifdef __SERVER__
     // Must be a server.
-    if(isClient) return;
+    if (isClient) return;
 
     LOG_AS("N_MasterAnnounceServer");
 
-    if(isOpen && !strlen(netPassword))
+    if (isOpen && !strlen(netPassword))
     {
         LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
                         "You must set one with the 'server-password' cvar.");
@@ -284,16 +307,19 @@ void N_MasterAnnounceServer(dd_bool isOpen)
     LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
     // This will be freed by the worker after the request has been made.
-    serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));
+    shell::ServerInfo info = ServerApp::currentServerInfo();
+    //serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
-    Sv_GetInfo(info);
-    if(!isOpen)
+    //Sv_GetInfo(info);
+    if (!isOpen)
     {
-        info->canJoin = false;
+        auto flags = info.flags();
+        applyFlagOperation(flags, shell::ServerInfo::AllowJoin, false);
+        info.setFlags(flags);
     }
 
-    assert(worker);
+    DENG2_ASSERT(worker);
     worker->newJob(MasterWorker::ANNOUNCE, info);
 #else
     DENG_UNUSED(isOpen);
@@ -302,34 +328,34 @@ void N_MasterAnnounceServer(dd_bool isOpen)
 
 void N_MasterRequestList(void)
 {
-    assert(worker);
-    worker->newJob(MasterWorker::REQUEST_SERVERS, 0);
+    DENG2_ASSERT(worker);
+    worker->newJob(MasterWorker::REQUEST_SERVERS);
 }
 
-int N_MasterGet(int index, serverinfo_t *info)
+int N_MasterGet(int index, shell::ServerInfo *info)
 {
-    assert(worker);
+    DENG2_ASSERT(worker);
 
-    if(!worker->isAllDone())
+    if (!worker->isAllDone())
     {
         // Not done yet.
         return -1;
     }
 
-    if(!info)
+    if (!info)
     {
         return worker->serverCount();
     }
     else
     {
-        if(index >= 0 && index < worker->serverCount())
+        if (index >= 0 && index < worker->serverCount())
         {
             *info = worker->server(index);
             return true;
         }
         else
         {
-            memset(info, 0, sizeof(*info));
+            *info = shell::ServerInfo();
             return false;
         }
     }

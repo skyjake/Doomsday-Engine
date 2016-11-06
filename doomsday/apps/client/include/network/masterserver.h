@@ -27,6 +27,7 @@
 #include "dd_share.h"
 
 #include <de/libcore.h>
+#include <de/shell/ServerInfo>
 #include <QObject>
 #include <QNetworkReply>
 #include <QByteArray>
@@ -50,19 +51,19 @@ public:
 public:
     MasterWorker();
 
-    void newJob(Action action, void* data);
+    void newJob(Action action, de::Record const &data = de::Record());
 
     bool isAllDone() const;
     bool isOngoing() const;
     int serverCount() const;
-    serverinfo_t server(int index) const;
+    de::shell::ServerInfo server(int index) const;
 
 protected:
     void nextJob();
-    bool parseResponse(const QByteArray& response);
+    bool parseResponse(QByteArray const &response);
 
 public slots:
-    void requestFinished(QNetworkReply* reply);
+    void requestFinished(QNetworkReply *reply);
 
 private:
     DENG2_PRIVATE(d)
@@ -86,7 +87,7 @@ void N_MasterShutdown(void);
  *                          visible on the server list for other clients to
  *                          find by querying the server list.
  */
-void N_MasterAnnounceServer(dd_bool isOpen);
+void N_MasterAnnounceServer(bool isOpen);
 
 /**
  * Requests the list of open servers from the master.
@@ -101,6 +102,6 @@ void N_MasterRequestList(void);
  * return @c not zero, if param index was valid and the master returned info on
  * the requested server.
  */
-int N_MasterGet(int index, serverinfo_t *info);
+int N_MasterGet(int index, de::shell::ServerInfo *info);
 
 #endif // LIBDENG_MASTER_SERVER_H
