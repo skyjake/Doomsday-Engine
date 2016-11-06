@@ -171,6 +171,19 @@ Block &Block::operator = (IByteArray const &byteArray)
     return *this;
 }
 
+Block Block::join(QList<Block> const &blocks, Block const &sep) // static
+{
+    if (blocks.isEmpty()) return Block();
+
+    Block joined = blocks.at(0);
+    for (int i = 1; i < blocks.size(); ++i)
+    {
+        joined += sep;
+        joined += blocks.at(i);
+    }
+    return joined;
+}
+
 void Block::clear()
 {
     QByteArray::clear();

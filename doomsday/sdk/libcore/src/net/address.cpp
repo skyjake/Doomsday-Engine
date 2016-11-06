@@ -128,7 +128,7 @@ String Address::asText() const
     return result;
 }
 
-Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort)
+Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort) // static
 {
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;

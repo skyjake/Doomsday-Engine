@@ -107,6 +107,9 @@ public:
     Block &operator = (Block const &other);
 
     Block &operator = (IByteArray const &byteArray);
+
+public:
+    static Block join(QList<Block> const &blocks, Block const &sep = Block());
 };
 
 } // namespace de

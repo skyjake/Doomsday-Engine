@@ -156,7 +156,7 @@ DENG2_PIMPL(Record), public Lockable
             Variable const &member = *i.value();
             if (isSubrecord(member))
             {
-                Record *rec = member.value().as<RecordValue>().record();
+                Record *rec = member.value<RecordValue>().record();
                 DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
 
                 if (auto result = func(i.key(), *rec))
@@ -307,6 +307,11 @@ Record::Record(Record const &other, Behavior behavior)
     copyMembersFrom(other, behavior);
 }
 
+Record::Record(Record &&moved)
+    : RecordAccessor(this)
+    , d(std::move(moved.d))
+{}
+
 Record::~Record()
 {
     // Notify before deleting members so that observers have full visibility
@@ -333,6 +338,12 @@ void Record::copyMembersFrom(Record const &other, Behavior behavior)
 Record &Record::operator = (Record const &other)
 {
     return assign(other);
+}
+
+Record &Record::operator = (Record &&moved)
+{
+    d = std::move(moved.d);
+    return *this;
 }
 
 Record &Record::assign(Record const &other, Behavior behavior)
@@ -513,7 +524,7 @@ Record *Record::removeSubrecord(String const &name)
     Members::const_iterator found = d->members.find(name);
     if (found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        Record *returnedToCaller = found.value()->value().as<RecordValue>().takeRecord();
+        Record *returnedToCaller = found.value()->value<RecordValue>().takeRecord();
         remove(*found.value());
         return returnedToCaller;
     }
@@ -648,7 +659,7 @@ Variable &Record::insertToSortedArray(String const &name, Value *value)
     }
 
     Variable &var = (*this)[name];
-    ArrayValue &array = var.value().as<ArrayValue>();
+    ArrayValue &array = var.value<ArrayValue>();
     // O(n) insertion sort.
     for (dsize i = 0; i < array.size(); ++i)
     {
@@ -696,7 +707,7 @@ Record const &Record::subrecord(String const &name) const
     Members::const_iterator found = d->members.find(name);
     if (found != d->members.end() && d->isSubrecord(*found.value()))
     {
-        return *found.value()->value().as<RecordValue>().record();
+        return *found.value()->value<RecordValue>().record();
     }
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
 }
@@ -704,6 +715,30 @@ Record const &Record::subrecord(String const &name) const
 Record::Members const &Record::members() const
 {
     return d->members;
+}
+
+LoopResult Record::forMembers(std::function<LoopResult (String const &, Variable &)> func)
+{
+    for (Members::iterator i = d->members.begin(); i != d->members.end(); ++i)
+    {
+        if (auto result = func(i.key(), *i.value()))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
+}
+
+LoopResult Record::forMembers(std::function<LoopResult (String const &, Variable const &)> func) const
+{
+    for (Members::const_iterator i = d->members.constBegin(); i != d->members.constEnd(); ++i)
+    {
+        if (auto result = func(i.key(), *i.value()))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
 }
 
 Record::Subrecords Record::subrecords() const

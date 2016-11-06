@@ -24,6 +24,7 @@
 
 #include <QDir>
 #include <QTextStream>
+#include <QUrl> // percent encoding
 #include <cstdio>
 #include <cstdarg>
 
@@ -539,8 +540,14 @@ String String::addLinePrefix(String const &prefix) const
 String String::escaped() const
 {
     String esc = *this;
-    esc.replace("\\", "\\\\").replace("\"", "\\\"");
+    esc.replace("\\", "\\\\")
+       .replace("\"", "\\\"");
     return esc;
+}
+
+Block String::toPercentEncoding() const
+{
+    return QUrl::toPercentEncoding(*this);
 }
 
 String String::truncateWithEllipsis(int maxLength) const
@@ -558,7 +565,7 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
     if (i == end)
     {
         throw IllegalPatternError("String::advanceFormat",
-            "Incomplete formatting instructions");
+                                  "Incomplete formatting instructions");
     }
 }
 
@@ -719,6 +726,11 @@ String String::fromCP437(IByteArray const &byteArray)
         conv.append(codePage437ToUnicode(ch));
     }
     return conv;
+}
+
+String String::fromPercentEncoding(Block const &percentEncoded) // static
+{
+    return QUrl::fromPercentEncoding(percentEncoded);
 }
 
 size_t qchar_strlen(QChar const *str)

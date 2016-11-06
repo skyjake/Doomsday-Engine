@@ -106,6 +106,9 @@ public:
      * @param behavior  Which members to copy.
      */
     Record(Record const &other, Behavior behavior = AllMembers);
+
+    Record(Record &&moved);
+
     virtual ~Record();
 
     /**
@@ -130,6 +133,12 @@ public:
      * @return This record.
      */
     Record &operator = (Record const &other);
+
+    /**
+     * Move assignment operator.
+     * @return This record.
+     */
+    Record &operator = (Record &&moved);
 
     /**
      * Assignment with specific behavior. All existing members in this record
@@ -424,6 +433,14 @@ public:
      */
     Variable const &operator [] (String const &name) const;
 
+    inline Variable &member(String const &name) {
+        return (*this)[name];
+    }
+
+    inline Variable const &member(String const &name) const {
+        return (*this)[name];
+    }
+
     /**
      * Looks up a subrecord in the record.
      *
@@ -446,6 +463,10 @@ public:
      * Returns a non-modifiable map of the members.
      */
     Members const &members() const;
+
+    LoopResult forMembers(std::function<LoopResult (String const &, Variable &)> func);
+
+    LoopResult forMembers(std::function<LoopResult (String const &, Variable const &)> func) const;
 
     /**
      * Collects a map of all the subrecords present in the record.

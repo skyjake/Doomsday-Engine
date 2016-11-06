@@ -300,6 +300,8 @@ public:
 
     String truncateWithEllipsis(int maxLength) const;
 
+    Block toPercentEncoding() const;
+
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.
@@ -320,6 +322,8 @@ public:
      * @return Converted string.
      */
     static String fromCP437(IByteArray const &byteArray);
+
+    static String fromPercentEncoding(Block const &percentEncoded);
 
     static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
 
