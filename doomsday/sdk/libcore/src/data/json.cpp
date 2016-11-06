@@ -1,8 +1,8 @@
-/** @file json.cpp JSON parser.
+/** @file json.cpp  JSON parser and composer.
  *
  * Parses JSON and outputs a QVariant with the data.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -15,13 +15,21 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/data/json.h"
 #include <QVarLengthArray>
-#include <de/Log>
+#include <de/Block>
 #include <de/Error>
+#include <de/Log>
+#include <de/Record>
+#include <de/NoneValue>
+#include <de/NumberValue>
+#include <de/RecordValue>
+#include <de/DictionaryValue>
+#include <de/ArrayValue>
+#include <QTextStream>
 #include <QDebug>
 
 namespace de {
@@ -78,7 +86,7 @@ public:
         return source[pos++];
     }
 
-    void error(QString const &message)
+    void error(QString const &message) DENG2_NORETURN
     {
         throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
                         .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
@@ -126,7 +134,7 @@ public:
             result.insert(name, value);
             // Move forward.
             skipWhite();
-            c = next();            
+            c = next();
             if (c == '}')
             {
                 // End of object.
@@ -286,7 +294,7 @@ public:
         {
             pos += 4;
             skipWhite();
-            return QVariant(0);
+            return QVariant();
         }
         else
         {
@@ -295,6 +303,87 @@ public:
         return QVariant();
     }
 };
+
+//---------------------------------------------------------------------------------------
+
+static Block recordToJSON(Record const &rec);
+
+static Block valueToJSON(Value const &value)
+{
+    if (value.is<NoneValue>())
+    {
+        return "null";
+    }
+    if (auto const *rec = value.maybeAs<RecordValue>())
+    {
+        return recordToJSON(rec->dereference());
+    }
+    if (auto const *dict = value.maybeAs<DictionaryValue>())
+    {
+        Block out = "{";
+        auto const &elems = dict->elements();
+        for (auto i = elems.begin(); i != elems.end(); ++i)
+        {
+            if (i != elems.begin())
+            {
+                out += ",";
+            }
+            Block value = valueToJSON(*i->second);
+            value.replace('\n', "\n\t");
+            out += "\n\t" + valueToJSON(*i->first.value) + ": " + value;
+        }
+        return out + "\n}";
+    }
+    if (auto const *array = value.maybeAs<ArrayValue>())
+    {
+        Block out = "[";
+        auto const &elems = array->elements();
+        for (auto i = elems.begin(); i != elems.end(); ++i)
+        {
+            if (i != elems.begin())
+            {
+                out += ",";
+            }
+            Block value = valueToJSON(**i);
+            value.replace('\n', "\n\t");
+            out += "\n\t" + value;
+        }
+        return out + "\n]";
+    }
+    if (auto const *num = value.maybeAs<NumberValue>())
+    {
+        if (num->semanticHints().testFlag(NumberValue::Boolean))
+        {
+            return num->isTrue()? "true" : "false";
+        }
+        return num->asText().toUtf8();
+    }
+
+    // Text string.
+    String text = value.asText();
+    text.replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\b", "\\b")
+        .replace("\f", "\\f")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t");
+    return "\"" + text.toUtf8() + "\"";
+}
+
+static Block recordToJSON(Record const &rec)
+{
+    Block out = "{\n\t\"__obj__\": \"Record\"";
+    rec.forMembers([&out] (String const &name, Variable const &var)
+    {
+        out += ",";
+        Block value = valueToJSON(var.value());
+        value.replace('\n', "\n\t");
+        out += "\n\t\"" + name.toUtf8() + "\": " + value;
+        return LoopContinue;
+    });
+    return out + "\n}";
+}
 
 } // internal
 
@@ -309,6 +398,11 @@ QVariant parseJSON(String const &jsonText)
         LOG_WARNING(er.asText());
         return QVariant(); // invalid
     }
+}
+
+Block composeJSON(Record const &rec)
+{
+    return internal::recordToJSON(rec) + "\n";
 }
 
 } // de
