@@ -307,6 +307,14 @@ public:
 //---------------------------------------------------------------------------------------
 
 static Block recordToJSON(Record const &rec);
+static Block valueToJSON(Value const &value);
+
+static Block valueToJSONWithTabNewlines(Value const &value)
+{
+    Block json = valueToJSON(value);
+    json.replace('\n', "\n\t");
+    return json;
+}
 
 static Block valueToJSON(Value const &value)
 {
@@ -328,9 +336,8 @@ static Block valueToJSON(Value const &value)
             {
                 out += ",";
             }
-            Block value = valueToJSON(*i->second);
-            value.replace('\n', "\n\t");
-            out += "\n\t" + valueToJSON(*i->first.value) + ": " + value;
+            out += "\n\t" + valueToJSON(*i->first.value) + ": " +
+                   valueToJSONWithTabNewlines(*i->second);
         }
         return out + "\n}";
     }
@@ -344,9 +351,7 @@ static Block valueToJSON(Value const &value)
             {
                 out += ",";
             }
-            Block value = valueToJSON(**i);
-            value.replace('\n', "\n\t");
-            out += "\n\t" + value;
+            out += "\n\t" + valueToJSONWithTabNewlines(**i);
         }
         return out + "\n]";
     }
@@ -376,10 +381,7 @@ static Block recordToJSON(Record const &rec)
     Block out = "{\n\t\"__obj__\": \"Record\"";
     rec.forMembers([&out] (String const &name, Variable const &var)
     {
-        out += ",";
-        Block value = valueToJSON(var.value());
-        value.replace('\n', "\n\t");
-        out += "\n\t\"" + name.toUtf8() + "\": " + value;
+        out += ",\n\t\"" + name.toUtf8() + "\": " + valueToJSONWithTabNewlines(var.value());
         return LoopContinue;
     });
     return out + "\n}";

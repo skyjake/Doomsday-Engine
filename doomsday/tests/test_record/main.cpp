@@ -24,6 +24,7 @@
 #include <de/TextValue>
 #include <de/NumberValue>
 #include <de/Variable>
+#include <de/data/json.h>
 
 #include <QDebug>
 #include <QTextStream>
@@ -46,6 +47,8 @@ int main(int argc, char **argv)
 
         rec.add(new Variable("size", new NumberValue(1024)));
         LOG_MSG("With two variables:\n") << rec;
+
+        LOG_MSG("Record as JSON:\n") << composeJSON(rec).constData();
 
         Record rec2;
         Block b;
@@ -72,6 +75,8 @@ int main(int argc, char **argv)
         Record copied = before;
         DENG2_ASSERT(copied.hasSubrecord("subrecord"));
         LOG_MSG("Copied:\n") << copied;
+
+        LOG_MSG("...and as JSON:\n") << composeJSON(copied).constData();
     }
     catch (Error const &err)
     {
