@@ -69,6 +69,7 @@ dint svMaxPlayers = DDMAXPLAYERS;
 
 static world::MaterialArchive *materialDict;
 
+#if 0
 /**
  * @defgroup pathToStringFlags  Path To String Flags
  * @ingroup flags
@@ -151,6 +152,7 @@ static void composePWADFileList(char *outBuf, dsize outBufSize, char const *deli
     QByteArray strUtf8 = str.toUtf8();
     strncpy(outBuf, strUtf8.constData(), outBufSize);
 }
+#endif
 
 /*Record *Sv_InfoToRecord(serverinfo_t *info)
 {

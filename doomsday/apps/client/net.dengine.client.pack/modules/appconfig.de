@@ -91,7 +91,7 @@ def setDefaults(d)
     
     # Master server settings.
     record d.masterServer
-    d.masterServer.apiUrl = "www.dengine.net/master.php"
+    d.masterServer.apiUrl = "api.dengine.net/1/master_server"
     
     # Resource settings.
     record d.resource
