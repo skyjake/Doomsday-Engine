@@ -117,9 +117,11 @@ macro (deng_target_rpath target)
         )
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
+            qmake_query (_qtLibPath QT_INSTALL_LIBS)
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${_qtLibPath}"
             )
+            set (_qtLibPath)
         endif ()
     elseif (UNIX)
         set_property (TARGET ${target}
@@ -227,7 +229,7 @@ macro (deng_merge_sources srcName globbing)
         set (_turbo ${CMAKE_CURRENT_BINARY_DIR}/src_${srcName}_turbo.cpp)
         add_custom_command (
             OUTPUT  ${_turbo}
-            COMMAND ${PYTHON_EXECUTABLE} "${DENG_CMAKE_DIR}/merge_sources.py" 
+            COMMAND ${PYTHON_EXECUTABLE} "${DENG_CMAKE_DIR}/merge_sources.py"
                     ${_turbo} ${_mergingSources}
             DEPENDS ${_mergingSources}
             COMMENT "Merging sources ${globbing}"
@@ -563,7 +565,8 @@ function (fix_bundled_install_names binaryFile)
     if (binaryFile MATCHES ".*\\.bundle")
         set (ref "@loader_path/../Frameworks")
     else ()
-        set (ref "@executable_path/../Frameworks")
+        #set (ref "@executable_path/../Frameworks")
+        set (ref "@rpath")
     endif ()
     sublist (libs 1 -1 ${ARGV})
     # Check for arguments.
