@@ -36,8 +36,8 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
-    static String hostId(serverinfo_t const &sv) {
-        return String("%1:%2").arg(sv.address).arg(sv.port);
+    static String hostId(shell::ServerInfo const &sv) {
+        return sv.address().asText();
     }
 
     /**
@@ -46,7 +46,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
     class ServerListItem : public ui::Item
     {
     public:
-        ServerListItem(serverinfo_t const &serverInfo, bool isLocal)
+        ServerListItem(shell::ServerInfo const &serverInfo, bool isLocal)
             : _lan(isLocal)
         {
             setData(hostId(serverInfo));
@@ -58,12 +58,12 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             return _lan;
         }
 
-        serverinfo_t const &info() const
+        shell::ServerInfo const &info() const
         {
             return _info;
         }
 
-        void setInfo(serverinfo_t const &serverInfo)
+        void setInfo(shell::ServerInfo const &serverInfo)
         {
             _info = serverInfo;
             notifyChange();
@@ -71,16 +71,16 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
         String title() const
         {
-            return _info.name;
+            return _info.name();
         }
 
         String gameId() const
         {
-            return _info.gameIdentityKey;
+            return _info.gameId();
         }
 
     private:
-        serverinfo_t _info;
+        shell::ServerInfo _info;
         bool _lan;
     };
 
@@ -116,15 +116,15 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         // Add new entries and update existing ones.
         foreach (Address const &host, link.foundServers(mask))
         {
-            serverinfo_t info;
-            if (!link.foundServerInfo(host, &info, mask)) continue;
+            shell::ServerInfo info;
+            if (!link.foundServerInfo(host, info, mask)) continue;
 
             ui::Data::Pos found = items.findData(hostId(info));
             if (found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
                 items.append(new ServerListItem(info,
-                        link.isServerOnLocalNetwork(Address::parse(hostId(info)))));
+                        link.isServerOnLocalNetwork(info.address())));
                 changed = true;
             }
             else
@@ -145,20 +145,18 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
                 if (first.isLocal() == second.isLocal())
                 {
                     // Sort by number of players.
-                    if (first.info().numPlayers == second.info().numPlayers)
+                    if (first.info().playerCount() == second.info().playerCount())
                     {
                         // Finally, by game ID.
-                        int cmp = qstrcmp(first .info().gameIdentityKey,
-                                          second.info().gameIdentityKey);
+                        int cmp = first.info().gameId().compareWithCase(second.info().gameId());
                         if (!cmp)
                         {
                             // Lastly by server name.
-                            return qstricmp(first.info().name,
-                                            second.info().name) < 0;
+                            return first.info().name().compareWithoutCase(second.info().name()) < 0;
                         }
                         return cmp < 0;
                     }
-                    return first.info().numPlayers - second.info().numPlayers > 0;
+                    return first.info().playerCount() - second.info().playerCount() > 0;
                 }
                 return first.isLocal();
             });
@@ -196,7 +194,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         menuItemWidget.enable(playable);
     }
 
-    void aboutToJoinMultiplayerGame(serverinfo_t const &sv) override
+    void aboutToJoinMultiplayerGame(shell::ServerInfo const &sv) override
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }

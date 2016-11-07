@@ -147,12 +147,8 @@ DENG2_PIMPL(ServerSystem)
             // Update the status message in the server's presence beacon.
             if (serverSock && App_World().hasMap())
             {
-                serverinfo_t info;
-                Sv_GetInfo(&info);
-
-                std::unique_ptr<Record> rec(Sv_InfoToRecord(&info));
                 Block msg;
-                de::Writer(msg).withHeader() << *rec;
+                de::Writer(msg).withHeader() << ServerApp::currentServerInfo();
                 beacon.setMessage(msg);
             }
         }

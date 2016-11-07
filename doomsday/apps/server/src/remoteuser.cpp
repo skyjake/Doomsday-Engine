@@ -22,7 +22,9 @@
 #include "network/net_msg.h"
 #include "network/net_event.h"
 #include "server/sv_def.h"
+#include "serverapp.h"
 
+#include <de/data/json.h>
 #include <de/memory.h>
 #include <de/Message>
 #include <de/ByteRefArray>
@@ -113,8 +115,7 @@ DENG2_PIMPL(RemoteUser)
     {
         LOG_AS("handleRequest");
 
-        serverinfo_t info;
-        ddstring_t msg;
+        //ddstring_t msg;
 
         int length = command.size();
 
@@ -128,16 +129,17 @@ DENG2_PIMPL(RemoteUser)
         // Status query?
         if (command == "Info?")
         {
-            Sv_GetInfo(&info);
-            Str_Init(&msg);
-            Str_Appendf(&msg, "Info\n");
-            Sv_InfoToString(&info, &msg);
+            shell::ServerInfo const info = ServerApp::currentServerInfo(); //Sv_GetInfo(&info);
+            //Str_Init(&msg);
+            //Str_Appendf(&msg, "Info\n");
+            Block const msg = "Info\n" + composeJSON(info);
+            //Sv_InfoToString(&info, &msg);
 
-            LOGDEV_NET_VERBOSE("Info reply:\n%s") << Str_Text(&msg);
+            LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg); //Str_Text(&msg);
 
-            self << ByteRefArray(Str_Text(&msg), Str_Length(&msg));
+            self << msg; //mRefArray(Str_Text(&msg), Str_Length(&msg));
 
-            Str_Free(&msg);
+            //Str_Free(&msg);
         }
         else if (length >= 5 && command.startsWith("Shell"))
         {

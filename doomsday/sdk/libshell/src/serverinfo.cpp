@@ -19,6 +19,7 @@
 #include "de/shell/ServerInfo"
 #include <de/TextValue>
 #include <de/Version>
+#include <de/Log>
 #include <de/data/json.h>
 
 namespace de {
@@ -46,6 +47,10 @@ ServerInfo::ServerInfo()
     addArray(VAR_PLAYERS);
 }
 
+ServerInfo::ServerInfo(ServerInfo const &other)
+    : Record(other)
+{}
+
 ServerInfo::ServerInfo(Record const &rec)
     : Record(rec)
 {}
@@ -53,6 +58,12 @@ ServerInfo::ServerInfo(Record const &rec)
 ServerInfo::ServerInfo(ServerInfo &&moved)
     : Record(std::move(moved))
 {}
+
+ServerInfo &ServerInfo::operator = (ServerInfo const &other)
+{
+    Record::operator = (other);
+    return *this;
+}
 
 ServerInfo &ServerInfo::operator = (ServerInfo &&moved)
 {
@@ -178,6 +189,11 @@ StringList ServerInfo::players() const
     return getStringList(VAR_PLAYERS);
 }
 
+int ServerInfo::playerCount() const
+{
+    return int(geta(VAR_PLAYERS).size());
+}
+
 ServerInfo &ServerInfo::addPlayer(String const &playerName)
 {
     ArrayValue &players = member(VAR_PLAYERS).value<ArrayValue>();
@@ -217,7 +233,32 @@ ServerInfo::Flags ServerInfo::flags() const
 
 String ServerInfo::asStyledText() const
 {
-    return String();
+#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
+
+    auto const playerNames = players();
+
+    return String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                  TABBED("Address:", "%6")
+                  TABBED("Joinable:", "%5")
+                  TABBED("Players:", "%3 / %4%11")
+                  TABBED("Game:", "%7\n%8\n%10 %9")
+                  TABBED("Packages:", "%12")
+                  /*TABBED("Ping:", "%8 ms (approx)")*/)
+            .arg(name())
+            .arg(description())
+            .arg(playerNames.size())
+            .arg(maxPlayers())
+            .arg(flags().testFlag(AllowJoin)? "Yes" : "No") // 5
+            .arg(address().asText())
+            //.arg(sv->ping)
+            .arg(pluginDescription())
+            .arg(gameId())
+            .arg(gameConfig())
+            .arg(map()) // 10
+            .arg(!playerNames.isEmpty()? String(_E(2) " (%1)" _E(.)).arg(String::join(playerNames, " ")) : "")
+            .arg(String::join(packages(), " "));
+
+#undef TABBED
 }
 
 Block ServerInfo::asJSON() const
@@ -229,6 +270,39 @@ ServerInfo &ServerInfo::setFlags(Flags const &flags)
 {
     set(VAR_FLAGS, duint32(flags));
     return *this;
+}
+
+void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
+{
+    /// @todo Update table for de::Log. -jk
+
+    if (includeHeader)
+    {
+        LOG_NET_MSG(_E(m)"    %-20s P/M  L Ver:  Game:            Location:") << "Name:";
+    }
+
+    auto const plrs = players();
+
+    LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s")
+            << indexNumber
+            << name()
+            << plrs.size()
+            << maxPlayers()
+            << (flags().testFlag(AllowJoin)? ' ' : '*')
+            << compatibilityVersion()
+            << pluginDescription()
+            << address().asText();
+    LOG_NET_MSG("    %s %-40s") << map() << description();
+    LOG_NET_MSG("    %s %s") << gameId() << gameConfig();
+
+    // Optional: PWADs in use.
+    LOG_NET_MSG("    Packages: %s") << String::join(packages(), " ");
+
+    // Optional: names of players.
+    if (!plrs.isEmpty())
+    {
+        LOG_NET_MSG("    Players: %s") << String::join(plrs, " ");
+    }
 }
 
 } // namespace shell

@@ -22,7 +22,7 @@
 #include "network/net_main.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
-#include "dd_share.h" // serverinfo_s
+//#include "dd_share.h" // serverinfo_s
 #include "dd_main.h"
 
 #include <doomsday/doomsdayapp.h>
@@ -42,7 +42,7 @@ using namespace de;
 DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 , DENG2_OBSERVES(Games, Readiness)
 {
-    serverinfo_t serverInfo;
+    shell::ServerInfo serverInfo;
     ButtonWidget *joinButton;
     String gameConfig;
     LabelWidget *info;
@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
         // Use a delayed callback so that the UI is not blocked while we switch games.
-        serverinfo_t const info = serverInfo;
+        auto const info = serverInfo;
         Loop::get().timer(0.1, [info] ()
         {
             // Switch locally to the game running on the server.
@@ -107,10 +107,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
             /// @todo Set up a temporary profile using packages from the server.
 
             DoomsdayApp::app().changeGame(
-                        DoomsdayApp::games()[info.gameIdentityKey].profile(),
+                        DoomsdayApp::games()[info.gameId()].profile(),
                         DD_ActivateGameWorker);
-            Con_Execute(CMDS_DDAY, String("connect %1:%2")
-                        .arg(info.address).arg(info.port).toLatin1(),
+            Con_Execute(CMDS_DDAY, String("connect %1")
+                        .arg(info.address().asText()).toUtf8(),
                         false, false);
         });
     }
@@ -147,38 +147,39 @@ void MultiplayerPanelButtonWidget::setSelected(bool selected)
     d->extra->show(selected);
 }
 
-void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
+void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 {
     d->serverInfo = info;
-    d->gameConfig = info.gameConfig;
+    d->gameConfig = info.gameConfig();
 
     //label().setText(info.name);
     String meta;
-    if (info.numPlayers > 0)
+    int const playerCount = info.playerCount();
+    if (playerCount > 0)
     {
         meta = String("%1 player%2 " DENG2_CHAR_MDASH " ")
-                .arg(info.numPlayers)
-                .arg(info.numPlayers != 1? "s" : "");
+                .arg(playerCount)
+                .arg(DENG2_PLURAL_S(playerCount));
     }
 
     meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
                                 d->hasConfig("dm2")?  "Deathmatch v2" :
                                                       "Deathmatch"));
 
-    if (ClientApp::serverLink().isServerOnLocalNetwork(Address(info.address, info.port)))
+    if (ClientApp::serverLink().isServerOnLocalNetwork(info.address()))
     {
         meta = "LAN " DENG2_CHAR_MDASH " " + meta;
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                    .arg(info.name)
+                    .arg(info.name())
                     .arg(meta));
 
     // Additional information.
-    String infoText = String(info.map) + " " DENG2_CHAR_MDASH " ";
-    if (DoomsdayApp::games().contains(info.gameIdentityKey))
+    String infoText = String(info.map()) + " " DENG2_CHAR_MDASH " ";
+    if (DoomsdayApp::games().contains(info.gameId()))
     {
-        auto const &game = DoomsdayApp::games()[info.gameIdentityKey];
+        auto const &game = DoomsdayApp::games()[info.gameId()];
         infoText += game.title();
         d->joinButton->enable();
 
@@ -195,7 +196,7 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
 
         icon().setImage(nullptr);
     }
-    infoText += "\n" _E(C) + String(info.description);
+    infoText += "\n" _E(C) + String(info.description());
 
     d->info->setFont("small");
     d->info->setText(infoText);

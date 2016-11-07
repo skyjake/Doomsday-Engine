@@ -150,7 +150,7 @@ void MasterWorker::nextJob()
         {
             LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
-        LOGDEV_NET_VERBOSE("Request contents:\n%s") << msg;
+        LOGDEV_NET_VERBOSE("Request contents:\n%s") << msg.constData();
 
         d->network->post(req, msg);
     }

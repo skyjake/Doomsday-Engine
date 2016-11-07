@@ -191,14 +191,13 @@ void N_NETicker(timespan_t time)
             break;
 
         case MAC_LIST: {
-            ServerInfo_Print(nullptr, 0);
-            dint num = N_MasterGet(0, 0);
+            dint const num = N_MasterGet(0, 0);
             dint i = num;
             while(--i >= 0)
             {
-                serverinfo_t info;
+                shell::ServerInfo info;
                 N_MasterGet(i, &info);
-                ServerInfo_Print(&info, i);
+                info.printToLog(i, i - 1 == num);
             }
             LOG_NET_VERBOSE("%i server%s found") << num << (num != 1 ? "s were" : " was");
             N_MARemove();

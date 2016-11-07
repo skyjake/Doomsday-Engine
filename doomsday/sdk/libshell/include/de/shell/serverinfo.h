@@ -41,8 +41,10 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
     ServerInfo();
-    ServerInfo(Record const &rec);
+    ServerInfo(ServerInfo const &other);
     ServerInfo(ServerInfo &&moved);
+    ServerInfo(Record const &rec);
+    ServerInfo &operator = (ServerInfo const &other);
     ServerInfo &operator = (ServerInfo &&moved);
 
     Version version() const;
@@ -58,6 +60,7 @@ public:
     String gameConfig() const;
     String map() const;
     StringList players() const;
+    int playerCount() const;
     int maxPlayers() const;
     Flags flags() const;
 
@@ -97,6 +100,12 @@ public:
     //char            iwad[32];   ///< Obsolete.
     //char            pwads[128];
     //int             data[3];
+
+    /**
+     * Prints server/host information into the console. The header line is
+     * printed if 'info' is NULL.
+     */
+    void printToLog(int indexNumber, bool includeHeader = false) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ServerInfo::Flags)

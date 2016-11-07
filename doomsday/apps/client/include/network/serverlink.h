@@ -22,8 +22,8 @@
 #include <de/Transmitter>
 #include <de/Address>
 #include <de/Observers>
-#include <doomsday/ServerInfo>
 #include <de/shell/AbstractLink>
+#include <de/shell/ServerInfo>
 #include <QObject>
 #include "network/net_main.h"
 
@@ -94,13 +94,13 @@ public:
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(de::Address const &host, ServerInfo &info,
+    bool foundServerInfo(de::Address const &host, de::shell::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(int index, ServerInfo &info,
+    bool foundServerInfo(int index, de::shell::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     bool isServerOnLocalNetwork(de::Address const &host) const;

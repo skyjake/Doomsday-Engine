@@ -675,73 +675,7 @@ void Net_Ticker(timespan_t time)
     }
 }
 
-de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
-{
-#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
-
-    return String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
-                  TABBED("Joinable:", "%5")
-                  TABBED("Players:", "%3 / %4%12")
-                  TABBED("Game:", "%8\n%9\n%11 %10")
-                  TABBED("PWADs:", "%13")
-                  TABBED("Address:", "%6:%7")
-                  /*TABBED("Ping:", "%8 ms (approx)")*/)
-             .arg(sv->name)
-             .arg(sv->description)
-             .arg(sv->numPlayers)
-             .arg(sv->maxPlayers)
-             .arg(sv->canJoin? "Yes" : "No") // 5
-             .arg(sv->address)
-             .arg(sv->port)
-             //.arg(sv->ping)
-             .arg(sv->plugin)
-             .arg(sv->gameIdentityKey) // 10
-             .arg(sv->gameConfig)
-             .arg(sv->map)
-             .arg(!String(sv->clientNames).isEmpty()? String(_E(2) " (%1)" _E(.)).arg(sv->clientNames) : "")
-             .arg(String(sv->pwads).isEmpty() ? String(DENG2_CHAR_MDASH) : String(sv->pwads));  // 14
-
-#undef TABBED
-}
-
-/**
- * Prints server/host information into the console. The header line is
- * printed if 'info' is NULL.
- */
-void ServerInfo_Print(serverinfo_t const *info, dint index)
-{
-    /// @todo Update table for de::Log. -jk
-    ///
-    if(!info)
-    {
-        LOG_NET_MSG(_E(m)"    %-20s P/M  L Ver:  Game:            Location:") << "Name:";
-    }
-    else
-    {
-        LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i")
-            << index << info->name << info->numPlayers << info->maxPlayers
-            << (info->canJoin? ' ' : '*') << info->version << info->plugin
-            << info->address << info->port;
-        LOG_NET_MSG("    %s p:%ims %-40s") << info->map << info->ping << info->description;
-        LOG_NET_MSG("    %s (CRC:%x) %s") << info->gameIdentityKey << info->loadedFilesCRC << info->gameConfig;
-
-        // Optional: PWADs in use.
-        if(info->pwads[0])
-            LOG_NET_MSG("    PWADs: %s") << info->pwads;
-
-        // Optional: names of players.
-        if(info->clientNames[0])
-            LOG_NET_MSG("    Players: %s") << info->clientNames;
-
-        // Optional: data values.
-        if(info->data[0] || info->data[1] || info->data[2])
-        {
-            LOG_NET_MSG("    Data: (%08x, %08x, %08x)")
-                << info->data[0] << info->data[1] << info->data[2];
-        }
-    }
-}
-
+#if 0
 /**
  * Extracts the label and value from a string.
  *
@@ -796,7 +730,9 @@ void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 
 #undef COPY_STR
 }
+#endif
 
+#if 0
 dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 {
     char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
@@ -894,6 +830,7 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
     }
     return true;
 }
+#endif
 
 String Net_UserAgent()
 {
@@ -1290,21 +1227,23 @@ D_CMD(Net)
             }
 
             dint index = strtoul(argv[2], 0, 10);
-            serverinfo_t info;
-            if(Net_ServerLink().foundServerInfo(index, &info))
+            //serverinfo_t info;
+            shell::ServerInfo info;
+            if(Net_ServerLink().foundServerInfo(index, info))
             {
-                ServerInfo_Print(&info, index);
-                Net_ServerLink().connectDomain(String("%1:%2").arg(info.address).arg(info.port), 5);
+                info.printToLog(index);
+                //ServerInfo_Print(&info, index);
+                Net_ServerLink().connectDomain(info.address().asText(), 5);
             }
         }
         else if(!stricmp(argv[1], "mconnect"))
         {
-            serverinfo_t info;
+            shell::ServerInfo info;
             if(N_MasterGet(strtol(argv[2], 0, 0), &info))
             {
                 // Connect using TCP/IP.
-                return Con_Executef(CMDS_CONSOLE, false, "connect %s %i",
-                                    info.address, info.port);
+                return Con_Executef(CMDS_CONSOLE, false, "connect %s",
+                                    info.address().asText().toUtf8().constData());
             }
             else return false;
         }
