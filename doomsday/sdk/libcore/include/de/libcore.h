@@ -398,14 +398,14 @@ class PrivateAutoPtr
 
 public:
     PrivateAutoPtr(ImplType *p) : ptr(p) {}
-    PrivateAutoPtr(PrivateAutoPtr &&moved) : ptr(moved.p) {
-        moved.p = nullptr;
+    PrivateAutoPtr(PrivateAutoPtr &&moved) : ptr(moved.ptr) {
+        moved.ptr = nullptr;
     }
     ~PrivateAutoPtr() { reset(); }
 
-    ImplType &operator = (PrivateAutoPtr &&moved) {
-        ptr = moved.p;
-        moved.p = nullptr;
+    PrivateAutoPtr &operator = (PrivateAutoPtr &&moved) {
+        ptr = moved.ptr;
+        moved.ptr = nullptr;
         return *this;
     }
     inline ImplType &operator * () const { return *ptr; }

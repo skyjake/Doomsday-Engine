@@ -40,6 +40,10 @@ Block::Block(Block const &other)
     : QByteArray(other), IByteArray(), IBlock()
 {}
 
+Block::Block(Block &&moved)
+    : QByteArray(moved)
+{}
+
 Block::Block(QByteArray const &byteArray)
     : QByteArray(byteArray)
 {}

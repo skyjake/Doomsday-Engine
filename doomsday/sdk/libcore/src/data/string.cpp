@@ -38,6 +38,9 @@ String::String()
 String::String(String const &other) : QString(other)
 {}
 
+String::String(String &&moved) : QString(moved)
+{}
+
 String::String(QString const &text) : QString(text)
 {}
 

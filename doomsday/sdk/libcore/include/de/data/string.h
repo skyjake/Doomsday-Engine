@@ -83,6 +83,7 @@ public:
 public:
     String();
     String(String const &other);
+    String(String &&moved);
     String(QString const &text);
     String(char const *nullTerminatedCStr);
     String(wchar_t const *nullTerminatedWideStr);
@@ -94,6 +95,16 @@ public:
     String(QString const &str, size_type index, size_type length);
     String(const_iterator start, const_iterator end);
     String(iterator start, iterator end);
+
+    inline String &operator = (String const &other) {
+        QString::operator = (other);
+        return *this;
+    }
+
+    inline String &operator = (String &&moved) {
+        QString::operator = (moved);
+        return *this;
+    }
 
     /// Conversion to a character pointer.
     operator QChar const *() const {
