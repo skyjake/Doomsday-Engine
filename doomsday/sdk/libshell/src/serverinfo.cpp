@@ -25,39 +25,45 @@
 namespace de {
 namespace shell {
 
-static String const VAR_VERSION                 ("version");
-static String const VAR_PROTOCOL_VERSION        ("proto");
-static String const VAR_COMPATIBILITY_VERSION   ("compat");
+static String const VAR_VERSION                 ("ver");
+static String const VAR_COMPATIBILITY_VERSION   ("cver");
 static String const VAR_HOST                    ("host");
+static String const VAR_PORT                    ("port");
 static String const VAR_NAME                    ("name");
 static String const VAR_DESCRIPTION             ("desc");
 static String const VAR_PLUGIN                  ("plugin");
 static String const VAR_PACKAGES                ("pkgs");
 static String const VAR_GAME_ID                 ("game");
-static String const VAR_GAME_CONFIG             ("conf");
+static String const VAR_GAME_CONFIG             ("cfg");
 static String const VAR_MAP                     ("map");
-static String const VAR_PLAYERS                 ("players");
-static String const VAR_MAX_PLAYERS             ("plmax");
+static String const VAR_PLAYERS                 ("plrs");
+static String const VAR_PLAYER_COUNT            ("pnum");
+static String const VAR_MAX_PLAYERS             ("pmax");
 static String const VAR_FLAGS                   ("flags");
 
 ServerInfo::ServerInfo()
 {
-    set(VAR_VERSION, Version::currentBuild().asText());
-    set(VAR_PROTOCOL_VERSION, DENG2_PROTOCOL_LATEST);
+    set(VAR_VERSION, Version::currentBuild().baseNumber());
     addArray(VAR_PLAYERS);
 }
 
 ServerInfo::ServerInfo(ServerInfo const &other)
     : Record(other)
-{}
+{
+    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+}
 
 ServerInfo::ServerInfo(Record const &rec)
     : Record(rec)
-{}
+{
+    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+}
 
 ServerInfo::ServerInfo(ServerInfo &&moved)
     : Record(std::move(moved))
-{}
+{
+    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+}
 
 ServerInfo &ServerInfo::operator = (ServerInfo const &other)
 {
@@ -74,11 +80,6 @@ ServerInfo &ServerInfo::operator = (ServerInfo &&moved)
 Version ServerInfo::version() const
 {
     return Version(gets(VAR_VERSION));
-}
-
-ProtocolVersion ServerInfo::protocolVersion() const
-{
-    return ProtocolVersion(geti(VAR_PROTOCOL_VERSION));
 }
 
 int ServerInfo::compatibilityVersion() const
@@ -100,7 +101,13 @@ Address ServerInfo::address() const
 ServerInfo &ServerInfo::setAddress(Address const &address)
 {
     set(VAR_HOST, address.asText());
+    set(VAR_PORT, address.port());
     return *this;
+}
+
+duint16 ServerInfo::port() const
+{
+    return duint16(geti(VAR_PORT, shell::DEFAULT_PORT));
 }
 
 String ServerInfo::name() const
@@ -191,13 +198,14 @@ StringList ServerInfo::players() const
 
 int ServerInfo::playerCount() const
 {
-    return int(geta(VAR_PLAYERS).size());
+    return geti(VAR_PLAYER_COUNT, 0);
 }
 
 ServerInfo &ServerInfo::addPlayer(String const &playerName)
 {
     ArrayValue &players = member(VAR_PLAYERS).value<ArrayValue>();
     players.add(playerName);
+    set(VAR_PLAYER_COUNT, players.size());
     return *this;
 }
 
@@ -209,6 +217,7 @@ ServerInfo &ServerInfo::removePlayer(String const &playerName)
         if (players.at(i).asText() == playerName)
         {
             players.remove(i);
+            set(VAR_PLAYER_COUNT, players.size());
             break;
         }
     }
@@ -264,6 +273,16 @@ String ServerInfo::asStyledText() const
 Block ServerInfo::asJSON() const
 {
     return composeJSON(*this);
+}
+
+Record ServerInfo::strippedForBroadcast() const
+{
+    Record stripped(*this);
+    if (stripped.has(VAR_HOST))     stripped.remove(VAR_HOST);     // address in network msg
+    if (stripped.has(VAR_PLUGIN))   stripped.remove(VAR_PLUGIN);   // gameId+version is enough
+    if (stripped.has(VAR_PLAYERS))  stripped.remove(VAR_PLAYERS);  // count is enough
+    if (stripped.has(VAR_PACKAGES)) stripped.remove(VAR_PACKAGES); // queried before connecting
+    return stripped;
 }
 
 ServerInfo &ServerInfo::setFlags(Flags const &flags)

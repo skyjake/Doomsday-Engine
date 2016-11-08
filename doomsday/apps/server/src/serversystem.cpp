@@ -148,7 +148,7 @@ DENG2_PIMPL(ServerSystem)
             if (serverSock && App_World().hasMap())
             {
                 Block msg;
-                de::Writer(msg).withHeader() << ServerApp::currentServerInfo();
+                de::Writer(msg).withHeader() << ServerApp::currentServerInfo().strippedForBroadcast();
                 beacon.setMessage(msg);
             }
         }

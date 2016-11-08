@@ -48,10 +48,10 @@ public:
     ServerInfo &operator = (ServerInfo &&moved);
 
     Version version() const;
-    ProtocolVersion protocolVersion() const;
     int compatibilityVersion() const;
 
     Address address() const;
+    duint16 port() const;
     String name() const;
     String description() const;
     String pluginDescription() const;
@@ -66,6 +66,7 @@ public:
 
     String asStyledText() const;
     Block asJSON() const;
+    Record strippedForBroadcast() const;
 
     ServerInfo &setCompatibilityVersion(int compatVersion);
     ServerInfo &setAddress(Address const &address);
