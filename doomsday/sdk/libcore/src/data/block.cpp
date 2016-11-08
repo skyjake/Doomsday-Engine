@@ -175,6 +175,16 @@ Block &Block::operator = (IByteArray const &byteArray)
     return *this;
 }
 
+Block Block::compressed() const
+{
+    return qCompress(*this);
+}
+
+Block Block::decompressed() const
+{
+    return qUncompress(*this);
+}
+
 Block Block::join(QList<Block> const &blocks, Block const &sep) // static
 {
     if (blocks.isEmpty()) return Block();

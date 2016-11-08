@@ -109,6 +109,9 @@ public:
 
     Block &operator = (IByteArray const &byteArray);
 
+    Block compressed() const;
+    Block decompressed() const;
+
 public:
     static Block join(QList<Block> const &blocks, Block const &sep = Block());
 };

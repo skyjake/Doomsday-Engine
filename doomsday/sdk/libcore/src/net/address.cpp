@@ -41,17 +41,17 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
 
     if (QLatin1String(address) == "localhost")
     {
-        d->host = QHostAddress(QHostAddress::LocalHost);
+        d->host = QHostAddress(QHostAddress::LocalHostIPv6);
     }
     else
     {
-        d->host = QHostAddress(address);
+        d->host = QHostAddress(QHostAddress(address).toIPv6Address());
     }
 }
 
 Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
 {
-    d->host = host;
+    d->host = QHostAddress(host.toIPv6Address());
     d->port = port;
 }
 
@@ -70,6 +70,10 @@ Address &Address::operator = (Address const &other)
 
 bool Address::operator < (Address const &other) const
 {
+    if (d->host == other.d->host)
+    {
+        return d->port < other.d->port;
+    }
     quint32 const a = d->host.toIPv4Address();
     quint32 const b = other.d->host.toIPv4Address();
     if (a == b)
@@ -95,7 +99,7 @@ QHostAddress const &Address::host() const
 
 void Address::setHost(QHostAddress const &host)
 {
-    d->host = host;
+    d->host = QHostAddress(host.toIPv6Address());
 }
 
 bool Address::isLocal() const
@@ -149,12 +153,13 @@ QTextStream &operator << (QTextStream &os, Address const &address)
 
 bool Address::isHostLocal(QHostAddress const &host) // static
 {
-    if (host == QHostAddress::LocalHost) return true;
+    if (host.isLoopback()) return true;
 
-    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
+    QHostInfo const info = QHostInfo::fromName(QHostInfo::localHostName());
     foreach (QHostAddress addr, info.addresses())
     {
-        if (addr == host) return true;
+        if (QHostAddress(addr.toIPv6Address()) == host)
+            return true;
     }
     return false;
 }
