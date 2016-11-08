@@ -49,7 +49,7 @@ signals:
 
 public slots:
     void openConnection(QString address);
-    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath);
+    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, QString name);
     void openConnection(de::shell::Link *link, de::String name = "");
     void closeConnection();
     void sendCommandToServer(de::String command);

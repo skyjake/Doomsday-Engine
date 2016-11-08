@@ -225,7 +225,8 @@ void GuiShellApp::startLocalServer()
             }
             sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
 
-            newOrReusedConnectionWindow()->waitForLocalConnection(dlg.port(), sv.errorLogPath());
+            newOrReusedConnectionWindow()->waitForLocalConnection
+                    (dlg.port(), sv.errorLogPath(), dlg.name());
         }
     }
     catch (Error const &er)
@@ -273,7 +274,7 @@ void GuiShellApp::aboutShell()
 
 void GuiShellApp::showHelp()
 {
-    QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
+    QDesktopServices::openUrl(QUrl(tr("http://wiki.dengine.net/w/Shell_Help")));
 }
 
 void GuiShellApp::openWebAddress(QString url)

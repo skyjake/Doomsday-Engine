@@ -393,7 +393,8 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::waitForLocalConnection(duint16 localPort, NativePath const &errorLogPath)
+void LinkWindow::waitForLocalConnection(duint16 localPort, NativePath const &errorLogPath,
+                                        QString name)
 {
     closeConnection();
 
@@ -404,7 +405,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort, NativePath const &err
     d->startedWaitingAt = Time();
     d->errorLog = errorLogPath;
 
-    d->linkName = tr("Local Server %1").arg(localPort);
+    d->linkName = name + " - "  + tr("Local Server %1").arg(localPort);
     setTitle(d->linkName);
 
     d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
