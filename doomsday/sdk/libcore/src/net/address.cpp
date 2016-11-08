@@ -124,7 +124,7 @@ bool Address::matches(Address const &other, duint32 mask)
 
 String Address::asText() const
 {
-    String result = (d->host == QHostAddress::LocalHost? "localhost" : d->host.toString());
+    String result = (isLocal()? String("localhost") : d->host.toString());
     if (d->port)
     {
         result += ":" + QString::number(d->port);

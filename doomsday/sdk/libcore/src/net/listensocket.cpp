@@ -75,7 +75,7 @@ Socket *ListenSocket::accept()
     }
 
     QTcpSocket *s = d->incoming.takeFirst();
-    LOG_NET_NOTE("Accepted new connection from %s") << s->peerAddress().toString();
+    LOG_NET_NOTE("Accepted new connection from %s") << Address(s->peerAddress()).asText();
 
     // We can use this constructor because we are Socket's friend.
     return new Socket(s);

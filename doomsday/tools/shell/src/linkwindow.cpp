@@ -131,7 +131,8 @@ DENG2_PIMPL(LinkWindow)
             if (self.isConnected() && !link->address().isNull())
             {
                 txt = tr("<b>%1</b>:%2")
-                        .arg(link->address().host().toString())
+                        .arg(link->address().isLocal()? "localhost"
+                                                      : link->address().host().toString())
                         .arg(link->address().port());
             }
             else if (self.isConnected() && link->address().isNull())

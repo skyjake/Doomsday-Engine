@@ -136,7 +136,9 @@ ServerInfo ServerFinder::messageFromServer(Address const &address) const
         throw NotFoundError("ServerFinder::messageFromServer",
                             "No message from server " + address.asText());
     }
-    return ServerInfo(*d->servers[address].message);
+    ServerInfo info(*d->servers[address].message);
+    info.setAddress(address);
+    return info;
 }
 
 void ServerFinder::found(Address host, Block block)
@@ -162,6 +164,8 @@ void ServerFinder::found(Address host, Block block)
             d->servers.insert(host, found);
         }
         Reader(block).withHeader() >> *found.message;
+
+        //qDebug() << "Server found:\n" << found.message->asText().toLatin1().constData();
 
         emit updated();
     }

@@ -98,7 +98,7 @@ void Beacon::setMessage(IByteArray const &advertisedMessage)
 
     d->message += Block(advertisedMessage).compressed();
 
-    qDebug() << "Beacon message:" << advertisedMessage.size() << d->message.size();
+    //qDebug() << "Beacon message:" << advertisedMessage.size() << d->message.size();
 }
 
 void Beacon::stop()
