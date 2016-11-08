@@ -27,6 +27,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QUrl>
+#include <QTimer>
 #include <QDesktopServices>
 
 Q_DECLARE_METATYPE(de::Address)
@@ -224,7 +225,7 @@ void GuiShellApp::startLocalServer()
             }
             sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
 
-            newOrReusedConnectionWindow()->openConnection(sv.openLink(), sv.errorLogPath());
+            newOrReusedConnectionWindow()->waitForLocalConnection(dlg.port(), sv.errorLogPath());
         }
     }
     catch (Error const &er)

@@ -30,7 +30,7 @@
 class LinkWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     LinkWindow(QWidget *parent = 0);
 
@@ -49,7 +49,8 @@ signals:
 
 public slots:
     void openConnection(QString address);
-    void openConnection(de::shell::Link *link, de::NativePath const &errorLogPath, de::String name = "");
+    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath);
+    void openConnection(de::shell::Link *link, de::String name = "");
     void closeConnection();
     void sendCommandToServer(de::String command);
     void switchToStatus();
@@ -58,6 +59,7 @@ public slots:
     void updateConsoleFontFromPreferences();
 
 protected slots:
+    void checkFoundServers();
     void handleIncomingPackets();
     void addressResolved();
     void connected();
