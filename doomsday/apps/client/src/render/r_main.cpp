@@ -104,7 +104,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 
     parm.ambientColor[3] = vs.data.sprite.alpha;
 
-    if(vs.data.sprite.isFullBright)
+    if (vs.data.sprite.isFullBright)
     {
         parm.ambientColor[0] =
             parm.ambientColor[1] =
@@ -116,13 +116,13 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         DENG2_ASSERT(vs.bspLeaf);
         world::Map const &map = ClientApp::world().map();
 
-        if(useBias && map.hasLightGrid())
+        if (useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
             Vector4f color = map.lightGrid().evaluate(vs.origin);
 
             // Apply light range compression.
-            for(dint i = 0; i < 3; ++i)
+            for (dint i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -146,7 +146,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(dint i = 0; i < 3; ++i)
+            for (dint i = 0; i < 3; ++i)
             {
                 parm.ambientColor[i] = lightLevel * color[i];
             }
@@ -161,34 +161,34 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 
 void Rend_Draw2DPlayerSprites()
 {
-    if(!viewPlayer) return;
+    if (!viewPlayer) return;
 
     ddplayer_t const &ddpl = viewPlayer->publicData();
 
     // Cameramen have no HUD sprites.
-    if(ddpl.flags & DDPF_CAMERA  ) return;
-    if(ddpl.flags & DDPF_CHASECAM) return;
+    if (ddpl.flags & DDPF_CAMERA  ) return;
+    if (ddpl.flags & DDPF_CHASECAM) return;
 
-    if(fogParams.usingFog)
+    if (fogParams.usingFog)
     {
         LIBGUI_GL.glEnable(GL_FOG);
     }
 
     // Draw HUD vissprites.
-    for(vispsprite_t const &vs : visPSprites)
+    for (vispsprite_t const &vs : visPSprites)
     {
         // We are only interested in sprites (models are handled elsewhere).
-        if(vs.type != VPSPR_SPRITE) continue;  // No...
+        if (vs.type != VPSPR_SPRITE) continue;  // No...
 
         // We require PSprite and State info.
-        if(!vs.psp || !vs.psp->statePtr) continue;
+        if (!vs.psp || !vs.psp->statePtr) continue;
 
         try
         {
             rendpspriteparams_t parm; setupPSpriteParams(parm, vs);
             Rend_DrawPSprite(parm);
         }
-        catch(Resources::MissingResourceManifestError const &er)
+        catch (Resources::MissingResourceManifestError const &er)
         {
             // Log but otherwise ignore this error.
             state_t const &state = *vs.psp->statePtr;
@@ -197,7 +197,7 @@ void Rend_Draw2DPlayerSprites()
         }
     }
 
-    if(fogParams.usingFog)
+    if (fogParams.usingFog)
     {
         LIBGUI_GL.glDisable(GL_FOG);
     }
@@ -235,7 +235,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &
     params->shinepspriteCoordSpace = true;
     vis.light.ambientColor[3] = spr.data.model.alpha;
 
-    if((levelFullBright || spr.data.model.stateFullBright) &&
+    if ((levelFullBright || spr.data.model.stateFullBright) &&
        !spr.data.model.mf->testSubFlag(0, MFF_DIM))
     {
         vis.light.ambientColor[0] = vis.light.ambientColor[1] = vis.light.ambientColor[2] = 1;
@@ -252,23 +252,49 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    GLFramebuffer::AlternativeBuffer altDepth
-            (GLState::current().target(), GLFramebuffer::DepthStencil);
+    bool first = true;
+    std::unique_ptr<GLFramebuffer::AlternativeBuffer> altDepth;
+    static bool altDepthSupported = true;
+
+    if (altDepthSupported)
+    {
+        try
+        {
+            altDepth.reset(new GLFramebuffer::AlternativeBuffer
+                           (GLState::current().target(), GLFramebuffer::DepthStencil));
+        }
+        catch (...)
+        {
+            // The FBO doesn't support an alternative depth target.
+            // We will not try again...
+            altDepthSupported = false;
+        }
+    }
 
     // Draw HUD vissprites.
-    for(vispsprite_t const &spr : visPSprites)
+    for (vispsprite_t const &spr : visPSprites)
     {
         // We are only interested in models (sprites are handled elsewhere).
-        if(spr.type != VPSPR_MODEL &&
-           spr.type != VPSPR_MODEL2) continue;
+        if (spr.type != VPSPR_MODEL &&
+            spr.type != VPSPR_MODEL2) continue;
 
-        if(altDepth.init())
+        if (first)
         {
-            // Clear the depth before first use.
-            altDepth.target().clear(GLFramebuffer::DepthStencil);
+            first = false;
+            if (altDepth && altDepth->init())
+            {
+                // Clear the depth before first use.
+                altDepth->target().clear(GLFramebuffer::DepthStencil);
+            }
+            else
+            {
+                // As a fallback, just clear the depth buffer so models don't clip
+                // into walls.
+                GLState::current().target().clear(GLFramebuffer::Depth);
+            }
         }
 
-        if(spr.type == VPSPR_MODEL)
+        if (spr.type == VPSPR_MODEL)
         {
             vissprite_t vs; de::zap(vs);
             setupModelParamsForVisPSprite(vs, spr);
