@@ -70,6 +70,7 @@ FolderSelection::FolderSelection(QString const &prompt, QWidget *parent)
 {
     d->prompt = prompt;
     connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
+    connect(d->edit, SIGNAL(textEdited(QString)), this, SIGNAL(selected()));
 }
 
 FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent)
