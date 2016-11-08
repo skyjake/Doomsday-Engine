@@ -51,6 +51,7 @@
 #include <de/LogBuffer>
 #include <de/DictionaryValue>
 #include <de/Log>
+#include <de/EscapeParser>
 #include <de/NativePath>
 #ifdef __CLIENT__
 #  include <de/texgamma.h>
@@ -1222,7 +1223,9 @@ void DD_FinishInitializationAfterWindowReady()
     }
     catch (Error const &er)
     {
-        Sys_CriticalMessage((er.asText() + ".").toUtf8().constData());
+        EscapeParser esc;
+        esc.parse(er.asText());
+        Sys_CriticalMessage(esc.plainText().toUtf8().constData());
     }
     catch (...)
     {}
