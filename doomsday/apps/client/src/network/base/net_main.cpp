@@ -1322,7 +1322,7 @@ void Net_Register()
     //C_CMD_FLAGS ("logout",   "",         Logout, CMDF_NO_NULLGAME);
     C_CMD_FLAGS ("kick",    "i",        Kick, CMDF_NO_NULLGAME);
 #endif
-    C_CMD_FLAGS ("net",     nullptr,    Net,  CMDF_NO_NULLGAME);
+    C_CMD       ("net",     nullptr,    Net);
     C_CMD_FLAGS ("ping",    nullptr,    Ping, CMDF_NO_NULLGAME);
     C_CMD_FLAGS ("say",     nullptr,    Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS ("saynum",  nullptr,    Chat, CMDF_NO_NULLGAME);

@@ -65,7 +65,7 @@ static QString masterUrl(char const *suffix = 0)
 
 DENG2_PIMPL_NOREF(MasterWorker)
 {
-    QNetworkAccessManager* network;
+    QNetworkAccessManager *network;
 
     typedef std::list<job_t> Jobs;
     Jobs jobs;

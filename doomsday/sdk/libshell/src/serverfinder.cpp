@@ -120,7 +120,7 @@ String ServerFinder::name(Address const &server) const
 
 int ServerFinder::playerCount(Address const &server) const
 {
-    return messageFromServer(server).players().size();
+    return messageFromServer(server).playerCount();
 }
 
 int ServerFinder::maxPlayers(Address const &server) const
@@ -137,7 +137,7 @@ ServerInfo ServerFinder::messageFromServer(Address const &address) const
                             "No message from server " + address.asText());
     }
     ServerInfo info(*d->servers[address].message);
-    info.setAddress(address);
+    info.setAddress(Address(address.host(), info.port()));
     return info;
 }
 

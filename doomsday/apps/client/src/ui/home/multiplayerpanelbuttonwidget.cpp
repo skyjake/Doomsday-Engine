@@ -92,27 +92,42 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         // Use a delayed callback so that the UI is not blocked while we switch games.
         auto const info = serverInfo;
-        Loop::get().timer(0.1, [info] ()
+        //Loop::get().timer(0.1, [info] ()
         {
             // Switch locally to the game running on the server.
             BusyMode_FreezeGameForBusyMode();
             ClientWindow::main().taskBar().close();
 
+            auto &svLink = ClientApp::serverLink();
+
             // Automatically leave the current MP game.
             if (netGame && isClient)
             {
-                ClientApp::serverLink().disconnect();
+                svLink.disconnect();
             }
 
-            /// @todo Set up a temporary profile using packages from the server.
+            // Get the profile for this.
+            svLink.acquireServerProfile(info.address(),
+                                        [&svLink, info] (GameProfile const *serverProfile)
+            {
+                if (!serverProfile)
+                {
+                    // Hmm, oopsie?
+                    LOG_NET_ERROR("Failed to connect: not enough information about "
+                                  "server %s") << info.address();
+                    return;
+                }
 
-            DoomsdayApp::app().changeGame(
-                        DoomsdayApp::games()[info.gameId()].profile(),
-                        DD_ActivateGameWorker);
-            Con_Execute(CMDS_DDAY, String("connect %1")
-                        .arg(info.address().asText()).toUtf8(),
-                        false, false);
-        });
+                DoomsdayApp::app().changeGame(
+                            *serverProfile /*DoomsdayApp::games()[info.gameId()].profile()*/,
+                            DD_ActivateGameWorker);
+
+                svLink.connectHost(info.address());
+                /*Con_Execute(CMDS_DDAY, String("connect %1")
+                            .arg(info.address().asText()).toUtf8(),
+                            false, false);*/
+            });
+        }
     }
 
     bool hasConfig(String const &token) const

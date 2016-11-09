@@ -684,8 +684,12 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
 {
     auto const &newGame = games()[profile.game()];
 
+    bool const arePackagesDifferent =
+            !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),
+                                                     profile.packagesAffectingGameplay());
+
     // Ignore attempts to reload the current game?
-    if (game().id() == newGame.id())
+    if (game().id() == newGame.id() && !arePackagesDifferent)
     {
         // We are reloading.
         if (!behaviors.testFlag(AllowReload))

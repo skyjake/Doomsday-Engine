@@ -170,7 +170,7 @@ StringList GameProfiles::Profile::allRequiredPackages() const
     return DoomsdayApp::games()[d->gameId].requiredPackages() + d->packages;
 }
 
-StringList GameProfiles::Profile::packagesIncludedInSavegames() const
+StringList GameProfiles::Profile::packagesAffectingGameplay() const
 {
     StringList ids = PackageLoader::get().expandDependencies(allRequiredPackages());
     QMutableListIterator<String> iter(ids);
@@ -186,7 +186,7 @@ StringList GameProfiles::Profile::packagesIncludedInSavegames() const
 
 bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const
 {
-    return GameProfiles::arePackageListsCompatible(packagesIncludedInSavegames(), ids);
+    return GameProfiles::arePackageListsCompatible(packagesAffectingGameplay(), ids);
 }
 
 bool GameProfiles::Profile::isPlayable() const

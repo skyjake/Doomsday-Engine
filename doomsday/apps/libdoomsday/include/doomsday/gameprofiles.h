@@ -55,7 +55,7 @@ public:
          */
         de::StringList allRequiredPackages() const;
 
-        de::StringList packagesIncludedInSavegames() const;
+        de::StringList packagesAffectingGameplay() const;
 
         bool isCompatibleWithPackages(de::StringList const &ids) const;
 

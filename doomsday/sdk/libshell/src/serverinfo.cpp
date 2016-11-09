@@ -60,7 +60,7 @@ ServerInfo::ServerInfo(Record const &rec)
 }
 
 ServerInfo::ServerInfo(ServerInfo &&moved)
-    : Record(std::move(moved))
+    : Record(moved)
 {
     if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
 }
@@ -68,12 +68,14 @@ ServerInfo::ServerInfo(ServerInfo &&moved)
 ServerInfo &ServerInfo::operator = (ServerInfo const &other)
 {
     Record::operator = (other);
+    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
     return *this;
 }
 
 ServerInfo &ServerInfo::operator = (ServerInfo &&moved)
 {
     Record::operator = (moved);
+    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
     return *this;
 }
 
@@ -95,7 +97,11 @@ ServerInfo &ServerInfo::setCompatibilityVersion(int compatVersion)
 
 Address ServerInfo::address() const
 {
-    return Address::parse(gets(VAR_HOST));
+    if (has(VAR_HOST))
+    {
+        return Address::parse(gets(VAR_HOST));
+    }
+    return Address();
 }
 
 ServerInfo &ServerInfo::setAddress(Address const &address)
@@ -112,7 +118,7 @@ duint16 ServerInfo::port() const
 
 String ServerInfo::name() const
 {
-    return gets(VAR_NAME);
+    return gets(VAR_NAME, "");
 }
 
 ServerInfo &ServerInfo::setName(String const &name)
@@ -305,7 +311,7 @@ void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
     LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s")
             << indexNumber
             << name()
-            << plrs.size()
+            << playerCount()
             << maxPlayers()
             << (flags().testFlag(AllowJoin)? ' ' : '*')
             << compatibilityVersion()
@@ -315,12 +321,12 @@ void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
     LOG_NET_MSG("    %s %s") << gameId() << gameConfig();
 
     // Optional: PWADs in use.
-    LOG_NET_MSG("    Packages: %s") << String::join(packages(), " ");
+    LOG_NET_MSG("    Packages: " _E(>) "%s") << String::join(packages(), "\n");
 
     // Optional: names of players.
     if (!plrs.isEmpty())
     {
-        LOG_NET_MSG("    Players: %s") << String::join(plrs, " ");
+        LOG_NET_MSG("    Players: " _E(>) "%s") << String::join(plrs, "\n");
     }
 }
 

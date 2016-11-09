@@ -46,6 +46,9 @@ public:
 
     void clear();
 
+    void acquireServerProfile(de::Address const &address,
+                              std::function<void (GameProfile const *)> resultHandler);
+
     void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0);
     void connectHost(de::Address const &address);
 
