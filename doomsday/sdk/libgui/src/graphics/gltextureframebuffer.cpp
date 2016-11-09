@@ -78,8 +78,10 @@ DENG2_PIMPL(GLTextureFramebuffer)
         texFboState.setState(NotReady);
     }
 
+#if 0
     void configureTexturesWithFallback(GLFramebuffer &fbo)
     {
+        fbo.configure(&color, &depthStencil);
         // Try a couple of different ways to set up the FBO.
         for (int attempt = 0; ; ++attempt)
         {
@@ -136,6 +138,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
             }
         }
     }
+#endif
 
     void reconfigure()
     {
@@ -160,14 +163,28 @@ DENG2_PIMPL(GLTextureFramebuffer)
         if (isMultisampled())
         {
             self.configure(size, ColorDepthStencil, sampleCount());
-            configureTexturesWithFallback(resolvedFbo);
+            //configureTexturesWithFallback(resolvedFbo);
+            resolvedFbo.configure(&color, &depthStencil);
         }
         else
         {
-            configureTexturesWithFallback(self);
+            try
+            {
+                //configureTexturesWithFallback(self);
+                self.configure(&color, &depthStencil);
+            }
+            catch (ConfigError const &er)
+            {
+                LOG_GL_WARNING("Using framebuffer configuration fallback "
+                               "(depth/stencil inaccessible): ") << er.asText();
+                self.configure(size, ColorDepthStencil);
+                resolvedFbo.configure(GLFramebuffer::Color, color);
+            }
         }
 
         self.clear(GLFramebuffer::ColorDepthStencil);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void resize(Size const &newSize)
@@ -247,7 +264,8 @@ void GLTextureFramebuffer::resize(Size const &newSize)
 
 void GLTextureFramebuffer::resolveSamples()
 {
-    if (d->isMultisampled())
+    //if (d->isMultisampled())
+    if (d->resolvedFbo.isReady())
     {
         // Copy the framebuffer contents to the textures (that have no multisampling).
         blit(d->resolvedFbo, ColorDepthStencil);
@@ -256,7 +274,7 @@ void GLTextureFramebuffer::resolveSamples()
 
 GLFramebuffer &GLTextureFramebuffer::resolvedFramebuffer()
 {
-    if (d->isMultisampled())
+    if (d->resolvedFbo.isReady())
     {
         return d->resolvedFbo;
     }
@@ -285,7 +303,7 @@ int GLTextureFramebuffer::sampleCount() const
 
 GLTexture *GLTextureFramebuffer::attachedTexture(Flags const &attachment) const
 {
-    if (d->isMultisampled())
+    if (d->resolvedFbo.isReady())
     {
         return d->resolvedFbo.attachedTexture(attachment);
     }

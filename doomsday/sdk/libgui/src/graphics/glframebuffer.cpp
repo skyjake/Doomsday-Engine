@@ -183,6 +183,7 @@ DENG2_OBSERVES(Asset, Deletion)
         GLInfo::EXT_framebuffer_object()->glGenFramebuffersEXT(1, &fbo);
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
 
+        LIBGUI_ASSERT_GL_OK();
         LOG_GL_XVERBOSE("Creating FBO %i") << fbo;
     }
 
@@ -205,6 +206,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
         GLInfo::EXT_framebuffer_object()->glGenRenderbuffersEXT(1, &renderBufs[id]);
         GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, renderBufs[id]);
+        LIBGUI_ASSERT_GL_OK();
 
         if (sampleCount > 1)
         {
@@ -216,6 +218,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
                 GLInfo::NV_framebuffer_multisample_coverage()->glRenderbufferStorageMultisampleCoverageNV(
                         GL_RENDERBUFFER, 8, sampleCount, type, size.x, size.y);
+                LIBGUI_ASSERT_GL_OK();
             }
             else
             {
@@ -226,11 +229,13 @@ DENG2_OBSERVES(Asset, Deletion)
                 //DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
                 GLInfo::EXT_framebuffer_multisample()->glRenderbufferStorageMultisampleEXT(
                         GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+                LIBGUI_ASSERT_GL_OK();
             }
         }
         else
         {
             GLInfo::EXT_framebuffer_object()->glRenderbufferStorageEXT(GL_RENDERBUFFER, type, size.x, size.y);
+            LIBGUI_ASSERT_GL_OK();
         }
 
         GLInfo::EXT_framebuffer_object()->glFramebufferRenderbufferEXT(
@@ -415,6 +420,7 @@ DENG2_OBSERVES(Asset, Deletion)
         self.setState(Ready);
 
         GLState::current().target().glBind();
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void assetBeingDeleted(Asset &asset)
@@ -510,6 +516,8 @@ void GLFramebuffer::configure(Vector2ui const &size, Flags const &flags, int sam
     d->allocFBO();
     d->allocRenderBuffers();
     d->validate();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GLFramebuffer::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
@@ -548,6 +556,8 @@ void GLFramebuffer::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     {
         d->attachRenderbuffer(Impl::DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
     }
+
+    LIBGUI_ASSERT_GL_OK();
 
     d->validate();
 }

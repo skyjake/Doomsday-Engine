@@ -201,6 +201,8 @@ DENG2_PIMPL(Bloom)
 
         GLState::pop();
 
+        workFB.resolveSamples();
+
         /*
          * Draw step #2: vertical blur and blending back to the real framebuffer.
          */

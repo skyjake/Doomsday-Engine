@@ -275,6 +275,8 @@ DENG2_PIMPL(GuiWidget)
         self.root().drawUntil(self);
         GLState::pop();
 
+        blur->fb[0]->resolveSamples();
+
         // Pass 2: apply the horizontal blur filter to draw the background
         // contents onto the second blur texture.
         GLState::push()
@@ -286,6 +288,8 @@ DENG2_PIMPL(GuiWidget)
         blur->drawable.setProgram(blur->drawable.program());
         blur->drawable.draw();
         GLState::pop();
+
+        blur->fb[1]->resolveSamples();
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
@@ -1074,7 +1078,7 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, f
                              rect.height() / float(viewSize.y));
     blur->uMvpMatrix = root().projMatrix2D() *
                        Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
-    blur->drawable.setProgram("vert");
+    blur->drawable.setProgram(QStringLiteral("vert"));
 
     blur->drawable.draw();
 }
