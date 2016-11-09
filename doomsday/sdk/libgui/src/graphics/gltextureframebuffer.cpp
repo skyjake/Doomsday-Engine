@@ -172,6 +172,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
             {
                 //configureTexturesWithFallback(self);
                 self.configure(&color, &depthStencil);
+                resolvedFbo.setState(NotReady);
             }
             catch (ConfigError const &er)
             {
