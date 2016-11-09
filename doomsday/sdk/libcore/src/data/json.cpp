@@ -220,6 +220,7 @@ public:
                 result.append(c);
             }
         }
+        skipWhite();
         return QString(result.constData(), result.size());
     }
 
