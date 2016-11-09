@@ -70,21 +70,30 @@ Address &Address::operator = (Address const &other)
 
 bool Address::operator < (Address const &other) const
 {
-    if (d->host == other.d->host)
+    return asText() < other.asText();
+#if 0
+    if (d->host == other.d->host || (isLocal() && other.isLocal()))
     {
         return d->port < other.d->port;
     }
-    quint32 const a = d->host.toIPv4Address();
-    quint32 const b = other.d->host.toIPv4Address();
-    if (a == b)
-        return d->port < other.d->port;
-    else
-        return a < b;
+
+    QIPv6Address const a = d->host      .toIPv6Address();
+    QIPv6Address const b = other.d->host.toIPv6Address();
+
+    for (int i = 0; i < 16; ++i)
+    {
+        if (a[i] < b[i]) return true;
+        if (a[i] > b[i]) return false;
+    }
+
+    return d->port < other.d->port;
+#endif
 }
 
 bool Address::operator == (Address const &other) const
 {
-    return d->host == other.d->host && d->port == other.d->port;
+    if (d->port != other.d->port) return false;
+    return (isLocal() && other.isLocal()) || (d->host == other.d->host);
 }
 
 bool Address::isNull() const
