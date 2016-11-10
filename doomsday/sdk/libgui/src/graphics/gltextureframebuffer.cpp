@@ -160,30 +160,58 @@ DENG2_PIMPL(GLTextureFramebuffer)
 
         DENG2_ASSERT(depthStencil.isReady());
 
+        // Configure the framebuffer(s) in the best way supported by hardware.
+        // The fallbacks are for older HW/drivers only, reasonably modern ones should
+        // have no problem supporting either of the first choices.
+
         if (isMultisampled())
         {
             self.configure(size, ColorDepthStencil, sampleCount());
-            //configureTexturesWithFallback(resolvedFbo);
             resolvedFbo.configure(&color, &depthStencil);
         }
         else
         {
             try
             {
-                //configureTexturesWithFallback(self);
                 self.configure(&color, &depthStencil);
                 resolvedFbo.setState(NotReady);
             }
             catch (ConfigError const &er)
             {
-                LOG_GL_WARNING("Using framebuffer configuration fallback "
-                               "(depth/stencil inaccessible): ") << er.asText();
-                self.configure(size, ColorDepthStencil);
-                resolvedFbo.configure(GLFramebuffer::Color, color);
+                try
+                {
+                    LOG_GL_WARNING("Using framebuffer configuration fallback 1 "
+                                   "(depth & stencil will be used for rendering but "
+                                   "are inaccessible in shaders): ") << er.asText();
+
+                    self.configure(size, ColorDepthStencil);
+                    resolvedFbo.configure(Color, color);
+                }
+                catch (ConfigError const &er)
+                {
+                    try
+                    {
+                        LOG_GL_WARNING("Using framebuffer configuration fallback 2 "
+                                       "(only depth used for rendering, depth & stencil "
+                                       "inaccessible in shaders): ") << er.asText();
+
+                        self.configure(Color, color, Depth);
+                        resolvedFbo.setState(NotReady);
+                    }
+                    catch (ConfigError const &er)
+                    {
+                        LOG_GL_WARNING("Using final framebuffer configuration fallback 3 "
+                                       "(only depth used for rendering, depth & stencil "
+                                       "inaccessible in shaders): ") << er.asText();
+                        self.configure(size, ColorDepth);
+                        resolvedFbo.configure(GLFramebuffer::Color, color);
+                    }
+                }
             }
         }
 
-        self.clear(GLFramebuffer::ColorDepthStencil);
+        self.clear(ColorDepthStencil);
+        if (resolvedFbo.isReady()) resolvedFbo.clear(ColorDepthStencil);
 
         LIBGUI_ASSERT_GL_OK();
     }
