@@ -92,11 +92,10 @@ bool GLFramebuffer::AlternativeBuffer::init()
         d->originalRendBuf = d->target->attachedRenderBuffer(d->attachment);
         if (d->originalRendBuf == 0)
         {
-            // Currently using a texture attachment.
+            // Currently using a texture attachment?
             d->original = d->target->attachedTexture(d->attachment);
+            if (!d->original) return false; // Not supported.
         }
-
-        /// @todo What about separate depth+stencil (if that even works at all)?
 
         d->target->replaceWithNewRenderBuffer(d->attachment);
     }
