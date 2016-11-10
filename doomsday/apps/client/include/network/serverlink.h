@@ -46,6 +46,18 @@ public:
 
     void clear();
 
+    /**
+     * Acquires a game profile that describes the game on a multiplayer server.
+     * If information about the server at @a address is not currently available, a
+     * discovery query is sent to the address.
+     *
+     * After the server's profile is available, a callback is made via LoopCallback.
+     *
+     * @param address        Server address.
+     * @param resultHandler  Callback for receiving the server profile. ServerLink
+     *                       retains ownership of the profile. The profile is @c nullptr
+     *                       if server discovery fails and the profile is not available.
+     */
     void acquireServerProfile(de::Address const &address,
                               std::function<void (GameProfile const *)> resultHandler);
 

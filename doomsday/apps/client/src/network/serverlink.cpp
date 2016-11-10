@@ -118,6 +118,7 @@ DENG2_PIMPL(ServerLink)
 
                 notifyDiscoveryUpdate();
 
+                // If the server's profile is being acquired, do the callback now.
                 if (profileResultCallback)
                 {
                     if (prepareServerProfile(svAddress))
