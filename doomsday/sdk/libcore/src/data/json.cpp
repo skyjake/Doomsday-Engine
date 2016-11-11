@@ -86,7 +86,7 @@ public:
         return source[pos++];
     }
 
-    void error(QString const &message) DENG2_NORETURN
+    DENG2_NORETURN void error(QString const &message)
     {
         throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
                         .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
