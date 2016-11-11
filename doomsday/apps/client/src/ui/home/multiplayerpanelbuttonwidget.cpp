@@ -90,44 +90,41 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
-        // Use a delayed callback so that the UI is not blocked while we switch games.
         auto const info = serverInfo;
-        //Loop::get().timer(0.1, [info] ()
+
+        auto &svLink = ClientApp::serverLink();
+
+        // Automatically leave the current MP game.
+        if (netGame && isClient)
         {
-            // Switch locally to the game running on the server.
-            BusyMode_FreezeGameForBusyMode();
-            ClientWindow::main().taskBar().close();
+            svLink.disconnect();
+        }
 
-            auto &svLink = ClientApp::serverLink();
-
-            // Automatically leave the current MP game.
-            if (netGame && isClient)
+        // Get the profile for this.
+        // Use a delayed callback so that the UI is not blocked while we switch games.
+        svLink.acquireServerProfile(info.address(),
+                                    [&svLink, info] (GameProfile const *serverProfile)
+        {
+            if (!serverProfile)
             {
-                svLink.disconnect();
+                // Hmm, oopsie?
+                LOG_NET_ERROR("Failed to connect: not enough information about "
+                              "server %s") << info.address();
+                return;
             }
 
-            // Get the profile for this.
-            svLink.acquireServerProfile(info.address(),
-                                        [&svLink, info] (GameProfile const *serverProfile)
-            {
-                if (!serverProfile)
-                {
-                    // Hmm, oopsie?
-                    LOG_NET_ERROR("Failed to connect: not enough information about "
-                                  "server %s") << info.address();
-                    return;
-                }
+            auto &win = ClientWindow::main();
+            win.glActivate();
 
-                DoomsdayApp::app().changeGame(
-                            *serverProfile /*DoomsdayApp::games()[info.gameId()].profile()*/,
-                            DD_ActivateGameWorker);
+            BusyMode_FreezeGameForBusyMode();
+            win.taskBar().close();
 
-                svLink.connectHost(info.address());
-                /*Con_Execute(CMDS_DDAY, String("connect %1")
-                            .arg(info.address().asText()).toUtf8(),
-                            false, false);*/
-            });
-        }
+            DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
+
+            svLink.connectHost(info.address());
+
+            win.glDone();
+        });
     }
 
     bool hasConfig(String const &token) const

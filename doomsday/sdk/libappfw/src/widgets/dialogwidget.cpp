@@ -711,7 +711,7 @@ void DialogWidget::preparePanelForOpening()
 
 void DialogWidget::finish(int result)
 {
-    root().setFocus(0);
+    root().setFocus(nullptr);
     close();
 
     d->untrapper.reset();
