@@ -41,6 +41,18 @@ static String const VAR_PLAYER_COUNT            ("pnum");
 static String const VAR_MAX_PLAYERS             ("pmax");
 static String const VAR_FLAGS                   ("flags");
 
+void checkValid(ServerInfo &info)
+{
+    if (!info.has(VAR_PLAYERS)) info.addArray(VAR_PLAYERS);
+    if (info.has(VAR_HOST))
+    {
+        if (info.address().port() != info.port())
+        {
+            info.setAddress(Address(info.address().host(), info.port()));
+        }
+    }
+}
+
 ServerInfo::ServerInfo()
 {
     set(VAR_VERSION, Version::currentBuild().baseNumber());
@@ -50,32 +62,32 @@ ServerInfo::ServerInfo()
 ServerInfo::ServerInfo(ServerInfo const &other)
     : Record(other)
 {
-    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+    checkValid(*this);
 }
 
 ServerInfo::ServerInfo(Record const &rec)
     : Record(rec)
 {
-    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+    checkValid(*this);
 }
 
 ServerInfo::ServerInfo(ServerInfo &&moved)
     : Record(moved)
 {
-    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+    checkValid(*this);
 }
 
 ServerInfo &ServerInfo::operator = (ServerInfo const &other)
 {
     Record::operator = (other);
-    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+    checkValid(*this);
     return *this;
 }
 
 ServerInfo &ServerInfo::operator = (ServerInfo &&moved)
 {
     Record::operator = (moved);
-    if (!has(VAR_PLAYERS)) addArray(VAR_PLAYERS);
+    checkValid(*this);
     return *this;
 }
 
@@ -107,7 +119,8 @@ Address ServerInfo::address() const
 ServerInfo &ServerInfo::setAddress(Address const &address)
 {
     set(VAR_HOST, address.asText());
-    set(VAR_PORT, address.port());
+    set(VAR_PORT, address.port()? address.port() : shell::DEFAULT_PORT);
+    checkValid(*this);
     return *this;
 }
 
