@@ -157,12 +157,6 @@ DENG2_PIMPL(LinkWindow)
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
-
-        // Perhaps show the error log?
-        if (!errorLog.isEmpty())
-        {
-            showErrorLog();
-        }
     }
 
     QString readErrorLogContents() const
@@ -177,12 +171,7 @@ DENG2_PIMPL(LinkWindow)
 
     bool checkForErrors()
     {
-        if (startedWaitingAt.since() > 5.0)
-        {
-            QString const text = readErrorLogContents();
-            return !text.isEmpty();
-        }
-        return false;
+        return !readErrorLogContents().isEmpty();
     }
 
     void showErrorLog()
@@ -336,7 +325,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     setTitle(tr("Disconnected"));
     d->stopAction->setDisabled(true);
 
-    // Waiting for local servers:
+    // Observer local servers.
+    connect(&GuiShellApp::app(), SIGNAL(localServerStopped(int)), this, SLOT(localServerStopped(int)));
     connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(checkFoundServers()));
     connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
     d->waitTimeout.start();
@@ -393,7 +383,8 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::waitForLocalConnection(duint16 localPort, NativePath const &errorLogPath,
+void LinkWindow::waitForLocalConnection(duint16 localPort,
+                                        NativePath const &errorLogPath,
                                         QString name)
 {
     closeConnection();
@@ -463,12 +454,11 @@ void LinkWindow::closeConnection()
 
         delete d->link;
         d->link = 0;
-        d->waitingForLocalPort = 0;
-
-        d->disconnected();
 
         emit linkClosed(this);
     }
+
+    d->disconnected();
 }
 
 void LinkWindow::switchToStatus()
@@ -641,6 +631,21 @@ void LinkWindow::askForPassword()
     QTimer::singleShot(1, this, SLOT(closeConnection()));
 }
 
+void LinkWindow::localServerStopped(int port)
+{
+    if (d->waitingForLocalPort == port)
+    {
+        if (!d->errorLog.isEmpty())
+        {
+            if (d->checkForErrors())
+            {
+                d->showErrorLog();
+            }
+        }
+        closeConnection();
+    }
+}
+
 void LinkWindow::updateConsoleFontFromPreferences()
 {
     d->console->root().setFont(Preferences::consoleFont());
@@ -650,16 +655,6 @@ void LinkWindow::updateConsoleFontFromPreferences()
 void LinkWindow::checkFoundServers()
 {
     if (!d->waitingForLocalPort) return;
-
-    if (!d->errorLog.isEmpty())
-    {
-        if (d->checkForErrors())
-        {
-            d->waitingForLocalPort = 0;
-            d->disconnected();
-            return;
-        }
-    }
 
     auto const &finder = GuiShellApp::app().serverFinder();
     foreach (Address const &addr, finder.foundServers())

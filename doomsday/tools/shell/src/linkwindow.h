@@ -65,6 +65,7 @@ protected slots:
     void connected();
     void disconnected();
     void askForPassword();
+    void localServerStopped(int port);
 
 private:
     DENG2_PRIVATE(d)

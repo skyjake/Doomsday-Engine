@@ -56,9 +56,11 @@ public slots:
 
 signals:
     void consoleFontChanged();
+    void localServerStopped(int port);
 
 protected slots:
     void windowClosed(LinkWindow *window);
+    void checkLocalServers();
 
 private:
     DENG2_PRIVATE(d)
