@@ -433,7 +433,7 @@ DENG2_PIMPL(ClientApp)
         /// @todo These belong in their respective subsystems.
 
         networkSettings
-                .define(Prof::ConfigVariable, "masterServer.apiUrl", "www.dengine.net/master.php")
+                .define(Prof::ConfigVariable, "apiUrl")
                 .define(Prof::IntCVar,        "net-dev",             0);
 
         audioSettings

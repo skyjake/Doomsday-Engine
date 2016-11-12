@@ -50,16 +50,15 @@ typedef struct job_s {
     Record data;
 } job_t;
 
-static String const DEFAULT_API_URL = "api.dengine.net/1/master_server";
-
 dd_bool masterAware = false; // cvar
 
 static QString masterUrl(char const *suffix = 0)
 {
-    String u = App::config().gets("masterServer.apiUrl", DEFAULT_API_URL);
-    if(u.isEmpty()) return u;
-    if(!u.startsWith("http")) u = "http://" + u;
-    if(suffix) u += suffix;
+    String u = App::config().gets("apiUrl");
+    if (!u.startsWith("http")) u = "http://" + u;
+    if (!u.endsWith("/")) u += "/";
+    u += "master_server";
+    if (suffix) u += suffix;
     return u;
 }
 
@@ -92,7 +91,7 @@ void MasterWorker::newJob(Action action, Record const &data)
 {
     LOG_AS("MasterWorker");
 
-    if(masterUrl().isEmpty()) return;
+    if (masterUrl().isEmpty()) return;
 
     job_t job;
     job.act = action;
@@ -126,7 +125,7 @@ shell::ServerInfo MasterWorker::server(int index) const
 
 void MasterWorker::nextJob()
 {
-    if(isOngoing() || isAllDone()) return; // Not a good time, or nothing to do.
+    if (isOngoing() || isAllDone()) return; // Not a good time, or nothing to do.
 
     // Get the next job from the queue.
     job_t job = d->jobs.front();
@@ -134,11 +133,11 @@ void MasterWorker::nextJob()
     d->currentAction = job.act;
 
     // Let's form an HTTP request.
-    QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?list" : 0));
+    QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?op=list" : 0));
     req.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
 
 #ifdef __SERVER__
-    if(d->currentAction == ANNOUNCE)
+    if (d->currentAction == ANNOUNCE)
     {
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-deng-announce");
 
@@ -158,7 +157,7 @@ void MasterWorker::nextJob()
 #endif
     {
         LOGDEV_NET_VERBOSE("GET request ") << req.url().toString();
-        foreach(const QByteArray& hdr, req.rawHeaderList())
+        foreach (QByteArray const &hdr, req.rawHeaderList())
         {
             LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
@@ -174,13 +173,21 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     // Make sure the reply gets deleted afterwards.
     reply->deleteLater();
 
-    if(reply->error() == QNetworkReply::NoError)
+    if (reply->error() == QNetworkReply::NoError)
     {
         LOG_NET_XVERBOSE("Got reply");
 
-        if(d->currentAction == REQUEST_SERVERS)
+        if (d->currentAction == REQUEST_SERVERS)
         {
             parseResponse(reply->readAll());
+        }
+        else
+        {
+            String replyText = String::fromUtf8(Block(reply->readAll())).strip();
+            if (!replyText.isEmpty())
+            {
+                LOGDEV_NET_VERBOSE("Reply contents:\n") << replyText;
+            }
         }
     }
     else
@@ -202,15 +209,6 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
  */
 bool MasterWorker::parseResponse(QByteArray const &response)
 {
-    //ddstring_t msg;
-    //ddstring_t line;
-    //serverinfo_t* info = NULL;
-
-    //Str_InitStd(&msg);
-    //Str_PartAppend(&msg, response.constData(), 0, response.size());
-
-    //Str_InitStd(&line);
-
     try
     {
         d->servers.clear();
@@ -226,7 +224,12 @@ bool MasterWorker::parseResponse(QByteArray const &response)
                     LOG_NET_WARNING("Server information was in unexpected format");
                     continue;
                 }
-                d->servers.append(*entryValue->as<RecordValue>().record());
+                shell::ServerInfo svInfo = *entryValue->as<RecordValue>().record();
+                // Include the port number in the host address.
+                Address addr = svInfo.address();
+                addr.setPort(svInfo.port());
+                svInfo.setAddress(addr);
+                d->servers.append(svInfo);
             }
             catch (Error const &er)
             {
@@ -240,36 +243,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
         LOG_NET_WARNING("Failed to parse master server response: %s") << er.asText();
     }
 
-
-
-    /*const char* pos = Str_Text(&msg);
-    while(*pos)
-    {
-        pos = Str_GetLine(&line, pos);
-
-        if(Str_Length(&line) && !info)
-        {
-            // A new server begins.
-            d->servers.push_back(serverinfo_t());
-            info = &d->servers.back();
-            memset(info, 0, sizeof(*info));
-        }
-        else if(!Str_Length(&line) && info)
-        {
-            // No more current server.
-            info = NULL;
-        }
-
-        if(info)
-        {
-            ServerInfo_FromString(info, Str_Text(&line));
-        }
-    }*/
-
     LOG_NET_MSG("Received %i servers from master") << serverCount();
-
-    //Str_Free(&line);
-    //Str_Free(&msg);
     return true;
 }
 
@@ -283,7 +257,7 @@ void N_MasterInit(void)
 
 void N_MasterShutdown(void)
 {
-    if(!worker) return;
+    if (!worker) return;
 
     delete worker;
     worker = 0;
@@ -308,10 +282,8 @@ void N_MasterAnnounceServer(bool isOpen)
 
     // This will be freed by the worker after the request has been made.
     shell::ServerInfo info = ServerApp::currentServerInfo();
-    //serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
-    //Sv_GetInfo(info);
     if (!isOpen)
     {
         auto flags = info.flags();
