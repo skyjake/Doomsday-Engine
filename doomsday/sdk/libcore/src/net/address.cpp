@@ -21,6 +21,7 @@
 #include "de/String"
 
 #include <QHostInfo>
+#include <QRegularExpression>
 
 namespace de {
 
@@ -39,7 +40,7 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
 {
     d->port = port;
 
-    if (QLatin1String(address) == "localhost")
+    if (QLatin1String(address) == "localhost") // special case
     {
         d->host = QHostAddress(QHostAddress::LocalHostIPv6);
     }
@@ -71,23 +72,6 @@ Address &Address::operator = (Address const &other)
 bool Address::operator < (Address const &other) const
 {
     return asText() < other.asText();
-#if 0
-    if (d->host == other.d->host || (isLocal() && other.isLocal()))
-    {
-        return d->port < other.d->port;
-    }
-
-    QIPv6Address const a = d->host      .toIPv6Address();
-    QIPv6Address const b = other.d->host.toIPv6Address();
-
-    for (int i = 0; i < 16; ++i)
-    {
-        if (a[i] < b[i]) return true;
-        if (a[i] > b[i]) return false;
-    }
-
-    return d->port < other.d->port;
-#endif
 }
 
 bool Address::operator == (Address const &other) const
@@ -145,7 +129,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
 {
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;
-    int portPosMin = 1;
+    /*int portPosMin = 1;
     if (str.beginsWith(QStringLiteral("::ffff:")))
     {
         // IPv4 address.
@@ -156,6 +140,21 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     {
         port = duint16(str.mid(pos + 1).toInt());
         str = str.left(pos);
+    }*/
+    // Let's see if there is a port number included.
+    static QRegularExpression const ipPortRegex
+            ("^(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9]):([0-9]+)$");
+    //qDebug() << "matching:" << addressWithOptionalPort;
+    auto match = ipPortRegex.match(addressWithOptionalPort);
+    if (match.hasMatch())
+    {
+        //qDebug() << match;
+        str  = match.captured(1);
+        port = duint16(match.captured(3).toInt());
+    }
+    else
+    {
+        //qDebug() << "no match!";
     }
     return Address(str.toLatin1(), port);
 }
