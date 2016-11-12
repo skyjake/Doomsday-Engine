@@ -55,6 +55,10 @@ public:
 
     void stop();
 
+    duint16 port() const;
+
+    bool isRunning() const;
+
     /**
      * Opens a link for communicating with the server. The returned link will
      * initially be in the Link::Connecting state.

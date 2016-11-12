@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/LocalServer"
@@ -30,12 +30,19 @@ static String const ERROR_LOG_NAME = "doomsday-errors.out";
 
 DENG2_PIMPL_NOREF(LocalServer)
 {
-    Link *link;
-    duint16 port;
+    Link *link = nullptr;
+    duint16 port = 0;
     String name;
     NativePath userDir;
+    QProcess *proc = nullptr; // not deleted until stopped
 
-    Impl() : link(0), port(0) {}
+    ~Impl()
+    {
+        if (proc && proc->state() == QProcess::NotRunning)
+        {
+            delete proc;
+        }
+    }
 };
 
 LocalServer::LocalServer() : d(new Impl)
@@ -119,19 +126,35 @@ void LocalServer::start(duint16 port,
 
     foreach (String opt, additionalOptions) cmd.append(opt);
 
-    LOG_NET_NOTE("Starting local server with port %i using game mode '%s'")
+    LOG_NET_NOTE("Starting local server on port %i using game mode '%s'")
             << port << gameMode;
 
-    cmd.execute();
+    d->proc = cmd.executeProcess();
 }
 
 void LocalServer::stop()
 {
-    DENG2_ASSERT(d->link != 0);
+    if (isRunning())
+    {
+        LOG_NET_NOTE("Stopping local server on port %i") << d->port;
+        d->proc->kill();
+    }
+}
+
+duint16 LocalServer::port() const
+{
+    return d->port;
+}
+
+bool LocalServer::isRunning() const
+{
+    if (!d->proc) return false;
+    return (d->proc->state() != QProcess::NotRunning);
 }
 
 Link *LocalServer::openLink()
 {
+    if (!isRunning()) return nullptr;
     return new Link(String("localhost:%1").arg(d->port), 30);
 }
 
