@@ -30,6 +30,7 @@ require_once('api_config.inc.php'); // database config
 
 define('DB_TABLE', 'servers');
 define('EXPIRE_SECONDS', 300);
+define('DEFAULT_PORT', 13209);
 
 // Opens the database connection.
 // @return MySQLi object.
@@ -102,6 +103,8 @@ function parse_announcement($json_data)
     $player_max   = (int) $server_info->pmax;
     $player_names = urlencode(json_encode($server_info->plrs));
     $flags        = (int) $server_info->flags;
+
+    if ($port == 0) $port = DEFAULT_PORT;
 
     $db = db_open();
     $table = DB_TABLE;
