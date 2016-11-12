@@ -452,14 +452,25 @@ bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask m
 
 bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 {
-    return d->finder.foundServers().contains(host);
+    Address addr = host;
+    if (!addr.port())
+    {
+        addr.setPort(shell::DEFAULT_PORT);
+    }
+    return d->finder.foundServers().contains(addr);
 }
 
 bool ServerLink::foundServerInfo(de::Address const &host, shell::ServerInfo &info, FoundMask mask) const
 {
+    Address addr = host;
+    if (!addr.port())
+    {
+        addr.setPort(shell::DEFAULT_PORT);
+    }
+
     Impl::Servers const all = d->allFound(mask);
-    if (!all.contains(host)) return false;
-    info = all[host];
+    if (!all.contains(addr)) return false;
+    info = all[addr];
     return true;
 }
 

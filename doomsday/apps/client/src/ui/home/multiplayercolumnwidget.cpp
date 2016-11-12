@@ -29,6 +29,8 @@
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
 
+#include "ui/commandaction.h"
+
 using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerColumnWidget)
@@ -43,9 +45,11 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
         self.header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
-            menu->items() << new ui::ActionItem(tr("Connect to Server..."),
-                                                new SignalAction(&ClientWindow::main().taskBar(),
-                                                                 SLOT(connectToServerManually())));
+            menu->items()
+                    << new ui::ActionItem(tr("Connect to Server..."),
+                                          new SignalAction(&ClientWindow::main().taskBar(),
+                                                           SLOT(connectToServerManually())))
+                    << new ui::ActionItem(tr("Refresh List"), new CommandAction("net request"));
             return menu;
         }, ui::Down);
 
