@@ -145,10 +145,16 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
 {
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;
-    if (str.contains(':'))
+    int portPosMin = 1;
+    if (str.beginsWith(QStringLiteral("::ffff:")))
     {
-        int pos = str.lastIndexOf(':');
-        port = str.mid(pos + 1).toInt();
+        // IPv4 address.
+        portPosMin = 8;
+    }
+    int pos = str.lastIndexOf(':');
+    if (pos >= portPosMin)
+    {
+        port = duint16(str.mid(pos + 1).toInt());
         str = str.left(pos);
     }
     return Address(str.toLatin1(), port);
