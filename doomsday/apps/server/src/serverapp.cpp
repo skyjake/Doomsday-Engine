@@ -268,6 +268,7 @@ shell::ServerInfo ServerApp::currentServerInfo()
     {
         flags |= shell::ServerInfo::AllowJoin;
     }
+    info.setFlags(flags);
 
     // Identifier of the current map.
     if (world().hasMap())
