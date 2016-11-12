@@ -440,34 +440,43 @@ bool CommandLine::execute() const
         return false;
     }
 
-    LOG_DEBUG("Started detached process %i using \"%s\"") << pid << at(0);
+    LOG_DEBUG("Started detached process %i \"%s\"") << pid << at(0);
     return true;
 }
 
 bool CommandLine::executeAndWait(String *output) const
 {
+    std::unique_ptr<QProcess> proc(executeProcess());
+    if (!proc)
+    {
+        return false;
+    }
+    bool result = proc->waitForFinished();
+    if (output)
+    {
+        *output = String::fromUtf8(Block(proc->readAll()));
+    }
+    return result;
+}
+
+QProcess *CommandLine::executeProcess() const
+{
     LOG_AS("CommandLine");
 
-    if (count() < 1) return false;
+    if (count() < 1) return nullptr;
 
     QStringList args;
     for (int i = 1; i < count(); ++i) args << at(i);
 
-    LOG_DEBUG("Starting process \"%s\"") << at(0);
-
-    if (output) output->clear();
-
-    QProcess proc;
-    proc.start(at(0), args);
-    if (!proc.waitForStarted()) return false;
-    bool result = proc.waitForFinished();
-
-    if (output)
+    auto *proc = new QProcess;
+    proc->start(at(0), args);
+    if (!proc->waitForStarted())
     {
-        *output = String::fromUtf8(Block(proc.readAll()));
+        delete proc;
+        return nullptr;
     }
-
-    return result;
+    LOG_DEBUG("Started process %i \"%s\"") << proc->pid() << at(0);
+    return proc;
 }
 
 CommandLine &CommandLine::get()
