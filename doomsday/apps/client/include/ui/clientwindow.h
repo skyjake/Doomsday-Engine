@@ -167,9 +167,6 @@ public:
     // Notifications.
     bool isFPSCounterVisible() const;
 
-    // Events.
-    //void closeEvent(QCloseEvent *) override;
-
     // Implements BaseWindow.
     de::Vector2f windowContentSize() const override;
     void drawWindowContent() override;
@@ -184,6 +181,9 @@ public slots:
     void toggleFPSCounter();
     void showColorAdjustments();
     void hideTaskBarBlur();
+
+protected:
+    void windowAboutToClose() override;
 
 private:
     DENG2_PRIVATE(d)

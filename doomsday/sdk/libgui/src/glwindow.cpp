@@ -335,6 +335,10 @@ bool GLWindow::event(QEvent *ev)
         return QApplication::sendEvent(&canvas(), &keyEvent);
     }
 #endif*/
+    if (ev->type() == QEvent::Close)
+    {
+        windowAboutToClose();
+    }
     return QOpenGLWindow::event(ev);
 }
 
@@ -448,6 +452,9 @@ void GLWindow::paintGL()
         d->timerQueryPending = true;
     }
 }
+
+void GLWindow::windowAboutToClose()
+{}
 
 void GLWindow::resizeEvent(QResizeEvent *ev)
 {
