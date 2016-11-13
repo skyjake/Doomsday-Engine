@@ -78,11 +78,11 @@ de::dint Sv_Latency(byte cmdTime);
 
 void Sv_Kick(de::dint who);
 
-void Sv_GetInfo(serverinfo_t *info);
+//void Sv_GetInfo(serverinfo_t *info);
 
-de::dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg);
+//de::dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg);
 
-de::Record *Sv_InfoToRecord(serverinfo_t *info);
+//de::Record *Sv_InfoToRecord(serverinfo_t *info);
 
 de::dint Sv_GetNumPlayers();
 

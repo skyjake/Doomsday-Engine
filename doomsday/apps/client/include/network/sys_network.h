@@ -32,6 +32,8 @@
 #include "monitor.h"
 #include "serverlink.h"
 
+#include <de/shell/ServerInfo>
+
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
@@ -42,8 +44,8 @@ ServerLink &Net_ServerLink(void);
 
 void    N_Register(void);
 void    N_PrintInfo(void);
-int     N_GetHostCount(void);
-dd_bool N_GetHostInfo(int index, struct serverinfo_s *info);
+//int     N_GetHostCount(void);
+//dd_bool N_GetHostInfo(int index, de::shell::ServerInfo &info);
 void    N_PrintNetworkStatus(void);
 
 #endif  // CLIENT_SYSTEM_NETWORK_H

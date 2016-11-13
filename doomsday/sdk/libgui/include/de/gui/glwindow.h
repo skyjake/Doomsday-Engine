@@ -181,6 +181,7 @@ public:
 protected:
     void initializeGL() override;
     void paintGL() override;
+    virtual void windowAboutToClose();
 
     // Native events.
     void resizeEvent            (QResizeEvent *ev) override;

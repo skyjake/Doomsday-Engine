@@ -139,10 +139,9 @@ public:
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
-        Type *ptrs[] = { &x, &y };
         if (index >= 0 && index < 2)
         {
-            return *ptrs[index];
+            return (&x)[index];
         }
         throw Error("Vector2::operator []", QString("Illegal index %1").arg(index));
     }
@@ -345,12 +344,9 @@ public:
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 2);
-        Type *ptrs[] = { &(this->Vector2<Type>::x),
-                         &(this->Vector2<Type>::y),
-                         &z };
         if (index >= 0 && index < 3)
         {
-            return *ptrs[index];
+            return (&(this->Vector2<Type>::x))[index];
         }
         throw Error("Vector3::operator []", QString("Illegal index %1").arg(index));
     }
@@ -575,13 +571,9 @@ public:
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
-        Type *ptrs[] = { &(this->Vector2<Type>::x),
-                         &(this->Vector2<Type>::y),
-                         &(this->Vector3<Type>::z),
-                         &w };
         if (index >= 0 && index < 4)
         {
-            return *ptrs[index];
+            return (&(this->Vector2<Type>::x))[index];
         }
         throw Error("Vector4::operator []", QString("Illegal index %1").arg(index));
     }

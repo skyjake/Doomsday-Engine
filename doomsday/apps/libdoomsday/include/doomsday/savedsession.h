@@ -183,8 +183,8 @@ public:
     }
 
     /**
-     * Locates a state data file in this saved or in one of its subfolders. Looks recusively
-     * through subfolders.
+     * Locates a state data file in this saved or in one of its subfolders. Looks
+     * recusively through subfolders.
      *
      * @param path  Path to look for. Relative to this folder.
      *
@@ -197,16 +197,16 @@ public:
 
 public:
     /**
-     * Determines if informatino about a package should be included in savegame files.
-     * Packages that alter gameplay or game objects must be included, while purely visual
-     * content does not.
+     * Determines if a package affects gameplay and should therefore be included in
+     * savegame and multiplayer metadata. Packages that alter gameplay or game objects
+     * must be included, while purely visual content does not.
      *
      * @param packageId  Package identifier.
      *
-     * @return @c true, if the package must be included in the list of packages in
-     * savegame metadata. @c false, if it is omitted.
+     * @return @c true, if the package has gameplay-altering contents. @c false, if its
+     * contents are only superficial.
      */
-    static bool isIncludedInSavegames(de::String const &packageId);
+    static bool isPackageAffectingGameplay(de::String const &packageId);
 
     /**
      * Utility for composing the full path of a state data file in the saved session.

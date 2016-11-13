@@ -243,16 +243,14 @@ void ViewCompositor::drawCompositedLayers()
 
     // Fill around a scaled-down 3D view. The border is not visible if the 3D view
     // covers the entire area.
-    //if (d->frameDrawable.isReady())
-    {
-        R_RenderPlayerViewBorder();
-    }
 
     // Game HUD.
+    if (auto const *vp = R_CurrentViewPort())
     {
+        R_RenderPlayerViewBorder();
+
         /// @todo HUD rendering probably doesn't need the vdWindow (maybe for the automap?).
 
-        auto const *vp = R_CurrentViewPort();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
                            vp->geometry.width(), vp->geometry.height());
 

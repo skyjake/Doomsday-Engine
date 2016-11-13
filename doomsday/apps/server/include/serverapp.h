@@ -21,6 +21,7 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
+#include <de/shell/ServerInfo>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Games>
 #include <doomsday/resource/resources.h>
@@ -48,6 +49,12 @@ public:
             de::StringList const &packageIds,
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) override;
+
+    /**
+     * Fill in a ServerInfo record with the current status of a running server.
+     * @return Server information.
+     */
+    static de::shell::ServerInfo currentServerInfo();
 
 protected:
     void unloadGame(GameProfile const &upcomingGame) override;

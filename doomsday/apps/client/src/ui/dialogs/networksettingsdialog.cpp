@@ -34,7 +34,7 @@ using namespace de::ui;
 
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
-    VariableLineEditWidget *masterApi;
+    VariableLineEditWidget *webApiUrl;
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(masterApi = new VariableLineEditWidget(App::config("masterServer.apiUrl")));
+        area.add(webApiUrl = new VariableLineEditWidget(App::config("apiUrl")));
 
         // Developer options.
         self.add(devPopup = new GridPopupWidget);
@@ -71,13 +71,13 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
-    LabelWidget *masterApiLabel = LabelWidget::newWithText(tr("Master API URL:"), &area());
+    LabelWidget *webApiUrlLabel = LabelWidget::newWithText(tr("Web API:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *masterApiLabel  << *d->masterApi;
+    layout << *webApiUrlLabel  << *d->webApiUrl;
 
     area().setContentSize(layout.width(), layout.height());
 

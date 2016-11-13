@@ -488,6 +488,11 @@ void Socket::initialize()
     QObject::connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
     QObject::connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
     QObject::connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
+
+    /*QObject::connect(d->socket, &QAbstractSocket::stateChanged, [] (QAbstractSocket::SocketState state)
+    {
+        qDebug() << "socket state:" << state;
+    });*/
 }
 
 void Socket::close()

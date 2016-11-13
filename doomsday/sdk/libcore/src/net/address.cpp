@@ -21,6 +21,8 @@
 #include "de/String"
 
 #include <QHostInfo>
+#include <QNetworkInterface>
+#include <QRegularExpression>
 
 namespace de {
 
@@ -39,19 +41,19 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
 {
     d->port = port;
 
-    if (QLatin1String(address) == "localhost")
+    if (QLatin1String(address) == "localhost") // special case
     {
-        d->host = QHostAddress(QHostAddress::LocalHost);
+        d->host = QHostAddress(QHostAddress::LocalHostIPv6);
     }
     else
     {
-        d->host = QHostAddress(address);
+        d->host = QHostAddress(QHostAddress(address).toIPv6Address());
     }
 }
 
 Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
 {
-    d->host = host;
+    d->host = QHostAddress(host.toIPv6Address());
     d->port = port;
 }
 
@@ -70,17 +72,13 @@ Address &Address::operator = (Address const &other)
 
 bool Address::operator < (Address const &other) const
 {
-    quint32 const a = d->host.toIPv4Address();
-    quint32 const b = other.d->host.toIPv4Address();
-    if (a == b)
-        return d->port < other.d->port;
-    else
-        return a < b;
+    return asText() < other.asText();
 }
 
 bool Address::operator == (Address const &other) const
 {
-    return d->host == other.d->host && d->port == other.d->port;
+    if (d->port != other.d->port) return false;
+    return (isLocal() && other.isLocal()) || (d->host == other.d->host);
 }
 
 bool Address::isNull() const
@@ -95,7 +93,7 @@ QHostAddress const &Address::host() const
 
 void Address::setHost(QHostAddress const &host)
 {
-    d->host = host;
+    d->host = QHostAddress(host.toIPv6Address());
 }
 
 bool Address::isLocal() const
@@ -120,7 +118,7 @@ bool Address::matches(Address const &other, duint32 mask)
 
 String Address::asText() const
 {
-    String result = (d->host == QHostAddress::LocalHost? "localhost" : d->host.toString());
+    String result = (isLocal()? String("localhost") : d->host.toString());
     if (d->port)
     {
         result += ":" + QString::number(d->port);
@@ -128,15 +126,36 @@ String Address::asText() const
     return result;
 }
 
-Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort)
+Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort) // static
 {
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;
-    if (str.contains(':'))
+    /*int portPosMin = 1;
+    if (str.beginsWith(QStringLiteral("::ffff:")))
     {
-        int pos = str.lastIndexOf(':');
-        port = str.mid(pos + 1).toInt();
+        // IPv4 address.
+        portPosMin = 8;
+    }
+    int pos = str.lastIndexOf(':');
+    if (pos >= portPosMin)
+    {
+        port = duint16(str.mid(pos + 1).toInt());
         str = str.left(pos);
+    }*/
+    // Let's see if there is a port number included.
+    static QRegularExpression const ipPortRegex
+            ("^(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9]):([0-9]+)$");
+    //qDebug() << "matching:" << addressWithOptionalPort;
+    auto match = ipPortRegex.match(addressWithOptionalPort);
+    if (match.hasMatch())
+    {
+        //qDebug() << match;
+        str  = match.captured(1);
+        port = duint16(match.captured(3).toInt());
+    }
+    else
+    {
+        //qDebug() << "no match!";
     }
     return Address(str.toLatin1(), port);
 }
@@ -149,12 +168,13 @@ QTextStream &operator << (QTextStream &os, Address const &address)
 
 bool Address::isHostLocal(QHostAddress const &host) // static
 {
-    if (host == QHostAddress::LocalHost) return true;
+    if (host.isLoopback()) return true;
 
-    QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach (QHostAddress addr, info.addresses())
+    QHostAddress const hostv6(host.toIPv6Address());
+    foreach (QHostAddress addr, QNetworkInterface::allAddresses())
     {
-        if (addr == host) return true;
+        if (QHostAddress(addr.toIPv6Address()) == hostv6)
+            return true;
     }
     return false;
 }

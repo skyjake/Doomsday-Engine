@@ -1,0 +1,14 @@
+<?php
+
+// For development: show PHP errors.
+//ini_set('display_errors', 1);
+//error_reporting(E_ALL ^ E_NOTICE);
+
+// Set to true when setup actions are enabled.
+define('DENG_SETUP_ENABLED', false);
+
+// Database configuration.
+define('DENG_DB_HOST',     'localhost');
+define('DENG_DB_NAME',     '');
+define('DENG_DB_USER',     '');
+define('DENG_DB_PASSWORD', '');

@@ -69,6 +69,9 @@ def setDefaults(d = None)
     record d.fs
     d.fs.selectedPackages = {}
 
+    # Network settings.
+    d.apiUrl = 'http://api.dengine.net/1/'
+
     try
         # Get the application's default configuration, if we can.
         import appconfig

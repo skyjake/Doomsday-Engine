@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Beacon"
@@ -33,7 +33,9 @@ namespace de {
  */
 static duint16 const MAX_LISTEN_RANGE = 16;
 
-static char const *discoveryMessage = "Doomsday Beacon 1.0";
+// 1.0: Initial version.
+// 1.1: Advertised message is compressed with zlib (deflate).
+static char const *discoveryMessage = "Doomsday Beacon 1.1";
 
 DENG2_PIMPL_NOREF(Beacon)
 {
@@ -94,7 +96,9 @@ void Beacon::setMessage(IByteArray const &advertisedMessage)
     // Begin with the service listening port.
     Writer(d->message) << d->servicePort;
 
-    d->message += Block(advertisedMessage);
+    d->message += Block(advertisedMessage).compressed();
+
+    //qDebug() << "Beacon message:" << advertisedMessage.size() << d->message.size();
 }
 
 void Beacon::stop()
@@ -204,15 +208,16 @@ void Beacon::readDiscoveryReply()
             duint16 listenPort = 0;
             Reader(block) >> listenPort;
             block.remove(0, 2);
+            block = block.decompressed();
 
-            Address host(from, listenPort);
+            Address const host(from, listenPort);
             d->found.insert(host, block);
 
             emit found(host, block);
         }
         catch (Error const &)
         {
-            // Bogus message, ignore.
+            // Bogus reply message, ignore.
         }
     }
 }

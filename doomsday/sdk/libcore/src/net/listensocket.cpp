@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ListenSocket"
@@ -75,7 +75,7 @@ Socket *ListenSocket::accept()
     }
 
     QTcpSocket *s = d->incoming.takeFirst();
-    LOG_NET_NOTE("Accepted new connection from %s") << s->peerAddress().toString();
+    LOG_NET_NOTE("Accepted new connection from %s") << Address(s->peerAddress()).asText();
 
     // We can use this constructor because we are Socket's friend.
     return new Socket(s);

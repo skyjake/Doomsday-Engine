@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Id"
@@ -29,7 +29,7 @@ Id::Type Id::_generator = 1;
 
 Id::Id() : _id(_generator++)
 {
-    if (_id == None) 
+    if (_id == None)
     {
         ++_id;
     }
@@ -39,7 +39,7 @@ Id::Id(String const &text) : _id(None)
 {
     if (text.beginsWith("{") && text.endsWith("}"))
     {
-        _id = text.substr(1, text.size() - 2).toUInt();
+        _id = text.substr(1, text.size() - 2).toUInt(nullptr, 16);
     }
 }
 
@@ -50,15 +50,15 @@ Id::operator String () const
 {
     return asText();
 }
-    
+
 Id::operator Value::Number () const
 {
     return static_cast<Value::Number>(_id);
 }
-    
+
 String Id::asText() const
 {
-    return QString("{%1}").arg(_id);
+    return QString("{%1}").arg(_id, 8, 16, QChar('0'));
 }
 
 ddouble Id::asDouble() const

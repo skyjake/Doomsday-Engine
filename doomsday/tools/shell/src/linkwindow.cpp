@@ -64,6 +64,10 @@ DENG2_PIMPL(LinkWindow)
 {
     LogBuffer logBuffer;
     Link *link;
+    duint16 waitingForLocalPort = 0;
+    Time startedWaitingAt;
+    QTimer waitTimeout;
+    String linkName;
     NativePath errorLog;
     QToolBar *tools;
     QToolButton *statusButton;
@@ -77,7 +81,7 @@ DENG2_PIMPL(LinkWindow)
     QAction *stopAction;
 #ifdef MENU_IN_LINK_WINDOW
     QAction *disconnectAction;
-#endif      
+#endif
 
     Impl(Public &i)
         : Base(i),
@@ -94,6 +98,9 @@ DENG2_PIMPL(LinkWindow)
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
         logBuffer.setAutoFlushInterval(0.1);
+
+        waitTimeout.setSingleShot(false);
+        waitTimeout.setInterval(1000);
     }
 
     ~Impl()
@@ -124,7 +131,8 @@ DENG2_PIMPL(LinkWindow)
             if (self.isConnected() && !link->address().isNull())
             {
                 txt = tr("<b>%1</b>:%2")
-                        .arg(link->address().host().toString())
+                        .arg(link->address().isLocal()? "localhost"
+                                                      : link->address().host().toString())
                         .arg(link->address().port());
             }
             else if (self.isConnected() && link->address().isNull())
@@ -149,29 +157,34 @@ DENG2_PIMPL(LinkWindow)
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
+    }
 
-        // Perhaps show the error log?
-        if (!errorLog.isEmpty())
+    QString readErrorLogContents() const
+    {
+        QFile logFile(errorLog);
+        if (logFile.open(QFile::ReadOnly))
         {
-            showErrorLog();
+            return QString::fromUtf8(logFile.readAll());
         }
+        return QString();
+    }
+
+    bool checkForErrors()
+    {
+        return !readErrorLogContents().isEmpty();
     }
 
     void showErrorLog()
     {
-        QFile logFile(errorLog);
-        if (!logFile.open(QFile::ReadOnly))
+        QString const text = readErrorLogContents();
+        if (!text.isEmpty())
         {
-            return;
+            // Show a message box.
+            ErrorLogDialog dlg;
+            dlg.setLogContent(text);
+            dlg.setMessage(tr("Failed to start the server. This may explain why:"));
+            dlg.exec();
         }
-        QString text = QString::fromUtf8(logFile.readAll());
-        logFile.close();
-
-        // Show a message box.
-        ErrorLogDialog dlg;
-        dlg.setLogContent(text);
-        dlg.setMessage(tr("Failed to start the server. This may explain why:"));
-        dlg.exec();
     }
 
     QToolButton *addToolButton(QString const &label, QIcon const &icon)
@@ -206,7 +219,7 @@ DENG2_PIMPL(LinkWindow)
 
 LinkWindow::LinkWindow(QWidget *parent)
     : QMainWindow(parent), d(new Impl(*this))
-{    
+{
     setUnifiedTitleAndToolBarOnMac(true);
 #ifndef MACOSX
     setWindowIcon(QIcon(":/images/shell.png"));
@@ -251,7 +264,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->status = new StatusWidget;
     d->stack->addWidget(d->status);
 
-    // Console page.    
+    // Console page.
     d->console = new ConsolePage;
     d->stack->addWidget(d->console);
     d->logBuffer.addSink(d->console->log().logSink());
@@ -311,6 +324,12 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->console->root().setOverlaidMessage(tr("Disconnected"));
     setTitle(tr("Disconnected"));
     d->stopAction->setDisabled(true);
+
+    // Observer local servers.
+    connect(&GuiShellApp::app(), SIGNAL(localServerStopped(int)), this, SLOT(localServerStopped(int)));
+    connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(checkFoundServers()));
+    connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
+    d->waitTimeout.start();
 }
 
 void LinkWindow::setTitle(const QString &title)
@@ -364,7 +383,27 @@ void LinkWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void LinkWindow::openConnection(Link *link, NativePath const &errorLogPath, String name)
+void LinkWindow::waitForLocalConnection(duint16 localPort,
+                                        NativePath const &errorLogPath,
+                                        QString name)
+{
+    closeConnection();
+
+    d->logBuffer.flush();
+    d->console->log().clear();
+
+    d->waitingForLocalPort = localPort;
+    d->startedWaitingAt = Time();
+    d->errorLog = errorLogPath;
+
+    d->linkName = name + " - "  + tr("Local Server %1").arg(localPort);
+    setTitle(d->linkName);
+
+    d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
+    statusBar()->showMessage(tr("Waiting for local server..."));
+}
+
+void LinkWindow::openConnection(Link *link, String name)
 {
     closeConnection();
 
@@ -372,19 +411,23 @@ void LinkWindow::openConnection(Link *link, NativePath const &errorLogPath, Stri
     d->console->log().clear();
 
     d->link = link;
-    d->errorLog = errorLogPath;
 
     connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
     connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
-    if (name.isEmpty()) name = link->address().asText();
-    setTitle(name);
+    if (!name.isEmpty())
+    {
+        d->linkName = name;
+        setTitle(d->linkName);
+    }
     d->console->root().setOverlaidMessage(tr("Looking up host..."));
     statusBar()->showMessage(tr("Looking up host..."));
+
+    d->link->connectLink();
     d->status->linkConnected(d->link);
-    d->updateCurrentHost();
+
     d->updateStyle();
 }
 
@@ -393,11 +436,14 @@ void LinkWindow::openConnection(QString address)
     qDebug() << "Opening connection to" << address;
 
     // Keep trying to connect to 30 seconds.
-    openConnection(new Link(address, 30), "", address);
+    openConnection(new Link(address, 30), address);
 }
 
 void LinkWindow::closeConnection()
 {
+    d->waitingForLocalPort = 0;
+    d->errorLog.clear();
+
     if (d->link)
     {
         qDebug() << "Closing existing connection to" << d->link->address().asText();
@@ -409,10 +455,10 @@ void LinkWindow::closeConnection()
         delete d->link;
         d->link = 0;
 
-        d->disconnected();
-
         emit linkClosed(this);
     }
+
+    d->disconnected();
 }
 
 void LinkWindow::switchToStatus()
@@ -523,6 +569,7 @@ void LinkWindow::addressResolved()
     d->console->root().setOverlaidMessage(tr("Connecting..."));
     statusBar()->showMessage(tr("Connecting..."));
     d->updateCurrentHost();
+    d->updateStyle();
 }
 
 void LinkWindow::connected()
@@ -530,6 +577,9 @@ void LinkWindow::connected()
     // Once successfully connected, we don't want to show error log any more.
     d->errorLog = "";
 
+    if (d->linkName.isEmpty()) d->linkName = d->link->address().asText();
+    setTitle(d->linkName);
+    d->updateCurrentHost();
     d->console->root().setOverlaidMessage("");
     d->status->linkConnected(d->link);
     statusBar()->clearMessage();
@@ -581,8 +631,39 @@ void LinkWindow::askForPassword()
     QTimer::singleShot(1, this, SLOT(closeConnection()));
 }
 
+void LinkWindow::localServerStopped(int port)
+{
+    if (d->waitingForLocalPort == port)
+    {
+        if (!d->errorLog.isEmpty())
+        {
+            if (d->checkForErrors())
+            {
+                d->showErrorLog();
+            }
+        }
+        closeConnection();
+    }
+}
+
 void LinkWindow::updateConsoleFontFromPreferences()
 {
     d->console->root().setFont(Preferences::consoleFont());
     d->console->update();
+}
+
+void LinkWindow::checkFoundServers()
+{
+    if (!d->waitingForLocalPort) return;
+
+    auto const &finder = GuiShellApp::app().serverFinder();
+    foreach (Address const &addr, finder.foundServers())
+    {
+        if (addr.isLocal() && addr.port() == d->waitingForLocalPort)
+        {
+            // This is the one!
+            QTimer::singleShot(100, [this, addr] () { openConnection(new Link(addr)); });
+            d->waitingForLocalPort = 0;
+        }
+    }
 }

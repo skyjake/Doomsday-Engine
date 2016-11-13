@@ -21,13 +21,12 @@
 
 #include "../widgets/panelbuttonwidget.h"
 #include <de/ButtonWidget>
-
-struct serverinfo_s;
+#include <de/shell/ServerInfo>
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(serverinfo_s const &))
+    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
 
 public:
     MultiplayerPanelButtonWidget();
@@ -36,7 +35,7 @@ public:
 
     void setSelected(bool selected) override;
 
-    void updateContent(serverinfo_s const &info);
+    void updateContent(de::shell::ServerInfo const &info);
 
 private:
     DENG2_PRIVATE(d)

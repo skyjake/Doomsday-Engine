@@ -24,6 +24,8 @@
 #include "../ISerializable"
 #include "../String"
 
+#include <QVariant>
+
 namespace de {
 
 class Process;
@@ -311,12 +313,17 @@ public:
 public:
     /**
      * Construct a value by reading data from the Reader.
-     *
      * @param reader  Data for the value.
-     *
      * @return  Value. Caller gets owernship.
      */
     static Value *constructFrom(Reader &reader);
+
+    /**
+     * Construct a value by converting from a QVariant.
+     * @param variant  Data for the value.
+     * @return Value. Caller gets ownership.
+     */
+    static Value *constructFrom(QVariant const &variant);
 
 protected:
     typedef dbyte SerialId;

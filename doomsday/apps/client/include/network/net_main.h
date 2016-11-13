@@ -136,7 +136,7 @@ enum {
 #define SVINFO_VALID_LABEL_LEN  16
 
 extern char    *serverName, *serverInfo, *playerName;
-extern int      serverData[];
+//extern int      serverData[];
 
 extern dd_bool  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics
@@ -177,21 +177,19 @@ void Net_Drawer(void);
 
 dd_bool Net_IsLocalPlayer(int pNum);
 
-void ServerInfo_Print(serverinfo_t const *info, int index);
+//void ServerInfo_Print(serverinfo_t const *info, int index);
 
 /**
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
-dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair);
+//dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair);
 
-void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec);
+//void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-de::String ServerInfo_AsStyledText(serverinfo_t const *sv);
 
 de::String Net_UserAgent();
 

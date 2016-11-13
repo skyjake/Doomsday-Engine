@@ -173,6 +173,8 @@ void ShellApp::openConnection(String const &address)
 
     connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+
+    d->link->connectLink();
 }
 
 void ShellApp::showAbout()

@@ -538,13 +538,13 @@ bool DoomsdayApp::isGameLoaded()
     return App::appExists() && !DoomsdayApp::game().isNull();
 }
 
-StringList DoomsdayApp::loadedPackagesIncludedInSavegames() // static
+StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
 {
     StringList ids = PackageLoader::get().loadedPackageIdsInOrder();
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }
@@ -684,8 +684,12 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
 {
     auto const &newGame = games()[profile.game()];
 
+    bool const arePackagesDifferent =
+            !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),
+                                                     profile.packagesAffectingGameplay());
+
     // Ignore attempts to reload the current game?
-    if (game().id() == newGame.id())
+    if (game().id() == newGame.id() && !arePackagesDifferent)
     {
         // We are reloading.
         if (!behaviors.testFlag(AllowReload))

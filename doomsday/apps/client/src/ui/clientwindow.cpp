@@ -441,8 +441,6 @@ DENG2_PIMPL(ClientWindow)
 
     void windowInit(GLWindow &)
     {
-        qDebug() << "Client: windowInit";
-
         Sys_GLConfigureDefaultState();
         GL_Init2DState();
 
@@ -869,9 +867,23 @@ bool ClientWindow::isGameMinimized() const
     return d->isGameMini;
 }
 
-/*
-void ClientWindow::closeEvent(QCloseEvent *ev)
+void ClientWindow::windowAboutToClose()
 {
+    if (BusyMode_Active())
+    {
+        // Oh well, we can't cancel busy mode...
+        return;
+    }
+
+    // Unload the game currently loaded. This will ensure it is shut down gracefully.
+    if (!DoomsdayApp::game().isNull())
+    {
+        glActivate();
+        BusyMode_FreezeGameForBusyMode();
+        DoomsdayApp::app().changeGame(GameProfiles::null(), DD_ActivateGameWorker);
+    }
+
+#if 0
     if (!BusyMode_Active())
     {
         LOG_DEBUG("Window is about to close, executing 'quit'");
@@ -882,8 +894,9 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
-    ev->ignore(); // don't close
-}*/
+    return false;
+#endif
+}
 
 void ClientWindow::preDraw()
 {

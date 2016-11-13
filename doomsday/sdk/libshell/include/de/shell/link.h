@@ -41,6 +41,8 @@ class LIBSHELL_PUBLIC Link : public AbstractLink
     Q_OBJECT
 
 public:
+    DENG2_ERROR(ConnectError);
+
     /**
      * Opens a connection to a server over the network.
      *
@@ -67,6 +69,12 @@ public:
      * Shell protocol for constructing and interpreting packets.
      */
     Protocol &protocol();
+
+    /**
+     * Opens the connection. This is an asynchronous operation. One can observe the
+     * state of the link via signals.
+     */
+    void connectLink();
 
 protected:
     Packet *interpret(Message const &msg);

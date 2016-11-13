@@ -20,8 +20,7 @@
 #define DENG_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
 
 #include "homemenuwidget.h"
-
-struct serverinfo_s;
+#include <de/shell/ServerInfo>
 
 /**
  * Menu for listing available multiplayer servers.
@@ -29,7 +28,7 @@ struct serverinfo_s;
 class MultiplayerServerMenuWidget : public HomeMenuWidget
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(serverinfo_s const &))
+    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
 
     enum DiscoveryMode {
         NoDiscovery,

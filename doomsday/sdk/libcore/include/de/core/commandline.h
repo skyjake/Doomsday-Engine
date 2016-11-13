@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 
+#include <QProcess>
 #include <QStringList>
 
 #include "../libcore.h"
@@ -226,6 +227,8 @@ public:
      * @return @c true if successful, otherwise @c false.
      */
     bool executeAndWait(String *output = 0) const;
+
+    QProcess *executeProcess() const;
 
     static CommandLine &get();
 

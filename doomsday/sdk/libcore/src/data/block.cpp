@@ -40,6 +40,10 @@ Block::Block(Block const &other)
     : QByteArray(other), IByteArray(), IBlock()
 {}
 
+Block::Block(Block &&moved)
+    : QByteArray(moved)
+{}
+
 Block::Block(QByteArray const &byteArray)
     : QByteArray(byteArray)
 {}
@@ -169,6 +173,29 @@ Block &Block::operator = (IByteArray const &byteArray)
 {
     copyFrom(byteArray, 0, byteArray.size());
     return *this;
+}
+
+Block Block::compressed() const
+{
+    return qCompress(*this);
+}
+
+Block Block::decompressed() const
+{
+    return qUncompress(*this);
+}
+
+Block Block::join(QList<Block> const &blocks, Block const &sep) // static
+{
+    if (blocks.isEmpty()) return Block();
+
+    Block joined = blocks.at(0);
+    for (int i = 1; i < blocks.size(); ++i)
+    {
+        joined += sep;
+        joined += blocks.at(i);
+    }
+    return joined;
 }
 
 void Block::clear()

@@ -49,8 +49,8 @@ int main(int, char **)
         qDebug() << "Sizeof Matrix4d:" << sizeof(mc);
 
         qDebug() << "Direct access to members:";
-        qDebug() << a.x << a.y;
-        qDebug() << b.x << b.y << b.z;
+        qDebug() << a.x << a.y << a[0] << a[1];
+        qDebug() << b.x << b.y << b.z << b[0] << b[1] << b[2];
 
         qDebug() << "First operand defines type of result:";
 
@@ -61,7 +61,7 @@ int main(int, char **)
 
         // This would downgrade the latter to int; won't do it.
         //qDebug() << "Vector2i + Vector2f (converted to int!): " << (c + a).asText();
-        
+
         qDebug() << "Vector2i:" << c.asText();
         qDebug() << "Vector2f + Vector2i:" << (a + c).asText();
 
@@ -69,10 +69,10 @@ int main(int, char **)
         b += a;
         qDebug() << "After sum:" ;
         qDebug() << "a:" << a.asText() << "b:" << b.asText();
-        
+
         qDebug() << "a > b: " << (a > b);
         qDebug() << "b > a: " << (b > a);
-        
+
         Vector2f s(1, 1);
         Vector3f t(2, 2, 2);
         qDebug() << "s: " << s.asText() << " t:" << t.asText();
@@ -151,5 +151,5 @@ int main(int, char **)
     }
 
     qDebug() << "Exiting main()...\n";
-    return 0;        
+    return 0;
 }

@@ -132,6 +132,7 @@ void AbstractLink::disconnect()
 
 Address AbstractLink::address() const
 {
+    if (!d->socket) return Address();
     if (d->socket->isOpen()) return d->socket->peerAddress();
     return d->peerAddress;
 }

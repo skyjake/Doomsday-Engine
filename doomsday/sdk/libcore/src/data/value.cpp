@@ -237,6 +237,62 @@ Value *Value::constructFrom(Reader &reader)
     return result.release();
 }
 
+Value *Value::constructFrom(QVariant const &variant)
+{
+    switch (variant.type())
+    {
+    case QVariant::Invalid:
+        return new NoneValue;
+
+    case QVariant::Bool:
+        return new NumberValue(variant.toBool());
+
+    case QVariant::Double:
+        return new NumberValue(variant.toDouble());
+
+    default:
+        break;
+    }
+
+    if (variant.canConvert<QVariantList>())
+    {
+        std::unique_ptr<ArrayValue> array(new ArrayValue);
+        foreach (QVariant value, variant.toList())
+        {
+            *array << constructFrom(value);
+        }
+        return array.release();
+    }
+
+    if (variant.canConvert<QVariantMap>())
+    {
+        auto const map = variant.toMap();
+        if (map.contains(QStringLiteral("__obj__")) &&
+            map[QStringLiteral("__obj__")] == QStringLiteral("Record"))
+        {
+            std::unique_ptr<Record> rec(new Record);
+            foreach (QString key, map.keys())
+            {
+                std::unique_ptr<Value> v(constructFrom(map[key]));
+                rec->add(new Variable(key, v.release()));
+            }
+            return new RecordValue(rec.release(), RecordValue::OwnsRecord);
+        }
+        else
+        {
+            std::unique_ptr<DictionaryValue> dict(new DictionaryValue);
+            foreach (QString key, map.keys())
+            {
+                std::unique_ptr<Value> value(constructFrom(map[key]));
+                dict->add(new TextValue(key), value.release());
+            }
+            return dict.release();
+        }
+    }
+
+    return new TextValue(variant.toString());
+}
+
 Value const &Value::element(dint index) const
 {
     return element(NumberValue(index));

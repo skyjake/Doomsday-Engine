@@ -85,7 +85,7 @@ DENG2_PIMPL(ManualConnectionDialog)
         return self.buttonWidget(tr("Connect"));
     }
 
-    void aboutToJoinMultiplayerGame(serverinfo_t const &) override
+    void aboutToJoinMultiplayerGame(shell::ServerInfo const &) override
     {
         self.accept();
     }

@@ -89,6 +89,29 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile &)> func)
     });
 }
 
+LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func) const
+{
+    return Profiles::forAll([&func] (AbstractProfile const &prof) -> LoopResult
+    {
+        if (auto result = func(prof.as<Profile>()))
+        {
+            return result;
+        }
+        return LoopContinue;
+    });
+}
+
+QList<GameProfile const *> GameProfiles::allPlayableProfiles() const
+{
+    QList<GameProfile const *> playable;
+    forAll([&playable] (Profile const &prof)
+    {
+        if (prof.isPlayable()) playable << &prof;
+        return LoopContinue;
+    });
+    return playable;
+}
+
 Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement const &block)
 {
     std::unique_ptr<Profile> prof(new Profile);
@@ -170,13 +193,13 @@ StringList GameProfiles::Profile::allRequiredPackages() const
     return DoomsdayApp::games()[d->gameId].requiredPackages() + d->packages;
 }
 
-StringList GameProfiles::Profile::packagesIncludedInSavegames() const
+StringList GameProfiles::Profile::packagesAffectingGameplay() const
 {
     StringList ids = PackageLoader::get().expandDependencies(allRequiredPackages());
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isIncludedInSavegames(iter.next()))
+        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }
@@ -186,7 +209,7 @@ StringList GameProfiles::Profile::packagesIncludedInSavegames() const
 
 bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const
 {
-    return GameProfiles::arePackageListsCompatible(packagesIncludedInSavegames(), ids);
+    return GameProfiles::arePackageListsCompatible(packagesAffectingGameplay(), ids);
 }
 
 bool GameProfiles::Profile::isPlayable() const

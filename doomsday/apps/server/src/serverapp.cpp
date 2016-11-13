@@ -20,6 +20,7 @@
 #include "de_platform.h"
 
 #include <QNetworkProxyFactory>
+#include <QHostInfo>
 #include <QDebug>
 #include <stdlib.h>
 
@@ -40,6 +41,7 @@
 #include "con_config.h"
 #include "network/net_main.h"
 #include "world/map.h"
+#include "world/p_players.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -226,7 +228,7 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
                                           String const &userMessageIfIncompatible,
                                           std::function<void ()> finalizeFunc)
 {
-    if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesIncludedInSavegames()))
+    if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
     {
         finalizeFunc();
     }
@@ -234,6 +236,67 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
     {
         LOG_RES_ERROR("%s") << userMessageIfIncompatible;
     }
+}
+
+shell::ServerInfo ServerApp::currentServerInfo()
+{
+    shell::ServerInfo info;
+
+    // Let's figure out what we want to tell about ourselves.
+    info.setCompatibilityVersion(DOOMSDAY_VERSION);
+    info.setPluginDescription(String::format("%s %s",
+                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)),
+                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_VERSION_SHORT))));
+
+    info.setGameId(game().id());
+    info.setGameConfig(reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG)));
+    info.setName(serverName);
+    info.setDescription(serverInfo);
+
+    // The server player is there, it's just hidden.
+    info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
+
+    //info->canJoin = ;
+    shell::ServerInfo::Flags flags(0);
+    if (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers)
+    {
+        flags |= shell::ServerInfo::AllowJoin;
+    }
+    info.setFlags(flags);
+
+    // Identifier of the current map.
+    if (world().hasMap())
+    {
+        auto &map = world().map();
+        String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
+        info.setMap(mapPath);
+    }
+
+    QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
+    if (!host.addresses().isEmpty())
+    {
+        /// @todo Maybe check that it's not a loopback address?
+        info.setAddress(Address(host.addresses().at(0), duint16(nptIPPort)));
+    }
+
+    // Let's compile a list of client names.
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if (DD_Player(i)->isConnected())
+        {
+            info.addPlayer(DD_Player(i)->name);
+        }
+    }
+
+    info.setPackages(loadedPackagesAffectingGameplay());
+
+    // Some WAD names.
+    //composePWADFileList(info->pwads, sizeof(info->pwads), ";");
+
+    // This should be a CRC number that describes all the loaded data.
+    //info->loadedFilesCRC = App_FileSystem().loadedFilesCRC();;
+
+    return info;
 }
 
 void ServerApp::unloadGame(GameProfile const &upcomingGame)

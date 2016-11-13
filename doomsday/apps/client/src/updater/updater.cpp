@@ -327,7 +327,8 @@ DENG2_PIMPL(Updater)
         QVariant result = de::parseJSON(QString::fromUtf8(reply->readAll()));
         if (!result.isValid()) return;
 
-        QVariantMap map  = result.toMap();
+        QVariantMap const map = result.toMap();
+
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri     = map["release_changeloguri"].toString();
 

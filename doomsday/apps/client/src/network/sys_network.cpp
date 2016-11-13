@@ -53,6 +53,7 @@ ServerLink &Net_ServerLink(void)
     return ClientApp::app().serverLink();
 }
 
+#if 0
 dd_bool N_GetHostInfo(int index, struct serverinfo_s *info)
 {
     return Net_ServerLink().foundServerInfo(index, info);
@@ -62,6 +63,7 @@ int N_GetHostCount(void)
 {
     return Net_ServerLink().foundServerCount();
 }
+#endif
 
 /**
  * Called from "net info" (client-side).

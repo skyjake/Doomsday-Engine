@@ -69,6 +69,7 @@ dint svMaxPlayers = DDMAXPLAYERS;
 
 static world::MaterialArchive *materialDict;
 
+#if 0
 /**
  * @defgroup pathToStringFlags  Path To String Flags
  * @ingroup flags
@@ -151,63 +152,9 @@ static void composePWADFileList(char *outBuf, dsize outBufSize, char const *deli
     QByteArray strUtf8 = str.toUtf8();
     strncpy(outBuf, strUtf8.constData(), outBufSize);
 }
+#endif
 
-/**
- * Fills the provided struct with information about the local server.
- */
-void Sv_GetInfo(serverinfo_t *info)
-{
-    DENG2_ASSERT(info);
-
-    de::zapPtr(info);
-
-    world::Map &map = App_World().map();
-
-    // Let's figure out what we want to tell about ourselves.
-    info->version = DOOMSDAY_VERSION;
-    dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char *) gx.GetVariable(DD_PLUGIN_NAME), (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
-    strncpy(info->gameIdentityKey, App_CurrentGame().id().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
-    strncpy(info->gameConfig,      (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
-    strncpy(info->name,            serverName, sizeof(info->name) - 1);
-    strncpy(info->description,     serverInfo, sizeof(info->description) - 1);
-    info->numPlayers = Sv_GetNumPlayers();
-
-    // The server player is there, it's just hidden.
-    info->maxPlayers = DDMAXPLAYERS - (::isDedicated ? 1 : 0);
-
-    // Don't go over the limit.
-    if (info->maxPlayers > ::svMaxPlayers)
-        info->maxPlayers = ::svMaxPlayers;
-
-    info->canJoin = (::isServer != 0 && Sv_GetNumPlayers() < ::svMaxPlayers);
-
-    // Identifier of the current map.
-    String mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
-    qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
-
-    // These are largely unused at the moment... Mainly intended for the game's custom values.
-    std::memcpy(info->data, ::serverData, sizeof(info->data));
-
-    // Also include the port we're using.
-    info->port = ::nptIPPort;
-
-    // Let's compile a list of client names.
-    for (dint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if (DD_Player(i)->isConnected())
-        {
-            M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
-        }
-    }
-
-    // Some WAD names.
-    composePWADFileList(info->pwads, sizeof(info->pwads), ";");
-
-    // This should be a CRC number that describes all the loaded data.
-    info->loadedFilesCRC = App_FileSystem().loadedFilesCRC();;
-}
-
-Record *Sv_InfoToRecord(serverinfo_t *info)
+/*Record *Sv_InfoToRecord(serverinfo_t *info)
 {
     DENG2_ASSERT(info);
 
@@ -236,12 +183,12 @@ Record *Sv_InfoToRecord(serverinfo_t *info)
     }
 
     return rec;
-}
+}*/
 
-/**
+/*
  * @return  Length of the string.
  */
-dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
+/*dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 {
     DENG2_ASSERT(info && msg);
 
@@ -265,7 +212,7 @@ dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
         Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
     }
     return Str_Length(msg);
-}
+}*/
 
 /**
  * @return  gametic - cmdtime.

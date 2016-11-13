@@ -23,7 +23,7 @@ DENG2_PIMPL(ErrorLogDialog)
         text->setReadOnly(true);
         text->setFont(Preferences::consoleFont());
         QFontMetrics metrics(text->font());
-        text->setMinimumWidth(metrics.width("A") * 90);
+        text->setMinimumWidth(metrics.width("A") * 120);
         text->setMinimumHeight(metrics.height() * 15);
         layout->addWidget(text, 1);
 

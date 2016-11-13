@@ -25,12 +25,16 @@
 #include "network/net_event.h"
 #include "network/protocol.h"
 #include "client/cl_def.h"
+#include "ui/clientwindow.h"
 #include "dd_def.h"
 
 #include <QTimer>
+#include <doomsday/Games>
 #include <de/memory.h>
+#include <de/data/json.h>
 #include <de/GuiApp>
 #include <de/Socket>
+#include <de/RecordValue>
 #include <de/Message>
 #include <de/ByteRefArray>
 #include <de/BlockPacket>
@@ -53,9 +57,11 @@ DENG2_PIMPL(ServerLink)
     shell::ServerFinder finder; ///< Finding local servers.
     LinkState state;
     bool fetching;
-    typedef QMap<Address, serverinfo_t> Servers;
+    typedef QMap<Address, shell::ServerInfo> Servers;
     Servers discovered;
     Servers fromMaster;
+    std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
+    std::function<void (GameProfile const *)> profileResultCallback;
     LoopCallback mainCall;
 
     Impl(Public *i)
@@ -78,59 +84,64 @@ DENG2_PIMPL(ServerLink)
         Address svAddress = self.address();
 
         // Local addresses are all represented as "localhost".
-        if(svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
+        if (svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
 
         // Close the connection; that was all the information we need.
         self.disconnect();
 
         // Did we receive what we expected to receive?
-        if(reply.size() >= 5 && reply.startsWith("Info\n"))
+        if (reply.size() >= 5 && reply.startsWith("Info\n"))
         {
-            const char *ch;
-            ddstring_t *line;
-            ddstring_t* response = Str_New();
-
-            // Make a null-terminated copy of the response text.
-            Str_PartAppend(response, (char const *) reply.data(), 0, reply.size());
-
-            serverinfo_t svInfo;
-
-            // Convert the string into a serverinfo_s.
-            line = Str_New();
-            ch = Str_Text(response);
-            do
+            try
             {
-                ch = Str_GetLine(line, ch);
-                ServerInfo_FromString(&svInfo, Str_Text(line));
+                QVariant const response = parseJSON(String::fromUtf8(Block(reply.mid(5))));
+                std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
+                if (!rec->is<RecordValue>())
+                {
+                    throw Error("ServerLink::handleInfoResponse", "Failed to parse response contents");
+                }
+                shell::ServerInfo svInfo(*rec->as<RecordValue>().record());
+
+                LOG_NET_VERBOSE("Discovered server at ") << svAddress;
+
+                // Update with the correct address.
+                svAddress = Address(svAddress.host(), svInfo.port());
+                svInfo.setAddress(svAddress);
+                svInfo.printToLog(0, true);
+
+                discovered.insert(svAddress, svInfo);
+
+                // Show the information in the console.
+                LOG_NET_NOTE("%i server%s been found")
+                        << discovered.size()
+                        << (discovered.size() != 1 ? "s have" : " has");
+
+                notifyDiscoveryUpdate();
+
+                // If the server's profile is being acquired, do the callback now.
+                if (profileResultCallback)
+                {
+                    if (prepareServerProfile(svAddress))
+                    {
+                        LOG_NET_MSG("Received server's game profile from ") << svAddress;
+                        mainCall.enqueue([this] ()
+                        {
+                            profileResultCallback(serverProfile.get());
+                            profileResultCallback = nullptr;
+                        });
+                    }
+                }
+                return true;
             }
-            while(*ch);
-
-            Str_Delete(line);
-            Str_Delete(response);
-
-            LOG_NET_VERBOSE("Discovered server at ") << svAddress;
-
-            // Update with the correct address.
-            strncpy(svInfo.address, svAddress.host().toString().toLatin1(),
-                    sizeof(svInfo.address) - 1);
-
-            discovered.insert(svAddress, svInfo);
-
-            // Show the information in the console.
-            LOG_NET_NOTE("%i server%s been found")
-                    << discovered.size()
-                    << (discovered.size() != 1 ? "s have" : " has");
-
-            ServerInfo_Print(NULL, 0);
-            ServerInfo_Print(&svInfo, 0);
-
-            notifyDiscoveryUpdate();
+            catch (Error const &er)
+            {
+                LOG_NET_WARNING("Reply from %s was invalid: %s") << svAddress << er.asText();
+            }
         }
         else
         {
             LOG_NET_WARNING("Reply from %s was invalid") << svAddress;
         }
-
         return false;
     }
 
@@ -140,7 +151,7 @@ DENG2_PIMPL(ServerLink)
      */
     bool handleJoinResponse(Block const &reply)
     {
-        if(reply.size() < 5 || reply != "Enter")
+        if (reply.size() < 5 || reply != "Enter")
         {
             LOG_NET_WARNING("Server refused connection");
             LOGDEV_NET_WARNING("Received %i bytes instead of \"Enter\")")
@@ -173,7 +184,7 @@ DENG2_PIMPL(ServerLink)
 
     void fetchFromMaster()
     {
-        if(fetching) return;
+        if (fetching) return;
 
         fetching = true;
         N_MAPost(MAC_REQUEST);
@@ -185,17 +196,17 @@ DENG2_PIMPL(ServerLink)
     {
         DENG2_ASSERT(fetching);
 
-        if(N_MADone())
+        if (N_MADone())
         {
             fetching = false;
 
             fromMaster.clear();
             int const count = N_MasterGet(0, 0);
-            for(int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
-                serverinfo_t info;
+                shell::ServerInfo info;
                 N_MasterGet(i, &info);
-                fromMaster.insert(Address::parse(info.address, info.port), info);
+                fromMaster.insert(info.address(), info);
             }
 
             notifyDiscoveryUpdate();
@@ -207,40 +218,87 @@ DENG2_PIMPL(ServerLink)
         }
     }
 
+    bool prepareServerProfile(Address const &host)
+    {
+        serverProfile.reset();
+
+        // Do we have information about this host?
+        shell::ServerInfo info;
+        if (!self.foundServerInfo(host, info))
+        {
+            return false;
+        }
+        qDebug() << "For profile:" << info.asText().toLatin1().constData();
+        if (info.gameId().isEmpty() || info.packages().isEmpty())
+        {
+            // There isn't enough information here.
+            return false;
+        }
+
+        serverProfile.reset(new GameProfile(info.name()));
+        serverProfile->setGame(info.gameId());
+
+        try
+        {
+            // Figure out the packages needed in the profile.
+            Game const &game = DoomsdayApp::games()[info.gameId()];
+            StringList packagesForProfile = info.packages();
+            // Omit the required packages from the profile.
+            foreach (String requiredPackage, game.requiredPackages())
+            {
+                //auto const svPkg  = Package::split(packagesForProfile.first());
+                //auto const reqPkg = Package::split(requiredPackage);
+                //File const *reqPkg = App::packageLoader().select(requiredPackage);
+
+                //qDebug() << svPkg.first << svPkg.second.asText() << reqPkg.first << reqPkg.second.asText();
+
+                if (Package::equals(packagesForProfile.first(), requiredPackage))
+                {
+                    // Both IDs and versions must match.
+                    packagesForProfile.removeFirst();
+                }
+                else
+                {
+                    break;
+                }
+            }
+            serverProfile->setPackages(packagesForProfile);
+            return true;
+        }
+        catch (Error const &er)
+        {
+            LOG_ERROR("Server's game \"%s\" not supported locally: ")
+                    << info.gameId() << er.asText();
+            return false;
+        }
+    }
+
     Servers allFound(FoundMask const &mask) const
     {
         Servers all;
-
-        if(mask.testFlag(Direct))
+        if (mask.testFlag(LocalNetwork))
         {
-            all = discovered;
+            // Append the ones from the server finder.
+            foreach (Address const &sv, finder.foundServers())
+            {
+                all.insert(sv, finder.messageFromServer(sv));
+            }
         }
-
-        if(mask.testFlag(MasterServer))
+        if (mask.testFlag(MasterServer))
         {
             // Append from master (if available).
-            DENG2_FOR_EACH_CONST(Servers, i, fromMaster)
+            for (auto i = fromMaster.constBegin(); i != fromMaster.constEnd(); ++i)
             {
                 all.insert(i.key(), i.value());
             }
         }
-
-        if(mask.testFlag(LocalNetwork))
+        if (mask.testFlag(Direct))
         {
-            // Append the ones from the server finder.
-            foreach(Address const &sv, finder.foundServers())
+            for (auto i = discovered.constBegin(); i != discovered.constEnd(); ++i)
             {
-                serverinfo_t info;
-                ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
-
-                // Update the address in the info, which is missing because this
-                // information didn't come from the master.
-                strncpy(info.address, sv.host().toString().toLatin1(), sizeof(info.address) - 1);
-
-                all.insert(sv, info);
+                all.insert(i.key(), i.value());
             }
         }
-
         return all;
     }
 };
@@ -256,6 +314,27 @@ void ServerLink::clear()
 {
     d->finder.clear();
     // TODO: clear all found servers
+}
+
+void ServerLink::acquireServerProfile(Address const &address,
+                                      std::function<void (GameProfile const *)> resultHandler)
+{
+    if (d->prepareServerProfile(address))
+    {
+        // We already know everything that is needed for the profile.
+        d->mainCall.enqueue([this, resultHandler] ()
+        {
+            DENG2_ASSERT(d->serverProfile.get() != nullptr);
+            resultHandler(d->serverProfile.get());
+        });
+    }
+    else
+    {
+        AbstractLink::connectHost(address);
+        d->profileResultCallback = resultHandler;
+        d->state = Discovering;
+        LOG_NET_MSG("Querying %s for full status") << address;
+    }
 }
 
 void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
@@ -277,7 +356,7 @@ void ServerLink::connectHost(Address const &address)
 void ServerLink::linkDisconnected()
 {
     LOG_AS("ServerLink");
-    if(d->state != None)
+    if (d->state != None)
     {
         LOG_NET_NOTE("Connection to server was disconnected");
 
@@ -288,16 +367,16 @@ void ServerLink::linkDisconnected()
 
 void ServerLink::disconnect()
 {
-    if(d->state == None) return;
+    if (d->state == None) return;
 
     LOG_AS("ServerLink::disconnect");
 
-    if(d->state == InGame)
+    if (d->state == InGame)
     {
         d->state = None;
 
         // Tell the Game that a disconnection is about to happen.
-        if(gx.NetDisconnect)
+        if (gx.NetDisconnect)
             gx.NetDisconnect(true);
 
         DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
@@ -309,7 +388,7 @@ void ServerLink::disconnect()
         Net_StopGame();
 
         // Tell the Game that the disconnection is now complete.
-        if(gx.NetDisconnect)
+        if (gx.NetDisconnect)
             gx.NetDisconnect(false);
     }
     else
@@ -336,7 +415,8 @@ void ServerLink::discoverUsingMaster()
 
 bool ServerLink::isDiscovering() const
 {
-    return (d->state == Discovering || d->state == WaitingForInfoResponse ||
+    return (d->state == Discovering ||
+            d->state == WaitingForInfoResponse ||
             d->fetching);
 }
 
@@ -352,34 +432,31 @@ QList<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    Address addr = host;
-    if(!addr.port())
-    {
-        // Zero means default port.
-        addr.setPort(shell::DEFAULT_PORT);
-    }
+    Address const addr = shell::checkPort(host);
     return d->allFound(mask).contains(addr);
 }
 
-bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const
+bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask mask) const
 {
-    Impl::Servers all = d->allFound(mask);
-    QList<Address> listed = all.keys();
-    if(index < 0 || index >= listed.size()) return false;
-    memcpy(info, &all[listed[index]], sizeof(*info));
+    Impl::Servers const all = d->allFound(mask);
+    QList<Address> const listed = all.keys();
+    if (index < 0 || index >= listed.size()) return false;
+    info = all[listed[index]];
     return true;
 }
 
 bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 {
-    return d->finder.foundServers().contains(host);
+    Address const addr = shell::checkPort(host);
+    return d->finder.foundServers().contains(addr);
 }
 
-bool ServerLink::foundServerInfo(de::Address const &host, serverinfo_t *info, FoundMask mask) const
+bool ServerLink::foundServerInfo(de::Address const &host, shell::ServerInfo &info, FoundMask mask) const
 {
-    Impl::Servers all = d->allFound(mask);
-    if(!all.contains(host)) return false;
-    memcpy(info, &all[host], sizeof(*info));
+    Address const addr = shell::checkPort(host);
+    Impl::Servers const all = d->allFound(mask);
+    if (!all.contains(addr)) return false;
+    info = all[addr];
     return true;
 }
 
@@ -390,15 +467,17 @@ Packet *ServerLink::interpret(Message const &msg)
 
 void ServerLink::initiateCommunications()
 {
-    if(d->state == Discovering)
+    if (d->state == Discovering)
     {
         // Ask for the serverinfo.
         *this << ByteRefArray("Info?", 5);
 
         d->state = WaitingForInfoResponse;
     }
-    else if(d->state == Joining)
+    else if (d->state == Joining)
     {
+        ClientWindow::main().glActivate();
+
         Demo_StopPlayback();
         BusyMode_FreezeGameForBusyMode();
 
@@ -408,7 +487,7 @@ void ServerLink::initiateCommunications()
 
         // Connect by issuing: "Join (myname)"
         String pName = (playerName? playerName : "");
-        if(pName.isEmpty())
+        if (pName.isEmpty())
         {
             pName = "Player";
         }
@@ -416,6 +495,8 @@ void ServerLink::initiateCommunications()
         *this << req.toUtf8();
 
         d->state = WaitingForJoinResponse;
+
+        ClientWindow::main().glDone();
     }
     else
     {
@@ -430,7 +511,7 @@ void ServerLink::localServersFound()
 
 void ServerLink::handleIncomingPackets()
 {
-    if(d->state == Discovering || d->state == Joining)
+    if (d->state == Discovering)
         return;
 
     LOG_AS("ServerLink");
@@ -438,16 +519,16 @@ void ServerLink::handleIncomingPackets()
     {
         // Only BlockPackets received (see interpret()).
         QScopedPointer<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
-        if(packet.isNull()) break;
+        if (packet.isNull()) break;
 
-        switch(d->state)
+        switch (d->state)
         {
         case WaitingForInfoResponse:
-            if(!d->handleInfoResponse(*packet)) return;
+            if (!d->handleInfoResponse(*packet)) return;
             break;
 
         case WaitingForJoinResponse:
-            if(!d->handleJoinResponse(*packet)) return;
+            if (!d->handleJoinResponse(*packet)) return;
             break;
 
         case InGame: {

@@ -174,7 +174,7 @@ public:
      *
      * @return List of package identifiers, in load order.
      */
-    static de::StringList loadedPackagesIncludedInSavegames();
+    static de::StringList loadedPackagesAffectingGameplay();
 
 protected:
     /**

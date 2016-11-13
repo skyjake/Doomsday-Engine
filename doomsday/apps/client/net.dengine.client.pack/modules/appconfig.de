@@ -88,11 +88,7 @@ def setDefaults(d)
         snap = True
         script = False
     end
-    
-    # Master server settings.
-    record d.masterServer
-    d.masterServer.apiUrl = "www.dengine.net/master.php"
-    
+        
     # Resource settings.
     record d.resource
     d.resource.iwadFolder = ''

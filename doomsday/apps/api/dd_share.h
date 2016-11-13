@@ -785,13 +785,13 @@ enum {
 };
 ///@}
 
-/**
+/*
  * Information about a multiplayer server. @ingroup network
  *
  * This structure is not sent over the network. The information is only sent either
  * as plain text or as a serialized Record.
  */
-typedef struct serverinfo_s {
+/*typedef struct serverinfo_s {
     int             version;
     char            name[64];
     char            description[80];
@@ -809,7 +809,7 @@ typedef struct serverinfo_s {
     char            iwad[32];   ///< Obsolete.
     char            pwads[128];
     int             data[3];
-} serverinfo_t;
+} serverinfo_t;*/
 
 /**
  * @defgroup netPackets Network Packets

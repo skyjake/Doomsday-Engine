@@ -27,6 +27,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QUrl>
+#include <QTimer>
 #include <QDesktopServices>
 
 Q_DECLARE_METATYPE(de::Address)
@@ -45,10 +46,16 @@ DENG2_PIMPL_NOREF(GuiShellApp)
     QAction *disconnectAction;
 #endif
     QList<LinkWindow *> windows;
+    QHash<int, LocalServer *> localServers; // port as key
+    QTimer localCheckTimer;
 
     Preferences *prefs;
 
-    Impl() : prefs(0) {}
+    Impl() : prefs(0)
+    {
+        localCheckTimer.setInterval(1000);
+        localCheckTimer.setSingleShot(false);
+    }
 
     ~Impl()
     {
@@ -103,6 +110,9 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
 
     d->menuBar->addMenu(makeHelpMenu());
 #endif
+
+    connect(&d->localCheckTimer, SIGNAL(timeout()), this, SLOT(checkLocalServers()));
+    d->localCheckTimer.start();
 
     newOrReusedConnectionWindow();
 }
@@ -217,14 +227,16 @@ void GuiShellApp::startLocalServer()
                 opts << "-iwad" << Preferences::iwadFolder().toString();
             }
 
-            LocalServer sv;
+            auto *sv = new LocalServer;
             if (!dlg.name().isEmpty())
             {
-                sv.setName(dlg.name());
+                sv->setName(dlg.name());
             }
-            sv.start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
+            sv->start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
+            d->localServers[dlg.port()] = sv;
 
-            newOrReusedConnectionWindow()->openConnection(sv.openLink(), sv.errorLogPath());
+            newOrReusedConnectionWindow()->waitForLocalConnection
+                    (dlg.port(), sv->errorLogPath(), dlg.name());
         }
     }
     catch (Error const &er)
@@ -272,7 +284,7 @@ void GuiShellApp::aboutShell()
 
 void GuiShellApp::showHelp()
 {
-    QDesktopServices::openUrl(QUrl(tr("http://dengine.net/dew/index.php?title=Shell_Help")));
+    QDesktopServices::openUrl(QUrl(tr("http://wiki.dengine.net/w/Shell_Help")));
 }
 
 void GuiShellApp::openWebAddress(QString url)
@@ -318,4 +330,20 @@ void GuiShellApp::windowClosed(LinkWindow *window)
 {
     d->windows.removeAll(window);
     window->deleteLater();
+}
+
+void GuiShellApp::checkLocalServers()
+{
+    QMutableHashIterator<int, LocalServer *> iter(d->localServers);
+    while (iter.hasNext())
+    {
+        iter.next();
+        if (!iter.value()->isRunning())
+        {
+            emit localServerStopped(iter.key());
+
+            delete iter.value();
+            iter.remove();
+        }
+    }
 }
