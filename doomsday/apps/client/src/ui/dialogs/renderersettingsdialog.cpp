@@ -233,7 +233,6 @@ void RendererSettingsDialog::finish(int result)
 
     if (d->texSettingsToggled)
     {
-        //Con_Execute(CMDS_DDAY, "texreset", true /* silent */, false /* network */);
         GL_TexReset();
     }
 }
