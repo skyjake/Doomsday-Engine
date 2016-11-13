@@ -77,7 +77,7 @@ DENG_API_TYPEDEF(Rend)
 
     void (*SetViewWindowGeometry)(int player, const RectRaw* geometry, dd_bool interpolate);
 
-    void (*SetBorderGfx)(Uri const *const *paths);
+    void (*SetBorderGfx)(UriWrapper const *const *paths);
 
     /**
      * Retrieve the geometry of the specified viewport by console player num.
