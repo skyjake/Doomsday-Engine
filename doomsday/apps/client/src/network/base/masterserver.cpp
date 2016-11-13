@@ -224,12 +224,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
                     LOG_NET_WARNING("Server information was in unexpected format");
                     continue;
                 }
-                shell::ServerInfo svInfo = *entryValue->as<RecordValue>().record();
-                // Include the port number in the host address.
-                Address addr = svInfo.address();
-                addr.setPort(svInfo.port());
-                svInfo.setAddress(addr);
-                d->servers.append(svInfo);
+                d->servers.append(*entryValue->as<RecordValue>().record());
             }
             catch (Error const &er)
             {

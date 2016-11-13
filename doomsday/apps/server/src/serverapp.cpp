@@ -248,19 +248,13 @@ shell::ServerInfo ServerApp::currentServerInfo()
                                              reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)),
                                              reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_VERSION_SHORT))));
 
-    //dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", ;
     info.setGameId(game().id());
     info.setGameConfig(reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG)));
     info.setName(serverName);
     info.setDescription(serverInfo);
-    //info->numPlayers = Sv_GetNumPlayers();
 
     // The server player is there, it's just hidden.
     info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
-
-    // Don't go over the limit.
-    //if (info->maxPlayers > ::svMaxPlayers)
-    //    info->maxPlayers = ::svMaxPlayers;
 
     //info->canJoin = ;
     shell::ServerInfo::Flags flags(0);
@@ -275,12 +269,8 @@ shell::ServerInfo ServerApp::currentServerInfo()
     {
         auto &map = world().map();
         String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
-        //qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
         info.setMap(mapPath);
     }
-
-    // These are largely unused at the moment... Mainly intended for the game's custom values.
-    //std::memcpy(info->data, ::serverData, sizeof(info->data));
 
     QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
     if (!host.addresses().isEmpty())
@@ -289,15 +279,11 @@ shell::ServerInfo ServerApp::currentServerInfo()
         info.setAddress(Address(host.addresses().at(0), duint16(nptIPPort)));
     }
 
-    // Also include the port we're using.
-    //info->port = ::nptIPPort;
-
     // Let's compile a list of client names.
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         if (DD_Player(i)->isConnected())
         {
-            //M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
             info.addPlayer(DD_Player(i)->name);
         }
     }

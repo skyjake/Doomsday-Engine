@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(ServerFinder)
     Beacon beacon;
     struct Found
     {
-        Record *message;
+        shell::ServerInfo *message;
         Time at;
 
         Found() : message(0), at(Time()) {}
@@ -130,15 +130,14 @@ int ServerFinder::maxPlayers(Address const &server) const
 
 ServerInfo ServerFinder::messageFromServer(Address const &address) const
 {
-    if (!d->servers.contains(address))
+    Address addr = shell::checkPort(address);
+    if (!d->servers.contains(addr))
     {
         /// @throws NotFoundError @a address not found in the registry of server responses.
         throw NotFoundError("ServerFinder::messageFromServer",
-                            "No message from server " + address.asText());
+                            "No message from server " + addr.asText());
     }
-    ServerInfo info(*d->servers[address].message);
-    info.setAddress(Address(address.host(), info.port()));
-    return info;
+    return *d->servers[addr].message;
 }
 
 void ServerFinder::found(Address host, Block block)
@@ -151,21 +150,26 @@ void ServerFinder::found(Address host, Block block)
         LOG_TRACE("Received a server message from %s with %i bytes")
                 << host << block.size();
 
+        shell::ServerInfo receivedInfo;
+        Reader(block).withHeader() >> receivedInfo;
+        receivedInfo.setAddress(host);
+
+        Address const from = receivedInfo.address(); // port validated
+
         // Replace or insert the information for this host.
         Impl::Found found;
-        if (d->servers.contains(host))
+        if (d->servers.contains(from))
         {
-            found.message = d->servers[host].message;
-            d->servers[host].at = Time();
+            *d->servers[from].message = receivedInfo;
+            d->servers[from].at = Time();
         }
         else
         {
-            found.message = new Record;
-            d->servers.insert(host, found);
+            found.message = new shell::ServerInfo(receivedInfo);
+            d->servers.insert(from, found);
         }
-        Reader(block).withHeader() >> *found.message;
 
-        //qDebug() << "Server found:\n" << found.message->asText().toLatin1().constData();
+        //qDebug() << "Server found:\n" << receivedInfo.asText().toLatin1().constData();
 
         emit updated();
     }

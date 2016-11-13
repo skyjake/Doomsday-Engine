@@ -432,12 +432,7 @@ QList<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    Address addr = host;
-    if (!addr.port())
-    {
-        // Zero means default port.
-        addr.setPort(shell::DEFAULT_PORT);
-    }
+    Address const addr = shell::checkPort(host);
     return d->allFound(mask).contains(addr);
 }
 
@@ -452,22 +447,13 @@ bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask m
 
 bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 {
-    Address addr = host;
-    if (!addr.port())
-    {
-        addr.setPort(shell::DEFAULT_PORT);
-    }
+    Address const addr = shell::checkPort(host);
     return d->finder.foundServers().contains(addr);
 }
 
 bool ServerLink::foundServerInfo(de::Address const &host, shell::ServerInfo &info, FoundMask mask) const
 {
-    Address addr = host;
-    if (!addr.port())
-    {
-        addr.setPort(shell::DEFAULT_PORT);
-    }
-
+    Address const addr = shell::checkPort(host);
     Impl::Servers const all = d->allFound(mask);
     if (!all.contains(addr)) return false;
     info = all[addr];

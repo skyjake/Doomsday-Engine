@@ -19,8 +19,9 @@
 #ifndef LIBSHELL_MAIN_H
 #define LIBSHELL_MAIN_H
 
-#include <de/String>
+#include <de/Address>
 #include <de/Range>
+#include <de/String>
 
 /** @defgroup shell Shell Access */
 
@@ -54,6 +55,12 @@ namespace shell {
 
 // Default TCP/UDP port for servers to listen on.
 static duint16 const DEFAULT_PORT = 13209;
+
+inline Address checkPort(Address const &address)
+{
+    if (address.port() == 0) return Address(address.host(), DEFAULT_PORT);
+    return address;
+}
 
 /**
  * Line of word-wrapped text.
