@@ -21,6 +21,7 @@
 #include "de/String"
 
 #include <QHostInfo>
+#include <QNetworkInterface>
 #include <QRegularExpression>
 
 namespace de {
@@ -169,10 +170,10 @@ bool Address::isHostLocal(QHostAddress const &host) // static
 {
     if (host.isLoopback()) return true;
 
-    QHostInfo const info = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach (QHostAddress addr, info.addresses())
+    QHostAddress const hostv6(host.toIPv6Address());
+    foreach (QHostAddress addr, QNetworkInterface::allAddresses())
     {
-        if (QHostAddress(addr.toIPv6Address()) == host)
+        if (QHostAddress(addr.toIPv6Address()) == hostv6)
             return true;
     }
     return false;
