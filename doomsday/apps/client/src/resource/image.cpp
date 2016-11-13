@@ -755,13 +755,15 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                           TextureVariantSpec const &spec)
 {
     de::FS1 &fileSys = App_FileSystem();
+    auto &cfg = R_Config();
 
     Source source = None;
     variantspecification_t const &vspec = spec.variant;
     if (!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
-        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (cfg.noHighResTex->value().isFalse() &&
+                (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the textures scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -785,7 +787,8 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     else if (!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
-        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (cfg.noHighResTex->value().isFalse() &&
+                (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the flats scheme.
             de::Uri uri = tex.manifest().composeUri();
@@ -831,7 +834,8 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         }
 
         // Attempt to load an external replacement for this patch?
-        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (cfg.noHighResTex->value().isFalse() &&
+                (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
@@ -870,7 +874,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         }
 
         // Attempt to load an external replacement for this sprite?
-        if (!noHighResPatches)
+        if (cfg.noHighResPatches->value().isFalse())
         {
             de::Uri uri = tex.manifest().composeUri();
 

@@ -206,9 +206,9 @@ dint filterSprites = true;
 dint texMagMode = 1;  ///< Linear.
 dint texAniso = -1;   ///< Use best.
 
-dd_bool noHighResTex;
-dd_bool noHighResPatches;
-dd_bool highResWithPWAD;
+//dd_bool noHighResTex;
+//dd_bool noHighResPatches;
+//dd_bool highResWithPWAD;
 dbyte loadExtAlways;  ///< Always check for extres (cvar)
 
 dfloat texGamma;
@@ -6445,4 +6445,16 @@ void Rend_Register()
     fx::LensFlares::consoleRegister();
     Shard::consoleRegister();
     VR_ConsoleRegister();
+}
+
+ResourceConfigVars &R_Config()
+{
+    static ResourceConfigVars vars { nullptr, nullptr, nullptr};
+    if (!vars.noHighResTex)
+    {
+        vars.noHighResTex     = &App::config("resource.noHighResTex");
+        vars.noHighResPatches = &App::config("resource.noHighResPatches");
+        vars.highResWithPWAD  = &App::config("resource.highResWithPWAD");
+    }
+    return vars;
 }

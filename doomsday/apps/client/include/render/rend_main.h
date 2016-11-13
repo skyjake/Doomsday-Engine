@@ -129,9 +129,9 @@ DENG_EXTERN_C int useSmartFilter;
 DENG_EXTERN_C int texMagMode;
 DENG_EXTERN_C int glmode[6];
 DENG_EXTERN_C dd_bool fillOutlines;
-DENG_EXTERN_C dd_bool noHighResTex;
-DENG_EXTERN_C dd_bool noHighResPatches;
-DENG_EXTERN_C dd_bool highResWithPWAD;
+//DENG_EXTERN_C dd_bool noHighResTex;
+//DENG_EXTERN_C dd_bool noHighResPatches;
+//DENG_EXTERN_C dd_bool highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
 DENG_EXTERN_C int devNoCulling;
@@ -140,6 +140,15 @@ DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C byte devDrawLums;
 
 DENG_EXTERN_C byte freezeRLs;
+
+struct ResourceConfigVars
+{
+    de::Variable *noHighResTex;
+    de::Variable *noHighResPatches;
+    de::Variable *highResWithPWAD;
+};
+
+ResourceConfigVars &R_Config();
 
 void Rend_Register();
 

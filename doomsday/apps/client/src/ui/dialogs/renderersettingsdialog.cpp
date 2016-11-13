@@ -25,7 +25,10 @@
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/clientwindow.h"
 #include "render/rendersystem.h"
+#include "gl/gl_texmanager.h"
 #include "clientapp.h"
+
+#include <doomsday/console/exec.h>
 
 #include <de/GridPopupWidget>
 #include <de/GridLayout>
@@ -33,6 +36,7 @@
 #include <de/DialogContentStylist>
 #include <de/InputDialog>
 #include <de/VariableSliderWidget>
+#include <de/VariableToggleWidget>
 
 using namespace de;
 using namespace de::ui;
@@ -41,6 +45,9 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 {
     ProfilePickerWidget *appear;
     CVarSliderWidget *fov;
+    VariableToggleWidget *enableExtWithPWADs;
+    VariableToggleWidget *disableExtTextures;
+    VariableToggleWidget *disableExtPatches;
     CVarToggleWidget *precacheModels;
     CVarToggleWidget *precacheSprites;
     CVarToggleWidget *multiLight;
@@ -49,6 +56,8 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
     // Developer settings.
     GridPopupWidget *devPopup;
+
+    bool texSettingsToggled = false;
 
     Impl(Public *i) : Base(i)
     {
@@ -61,6 +70,10 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         area.add(fov = new CVarSliderWidget("rend-camera-fov"));
         fov->setPrecision(0);
         fov->setRange(Ranged(30, 160));
+
+        area.add(enableExtWithPWADs = new VariableToggleWidget(tr("Use with PWADs"),   App::config("resource.highResWithPWAD")));
+        area.add(disableExtTextures = new VariableToggleWidget(tr("Disable for textures"), App::config("resource.noHighResTex")));
+        area.add(disableExtPatches  = new VariableToggleWidget(tr("Disable for patches"),  App::config("resource.noHighResPatches")));
 
         // Set up a separate popup for developer settings.
         self.add(devPopup = new GridPopupWidget);
@@ -157,6 +170,17 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
         layout << *LabelWidget::newWithText(tr("Pixel Density:"), &area()) << *pd;
     }
 
+    // Textures options.
+    LabelWidget *texturesLabel = LabelWidget::newWithText(_E(D) + tr("Textures"), &area());
+    texturesLabel->setFont("separator.label");
+    texturesLabel->margins().setTop("gap");
+    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+    layout.append(*texturesLabel, 2);
+
+    layout << *LabelWidget::newWithText(tr("External Images:"), &area()) << *d->enableExtWithPWADs
+           << Const(0) << *d->disableExtTextures
+           << Const(0) << *d->disableExtPatches;
+
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
@@ -173,6 +197,14 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     connect(d->appear, SIGNAL(profileEditorRequested()), this, SLOT(editProfile()));
 
     d->fetch();
+
+    auto toggledFunc = [this] (ToggleWidget::ToggleState) {
+        d->texSettingsToggled = true;
+    };
+
+    connect(d->enableExtWithPWADs, &ToggleWidget::stateChangedByUser, toggledFunc);
+    connect(d->disableExtTextures, &ToggleWidget::stateChangedByUser, toggledFunc);
+    connect(d->disableExtPatches,  &ToggleWidget::stateChangedByUser, toggledFunc);
 }
 
 void RendererSettingsDialog::resetToDefaults()
@@ -193,4 +225,15 @@ void RendererSettingsDialog::editProfile()
     editor->open();
 
     ClientWindow::main().taskBar().closeConfigMenu();
+}
+
+void RendererSettingsDialog::finish(int result)
+{
+    DialogWidget::finish(result);
+
+    if (d->texSettingsToggled)
+    {
+        //Con_Execute(CMDS_DDAY, "texreset", true /* silent */, false /* network */);
+        GL_TexReset();
+    }
 }

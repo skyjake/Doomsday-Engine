@@ -38,6 +38,9 @@ protected slots:
     void showDeveloperPopup();
     void editProfile();
 
+protected:
+    void finish(int result) override;
+
 private:
     DENG2_PRIVATE(d)
 };

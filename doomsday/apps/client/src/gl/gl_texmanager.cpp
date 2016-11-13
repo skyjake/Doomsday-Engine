@@ -71,11 +71,21 @@ void GL_InitTextureManager()
         return; // Already been here.
     }
 
+    auto &cfg = R_Config();
     // Disable the use of 'high resolution' textures and/or patches?
-    noHighResTex     = CommandLine_Exists("-nohightex");
-    noHighResPatches = CommandLine_Exists("-nohighpat");
+    if (CommandLine_Exists("-nohightex"))
+    {
+        cfg.noHighResTex->set(NumberValue(true));
+    }
+    if (CommandLine_Exists("-nohighpat"))
+    {
+        cfg.noHighResPatches->set(NumberValue(true));
+    }
     // Should we allow using external resources with PWAD textures?
-    highResWithPWAD  = CommandLine_Exists("-pwadtex");
+    if (CommandLine_Exists("-pwadtex"))
+    {
+        cfg.highResWithPWAD->set(NumberValue(true));
+    }
 
     // System textures.
     zap(sysFlareTextures);
@@ -108,6 +118,8 @@ static int reloadTextures(void *context)
 void GL_TexReset()
 {
     if (!initedOk) return;
+
+    Rend_ResetLookups();
 
     App_Resources().releaseAllGLTextures();
     LOG_GL_VERBOSE("Released all GL textures");

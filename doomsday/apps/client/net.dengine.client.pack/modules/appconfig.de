@@ -93,6 +93,9 @@ def setDefaults(d)
     record d.resource
     d.resource.iwadFolder = ''
     d.resource.packageFolder = ''
+    d.resource.noHighResTex = False
+    d.resource.noHighResPatches = False
+    d.resource.highResWithPWAD = True
     
     # Renderer settings.
     record d.render
