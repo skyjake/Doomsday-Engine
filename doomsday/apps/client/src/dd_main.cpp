@@ -70,6 +70,7 @@
 #include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/resource/resources.h>
+#include <doomsday/res/Bundles>
 #include <doomsday/res/DoomsdayPackage>
 #include <doomsday/res/MapManifests>
 #include <doomsday/res/Sprites>
@@ -905,6 +906,7 @@ static GameProfile const *autoselectGameProfile()
     {
         // Make sure all files have been found so we can determine which games are playable.
         Folder::waitForPopulation();
+        DoomsdayApp::bundles().waitForEverythingIdentified();
 
         char const *identityKey = CommandLine_Next();
 
@@ -1059,7 +1061,22 @@ static void initialize()
             // connections can only be made after a game is loaded and the
             // server mode started.
             /// @todo Allow shell connections in Home, too.
-            App_Error("No playable games available.");
+            String msg = "Could not determine which game to start. "
+                         "Please specify one with the " _E(b) "-game" _E(.) " option. ";
+            auto const playable = DoomsdayApp::gameProfiles().allPlayableProfiles();
+            if (playable.isEmpty())
+            {
+                msg += "However, it seems all games are missing required data files. "
+                       "Check that the " _E(b) "-iwad" _E(.) " option specifies a "
+                       "folder with game WAD files.";
+            }
+            else
+            {
+                StringList ids;
+                foreach (GameProfile const *prof, playable) ids << prof->game();
+                msg += "The following games are playable: " + String::join(ids, ", ");
+            }
+            App_Error(msg.toLatin1());
         }
 #endif
     }

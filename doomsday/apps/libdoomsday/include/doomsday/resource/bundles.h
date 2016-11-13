@@ -81,6 +81,8 @@ public:
 
     bool isEverythingIdentified() const;
 
+    void waitForEverythingIdentified();
+
     /**
      * Finds a matching entry in the registry for a given data bundle.
      * @param bundle  Data bundle whose information to look for.

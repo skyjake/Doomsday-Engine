@@ -216,7 +216,7 @@ bool Profiles::isPersistent() const
     return !d->persistentName.isEmpty();
 }
 
-LoopResult Profiles::forAll(std::function<LoopResult (AbstractProfile &)> func)
+LoopResult Profiles::forAll(std::function<LoopResult (AbstractProfile &)> func) const
 {
     foreach (AbstractProfile *prof, d->profiles.values())
     {

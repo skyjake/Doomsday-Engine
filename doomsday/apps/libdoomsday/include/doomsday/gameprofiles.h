@@ -91,6 +91,9 @@ public:
     Profile const &builtInProfile(de::String const &gameId) const;
 
     de::LoopResult forAll(std::function<de::LoopResult (Profile &)> func);
+    de::LoopResult forAll(std::function<de::LoopResult (Profile const &)> func) const;
+
+    QList<Profile const *> allPlayableProfiles() const;
 
     static Profile const &null();
 

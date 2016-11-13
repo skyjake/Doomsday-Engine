@@ -211,6 +211,11 @@ bool Bundles::isEverythingIdentified() const
     return d->bundlesToIdentify.isEmpty();
 }
 
+void Bundles::waitForEverythingIdentified()
+{
+    d->tasks.waitForDone();
+}
+
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 {
     using Info = de::Info;
