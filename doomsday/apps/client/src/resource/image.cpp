@@ -26,24 +26,20 @@
 
 #include <de/memory.h>
 #include <de/Log>
-#ifdef __CLIENT__
-#  include <QByteArray>
-#  include <QImage>
-#  include <de/NativePath>
-#  include <doomsday/filesys/fs_main.h>
-#endif
+#include <QByteArray>
+#include <QImage>
+#include <de/NativePath>
+#include <doomsday/filesys/fs_main.h>
 
 #include "dd_main.h"
 
-#ifdef __CLIENT__
-#  include <doomsday/res/Composite>
-#  include <doomsday/resource/pcx.h>
-#  include <doomsday/resource/tga.h>
+#include <doomsday/res/Composite>
+#include <doomsday/resource/pcx.h>
+#include <doomsday/resource/tga.h>
 
-#  include "gl/gl_tex.h"
+#include "gl/gl_tex.h"
 
-#  include "render/rend_main.h" // misc global vars awaiting new home
-#endif
+#include "render/rend_main.h" // misc global vars awaiting new home
 
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
@@ -51,8 +47,6 @@
 
 using namespace de;
 using namespace res;
-
-#ifdef __CLIENT__
 
 struct GraphicFileType
 {
@@ -104,12 +98,12 @@ static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
 {
     // The path must have an extension for this.
     String ext = fileName.fileNameExtension();
-    if(!ext.isEmpty())
+    if (!ext.isEmpty())
     {
-        for(int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
+        for (int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
         {
             GraphicFileType const &type = graphicTypes[i];
-            if(!ext.compareWithoutCase(type.ext))
+            if (!ext.compareWithoutCase(type.ext))
             {
                 return &type;
             }
@@ -122,25 +116,25 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 {
     // Firstly try the interpreter for the guessed resource types.
     GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
-    if(rtypeGuess)
+    if (rtypeGuess)
     {
         rtypeGuess->interpretFunc(hndl, filePath, img);
     }
 
     // If not yet interpreted - try each recognisable format in order.
-    if(!img.pixels)
+    if (!img.pixels)
     {
         // Try each recognisable format instead.
         /// @todo Order here should be determined by the resource locator.
-        for(int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
+        for (int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
         {
             GraphicFileType const *graphicType = &graphicTypes[i];
 
             // Already tried this?
-            if(graphicType == rtypeGuess) continue;
+            if (graphicType == rtypeGuess) continue;
 
             graphicTypes[i].interpretFunc(hndl, filePath, img);
-            if(img.pixels) break;
+            if (img.pixels) break;
         }
     }
 }
@@ -151,8 +145,6 @@ static inline bool isColorKeyed(String path)
     return path.fileNameWithoutExtension().endsWith("-ck", Qt::CaseInsensitive);
 }
 
-#endif // __CLIENT__
-
 void Image_Init(image_t &img)
 {
     img.size      = Vector2ui(0, 0);
@@ -162,7 +154,6 @@ void Image_Init(image_t &img)
     img.pixels    = 0;
 }
 
-#ifdef __CLIENT__
 void Image_InitFromImage(image_t &img, Image const &guiImage)
 {
     img.size      = guiImage.size();
@@ -172,7 +163,6 @@ void Image_InitFromImage(image_t &img, Image const &guiImage)
     img.pixels    = reinterpret_cast<uint8_t *>(M_Malloc(guiImage.byteCount()));
     std::memcpy(img.pixels, guiImage.bits(), guiImage.byteCount());
 }
-#endif
 
 void Image_ClearPixelData(image_t &img)
 {
@@ -200,7 +190,7 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
     uint8_t *alphaChannel = 0, *ptr = 0;
 
     // Is this suitable?
-    if(0 != img.paletteId || (img.pixelSize < 3 && (img.flags & IMGF_IS_MASKED)))
+    if (0 != img.paletteId || (img.pixelSize < 3 && (img.flags & IMGF_IS_MASKED)))
     {
         LOG_RES_WARNING("Unknown paletted/masked image format");
         return;
@@ -209,13 +199,13 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
     long numPels = img.size.x * img.size.y;
 
     // Do we need to relocate the alpha data?
-    if(retainAlpha && img.pixelSize == 4)
+    if (retainAlpha && img.pixelSize == 4)
     {
         // Yes. Take a copy.
         alphaChannel = reinterpret_cast<uint8_t *>(M_Malloc(numPels));
 
         ptr = img.pixels;
-        for(long p = 0; p < numPels; ++p, ptr += img.pixelSize)
+        for (long p = 0; p < numPels; ++p, ptr += img.pixelSize)
         {
             alphaChannel[p] = ptr[3];
         }
@@ -223,7 +213,7 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
 
     // Average the RGB colors.
     ptr = img.pixels;
-    for(long p = 0; p < numPels; ++p, ptr += img.pixelSize)
+    for (long p = 0; p < numPels; ++p, ptr += img.pixelSize)
     {
         int min = de::min(ptr[0], de::min(ptr[1], ptr[2]));
         int max = de::max(ptr[0], de::max(ptr[1], ptr[2]));
@@ -231,7 +221,7 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
     }
 
     // Do we need to relocate the alpha data?
-    if(alphaChannel)
+    if (alphaChannel)
     {
         std::memcpy(img.pixels + numPels, alphaChannel, numPels);
         img.pixelSize = 2;
@@ -247,10 +237,10 @@ void Image_ConvertToAlpha(image_t &img, bool makeWhite)
     Image_ConvertToLuminance(img);
 
     long total = img.size.x * img.size.y;
-    for(long p = 0; p < total; ++p)
+    for (long p = 0; p < total; ++p)
     {
         img.pixels[total + p] = img.pixels[p];
-        if(makeWhite) img.pixels[p] = 255;
+        if (makeWhite) img.pixels[p] = 255;
     }
     img.pixelSize = 2;
 }
@@ -259,24 +249,24 @@ bool Image_HasAlpha(image_t const &img)
 {
     LOG_AS("Image_HasAlpha");
 
-    if(0 != img.paletteId || (img.flags & IMGF_IS_MASKED))
+    if (0 != img.paletteId || (img.flags & IMGF_IS_MASKED))
     {
         LOG_RES_WARNING("Unknown paletted/masked image format");
         return false;
     }
 
-    if(img.pixelSize == 3)
+    if (img.pixelSize == 3)
     {
         return false;
     }
 
-    if(img.pixelSize == 4)
+    if (img.pixelSize == 4)
     {
         long const numpels = img.size.x * img.size.y;
         uint8_t const *in = img.pixels;
-        for(long i = 0; i < numpels; ++i, in += 4)
+        for (long i = 0; i < numpels; ++i, in += 4)
         {
-            if(in[3] < 255)
+            if (in[3] < 255)
             {
                 return true;
             }
@@ -288,7 +278,6 @@ bool Image_HasAlpha(image_t const &img)
 
 uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
 {
-#ifdef __CLIENT__
     LOG_AS("Image_LoadFromFile");
 
     String filePath = file.file().composePath();
@@ -297,7 +286,7 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     interpretGraphic(file, filePath, img);
 
     // Still not interpreted?
-    if(!img.pixels)
+    if (!img.pixels)
     {
         LOG_RES_XVERBOSE("\"%s\" unrecognized, trying fallback loader...")
             << NativePath(filePath).pretty();
@@ -305,10 +294,10 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     }
 
     // How about some color-keying?
-    if(isColorKeyed(filePath))
+    if (isColorKeyed(filePath))
     {
         uint8_t *out = ApplyColorKeying(img.pixels, img.size.x, img.size.y, img.pixelSize);
-        if(out != img.pixels)
+        if (out != img.pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
             M_Free(img.pixels);
@@ -320,7 +309,7 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     }
 
     // Any alpha pixels?
-    if(Image_HasAlpha(img))
+    if (Image_HasAlpha(img))
     {
         img.flags |= IMGF_IS_MASKED;
     }
@@ -329,16 +318,10 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
             << NativePath(filePath).pretty() << img.size.asText();
 
     return img.pixels;
-#else
-    // Server does not load image files.
-    DENG2_UNUSED2(img, file);
-    return NULL;
-#endif
 }
 
 bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &hndl)
 {
-#ifdef __CLIENT__
     LOG_AS("Image_LoadFromFileWithFormat");
 
     /// @todo There are too many copies made here. It would be best if image_t
@@ -355,7 +338,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     hndl.read(reinterpret_cast<uint8_t*>(data.data()), data.size());
 
     QImage image = QImage::fromData(data, format);
-    if(image.isNull())
+    if (image.isNull())
     {
         // Back to the original file position.
         hndl.seek(initPos, SeekSet);
@@ -365,7 +348,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     //LOG_TRACE("Loading \"%s\"...") << NativePath(hndl->file().composePath()).pretty();
 
     // Convert paletted images to RGB.
-    if(image.colorCount())
+    if (image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
         DENG_ASSERT(!image.colorCount());
@@ -387,25 +370,19 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
     return true;
-#else
-    // Server does not load image files.
-    DENG2_UNUSED3(img, format, hndl);
-    return false;
-#endif
 }
 
 bool Image_Save(image_t const &img, char const *filePath)
 {
-#ifdef __CLIENT__
     // Compose the full path.
     String fullPath = String(filePath);
-    if(fullPath.isEmpty())
+    if (fullPath.isEmpty())
     {
         static int n = 0;
         fullPath = String("image%1x%2-%3").arg(img.size.x).arg(img.size.y).arg(n++, 3);
     }
 
-    if(fullPath.fileNameExtension().isEmpty())
+    if (fullPath.fileNameExtension().isEmpty())
     {
         fullPath += ".png";
     }
@@ -415,14 +392,8 @@ bool Image_Save(image_t const &img, char const *filePath)
     image = image.rgbSwapped();
 
     return image.save(NativePath(fullPath));
-#else
-    // Server does not save images.
-    DENG2_UNUSED2(img, filePath);
-    return false;
-#endif
 }
 
-#ifdef __CLIENT__
 uint8_t *GL_LoadImage(image_t &image, String nativePath)
 {
     try
@@ -438,7 +409,7 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
 
         return pixels;
     }
-    catch(FS1::NotFoundError const&)
+    catch (FS1::NotFoundError const&)
     {} // Ignore error.
 
     return 0; // Not loaded.
@@ -455,14 +426,14 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
-        if(GL_LoadImage(image, foundPath))
+        if (GL_LoadImage(image, foundPath))
         {
             // Force it to grayscale?
-            if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
+            if (mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
             {
                 Image_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
             }
-            else if(mode == LGM_GRAYSCALE)
+            else if (mode == LGM_GRAYSCALE)
             {
                 Image_ConvertToLuminance(image);
             }
@@ -470,7 +441,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
             return External;
         }
     }
-    catch(FS1::NotFoundError const&)
+    catch (FS1::NotFoundError const&)
     {} // Ignore this error.
 
     return None;
@@ -481,9 +452,9 @@ static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
     DENG2_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.
     pixels += width * height;
-    for(int i = 0; i < width * height; ++i)
+    for (int i = 0; i < width * height; ++i)
     {
-        if(255 != pixels[i])
+        if (255 != pixels[i])
         {
             return true;
         }
@@ -504,11 +475,11 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
 
         return GL_LoadImage(image, foundPath)? External : None;
     }
-    catch(FS1::NotFoundError const&)
+    catch (FS1::NotFoundError const&)
     {} // Ignore this error.
 
     // Try again without the suffix?
-    if(!optionalSuffix.empty())
+    if (!optionalSuffix.empty())
     {
         try
         {
@@ -519,7 +490,7 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
 
             return GL_LoadImage(image, foundPath)? External : None;
         }
-        catch(FS1::NotFoundError const&)
+        catch (FS1::NotFoundError const&)
         {} // Ignore this error.
     }
 
@@ -540,8 +511,8 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
 static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
     IByteArray const &src, Vector2ui const &srcDimensions, Vector2i const &origin)
 {
-    if(dstDimensions == Vector2ui()) return;
-    if(srcDimensions == Vector2ui()) return;
+    if (dstDimensions == Vector2ui()) return;
+    if (srcDimensions == Vector2ui()) return;
 
     int const       srcW = srcDimensions.x;
     int const       srcH = srcDimensions.y;
@@ -553,17 +524,17 @@ static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
 
     int dstX, dstY;
 
-    for(int srcY = 0; srcY < srcH; ++srcY)
-    for(int srcX = 0; srcX < srcW; ++srcX)
+    for (int srcY = 0; srcY < srcH; ++srcY)
+    for (int srcX = 0; srcX < srcW; ++srcX)
     {
         dstX = origin.x + srcX;
         dstY = origin.y + srcY;
-        if(dstX < 0 || dstX >= dstW) continue;
-        if(dstY < 0 || dstY >= dstH) continue;
+        if (dstX < 0 || dstX >= dstW) continue;
+        if (dstY < 0 || dstY >= dstH) continue;
 
         dbyte srcAlpha;
         src.get(srcY * srcW + srcX + srcPels, &srcAlpha, 1);
-        if(srcAlpha)
+        if (srcAlpha)
         {
             src.get(srcY * srcW + srcX, &dst[dstY * dstW + dstX], 1);
             dst[dstY * dstW + dstX + dstPels] = srcAlpha;
@@ -579,7 +550,7 @@ static String toTranslationId(int tclass, int tmap)
 #define NUM_TRANSLATION_MAPS_PER_CLASS  7
 
     // Is translation unnecessary?
-    if(!tclass && !tmap) return String();
+    if (!tclass && !tmap) return String();
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
     LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
@@ -593,7 +564,7 @@ static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palI
     int tclass = 0, int tmap = 0)
 {
     res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(palId);
-    if(res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
+    if (res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
         return res::Patch::load(data, *xlat, res::Patch::ClipToLogicalDimensions);
     }
@@ -608,7 +579,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
 {
     LOG_AS("image_t::loadPatch");
 
-    if(Image_LoadFromFile(image, hndl))
+    if (Image_LoadFromFile(image, hndl))
     {
         return External;
     }
@@ -617,7 +588,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
     // A DOOM patch?
-    if(Patch::recognize(fileData))
+    if (Patch::recognize(fileData))
     {
         try
         {
@@ -637,14 +608,14 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
             compositePaletted(image.pixels, image.size,
                               patchImg, info.logicalDimensions, Vector2i(border, border));
 
-            if(palettedIsMasked(image.pixels, image.size.x, image.size.y))
+            if (palettedIsMasked(image.pixels, image.size.x, image.size.y))
             {
                 image.flags |= IMGF_IS_MASKED;
             }
 
             return Original;
         }
-        catch(IByteArray::OffsetError const &)
+        catch (IByteArray::OffsetError const &)
         {
             LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch")
                 << NativePath(file.container().composePath()).pretty()
@@ -675,18 +646,18 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
 
         // A DOOM patch?
-        if(Patch::recognize(fileData))
+        if (Patch::recognize(fileData))
         {
             try
             {
                 Patch::Flags loadFlags;
-                if(maskZero) loadFlags |= Patch::MaskZero;
+                if (maskZero) loadFlags |= Patch::MaskZero;
 
                 Block patchImg     = Patch::load(fileData, loadFlags);
                 PatchMetadata info = Patch::loadMetadata(fileData);
 
                 Vector2i origin = i->origin();
-                if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
+                if (useZeroOriginIfOneComponent && texDef.componentCount() == 1)
                 {
                     origin = Vector2i(0, 0);
                 }
@@ -695,14 +666,14 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
                 compositePaletted(image.pixels, image.size,
                                   patchImg, info.dimensions, origin);
             }
-            catch(IByteArray::OffsetError const &)
+            catch (IByteArray::OffsetError const &)
             {} // Ignore this error.
         }
 
         file.unlock();
     }
 
-    if(maskZero || palettedIsMasked(image.pixels, image.size.x, image.size.y))
+    if (maskZero || palettedIsMasked(image.pixels, image.size.x, image.size.y))
     {
         image.flags |= IMGF_IS_MASKED;
     }
@@ -715,7 +686,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
 static Source loadFlat(image_t &image, FileHandle &hndl)
 {
-    if(Image_LoadFromFile(image, hndl))
+    if (Image_LoadFromFile(image, hndl))
     {
         return External;
     }
@@ -734,7 +705,7 @@ static Source loadFlat(image_t &image, FileHandle &hndl)
     size_t bufSize = de::max(fileLength, (size_t) image.size.x * image.size.y);
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
-    if(fileLength < bufSize)
+    if (fileLength < bufSize)
     {
         std::memset(image.pixels, 0, bufSize);
     }
@@ -746,7 +717,7 @@ static Source loadFlat(image_t &image, FileHandle &hndl)
 
 static Source loadDetail(image_t &image, FileHandle &hndl)
 {
-    if(Image_LoadFromFile(image, hndl))
+    if (Image_LoadFromFile(image, hndl))
     {
         return Original;
     }
@@ -757,7 +728,7 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
     // How big is it?
     File1 &file = hndl.file();
     size_t fileLength = hndl.length();
-    switch(fileLength)
+    switch (fileLength)
     {
     case 256 * 256: image.size.x = image.size.y = 256; break;
     case 128 * 128: image.size.x = image.size.y = 128; break;
@@ -770,7 +741,7 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
     size_t bufSize = (size_t) image.size.x * image.size.y;
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
-    if(fileLength < bufSize)
+    if (fileLength < bufSize)
     {
         std::memset(image.pixels, 0, bufSize);
     }
@@ -787,19 +758,19 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
 
     Source source = None;
     variantspecification_t const &vspec = spec.variant;
-    if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
+    if (!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             // First try the textures scheme.
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
-        if(source == None)
+        if (source == None)
         {
-            if(TC_SKYSPHERE_DIFFUSE != vspec.context)
+            if (TC_SKYSPHERE_DIFFUSE != vspec.context)
             {
                 source = loadPatchComposite(image, tex);
             }
@@ -811,28 +782,28 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             }
         }
     }
-    else if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
+    else if (!tex.manifest().schemeName().compareWithoutCase("Flats"))
     {
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             // First try the flats scheme.
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
-            if(source == None)
+            if (source == None)
             {
                 // How about the old-fashioned "flat-name" in the textures scheme?
                 source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
             }
         }
 
-        if(source == None)
+        if (source == None)
         {
-            if(tex.manifest().hasResourceUri())
+            if (tex.manifest().hasResourceUri())
             {
                 de::Uri resourceUri = tex.manifest().resourceUri();
-                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
@@ -844,34 +815,34 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                         fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
-                    catch(LumpIndex::NotFoundError const&)
+                    catch (LumpIndex::NotFoundError const&)
                     {} // Ignore this error.
                 }
             }
         }
     }
-    else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
+    else if (!tex.manifest().schemeName().compareWithoutCase("Patches"))
     {
         int tclass = 0, tmap = 0;
-        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if (vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             tclass = vspec.tClass;
             tmap   = vspec.tMap;
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        if (!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
         {
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
-        if(source == None)
+        if (source == None)
         {
-            if(tex.manifest().hasResourceUri())
+            if (tex.manifest().hasResourceUri())
             {
                 de::Uri resourceUri = tex.manifest().resourceUri();
-                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
@@ -883,48 +854,48 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                         fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
-                    catch(LumpIndex::NotFoundError const&)
+                    catch (LumpIndex::NotFoundError const&)
                     {} // Ignore this error.
                 }
             }
         }
     }
-    else if(!tex.manifest().schemeName().compareWithoutCase("Sprites"))
+    else if (!tex.manifest().schemeName().compareWithoutCase("Sprites"))
     {
         int tclass = 0, tmap = 0;
-        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        if (vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             tclass = vspec.tClass;
             tmap   = vspec.tMap;
         }
 
         // Attempt to load an external replacement for this sprite?
-        if(!noHighResPatches)
+        if (!noHighResPatches)
         {
             de::Uri uri = tex.manifest().composeUri();
 
             // Prefer psprite or translated versions if available.
-            if(TC_PSPRITE_DIFFUSE == vspec.context)
+            if (TC_PSPRITE_DIFFUSE == vspec.context)
             {
                 source = loadExternalTexture(image, "Patches:" + uri.path() + "-hud", "-ck");
             }
-            else if(tclass || tmap)
+            else if (tclass || tmap)
             {
                 source = loadExternalTexture(image, "Patches:" + uri.path() + String("-table%1%2").arg(tclass).arg(tmap), "-ck");
             }
 
-            if(!source)
+            if (!source)
             {
                 source = loadExternalTexture(image, "Patches:" + uri.path(), "-ck");
             }
         }
 
-        if(source == None)
+        if (source == None)
         {
-            if(tex.manifest().hasResourceUri())
+            if (tex.manifest().hasResourceUri())
             {
                 de::Uri resourceUri = tex.manifest().resourceUri();
-                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
@@ -936,18 +907,18 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                         fileSys.releaseFile(hndl.file());
                         delete &hndl;
                     }
-                    catch(LumpIndex::NotFoundError const&)
+                    catch (LumpIndex::NotFoundError const&)
                     {} // Ignore this error.
                 }
             }
         }
     }
-    else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
+    else if (!tex.manifest().schemeName().compareWithoutCase("Details"))
     {
-        if(tex.manifest().hasResourceUri())
+        if (tex.manifest().hasResourceUri())
         {
             de::Uri resourceUri = tex.manifest().resourceUri();
-            if(resourceUri.scheme().compareWithoutCase("Lumps"))
+            if (resourceUri.scheme().compareWithoutCase("Lumps"))
             {
                 source = loadExternalTexture(image, resourceUri.compose());
             }
@@ -964,14 +935,14 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                     fileSys.releaseFile(hndl.file());
                     delete &hndl;
                 }
-                catch(LumpIndex::NotFoundError const&)
+                catch (LumpIndex::NotFoundError const&)
                 {} // Ignore this error.
             }
         }
     }
     else
     {
-        if(tex.manifest().hasResourceUri())
+        if (tex.manifest().hasResourceUri())
         {
             de::Uri resourceUri = tex.manifest().resourceUri();
             source = loadExternalTexture(image, resourceUri.compose());
@@ -979,5 +950,3 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     }
     return source;
 }
-
-#endif // __CLIENT__

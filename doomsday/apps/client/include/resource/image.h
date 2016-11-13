@@ -23,15 +23,16 @@
 #ifndef DENG_RESOURCE_IMAGE_H
 #define DENG_RESOURCE_IMAGE_H
 
+#ifndef __CLIENT__
+#  error "resource/image.h is for the client only"
+#endif
+
 #include "dd_share.h" // gfxmode_t
 #include <doomsday/filesys/filehandle.h>
+#include <de/Image>
 #include <de/String>
 #include <de/Vector>
 #include <de/size.h>
-
-#ifdef __CLIENT__
-#  include <de/Image>
-#endif
 
 /// @todo Should not depend on texture-level stuff here.
 class TextureVariantSpec;
@@ -90,9 +91,7 @@ struct image_t
  */
 void Image_Init(image_t &image);
 
-#ifdef __CLIENT__
 void Image_InitFromImage(image_t &image, de::Image const &guiImage);
-#endif
 
 /**
  * Releases image pixel data, but does not delete @a image.
