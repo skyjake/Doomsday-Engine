@@ -354,8 +354,10 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
     return lexicon;
 }
 
-RecordPacket *Protocol::newGameState(String const &mode, String const &rules,
-                                     String const &mapId, String const &mapTitle)
+RecordPacket *Protocol::newGameState(String const &mode,
+                                     String const &rules,
+                                     String const &mapId,
+                                     String const &mapTitle)
 {
     RecordPacket *gs = new RecordPacket(PT_GAME_STATE);
     Record &r = gs->record();

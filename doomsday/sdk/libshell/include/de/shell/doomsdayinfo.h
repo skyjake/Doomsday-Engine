@@ -35,10 +35,43 @@ namespace shell {
 class LIBSHELL_PUBLIC DoomsdayInfo
 {
 public:
-    struct GameMode
+    struct Game
     {
         String title;
         String option; ///< Mode identifier.
+    };
+
+    enum OptionType
+    {
+        Toggle,
+        Choice,
+        Text
+    };
+
+    struct LIBSHELL_PUBLIC GameOption
+    {
+        struct LIBSHELL_PUBLIC Value
+        {
+            String value;
+            String label;
+            String ruleSemantic; // for determining if the option is set
+
+            Value(String const &value = String(), String const &label = String(),
+                  String const &ruleSemantic = String())
+                : value(value), label(label), ruleSemantic(ruleSemantic) {}
+        };
+
+        OptionType type;
+        String title;
+        String command; // e.g., "setmap %1"
+        Value defaultValue;
+        QList<Value> allowedValues;
+
+        GameOption(OptionType type,
+                   String title,
+                   String command,
+                   Value defaultValue = Value(),
+                   QList<Value> allowedValues = QList<Value>());
     };
 
     /**
@@ -46,9 +79,11 @@ public:
      * human-presentable titles plus game mode identifiers (for the @c -game
      * option).
      */
-    static QList<GameMode> allGameModes();
+    static QList<Game> allGames();
 
-    static String titleForGameMode(String const &mode);
+    static String titleForGame(String const &gameId);
+
+    static QList<GameOption> gameOptions(String const &gameId);
 
     static NativePath defaultServerRuntimeFolder();
 };

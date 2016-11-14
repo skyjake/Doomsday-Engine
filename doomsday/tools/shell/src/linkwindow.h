@@ -53,7 +53,9 @@ public slots:
     void openConnection(de::shell::Link *link, de::String name = "");
     void closeConnection();
     void sendCommandToServer(de::String command);
+    void sendCommandsToServer(QStringList commands);
     void switchToStatus();
+    void switchToOptions();
     void switchToConsole();
     void updateWhenConnected();
     void updateConsoleFontFromPreferences();

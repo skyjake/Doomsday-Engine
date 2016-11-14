@@ -41,9 +41,9 @@ LocalServerDialog::LocalServerDialog() : d(new Impl)
 
     // Define the contents for the choice list.
     ChoiceWidget::Items modes;
-    foreach (DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
+    foreach (DoomsdayInfo::Game const &game, DoomsdayInfo::allGames())
     {
-        modes << mode.title;
+        modes << game.title;
     }
     d->choice->setItems(modes);
     d->choice->setPrompt(tr("Game mode: "));
@@ -93,7 +93,7 @@ duint16 LocalServerDialog::port() const
 
 String LocalServerDialog::gameMode() const
 {
-    return DoomsdayInfo::allGameModes()[d->choice->selection()].option;
+    return DoomsdayInfo::allGames()[d->choice->selection()].option;
 }
 
 void LocalServerDialog::prepare()

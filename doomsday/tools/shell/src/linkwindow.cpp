@@ -21,6 +21,7 @@
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
 #include "guishellapp.h"
+#include "optionspage.h"
 #include "consolepage.h"
 #include "preferences.h"
 #include "errorlogdialog.h"
@@ -71,9 +72,11 @@ DENG2_PIMPL(LinkWindow)
     NativePath errorLog;
     QToolBar *tools;
     QToolButton *statusButton;
+    QToolButton *optionsButton;
     QToolButton *consoleButton;
     QStackedWidget *stack;
     StatusWidget *status;
+    OptionsPage *options;
     ConsolePage *console;
     QLabel *gameStatus;
     QLabel *timeCounter;
@@ -197,7 +200,7 @@ DENG2_PIMPL(LinkWindow)
         tb->setCheckable(true);
 #ifdef MACOSX
         // Tighter spacing, please.
-        tb->setStyleSheet("padding-bottom:-5px");
+        tb->setStyleSheet("padding-bottom:-1px");
 #endif
         tools->addWidget(tb);
         return tb;
@@ -264,6 +267,11 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->status = new StatusWidget;
     d->stack->addWidget(d->status);
 
+    // Game options page.
+    d->options = new OptionsPage;
+    d->stack->addWidget(d->options);
+    connect(d->options, SIGNAL(commandsSubmitted(QStringList)), this, SLOT(sendCommandsToServer(QStringList)));
+
     // Console page.
     d->console = new ConsolePage;
     d->stack->addWidget(d->console);
@@ -309,13 +317,14 @@ LinkWindow::LinkWindow(QWidget *parent)
 
     btn = d->addToolButton(tr("Chat"), icon);
     btn->setDisabled(true);
-
-    btn = d->addToolButton(tr("Options"), icon);
-    btn->setDisabled(true);
 #endif
 
+    d->optionsButton = d->addToolButton(tr("Options"), QIcon(":/images/toolbar_placeholder.png"));
+    d->optionsButton->setShortcut(QKeySequence(tr("Ctrl+2")));
+    connect(d->optionsButton, SIGNAL(pressed()), this, SLOT(switchToOptions()));
+
     d->consoleButton = d->addToolButton(tr("Console"), QIcon(":/images/toolbar_console.png"));
-    d->consoleButton->setShortcut(QKeySequence(tr("Ctrl+2")));
+    d->consoleButton->setShortcut(QKeySequence(tr("Ctrl+3")));
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
 
     // Initial state for the window.
@@ -463,13 +472,22 @@ void LinkWindow::closeConnection()
 
 void LinkWindow::switchToStatus()
 {
+    d->optionsButton->setChecked(false);
     d->consoleButton->setChecked(false);
     d->stack->setCurrentWidget(d->status);
+}
+
+void LinkWindow::switchToOptions()
+{
+    d->statusButton->setChecked(false);
+    d->consoleButton->setChecked(false);
+    d->stack->setCurrentWidget(d->options);
 }
 
 void LinkWindow::switchToConsole()
 {
     d->statusButton->setChecked(false);
+    d->optionsButton->setChecked(false);
     d->stack->setCurrentWidget(d->console);
     d->console->root().setFocus();
 }
@@ -527,13 +545,18 @@ void LinkWindow::handleIncomingPackets()
 
         case shell::Protocol::GameState: {
             Record &rec = static_cast<RecordPacket *>(packet.data())->record();
+            String const rules = rec["rules"];
+            String gameType = rules.containsWord("dm")?  tr("Deathmatch")    :
+                              rules.containsWord("dm2")? tr("Deathmatch II") :
+                                                         tr("Co-op");
             d->status->setGameState(
                     rec["mode"].value().asText(),
-                    rec["rules"].value().asText(),
+                    gameType,
                     rec["mapId"].value().asText(),
                     rec["mapTitle"].value().asText());
 
             d->updateStatusBarWithGameState(rec);
+            d->options->updateWithGameState(rec);
             break; }
 
         case shell::Protocol::MapOutline:
@@ -561,6 +584,14 @@ void LinkWindow::sendCommandToServer(de::String command)
 
         QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
         *d->link << *packet;
+    }
+}
+
+void LinkWindow::sendCommandsToServer(QStringList commands)
+{
+    foreach (QString c, commands)
+    {
+        sendCommandToServer(c);
     }
 }
 

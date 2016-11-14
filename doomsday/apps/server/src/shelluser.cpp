@@ -110,11 +110,7 @@ void ShellUser::sendGameState()
      * state packet.
      */
 
-    /// @todo This information needs to come form the Game Rules.
-    int deathmatch = Con_GetInteger("server-game-deathmatch");
-    String rules = (!deathmatch    ? "Coop" :
-                    deathmatch == 1? "Deathmatch"  :
-                                     "Deathmatch II");
+    String rules = reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG));
 
     // Check the map's information.
     String mapId;
@@ -123,7 +119,7 @@ void ShellUser::sendGameState()
     {
         world::Map &map = App_World().map();
 
-        mapId = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
+        mapId = (map.hasManifest()? map.manifest().composeUri().path() : "(unknown map)");
 
         /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.

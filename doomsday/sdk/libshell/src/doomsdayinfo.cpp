@@ -19,7 +19,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/DoomsdayInfo"
@@ -33,10 +33,8 @@ static struct
     char const *name;
     char const *mode;
 }
-gameModes[] =
+const gameTable[] =
 {
-    //{ "None",                                   "" },
-
     { "Shareware DOOM",                         "doom1-share" },
     { "DOOM",                                   "doom1" },
     { "Ultimate DOOM",                          "doom1-ultimate" },
@@ -55,30 +53,89 @@ gameModes[] =
     { "Hexen: Death Kings of Dark Citadel",     "hexen-dk" },
     { "Hexen Demo",                             "hexen-demo" },
 
-    { 0, 0 }
+    { nullptr, nullptr }
 };
 
-QList<DoomsdayInfo::GameMode> DoomsdayInfo::allGameModes()
+QList<DoomsdayInfo::Game> DoomsdayInfo::allGames()
 {
-    QList<GameMode> modes;
-    for (int i = 0; gameModes[i].name; ++i)
+    QList<Game> games;
+    for (int i = 0; gameTable[i].name; ++i)
     {
-        GameMode mod;
-        mod.title  = gameModes[i].name;
-        mod.option = gameModes[i].mode;
-        modes.append(mod);
+        Game game;
+        game.title  = gameTable[i].name;
+        game.option = gameTable[i].mode;
+        games.append(game);
     }
-    return modes;
+    return games;
 }
 
-String DoomsdayInfo::titleForGameMode(String const &mode)
+String DoomsdayInfo::titleForGame(String const &mode)
 {
-    for (int i = 0; gameModes[i].name; ++i)
+    for (int i = 0; gameTable[i].name; ++i)
     {
-        if (gameModes[i].mode == mode)
-            return gameModes[i].name;
+        if (gameTable[i].mode == mode)
+            return gameTable[i].name;
     }
     return mode;
+}
+
+QList<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
+{
+    using GOValue = GameOption::Value;
+
+    QList<GameOption> opts;
+
+    // Common options.
+    opts << GameOption(Choice, "Game type", "server-game-deathmatch %1",
+                       GOValue(),
+                       QList<GOValue>({ GOValue("0", "Co-op", "coop"),
+                                        GOValue("1", "Deathmatch", "dm"),
+                                        GOValue("2", "Deathmatch II", "dm2") }));
+
+    opts << GameOption(Choice, "Skill level", "server-game-skill %1",
+                       GOValue(),
+                       QList<GOValue>({ GOValue("0", "Novice", "skill1"),
+                                        GOValue("1", "Easy", "skill2"),
+                                        GOValue("2", "Normal", "skill3"),
+                                        GOValue("3", "Hard", "skill4"),
+                                        GOValue("4", "Nightmare", "skill5") }));
+
+    opts << GameOption(Toggle, "Players can jump", "server-game-jump %1",
+                       GOValue(),
+                       QList<GOValue>({ GOValue("0"),
+                                        GOValue("1", "", "jump") }));
+
+    opts << GameOption(Toggle, "Monsters disabled", "server-game-nomonsters %1",
+                       GOValue(),
+                       QList<GOValue>({ GOValue("0"),
+                                        GOValue("1", "", "nomonst") }));
+
+    if (!gameId.startsWith("hexen"))
+    {
+        opts << GameOption(Toggle, "Respawn monsters", "server-game-respawn %1",
+                           GOValue(),
+                           QList<GOValue>({ GOValue("0"),
+                                            GOValue("1", "", "respawn") }));
+    }
+
+    if (gameId.startsWith("doom1"))
+    {
+        opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
+    }
+    else if (gameId.startsWith("doom2"))
+    {
+        opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
+    }
+    else if (gameId.startsWith("heretic"))
+    {
+        opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
+    }
+    else if (gameId.startsWith("hexen"))
+    {
+        opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
+    }
+
+    return opts;
 }
 
 NativePath DoomsdayInfo::defaultServerRuntimeFolder()
@@ -91,6 +148,16 @@ NativePath DoomsdayInfo::defaultServerRuntimeFolder()
     return NativePath(QDir::home().filePath(".doomsday")) / "server-runtime";
 #endif
 }
+
+DoomsdayInfo::GameOption::GameOption(OptionType type, String title,
+                                     String command, Value defaultValue,
+                                     QList<Value> allowedValues)
+    : type(type)
+    , title(title)
+    , command(command)
+    , defaultValue(defaultValue)
+    , allowedValues(allowedValues)
+{}
 
 } // namespace shell
 } // namespace de

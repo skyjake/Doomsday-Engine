@@ -82,7 +82,7 @@ DENG2_PIMPL(LocalServerDialog)
 
         games = new QComboBox;
         games->setEditable(false);
-        foreach (DoomsdayInfo::GameMode const &mode, DoomsdayInfo::allGameModes())
+        foreach (DoomsdayInfo::Game const &mode, DoomsdayInfo::allGames())
         {
             games->addItem(mode.title, mode.option);
         }

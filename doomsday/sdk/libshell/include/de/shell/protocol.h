@@ -239,7 +239,7 @@ public:
      * Constructs a packet that describes the current gameplay state.
      *
      * @param mode      Game mode (e.g., doom2).
-     * @param rules     Name of the game rules (e.g., Deathmatch).
+     * @param rules     Game rule keywords (e.g., "dm skill2 jump").
      * @param mapId     Identifier of the map (e.g., E1M3).
      * @param mapTitle  Title of the map (from mapinfo/defs).
      *
