@@ -129,7 +129,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
     bool hasConfig(String const &token) const
     {
-        return QRegExp("\\b" + token + "\\b").indexIn(gameConfig) >= 0;
+        return gameConfig.containsWord(token);
     }
 
     void gameReadinessUpdated()
@@ -175,7 +175,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     }
 
     meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
-                                d->hasConfig("dm2")?  "Deathmatch v2" :
+                                d->hasConfig("dm2")?  "Deathmatch II" :
                                                       "Deathmatch"));
 
     if (ClientApp::serverLink().isServerOnLocalNetwork(info.address()))
