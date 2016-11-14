@@ -2803,8 +2803,15 @@ D_CMD(WarpMap)
     else
     {
         // If a session is already in progress then copy the rules from it.
-        GameRuleset const rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
-                                                                 : defaultGameRules);
+        GameRuleset rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
+                                                           : defaultGameRules);
+        if (IS_DEDICATED)
+        {
+            // Why is this necessary to set here? Changing the rules in P_SetupMap()
+            // causes the skill change to be effective on the _next_ map load, not
+            // the current one. -jk
+            rules.skill = cfg.common.netSkill;
+        }
         G_SetGameActionNewSession(rules, episodeId, mapUri);
     }
 

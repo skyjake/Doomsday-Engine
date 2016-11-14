@@ -664,6 +664,7 @@ void P_SetupMap(de::Uri const &mapUri)
     {
         // Whenever the map changes, update the game rule config.
         GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
+        newRules.skill           = cfg.common.netSkill;
         newRules.deathmatch      = cfg.common.netDeathmatch;
         newRules.noMonsters      = cfg.common.netNoMonsters;
         /*newRules.*/cfg.common.jumpEnabled = cfg.common.netJumping;

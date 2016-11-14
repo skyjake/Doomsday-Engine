@@ -104,37 +104,38 @@ void NetSv_UpdateGameConfigDescription()
 
     GameRuleset const &gameRules = COMMON_GAMESESSION->rules();
 
-    de::zap(gameConfigString);
-    sprintf(gameConfigString, "skill%i", gameRules.skill + 1);
+    QByteArray str = "skill" + QByteArray::number(gameRules.skill + 1);
 
     if(gameRules.deathmatch > 1)
     {
-        sprintf(gameConfigString, " dm%i", gameRules.deathmatch);
+        str += " dm" + QByteArray::number(gameRules.deathmatch);
     }
     else if(gameRules.deathmatch)
     {
-        strcat(gameConfigString, " dm");
+        str += " dm";
     }
     else
     {
-        strcat(gameConfigString, " coop");
+        str += " coop";
     }
 
     if(gameRules.noMonsters)
     {
-        strcat(gameConfigString, " nomonst");
+        str += " nomonst";
     }
 #if !__JHEXEN__
     if(gameRules.respawnMonsters)
     {
-        strcat(gameConfigString, " respawn");
+        str += " respawn";
     }
 #endif
 
     if(cfg.common.jumpEnabled)
     {
-        strcat(gameConfigString, " jump");
+        str += " jump";
     }
+
+    strcpy(gameConfigString, str);
 }
 
 void NetSv_Ticker()
