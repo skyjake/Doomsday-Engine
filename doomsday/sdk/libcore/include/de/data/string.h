@@ -217,6 +217,8 @@ public:
     /// Extracts everything but the extension from string.
     String fileNameAndPathWithoutExtension(QChar dirChar = '/') const;
 
+    bool containsWord(String const &word) const;
+
     /**
      * Compare two strings (case sensitive).
      *

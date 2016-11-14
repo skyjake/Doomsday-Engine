@@ -24,6 +24,7 @@
 
 #include <QDir>
 #include <QTextStream>
+#include <QRegularExpression>
 #include <QUrl> // percent encoding
 #include <cstdio>
 #include <cstdarg>
@@ -410,6 +411,15 @@ String String::fileNamePath(QChar dirChar) const
 String String::fileNameAndPathWithoutExtension(QChar dirChar) const
 {
     return fileNamePath(dirChar) / fileNameWithoutExtension();
+}
+
+bool String::containsWord(String const &word) const
+{
+    if (word.isEmpty())
+    {
+        return false;
+    }
+    return QRegularExpression(QString("\\b%1\\b").arg(word)).match(*this).hasMatch();
 }
 
 dint String::compareWithCase(String const &str) const

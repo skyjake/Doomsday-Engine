@@ -625,9 +625,8 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
 {
     DENG2_GUARD(d);
 
-    QRegExp re(QString("\\b%1\\b").arg(word));
     String const value = gets(name, "");
-    if (re.indexIn(value) < 0)
+    if (!value.containsWord(word))
     {
         appendWord(name, word, separator);
     }
