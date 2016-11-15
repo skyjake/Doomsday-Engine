@@ -1192,11 +1192,11 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
         {
         default: break;
 
-        case Id1MapRecognizer::VertexData:    d->readVertexes(reader, elemCount);   break;
-        case Id1MapRecognizer::LineDefData:   d->readLineDefs(reader, elemCount);   break;
-        case Id1MapRecognizer::SideDefData:   d->readSideDefs(reader, elemCount);   break;
+        case Id1MapRecognizer::VertexData:    d->readVertexes  (reader, elemCount); break;
+        case Id1MapRecognizer::LineDefData:   d->readLineDefs  (reader, elemCount); break;
+        case Id1MapRecognizer::SideDefData:   d->readSideDefs  (reader, elemCount); break;
         case Id1MapRecognizer::SectorDefData: d->readSectorDefs(reader, elemCount); break;
-        case Id1MapRecognizer::ThingData:     d->readThings(reader, elemCount);     break;
+        case Id1MapRecognizer::ThingData:     d->readThings    (reader, elemCount); break;
         case Id1MapRecognizer::TintColorData: d->readTintColors(reader, elemCount); break;
         }
 

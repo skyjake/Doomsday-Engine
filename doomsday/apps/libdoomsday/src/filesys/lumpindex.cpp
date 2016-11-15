@@ -25,6 +25,7 @@
 
 #include "doomsday/filesys/lumpindex.h"
 #include <QBitArray>
+#include <QHash>
 #include <QVector>
 #include <de/Log>
 
@@ -48,7 +49,7 @@ namespace internal
 
         // Still matched; try the file load order indexes.
         if (int delta = (infoA->lump->container().loadOrderIndex() -
-                        infoB->lump->container().loadOrderIndex()))
+                         infoB->lump->container().loadOrderIndex()))
             return delta;
 
         // Still matched (i.e., present in the same package); use the original indexes.
@@ -61,12 +62,10 @@ using namespace internal;
 
 DENG2_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
 {
-    lumpnum_t lastLump;
+    lumpnum_t lastLump = -1;
     Lumps lumps;
     String id;
-    Format format;
-
-    Impl() : lastLump(-1), format(UnknownFormat) {}
+    Format format = UnknownFormat;
 };
 
 LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
@@ -92,6 +91,12 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
             // Missing a header?
             if (d->lastLump == 0) return;
 
+            if (dataType == UDMFTextmapData)
+            {
+                // This must be UDMF.
+                d->format = UniversalFormat;
+            }
+
             // The id of the map is the name of the lump which precedes the first
             // recognized data lump (which should be the header). Note that some
             // ports include MAPINFO-like data in the header.
@@ -100,8 +105,16 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         }
         else
         {
-            // The first unrecognized lump ends the sequence.
-            if (dataType == UnknownData) break;
+            if (d->format == UniversalFormat)
+            {
+                // Found the UDMF end marker.
+                if (dataType == UDMFEndmapData) break;
+            }
+            else
+            {
+                // The first unrecognized lump ends the sequence.
+                if (dataType == UnknownData) break;
+            }
 
             // A lump from another source file also ends the sequence.
             if (sourceFile.compareWithoutCase(lump.container().composePath()))
@@ -116,70 +129,73 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
     if (d->lumps.isEmpty()) return;
 
     // At this point we know we've found something that could be map data.
-
-    // Some data lumps are specific to a particular map format and thus their
-    // presence unambiguously identifies the format.
-    if (d->lumps.contains(BehaviorData))
+    if (d->format == UnknownFormat)
     {
-        d->format = HexenFormat;
-    }
-    else if (d->lumps.contains(MacroData) || d->lumps.contains(TintColorData) ||
-            d->lumps.contains(LeafData))
-    {
-        d->format = Doom64Format;
-    }
-    else
-    {
-        d->format = DoomFormat;
-    }
-
-    // Determine whether each data lump is of the expected size.
-    duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
-    {
-        DataType const dataType = i.key();
-        File1 const &lump       = *i.value();
-
-        // Determine the number of map data objects of each data type.
-        duint *elemCountAddr = 0;
-        dsize const elemSize = elementSizeForDataType(d->format, dataType);
-
-        switch (dataType)
+        // Some data lumps are specific to a particular map format and thus their
+        // presence unambiguously identifies the format.
+        if (d->lumps.contains(BehaviorData))
         {
-        default: break;
-
-        case VertexData:    elemCountAddr = &numVertexes; break;
-        case ThingData:     elemCountAddr = &numThings;   break;
-        case LineDefData:   elemCountAddr = &numLines;    break;
-        case SideDefData:   elemCountAddr = &numSides;    break;
-        case SectorDefData: elemCountAddr = &numSectors;  break;
-        case TintColorData: elemCountAddr = &numLights;   break;
+            d->format = HexenFormat;
+        }
+        else if (d->lumps.contains(MacroData) ||
+                 d->lumps.contains(TintColorData) ||
+                 d->lumps.contains(LeafData))
+        {
+            d->format = Doom64Format;
+        }
+        else
+        {
+            d->format = DoomFormat;
         }
 
-        if (elemCountAddr)
+        // Determine whether each data lump is of the expected size.
+        duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
+        DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
         {
-            if (lump.size() % elemSize != 0)
+            DataType const dataType = i.key();
+            File1 const &lump       = *i.value();
+
+            // Determine the number of map data objects of each data type.
+            duint *elemCountAddr = 0;
+            dsize const elemSize = elementSizeForDataType(d->format, dataType);
+
+            switch (dataType)
             {
-                // What *is* this??
-                d->format = UnknownFormat;
-                d->id.clear();
-                return;
+            default: break;
+
+            case VertexData:    elemCountAddr = &numVertexes; break;
+            case ThingData:     elemCountAddr = &numThings;   break;
+            case LineDefData:   elemCountAddr = &numLines;    break;
+            case SideDefData:   elemCountAddr = &numSides;    break;
+            case SectorDefData: elemCountAddr = &numSectors;  break;
+            case TintColorData: elemCountAddr = &numLights;   break;
             }
 
-            *elemCountAddr += lump.size() / elemSize;
+            if (elemCountAddr)
+            {
+                if (lump.size() % elemSize != 0)
+                {
+                    // What *is* this??
+                    d->format = UnknownFormat;
+                    d->id.clear();
+                    return;
+                }
+
+                *elemCountAddr += lump.size() / elemSize;
+            }
+        }
+
+        // A valid map contains at least one of each of these element types.
+        /// @todo Support loading "empty" maps.
+        if (!numVertexes || !numLines || !numSides || !numSectors)
+        {
+            d->format = UnknownFormat;
+            d->id.clear();
+            return;
         }
     }
 
-    // A valid map contains at least one of each of these element types.
-    /// @todo Support loading "empty" maps.
-    if (!numVertexes || !numLines || !numSides || !numSectors)
-    {
-        d->format = UnknownFormat;
-        d->id.clear();
-        return;
-    }
-
-    //LOG_RES_VERBOSE("Recognized %s format map") << Id1Map::formatName(d->format);
+    LOG_RES_VERBOSE("Recognized %s format map") << formatName(d->format);
 }
 
 String const &LumpIndex::Id1MapRecognizer::id() const
@@ -211,10 +227,11 @@ lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const
 String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
 {
     static String const names[1 + KnownFormatCount] = {
-        /* MF_UNKNOWN */ "Unknown",
-        /* MF_DOOM    */ "id Tech 1 (Doom)",
-        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
-        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
+        "Unknown",
+        "id Tech 1 (Doom)",
+        "id Tech 1 (Hexen)",
+        "id Tech 1 (Doom64)",
+        "id Tech 1 (UDMF)"
     };
     if (id >= DoomFormat && id < KnownFormatCount)
     {
@@ -223,53 +240,40 @@ String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
     return names[0];
 }
 
-/// @todo Optimize: Replace linear search...
 LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpName(String name) // static
 {
-    static const struct LumpTypeInfo {
-        String name;
-        DataType type;
-    } lumpTypeInfo[] =
+    static QHash<String, DataType> const lumpTypeInfo
     {
-        { "THINGS",     ThingData       },
-        { "LINEDEFS",   LineDefData     },
-        { "SIDEDEFS",   SideDefData     },
-        { "VERTEXES",   VertexData      },
-        { "SEGS",       SegData         },
-        { "SSECTORS",   SubsectorData   },
-        { "NODES",      NodeData        },
-        { "SECTORS",    SectorDefData   },
-        { "REJECT",     RejectData      },
-        { "BLOCKMAP",   BlockmapData    },
-        { "BEHAVIOR",   BehaviorData    },
-        { "SCRIPTS",    ScriptData      },
-        { "LIGHTS",     TintColorData   },
-        { "MACROS",     MacroData       },
-        { "LEAFS",      LeafData        },
-        { "GL_VERT",    GLVertexData    },
-        { "GL_SEGS",    GLSegData       },
-        { "GL_SSECT",   GLSubsectorData },
-        { "GL_NODES",   GLNodeData      },
-        { "GL_PVS",     GLPVSData       },
-        { "",           UnknownData     }
+        std::make_pair(String("THINGS"),   ThingData      ),
+        std::make_pair(String("LINEDEFS"), LineDefData    ),
+        std::make_pair(String("SIDEDEFS"), SideDefData    ),
+        std::make_pair(String("VERTEXES"), VertexData     ),
+        std::make_pair(String("SEGS"),     SegData        ),
+        std::make_pair(String("SSECTORS"), SubsectorData  ),
+        std::make_pair(String("NODES"),    NodeData       ),
+        std::make_pair(String("SECTORS"),  SectorDefData  ),
+        std::make_pair(String("REJECT"),   RejectData     ),
+        std::make_pair(String("BLOCKMAP"), BlockmapData   ),
+        std::make_pair(String("BEHAVIOR"), BehaviorData   ),
+        std::make_pair(String("SCRIPTS"),  ScriptData     ),
+        std::make_pair(String("LIGHTS"),   TintColorData  ),
+        std::make_pair(String("MACROS"),   MacroData      ),
+        std::make_pair(String("LEAFS"),    LeafData       ),
+        std::make_pair(String("GL_VERT"),  GLVertexData   ),
+        std::make_pair(String("GL_SEGS"),  GLSegData      ),
+        std::make_pair(String("GL_SSECT"), GLSubsectorData),
+        std::make_pair(String("GL_NODES"), GLNodeData     ),
+        std::make_pair(String("GL_PVS"),   GLPVSData      ),
+        std::make_pair(String("TEXTMAP"),  UDMFTextmapData),
+        std::make_pair(String("ENDMAP"),   UDMFEndmapData ),
     };
 
     // Ignore the file extension if present.
-    name = name.fileNameWithoutExtension();
-
-    if (!name.isEmpty())
+    auto found = lumpTypeInfo.constFind(name.fileNameWithoutExtension().toUpper());
+    if (found != lumpTypeInfo.constEnd())
     {
-        for (dint i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
-        {
-            LumpTypeInfo const &info = lumpTypeInfo[i];
-            if (!info.name.compareWithoutCase(name) &&
-               info.name.length() == name.length())
-            {
-                return info.type;
-            }
-        }
+        return found.value();
     }
-
     return UnknownData;
 }
 

@@ -68,6 +68,7 @@ public:
             DoomFormat,
             HexenFormat,
             Doom64Format,
+            UniversalFormat, // UDMF
 
             KnownFormatCount
         };
@@ -96,6 +97,8 @@ public:
             GLSubsectorData,
             GLNodeData,
             GLPVSData,
+            UDMFTextmapData,
+            UDMFEndmapData,
 
             KnownDataCount
         };

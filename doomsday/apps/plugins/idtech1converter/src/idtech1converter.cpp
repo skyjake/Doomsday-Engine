@@ -59,7 +59,8 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     DENG2_ASSERT(context != 0);
     Id1MapRecognizer const &recognizer = *reinterpret_cast<de::Id1MapRecognizer *>(context);
 
-    if(recognizer.format() != Id1MapRecognizer::UnknownFormat)
+    if(recognizer.format() != Id1MapRecognizer::UnknownFormat &&
+       recognizer.format() != Id1MapRecognizer::UniversalFormat)
     {
         // Attempt a conversion...
         try

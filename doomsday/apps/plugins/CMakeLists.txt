@@ -12,6 +12,7 @@ endif ()
 add_subdirectory (idtech1converter)
 add_subdirectory (savegameconverter)
 add_subdirectory (dehread)
+add_subdirectory (udmfconverter)
 
 add_subdirectory (doom)
 add_subdirectory (heretic)
