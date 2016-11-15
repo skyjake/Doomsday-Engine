@@ -75,6 +75,7 @@ DENG2_PIMPL(LinkWindow)
     QToolButton *optionsButton;
     QToolButton *consoleButton;
     QStackedWidget *stack;
+    QWidget *newLocalServerPage;
     StatusWidget *status;
     OptionsPage *options;
     ConsolePage *console;
@@ -160,6 +161,8 @@ DENG2_PIMPL(LinkWindow)
         status->linkDisconnected();
         updateCurrentHost();
         updateStyle();
+
+        checkCurrentTab(false);
     }
 
     QString readErrorLogContents() const
@@ -218,6 +221,18 @@ DENG2_PIMPL(LinkWindow)
 
         gameStatus->setText(statusText(msg));
     }
+
+    void checkCurrentTab(bool connected)
+    {
+        if (stack->currentWidget() == newLocalServerPage && connected)
+        {
+            stack->setCurrentWidget(status);
+        }
+        else if (stack->currentWidget() == status && !connected)
+        {
+            stack->setCurrentWidget(newLocalServerPage);
+        }
+    }
 };
 
 LinkWindow::LinkWindow(QWidget *parent)
@@ -262,6 +277,21 @@ LinkWindow::LinkWindow(QWidget *parent)
 #endif
 
     d->stack = new QStackedWidget;
+
+    // Page for quickly starting a new local server.
+    d->newLocalServerPage = new QWidget;
+    d->stack->addWidget(d->newLocalServerPage);
+    {
+        auto *newButton = new QPushButton(tr("New Local Server..."));
+        newButton->setMinimumWidth(200);
+        connect(newButton, SIGNAL(pressed()), &GuiShellApp::app(), SLOT(startLocalServer()));
+
+        auto *layout = new QVBoxLayout;
+        layout->addStretch(1);
+        layout->addWidget(newButton, 0, Qt::AlignCenter);
+        layout->addStretch(1);
+        d->newLocalServerPage->setLayout(layout);
+    }
 
     // Status page.
     d->status = new StatusWidget;
@@ -410,6 +440,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
 
     d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
     statusBar()->showMessage(tr("Waiting for local server..."));
+    d->checkCurrentTab(true);
 }
 
 void LinkWindow::openConnection(Link *link, String name)
@@ -436,7 +467,7 @@ void LinkWindow::openConnection(Link *link, String name)
 
     d->link->connectLink();
     d->status->linkConnected(d->link);
-
+    d->checkCurrentTab(true);
     d->updateStyle();
 }
 
@@ -474,7 +505,7 @@ void LinkWindow::switchToStatus()
 {
     d->optionsButton->setChecked(false);
     d->consoleButton->setChecked(false);
-    d->stack->setCurrentWidget(d->status);
+    d->stack->setCurrentWidget(d->link? d->status : d->newLocalServerPage);
 }
 
 void LinkWindow::switchToOptions()
@@ -619,6 +650,7 @@ void LinkWindow::connected()
 #ifdef MENU_IN_LINK_WINDOW
     d->disconnectAction->setEnabled(true);
 #endif
+    d->checkCurrentTab(true);
 
     emit linkOpened(this);
 }

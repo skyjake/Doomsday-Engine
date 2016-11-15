@@ -64,9 +64,11 @@ DENG2_PIMPL(OptionsPage)
         gameOptions = shell::DoomsdayInfo::gameOptions(game);
 
         base   = new QWidget(&self);
+        base->setMaximumWidth(320);
         layout = new QFormLayout(base);
 
         buttons = new QDialogButtonBox;
+        buttons->setMaximumWidth(320);
         auto *acceptButton = buttons->addButton("Apply && Restart Map", QDialogButtonBox::AcceptRole);
         QObject::connect(acceptButton, &QPushButton::pressed, [this] () { apply(); });
 
@@ -113,8 +115,8 @@ DENG2_PIMPL(OptionsPage)
 
         vbox->setContentsMargins(36, 36, 36, 36);
         vbox->addStretch(1);
-        vbox->addWidget(base);
-        vbox->addWidget(buttons);
+        vbox->addWidget(base, 0, Qt::AlignCenter);
+        vbox->addWidget(buttons, 0, Qt::AlignCenter);
         vbox->addStretch(1);
 
         buttons->setEnabled(false);
