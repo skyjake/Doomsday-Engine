@@ -18,6 +18,7 @@
  */
 
 #include "importudmf.h"
+#include "udmfparser.h"
 
 #include <doomsday/filesys/lumpindex.h>
 #include <de/App>
@@ -32,36 +33,42 @@ using namespace de;
  * Our job is to read in the map data structures then use the Doomsday map editing
  * interface to recreate the map in native format.
  */
-static int convertMapHook(int /*hookType*/, int /*parm*/, void *context)
+static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
-    Id1MapRecognizer const *recognizer = reinterpret_cast<Id1MapRecognizer *>(context);
-    if (!recognizer) return false;
-
-    if (recognizer->format() == Id1MapRecognizer::UniversalFormat)
+    if (Id1MapRecognizer const *recognizer = reinterpret_cast<Id1MapRecognizer *>(context))
     {
-        LOG_AS("UDMFConverter");
-
-        // Attempt a conversion...
-        try
+        if (recognizer->format() == Id1MapRecognizer::UniversalFormat)
         {
-#if 0
-            std::unique_ptr<MapImporter> map(new MapImporter(recognizer));
+            LOG_AS("importudmf");
+            try
+            {
+                // Read the contents of the TEXTMAP lump.
+                auto *src = recognizer->lumps()[Id1MapRecognizer::UDMFTextmapData];
+                Block bytes(src->size());
+                src->read(bytes.data(), false);
 
-            // The archived map data was read successfully.
-            // Transfer to the engine via the runtime map editing interface.
-            /// @todo Build it using native components directly...
-            LOG_AS("importidtech1");
-            map->transfer();
-#endif
-            return true; // success
-        }
-        catch (Error const &er)
-        {
-            LOG_MAP_ERROR("Erroring while loading UDMF: ") << er.asText();
+                String const source = String::fromUtf8(bytes);
+
+                // Parse the UDMF source and use the MPE API to create the map elements.
+                UDMFParser parser;
+                parser.setGlobalAssignmentHandler([] (String const &ident, QVariant const &value)
+                {
+                    qDebug() << "Global:" << ident << value;
+                });
+                parser.setBlockHandler([] (String const &type, UDMFParser::Block const &block)
+                {
+                    qDebug() << "Block" << type << block;
+                });
+                parser.parse(source);
+                return true;
+            }
+            catch (Error const &er)
+            {
+                LOG_MAP_ERROR("Erroring while loading UDMF: ") << er.asText();
+            }
         }
     }
-
-    return false; // failure :(
+    return false;
 }
 
 /**
@@ -70,7 +77,7 @@ static int convertMapHook(int /*hookType*/, int /*parm*/, void *context)
  */
 extern "C" void DP_Initialize()
 {
-    Plug_AddHook(HOOK_MAP_CONVERT, convertMapHook);
+    Plug_AddHook(HOOK_MAP_CONVERT, importMapHook);
 }
 
 /**
@@ -83,17 +90,15 @@ extern "C" char const *deng_LibraryType()
 }
 
 //DENG_DECLARE_API(Base);
-//DENG_DECLARE_API(F);
+DENG_DECLARE_API(F);
 DENG_DECLARE_API(Map);
 DENG_DECLARE_API(Material);
 DENG_DECLARE_API(MPE);
-//DENG_DECLARE_API(Uri);
 
 DENG_API_EXCHANGE(
     //DENG_GET_API(DE_API_BASE, Base);
-    //DENG_GET_API(DE_API_FILE_SYSTEM, F);
+    DENG_GET_API(DE_API_FILE_SYSTEM, F);
     DENG_GET_API(DE_API_MAP, Map);
     DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
-    //DENG_GET_API(DE_API_URI, Uri);
 )
