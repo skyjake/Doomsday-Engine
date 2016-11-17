@@ -110,7 +110,7 @@ void UDMFParser::parseAssignment(Block &block)
                           _range.token(1).asText());
     }
 
-    String const identifier = _range.firstToken().str();
+    String const identifier = _range.firstToken().str().toLower();
     Token const &valueToken = _range.token(2);
 
     // Store the assigned value into a variant.
