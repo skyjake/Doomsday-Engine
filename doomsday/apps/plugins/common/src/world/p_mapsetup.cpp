@@ -399,29 +399,29 @@ static void initXSectors()
 static void initMapSpots()
 {
     numMapSpots = P_CountMapObjs(MO_THING);
-    mapSpots = (mapspot_t *)Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
+    mapSpots = reinterpret_cast<mapspot_t *>(Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0));
 
     for(uint i = 0; i < numMapSpots; ++i)
     {
         mapspot_t *spot = &mapSpots[i];
 
-        spot->origin[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
-        spot->origin[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        spot->origin[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+        spot->origin[VX] = P_GetGMODouble(MO_THING, i, MO_X);
+        spot->origin[VY] = P_GetGMODouble(MO_THING, i, MO_Y);
+        spot->origin[VZ] = P_GetGMODouble(MO_THING, i, MO_Z);
 
-        spot->doomEdNum = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
+        spot->doomEdNum  = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
         spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
-        spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
-        spot->angle = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
+        spot->flags      = P_GetGMOInt(MO_THING, i, MO_FLAGS);
+        spot->angle      = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
 
 #if __JHEXEN__
-        spot->tid = P_GetGMOShort(MO_THING, i, MO_ID);
+        spot->tid     = P_GetGMOShort(MO_THING, i, MO_ID);
         spot->special = P_GetGMOByte(MO_THING, i, MO_SPECIAL);
-        spot->arg1 = P_GetGMOByte(MO_THING, i, MO_ARG0);
-        spot->arg2 = P_GetGMOByte(MO_THING, i, MO_ARG1);
-        spot->arg3 = P_GetGMOByte(MO_THING, i, MO_ARG2);
-        spot->arg4 = P_GetGMOByte(MO_THING, i, MO_ARG3);
-        spot->arg5 = P_GetGMOByte(MO_THING, i, MO_ARG4);
+        spot->arg1    = P_GetGMOByte(MO_THING, i, MO_ARG0);
+        spot->arg2    = P_GetGMOByte(MO_THING, i, MO_ARG1);
+        spot->arg3    = P_GetGMOByte(MO_THING, i, MO_ARG2);
+        spot->arg4    = P_GetGMOByte(MO_THING, i, MO_ARG3);
+        spot->arg5    = P_GetGMOByte(MO_THING, i, MO_ARG4);
 #endif
 
 #if __JHERETIC__
