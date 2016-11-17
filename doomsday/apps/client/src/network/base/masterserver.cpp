@@ -183,7 +183,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
         }
         else
         {
-            String replyText = String::fromUtf8(Block(reply->readAll())).strip();
+            String replyText = String::fromUtf8(reply->readAll()).strip();
             if (!replyText.isEmpty())
             {
                 LOGDEV_NET_VERBOSE("Reply contents:\n") << replyText;
@@ -214,7 +214,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
         d->servers.clear();
 
         // The syntax of the response is a JSON array containing server objects.
-        foreach (QVariant entry, parseJSON(String::fromUtf8(Block(response))).toList())
+        foreach (QVariant entry, parseJSON(String::fromUtf8(response)).toList())
         {
             try
             {

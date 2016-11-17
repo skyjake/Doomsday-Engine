@@ -900,9 +900,9 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     {
         if (!fmt.str.compareWithoutCase(ext))
         {
-            LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
-                                            << " as "
-                                            << ::internal::formatDescriptions[fmt.format];
+            LOG_RES_XVERBOSE("Interpreted %s as %s")
+                    << sourceData->description()
+                    << ::internal::formatDescriptions[fmt.format];
 
             switch (fmt.format)
             {

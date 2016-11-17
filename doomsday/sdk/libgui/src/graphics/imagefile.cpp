@@ -195,8 +195,8 @@ File *ImageFile::Interpreter::interpretFile(File *sourceData) const
 {
     if (Image::recognize(*sourceData))
     {
-        LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
-                                        << " as an image";
+        LOG_RES_XVERBOSE("Interpreted ") << sourceData->description()
+                                         << " as an image";
         return new ImageFile(sourceData);
     }
     return nullptr;

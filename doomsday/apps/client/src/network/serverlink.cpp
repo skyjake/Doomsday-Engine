@@ -94,7 +94,7 @@ DENG2_PIMPL(ServerLink)
         {
             try
             {
-                QVariant const response = parseJSON(String::fromUtf8(Block(reply.mid(5))));
+                QVariant const response = parseJSON(String::fromUtf8(reply.mid(5)));
                 std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
                 if (!rec->is<RecordValue>())
                 {

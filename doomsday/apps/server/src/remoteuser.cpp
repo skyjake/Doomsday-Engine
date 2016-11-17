@@ -178,7 +178,7 @@ DENG2_PIMPL(RemoteUser)
             // Read the client's name and convert the network node into an actual
             // client. Here we also decide if the client's protocol is compatible
             // with ours.
-            name = String::fromUtf8(Block(command.mid(10)));
+            name = String::fromUtf8(command.mid(10));
 
             if (App_ServerSystem().isUserAllowedToJoin(self))
             {

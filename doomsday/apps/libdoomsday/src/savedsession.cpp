@@ -425,7 +425,7 @@ File *SavedSession::Interpreter::interpretFile(File *sourceData) const
             if (sourceData->extension() == ".save")
             {
                 /// @todo fixme: Don't assume this is a save package.
-                LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
+                LOG_RES_XVERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
                 std::unique_ptr<ArchiveFolder> package;
                 package.reset(new SavedSession(*sourceData, sourceData->name()));
 
