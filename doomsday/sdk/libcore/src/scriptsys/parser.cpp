@@ -87,9 +87,9 @@ void Parser::parseCompound(Compound &compound)
     while (_statementRange.size() > 0)
     {
         if (_statementRange.firstToken().equals(ScriptLex::ELSIF) ||
-           _statementRange.firstToken().equals(ScriptLex::ELSE) ||
-           _statementRange.firstToken().equals(ScriptLex::CATCH) ||
-           (_statementRange.size() == 1 && _statementRange.firstToken().equals(ScriptLex::END)))
+            _statementRange.firstToken().equals(ScriptLex::ELSE)  ||
+            _statementRange.firstToken().equals(ScriptLex::CATCH) ||
+            (_statementRange.size() == 1 && _statementRange.firstToken().equals(ScriptLex::END)))
         {
             // End of compound.
             break;
@@ -104,7 +104,7 @@ void Parser::parseCompound(Compound &compound)
 
 void Parser::parseStatement(Compound &compound)
 {
-    DENG2_ASSERT(!_statementRange.empty());
+    DENG2_ASSERT(!_statementRange.isEmpty());
 
     Token const &firstToken = _statementRange.firstToken();
 
@@ -376,7 +376,7 @@ FunctionStatement *Parser::parseFunctionStatement()
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
-    if (!argRange.empty())
+    if (!argRange.isEmpty())
     {
         // The arguments are comma-separated.
         TokenRange delim = argRange.undefinedRange();
@@ -585,7 +585,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
         LOGDEV_SCR_XVERBOSE_DEBUGONLY("colon at %i", colon);
 
         TokenRange conditionRange = range.between(1, colon);
-        if (conditionRange.empty())
+        if (conditionRange.isEmpty())
         {
             throw MissingTokenError("Parser::parseConditionalCompound",
                 "A condition expression was expected after " + range.token(0).asText());
@@ -771,7 +771,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     args->add(namedArgs);
 
     TokenRange argsRange = argumentRange.shrink(1);
-    if (!argsRange.empty())
+    if (!argsRange.isEmpty())
     {
         // The arguments are comma-separated.
         TokenRange delim = argsRange.undefinedRange();
@@ -817,7 +817,7 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
 
-    if (leftSide.empty())
+    if (leftSide.isEmpty())
     {
         // Must be unary.
         QScopedPointer<Expression> operand(parseExpression(rightSide));
@@ -918,12 +918,10 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
     case Token::LITERAL_STRING_APOSTROPHE:
     case Token::LITERAL_STRING_QUOTED:
     case Token::LITERAL_STRING_LONG:
-        return new ConstantExpression(
-            new TextValue(ScriptLex::unescapeStringToken(token)));
+        return new ConstantExpression(new TextValue(token.unescapeStringLiteral()));
 
     case Token::LITERAL_NUMBER:
-        return new ConstantExpression(
-            new NumberValue(ScriptLex::tokenToNumber(token)));
+        return new ConstantExpression(new NumberValue(token.toNumber()));
 
     default:
         throw UnexpectedTokenError("Parser::parseTokenExpression",

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_TOKENRANGE_H
@@ -66,7 +66,7 @@ public:
         return _end - _start;
     }
 
-    bool empty() const { return !size(); }
+    bool isEmpty() const { return !size(); }
 
     TokenRange undefinedRange() const;
 

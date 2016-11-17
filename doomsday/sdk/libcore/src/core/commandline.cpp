@@ -454,7 +454,7 @@ bool CommandLine::executeAndWait(String *output) const
     bool result = proc->waitForFinished();
     if (output)
     {
-        *output = String::fromUtf8(Block(proc->readAll()));
+        *output = String::fromUtf8(proc->readAll());
     }
     return result;
 }

@@ -14,13 +14,14 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TokenBuffer"
 #include "de/String"
 #include "de/math.h"
 
+#include <QTextStream>
 #include <cstring>
 
 using namespace de;
@@ -47,7 +48,7 @@ bool Token::equals(QChar const *str) const
 
 bool Token::beginsWith(QChar const *str) const
 {
-    dsize length = qchar_strlen(str);
+    dsize const length = qchar_strlen(str);
     if (length > dsize(size()))
     {
         // We are shorter than the required beginning string.
@@ -58,7 +59,7 @@ bool Token::beginsWith(QChar const *str) const
 
 String Token::asText() const
 {
-    return String(typeToText(_type)) + " '" + QString(_begin, _end - _begin) +
+    return String(typeToText(_type)) + " '" + str() +
            "' (on line " + QString::number(_line) + ")";
 }
 
@@ -67,9 +68,162 @@ String Token::str() const
     return String(_begin, _end - _begin);
 }
 
+String Token::unescapeStringLiteral() const
+{
+    DENG2_ASSERT(_type == LITERAL_STRING_APOSTROPHE ||
+                 _type == LITERAL_STRING_QUOTED ||
+                 _type == LITERAL_STRING_LONG);
+
+    String result;
+    QTextStream os(&result);
+    bool escaped = false;
+
+    QChar const *begin = _begin;
+    QChar const *end   = _end;
+
+    // A long string?
+    if (_type == LITERAL_STRING_LONG)
+    {
+        DENG2_ASSERT(size() >= 6);
+        begin += 3;
+        end -= 3;
+    }
+    else
+    {
+        // Normal string token.
+        ++begin;
+        --end;
+    }
+
+    for (QChar const *ptr = begin; ptr != end; ++ptr)
+    {
+        if (escaped)
+        {
+            QChar c = '\\';
+            escaped = false;
+            if (*ptr == '\\')
+            {
+                c = '\\';
+            }
+            else if (*ptr == '\'')
+            {
+                c = '\'';
+            }
+            else if (*ptr == '\"')
+            {
+                c = '\"';
+            }
+            else if (*ptr == 'a')
+            {
+                c = '\a';
+            }
+            else if (*ptr == 'b')
+            {
+                c = '\b';
+            }
+            else if (*ptr == 'f')
+            {
+                c = '\f';
+            }
+            else if (*ptr == 'n')
+            {
+                c = '\n';
+            }
+            else if (*ptr == 'r')
+            {
+                c = '\r';
+            }
+            else if (*ptr == 't')
+            {
+                c = '\t';
+            }
+            else if (*ptr == 'v')
+            {
+                c = '\v';
+            }
+            else if (*ptr == 'x' && (end - ptr > 2))
+            {
+                QString num(const_cast<QChar const *>(ptr + 1), 2);
+                duint code = num.toInt(0, 16);
+                c = QChar(code);
+                ptr += 2;
+            }
+            else
+            {
+                // Unknown escape sequence?
+                os << '\\' << *ptr;
+                continue;
+            }
+            os << c;
+        }
+        else
+        {
+            if (*ptr == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+            os << *ptr;
+        }
+    }
+    DENG2_ASSERT(!escaped);
+
+    return result;
+}
+
+bool Token::isInteger() const
+{
+    if (_type != LITERAL_NUMBER) return false;
+
+    String const string = str();
+    if (string.beginsWith(QStringLiteral("0x")) ||
+        string.beginsWith(QStringLiteral("0X")))
+    {
+        return true;
+    }
+    return !isFloat();
+}
+
+bool Token::isFloat() const
+{
+    if (_type != LITERAL_NUMBER) return false;
+    for (QChar c : *this)
+    {
+        if (c == '.') return true;
+    }
+    return false;
+}
+
+ddouble Token::toNumber() const
+{
+    String const string = str();
+
+    if (string.beginsWith(QStringLiteral("0x")) ||
+        string.beginsWith(QStringLiteral("0X")))
+    {
+        return ddouble(string.toLongLong(0, 16));
+    }
+    else
+    {
+        return string.toDouble();
+    }
+}
+
+dint64 Token::toInteger() const
+{
+    return str().toLongLong(nullptr, 0);
+}
+
+ddouble Token::toDouble() const
+{
+    return str().toDouble();
+}
+
+//---------------------------------------------------------------------------------------
+
 TokenBuffer::TokenBuffer() : _forming(0), _formPool(0)
 {}
- 
+
 TokenBuffer::~TokenBuffer()
 {}
 
@@ -106,7 +260,7 @@ QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
         {
             return &fp.chars.data()[fp.rover];
         }
-        
+
         // Can we resize this pool?
         if (!fp.rover)
         {
@@ -128,7 +282,7 @@ void TokenBuffer::newToken(duint line)
 
     // Determine which pool to use and the starting address.
     QChar *begin = advanceToPoolWithSpace(0);
-    
+
     _tokens.push_back(Token(begin, begin, line));
     _forming = &_tokens.back();
 }
@@ -136,7 +290,7 @@ void TokenBuffer::newToken(duint line)
 void TokenBuffer::appendChar(QChar c)
 {
     DENG2_ASSERT(_forming != 0);
-        
+
     // There is at least one character available in the pool.
     _forming->appendChar(c);
 
@@ -166,7 +320,7 @@ void TokenBuffer::endToken()
     {
         // Update the pool.
         _pools[_formPool].rover += _forming->size();
-        
+
         _forming = 0;
     }
 }

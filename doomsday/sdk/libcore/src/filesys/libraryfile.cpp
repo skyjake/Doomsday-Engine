@@ -130,8 +130,8 @@ File *LibraryFile::Interpreter::interpretFile(File *sourceData) const
 {
     if (recognize(*sourceData))
     {
-        LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
-                                        << " as a shared library";
+        LOG_RES_XVERBOSE("Interpreted ") << sourceData->description()
+                                         << " as a shared library";
 
         // It is a shared library intended for Doomsday.
         return new LibraryFile(sourceData);

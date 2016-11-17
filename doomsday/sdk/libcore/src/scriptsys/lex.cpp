@@ -18,12 +18,18 @@
  */
 
 #include "de/Lex"
+#include "de/TokenBuffer"
 
 #include <cctype>
 
 using namespace de;
 
-Lex::Lex(String const &input) : _input(&input), _lineCommentChar('#'), _mode(0)
+Lex::Lex(String const &input,
+         QChar lineCommentChar,
+         ModeFlags initialMode)
+    : _input(&input)
+    , _lineCommentChar(lineCommentChar)
+    , _mode(initialMode)
 {}
 
 String const &Lex::input() const
@@ -53,15 +59,19 @@ QChar Lex::peek() const
 
     if (!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
     {
-        // This isn't considered part of the input stream. Skip it.
-        duint p = _state.pos;
-        while (p < duint(_input->size()) && _input->at(++p) != '\n') {}
-        _nextPos = p + 1;
-        if (p == duint(_input->size()))
+        if (!_mode.testFlag(DoubleCharComment) ||
+            (int(_state.pos) < _input->size() - 1 && _input->at(int(_state.pos) + 1) == _lineCommentChar))
         {
-            return 0;
+            // This isn't considered part of the input stream. Skip it.
+            duint p = _state.pos;
+            while (p < duint(_input->size()) && _input->at(++p) != '\n') {}
+            _nextPos = p + 1;
+            if (p == duint(_input->size()))
+            {
+                return 0;
+            }
+            return '\n';
         }
-        return '\n';
     }
 
     _nextPos = _state.pos + 1;
@@ -144,8 +154,38 @@ duint Lex::countLineStartSpace() const
     duint pos = _state.lineStartPos;
     duint count = 0;
 
-    while (pos < duint(_input->size()) && isWhite(_input->at(pos++))) count++;
+    while (pos < duint(_input->size()) && isWhite(_input->at(pos++)))
+    {
+        count++;
+    }
     return count;
+}
+
+bool Lex::parseLiteralNumber(QChar c, TokenBuffer &output)
+{
+    if ((c == '.' && isNumeric(peek())) || isNumeric(c))
+    {
+        bool gotPoint = (c == '.');
+        bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
+        bool gotX = false;
+
+        output.setType(Token::LITERAL_NUMBER);
+
+        // Read until a non-numeric character is found.
+        while (isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
+               (!isHex && !gotPoint && c == '.') ||
+               (isHex && !gotX && (c == 'x' || c == 'X')))
+        {
+            // Just one decimal point.
+            if (c == '.') gotPoint = true;
+            // Just one 'x'.
+            if (c == 'x' || c == 'X') gotX = true;
+            output.appendChar(get());
+        }
+        output.endToken();
+        return true;
+    }
+    return false;
 }
 
 bool Lex::isWhite(QChar c)

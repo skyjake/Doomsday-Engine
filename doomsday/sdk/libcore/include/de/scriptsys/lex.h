@@ -27,6 +27,8 @@
 
 namespace de {
 
+class TokenBuffer;
+
 /**
  * Base class for lexical analyzers. Provides the basic service of reading
  * characters one by one from an input text. It also classifies characters.
@@ -40,7 +42,9 @@ public:
     DENG2_ERROR(OutOfInputError);
 
     enum ModeFlag {
-        SkipComments = 0x1
+        DoubleCharComment = 0x1, // Comment start char must be used twice to begin comment.
+        SkipComments      = 0x2,
+        DefaultMode       = 0
     };
     Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
 
@@ -54,7 +58,7 @@ public:
     {
     public:
         ModeSpan(Lex &lex, ModeFlags const &m) : _lex(lex), _originalMode(lex._mode) {
-            lex._mode = m;
+            applyFlagOperation(_lex._mode, m, true);
         }
 
         ~ModeSpan() {
@@ -75,7 +79,9 @@ public:
     static String const T_CURLY_CLOSE;
 
 public:
-    Lex(String const &input = "");
+    Lex(String const &input = "",
+        QChar lineCommentChar = QChar('#'),
+        ModeFlags initialMode = DefaultMode);
 
     /// Returns the input string in its entirety.
     String const &input() const;
@@ -118,6 +124,14 @@ public:
     /// the current line.
     duint countLineStartSpace() const;
 
+    /// Attempts to parse the current reading position as a C-style number
+    /// literal (integer, float, or hexadecimal). It is assumed that a new
+    /// token has been started in the @a output buffer.
+    /// @param c Character that begins the number (from get()).
+    /// @param output Token buffer.
+    /// @return @c true, if a number token was parsed; otherwise @c false.
+    bool parseLiteralNumber(QChar c, TokenBuffer &output);
+
 public:
     /// Determines whether a character is whitespace.
     /// @param c Character to check.
@@ -156,7 +170,7 @@ private:
     State _state;
 
     /// Character that begins a line comment.
-    duchar _lineCommentChar;
+    QChar _lineCommentChar;
 
     ModeFlags _mode;
 };

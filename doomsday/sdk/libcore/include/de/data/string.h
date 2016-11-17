@@ -321,6 +321,12 @@ public:
      */
     static String fromUtf8(IByteArray const &byteArray);
 
+    static String fromUtf8(QByteArray const &byteArray);
+
+    static String fromUtf8(Block const &block);
+
+    static String fromUtf8(char const *nullTerminatedCStr);
+
     /**
      * Builds a String out of an array of bytes that contains a Latin1 string.
      */

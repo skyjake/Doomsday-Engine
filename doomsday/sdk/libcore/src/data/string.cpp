@@ -721,7 +721,23 @@ Block String::toLatin1() const
 
 String String::fromUtf8(IByteArray const &byteArray)
 {
-    return QString::fromUtf8(reinterpret_cast<char *>(Block(byteArray).data()));
+    Block const bytes(byteArray);
+    return QString::fromUtf8(reinterpret_cast<char const *>(bytes.data()), int(bytes.size()));
+}
+
+String String::fromUtf8(QByteArray const &byteArray)
+{
+    return QString::fromUtf8(byteArray);
+}
+
+String String::fromUtf8(Block const &block)
+{
+    return QString::fromUtf8(block);
+}
+
+String String::fromUtf8(char const *nullTerminatedCStr)
+{
+    return QString::fromUtf8(nullTerminatedCStr);
 }
 
 String String::fromLatin1(IByteArray const &byteArray)

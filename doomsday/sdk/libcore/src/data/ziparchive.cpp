@@ -646,7 +646,7 @@ File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
         try
         {
             // It is a ZIP archive: we will represent it as a folder.
-            LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
+            LOG_RES_XVERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
 
             std::unique_ptr<ArchiveFolder> package(new ArchiveFolder(*sourceData, sourceData->name()));
 

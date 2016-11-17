@@ -91,7 +91,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         skipWhiteExceptNewline();
 
         if (behavior.testFlag(StopAtMismatchedCloseBrace) &&
-           !bracketLevel[BRACKET_CURLY] &&
+            !bracketLevel[BRACKET_CURLY] &&
             peek() == '}')
         {
             // Don't read past the bracket.
@@ -138,26 +138,8 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         }
 
         // Is it a number literal?
-        if ((c == '.' && isNumeric(peek())) || isNumeric(c))
+        if (parseLiteralNumber(c, output))
         {
-            bool gotPoint = (c == '.');
-            bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
-            bool gotX = false;
-
-            output.setType(Token::LITERAL_NUMBER);
-
-            // Read until a non-numeric character is found.
-            while (isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
-                  (!isHex && !gotPoint && c == '.') ||
-                  (isHex && !gotX && (c == 'x' || c == 'X')))
-            {
-                // Just one decimal point.
-                if (c == '.') gotPoint = true;
-                // Just one 'x'.
-                if (c == 'x' || c == 'X') gotX = true;
-                output.appendChar(get());
-            }
-            output.endToken();
             counter++;
             continue;
         }
@@ -347,10 +329,10 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
 bool ScriptLex::isOperator(QChar c)
 {
     return (c == '=' || c == ',' || c == '.'
-        || c == '-' || c == '+' || c == '/' || c == '*' || c == '%'
-        || c == '&' || c == '|' || c == '!' || c == '^' || c == '~'
-        || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'
-        || c == ':' || c == '<' || c == '>' || c == '?');
+         || c == '-' || c == '+' || c == '/' || c == '*' || c == '%'
+         || c == '&' || c == '|' || c == '!' || c == '^' || c == '~'
+         || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'
+         || c == ':' || c == '<' || c == '>' || c == '?');
 }
 
 bool ScriptLex::combinesWith(QChar a, QChar b)
@@ -358,8 +340,8 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     if (b == '=')
     {
         return (a == '=' || a == '+' || a == '-' || a == '/'
-            || a == '*' || a == '%' || a == '!' || a == '|' || a == '&'
-            || a == '^' || a == '~' || a == '<' || a == '>' || a == ':' || a == '?');
+             || a == '*' || a == '%' || a == '!' || a == '|' || a == '&'
+             || a == '^' || a == '~' || a == '<' || a == '>' || a == ':' || a == '?');
     }
     else if ((a == '<' && b == '<') || (a == '>' && b == '>'))
     {
@@ -368,7 +350,7 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     return false;
 }
 
-static QChar const *keywordStr[] =
+static QSet<QString> const keywordStr
 {
     ScriptLex::AND,
     ScriptLex::BREAK,
@@ -399,144 +381,28 @@ static QChar const *keywordStr[] =
     ScriptLex::T_FALSE,
     ScriptLex::T_TRUE,
     ScriptLex::PI,
-    0
 };
 
 bool ScriptLex::isKeyword(Token const &token)
 {
-    for (int i = 0; keywordStr[i]; ++i)
+    return keywordStr.contains(token.str());
+
+/*    for (int i = 0; keywordStr[i]; ++i)
     {
         if (token.equals(keywordStr[i]))
         {
             return true;
         }
     }
-    return false;
+    return false;*/
 }
 
 StringList ScriptLex::keywords()
 {
-    StringList kw;
-    for (int i = 0; keywordStr[i]; ++i)
+    StringList list;
+    foreach (QString const &kw, keywordStr)
     {
-        kw << keywordStr[i];
+        list << kw;
     }
-    return kw;
-}
-
-String ScriptLex::unescapeStringToken(Token const &token)
-{
-    DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
-                 token.type() == Token::LITERAL_STRING_QUOTED ||
-                 token.type() == Token::LITERAL_STRING_LONG);
-
-    String result;
-    QTextStream os(&result);
-    bool escaped = false;
-
-    QChar const *begin = token.begin();
-    QChar const *end = token.end();
-
-    // A long string?
-    if (token.type() == Token::LITERAL_STRING_LONG)
-    {
-        DENG2_ASSERT(token.size() >= 6);
-        begin += 3;
-        end -= 3;
-    }
-    else
-    {
-        // Normal string token.
-        ++begin;
-        --end;
-    }
-
-    for (QChar const *ptr = begin; ptr != end; ++ptr)
-    {
-        if (escaped)
-        {
-            QChar c = '\\';
-            escaped = false;
-            if (*ptr == '\\')
-            {
-                c = '\\';
-            }
-            else if (*ptr == '\'')
-            {
-                c = '\'';
-            }
-            else if (*ptr == '\"')
-            {
-                c = '\"';
-            }
-            else if (*ptr == 'a')
-            {
-                c = '\a';
-            }
-            else if (*ptr == 'b')
-            {
-                c = '\b';
-            }
-            else if (*ptr == 'f')
-            {
-                c = '\f';
-            }
-            else if (*ptr == 'n')
-            {
-                c = '\n';
-            }
-            else if (*ptr == 'r')
-            {
-                c = '\r';
-            }
-            else if (*ptr == 't')
-            {
-                c = '\t';
-            }
-            else if (*ptr == 'v')
-            {
-                c = '\v';
-            }
-            else if (*ptr == 'x' && (end - ptr > 2))
-            {
-                QString num(const_cast<QChar const *>(ptr + 1), 2);
-                duint code = num.toInt(0, 16);
-                c = QChar(code);
-                ptr += 2;
-            }
-            else
-            {
-                // Unknown escape sequence?
-                os << '\\' << *ptr;
-                continue;
-            }
-            os << c;
-        }
-        else
-        {
-            if (*ptr == '\\')
-            {
-                escaped = true;
-                continue;
-            }
-            os << *ptr;
-        }
-    }
-    DENG2_ASSERT(!escaped);
-
-    return result;
-}
-
-ddouble ScriptLex::tokenToNumber(Token const &token)
-{
-    String str(token.str());
-
-    if (token.beginsWith(String("0x")) || token.beginsWith(String("0X")))
-    {
-        return ddouble(str.toLongLong(0, 16));
-    }
-    else
-    {
-        return str.toDouble();
-    }
+    return list;
 }

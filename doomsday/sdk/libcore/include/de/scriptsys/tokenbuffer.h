@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_TOKENBUFFER_H
@@ -40,11 +40,12 @@ public:
         UNKNOWN,
         KEYWORD,
         OPERATOR,
+        LITERAL,
         LITERAL_STRING_APOSTROPHE,
         LITERAL_STRING_QUOTED,
         LITERAL_STRING_LONG,
         LITERAL_NUMBER,
-        IDENTIFIER
+        IDENTIFIER,
     };
 
     // Token constants.
@@ -119,15 +120,29 @@ public:
     /// This includes nothing extra but the text of the token.
     String str() const;
 
+    /// Unescapes a string literal into a String. The quotes/apostrophes in the
+    /// beginning and end are also removed.
+    String unescapeStringLiteral() const;
+
+    bool isInteger() const;
+    bool isFloat() const;
+
+    /// Converts the token into a double-precision floating point number.
+    ddouble toNumber() const;
+
+    de::dint64 toInteger() const;
+    de::ddouble toDouble() const;
+
     static char const *typeToText(Type type) {
-        switch (type)
-        {
+        switch (type) {
         case UNKNOWN:
             return "UNKNOWN";
         case KEYWORD:
             return "KEYWORD";
         case OPERATOR:
             return "OPERATOR";
+        case LITERAL:
+            return "LITERAL";
         case LITERAL_STRING_APOSTROPHE:
             return "LITERAL_STRING_APOSTROPHE";
         case LITERAL_STRING_QUOTED:

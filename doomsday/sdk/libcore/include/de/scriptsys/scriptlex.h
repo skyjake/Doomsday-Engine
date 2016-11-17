@@ -120,8 +120,7 @@ public:
      *
      * @return Type of the parsed string.
      */
-    Token::Type parseString(QChar startChar, duint startIndentation,
-        TokenBuffer &output);
+    Token::Type parseString(QChar startChar, duint startIndentation, TokenBuffer &output);
 
 public:
     /// Determines whether a character is an operator character.
@@ -136,12 +135,6 @@ public:
     /// Determines whether one character should join another to
     /// form a longer token.
     static bool combinesWith(QChar a, QChar b);
-
-    /// Unescapes a string token into a std::string.
-    static String unescapeStringToken(Token const &token);
-
-    /// Converts a token to a number.
-    static ddouble tokenToNumber(Token const &token);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ScriptLex::Behaviors)
