@@ -26,9 +26,11 @@ using namespace de;
 
 Lex::Lex(String const &input,
          QChar lineCommentChar,
+         QChar multiCommentChar,
          ModeFlags initialMode)
     : _input(&input)
     , _lineCommentChar(lineCommentChar)
+    , _multiCommentChar(multiCommentChar)
     , _mode(initialMode)
 {}
 
@@ -47,6 +49,60 @@ duint Lex::pos() const
     return _state.pos;
 }
 
+bool Lex::atCommentStart() const
+{
+    if (atEnd() || _mode.testFlag(RetainComments))
+    {
+        return false;
+    }
+
+    QChar const c = _input->at(_state.pos);
+    if (c == _lineCommentChar)
+    {
+        if (!_mode.testFlag(DoubleCharComment)) return true;
+        if (int(_state.pos) >= _input->size() - 1) return false;
+
+        QChar const d = _input->at(_state.pos + 1);
+        if (d == _lineCommentChar || d == _multiCommentChar)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+QChar Lex::peekComment() const
+{
+    DENG2_ASSERT(atCommentStart());
+
+    duint const inputSize = duint(_input->size());
+
+    // Skipping multiple lines?
+    if (_mode.testFlag(DoubleCharComment))
+    {
+        QChar c = _input->at(_state.pos + 1);
+        if (c == _multiCommentChar)
+        {
+            duint p = _state.pos + 2;
+            while (p < inputSize - 1 &&
+                   !(_input->at(p)     == _multiCommentChar &&
+                     _input->at(p + 1) == _lineCommentChar))
+            {
+                ++p;
+            }
+            p += 2; // skip the ending
+            _nextPos = p + 1;
+            return (p < inputSize? _input->at(p) : 0);
+        }
+    }
+
+    // Skip over the line.
+    duint p = _state.pos;
+    while (p < inputSize && _input->at(++p) != '\n') {}
+    _nextPos = p + 1;
+    return (p < inputSize? '\n' : 0);
+}
+
 QChar Lex::peek() const
 {
     if (atEnd())
@@ -55,8 +111,12 @@ QChar Lex::peek() const
         return 0;
     }
 
-    QChar c = _input->at(_state.pos);
+    if (atCommentStart())
+    {
+        return peekComment();
+    }
 
+#if 0
     if (!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
     {
         if (!_mode.testFlag(DoubleCharComment) ||
@@ -73,6 +133,7 @@ QChar Lex::peek() const
             return '\n';
         }
     }
+#endif
 
     _nextPos = _state.pos + 1;
     return _input->at(_state.pos);
@@ -88,15 +149,19 @@ QChar Lex::get()
 
     QChar c = peek();
 
+    // Keep track of the line numbers.
+    for (duint p = _state.pos; p < _nextPos; ++p)
+    {
+        if (_input->at(p) == '\n')
+        {
+            _state.lineNumber++;
+            _state.lineStartPos = p + 1;
+        }
+    }
+
     // The next position is determined by peek().
     _state.pos = _nextPos;
 
-    // Did we move to a new line?
-    if (c == '\n')
-    {
-        _state.lineNumber++;
-        _state.lineStartPos = _state.pos;
-    }
     return c;
 }
 

@@ -43,7 +43,7 @@ public:
 
     enum ModeFlag {
         DoubleCharComment = 0x1, // Comment start char must be used twice to begin comment.
-        SkipComments      = 0x2,
+        RetainComments    = 0x2,
         DefaultMode       = 0
     };
     Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
@@ -80,8 +80,9 @@ public:
 
 public:
     Lex(String const &input = "",
-        QChar lineCommentChar = QChar('#'),
-        ModeFlags initialMode = DefaultMode);
+        QChar lineCommentChar  = QChar('#'),
+        QChar multiCommentChar = QChar('\0'),
+        ModeFlags initialMode  = DefaultMode);
 
     /// Returns the input string in its entirety.
     String const &input() const;
@@ -110,6 +111,8 @@ public:
     /// Skips until a new line begins.
     void skipToNextLine();
 
+    QChar peekComment() const;
+
     /// Returns the current line of the reading position. The character
     /// returned from get() will be on this line.
     duint lineNumber() const {
@@ -119,6 +122,8 @@ public:
     /// Determines whether there is only whitespace (or nothing)
     /// remaining on the current line.
     bool onlyWhiteOnLine();
+
+    bool atCommentStart() const;
 
     /// Counts the number of whitespace characters in the beginning of
     /// the current line.
@@ -171,6 +176,10 @@ private:
 
     /// Character that begins a line comment.
     QChar _lineCommentChar;
+
+    /// Character that begins a multiline comment, if it follows _lineCommentChar.
+    /// In reversed order, the characters end a multiline comment.
+    QChar _multiCommentChar;
 
     ModeFlags _mode;
 };
