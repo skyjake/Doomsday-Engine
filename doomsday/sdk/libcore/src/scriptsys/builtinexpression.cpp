@@ -370,10 +370,7 @@ void BuiltInExpression::operator << (Reader &from)
     _arg = Expression::constructFrom(from);
 }
 
-static struct {
-    char const *str;
-    BuiltInExpression::Type type;
-} types[] = {
+static QHash<String, BuiltInExpression::Type> const types {
     { "File",        BuiltInExpression::AS_FILE },
     { "Number",      BuiltInExpression::AS_NUMBER },
     { "Record",      BuiltInExpression::AS_RECORD },
@@ -393,27 +390,21 @@ static struct {
     { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "timedelta",   BuiltInExpression::TIME_DELTA },
     { "typeof",      BuiltInExpression::TYPE_OF },
-    { NULL,          BuiltInExpression::NONE }
 };
 
 BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
 {
-    for (duint i = 0; types[i].str; ++i)
-    {
-        if (identifier == types[i].str)
-        {
-            return types[i].type;
-        }
-    }
+    auto found = types.find(identifier);
+    if (found != types.end()) return found.value();
     return NONE;
 }
 
 StringList BuiltInExpression::identifiers()
 {
     StringList names;
-    for (int i = 0; types[i].str; ++i)
+    foreach (auto const &t, types.keys())
     {
-        names << types[i].str;
+        names << t;
     }
     return names;
 }
