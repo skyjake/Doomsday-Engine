@@ -46,7 +46,16 @@ public:
 public:
     UDMFLex(de::String const &input = "");
 
-    de::dsize getExpression(de::TokenBuffer &output);
+    /**
+     * Reads tokens from the source until the end of an expression. The opening bracket
+     * of a block ends an expression, and the closing bracket is treated as an expression
+     * of its own.
+     *
+     * @param output  The read tokens.
+     *
+     * @return Number of tokens in the @a output buffer.
+     */
+    de::dsize getExpressionFragment(de::TokenBuffer &output);
 
     /**
      * Parse a string.

@@ -34,10 +34,10 @@ String const UDMFLex::BRACKET_CLOSE("}");
 String const UDMFLex::SEMICOLON(";");
 
 UDMFLex::UDMFLex(String const &input)
-    : Lex(input, QChar('/'), DoubleCharComment)
+    : Lex(input, QChar('/'), QChar('*'), DoubleCharComment)
 {}
 
-dsize UDMFLex::getExpression(TokenBuffer &output)
+dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
 {
     output.clear();
 
@@ -104,7 +104,7 @@ dsize UDMFLex::getExpression(TokenBuffer &output)
 
 void UDMFLex::parseString(TokenBuffer &output)
 {
-    ModeSpan readingMode(*this, SkipComments);
+    ModeSpan readingMode(*this, RetainComments);
 
     // The token already contains the first quote char.
     // This will throw an exception if the string is unterminated.

@@ -27,7 +27,8 @@
 /**
  * UMDF parser.
  *
- * Reads input text and makes callbacks for each parsed block.
+ * Reads input text and makes callbacks for each parsed block. The parsed contents are
+ * not kept in memory.
  */
 class UDMFParser
 {
@@ -46,20 +47,28 @@ public:
 
     Block const &globals() const;
 
+    /**
+     * Parse UDMF source and make callbacks for global assignments and blocks while
+     * parsing.
+     *
+     * @param input  UDMF source text.
+     *
+     * @throws SyntaxError  UDMF source text has a syntax error.
+     */
     void parse(de::String const &input);
 
 protected:
-    de::dsize nextExpression();
+    de::dsize nextFragment();
     void parseBlock(Block &block);
     void parseAssignment(Block &block);
 
 private:
     AssignmentFunc _assignmentHandler;
     BlockFunc _blockHandler;
+    Block _globals;
     UDMFLex _analyzer;
     de::TokenBuffer _tokens;
     de::TokenRange _range;
-    Block _globals;
 };
 
 #endif // IMPORTUDMF_UDMFPARSER_H

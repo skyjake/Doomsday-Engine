@@ -43,11 +43,12 @@ void UDMFParser::parse(String const &input)
     // Lexical analyzer for Haw scripts.
     _analyzer = UDMFLex(input);
 
-    while (nextExpression() > 0)
+    while (nextFragment() > 0)
     {
         if (_range.lastToken().equals(UDMFLex::BRACKET_OPEN))
         {
             String const blockType = _range.firstToken().str();
+
             Block block;
             parseBlock(block);
 
@@ -66,9 +67,9 @@ void UDMFParser::parse(String const &input)
     _tokens.clear();
 }
 
-dsize UDMFParser::nextExpression()
+dsize UDMFParser::nextFragment()
 {
-    _analyzer.getExpression(_tokens);
+    _analyzer.getExpressionFragment(_tokens);
 
     // Begin with the whole thing.
     _range = TokenRange(_tokens);
@@ -79,7 +80,7 @@ dsize UDMFParser::nextExpression()
 void UDMFParser::parseBlock(Block &block)
 {
     // Read all the assignments in the block.
-    while (nextExpression() > 0)
+    while (nextFragment() > 0)
     {
         if (_range.firstToken().equals(UDMFLex::BRACKET_CLOSE))
             break;
@@ -158,7 +159,6 @@ void UDMFParser::parseAssignment(Block &block)
 
     block.insert(identifier, value);
 
-    // Handler global assignments.
     if (_assignmentHandler && (&block == &_globals))
     {
         _assignmentHandler(identifier, value);
