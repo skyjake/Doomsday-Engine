@@ -85,14 +85,14 @@ DENG2_PIMPL(EntityDatabase)
 EntityDatabase::EntityDatabase() : d(new Impl(this))
 {}
 
-uint EntityDatabase::entityCount(MapEntityDef const *entityDef)
+uint EntityDatabase::entityCount(MapEntityDef const *entityDef) const
 {
     DENG2_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
     return set->size();
 }
 
-bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex)
+bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex) const
 {
     DENG2_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
@@ -100,7 +100,7 @@ bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex)
 }
 
 PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
-    int elementIndex)
+                                              int elementIndex) const
 {
     DENG2_ASSERT(def);
     Entities *set = d->entities(def->entity->id);

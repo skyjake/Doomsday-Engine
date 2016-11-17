@@ -1,6 +1,6 @@
 /** @file entitydef.h World map entity definitions.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -130,12 +130,13 @@ LIBDOOMSDAY_PUBLIC void P_ShutdownMapEntityDefs();
 LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObj(int identifier, char const *name);
 LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
                                                     char const *propertyName, valuetype_t type);
-LIBDOOMSDAY_PUBLIC byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
-LIBDOOMSDAY_PUBLIC short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
-LIBDOOMSDAY_PUBLIC int P_GetGMOInt(int entityId, int elementIndex, int propertyId);
-LIBDOOMSDAY_PUBLIC fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
-LIBDOOMSDAY_PUBLIC angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
-LIBDOOMSDAY_PUBLIC float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC byte     P_GetGMOByte(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC short    P_GetGMOShort(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC int      P_GetGMOInt(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC fixed_t  P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC angle_t  P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC float    P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC double   P_GetGMODouble(int entityId, int elementIndex, int propertyId);
 
 #ifdef __cplusplus
 } // extern "C"

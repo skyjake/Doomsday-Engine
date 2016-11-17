@@ -1,6 +1,6 @@
 /** @file entitydef.cpp  World playsim data structures.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -160,6 +160,7 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
     case DDVT_FIXED:
     case DDVT_ANGLE:
     case DDVT_FLOAT:
+    case DDVT_DOUBLE:
         break;
 
     default:
@@ -299,133 +300,70 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue
 {
     switch (dstType)
     {
-    case DDVT_FIXED: *((fixed_t *) dst) = pvalue.asFixed(); break;
-    case DDVT_FLOAT: *(  (float *) dst) = pvalue.asFloat(); break;
-    case DDVT_BYTE:  *(   (byte *) dst) = pvalue.asByte();  break;
-    case DDVT_INT:   *(    (int *) dst) = pvalue.asInt32(); break;
-    case DDVT_SHORT: *(  (short *) dst) = pvalue.asInt16(); break;
-    case DDVT_ANGLE: *((angle_t *) dst) = pvalue.asAngle(); break;
+    case DDVT_FIXED:  *((fixed_t *) dst) = pvalue.asFixed();  break;
+    case DDVT_FLOAT:  *(  (float *) dst) = pvalue.asFloat();  break;
+    case DDVT_DOUBLE: *( (double *) dst) = pvalue.asDouble(); break;
+    case DDVT_BYTE:   *(   (byte *) dst) = pvalue.asByte();   break;
+    case DDVT_INT:    *(    (int *) dst) = pvalue.asInt32();  break;
+    case DDVT_SHORT:  *(  (short *) dst) = pvalue.asInt16();  break;
+    case DDVT_ANGLE:  *((angle_t *) dst) = pvalue.asAngle();  break;
     default:
         throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
+template <typename Type, valuetype_t returnValueType>
+Type getEntityValue(int entityId, int elementIndex, int propertyId)
+{
+    try
+    {
+        Type returnVal = 0;
+        if (World::get().hasMap())
+        {
+            EntityDatabase const &db = World::get().map().entityDatabase();
+            MapEntityPropertyDef const *propDef = entityPropertyDef(entityId, propertyId);
+            setValue(&returnVal, returnValueType, db.property(propDef, elementIndex));
+        }
+        return returnVal;
+    }
+    catch (Error const &er)
+    {
+        LOG_WARNING("%s. Returning 0.") << er.asText();
+        return 0;
+    }
+}
+
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
-    byte returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
-
-            setValue(&returnVal, DDVT_BYTE, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+    return getEntityValue<byte, DDVT_BYTE>(entityId, elementIndex, propertyId);
 }
 
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
-    short returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
-
-            setValue(&returnVal, DDVT_SHORT, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+    return getEntityValue<short, DDVT_SHORT>(entityId, elementIndex, propertyId);
 }
 
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
-    int returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
-
-            setValue(&returnVal, DDVT_INT, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+    return getEntityValue<int, DDVT_INT>(entityId, elementIndex, propertyId);
 }
 
 DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
-    fixed_t returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
-
-            setValue(&returnVal, DDVT_FIXED, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+    return getEntityValue<fixed_t, DDVT_FIXED>(entityId, elementIndex, propertyId);
 }
 
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
-    angle_t returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
-
-            setValue(&returnVal, DDVT_ANGLE, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+    return getEntityValue<angle_t, DDVT_ANGLE>(entityId, elementIndex, propertyId);
 }
 
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
-    float returnVal = 0;
-    if (World::get().hasMap())
-    {
-        try
-        {
-            EntityDatabase &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
+    return getEntityValue<float, DDVT_FLOAT>(entityId, elementIndex, propertyId);
+}
 
-            setValue(&returnVal, DDVT_FLOAT, db.property(propDef, elementIndex));
-        }
-        catch (Error const &er)
-        {
-            LOG_WARNING("%s. Returning 0.") << er.asText();
-        }
-    }
-    return returnVal;
+DENG_EXTERN_C double P_GetGMODouble(int entityId, int elementIndex, int propertyId)
+{
+    return getEntityValue<double, DDVT_DOUBLE>(entityId, elementIndex, propertyId);
 }

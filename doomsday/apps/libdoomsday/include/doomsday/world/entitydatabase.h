@@ -46,13 +46,13 @@ public:
     EntityDatabase();
 
     /// @return Total number of entities by definition @a entityDef.
-    uint entityCount(MapEntityDef const *entityDef);
+    uint entityCount(MapEntityDef const *entityDef) const;
 
     /**
      * Returns @c true iff an entity with definition @a entityDef and
      * @a elementIndex is known/present.
      */
-    bool hasEntity(MapEntityDef const *entityDef, int elementIndex);
+    bool hasEntity(MapEntityDef const *entityDef, int elementIndex) const;
 
     /**
      * Lookup a known entity element property value in the database.
@@ -62,7 +62,7 @@ public:
      *
      * @return The found PropertyValue.
      */
-    PropertyValue const &property(MapEntityPropertyDef const *def, int elementIndex);
+    PropertyValue const &property(MapEntityPropertyDef const *def, int elementIndex) const;
 
     /**
      * Replace/add a value for a known entity element property to the database.
