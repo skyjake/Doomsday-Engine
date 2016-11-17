@@ -24,7 +24,8 @@ using namespace de;
 
 namespace res {
 
-MapManifest::MapManifest(PathTree::NodeArgs const &args) : Node(args), Record()
+MapManifest::MapManifest(PathTree::NodeArgs const &args)
+    : Node(args), Record(), _sourceFile(nullptr)
 {}
 
 String MapManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const

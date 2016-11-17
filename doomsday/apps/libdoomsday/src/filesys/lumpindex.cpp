@@ -215,8 +215,8 @@ LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() c
 
 File1 *LumpIndex::Id1MapRecognizer::sourceFile() const
 {
-    if (d->lumps.isEmpty()) return 0;
-    return &lumps().find(VertexData).value()->container();
+    if (d->lumps.isEmpty()) return nullptr;
+    return &lumps().first()->container();
 }
 
 lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const
