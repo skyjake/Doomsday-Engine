@@ -24,11 +24,13 @@
 #include "common.h"
 #include "hu_inventory.h"
 
-#include <cmath>
-#include <cstring>
 #include "hu_stuff.h"
 #include "p_tick.h"
 #include "p_inventory.h"
+
+#include <gamefw/libgamefw.h>
+#include <cmath>
+#include <cstring>
 
 using namespace de;
 

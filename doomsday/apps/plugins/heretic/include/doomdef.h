@@ -46,6 +46,7 @@
 #include <de/c_wrapper.h>
 #include <de/fixedpoint.h>
 #include <de/input/ddkey.h>
+#include <gamefw/libgamefw.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"
@@ -259,18 +260,6 @@ typedef enum {
 #define MAXINVITEMCOUNT        16
 
 #define BLINKTHRESHOLD      (4*TICRATE)
-
-//enum { VX, VY, VZ }; // Vertex indices.
-
-enum { CR, CG, CB, CA }; // Color indices.
-
-#define IS_SERVER           Get(DD_SERVER)
-#define IS_CLIENT           Get(DD_CLIENT)
-#define IS_NETGAME          Get(DD_NETGAME)
-#define IS_DEDICATED        Get(DD_DEDICATED)
-
-#define SFXVOLUME       (Get(DD_SFX_VOLUME)/17)
-#define MUSICVOLUME     (Get(DD_MUSIC_VOLUME)/17)
 
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);

@@ -39,14 +39,7 @@
 
 #include "doomdata.h"
 #include "h_player.h"
-
-// Player taking events, and displaying.
-#define CONSOLEPLAYER       Get(DD_CONSOLEPLAYER)
-#define DISPLAYPLAYER       Get(DD_DISPLAYPLAYER)
-
-#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
-//#define maketic             Get(DD_MAKETIC)
-//#define ticdup              1
+#include <gamefw/libgamefw.h>
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 extern gamestate_t wipeGameState;

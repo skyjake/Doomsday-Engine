@@ -30,6 +30,7 @@
 #include <string.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
+#include <gamefw/libgamefw.h>
 
 #include "doomsday.h"
 
@@ -132,6 +133,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 DENG_EXTERN_C void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+    gfw_SetCurrentGame(GFW_HERETIC);
 }
 
 /**

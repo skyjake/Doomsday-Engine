@@ -19,6 +19,8 @@
 #ifndef LIBGAMEFW_H
 #define LIBGAMEFW_H
 
+#include <de/types.h>
+
 /*
  * The LIBGAMEFW_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
@@ -36,12 +38,56 @@
 #  define LIBGAMEFW_PUBLIC
 #endif
 
+typedef enum gfw_game_id_e {
+    GFW_DOOM,
+    GFW_HERETIC,
+    GFW_HEXEN,
+    GFW_DOOM64,
+    GFW_STRIFE,
+    GFW_GAME_ID_COUNT
+} gfw_game_id_t;
+
+// Color indices.
+enum { CR, CG, CB, CA };
+
+// The Base API is required when using these defines:
+#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
+#define IS_SERVER           (DD_GetInteger(DD_SERVER))
+#define IS_CLIENT           (DD_GetInteger(DD_CLIENT))
+#define IS_NETGAME          (DD_GetInteger(DD_NETGAME))
+#define IS_DEDICATED        (DD_GetInteger(DD_DEDICATED))
+#define CONSOLEPLAYER       (DD_GetInteger(DD_CONSOLEPLAYER))
+#define DISPLAYPLAYER       (DD_GetInteger(DD_DISPLAYPLAYER))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Sets the current game.
+ *
+ * The current game setting can affect the behavior of some operations. This is
+ * particularly useful when vanilla-compatible game-specific behavior is needed.
+ *
+ * @note When refactoring code and moving it into libgamefw, this game enum
+ * should be used to replace the old __JDOOM__ etc. defines.
+ *
+ * @param game  Current game.
+ */
+LIBGAMEFW_PUBLIC void gfw_SetCurrentGame(gfw_game_id_t game);
+
+LIBGAMEFW_PUBLIC gfw_game_id_t gfw_CurrentGame();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #ifdef __cplusplus
 
 /// libgamefw uses the @c gfw namespace for all its C++ symbols.
 namespace gfw {
 
-
+typedef gfw_game_id_t GameId;
 
 } // namespace gfw
 

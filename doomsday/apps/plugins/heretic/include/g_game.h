@@ -34,6 +34,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include <gamefw/libgamefw.h>
 #include "doomdef.h"
 #include "gamerules.h"
 #include "h_player.h"

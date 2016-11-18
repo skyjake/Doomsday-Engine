@@ -27,8 +27,6 @@
  * Common HUD psprite handling.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -42,21 +40,7 @@
 #include "g_controls.h"
 #include "r_common.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+#include <gamefw/libgamefw.h>
 
 #if __JHERETIC__
 static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
@@ -79,8 +63,6 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
     {10, 10, 10, 10}
 };
 #endif
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Calculates the Y offset for the player's psprite. The offset depends
