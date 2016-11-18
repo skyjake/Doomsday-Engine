@@ -115,7 +115,7 @@ LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDefByName(char const *name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-LIBDOOMSDAY_PUBLIC AutoStr *P_NameForMapEntityDef(MapEntityDef *def);
+LIBDOOMSDAY_PUBLIC AutoStr *P_NameForMapEntityDef(MapEntityDef const *def);
 
 /**
  * To be called to initialize the game map object defs.
@@ -137,6 +137,8 @@ LIBDOOMSDAY_PUBLIC fixed_t  P_GetGMOFixed(int entityId, int elementIndex, int pr
 LIBDOOMSDAY_PUBLIC angle_t  P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
 LIBDOOMSDAY_PUBLIC float    P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
 LIBDOOMSDAY_PUBLIC double   P_GetGMODouble(int entityId, int elementIndex, int propertyId);
+
+LIBDOOMSDAY_PUBLIC dd_bool  P_GMOPropertyIsSet(int entityId, int elementIndex, int propertyId);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -80,6 +80,25 @@ DENG2_PIMPL(EntityDatabase)
         result = set.insert(std::pair<int, Entity>(elementIndex, Entity()));
         return &result.first->second;
     }
+
+    PropertyValue const *tryFindPropertyValue(MapEntityPropertyDef const &def,
+                                              int elementIndex)
+    {
+         Entities *set = entities(def.entity->id);
+         Entity const *entity = entityByElementIndex(*set, elementIndex, false /*do not create*/);
+         if (!entity)
+         {
+             throw Error("EntityDatabase::property", QString("There is no element %1 of type %2")
+                                                         .arg(elementIndex)
+                                                         .arg(Str_Text(P_NameForMapEntityDef(def.entity))));
+         }
+         Entity::const_iterator found = entity->find(def.id);
+         if (found == entity->end())
+         {
+             return nullptr;
+         }
+         return found->second;
+    }
 };
 
 EntityDatabase::EntityDatabase() : d(new Impl(this))
@@ -103,20 +122,21 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
                                               int elementIndex) const
 {
     DENG2_ASSERT(def);
-    Entities *set = d->entities(def->entity->id);
-    Entity *entity = d->entityByElementIndex(*set, elementIndex, false /*do not create*/);
-    if (!entity)
-        throw Error("EntityDatabase::property", QString("There is no element %1 of type %2")
-                                                    .arg(elementIndex)
-                                                    .arg(Str_Text(P_NameForMapEntityDef(def->entity))));
+    if (auto const *propValue = d->tryFindPropertyValue(*def, elementIndex))
+    {
+        return *propValue;
+    }
+    throw Error("EntityDatabase::property",
+                QString("Element %1 of type %2 has no value for property %3")
+                .arg(elementIndex)
+                .arg(Str_Text(P_NameForMapEntityDef(def->entity)))
+                .arg(def->id));
+}
 
-    Entity::const_iterator found = entity->find(def->id);
-    if (found == entity->end())
-        throw Error("EntityDatabase::property", QString("Element %1 of type %2 has no value for property %3")
-                                                    .arg(elementIndex)
-                                                    .arg(Str_Text(P_NameForMapEntityDef(def->entity)))
-                                                    .arg(def->id));
-    return *found->second;
+bool EntityDatabase::hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const
+{
+    DENG2_ASSERT(def);
+    return d->tryFindPropertyValue(*def, elementIndex) != nullptr;
 }
 
 void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementIndex,

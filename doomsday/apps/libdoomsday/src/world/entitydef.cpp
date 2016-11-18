@@ -83,7 +83,7 @@ MapEntityDef *P_MapEntityDefByName(char const *name)
     return nullptr;  // Not found.
 }
 
-AutoStr *P_NameForMapEntityDef(MapEntityDef *def)
+AutoStr *P_NameForMapEntityDef(MapEntityDef const *def)
 {
     String name;  // Not found.
     if (def)
@@ -310,6 +310,16 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue
     default:
         throw Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
+}
+
+dd_bool P_GMOPropertyIsSet(int entityId, int elementIndex, int propertyId)
+{
+    if (World::get().hasMap())
+    {
+        World::get().map().entityDatabase()
+                .hasPropertyValue(entityPropertyDef(entityId, propertyId), elementIndex);
+    }
+    return false;
 }
 
 template <typename Type, valuetype_t returnValueType>

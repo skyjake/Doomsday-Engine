@@ -64,6 +64,8 @@ public:
      */
     PropertyValue const &property(MapEntityPropertyDef const *def, int elementIndex) const;
 
+    bool hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const;
+
     /**
      * Replace/add a value for a known entity element property to the database.
      *
