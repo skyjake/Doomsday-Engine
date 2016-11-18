@@ -50,7 +50,6 @@ enum {
     MO_SKILLMODES,
     MO_USETYPE,
     MO_FLAGS,
-    MO_MAPSPOT_FLAGS, // gamefw
     MO_TAG,
     MO_DRAWFLAGS,
     MO_TEXFLAGS,

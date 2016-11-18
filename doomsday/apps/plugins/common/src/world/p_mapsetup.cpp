@@ -413,17 +413,7 @@ static void initMapSpots()
         spot->doomEdNum  = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
         spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
         spot->angle      = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
-
-        // If the universal map spot flags are specified, use them instead.
-        if (P_GMOPropertyIsSet(MO_THING, i, MO_MAPSPOT_FLAGS))
-        {
-            spot->flags = gfw_MapSpot_TranslateFlagsToInternal
-                    (gfw_mapspot_flags_t(P_GetGMOInt(MO_THING, i, MO_MAPSPOT_FLAGS)));
-        }
-        else
-        {
-            spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
-        }
+        spot->flags      = P_GetGMOInt(MO_THING, i, MO_FLAGS);
 
 #if __JHEXEN__
         spot->tid     = P_GetGMOShort(MO_THING, i, MO_ID);

@@ -47,7 +47,7 @@ void UDMFParser::parse(String const &input)
     {
         if (_range.lastToken().equals(UDMFLex::BRACKET_OPEN))
         {
-            String const blockType = _range.firstToken().str();
+            String const blockType = _range.firstToken().str().toLower();
 
             Block block;
             parseBlock(block);

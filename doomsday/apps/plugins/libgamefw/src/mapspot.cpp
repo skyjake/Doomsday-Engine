@@ -26,13 +26,29 @@ struct FlagTranslation
     int internalFlag;
 };
 
+// In the internal flags, the single/dm/coop flags have inversed meaning.
+
+static int const defaultInternalFlags[GFW_GAME_ID_COUNT] =
+{
+    0x070,  // GFW_DOOM
+    0x070,  // GFW_HERETIC
+    0x700,  // GFW_HEXEN
+    0xc10,  // GFW_DOOM64
+    0x0,    // GFW_STRIFE
+};
+
+static gfw_mapspot_flags_t const defaultMapSpotFlags =
+        GFW_MAPSPOT_SINGLE |
+        GFW_MAPSPOT_COOP   |
+        GFW_MAPSPOT_DM;
+
 static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 {
     // GFW_DOOM
     {
-        { GFW_MAPSPOT_NOT_SINGLE  , 0x0010 },
-        { GFW_MAPSPOT_NOT_DM      , 0x0020 },
-        { GFW_MAPSPOT_NOT_COOP    , 0x0040 },
+        { GFW_MAPSPOT_SINGLE      , 0x0010 },
+        { GFW_MAPSPOT_DM          , 0x0020 },
+        { GFW_MAPSPOT_COOP        , 0x0040 },
         { GFW_MAPSPOT_DEAF        , 0x0008 },
         { GFW_MAPSPOT_MBF_FRIEND  , 0x1000 },
         { GFW_MAPSPOT_TRANSLUCENT , 0x2000 },
@@ -42,9 +58,9 @@ static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 
     // GFW_HERETIC
     {
-        { GFW_MAPSPOT_NOT_SINGLE  , 0x0010 },
-        { GFW_MAPSPOT_NOT_DM      , 0x0020 },
-        { GFW_MAPSPOT_NOT_COOP    , 0x0040 },
+        { GFW_MAPSPOT_SINGLE      , 0x0010 },
+        { GFW_MAPSPOT_DM          , 0x0020 },
+        { GFW_MAPSPOT_COOP        , 0x0040 },
         { GFW_MAPSPOT_DEAF        , 0x0008 },
         { GFW_MAPSPOT_MBF_FRIEND  , 0x1000 },
         { GFW_MAPSPOT_TRANSLUCENT , 0x2000 },
@@ -54,9 +70,9 @@ static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 
     // GFW_HEXEN
     {
-        { GFW_MAPSPOT_NOT_SINGLE  , 0x0100 },
-        { GFW_MAPSPOT_NOT_DM      , 0x0400 },
-        { GFW_MAPSPOT_NOT_COOP    , 0x0800 },
+        { GFW_MAPSPOT_SINGLE      , 0x0100 },
+        { GFW_MAPSPOT_DM          , 0x0400 },
+        { GFW_MAPSPOT_COOP        , 0x0800 },
         { GFW_MAPSPOT_DEAF        , 0x0008 },
         { GFW_MAPSPOT_DORMANT     , 0x0010 },
         { GFW_MAPSPOT_CLASS1      , 0x0020 },
@@ -70,9 +86,9 @@ static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 
     // GFW_DOOM64
     {
-        { GFW_MAPSPOT_NOT_SINGLE  , 0x0010 },
-        { GFW_MAPSPOT_NOT_DM      , 0x0400 },
-        { GFW_MAPSPOT_NOT_COOP    , 0x0800 },
+        { GFW_MAPSPOT_SINGLE      , 0x0010 },
+        { GFW_MAPSPOT_DM          , 0x0400 },
+        { GFW_MAPSPOT_COOP        , 0x0800 },
         { GFW_MAPSPOT_DEAF        , 0x0008 },
         { GFW_MAPSPOT_MBF_FRIEND  , 0x1000 },
         { GFW_MAPSPOT_TRANSLUCENT , 0x2000 },
@@ -86,12 +102,12 @@ static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 
 int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags)
 {
-    int internalFlags = 0;
-    for (auto const &xlat : flagTranslationTable[gfw_CurrentGame()])
+    int internalFlags = defaultInternalFlags[gfw_CurrentGame()];
+    for (auto const &x : flagTranslationTable[gfw_CurrentGame()])
     {
-        if (mapSpotFlags & xlat.gfwFlag)
+        if (mapSpotFlags & x.gfwFlag)
         {
-            internalFlags |= xlat.internalFlag;
+            internalFlags ^= x.internalFlag;
         }
     }
     return internalFlags;
@@ -99,12 +115,12 @@ int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags)
 
 gfw_mapspot_flags_t gfw_MapSpot_TranslateFlagsFromInternal(int internalFlags)
 {
-    gfw_mapspot_flags_t mapSpotFlags = 0;
-    for (auto const &xlat : flagTranslationTable[gfw_CurrentGame()])
+    gfw_mapspot_flags_t mapSpotFlags = defaultMapSpotFlags;
+    for (auto const &x : flagTranslationTable[gfw_CurrentGame()])
     {
-        if (internalFlags & xlat.internalFlag)
+        if (internalFlags & x.internalFlag)
         {
-            mapSpotFlags |= xlat.gfwFlag;
+            mapSpotFlags ^= x.gfwFlag;
         }
     }
     return mapSpotFlags;

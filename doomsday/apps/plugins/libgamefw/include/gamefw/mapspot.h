@@ -31,9 +31,9 @@ typedef uint32_t gfw_mapspot_flags_t;
  * - The third byte controls the behavior of the object.
  */
 
-#define GFW_MAPSPOT_NOT_SINGLE  0x00000001
-#define GFW_MAPSPOT_NOT_DM      0x00000002
-#define GFW_MAPSPOT_NOT_COOP    0x00000004
+#define GFW_MAPSPOT_SINGLE      0x00000001
+#define GFW_MAPSPOT_DM          0x00000002
+#define GFW_MAPSPOT_COOP        0x00000004
 #define GFW_MAPSPOT_CLASS1      0x00000008
 #define GFW_MAPSPOT_CLASS2      0x00000010
 #define GFW_MAPSPOT_CLASS3      0x00000020

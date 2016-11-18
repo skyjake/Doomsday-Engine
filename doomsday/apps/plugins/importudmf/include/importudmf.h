@@ -22,11 +22,8 @@
 
 #include <doomsday.h> // Doomsday's Public API
 
-//DENG_USING_API(Base);
-DENG_USING_API(F);
 DENG_USING_API(Map);
 DENG_USING_API(Material);
 DENG_USING_API(MPE);
-//DENG_USING_API(Uri);
 
 #endif // IMPORTUDMF_H
