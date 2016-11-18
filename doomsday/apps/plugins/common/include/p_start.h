@@ -34,6 +34,7 @@
 /**
  * Map Spot Flags (MSF):
  * @todo Commonize these flags and introduce translations where needed.
+ *       See gamefw/mapspot.cpp.
  */
 #define MSF_UNUSED1         0x00000001 // Appears in easy skill modes.
 #define MSF_UNUSED2         0x00000002 // Appears in medium skill modes.
@@ -54,7 +55,6 @@
 #if __JDOOM__ || __JHERETIC__
 # define MSF_NOTDM          0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
 # define MSF_NOTCOOP        0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
-# define MSF_FRIENDLY       0x00000080 // (BOOM) friendly monster.
 #elif __JDOOM64__
 # define MSF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
 # define MSF_SCRIPT_TOUCH   0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
@@ -70,12 +70,13 @@
 # define MSF_NOTSINGLE      0x00000100
 # define MSF_NOTCOOP        0x00000200
 # define MSF_NOTDM          0x00000400
-// The following are not currently implemented.
-# define MSF_SHADOW         0x00000800 // (ZDOOM) Thing is 25% translucent.
-# define MSF_INVISIBLE      0x00001000 // (ZDOOM) Makes the thing invisible.
-# define MSF_FRIENDLY       0x00002000 // (ZDOOM) Friendly monster.
-# define MSF_STILL          0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 #endif
+
+// The following are not currently implemented.
+#define MSF_FRIENDLY        0x00001000 // (BOOM) friendly monster.
+#define MSF_SHADOW          0x00002000 // (ZDOOM) Thing is 25% translucent.
+#define MSF_INVISIBLE       0x00004000 // (ZDOOM) Makes the thing invisible.
+#define MSF_STILL           0x00008000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 
 // New flags:
 #define MSF_Z_FLOOR         0x20000000 // Spawn relative to floor height.

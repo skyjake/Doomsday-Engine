@@ -47,7 +47,8 @@ enum {
     MO_DOOMEDNUM,
     MO_SKILLMODES,
     MO_FLAGS,
-    MO_TAG
+    MO_TAG,
+    MO_MAPSPOT_FLAGS // gamefw
 };
 
 #ifdef __cplusplus

@@ -38,6 +38,7 @@ void P_RegisterMapObjs(void)
     P_RegisterMapObjProperty(MO_THING, MO_DOOMEDNUM, "DoomEdNum", DDVT_INT);
     P_RegisterMapObjProperty(MO_THING, MO_SKILLMODES, "SkillModes", DDVT_INT);
     P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_INT);
+    P_RegisterMapObjProperty(MO_THING, MO_MAPSPOT_FLAGS, "MapSpotFlags", DDVT_INT);
 
     P_RegisterMapObj(MO_XLINEDEF, "XLinedef");
     P_RegisterMapObjProperty(MO_XLINEDEF, MO_TAG, "Tag", DDVT_SHORT);

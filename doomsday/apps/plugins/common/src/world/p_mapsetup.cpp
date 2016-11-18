@@ -24,6 +24,7 @@
 #include "p_mapsetup.h"
 
 #include <doomsday/world/entitydef.h>
+#include <gamefw/mapspot.h>
 
 #include <cmath>
 #include <cctype>  // isspace
@@ -401,7 +402,7 @@ static void initMapSpots()
     numMapSpots = P_CountMapObjs(MO_THING);
     mapSpots = reinterpret_cast<mapspot_t *>(Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0));
 
-    for(uint i = 0; i < numMapSpots; ++i)
+    for(int i = 0; i < int(numMapSpots); ++i)
     {
         mapspot_t *spot = &mapSpots[i];
 
@@ -411,8 +412,18 @@ static void initMapSpots()
 
         spot->doomEdNum  = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
         spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
-        spot->flags      = P_GetGMOInt(MO_THING, i, MO_FLAGS);
         spot->angle      = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
+
+        // If the universal map spot flags are specified, use them instead.
+        if (P_GMOPropertyIsSet(MO_THING, i, MO_MAPSPOT_FLAGS))
+        {
+            spot->flags = gfw_MapSpot_TranslateFlagsToInternal
+                    (gfw_mapspot_flags_t(P_GetGMOInt(MO_THING, i, MO_MAPSPOT_FLAGS)));
+        }
+        else
+        {
+            spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
+        }
 
 #if __JHEXEN__
         spot->tid     = P_GetGMOShort(MO_THING, i, MO_ID);
