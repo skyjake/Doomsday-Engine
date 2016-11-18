@@ -1,11 +1,12 @@
 # The Doomsday Engine Project -- Common build config for plugins
-# Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2015-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.0)
 project (DENG_PLUGINS)
 include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Config.cmake)
 
 find_package (DengDoomsday)
+find_package (DengGamefw)   # Game framework is available in all plugins.
 
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})
@@ -23,20 +24,20 @@ macro (deng_add_plugin target)
         list (APPEND _src ${_winres})
     endif ()
     add_library (${target} MODULE ${_src} ${DENG_RESOURCES})
-    target_include_directories (${target} 
-        PUBLIC "${DENG_API_DIR}" 
+    target_include_directories (${target}
+        PUBLIC "${DENG_API_DIR}"
         PRIVATE "${DENG_SOURCE_DIR}/sdk/libgui/include"
     )
-    target_link_libraries (${target} PUBLIC Deng::libdoomsday)
+    target_link_libraries (${target} PUBLIC Deng::libdoomsday Deng::libgamefw)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
     if (APPLE)
         # The plugins have some messy code.
-        set_property (TARGET ${target} 
+        set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces
         )
-        set_target_properties (${target} PROPERTIES 
+        set_target_properties (${target} PROPERTIES
             BUNDLE ON
             MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in
             BUILD_WITH_INSTALL_RPATH ON  # staging prevents CMake's own rpath fixing
@@ -49,14 +50,14 @@ macro (deng_add_plugin target)
         # plugins are not installed yet -- the staging directory symlinks to the
         # individual build directories.
         set (stage "${DENG_BUILD_STAGING_DIR}/DengPlugins")
-        add_custom_command (TARGET ${target} POST_BUILD 
+        add_custom_command (TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${stage}"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink 
-                "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${target}.bundle" 
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${target}.bundle"
                 "${stage}/${target}.bundle"
         )
         # Fix the Qt framework install names manually.
-        deng_bundle_install_names (${target} 
+        deng_bundle_install_names (${target}
             SCRIPT_NAME "qtlibs"
             LD_PATH "@executable_path/../Frameworks"
             QtCore.framework/Versions/5/QtCore

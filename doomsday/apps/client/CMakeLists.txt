@@ -169,9 +169,8 @@ endif ()
 
 if (APPLE)
     deng_install_bundle_deps (client
-        Deng::libcore Deng::libshell
-        Deng::libgui Deng::libappfw
-        Deng::liblegacy Deng::libdoomsday
+        Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
+        Deng::liblegacy Deng::libdoomsday Deng::libgamefw
         SDL2 SDL2_mixer
     )
 
