@@ -25,6 +25,8 @@
 #include "liblegacy.h"
 #include "str.h"
 
+#include <QString>
+
 namespace de {
 
 /**
@@ -37,6 +39,10 @@ public:
         if (text) {
             Str_Set(&str, text);
         }
+    }
+    Str(QString const &text) {
+        Str_InitStd(&str);
+        Str_Set(&str, text.toUtf8());
     }
     ~Str() {
         // This should never be called directly.
