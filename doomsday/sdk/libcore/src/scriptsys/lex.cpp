@@ -228,8 +228,15 @@ duint Lex::countLineStartSpace() const
 
 bool Lex::parseLiteralNumber(QChar c, TokenBuffer &output)
 {
-    if ((c == '.' && isNumeric(peek())) || isNumeric(c))
+    if ((c == '.' && isNumeric(peek())) ||
+        (_mode.testFlag(NegativeNumbers) && c == '-' && isNumeric(peek())) ||
+        isNumeric(c))
     {
+        if (c == '-')
+        {
+            c = get();
+            output.appendChar(c);
+        }
         bool gotPoint = (c == '.');
         bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
         bool gotX = false;

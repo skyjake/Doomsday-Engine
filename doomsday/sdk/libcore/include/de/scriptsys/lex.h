@@ -44,6 +44,7 @@ public:
     enum ModeFlag {
         DoubleCharComment = 0x1, // Comment start char must be used twice to begin comment.
         RetainComments    = 0x2,
+        NegativeNumbers   = 0x4, // If set, '-' preceding a number is included in the literal.
         DefaultMode       = 0
     };
     Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
@@ -131,7 +132,8 @@ public:
 
     /// Attempts to parse the current reading position as a C-style number
     /// literal (integer, float, or hexadecimal). It is assumed that a new
-    /// token has been started in the @a output buffer.
+    /// token has been started in the @a output buffer, and @a c has already
+    /// been added as the token's first character.
     /// @param c Character that begins the number (from get()).
     /// @param output Token buffer.
     /// @return @c true, if a number token was parsed; otherwise @c false.

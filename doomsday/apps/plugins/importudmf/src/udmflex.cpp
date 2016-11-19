@@ -34,7 +34,7 @@ String const UDMFLex::BRACKET_CLOSE("}");
 String const UDMFLex::SEMICOLON(";");
 
 UDMFLex::UDMFLex(String const &input)
-    : Lex(input, QChar('/'), QChar('*'), DoubleCharComment)
+    : Lex(input, QChar('/'), QChar('*'), DoubleCharComment | NegativeNumbers)
 {}
 
 dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
