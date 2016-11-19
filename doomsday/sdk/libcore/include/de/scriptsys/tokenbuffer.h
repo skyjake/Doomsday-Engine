@@ -31,7 +31,7 @@ class String;
 /**
  * Character sequence allocated out of the token buffer.
  */
-class Token
+class DENG2_PUBLIC Token
 {
 public:
     /// Types for tokens. This much can be analyzed without knowing
@@ -171,7 +171,7 @@ private:
  *
  * @ingroup script
  */
-class TokenBuffer
+class DENG2_PUBLIC TokenBuffer
 {
 public:
     /// Attempt to append characters while no token is being formed. @ingroup errors

@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup script
  */
-class TokenRange
+class DENG2_PUBLIC TokenRange
 {
 public:
     /// The token range is unexpectedly empty. @ingroup errors
