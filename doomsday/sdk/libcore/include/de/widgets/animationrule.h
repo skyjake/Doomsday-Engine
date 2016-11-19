@@ -25,6 +25,8 @@
 #include "../Animation"
 #include "../Time"
 
+#include <QFlags>
+
 namespace de {
 
 /**
@@ -60,7 +62,12 @@ public:
 
     void setStyle(Animation::Style style, float bounceSpring);
 
-    enum Behavior { Singleshot, RestartWhenTargetChanges };
+    enum Behavior {
+        Singleshot               = 0x1,
+        RestartWhenTargetChanges = 0x2,
+        DontAnimateFromZero      = 0x4,
+    };
+    Q_DECLARE_FLAGS(Behaviors, Behavior)
 
     /**
      * Sets the behavior for updating the animation target. The default is Singleshot,
@@ -70,9 +77,9 @@ public:
      *
      * @param behavior  Target update behavior.
      */
-    void setBehavior(Behavior behavior);
+    void setBehavior(Behaviors behavior);
 
-    Behavior behavior() const;
+    Behaviors behavior() const;
 
     /**
      * Read-only access to the scalar animation.
@@ -106,9 +113,11 @@ protected:
 private:
     Animation _animation;
     Rule const *_targetRule;
-    Behavior _behavior;
+    Behaviors _behavior;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationRule::Behaviors)
 
 } // namespace de
 
-#endif // LIBDENG2_ANIMAITONRULE_H
+#endif // LIBDENG2_ANIMATIONRULE_H

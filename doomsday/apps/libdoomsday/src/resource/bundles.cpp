@@ -213,6 +213,7 @@ bool Bundles::isEverythingIdentified() const
 
 void Bundles::waitForEverythingIdentified()
 {
+    identify();
     d->tasks.waitForDone();
 }
 

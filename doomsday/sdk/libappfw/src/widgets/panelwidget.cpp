@@ -154,22 +154,26 @@ DENG_GUI_PIMPL(PanelWidget)
         dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
 
-    void findAssets(Widget const *widget)
+    void findAssets(Widget *widget)
     {
-        if (Asset const *asset = widget->maybeAs<Asset>())
+        //qDebug() << "checking if" << widget << "is an asset to wait for...";
+
+        if (auto *assetGroup = widget->maybeAs<IAssetGroup>())
         {
-            if (!asset->isReady())
+            if (!assetGroup->assets().isReady())
             {
-                *pendingShow += *asset;
+                *pendingShow += *assetGroup;
 
                 LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)")
                         << widget->path() << widget;
             }
         }
-
-        foreach (Widget const *child, widget->children())
+        else
         {
-            findAssets(child);
+            foreach (Widget *child, widget->children())
+            {
+                findAssets(child);
+            }
         }
     }
 

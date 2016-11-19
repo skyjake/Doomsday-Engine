@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(DialogWidget)
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
-        minWidth = new IndirectRule;
+        minWidth  = new IndirectRule;
 
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;

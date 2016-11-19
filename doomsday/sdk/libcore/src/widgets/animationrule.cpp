@@ -34,7 +34,7 @@ AnimationRule::AnimationRule(Rule const &target, TimeDelta transition, Animation
     : Rule(target.value())
     , _animation(target.value(), style)
     , _targetRule(0)
-    , _behavior(RestartWhenTargetChanges)
+    , _behavior(RestartWhenTargetChanges | DontAnimateFromZero)
 {
     set(target, transition);
 }
@@ -74,12 +74,12 @@ void AnimationRule::setStyle(Animation::Style style, float bounceSpring)
     _animation.setStyle(style, bounceSpring);
 }
 
-void AnimationRule::setBehavior(Behavior behavior)
+void AnimationRule::setBehavior(Behaviors behavior)
 {
     _behavior = behavior;
 }
 
-AnimationRule::Behavior AnimationRule::behavior() const
+AnimationRule::Behaviors AnimationRule::behavior() const
 {
     return _behavior;
 }
@@ -120,9 +120,7 @@ void AnimationRule::update()
     // When using a rule for the target, keep it updated.
     if (_targetRule)
     {
-        if (_behavior == Singleshot || !_animation.done() /*||
-           fequal(_animation.target(), 0) || // Don't animate to/from zero.
-           fequal(_targetRule->value(), 0)*/)
+        if (_behavior.testFlag(Singleshot) || !_animation.done())
         {
             _animation.adjustTarget(_targetRule->value());
         }
@@ -131,7 +129,12 @@ void AnimationRule::update()
             // Start a new animation with the previously used transition time.
             if (!fequal(_animation.target(), _targetRule->value()))
             {
-                _animation.setValue(_targetRule->value(), _animation.transitionTime());
+                TimeDelta span = _animation.transitionTime();
+                if (_behavior.testFlag(DontAnimateFromZero) && fequal(_animation.target(), 0))
+                {
+                    span = 0;
+                }
+                _animation.setValue(_targetRule->value(), span);
                 _animation.clock().audienceForPriorityTimeChange += this;
             }
         }

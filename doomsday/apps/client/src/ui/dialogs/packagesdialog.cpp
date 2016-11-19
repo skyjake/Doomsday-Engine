@@ -21,6 +21,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/packagepopupwidget.h"
+#include "ui/clientwindow.h"
 #include "clientapp.h"
 
 #include <doomsday/Games>
