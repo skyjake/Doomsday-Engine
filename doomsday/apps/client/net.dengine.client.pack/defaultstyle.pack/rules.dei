@@ -76,7 +76,7 @@ console {
 }
 
 home {
-    rule column.width { constant $= UNIT * 113.8 }
+    rule column.width { constant $= UNIT * 125 } #113.8 }
     rule popup.width  { constant $= UNIT * 175 }
     rule popup.height { constant $= UNIT * 120 }
     rule progress     { constant $= UNIT * 60 }

@@ -36,9 +36,15 @@ void FadeToBlackWidget::initFadeFromBlack(TimeDelta const &span)
     d->span = span;
 }
 
+void FadeToBlackWidget::initFadeToBlack(TimeDelta const &span)
+{
+    setOpacity(0);
+    d->span = span;
+}
+
 void FadeToBlackWidget::start()
 {
-    setOpacity(0, d->span);
+    setOpacity(fequal(opacity().target(), 1)? 0 : 1, d->span);
 }
 
 void FadeToBlackWidget::pause()

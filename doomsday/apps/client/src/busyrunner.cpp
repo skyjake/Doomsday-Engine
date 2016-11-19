@@ -142,7 +142,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
         if (fadeFromBlack)
         {
-            ClientWindow::main().fadeContentFromBlack(2);
+            ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 2);
         }
     }
 };

@@ -235,7 +235,9 @@ void Sys_HideMouseCursor()
 #undef Sys_Quit
 DENG_EXTERN_C void Sys_Quit(void)
 {
-    if(DoomsdayApp::app().busyMode().isActive())
+    auto &app = DoomsdayApp::app();
+
+    if (app.busyMode().isActive())
     {
         // The busy worker is running; we cannot just stop it abruptly.
         Sys_MessageBox2(MBT_WARNING, DOOMSDAY_NICENAME, "Cannot quit while in busy mode.",
@@ -243,7 +245,17 @@ DENG_EXTERN_C void Sys_Quit(void)
         return;
     }
 
-    DoomsdayApp::app().setShuttingDown(true);
+    app.setShuttingDown(true);
+
+    // Unload the game currently loaded. This will ensure it is shut down gracefully.
+    if (!app.game().isNull())
+    {
+#ifdef __CLIENT__
+        ClientWindow::main().glActivate();
+        BusyMode_FreezeGameForBusyMode();
+#endif
+        app.changeGame(GameProfiles::null(), DD_ActivateGameWorker);
+    }
 
     // It's time to stop the main loop.
     DENG2_APP->stopLoop(DD_GameLoopExitCode());

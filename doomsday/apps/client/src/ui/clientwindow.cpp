@@ -503,17 +503,19 @@ DENG2_PIMPL(ClientWindow)
 
     void windowSwapped(GLWindow &)
     {
+        if (DoomsdayApp::app().isShuttingDown()) return;
+
         ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
         // Frame has been shown, now we can do post-frame updates.
         updateFpsNotification(self.frameRate());
         completeFade();
 
-        if (needSurfaceFormatUpdate)
+        /*if (needSurfaceFormatUpdate)
         {
             qDebug() << "-------- OpenGL surface format needs updating! --------";
             needSurfaceFormatUpdate = false;
-        }
+        }*/
     }
 
     void showOrHideQuitButton()
@@ -756,7 +758,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void setupFadeFromBlack(TimeDelta const &span)
+    void setupFade(FadeDirection fadeDir, TimeDelta const &span)
     {
         if (!fader)
         {
@@ -764,7 +766,14 @@ DENG2_PIMPL(ClientWindow)
             fader->rule().setRect(root.viewRule());
             root.add(fader); // on top of everything else
         }
-        fader->initFadeFromBlack(span);
+        if (fadeDir == FadeFromBlack)
+        {
+            fader->initFadeFromBlack(span);
+        }
+        else
+        {
+            fader->initFadeToBlack(span);
+        }
         fader->start();
     }
 
@@ -872,30 +881,11 @@ void ClientWindow::windowAboutToClose()
     if (BusyMode_Active())
     {
         // Oh well, we can't cancel busy mode...
+        // TODO: Wait until busy mode ends.
         return;
     }
 
-    // Unload the game currently loaded. This will ensure it is shut down gracefully.
-    if (!DoomsdayApp::game().isNull())
-    {
-        glActivate();
-        BusyMode_FreezeGameForBusyMode();
-        DoomsdayApp::app().changeGame(GameProfiles::null(), DD_ActivateGameWorker);
-    }
-
-#if 0
-    if (!BusyMode_Active())
-    {
-        LOG_DEBUG("Window is about to close, executing 'quit'");
-
-        /// @todo autosave and quit?
-        Con_Execute(CMDS_DDAY, "quit", true, false);
-    }
-
-    // We are not authorizing immediate closing of the window;
-    // engine shutdown will take care of it later.
-    return false;
-#endif
+    Sys_Quit();
 }
 
 void ClientWindow::preDraw()
@@ -1134,9 +1124,9 @@ bool ClientWindow::handleFallbackEvent(Event const &event)
     return d->handleFallbackEvent(event);
 }
 
-void ClientWindow::fadeContentFromBlack(TimeDelta const &duration)
+void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeDelta const &duration)
 {
-    d->setupFadeFromBlack(duration);
+    d->setupFade(fadeDirection, duration);
 }
 
 FadeToBlackWidget *ClientWindow::contentFade()

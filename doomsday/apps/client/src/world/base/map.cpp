@@ -3879,7 +3879,7 @@ Vertex *Map::createVertex(Vector2d const &origin, dint archiveIndex)
 }
 
 Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
-    Sector *backSector, int archiveIndex)
+                      Sector *backSector, int archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -3899,8 +3899,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     return line;
 }
 
-Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor,
-    dint archiveIndex)
+Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor, dint archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.

@@ -147,15 +147,9 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
-    /*
-     * Draws the untransformed game-related contents of the window. The drawing
-     * is done immediately; this must be called from the main/UI thread.
-     *
-     * The current render target is cleared before drawing.
-     */
-    //void drawGameContent();
+    enum FadeDirection { FadeFromBlack, FadeToBlack };
 
-    void fadeContentFromBlack(de::TimeDelta const &duration);
+    void fadeContent(FadeDirection fadeDirection, de::TimeDelta const &duration);
     de::FadeToBlackWidget *contentFade();
 
     void fadeInTaskBarBlur(de::TimeDelta span);

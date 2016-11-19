@@ -264,7 +264,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         if (!newGame.isNull())
         {
-            ClientWindow::main().fadeContentFromBlack(1.0);
+            ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 1.0);
         }
     }
 

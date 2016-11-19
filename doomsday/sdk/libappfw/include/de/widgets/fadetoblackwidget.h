@@ -36,6 +36,8 @@ public:
 
     void initFadeFromBlack(TimeDelta const &span);
 
+    void initFadeToBlack(TimeDelta const &span);
+
     void start();
 
     void pause();
