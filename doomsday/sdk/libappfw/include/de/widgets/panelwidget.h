@@ -52,6 +52,8 @@ public:
 public:
     PanelWidget(String const &name = String());
 
+    void setWaitForContentReady(bool yes);
+
     /**
      * Sets the size policy for the secondary dimension. For instance, for a
      * panel that opens horizontally, this determines what is done to the

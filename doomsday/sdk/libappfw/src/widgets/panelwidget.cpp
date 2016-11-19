@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(PanelWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
+    bool waitForContentReady = true;
     bool opened = false;
     ui::Direction dir = ui::Down;
     ui::SizePolicy secondaryPolicy = ui::Expand;
@@ -179,6 +180,8 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void waitForAssetsInContent()
     {
+        if (!waitForContentReady) return;
+
         LOG_AS("PanelWidget");
 
         pendingShow.reset(new AssetGroup);
@@ -225,6 +228,11 @@ PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this)
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping);
     hide();
+}
+
+void PanelWidget::setWaitForContentReady(bool yes)
+{
+    d->waitForContentReady = yes;
 }
 
 void PanelWidget::setContent(GuiWidget *content)

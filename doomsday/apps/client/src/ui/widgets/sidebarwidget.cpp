@@ -80,6 +80,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
     , d(new Impl(this))
 {
     setSizePolicy(Fixed);
+    setWaitForContentReady(false);
     setOpeningDirection(Left);
     set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
 
