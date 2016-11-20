@@ -402,6 +402,12 @@ void GuiRootWidget::popFocus()
     setFocus(nullptr);
 }
 
+void GuiRootWidget::clearFocusStack()
+{
+    qDeleteAll(d->focusStack);
+    d->focusStack.clear();
+}
+
 void GuiRootWidget::update()
 {
     if (window().isGLReady())

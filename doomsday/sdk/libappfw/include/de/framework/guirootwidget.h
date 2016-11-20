@@ -107,6 +107,8 @@ public:
 
     void popFocus();
 
+    void clearFocusStack();
+
     // Events.
     void update();
     void draw();
