@@ -52,6 +52,8 @@ else ()
 	set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
     set (CPACK_GENERATOR WIX;ZIP)
 	set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
+    set (CPACK_WIX_UI_DIALOG "${DENG_SOURCE_DIR}/../distrib/win32/installer_dialog.png")
+    set (CPACK_WIX_UI_BANNER "${DENG_SOURCE_DIR}/../distrib/win32/installer_banner.png")
 endif ()
 
 # Source packaging.
