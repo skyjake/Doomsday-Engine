@@ -30,6 +30,7 @@
 
 #include <de/timer.h>
 #include <de/Log>
+#include <QVector>
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
@@ -101,8 +102,7 @@ audiointerface_music_t audiod_sdlmixer_music = { {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int numChannels;
-static dd_bool* usedChannels;
+static QVector<bool> usedChannels;
 
 static Mix_Music* lastMusic;
 //static dd_bool playingMusic = false;
@@ -121,14 +121,11 @@ static void musicPlaybackFinished(void)
 
 static int getFreeChannel(void)
 {
-    int                 i;
-
-    for(i = 0; i < numChannels; ++i)
+    for (int i = 0; i < usedChannels.size(); ++i)
     {
-        if(!usedChannels[i])
+        if (!usedChannels[i])
             return i;
     }
-
     return -1;
 }
 
@@ -192,7 +189,7 @@ int DS_SDLMixerInit(void)
 
     // Prepare to play simultaneous sounds.
     /*numChannels =*/ Mix_AllocateChannels(MIX_CHANNELS);
-    usedChannels = NULL;
+    usedChannels.clear();
 
     // Everything is OK.
     sdlInitOk = true;
@@ -204,8 +201,7 @@ void DS_SDLMixerShutdown(void)
     if(!sdlInitOk)
         return;
 
-    if(usedChannels)
-        M_Free(usedChannels);
+    usedChannels.clear();
 
     if(lastMusic)
     {
@@ -233,7 +229,7 @@ int DS_SDLMixer_SFX_Init(void)
 
 sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t*        buf;
+    sfxbuffer_t *buf;
 
     // Create the buffer.
     buf = (sfxbuffer_t *) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
@@ -245,19 +241,21 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // The cursor is used to keep track of the channel on which the sample
     // is playing.
-    buf->cursor = getFreeChannel();
-    if((int)buf->cursor < 0)
+    int const freeChannelIndex = getFreeChannel();
+    if (freeChannelIndex >= 0)
     {
-        buf->cursor = numChannels++;
-        usedChannels = (ddboolean_t *) M_Realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);
+        usedChannels[buf->cursor = freeChannelIndex] = true;
+    }
+    else
+    {
+        buf->cursor = usedChannels.size();
+        usedChannels << true;
 
         // Make sure we have enough channels allocated.
-        Mix_AllocateChannels(numChannels);
+        Mix_AllocateChannels(usedChannels.size());
 
         Mix_UnregisterAllEffects(buf->cursor);
     }
-
-    usedChannels[buf->cursor] = true;
 
     return buf;
 }
@@ -384,7 +382,6 @@ void DS_SDLMixer_SFX_Stop(sfxbuffer_t* buf)
         return;
 
     Mix_HaltChannel(buf->cursor);
-    //usedChannels[buf->cursor] = false;
     buf->flags &= ~SFXBF_PLAYING;
 }
 
