@@ -46,6 +46,7 @@ static DotPath const ID_DOT                 = "GuiRootWidget.dot";
 #else
 #  define DPI_SCALED(x)       (x)
 #endif
+#define DPI_SCALED_INT(x)     (int(DPI_SCALED(x)))
 
 DENG2_PIMPL(GuiRootWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
@@ -62,7 +63,7 @@ DENG2_PIMPL(GuiRootWidget)
     };
     struct ThinCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED(15), DPI_SCALED(15)), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED_INT(15), DPI_SCALED_INT(15)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
@@ -74,7 +75,7 @@ DENG2_PIMPL(GuiRootWidget)
     };
     struct BoldCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED(12), DPI_SCALED(12)), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
@@ -86,7 +87,7 @@ DENG2_PIMPL(GuiRootWidget)
     };
     struct SolidRoundedImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED(12), DPI_SCALED(12)), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
@@ -98,13 +99,13 @@ DENG2_PIMPL(GuiRootWidget)
     };
     struct TinyDotImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED(5), DPI_SCALED(5)), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED_INT(5), DPI_SCALED_INT(5)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setPen(Qt::NoPen);
             painter.setBrush(Qt::white);
-            painter.drawEllipse(DPI_SCALED(QPointF(2.5f, 2.5f)), DPI_SCALED(2), DPI_SCALED(2));
+            painter.drawEllipse(DPI_SCALED(QPointF(2.5, 2.5)), DPI_SCALED(2), DPI_SCALED(2));
             return img;
         }
     };
@@ -429,12 +430,11 @@ void GuiRootWidget::draw()
 
     if (d->noFramesDrawnYet)
     {
-        // Widgets may not yet be ready on the first frame; make sure
-        // we don't show garbage.
-        window().framebuffer().clear(GLFramebuffer::ColorDepthStencil);
-
         d->noFramesDrawnYet = false;
     }
+
+    // Clear the framebuffer for the frame.
+    window().framebuffer().clear(GLFramebuffer::ColorDepthStencil);
 
 #ifdef DENG2_DEBUG
     // Detect mistakes in GLState stack usage.
