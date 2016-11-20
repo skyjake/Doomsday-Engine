@@ -505,10 +505,16 @@ QList<NativePath> DoomsdayApp::gogComPaths()
 #ifdef WIN32
     // Look up all the Doom GOG.com paths.
     QList<QString> const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
-    foreach (auto gogId, QList<QString>({ "1435827232", "1435848814", "1435848742" }))
+    QList<QString> const gogIds    ({ "1435827232", "1435848814", "1435848742" });
+    foreach (auto gogId, gogIds)
     {
-        NativePath const basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId,
-                                              QSettings::NativeFormat).value("Path").toString();
+        NativePath basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId,
+                                        QSettings::NativeFormat).value("PATH").toString();
+        if (basePath.isEmpty())
+        {
+            basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\WOW6432Node\\GOG.com\\Games\\" + gogId,
+                                 QSettings::NativeFormat).value("PATH").toString();
+        }
         if (!basePath.isEmpty())
         {
             foreach (auto sub, subfolders)
