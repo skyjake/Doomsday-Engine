@@ -229,8 +229,11 @@ DENG2_PIMPL(AudioSystem)
 #ifndef DENG_DISABLE_SDLMIXER
         if (cmdLine.has("-sdlmixer"))
             return AUDIOD_SDL_MIXER;
-#endif
 
+        // FMOD is preferred, but SDL_mixer is also a fallback.
+        if (!AudioDriver::isAvailable(driverIdentifier[AUDIOD_FMOD]))
+            return AUDIOD_SDL_MIXER;
+#endif
         // The default audio driver.
         return AUDIOD_FMOD;
     }
@@ -242,31 +245,37 @@ DENG2_PIMPL(AudioSystem)
      */
     bool initDriver(audiodriverid_t driverId)
     {
-        if (!AudioDriver::isAvailable(driverIdentifier[driverId]))
-        {
-            return false;
-        }
-
         LOG_AS("AudioSystem");
         try
         {
-            AudioDriver &driver = driverById(driverId);
+            String const idStr = driverIdentifier[driverId];
+            if (!AudioDriver::isAvailable(idStr))
+            {
+                return false;
+            }
 
+            AudioDriver &driver = driverById(driverId);
             switch (driverId)
             {
-            case AUDIOD_DUMMY:      driver.load("dummy");       break;
+            case AUDIOD_DUMMY:
+            case AUDIOD_OPENAL:
+            case AUDIOD_FMOD:
+            case AUDIOD_FLUIDSYNTH:
+                driver.load(idStr);
+                break;
 #ifndef DENG_DISABLE_SDLMIXER
-            case AUDIOD_SDL_MIXER:  driver.load("sdlmixer");    break;
+            case AUDIOD_SDL_MIXER:
+                driver.load(idStr);
+                break;
 #endif
-            case AUDIOD_OPENAL:     driver.load("openal");      break;
-            case AUDIOD_FMOD:       driver.load("fmod");        break;
-            case AUDIOD_FLUIDSYNTH: driver.load("fluidsynth");  break;
 #ifdef WIN32
-            case AUDIOD_DSOUND:     driver.load("directsound"); break;
-            case AUDIOD_WINMM:      driver.load("winmm");       break;
+            case AUDIOD_DSOUND:
+            case AUDIOD_WINMM:
+                driver.load(idStr);
+                break;
 #endif
-
-            default: return false;
+            default:
+                return false;
             }
 
             // All loaded drivers are automatically initialized so they are ready for use.
@@ -304,17 +313,16 @@ DENG2_PIMPL(AudioSystem)
             return false;
 
         audiodriverid_t defaultDriverId = chooseAudioDriver();
+        initDriver(defaultDriverId);
 
-        bool ok = initDriver(defaultDriverId);
-
-#ifndef DENG_DISABLE_SDLMIXER
+/*#ifndef DENG_DISABLE_SDLMIXER
         // Fallback option for the default driver.
         if (!ok)
         {
             defaultDriverId = AUDIOD_SDL_MIXER;
             ok = initDriver(defaultDriverId);
         }
-#endif
+#endif*/
 
         // Choose the interfaces to use.
         selectInterfaces(defaultDriverId);

@@ -287,6 +287,12 @@ void AudioDriver::deinitialize()
 
 bool AudioDriver::isAvailable(String const &identifier)
 {
+    if (identifier == "dummy") return true;
+#ifndef DENG_DISABLE_SDLMIXER
+    if (identifier == "sdlmixer") return true;
+#else
+    if (identifier == "sdlmixer") return false;
+#endif
     return Impl::tryFindAudioPlugin(identifier);
 }
 
