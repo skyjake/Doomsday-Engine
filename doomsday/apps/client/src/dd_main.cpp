@@ -323,6 +323,7 @@ static void createPackagesScheme()
 {
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
 
+#if 0
     //
     // Add default search paths.
     //
@@ -408,6 +409,7 @@ static void createPackagesScheme()
 
     scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
     scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
+#endif
 }
 
 void DD_CreateFileSystemSchemes()
