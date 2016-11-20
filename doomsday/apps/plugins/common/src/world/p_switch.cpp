@@ -263,13 +263,13 @@ void P_InitSwitchList()
 
 static world_Material *findSwitch(world_Material *mat, const switchlist_t** info)
 {
-    if(!mat) return 0;
+    if (!mat) return 0;
 
-    for(int i = 0; i < numswitches * 2; ++i)
+    for (int i = 0; i < numswitches * 2; ++i)
     {
-        if(switchlist[i] == mat)
+        if (switchlist[i] == mat)
         {
-            if(info)
+            if (info)
             {
                 *info = &switchInfo[i / 2];
             }
@@ -280,22 +280,43 @@ static world_Material *findSwitch(world_Material *mat, const switchlist_t** info
     return 0;
 }
 
+static void playSwitchSound(Side *side, uint sectionFlags, int sound)
+{
+    if (cfg.common.switchSoundOrigin == 1 /* vanilla behavior */)
+    {
+        S_SectorSound(reinterpret_cast<Sector *>(P_GetPtrp(side, DMU_SECTOR)), sound);
+    }
+    else
+    {
+        mobj_t const *sideEmitter = reinterpret_cast<mobj_t const *>
+                (P_GetPtrp(side, DMU_EMITTER | sectionFlags));
+        S_StopSound(0, sideEmitter);
+        S_StartSound(sound, sideEmitter);
+    }
+}
+
 void T_MaterialChanger(void *materialChangerThinker)
 {
     materialchanger_t *mchanger = (materialchanger_t *)materialChangerThinker;
 
     if(!(--mchanger->timer))
     {
-        int const sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
+        uint const sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
 
         P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
 
+        int const sound =
 #if __JDOOM__ || __JDOOM64__
-        S_SectorSound((Sector *)P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWTCHN);
+            SFX_SWTCHN;
 #elif __JHERETIC__
-        S_SectorSound((Sector *)P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
+            SFX_SWITCH;
+#else
+            0;
 #endif
-
+        if (sound > 0)
+        {
+            playSwitchSound(mchanger->side, sectionFlags, sound);
+        }
         Thinker_Remove(&mchanger->thinker);
     }
 }
@@ -387,7 +408,7 @@ static void startButton(Side *side, SideSection section, world_Material *mat, in
     parm.section = section;
 
     // See if a material change has already been queued.
-    if(!Thinker_Iterate(T_MaterialChanger, findMaterialChanger, &parm))
+    if (!Thinker_Iterate(T_MaterialChanger, findMaterialChanger, &parm))
     {
         spawnMaterialChanger(side, section, mat, tics);
     }
@@ -411,26 +432,27 @@ static int chooseDefaultSound(switchlist_t const *info)
 
 dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool silent, int tics)
 {
-    int const sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
-    world_Material *current = (world_Material *)P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
+    uint const sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
+    world_Material *current = reinterpret_cast<world_Material *>
+                              (P_GetPtrp(side, sectionFlags | DMU_MATERIAL));
 
     switchlist_t const *info;
-    if(world_Material *mat = findSwitch(current, &info))
+    if (world_Material *mat = findSwitch(current, &info))
     {
-        if(!silent)
+        if (!silent)
         {
-            if(!sound)
+            // Play the switch sound.
+            if (!sound)
             {
                 sound = chooseDefaultSound(info);
             }
-
-            S_SectorSound((Sector *)P_GetPtrp(side, DMU_SECTOR), sound);
+            playSwitchSound(side, sectionFlags, sound);
         }
 
         P_SetPtrp(side, sectionFlags | DMU_MATERIAL, mat);
 
         // Are we changing it back again?
-        if(tics > 0)
+        if (tics > 0)
         {
             // Spawn a deferred material change thinker.
             startButton(side, section, current, tics);
@@ -438,7 +460,6 @@ dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool sile
 
         return true;
     }
-
     return false;
 }
 

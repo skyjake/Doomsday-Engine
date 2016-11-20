@@ -683,6 +683,9 @@ desc = 1=ALL radius attacks are infinitely tall.
 [server-game-skill]
 desc = Skill level in multiplayer games.
 
+[sound-switch-origin]
+desc = Position for switch sounds: 0=Switch line, 1=Sector center (vanilla).
+
 [view-bob-height]
 desc = Scale for viewheight bobbing.
 

@@ -51,6 +51,9 @@ typedef struct libcommon_config_s {
     float           bobWeapon;
     int             plrViewHeight;
 
+    // Gameplay:
+    byte            switchSoundOrigin;
+
     // Weapons:
     byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     int             weaponOrder[NUM_WEAPON_TYPES];
@@ -128,7 +131,6 @@ typedef struct libcommon_config_s {
     float           xhairDeadRed;
     float           xhairDeadGreen;
     float           xhairDeadBlue;
-
 
     // Automap:
     float           automapMobj[3];

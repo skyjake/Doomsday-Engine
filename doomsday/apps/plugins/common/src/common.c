@@ -39,8 +39,11 @@ int Common_GetInteger(int id)
 void Common_Register()
 {
     // Movement
-    C_VAR_FLOAT("player-move-speed",                    &cfg.common.playerMoveSpeed,               0, 0, 1);
-    C_VAR_INT  ("player-jump",                          &cfg.common.jumpEnabled,                   0, 0, 1);
-    C_VAR_FLOAT("player-jump-power",                    &cfg.common.jumpPower,                     0, 0, 100);
-    C_VAR_BYTE ("player-air-movement",                  &cfg.common.airborneMovement,              0, 0, 32);
+    C_VAR_FLOAT("player-move-speed",    &cfg.common.playerMoveSpeed,    0, 0, 1);
+    C_VAR_INT  ("player-jump",          &cfg.common.jumpEnabled,        0, 0, 1);
+    C_VAR_FLOAT("player-jump-power",    &cfg.common.jumpPower,          0, 0, 100);
+    C_VAR_BYTE ("player-air-movement",  &cfg.common.airborneMovement,   0, 0, 32);
+
+    // Gameplay
+    C_VAR_BYTE ("sound-switch-origin",  &cfg.common.switchSoundOrigin,  0, 0, 1);
 }
