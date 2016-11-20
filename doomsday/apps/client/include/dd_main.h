@@ -56,7 +56,7 @@ DENG2_NORETURN void App_Error(char const *error, ...);
 
 DENG2_NORETURN void App_AbnormalShutdown(char const *error);
 
-/// Returns the application's global audio::System.
+/// Returns the application's global audio subsystem.
 AudioSystem &App_AudioSystem();
 
 /// Returns the application's global InFineSystem.

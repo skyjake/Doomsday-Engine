@@ -52,6 +52,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
     VariableChoiceWidget *cdPlugin;
+    bool audioPluginsChanged = false;
 
     Impl(Public *i) : Base(i)
     {
@@ -126,6 +127,12 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         soundPlugin->updateFromVariable();
         musicPlugin->updateFromVariable();
         cdPlugin   ->updateFromVariable();
+
+        // The audio system needs reinitializing if the plugins are changed.
+        auto changeFunc = [this] (uint) { audioPluginsChanged = true; };
+        QObject::connect(soundPlugin, &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(musicPlugin, &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(cdPlugin,    &ChoiceWidget::selectionChangedByUser, changeFunc);
     }
 
     void fetch()
@@ -227,4 +234,16 @@ void AudioSettingsDialog::resetToDefaults()
     ClientApp::audioSettings().resetToDefaults();
 
     d->fetch();
+}
+
+void AudioSettingsDialog::finish(int result)
+{
+    DialogWidget::finish(result);
+    if (result)
+    {
+        if (d->audioPluginsChanged)
+        {
+            AudioSystem::get().reinitialize();
+        }
+    }
 }

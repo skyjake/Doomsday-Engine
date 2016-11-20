@@ -34,6 +34,9 @@ public:
 public slots:
     void resetToDefaults();
 
+protected:
+    void finish(int result) override;
+
 private:
     DENG2_PRIVATE(d)
 };

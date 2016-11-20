@@ -118,7 +118,7 @@ void SfxChannel::stop()
 {
     if(!d->buffer) return;
 
-    /// @todo audio::System should observe. -ds
+    /// @todo AudioSystem should observe. -ds
     App_AudioSystem().sfx()->Stop(d->buffer);
 }
 
@@ -187,7 +187,7 @@ dfloat SfxChannel::priority() const
     return App_AudioSystem().rateSoundPriority(0, d->origin, d->volume, d->startTime);
 }
 
-/// @todo audio::System should observe. -ds
+/// @todo AudioSystem should observe. -ds
 void SfxChannel::updatePriority()
 {
     // If no sound buffer is assigned we've no need to update.

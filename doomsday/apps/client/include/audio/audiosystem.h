@@ -57,6 +57,8 @@ public:
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
+    void reinitialize();
+
     /**
      * Returns a textual, human-friendly description of the audio system configuration
      * including an active playback interface itemization (suitable for logging, error

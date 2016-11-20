@@ -244,7 +244,7 @@ DENG2_PIMPL(AudioSystem)
      */
     bool initDriver(audiodriverid_t driverId)
     {
-        LOG_AS("audio::System");
+        LOG_AS("AudioSystem");
         try
         {
             AudioDriver &driver = driverById(driverId);
@@ -1416,12 +1416,17 @@ DENG2_PIMPL(AudioSystem)
     }
 #endif  // __CLIENT__
 
-    void aboutToUnloadGame(Game const &)
+    void reset()
     {
 #ifdef __CLIENT__
         self.reset();
 #endif
         sfxClearLogical();
+    }
+
+    void aboutToUnloadGame(Game const &)
+    {
+        reset();
     }
 };
 
@@ -1437,6 +1442,18 @@ AudioSystem &AudioSystem::get()
 void AudioSystem::timeChanged(Clock const &)
 {
     // Nothing to do.
+}
+
+void AudioSystem::reinitialize()
+{
+    LOG_AS("AudioSystem");
+    LOG_AUDIO_NOTE("Reinitializing all audio interfaces...");
+
+    d->reset();
+#ifdef __CLIENT__
+    deinitPlayback();
+    initPlayback();
+#endif
 }
 
 String AudioSystem::description() const
@@ -1493,7 +1510,7 @@ String AudioSystem::description() const
 #ifdef __CLIENT__
 void AudioSystem::reset()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     LOG_AUDIO_VERBOSE("Reseting...");
 
     if(d->sfxAvail)
@@ -1520,7 +1537,7 @@ void AudioSystem::reset()
  */
 void AudioSystem::startFrame()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
 #ifdef __CLIENT__
     d->updateMusicVolumeIfChanged();
@@ -1559,7 +1576,7 @@ void AudioSystem::startFrame()
 #ifdef __CLIENT__
 void AudioSystem::endFrame()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
     if(sfxIsAvailable())
     {
@@ -1592,7 +1609,7 @@ void AudioSystem::endFrame()
 
 void AudioSystem::initPlayback()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
@@ -1643,7 +1660,7 @@ void AudioSystem::initPlayback()
 
 void AudioSystem::deinitPlayback()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
     d->deinitSfx();
     d->deinitMusic();
@@ -1670,7 +1687,7 @@ bool AudioSystem::musicIsAvailable() const
 
 bool AudioSystem::musicIsPlaying() const
 {
-    //LOG_AS("audio::System");
+    //LOG_AS("AudioSystem");
     return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_t *) ifs;
@@ -1682,7 +1699,7 @@ void AudioSystem::stopMusic()
 {
     if(!d->musAvail) return;
 
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     d->musCurrentSong = "";
 
     // Stop all interfaces.
@@ -1698,7 +1715,7 @@ void AudioSystem::pauseMusic(bool doPause)
 {
     if(!d->musAvail) return;
 
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     d->musPaused = !d->musPaused;
 
     // Pause playback on all interfaces.
@@ -1719,7 +1736,7 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
 {
     if(!d->musAvail) return false;
 
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     LOG_AUDIO_MSG("Starting music \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
     //LOG_AUDIO_VERBOSE("Current song '%s'") << d->musCurrentSong;
 
@@ -1800,27 +1817,27 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
 dint AudioSystem::playMusicLump(lumpnum_t lumpNum, bool looped)
 {
     stopMusic();
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     return d->playMusicLump(lumpNum, looped);
 }
 
 dint AudioSystem::playMusicFile(String const &filePath, bool looped)
 {
     stopMusic();
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     return d->playMusicFile(filePath, looped);
 }
 
 dint AudioSystem::playMusicCDTrack(dint cdTrack, bool looped)
 {
     stopMusic();
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     return d->playMusicCDTrack(cdTrack, looped);
 }
 
 void AudioSystem::updateMusicMidiFont()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
     NativePath path(musMidiFontPath);
 #ifdef MACOSX
@@ -1863,7 +1880,7 @@ void AudioSystem::setSfxListener(mobj_t *newListener)
 
 bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
-    //LOG_AS("audio::System");
+    //LOG_AS("AudioSystem");
 
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
@@ -1933,7 +1950,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 void AudioSystem::stopSoundGroup(dint group, mobj_t *emitter)
 {
     if(!d->sfxAvail) return;
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     d->sfxChannels->forAll([this, &group, &emitter] (audio::SfxChannel &ch)
     {
         if(ch.hasBuffer())
@@ -1954,7 +1971,7 @@ dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defP
 {
     if(!d->sfxAvail) return false;
 
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     dint stopCount = 0;
     d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (audio::SfxChannel &ch)
     {
@@ -2001,7 +2018,7 @@ dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defP
 
 void AudioSystem::stopSound(dint soundId, mobj_t *emitter, dint flags)
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
 
     // Are we performing any special stop behaviors?
     if(emitter && flags)
@@ -2049,7 +2066,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
 
     bool const play3D = sfx3D && (emitter || fixedOrigin);
 
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     if(sample->id < 1 || sample->id >= DED_Definitions()->sounds.size()) return false;
     if(volume <= 0 || !sample->size) return false;
 
@@ -2415,7 +2432,7 @@ void AudioSystem::startLogical(dint soundIdAndFlags, mobj_t *emitter)
 
 void AudioSystem::aboutToUnloadMap()
 {
-    LOG_AS("audio::System");
+    LOG_AS("AudioSystem");
     LOG_AUDIO_VERBOSE("Cleaning for map unload...");
 
     d->sfxClearLogical();
