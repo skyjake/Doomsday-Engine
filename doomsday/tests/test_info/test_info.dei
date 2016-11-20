@@ -1,12 +1,12 @@
 # Fonts for the default UI style
-# - size can be "pt" or "px", defaults to "pt" 
+# - size can be "pt" or "px", defaults to "pt"
 # - weight: normal bold light
 # - style: normal italic
 
 script {
     # Version module will be available in embedded scripts here.
     import Version
-    
+
     def joinArray(a)
         result = ''
         for i in a: result += i
@@ -14,7 +14,7 @@ script {
     end
 }
 
-script "condition testing" condition "Version.OS == 'macx'" {
+script condition "Version.OS == 'macx'" {
     print "Running on %s!" % Version.OS
     for i in [0, 2, 4]
         print 'i =', i
@@ -24,10 +24,10 @@ script "condition testing" condition "Version.OS == 'macx'" {
 # Nameless groups are allowed.
 group {
     condition: False
-    script test2 condition True { print "WILL NOT BE RUN" }    
+    script condition True { print "WILL NOT BE RUN" }
 }
 
-thing A { 
+thing A {
     member: value from A
 }
 
@@ -39,7 +39,7 @@ thing B inherits A {
 group {
     # All members inherit A.
     inherits = A
-    
+
     thing C {
         member2: value from C
         script { print "Contents of C:"; print self }
@@ -50,15 +50,15 @@ group {
         script { print "Contents of D:"; print self }
     }
 }
-    
+
 type1 first-block { key = value }
-type2 example-block inherits first-block {}    
-    
+type2 example-block inherits first-block {}
+
 group font {
     condition: Version.OS == 'macx'
-    
+
     preferences < font.default, $" 'font'+'.'+'title' " >
-    
+
     font Default {
         family $= 'Lucida ' + "Grande"
         size $: joinArray(['16', 'pt'])
@@ -70,7 +70,7 @@ group font {
             print self
         }
     }
-    
+
     # Identifiers retain case in script namespaces (and are case
     # sensitive), however group types are forced lower case (FoNt==font).
     FoNt "Title" inherits font.Default {
