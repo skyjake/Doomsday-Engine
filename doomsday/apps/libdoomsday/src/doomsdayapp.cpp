@@ -217,6 +217,12 @@ DENG2_PIMPL(DoomsdayApp)
             }
         }
 
+        // Check for games installed from GOG.com.
+        foreach (NativePath gogPath, gogComPaths())
+        {
+            attachWadFeed("GOG.com", gogPath);
+        }
+
 #ifdef UNIX
         NativePath const systemWads("/usr/share/games/doom");
         if (systemWads.exists())
@@ -490,6 +496,34 @@ NativePath DoomsdayApp::steamBasePath()
     /// @todo Where are Steam apps located on Linux?
     return "";
 #endif
+}
+
+QList<NativePath> DoomsdayApp::gogComPaths()
+{
+    QList<NativePath> paths;
+
+#ifdef WIN32
+    // Look up all the Doom GOG.com paths.
+    QList<QString> const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
+    foreach (auto gogId, QList<QString>({ "1435827232", "1435848814", "1435848742" }))
+    {
+        NativePath const basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId,
+                                              QSettings::NativeFormat).value("Path").toString();
+        if (!basePath.isEmpty())
+        {
+            foreach (auto sub, subfolders)
+            {
+                NativePath path(basePath / sub);
+                if (path.exists())
+                {
+                    paths << path;
+                }
+            }
+        }
+    }
+#endif
+
+    return paths;
 }
 
 bool DoomsdayApp::isShuttingDown() const

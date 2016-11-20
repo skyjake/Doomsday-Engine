@@ -149,6 +149,7 @@ public:
     static SaveGames &      saveGames();
 
     static de::NativePath   steamBasePath();
+    static QList<de::NativePath> gogComPaths();
 
     /**
      * Sets the currently active game. DoomsdayApp does not take ownership of
