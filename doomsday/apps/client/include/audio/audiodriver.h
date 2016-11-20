@@ -98,7 +98,7 @@ public:
      * Initialize the audio driver if necessary, ready for use.
      */
     void initialize();
-    
+
     /**
      * Deinitialize the audio driver if necessary, so that it may be unloaded.
      */
@@ -109,6 +109,8 @@ public:
      * @c nullptr if not yet loaded, or this is a built-in driver).
      */
     ::Library *library() const;
+
+    static bool isAvailable(de::String const &identifier);
 
 public:  // Interfaces: -----------------------------------------------------------
 

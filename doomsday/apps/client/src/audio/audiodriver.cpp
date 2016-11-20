@@ -52,19 +52,17 @@ DENG2_PIMPL(AudioDriver)
 
     static LibraryFile *tryFindAudioPlugin(String const &name)
     {
-        if(!name.isEmpty())
+        if (!name.isEmpty())
         {
             LibraryFile *found = nullptr;
             Library_ForAll([&name, &found] (LibraryFile &lib)
             {
                 // Plugins are native files.
-                if(lib.source()->is<NativeFile>())
+                if (lib.source()->is<NativeFile>() &&
+                    lib.hasUnderscoreName(name))
                 {
-                    if(lib.hasUnderscoreName(name))
-                    {
-                        found = &lib;
-                        return LoopAbort;
-                    }
+                    found = &lib;
+                    return LoopAbort;
                 }
                 return LoopContinue;
             });
@@ -285,6 +283,11 @@ void AudioDriver::deinitialize()
 ::Library *AudioDriver::library() const
 {
     return d->library;
+}
+
+bool AudioDriver::isAvailable(String const &identifier)
+{
+    return Impl::tryFindAudioPlugin(identifier);
 }
 
 audiodriver_t /*const*/ &AudioDriver::iBase() const
