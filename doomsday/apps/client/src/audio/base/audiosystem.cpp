@@ -25,50 +25,40 @@
 #include "dd_share.h"      // SF_* flags
 #include "dd_main.h"       // ::isDedicated
 #include "def_main.h"      // ::defs
-#ifdef __CLIENT__
-#  include "sys_system.h"  // Sys_Sleep()
-#endif
+#include "api_map.h"
+#include "world/p_players.h"
+#include "world/thinkers.h"
+#include "audio/s_cache.h"
+#include "Sector"
+#include "Subsector"
 
 #ifdef __CLIENT__
+#  include "sys_system.h"  // Sys_Sleep()
+#  include "audio/m_mus2midi.h"
+#  include "audio/sfxchannel.h"
+#  include "audio/sys_audiod_dummy.h"
+#  include "world/audioenvironment.h"
 #  include "client/clientsubsector.h"
+#  include <doomsday/defs/music.h>
+#  include <doomsday/filesys/fs_main.h>
+#  include <doomsday/filesys/fs_util.h>
 #endif
 
 #ifdef __SERVER__
 #  include "server/sv_sound.h"
 #endif
 
-#ifdef __CLIENT__
-#  include "audio/m_mus2midi.h"
-#  include "audio/sfxchannel.h"
-#endif
-#include "audio/s_cache.h"
-
-#include "api_map.h"
-#ifdef __CLIENT__
-#  include "world/audioenvironment.h"
-#endif
-#include "world/p_players.h"
-#include "world/thinkers.h"
-#include "Sector"
-#include "Subsector"
-
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#ifdef __CLIENT__
-#  include <doomsday/defs/music.h>
-#  include <doomsday/filesys/fs_main.h>
-#  include <doomsday/filesys/fs_util.h>
-#endif
 #include <de/App>
 #include <de/CommandLine>
 #include <de/FileSystem>
 #include <de/NativeFile>
 #include <de/timer.h>
 #include <de/c_wrapper.h>
-#ifdef __CLIENT__
-#  include <de/concurrency.h>
-#  include <de/memory.h>
-#endif
+#include <de/concurrency.h>
+#include <de/memory.h>
+
 #include <QMultiHash>
 #include <QtAlgorithms>
 
@@ -361,6 +351,25 @@ DENG2_PIMPL(AudioSystem)
             audiointerface_music_t *music;
             audiointerface_cd_t    *cd;
         } i;
+
+        bool isDummy() const
+        {
+            switch (type)
+            {
+            case AUDIO_ISFX:
+                return !std::memcmp(i.sfx, &audiod_dummy_sfx, sizeof(*i.sfx));
+
+            case AUDIO_IMUSIC:
+                return !std::memcmp(i.music, &audiod_dummy_music, sizeof(*i.music));
+
+            case AUDIO_ICD:
+                return !std::memcmp(i.cd, &audiod_dummy_cd, sizeof(*i.cd));
+
+            default:
+                break;
+            }
+            return false;
+        }
     };
     QList<AudioInterface> activeInterfaces;
 
@@ -382,6 +391,20 @@ DENG2_PIMPL(AudioSystem)
             AudioInterface ifs; zap(ifs);
             ifs.type  = type;
             ifs.i.any = ptr;
+
+            if (ifs.isDummy())
+            {
+                // A dummy interface as the primary one removes the need to have any
+                // other interfaces of the same type.
+                for (int i = activeInterfaces.size() - 1; i >= 0; --i)
+                {
+                    if (activeInterfaces[i].type == type)
+                    {
+                        activeInterfaces.removeAt(i);
+                    }
+                }
+            }
+
             activeInterfaces << ifs;  // a copy is made
         }
     }
@@ -422,23 +445,6 @@ DENG2_PIMPL(AudioSystem)
         }
 #endif
 
-/*#ifndef WIN32
-        // At the moment, dsFMOD supports streaming samples so we can
-        // automatically load dsFluidSynth for MIDI music.
-        if (defaultDriverId == AUDIOD_FMOD)
-        {
-            initDriverIfNeeded("fluidsynth");
-            AudioDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
-            if(fluidSynth.isInitialized())
-            {
-                AudioInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_IMUSIC;
-                ifs.i.any = &fluidSynth.iMusic();
-                activeInterfaces << ifs;  // a copy is made
-            }
-        }
-#endif*/
-
         if (defaultDriver.hasCd())
         {
             AudioInterface ifs; zap(ifs);
@@ -447,9 +453,9 @@ DENG2_PIMPL(AudioSystem)
             activeInterfaces << ifs;  // a copy is made
         }
 
-        String userSfx   = App::config("audio.soundPlugin").value().asText();
-        String userMusic = App::config("audio.musicPlugin").value().asText();
-        String userCD    = App::config("audio.cdPlugin")   .value().asText();
+        String userSfx   = App::config("audio.soundPlugin");
+        String userMusic = App::config("audio.musicPlugin");
+        String userCD    = App::config("audio.cdPlugin");
 
         // Command line options may also be used to specify which plugin to use.
         CommandLine &cmdLine = App::commandLine();
@@ -494,55 +500,6 @@ DENG2_PIMPL(AudioSystem)
                             "' does not provide a CD interface");*/
             }
         }
-
-#if 0
-        for(dint p = 1; p < cmdLine.count() - 1; ++p)
-        {
-            if(!cmdLine.isOption(p)) continue;
-
-            // Check for SFX override.
-            if(cmdLine.matches("-isfx", cmdLine.at(p)))
-            {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasSfx())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide an SFX interface");
-
-                AudioInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_ISFX;
-                ifs.i.any = &driver.iSfx();
-                activeInterfaces << ifs;  // a copy is made
-                continue;
-            }
-
-            // Check for Music override.
-            if(cmdLine.matches("-imusic", cmdLine.at(p)))
-            {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasMusic())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide a Music interface");
-
-                AudioInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_IMUSIC;
-                ifs.i.any = &driver.iMusic();
-                activeInterfaces << ifs;  // a copy is made
-                continue;
-            }
-
-            // Check for CD override.
-            if(cmdLine.matches("-icd", cmdLine.at(p)))
-            {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasCd())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide a CD interface");
-
-                AudioInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_ICD;
-                ifs.i.any = &driver.iCd();
-                activeInterfaces << ifs;  // a copy is made
-                continue;
-            }
-        }
-#endif
 
         // Let the music driver(s) know of the primary sfx interface, in case they
         // want to play audio through it.
@@ -1503,21 +1460,28 @@ String AudioSystem::description() const
 #endif
 
 #ifdef __CLIENT__
+    int ifCounts[AUDIO_INTERFACE_COUNT] {};
+
     // Include an active playback interface itemization.
-    for(dint i = d->activeInterfaces.count(); i--> 0; )
+    for (dint i = d->activeInterfaces.count(); i-- > 0; )
     {
         Impl::AudioInterface const &ifs = d->activeInterfaces[i];
 
-        if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
+        String ifName = (ifs.type == AUDIO_IMUSIC? "Music" :
+                         ifs.type == AUDIO_ISFX?   "SFX" : "CD");
+        if (++ifCounts[ifs.type] > 1)
         {
-            os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << d->interfaceName(ifs.i.any) << "\n";
+            ifName += String(" %1").arg(ifCounts[ifs.type]);
         }
+
+        os << _E(Ta) _E(l) "  " << ifName << ": " << _E(.) _E(Tb)
+           << d->interfaceName(ifs.i.any) << "\n";
+
+        /*}
         else if(ifs.type == AUDIO_ISFX)
         {
-            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << d->interfaceName(ifs.i.sfx) << "\n";
-        }
+            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb) << d->interfaceName(ifs.i.sfx) << "\n";
+        }*/
     }
 #endif
 

@@ -45,7 +45,8 @@ typedef enum {
     AUDIO_ISFX,
     AUDIO_IMUSIC,
     AUDIO_ICD,
-    AUDIO_IMUSIC_OR_ICD
+    AUDIO_INTERFACE_COUNT,
+    AUDIO_IMUSIC_OR_ICD // forAllInterfaces() special value
 } audiointerfacetype_t;
 
 #ifdef WIN32
