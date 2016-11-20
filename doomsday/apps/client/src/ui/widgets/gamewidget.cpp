@@ -273,7 +273,8 @@ bool GameWidget::handleEvent(Event const &event)
             // Click completed on the widget, trap the mouse.
             window.eventHandler().trapMouse();
             window.taskBar().close();
-            root().setFocus(0); // Allow input to reach here.
+            root().setFocus(0);         // Allow input to reach here.
+            root().clearFocusStack();   // Ensure no popups steal focus away.
             break;
 
         default:
