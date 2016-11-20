@@ -1026,18 +1026,6 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-/*
-void ClientWindow::drawGameContent()
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    GLState::current().target().clear(GLFramebuffer::ColorDepthStencil);
-
-    d->root.drawUntil(*d->home);
-}
-*/
-
 void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
 {
     d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent, UnsetFlags);

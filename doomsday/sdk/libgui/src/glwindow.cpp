@@ -391,8 +391,6 @@ void GLWindow::initializeGL()
     LOGDEV_GL_NOTE("Initializing OpenGL window");
 
     d->glInit();
-
-    LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void GLWindow::paintGL()
@@ -410,6 +408,7 @@ void GLWindow::paintGL()
             d->readyPending = true;
             d->mainCall.enqueue([this] () { d->notifyReady(); });
         }
+        LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         return;
     }
 
