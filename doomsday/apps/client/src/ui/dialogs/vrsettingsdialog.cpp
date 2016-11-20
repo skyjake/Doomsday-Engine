@@ -136,6 +136,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
+#ifdef DENG_HAVE_OCULUS_API
     LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + tr("Oculus Rift"), &area());
     LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
     ovrLabel->setFont("separator.label");
@@ -160,6 +161,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     {
         layout << *utilLabel << *d->desktopSetup;
     }
+#endif
 
     area().setContentSize(layout.width(), layout.height());
 
