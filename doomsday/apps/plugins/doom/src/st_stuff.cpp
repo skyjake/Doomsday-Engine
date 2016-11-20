@@ -506,7 +506,8 @@ static void drawUIWidgetsForPlayer(player_t *plr)
     int const displayMode = ST_ActiveHud(localPlayer);
     hudstate_t *hud       = &hudStates[localPlayer];
 
-    Size2Raw portSize; R_ViewPortSize(localPlayer, &portSize);
+    Size2Raw portSize;    R_ViewPortSize  (localPlayer, &portSize);
+    Point2Raw portOrigin; R_ViewPortOrigin(localPlayer, &portOrigin);
 
     // The automap is drawn in a viewport scaled coordinate space (of viewwindow dimensions).
     HudWidget &aGroup = GUI_FindWidgetById(hud->groupIds[UWG_AUTOMAP]);
@@ -522,6 +523,7 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
+    DGL_Translatef(portOrigin.x, portOrigin.y, 0);
     DGL_Scalef(scale, scale, 1);
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
@@ -1022,7 +1024,7 @@ void HU_WakeWidgets(int localPlayer)
             HU_WakeWidgets(i);
         }
     }
-    else if(localPlayer < MAXPLAYERS) 
+    else if(localPlayer < MAXPLAYERS)
     {
         if(players[localPlayer].plr->inGame)
         {

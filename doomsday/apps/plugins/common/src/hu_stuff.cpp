@@ -1528,8 +1528,11 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
+    Point2Raw portOrigin;
+    R_ViewPortOrigin(DISPLAYPLAYER, &portOrigin);
+
     // After scaling, the title is centered horizontally on the screen.
-    DGL_Translatef(origin.x, origin.y, 0);
+    DGL_Translatef(portOrigin.x + origin.x, portOrigin.y + origin.y, 0);
 
     DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
 

@@ -100,8 +100,8 @@ struct hudstate_t {
     int     hideTics;
     float   hideAmount;
     // Fullscreen HUD alpha
-    float   alpha; 
-    int     automapCheatLevel; 
+    float   alpha;
+    int     automapCheatLevel;
 
     /*
      * UI Widgets
@@ -163,14 +163,15 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     // Magic (not really -- standard 1.2:1 anamporphic) aspect ratio used to adjust render height
     static const float  ASPECT_TRIM = 1.2F;
-    
+
     DENG2_ASSERT(plr);
 
     int const playerId    = (plr - players);
     int const hudMode     = ST_ActiveHud(playerId);
     hudstate_t* hud       = &hudStates[playerId];
 
-    Size2Raw portSize; R_ViewPortSize(playerId, &portSize);
+    Size2Raw portSize;    R_ViewPortSize(playerId, &portSize);
+    Point2Raw portOrigin; R_ViewPortOrigin(playerId, &portOrigin);
 
     // TODO float const automapOpacity
     // Automap Group
@@ -178,24 +179,25 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         HudWidget& amGroup = GUI_FindWidgetById(hud->groupIds[UWG_AUTOMAP]);
         amGroup.setOpacity(ST_AutomapOpacity(playerId));
         amGroup.setMaximumSize(portSize);
-        
+
         GUI_DrawWidgetXY(&amGroup, 0, 0);
     }
 
     // Ingame UI
-    // hudMode >= 3 presumeable refers to `No-Hud` 
+    // hudMode >= 3 presumeable refers to `No-Hud`
     // There ought to be some constants for this
     if (hud->alpha > 0 || hudMode < 3) {
         float uiScale;
-        R_ChooseAlignModeAndScaleFactor(&uiScale, SCREENWIDTH, SCREENHEIGHT, 
+        R_ChooseAlignModeAndScaleFactor(&uiScale, SCREENWIDTH, SCREENHEIGHT,
                                         portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
         float opacity = de::min(1.0F, hud->alpha) * (1 - hud->hideAmount);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
+        DGL_Translatef(portOrigin.x, portOrigin.y, 0);
         DGL_Scalef(uiScale, uiScale * ASPECT_TRIM, 1);
-       
+
         RectRaw displayRegion;
         {
             displayRegion.origin.x    = INSET;
@@ -214,7 +216,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
             bottomGroup.setMaximumSize(displayRegion.size);
 
             GUI_DrawWidget(&bottomGroup, &displayRegion.origin);
-            
+
             Size2_Raw(Rect_Size(&bottomGroup.geometry()), &regionRendered);
         }
 
@@ -225,7 +227,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
             Size2Raw remainingVertical(displayRegion.size.width,
                                        displayRegion.size.height - (regionRendered.height > 0 ? regionRendered.height : 0));
-            
+
             mapNameGroup.setMaximumSize(remainingVertical);
 
             GUI_DrawWidget(&mapNameGroup, &displayRegion.origin);
@@ -240,7 +242,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
                 opacity = 1.0F;
             }
 
-            // Top Center 
+            // Top Center
             {
                 HudWidget& topCenter = GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]);
                 topCenter.setOpacity(opacity);
@@ -300,7 +302,7 @@ static void setAutomapCheatLevel(AutomapWidget& map, int level)
     hud->automapCheatLevel = level;
 
     dint flags = map.flags()
-        & ~ (AWF_SHOW_ALLLINES 
+        & ~ (AWF_SHOW_ALLLINES
             |AWF_SHOW_THINGS
             |AWF_SHOW_SPECIALLINES
             |AWF_SHOW_VERTEXES
@@ -313,12 +315,12 @@ static void setAutomapCheatLevel(AutomapWidget& map, int level)
 
     if (hud->automapCheatLevel == 2)
     {
-        flags |= AWF_SHOW_THINGS 
+        flags |= AWF_SHOW_THINGS
               |  AWF_SHOW_SPECIALLINES;
     }
     else if (hud->automapCheatLevel > 2)
     {
-        flags |= AWF_SHOW_VERTEXES 
+        flags |= AWF_SHOW_VERTEXES
               |  AWF_SHOW_LINE_NORMALS;
     }
 
@@ -405,7 +407,7 @@ static void ST_BuildWidgets(int player)
 
         void (*updateGeometry) (HudWidget* obj);
         void (*drawer) (HudWidget* obj, Point2Raw const* origin);
-        
+
         uiwidgetid_t* id;
     };
 
@@ -455,11 +457,11 @@ static void ST_BuildWidgets(int player)
         uiwidgetdef_t const widgetDefs[] = {
             { GUI_HEALTHICON,       ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->healthIconId      },
             { GUI_HEALTH,           ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   function_cast<UpdateGeometryFunc>(HealthWidget_UpdateGeometry),         function_cast<DrawFunc>(HealthWidget_Draw),             &hud->healthId          },
-            { GUI_READYAMMOICON,    ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    function_cast<UpdateGeometryFunc>(ReadyAmmoIconWidget_UpdateGeometry),  function_cast<DrawFunc>(ReadyAmmoIconWidget_Drawer),    &hud->readyAmmoIconId   },        
+            { GUI_READYAMMOICON,    ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    function_cast<UpdateGeometryFunc>(ReadyAmmoIconWidget_UpdateGeometry),  function_cast<DrawFunc>(ReadyAmmoIconWidget_Drawer),    &hud->readyAmmoIconId   },
             { GUI_READYAMMO,        ALIGN_BOTTOM,       UWG_BOTTOMCENTER,   GF_FONTB,   function_cast<UpdateGeometryFunc>(ReadyAmmo_UpdateGeometry),            function_cast<DrawFunc>(ReadyAmmo_Drawer),              &hud->readyAmmoId       },
 
             // { GUI_FRAGS,            ALIGN_BOTTOMCENTER, UWG_BOTTOMCENTER,   GF_FONTA,   function_cast<UpdateGeometryFunc>(FragsWidget_UpdateGeometry),          function_cast<DrawFunc>(FragsWidget_Draw),              &hud->fragsId           },
-            
+
             { GUI_KEYS,             ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->keysId            },
             { GUI_ARMOR,            ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_FONTB,   function_cast<UpdateGeometryFunc>(Armor_UpdateGeometry),                function_cast<DrawFunc>(ArmorWidget_Draw),              &hud->armorId           },
             { GUI_ARMORICON,        ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->armorIconId       },
@@ -485,13 +487,13 @@ static void ST_BuildWidgets(int player)
                 case GUI_FRAGS:         widget = new guidata_frags_t        (def.updateGeometry, def.drawer, player); break;
                 case GUI_SECRETS:       widget = new guidata_secrets_t                                      (player); break;
                 case GUI_ITEMS:         widget = new guidata_items_t                                        (player); break;
-                case GUI_KILLS:         widget = new guidata_kills_t                                        (player); break; 
+                case GUI_KILLS:         widget = new guidata_kills_t                                        (player); break;
 
                 // Handled specially
                 // case GUI_AUTOMAP:       widget = new AutomapWidget          (def.updateGeometry, def.drawer, player); break;
                 // case GUI_LOG:           widget = new PlayerLogWidget        (def.updateGeometry, def.drawer, player); break;
                 // case GUI_CHAT:          widget = new ChatWidget             (def.updateGeometry, def.drawer, player); break;
-                
+
                 default:
                     LOG_SCR_ERROR ("Unknown widget type: %i. Skipping")
                         << def.type;
@@ -502,7 +504,7 @@ static void ST_BuildWidgets(int player)
             GUI_AddWidget(widget);
             GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>().addChild(widget);
 
-            if (def.id) 
+            if (def.id)
             {
                 *def.id = widget->id();
             }
@@ -588,7 +590,7 @@ D_CMD(ChatOpen)
 {
     DENG2_UNUSED(src);
 
-    if (G_QuitInProgress()) 
+    if (G_QuitInProgress())
     {
         return false;
     }
@@ -605,13 +607,13 @@ D_CMD(ChatOpen)
                 if (destination < 0)
                 {
                     LOG_SCR_ERROR("Invalid team number: %i (valid numbers in range 0 through %i")
-                            << destination 
+                            << destination
                             << NUMTEAMS;
                     return false;
                 }
             }
         }
-    
+
         chat->setDestination(destination);
         chat->activate();
         return true;
@@ -637,7 +639,7 @@ D_CMD(ChatAction)
     if (chat && !chat->isActive())
     {
         String const command = String(argv[0] + 4 /* ghetto substring */);
-        
+
         if (command.compareWithoutCase("complete") == 0)
         {
             return chat->handleMenuCommand(MCMD_SELECT);
@@ -674,11 +676,11 @@ D_CMD(ChatSendMacro)
     {
         LOG_SCR_NOTE("Usage: %s (team) (macro number)")
                 << argv[0];
-    
+
         LOG_SCR_MSG("Send a chat macro to other player(s). "
                     "If (team) is omitted, the message with be broadcast to all players.");
 
-        return true;        
+        return true;
     }
     else
     {
@@ -702,7 +704,7 @@ D_CMD(ChatSendMacro)
                     }
                 }
             }
-            
+
             int macroId = parseMacroId(argc == 3 ? argv[2] : argv[1]);
 
             if (macroId >= 0)
@@ -820,7 +822,7 @@ int ST_Responder(event_t* ev)
 void ST_Ticker(timespan_t ticLength)
 {
     dd_bool const isSharpTic = DD_IsSharpTick();
-    
+
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr   = &players[i];
@@ -913,7 +915,7 @@ void ST_Start(int player)
 
         // Initialize all widgets to default values
         initData(hud);
-    
+
         /*
          * Set user preferences for layout, etc...
          */
@@ -939,7 +941,7 @@ void ST_Start(int player)
         // Automap
         {
             AutomapWidget& map = GUI_FindWidgetById(hud->automapId).as<AutomapWidget>();
-            
+
             // Reset automap open state to closed
             map.open(false, true /* close instantly */);
 
@@ -1303,7 +1305,7 @@ ChatWidget* ST_TryFindChatWidget(int player)
     if(player >= 0 && player < MAXPLAYERS)
     {
         HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].chatId);
-        
+
         if (widgetPointer)
         {
             return widgetPointer->maybeAs<ChatWidget>();
@@ -1318,7 +1320,7 @@ PlayerLogWidget* ST_TryFindLogWidget(int player)
     if(player >= 0 && player < MAXPLAYERS)
     {
         HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].logId);
-        
+
         if (widgetPointer)
         {
             return widgetPointer->maybeAs<PlayerLogWidget>();
@@ -1333,7 +1335,7 @@ AutomapWidget* ST_TryFindAutomapWidget(int player)
     if(player >= 0 && player < MAXPLAYERS)
     {
         HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].automapId);
-        
+
         if (widgetPointer)
         {
             return widgetPointer->maybeAs<AutomapWidget>();

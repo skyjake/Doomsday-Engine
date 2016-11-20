@@ -912,7 +912,7 @@ void HU_WakeWidgets(int localPlayer)
 void ST_CloseAll(int localPlayer, dd_bool fast)
 {
     NetSv_DismissHUDs(localPlayer, fast);
-    
+
     ST_AutomapOpen(localPlayer, false, fast);
     Hu_InventoryOpen(localPlayer, false);
 }
@@ -1278,7 +1278,8 @@ static void drawUIWidgetsForPlayer(player_t *plr)
     int const displayMode = ST_ActiveHud(playerNum);
     hudstate_t *hud       = &hudStates[playerNum];
 
-    Size2Raw portSize; R_ViewPortSize(playerNum, &portSize);
+    Size2Raw portSize;    R_ViewPortSize(playerNum, &portSize);
+    Point2Raw portOrigin; R_ViewPortOrigin(playerNum, &portOrigin);
 
     // The automap is drawn in a viewport scaled coordinate space (of viewwindow dimensions).
     HudWidget &amGroup = GUI_FindWidgetById(hud->groupIds[UWG_AUTOMAP]);
@@ -1294,6 +1295,7 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
+    DGL_Translatef(portOrigin.x, portOrigin.y, 0);
     DGL_Scalef(scale, scale, 1);
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
