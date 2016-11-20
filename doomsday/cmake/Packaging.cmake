@@ -44,6 +44,8 @@ endif ()
 if (APPLE)
     set (CPACK_GENERATOR DragNDrop)
     set (CPACK_DMG_FORMAT UDZO)
+    set (CPACK_DMG_BACKGROUND_IMAGE "${DENG_SOURCE_DIR}/../distrib/macx/dmg_background.jpg")
+    set (CPACK_DMG_DS_STORE_SETUP_SCRIPT "${DENG_CMAKE_DIR}/DMGSetup.scpt")
 elseif (UNIX)
     #set (CPACK_GENERATOR RPM;DEB)
     # Set CPACK_GENERATOR manually.
