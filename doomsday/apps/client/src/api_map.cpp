@@ -633,8 +633,8 @@ static void getProperty(MapElement const *elem, DmuArgs &args)
         }
     }
 
-    if(args.type == DMU_SIDE)
-    {
+    if(args.type == DMU_SIDE && args.prop != DMU_EMITTER) // emitter is in Line::Side,
+    {                                                     // not Surface.
         if(args.modifiers & DMU_TOP_OF_SIDE)
         {
             elem = &elem->as<LineSide>().top();

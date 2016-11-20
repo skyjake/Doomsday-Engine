@@ -43,7 +43,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s *emitter,
+    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s const *emitter,
         coord_t *origin, float volume);
 
     /**
@@ -52,7 +52,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
+    int (*LocalSoundAtVolume)(int soundId, struct mobj_s const *emitter, float volume);
 
     /**
      * Plays a sound on the local system from the given @a emitter.
@@ -60,7 +60,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSound)(int soundId, struct mobj_s *emitter);
+    int (*LocalSound)(int soundId, struct mobj_s const *emitter);
 
     /**
      * Plays a sound on the local system at the given fixed world @a origin.
@@ -75,7 +75,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSound)(int soundId, struct mobj_s *emitter);
+    int (*StartSound)(int soundId, struct mobj_s const *emitter);
 
     /**
      * Play a world sound. The sound is sent to all players except the one who
@@ -87,14 +87,14 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was successfully started.
      */
-    int (*StartSoundEx)(int soundId, struct mobj_s *emitter);
+    int (*StartSoundEx)(int soundId, struct mobj_s const *emitter);
 
     /**
      * Play a world sound. All players in the game will hear it.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
+    int (*StartSoundAtVolume)(int soundId, struct mobj_s const *emitter, float volume);
 
     /**
      * Play a player sound. Only the specified player will hear it.
@@ -111,13 +111,13 @@ DENG_API_TYPEDEF(S)
      * @param emitter  @c nullptr: stops all sounds with the ID.
      *                 Otherwise both ID and origin must match.
      */
-    void (*StopSound)(int soundId, struct mobj_s *emitter/*, flags = 0*/);
+    void (*StopSound)(int soundId, struct mobj_s const *emitter/*, flags = 0*/);
 
     /**
      * @copydoc StopSound()
      * @param flags  @ref soundStopFlags
      */
-    void (*StopSound2)(int soundId, struct mobj_s *emitter, int flags);
+    void (*StopSound2)(int soundId, struct mobj_s const *emitter, int flags);
 
     /**
      * Is an instance of the sound being played using the given emitter?

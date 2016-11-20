@@ -36,7 +36,7 @@ static inline dd_bool isRealMobj(mobj_t const *base)
 /**
  * Find the map object to whom @a base belongs.
  */
-static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
+static void identifySoundEmitter(mobj_t const **base, Sector **sector, Polyobj **poly,
                                  Plane **plane, Surface **surface)
 {
     *sector  = nullptr;
@@ -47,8 +47,8 @@ static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
     if (!*base || isRealMobj(*base)) return;
 
     /// @todo fixme: Do not assume the current map.
-    App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter *>(*base),
-                                                 sector, poly, plane, surface);
+    App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter const *>(*base),
+                                           sector, poly, plane, surface);
 
 #ifdef DENG2_DEBUG
     if (!*sector && !*poly && !*plane && !*surface)
@@ -60,12 +60,12 @@ static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
     *base = nullptr;
 }
 
-void Sv_Sound(dint soundId, mobj_t *origin, dint toPlr)
+void Sv_Sound(dint soundId, mobj_t const *origin, dint toPlr)
 {
     Sv_SoundAtVolume(soundId, origin, 1, toPlr);
 }
 
-void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint toPlr)
+void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t const *origin, dfloat volume, dint toPlr)
 {
     if (::isClient) return;
 
@@ -104,7 +104,7 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint 
                      (soundIDAndFlags & DDSF_REPEAT) != 0, targetPlayers);
 }
 
-void Sv_StopSound(dint soundId, mobj_t *origin)
+void Sv_StopSound(dint soundId, mobj_t const *origin)
 {
     if (::isClient) return;
 

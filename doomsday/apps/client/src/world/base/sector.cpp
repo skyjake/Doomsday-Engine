@@ -412,6 +412,8 @@ void Sector::buildSides()
         }
         return LoopContinue;
     });
+
+    d->updateAllEmitterOrigins();
 }
 
 SoundEmitter &Sector::soundEmitter()

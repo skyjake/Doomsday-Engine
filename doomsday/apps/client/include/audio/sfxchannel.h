@@ -88,8 +88,8 @@ public:
     /**
      * Returns the attributed sound emitter if any (may be @c nullptr).
      */
-    struct mobj_s *emitter() const;
-    void setEmitter(struct mobj_s *newEmitter);
+    struct mobj_s const *emitter() const;
+    void setEmitter(struct mobj_s const *newEmitter);
 
     void setFixedOrigin(de::Vector3d const &newOrigin);
 

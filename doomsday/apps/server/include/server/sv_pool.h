@@ -185,7 +185,7 @@ typedef struct {
 typedef struct {
     delta_t         delta; // id = Emitter identifier (mobjid/sectoridx)
     int             sound; // Sound ID
-    mobj_t*         mobj;
+    mobj_t const *  mobj;
     float           volume;
 } sounddelta_t;
 
@@ -289,7 +289,7 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  * @param clientsMask    Each bit corresponds a client number;
  *                       -1 if all clients should receive the delta.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
+void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
     Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
     float volume, dd_bool isRepeating, int clientsMask);
 

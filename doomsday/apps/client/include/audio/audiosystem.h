@@ -174,8 +174,8 @@ public:  // Sound effect playback: ---------------------------------------------
     bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
-    void stopSoundGroup(int group, struct mobj_s *emitter);
-    int stopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, int defPriority);
+    void stopSoundGroup(int group, struct mobj_s const *emitter);
+    int stopSoundWithLowerPriority(int soundId, struct mobj_s const *emitter, int defPriority);
 #endif
 
     /**
@@ -184,7 +184,7 @@ public:  // Sound effect playback: ---------------------------------------------
      *                 and @a emitter must match.
      * @param flags    @ref soundStopFlags.
      */
-    void stopSound(int soundId, struct mobj_s *emitter, int flags = 0);
+    void stopSound(int soundId, struct mobj_s const *emitter, int flags = 0);
 
 #ifdef __CLIENT__
 
@@ -202,13 +202,13 @@ public:  // Sound effect playback: ---------------------------------------------
      *
      * @return  @c true, if a sound is started.
      */
-    int playSound(sfxsample_t *sample, float volume, float freq, struct mobj_s *emitter,
+    int playSound(sfxsample_t *sample, float volume, float freq, struct mobj_s const *emitter,
                   coord_t *fixedOrigin, int flags);
 
     /**
      * The priority of a sound is affected by distance, volume and age.
      */
-    float rateSoundPriority(struct mobj_s *emitter, coord_t const *point, float volume, int startTic);
+    float rateSoundPriority(struct mobj_s const *emitter, coord_t const *point, float volume, int startTic);
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -274,7 +274,7 @@ public:  /// @todo make private:
 #endif  // __CLIENT__
 
     /// @todo Should not be exposed to users of this class. -ds
-    void startLogical(int soundIdAndFlags, struct mobj_s *emitter);
+    void startLogical(int soundIdAndFlags, struct mobj_s const *emitter);
 
 private:
     DENG2_PRIVATE(d)
@@ -303,7 +303,7 @@ mobj_t *S_GetListenerMobj();
 /**
  * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
  */
-void S_StopSoundGroup(int group, struct mobj_s *emitter);
+void S_StopSoundGroup(int group, struct mobj_s const *emitter);
 
 /**
  * Stops all channels that are playing the specified sound.

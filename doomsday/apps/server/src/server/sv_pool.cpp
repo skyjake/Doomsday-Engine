@@ -2283,7 +2283,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 }
 
-void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
+void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
     Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
     float volume, dd_bool isRepeating, int clientsMask)
 {
@@ -2311,7 +2311,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
         type = DT_SECTOR_SOUND;
 
         // Clients need to know which emitter to use.
-        if (emitter && emitter == (mobj_t *) &sourcePlane->soundEmitter())
+        if (emitter && emitter == (mobj_t const *) &sourcePlane->soundEmitter())
         {
             if (sourcePlane->isSectorFloor())
             {

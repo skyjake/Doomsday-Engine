@@ -48,7 +48,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
     dfloat volume = 0;              ///< Sound volume: 1.0 is max.
 
-    mobj_t *emitter = nullptr;      ///< Mobj emitter for the sound, if any (not owned).
+    mobj_t const *emitter = nullptr;///< Mobj emitter for the sound, if any (not owned).
     coord_t origin[3];              ///< Emit from here (synced with emitter).
 
     sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
@@ -153,12 +153,12 @@ void SfxChannel::setVolume(dfloat newVolume)
     d->volume = newVolume;
 }
 
-mobj_t *SfxChannel::emitter() const
+mobj_t const *SfxChannel::emitter() const
 {
     return d->emitter;
 }
 
-void SfxChannel::setEmitter(mobj_t *newEmitter)
+void SfxChannel::setEmitter(mobj_t const *newEmitter)
 {
     d->emitter = newEmitter;
 }

@@ -988,6 +988,12 @@ dint Line::Side::property(DmuArgs &args) const
     case DMU_FLAGS:
         args.setValue(DMT_SIDE_FLAGS, &d->flags, 0);
         break;
+    case DMU_EMITTER:
+        args.setValue(DMT_SIDE_EMITTER,
+                      args.modifiers & DMU_TOP_OF_SIDE?    &soundEmitter(Top)    :
+                      args.modifiers & DMU_MIDDLE_OF_SIDE? &soundEmitter(Middle) :
+                                                           &soundEmitter(Bottom), 0);
+        break;
     default:
         return MapElement::property(args);
     }

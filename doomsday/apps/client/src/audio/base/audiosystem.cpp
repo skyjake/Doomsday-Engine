@@ -607,8 +607,8 @@ DENG2_PIMPL(AudioSystem)
     struct LogicSound
     {
         //dint soundId     = 0;
-        mobj_t *emitter  = nullptr;
-        duint endTime    = 0;
+        mobj_t const *emitter = nullptr;
+        duint endTime = 0;
         bool isRepeating = false;
 
         bool inline isPlaying(duint nowTime) const {
@@ -1176,7 +1176,7 @@ DENG2_PIMPL(AudioSystem)
      *
      * @return  Number of sounds stopped.
      */
-    dint sfxStopLogical(dint soundId, mobj_t *emitter)
+    dint sfxStopLogical(dint soundId, mobj_t const *emitter)
     {
         dint stopCount = 0;
         MutableLogicSoundHashIterator it(sfxLogicHash);
@@ -1211,7 +1211,7 @@ DENG2_PIMPL(AudioSystem)
      * a different set of samples so using this information on server side (for
      * scheduling of remote playback events?) is not logical. -ds
      */
-    void sfxStartLogical(dint soundIdAndFlags, mobj_t *emitter)
+    void sfxStartLogical(dint soundIdAndFlags, mobj_t const *emitter)
     {
         if (soundIdAndFlags <= 0) return;
 
@@ -1221,7 +1221,8 @@ DENG2_PIMPL(AudioSystem)
         // so that we can determine it's length.
         if (sfxsample_t *sample = sfxSampleCache.cache(soundId))
         {
-            bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+            bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) ||
+                                     Def_SoundIsRepeating(soundId);
 
             duint length = (1000 * sample->numSamples) / sample->rate;
             if (isRepeating && length > 1)
@@ -1953,7 +1954,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 
 #ifdef __CLIENT__
 
-void AudioSystem::stopSoundGroup(dint group, mobj_t *emitter)
+void AudioSystem::stopSoundGroup(dint group, mobj_t const *emitter)
 {
     if (!d->sfxAvail) return;
     LOG_AS("AudioSystem");
@@ -1973,7 +1974,7 @@ void AudioSystem::stopSoundGroup(dint group, mobj_t *emitter)
     });
 }
 
-dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
+dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t const *emitter, dint defPriority)
 {
     if (!d->sfxAvail) return false;
 
@@ -2022,7 +2023,7 @@ dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defP
 
 #endif  // __CLIENT__
 
-void AudioSystem::stopSound(dint soundId, mobj_t *emitter, dint flags)
+void AudioSystem::stopSound(dint soundId, mobj_t const *emitter, dint flags)
 {
     LOG_AS("AudioSystem");
 
@@ -2064,7 +2065,7 @@ void AudioSystem::stopSound(dint soundId, mobj_t *emitter, dint flags)
 }
 
 #ifdef __CLIENT__
-dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
+dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t const *emitter,
     coord_t *fixedOrigin, dint flags)
 {
     DENG2_ASSERT(sample);
@@ -2325,7 +2326,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
     return true;
 }
 
-dfloat AudioSystem::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
+dfloat AudioSystem::rateSoundPriority(mobj_t const *emitter, coord_t const *point, dfloat volume,
     dint startTic)
 {
     // In five seconds all priority of a sound is gone.
@@ -2431,7 +2432,7 @@ void AudioSystem::requestSfxListenerUpdate()
 
 #endif  // __CLIENT__
 
-void AudioSystem::startLogical(dint soundIdAndFlags, mobj_t *emitter)
+void AudioSystem::startLogical(dint soundIdAndFlags, mobj_t const *emitter)
 {
     d->sfxStartLogical(soundIdAndFlags, emitter);
 }
@@ -2753,7 +2754,7 @@ mobj_t *S_GetListenerMobj()
 }
 
 #undef S_LocalSoundAtVolumeFrom
-dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *point, dfloat volume)
+dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_t *point, dfloat volume)
 {
 #ifdef __CLIENT__
     LOG_AS("S_LocalSoundAtVolumeFrom");
@@ -2789,7 +2790,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
     if (!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        coord_t *fixPoint = (origin ? origin->origin : point);
+        coord_t const *fixPoint = (origin ? origin->origin : point);
 
         if (Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
             return false;
@@ -2824,7 +2825,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
     // iterations of this sound will stop.
     if (info->group)
     {
-        mobj_t *emitter = ((info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : origin);
+        mobj_t const *emitter = ((info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : origin);
         S_StopSoundGroup(info->group, emitter);
     }
 
@@ -2842,13 +2843,13 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 }
 
 #undef S_LocalSoundAtVolume
-dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t const *emitter, dfloat volume)
 {
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
 }
 
 #undef S_LocalSound
-dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
+dint S_LocalSound(dint soundIdAndFlags, mobj_t const *emitter)
 {
     // Play local sound at max volume.
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1);
@@ -2861,7 +2862,7 @@ dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 }
 
 #undef S_StartSound
-dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
+dint S_StartSound(dint soundIdAndFlags, mobj_t const *emitter)
 {
 #ifdef __SERVER__
     // The sound is audible to everybody.
@@ -2873,7 +2874,7 @@ dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 }
 
 #undef S_StartSoundEx
-dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
+dint S_StartSoundEx(dint soundIdAndFlags, mobj_t const *emitter)
 {
 #ifdef __SERVER__
     Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
@@ -2884,7 +2885,7 @@ dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 }
 
 #undef S_StartSoundAtVolume
-dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t const *emitter, dfloat volume)
 {
 #ifdef __SERVER__
     Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
@@ -2912,13 +2913,13 @@ dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
 }
 
 #undef S_StopSound
-void S_StopSound(dint soundId, mobj_t *emitter)
+void S_StopSound(dint soundId, mobj_t const *emitter)
 {
     App_AudioSystem().stopSound(soundId, emitter);
 }
 
 #undef S_StopSound2
-void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
+void S_StopSound2(dint soundId, mobj_t const *emitter, dint flags)
 {
     App_AudioSystem().stopSound(soundId, emitter, flags);
 }
@@ -2931,7 +2932,7 @@ dint S_IsPlaying(dint soundId, mobj_t *emitter)
 
 #ifdef __CLIENT__
 
-void S_StopSoundGroup(dint group, mobj_t *emitter)
+void S_StopSoundGroup(dint group, mobj_t const *emitter)
 {
     App_AudioSystem().stopSoundGroup(group, emitter);
 }
