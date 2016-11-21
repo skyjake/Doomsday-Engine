@@ -32,13 +32,6 @@
 
 #undef main
 
-/**
- * Macro for conveniently accessing the current active window. There is always
- * one active window, so no need to worry about NULLs. The easiest way to get
- * information about the window where drawing is done.
- */
-//#define DENG_WINDOW         (&ClientWindow::main())
-
 #define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
 #define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
 #define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
@@ -155,7 +148,6 @@ public:
     void fadeInTaskBarBlur(de::TimeDelta span);
     void fadeOutTaskBarBlur(de::TimeDelta span);
 
-    //void updateCanvasFormat();
     void updateRootSize();
 
     // Notifications.

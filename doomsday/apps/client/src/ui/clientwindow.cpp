@@ -77,10 +77,10 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(GLWindow, Init)
 , DENG2_OBSERVES(GLWindow, Resize)
 , DENG2_OBSERVES(GLWindow, Swap)
+, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 , DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit            = true;
-    bool needSurfaceFormatUpdate = false;
     bool needRootSizeUpdate      = false;
 
     Mode mode = Normal;
@@ -351,6 +351,8 @@ DENG2_PIMPL(ClientWindow)
         });
 #endif
         */
+
+        self.audienceForAttributeChange() += this;
     }
 
     void appStartupCompleted()
@@ -455,7 +457,6 @@ DENG2_PIMPL(ClientWindow)
 
         // Now that the window is ready for drawing we can enable the GameWidget.
         game->enable();
-        //gameUI->enable();
 
         // Configure a viewport immediately.
         GLState::current().setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight())).apply();
@@ -510,12 +511,11 @@ DENG2_PIMPL(ClientWindow)
         // Frame has been shown, now we can do post-frame updates.
         updateFpsNotification(self.frameRate());
         completeFade();
+    }
 
-        /*if (needSurfaceFormatUpdate)
-        {
-            qDebug() << "-------- OpenGL surface format needs updating! --------";
-            needSurfaceFormatUpdate = false;
-        }*/
+    void windowAttributesChanged(PersistentGLWindow &)
+    {
+        showOrHideQuitButton();
     }
 
     void showOrHideQuitButton()
@@ -1051,12 +1051,6 @@ void ClientWindow::hideTaskBarBlur()
         d->taskBarBlur->setOpacity(0);
     }
 }
-
-/*void ClientWindow::updateCanvasFormat()
-{
-    //d->needSurfaceFormatUpdate = true;
-    /// @todo Update Canvas surface format.
-}*/
 
 void ClientWindow::updateRootSize()
 {
