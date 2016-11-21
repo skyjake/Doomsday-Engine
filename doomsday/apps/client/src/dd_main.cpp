@@ -321,9 +321,9 @@ static void registerResourceFileTypes()
 
 static void createPackagesScheme()
 {
+#if 0
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
 
-#if 0
     //
     // Add default search paths.
     //
