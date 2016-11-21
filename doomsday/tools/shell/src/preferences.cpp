@@ -17,6 +17,7 @@
 
 DENG2_PIMPL(Preferences)
 {
+    FolderSelection *appFolder;
     QCheckBox *useCustomIwad;
     FolderSelection *iwadFolder;
     QFont consoleFont;
@@ -44,52 +45,82 @@ DENG2_PIMPL(Preferences)
 
         mainLayout->addStretch(1);
 
+        QGroupBox *appGroup = new QGroupBox(tr("Server Location"));
+        {
+            mainLayout->addWidget(appGroup);
+
+#ifdef MACOSX
+            appFolder = new FolderSelection(tr("Doomsday.app Folder"));
+            QLabel *info = new QLabel("<small>" + tr("Shell needs to know where Doomsday.app is located "
+                                                     "to be able to start local servers. The server "
+                                                     "executable is located inside the Doomsday.app "
+                                                     "bundle.") +
+                                      "</small>");
+#else
+            appFolder = new FolderSelection(tr("Executable Folder"));
+            QLabel *info = new QLabel("<small>" + tr("The server executable in this folder "
+                                                     "is used for starting local servers.") +
+                                      "</small>");
+#endif
+            info->setWordWrap(true);
+
+            appFolder->setPath(st.value("Preferences/appFolder").toString());
+
+            QVBoxLayout *bl = new QVBoxLayout;
+            bl->addWidget(appFolder);
+            bl->addWidget(info);
+            appGroup->setLayout(bl);
+        }
+
         QGroupBox *fontGroup = new QGroupBox(tr("Console Font"));
-        mainLayout->addWidget(fontGroup);
+        {
+            mainLayout->addWidget(fontGroup);
 
-        fontDesc = new QLabel;
+            fontDesc = new QLabel;
 
-        QPushButton *selFont = new QPushButton(tr("Select..."));
-        selFont->setAutoDefault(false);
-        QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
+            QPushButton *selFont = new QPushButton(tr("Select..."));
+            selFont->setAutoDefault(false);
+            QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
 
-        QHBoxLayout *fl = new QHBoxLayout;
-        fl->addWidget(fontDesc, 1);
-        fl->addWidget(selFont, 0);
-        fontGroup->setLayout(fl);
-
+            QHBoxLayout *fl = new QHBoxLayout;
+            fl->addWidget(fontDesc, 1);
+            fl->addWidget(selFont, 0);
+            fontGroup->setLayout(fl);
+        }
         updateFontDesc();
 
         QGroupBox *group = new QGroupBox(tr("Game Data"));
-        mainLayout->addWidget(group);
+        {
+            mainLayout->addWidget(group);
 
-        useCustomIwad = new QCheckBox(tr("Use a custom IWAD folder"));
-        useCustomIwad->setChecked(st.value("Preferences/customIwad", false).toBool());
-        useCustomIwad->setToolTip(tr("Doomsday's default IWAD folder can be configured\n"
-                                     "using configuration files, environment variables,\n"
-                                     "or command line options."));
+            useCustomIwad = new QCheckBox(tr("Use a custom IWAD folder"));
+            useCustomIwad->setChecked(st.value("Preferences/customIwad", false).toBool());
+            useCustomIwad->setToolTip(tr("Doomsday's default IWAD folder can be configured\n"
+                                         "using configuration files, environment variables,\n"
+                                         "or command line options."));
 
-        iwadFolder = new FolderSelection(tr("Select IWAD Folder"));
-        iwadFolder->setPath(st.value("Preferences/iwadFolder").toString());
+            iwadFolder = new FolderSelection(tr("Select IWAD Folder"));
+            iwadFolder->setPath(st.value("Preferences/iwadFolder").toString());
 
-        QVBoxLayout *bl = new QVBoxLayout;
-        bl->addWidget(useCustomIwad);
-        bl->addWidget(iwadFolder);
-        QLabel *info = new QLabel("<small>" +
-                    tr("Doomsday tries to locate game data such as "
-                       "<a href=\"http://dengine.net/dew/index.php?title=IWAD_folder\">IWAD files</a> "
-                       "automatically, but that may fail "
-                       "if you have the files in a custom location.") + "</small>");
-        QObject::connect(info, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
-        info->setWordWrap(true);
-        bl->addWidget(info);
-        group->setLayout(bl);
+            QVBoxLayout *bl = new QVBoxLayout;
+            bl->addWidget(useCustomIwad);
+            bl->addWidget(iwadFolder);
+            QLabel *info = new QLabel("<small>" +
+                        tr("Doomsday tries to locate game data such as "
+                           "<a href=\"http://dengine.net/dew/index.php?title=IWAD_folder\">IWAD files</a> "
+                           "automatically, but that may fail "
+                           "if you have the files in a custom location.") + "</small>");
+            QObject::connect(info, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
+            info->setWordWrap(true);
+            bl->addWidget(info);
+            group->setLayout(bl);
+        }
 
         mainLayout->addStretch(1);
 
 #ifndef PREFS_APPLY_IMMEDIATELY
 
-        // On Mac, changes to the preferences are applied immediately.
+        // On macOS, changes to the preferences are applied immediately.
         // Other platforms use OK/Cancel buttons.
 
         // Buttons.
@@ -97,10 +128,8 @@ DENG2_PIMPL(Preferences)
         mainLayout->addWidget(bbox);
         QPushButton *yes = bbox->addButton(tr("&OK"), QDialogButtonBox::YesRole);
         QPushButton *no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        //QPushButton *act = bbox->addButton(tr("&Apply"), QDialogButtonBox::ActionRole);
         QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
         QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
-        //QObject::connect(act, SIGNAL(clicked()), &self, SLOT(saveState()));
         yes->setDefault(true);
 #endif
     }
@@ -132,6 +161,7 @@ Preferences::Preferences(QWidget *parent) :
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
 #ifdef PREFS_APPLY_IMMEDIATELY
     connect(d->iwadFolder, SIGNAL(selected()), this, SLOT(saveState()));
+    connect(d->appFolder, SIGNAL(selected()), this, SLOT(saveState()));
 #endif
     validate();
 }
@@ -157,6 +187,7 @@ QFont Preferences::consoleFont()
 void Preferences::saveState()
 {
     QSettings st;
+    st.setValue("Preferences/appFolder", d->appFolder->path().toString());
     st.setValue("Preferences/customIwad", d->useCustomIwad->isChecked());
     st.setValue("Preferences/iwadFolder", d->iwadFolder->path().toString());
     st.setValue("Preferences/consoleFont", d->consoleFont.toString());

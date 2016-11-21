@@ -48,6 +48,8 @@ public:
      */
     void setName(String const &name);
 
+    void setApplicationPath(NativePath const &path);
+
     void start(duint16 port,
                String const &gameMode,
                QStringList additionalOptions = QStringList(),

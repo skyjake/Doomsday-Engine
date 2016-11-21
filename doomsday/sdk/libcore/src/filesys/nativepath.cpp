@@ -227,6 +227,7 @@ String NativePath::withSeparators(QChar sep) const
 
 bool NativePath::exists() const
 {
+    if (isEmpty()) return false;
     return QFile::exists(toString());
 }
 

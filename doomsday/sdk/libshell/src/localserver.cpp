@@ -31,6 +31,7 @@ static String const ERROR_LOG_NAME = "doomsday-errors.out";
 DENG2_PIMPL_NOREF(LocalServer)
 {
     Link *link = nullptr;
+    NativePath appPath; // where to find the server
     duint16 port = 0;
     String name;
     NativePath userDir;
@@ -54,6 +55,11 @@ void LocalServer::setName(String const &name)
     d->name.replace("\"", "\\\""); // for use on command line
 }
 
+void LocalServer::setApplicationPath(NativePath const &path)
+{
+    d->appPath = path;
+}
+
 void LocalServer::start(duint16 port,
                         String const &gameMode,
                         QStringList additionalOptions,
@@ -75,19 +81,26 @@ void LocalServer::start(duint16 port,
     DENG2_ASSERT(d->link == 0);
 
     CommandLine cmd;
+    NativePath bin;
 
 #ifdef MACOSX
     // First locate the server executable.
-    NativePath bin = NativePath(qApp->applicationDirPath()) / "../MacOS/doomsday-server";
-    if (!bin.exists())
+    if (!d->appPath.isEmpty())
     {
-        // Try another location: Doomsday-Shell.app -> Doomsday Engine.app/Contents/Doomsday.app
-        bin = NativePath(qApp->applicationDirPath()) /
-                "../../../Doomsday Engine.app/Contents/Doomsday.app/Contents/Resources/doomsday-server";
+        bin = d->appPath / "Doomsday.app/Contents/MacOS/doomsday-server";
+        if (!bin.exists())
+        {
+            bin = d->appPath / "Contents/MacOS/doomsday-server";
+        }
     }
     if (!bin.exists())
     {
-        // Yet another possibility: Doomsday-Shell.app -> Doomsday.app
+        bin = NativePath(qApp->applicationDirPath()) / "../MacOS/doomsday-server";
+    }
+    if (!bin.exists())
+    {
+        // Yet another possibility: Doomsday Shell.app -> Doomsday.app
+        // App folder randomization means this is only useful in developer builds, though.
         bin = NativePath(qApp->applicationDirPath()) /
                 "../../../Doomsday.app/Contents/MacOS/doomsday-server";
     }
@@ -98,13 +111,27 @@ void LocalServer::start(duint16 port,
     cmd.append(bin);
 
 #elif WIN32
-    NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";
+    if (!d->appPath.isEmpty())
+    {
+        bin = d->appPath / "doomsday-server.exe";
+    }
+    if (!bin.exists())
+    {
+        bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";
+    }
     cmd.append(bin);
     cmd.append("-basedir");
     cmd.append(bin.fileNamePath() / "..");
 
 #else // UNIX
-    NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server";
+    if (!d->appPath.isEmpty())
+    {
+        bin = d->appPath / "doomsday-server";
+    }
+    if (!bin.exists())
+    {
+        bin = NativePath(qApp->applicationDirPath()) / "doomsday-server";
+    }
     if (!bin.exists()) bin = "doomsday-server"; // Perhaps it's on the path?
     cmd.append(bin);
 #endif

@@ -24,9 +24,11 @@
 #include "preferences.h"
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
+#include <de/EscapeParser>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QUrl>
+#include <QSettings>
 #include <QTimer>
 #include <QDesktopServices>
 
@@ -218,6 +220,14 @@ void GuiShellApp::startLocalServer()
 {
     try
     {
+#ifdef MACOSX
+        // App folder randomization means we can't find Doomsday.app on our own.
+        if (!QSettings().contains("Preferences/appFolder"))
+        {
+            showPreferences();
+            return;
+        }
+#endif
         LocalServerDialog dlg;
         if (dlg.exec() == QDialog::Accepted)
         {
@@ -228,6 +238,7 @@ void GuiShellApp::startLocalServer()
             }
 
             auto *sv = new LocalServer;
+            sv->setApplicationPath(QSettings().value("Preferences/appFolder").toString());
             if (!dlg.name().isEmpty())
             {
                 sv->setName(dlg.name());
@@ -241,7 +252,11 @@ void GuiShellApp::startLocalServer()
     }
     catch (Error const &er)
     {
-        QMessageBox::critical(0, tr("Failed to Start Server"), er.asText());
+        EscapeParser esc;
+        esc.parse(er.asText());
+        QMessageBox::critical(0, tr("Failed to Start Server"), esc.plainText());
+
+        showPreferences();
     }
 }
 
