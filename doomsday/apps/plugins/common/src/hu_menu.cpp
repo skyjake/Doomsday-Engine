@@ -1122,6 +1122,13 @@ void Hu_MenuInitGameplayOptionsPage()
 
 # endif // __JDOOM__ || __JDOOM64__
 #endif // __JDOOM__ || __JHERETIC__ || __JDOOM64__
+
+    page->addWidget(new LabelWidget("Vanilla Switch Sound Positioning"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("sound-switch-origin"))
+            .setGroup(1)
+            .setShortcut('v');
 }
 
 void Hu_MenuInitHUDOptionsPage()
