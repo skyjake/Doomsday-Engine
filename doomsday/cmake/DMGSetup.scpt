@@ -23,7 +23,7 @@ on run argv
         set sidebar width to 0
         set statusbar visible to false
         set toolbar visible to false
-        set the bounds to { 250, 100, 1010, 540 }
+        set the bounds to { 250, 100, 1010, 550 }
         set position of item "Doomsday.app" to { 130, 200 }
         set position of item "Doomsday Shell.app" to { 300, 200 }
         set position of item "Applications" to { 470, 200 }
