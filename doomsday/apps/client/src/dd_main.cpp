@@ -319,9 +319,9 @@ static void registerResourceFileTypes()
     /// @todo ftype leaks. -jk
 }
 
+#if 0
 static void createPackagesScheme()
 {
-#if 0
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
 
     //
@@ -409,8 +409,8 @@ static void createPackagesScheme()
 
     scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
     scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
-#endif
 }
+#endif
 
 void DD_CreateFileSystemSchemes()
 {
@@ -456,7 +456,7 @@ void DD_CreateFileSystemSchemes()
         }
     };
 
-    createPackagesScheme();
+    //createPackagesScheme();
 
     // Setup the rest...
     for (schemedef_s const &def : defs)
