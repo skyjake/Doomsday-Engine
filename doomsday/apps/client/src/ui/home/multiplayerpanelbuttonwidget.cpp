@@ -17,12 +17,10 @@
  */
 
 #include "ui/home/multiplayerpanelbuttonwidget.h"
-#include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
 #include "network/net_main.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
-//#include "dd_share.h" // serverinfo_s
 #include "dd_main.h"
 
 #include <doomsday/doomsdayapp.h>
@@ -32,6 +30,7 @@
 #include <doomsday/Games>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
+#include <de/MessageDialog>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 
@@ -90,41 +89,62 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
-        auto const info = serverInfo;
+        ClientApp::serverLink().connectToServerAndChangeGame(serverInfo);
 
+#if 0
         auto &svLink = ClientApp::serverLink();
-
-        // Automatically leave the current MP game.
-        if (netGame && isClient)
         {
-            svLink.disconnect();
-        }
-
-        // Get the profile for this.
-        // Use a delayed callback so that the UI is not blocked while we switch games.
-        svLink.acquireServerProfile(info.address(),
-                                    [&svLink, info] (GameProfile const *serverProfile)
-        {
-            if (!serverProfile)
+            // Automatically leave the current MP game.
+            if (netGame && isClient)
             {
-                // Hmm, oopsie?
-                LOG_NET_ERROR("Failed to connect: not enough information about "
-                              "server %s") << info.address();
-                return;
+                svLink.disconnect();
             }
 
-            auto &win = ClientWindow::main();
-            win.glActivate();
+            // Get the profile for this.
+            // Use a delayed callback so that the UI is not blocked while we switch games.
+            svLink.acquireServerProfile(info.address(),
+                                        [&svLink, info] (GameProfile const *serverProfile)
+            {
+                if (!serverProfile)
+                {
+                    // Hmm, oopsie?
+                    LOG_NET_ERROR("Failed to connect: not enough information about "
+                                  "server %s") << info.address();
+                    return;
+                }
 
-            BusyMode_FreezeGameForBusyMode();
-            win.taskBar().close();
+                auto &win = ClientWindow::main();
+                win.glActivate();
 
-            DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
+                if (!serverProfile->isPlayable())
+                {
+                    String const errorMsg = QString("Server's game \"%1\" is not playable on this system. "
+                                                    "The following packages are unavailable:\n\n%2")
+                            .arg(info.gameId())
+                            .arg(String::join(serverProfile->unavailablePackages(), "\n"));
 
-            svLink.connectHost(info.address());
+                    // Show the error message in a dialog box.
+                    MessageDialog *dlg = new MessageDialog;
+                    dlg->setDeleteAfterDismissed(true);
+                    dlg->title().setText(tr("Cannot Join Game"));
+                    dlg->message().setText(errorMsg);
+                    dlg->buttons()
+                            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept);
+                    dlg->exec(win.root());
+                    return;
+                }
 
-            win.glDone();
-        });
+                BusyMode_FreezeGameForBusyMode();
+                win.taskBar().close();
+
+                DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
+
+                svLink.connectHost(info.address());
+
+                win.glDone();
+            });
+        }
+#endif
     }
 
     bool hasConfig(String const &token) const

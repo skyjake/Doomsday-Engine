@@ -47,6 +47,16 @@ public:
     void clear();
 
     /**
+     * Connects to a server after loading the game running on the server and making
+     * sure that all of the server's gameplay-affecting packages have been loaded
+     * locally.
+     *
+     * @param info  Server to join. This should be one of the servers that have
+     *              previously been found via discovery.
+     */
+    void connectToServerAndChangeGame(de::shell::ServerInfo info);
+
+    /**
      * Acquires a game profile that describes the game on a multiplayer server.
      * If information about the server at @a address is not currently available, a
      * discovery query is sent to the address.
@@ -61,13 +71,13 @@ public:
     void acquireServerProfile(de::Address const &address,
                               std::function<void (GameProfile const *)> resultHandler);
 
-    void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0);
-    void connectHost(de::Address const &address);
+    void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0) override;
+    void connectHost(de::Address const &address) override;
 
     /**
      * Disconnect from the server.
      */
-    void disconnect();
+    void disconnect() override;
 
     /**
      * Attempts to connect to the specified address and asks for server
@@ -131,8 +141,8 @@ protected slots:
     void linkDisconnected();
 
 protected:
-    de::Packet *interpret(de::Message const &msg);
-    void initiateCommunications();
+    de::Packet *interpret(de::Message const &msg) override;
+    void initiateCommunications() override;
 
 private:
     DENG2_PRIVATE(d)

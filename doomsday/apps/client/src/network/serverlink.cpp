@@ -26,19 +26,22 @@
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
+#include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
+#include "dd_main.h"
 
-#include <QTimer>
-#include <doomsday/Games>
-#include <de/memory.h>
-#include <de/data/json.h>
-#include <de/GuiApp>
-#include <de/Socket>
-#include <de/RecordValue>
-#include <de/Message>
-#include <de/ByteRefArray>
 #include <de/BlockPacket>
+#include <de/ByteRefArray>
+#include <de/GuiApp>
+#include <de/Message>
+#include <de/MessageDialog>
+#include <de/RecordValue>
+#include <de/Socket>
+#include <de/data/json.h>
+#include <de/memory.h>
 #include <de/shell/ServerFinder>
+#include <doomsday/Games>
+#include <QTimer>
 
 using namespace de;
 
@@ -228,7 +231,6 @@ DENG2_PIMPL(ServerLink)
         {
             return false;
         }
-        qDebug() << "For profile:" << info.asText().toLatin1().constData();
         if (info.gameId().isEmpty() || info.packages().isEmpty())
         {
             // There isn't enough information here.
@@ -237,40 +239,10 @@ DENG2_PIMPL(ServerLink)
 
         serverProfile.reset(new GameProfile(info.name()));
         serverProfile->setGame(info.gameId());
+        serverProfile->setUseGameRequirements(false); // server lists all packages (that affect gameplay)
+        serverProfile->setPackages(info.packages());
 
-        try
-        {
-            // Figure out the packages needed in the profile.
-            Game const &game = DoomsdayApp::games()[info.gameId()];
-            StringList packagesForProfile = info.packages();
-            // Omit the required packages from the profile.
-            foreach (String requiredPackage, game.requiredPackages())
-            {
-                //auto const svPkg  = Package::split(packagesForProfile.first());
-                //auto const reqPkg = Package::split(requiredPackage);
-                //File const *reqPkg = App::packageLoader().select(requiredPackage);
-
-                //qDebug() << svPkg.first << svPkg.second.asText() << reqPkg.first << reqPkg.second.asText();
-
-                if (Package::equals(packagesForProfile.first(), requiredPackage))
-                {
-                    // Both IDs and versions must match.
-                    packagesForProfile.removeFirst();
-                }
-                else
-                {
-                    break;
-                }
-            }
-            serverProfile->setPackages(packagesForProfile);
-            return true;
-        }
-        catch (Error const &er)
-        {
-            LOG_ERROR("Server's game \"%s\" not supported locally: ")
-                    << info.gameId() << er.asText();
-            return false;
-        }
+        return true; // profile available
     }
 
     Servers allFound(FoundMask const &mask) const
@@ -301,6 +273,17 @@ DENG2_PIMPL(ServerLink)
         }
         return all;
     }
+
+    void reportError(String const &msg)
+    {
+        // Show the error message in a dialog box.
+        MessageDialog *dlg = new MessageDialog;
+        dlg->setDeleteAfterDismissed(true);
+        dlg->title().setText(tr("Cannot Join Game"));
+        dlg->message().setText(msg);
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept);
+        dlg->exec(ClientWindow::main().root());
+    }
 };
 
 ServerLink::ServerLink() : d(new Impl(this))
@@ -314,6 +297,54 @@ void ServerLink::clear()
 {
     d->finder.clear();
     // TODO: clear all found servers
+}
+
+void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
+{
+    // Automatically leave the current MP game.
+    if (netGame && isClient)
+    {
+        disconnect();
+    }
+
+    // Get the profile for this.
+    // Use a delayed callback so that the UI is not blocked while we switch games.
+    acquireServerProfile(info.address(),
+                         [this, info] (GameProfile const *serverProfile)
+    {
+        if (!serverProfile)
+        {
+            // Hmm, oopsie?
+            String const errorMsg = QString("Not enough information known about server %1")
+                    .arg(info.address().asText());
+            LOG_NET_ERROR("Failed to join: ") << errorMsg;
+            d->reportError(errorMsg);
+            return;
+        }
+
+        auto &win = ClientWindow::main();
+        win.glActivate();
+
+        if (!serverProfile->isPlayable())
+        {
+            String const errorMsg = QString("Server's game \"%1\" is not playable on this system. "
+                                            "The following packages are unavailable:\n\n%2")
+                    .arg(info.gameId())
+                    .arg(String::join(serverProfile->unavailablePackages(), "\n"));
+            LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
+            d->reportError(errorMsg);
+            return;
+        }
+
+        BusyMode_FreezeGameForBusyMode();
+        win.taskBar().close();
+
+        DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
+
+        connectHost(info.address());
+
+        win.glDone();
+    });
 }
 
 void ServerLink::acquireServerProfile(Address const &address,
@@ -535,7 +566,7 @@ void ServerLink::handleIncomingPackets()
             /// @todo The incoming packets should go be handled immediately.
 
             // Post the data into the queue.
-            netmessage_t *msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
+            netmessage_t *msg = reinterpret_cast<netmessage_t *>(M_Calloc(sizeof(netmessage_t)));
 
             msg->sender = 0; // the server
             msg->data = new byte[packet->size()];
