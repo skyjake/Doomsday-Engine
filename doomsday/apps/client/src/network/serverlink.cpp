@@ -282,7 +282,8 @@ DENG2_PIMPL(ServerLink)
         dlg->title().setText(tr("Cannot Join Game"));
         dlg->message().setText(msg);
         dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept);
-        dlg->exec(ClientWindow::main().root());
+        ClientWindow::main().root().addOnTop(dlg);
+        dlg->open(MessageDialog::Modal);
     }
 };
 
@@ -327,10 +328,18 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
 
         if (!serverProfile->isPlayable())
         {
+            auto prettyPkg = [] (String const &pkgId) -> String {
+                auto meta = Package::split(pkgId);
+                if (meta.second.isValid()) {
+                    return String("%1 (version %2)").arg(meta.first).arg(meta.second.asText());
+                }
+                return pkgId;
+            };
+
             String const errorMsg = QString("Server's game \"%1\" is not playable on this system. "
                                             "The following packages are unavailable:\n\n%2")
                     .arg(info.gameId())
-                    .arg(String::join(serverProfile->unavailablePackages(), "\n"));
+                    .arg(String::join(de::map(serverProfile->unavailablePackages(), prettyPkg), "\n"));
             LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
             d->reportError(errorMsg);
             return;
