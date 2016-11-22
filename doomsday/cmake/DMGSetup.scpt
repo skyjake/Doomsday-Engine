@@ -7,18 +7,20 @@ on run argv
     -- open the image the first time and save a DS_Store with just
     -- background and icon setup
     open
+      delay 4
       set current view of container window to icon view
       set theViewOptions to the icon view options of container window
       set background picture of theViewOptions to file ".background:background.jpg"
       set arrangement of theViewOptions to not arranged
       set icon size of theViewOptions to 128
-      delay 1
+      delay 2
     close
 
     -- next setup the position of the app and Applications symlink
     -- plus hide all the window decoration
     open
       update without registering applications
+      delay 1
       tell container window
         set sidebar width to 0
         set statusbar visible to false
@@ -33,7 +35,11 @@ on run argv
         set position of item "share" to { 555, 500 }
       end tell
       update without registering applications
-      delay 1
+
+      set theViewOptions to the icon view options of container window
+      set icon size of theViewOptions to 128
+
+      delay 2
     close
 
     -- one last open and close so you can see everything looks correct
