@@ -61,7 +61,6 @@ DENG_GUI_PIMPL(SidebarWidget)
 
     ~Impl()
     {
-        //DoomsdayApp::app().audienceForGameChange() -= this;
         releaseRef(firstColumnWidth);
     }
 
@@ -121,13 +120,17 @@ LabelWidget &SidebarWidget::title()
 
 Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
-    Rule const *max = 0;
+    Rule const *max = nullptr;
     foreach (Widget *child, d->container->childWidgets())
     {
         if (auto *g = child->maybeAs<VariableGroupEditor>())
         {
             changeRef(max, OperatorRule::maximum(g->firstColumnWidth(), max));
         }
+    }
+    if (!max)
+    {
+        return ConstantRule::zero();
     }
     return *refless(max);
 }
