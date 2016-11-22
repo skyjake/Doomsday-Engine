@@ -22,6 +22,8 @@
 
 namespace de {
 
+static AutoRef<ConstantRule> zeroRule(new ConstantRule(0));
+
 ConstantRule::ConstantRule() : Rule(), _pendingValue(0)
 {
     // No valid value defined.
@@ -45,6 +47,11 @@ void ConstantRule::set(float newValue)
 String ConstantRule::description() const
 {
     return String("Constant(%1)").arg(cachedValue());
+}
+
+ConstantRule const &ConstantRule::zero()
+{
+    return zeroRule;
 }
 
 void ConstantRule::update()

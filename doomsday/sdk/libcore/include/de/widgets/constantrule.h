@@ -69,6 +69,8 @@ public:
 
     String description() const;
 
+    static ConstantRule const &zero();
+
 protected:
     void update();
 
@@ -79,12 +81,14 @@ private:
 template <typename Type>
 ConstantRule::Builder<Type>::operator Rule const &() const
 {
+    if (fequal(float(_number), 0)) return ConstantRule::zero();
     return *refless(new ConstantRule(_number));
 }
 
 template <typename Type>
 ConstantRule::Builder<Type>::operator RefArg<Rule>() const
 {
+    if (fequal(float(_number), 0)) return RefArg<Rule>(ConstantRule::zero());
     return RefArg<Rule>(new ConstantRule(_number));
 }
 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RuleBank"
@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(RuleBank)
+DENG2_PIMPL_NOREF(RuleBank)
 {
     struct RuleSource : public ISource
     {
@@ -46,21 +46,9 @@ DENG2_PIMPL(RuleBank)
         RuleData(Rule *r) : rule(holdRef(r)) {}
         ~RuleData() { releaseRef(rule); }
     };
-
-    ConstantRule *zero;
-
-    Impl(Public *i) : Base(i)
-    {
-        zero = new ConstantRule(0);
-    }
-
-    ~Impl()
-    {
-        releaseRef(zero);
-    }
 };
 
-RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Impl(this))
+RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Impl)
 {}
 
 void RuleBank::addFromInfo(File const &file)
@@ -72,7 +60,7 @@ void RuleBank::addFromInfo(File const &file)
 
 Rule const &RuleBank::rule(DotPath const &path) const
 {
-    if (path.isEmpty()) return *d->zero;
+    if (path.isEmpty()) return ConstantRule::zero();
     return *static_cast<Impl::RuleData &>(data(path)).rule;
 }
 

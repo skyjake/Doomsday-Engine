@@ -43,7 +43,6 @@ DENG2_PIMPL(GridLayout)
     CellAlignments cellAlignment;
     Rule const *colPad;
     Rule const *rowPad;
-    Rule const *zeroRule;
 
     struct Metric {
         Rule const *fixedLength; ///< May be @c NULL.
@@ -98,7 +97,6 @@ DENG2_PIMPL(GridLayout)
         , fixedCellHeight(0)
         , colPad(0)
         , rowPad(0)
-        , zeroRule(new ConstantRule(0))
         , totalWidth(new ConstantRule(0))
         , totalHeight(new ConstantRule(0))
         , current(0)
@@ -117,7 +115,6 @@ DENG2_PIMPL(GridLayout)
         releaseRef(fixedCellHeight);
         releaseRef(colPad);
         releaseRef(rowPad);
-        releaseRef(zeroRule);
         releaseRef(totalWidth);
         releaseRef(totalHeight);
         releaseRef(publicWidth);
@@ -757,13 +754,13 @@ Rule const &GridLayout::overrideHeight() const
 Rule const &GridLayout::columnPadding() const
 {
     if (d->colPad) return *d->colPad;
-    return *d->zeroRule;
+    return ConstantRule::zero();
 }
 
 Rule const &GridLayout::rowPadding() const
 {
     if (d->rowPad) return *d->rowPad;
-    return *d->zeroRule;
+    return ConstantRule::zero();
 }
 
 void GridLayout::setCellAlignment(Vector2i const &cell, ui::Alignment cellAlign)
