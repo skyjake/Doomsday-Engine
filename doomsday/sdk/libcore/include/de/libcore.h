@@ -502,6 +502,26 @@ inline void zapPtr(Type *t) {
     std::memset(t, 0, sizeof(Type));
 }
 
+template <typename ContainerType>
+inline ContainerType mapInPlace(ContainerType &c,
+                                std::function<typename ContainerType::value_type (
+                                    typename ContainerType::value_type const &)> func) {
+    for (auto i = c.begin(); i != c.end(); ++i) {
+        *i = func(*i);
+    }
+}
+
+template <typename ContainerType>
+inline ContainerType map(ContainerType const &c,
+                         std::function<typename ContainerType::value_type (
+                             typename ContainerType::value_type const &)> func) {
+    ContainerType out;
+    for (auto i = c.begin(); i != c.end(); ++i) {
+        out.push_back(func(*i));
+    }
+    return out;
+}
+
 } // namespace de
 #endif // __cplusplus
 
