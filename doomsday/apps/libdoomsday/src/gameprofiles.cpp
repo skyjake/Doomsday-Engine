@@ -32,6 +32,7 @@ using namespace de;
 static String const VAR_GAME        ("game");
 static String const VAR_PACKAGES    ("packages");
 static String const VAR_USER_CREATED("userCreated");
+static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
 
 static GameProfile nullGameProfile;
 
@@ -126,6 +127,11 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     }
 
     prof->setUserCreated(!block.keyValue(VAR_USER_CREATED).text.compareWithoutCase("True"));
+    if (block.contains(VAR_USE_GAME_REQUIREMENTS))
+    {
+        prof->setUseGameRequirements(!block.keyValue(VAR_USE_GAME_REQUIREMENTS)
+                                     .text.compareWithoutCase("True"));
+    }
 
     return prof.release();
 }
@@ -137,13 +143,15 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     String gameId;
     StringList packages;
     bool userCreated = false;
+    bool useGameRequirements = true;
 
     Impl() {}
 
     Impl(Impl const &other)
-        : gameId     (other.gameId)
-        , packages   (other.packages)
-        , userCreated(other.userCreated)
+        : gameId             (other.gameId)
+        , packages           (other.packages)
+        , userCreated        (other.userCreated)
+        , useGameRequirements(other.useGameRequirements)
     {}
 };
 
@@ -173,6 +181,11 @@ void GameProfiles::Profile::setUserCreated(bool userCreated)
     d->userCreated = userCreated;
 }
 
+void GameProfiles::Profile::setUseGameRequirements(bool useGameRequirements)
+{
+    d->useGameRequirements = useGameRequirements;
+}
+
 String GameProfiles::Profile::game() const
 {
     return d->gameId;
@@ -188,9 +201,19 @@ bool GameProfiles::Profile::isUserCreated() const
     return d->userCreated;
 }
 
+bool GameProfiles::Profile::isUsingGameRequirements() const
+{
+    return d->useGameRequirements;
+}
+
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
-    return DoomsdayApp::games()[d->gameId].requiredPackages() + d->packages;
+    StringList list;
+    if (d->useGameRequirements)
+    {
+        list = DoomsdayApp::games()[d->gameId].requiredPackages();
+    }
+    return list + d->packages;
 }
 
 StringList GameProfiles::Profile::packagesAffectingGameplay() const
@@ -202,6 +225,19 @@ StringList GameProfiles::Profile::packagesAffectingGameplay() const
         if (!SavedSession::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
+        }
+    }
+    return ids;
+}
+
+StringList GameProfiles::Profile::unavailablePackages() const
+{
+    StringList ids;
+    for (String const &pkg : allRequiredPackages())
+    {
+        if (!App::packageLoader().isAvailable(pkg))
+        {
+            ids << pkg;
         }
     }
     return ids;
@@ -255,7 +291,8 @@ String GameProfiles::Profile::toInfoSource() const
 
     os << VAR_GAME << ": " << d->gameId << "\n"
        << VAR_PACKAGES << " <" << String::join(d->packages, ", ") << ">\n"
-       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False");
+       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False")
+       << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
 
     return info;
 }

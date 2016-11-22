@@ -44,10 +44,12 @@ public:
         void setGame(de::String const &id);
         void setPackages(de::StringList const &packagesInOrder);
         void setUserCreated(bool userCreated);
+        void setUseGameRequirements(bool useGameRequirements);
 
         de::String game() const;
         de::StringList packages() const;
         bool isUserCreated() const;
+        bool isUsingGameRequirements() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's
@@ -56,6 +58,8 @@ public:
         de::StringList allRequiredPackages() const;
 
         de::StringList packagesAffectingGameplay() const;
+
+        de::StringList unavailablePackages() const;
 
         bool isCompatibleWithPackages(de::StringList const &ids) const;
 
