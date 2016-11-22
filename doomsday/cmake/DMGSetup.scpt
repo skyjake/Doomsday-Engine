@@ -4,16 +4,30 @@ on run argv
   tell application "Finder"
   tell disk image_name
 
+    -- wait for the image to finish mounting
+    set open_attempts to 0
+    repeat while open_attempts < 4
+      try
+        open
+          delay 1
+          set open_attempts to 5
+        close
+      on error errStr number errorNumber
+        set open_attempts to open_attempts + 1
+        delay 10
+      end try
+    end repeat
+    delay 5
+    
     -- open the image the first time and save a DS_Store with just
     -- background and icon setup
     open
-      delay 4
       set current view of container window to icon view
       set theViewOptions to the icon view options of container window
       set background picture of theViewOptions to file ".background:background.jpg"
       set arrangement of theViewOptions to not arranged
       set icon size of theViewOptions to 128
-      delay 2
+      delay 5
     close
 
     -- next setup the position of the app and Applications symlink
@@ -39,7 +53,7 @@ on run argv
       set theViewOptions to the icon view options of container window
       set icon size of theViewOptions to 128
 
-      delay 2
+      delay 5
     close
 
     -- one last open and close so you can see everything looks correct
