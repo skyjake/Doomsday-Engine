@@ -568,7 +568,12 @@ int DialogWidget::exec(GuiRootWidget &root)
 
 void DialogWidget::open()
 {
-    d->modality = NonModal;
+    open(NonModal);
+}
+
+void DialogWidget::open(Modality modality)
+{
+    d->modality = modality;
 
     DENG2_ASSERT(hasRoot());
     prepare(); // calls base class's open()
@@ -660,7 +665,7 @@ void DialogWidget::accept(int result)
         d->subloop.exit(result);
         emit accepted(result);
     }
-    else if (d->modality == NonModal)
+    else
     {
         emit accepted(result);
         finish(result);
@@ -675,7 +680,7 @@ void DialogWidget::reject(int result)
         d->subloop.exit(result);
         emit rejected(result);
     }
-    else if (d->modality == NonModal)
+    else
     {
         emit rejected(result);
         finish(result);

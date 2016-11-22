@@ -225,7 +225,9 @@ public:
      * Opens the dialog as non-modal. The dialog must already be added to the
      * widget tree. Use accept() or reject() to close the dialog.
      */
-    void open();
+    void open() override;
+
+    void open(Modality modality);
 
     ui::ActionItem *defaultActionItem();
 
