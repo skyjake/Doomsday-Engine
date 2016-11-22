@@ -60,11 +60,14 @@ DENG2_PIMPL(NativeMenu)
 
     void gameReadinessUpdated() override
     {
+#ifdef MACOSX
         mainCall.enqueue([this] () { updateGameMenuItems(); });
+#endif
     }
 
     void updateGameMenuItems()
     {
+#ifdef MACOSX
         if (!gameMenu) return;
 
         gameMenu->clear();
@@ -76,7 +79,7 @@ DENG2_PIMPL(NativeMenu)
 
         foreach (Game *game, allGames)
         {
-            QAction *load = new QAction(tr("Load %1").arg(game->title()));
+            QAction *load = new QAction(tr("Load %1").arg(game->title()), &self);
             load->setData(game->id());
             load->setEnabled(game->isPlayable());
             connect(load, &QAction::triggered, [load] () {
@@ -88,6 +91,7 @@ DENG2_PIMPL(NativeMenu)
             });
             gameMenu->addAction(load);
         }
+#endif
     }
 };
 
