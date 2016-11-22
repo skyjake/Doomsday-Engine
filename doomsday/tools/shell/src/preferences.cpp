@@ -45,6 +45,23 @@ DENG2_PIMPL(Preferences)
 
         mainLayout->addStretch(1);
 
+        QGroupBox *fontGroup = new QGroupBox(tr("Console Font"));
+        {
+            mainLayout->addWidget(fontGroup);
+
+            fontDesc = new QLabel;
+
+            QPushButton *selFont = new QPushButton(tr("Select..."));
+            selFont->setAutoDefault(false);
+            QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
+
+            QHBoxLayout *fl = new QHBoxLayout;
+            fl->addWidget(fontDesc, 1);
+            fl->addWidget(selFont, 0);
+            fontGroup->setLayout(fl);
+        }
+        updateFontDesc();
+
         QGroupBox *appGroup = new QGroupBox(tr("Server Location"));
         {
             mainLayout->addWidget(appGroup);
@@ -71,23 +88,6 @@ DENG2_PIMPL(Preferences)
             bl->addWidget(info);
             appGroup->setLayout(bl);
         }
-
-        QGroupBox *fontGroup = new QGroupBox(tr("Console Font"));
-        {
-            mainLayout->addWidget(fontGroup);
-
-            fontDesc = new QLabel;
-
-            QPushButton *selFont = new QPushButton(tr("Select..."));
-            selFont->setAutoDefault(false);
-            QObject::connect(selFont, SIGNAL(clicked()), thisPublic, SLOT(selectFont()));
-
-            QHBoxLayout *fl = new QHBoxLayout;
-            fl->addWidget(fontDesc, 1);
-            fl->addWidget(selFont, 0);
-            fontGroup->setLayout(fl);
-        }
-        updateFontDesc();
 
         QGroupBox *group = new QGroupBox(tr("Game Data"));
         {
