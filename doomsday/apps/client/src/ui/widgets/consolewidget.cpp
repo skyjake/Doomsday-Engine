@@ -217,7 +217,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         promptButton->setText(yes? _E(b)_E(F) "$" : ">");
 
         // Bottom of the console must follow the active command line height.
-        self.rule().setInput(Rule::Bottom, next->rule().top() - rule("unit"));
+        self.rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
         if (scriptMode == yes)
         {

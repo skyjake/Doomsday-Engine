@@ -170,7 +170,7 @@ DENG_GUI_PIMPL(HomeWidget)
         button.audienceForStateChange() += this;
 
         button.rule()
-                .setInput(Rule::Width,  rule("unit"))
+                .setInput(Rule::Width,  rule(RuleBank::UNIT))
                 .setInput(Rule::Bottom, self.rule().bottom())
                 .setInput(Rule::Top,    tabs->rule().bottom());
     }

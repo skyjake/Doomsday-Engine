@@ -22,6 +22,8 @@
 
 namespace de {
 
+DotPath const RuleBank::UNIT("unit");
+
 DENG2_PIMPL_NOREF(RuleBank)
 {
     struct RuleSource : public ISource

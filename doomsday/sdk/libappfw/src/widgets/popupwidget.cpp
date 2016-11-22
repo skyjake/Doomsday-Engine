@@ -328,7 +328,7 @@ void PopupWidget::enableCloseButton(bool enable)
         d->close = new ButtonWidget;
         d->close->setColorTheme(d->colorTheme);
         d->close->setStyleImage("close.ringless", "small");
-        d->close->margins().set("dialog.gap").setTopBottom("unit");
+        d->close->margins().set("dialog.gap").setTopBottom(RuleBank::UNIT);
         d->close->setImageColor(d->close->textColorf());
         d->close->setSizePolicy(ui::Expand, ui::Expand);
         d->close->setActionFn([this] () { close(); });

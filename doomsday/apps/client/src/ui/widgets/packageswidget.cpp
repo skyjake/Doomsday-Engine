@@ -200,7 +200,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 updateTagButtonStyle(btn, "accent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
-                        .setTop("unit").setBottom("unit")
+                        .setTop(RuleBank::UNIT).setBottom(RuleBank::UNIT)
                         .setLeft("gap").setRight("gap");
                 add(btn);
 
@@ -211,7 +211,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             if (!_tags.isEmpty())
             {
                 //rule().setInput(Rule::Height, label().rule().height());
-                label().margins().setBottom(rule("unit")*2 +
+                label().margins().setBottom(rule(RuleBank::UNIT)*2 +
                                             style().fonts().font("small").height() +
                                             rule("gap"));
             }
@@ -454,7 +454,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   self.rule().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
-        menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule("unit").valuei() +
+        menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule(RuleBank::UNIT).valuei() +
                                        int(style().fonts().font("default").height().value()*3));
 
         QObject::connect(search, &LineEditWidget::editorContentChanged, [this] () { updateFilterTerms(); });

@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void updateChildLayout()
     {
-        Rule const &gap = rule("unit");
+        Rule const &gap = rule(RuleBank::UNIT);
 
         // The children are laid out simply in a row from right to left.
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);

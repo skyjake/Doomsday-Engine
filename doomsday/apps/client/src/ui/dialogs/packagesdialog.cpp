@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
             _removeButton = new ButtonWidget;
             _removeButton->setStyleImage("close.ringless", "small");
-            _removeButton->margins().setTopBottom("unit");
+            _removeButton->margins().setTopBottom(RuleBank::UNIT);
             _removeButton->setActionFn([this] ()
             {
                 PackagesDialog::Impl *d = _owner.d;

@@ -105,7 +105,7 @@ HeaderWidget::HeaderWidget()
     d->menuButton->setSizePolicy(ui::Expand, ui::Expand);
     d->menuButton->setFont("small");
     d->menuButton->setText("...");
-    d->menuButton->margins().setTopBottom("unit");
+    d->menuButton->margins().setTopBottom(RuleBank::UNIT);
     /*d->menuButton->setAction(new CallbackAction([this] ()
     {
         if (d->infoPanel->isOpen())

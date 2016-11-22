@@ -85,7 +85,7 @@ UISettingsDialog::UISettingsDialog(String const &name)
     restartNotice->setFont("separator.annotation");
     restartNotice->setTextColor("altaccent");
 
-    d->showAnnotations->margins().setBottom("unit");
+    d->showAnnotations->margins().setBottom(RuleBank::UNIT);
 
     auto *annots = LabelWidget::newWithText(tr("Annotations briefly describe menu functions."), &area());
     annots->margins().setTop("");

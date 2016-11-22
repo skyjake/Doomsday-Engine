@@ -149,7 +149,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         int const midY  = rect.middle().y;
         int count       = range.size();
         Vector4f color  = style().colors().colorf(colorId);
-        int const gap   = rule("unit").valuei();
+        int const gap   = rule(RuleBank::UNIT).valuei();
         int totalWidth  = count * dotSize.x + (count - 1) * gap;
 
         for (int i = 0; i < count; ++i)

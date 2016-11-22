@@ -34,7 +34,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
         aux->setFont("small");
         aux->setTextColor("text");
         aux->setSizePolicy(ui::Expand, ui::Fixed);
-        Rule const &unit = rule("unit");
+        Rule const &unit = rule(RuleBank::UNIT);
         aux->rule()
                 .setInput(Rule::Right,  self.rule().right()  - unit)
                 .setInput(Rule::Top,    self.rule().top()    + unit)

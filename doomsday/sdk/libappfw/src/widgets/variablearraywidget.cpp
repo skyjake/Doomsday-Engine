@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         auto &label = widget.as<LabelWidget>();
         label.setSizePolicy(ui::Expand, ui::Expand);
         label.setMaximumTextWidth(*maxWidth);
-        widget.margins().setLeftRight("").setTopBottom("unit");
+        widget.margins().setLeftRight("").setTopBottom(RuleBank::UNIT);
         widget.addEventHandler(new HoverHandler(self));
     }
 
@@ -159,7 +159,7 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
 {
     d->deleteButton->setSizePolicy(ui::Expand, ui::Expand);
     d->deleteButton->setStyleImage("close.ring", "default");
-    d->deleteButton->margins().setLeft("unit").setRight("dialog.gap");
+    d->deleteButton->margins().setLeft(RuleBank::UNIT).setRight("dialog.gap");
     d->deleteButton->setBehavior(Focusable, UnsetFlags);
     d->deleteButton->set(Background());
 

@@ -193,8 +193,8 @@ DENG2_PIMPL(ClientWindow)
         {
             miniGameControls->set(GuiWidget::Background(style.colors().colorf("inverted.background")));
             miniGameControls->rule()
-                    .setInput(Rule::Width,  root.viewWidth()/2 -   style.rules().rule("unit"))
-                    .setInput(Rule::Left,   game->rule().right() + style.rules().rule("unit"))
+                    .setInput(Rule::Width,  root.viewWidth()/2 -   style.rules().rule(RuleBank::UNIT))
+                    .setInput(Rule::Left,   game->rule().right() + style.rules().rule(RuleBank::UNIT))
                     .setInput(Rule::Top,    game->rule().top());
 
             ButtonWidget *backToGame = new ButtonWidget;
@@ -714,7 +714,7 @@ DENG2_PIMPL(ClientWindow)
             // Get rid of the sidebar, if it's open.
             self.setSidebar(RightEdge, nullptr);
 
-            auto const &unit = Style::get().rules().rule("unit");
+            auto const &unit = Style::get().rules().rule(RuleBank::UNIT);
 
             gameWidth ->set(root.viewWidth()/2 - unit, SPAN);
             gameHeight->set(root.viewHeight()/4,       SPAN);

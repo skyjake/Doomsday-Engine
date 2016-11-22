@@ -245,7 +245,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
     layout.setGridSize(2, 3);
-    layout.setColumnPadding(rule("unit"));
+    layout.setColumnPadding(rule(RuleBank::UNIT));
     layout << *d->showFps
            << *d->fsaa
            << *d->vsync

@@ -714,7 +714,7 @@ void TaskBarWidget::close()
 
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
-                          rule("unit").valuei(), OPEN_CLOSE_SPAN);
+                          rule(RuleBank::UNIT).valuei(), OPEN_CLOSE_SPAN);
         setOpacity(0, OPEN_CLOSE_SPAN);
 
         d->console->closeLog();

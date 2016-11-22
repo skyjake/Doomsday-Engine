@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_RULEBANK_H
@@ -52,6 +52,8 @@ public:
      * @return  Rule instance.
      */
     Rule const &rule(DotPath const &path) const;
+
+    static DotPath const UNIT;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id);

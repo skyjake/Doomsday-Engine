@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         extra->setSizePolicy(ui::Expand, ui::Expand);
         extra->setText("...");
         extra->setFont("small");
-        extra->margins().setTopBottom("unit");
+        extra->margins().setTopBottom(RuleBank::UNIT);
         extra->rule()
                 .setInput(Rule::Bottom, info->rule().bottom() - info->margins().bottom())
                 .setMidAnchorX(info->rule().left() + self.icon().rule().width()/2);

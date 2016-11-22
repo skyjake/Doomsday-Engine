@@ -153,7 +153,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         contents = new MenuWidget;
         contents->enableIndicatorDraw(true);
         contents->setBehavior(ChildVisibilityClipping);
-        contents->setVirtualizationEnabled(true, rule("unit").value()*2 +
+        contents->setVirtualizationEnabled(true, rule(RuleBank::UNIT).value()*2 +
                                            style().fonts().font("default").height().value());
         contents->layout().setRowPadding(Const(0));
         contents->organizer().setWidgetFactory(*this);
@@ -295,7 +295,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
             auto *label = new LabelWidget;
             label->setFont("separator.label");
             label->setTextColor("accent");
-            label->margins().setBottom("unit");
+            label->margins().setBottom(RuleBank::UNIT);
             label->setSizePolicy(ui::Fixed, ui::Expand);
             label->setAlignment(ui::AlignLeft);
             return label;
@@ -305,7 +305,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         toggle->setSizePolicy(ui::Fixed, ui::Expand);
         toggle->setAlignment(ui::AlignLeft);
         toggle->set(Background());
-        toggle->margins().setTopBottom("unit");
+        toggle->margins().setTopBottom(RuleBank::UNIT);
         QObject::connect(toggle, &ToggleWidget::stateChangedByUser,
                          [&item] (ToggleWidget::ToggleState active)
         {
