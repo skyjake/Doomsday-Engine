@@ -47,7 +47,7 @@ public:
     void clear();
 
     /**
-     * Connects to a server after loading the game running on the server and making
+     * Connect to a server after loading the game running on the server and making
      * sure that all of the server's gameplay-affecting packages have been loaded
      * locally.
      *
@@ -57,7 +57,7 @@ public:
     void connectToServerAndChangeGame(de::shell::ServerInfo info);
 
     /**
-     * Acquires a game profile that describes the game on a multiplayer server.
+     * Acquire a game profile that describes the game on a multiplayer server.
      * If information about the server at @a address is not currently available, a
      * discovery query is sent to the address.
      *
@@ -80,15 +80,15 @@ public:
     void disconnect() override;
 
     /**
-     * Attempts to connect to the specified address and asks for server
-     * information if one happens to be running.
+     * Attempt to connect to the specified address and asks for server information if one
+     * happens to be running.
      *
      * @param domain
      */
     void discover(de::String const &domain);
 
     /**
-     * Asks the master server for information about currently running servers.
+     * Ask the master server for information about currently running servers.
      */
     void discoverUsingMaster();
 
