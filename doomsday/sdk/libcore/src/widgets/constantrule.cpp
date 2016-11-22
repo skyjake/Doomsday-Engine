@@ -22,8 +22,6 @@
 
 namespace de {
 
-static AutoRef<ConstantRule> zeroRule(new ConstantRule(0));
-
 ConstantRule::ConstantRule() : Rule(), _pendingValue(0)
 {
     // No valid value defined.
@@ -51,7 +49,15 @@ String ConstantRule::description() const
 
 ConstantRule const &ConstantRule::zero()
 {
-    return zeroRule;
+    static ConstantRule *zeroRule = nullptr;
+    if (!zeroRule)
+    {
+        zeroRule = new ConstantRule(0); // won't be deleted ever
+#ifdef DENG2_DEBUG
+        Counted::totalCount--;
+#endif
+    }
+    return *zeroRule;
 }
 
 void ConstantRule::update()
