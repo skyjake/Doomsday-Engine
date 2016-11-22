@@ -74,8 +74,9 @@
 #  define DENG2_USE_QT
 #  include <cstddef> // size_t
 #  include <cstring> // memset
-#  include <typeinfo>
+#  include <functional>
 #  include <memory>  // unique_ptr, shared_ptr
+#  include <typeinfo>
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64) || defined(DENG_64BIT_HOST)
