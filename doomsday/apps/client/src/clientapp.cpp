@@ -74,6 +74,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/inputsystem.h"
+#include "ui/nativemenu.h"
 #include "ui/progress.h"
 #include "ui/styledlogsinkformatter.h"
 #include "ui/sys_input.h"
@@ -149,15 +150,15 @@ DENG2_PIMPL(ClientApp)
     ConfigProfiles networkSettings;
     ConfigProfiles logSettings;
     ConfigProfiles uiSettings;
-    QMenuBar *menuBar;
-    InputSystem *inputSys;
-    AudioSystem *audioSys;
-    RenderSystem *rendSys;
-    ClientResources *resources;
-    ClientWindowSystem *winSys;
+    std::unique_ptr<NativeMenu> nativeAppMenu;
+    InputSystem *inputSys = nullptr;
+    AudioSystem *audioSys = nullptr;
+    RenderSystem *rendSys = nullptr;
+    ClientResources *resources = nullptr;
+    ClientWindowSystem *winSys = nullptr;
     InFineSystem infineSys; // instantiated at construction time
-    ServerLink *svLink;
-    ClientServerWorld *world;
+    ServerLink *svLink = nullptr;
+    ClientServerWorld *world = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -220,16 +221,7 @@ DENG2_PIMPL(ClientApp)
 
     LogWarningAlarm logAlarm;
 
-    Impl(Public *i)
-        : Base(i)
-        , menuBar  (0)
-        , inputSys (0)
-        , audioSys (0)
-        , rendSys  (0)
-        , resources(0)
-        , winSys   (0)
-        , svLink   (0)
-        , world    (0)
+    Impl(Public *i) : Base(i)
     {
         clientAppSingleton = thisPublic;
 
@@ -274,7 +266,6 @@ DENG2_PIMPL(ClientApp)
         delete rendSys;
         delete world;
         delete svLink;
-        delete menuBar;
         clientAppSingleton = 0;
     }
 
@@ -397,11 +388,7 @@ DENG2_PIMPL(ClientApp)
     void setupAppMenu()
     {
 #ifdef MACOSX
-        menuBar = new QMenuBar;
-        QMenu *gameMenu = menuBar->addMenu("&Game");
-        QAction *checkForUpdates = gameMenu->addAction("Check For &Updates...", updater.data(),
-                                                       SLOT(checkNowShowingProgress()));
-        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+        nativeAppMenu.reset(new NativeMenu);
 #endif
     }
 
@@ -590,7 +577,6 @@ void ClientApp::initialize()
 
     // Check for updates automatically.
     d->updater.reset(new Updater);
-    d->setupAppMenu();
 
     // Create the resource system.
     d->resources = new ClientResources;
@@ -600,6 +586,8 @@ void ClientApp::initialize()
 
     // Create the main window.
     d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
+
+    d->setupAppMenu();
 
     // Create the input system.
     d->inputSys = new InputSystem;

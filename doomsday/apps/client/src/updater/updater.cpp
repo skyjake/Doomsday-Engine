@@ -651,6 +651,8 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if (d->download) return;
 
+    ClientWindow::main().glActivate();
+
     d->availableDlg = new UpdateAvailableDialog;
     d->queryLatestVersion(true);
     d->execAvailableDialog();
