@@ -47,7 +47,6 @@ class LIBGUI_PUBLIC GLWindow : public QOpenGLWindow, public Asset
 public:
     typedef Vector2ui Size;
 
-
     /**
      * Notified when the canvas's GL state needs to be initialized. The OpenGL
      * context and drawing surface are not ready before this occurs. This gets
@@ -176,6 +175,7 @@ public:
 public:
     static bool mainExists();
     static GLWindow &main();
+    static void glActiveMain();
     static void setMain(GLWindow *window);
 
 protected:

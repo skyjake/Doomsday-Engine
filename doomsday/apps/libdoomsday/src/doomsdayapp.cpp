@@ -131,9 +131,11 @@ DENG2_PIMPL(DoomsdayApp)
 
     ~Impl()
     {
-        // Save any changes to the game profiles.
-        gameProfiles.serialize();
-
+        if (initialized)
+        {
+            // Save any changes to the game profiles.
+            gameProfiles.serialize();
+        }
         theDoomsdayApp = nullptr;
     }
 

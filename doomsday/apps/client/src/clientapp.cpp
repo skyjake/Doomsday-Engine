@@ -238,7 +238,7 @@ DENG2_PIMPL(ClientApp)
     {
         try
         {
-            ClientWindow::main().glActivate(); // for GL deinit
+            ClientWindow::glActiveMain(); // for GL deinit
 
             LogBuffer::get().removeSink(logAlarm);
 

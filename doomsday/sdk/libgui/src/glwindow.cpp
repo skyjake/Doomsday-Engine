@@ -497,6 +497,11 @@ GLWindow &GLWindow::main() // static
     return *mainWindow;
 }
 
+void GLWindow::glActiveMain()
+{
+    if (mainExists()) main().glActivate();
+}
+
 void GLWindow::setMain(GLWindow *window) // static
 {
     mainWindow = window;

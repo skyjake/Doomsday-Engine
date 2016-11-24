@@ -1,7 +1,7 @@
 /** @file main_client.cpp Client application entrypoint.
  * @ingroup base
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -22,15 +22,14 @@
 /**
  * @page mainFlow Engine Control Flow
  *
- * The main Qt application instance is ClientApp, based on de::GuiApp, a slightly
- * modified version of the normal QApplication: it catches stray exceptions and forces a
- * clean shutdown of the application.
+ * The main Qt application instance is ClientApp, based on de::BaseGuiApp.
  *
- * The application's event loop is started as soon as the main window has been created
- * (but not shown yet). After the window appears with a fully functional OpenGL drawing
- * surface, the rest of the engine initialization is completed. This is done via a
- * callback in the Canvas class that gets called when the window actually appears on
- * screen (with empty contents).
+ * The event loop is started after the application has been initialized. Initialization
+ * comprises the creation of subsystems and the main window. As a final step during
+ * initialization, the "bootstrap" script is executed. At this point, the main window is
+ * not visible yet. After the window appears with a fully functional OpenGL drawing
+ * surface, the rest of the engine initialization is completed. This is done via an
+ * observer audience in the de::GLWindow class.
  *
  * The application's refresh loop is controlled by de::Loop. Before each frame, clock
  * time advances and de::Loop's iteration audience is notified. This is observed by
