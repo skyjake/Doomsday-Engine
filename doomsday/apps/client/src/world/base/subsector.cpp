@@ -70,7 +70,7 @@ DENG2_PIMPL_NOREF(Subsector)
 
 Subsector::Subsector(QVector<ConvexSubspace *> const &subspaces) : d(new Impl)
 {
-    d->subspaces.append(subspaces);
+    d->subspaces += subspaces;
     for (ConvexSubspace *subspace : subspaces)
     {
         // Attribute the subspace to the subsector.

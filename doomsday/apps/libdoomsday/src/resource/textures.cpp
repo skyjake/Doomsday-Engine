@@ -371,7 +371,7 @@ DENG2_PIMPL(Textures)
             if (!existingDefs->isEmpty())
             {
                 // Merge with the existing definitions.
-                existingDefs->append(newDefs);
+                *existingDefs += newDefs;
             }
             else
             {
@@ -441,7 +441,7 @@ DENG2_PIMPL(Textures)
              */
 
             // Add definitions from the custom list to the end of the main set.
-            defs.append(customDefs);
+            defs += customDefs;
         }
 
         return defs;

@@ -761,7 +761,7 @@ DENG2_PIMPL(Map)
                                 && subspaceSets[k].contains(&otherSubspace))
                             {
                                 // Merge k into i.
-                                subspaceSets[i].append(subspaceSets[k]);
+                                subspaceSets[i] += subspaceSets[k];
                                 subspaceSets.removeAt(k);
 
                                 // Compare the next pair.
