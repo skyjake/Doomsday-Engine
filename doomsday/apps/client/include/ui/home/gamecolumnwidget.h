@@ -23,7 +23,7 @@
 
 #include <de/IPersistent>
 
-class SavedSessionListData;
+class SaveListData;
 
 class GameColumnWidget : public ColumnWidget, public de::IPersistent
 {
@@ -31,7 +31,7 @@ class GameColumnWidget : public ColumnWidget, public de::IPersistent
 
 public:
     GameColumnWidget(de::String const &gameFamily,
-                     SavedSessionListData const &savedItems);
+                     SaveListData const &savedItems);
 
     de::String tabHeading() const override;
     de::String configVariableName() const override;

@@ -20,8 +20,8 @@
 #include "doomsday/SaveGames"
 #include "doomsday/DoomsdayApp"
 #include "doomsday/Games"
-#include "doomsday/Session"
-#include "doomsday/SavedSession"
+#include "doomsday/AbstractSession"
+#include "doomsday/GameStateFolder"
 #include "doomsday/console/cmd.h"
 
 #include <de/Binder>
@@ -40,7 +40,7 @@ using namespace de;
 /**
  * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
  */
-static Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues const &args)
+static Value *Function_GameStateFolder_Convert(Context &, Function::ArgumentValues const &args)
 {
     String gameId     = args[0]->asText();
     String sourcePath = args[1]->asText();
@@ -51,7 +51,7 @@ static Value *Function_SavedSession_Convert(Context &, Function::ArgumentValues 
  * Native Doomsday Script utility for scheduling conversion of @em all legacy savegames
  * for the specified gameId.
  */
-static Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues const &args)
+static Value *Function_GameStateFolder_ConvertAll(Context &, Function::ArgumentValues const &args)
 {
     String gameId = args[0]->asText();
     return new NumberValue(SaveGames::get().convertLegacySavegames(gameId));
@@ -64,15 +64,15 @@ DENG2_PIMPL(SaveGames)
 , DENG2_OBSERVES(Loop,  Iteration) // post savegame conversion FS population
 {
     Binder binder;
-    Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
+    Record savedSessionModule; // GameStateFolder: manipulation, conversion, etc... (based on native class GameStateFolder)
     TaskPool convertSavegameTasks;
 
     Impl(Public *i) : Base(i)
     {
-        // Setup the SavedSession module.
+        // Setup the GameStateFolder module.
         binder.init(savedSessionModule)
-                << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
-                << DENG2_FUNC(SavedSession_ConvertAll, "convertAll", "gameId");
+                << DENG2_FUNC(GameStateFolder_Convert,    "convert",    "gameId" << "savegamePath")
+                << DENG2_FUNC(GameStateFolder_ConvertAll, "convertAll", "gameId");
         ScriptSystem::get().addNativeModule("SavedSession", savedSessionModule);
     }
 
@@ -198,12 +198,17 @@ void SaveGames::initialize()
     auto &fs = FileSystem::get();
 
     // Create the user saved session folder in the local FS if it doesn't yet exist.
-    // Once created, any SavedSessions in this folder will be found and indexed
+    // Once created, any GameStateFolders in this folder will be found and indexed
     // automatically into the file system.
     fs.makeFolder("/home/savegames");
 
     // Create the legacy savegame folder.
     fs.makeFolder("/sys/legacysavegames");
+}
+
+FileIndex const &SaveGames::saveIndex() const
+{
+    return FileSystem::get().indexFor(DENG2_TYPE_NAME(GameStateFolder));
 }
 
 bool SaveGames::convertLegacySavegames(String const &gameId, String const &sourcePath)
@@ -271,10 +276,10 @@ D_CMD(InspectSavegame)
     // If a game is loaded assume the user is referring to those savegames if not specified.
     if (savePath.fileNamePath().isEmpty() && App_GameLoaded())
     {
-        savePath = Session::savePath() / savePath;
+        savePath = AbstractSession::savePath() / savePath;
     }
 
-    if (SavedSession const *saved = FileSystem::get().root().tryLocate<SavedSession>(savePath))
+    if (GameStateFolder const *saved = FileSystem::get().root().tryLocate<GameStateFolder>(savePath))
     {
         LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();

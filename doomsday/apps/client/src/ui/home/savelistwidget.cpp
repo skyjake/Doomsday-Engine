@@ -18,7 +18,7 @@
 
 #include "ui/home/savelistwidget.h"
 #include "ui/home/gamepanelbuttonwidget.h"
-#include "ui/savedsessionlistdata.h"
+#include "ui/savelistdata.h"
 
 #include <doomsday/game.h>
 
@@ -79,7 +79,7 @@ DENG_GUI_PIMPL(SaveListWidget)
         });
         button.addEventHandler(new DoubleClickHandler(this));
 
-        auto const &saveItem = item.as<SavedSessionListData::SaveItem>();
+        auto const &saveItem = item.as<SaveListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
         button.setOverrideImageSize(style().fonts().font("default").height().value() * 1.4f);
     }

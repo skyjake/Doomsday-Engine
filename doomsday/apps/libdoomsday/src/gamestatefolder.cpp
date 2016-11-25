@@ -1,5 +1,6 @@
-/** @file savedsession.cpp  Saved (game) session.
+/** @file gamestatefolder.cpp  Archived game state.
  *
+ * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -16,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/savedsession.h"
-#include "doomsday/Session"
+#include "doomsday/GameStateFolder"
+#include "doomsday/AbstractSession"
 #include "doomsday/DataBundle"
 
 #include <de/App>
@@ -54,12 +55,198 @@ static Value *makeValueFromInfoValue(de::Info::Element::Value const &v)
     }
 }
 
-void SavedSession::Metadata::parse(String const &source)
+DENG2_PIMPL(GameStateFolder)
 {
-    clear();
+    Metadata metadata;  ///< Cached.
+    bool needCacheMetadata;
 
+    Impl(Public *i)
+        : Base(i)
+        , needCacheMetadata(true)
+    {}
+
+    bool readMetadata(Metadata &metadata)
+    {
+        try
+        {
+            Block raw;
+            self.locate<File const>("Info") >> raw;
+
+            metadata.parse(String::fromUtf8(raw));
+
+            // So far so good.
+            return true;
+        }
+        catch (IByteArray::OffsetError const &)
+        {
+            LOG_RES_WARNING("Archive in %s is truncated") << self.description();
+        }
+        catch (IIStream::InputError const &)
+        {
+            LOG_RES_WARNING("%s cannot be read") << self.description();
+        }
+        catch (Archive::FormatError const &)
+        {
+            LOG_RES_WARNING("Archive in %s is invalid") << self.description();
+        }
+        catch (Folder::NotFoundError const &)
+        {
+            LOG_RES_WARNING("%s does not appear to be a .save package") << self.description();
+        }
+        return 0;
+    }
+
+    DENG2_PIMPL_AUDIENCE(MetadataChange)
+};
+
+DENG2_AUDIENCE_METHOD(GameStateFolder, MetadataChange)
+
+GameStateFolder::GameStateFolder(File &sourceArchiveFile, String const &name)
+    : ArchiveFolder(sourceArchiveFile, name)
+    , d(new Impl(this))
+{}
+
+GameStateFolder::~GameStateFolder()
+{
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion().clear();
+    deindex();
+    //Session::savedIndex().remove(path());
+}
+
+/*void GameStateFolder::populate(PopulationBehaviors behavior)
+{
+    ArchiveFolder::populate(behavior);
+    //Session::savedIndex().add(*this);
+}*/
+
+void GameStateFolder::readMetadata()
+{
+    LOGDEV_VERBOSE("Updating GameStateFolder metadata %p") << this;
+
+    // Determine if a .save package exists in the repository and if so, read the metadata.
+    Metadata newMetadata;
+    if (!d->readMetadata(newMetadata))
+    {
+        // Unrecognized or the file could not be accessed (perhaps its a network path?).
+        // Return the session to the "null/invalid" state.
+        newMetadata.set("userDescription", "");
+        newMetadata.set("sessionId", duint32(0));
+    }
+
+    cacheMetadata(newMetadata);
+}
+
+GameStateFolder::Metadata const &GameStateFolder::metadata() const
+{
+    if (d->needCacheMetadata)
+    {
+        const_cast<GameStateFolder *>(this)->readMetadata();
+    }
+    return d->metadata;
+}
+
+void GameStateFolder::cacheMetadata(Metadata const &copied)
+{
+    d->metadata          = copied;
+    d->needCacheMetadata = false;
+    DENG2_FOR_AUDIENCE2(MetadataChange, i)
+    {
+        i->gameStateFolderMetadataChanged(*this);
+    }
+}
+
+String GameStateFolder::stateFilePath(String const &path) //static
+{
+    if (!path.fileName().isEmpty())
+    {
+        return path + "State";
+    }
+    return "";
+}
+
+bool GameStateFolder::isPackageAffectingGameplay(String const &packageId) // static
+{
+    /**
+     * @todo The rules here could be more sophisticated when it comes to checking what
+     * exactly do the data bundles contain. Also, packages should be checked for any
+     * gameplay-affecting assets. (2016-07-06: Currently there are none.)
+     */
+    if (auto const *bundle = DataBundle::bundleForPackage(packageId))
+    {
+        // Collections can be configured, so we need to list the actual files in use
+        // rather than just the collection itself.
+        return bundle->format() != DataBundle::Collection;
+    }
+    return false;
+}
+
+File *GameStateFolder::Interpreter::interpretFile(File *sourceData) const
+{
     try
     {
+        if (ZipArchive::recognize(*sourceData))
+        {
+            // It is a ZIP archive: we will represent it as a folder.
+            if (sourceData->extension() == ".save")
+            {
+                /// @todo fixme: Don't assume this is a save package.
+                LOG_RES_XVERBOSE("Interpreted %s as a GameStateFolder") << sourceData->description();
+                std::unique_ptr<ArchiveFolder> package;
+                package.reset(new GameStateFolder(*sourceData, sourceData->name()));
+
+                // Archive opened successfully, give ownership of the source to the folder.
+                package->setSource(sourceData);
+                return package.release();
+            }
+        }
+    }
+    catch (Error const &er)
+    {
+        // Even though it was recognized as an archive, the file
+        // contents may still prove to be corrupted.
+        LOG_RES_WARNING("Failed to read archive in %s: %s")
+                << sourceData->description()
+                << er.asText();
+    }
+    return nullptr;
+}
+
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(GameStateFolder::MapStateReader)
+{
+    GameStateFolder const *session; ///< Saved session being read. Not owned.
+
+    Impl(GameStateFolder const &session) : session(&session)
+    {}
+};
+
+GameStateFolder::MapStateReader::MapStateReader(GameStateFolder const &session)
+    : d(new Impl(session))
+{}
+
+GameStateFolder::MapStateReader::~MapStateReader()
+{}
+
+GameStateFolder::Metadata const &GameStateFolder::MapStateReader::metadata() const
+{
+    return d->session->metadata();
+}
+
+Folder const &GameStateFolder::MapStateReader::folder() const
+{
+    return *d->session;
+}
+
+//---------------------------------------------------------------------------------------
+
+void GameStateFolder::Metadata::parse(String const &source)
+{
+    try
+    {
+        clear();
+
         Info info;
         info.setAllowDuplicateBlocksOfType(QStringList() << BLOCK_GROUP << BLOCK_GAMERULE);
         info.parse(source);
@@ -130,7 +317,7 @@ void SavedSession::Metadata::parse(String const &source)
             else
             {
                 // Hmm, very odd...
-                throw Error("SavedSession::metadata::parse", "Failed to extract episode id from map URI \"" + gets("mapUri") + "\"");
+                throw Error("GameStateFolder::metadata::parse", "Failed to extract episode id from map URI \"" + gets("mapUri") + "\"");
             }
         }
 
@@ -163,7 +350,7 @@ void SavedSession::Metadata::parse(String const &source)
     }
 }
 
-String SavedSession::Metadata::asStyledText() const
+String GameStateFolder::Metadata::asStyledText() const
 {
     String currentMapText = String(_E(l)" - Uri: " _E(.) "%1" _E(.)).arg(gets("mapUri"));
     // Is the time in the current map known?
@@ -203,14 +390,14 @@ String SavedSession::Metadata::asStyledText() const
              .arg(gameRulesText);
 }
 
-/**
+/*
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
- *
- * @todo Use a more generic Record => Info conversion logic.
  */
-String SavedSession::Metadata::asTextWithInfoSyntax() const
+String GameStateFolder::Metadata::asTextWithInfoSyntax() const
 {
+    /// @todo Use a more generic Record => Info conversion logic.
+
     String text;
     QTextStream os(&text);
     os.setCodec("UTF-8");
@@ -264,185 +451,3 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
 
     return text;
 }
-
-DENG2_PIMPL_NOREF(SavedSession::MapStateReader)
-{
-    SavedSession const *session; ///< Saved session being read. Not Owned.
-    Impl(SavedSession const &session) : session(&session) {}
-};
-
-SavedSession::MapStateReader::MapStateReader(SavedSession const &session)
-    : d(new Impl(session))
-{}
-
-SavedSession::MapStateReader::~MapStateReader()
-{}
-
-SavedSession::Metadata const &SavedSession::MapStateReader::metadata() const
-{
-    return d->session->metadata();
-}
-
-Folder const &SavedSession::MapStateReader::folder() const
-{
-    return *d->session;
-}
-
-DENG2_PIMPL(SavedSession)
-{
-    Metadata metadata;  ///< Cached.
-    bool needCacheMetadata;
-
-    Impl(Public *i)
-        : Base(i)
-        , needCacheMetadata(true)
-    {}
-
-    bool readMetadata(Metadata &metadata)
-    {
-        try
-        {
-            Block raw;
-            self.locate<File const>("Info") >> raw;
-
-            metadata.parse(String::fromUtf8(raw));
-
-            // So far so good.
-            return true;
-        }
-        catch (IByteArray::OffsetError const &)
-        {
-            LOG_RES_WARNING("Archive in %s is truncated") << self.description();
-        }
-        catch (IIStream::InputError const &)
-        {
-            LOG_RES_WARNING("%s cannot be read") << self.description();
-        }
-        catch (Archive::FormatError const &)
-        {
-            LOG_RES_WARNING("Archive in %s is invalid") << self.description();
-        }
-        catch (Folder::NotFoundError const &)
-        {
-            LOG_RES_WARNING("%s does not appear to be a .save package") << self.description();
-        }
-
-        return 0;
-    }
-
-    DENG2_PIMPL_AUDIENCE(MetadataChange)
-};
-
-DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
-
-SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
-    : ArchiveFolder(sourceArchiveFile, name)
-    , d(new Impl(this))
-{}
-
-SavedSession::~SavedSession()
-{
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
-    audienceForDeletion().clear();
-    deindex();
-    Session::savedIndex().remove(path());
-}
-
-void SavedSession::populate(PopulationBehaviors behavior)
-{
-    ArchiveFolder::populate(behavior);
-    Session::savedIndex().add(*this);
-}
-
-void SavedSession::readMetadata()
-{
-    LOGDEV_VERBOSE("Updating SavedSession metadata %p") << this;
-
-    // Determine if a .save package exists in the repository and if so, read the metadata.
-    Metadata newMetadata;
-    if (!d->readMetadata(newMetadata))
-    {
-        // Unrecognized or the file could not be accessed (perhaps its a network path?).
-        // Return the session to the "null/invalid" state.
-        newMetadata.set("userDescription", "");
-        newMetadata.set("sessionId", duint32(0));
-    }
-
-    cacheMetadata(newMetadata);
-}
-
-SavedSession::Metadata const &SavedSession::metadata() const
-{
-    if (d->needCacheMetadata)
-    {
-        const_cast<SavedSession *>(this)->readMetadata();
-    }
-    return d->metadata;
-}
-
-void SavedSession::cacheMetadata(Metadata const &copied)
-{
-    d->metadata          = copied;
-    d->needCacheMetadata = false;
-    DENG2_FOR_AUDIENCE2(MetadataChange, i)
-    {
-        i->savedSessionMetadataChanged(*this);
-    }
-}
-
-String SavedSession::stateFilePath(String const &path) //static
-{
-    if (!path.fileName().isEmpty())
-    {
-        return path + "State";
-    }
-    return "";
-}
-
-bool SavedSession::isPackageAffectingGameplay(String const &packageId) // static
-{
-    /**
-     * @todo The rules here could be more sophisticated when it comes to checking what
-     * exactly do the data bundles contain. Also, packages should be checked for any
-     * gameplay-affecting assets. (2016-07-06: Currently there are none.)
-     */
-    if (auto const *bundle = DataBundle::bundleForPackage(packageId))
-    {
-        // Collections can be configured, so we need to list the actual files in use
-        // rather than just the collection itself.
-        return bundle->format() != DataBundle::Collection;
-    }
-    return false;
-}
-
-File *SavedSession::Interpreter::interpretFile(File *sourceData) const
-{
-    try
-    {
-        if (ZipArchive::recognize(*sourceData))
-        {
-            // It is a ZIP archive: we will represent it as a folder.
-            if (sourceData->extension() == ".save")
-            {
-                /// @todo fixme: Don't assume this is a save package.
-                LOG_RES_XVERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
-                std::unique_ptr<ArchiveFolder> package;
-                package.reset(new SavedSession(*sourceData, sourceData->name()));
-
-                // Archive opened successfully, give ownership of the source to the folder.
-                package->setSource(sourceData);
-                return package.release();
-            }
-        }
-    }
-    catch (Error const &er)
-    {
-        // Even though it was recognized as an archive, the file
-        // contents may still prove to be corrupted.
-        LOG_RES_WARNING("Failed to read archive in %s: %s")
-                << sourceData->description()
-                << er.asText();
-    }
-    return nullptr;
-}
-

@@ -34,7 +34,7 @@ PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList base
 PackageFormatter::~PackageFormatter() // virtual
 {}
 
-String PackageFormatter::composeInfo(SessionMetadata const &metadata, Path const &sourceFile,
+String PackageFormatter::composeInfo(GameStateMetadata const &metadata, Path const &sourceFile,
     dint32 oldSaveVersion) const
 {
     String info;

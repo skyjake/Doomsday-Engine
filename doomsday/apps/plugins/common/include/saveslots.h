@@ -23,7 +23,7 @@
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
-#include <doomsday/SavedSession>
+#include <doomsday/GameStateFolder>
 
 /**
  * Maps saved game session file names into a finite set of "save slots".
@@ -98,7 +98,7 @@ public:
 
     private:
         friend class SaveSlots;
-        void setSavedSession(SavedSession *newSession);
+        void setGameStateFolder(GameStateFolder *newSession);
 
         DENG2_PRIVATE(d)
     };

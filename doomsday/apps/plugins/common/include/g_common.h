@@ -155,7 +155,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map);
  * @param autogenerate  @c true to generate a useful description (map name, map time, etc...)
  *                      if none exists for the @a saveName referenced.
  */
-de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
+de::String G_DefaultGameStateFolderUserDescription(de::String const &saveName, bool autogenerate = true);
 
 /**
  * Returns the game's SaveSlots.

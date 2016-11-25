@@ -89,7 +89,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     LoopCallback mainCall;
     String gameFamily;
-    SavedSessionListData const &savedItems;
+    SaveListData const &savedItems;
     HomeMenuWidget *menu;
     ButtonWidget *newProfileButton;
     int restoredSelected = -1;
@@ -97,7 +97,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     Impl(Public *i,
          String const &gameFamily,
-         SavedSessionListData const &savedItems)
+         SaveListData const &savedItems)
         : Base(i)
         , gameFamily(gameFamily)
         , savedItems(savedItems)
@@ -171,8 +171,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
     int userProfileCount() const
     {
         int count = 0;
-        menu->items().forAll([this, &count] (ui::Item const &item) {
-            if (!item.semantics().testFlag(ui::Item::Separator)) {
+        menu->items().forAll([this, &count] (ui::Item const &item)
+        {
+            if (!item.semantics().testFlag(ui::Item::Separator))
+            {
                 auto const *profile = item.as<ProfileItem>().profile;
                 if (profile && profile->isUserCreated()) ++count;
             }
@@ -483,7 +485,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 };
 
 GameColumnWidget::GameColumnWidget(String const &gameFamily,
-                                   SavedSessionListData const &savedItems)
+                                   SaveListData const &savedItems)
     : ColumnWidget(gameFamily.isEmpty()? "other-column"
                                        : (gameFamily.toLower() + "-column"))
     , d(new Impl(this, gameFamily.toLower(), savedItems))

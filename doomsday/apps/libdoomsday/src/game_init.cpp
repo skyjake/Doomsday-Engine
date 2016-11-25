@@ -20,7 +20,7 @@
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/games.h"
 #include "doomsday/busymode.h"
-#include "doomsday/session.h"
+#include "doomsday/AbstractSession"
 #include "doomsday/console/var.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/virtualmappings.h"
@@ -398,14 +398,6 @@ int loadAddonResourcesBusyWorker(void *context)
 {
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
-    /*
-    // User-selected files specified in the game itself.
-    for (String const &path : DoomsdayApp::game().userFiles())
-    {
-        NativePath const nativePath(path);
-        Session::profile().resourceFiles << nativePath.withSeparators('/');
-    }*/
-
     char const *startupFiles = CVar_String(Con_FindVariable("file-startup"));
 
     /**
@@ -427,7 +419,7 @@ int loadAddonResourcesBusyWorker(void *context)
         /**
          * Phase 3: Add real files from the Auto directory.
          */
-        Session::Profile &prof = Session::profile();
+        auto &prof = AbstractSession::profile();
 
         FS1::PathList found;
         findAllGameDataPaths(found);

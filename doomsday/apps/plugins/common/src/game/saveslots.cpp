@@ -20,33 +20,35 @@
 
 #include "common.h"
 #include "saveslots.h"
+#include "g_common.h"
+#include "gamesession.h"
+#include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/lineeditwidget.h"
 
-#include <map>
-#include <utility>
+#include <doomsday/SaveGames>
 #include <de/App>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
-#include "g_common.h"
-#include "gamesession.h"
+#include <de/Loop>
 
-#include "hu_menu.h"
-#include "menu/page.h"
-#include "menu/widgets/lineeditwidget.h"
+#include <map>
+#include <utility>
 
 using namespace de;
 using namespace common;
 using namespace common::menu;
 
 DENG2_PIMPL_NOREF(SaveSlots::Slot)
-, DENG2_OBSERVES(SavedSession, MetadataChange)
+, DENG2_OBSERVES(GameStateFolder, MetadataChange)
 {
     String id;
     bool userWritable;
     String savePath;
     int menuWidgetId;
 
-    SavedSession *session; // Not owned.
+    GameStateFolder *session; // Not owned.
     SessionStatus status;
 
     Impl()
@@ -109,17 +111,17 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
     }
 
-    /// Observes SavedSession MetadataChange
-    void savedSessionMetadataChanged(SavedSession &changed)
+    void gameStateFolderMetadataChanged(GameStateFolder &changed)
     {
         DENG2_ASSERT(&changed == session);
         DENG2_UNUSED(changed);
+
         updateStatus();
     }
 };
 
 SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWidgetId)
-    : d(new Impl())
+    : d(new Impl)
 {
     d->id           = id;
     d->userWritable = userWritable;
@@ -131,7 +133,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWid
     }
 
     // See if a saved session already exists for this slot.
-    setSavedSession(App::rootFolder().tryLocate<SavedSession>(d->savePath));
+    setGameStateFolder(App::rootFolder().tryLocate<GameStateFolder>(d->savePath));
 }
 
 SaveSlots::Slot::SessionStatus SaveSlots::Slot::sessionStatus() const
@@ -165,11 +167,11 @@ void SaveSlots::Slot::bindSaveName(String newName)
     if(d->savePath != newPath)
     {
         d->savePath = newPath;
-        setSavedSession(App::rootFolder().tryLocate<SavedSession>(d->savePath));
+        setGameStateFolder(App::rootFolder().tryLocate<GameStateFolder>(d->savePath));
     }
 }
 
-void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
+void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
 {
     if(d->session == newSession) return;
 
@@ -212,15 +214,20 @@ void SaveSlots::Slot::updateStatus()
 }
 
 DENG2_PIMPL(SaveSlots)
-, DENG2_OBSERVES(GameSession::SavedIndex, AvailabilityUpdate)
+, DENG2_OBSERVES(FileIndex, Addition)
+, DENG2_OBSERVES(FileIndex, Removal)
 {
     typedef std::map<String, Slot *> Slots;
     typedef std::pair<String, Slot *> SlotItem;
     Slots sslots;
+    LoopCallback mainCall;
 
     Impl(Public *i) : Base(i)
     {
-        GameSession::savedIndex().audienceForAvailabilityUpdate() += this;
+        //GameSession::savedIndex().audienceForAvailabilityUpdate() += this;
+
+        SaveGames::get().saveIndex().audienceForAddition() += this;
+        SaveGames::get().saveIndex().audienceForRemoval()  += this;
     }
 
     ~Impl()
@@ -240,42 +247,58 @@ DENG2_PIMPL(SaveSlots)
 
     SaveSlot *slotBySavePath(String path)
     {
-        if(!path.isEmpty())
+        if (!path.isEmpty())
         {
             // Append the .save extension if non exists.
-            if(path.fileNameExtension().isEmpty())
+            if (path.fileNameExtension().isEmpty())
             {
                 path += ".save";
             }
 
             DENG2_FOR_EACH_CONST(Slots, i, sslots)
             {
-                if(!i->second->savePath().compareWithoutCase(path))
+                if (!i->second->savePath().compareWithoutCase(path))
                 {
                     return i->second;
                 }
             }
         }
-        return 0; // Not found.
+        return nullptr; // Not found.
     }
 
-    void savedIndexAvailabilityUpdate(GameSession::SavedIndex const &index)
+    void fileAdded(File const &saveFolder, FileIndex const &)
+    {
+        mainCall.enqueue([this, &saveFolder] ()
+        {
+        //for (auto i = index.begin(); i != index.end(); ++i)
+        //{
+            //auto &saveFolder = i->second->as<GameStateFolder>();
+            if (SaveSlot *sslot = slotBySavePath(saveFolder.path()))
+            {
+                sslot->setGameStateFolder(const_cast<GameStateFolder *>(&saveFolder.as<GameStateFolder>()));
+            }
+        //}
+        });
+    }
+
+    void fileRemoved(File const &saveFolder, FileIndex const &)
     {
         DENG2_FOR_EACH_CONST(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
-            if(!index.find(sslot->savePath()))
+            if (sslot->savePath() == saveFolder.path())
             {
-                sslot->setSavedSession(0);
+                sslot->setGameStateFolder(nullptr);
             }
         }
+    }
 
-        DENG2_FOR_EACH_CONST(GameSession::SavedIndex::All, i, index.all())
+    void setAllIndexedSaves()
+    {
+        auto const &index = SaveGames::get().saveIndex();
+        foreach (File *file, index.files())
         {
-            if(SaveSlot *sslot = slotBySavePath(i.key()))
-            {
-                sslot->setSavedSession(i.value());
-            }
+            fileAdded(*file, index);
         }
     }
 };
@@ -365,6 +388,7 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
 
 void SaveSlots::updateAll()
 {
+    d->setAllIndexedSaves();
     DENG2_FOR_EACH(Impl::Slots, i, d->sslots)
     {
         i->second->updateStatus();

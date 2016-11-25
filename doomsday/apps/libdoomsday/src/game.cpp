@@ -22,7 +22,7 @@
 #include "doomsday/games.h"
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/GameProfiles"
-#include "doomsday/SavedSession"
+#include "doomsday/GameStateFolder"
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
 #include "doomsday/resource/manifest.h"

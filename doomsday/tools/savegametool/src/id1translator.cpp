@@ -113,7 +113,7 @@ DENG2_PIMPL(Id1Translator)
         return new Block(source, from.offset(), source.size() - from.offset());
     }
 
-    void translateMetadata(SessionMetadata &metadata, Reader &from)
+    void translateMetadata(GameStateMetadata &metadata, Reader &from)
     {
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
@@ -247,7 +247,7 @@ void Id1Translator::convert(Path path)
     QScopedPointer<Reader> from(new Reader(*d->saveFile()));
 
     // Read and translate the game session metadata.
-    SessionMetadata metadata;
+    GameStateMetadata metadata;
     d->translateMetadata(metadata, *from);
 
     ZipArchive arch;

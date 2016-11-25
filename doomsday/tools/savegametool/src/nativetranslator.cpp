@@ -311,7 +311,7 @@ DENG2_PIMPL(NativeTranslator)
     /**
      * Supports native formats up to and including version 13.
      */
-    void translateMetadata(SessionMetadata &metadata, LZReader &from)
+    void translateMetadata(GameStateMetadata &metadata, LZReader &from)
     {
 #define SM_NOTHINGS     -1
 #define SM_BABY         0
@@ -639,7 +639,7 @@ void NativeTranslator::convert(Path path)
     ZipArchive arch;
 
     // Read and translate the game session metadata.
-    SessionMetadata metadata;
+    GameStateMetadata metadata;
     d->translateMetadata(metadata, from);
 
     if (d->id == Hexen)

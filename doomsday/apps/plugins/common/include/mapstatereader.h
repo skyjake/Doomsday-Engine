@@ -23,7 +23,7 @@
 
 #include <de/reader.h>
 #include <de/String>
-#include <doomsday/SavedSession>
+#include <doomsday/GameStateFolder>
 #include "common.h"
 #include "thingarchive.h"
 
@@ -35,10 +35,10 @@ namespace world { class Material; }
  * @ingroup libcommon
  * @see MapStateWriter
  */
-class MapStateReader : public SavedSession::MapStateReader
+class MapStateReader : public GameStateFolder::MapStateReader
 {
 public:
-    MapStateReader(SavedSession const &session);
+    MapStateReader(GameStateFolder const &session);
     virtual ~MapStateReader();
 
     /**

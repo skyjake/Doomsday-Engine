@@ -1,5 +1,6 @@
-/** @file savedsession.h  Saved (game) session.
+/** @file gamestatefolder.h  Archived game state.
  *
+ * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -16,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SAVEDSESSION_H
-#define LIBDENG2_SAVEDSESSION_H
+#ifndef LIBDOOMSDAY_GAMESTATEFOLDER_H
+#define LIBDOOMSDAY_GAMESTATEFOLDER_H
 
 #include "libdoomsday.h"
 
@@ -36,11 +37,11 @@
  *
  * @ingroup game
  */
-class LIBDOOMSDAY_PUBLIC SavedSession : public de::ArchiveFolder
+class LIBDOOMSDAY_PUBLIC GameStateFolder : public de::ArchiveFolder
 {
 public:
     /// Notified whenever the cached metadata of the saved session changes.
-    DENG2_DEFINE_AUDIENCE2(MetadataChange, void savedSessionMetadataChanged(SavedSession &session))
+    DENG2_DEFINE_AUDIENCE2(MetadataChange, void gameStateFolderMetadataChanged(GameStateFolder &session))
 
     /**
      * Session metadata.
@@ -80,7 +81,7 @@ public:
          *
          * @param session  The saved session to be read.
          */
-        MapStateReader(SavedSession const &session);
+        MapStateReader(GameStateFolder const &session);
         virtual ~MapStateReader();
 
         /**
@@ -123,19 +124,13 @@ public:
          * if recognized. Ownership is given to the caller.
          */
         virtual MapStateReader *makeMapStateReader(
-                SavedSession const &session, de::String const &mapUriStr) = 0;
+                GameStateFolder const &session, de::String const &mapUriStr) = 0;
     };
 
 public:
-    SavedSession(File &sourceArchiveFile, de::String const &name = de::String());
+    GameStateFolder(File &sourceArchiveFile, de::String const &name = de::String());
 
-    virtual ~SavedSession();
-
-    /**
-     * Specialized population behavior which first populates the ArchiveFolder
-     * before then adding the saved session into the (shared) Session::SavedIndex.
-     */
-    virtual void populate(PopulationBehaviors behavior = PopulateFullTree) override;
+    virtual ~GameStateFolder();
 
     /**
      * Re-read the metadata for the saved session from the package and cache it.
@@ -223,6 +218,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-typedef SavedSession::Metadata SessionMetadata;
+typedef GameStateFolder::Metadata GameStateMetadata;
 
-#endif // LIBDENG2_SAVEDSESSION_H
+#endif // LIBDOOMSDAY_GAMESTATEFOLDER_H

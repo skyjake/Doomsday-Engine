@@ -184,12 +184,11 @@ char const *Library_LastError()
 de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func)
 {
     auto const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
-    DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
+    foreach (de::File *file, libs.files())
     {
-        auto &libraryFile = i->second->as<de::LibraryFile>();
-        if (libraryFile.path().beginsWith("/bin/"))
+        if (file->path().beginsWith("/bin/"))
         {
-            if (auto result = func(libraryFile))
+            if (auto result = func(file->as<de::LibraryFile>()))
                 return result;
         }
     }

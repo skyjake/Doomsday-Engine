@@ -33,8 +33,8 @@
 #include "doomsday/world/entitydef.h"
 #include "doomsday/world/materials.h"
 #include "doomsday/SaveGames"
-#include "doomsday/Session"
-#include "doomsday/SavedSession"
+#include "doomsday/AbstractSession"
+#include "doomsday/GameStateFolder"
 
 #include <de/App>
 #include <de/Config>
@@ -378,10 +378,10 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
 
     App::app().addInitPackage("net.dengine.base");
 
-    static SavedSession::Interpreter intrpSavedSession;
-    static DataBundle::Interpreter   intrpDataBundle;
+    static GameStateFolder::Interpreter intrpGameStateFolder;
+    static DataBundle::Interpreter      intrpDataBundle;
 
-    App::fileSystem().addInterpreter(intrpSavedSession);
+    App::fileSystem().addInterpreter(intrpGameStateFolder);
     App::fileSystem().addInterpreter(intrpDataBundle);
 }
 
@@ -586,7 +586,7 @@ StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
+        if (!GameStateFolder::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }
@@ -630,7 +630,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
         Resources::get().clear();
 
         // We do not want to load session resources specified on the command line again.
-        Session::profile().resourceFiles.clear();
+        AbstractSession::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
         setGame(games().nullGame());
@@ -704,7 +704,7 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     // This is now the current game.
     setGame(newGame);
     d->currentProfile = &profile;
-    Session::profile().gameId = newGame.id();
+    AbstractSession::profile().gameId = newGame.id();
 
     if (!newGame.isNull())
     {

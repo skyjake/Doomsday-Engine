@@ -2856,7 +2856,7 @@ void Hu_MenuSaveSlotEdit(Widget &wi, Widget::Action action)
     if(cfg.common.menuGameSaveSuggestDescription)
     {
         auto &edit = wi.as<LineEditWidget>();
-        edit.setText(G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/));
+        edit.setText(G_DefaultGameStateFolderUserDescription("" /*don't reuse an existing description*/));
     }
 }
 

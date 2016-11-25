@@ -21,7 +21,7 @@
 #define LIBCOMMON_GAMESESSION_H
 
 #include <de/String>
-#include <doomsday/Session>
+#include <doomsday/AbstractSession>
 #include <doomsday/uri.h>
 #include "doomsday.h"
 #include "acs/system.h"
@@ -47,7 +47,7 @@ namespace common {
  *
  * @ingroup libcommon
  */
-class GameSession : public Session
+class GameSession : public AbstractSession
 {
 public:
     typedef QList<de::Uri> VisitedMaps;
@@ -57,8 +57,8 @@ public:
     virtual ~GameSession();
 
     bool hasBegun() const;
-    bool savingPossible();
-    bool loadingPossible();
+    bool isSavingPossible();
+    bool isLoadingPossible();
 
     /**
      * Returns the current Episode definition for the game session in progress. If the session

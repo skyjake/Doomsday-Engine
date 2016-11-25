@@ -161,7 +161,7 @@ void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
 
 bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 {
-    if(!COMMON_GAMESESSION->savingPossible()) return false;
+    if(!COMMON_GAMESESSION->isSavingPossible()) return false;
     if(!G_SaveSlots().has(slotId)) return false;
 
     ::gaSaveSessionSlot = slotId;
@@ -185,7 +185,7 @@ bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 
 bool G_SetGameActionLoadSession(String slotId)
 {
-    if(!COMMON_GAMESESSION->loadingPossible()) return false;
+    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
 
     // Check whether this slot is in use. We do this here also because we need to provide our
     // caller with instant feedback. Naturally this is no guarantee that the game-save will
@@ -208,7 +208,7 @@ bool G_SetGameActionLoadSession(String slotId)
     try
     {
         auto const &slot = G_SaveSlots()[slotId];
-        SavedSession const &save = App::rootFolder().locate<SavedSession const>(slot.savePath());
+        GameStateFolder const &save = App::rootFolder().locate<GameStateFolder const>(slot.savePath());
         Record const &meta = save.metadata();
 
         if (meta.has("packages"))
@@ -1979,7 +1979,7 @@ void G_IntermissionDone()
     G_SetGameAction(GA_LEAVEMAP);
 }
 
-String G_DefaultSavedSessionUserDescription(String const &saveName, bool autogenerate)
+String G_DefaultGameStateFolderUserDescription(String const &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
     if(!saveName.isEmpty())
@@ -2292,7 +2292,7 @@ D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!COMMON_GAMESESSION->loadingPossible()) return false;
+    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
     DD_Execute(true, "menu loadgame");
     return true;
 }
@@ -2301,7 +2301,7 @@ D_CMD(OpenSaveMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!COMMON_GAMESESSION->savingPossible()) return false;
+    if(!COMMON_GAMESESSION->isSavingPossible()) return false;
     DD_Execute(true, "menu savegame");
     return true;
 }
@@ -2380,7 +2380,7 @@ D_CMD(LoadSession)
     bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
-    if(!COMMON_GAMESESSION->loadingPossible()) return false;
+    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
 
     if(IS_NETGAME)
     {
@@ -2561,7 +2561,7 @@ D_CMD(QuickSaveSession)
     return DD_Execute(true, "savegame quick");
 }
 
-static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
+static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     String const *saveName = static_cast<de::String const *>(context);
     DENG2_ASSERT(saveName != 0);
@@ -2573,7 +2573,7 @@ static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/
     return true;
 }
 
-D_CMD(DeleteSavedSession)
+D_CMD(DeleteGameStateFolder)
 {
     DENG2_UNUSED(src);
 
@@ -2601,7 +2601,7 @@ D_CMD(DeleteSavedSession)
                 // Compose the confirmation message.
                 String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new String(sslot->saveName()));
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
 
             return true;
@@ -3034,8 +3034,8 @@ void G_ConsoleRegister()
     C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.common.confirmRebornLoad,     0, 0, 1);
     C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.common.loadLastSaveOnReborn,  0, 0, 1);
 
-    C_CMD("deletegamesave",     "ss",       DeleteSavedSession);
-    C_CMD("deletegamesave",     "s",        DeleteSavedSession);
+    C_CMD("deletegamesave",     "ss",       DeleteGameStateFolder);
+    C_CMD("deletegamesave",     "s",        DeleteGameStateFolder);
     C_CMD("endgame",            "s",        EndSession);
     C_CMD("endgame",            "",         EndSession);
     C_CMD("helpscreen",         "",         HelpScreen);

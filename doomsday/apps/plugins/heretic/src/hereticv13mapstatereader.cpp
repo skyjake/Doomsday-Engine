@@ -809,8 +809,8 @@ DENG2_PIMPL(HereticV13MapStateReader)
     }
 };
 
-HereticV13MapStateReader::HereticV13MapStateReader(SavedSession const &session)
-    : SavedSession::MapStateReader(session)
+HereticV13MapStateReader::HereticV13MapStateReader(GameStateFolder const &session)
+    : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
 

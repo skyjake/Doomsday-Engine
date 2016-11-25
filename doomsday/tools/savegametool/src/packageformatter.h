@@ -25,7 +25,7 @@
 #include <de/Block>
 #include <de/Path>
 #include <de/String>
-#include <doomsday/SavedSession>
+#include <doomsday/GameStateFolder>
 
 /**
  * Base class for .save package formatters.
@@ -63,7 +63,7 @@ public:
      *
      * @return  Formated Info data.
      */
-    de::String composeInfo(SessionMetadata const &metadata, de::Path const &sourceFile,
+    de::String composeInfo(GameStateMetadata const &metadata, de::Path const &sourceFile,
                            de::dint32 oldSaveVersion) const;
 
     /**

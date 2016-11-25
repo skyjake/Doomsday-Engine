@@ -724,8 +724,8 @@ DENG2_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader(SavedSession const &session)
-    : SavedSession::MapStateReader(session)
+MapStateReader::MapStateReader(GameStateFolder const &session)
+    : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
 

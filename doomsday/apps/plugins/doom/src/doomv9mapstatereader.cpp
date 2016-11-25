@@ -799,8 +799,8 @@ DENG2_PIMPL(DoomV9MapStateReader)
     }
 };
 
-DoomV9MapStateReader::DoomV9MapStateReader(SavedSession const &session)
-    : SavedSession::MapStateReader(session)
+DoomV9MapStateReader::DoomV9MapStateReader(GameStateFolder const &session)
+    : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
 

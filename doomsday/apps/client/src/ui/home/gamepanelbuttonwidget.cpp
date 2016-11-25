@@ -19,7 +19,7 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/savelistwidget.h"
-#include "ui/savedsessionlistdata.h"
+#include "ui/savelistdata.h"
 #include "ui/dialogs/packagesdialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "resource/idtech1image.h"
@@ -43,7 +43,7 @@ using namespace de;
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 {
     GameProfile &gameProfile;
-    ui::FilteredDataT<SavedSessionListData::SaveItem> savedItems;
+    ui::FilteredDataT<SaveListData::SaveItem> savedItems;
     SaveListWidget *saves;
     PackagesButtonWidget *packagesButton;
     ButtonWidget *playButton;
@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
 
-    Impl(Public *i, GameProfile &profile, SavedSessionListData const &allSavedItems)
+    Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
         : Base(i)
         , gameProfile(profile)
         , savedItems(allSavedItems)
@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         savedItems.setFilter([this] (ui::Item const &it)
         {
             // Only saved sessions for this game are to be included.
-            auto const &item = it.as<SavedSessionListData::SaveItem>();
+            auto const &item = it.as<SaveListData::SaveItem>();
             if (item.gameId() != gameProfile.game())
             {
                 return false;
@@ -241,7 +241,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     }
 };
 
-GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SavedSessionListData const &savedItems)
+GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData const &savedItems)
     : d(new Impl(this, game, savedItems))
 {
     connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));

@@ -21,6 +21,7 @@
 
 #include "libdoomsday.h"
 #include <de/String>
+#include <de/FileIndex>
 
 class Games;
 
@@ -35,6 +36,8 @@ public:
     void setGames(Games &games);
 
     void initialize();
+
+    de::FileIndex const &saveIndex() const;
 
     /**
      * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).

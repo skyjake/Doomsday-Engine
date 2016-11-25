@@ -785,8 +785,8 @@ void SV_SaveGameClient(uint /*sessionId*/)
         return;
 
     // Prepare new saved game session session.
-    de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
-    de::game::SessionMetadata *metadata = G_CurrentSessionMetadata();
+    de::game::GameStateFolder *session = new de::game::GameStateFolder(saveNameForClientSessionId(sessionId));
+    de::game::GameStateMetadata *metadata = G_CurrentSessionMetadata();
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);
 
@@ -846,8 +846,8 @@ void SV_LoadGameClient(uint /*sessionId*/)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::game::SavedSession *session = new de::game::SavedSession(saveNameForClientSessionId(sessionId));
-    de::game::SessionMetadata *metadata = new de::game::SessionMetadata;
+    de::game::GameStateFolder *session = new de::game::GameStateFolder(saveNameForClientSessionId(sessionId));
+    de::game::GameStateMetadata *metadata = new de::game::GameStateMetadata;
     //G_ReadLegacySessionMetadata(metadata, reader);
     metadata->set("sessionId", sessionId);
     session->replaceMetadata(metadata);

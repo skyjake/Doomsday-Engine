@@ -23,7 +23,7 @@
 
 #include <doomsday/gameprofiles.h>
 
-class SavedSessionListData;
+class SaveListData;
 
 /**
  * Drawer button for a particular game. Also shows the list of saved games.
@@ -34,7 +34,7 @@ class GamePanelButtonWidget : public PanelButtonWidget
 
 public:
     GamePanelButtonWidget(GameProfile &game,
-                          SavedSessionListData const &savedItems);
+                          SaveListData const &savedItems);
 
     void setSelected(bool selected) override;
 

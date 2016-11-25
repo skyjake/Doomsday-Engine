@@ -1,4 +1,4 @@
-/** @file savedsessionlistdata.h  UI data items representing available saved games.
+/** @file savelistdata.h  UI data items representing available saved games.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_SAVEDSESSIONLISTDATA_H
-#define DENG_CLIENT_UI_SAVEDSESSIONLISTDATA_H
+#ifndef DENG_CLIENT_UI_SAVELISTDATA_H
+#define DENG_CLIENT_UI_SAVELISTDATA_H
 
 #include <de/ui/ListData>
 #include <de/ui/ImageItem>
-#include <doomsday/SavedSession>
+#include <doomsday/GameStateFolder>
 
 /**
  * List data model for available saved sessions.
  */
-class SavedSessionListData : public de::ui::ListData
+class SaveListData : public de::ui::ListData
 {
 public:
     struct SaveItem : public de::ui::ImageItem,
                       DENG2_OBSERVES(de::File, Deletion)
     {
-        SavedSession const *session;
+        GameStateFolder const *saveFolder;
 
-        SaveItem(SavedSession const &session);
+        SaveItem(GameStateFolder const &saveFolder);
         ~SaveItem();
 
         bool isValid() const;
@@ -48,7 +48,7 @@ public:
     };
 
 public:
-    SavedSessionListData();
+    SaveListData();
 
     SaveItem &at(Pos pos) override;
     SaveItem const &at(Pos pos) const override;
@@ -57,4 +57,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_SAVEDSESSIONLISTDATA_H
+#endif // DENG_CLIENT_UI_SAVELISTDATA_H

@@ -19,7 +19,7 @@
 #include "doomsday/GameProfiles"
 #include "doomsday/Games"
 #include "doomsday/DoomsdayApp"
-#include "doomsday/SavedSession"
+#include "doomsday/GameStateFolder"
 
 #include <de/App>
 #include <de/PackageLoader>
@@ -222,7 +222,7 @@ StringList GameProfiles::Profile::packagesAffectingGameplay() const
     QMutableListIterator<String> iter(ids);
     while (iter.hasNext())
     {
-        if (!SavedSession::isPackageAffectingGameplay(iter.next()))
+        if (!GameStateFolder::isPackageAffectingGameplay(iter.next()))
         {
             iter.remove();
         }
@@ -291,7 +291,7 @@ String GameProfiles::Profile::toInfoSource() const
 
     os << VAR_GAME << ": " << d->gameId << "\n"
        << VAR_PACKAGES << " <" << String::join(d->packages, ", ") << ">\n"
-       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False")
+       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False") << "\n"
        << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
 
     return info;

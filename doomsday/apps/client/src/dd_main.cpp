@@ -57,7 +57,7 @@
 #  include <de/texgamma.h>
 #  include <de/DisplayMode>
 #endif
-#include <doomsday/Session>
+#include <doomsday/AbstractSession>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -1033,7 +1033,7 @@ static void initialize()
             // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
             // to the list for the session.
-            Session::Profile &prof = Session::profile();
+            AbstractSession::Profile &prof = AbstractSession::profile();
 
             for (dint p = 0; p < CommandLine_Count(); ++p)
             {

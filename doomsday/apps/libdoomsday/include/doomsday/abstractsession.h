@@ -1,4 +1,4 @@
-/** @file session.h  Logical game session base class.
+/** @file abstractsession.h  Logical game session base class.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -25,7 +25,7 @@
 #include <de/String>
 #include <QMap>
 
-class SavedSession;
+class GameStateFolder;
 
 /**
  * Base class for a logical game session. Derived classes implement the high level logic for
@@ -35,17 +35,18 @@ class SavedSession;
  * job of the derived class is to ensure that the current game state remains valid and provide
  * a mechanism for saving player progress.
  */
-class LIBDOOMSDAY_PUBLIC Session
+class LIBDOOMSDAY_PUBLIC AbstractSession
 {
 public:
     /// Current in-progress state does not match that expected. @ingroup errors
     DENG2_ERROR(InProgressError);
 
 public:
-    virtual ~Session() {}
+    virtual ~AbstractSession() {}
 
     /**
      * Configuration profile.
+     * @todo Remove this. Could just point to a GameProfile instead. -jk
      */
     struct Profile
     {
@@ -77,12 +78,12 @@ public:
     /**
      * Determines whether the game state currently allows the session to be saved.
      */
-    virtual bool savingPossible() = 0;
+    virtual bool isSavingPossible() = 0;
 
     /**
      * Determines whether the game state currently allows a saved session to be loaded.
      */
-    virtual bool loadingPossible() = 0;
+    virtual bool isLoadingPossible() = 0;
 
     /**
      * Save the current game state to a new @em user saved session.
@@ -114,43 +115,6 @@ protected:  // Saved session management: ---------------------------------------
      * Removes the saved session at @a path.
      */
     static void removeSaved(de::String const &path);
-
-public:  // Saved session index: -----------------------------------------------------------
-
-    /// @todo Take advantage of FileIndex. -jk
-    class LIBDOOMSDAY_PUBLIC SavedIndex
-    {
-    public:
-        /// Notified whenever a saved session is added/removed from the index.
-        DENG2_DEFINE_AUDIENCE2(AvailabilityUpdate, void savedIndexAvailabilityUpdate(SavedIndex const &index))
-
-        typedef QMap<de::String, SavedSession *> All;
-
-    public:
-        SavedIndex();
-
-        /// Lookup a SavedSession by absolute @a path.
-        SavedSession *find(de::String path) const;
-
-        /// Add an entry for the saved @a session, replacing any existing one.
-        void add(SavedSession &session);
-
-        /// Remove the entry for the saved session with absolute @a path (if present).
-        void remove(de::String path);
-
-        void clear();
-
-        /// Provides access to the entry dataset, for efficient traversal.
-        All const &all() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-
-    /**
-     * Provides access to the (shared) saved session index.
-     */
-    static SavedIndex &savedIndex();
 };
 
 #endif // LIBDOOMSDAY_SESSION_H

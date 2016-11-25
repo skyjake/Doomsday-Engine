@@ -23,7 +23,7 @@
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/busywidget.h"
-#include "ui/savedsessionlistdata.h"
+#include "ui/savelistdata.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 
@@ -62,7 +62,7 @@ DENG_GUI_PIMPL(HomeWidget)
     };
 
     LoopCallback mainCall;
-    SavedSessionListData savedItems; ///< All the available save games as items.
+    SaveListData savedItems; ///< All the available save games as items.
 
     dsize visibleColumnCount = 2;
     QList<Column> allColumns; // not owned
