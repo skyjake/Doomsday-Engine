@@ -50,8 +50,6 @@ DENG2_PIMPL(SaveListData)
         {
             mainCall.enqueue([this, &saveFolder] ()
             {
-            //GameStateFolder &saveFolder = *i.value();
-            //{
                 // Needs to be added.
                 self.append(new SaveItem(saveFolder));
             });
@@ -60,9 +58,6 @@ DENG2_PIMPL(SaveListData)
 
     void fileRemoved(File const &, FileIndex const &)
     {
-        //GameStateFolder const &saveFolder = file.as<GameStateFolder>();
-        //String path = saveFolder.path();
-
         // Remove obsolete entries.
         mainCall.enqueue([this] ()
         {
@@ -75,11 +70,6 @@ DENG2_PIMPL(SaveListData)
             }
         });
     }
-
-    /*void savedIndexAvailabilityUpdate(Session::SavedIndex const &)
-    {
-        mainCall.enqueue([this] () { updateFromSavedIndex(); });
-    }*/
 
     void addAllFromIndex()
     {
@@ -151,7 +141,7 @@ String SaveListData::SaveItem::savePath() const
 {
     if (saveFolder)
     {
-        return saveFolder->path().toLower();
+        return saveFolder->path();
     }
     return "";
 }
