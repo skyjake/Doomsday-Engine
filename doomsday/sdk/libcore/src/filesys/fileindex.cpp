@@ -217,4 +217,16 @@ void FileIndex::print() const
     }
 }
 
+QList<File *> FileIndex::files() const
+{
+    DENG2_GUARD_READ(d);
+
+    QList<File *> list;
+    for (auto i = begin(); i != end(); ++i)
+    {
+        list.append(i->second);
+    }
+    return list;
+}
+
 } // namespace de

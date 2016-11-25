@@ -341,6 +341,7 @@ File *File::reinterpret()
     if (folder)
     {
         folder->remove(*this);
+        deindex();
     }
 
     original->flush();
@@ -357,6 +358,7 @@ File *File::reinterpret()
     if (folder)
     {
         folder->add(result);
+        fileSystem().index(*result);
     }
     return result;
 }

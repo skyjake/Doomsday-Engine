@@ -241,45 +241,46 @@ DENG2_PIMPL(PackageLoader)
 
     void listPackagesInIndex(FileIndex const &index, StringList &list)
     {
-        for (auto i = index.begin(); i != index.end(); ++i)
+        foreach (File *indexedFile, index.files())
         {
-            if (shouldIgnoreFile(*i->second)) continue;
+            if (shouldIgnoreFile(*indexedFile)) continue;
 
-            if (i->first.fileNameExtension() == ".pack")
+            String const fileName = indexedFile->name();
+            if (fileName.fileNameExtension() == ".pack")
             {
                 try
                 {
-                    File &file = *i->second;
-                    String path = file.path();
+                    //File &file = *indexedFile;
+                    String path = indexedFile->path();
 
                     // The special persistent data package should be ignored.
-                    if (path == "/home/persist.pack") continue;
+                    if (path == QStringLiteral("/home/persist.pack")) continue;
 
                     // Check the metadata.
-                    checkPackage(file);
+                    checkPackage(*indexedFile);
 
                     list.append(path);
                 }
                 catch (Package::NotPackageError const &er)
                 {
                     // This is usually a .pack folder used only for nesting.
-                    LOG_RES_XVERBOSE("\"%s\": %s") << i->first << er.asText();
+                    LOG_RES_XVERBOSE("\"%s\": %s") << fileName << er.asText();
                 }
                 catch (Package::ValidationError const &er)
                 {
                     // Not a loadable package.
-                    LOG_RES_MSG("\"%s\": Package is invalid: %s") << i->first << er.asText();
+                    LOG_RES_MSG("\"%s\": Package is invalid: %s") << fileName << er.asText();
                 }
                 catch (Parser::SyntaxError const &er)
                 {
                     LOG_RES_WARNING("\"%s\": Package has a Doomsday Script syntax error: %s")
-                            << i->first << er.asText();
+                            << fileName << er.asText();
                 }
                 catch (Info::SyntaxError const &er)
                 {
                     // Not a loadable package.
                     LOG_RES_WARNING("\"%s\": Package has a syntax error: %s")
-                            << i->first << er.asText();
+                            << fileName << er.asText();
                 }
 
                 /// @todo Store the errors so that the UI can show a list of

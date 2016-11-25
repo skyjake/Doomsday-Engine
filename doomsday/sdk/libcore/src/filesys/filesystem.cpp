@@ -258,6 +258,8 @@ void FileSystem::index(File &file)
 {
     d->index.maybeAdd(file);
 
+    //qDebug() << "[FS] Indexing" << file.path() << DENG2_TYPE_NAME(file);
+
     // Also make an entry in the type index.
     d->getTypeIndex(DENG2_TYPE_NAME(file)).maybeAdd(file);
 
@@ -293,6 +295,7 @@ File &FileSystem::copySerialized(String const &sourcePath, String const &destina
     if (behavior & ReinterpretDestination)
     {
         // We can now reinterpret and populate the contents of the archive.
+        //qDebug() << "[FS] Reinterpreting" << dest->path();
         dest = dest->reinterpret();
     }
 
