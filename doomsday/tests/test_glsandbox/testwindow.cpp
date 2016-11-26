@@ -94,8 +94,8 @@ DENG2_OBSERVES(Bank, Load)
         // Use this as the main window.
         setMain(i);
 
-        self.audienceForInit() += this;
-        self.audienceForResize() += this;
+        self().audienceForInit() += this;
+        self().audienceForResize() += this;
         Clock::get().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
@@ -116,7 +116,7 @@ DENG2_OBSERVES(Bank, Load)
 
     ~Impl()
     {
-        self.glActivate();
+        self().glActivate();
         model.glDeinit();
     }
 
@@ -250,7 +250,7 @@ DENG2_OBSERVES(Bank, Load)
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
-        self.framebuffer().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+        self().framebuffer().setClearColor(Vector4f(.2f, .2f, .2f, 0));
 
         modelProgram.build(
                     ByteRefArray::fromCStr(
@@ -302,9 +302,9 @@ DENG2_OBSERVES(Bank, Load)
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
 
-            self.glActivate();
+            self().glActivate();
             testpic.setImage(imageBank.image(path));
-            //self.canvas().doneCurrent();
+            //self().canvas().doneCurrent();
 
             imageBank.unload(path);
         }
@@ -312,11 +312,11 @@ DENG2_OBSERVES(Bank, Load)
 
     void windowResized(GLWindow &)
     {
-        LOG_GL_VERBOSE("GLResized: %i x %i pixels") << self.pixelWidth() << self.pixelHeight();
+        LOG_GL_VERBOSE("GLResized: %i x %i pixels") << self().pixelWidth() << self().pixelHeight();
 
         GLState &st = GLState::current();
         //st.setViewport(Rectangleui::fromSize(cv.size()));
-        st.setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight()));
+        st.setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight()));
 
         updateProjection();
     }
@@ -327,21 +327,21 @@ DENG2_OBSERVES(Bank, Load)
         {
         case TestRenderToTexture:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(self.pixelWidth())/float(self.pixelHeight())) *
+            projMatrix = Matrix4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
                          Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
             break;
 
         case TestDynamicAtlas:
             // 2D projection.
-            projMatrix = Matrix4f::ortho(-self.pointWidth()/2,  self.pointWidth()/2,
-                                         -self.pointHeight()/2, self.pointHeight()/2) *
-                         Matrix4f::scale(self.pointHeight()/150.f) *
+            projMatrix = Matrix4f::ortho(-self().pointWidth()/2,  self().pointWidth()/2,
+                                         -self().pointHeight()/2, self().pointHeight()/2) *
+                         Matrix4f::scale(self().pointHeight()/150.f) *
                          Matrix4f::translate(Vector2f(-50, -50));
             break;
 
         case TestModel:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(self.pixelWidth())/float(self.pixelHeight())) *
+            projMatrix = Matrix4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
                          Matrix4f::lookAt(Vector3f(), Vector3f(0, -3, 0), Vector3f(0, 0, 1));
             break;
         }
@@ -444,7 +444,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void timeChanged(Clock const &clock)
     {
-        self.glActivate();
+        self().glActivate();
 
         if (!startedAt.isValid())
         {
@@ -476,8 +476,8 @@ DENG2_OBSERVES(Bank, Load)
             break;
         }
 
-        self.glDone();
-        self.update();
+        self().glDone();
+        self().update();
     }
 
     void nextAtlasAlloc()

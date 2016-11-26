@@ -220,7 +220,7 @@ DENG2_PIMPL(CoreTextNativeFont)
         release();
 
         // Get a reference to the font.
-        font = fontCache.getFont(self.nativeFontName(), self.size());
+        font = fontCache.getFont(self().nativeFontName(), self().size());
 
         // Get basic metrics about the font.
         ascent      = ceil(CTFontGetAscent(font));

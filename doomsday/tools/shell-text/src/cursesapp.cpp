@@ -155,7 +155,7 @@ DENG2_PIMPL(CursesApp)
 
     void requestRefresh()
     {
-        QTimer::singleShot(1000 / 30, &self, SLOT(refresh()));
+        QTimer::singleShot(1000 / 30, thisPublic, SLOT(refresh()));
     }
 
     void handleResize()

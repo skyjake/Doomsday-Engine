@@ -79,7 +79,7 @@ DENG2_PIMPL(NativeMenu)
 
         foreach (Game *game, allGames)
         {
-            QAction *load = new QAction(tr("Load %1").arg(game->title()), &self);
+            QAction *load = new QAction(tr("Load %1").arg(game->title()), thisPublic);
             load->setData(game->id());
             load->setEnabled(game->isPlayable());
             connect(load, &QAction::triggered, [load] () {

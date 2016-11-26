@@ -35,18 +35,18 @@ DENG2_PIMPL(TestApp)
     ~Impl()
     {
         // Windows will be closed; OpenGL context will be gone.
-        self.glDeinit();
+        self().glDeinit();
     }
 
     void loadAllShaders()
     {
         // Load all the shader program definitions.
         FS::FoundFiles found;
-        self.findInPackages("shaders.dei", found);
+        self().findInPackages("shaders.dei", found);
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
-            self.shaders().addFromInfo(**i);
+            self().shaders().addFromInfo(**i);
         }
     }
 };

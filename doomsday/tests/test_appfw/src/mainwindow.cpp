@@ -51,18 +51,18 @@ DENG2_PIMPL(MainWindow)
 
     Impl(Public *i)
         : Base(i)
-        , root(&self)
+        , root(i)
         , needRootSizeUpdate(false)
-        , contentXf(self)
+        , contentXf(*i)
         , compositor(0)
         , test(0)
         , cursor(0)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
     {
-        self.setTransform(contentXf);
-        self.audienceForInit()   += this;
-        self.audienceForResize() += this;
+        self().setTransform(contentXf);
+        self().audienceForInit()   += this;
+        self().audienceForResize() += this;
     }
 
     ~Impl()
@@ -134,8 +134,8 @@ DENG2_PIMPL(MainWindow)
     {
         contentXf.glInit();
 
-        self.raise();
-        self.requestActivate();
+        self().raise();
+        self().requestActivate();
         //self.canvas().setFocus();
     }
 
@@ -153,7 +153,7 @@ DENG2_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.pixelSize());
+        Vector2ui const size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -185,7 +185,7 @@ DENG2_PIMPL(MainWindow)
     {
         LOG_AS("MainWindow");
 
-        Size size = self.pixelSize();
+        Size size = self().pixelSize();
         LOG_TRACE("Window resized to %s pixels") << size.asText();
 
         // Update viewport.

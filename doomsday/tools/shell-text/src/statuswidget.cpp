@@ -33,7 +33,7 @@ DENG2_PIMPL(StatusWidget)
 
     Impl(Public &i) : Base(i), link(0)
     {
-        updateTimer = new QTimer(&self);
+        updateTimer = new QTimer(thisPublic);
     }
 };
 

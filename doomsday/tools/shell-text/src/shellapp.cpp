@@ -50,7 +50,7 @@ DENG2_PIMPL(ShellApp)
 
     Impl(Public &i) : Base(i), link(0)
     {
-        RootWidget &root = self.rootWidget();
+        RootWidget &root = self().rootWidget();
 
         // Status bar in the bottom of the view.
         status = new StatusWidget;
@@ -70,10 +70,10 @@ DENG2_PIMPL(ShellApp)
                 .setInput(Rule::Width,  Const(menuLabel->label().size()))
                 .setInput(Rule::Bottom, status->rule().top());
 
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_F9), &self, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), &self, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_C, KeyEvent::Control), &self, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_X, KeyEvent::Control), &self, SLOT(quit())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_F9), thisPublic, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), thisPublic, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_C, KeyEvent::Control), thisPublic, SLOT(openMenu())));
+        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_X, KeyEvent::Control), thisPublic, SLOT(quit())));
 
         // Expanding command line widget.
         cli = new CommandLineWidget;
@@ -97,14 +97,14 @@ DENG2_PIMPL(ShellApp)
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new shell::Action(tr("Connect to..."),
-                                    &self, SLOT(askToOpenConnection())));
-        menu->appendItem(new shell::Action(tr("Disconnect"), &self, SLOT(closeConnection())));
+                                    thisPublic, SLOT(askToOpenConnection())));
+        menu->appendItem(new shell::Action(tr("Disconnect"), thisPublic, SLOT(closeConnection())));
         menu->appendSeparator();
-        menu->appendItem(new shell::Action(tr("Start local server"), &self, SLOT(askToStartLocalServer())));
+        menu->appendItem(new shell::Action(tr("Start local server"), thisPublic, SLOT(askToStartLocalServer())));
         menu->appendSeparator();
         menu->appendItem(new shell::Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
-        menu->appendItem(new shell::Action(tr("About"), &self, SLOT(showAbout())));
-        menu->appendItem(new shell::Action(tr("Quit Shell"), &self, SLOT(quit())), "Ctrl-X");
+        menu->appendItem(new shell::Action(tr("About"), thisPublic, SLOT(showAbout())));
+        menu->appendItem(new shell::Action(tr("Quit Shell"), thisPublic, SLOT(quit())), "Ctrl-X");
         menu->rule()
                 .setInput(Rule::Bottom, menuLabel->rule().top())
                 .setInput(Rule::Left,   menuLabel->rule().left());
@@ -119,9 +119,9 @@ DENG2_PIMPL(ShellApp)
         root.setFocus(cli);
 
         // Signals.
-        QObject::connect(cli, SIGNAL(commandEntered(de::String)), &self, SLOT(sendCommandToServer(de::String)));
-        QObject::connect(menu, SIGNAL(closed()), &self, SLOT(menuClosed()));
-        QObject::connect(&finder, SIGNAL(updated()), &self, SLOT(updateMenuWithFoundServers()));
+        QObject::connect(cli, SIGNAL(commandEntered(de::String)), thisPublic, SLOT(sendCommandToServer(de::String)));
+        QObject::connect(menu, SIGNAL(closed()), thisPublic, SLOT(menuClosed()));
+        QObject::connect(&finder, SIGNAL(updated()), thisPublic, SLOT(updateMenuWithFoundServers()));
     }
 
     ~Impl()
