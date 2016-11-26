@@ -54,7 +54,9 @@ String const Record::VAR_NATIVE_SELF = "__self__";
  */
 static duint32 recordIdCounter = 0;
 
-DENG2_PIMPL(Record), public Lockable
+DENG2_PIMPL(Record)
+, public Lockable
+, DENG2_OBSERVES(Variable, Deletion)
 {
     Record::Members members;
     duint32 uniqueId; ///< Identifier to track serialized references.
@@ -102,7 +104,7 @@ DENG2_PIMPL(Record), public Lockable
 
                 DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self, **i);
 
-                i.value()->audienceForDeletion() -= self;
+                i.value()->audienceForDeletion() -= this;
                 delete i.value();
             }
 
@@ -122,7 +124,7 @@ DENG2_PIMPL(Record), public Lockable
             bool const alreadyExists = members.contains(i.key());
 
             Variable *var = new Variable(*i.value());
-            var->audienceForDeletion() += self;
+            var->audienceForDeletion() += this;
             members[i.key()] = var;
 
             if (!alreadyExists)
@@ -243,6 +245,18 @@ DENG2_PIMPL(Record), public Lockable
         return self;
     }
 
+    // Observes Variable deletion.
+    void variableBeingDeleted(Variable &variable)
+    {
+        DENG2_ASSERT(findMemberByPath(variable.name()));
+
+        LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << &self);
+
+        // Remove from our index.
+        DENG2_GUARD(this);
+        members.remove(variable.name());
+    }
+
     static String memberNameFromPath(String const &path)
     {
         return path.fileName('.');
@@ -310,17 +324,22 @@ Record::Record(Record const &other, Behavior behavior)
 Record::Record(Record &&moved)
     : RecordAccessor(this)
     , d(std::move(moved.d))
-{}
+{
+    DENG2_ASSERT(moved.d.isNull());
+    d->thisPublic = this;
+}
 
 Record::~Record()
 {
-    // Notify before deleting members so that observers have full visibility
-    // to the record prior to deletion.
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
+    if (!d.isNull()) // will be nullptr if moved away
+    {
+        // Notify before deleting members so that observers have full visibility
+        // to the record prior to deletion.
+        DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
 
-    DENG2_GUARD(d);
-
-    clear();
+        DENG2_GUARD(d);
+        clear();
+    }
 }
 
 void Record::clear(Behavior behavior)
@@ -402,7 +421,7 @@ Variable &Record::add(Variable *variable)
             // Delete the previous variable with this name.
             delete d->members[variable->name()];
         }
-        var->audienceForDeletion() += this;
+        var->audienceForDeletion() += d;
         d->members[variable->name()] = var.release();
     }
 
@@ -415,7 +434,7 @@ Variable *Record::remove(Variable &variable)
 {
     {
         DENG2_GUARD(d);
-        variable.audienceForDeletion() -= this;
+        variable.audienceForDeletion() -= d;
         d->members.remove(variable.name());
     }
 
@@ -910,21 +929,9 @@ void Record::operator << (Reader &from)
 #ifdef DENG2_DEBUG
     DENG2_FOR_EACH(Members, i, d->members)
     {
-        DENG2_ASSERT(i.value()->audienceForDeletion().contains(this));
+        DENG2_ASSERT(i.value()->audienceForDeletion().contains(d));
     }
 #endif
-}
-
-void Record::variableBeingDeleted(Variable &variable)
-{
-    DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
-
-    LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << this);
-
-    DENG2_GUARD(d);
-
-    // Remove from our index.
-    d->members.remove(variable.name());
 }
 
 Record &Record::operator << (NativeFunctionSpec const &spec)

@@ -63,7 +63,6 @@ class DENG2_PUBLIC Record
         : public RecordAccessor
         , public ISerializable
         , public LogEntry::Arg::Base
-        , DENG2_OBSERVES(Variable, Deletion)
 {
 public:
     /// Unknown variable name was given. @ingroup errors
@@ -564,9 +563,6 @@ public:
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
     String asText() const { return asText("", 0); }
-
-    // Observes Variable deletion.
-    void variableBeingDeleted(Variable &variable);
 
     /*
      * Utility template for initializing a Record with an arbitrary number of
