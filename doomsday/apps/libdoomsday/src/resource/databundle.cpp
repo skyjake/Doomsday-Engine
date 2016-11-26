@@ -931,6 +931,42 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
             // Non-collection data files are loaded as-is.
             loaded << bundle;
         }
+        else
+        {
+            // Packages may declare a list of data files to load.
+            Package const *pkg = PackageLoader::get().tryFindLoaded(*f);
+            DENG2_ASSERT(pkg);
+
+            auto const &meta = Package::metadata(*f);
+            if (meta.has(VAR_DATA_FILES))
+            {
+                foreach (Value const *v, meta.geta(VAR_DATA_FILES).elements())
+                {
+                    String const dataFilePath = v->asText();
+
+                    // Look up the data bundle file.
+                    if (DataBundle const *bundle = pkg->root().tryLocate<DataBundle const>(dataFilePath))
+                    {
+                        // Identify it now (if not already identified). Note that data
+                        // files inside packages usually aren't identified during
+                        // startup.
+                        bundle->identifyPackages();
+                        if (bundle->isLinkedAsPackage())
+                        {
+                            loaded << bundle;
+                        }
+                        else
+                        {
+                            LOG_RES_WARNING("Cannot identify %s") << bundle->asFile().description();
+                        }
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Cannot load \"%s\" from %s") << dataFilePath << f->description();
+                    }
+                }
+            }
+        }
     }
 
     return loaded;
