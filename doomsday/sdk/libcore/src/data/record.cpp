@@ -102,7 +102,7 @@ DENG2_PIMPL(Record)
                     continue;
                 }
 
-                DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self, **i);
+                DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self(), **i);
 
                 i.value()->audienceForDeletion() -= this;
                 delete i.value();
@@ -130,7 +130,7 @@ DENG2_PIMPL(Record)
             if (!alreadyExists)
             {
                 // Notify about newly added members.
-                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
+                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self(), *var);
             }
 
             /// @todo Should also notify if the value of an existing variable changes. -jk
@@ -196,8 +196,8 @@ DENG2_PIMPL(Record)
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
-            if (!self.hasRecord(subName)) return 0;
-            return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
+            if (!self().hasRecord(subName)) return 0;
+            return self()[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
         DENG2_GUARD(this);
@@ -230,19 +230,19 @@ DENG2_PIMPL(Record)
             String remaining = pathOrName.substr(pos + 1);
             Record *rec = 0;
 
-            if (!self.hasSubrecord(subName))
+            if (!self().hasSubrecord(subName))
             {
                 // Create it now.
-                rec = &self.addSubrecord(subName);
+                rec = &self().addSubrecord(subName);
             }
             else
             {
-                rec = &self.subrecord(subName);
+                rec = &self().subrecord(subName);
             }
 
             return rec->d->parentRecordByPath(remaining);
         }
-        return self;
+        return self();
     }
 
     // Observes Variable deletion.
@@ -250,7 +250,7 @@ DENG2_PIMPL(Record)
     {
         DENG2_ASSERT(findMemberByPath(variable.name()));
 
-        LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << &self);
+        LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << thisPublic);
 
         // Remove from our index.
         DENG2_GUARD(this);

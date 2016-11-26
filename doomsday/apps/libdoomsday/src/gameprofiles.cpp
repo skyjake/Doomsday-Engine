@@ -48,11 +48,11 @@ DENG2_PIMPL(GameProfiles)
          * configuration for each game is persistently stored using these profiles.
          * (User-created profiles must use different names.)
          */
-        if (!self.tryFind(game.title()))
+        if (!self().tryFind(game.title()))
         {
             auto *prof = new Profile(game.title());
             prof->setGame(game.id());
-            self.add(prof);
+            self().add(prof);
         }
     }
 };

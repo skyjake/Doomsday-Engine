@@ -68,7 +68,7 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         : Base(i)
         , win(ClientWindow::main())
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         area.add(showFps      = new VariableToggleWidget(App::config("window.main.showFps")));
         area.add(fullscreen   = new ToggleWidget);
@@ -152,7 +152,7 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
 
-        foreach (Widget *child, self.area().childWidgets())
+        foreach (Widget *child, self().area().childWidgets())
         {
             if (ICVarWidget *cw = child->maybeAs<ICVarWidget>())
                 cw->updateFromCVar();

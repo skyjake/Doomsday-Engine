@@ -88,18 +88,18 @@ DENG_GUI_PIMPL(PanelWidget)
         // Widget's size depends on the opening animation.
         if (isVerticalAnimation())
         {
-            self.rule().setInput(Rule::Height, *openingRule);
+            self().rule().setInput(Rule::Height, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self.rule().setInput(Rule::Width, content->rule().width());
+                self().rule().setInput(Rule::Width, content->rule().width());
             }
         }
         else
         {
-            self.rule().setInput(Rule::Width, *openingRule);
+            self().rule().setInput(Rule::Width, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self.rule().setInput(Rule::Height, content->rule().height());
+                self().rule().setInput(Rule::Height, content->rule().height());
             }
         }
     }
@@ -107,12 +107,12 @@ DENG_GUI_PIMPL(PanelWidget)
     void updateGeometry()
     {
         Rectanglei pos;
-        if (self.hasChangedPlace(pos) || self.geometryRequested())
+        if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
-            self.requestGeometry(false);
+            self().requestGeometry(false);
 
             VertexBuf::Builder verts;
-            self.glMakeGeometry(verts);
+            self().glMakeGeometry(verts);
             drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
     }
@@ -136,20 +136,20 @@ DENG_GUI_PIMPL(PanelWidget)
 
         opened = false;
 
-        self.setBehavior(DisableEventDispatchToChildren);
+        self().setBehavior(DisableEventDispatchToChildren);
 
         // Begin the closing animation.
         openingRule->set(0, CLOSING_ANIM_SPAN + delay, delay);
         openingRule->setStyle(Animation::EaseIn);
 
-        self.panelClosing();
+        self().panelClosing();
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Close, i)
         {
-            i->panelBeingClosed(self);
+            i->panelBeingClosed(self());
         }
 
-        emit self.closed();
+        emit self().closed();
 
         dismissTimer.start();
         dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());

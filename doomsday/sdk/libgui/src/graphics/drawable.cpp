@@ -49,7 +49,7 @@ DENG2_PIMPL(Drawable)
 
     Impl(Public *i) : Base(i)
     {
-        self += defaultProgram;
+        self() += defaultProgram;
     }
 
     ~Impl()

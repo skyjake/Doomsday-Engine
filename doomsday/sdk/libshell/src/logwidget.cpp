@@ -123,7 +123,7 @@ DENG2_PIMPL(LogWidget)
         if (visibleOffset != off)
         {
             visibleOffset = off;
-            emit self.scrollPositionChanged(off);
+            emit self().scrollPositionChanged(off);
         }
     }
 };

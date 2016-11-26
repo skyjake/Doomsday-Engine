@@ -293,9 +293,9 @@ DENG2_PIMPL(PackageLoader)
     {
         for (String const &reqId : Package::requires(packageFile))
         {
-            if (!self.isLoaded(reqId))
+            if (!self().isLoaded(reqId))
             {
-                self.load(reqId);
+                self().load(reqId);
             }
         }
     }
@@ -349,9 +349,9 @@ DENG2_PIMPL(PackageLoader)
     {
         forOptionalContent(packageFile, [this] (String const &pkgId)
         {
-            if (!self.isLoaded(pkgId))
+            if (!self().isLoaded(pkgId))
             {
-                self.load(pkgId);
+                self().load(pkgId);
             }
         });
     }

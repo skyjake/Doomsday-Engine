@@ -76,8 +76,8 @@ DENG2_PIMPL(ServerApp)
         serverAppSingleton = thisPublic;
 
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
-        self.audienceForGameUnload() += this;
-        self.audienceForConsoleRegistration() += this;
+        self().audienceForGameUnload() += this;
+        self().audienceForConsoleRegistration() += this;
     }
 
     ~Impl()
@@ -123,7 +123,7 @@ DENG2_PIMPL(ServerApp)
     void printHelpToStdOut()
     {
         printVersionToStdOut();
-        printf("Usage: %s [options]\n", self.commandLine().at(0).toLatin1().constData());
+        printf("Usage: %s [options]\n", self().commandLine().at(0).toLatin1().constData());
         printf(" -iwad (dir)  Set directory containing IWAD files.\n");
         printf(" -file (f)    Load one or more PWAD files at startup.\n");
         printf(" -game (id)   Set game to load at startup.\n");

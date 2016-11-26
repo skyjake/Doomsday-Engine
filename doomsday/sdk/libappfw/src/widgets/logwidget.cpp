@@ -375,7 +375,7 @@ public Font::RichFormat::IStyle
         , uColor      ("uColor",     GLUniform::Vec4)
         , uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
-        self.setFont("log.normal");
+        self().setFont("log.normal");
         updateStyle();
     }
 
@@ -389,7 +389,7 @@ public Font::RichFormat::IStyle
     {
         sink.clear();
         clearCache();
-        self.setContentHeight(0);
+        self().setContentHeight(0);
     }
 
     void clearCache()
@@ -402,7 +402,7 @@ public Font::RichFormat::IStyle
     {
         Style const &st = style();
 
-        font           = &self.font();
+        font           = &self().font();
 
         normalColor    = st.colors().color("log.normal");
         highlightColor = st.colors().color("log.highlight");
@@ -411,7 +411,7 @@ public Font::RichFormat::IStyle
         dimAccentColor = st.colors().color("log.dimaccent");
         altAccentColor = st.colors().color("log.altaccent");
 
-        self.set(Background(st.colors().colorf("background")));
+        self().set(Background(st.colors().colorf("background")));
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -467,8 +467,8 @@ public Font::RichFormat::IStyle
         /*Image solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
                                                   Image::Size(1, 1));
         scrollTex = entryAtlas->alloc(solidWhitePixel);
-        self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());*/
-        //self.setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
+        self().setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());*/
+        //self().setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
         uTex = entryAtlas;
         uColor = Vector4f(1, 1, 1, 1);
@@ -503,7 +503,7 @@ public Font::RichFormat::IStyle
         if (entryAtlas == &atlas)
         {
             entryAtlasLayoutChanged = true;
-            self.setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
+            self().setIndicatorUv(entryAtlas->imageRectf(scrollTex).middle());
         }
     }
 
@@ -517,25 +517,25 @@ public Font::RichFormat::IStyle
 
     duint contentWidth() const
     {
-        return self.viewportSize().x;
+        return self().viewportSize().x;
     }
 
     int maxVisibleOffset()
     {
-        return self.maximumScrollY().valuei();
+        return self().maximumScrollY().valuei();
     }
 
     void modifyContentHeight(float delta)
     {
-        self.modifyContentHeight(delta);
+        self().modifyContentHeight(delta);
 
         // TODO: If content height changes below the visible range, we should adjust
         // the current scroll position so that the entries don't change position
         // inside the view.
 
-        if (!self.isAtBottom())
+        if (!self().isAtBottom())
         {
-            self.scrollPositionY().shift(delta);
+            self().scrollPositionY().shift(delta);
         }
     }
 
@@ -615,7 +615,7 @@ public Font::RichFormat::IStyle
             sink.remove(0, num);
             for (int i = 0; i < num; ++i)
             {
-                self.modifyContentHeight(-cache.first()->height());
+                self().modifyContentHeight(-cache.first()->height());
                 delete cache.takeFirst();
             }
         }
@@ -638,7 +638,7 @@ public Font::RichFormat::IStyle
     {
         bool needHeightNotify = false; // if changed as entries are updated
         int heightDelta = 0;
-        Vector2i const contentSize = self.viewportSize();
+        Vector2i const contentSize = self().viewportSize();
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
@@ -654,7 +654,7 @@ public Font::RichFormat::IStyle
         VertexBuf::Builder verts;
 
         // Draw in reverse, as much as we need.
-        int initialYBottom = contentSize.y + self.scrollPositionY().valuei();
+        int initialYBottom = contentSize.y + self().scrollPositionY().valuei();
         contentOffsetForDrawing = std::ceil(contentOffset.value());
 
         Rangei visiblePixelRange = extendPixelRangeWithPadding(
@@ -732,7 +732,7 @@ nextAttempt:
         }
 
         // Draw the scroll indicator, too.
-        //self.glMakeScrollIndicatorGeometry(verts);
+        //self().glMakeScrollIndicatorGeometry(verts);
 
         buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
 
@@ -743,7 +743,7 @@ nextAttempt:
             modifyContentHeight(heightDelta);
             if (needHeightNotify && heightDelta > 0)
             {
-                emit self.contentHeightIncreased(heightDelta);
+                emit self().contentHeightIncreased(heightDelta);
             }
         }
 
@@ -753,32 +753,32 @@ nextAttempt:
 
     bool isVisible() const
     {
-        Rectanglei vp = self.viewport();
+        Rectanglei vp = self().viewport();
         return vp.height() > 0 && vp.right() >= 0;
     }
 
     void draw()
     {
         Rectanglei pos;
-        if (self.hasChangedPlace(pos) || !bgBuf->isReady())
+        if (self().hasChangedPlace(pos) || !bgBuf->isReady())
         {
             // Update the background quad.
             VertexBuf::Builder bgVerts;
-            self.glMakeGeometry(bgVerts);
+            self().glMakeGeometry(bgVerts);
             bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
         }
 
         background.draw();
 
-        Rectanglei vp = self.viewport();
+        Rectanglei vp = self().viewport();
         if (vp.height() > 0)
         {
             GLState &st = GLState::push();
 
             // Leave room for the indicator in the scissor.
             st.setNormalizedScissor(
-                    self.normalizedRect(
-                            vp.adjusted(Vector2i(), Vector2i(self.margins().right().valuei(), 0))));
+                    self().normalizedRect(
+                            vp.adjusted(Vector2i(), Vector2i(self().margins().right().valuei(), 0))));
 
             // First draw the shadow of the text.
             uMvpMatrix = projMatrix * Matrix4f::translate(

@@ -272,7 +272,7 @@ DENG2_PIMPL(LightGrid)
     ~Impl() { clearBlocks(); }
 
     inline LightBlock &block(Index index)     { return *blocks[index]; }
-    inline LightBlock &block(Ref const &gref) { return block(self.toIndex(gref)); }
+    inline LightBlock &block(Ref const &gref) { return block(self().toIndex(gref)); }
 
     void clearBlocks()
     {
@@ -410,7 +410,7 @@ DENG2_PIMPL(LightGrid)
         M_Free(contribBitfield);
 
         // A full update is needed after this.
-        self.scheduleFullUpdate();
+        self().scheduleFullUpdate();
     }
 };
 

@@ -89,7 +89,7 @@ DENG2_PIMPL(GLProgram)
 
     void releaseButRetainBindings()
     {
-        self.setState(NotReady);
+        self().setState(NotReady);
         detachAllShaders();
         if (name)
         {
@@ -239,7 +239,7 @@ DENG2_PIMPL(GLProgram)
             DENG2_ASSERT(active.contains(changed));
             if (!u->isSampler())
             {
-                u->applyInProgram(self);
+                u->applyInProgram(self());
             }
         }
 
@@ -248,7 +248,7 @@ DENG2_PIMPL(GLProgram)
             // Update the sampler uniforms.
             for (int unit = 0; unit < textures.size(); ++unit)
             {
-                int loc = self.glUniformLocation(textures[unit]->name());
+                int loc = self().glUniformLocation(textures[unit]->name());
                 if (loc >= 0)
                 {
                     LIBGUI_GL.glUniform1i(loc, unit);
@@ -304,7 +304,7 @@ DENG2_PIMPL(GLProgram)
 
     void uniformDeleted(GLUniform &uniform)
     {
-        self.unbind(uniform);
+        self().unbind(uniform);
     }
 
     void addBinding(GLUniform const *uniform)

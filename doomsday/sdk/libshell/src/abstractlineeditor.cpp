@@ -74,13 +74,13 @@ DENG2_PIMPL(AbstractLineEditor)
     void rewrapLater()
     {
         wraps->clear();
-        self.contentChanged();
+        self().contentChanged();
     }
 
     void rewrapNow()
     {
         updateWraps();
-        self.contentChanged();
+        self().contentChanged();
     }
 
     /**
@@ -89,15 +89,15 @@ DENG2_PIMPL(AbstractLineEditor)
      */
     void updateWraps()
     {
-        wraps->wrapTextToWidth(text, de::max(1, self.maximumWidth()));
+        wraps->wrapTextToWidth(text, de::max(1, self().maximumWidth()));
 
         if (wraps->height() > 0)
         {
-            self.numberOfLinesChanged(wraps->height());
+            self().numberOfLinesChanged(wraps->height());
         }
         else
         {
-            self.numberOfLinesChanged(1);
+            self().numberOfLinesChanged(1);
         }
     }
 
@@ -148,7 +148,7 @@ DENG2_PIMPL(AbstractLineEditor)
         if (!span.isFinal) span.range.end--;
         if (cursor > span.range.end) cursor = span.range.end;
 
-        self.cursorMoved();
+        self().cursorMoved();
         return true;
     }
 
@@ -201,7 +201,7 @@ DENG2_PIMPL(AbstractLineEditor)
         if (cursor > 0)
         {
             --cursor;
-            self.cursorMoved();
+            self().cursorMoved();
             return true;
         }
         return false;
@@ -214,7 +214,7 @@ DENG2_PIMPL(AbstractLineEditor)
         if (cursor < text.size())
         {
             ++cursor;
-            self.cursorMoved();
+            self().cursorMoved();
             return true;
         }
         return false;
@@ -240,7 +240,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
         cursor = wordJumpLeft(cursor);
-        self.cursorMoved();
+        self().cursorMoved();
     }
 
     void doWordRight()
@@ -261,7 +261,7 @@ DENG2_PIMPL(AbstractLineEditor)
             cursor++;
         }
 
-        self.cursorMoved();
+        self().cursorMoved();
     }
 
     void doHome()
@@ -269,7 +269,7 @@ DENG2_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         cursor = lineSpan(lineCursorPos().y).range.start;
-        self.cursorMoved();
+        self().cursorMoved();
     }
 
     void doEnd()
@@ -278,7 +278,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
         WrappedLine const span = lineSpan(lineCursorPos().y);
         cursor = span.range.end - (span.isFinal? 0 : 1);
-        self.cursorMoved();
+        self().cursorMoved();
     }
 
     void killEndOfLine()
@@ -373,7 +373,7 @@ DENG2_PIMPL(AbstractLineEditor)
                     //rewrapNow();
                     suggesting = true;
                     // Notify immediately.
-                    self.autoCompletionBegan(base);
+                    self().autoCompletionBegan(base);
                     completionNotified = true;
                     return true;
                 }
@@ -384,7 +384,7 @@ DENG2_PIMPL(AbstractLineEditor)
             if (!completionNotified)
             {
                 // Time to notify now.
-                self.autoCompletionBegan(wordBehindPos(completion.pos));
+                self().autoCompletionBegan(wordBehindPos(completion.pos));
                 completionNotified = true;
                 return true;
             }
@@ -444,7 +444,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
         resetCompletion();
 
-        self.autoCompletionEnded(true);
+        self().autoCompletionEnded(true);
     }
 
     bool rejectCompletion()
@@ -458,7 +458,7 @@ DENG2_PIMPL(AbstractLineEditor)
         resetCompletion();
         rewrapNow();
 
-        self.autoCompletionEnded(false);
+        self().autoCompletionEnded(false);
 
         return cursor != oldCursor; // cursor was moved as part of the rejection
     }

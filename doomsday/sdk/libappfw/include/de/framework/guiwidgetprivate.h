@@ -65,7 +65,7 @@ public:
          *
          * @see GuiWidget::destroy()
          */
-        DENG2_ASSERT(!Base::self.isInitialized());
+        DENG2_ASSERT(!Base::self().isInitialized());
     }
 
     void forgetRootAtlas()
@@ -91,13 +91,13 @@ public:
 
     bool hasRoot() const
     {
-        return Base::self.hasRoot();
+        return Base::self().hasRoot();
     }
 
     GuiRootWidget &root() const
     {
         DENG2_ASSERT(hasRoot());
-        return Base::self.root();
+        return Base::self().root();
     }
 
     AtlasTexture &atlas() const
@@ -119,12 +119,12 @@ public:
 
     Style const &style() const
     {
-        return Base::self.style();
+        return Base::self().style();
     }
 
     Rule const &rule(DotPath const &path) const
     {
-        return Base::self.rule(path);
+        return Base::self().rule(path);
     }
 
     void atlasContentRepositioned(Atlas &atlas)
@@ -132,7 +132,7 @@ public:
         if (_observingAtlas == &atlas)
         {
             // Make sure the new texture coordinates get used by the widget.
-            Base::self.requestGeometry();
+            Base::self().requestGeometry();
         }
     }
 

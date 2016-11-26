@@ -340,7 +340,7 @@ DENG2_PIMPL(LumpIndex)
         , needPruneDuplicateLumps(false)
     {}
 
-    ~Impl() { self.clear(); }
+    ~Impl() { self().clear(); }
 
     void buildLumpsByPathIfNeeded()
     {
@@ -367,7 +367,7 @@ DENG2_PIMPL(LumpIndex)
             (*lumpsByPath)[k].head = i;
         }
 
-        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << &self;
+        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << thisPublic;
     }
 
     /**

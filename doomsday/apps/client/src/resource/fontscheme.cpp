@@ -44,7 +44,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
 
     ~Impl()
     {
-        self.clear();
+        self().clear();
         DENG2_ASSERT(index.isEmpty()); // sanity check.
     }
 

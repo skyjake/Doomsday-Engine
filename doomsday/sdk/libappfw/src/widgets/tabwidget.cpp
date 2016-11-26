@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(TabWidget)
 
     Impl(Public *i) : Base(i)
     {
-        self.add(buttons = new MenuWidget);
+        self().add(buttons = new MenuWidget);
         buttons->enableScrolling(false);
         buttons->margins().set("");
         buttons->setGridSize(0, ui::Expand, 1, ui::Expand, GridLayout::ColumnFirst);
@@ -53,12 +53,12 @@ DENG_GUI_PIMPL(TabWidget)
 
         // Center the buttons inside the widget.
         buttons->rule()
-                .setInput(Rule::AnchorX, self.rule().left() + self.rule().width() / 2)
-                .setInput(Rule::Top, self.rule().top())
+                .setInput(Rule::AnchorX, self().rule().left() + self().rule().width() / 2)
+                .setInput(Rule::Top, self().rule().top())
                 .setAnchorPoint(Vector2f(.5f, 0));
 
         // Selection highlight.
-        self.add(selected = new LabelWidget);
+        self().add(selected = new LabelWidget);
     }
 
     ~Impl()
@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(TabWidget)
 
     void buttonPressed(ButtonWidget &button)
     {
-        self.setCurrent(buttons->items().find(*buttons->organizer().findItemForWidget(button)));
+        self().setCurrent(buttons->items().find(*buttons->organizer().findItemForWidget(button)));
     }
 
     void dataItemAdded(ui::Data::Pos, ui::Item const &)
@@ -101,7 +101,7 @@ DENG_GUI_PIMPL(TabWidget)
         {
             current = pos;
             updateSelected();
-            emit self.currentTabChanged();
+            emit self().currentTabChanged();
         }
     }
 

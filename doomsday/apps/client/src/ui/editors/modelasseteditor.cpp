@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         App::packageLoader().audienceForActivity() += this;
 
         // The contents of the editor will scroll.
-        GuiWidget *container = &self.containerWidget();
+        GuiWidget *container = &self().containerWidget();
 
         container->add(assetChoice = new ChoiceWidget);
         assetChoice->popup().useInfoStyle();
@@ -103,8 +103,8 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         updateAssetsList();
     }
 
-    Rule const &firstColumnWidthRule() const { return self.firstColumnWidth(); }
-    ScrollAreaWidget &containerWidget() { return self.containerWidget(); }
+    Rule const &firstColumnWidthRule() const { return self().firstColumnWidth(); }
+    ScrollAreaWidget &containerWidget() { return self().containerWidget(); }
 
     void resetToDefaults(String const &/*settingName*/)
     {}
@@ -462,7 +462,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
     void redoLayout()
     {
-        SequentialLayout &layout = self.layout();
+        SequentialLayout &layout = self().layout();
         layout.clear();
         layout << *info
                << *instLabel;
@@ -470,7 +470,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         {
             layout << g->title() << *g;
         }
-        self.updateSidebarLayout(assetLabel->rule().width() +
+        self().updateSidebarLayout(assetLabel->rule().width() +
                                  assetChoice->rule().width(),
                                  assetChoice->rule().height());
     }

@@ -62,7 +62,7 @@ DENG2_PIMPL(ChatWidget)
 
     void sendMessage()
     {
-        String const msg = self.messageAsText();
+        String const msg = self().messageAsText();
         if(msg.isEmpty()) return;
 
         if(destination == 0)

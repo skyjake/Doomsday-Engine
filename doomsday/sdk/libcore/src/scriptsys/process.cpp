@@ -65,7 +65,7 @@ DENG2_PIMPL(Process)
 
         state = Stopped;
         clearStack();
-        self.pushContext(new Context(Context::BaseProcess, thisPublic, externalGlobals));
+        self().pushContext(new Context(Context::BaseProcess, thisPublic, externalGlobals));
         workingPath = "/";
     }
 

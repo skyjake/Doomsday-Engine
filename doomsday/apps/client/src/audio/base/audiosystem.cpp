@@ -509,7 +509,7 @@ DENG2_PIMPL(AudioSystem)
 
         // Let the music driver(s) know of the primary sfx interface, in case they
         // want to play audio through it.
-        setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
+        setMusicProperty(AUDIOP_SFX_INTERFACE, self().sfx());
     }
 
     /**
@@ -878,7 +878,7 @@ DENG2_PIMPL(AudioSystem)
         if (musAvail)
         {
             // Tell audio drivers about our soundfont config.
-            self.updateMusicMidiFont();
+            self().updateMusicMidiFont();
         }
     }
 
@@ -937,13 +937,13 @@ DENG2_PIMPL(AudioSystem)
 
         LOG_AUDIO_VERBOSE("Initializing sound effect playback...");
         // No available interface?
-        if (!self.sfx()) return;
+        if (!self().sfx()) return;
 
         // This is based on the scientific calculations that if the DOOM marine
         // is 56 units tall, 60 is about two meters.
         //// @todo Derive from the viewheight.
-        self.sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
-        self.sfx()->Listener(SFXLP_DOPPLER, 1.5f);
+        self().sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
+        self().sfx()->Listener(SFXLP_DOPPLER, 1.5f);
 
         // The audio driver is working, let's create the channels.
         initSfxChannels();
@@ -963,11 +963,11 @@ DENG2_PIMPL(AudioSystem)
         dint disableRefresh = false;
 
         // Nothing to refresh?
-        if (!self.sfx()) goto noRefresh;
+        if (!self().sfx()) goto noRefresh;
 
-        if (self.sfx()->Getv)
+        if (self().sfx()->Getv)
         {
-            self.sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+            self().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
         }
 
         if (!disableRefresh)
@@ -1023,7 +1023,7 @@ DENG2_PIMPL(AudioSystem)
     {
         if (!sfxAvail) return;
 
-        self.allowSfxRefresh(false);
+        self().allowSfxRefresh(false);
         sfxChannels->forAll([this, &id] (audio::SfxChannel &ch)
         {
             if (ch.hasBuffer())
@@ -1032,12 +1032,12 @@ DENG2_PIMPL(AudioSystem)
                 if (sbuf.sample && sbuf.sample->id == id)
                 {
                     // Stop and unload.
-                    self.sfx()->Reset(&sbuf);
+                    self().sfx()->Reset(&sbuf);
                 }
             }
             return LoopContinue;
         });
-        self.allowSfxRefresh(true);
+        self().allowSfxRefresh(true);
     }
 
     /**
@@ -1045,18 +1045,18 @@ DENG2_PIMPL(AudioSystem)
      */
     void destroySfxChannels()
     {
-        self.allowSfxRefresh(false);
+        self().allowSfxRefresh(false);
         sfxChannels->forAll([this] (audio::SfxChannel &ch)
         {
             ch.stop();
             if (ch.hasBuffer())
             {
-                self.sfx()->Destroy(&ch.buffer());
+                self().sfx()->Destroy(&ch.buffer());
                 ch.setBuffer(nullptr);
             }
             return LoopContinue;
         });
-        self.allowSfxRefresh(true);
+        self().allowSfxRefresh(true);
     }
 
     void createSfxChannels()
@@ -1069,13 +1069,13 @@ DENG2_PIMPL(AudioSystem)
 
         // Change the primary buffer format to match the channel format.
         dfloat parm[2] = { dfloat(bits), dfloat(rate) };
-        self.sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+        self().sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
         // Create sample buffers for the channels.
         dint idx = 0;
         sfxChannels->forAll([this, &num2D, &bits, &rate, &idx] (audio::SfxChannel &ch)
         {
-            ch.setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
+            ch.setBuffer(self().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
             if (!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed to create sample buffer for #%i") << idx;
@@ -1263,7 +1263,7 @@ DENG2_PIMPL(AudioSystem)
         // Are we stopping with this sector's emitter?
         if (flags & SSF_SECTOR)
         {
-            self.stopSound(soundId, (mobj_t *)sectorEmitter);
+            self().stopSound(soundId, (mobj_t *)sectorEmitter);
         }
 
         // Are we stopping with linked emitters?
@@ -1274,7 +1274,7 @@ DENG2_PIMPL(AudioSystem)
         while ((base = (ddmobj_base_t *)base->thinker.next))
         {
             // Stop sounds from this emitter.
-            self.stopSound(soundId, (mobj_t *)base);
+            self().stopSound(soundId, (mobj_t *)base);
         }
     }
 
@@ -1301,8 +1301,8 @@ DENG2_PIMPL(AudioSystem)
         sfxListenerSubsector = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
-        self.sfx()->Listenerv(SFXLP_REVERB, rev);
-        self.sfx()->Listener(SFXLP_UPDATE, 0);
+        self().sfx()->Listenerv(SFXLP_REVERB, rev);
+        self().sfx()->Listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfxListener()
@@ -1313,7 +1313,7 @@ DENG2_PIMPL(AudioSystem)
         if (!::sfxVolume) return;
 
         // Update the listener mobj.
-        self.setSfxListener(S_GetListenerMobj());
+        self().setSfxListener(S_GetListenerMobj());
         if (sfxListener)
         {
             {
@@ -1321,7 +1321,7 @@ DENG2_PIMPL(AudioSystem)
                 auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
-                self.sfx()->Listenerv(SFXLP_POSITION, vec);
+                self().sfx()->Listenerv(SFXLP_POSITION, vec);
             }
             {
                 // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
@@ -1329,14 +1329,14 @@ DENG2_PIMPL(AudioSystem)
                     sfxListener->angle / (dfloat) ANGLE_MAX * 360,
                     (sfxListener->dPlayer ? LOOKDIR2DEG(sfxListener->dPlayer->lookDir) : 0)
                 };
-                self.sfx()->Listenerv(SFXLP_ORIENTATION, vec);
+                self().sfx()->Listenerv(SFXLP_ORIENTATION, vec);
             }
             {
                 // Velocity. The unit is world distance units per second
                 auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
-                self.sfx()->Listenerv(SFXLP_VELOCITY, vec);
+                self().sfx()->Listenerv(SFXLP_VELOCITY, vec);
             }
 
             // Reverb effects. Has the current subsector changed?
@@ -1354,12 +1354,12 @@ DENG2_PIMPL(AudioSystem)
                 args[SFXLP_REVERB_DECAY  ] = aenv.decay;
                 args[SFXLP_REVERB_DAMPING] = aenv.damping;
 
-                self.sfx()->Listenerv(SFXLP_REVERB, args);
+                self().sfx()->Listenerv(SFXLP_REVERB, args);
             }
         }
 
         // Update all listener properties.
-        self.sfx()->Listener(SFXLP_UPDATE, 0);
+        self().sfx()->Listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfx3DModeIfChanged()
@@ -1426,7 +1426,7 @@ DENG2_PIMPL(AudioSystem)
     void reset()
     {
 #ifdef __CLIENT__
-        self.reset();
+        self().reset();
 #endif
         sfxClearLogical();
     }

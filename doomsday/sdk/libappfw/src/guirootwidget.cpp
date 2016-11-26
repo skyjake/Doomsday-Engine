@@ -131,8 +131,8 @@ DENG2_PIMPL(GuiRootWidget)
         , uTexAtlas("uTex", GLUniform::Sampler2D)
         , noFramesDrawnYet(true)
     {
-        self.audienceForChildAddition() += this;
-        self.audienceForFocusChange() += this;
+        self().audienceForChildAddition() += this;
+        self().audienceForFocusChange() += this;
 
         // The focus indicator exists outside the widget tree.
         focusIndicator = new FocusWidget;
@@ -151,11 +151,11 @@ DENG2_PIMPL(GuiRootWidget)
         // class destructor will destroy all widgets, but this class governs
         // shared GL resources, so we'll ask the widgets to do this now.
         focusIndicator->deinitialize();
-        self.notifyTree(&Widget::deinitialize);
+        self().notifyTree(&Widget::deinitialize);
 
         // Destroy GUI widgets while the shared resources are still available.
         GuiWidget::destroy(focusIndicator);
-        self.clearTree();
+        self().clearTree();
     }
 
     void initAtlas()
@@ -169,7 +169,7 @@ DENG2_PIMPL(GuiRootWidget)
             texBank.setAtlas(atlas.data());
 
             // Load a set of general purpose textures (derived classes may extend this).
-            self.loadCommonTextures();
+            self().loadCommonTextures();
         }
     }
 

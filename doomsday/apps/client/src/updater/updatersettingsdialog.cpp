@@ -61,7 +61,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
     Impl(Public *i, Mode mode) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         // Create the widgets.
         area.add(autoCheck   = new ToggleWidget);
@@ -132,12 +132,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         area.setContentSize(layout.width(), layout.height());
 
-        self.buttons()
+        self().buttons()
                 << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));
 
         if (mode == WithApplyAndCheckButton)
         {
-            self.buttons()
+            self().buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("Check Now"),
                                             new SignalAction(thisPublic, SLOT(applyAndCheckNow())));
         }

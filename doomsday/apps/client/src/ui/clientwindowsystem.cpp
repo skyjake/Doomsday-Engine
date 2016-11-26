@@ -43,8 +43,8 @@ DENG2_PIMPL(ClientWindowSystem)
     Impl(Public *i)
         : Base(i)
     {
-        self.setStyle(new ClientStyle);
-        self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
+        self().setStyle(new ClientStyle);
+        self().style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
         using SReg = ConfigProfiles;
         settings.define(SReg::ConfigVariable, "window.main.showFps")

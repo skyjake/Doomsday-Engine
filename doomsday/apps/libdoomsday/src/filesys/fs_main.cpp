@@ -236,7 +236,7 @@ DENG2_PIMPL(FS1)
             File1 &file = loadedFiles[i]->file();
             if (!index || index->catalogues(file))
             {
-                self.deindex(file);
+                self().deindex(file);
                 delete &file;
             }
         }
@@ -258,7 +258,7 @@ DENG2_PIMPL(FS1)
         // Within a subspace scheme?
         try
         {
-            Scheme &scheme = self.scheme(search.scheme());
+            Scheme &scheme = self().scheme(search.scheme());
             LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
@@ -324,10 +324,10 @@ DENG2_PIMPL(FS1)
                 LumpMapping const &mapping = *i;
                 if (mapping.first.compare(path)) continue;
 
-                lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
+                lumpnum_t lumpNum = self().lumpNumForName(mapping.second);
                 if (lumpNum < 0) continue;
 
-                return &self.lump(lumpNum);
+                return &self().lump(lumpNum);
             }
         }
 
@@ -404,7 +404,7 @@ DENG2_PIMPL(FS1)
             if (File1 *found = findLump(path, mode))
             {
                 // Do not read files twice.
-                if (!allowDuplicate && !self.checkFileId(found->composeUri())) return 0;
+                if (!allowDuplicate && !self().checkFileId(found->composeUri())) return 0;
 
                 // Get a handle to the lump we intend to open.
                 /// @todo The way this buffering works is nonsensical it should not be done here
@@ -423,7 +423,7 @@ DENG2_PIMPL(FS1)
             if (FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
-                if (!allowDuplicate && !self.checkFileId(de::Uri(foundPath, RC_NULL)))
+                if (!allowDuplicate && !self().checkFileId(de::Uri(foundPath, RC_NULL)))
                 {
                     fclose(found);
                     return 0;
@@ -444,7 +444,7 @@ DENG2_PIMPL(FS1)
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        File1 &file = self.interpret(*hndl, path, info);
+        File1 &file = self().interpret(*hndl, path, info);
 
         if (loadingForStartup)
         {

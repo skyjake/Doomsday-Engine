@@ -42,7 +42,7 @@ DENG2_PIMPL(UISettingsDialog)
 
     Impl(Public *i) : Base(i)
     {
-        auto &area = self.area();
+        auto &area = self().area();
 
         area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor")));
         area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"), App::config("ui.showAnnotations")));

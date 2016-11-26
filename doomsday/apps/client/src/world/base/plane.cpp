@@ -74,15 +74,15 @@ DENG2_PIMPL(Plane)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self());
 
 #ifdef __CLIENT__
         // Stop movement tracking of this plane.
-        map().trackedPlanes().remove(&self);
+        map().trackedPlanes().remove(thisPublic);
 #endif
     }
 
-    inline Map &map() const { return self.map(); }
+    inline Map &map() const { return self().map(); }
 
     void setHeight(ddouble newHeight)
     {
@@ -105,7 +105,7 @@ DENG2_PIMPL(Plane)
         if(!ddMapSetup)
         {
             // Update the sound emitter origin for the plane.
-            self.updateSoundEmitterOrigin();
+            self().updateSoundEmitterOrigin();
         }
 
         notifyHeightChanged();
@@ -114,7 +114,7 @@ DENG2_PIMPL(Plane)
         if(!ddMapSetup)
         {
             // Add ourself to tracked plane list (for movement interpolation).
-            map().trackedPlanes().insert(&self);
+            map().trackedPlanes().insert(thisPublic);
         }
 #endif
     }
@@ -139,13 +139,13 @@ DENG2_PIMPL(Plane)
 
     void notifyHeightChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(HeightChange, i) i->planeHeightChanged(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(HeightChange, i) i->planeHeightChanged(self());
     }
 
 #ifdef __CLIENT__
     void notifySmoothedHeightChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
     }
 
     void surfaceMaterialChanged(Surface &suf)
@@ -155,7 +155,7 @@ DENG2_PIMPL(Plane)
         if (!::ddMapSetup && surface.hasMaterial())
         {
             de::Uri uri = surface.material().manifest().composeUri();
-            self.spawnParticleGen(Def_GetGenerator(reinterpret_cast<uri_s *>(&uri)));
+            self().spawnParticleGen(Def_GetGenerator(reinterpret_cast<uri_s *>(&uri)));
         }
     }
 #endif

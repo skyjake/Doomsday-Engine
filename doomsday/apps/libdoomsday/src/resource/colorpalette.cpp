@@ -192,7 +192,7 @@ DENG2_PIMPL(ColorPalette)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(ColorTableChange, i)
         {
-            i->colorPaletteColorTableChanged(self);
+            i->colorPaletteColorTableChanged(self());
         }
     }
 

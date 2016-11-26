@@ -57,15 +57,15 @@ DENG2_PIMPL(LocalServerDialog)
     Impl(Public &i) : Base(i), portChanged(false)
     {
 #ifdef WIN32
-        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+        self().setWindowFlags(self().windowFlags() & ~Qt::WindowContextHelpButtonHint);
 #endif
 
         QSettings st;
 
-        self.setWindowTitle(tr("Start Local Server"));
+        self().setWindowTitle(tr("Start Local Server"));
 
         QVBoxLayout *mainLayout = new QVBoxLayout;
-        self.setLayout(mainLayout);
+        self().setLayout(mainLayout);
 
         QTabWidget *tabs = new QTabWidget;
         mainLayout->addWidget(tabs, 1);
@@ -154,7 +154,7 @@ DENG2_PIMPL(LocalServerDialog)
             runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder().toString());
         }
         form->addRow(tr("Runtime folder:"), runtime);
-        QObject::connect(runtime, SIGNAL(selected()), &self, SLOT(validate()));
+        QObject::connect(runtime, SIGNAL(selected()), thisPublic, SLOT(validate()));
 
         options = new QTextEdit;
         options->setTabChangesFocus(true);
@@ -168,8 +168,8 @@ DENG2_PIMPL(LocalServerDialog)
         mainLayout->addWidget(bbox);
         yes = bbox->addButton(tr("&Start Server"), QDialogButtonBox::YesRole);
         QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
-        QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
+        QObject::connect(yes, SIGNAL(clicked()), thisPublic, SLOT(accept()));
+        QObject::connect(no, SIGNAL(clicked()), thisPublic, SLOT(reject()));
         //QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
         yes->setDefault(true);
     }

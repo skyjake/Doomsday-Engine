@@ -45,8 +45,8 @@ DENG_GUI_PIMPL(SaveListWidget)
                 MouseEvent const &mouse = event.as<MouseEvent>();
                 if (button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
                 {
-                    emit d->self.doubleClicked(d->self.items().find(
-                            *d->self.organizer().findItemForWidget(button)));
+                    emit d->self().doubleClicked(d->self().items().find(
+                            *d->self().organizer().findItemForWidget(button)));
                     return true;
                 }
             }
@@ -59,7 +59,7 @@ DENG_GUI_PIMPL(SaveListWidget)
 
     Impl(Public *i, GamePanelButtonWidget &owner) : Base(i), owner(owner)
     {
-        self.organizer().audienceForWidgetUpdate() += this;
+        self().organizer().audienceForWidgetUpdate() += this;
     }
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
@@ -86,7 +86,7 @@ DENG_GUI_PIMPL(SaveListWidget)
 
     void toggleSelectedItem(ButtonWidget &button)
     {
-        auto const buttonItemPos = self.items().find(*self.organizer().findItemForWidget(button));
+        auto const buttonItemPos = self().items().find(*self().organizer().findItemForWidget(button));
 
         if (selected == buttonItemPos)
         {
@@ -100,12 +100,12 @@ DENG_GUI_PIMPL(SaveListWidget)
             updateItemHighlights(&button);
         }
 
-        emit self.selectionChanged(selected);
+        emit self().selectionChanged(selected);
     }
 
     void updateItemHighlights(ButtonWidget *selectedButton)
     {
-        for (auto *w : self.childWidgets())
+        for (auto *w : self().childWidgets())
         {
             if (auto *bw = w->maybeAs<ButtonWidget>())
             {

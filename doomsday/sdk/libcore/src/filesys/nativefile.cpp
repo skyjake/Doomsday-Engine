@@ -74,10 +74,10 @@ DENG2_PIMPL(NativeFile)
         if (!out)
         {
             // Are we allowed to output?
-            self.verifyWriteAccess();
+            self().verifyWriteAccess();
 
             QFile::OpenMode fileMode = QFile::ReadWrite;
-            if (self.mode() & Truncate)
+            if (self().mode() & Truncate)
             {
                 if (needTruncation)
                 {
@@ -93,12 +93,12 @@ DENG2_PIMPL(NativeFile)
                 /// @throw OutputError  Opening the output stream failed.
                 throw OutputError("NativeFile::output", "Failed to write " + nativePath);
             }
-            if (self.mode() & Truncate)
+            if (self().mode() & Truncate)
             {
-                Status st = self.status();
+                Status st = self().status();
                 st.size = 0;
                 st.modifiedAt = Time();
-                self.setStatus(st);
+                self().setStatus(st);
             }
         }
         return *out;

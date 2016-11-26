@@ -91,7 +91,7 @@ DENG2_PIMPL(GLTexture)
         size = Size();
         texTarget = GL_TEXTURE_2D;
         flags |= ParamsChanged;
-        self.setState(NotReady);
+        self().setState(NotReady);
     }
 
     bool isCube() const

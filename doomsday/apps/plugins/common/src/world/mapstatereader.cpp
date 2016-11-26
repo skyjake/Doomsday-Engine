@@ -197,7 +197,7 @@ DENG2_PIMPL(MapStateReader)
         dummyPlayer.plr = &dummyDDPlayer;
 
 #if !__JHEXEN__
-        ArrayValue const &presentPlayers = self.metadata().geta("players");
+        ArrayValue const &presentPlayers = self().metadata().geta("players");
 #endif
         for(int i = 0; i < MAXPLAYERS; ++i)
         {

@@ -69,7 +69,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         if (newGame.isNull())
         {
             // Back to Home -- sidebars are not expected to remain open.
-            self.close();
+            self().close();
         }
     }
 };

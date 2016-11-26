@@ -96,10 +96,10 @@ DENG2_PIMPL(LogSettingsDialog)
             {
                 initDomain(domainText[i],
                            domWidgets[i],
-                           i == 0? &self.area() : &fold->content());
+                           i == 0? &self().area() : &fold->content());
             }
-            self.area().add(separately);
-            self.area().add(fold);
+            self().area().add(separately);
+            self().area().add(fold);
 
             // This'll keep the dialog's size fixed even though the choices change size.
             columnWidth->setSource(domWidgets[0].level->maximumWidth());

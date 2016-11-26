@@ -121,13 +121,13 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         : Base(i)
         , packageId(packageId)
     {
-        self.add(summary = new LabelWidget);
+        self().add(summary = new LabelWidget);
         summary->setSizePolicy(ui::Fixed, ui::Expand);
         summary->setFont("small");
         summary->setTextColor("altaccent");
         summary->setAlignment(ui::AlignLeft);
 
-        auto *label = LabelWidget::newWithText(tr("Select:"), &self);
+        auto *label = LabelWidget::newWithText(tr("Select:"), thisPublic);
         label->setSizePolicy(ui::Expand, ui::Expand);
         label->setFont("small");
         label->setAlignment(ui::AlignLeft);
@@ -136,19 +136,19 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         allButton->setSizePolicy(ui::Expand, ui::Expand);
         allButton->setText(tr("All"));
         allButton->setFont("small");
-        self.add(allButton);
+        self().add(allButton);
 
         auto *noneButton = new ButtonWidget;
         noneButton->setSizePolicy(ui::Expand, ui::Expand);
         noneButton->setText(tr("None"));
         noneButton->setFont("small");
-        self.add(noneButton);
+        self().add(noneButton);
 
         auto *defaultsButton = new ButtonWidget;
         defaultsButton->setSizePolicy(ui::Expand, ui::Expand);
         defaultsButton->setText(tr("Defaults"));
         defaultsButton->setFont("small");
-        self.add(defaultsButton);
+        self().add(defaultsButton);
 
         contents = new MenuWidget;
         contents->enableIndicatorDraw(true);
@@ -158,29 +158,29 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         contents->layout().setRowPadding(Const(0));
         contents->organizer().setWidgetFactory(*this);
         contents->setGridSize(1, ui::Filled, 0, ui::Fixed);
-        self.add(contents);
+        self().add(contents);
 
         // Layout.
-        auto &rect = self.rule();
-        SequentialLayout layout(rect.left() + self.margins().left(),
-                                rect.top()  + self.margins().top());
+        auto &rect = self().rule();
+        SequentialLayout layout(rect.left() + self().margins().left(),
+                                rect.top()  + self().margins().top());
         layout << *label << *summary << *contents;
         summary->rule()
-                .setInput(Rule::Width,  rect.width() - self.margins().width());
+                .setInput(Rule::Width,  rect.width() - self().margins().width());
         contents->rule()
                 .setInput(Rule::Left,   rect.left())
-                .setInput(Rule::Width,  summary->rule().width() + self.margins().left())
+                .setInput(Rule::Width,  summary->rule().width() + self().margins().left())
                 .setInput(Rule::Height, OperatorRule::minimum(contents->contentHeight(),
-                                                              maxHeight - self.margins().height() -
+                                                              maxHeight - self().margins().height() -
                                                               label->rule().height() -
                                                               summary->rule().height()));
 
         SequentialLayout(label->rule().right(), label->rule().top(), ui::Right)
                << *defaultsButton << *noneButton << *allButton;
-        self.rule().setInput(Rule::Height, layout.height() + self.margins().bottom());
+        self().rule().setInput(Rule::Height, layout.height() + self().margins().bottom());
 
         // Configure margins.
-        for (Widget *w : self.childWidgets())
+        for (Widget *w : self().childWidgets())
         {
             w->as<GuiWidget>().margins().set("dialog.gap");
         }

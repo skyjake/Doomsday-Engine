@@ -48,13 +48,13 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
     Impl(Public *i) : Base(i)
     {
-        //self.setTextLineAlignment(ui::AlignLeft);
-        self.setSizePolicy(ui::Fixed, ui::Expand);
+        //self().setTextLineAlignment(ui::AlignLeft);
+        self().setSizePolicy(ui::Fixed, ui::Expand);
 
-        self.auxiliary().setText(_E(l) + tr("Reset"));
+        self().auxiliary().setText(_E(l) + tr("Reset"));
 
-        self.audienceForPress() += this;
-        self.auxiliary().audienceForPress() += this;
+        self().audienceForPress() += this;
+        self().auxiliary().audienceForPress() += this;
     }
 
     String prettyKey(String const &eventDesc)
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
             }
         }
 
-        self.setText(_E(b) + text);
+        self().setText(_E(b) + text);
     }
 
     void bindCommand(String const &eventDesc)
@@ -136,7 +136,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
     {
         if (&button == thisPublic)
         {
-            if (!self.hasFocus())
+            if (!self().hasFocus())
             {
                 focus();
             }
@@ -156,15 +156,15 @@ DENG_GUI_PIMPL(InputBindingWidget)
     void focus()
     {
         root().setFocus(thisPublic);
-        self.auxiliary().disable();
-        self.invertStyle();
+        self().auxiliary().disable();
+        self().invertStyle();
     }
 
     void unfocus()
     {
         root().setFocus(0);
-        self.auxiliary().enable();
-        self.invertStyle();
+        self().auxiliary().enable();
+        self().invertStyle();
     }
 };
 

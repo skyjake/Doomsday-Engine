@@ -66,7 +66,7 @@ DENG2_PIMPL(TextureBank)
     ~Impl()
     {
         // Get rid of items before the reverse lookup hash is destroyed.
-        self.clear();
+        self().clear();
     }
 };
 

@@ -40,7 +40,7 @@ DENG2_OBSERVES(Variable, Change  )
     {
         if (!var) return;
 
-        self.setText(var->value<TextValue>());
+        self().setText(var->value<TextValue>());
     }
 
     void setVariableFromWidget()
@@ -48,7 +48,7 @@ DENG2_OBSERVES(Variable, Change  )
         if (!var) return;
 
         var->audienceForChange() -= this;
-        var->set(TextValue(self.text()));
+        var->set(TextValue(self().text()));
         var->audienceForChange() += this;
     }
 
@@ -60,7 +60,7 @@ DENG2_OBSERVES(Variable, Change  )
     void variableBeingDeleted(Variable &)
     {
         var = 0;
-        self.disable();
+        self().disable();
     }
 };
 

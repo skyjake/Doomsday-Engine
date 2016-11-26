@@ -36,21 +36,21 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 
     void updateLabel()
     {
-        self.setStyleImage("package");
+        self().setStyleImage("package");
 
         if (packages.isEmpty())
         {
-            self.setText(noneLabel);
-            self.setTextColor("text");
-            self.setImageColor(style().colors().colorf("text"));
+            self().setText(noneLabel);
+            self().setTextColor("text");
+            self().setImageColor(style().colors().colorf("text"));
 
-            if (!noneLabel.isEmpty()) self.setImage(nullptr);
+            if (!noneLabel.isEmpty()) self().setImage(nullptr);
         }
         else
         {
-            self.setText(String::format("%i", packages.count()));
-            self.setTextColor("accent");
-            self.setImageColor(style().colors().colorf("accent"));
+            self().setText(String::format("%i", packages.count()));
+            self().setTextColor("accent");
+            self().setImageColor(style().colors().colorf("accent"));
         }
     }
 
@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
             // Notify.
             QStringList ids;
             for (auto const &p : packages) ids << p;
-            emit self.packageSelectionChanged(ids);
+            emit self().packageSelectionChanged(ids);
         }));
         root().addOnTop(dlg);
         if (setupFunc) setupFunc(*dlg);

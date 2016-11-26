@@ -124,8 +124,8 @@ DENG2_PIMPL(ClientMaterial)
 
     ~Impl()
     {
-        self.clearAllAnimators();
-        self.clearAllDecorations();
+        self().clearAllAnimators();
+        self().clearAllDecorations();
     }
 
     MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
@@ -140,7 +140,7 @@ DENG2_PIMPL(ClientMaterial)
 
         if (!canCreate) return nullptr;
 
-        animators.append(new MaterialAnimator(self, spec));
+        animators.append(new MaterialAnimator(self(), spec));
         return animators.back();
     }
 };

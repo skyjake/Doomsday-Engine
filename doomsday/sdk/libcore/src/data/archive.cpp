@@ -58,7 +58,7 @@ DENG2_PIMPL(Archive)
             return;
         }
 
-        self.readFromSource(entry, path, deserializedData);
+        self().readFromSource(entry, path, deserializedData);
     }
 };
 

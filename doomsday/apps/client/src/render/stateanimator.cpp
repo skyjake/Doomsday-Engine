@@ -151,7 +151,7 @@ DENG2_PIMPL(StateAnimator)
 
     Impl(Public *i, DotPath const &id) : Base(i)
     {
-        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(&self)).setReadOnly();
+        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
         names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
                                                         QStringLiteral("StateAnimator")));
         names.addText(VAR_ID, id).setReadOnly();
@@ -160,9 +160,9 @@ DENG2_PIMPL(StateAnimator)
         initVariables();
 
         // Set up the model drawing parameters.
-        if (!self.model().passes.isEmpty())
+        if (!self().model().passes.isEmpty())
         {
-            appearance.drawPasses = &self.model().passes;
+            appearance.drawPasses = &self().model().passes;
         }
         appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
         {
@@ -171,7 +171,7 @@ DENG2_PIMPL(StateAnimator)
         };
         appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
         {
-            bindPassUniforms(*self.model().currentProgram(),
+            bindPassUniforms(*self().model().currentProgram(),
                 pass.name,
                 state == ModelDrawable::PassBegun? Bind : Unbind);
         };
@@ -184,7 +184,7 @@ DENG2_PIMPL(StateAnimator)
 
     void initVariables()
     {
-        int const passCount = self.model().passes.size();
+        int const passCount = self().model().passes.size();
 
         // Clear lookups affected by the variables.
         indexForPassName.clear();
@@ -257,7 +257,7 @@ DENG2_PIMPL(StateAnimator)
         Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
                                                   block.gets(DEF_MATERIAL, DEFAULT_MATERIAL));
         passMaterialVar.audienceForChange() += this;
-        passForMaterialVariable.insert(&passMaterialVar, self.model().passes.findName(passName));
+        passForMaterialVariable.insert(&passMaterialVar, self().model().passes.findName(passName));
 
         /// @todo Should observe if the variable above is deleted unexpectedly. -jk
 
@@ -297,7 +297,7 @@ DENG2_PIMPL(StateAnimator)
 
             // The model should now be transformed even without active
             // animation sequences so that the variables are applied.
-            self.setFlags(AlwaysTransformNodes);
+            self().setFlags(AlwaysTransformNodes);
         }
         catch (Error const &er)
         {
@@ -328,7 +328,7 @@ DENG2_PIMPL(StateAnimator)
 
     Variable const &materialVariableForPass(duint passIndex) const
     {
-        auto const &model = self.model();
+        auto const &model = self().model();
         if (!model.passes.isEmpty())
         {
             String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
@@ -383,7 +383,7 @@ DENG2_PIMPL(StateAnimator)
      */
     duint materialForUserProvidedName(String const &materialName) const
     {
-       auto const &model = self.model();
+       auto const &model = self().model();
        auto const matIndex = model.materialIndexForName.constFind(materialName);
        if (matIndex != model.materialIndexForName.constEnd())
        {
@@ -470,13 +470,13 @@ DENG2_PIMPL(StateAnimator)
     int animationId(String const &name) const
     {
         return ModelRenderer::identifierFromText(name, [this] (String const &name) {
-            return self.model().animationIdForName(name);
+            return self().model().animationIdForName(name);
         });
     }
 
     Sequence &start(Sequence const &spec)
     {
-        Sequence &anim = self.start(spec.animId, spec.node).as<Sequence>();
+        Sequence &anim = self().start(spec.animId, spec.node).as<Sequence>();
         anim.apply(spec);
         if (anim.timeline)
         {
@@ -508,7 +508,7 @@ void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("self.ASSET.onInit"),
+                            QStringLiteral("self().ASSET.onInit"),
                             "$self");
     }
 }
@@ -596,7 +596,7 @@ void StateAnimator::triggerByState(String const &stateName)
         }
 
         /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
-                << d->names.geti("self.__id__") << seq.name;*/
+                << d->names.geti("self().__id__") << seq.name;*/
         break;
     }
 }
@@ -618,7 +618,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("self.ASSET.onDamage"),
+                            QStringLiteral("self().ASSET.onDamage"),
                             "$self", points,
                             inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);

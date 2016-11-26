@@ -70,7 +70,7 @@ DENG2_PIMPL(InfoBank)
                         << fullIdentifier
                         << ScriptedInfo::sourceLocation(sub);
 
-                self.remove(fullIdentifier);
+                self().remove(fullIdentifier);
                 delete group.remove(name);
             }
             return LoopContinue;

@@ -92,7 +92,7 @@ DENG2_PIMPL(Context)
         : Base(i)
         , type(type)
         , owner(owner)
-        , evaluator(self)
+        , evaluator(*i)
         , ownsNamespace(false)
         , names(globals)
     {
@@ -111,7 +111,7 @@ DENG2_PIMPL(Context)
         {
             delete names;
         }
-        self.reset();
+        self().reset();
     }
 
     /// Returns the topmost control flow information.

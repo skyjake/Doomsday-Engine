@@ -348,7 +348,7 @@ DENG2_PIMPL(MaterialAnimator)
     void initLayers()
     {
         clearLayers();
-        for (int i = 0; i < self.material().layerCount(); ++i)
+        for (int i = 0; i < self().material().layerCount(); ++i)
         {
             layers << new LayerState;
         }
@@ -361,7 +361,7 @@ DENG2_PIMPL(MaterialAnimator)
         {
             layers[i]->stageTextures.clear();
 
-            if (world::TextureMaterialLayer const *layer = self.material().layer(i).maybeAs<world::TextureMaterialLayer>())
+            if (world::TextureMaterialLayer const *layer = self().material().layer(i).maybeAs<world::TextureMaterialLayer>())
             {
                 for (int k = 0; k < layer->stageCount(); ++k)
                 {
@@ -379,7 +379,7 @@ DENG2_PIMPL(MaterialAnimator)
     void initDecorations()
     {
         clearDecorations();
-        self.material().forAllDecorations([this] (MaterialDecoration &decor)
+        self().material().forAllDecorations([this] (MaterialDecoration &decor)
         {
             decorations << new Decoration(decor);
             return LoopContinue;

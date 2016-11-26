@@ -84,7 +84,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         label.setSizePolicy(ui::Expand, ui::Expand);
         label.setMaximumTextWidth(*maxWidth);
         widget.margins().setLeftRight("").setTopBottom(RuleBank::UNIT);
-        widget.addEventHandler(new HoverHandler(self));
+        widget.addEventHandler(new HoverHandler(self()));
     }
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
@@ -102,7 +102,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         {
             for (Value const *value : array->elements())
             {
-                menu->items() << self.makeItem(*value);
+                menu->items() << self().makeItem(*value);
             }
         }
         else
@@ -110,7 +110,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
             String const value = var->value().asText();
             if (!value.isEmpty())
             {
-                menu->items() << self.makeItem(var->value());
+                menu->items() << self().makeItem(var->value());
             }
         }
     }
@@ -149,7 +149,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
     void variableBeingDeleted(Variable &) override
     {
         var = nullptr;
-        self.disable();
+        self().disable();
     }
 };
 

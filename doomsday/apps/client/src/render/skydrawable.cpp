@@ -375,7 +375,7 @@ DENG2_PIMPL(SkyDrawable)
     ~Impl()
     {
         // Stop observing Sky change notifications (if observing).
-        self.configure();
+        self().configure();
     }
 
     /**
@@ -578,7 +578,7 @@ DENG2_PIMPL(SkyDrawable)
     void skyBeingDeleted(Sky const &)
     {
         // Stop observing Sky change notifications.
-        self.configure();
+        self().configure();
     }
 
     /// Observes Sky HeightChange

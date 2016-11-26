@@ -191,18 +191,18 @@ DENG2_PIMPL(ConfigProfiles)
     {
         Profile *prof = new Profile;
         prof->setName(name);
-        self.add(prof);
+        self().add(prof);
         return prof;
     }
 
     Profile *tryFind(String const &name) const
     {
-        return self.tryFind(name)->maybeAs<Profile>();
+        return self().tryFind(name)->maybeAs<Profile>();
     }
 
     Profile &currentProfile() const
     {
-        return self.find(current).as<Profile>();
+        return self().find(current).as<Profile>();
     }
 
     QVariant getDefaultFromConfig(String const &name)
@@ -246,7 +246,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void fetch(String const &profileName)
     {
-        Profile &prof = self.find(profileName).as<Profile>();
+        Profile &prof = self().find(profileName).as<Profile>();
         if (prof.isReadOnly()) return;
 
         foreach (Setting const &st, settings.values())
@@ -288,7 +288,7 @@ DENG2_PIMPL(ConfigProfiles)
     {
         current = name;
 
-        if (!self.persistentName().isEmpty())
+        if (!self().persistentName().isEmpty())
         {
             App::config().set(configVarName(), name);
         }
@@ -296,7 +296,7 @@ DENG2_PIMPL(ConfigProfiles)
 
     void apply(String const &profileName)
     {
-        Profile &profile = self.find(profileName).as<Profile>();
+        Profile &profile = self().find(profileName).as<Profile>();
 
         foreach (Setting const &st, settings.values())
         {
@@ -312,9 +312,9 @@ DENG2_PIMPL(ConfigProfiles)
 
         if (current == profileName) return;
 
-        if (!self.persistentName().isEmpty())
+        if (!self().persistentName().isEmpty())
         {
-            LOG_MSG("Changing %s profile to '%s'") << self.persistentName() << profileName;
+            LOG_MSG("Changing %s profile to '%s'") << self().persistentName() << profileName;
         }
 
         // First update the old profile.
@@ -352,8 +352,8 @@ DENG2_PIMPL(ConfigProfiles)
      */
     String configVarName() const
     {
-        if (self.persistentName().isEmpty()) return "";
-        return self.persistentName().concatenateMember("profile");
+        if (self().persistentName().isEmpty()) return "";
+        return self().persistentName().concatenateMember("profile");
     }
 
     QVariant textToSettingValue(String const &text, String const &settingName) const
@@ -402,12 +402,12 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void currentGameChanged(Game const &newGame)
     {
-        if (!self.isPersistent() || newGame.isNull()) return;
+        if (!self().isPersistent() || newGame.isNull()) return;
 
         LOG_AS("ConfigProfiles");
-        LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self.persistentName();
+        LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self().persistentName();
 
-        self.deserialize();
+        self().deserialize();
 
         // Settings haven't previously been created -- make sure we at least
         // have the Custom profile.
@@ -428,7 +428,7 @@ DENG2_PIMPL(ConfigProfiles)
             }
             else
             {
-                current = self.profiles().first();
+                current = self().profiles().first();
             }
         }
 
@@ -448,10 +448,10 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
-        if (!self.isPersistent() || gameBeingUnloaded.isNull()) return;
+        if (!self().isPersistent() || gameBeingUnloaded.isNull()) return;
 
         LOG_AS("ConfigProfiles");
-        LOG_DEBUG("Game being unloaded, serializing %s profiles") << self.persistentName();
+        LOG_DEBUG("Game being unloaded, serializing %s profiles") << self().persistentName();
 
         // Update the current profile.
         fetch(current);
@@ -459,7 +459,7 @@ DENG2_PIMPL(ConfigProfiles)
         // Remember which profile is the current one.
         App::config().set(configVarName(), current);
 
-        self.serialize();
+        self().serialize();
     }
 };
 

@@ -126,7 +126,7 @@ DENG2_PIMPL(Games)
     {
         if (!mainCall)
         {
-            mainCall.enqueue([this] () { self.checkReadiness(); });
+            mainCall.enqueue([this] () { self().checkReadiness(); });
         }
     }
 
@@ -303,7 +303,7 @@ void Games::checkReadiness()
             locateStartupResources(game);
 
             Games &self = *this; // MSVC 2013 cannot figure it out inside the lambda...
-            DENG2_FOR_EACH_OBSERVER(ProgressAudience, i, self.audienceForProgress())
+            DENG2_FOR_EACH_OBSERVER(ProgressAudience, i, self().audienceForProgress())
             {
                 i->gameWorkerProgress(n * 200 / count() - 1);
             }

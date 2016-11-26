@@ -26,10 +26,10 @@ DENG2_PIMPL(Preferences)
     Impl(Public &i) : Base(i), consoleFont(defaultConsoleFont())
     {
 #ifndef MACOSX
-        self.setWindowModality(Qt::ApplicationModal);
+        self().setWindowModality(Qt::ApplicationModal);
 #endif
 #ifdef WIN32
-        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+        self().setWindowFlags(self().windowFlags() & ~Qt::WindowContextHelpButtonHint);
 #endif
 
         QSettings st;
@@ -38,10 +38,10 @@ DENG2_PIMPL(Preferences)
             consoleFont.fromString(st.value("Preferences/consoleFont").toString());
         }
 
-        self.setWindowTitle(tr("Preferences"));
+        self().setWindowTitle(tr("Preferences"));
 
         QVBoxLayout *mainLayout = new QVBoxLayout;
-        self.setLayout(mainLayout);
+        self().setLayout(mainLayout);
 
         mainLayout->addStretch(1);
 
@@ -128,8 +128,8 @@ DENG2_PIMPL(Preferences)
         mainLayout->addWidget(bbox);
         QPushButton *yes = bbox->addButton(tr("&OK"), QDialogButtonBox::YesRole);
         QPushButton *no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
-        QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
+        QObject::connect(yes, SIGNAL(clicked()), thisPublic, SLOT(accept()));
+        QObject::connect(no, SIGNAL(clicked()), thisPublic, SLOT(reject()));
         yes->setDefault(true);
 #endif
     }

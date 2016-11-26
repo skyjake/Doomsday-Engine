@@ -26,7 +26,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
 
     Impl(Public *i) : Base(i)
     {
-        self.add(drawer = new PanelWidget);
+        self().add(drawer = new PanelWidget);
         drawer->set(Background(Vector4f(0, 0, 0, .15f)));
     }
 };

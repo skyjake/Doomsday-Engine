@@ -86,8 +86,8 @@ DENG2_PIMPL(Material)
 
     ~Impl()
     {
-        qDeleteAll(self._layers);
-        //self.clearAllLayers();
+        qDeleteAll(self()._layers);
+        //self().clearAllLayers();
     }
 
     inline bool haveValidDimensions() const {
@@ -96,7 +96,7 @@ DENG2_PIMPL(Material)
 
     TextureMaterialLayer *firstTextureLayer() const
     {
-        for (Layer *layer : self._layers)
+        for (Layer *layer : self()._layers)
         {
             if (layer->is<DetailTextureMaterialLayer>()) continue;
             if (layer->is<ShineTextureMaterialLayer>())  continue;
@@ -153,7 +153,7 @@ DENG2_PIMPL(Material)
     void textureDimensionsChanged(res::Texture const &texture)
     {
         DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
-        self.setDimensions(texture.dimensions());
+        self().setDimensions(texture.dimensions());
     }
 
     // Observes Texture Deletion.

@@ -41,9 +41,9 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
         , settings(reg)
         , button(0)
     {
-        self.add(button = new PopupButtonWidget);
+        self().add(button = new PopupButtonWidget);
         button->setOpener([this] (PopupWidget *) {
-            self.openMenu();
+            self().openMenu();
         });
 
         updateStyle();
@@ -58,22 +58,22 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
 
     void populate()
     {
-        self.items().clear();
+        self().items().clear();
 
         foreach (String prof, settings.profiles())
         {
-            self.items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
+            self().items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
         }
 
         // The items are alphabetically ordered.
-        self.items().sort();
+        self().items().sort();
 
-        self.setSelected(self.items().findData(settings.currentProfile()));
+        self().setSelected(self().items().findData(settings.currentProfile()));
     }
 
     String currentProfile() const
     {
-        return self.selectedItem().data().toString();
+        return self().selectedItem().data().toString();
     }
 };
 

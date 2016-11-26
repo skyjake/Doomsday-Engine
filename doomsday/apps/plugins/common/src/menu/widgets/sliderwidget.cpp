@@ -55,7 +55,7 @@ DENG2_PIMPL(SliderWidget)
         float range = max - min;
         if(!range) range = 1; // Should never happen...
 
-        float useVal = self.value() - min;
+        float useVal = self().value() - min;
         return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
 
 #undef WIDTH

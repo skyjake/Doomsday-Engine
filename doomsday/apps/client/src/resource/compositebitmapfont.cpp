@@ -53,12 +53,12 @@ DENG2_PIMPL(CompositeBitmapFont)
     {
         zap(glyphs);
         zap(missingGlyph);
-        self._flags |= AbstractFont::Colorize;
+        self()._flags |= AbstractFont::Colorize;
     }
 
     ~Impl()
     {
-        self.glDeinit();
+        self().glDeinit();
     }
 
     Glyph &glyph(uchar ch)

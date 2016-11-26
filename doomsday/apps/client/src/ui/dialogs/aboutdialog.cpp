@@ -44,12 +44,12 @@ DENG2_PIMPL(AboutDialog)
         // Popup with GL info.
         glPopup = new DocumentPopupWidget;
         glPopup->document().setText(Sys_GLDescription());
-        self.add(glPopup);
+        self().add(glPopup);
 
         // Popup with audio info.
         audioPopup = new DocumentPopupWidget;
         audioPopup->document().setText(App_AudioSystem().description());
-        self.add(audioPopup);
+        self().add(audioPopup);
     }
 };
 

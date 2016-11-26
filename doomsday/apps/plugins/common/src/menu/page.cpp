@@ -106,7 +106,7 @@ DENG2_PIMPL(Page)
         fontid_t oldFont = FR_Font();
 
         /// @kludge We cannot yet query line height from the font...
-        FR_SetFont(self.predefinedFont(MENU_FONT1));
+        FR_SetFont(self().predefinedFont(MENU_FONT1));
         int lh = FR_TextHeight("{case}WyQ");
         if(lineOffset)
         {
@@ -225,7 +225,7 @@ DENG2_PIMPL(Page)
     {
         DENG2_ASSERT(newFocus != 0);
 
-        if(Widget *focused = self.focusWidget())
+        if(Widget *focused = self().focusWidget())
         {
             if(focused != newFocus)
             {
@@ -238,7 +238,7 @@ DENG2_PIMPL(Page)
             }
         }
 
-        focus = self.indexOf(newFocus);
+        focus = self().indexOf(newFocus);
         newFocus->setFlags(Widget::Focused);
         newFocus->execAction(Widget::FocusGained);
     }

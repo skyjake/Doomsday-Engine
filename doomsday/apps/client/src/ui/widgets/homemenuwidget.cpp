@@ -33,7 +33,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     Impl(Public *i) : Base(i)
     {
-        self.organizer().audienceForWidgetCreation() += this;
+        self().organizer().audienceForWidgetCreation() += this;
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
@@ -51,18 +51,18 @@ DENG_GUI_PIMPL(HomeMenuWidget)
     {
         if (asset.state() == Asset::Ready)
         {
-            self.assets().audienceForStateChange() -= this; // only scroll once
+            self().assets().audienceForStateChange() -= this; // only scroll once
             scrollToSelected();
         }
     }
 
     void scrollToSelected()
     {
-        if (self.hasRoot())
+        if (self().hasRoot())
         {
-            if (auto *widget = self.itemWidget<GuiWidget>(selectedIndex))
+            if (auto *widget = self().itemWidget<GuiWidget>(selectedIndex))
             {
-                self.findTopmostScrollable().scrollToWidget(*widget);
+                self().findTopmostScrollable().scrollToWidget(*widget);
             }
         }
     }

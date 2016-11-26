@@ -38,10 +38,10 @@ DENG_GUI_PIMPL(HeaderWidget)
 
     Impl(Public *i) : Base(i)
     {
-        self.add(logoBg    = new LabelWidget);
-        self.add(logo      = new LabelWidget);
-        self.add(title     = new LabelWidget);
-        self.add(infoPanel = new PanelWidget);
+        self().add(logoBg    = new LabelWidget);
+        self().add(logo      = new LabelWidget);
+        self().add(title     = new LabelWidget);
+        self().add(infoPanel = new PanelWidget);
 
         info  = new LabelWidget;
         infoPanel->setContent(info);
@@ -49,7 +49,7 @@ DENG_GUI_PIMPL(HeaderWidget)
         {
             infoPanel->open();
         }
-        self.add(menuButton = new PopupButtonWidget);
+        self().add(menuButton = new PopupButtonWidget);
 
         showDescriptionVar().audienceForChange() += this;
     }

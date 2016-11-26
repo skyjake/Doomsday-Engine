@@ -174,7 +174,7 @@ DENG2_PIMPL(Resources)
 
         if (!deferredReset && needReset)
         {
-            deferredReset.enqueue([this] () { self.reloadAllResources(); });
+            deferredReset.enqueue([this] () { self().reloadAllResources(); });
         }
     }
 };

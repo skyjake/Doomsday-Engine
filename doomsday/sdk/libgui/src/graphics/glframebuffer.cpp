@@ -323,7 +323,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void release()
     {
-        self.setState(NotReady);
+        self().setState(NotReady);
         if (fbo)
         {
             releaseRenderBuffers();
@@ -363,7 +363,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replace(GLenum attachment, GLTexture &newTexture)
     {
-        DENG2_ASSERT(self.isReady()); // must already be inited
+        DENG2_ASSERT(self().isReady()); // must already be inited
         DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
 
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
@@ -374,7 +374,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replaceWithNewRenderBuffer(Flags const &attachment)
     {
-        DENG2_ASSERT(self.isReady()); // must already be inited
+        DENG2_ASSERT(self().isReady()); // must already be inited
         if (attachment == DepthStencil) // this supported only
         {
             GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
@@ -387,7 +387,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replaceWithExistingRenderBuffer(Flags const &attachment, GLuint renderBufId)
     {
-        DENG2_ASSERT(self.isReady());       // must already be inited
+        DENG2_ASSERT(self().isReady());       // must already be inited
 
         auto id = flagsToAttachmentId(attachment);
 
@@ -408,7 +408,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         if (isDefault())
         {
-            self.setState(Ready);
+            self().setState(Ready);
             return;
         }
 
@@ -427,7 +427,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT? "No images attached" :
                                                                         QString("Unsupported (0x%1)").arg(status, 0, 16));
         }
-        self.setState(Ready);
+        self().setState(Ready);
 
         GLState::current().target().glBind();
         LIBGUI_ASSERT_GL_OK();

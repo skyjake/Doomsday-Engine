@@ -54,17 +54,17 @@ DENG2_PIMPL(VRWindowTransform)
 
     GLFramebuffer &target() const
     {
-        return self.window().framebuffer();
+        return self().window().framebuffer();
     }
 
     int width() const
     {
-        return self.window().pixelWidth();
+        return self().window().pixelWidth();
     }
 
     int height() const
     {
-        return self.window().pixelHeight();
+        return self().window().pixelHeight();
     }
 
     float displayModeDependentUIScalingFactor() const
@@ -80,7 +80,7 @@ DENG2_PIMPL(VRWindowTransform)
     void drawContent() const
     {
         LIBGUI_ASSERT_GL_OK();
-        self.window().drawWindowContent();
+        self().window().drawWindowContent();
         LIBGUI_ASSERT_GL_OK();
     }
 
@@ -266,7 +266,7 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::QuadBuffered:
-            if (self.window().format().stereo())
+            if (self().window().format().stereo())
             {
                 /// @todo Fix me!
 
@@ -291,7 +291,7 @@ DENG2_PIMPL(VRWindowTransform)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
             QPoint ulCorner(0, 0);
-            ulCorner = self.window().mapToGlobal(ulCorner); // widget to screen coordinates
+            ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
             bool const rowParityIsEven = ((ulCorner.y() % 2) == 0);
 
             // Draw left eye view directly to the screen

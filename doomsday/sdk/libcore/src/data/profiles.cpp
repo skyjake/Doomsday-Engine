@@ -143,7 +143,7 @@ DENG2_PIMPL(Profiles)
 
                     LOG_VERBOSE("Reading profile '%s'") << profileName;
 
-                    auto *prof = self.profileFromInfoBlock(profBlock);
+                    auto *prof = self().profileFromInfoBlock(profBlock);
                     prof->setName(profileName);
                     prof->setReadOnly(markReadOnly);
                     add(prof);
@@ -342,7 +342,7 @@ DENG2_PIMPL(Profiles::AbstractProfile)
     {
         if (owner)
         {
-            owner->remove(self);
+            owner->remove(self());
         }
     }
 };

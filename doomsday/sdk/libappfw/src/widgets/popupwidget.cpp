@@ -51,35 +51,35 @@ DENG_GUI_PIMPL(PopupWidget)
 
     void flipOpeningDirectionIfNeeded()
     {
-        ui::Direction openDir = self.openingDirection();
+        ui::Direction openDir = self().openingDirection();
 
         // Opening direction depends on the anchor position: popup will open to
         // direction that has more space available.
         switch (openDir)
         {
         case ui::Up:
-            if (anchor.midY().value() < self.root().viewHeight().value()/2)
+            if (anchor.midY().value() < self().root().viewHeight().value()/2)
             {
                 openDir = ui::Down;
             }
             break;
 
         case ui::Down:
-            if (anchor.midY().value() > self.root().viewHeight().value()/2)
+            if (anchor.midY().value() > self().root().viewHeight().value()/2)
             {
                 openDir = ui::Up;
             }
             break;
 
         case ui::Left:
-            if (anchor.midX().value() < self.root().viewWidth().value()/2)
+            if (anchor.midX().value() < self().root().viewWidth().value()/2)
             {
                 openDir = ui::Right;
             }
             break;
 
         case ui::Right:
-            if (anchor.midX().value() > self.root().viewWidth().value()/2)
+            if (anchor.midX().value() > self().root().viewWidth().value()/2)
             {
                 openDir = ui::Left;
             }
@@ -89,14 +89,14 @@ DENG_GUI_PIMPL(PopupWidget)
             break;
         }
 
-        self.setOpeningDirection(openDir);
+        self().setOpeningDirection(openDir);
     }
 
     typedef Vector2<Rule const *> Vector2R;
 
     Vector2R anchorRule() const
     {
-        switch (self.openingDirection())
+        switch (self().openingDirection())
         {
         case ui::Up:
             return Vector2R(&anchor.midX(), &anchor.top());
@@ -125,7 +125,7 @@ DENG_GUI_PIMPL(PopupWidget)
 
     void updateLayout()
     {
-        self.rule()
+        self().rule()
                 .clearInput(Rule::Left)
                 .clearInput(Rule::Right)
                 .clearInput(Rule::Top)
@@ -135,55 +135,55 @@ DENG_GUI_PIMPL(PopupWidget)
 
         auto anchorPos = anchorRule();
 
-        switch (self.openingDirection())
+        switch (self().openingDirection())
         {
         case ui::Up:
-            self.rule()
+            self().rule()
                     .setInput(Rule::Bottom, OperatorRule::maximum(
                                   *anchorPos.y - *marker,
-                                  self.rule().height()))
+                                  self().rule().height()))
                     .setInput(Rule::Left, OperatorRule::clamped(
-                                  *anchorPos.x - self.rule().width() / 2,
-                                  self.margins().left(),
-                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
+                                  *anchorPos.x - self().rule().width() / 2,
+                                  self().margins().left(),
+                                  self().root().viewWidth() - self().rule().width() - self().margins().right()));
             break;
 
         case ui::Down:
-            self.rule()
+            self().rule()
                     .setInput(Rule::Top,  OperatorRule::minimum(
                                   *anchorPos.y + *marker,
-                                  self.root().viewHeight() - self.rule().height() - self.margins().bottom()))
+                                  self().root().viewHeight() - self().rule().height() - self().margins().bottom()))
                     .setInput(Rule::Left, OperatorRule::clamped(
-                                  *anchorPos.x - self.rule().width() / 2,
-                                  self.margins().left(),
-                                  self.root().viewWidth() - self.rule().width() - self.margins().right()));
+                                  *anchorPos.x - self().rule().width() / 2,
+                                  self().margins().left(),
+                                  self().root().viewWidth() - self().rule().width() - self().margins().right()));
             break;
 
         case ui::Left:
-            self.rule()
+            self().rule()
                     .setInput(Rule::Right, OperatorRule::maximum(
                                   *anchorPos.x - *marker,
-                                  self.rule().width()))
+                                  self().rule().width()))
                     .setInput(Rule::Top, OperatorRule::clamped(
-                                  *anchorPos.y - self.rule().height() / 2,
-                                  self.margins().top(),
-                                  self.root().viewHeight() - self.rule().height() -
-                                  self.margins().bottom() + self.margins().top()));
+                                  *anchorPos.y - self().rule().height() / 2,
+                                  self().margins().top(),
+                                  self().root().viewHeight() - self().rule().height() -
+                                  self().margins().bottom() + self().margins().top()));
             break;
 
         case ui::Right:
-            self.rule()
+            self().rule()
                     .setInput(Rule::Left, OperatorRule::minimum(
                                   *anchorPos.x + *marker,
-                                  self.root().viewWidth() - self.rule().width() - self.margins().right()))
+                                  self().root().viewWidth() - self().rule().width() - self().margins().right()))
                     .setInput(Rule::Top,  OperatorRule::clamped(
-                                  *anchorPos.y - self.rule().height() / 2,
-                                  self.margins().top(),
-                                  self.root().viewHeight() - self.rule().height() - self.margins().bottom()));
+                                  *anchorPos.y - self().rule().height() / 2,
+                                  self().margins().top(),
+                                  self().root().viewHeight() - self().rule().height() - self().margins().bottom()));
             break;
 
         case ui::NoDirection:
-            self.rule().setMidAnchorX(*anchorPos.x)
+            self().rule().setMidAnchorX(*anchorPos.x)
                        .setMidAnchorY(*anchorPos.y);
             break;
         }
@@ -192,11 +192,11 @@ DENG_GUI_PIMPL(PopupWidget)
     void updateStyle()
     {
         Style const &st = style();
-        bool const opaqueBackground = (self.levelOfNesting() > 0);
+        bool const opaqueBackground = (self().levelOfNesting() > 0);
 
         if (colorTheme == Inverted)
         {
-            self.set(self.infoStyleBackground());
+            self().set(self().infoStyleBackground());
         }
         else
         {
@@ -206,13 +206,13 @@ DENG_GUI_PIMPL(PopupWidget)
                           st.colors().colorf("glow"),
                           st.rules().rule("glow").valuei());
             bg.blur = style().sharedBlurWidget();
-            self.set(bg);
+            self().set(bg);
         }
 
         if (opaqueBackground)
         {
             // If nested, use an opaque background.
-            self.set(self.background().withSolidFillOpacity(1));
+            self().set(self().background().withSolidFillOpacity(1));
         }
     }
 };

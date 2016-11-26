@@ -90,17 +90,17 @@ DENG2_PIMPL(Surface)
     ~Impl()
     {
         // Stop scroll interpolation for this surface.
-        self.map().scrollingSurfaces().remove(&self);
+        self().map().scrollingSurfaces().remove(thisPublic);
     }
 #endif
 
-    inline MapElement &owner() const { return self.parent(); }
+    inline MapElement &owner() const { return self().parent(); }
 
 #ifdef DENG_DEBUG
     bool isSideMiddle() const
     {
         return owner().type() == DMU_SIDE
-               && &self == &owner().as<LineSide>().middle();
+               && thisPublic == &owner().as<LineSide>().middle();
     }
 
     bool isSectorExtraPlane() const
@@ -126,7 +126,7 @@ DENG2_PIMPL(Surface)
 #ifdef __CLIENT__
     void notifyOriginSmoothedChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
     }
 #endif
 

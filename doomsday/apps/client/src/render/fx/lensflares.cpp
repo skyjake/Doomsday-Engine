@@ -276,7 +276,7 @@ DENG2_PIMPL(LensFlares)
 
         buffer = new VBuf;
         drawable.addBuffer(buffer);
-        self.shaders().build(drawable.program(), "fx.lensflares")
+        self().shaders().build(drawable.program(), "fx.lensflares")
                 << uMvpMatrix
                 << uViewUnit << uPixelAsUv << uActiveRect
                 << uAtlas << uDepthBuf;

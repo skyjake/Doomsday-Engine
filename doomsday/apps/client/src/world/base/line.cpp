@@ -218,14 +218,14 @@ DENG2_PIMPL(Line::Side)
 #ifdef __CLIENT__
     void updateRadioCorner(shadowcorner_t &sc, dfloat openness, Plane *proximityPlane = nullptr, bool top = false)
     {
-        DENG2_ASSERT(self._sector);
+        DENG2_ASSERT(self()._sector);
         sc.corner    = openness;
         sc.proximity = proximityPlane;
         if (sc.proximity)
         {
             // Determine relative height offsets (affects shadow map selection).
             sc.pHeight = sc.proximity->heightSmoothed();
-            sc.pOffset = sc.pHeight - self._sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
+            sc.pOffset = sc.pHeight - self()._sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
         }
         else
         {
@@ -1099,7 +1099,7 @@ DENG2_PIMPL(Line)
         if (!gdata)
         {
             // Time to calculate this info.
-            gdata.reset(new GeomData(self.from(), self.to()));
+            gdata.reset(new GeomData(self().from(), self().to()));
         }
         return *gdata;
     }

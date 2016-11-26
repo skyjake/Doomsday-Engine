@@ -52,8 +52,8 @@ DENG_GUI_PIMPL(BusyWidget)
         progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);
         progress->setRange(Rangei(0, 200));
         progress->setImageScale(.2f);
-        progress->rule().setRect(self.rule());
-        self.add(progress);
+        progress->rule().setRect(self().rule());
+        self().add(progress);
     }
 
     void glInit()

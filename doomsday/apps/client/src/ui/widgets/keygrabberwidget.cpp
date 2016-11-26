@@ -36,15 +36,15 @@ DENG_GUI_PIMPL(KeyGrabberWidget)
     void focus()
     {
         root().setFocus(thisPublic);
-        self.set(Background(Background::GradientFrame, style().colors().colorf("accent"), 6));
-        self.setText(tr("Waiting for a key..."));
+        self().set(Background(Background::GradientFrame, style().colors().colorf("accent"), 6));
+        self().setText(tr("Waiting for a key..."));
     }
 
     void unfocus()
     {
         root().setFocus(0);
-        self.set(Background());
-        self.setText(tr("Click to focus"));
+        self().set(Background());
+        self().setText(tr("Click to focus"));
     }
 };
 

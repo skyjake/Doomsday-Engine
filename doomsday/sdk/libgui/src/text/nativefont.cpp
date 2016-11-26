@@ -42,17 +42,17 @@ namespace de
 
         void prepare()
         {
-            if (!self.isReady())
+            if (!self().isReady())
             {
-                self.commit();
+                self().commit();
                 cachedText.clear();
-                self.setState(Ready);
+                self().setState(Ready);
             }
         }
 
         void markNotReady()
         {
-            self.setState(NotReady);
+            self().setState(NotReady);
             cachedText.clear();
         }
     };

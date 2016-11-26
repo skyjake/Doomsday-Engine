@@ -117,8 +117,8 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
             {
                 try
                 {
-                    emit self.allTasksDone();
-                    DENG2_FOR_AUDIENCE(Done, i) i->taskPoolDone(self);
+                    emit self().allTasksDone();
+                    DENG2_FOR_AUDIENCE(Done, i) i->taskPoolDone(self());
                 }
                 catch (Error const &er)
                 {

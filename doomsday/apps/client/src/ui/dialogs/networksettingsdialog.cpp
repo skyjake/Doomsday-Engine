@@ -40,12 +40,12 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         area.add(webApiUrl = new VariableLineEditWidget(App::config("apiUrl")));
 
         // Developer options.
-        self.add(devPopup = new GridPopupWidget);
+        self().add(devPopup = new GridPopupWidget);
         devPopup->layout().setGridSize(1, 0);
         *devPopup << (devInfo = new CVarToggleWidget("net-dev"));
         devPopup->commit();
@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
     void fetch()
     {
-        foreach (Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        foreach (Widget *w, self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = w->maybeAs<ICVarWidget>())
             {

@@ -56,7 +56,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         if (DoomsdayApp::isGameLoaded())
         {
@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             musicVolume->setStep(1.0 / musicVolume->displayFactor());
 
             // Developer options.
-            self.add(devPopup = new GridPopupWidget);
+            self().add(devPopup = new GridPopupWidget);
             soundInfo = new CVarToggleWidget("sound-info", tr("Sound Channel Status"));
             *devPopup << soundInfo;
             devPopup->commit();
@@ -139,7 +139,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     {
         if (!DoomsdayApp::isGameLoaded()) return;
 
-        foreach (Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        foreach (Widget *w, self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = w->maybeAs<ICVarWidget>())
             {

@@ -51,7 +51,7 @@ DENG2_PIMPL(ImageFile)
         }
         if (filter == HeightMapToNormals || filter == Multiply)
         {
-            ImageFile *sub = new ImageFile(filter, self);
+            ImageFile *sub = new ImageFile(filter, self());
             filtered.insert(filter, sub);
             return sub;
         }
@@ -60,7 +60,7 @@ DENG2_PIMPL(ImageFile)
 
     ImageFile &filterSource()
     {
-        return self.Node::parent()->as<ImageFile>();
+        return self().Node::parent()->as<ImageFile>();
     }
 
     static String filterTypeToText(BuiltInFilter filter)

@@ -75,8 +75,8 @@ DENG2_PIMPL(ServerLink)
 
     void notifyDiscoveryUpdate()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self);
-        emit self.serversDiscovered();
+        DENG2_FOR_PUBLIC_AUDIENCE(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
+        emit self().serversDiscovered();
     }
 
     bool handleInfoResponse(Block const &reply)
@@ -84,13 +84,13 @@ DENG2_PIMPL(ServerLink)
         DENG2_ASSERT(state == WaitingForInfoResponse);
 
         // Address of the server where the info was received.
-        Address svAddress = self.address();
+        Address svAddress = self().address();
 
         // Local addresses are all represented as "localhost".
         if (svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
 
         // Close the connection; that was all the information we need.
-        self.disconnect();
+        self().disconnect();
 
         // Did we receive what we expected to receive?
         if (reply.size() >= 5 && reply.startsWith("Info\n"))
@@ -159,7 +159,7 @@ DENG2_PIMPL(ServerLink)
             LOG_NET_WARNING("Server refused connection");
             LOGDEV_NET_WARNING("Received %i bytes instead of \"Enter\")")
                     << reply.size();
-            self.disconnect();
+            self().disconnect();
             return false;
         }
 
@@ -227,7 +227,7 @@ DENG2_PIMPL(ServerLink)
 
         // Do we have information about this host?
         shell::ServerInfo info;
-        if (!self.foundServerInfo(host, info))
+        if (!self().foundServerInfo(host, info))
         {
             return false;
         }

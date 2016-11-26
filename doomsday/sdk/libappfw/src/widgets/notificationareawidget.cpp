@@ -64,10 +64,10 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         Rule const &gap = rule(RuleBank::UNIT);
 
         // The children are laid out simply in a row from right to left.
-        SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
+        SequentialLayout layout(self().rule().right(), self().rule().top(), ui::Left);
 
         bool first = true;
-        foreach (Widget *child, self.childWidgets())
+        foreach (Widget *child, self().childWidgets())
         {
             GuiWidget *w = child->as<RelayWidget>().target();
             DENG2_ASSERT(w != nullptr);
@@ -81,19 +81,19 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         }
 
         // Update the total size of the notification area.
-        self.rule().setSize(layout.width(), layout.height());
+        self().rule().setSize(layout.width(), layout.height());
     }
 
     void show()
     {
         shift->set(0, ANIM_SPAN);
         shift->setStyle(Animation::EaseOut);
-        self.show();
+        self().show();
     }
 
     void hide(TimeDelta const &span = ANIM_SPAN)
     {
-        shift->set(self.rule().height() + rule("gap"), span);
+        shift->set(self().rule().height() + rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
     }
 
@@ -106,12 +106,12 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
          * observing the notification for deletion and we don't know if the relay
          * will still be notified after this.
          */
-        self.remove(*relay);
+        self().remove(*relay);
         GuiWidget::destroyLater(relay);
 
-        if (!self.childCount())
+        if (!self().childCount())
         {
-            self.hide();
+            self().hide();
         }
         updateChildLayout();
     }

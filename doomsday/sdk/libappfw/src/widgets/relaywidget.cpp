@@ -45,7 +45,7 @@ DENG2_PIMPL(RelayWidget)
         {
             DENG2_FOR_PUBLIC_AUDIENCE2(Target, i)
             {
-                i->relayTargetBeingDeleted(self);
+                i->relayTargetBeingDeleted(self());
             }
             target = nullptr;
         }

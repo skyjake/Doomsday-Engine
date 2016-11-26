@@ -214,12 +214,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void updateItemHitRules()
     {
-        GridLayout const &layout = self.menu().layout();
+        GridLayout const &layout = self().menu().layout();
 
-        foreach (Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self().menu().childWidgets())
         {
             GuiWidget &widget = child->as<GuiWidget>();
-            if (self.menu().isWidgetPartOfMenu(widget))
+            if (self().menu().isWidgetPartOfMenu(widget))
             {
                 Vector2i cell = layout.widgetPos(widget);
                 DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
@@ -227,9 +227,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                 // We want items to be hittable throughout the width of the menu, however
                 // restrict this to the item's column if there are multiple columns.
                 widget.hitRule()
-                        .setInput(Rule::Left,  (!cell.x? self.rule().left() :
+                        .setInput(Rule::Left,  (!cell.x? self().rule().left() :
                                                          layout.columnLeft(cell.x)))
-                        .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self.rule().right() :
+                        .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self().rule().right() :
                                                                                    layout.columnRight(cell.x)));
             }
         }
@@ -237,7 +237,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     bool hasButtonsWithImages() const
     {
-        foreach (Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self().menu().childWidgets())
         {
             if (ButtonWidget *button = child->maybeAs<ButtonWidget>())
             {
@@ -261,14 +261,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         auto const &padding = rule("popup.menu.paddedmargin");
         auto const &none    = rule("popup.menu.margin");
 
-        foreach (Widget *child, self.menu().childWidgets())
+        foreach (Widget *child, self().menu().childWidgets())
         {
             GuiWidget &widget = child->as<GuiWidget>();
 
             // Pad annotations with the full amount.
             if (LabelWidget *label = widget.maybeAs<LabelWidget>())
             {
-                ui::Item const *item = self.menu().organizer().findItemForWidget(widget);
+                ui::Item const *item = self().menu().organizer().findItemForWidget(widget);
                 if (item->semantics().testFlag(ui::Item::Annotation))
                 {
                     if (useExtraPadding)
@@ -323,14 +323,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if (&button == hover && state == ButtonWidget::Up)
         {
             hover = 0;
-            self.requestGeometry();
+            self().requestGeometry();
             return;
         }
 
         if (state == ButtonWidget::Hover || state == ButtonWidget::Down)
         {
             hover = &button;
-            self.requestGeometry();
+            self().requestGeometry();
         }
     }
 
@@ -345,13 +345,13 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             hi.bottomRight.y = hover->hitRule().bottom().valuei();
         }
         // Clip the highlight to the main popup area.
-        return hi & self.rule().recti();
+        return hi & self().rule().recti();
     }
 
     void buttonActionTriggered(ButtonWidget &)
     {
         // The popup menu is closed when an action is triggered.
-        self.close();
+        self().close();
 
         if (parentPopup) parentPopup->close();
     }
@@ -359,7 +359,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     void updateIfScrolled()
     {
         // If the menu is scrolled, we need to update some things.
-        int scrollY = self.menu().scrollPositionY().valuei();
+        int scrollY = self().menu().scrollPositionY().valuei();
         if (scrollY == oldScrollY)
         {
             return;
@@ -371,7 +371,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // Resend the mouse position so the buttons realize they've moved.
         root().dispatchLatestMousePosition();
 
-        self.requestGeometry();
+        self().requestGeometry();
     }
 
     void variableValueChanged(Variable &, Value const &newValue)
@@ -379,9 +379,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         bool changed = false;
 
         // Update widgets of annotation items.
-        self.items().forAll([this, &newValue, &changed] (ui::Item const &item) {
+        self().items().forAll([this, &newValue, &changed] (ui::Item const &item) {
             if (item.semantics().testFlag(ui::Item::Annotation)) {
-                self.menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
+                self().menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
                 changed = true;
             }
             return LoopContinue;
@@ -389,13 +389,13 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
         if (changed)
         {
-            self.menu().updateLayout();
+            self().menu().updateLayout();
         }
     }
 
     void updateButtonColors()
     {
-        for (Widget *w : self.menu().childWidgets())
+        for (Widget *w : self().menu().childWidgets())
         {
             if (ButtonWidget *btn = w->maybeAs<ButtonWidget>())
             {

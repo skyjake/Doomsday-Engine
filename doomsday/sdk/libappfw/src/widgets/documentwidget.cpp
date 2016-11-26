@@ -66,9 +66,9 @@ public Font::RichFormat::IStyle
         progress = new ProgressWidget("progress-indicator");
         progress->setColor("progress.dark.wheel");
         progress->setShadowColor("progress.dark.shadow");
-        progress->rule().setRect(self.rule());
+        progress->rule().setRect(self().rule());
         progress->hide();
-        self.add(progress);
+        self().add(progress);
 
         maxLineWidth = GuiWidget::toDevicePixels(1000);
     }
@@ -88,8 +88,8 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("document.accent");
         dimAccentColor = st.colors().color("document.dimaccent");
 
-        glText.setFont(self.font());
-        self.requestGeometry();
+        glText.setFont(self().font());
+        self().requestGeometry();
     }
 
     Font::RichFormat::IStyle::Color richStyleColor(int index) const
@@ -132,9 +132,9 @@ public Font::RichFormat::IStyle
     {
         atlas().audienceForReposition() += this;
 
-        glText.init(atlas(), self.font(), this);
+        glText.init(atlas(), self().font(), this);
 
-        self.setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
+        self().setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
 
         drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
         drawable.addBuffer(ID_TEXT,       new VertexBuf);
@@ -157,24 +157,24 @@ public Font::RichFormat::IStyle
 
     void atlasContentRepositioned(Atlas &atlas)
     {
-        self.setIndicatorUv(atlas.imageRectf(root().solidWhitePixel()).middle());
-        self.requestGeometry();
+        self().setIndicatorUv(atlas.imageRectf(root().solidWhitePixel()).middle());
+        self().requestGeometry();
     }
 
     void updateGeometry()
     {
         // If scroll position has changed, must update text geometry.
-        int scrollY = self.scrollPositionY().valuei();
+        int scrollY = self().scrollPositionY().valuei();
         if (oldScrollY != scrollY)
         {
             oldScrollY = scrollY;
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
         Rectanglei pos;
-        if (self.hasChangedPlace(pos))
+        if (self().hasChangedPlace(pos))
         {
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
         // Make sure the text has been wrapped for the current dimensions.
@@ -185,7 +185,7 @@ public Font::RichFormat::IStyle
         }
         else
         {
-            wrapWidth = self.rule().width().valuei() - self.margins().width().valuei();
+            wrapWidth = self().rule().width().valuei() - self().margins().width().valuei();
         }
         glText.setLineWrapWidth(wrapWidth);
         if (glText.update())
@@ -194,20 +194,20 @@ public Font::RichFormat::IStyle
             if (!glText.isBeingWrapped() && progress->isVisible())
             {
                 contentMaxWidth->set(de::max(contentMaxWidth->value(), float(glText.wrappedSize().x)));
-                self.setContentSize(Vector2ui(contentMaxWidth->valuei(), glText.wrappedSize().y));
+                self().setContentSize(Vector2ui(contentMaxWidth->valuei(), glText.wrappedSize().y));
                 progress->hide();
             }
 
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
-        if (!self.geometryRequested()) return;
+        if (!self().geometryRequested()) return;
 
         // Background and scroll indicator.
         VertexBuf::Builder verts;
-        self.glMakeGeometry(verts);
+        self().glMakeGeometry(verts);
         drawable.buffer<VertexBuf>(ID_BACKGROUND)
-                .setVertices(gl::TriangleStrip, verts, self.isScrolling()? gl::Dynamic : gl::Static);
+                .setVertices(gl::TriangleStrip, verts, self().isScrolling()? gl::Dynamic : gl::Static);
 
         uMvpMatrix = root().projMatrix2D();
 
@@ -216,8 +216,8 @@ public Font::RichFormat::IStyle
             DENG2_ASSERT(glText.isReady());
 
             // Determine visible range of lines.
-            Font const &font     = self.font();
-            int contentHeight    = de::min(self.contentHeight(), self.rule().height().valuei());
+            Font const &font     = self().font();
+            int contentHeight    = de::min(self().contentHeight(), self().rule().height().valuei());
             int const extraLines = 1;
             int numVisLines      = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
             int firstVisLine     = scrollY / font.lineSpacing().valuei() - extraLines + 1;
@@ -234,27 +234,27 @@ public Font::RichFormat::IStyle
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
 
                 // Update content size to match the generated vertices exactly.
-                self.setContentWidth(glText.verticesMaxWidth());
+                self().setContentWidth(glText.verticesMaxWidth());
             }
 
             uScrollMvpMatrix = root().projMatrix2D() *
-                    Matrix4f::translate(Vector2f(self.contentRule().left().valuei(),
-                                                 self.contentRule().top().valuei()));
+                    Matrix4f::translate(Vector2f(self().contentRule().left().valuei(),
+                                                 self().contentRule().top().valuei()));
         }
 
         // Geometry is now up to date.
-        self.requestGeometry(false);
+        self().requestGeometry(false);
     }
 
     void draw()
     {
         updateGeometry();
 
-        uColor = Vector4f(1, 1, 1, self.visibleOpacity());
+        uColor = Vector4f(1, 1, 1, self().visibleOpacity());
 
         // Update the scissor for the text.
         clippedTextState = GLState::current();
-        clippedTextState.setNormalizedScissor(self.normalizedContentRect());
+        clippedTextState.setNormalizedScissor(self().normalizedContentRect());
 
         drawable.draw();
     }

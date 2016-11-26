@@ -47,7 +47,7 @@ DENG2_PIMPL(ThingArchive)
 
     ~Impl()
     {
-        self.clear();
+        self().clear();
     }
 
     struct countmobjthinkerstoarchive_params_t

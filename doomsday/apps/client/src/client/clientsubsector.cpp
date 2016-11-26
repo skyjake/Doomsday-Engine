@@ -386,7 +386,7 @@ DENG2_PIMPL(ClientSubsector)
 
             flags &= ~(NeverMapped | PartSelfRef);
             flags |= AllSelfRef | AllMissingBottom | AllMissingTop;
-            self.forAllSubspaces([this] (ConvexSubspace &subspace)
+            self().forAllSubspaces([this] (ConvexSubspace &subspace)
             {
                 HEdge const *base  = subspace.poly().hedge();
                 HEdge const *hedge = base;
@@ -445,13 +445,13 @@ DENG2_PIMPL(ClientSubsector)
                         flags &= ~AllMissingTop;
                     }
 
-                    if (backSpace.subsector().sector().floor().height() < self.sector().floor().height()
+                    if (backSpace.subsector().sector().floor().height() < self().sector().floor().height()
                         && backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if (backSpace.subsector().sector().ceiling().height() > self.sector().ceiling().height()
+                    if (backSpace.subsector().sector().ceiling().height() > self().sector().ceiling().height()
                         && backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
@@ -470,11 +470,11 @@ DENG2_PIMPL(ClientSubsector)
         if (boundaryData) return;
 
         boundaryData.reset(new BoundaryData);
-        QList<HEdge *> neighbors = self.listUniqueBoundaryEdges();
+        QList<HEdge *> neighbors = self().listUniqueBoundaryEdges();
         if (neighbors.count() == 1)
         {
             // Single neighbor => one implicit loop.
-            boundaryData->addEdgeLoop(new ClEdgeLoop(self, *neighbors.first()));
+            boundaryData->addEdgeLoop(new ClEdgeLoop(self(), *neighbors.first()));
         }
         else
         {
@@ -508,7 +508,7 @@ DENG2_PIMPL(ClientSubsector)
                 QRectF &boundary = boundaries[i];
                 HEdge *hedge     = neighbors[i];
 
-                boundaryData->addEdgeLoop(new ClEdgeLoop(self, *hedge, !(&boundary == largest || (largest && boundary == *largest))));
+                boundaryData->addEdgeLoop(new ClEdgeLoop(self(), *hedge, !(&boundary == largest || (largest && boundary == *largest))));
             }
         }
     }
@@ -525,7 +525,7 @@ DENG2_PIMPL(ClientSubsector)
         if (classification() & (AllSelfRef | PartSelfRef))
         {
             // Should we permanently map one or both planes to those of another sector?
-            self.forAllEdgeLoops([this] (ClEdgeLoop const &loop)
+            self().forAllEdgeLoops([this] (ClEdgeLoop const &loop)
             {
                 auto &backSubsec = loop.backSubsector().as<ClientSubsector>();
                 if (loop.isSelfReferencing()
@@ -582,7 +582,7 @@ DENG2_PIMPL(ClientSubsector)
         //
 
         // The sector must have open space.
-        if (self.sector().ceiling().height() <= self.sector().floor().height())
+        if (self().sector().ceiling().height() <= self().sector().floor().height())
             return;
 
         bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
@@ -606,14 +606,14 @@ DENG2_PIMPL(ClientSubsector)
                     {
                         if (doFloor && !floorIsMapped()
                             && !backSubsec.hasSkyFloor()
-                            && backSubsec.visFloor().height() > self.sector().floor().height())
+                            && backSubsec.visFloor().height() > self().sector().floor().height())
                         {
                             map(Sector::Floor, &backSubsec);
                             if (!doCeiling) break;
                         }
                         if (doCeiling && !ceilingIsMapped()
                             && !backSubsec.hasSkyCeiling()
-                            && backSubsec.visCeiling().height() < self.sector().ceiling().height())
+                            && backSubsec.visCeiling().height() < self().sector().ceiling().height())
                         {
                             map(Sector::Ceiling, &backSubsec);
                             if (!doFloor) break;
@@ -641,12 +641,12 @@ DENG2_PIMPL(ClientSubsector)
                         && !(backSubsec.d->classification() & NeverMapped))
                     {
                         if (doFloor && floorIsMapped()
-                            && backSubsec.visFloor().height() >= self.sector().floor().height())
+                            && backSubsec.visFloor().height() >= self().sector().floor().height())
                         {
                             backSubsec.d->clearMapping(Sector::Floor);
                         }
                         if (doCeiling && ceilingIsMapped()
-                            && backSubsec.visCeiling().height() <= self.sector().ceiling().height())
+                            && backSubsec.visCeiling().height() <= self().sector().ceiling().height())
                         {
                             backSubsec.d->clearMapping(Sector::Ceiling);
                         }
@@ -662,15 +662,15 @@ DENG2_PIMPL(ClientSubsector)
         if (!hedge->hasMapElement()) return;
 
         MapElement *mapElement = &hedge->mapElement();
-        if (Shard *shard = self.findShard(*mapElement, LineSide::Middle))
+        if (Shard *shard = self().findShard(*mapElement, LineSide::Middle))
         {
             shard->updateBiasAfterMove();
         }
-        if (Shard *shard = self.findShard(*mapElement, LineSide::Bottom))
+        if (Shard *shard = self().findShard(*mapElement, LineSide::Bottom))
         {
             shard->updateBiasAfterMove();
         }
-        if (Shard *shard = self.findShard(*mapElement, LineSide::Top))
+        if (Shard *shard = self().findShard(*mapElement, LineSide::Top))
         {
             shard->updateBiasAfterMove();
         }
@@ -738,9 +738,9 @@ DENG2_PIMPL(ClientSubsector)
      */
     void findReverbSubspaces()
     {
-        Map const &map = self.sector().map();
+        Map const &map = self().sector().map();
 
-        AABoxd box = self.bounds();
+        AABoxd box = self().bounds();
         box.minX -= 128;
         box.minY -= 128;
         box.maxX += 128;
@@ -783,8 +783,8 @@ DENG2_PIMPL(ClientSubsector)
 
         needReverbUpdate = false;
 
-        duint spaceVolume = dint((self.visCeiling().height() - self.visFloor().height())
-                          * self.roughArea());
+        duint spaceVolume = dint((self().visCeiling().height() - self().visFloor().height())
+                          * self().roughArea());
 
         reverb.reset();
 
@@ -833,7 +833,7 @@ DENG2_PIMPL(ClientSubsector)
         if (reverb.space > .99)
             reverb.space = .99f;
 
-        if (self.hasSkyPlane())
+        if (self().hasSkyPlane())
         {
             // An "exterior" space.
             // It can still be small, in which case; reverb is diminished a bit.
@@ -975,11 +975,11 @@ DENG2_PIMPL(ClientSubsector)
 
                     Vector3d decorOrigin = origin + delta * patternOffset;
                     // The point must be in the correct subsector.
-                    if (suf.map().subsectorAt(decorOrigin) == &self)
+                    if (suf.map().subsectorAt(decorOrigin) == thisPublic)
                     {
                         std::unique_ptr<LightDecoration> decor(new LightDecoration(decorSS, decorOrigin));
                         decor->setSurface(&suf);
-                        if (self.sector().hasMap()) decor->setMap(&self.sector().map());
+                        if (self().sector().hasMap()) decor->setMap(&self().sector().map());
                         static_cast<DecoratedSurface *>(suf.decorationState())->
                                 decorations.append(decor.get()); // take ownership.
                         decor.release();
@@ -1038,18 +1038,18 @@ DENG2_PIMPL(ClientSubsector)
         if (::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
-            , thisPublic << self.sector().indexInMap()
+            , thisPublic << self().sector().indexInMap()
         );
 
         // Mark surfaces of the edge loops.
-        self.forAllEdgeLoops([this, &plane, &yes] (ClEdgeLoop const &loop)
+        self().forAllEdgeLoops([this, &plane, &yes] (ClEdgeLoop const &loop)
         {
             SubsectorCirculator it(&loop.first());
             do
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
-                    if (    &plane == &self.visPlane(plane.indexInSector())
+                    if (    &plane == &self().visPlane(plane.indexInSector())
                         || (&plane == (it->hasTwin() && it->twin().hasFace()
                                        ? &it->twin().face().mapElementAs<ConvexSubspace>()
                                                   .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
@@ -1071,7 +1071,7 @@ DENG2_PIMPL(ClientSubsector)
             return LoopContinue;
         });
 
-        if (&plane == &self.visPlane(plane.indexInSector()))
+        if (&plane == &self().visPlane(plane.indexInSector()))
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(plane.surface()));
             if (auto *decor = plane.surface().decorationState())
@@ -1086,11 +1086,11 @@ DENG2_PIMPL(ClientSubsector)
         if (::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
-            , thisPublic << self.sector().indexInMap()
+            , thisPublic << self().sector().indexInMap()
         );
 
         // Surfaces of the edge loops.
-        self.forAllEdgeLoops([this, &material, &yes] (ClEdgeLoop const &loop)
+        self().forAllEdgeLoops([this, &material, &yes] (ClEdgeLoop const &loop)
         {
             SubsectorCirculator it(&loop.first());
             do
@@ -1116,7 +1116,7 @@ DENG2_PIMPL(ClientSubsector)
         });
 
         // Surfaces of the visual planes.
-        Plane &floor = self.visFloor();
+        Plane &floor = self().visFloor();
         if (floor.surface().materialPtr() == &material)
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(floor.surface()));
@@ -1125,7 +1125,7 @@ DENG2_PIMPL(ClientSubsector)
                 static_cast<DecoratedSurface *>(decor)->markForUpdate(yes);
             }
         }
-        Plane &ceiling = self.visCeiling();
+        Plane &ceiling = self().visCeiling();
         if (ceiling.surface().materialPtr() == &material)
         {
             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(ceiling.surface()));
@@ -1142,7 +1142,7 @@ DENG2_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
         line.forAllSides([this, &oldFlags] (LineSide &side)
         {
-            if (side.sectorPtr() == &self.sector())
+            if (side.sectorPtr() == &self().sector())
             {
                 if ((side.line().flags() & DDLF_DONTPEGTOP) != (oldFlags & DDLF_DONTPEGTOP))
                 {
@@ -1198,7 +1198,7 @@ DENG2_PIMPL(ClientSubsector)
         maybeInvalidateMapping(plane.indexInSector());
 
         // We may need to fix newly revealed missing materials.
-        self.forAllEdgeLoops([] (ClEdgeLoop &loop)
+        self().forAllEdgeLoops([] (ClEdgeLoop &loop)
         {
             loop.fixSurfacesMissingMaterials();
             return LoopContinue;
@@ -1207,7 +1207,7 @@ DENG2_PIMPL(ClientSubsector)
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
 
-        bool const planeIsInterior = (&plane == &self.visPlane(plane.indexInSector()));
+        bool const planeIsInterior = (&plane == &self().visPlane(plane.indexInSector()));
         if (planeIsInterior)
         {
             // We'll need to recalculate environmental audio characteristics.
@@ -1221,8 +1221,8 @@ DENG2_PIMPL(ClientSubsector)
                 if (plr.isInGame()
                     && (ddpl.flags & DDPF_CAMERA)
                     && Mobj_SubsectorPtr(*ddpl.mo) == thisPublic
-                    && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
-                        || ddpl.mo->origin[2] < self.visFloor  ().height()))
+                    && (   ddpl.mo->origin[2] > self().visCeiling().height() - 4
+                        || ddpl.mo->origin[2] < self().visFloor  ().height()))
                 {
                     plr.as<ClientPlayer>().inVoid = true;
                 }
@@ -1232,9 +1232,9 @@ DENG2_PIMPL(ClientSubsector)
             // Inform bias surfaces of changed geometry?
             if (!::ddMapSetup && ::useBias)
             {
-                self.forAllSubspaces([this, &plane] (ConvexSubspace &subspace)
+                self().forAllSubspaces([this, &plane] (ConvexSubspace &subspace)
                 {
-                    if (Shard *shard = self.findShard(subspace, plane.indexInSector()))
+                    if (Shard *shard = self().findShard(subspace, plane.indexInSector()))
                     {
                         shard->updateBiasAfterMove();
                     }
@@ -1273,22 +1273,22 @@ DENG2_PIMPL(ClientSubsector)
     /// Observes Sector LightLevelChange.
     void sectorLightLevelChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
-        DENG2_ASSERT(&changed == &self.sector());
+        DENG2_ASSERT(&changed == &self().sector());
         LOG_AS("ClientSubsector");
-        if (self.sector().map().hasLightGrid())
+        if (self().sector().map().hasLightGrid())
         {
-            self.sector().map().lightGrid().blockLightSourceChanged(thisPublic);
+            self().sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
 
     /// Observes Sector LightColorChange.
     void sectorLightColorChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
-        DENG2_ASSERT(&changed == &self.sector());
+        DENG2_ASSERT(&changed == &self().sector());
         LOG_AS("ClientSubsector");
-        if (self.sector().map().hasLightGrid())
+        if (self().sector().map().hasLightGrid())
         {
-            self.sector().map().lightGrid().blockLightSourceChanged(thisPublic);
+            self().sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
 

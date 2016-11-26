@@ -167,7 +167,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                      << "\nfileSize:" << source->size()
                      << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();*/
         }
-        else if (!self.containerPackageId().isEmpty())
+        else if (!self().containerPackageId().isEmpty())
         {
             // This file is inside a package, so the package will take care of it.
             /*qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
@@ -177,9 +177,9 @@ DENG2_PIMPL(DataBundle), public Lockable
         }
 
         // Search for known data files in the bundle registry.
-        res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self);
+        res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self());
 
-        File &dataFile = self.asFile();
+        File &dataFile = self().asFile();
         String const dataFilePath = dataFile.path();
 
         // Metadata for the package will be collected into this record.
@@ -210,7 +210,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             return false;
         }
 
-        DataBundle *container = self.containerBundle();
+        DataBundle *container = self().containerBundle();
         if (container)
         {
             // Make sure that the container has been fully identified.
@@ -437,7 +437,7 @@ DENG2_PIMPL(DataBundle), public Lockable
      */
     bool isAutoLoaded() const
     {
-        Path const path(self.asFile().path());
+        Path const path(self().asFile().path());
 
         //qDebug() << "checking" << path.toString();
 
@@ -590,7 +590,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         // Look at the path and contents of the bundle to estimate which game it is
         // compatible with.
-        Path const path(self.asFile().path());
+        Path const path(self().asFile().path());
         for (auto const &tag : gameTags)
         {
             QRegExp reTag(tag, Qt::CaseInsensitive);

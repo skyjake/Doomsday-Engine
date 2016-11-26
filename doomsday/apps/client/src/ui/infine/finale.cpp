@@ -46,7 +46,7 @@ DENG2_PIMPL(Finale)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self());
     }
 
     void loadScript(String const &script)

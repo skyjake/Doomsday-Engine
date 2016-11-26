@@ -32,7 +32,7 @@ DENG_GUI_PIMPL(MessageDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         // Create widgets.
         area.add(title   = new LabelWidget);
@@ -57,7 +57,7 @@ DENG_GUI_PIMPL(MessageDialog)
 
     void updateLayout(LayoutBehavior behavior = ExcludeHidden)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         // Simple vertical layout.
         SequentialLayout layout(area.contentRule().left(),

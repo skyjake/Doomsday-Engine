@@ -43,7 +43,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
 
     Impl(Public *i) : Base(i)
     {
-        self.add(updating = new ProgressWidget);
+        self().add(updating = new ProgressWidget);
         updating->setSizePolicy(ui::Expand, ui::Expand);
         updating->useMiniStyle("altaccent");
         updating->setText(tr("Updating..."));
@@ -51,9 +51,9 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         updating->setMode(ProgressWidget::Indefinite);
         updating->setOpacity(0);
         updating->rule()
-                .setInput(Rule::Top,    self.buttonsMenu().rule().top())
-                .setInput(Rule::Right,  self.buttonsMenu().rule().left())
-                .setInput(Rule::Height, self.buttonsMenu().rule().height() - self.margins().bottom());
+                .setInput(Rule::Top,    self().buttonsMenu().rule().top())
+                .setInput(Rule::Right,  self().buttonsMenu().rule().left())
+                .setInput(Rule::Height, self().buttonsMenu().rule().height() - self().margins().bottom());
     }
 
     String defaultButtonLabel() const
@@ -73,7 +73,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     void enableIgnore(bool yes)
     {
         ignoreCheck = yes;
-        if (auto *button = self.buttonWidget(Id1))
+        if (auto *button = self().buttonWidget(Id1))
         {
             button->setText(defaultButtonLabel());
         }
@@ -86,7 +86,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             delete list;
             list = nullptr;
         }
-        self.buttons().clear();
+        self().buttons().clear();
 
         try
         {
@@ -96,10 +96,10 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                  return new PackagePopupWidget(list->actionPackage());
             });
 
-            self.area().add(list = new PackagesWidget(wanted));
+            self().area().add(list = new PackagesWidget(wanted));
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);
-            list->setFilterEditorMinimumY(self.area().rule().top());
+            list->setFilterEditorMinimumY(self().area().rule().top());
 
             StringList const loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
             //qDebug() << "Currently loaded:" << loaded;
@@ -109,33 +109,33 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                 conflicted = true;
                 if (list->itemCount() > 0)
                 {
-                    self.message().setText(message + "\n\n" + tr("The packages listed below "
+                    self().message().setText(message + "\n\n" + tr("The packages listed below "
                                                                  "should be loaded."));
-                    self.buttons()
+                    self().buttons()
                             << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                     new CallbackAction([this] () { resolvePackages(); }));
                 }
                 else
                 {
                     list->hide();
-                    self.message().setText(message + "\n\n" + tr("All additional packages "
+                    self().message().setText(message + "\n\n" + tr("All additional packages "
                                                                  "should be unloaded."));
-                    self.buttons()
+                    self().buttons()
                                << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                        new CallbackAction([this] () { resolvePackages(); }));
                 }
-                self.buttons()
+                self().buttons()
                         << new DialogButtonItem(Reject, tr("Cancel"));
             }
         }
         catch (PackagesWidget::UnavailableError const &er)
         {
             conflicted = true;
-            self.message().setText(message + "\n\n" + er.asText());
-            self.buttons() << new DialogButtonItem(Default | Reject);
+            self().message().setText(message + "\n\n" + er.asText());
+            self().buttons() << new DialogButtonItem(Default | Reject);
         }
 
-        self.updateLayout();
+        self().updateLayout();
     }
 
     static bool containsIdentifier(String const &identifier, StringList const &ids)
@@ -152,7 +152,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         if (ignoreCheck)
         {
             LOG_RES_NOTE("Ignoring package compatibility check due to user request");
-            self.accept();
+            self().accept();
             return;
         }
 
@@ -207,13 +207,13 @@ DENG2_PIMPL(PackageCompatibilityDialog)
 
         qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
 
-        self.buttonsMenu().disable();
+        self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
 
         // Refresh resources.
         DD_UpdateEngineState();
 
-        self.accept();
+        self().accept();
     }
 };
 

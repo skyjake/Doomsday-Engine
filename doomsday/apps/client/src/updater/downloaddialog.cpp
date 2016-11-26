@@ -71,7 +71,7 @@ DENG2_PIMPL(DownloadDialog)
         : Base(d), state(Connecting), uri(downloadUri), uri2(fallbackUri), reply(0),
           receivedBytes(0), totalBytes(0)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         progress = new ProgressWidget;
         area.add(progress);
@@ -81,11 +81,11 @@ DENG2_PIMPL(DownloadDialog)
         progress->setRange(Rangei(0, 100));
         progress->rule()
                 .setLeftTop(area.contentRule().left(), area.contentRule().top())
-                .setInput(Rule::Width, self.rule("dialog.download.width"));
+                .setInput(Rule::Width, self().rule("dialog.download.width"));
 
         area.setContentSize(progress->rule().width(), progress->rule().height());
 
-        self.buttons() << new DialogButtonItem(DialogWidget::Reject,
+        self().buttons() << new DialogButtonItem(DialogWidget::Reject,
                                                tr("Cancel Download"),
                                                new SignalAction(thisPublic, SLOT(cancel())));
 

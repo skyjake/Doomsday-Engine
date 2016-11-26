@@ -160,7 +160,7 @@ DENG2_PIMPL(Sky)
     {
         for(dint i = 0; i < NUM_LAYERS; ++i)
         {
-            layers.append(new Layer(self));
+            layers.append(new Layer(self()));
 #ifdef __CLIENT__
             Layer *layer = layers.last();
             layer->audienceForActiveChange()   += this;
@@ -172,7 +172,7 @@ DENG2_PIMPL(Sky)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self());
     }
 
 #ifdef __CLIENT__

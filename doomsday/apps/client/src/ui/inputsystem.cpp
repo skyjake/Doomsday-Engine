@@ -362,7 +362,7 @@ DENG2_PIMPL(InputSystem)
 
     ~Impl()
     {
-        self.clearAllContexts();
+        self().clearAllContexts();
         clearAllDevices();
 
         // Shutdown system APIs.
@@ -413,7 +413,7 @@ DENG2_PIMPL(InputSystem)
         // enough for an echo.
         if (ev.type == E_AXIS)
         {
-            InputDevice const &device = self.device(ev.device);
+            InputDevice const &device = self().device(ev.device);
             float const pos = device.axis(ev.axis.id).translateRealPosition(ev.axis.pos);
 
             if ((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
@@ -434,7 +434,7 @@ DENG2_PIMPL(InputSystem)
         echo.symbolic.name = nameUtf8.constData();
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s") << name;
-        self.postEvent(&echo);
+        self().postEvent(&echo);
     }
 
     /**
@@ -448,7 +448,7 @@ DENG2_PIMPL(InputSystem)
         while ((ddev = nextFromQueue(q)))
         {
             // Update the state of the input device tracking table.
-            self.trackEvent(*ddev);
+            self().trackEvent(*ddev);
 
             if (ignoreInput && ddev->type != E_FOCUS)
                 continue;
@@ -458,7 +458,7 @@ DENG2_PIMPL(InputSystem)
             if (callGameResponders)
             {
                 // Events must first be converted for the game responders.
-                validGameEvent = self.convertEvent(*ddev, ev);
+                validGameEvent = self().convertEvent(*ddev, ev);
             }
 
             if (callGameResponders && validGameEvent && gx.PrivilegedResponder)
@@ -480,7 +480,7 @@ DENG2_PIMPL(InputSystem)
 
             // Try the binding system to see if we need to respond to the event
             // and if so, trigger any associated actions.
-            if (self.tryEvent(*ddev))
+            if (self().tryEvent(*ddev))
             {
                 continue;
             }
@@ -566,7 +566,7 @@ DENG2_PIMPL(InputSystem)
                     << ev.toggle.text << strlen(ev.toggle.text)
                     << ev.toggle.state;
 
-            self.postEvent(&ev);
+            self().postEvent(&ev);
         }
 
 #undef QUEUESIZE
@@ -633,13 +633,13 @@ DENG2_PIMPL(InputSystem)
         {
             ev.axis.id  = 0;
             ev.axis.pos = xpos;
-            self.postEvent(&ev);
+            self().postEvent(&ev);
         }
         if (ypos)
         {
             ev.axis.id  = 1;
             ev.axis.pos = ypos;
-            self.postEvent(&ev);
+            self().postEvent(&ev);
         }
 
         // Some very verbose output about mouse buttons.
@@ -669,13 +669,13 @@ DENG2_PIMPL(InputSystem)
                 {
                     ev.toggle.state = ETOG_DOWN;
                     LOG_INPUT_XVERBOSE("Mouse button %i down") << i;
-                    self.postEvent(&ev);
+                    self().postEvent(&ev);
                 }
                 if (mouse.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
                     LOG_INPUT_XVERBOSE("Mouse button %i up") << i;
-                    self.postEvent(&ev);
+                    self().postEvent(&ev);
                 }
             }
         }
@@ -709,13 +709,13 @@ DENG2_PIMPL(InputSystem)
                 if (state.buttonDowns[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_DOWN;
-                    self.postEvent(&ev);
+                    self().postEvent(&ev);
                     LOG_INPUT_XVERBOSE("Joy button %i down") << i;
                 }
                 if (state.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
-                    self.postEvent(&ev);
+                    self().postEvent(&ev);
                     LOG_INPUT_XVERBOSE("Joy button %i up") << i;
                 }
             }
@@ -742,7 +742,7 @@ DENG2_PIMPL(InputSystem)
                     }
                     LOG_INPUT_XVERBOSE("Joy hat %i angle %f") << i << ev.angle.pos;
 
-                    self.postEvent(&ev);
+                    self().postEvent(&ev);
 
                     oldPOV[i] = state.hatAngle[i];
                 }
@@ -757,7 +757,7 @@ DENG2_PIMPL(InputSystem)
             ev.axis.id   = i;
             ev.axis.pos  = state.axis[i];
             ev.axis.type = EAXIS_ABSOLUTE;
-            self.postEvent(&ev);
+            self().postEvent(&ev);
         }
     }
 
@@ -770,11 +770,11 @@ DENG2_PIMPL(InputSystem)
         // If a head tracking device is connected, the device is marked active.
         if (!DD_GetInteger(DD_USING_HEAD_TRACKING))
         {
-            self.device(IDEV_HEAD_TRACKER).deactivate();
+            self().device(IDEV_HEAD_TRACKER).deactivate();
             return;
         }
 
-        self.device(IDEV_HEAD_TRACKER).activate();
+        self().device(IDEV_HEAD_TRACKER).activate();
 
         // Get the latest values.
         //vrCfg().oculusRift().allowUpdate();
@@ -790,16 +790,16 @@ DENG2_PIMPL(InputSystem)
         // Yaw (1.0 means 180 degrees).
         ev.axis.id  = 0; // Yaw.
         ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
-        self.postEvent(&ev);
+        self().postEvent(&ev);
 
         ev.axis.id  = 1; // Pitch (1.0 means 85 degrees).
         ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
-        self.postEvent(&ev);
+        self().postEvent(&ev);
 
         // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
         ev.axis.id  = 2; // Roll.
         ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
-        self.postEvent(&ev);
+        self().postEvent(&ev);
     }
 
     /**
@@ -836,9 +836,9 @@ DENG2_PIMPL(InputSystem)
                 InputControl *ctrl = nullptr;
                 switch (bind.geti("type"))
                 {
-                case E_AXIS:   ctrl = &self.device(bind.geti("deviceId")).axis  (bind.geti("controlId")); break;
-                case E_TOGGLE: ctrl = &self.device(bind.geti("deviceId")).button(bind.geti("controlId")); break;
-                case E_ANGLE:  ctrl = &self.device(bind.geti("deviceId")).hat   (bind.geti("controlId")); break;
+                case E_AXIS:   ctrl = &self().device(bind.geti("deviceId")).axis  (bind.geti("controlId")); break;
+                case E_TOGGLE: ctrl = &self().device(bind.geti("deviceId")).button(bind.geti("controlId")); break;
+                case E_ANGLE:  ctrl = &self().device(bind.geti("deviceId")).hat   (bind.geti("controlId")); break;
 
                 case E_SYMBOLIC: break;
 
@@ -860,7 +860,7 @@ DENG2_PIMPL(InputSystem)
             {
                 //ImpulseBinding bind(rec);
                 auto const &bind = rec.compiled();
-                InputDevice &dev = self.device(bind.deviceId);
+                InputDevice &dev = self().device(bind.deviceId);
 
                 InputControl *ctrl = nullptr;
                 switch (bind.type)

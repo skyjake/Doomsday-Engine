@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(CompositorWidget)
 
     bool shouldBeDrawn() const
     {
-        return self.isInitialized() && !self.isHidden() && self.visibleOpacity() > 0 &&
+        return self().isInitialized() && !self().isHidden() && self().visibleOpacity() > 0 &&
                GLState::current().target().rectInUse().size() != Vector2ui();
     }
 };

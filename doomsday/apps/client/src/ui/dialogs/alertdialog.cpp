@@ -106,12 +106,12 @@ DENG_GUI_PIMPL(AlertDialog)
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
         notification->setOpener([this] (PopupWidget *) {
-            self.showListOfAlerts();
+            self().showListOfAlerts();
         });
 
         // The menu expands with all the alerts, and the dialog's scroll area allows
         // browsing it up and down.
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
         alerts = new MenuWidget;
         alerts->enableScrolling(false);
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);

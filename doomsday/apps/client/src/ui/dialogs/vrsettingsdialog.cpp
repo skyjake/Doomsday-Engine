@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         , riftReset(0)
         , riftSetup(0)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
     void fetch()
     {
-        foreach (Widget *child, self.area().childWidgets())
+        foreach (Widget *child, self().area().childWidgets())
         {
             if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {

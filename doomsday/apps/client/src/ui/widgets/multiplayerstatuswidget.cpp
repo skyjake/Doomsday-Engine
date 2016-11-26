@@ -47,7 +47,7 @@ DENG_GUI_PIMPL(MultiplayerStatusWidget)
 
     void networkGameJoined()
     {
-        /*self.menu().organizer().itemWidget(POS_SERVER_ADDRESS)->as<LabelWidget>()
+        /*self().menu().organizer().itemWidget(POS_SERVER_ADDRESS)->as<LabelWidget>()
                 .setText(_E(l) + tr("Server:") + _E(.) +
                          " " + link().address().asText());*/
     }

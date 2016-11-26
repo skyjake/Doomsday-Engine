@@ -60,7 +60,7 @@ DENG2_PIMPL(Atlas)
     ~Impl()
     {
         allocator.reset();
-        self.cancelDeferred();
+        self().cancelDeferred();
     }
 
     inline bool usingDeferredMode() const
@@ -203,11 +203,11 @@ DENG2_PIMPL(Atlas)
                 painter.drawImage(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
                 painter.drawImage(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
 
-                self.commit(bordered, rect.topLeft);
+                self().commit(bordered, rect.topLeft);
             }
             else
             {
-                self.commit(image, noBorders.topLeft);
+                self().commit(image, noBorders.topLeft);
             }
         }
     }
@@ -265,7 +265,7 @@ DENG2_PIMPL(Atlas)
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Reposition, i)
         {
-            i->atlasContentRepositioned(self);
+            i->atlasContentRepositioned(self());
         }
     }
 

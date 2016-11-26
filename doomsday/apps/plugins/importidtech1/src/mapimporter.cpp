@@ -722,7 +722,7 @@ DENG2_PIMPL(MapImporter)
         lines.reserve(lines.size() + numElements);
         for(dint n = 0; n < numElements; ++n)
         {
-            lines.push_back(LineDef(self));
+            lines.push_back(LineDef(self()));
             LineDef &line = lines.back();
             line << reader;
             line.index = n;
@@ -735,7 +735,7 @@ DENG2_PIMPL(MapImporter)
         sides.reserve(sides.size() + numElements);
         for(dint n = 0; n < numElements; ++n)
         {
-            sides.push_back(SideDef(self));
+            sides.push_back(SideDef(self()));
             SideDef &side = sides.back();
             side << reader;
             side.index = n;
@@ -748,7 +748,7 @@ DENG2_PIMPL(MapImporter)
         sectors.reserve(sectors.size() + numElements);
         for(dint n = 0; n < numElements; ++n)
         {
-            sectors.push_back(SectorDef(self));
+            sectors.push_back(SectorDef(self()));
             SectorDef &sector = sectors.back();
             sector << reader;
             sector.index = n;
@@ -761,7 +761,7 @@ DENG2_PIMPL(MapImporter)
         things.reserve(things.size() + numElements);
         for(dint n = 0; n < numElements; ++n)
         {
-            things.push_back(Thing(self));
+            things.push_back(Thing(self()));
             Thing &thing = things.back();
             thing << reader;
             thing.index = n;
@@ -774,7 +774,7 @@ DENG2_PIMPL(MapImporter)
         surfaceTints.reserve(surfaceTints.size() + numElements);
         for(dint n = 0; n < numElements; ++n)
         {
-            surfaceTints.push_back(TintColor(self));
+            surfaceTints.push_back(TintColor(self()));
             TintColor &tint = surfaceTints.back();
             tint << reader;
             tint.index = n;

@@ -70,12 +70,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     void showProgress(bool show, TimeDelta span)
     {
         checking->setOpacity(show? 1 : 0, span);
-        self.area().setOpacity(show? 0 : 1, span);
+        self().area().setOpacity(show? 0 : 1, span);
 
         if (show)
         {
             // Set up a cancel button.
-            self.buttons().clear()
+            self().buttons().clear()
                     << new DialogButtonItem(DialogWidget::Reject);
         }
     }
@@ -86,17 +86,17 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         checking->setText(tr("Checking for Updates..."));
 
         // The checking indicator is overlaid on the normal content.
-        checking->rule().setRect(self.rule());
-        self.add(checking);
+        checking->rule().setRect(self().rule());
+        self().add(checking);
 
         autoCheck = new ToggleWidget;
-        self.area().add(autoCheck);
+        self().area().add(autoCheck);
         autoCheck->setAlignment(ui::AlignLeft);
         autoCheck->setText(tr("Check for updates automatically"));
         autoCheck->audienceForToggle() += this;
 
         // Include the toggle in the layout.
-        self.updateLayout();
+        self().updateLayout();
     }
 
     void updateResult(Version const &latest, TimeDelta showSpan)
@@ -116,17 +116,17 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         {
             askUpgrade = true;
 
-            self.title().setText(tr("Update Available"));
-            self.title().setImage(style().images().image("updater"));
-            self.message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
+            self().title().setText(tr("Update Available"));
+            self().title().setImage(style().images().image("updater"));
+            self().message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
                                    .arg(channel)
                                    .arg(_E(b) + latestVersion.asText() + _E(.))
                                    .arg(currentVersion.asText()));
         }
         else if (channel == builtInType) // same release type
         {
-            self.title().setText(tr("Up to Date"));
-            self.message().setText(tr("The installed %1 is the latest available %2 build.")
+            self().title().setText(tr("Up to Date"));
+            self().message().setText(tr("The installed %1 is the latest available %2 build.")
                                    .arg(currentVersion.asText())
                                    .arg(_E(b) + channel + _E(.)));
         }
@@ -134,43 +134,43 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         {
             askDowngrade = true;
 
-            self.title().setText(tr("Up to Date"));
-            self.message().setText(tr("The installed %1 is newer than the latest available %2 build.")
+            self().title().setText(tr("Up to Date"));
+            self().message().setText(tr("The installed %1 is newer than the latest available %2 build.")
                                    .arg(currentVersion.asText())
                                    .arg(_E(b) + channel + _E(.)));
         }
 
         autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
 
-        self.buttons().clear();
+        self().buttons().clear();
 
         if (askDowngrade)
         {
-            self.buttons()
+            self().buttons()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
         }
         else if (askUpgrade)
         {
-            self.buttons()
+            self().buttons()
                     << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
                     << new DialogButtonItem(DialogWidget::Reject, tr("Not Now"));
         }
         else
         {
-            self.buttons()
+            self().buttons()
                     << new DialogButtonItem(DialogWidget::Accept, tr("Reinstall"))
                     << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
         }
 
-        self.buttons()
+        self().buttons()
                 << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
                                         style().images().image("gear"),
                                         new SignalAction(thisPublic, SLOT(editSettings())));
 
         if (askUpgrade)
         {
-            self.buttons()
+            self().buttons()
                     << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
                                             new SignalAction(thisPublic, SLOT(showWhatsNew())));
         }

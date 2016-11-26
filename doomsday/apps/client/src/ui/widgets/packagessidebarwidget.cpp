@@ -32,7 +32,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
 
     Impl(Public *i) : Base(i)
     {
-        GuiWidget *container = &self.containerWidget();
+        GuiWidget *container = &self().containerWidget();
 
         container->add(browser = new PackagesWidget);
         browser->setFilterEditorMinimumY(Const(0));

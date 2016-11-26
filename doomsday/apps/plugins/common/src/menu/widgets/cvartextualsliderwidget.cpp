@@ -40,7 +40,7 @@ DENG2_PIMPL(CVarTextualSliderWidget)
 
     inline bool valueIsOne(float value)
     {
-        if(self.floatMode())
+        if(self().floatMode())
         {
             return INRANGE_OF(1, value, .0001f);
         }
@@ -62,7 +62,7 @@ DENG2_PIMPL(CVarTextualSliderWidget)
 
     String composeTextualValue(float value, int precision = 0)
     {
-        if(self.floatMode() && !valueIsOne(value))
+        if(self().floatMode() && !valueIsOne(value))
         {
             return String::number(value, 'f', de::max(0, precision));
         }
@@ -74,7 +74,7 @@ DENG2_PIMPL(CVarTextualSliderWidget)
 
     String valueAsText(float emptyValue = 0, int precision = 0)
     {
-        float const value = de::clamp(self.min(), self.value(), self.max()); /// @todo clamp necessary?
+        float const value = de::clamp(self().min(), self().value(), self().max()); /// @todo clamp necessary?
 
         // Is the empty-value-string in use?
         if(!emptyText.isEmpty() && INRANGE_OF(value, emptyValue, .0001f))

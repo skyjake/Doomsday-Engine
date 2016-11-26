@@ -165,7 +165,7 @@ DENG2_PIMPL(App)
         NativePath appDir = appPath.fileNamePath();
         return appDir / "..\\modules";
 #else
-        return self.nativeBasePath() / "modules";
+        return self().nativeBasePath() / "modules";
 #endif
     }
 
@@ -178,12 +178,12 @@ DENG2_PIMPL(App)
         // directories into the appropriate places in the file system.
         // All of these are in read-only mode.
 
-        if (ZipArchive::recognize(self.nativeBasePath()))
+        if (ZipArchive::recognize(self().nativeBasePath()))
         {
             // As a special case, if the base path points to a resource pack,
             // use the contents of the pack as the root of the file system.
             // The pack itself does not appear in the file system.
-            basePackFile.reset(NativeFile::newStandalone(self.nativeBasePath()));
+            basePackFile.reset(NativeFile::newStandalone(self().nativeBasePath()));
             fs.root().attach(new ArchiveFeed(*basePackFile));
         }
         else
@@ -191,19 +191,19 @@ DENG2_PIMPL(App)
 #ifdef MACOSX
             NativePath appDir = appPath.fileNamePath();
             binFolder.attach(new DirectoryFeed(appDir));
-            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
 #elif WIN32
             NativePath appDir = appPath.fileNamePath();
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
 
 #else // UNIX
-            if ((self.nativeBasePath() / "data").exists())
+            if ((self().nativeBasePath() / "data").exists())
             {
-                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+                fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath() / "data"));
             }
             else
             {
-                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+                fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
             }
 #endif
             if (defaultNativeModulePath().exists())
@@ -214,11 +214,11 @@ DENG2_PIMPL(App)
 
         if (allowPlugins)
         {
-            binFolder.attach(new DirectoryFeed(self.nativePluginBinaryPath()));
+            binFolder.attach(new DirectoryFeed(self().nativePluginBinaryPath()));
         }
 
         // User's home folder.
-        fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
+        fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self().nativeHomePath(),
                 DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing | DirectoryFeed::DefaultFlags));
 
         // Loaded packages (as links).
@@ -286,7 +286,7 @@ DENG2_PIMPL(App)
     {
         if (CommandLine::ArgWithParams arg = cmdLine.check("-errors", 1))
         {
-            File &errors = self.rootFolder().replaceFile(Path("/home") / arg.params.at(0));
+            File &errors = self().rootFolder().replaceFile(Path("/home") / arg.params.at(0));
             errorSink.reset(new FileLogSink(errors));
             errorSink->setMode(LogSink::OnlyWarningEntries);
             logBuffer.addSink(*errorSink);

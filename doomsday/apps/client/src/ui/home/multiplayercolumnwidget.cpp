@@ -40,10 +40,10 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
     Impl(Public *i) : Base(i)
     {
         // Set up the widgets.
-        ScrollAreaWidget &area = self.scrollArea();
+        ScrollAreaWidget &area = self().scrollArea();
         area.add(menu = new MultiplayerServerMenuWidget);
 
-        self.header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
                     << new ui::ActionItem(tr("Connect to Server..."),
@@ -56,7 +56,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom());
+                .setInput(Rule::Top,   self().header().rule().bottom());
     }
 };
 

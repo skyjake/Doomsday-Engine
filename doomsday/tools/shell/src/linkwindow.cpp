@@ -115,7 +115,7 @@ DENG2_PIMPL(LinkWindow)
 
     void updateStyle()
     {
-        if (self.isConnected())
+        if (self().isConnected())
         {
             console->root().canvas().setBackgroundColor(Qt::white);
             console->root().canvas().setForegroundColor(Qt::black);
@@ -132,14 +132,14 @@ DENG2_PIMPL(LinkWindow)
         QString txt;
         if (link)
         {
-            if (self.isConnected() && !link->address().isNull())
+            if (self().isConnected() && !link->address().isNull())
             {
                 txt = tr("<b>%1</b>:%2")
                         .arg(link->address().isLocal()? "localhost"
                                                       : link->address().host().toString())
                         .arg(link->address().port());
             }
-            else if (self.isConnected() && link->address().isNull())
+            else if (self().isConnected() && link->address().isNull())
             {
                 txt = tr("Looking up host...");
             }
@@ -149,9 +149,9 @@ DENG2_PIMPL(LinkWindow)
 
     void disconnected()
     {
-        self.setTitle(tr("Disconnected"));
+        self().setTitle(tr("Disconnected"));
         console->root().setOverlaidMessage(tr("Disconnected"));
-        self.statusBar()->clearMessage();
+        self().statusBar()->clearMessage();
         stopAction->setDisabled(true);
 #ifdef MENU_IN_LINK_WINDOW
         disconnectAction->setDisabled(true);

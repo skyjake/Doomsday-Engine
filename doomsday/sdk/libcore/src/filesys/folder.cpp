@@ -60,7 +60,7 @@ DENG2_PIMPL(Folder), public Lockable
     void add(File *file)
     {
         contents.insert(file->name().toLower(), file);
-        file->setParent(&self);
+        file->setParent(thisPublic);
     }
 
     QList<Folder *> subfolders() const

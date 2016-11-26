@@ -87,12 +87,12 @@ DENG2_PIMPL(GuiWidget)
         , fontId("default")
         , textColorId("text")
     {
-        self.audienceForChildAddition() += this;
+        self().audienceForChildAddition() += this;
         margins.audienceForChange() += this;
 
 #ifdef DENG2_DEBUG
-        self.audienceForParentChange() += this;
-        rule.setDebugName(self.path());
+        self().audienceForParentChange() += this;
+        rule.setDebugName(self().path());
 #endif
     }
 
@@ -102,7 +102,7 @@ DENG2_PIMPL(GuiWidget)
 
         // The base class will delete all children, but we need to deinitialize
         // them first.
-        self.notifyTree(&Widget::deinitialize);
+        self().notifyTree(&Widget::deinitialize);
 
         deinitBlur();
 
@@ -112,7 +112,7 @@ DENG2_PIMPL(GuiWidget)
          * first before beginning destruction.
          */
 #ifdef DENG2_DEBUG
-        if (inited) qDebug() << "GuiWidget" << &self << self.name() << "is still inited!";
+        if (inited) qDebug() << "GuiWidget" << thisPublic << self().name() << "is still inited!";
         DENG2_ASSERT(!inited);
 #endif
     }
@@ -125,13 +125,13 @@ DENG2_PIMPL(GuiWidget)
 #ifdef DENG2_DEBUG
     void widgetParentChanged(Widget &, Widget *, Widget *)
     {
-        rule.setDebugName(self.path());
+        rule.setDebugName(self().path());
     }
 #endif
 
     void widgetChildAdded(Widget &child)
     {
-        if (self.hasRoot())
+        if (self().hasRoot())
         {
             // Make sure newly added children know the view size.
             child.viewResized();
@@ -145,9 +145,9 @@ DENG2_PIMPL(GuiWidget)
     bool isClipCulled() const
     {
         bool wasClipped = false;
-        Rectanglei visibleArea = self.root().viewRule().recti();
+        Rectanglei visibleArea = self().root().viewRule().recti();
 
-        for (Widget const *w = self.parentWidget(); w; w = w->parent())
+        for (Widget const *w = self().parentWidget(); w; w = w->parent())
         {
             if (!w->is<GuiWidget>()) continue;
 
@@ -160,12 +160,12 @@ DENG2_PIMPL(GuiWidget)
         }
         if (!wasClipped) return false;
 
-        if (self.isClipped())
+        if (self().isClipped())
         {
             int const CULL_SAFETY_WIDTH = 50; // avoid pop-in when scrolling
 
             // Clipped widgets are guaranteed to be within their rectangle.
-            return !visibleArea.overlaps(self.rule().recti().expanded(
+            return !visibleArea.overlaps(self().rule().recti().expanded(
                                              GuiWidget::toDevicePixels(CULL_SAFETY_WIDTH)));
         }
         // Otherwise widgets may draw anywhere in the view.
@@ -179,7 +179,7 @@ DENG2_PIMPL(GuiWidget)
         blur.reset(new BlurState);
 
         // The blurred version of the view is downsampled.
-        blur->size = (self.root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
+        blur->size = (self().root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
 
         for (int i = 0; i < 2; ++i)
         {
@@ -202,14 +202,14 @@ DENG2_PIMPL(GuiWidget)
         blur->uBlurStep = Vector2f(1.f / float(blur->size.x),
                                    1.f / float(blur->size.y));
 
-        self.root().shaders().build(blur->drawable.program(), "fx.blur.horizontal")
+        self().root().shaders().build(blur->drawable.program(), "fx.blur.horizontal")
                 << blur->uMvpMatrix
                 << blur->uTex
                 << blur->uBlurStep
                 << blur->uWindow;
 
         blur->drawable.addProgram("vert");
-        self.root().shaders().build(blur->drawable.program("vert"), "fx.blur.vertical")
+        self().root().shaders().build(blur->drawable.program("vert"), "fx.blur.vertical")
                 << blur->uMvpMatrix
                 << blur->uTex
                 << blur->uColor
@@ -248,7 +248,7 @@ DENG2_PIMPL(GuiWidget)
             DENG2_ASSERT(background.blur != 0);
             if (background.blur)
             {
-                background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+                background.blur->drawBlurredRect(self().rule().recti(), background.solidFill);
             }
             return;
         }
@@ -272,7 +272,7 @@ DENG2_PIMPL(GuiWidget)
                 .setTarget(*blur->fb[0])
                 .setViewport(Rectangleui::fromSize(blur->size));
         blur->fb[0]->clear(GLFramebuffer::Depth);
-        self.root().drawUntil(self);
+        self().root().drawUntil(self());
         GLState::pop();
 
         blur->fb[0]->resolveSamples();
@@ -294,14 +294,14 @@ DENG2_PIMPL(GuiWidget)
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
         Vector4f blurColor = background.solidFill;
-        float blurOpacity  = self.visibleOpacity();
+        float blurOpacity  = self().visibleOpacity();
         if (background.type == Background::BlurredWithSolidFill)
         {
             blurColor.w = 1;
         }
         if (!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
         {
-            self.drawBlurredRect(self.rule().recti(), blurColor, blurOpacity);
+            self().drawBlurredRect(self().rule().recti(), blurColor, blurOpacity);
         }
     }
 
@@ -312,7 +312,7 @@ DENG2_PIMPL(GuiWidget)
 
     void updateOpacityForDisabledWidgets()
     {
-        float const opac = (self.isDisabled()? .3f : 1.f);
+        float const opac = (self().isDisabled()? .3f : 1.f);
         if (opacityWhenDisabled.target() != opac)
         {
             opacityWhenDisabled.setValue(opac, .3f);
@@ -328,7 +328,7 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if (IPersistent *po = self.maybeAs<IPersistent>())
+            if (IPersistent *po = self().maybeAs<IPersistent>())
             {
                 DENG2_BASE_GUI_APP->persistentUIState() >> *po;
             }
@@ -337,7 +337,7 @@ DENG2_PIMPL(GuiWidget)
         {
             // Benign: widget will use default state.
             LOG_VERBOSE("Failed to restore state of widget '%s': %s")
-                    << self.path() << er.asText();
+                    << self().path() << er.asText();
         }
     }
 
@@ -345,7 +345,7 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if (IPersistent *po = self.maybeAs<IPersistent>())
+            if (IPersistent *po = self().maybeAs<IPersistent>())
             {
                 DENG2_BASE_GUI_APP->persistentUIState() << *po;
             }
@@ -353,16 +353,16 @@ DENG2_PIMPL(GuiWidget)
         catch (Error const &er)
         {
             LOG_WARNING("Failed to save state of widget '%s': %s")
-                    << self.path() << er.asText();
+                    << self().path() << er.asText();
         }
     }
 
     GuiWidget *findNextWidgetToFocus(WalkDirection dir)
     {
-        PopupWidget *parentPopup = self.findParentPopup();
-        Rectanglei const viewRect = self.root().viewRule().recti();
+        PopupWidget *parentPopup = self().findParentPopup();
+        Rectanglei const viewRect = self().root().viewRule().recti();
         bool escaped = false;
-        auto *widget = self.walkInOrder(dir, [this, &viewRect, parentPopup, &escaped] (Widget &widget)
+        auto *widget = self().walkInOrder(dir, [this, &viewRect, parentPopup, &escaped] (Widget &widget)
         {
             if (parentPopup && !widget.hasAncestor(*parentPopup))
             {
@@ -390,13 +390,13 @@ DENG2_PIMPL(GuiWidget)
 
     float scoreForWidget(GuiWidget const &widget, ui::Direction dir) const
     {
-        if (!widget.canBeFocused() || &widget == &self)
+        if (!widget.canBeFocused() || &widget == thisPublic)
         {
             return -1;
         }
 
-        Rectanglef const viewRect  = self.root().viewRule().rect();
-        Rectanglef const selfRect  = self.hitRule().rect();
+        Rectanglef const viewRect  = self().root().viewRule().rect();
+        Rectanglef const selfRect  = self().hitRule().rect();
         Rectanglef const otherRect = widget.hitRule().rect();
         Vector2f const otherMiddle =
                 (dir == ui::Up?   otherRect.midBottom() :
@@ -466,11 +466,11 @@ DENG2_PIMPL(GuiWidget)
         }
 
         float favorability = 1;
-        if (widget.parentWidget() == self.parentWidget())
+        if (widget.parentWidget() == self().parentWidget())
         {
             favorability = .1f; // Siblings are much preferred.
         }
-        else if (self.hasAncestor(widget) || widget.hasAncestor(self))
+        else if (self().hasAncestor(widget) || widget.hasAncestor(self()))
         {
             favorability = .2f; // Ancestry is also good.
         }
@@ -486,8 +486,8 @@ DENG2_PIMPL(GuiWidget)
 
         // Focus navigation is always contained within the popup where the focus is
         // currently in.
-        Widget *walkRoot = self.findParentPopup();
-        if (!walkRoot) walkRoot = &self.root();
+        Widget *walkRoot = self().findParentPopup();
+        if (!walkRoot) walkRoot = &self().root();
 
         walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
         {
@@ -519,7 +519,7 @@ DENG2_PIMPL(GuiWidget)
                      << "opacity:" << bestWidget->visibleOpacity()
                      << "visible:" << bestWidget->isVisible();
         }*/
-        return bestWidget? bestWidget : &self;
+        return bestWidget? bestWidget : thisPublic;
     }
 
     static float toDevicePixels(double logicalPixels)

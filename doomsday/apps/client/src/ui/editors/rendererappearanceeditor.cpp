@@ -65,7 +65,7 @@ public VariableGroupEditor::IOwner
     {
         settings.audienceForProfileChange += this;
 
-        GuiWidget *container = &self.containerWidget();
+        GuiWidget *container = &self().containerWidget();
 
         // The contents of the editor will scroll.
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
@@ -378,12 +378,12 @@ public VariableGroupEditor::IOwner
 
     Rule const &firstColumnWidthRule() const
     {
-        return self.firstColumnWidth();
+        return self().firstColumnWidth();
     }
 
     ScrollAreaWidget &containerWidget()
     {
-        return self.containerWidget();
+        return self().containerWidget();
     }
 
     void resetToDefaults(String const &settingName)
@@ -401,7 +401,7 @@ public VariableGroupEditor::IOwner
     {
         bool const isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
 
-        foreach (Widget *child, self.containerWidget().childWidgets())
+        foreach (Widget *child, self().containerWidget().childWidgets())
         {
             if (Group *g = child->maybeAs<Group>())
             {
@@ -423,11 +423,11 @@ public VariableGroupEditor::IOwner
 
     void saveFoldState(PersistentState &toState)
     {
-        foreach (Widget *child, self.containerWidget().childWidgets())
+        foreach (Widget *child, self().containerWidget().childWidgets())
         {
             if (Group *g = child->maybeAs<Group>())
             {
-                toState.objectNamespace().set(self.name() + "." + g->name() + ".open",
+                toState.objectNamespace().set(self().name() + "." + g->name() + ".open",
                                               g->isOpen());
             }
         }
@@ -437,11 +437,11 @@ public VariableGroupEditor::IOwner
     {
         bool gotState = false;
 
-        foreach (Widget *child, self.containerWidget().childWidgets())
+        foreach (Widget *child, self().containerWidget().childWidgets())
         {
             if (Group *g = child->maybeAs<Group>())
             {
-                String const var = self.name() + "." + g->name() + ".open";
+                String const var = self().name() + "." + g->name() + ".open";
                 if (fromState.objectNamespace().has(var))
                 {
                     gotState = true;

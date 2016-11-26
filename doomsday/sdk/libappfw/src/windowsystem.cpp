@@ -43,7 +43,7 @@ DENG2_PIMPL(WindowSystem)
 
     ~Impl()
     {
-        self.closeAll();
+        self().closeAll();
     }
 
     void setStyle(Style *s)
@@ -54,7 +54,7 @@ DENG2_PIMPL(WindowSystem)
 
     void processLatestMousePosition()
     {
-        self.rootProcessEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
+        self().rootProcessEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
     }
 
     void processLatestMousePositionIfMoved()

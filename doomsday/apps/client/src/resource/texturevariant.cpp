@@ -290,7 +290,7 @@ DENG2_PIMPL(ClientTexture::Variant)
     ~Impl()
     {
         // Release any GL texture we may have prepared.
-        self.release();
+        self().release();
     }
 };
 

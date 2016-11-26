@@ -655,7 +655,7 @@ DENG2_PIMPL(Bank)
 
     void load(Path const &path, Importance importance)
     {
-        beginJob(new Job(self, Job::Load, path), importance);
+        beginJob(new Job(self(), Job::Load, path), importance);
     }
 
     void unload(Path const &path, CacheLevel toLevel, Importance importance)
@@ -664,7 +664,7 @@ DENG2_PIMPL(Bank)
         {
             Job::Task const task = (toLevel == InHotStorage && serialCache?
                                     Job::Serialize : Job::Unload);
-            beginJob(new Job(self, task, path), importance);
+            beginJob(new Job(self(), task, path), importance);
         }
     }
 

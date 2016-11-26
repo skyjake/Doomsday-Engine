@@ -128,7 +128,7 @@ DENG2_PIMPL(ClientWindow)
         , quitX     (new AnimationRule(0, Animation::EaseBoth))
         , contentXf (*i)
     {
-        self.setTransform(contentXf);
+        self().setTransform(contentXf);
 
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -137,7 +137,7 @@ DENG2_PIMPL(ClientWindow)
         App::app().audienceForStartupComplete() += this;
 
         // Listen to input.
-        self.eventHandler().audienceForMouseStateChange() += this;
+        self().eventHandler().audienceForMouseStateChange() += this;
 
         foreach (String s, configVariableNames())
         {
@@ -163,8 +163,8 @@ DENG2_PIMPL(ClientWindow)
     StringList configVariableNames() const
     {
         return StringList()
-                << self.configName("fsaa")
-                << self.configName("vsync");
+                << self().configName("fsaa")
+                << self().configName("vsync");
     }
 
     void setupUI()
@@ -352,7 +352,7 @@ DENG2_PIMPL(ClientWindow)
 #endif
         */
 
-        self.audienceForAttributeChange() += this;
+        self().audienceForAttributeChange() += this;
     }
 
     void appStartupCompleted()
@@ -385,7 +385,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
-        self.hideTaskBarBlur(); // update background blur mode
+        self().hideTaskBarBlur(); // update background blur mode
 
         activateOculusRiftModeIfConnected();
     }
@@ -450,7 +450,7 @@ DENG2_PIMPL(ClientWindow)
         GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
         LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
-        if (vrCfg().needsStereoGLFormat() && !self.format().stereo())
+        if (vrCfg().needsStereoGLFormat() && !self().format().stereo())
         {
             LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
         }
@@ -459,7 +459,7 @@ DENG2_PIMPL(ClientWindow)
         game->enable();
 
         // Configure a viewport immediately.
-        GLState::current().setViewport(Rectangleui(0, 0, self.pixelWidth(), self.pixelHeight())).apply();
+        GLState::current().setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight())).apply();
 
         LOG_DEBUG("GameWidget enabled");
 
@@ -467,16 +467,16 @@ DENG2_PIMPL(ClientWindow)
         {
             needMainInit = false;
 
-            self.raise();
-            self.requestActivate();
+            self().raise();
+            self().requestActivate();
 
-            self.eventHandler().audienceForFocusChange() += this;
+            self().eventHandler().audienceForFocusChange() += this;
 
 /*#ifdef WIN32
-            if (self.isFullScreen())
+            if (self().isFullScreen())
             {
                 // It would seem we must manually give our canvas focus. Bug in Qt?
-                self.canvas().setFocus();
+                self().canvas().setFocus();
             }
 #endif*/
 
@@ -491,7 +491,7 @@ DENG2_PIMPL(ClientWindow)
     {
         LOG_AS("ClientWindow");
 
-        Size size = self.pixelSize();
+        Size size = self().pixelSize();
         LOG_TRACE("Window resized to %s pixels") << size.asText();
 
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
@@ -509,7 +509,7 @@ DENG2_PIMPL(ClientWindow)
         ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
         // Frame has been shown, now we can do post-frame updates.
-        updateFpsNotification(self.frameRate());
+        updateFpsNotification(self().frameRate());
         completeFade();
     }
 
@@ -521,7 +521,7 @@ DENG2_PIMPL(ClientWindow)
     void showOrHideQuitButton()
     {
         TimeDelta const SPAN = 0.6;
-        if (self.isFullScreen() && !DoomsdayApp::isGameLoaded())
+        if (self().isFullScreen() && !DoomsdayApp::isGameLoaded())
         {
             quitX->set(-quitButton->rule().width() - Style::get().rules().rule("gap"), SPAN);
         }
@@ -585,7 +585,7 @@ DENG2_PIMPL(ClientWindow)
     void windowFocusChanged(GLWindow &, bool hasFocus)
     {
         LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
-                << hasFocus << self.isFullScreen() << self.isHidden() << self.isMinimized();
+                << hasFocus << self().isFullScreen() << self().isHidden() << self().isMinimized();
 
         if (!hasFocus)
         {
@@ -596,12 +596,12 @@ DENG2_PIMPL(ClientWindow)
             });
             InputSystem::get().clearEvents();
 
-            self.eventHandler().trapMouse(false);
+            self().eventHandler().trapMouse(false);
         }
-        else if (self.isFullScreen() && !taskBar->isOpen() && DoomsdayApp::isGameLoaded())
+        else if (self().isFullScreen() && !taskBar->isOpen() && DoomsdayApp::isGameLoaded())
         {
             // Trap the mouse again in fullscreen mode.
-            self.eventHandler().trapMouse();
+            self().eventHandler().trapMouse();
         }
 
         // Generate an event about this.
@@ -615,7 +615,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateFpsNotification(float fps)
     {
-        notifications->showOrHide(*fpsCounter, self.isFPSCounterVisible());
+        notifications->showOrHide(*fpsCounter, self().isFPSCounterVisible());
 
         if (!fequal(oldFps, fps))
         {
@@ -628,12 +628,12 @@ DENG2_PIMPL(ClientWindow)
     {
         if (variable.name() == "fsaa")
         {
-            //self.updateCanvasFormat();
+            //self().updateCanvasFormat();
         }
         else if (variable.name() == "vsync")
         {
 /*#ifdef WIN32
-            self.updateCanvasFormat();
+            self().updateCanvasFormat();
             DENG2_UNUSED(newValue);
 #else*/
             GL_SetVSync(newValue.isTrue());
@@ -699,7 +699,7 @@ DENG2_PIMPL(ClientWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.pixelSize());
+        Vector2ui const size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -712,7 +712,7 @@ DENG2_PIMPL(ClientWindow)
         if (mini && !isGameMini)
         {
             // Get rid of the sidebar, if it's open.
-            self.setSidebar(RightEdge, nullptr);
+            self().setSidebar(RightEdge, nullptr);
 
             auto const &unit = Style::get().rules().rule(RuleBank::UNIT);
 
@@ -733,7 +733,7 @@ DENG2_PIMPL(ClientWindow)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
+        cursor->show(!self().eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
         // Show or hide the native mouse cursor.
         if (cursor->isVisible())

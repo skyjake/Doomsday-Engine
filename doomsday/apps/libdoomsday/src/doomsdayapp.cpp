@@ -335,7 +335,7 @@ DENG2_PIMPL(DoomsdayApp)
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
         // libcore has determined the native base path, so let FS1 know about it.
-        self.setDoomsdayBasePath(DENG2_APP->nativeBasePath());
+        self().setDoomsdayBasePath(DENG2_APP->nativeBasePath());
     }
 #endif // UNIX
 
@@ -345,14 +345,14 @@ DENG2_PIMPL(DoomsdayApp)
         // Use a custom base directory?
         if (CommandLine_CheckWith("-basedir", 1))
         {
-            self.setDoomsdayBasePath(CommandLine_Next());
+            self().setDoomsdayBasePath(CommandLine_Next());
         }
         else
         {
             // The default base directory is one level up from the bin dir.
             String binDir = App::executablePath().fileNamePath().withSeparators('/');
             String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
-            self.setDoomsdayBasePath(baseDir);
+            self().setDoomsdayBasePath(baseDir);
         }
     }
 #endif // WIN32

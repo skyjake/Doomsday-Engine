@@ -57,7 +57,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 
     void updateLexicon()
     {
-        self.setLexicon(Con_Lexicon());
+        self().setLexicon(Con_Lexicon());
     }
 };
 

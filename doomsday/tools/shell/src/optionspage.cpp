@@ -63,7 +63,7 @@ DENG2_PIMPL(OptionsPage)
         game = gameId;
         gameOptions = shell::DoomsdayInfo::gameOptions(game);
 
-        base   = new QWidget(&self);
+        base   = new QWidget(thisPublic);
         base->setMaximumWidth(320);
         layout = new QFormLayout(base);
 
@@ -228,7 +228,7 @@ DENG2_PIMPL(OptionsPage)
             }
         }
 
-        emit self.commandsSubmitted(commands);
+        emit self().commandsSubmitted(commands);
     }
 };
 

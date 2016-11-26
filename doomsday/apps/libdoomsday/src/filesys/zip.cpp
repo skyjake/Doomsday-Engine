@@ -334,7 +334,7 @@ DENG2_PIMPL(Zip)
         LOG_AS("Zip");
 
         FileInfo const &lumpInfo = lump.info();
-        self.handle_->seek(lumpInfo.baseOffset, SeekSet);
+        self().handle_->seek(lumpInfo.baseOffset, SeekSet);
 
         if (lumpInfo.isCompressed())
         {
@@ -343,7 +343,7 @@ DENG2_PIMPL(Zip)
             if (!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpInfo.compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
-            self.handle_->read(compressedData, lumpInfo.compressedSize);
+            self().handle_->read(compressedData, lumpInfo.compressedSize);
 
             // Uncompress into the buffer provided by the caller.
             result = uncompressRaw(compressedData, lumpInfo.compressedSize, buffer, lumpInfo.size);
@@ -354,7 +354,7 @@ DENG2_PIMPL(Zip)
         else
         {
             // Read the uncompressed data directly to the buffer provided by the caller.
-            self.handle_->read(buffer, lumpInfo.size);
+            self().handle_->read(buffer, lumpInfo.size);
         }
         return lumpInfo.size;
     }

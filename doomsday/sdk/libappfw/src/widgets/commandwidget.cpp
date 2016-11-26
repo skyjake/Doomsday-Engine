@@ -41,9 +41,9 @@ DENG_GUI_PIMPL(CommandWidget)
         // Height for the content: depends on the document height (plus margins), but at
         // most 400; never extend outside the view, though.
         popup->setPreferredHeight(rule("editor.completion.height"),
-                                  self.rule().top() - rule("gap"));
+                                  self().rule().top() - rule("gap"));
 
-        self.add(popup);
+        self().add(popup);
     }
 };
 

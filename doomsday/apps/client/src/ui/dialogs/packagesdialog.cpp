@@ -161,7 +161,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     Impl(Public *i) : Base(i)
     {
-        self.leftArea().add(gameTitle = new LabelWidget);
+        self().leftArea().add(gameTitle = new LabelWidget);
         gameTitle->add(gameDataFiles = new LabelWidget);
 
         // Indicator that is only visible when no packages have been added to the profile.
@@ -170,9 +170,9 @@ DENG_GUI_PIMPL(PackagesDialog)
         nothingSelected->setFont("heading");
         nothingSelected->setOpacity(0.5f);
         nothingSelected->rule()
-                .setRect(self.leftArea().rule())
+                .setRect(self().leftArea().rule())
                 .setInput(Rule::Top, gameTitle->rule().bottom());
-        self.leftArea().add(nothingSelected);
+        self().leftArea().add(nothingSelected);
 
         // Currently selected packages.
         gameTitle->setSizePolicy(ui::Filled, ui::Expand);
@@ -184,21 +184,21 @@ DENG_GUI_PIMPL(PackagesDialog)
         gameDataFiles->setTextLineAlignment(ui::AlignLeft);
         gameDataFiles->setAlignment(ui::AlignLeft);
         gameTitle->rule()
-                .setInput(Rule::Left,  self.leftArea().contentRule().left())
-                .setInput(Rule::Top,   self.leftArea().contentRule().top())
+                .setInput(Rule::Left,  self().leftArea().contentRule().left())
+                .setInput(Rule::Top,   self().leftArea().contentRule().top())
                 .setInput(Rule::Width, rule("dialog.packages.width"));
         gameDataFiles->rule()
                 .setRect(gameTitle->rule())
                 .clearInput(Rule::Top);
-        self.leftArea().add(menu = new HomeMenuWidget);
+        self().leftArea().add(menu = new HomeMenuWidget);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
-                .setInput(Rule::Left,  self.leftArea().contentRule().left())
+                .setInput(Rule::Left,  self().leftArea().contentRule().left())
                 .setInput(Rule::Top,   gameTitle->rule().bottom())
                 .setInput(Rule::Width, rule("dialog.packages.width"));
         menu->organizer().setWidgetFactory(*this);
         menu->audienceForChildAddition() += this;
-        self.leftArea().enableIndicatorDraw(true);
+        self().leftArea().enableIndicatorDraw(true);
 
         QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
         {
@@ -210,8 +210,8 @@ DENG_GUI_PIMPL(PackagesDialog)
         });
 
         // Package browser.
-        self.rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
-                                                          self.name() + ".filter"));
+        self().rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
+                                                          self().name() + ".filter"));
         browser->setActionsAlwaysShown(true);
         browser->setPackageStatus(*this);
 
@@ -265,11 +265,11 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         //browser->setColorTheme(Normal, Normal, Normal, Normal);
         browser->rule()
-                .setInput(Rule::Left,  self.rightArea().contentRule().left())
-                .setInput(Rule::Top,   self.rightArea().contentRule().top())
+                .setInput(Rule::Left,  self().rightArea().contentRule().left())
+                .setInput(Rule::Top,   self().rightArea().contentRule().top())
                 .setInput(Rule::Width, menu->rule().width());
-        self.rightArea().enableIndicatorDraw(true);
-        browser->setFilterEditorMinimumY(self.rightArea().rule().top());
+        self().rightArea().enableIndicatorDraw(true);
+        browser->setFilterEditorMinimumY(self().rightArea().rule().top());
     }
 
     void populate()
@@ -319,7 +319,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self);
+        return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self());
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)

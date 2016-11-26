@@ -59,7 +59,7 @@ DENG2_PIMPL(MultiAtlas)
             if (atlas->isEmpty()) return atlas;
         }
         // Make a new atlas.
-        Atlas *blank = factory.makeAtlas(self);
+        Atlas *blank = factory.makeAtlas(self());
         DENG2_ASSERT(blank->flags().testFlag(Atlas::DeferredAllocations));
         atlases.prepend(blank);
         return blank;

@@ -32,7 +32,7 @@ DENG2_PIMPL(ErrorLogDialog)
         QObject::connect(buttons, SIGNAL(accepted()), thisPublic, SLOT(accept()));
         layout->addWidget(buttons, 0);
 
-        self.setLayout(layout);
+        self().setLayout(layout);
     }
 };
 

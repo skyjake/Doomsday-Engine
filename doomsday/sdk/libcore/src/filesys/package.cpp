@@ -89,16 +89,16 @@ DENG2_PIMPL(Package)
     StringList importPaths() const
     {
         StringList paths;
-        if (self.objectNamespace().has(PACKAGE_IMPORT_PATH))
+        if (self().objectNamespace().has(PACKAGE_IMPORT_PATH))
         {
-            ArrayValue const &imp = self.objectNamespace().geta(PACKAGE_IMPORT_PATH);
+            ArrayValue const &imp = self().objectNamespace().geta(PACKAGE_IMPORT_PATH);
             DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
                 Path importPath = (*i)->asText();
                 if (!importPath.isAbsolute())
                 {
                     // Relative to the package root, and must exist.
-                    importPath = self.root().locate<File const >(importPath).path();
+                    importPath = self().root().locate<File const >(importPath).path();
                 }
                 paths << importPath;
             }
@@ -108,7 +108,7 @@ DENG2_PIMPL(Package)
 
     Record &packageInfo()
     {
-        return self.objectNamespace().subrecord(VAR_PACKAGE);
+        return self().objectNamespace().subrecord(VAR_PACKAGE);
     }
 };
 

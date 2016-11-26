@@ -58,14 +58,14 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         joinButton->useInfoStyle();
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
         joinButton->setActionFn([this] () { joinButtonPressed(); });
-        self.addButton(joinButton);
+        self().addButton(joinButton);
 
         info = new LabelWidget;
         info->setSizePolicy(ui::Fixed, ui::Expand);
         info->setAlignment(ui::AlignLeft);
         info->setTextLineAlignment(ui::AlignLeft);
-        info->rule().setInput(Rule::Width, self.rule().width());
-        info->margins().setLeft(self.icon().rule().width());
+        info->rule().setInput(Rule::Width, self().rule().width());
+        info->margins().setLeft(self().icon().rule().width());
 
         // Menu for additional functions.
         extra = new PopupButtonWidget;
@@ -76,16 +76,16 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         extra->margins().setTopBottom(RuleBank::UNIT);
         extra->rule()
                 .setInput(Rule::Bottom, info->rule().bottom() - info->margins().bottom())
-                .setMidAnchorX(info->rule().left() + self.icon().rule().width()/2);
+                .setMidAnchorX(info->rule().left() + self().icon().rule().width()/2);
         info->add(extra);
 
-        self.panel().setContent(info);
-        self.panel().open();
+        self().panel().setContent(info);
+        self().panel().open();
     }
 
     void joinButtonPressed() const
     {
-        self.root().setFocus(nullptr);
+        self().root().setFocus(nullptr);
 
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
 
@@ -156,7 +156,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     {
         // Let's refresh the icons.
         catalog.clear();
-        self.updateContent(serverInfo);
+        self().updateContent(serverInfo);
     }
 
     DENG2_PIMPL_AUDIENCE(AboutToJoin)

@@ -40,7 +40,7 @@ DENG2_OBSERVES(AbstractFont, Deletion)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self());
     }
 
     // Observes AbstractFont::Deletion.

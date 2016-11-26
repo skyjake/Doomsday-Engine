@@ -92,7 +92,7 @@ DENG2_PIMPL(GLUniform)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self());
 
         switch (type)
         {
@@ -177,13 +177,13 @@ DENG2_PIMPL(GLUniform)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
         {
-            i->uniformValueChanged(self);
+            i->uniformValueChanged(self());
         }
     }
 
     void assetBeingDeleted(Asset &asset)
     {
-        if (self.isSampler())
+        if (self().isSampler())
         {
             if (value.tex == &asset)
             {

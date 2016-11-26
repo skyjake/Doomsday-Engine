@@ -90,24 +90,24 @@ DENG2_PIMPL(Widget)
 
 #ifdef _DEBUG
         // Can't have double ownership.
-        if (self.parent())
+        if (self().parent())
         {
-            if (self.parent()->hasRoot())
+            if (self().parent()->hasRoot())
             {
-                DENG2_ASSERT(!self.parent()->root().isInTree(*child));
+                DENG2_ASSERT(!self().parent()->root().isInTree(*child));
             }
             else
             {
-                DENG2_ASSERT(!self.parent()->isInTree(*child));
+                DENG2_ASSERT(!self().parent()->isInTree(*child));
             }
         }
         else
         {
-            DENG2_ASSERT(!self.isInTree(*child));
+            DENG2_ASSERT(!self().isInTree(*child));
         }
 #endif
 
-        child->d->parent = &self;
+        child->d->parent = thisPublic;
 
         switch (behavior)
         {
@@ -137,7 +137,7 @@ DENG2_PIMPL(Widget)
         }
         DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
         {
-            i->widgetParentChanged(*child, 0, &self);
+            i->widgetParentChanged(*child, 0, thisPublic);
         }
     }
 
@@ -175,7 +175,7 @@ DENG2_PIMPL(Widget)
                     // previous parent.
                     return nullptr;
                 }
-                if (dir == Backward && func(self))
+                if (dir == Backward && func(self()))
                 {
                     return thisPublic;
                 }

@@ -79,7 +79,7 @@ DENG2_PIMPL(BitmapFont)
 
     ~Impl()
     {
-        self.glDeinit();
+        self().glDeinit();
     }
 
     /**
@@ -117,8 +117,8 @@ DENG2_PIMPL(BitmapFont)
     {
         DENG2_ASSERT(file != 0);
 
-        self._flags |= AbstractFont::Colorize;
-        self._flags &= ~AbstractFont::Shadowed;
+        self()._flags |= AbstractFont::Colorize;
+        self()._flags &= ~AbstractFont::Shadowed;
         texMargin = Vector2ui(0, 0);
 
         // Load in the data.
@@ -143,7 +143,7 @@ DENG2_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
-            de::Uri uri = self.manifest().composeUri();
+            de::Uri uri = self().manifest().composeUri();
             throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
@@ -172,12 +172,12 @@ DENG2_PIMPL(BitmapFont)
     {
         DENG2_ASSERT(file != 0);
 
-        self._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
+        self()._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
         int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            de::Uri uri = self.manifest().composeUri();
+            de::Uri uri = self().manifest().composeUri();
             throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 

@@ -51,7 +51,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             wd->updateItemHighlight();
             wd->choices->dismiss();
 
-            emit wd->self.selectionChangedByUser(wd->selected);
+            emit wd->self().selectionChangedByUser(wd->selected);
         }
     };
 
@@ -64,7 +64,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     {
         maxWidth = new IndirectRule;
 
-        self.setFont("choice.selected");
+        self().setFont("choice.selected");
 
         choices = new PopupMenuWidget;
         choices->items().audienceForAddition() += this;
@@ -72,9 +72,9 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         choices->items().audienceForOrderChange() += this;
         choices->menu().organizer().audienceForWidgetCreation() += this;
         choices->menu().organizer().audienceForWidgetUpdate() += this;
-        self.add(choices);
+        self().add(choices);
 
-        self.setPopup(*choices, ui::Right);
+        self().setPopup(*choices, ui::Right);
 
         QObject::connect(choices, &PanelWidget::opened, [this] ()
         {
@@ -112,10 +112,10 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void widgetUpdatedForItem(GuiWidget &, ui::Item const &item)
     {
-        if (isValidSelection() && &item == &self.selectedItem())
+        if (isValidSelection() && &item == &self().selectedItem())
         {
             // Make sure the button is up to date, too.
-            updateButtonWithItem(self.selectedItem());
+            updateButtonWithItem(self().selectedItem());
         }
     }
 
@@ -123,7 +123,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     {
         // We'll need to calculate this manually because the fonts keep changing due to
         // selection and thus we can't just check the current layout.
-        Font const &font = self.font();
+        Font const &font = self().font();
         int widest = 0;
         for (uint i = 0; i < items().size(); ++i)
         {
@@ -131,7 +131,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             esc.parse(items().at(i).label());
             widest = de::max(widest, font.advanceWidth(esc.plainText()));
         }
-        maxWidth->setSource(Const(widest) + self.margins().width());
+        maxWidth->setSource(Const(widest) + self().margins().width());
     }
 
     Data const &items() const
@@ -194,12 +194,12 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void updateButtonWithItem(ui::Item const &item)
     {
-        self.setText(item.label());
+        self().setText(item.label());
 
         ActionItem const *act = dynamic_cast<ActionItem const *>(&item);
         if (act)
         {
-            self.setImage(act->image());
+            self().setImage(act->image());
         }
     }
 
@@ -213,11 +213,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         else
         {
             // No valid selection.
-            self.setText(noSelectionHint);
-            self.setImage(Image());
+            self().setText(noSelectionHint);
+            self().setImage(Image());
         }
 
-        emit self.selectionChanged(selected);
+        emit self().selectionChanged(selected);
     }
 };
 

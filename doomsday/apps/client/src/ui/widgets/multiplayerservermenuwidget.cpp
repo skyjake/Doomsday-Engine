@@ -93,14 +93,14 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         DoomsdayApp::games().audienceForReadiness() += this;
         link().audienceForDiscoveryUpdate += this;
 
-        self.organizer().setWidgetFactory(*this);
+        self().organizer().setWidgetFactory(*this);
     }
 
     void linkDiscoveryUpdate(ServerLink const &link) override
     {
         bool changed = false;
 
-        ui::Data &items = self.items();
+        ui::Data &items = self().items();
 
         // Remove obsolete entries.
         for (ui::Data::Pos idx = 0; idx < items.size(); ++idx)
@@ -175,7 +175,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void gameReadinessUpdated() override
     {
-        foreach (Widget *w, self.childWidgets())
+        foreach (Widget *w, self().childWidgets())
         {
             updateAvailability(w->as<GuiWidget>());
         }
@@ -183,7 +183,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void updateAvailability(GuiWidget &menuItemWidget)
     {
-        auto const &item = self.organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
+        auto const &item = self().organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
 
         bool playable = false;
         String gameId = item.gameId();

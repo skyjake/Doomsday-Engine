@@ -207,7 +207,7 @@ DENG2_PIMPL(GLState)
         switch (prop)
         {
         case internal::CullMode:
-            switch (self.cull())
+            switch (self().cull())
             {
             case gl::None:
                 LIBGUI_GL.glDisable(GL_CULL_FACE);
@@ -224,36 +224,36 @@ DENG2_PIMPL(GLState)
             break;
 
         case internal::DepthTest:
-            if (self.depthTest())
+            if (self().depthTest())
                 LIBGUI_GL.glEnable(GL_DEPTH_TEST);
             else
                 LIBGUI_GL.glDisable(GL_DEPTH_TEST);
             break;
 
         case internal::DepthFunc:
-            LIBGUI_GL.glDepthFunc(glComp(self.depthFunc()));
+            LIBGUI_GL.glDepthFunc(glComp(self().depthFunc()));
             break;
 
         case internal::DepthWrite:
-            if (self.depthWrite())
+            if (self().depthWrite())
                 LIBGUI_GL.glDepthMask(GL_TRUE);
             else
                 LIBGUI_GL.glDepthMask(GL_FALSE);
             break;
 
         case internal::AlphaTest:
-            if (self.alphaTest())
+            if (self().alphaTest())
                 LIBGUI_GL.glEnable(GL_ALPHA_TEST);
             else
                 LIBGUI_GL.glDisable(GL_ALPHA_TEST);
             break;
 
         case internal::AlphaLimit:
-            LIBGUI_GL.glAlphaFunc(GL_GREATER, self.alphaLimit());
+            LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
             break;
 
         case internal::Blend:
-            if (self.blend())
+            if (self().blend())
                 LIBGUI_GL.glEnable(GL_BLEND);
             else
                 LIBGUI_GL.glDisable(GL_BLEND);
@@ -261,13 +261,13 @@ DENG2_PIMPL(GLState)
 
         case internal::BlendFuncSrc:
         case internal::BlendFuncDest:
-            //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
-            LIBGUI_GL.glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
+            //glBlendFunc(glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()));
+            LIBGUI_GL.glBlendFuncSeparate(glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()),
                                           GL_ONE, GL_ONE);
             break;
 
         case internal::BlendOp:
-            switch (self.blendOp())
+            switch (self().blendOp())
             {
             case gl::Add:
                 LIBGUI_GL.glBlendEquation(GL_FUNC_ADD);
@@ -283,7 +283,7 @@ DENG2_PIMPL(GLState)
 
         case internal::ColorMask:
         {
-            gl::ColorMask const mask = self.colorMask();
+            gl::ColorMask const mask = self().colorMask();
             LIBGUI_GL.glColorMask((mask & gl::WriteRed)   != 0,
                                   (mask & gl::WriteGreen) != 0,
                                   (mask & gl::WriteBlue)  != 0,
@@ -297,22 +297,22 @@ DENG2_PIMPL(GLState)
         case internal::ScissorWidth:
         case internal::ScissorHeight:
         {
-            if (self.scissor() || self.target().hasActiveRect())
+            if (self().scissor() || self().target().hasActiveRect())
             {
                 LIBGUI_GL.glEnable(GL_SCISSOR_TEST);
 
                 Rectangleui origScr;
-                if (self.scissor())
+                if (self().scissor())
                 {
-                    origScr = self.scissorRect();
+                    origScr = self().scissorRect();
                 }
                 else
                 {
-                    origScr = Rectangleui::fromSize(self.target().size());
+                    origScr = Rectangleui::fromSize(self().target().size());
                 }
 
-                Rectangleui const scr = self.target().scaleToActiveRect(origScr);
-                LIBGUI_GL.glScissor(scr.left(), self.target().size().y - scr.bottom(),
+                Rectangleui const scr = self().target().scaleToActiveRect(origScr);
+                LIBGUI_GL.glScissor(scr.left(), self().target().size().y - scr.bottom(),
                                     scr.width(), scr.height());
             }
             else
@@ -327,10 +327,10 @@ DENG2_PIMPL(GLState)
         case internal::ViewportWidth:
         case internal::ViewportHeight:
         {
-            Rectangleui const vp = self.target().scaleToActiveRect(self.viewport());
+            Rectangleui const vp = self().target().scaleToActiveRect(self().viewport());
             //qDebug() << "glViewport" << vp.asText();
 
-            LIBGUI_GL.glViewport(vp.left(), self.target().size().y - vp.bottom(),
+            LIBGUI_GL.glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
         }

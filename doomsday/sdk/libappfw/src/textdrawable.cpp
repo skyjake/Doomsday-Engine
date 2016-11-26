@@ -276,8 +276,8 @@ DENG2_PIMPL(TextDrawable)
 
         DENG2_ASSERT(visibleWrap != nullptr);
 
-        self.setWrapping(*visibleWrap);
-        self.GLTextComposer::setText(visibleWrap->plainText, visibleWrap->format);
+        self().setWrapping(*visibleWrap);
+        self().GLTextComposer::setText(visibleWrap->plainText, visibleWrap->format);
 
         return true;
     }

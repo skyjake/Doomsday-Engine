@@ -70,9 +70,9 @@ DENG2_PIMPL(ShellUser), public LogSink
      */
     void flush()
     {
-        if (!logEntryPacket.isEmpty() && self.status() == shell::Link::Connected)
+        if (!logEntryPacket.isEmpty() && self().status() == shell::Link::Connected)
         {
-            self << logEntryPacket;
+            self() << logEntryPacket;
             logEntryPacket.clear();
         }
     }

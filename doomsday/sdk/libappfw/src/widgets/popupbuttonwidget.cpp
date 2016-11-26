@@ -48,9 +48,9 @@ DENG2_PIMPL(PopupButtonWidget)
         {
             if (constructor)
             {
-                pop.reset(constructor(self));
-                self.add(pop);
-                self.setOpeningDirection(direction);
+                pop.reset(constructor(self()));
+                self().add(pop);
+                self().setOpeningDirection(direction);
                 pop->setDeleteAfterDismissed(true);
             }
             if (opener)
@@ -62,7 +62,7 @@ DENG2_PIMPL(PopupButtonWidget)
                 pop->open();
             }
 
-            if (auto *parentPop = self.findParentPopup())
+            if (auto *parentPop = self().findParentPopup())
             {
                 parentPop->audienceForClose() += this;
             }
@@ -71,7 +71,7 @@ DENG2_PIMPL(PopupButtonWidget)
 
     void panelBeingClosed(PanelWidget &)
     {
-        if (self.isOpen()) pop->close();
+        if (self().isOpen()) pop->close();
     }
 };
 

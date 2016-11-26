@@ -60,9 +60,9 @@ DENG2_PIMPL(GLWindow)
 
     ~Impl()
     {
-        self.makeCurrent();
+        self().makeCurrent();
         glDeinit();
-        self.doneCurrent();
+        self().doneCurrent();
 
         if (thisPublic == mainWindow)
         {
@@ -74,12 +74,12 @@ DENG2_PIMPL(GLWindow)
     void glInit()
     {
         GLInfo::glInit();
-        self.setState(Ready);
+        self().setState(Ready);
     }
 
     void glDeinit()
     {
-        self.setState(NotReady);
+        self().setState(NotReady);
         readyNotified = false;
         readyPending = false;
         if (timerQuery)
@@ -98,12 +98,12 @@ DENG2_PIMPL(GLWindow)
 
         readyPending = false;
 
-        self.makeCurrent();
+        self().makeCurrent();
 
         DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
         // Print some information.
-        QSurfaceFormat const fmt = self.format();
+        QSurfaceFormat const fmt = self().format();
 
         LOG_GL_NOTE("OpenGL %i.%i supported%s")
                 << fmt.majorVersion() << fmt.minorVersion()
@@ -112,14 +112,14 @@ DENG2_PIMPL(GLWindow)
                                                                               : " (Core)") : "");
 
         // Everybody can perform GL init now.
-        DENG2_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self());
 
         readyNotified = true;
 
-        self.doneCurrent();
+        self().doneCurrent();
 
         // Now we can paint.
-        mainCall.enqueue([this] () { self.update(); });
+        mainCall.enqueue([this] () { self().update(); });
     }
 
     bool timerQueryReady() const

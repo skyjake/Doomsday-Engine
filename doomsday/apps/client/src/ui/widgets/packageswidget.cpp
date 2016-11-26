@@ -393,17 +393,17 @@ DENG_GUI_PIMPL(PackagesWidget)
         }));
 
         //maxPanelHeight = new IndirectRule;
-        //maxPanelHeight->setSource(self.rule().height());
+        //maxPanelHeight->setSource(self().rule().height());
 
-        self.add(menu = new HomeMenuWidget);
-        self.add(search = new LineEditWidget);
-        self.add(clearSearch = new ButtonWidget);
+        self().add(menu = new HomeMenuWidget);
+        self().add(search = new LineEditWidget);
+        self().add(clearSearch = new ButtonWidget);
 
         // Search/filter terms.
         search->rule()
-                .setInput(Rule::Left,  self.rule().left())
-                .setInput(Rule::Right, self.rule().right())
-                .setInput(Rule::Top,   self.rule().top());
+                .setInput(Rule::Left,  self().rule().left())
+                .setInput(Rule::Right, self().rule().right())
+                .setInput(Rule::Top,   self().rule().top());
         search->setEmptyContentHint(tr("Search packages"));
         search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() + rule("gap"));
@@ -444,15 +444,15 @@ DENG_GUI_PIMPL(PackagesWidget)
         });
         menu->setItems(filteredPackages);
         menu->setBehavior(ChildVisibilityClipping);
-        if (!self.name().isEmpty())
+        if (!self().name().isEmpty())
         {
             menu->setOpacity(0); // initially
         }
         menu->layout().setRowPadding(Const(0));
         menu->rule()
-                .setInput(Rule::Left,  self.rule().left())
-                .setInput(Rule::Right, self.rule().right())
-                .setInput(Rule::Top,   self.rule().top() + search->rule().height());
+                .setInput(Rule::Left,  self().rule().left())
+                .setInput(Rule::Right, self().rule().right())
+                .setInput(Rule::Top,   self().rule().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule(RuleBank::UNIT).valuei() +
                                        int(style().fonts().font("default").height().value()*3));
@@ -468,12 +468,12 @@ DENG_GUI_PIMPL(PackagesWidget)
         refreshProgress = new ProgressWidget;
         refreshProgress->setMode(ProgressWidget::Indefinite);
         refreshProgress->setImageScale(.3f);
-        self.add(refreshProgress);
+        self().add(refreshProgress);
 
         // By default, only the progress indicator is shown.
         showProgressIndicator(true);
 
-        self.rule().setInput(Rule::Height, search->rule().height() + menu->rule().height());
+        self().rule().setInput(Rule::Height, search->rule().height() + menu->rule().height());
     }
 
     ~Impl()
@@ -567,7 +567,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         allPackages.sort();
 
-        emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
+        emit self().itemCountChanged(filteredPackages.size(), allPackages.size());
     }
 
     void updateItems()
@@ -612,7 +612,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         filteredPackages.refilter();
 
-        emit self.itemCountChanged(filteredPackages.size(), allPackages.size());
+        emit self().itemCountChanged(filteredPackages.size(), allPackages.size());
     }
 
     void focusFirstListedPackage()
@@ -633,7 +633,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 //qDebug() << "Bundles identified, re-populating" << &self;
                 populateEnabled = true;
-                self.populate();
+                self().populate();
             });
         }
     }
@@ -674,7 +674,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new PackageListItemWidget(item.as<PackageItem>(), self);
+        return new PackageListItemWidget(item.as<PackageItem>(), self());
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)

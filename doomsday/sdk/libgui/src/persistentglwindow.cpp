@@ -479,12 +479,12 @@ DENG2_PIMPL(PersistentGLWindow)
             setMain(thisPublic);
         }
 
-        self.setMinimumSize(QSize(MIN_WIDTH, MIN_HEIGHT));
+        self().setMinimumSize(QSize(MIN_WIDTH, MIN_HEIGHT));
     }
 
     ~Impl()
     {
-        self.saveToConfig();
+        self().saveToConfig();
     }
 
     /**
@@ -582,7 +582,7 @@ DENG2_PIMPL(PersistentGLWindow)
      */
     void applyToWidget(State const &newState)
     {
-        bool trapped = self.eventHandler().isMouseTrapped();
+        bool trapped = self().eventHandler().isMouseTrapped();
 
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
@@ -590,7 +590,7 @@ DENG2_PIMPL(PersistentGLWindow)
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 
-        if (!self.isVisible())
+        if (!self().isVisible())
         {
             // Update geometry for windowed mode right away.
             queue << Task(newState.windowRect);
@@ -613,7 +613,7 @@ DENG2_PIMPL(PersistentGLWindow)
 #endif
         }
 
-        if (self.isVisible())
+        if (self().isVisible())
         {
             // Possible actions:
             //
@@ -676,7 +676,7 @@ DENG2_PIMPL(PersistentGLWindow)
         state.fullSize = newState.fullSize;
         state.flags    = newState.flags;
 
-        if (self.isVisible())
+        if (self().isVisible())
         {
             // Carry out queued operations after dropping back to the event loop.
             QTimer::singleShot(10, thisPublic, SLOT(performQueuedTasks()));
@@ -706,17 +706,17 @@ DENG2_PIMPL(PersistentGLWindow)
                 {
                 case Task::ShowNormal:
                     LOG_GL_VERBOSE("Showing window as normal");
-                    self.showNormal();
+                    self().showNormal();
                     break;
 
                 case Task::ShowMaximized:
                     LOG_GL_VERBOSE("Showing window as maximized");
-                    self.showMaximized();
+                    self().showMaximized();
                     break;
 
                 case Task::ShowFullscreen:
                     LOG_GL_VERBOSE("Showing window as fullscreen");
-                    self.showFullScreen();
+                    self().showFullScreen();
                     break;
 
                 case Task::SetGeometry:
@@ -726,7 +726,7 @@ DENG2_PIMPL(PersistentGLWindow)
                         next.rect = centeredRect(next.rect.size());
                     }
                     LOG_GL_VERBOSE("Setting window geometry to ") << next.rect.asText();
-                    self.setGeometry(next.rect.left(),  next.rect.top(),
+                    self().setGeometry(next.rect.left(),  next.rect.top(),
                                      next.rect.width(), next.rect.height());
                     state.windowRect = next.rect;
                     break;
@@ -740,12 +740,12 @@ DENG2_PIMPL(PersistentGLWindow)
 #ifdef MACOSX
                     // Pull the window again over the shield after the mode change.
                     LOGDEV_GL_VERBOSE("Raising window over shield");
-                    DisplayMode_Native_Raise(self.nativeHandle());
+                    DisplayMode_Native_Raise(self().nativeHandle());
 #endif
                     break;
 
                 case Task::TrapMouse:
-                    self.eventHandler().trapMouse();
+                    self().eventHandler().trapMouse();
                     break;
                 }
 
@@ -756,7 +756,7 @@ DENG2_PIMPL(PersistentGLWindow)
         // The queue is now empty; all modifications to state have been applied.
         DENG2_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
         {
-            i->windowAttributesChanged(self);
+            i->windowAttributesChanged(self());
         }
     }
 
@@ -767,13 +767,13 @@ DENG2_PIMPL(PersistentGLWindow)
     {
         State st(id);
 
-        st.windowRect     = self.windowRect();
+        st.windowRect     = self().windowRect();
         st.fullSize       = state.fullSize;
         st.colorDepthBits = DisplayMode_Current()->depth;
 
         st.flags =
-                (self.isMaximized()?  State::Maximized  : State::None) |
-                (self.isFullScreen()? State::Fullscreen : State::None) |
+                (self().isMaximized()?  State::Maximized  : State::None) |
+                (self().isFullScreen()? State::Fullscreen : State::None) |
                 (state.isCentered()?  State::Centered   : State::None);
 
         return st;

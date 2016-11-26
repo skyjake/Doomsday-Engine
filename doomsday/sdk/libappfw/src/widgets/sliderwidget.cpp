@@ -121,7 +121,7 @@ DENG_GUI_PIMPL(SliderWidget)
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
           uColor    ("uColor",     GLUniform::Vec4)
     {
-        self.setFont("slider.label");
+        self().setFont("slider.label");
 
         frameOpacity.setValue(.25f);
 
@@ -137,7 +137,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         for (int i = 0; i < int(NUM_LABELS); ++i)
         {
-            labels[i].setFont(i == Value? style().fonts().font("slider.value") : self.font());
+            labels[i].setFont(i == Value? style().fonts().font("slider.value") : self().font());
             labels[i].setLineWrapWidth(endLabelSize);
         }
     }
@@ -152,7 +152,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         for (int i = 0; i < int(NUM_LABELS); ++i)
         {
-            labels[i].init(atlas(), self.font());
+            labels[i].init(atlas(), self().font());
         }
 
         updateValueLabel();
@@ -171,7 +171,7 @@ DENG_GUI_PIMPL(SliderWidget)
     /// Determines the total area where the slider is moving.
     Rectanglei sliderRect() const
     {
-        Rectanglei const rect = self.contentRect();
+        Rectanglei const rect = self().contentRect();
         return Rectanglei(Vector2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
                           Vector2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
     }
@@ -190,9 +190,9 @@ DENG_GUI_PIMPL(SliderWidget)
     void updateGeometry()
     {
         Rectanglei rect;
-        if (self.hasChangedPlace(rect))
+        if (self().hasChangedPlace(rect))
         {
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
         // Update texts.
@@ -201,17 +201,17 @@ DENG_GUI_PIMPL(SliderWidget)
             if (labels[i].update())
             {
                 //qDebug() << "label" << i << "updated";
-                self.requestGeometry();
+                self().requestGeometry();
             }
         }
 
-        if (!self.geometryRequested()) return;
+        if (!self().geometryRequested()) return;
 
-        Vector4i const margin = self.margins().toVector();
+        Vector4i const margin = self().margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
 
         DefaultVertexBuf::Builder verts;
-        self.glMakeGeometry(verts);
+        self().glMakeGeometry(verts);
 
         // Determine the area where the slider is moving.
         Rectanglei sliderArea = sliderRect();
@@ -282,14 +282,14 @@ DENG_GUI_PIMPL(SliderWidget)
         drawable.buffer<DefaultVertexBuf>()
                 .setVertices(gl::TriangleStrip, verts, animating? gl::Dynamic : gl::Static);
 
-        self.requestGeometry(false);
+        self().requestGeometry(false);
     }
 
     void draw()
     {
         updateGeometry();
 
-        uColor = Vector4f(1, 1, 1, self.visibleOpacity());
+        uColor = Vector4f(1, 1, 1, self().visibleOpacity());
         drawable.draw();
     }
 
@@ -321,14 +321,14 @@ DENG_GUI_PIMPL(SliderWidget)
             break;
         }
 
-        self.requestGeometry();
+        self().requestGeometry();
     }
 
     void updateHover(Vector2i const &pos)
     {
         if (state == Grabbed) return;
 
-        if (self.hitTest(pos))
+        if (self().hitTest(pos))
         {
             if (state == Inert) setState(Hovering);
         }
@@ -372,9 +372,9 @@ DENG_GUI_PIMPL(SliderWidget)
 
             animating = true;
             pos.setValue(float(value), 0.1);
-            self.requestGeometry();
+            self().requestGeometry();
 
-            emit self.valueChanged(v);
+            emit self().valueChanged(v);
         }
     }
 
@@ -404,7 +404,7 @@ DENG_GUI_PIMPL(SliderWidget)
         ddouble unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
 
-        emit self.valueChangedByUser(value);
+        emit self().valueChangedByUser(value);
     }
 
     /// Amount to step when clicking a label.
@@ -426,7 +426,7 @@ DENG_GUI_PIMPL(SliderWidget)
         }
         else
         {
-            Rectanglei const rect = self.contentRect();
+            Rectanglei const rect = self().contentRect();
 
             //qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
             //   << range.asText() << "new value:" << value - clickStep();
@@ -437,12 +437,12 @@ DENG_GUI_PIMPL(SliderWidget)
                 if (ev.pos().x < rect.left() + endLabelSize)
                 {
                     setValue(value - clickStep());
-                    emit self.valueChangedByUser(value);
+                    emit self().valueChangedByUser(value);
                 }
                 else if (ev.pos().x > rect.right() - endLabelSize)
                 {
                     setValue(value + clickStep());
-                    emit self.valueChangedByUser(value);
+                    emit self().valueChangedByUser(value);
                 }
             }
         }

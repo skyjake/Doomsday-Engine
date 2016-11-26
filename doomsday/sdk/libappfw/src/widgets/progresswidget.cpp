@@ -51,18 +51,18 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     {
         if (mini)
         {
-            self.setImageColor(Vector4f());
+            self().setImageColor(Vector4f());
         }
         else
         {
-            self.setImageColor(style().colors().colorf(colorId));
+            self().setImageColor(style().colors().colorf(colorId));
         }
     }
 
     void useDotStyle()
     {
         mini = true;
-        self.setImage(nullptr);
+        self().setImage(nullptr);
         updateStyle();
     }
 
@@ -79,7 +79,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     void makeRingGeometry(DefaultVertexBuf::Builder &verts)
     {
         ContentLayout layout;
-        self.contentLayout(layout);
+        self().contentLayout(layout);
 
         // There is a shadow behind the wheel.
         float gradientThick = layout.image.width() * 2.f;
@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
                        shadowColor,
                        root().atlas().imageRectf(root().borderGlow()), 0);
 
-        self.LabelWidget::glMakeGeometry(verts);
+        self().LabelWidget::glMakeGeometry(verts);
 
         if (pos.done())
         {
@@ -145,7 +145,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     {
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
 
-        Rectanglei rect = self.contentRect().shrunk(dotSize.x / 2);
+        Rectanglei rect = self().contentRect().shrunk(dotSize.x / 2);
         int const midY  = rect.middle().y;
         int count       = range.size();
         Vector4f color  = style().colors().colorf(colorId);

@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         , uColor    ("uColor",     GLUniform::Vec4)
     {
         uColor = Vector4f(1, 1, 1, 1);
-        self.set(Background(style().colors().colorf("background")));
+        self().set(Background(style().colors().colorf("background")));
 
         vertShift = new AnimationRule(0);
 
@@ -199,8 +199,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
                 break;
             }
 
-            self.updateCommandLineLayout();
-            self.requestGeometry();
+            self().updateCommandLineLayout();
+            self().requestGeometry();
             console->commandLine().requestGeometry();
         }
     }
@@ -254,12 +254,12 @@ DENG_GUI_PIMPL(TaskBarWidget)
     void updateGeometry()
     {
         Rectanglei pos;
-        if (self.hasChangedPlace(pos) || self.geometryRequested())
+        if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
-            self.requestGeometry(false);
+            self().requestGeometry(false);
 
             VertexBuf::Builder verts;
-            self.glMakeGeometry(verts);
+            self().glMakeGeometry(verts);
             drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
     }
@@ -288,7 +288,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_DATA_FILES)       .show(game.isNull());
 
-        if (self.hasRoot())
+        if (self().hasRoot())
         {
             configMenu->menu().updateLayout();
             mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
@@ -305,13 +305,13 @@ DENG_GUI_PIMPL(TaskBarWidget)
     void networkGameJoined()
     {
         multi->show();
-        self.updateCommandLineLayout();
+        self().updateCommandLineLayout();
     }
 
     void networkGameLeft()
     {
         multi->hide();
-        self.updateCommandLineLayout();
+        self().updateCommandLineLayout();
     }
 
     void updateStatus()
@@ -332,7 +332,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void panelAboutToOpen(PanelWidget &)
     {
-        if (self.root().window().as<ClientWindow>().isGameMinimized())
+        if (self().root().window().as<ClientWindow>().isGameMinimized())
         {
             mainMenu->items().at(POS_MULTIPLAYER).setLabel(tr("Hide Home"));
         }

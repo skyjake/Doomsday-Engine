@@ -123,7 +123,7 @@ DENG2_PIMPL(LogBuffer)
         DENG2_ASSERT(outputFile == &file);
         DENG2_UNUSED(file);
 
-        self.flush();
+        self().flush();
         disposeFileLogSink();
         outputFile = 0;
     }

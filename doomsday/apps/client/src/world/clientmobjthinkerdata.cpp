@@ -72,18 +72,18 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     String thingName() const
     {
-        return DED_Definitions()->getMobjName(self.mobj()->type);
+        return DED_Definitions()->getMobjName(self().mobj()->type);
     }
 
     String stateName() const
     {
-        return Def_GetStateName(self.mobj()->state);
+        return Def_GetStateName(self().mobj()->state);
     }
 
     bool isStateInCurrentSequence(state_t const *previous)
     {
         if(!previous) return false;
-        return Def_GetState(previous->nextState) == self.mobj()->state;
+        return Def_GetState(previous->nextState) == self().mobj()->state;
     }
 
     String modelId() const
@@ -121,14 +121,14 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self.objectNamespace(), QStringLiteral("THING"));
+                animator->setOwnerNamespace(self().objectNamespace(), QStringLiteral("THING"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
                 if(model.flags & render::Model::AutoscaleToThingHeight)
                 {
                     Vector3f const dims = modelMatrix * model.dimensions();
-                    modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                    modelMatrix = Matrix4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
             catch(Error const &er)
@@ -136,7 +136,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() -= this;
 
                 LOG_RES_ERROR("Failed to set up asset '%s' for map object %i: %s")
-                    << modelId() << self.mobj()->thinker.id << er.asText();
+                    << modelId() << self().mobj()->thinker.id << er.asText();
             }
         }
     }
@@ -190,13 +190,13 @@ DENG2_PIMPL(ClientMobjThinkerData)
     void triggerParticleGenerators(bool justSpawned)
     {
         // Check for a ptcgen trigger.
-        for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[self.stateIndex()].ptcGens;
+        for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[self().stateIndex()].ptcGens;
             pg; pg = pg->stateNext)
         {
             if(!(pg->flags & Generator::SpawnOnly) || justSpawned)
             {
                 // We are allowed to spawn the generator.
-                Mobj_SpawnParticleGen(self.mobj(), pg);
+                Mobj_SpawnParticleGen(self().mobj(), pg);
             }
         }
     }

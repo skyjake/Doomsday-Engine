@@ -33,7 +33,7 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         LabelWidget *gammaLabel      = LabelWidget::newWithText(tr("Gamma:"), &area);
         LabelWidget *contrastLabel   = LabelWidget::newWithText(tr("Contrast:"), &area);

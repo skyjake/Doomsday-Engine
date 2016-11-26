@@ -102,7 +102,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                                                 playButtonPressed();
                                             }));
         });
-        self.addButton(packagesButton);
+        self().addButton(packagesButton);
 
         QObject::connect(packagesButton,
                          &PackagesButtonWidget::packageSelectionChanged,
@@ -123,12 +123,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setStyleImage("play", "default");
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setActionFn([this] () { playButtonPressed(); });
-        self.addButton(playButton);
+        self().addButton(playButton);
 
         // List of saved games.
-        saves = new SaveListWidget(self);
-        saves->rule().setInput(Rule::Width, self.rule().width());
-        saves->margins().setZero().setLeft(self.icon().rule().width());
+        saves = new SaveListWidget(self());
+        saves->rule().setInput(Rule::Width, self().rule().width());
+        saves->margins().setZero().setLeft(self().icon().rule().width());
         saves->setItems(savedItems);
 
         deleteSaveButton = new ButtonWidget;
@@ -137,14 +137,14 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         deleteSaveButton->set(Background());
         deleteSaveButton->hide();
         deleteSaveButton->setActionFn([this] () { deleteButtonPressed(); });
-        self.panel().add(deleteSaveButton);
+        self().panel().add(deleteSaveButton);
 
         problemIcon = new LabelWidget;
         problemIcon->setStyleImage("alert", "default");
         problemIcon->setImageColor(style().colors().colorf("accent"));
-        problemIcon->rule().setRect(self.icon().rule());
+        problemIcon->rule().setRect(self().icon().rule());
         problemIcon->hide();
-        self.icon().add(problemIcon);
+        self().icon().add(problemIcon);
 
         // Package count indicator (non-interactive).
         packagesCounter = new LabelWidget;
@@ -156,15 +156,15 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         packagesCounter->margins().setLeft("");
         packagesCounter->setTextAlignment(ui::AlignLeft);
         packagesCounter->rule()
-                .setInput(Rule::Right, self.label().rule().right())
-                .setMidAnchorY(self.label().rule().midY());
+                .setInput(Rule::Right, self().label().rule().right())
+                .setMidAnchorY(self().label().rule().midY());
         packagesCounter->hide();
-        self.label().add(packagesCounter);
-        self.label().setMinimumHeight(style().fonts().font("default").lineSpacing() * 3 +
-                                      self.label().margins().height());
+        self().label().add(packagesCounter);
+        self().label().setMinimumHeight(style().fonts().font("default").lineSpacing() * 3 +
+                                      self().label().margins().height());
 
-        self.panel().setContent(saves);
-        self.panel().open();
+        self().panel().setContent(saves);
+        self().panel().open();
     }
 
     Game const &game() const
@@ -175,18 +175,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     void updatePackagesIndicator()
     {
         int const  count = gameProfile.packages().size();
-        bool const shown = count > 0 && !self.isSelected();
+        bool const shown = count > 0 && !self().isSelected();
 
         packagesCounter->setText(String::number(count));
         packagesCounter->show(shown);
 
         if (shown)
         {
-            self.setLabelMinimumRightMargin(packagesCounter->rule().width());
+            self().setLabelMinimumRightMargin(packagesCounter->rule().width());
         }
         else
         {
-            self.setLabelMinimumRightMargin(Const(0));
+            self().setLabelMinimumRightMargin(Const(0));
         }
     }
 
@@ -226,18 +226,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                 {
                     // Delete the savegame file; the UI will be automatically updated.
                     String const path = savedItems.at(saves->selectedPos()).savePath();
-                    self.unselectSave();
+                    self().unselectSave();
                     App::rootFolder().removeFile(path);
                     App::fileSystem().refresh();
                 }))
                 << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
-        self.add(pop);
+        self().add(pop);
         pop->open();
     }
 
     void updateGameTitleImage()
     {
-        self.icon().setImage(self.makeGameLogo(game(), catalog));
+        self().icon().setImage(self().makeGameLogo(game(), catalog));
     }
 };
 

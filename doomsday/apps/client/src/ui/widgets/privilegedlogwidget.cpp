@@ -34,14 +34,14 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
         log = new LogWidget("privlog");
         log->setLogFormatter(formatter);
         log->setPrivilegedEntries(true);
-        self.add(log);
+        self().add(log);
 
         closeButton = new ButtonWidget;
         closeButton->setSizePolicy(ui::Expand, ui::Expand);
         closeButton->setImage(style().images().image("close.ringless"));
         closeButton->setImageScale(toDevicePixels(.25f));
         closeButton->setImageColor(style().colors().colorf("altaccent"));
-        self.add(closeButton);
+        self().add(closeButton);
     }
 };
 

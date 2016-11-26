@@ -172,7 +172,7 @@ DENG2_PIMPL(BindContext)
             {
                 LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
                         << bindId << (cmdBinding? cmdBinding->geti(VAR_ID) : impBinding->geti(VAR_ID));
-                self.deleteBinding(bindId);
+                self().deleteBinding(bindId);
             }
         }
     }

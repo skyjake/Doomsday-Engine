@@ -122,7 +122,7 @@ DENG2_PIMPL(RemoteUser)
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
         {
-            self.deleteLater();
+            self().deleteLater();
             return false;
         }
 
@@ -137,7 +137,7 @@ DENG2_PIMPL(RemoteUser)
 
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg); //Str_Text(&msg);
 
-            self << msg; //mRefArray(Str_Text(&msg), Str_Length(&msg));
+            self() << msg; //mRefArray(Str_Text(&msg), Str_Length(&msg));
 
             //Str_Free(&msg);
         }
@@ -149,7 +149,7 @@ DENG2_PIMPL(RemoteUser)
                 if (strlen(netPassword) > 0 && !isFromLocal)
                 {
                     // Need to ask for a password, too.
-                    self << ByteRefArray("Psw?", 4);
+                    self() << ByteRefArray("Psw?", 4);
                     return true;
                 }
             }
@@ -161,7 +161,7 @@ DENG2_PIMPL(RemoteUser)
                 if (supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
                 {
                     // Wrong!
-                    self.deleteLater();
+                    self().deleteLater();
                     return false;
                 }
             }
@@ -180,12 +180,12 @@ DENG2_PIMPL(RemoteUser)
             // with ours.
             name = String::fromUtf8(command.mid(10));
 
-            if (App_ServerSystem().isUserAllowedToJoin(self))
+            if (App_ServerSystem().isUserAllowedToJoin(self()))
             {
                 state = Joined;
 
                 // Successful! Send a reply.
-                self << ByteRefArray("Enter", 5);
+                self() << ByteRefArray("Enter", 5);
 
                 // Inform the higher levels of this occurence.
                 netevent_t netEvent;
@@ -196,7 +196,7 @@ DENG2_PIMPL(RemoteUser)
             else
             {
                 // Couldn't join the game, so close the connection.
-                self.deleteLater();
+                self().deleteLater();
                 return false;
             }
         }
@@ -204,7 +204,7 @@ DENG2_PIMPL(RemoteUser)
         {
             // Too bad, scoundrel! Goodbye.
             LOG_NET_WARNING("Received an invalid request from %s") << id;
-            self.deleteLater();
+            self().deleteLater();
             return false;
         }
 

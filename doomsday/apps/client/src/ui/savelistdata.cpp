@@ -51,7 +51,7 @@ DENG2_PIMPL(SaveListData)
             mainCall.enqueue([this, &saveFolder] ()
             {
                 // Needs to be added.
-                self.append(new SaveItem(saveFolder));
+                self().append(new SaveItem(saveFolder));
             });
         }
     }
@@ -61,11 +61,11 @@ DENG2_PIMPL(SaveListData)
         // Remove obsolete entries.
         mainCall.enqueue([this] ()
         {
-            for (ui::Data::Pos idx = self.size() - 1; idx < self.size(); --idx)
+            for (ui::Data::Pos idx = self().size() - 1; idx < self().size(); --idx)
             {
-                if (!self.at(idx).isValid())
+                if (!self().at(idx).isValid())
                 {
-                    self.remove(idx);
+                    self().remove(idx);
                 }
             }
         });
@@ -78,7 +78,7 @@ DENG2_PIMPL(SaveListData)
             GameStateFolder &save = file->as<GameStateFolder>();
             if (shouldAddFolder(save))
             {
-                self.append(new SaveItem(save));
+                self().append(new SaveItem(save));
             }
         }
     }

@@ -61,7 +61,7 @@ DENG2_PIMPL(Hand)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(Grabbed, i)
         {
-            i->handGrabbed(self, grabbed);
+            i->handGrabbed(self(), grabbed);
         }
     }
 
@@ -69,7 +69,7 @@ DENG2_PIMPL(Hand)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(Ungrabbed, i)
         {
-            i->handUngrabbed(self, ungrabbed);
+            i->handUngrabbed(self(), ungrabbed);
         }
     }
 

@@ -74,10 +74,10 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         y = new AnimationRule(0);
 
         maxX = new OperatorRule(OperatorRule::Maximum, Const(0),
-                                contentRule.width() - self.rule().width() + self.margins().width());
+                                contentRule.width() - self().rule().width() + self().margins().width());
 
         maxY = new OperatorRule(OperatorRule::Maximum, Const(0),
-                                contentRule.height() - self.rule().height() + self.margins().height());
+                                contentRule.height() - self().rule().height() + self().margins().height());
     }
 
     ~Impl()
@@ -117,7 +117,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     void restartScrollOpacityFade()
     {
         indicatorAnimating = true;
-        if (origin == Bottom && self.isAtBottom())
+        if (origin == Bottom && self().isAtBottom())
         {
             scrollOpacity.setValue(0, .7f, .2f);
         }
@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         if (hover != scrollBarHover)
         {
             scrollBarHover = hover;
-            self.requestGeometry();
+            self().requestGeometry();
         }
     }
 
@@ -141,17 +141,17 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     RectanglefPair scrollIndicatorRects(Vector2f const &originPos) const
     {
-        Vector2i const viewSize = self.viewportSize();
+        Vector2i const viewSize = self().viewportSize();
         if (viewSize == Vector2i()) return RectanglefPair();
 
-        auto const &margins = self.margins();
+        auto const &margins = self().margins();
 
         int const indHeight = de::clamp(
                     margins.height().valuei(),
                     int(float(viewSize.y * viewSize.y) / float(contentRule.height().value())),
                     viewSize.y / 2);
 
-        float indPos = self.scrollPositionY().value() / self.maximumScrollY().value();
+        float indPos = self().scrollPositionY().value() / self().maximumScrollY().value();
         if (origin == Top) indPos = 1 - indPos;
 
         float const avail = viewSize.y - indHeight;

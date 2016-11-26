@@ -473,7 +473,7 @@ DENG2_PIMPL(ClientServerWorld)
     void makeCurrent(Map *map)
     {
         // This is now the current map (if any).
-        self.setMap(map);
+        self().setMap(map);
         if(!map) return;
 
         // We cannot make an editable map current.
@@ -495,7 +495,7 @@ DENG2_PIMPL(ClientServerWorld)
         /// so that it may perform the connection itself. Such notification
         /// would also afford the map the opportunity to prepare various data
         /// which is only needed when made current (e.g., caches for render).
-        self.audienceForFrameBegin() += map;
+        self().audienceForFrameBegin() += map;
 #endif
 
         // Print summary information about this map.
@@ -699,20 +699,20 @@ DENG2_PIMPL(ClientServerWorld)
         Z_PrintStatus();
 
         // Inform interested parties that the "current" map has changed.
-        self.notifyMapChange();
+        self().notifyMapChange();
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
     bool changeMap(res::MapManifest *mapManifest = nullptr)
     {
-        Map *map = self.mapPtr();
+        Map *map = self().mapPtr();
 
 #ifdef __CLIENT__
         if(map)
         {
             // Remove the current map from our audiences.
             /// @todo Map should handle this.
-            self.audienceForFrameBegin() -= map;
+            self().audienceForFrameBegin() -= map;
         }
 #endif
 
@@ -726,7 +726,7 @@ DENG2_PIMPL(ClientServerWorld)
         R_DestroyContactLists();
 #endif
         delete map;
-        self.setMap(nullptr);
+        self().setMap(nullptr);
 
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
@@ -765,13 +765,13 @@ DENG2_PIMPL(ClientServerWorld)
         // Output a human-readable report of any issues encountered during conversion.
         reporter.writeLog();
 
-        return self.hasMap();
+        return self().hasMap();
     }
 
 #ifdef __CLIENT__
     void updateHandOrigin()
     {
-        DENG2_ASSERT(hand != nullptr && self.hasMap());
+        DENG2_ASSERT(hand != nullptr && self().hasMap());
 
         viewdata_t const *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);

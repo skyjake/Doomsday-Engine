@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         // Gamepad.
         area.add(joyEnable     = new CVarToggleWidget("input-joy"));
@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
 
         // Developer options.
         syncInput = new CVarToggleWidget("input-sharp");
-        self.add(devPopup = new GridPopupWidget);
+        self().add(devPopup = new GridPopupWidget);
         devPopup->addSpanning(syncInput);
         *devPopup << LabelWidget::newWithText(tr("Key Grabber:"))
                   << new KeyGrabberWidget;

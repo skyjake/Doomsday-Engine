@@ -39,14 +39,14 @@ DENG2_PIMPL(BaseWindow)
 
     Impl(Public *i)
         : Base(i)
-        , defaultXf(self)
+        , defaultXf(*i)
         , xf(&defaultXf)
     {
-        self.audienceForInit() += this;
+        self().audienceForInit() += this;
 
         // Listen to input.
-        self.eventHandler().audienceForKeyEvent()   += this;
-        self.eventHandler().audienceForMouseEvent() += this;
+        self().eventHandler().audienceForKeyEvent()   += this;
+        self().eventHandler().audienceForMouseEvent() += this;
     }
 
     void windowInit(GLWindow &)
@@ -66,7 +66,7 @@ DENG2_PIMPL(BaseWindow)
         if (!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
-            self.handleFallbackEvent(ev);
+            self().handleFallbackEvent(ev);
         }
     }
 
@@ -85,7 +85,7 @@ DENG2_PIMPL(BaseWindow)
         if (!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
-            self.handleFallbackEvent(ev);
+            self().handleFallbackEvent(ev);
         }
     }
 };

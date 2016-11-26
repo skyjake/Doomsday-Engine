@@ -110,9 +110,9 @@ DENG_GUI_PIMPL(HomeItemWidget)
     {
         labelRightMargin    = new AnimationRule(0);
 
-        self.add(background = new LabelWidget);
-        self.add(icon       = new LabelWidget);
-        self.add(label      = new LabelWidget);
+        self().add(background = new LabelWidget);
+        self().add(icon       = new LabelWidget);
+        self().add(label      = new LabelWidget);
 
         // Observe state of the labels.
         assets += *background;
@@ -167,7 +167,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
             for (auto *button : buttons) button->show();
         }
 
-        TimeDelta const SPAN = (self.hasBeenUpdated()? 0.4 : 0.0);
+        TimeDelta const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
         if (show)
         {
             labelRightMargin->set(*buttonsWidth, SPAN/2);
@@ -183,8 +183,8 @@ DENG_GUI_PIMPL(HomeItemWidget)
     void menuItemTriggered(ui::Item const &actionItem) override
     {
         // Let the parent menu know which of its items is being interacted with.
-        self.parentMenu()->setInteractedItem(self.parentMenu()->organizer()
-                                             .findItemForWidget(self),
+        self().parentMenu()->setInteractedItem(self().parentMenu()->organizer()
+                                             .findItemForWidget(self()),
                                              &actionItem);
     }
 
@@ -202,7 +202,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
      */
     bool hasColumnAncestor() const
     {
-        for (Widget *i = self.parentWidget(); i; i = i->parent())
+        for (Widget *i = self().parentWidget(); i; i = i->parent())
         {
             if (i->is<ColumnWidget>()) return true;
         }

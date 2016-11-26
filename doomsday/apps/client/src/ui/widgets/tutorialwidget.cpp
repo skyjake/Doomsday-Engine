@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         exampleAlert->setImageColor(style().colors().colorf("accent"));
 
         // Highlight rectangle.
-        self.add(highlight = new LabelWidget);
+        self().add(highlight = new LabelWidget);
         highlight->set(Background(Background::GradientFrame,
                                   style().colors().colorf("accent"), 6));
         highlight->setOpacity(0);
@@ -195,7 +195,7 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         if (s == Finish)
         {
-            self.stop();
+            self().stop();
             return;
         }
 
@@ -243,7 +243,7 @@ DENG_GUI_PIMPL(TutorialWidget)
                                       "chance to pick a shortcut key for opening the console.\n\n"
                                       "The tutorial can be restarted later via the application menu."));
                                    //.arg(_E(b) DOOMSDAY_NICENAME _E(.)));
-            dlg->setAnchor(self.rule().midX(), self.rule().top());
+            dlg->setAnchor(self().rule().midX(), self().rule().top());
             dlg->setOpeningDirection(ui::Down);
             break;
 
@@ -287,7 +287,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             win.taskBar().open();
             win.taskBar().closeMainMenu();
             win.taskBar().closeConfigMenu();
-            dlg->setAnchor(self.rule().midX(), win.taskBar().rule().top());
+            dlg->setAnchor(self().rule().midX(), win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
             startHighlight(win.taskBar());
             break;
@@ -375,10 +375,10 @@ DENG_GUI_PIMPL(TutorialWidget)
                 .setInput(Rule::Right,  dlg->rule().right());
         dlg->add(progress);
 
-        GuiRootWidget &root = self.root();
+        GuiRootWidget &root = self().root();
 
         // Keep the tutorial above any dialogs etc. that might've been opened.
-        root.moveToTop(self);
+        root.moveToTop(self());
 
         root.addOnTop(dlg);
         dlg->open();

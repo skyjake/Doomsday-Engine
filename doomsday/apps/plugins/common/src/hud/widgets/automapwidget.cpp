@@ -301,8 +301,8 @@ DENG2_PIMPL(AutomapWidget)
         Vector2d const bottomLeft(bounds[BOXLEFT ], bounds[BOXBOTTOM]);
         coord_t const dist = de::abs((topRight - bottomLeft).length());
 
-        Vector2f const dimensions(Rect_Width (&self.geometry()),
-                                  Rect_Height(&self.geometry()));
+        Vector2f const dimensions(Rect_Width (&self().geometry()),
+                                  Rect_Height(&self().geometry()));
         Vector2f const scale = dimensions / dist;
 
         minScaleMTOF = (scale.x < scale.y ? scale.x : scale.y);
@@ -694,7 +694,7 @@ DENG2_PIMPL(AutomapWidget)
         if(!addToLists)
         {
             AABoxd aaBox;
-            self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+            self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
             Subspace_BoxIterator(&aaBox, drawLinesForSubspaceWorker, const_cast<Impl *>(this));
         }
         else
@@ -814,7 +814,7 @@ DENG2_PIMPL(AutomapWidget)
 
         // Draw any polyobjects in view.
         AABoxd aaBox;
-        self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+        self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
         Line_BoxIterator(&aaBox, LIF_POLYOBJ, drawLine_polyob, const_cast<Impl *>(this));
     }
 
@@ -861,7 +861,7 @@ DENG2_PIMPL(AutomapWidget)
         rs.obType     = -1;
 
         AABoxd aaBox;
-        self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+        self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
         Line_BoxIterator(&aaBox, LIF_SECTOR, drawLine_xg, const_cast<Impl *>(this));
 #endif
     }
@@ -874,7 +874,7 @@ DENG2_PIMPL(AutomapWidget)
         for(dint i = 0; i < MAXPLAYERS; ++i)
         {
             // Do not show markers for other players in deathmatch.
-            if(COMMON_GAMESESSION->rules().deathmatch && i != self.player())
+            if(COMMON_GAMESESSION->rules().deathmatch && i != self().player())
             {
                 continue;
             }
@@ -978,7 +978,7 @@ DENG2_PIMPL(AutomapWidget)
         parm.opacity = de::clamp(0.f, cfg.common.automapLineAlpha * alpha, 1.f);
 
         AABoxd aaBox;
-        self.pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+        self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
 
         VALIDCOUNT++;
         Mobj_BoxIterator(&aaBox, drawThingPoint, &parm);
@@ -991,7 +991,7 @@ DENG2_PIMPL(AutomapWidget)
         if(points.isEmpty()) return;
 
         // Calculate final scale factor.
-        scale = self.frameToMap(1) * scale;
+        scale = self().frameToMap(1) * scale;
 #if __JHERETIC__ || __JHEXEN__
         // These games use a larger font, so use a smaller scale.
         scale *= .5f;
@@ -1056,7 +1056,7 @@ DENG2_PIMPL(AutomapWidget)
         AM_GetMapColor(bgColor, cfg.common.automapBack, BACKGROUND, customPal);
 #endif
 
-        RectRaw geom; Rect_Raw(&self.geometry(), &geom);
+        RectRaw geom; Rect_Raw(&self().geometry(), &geom);
 
         // Do we want a background texture?
         if(autopageLumpNum != -1)
@@ -1076,10 +1076,10 @@ DENG2_PIMPL(AutomapWidget)
 
             // Apply the parallax scrolling, map rotation and counteract the
             // aspect of the quad (sized to map window dimensions).
-            DGL_Translatef(self.mapToFrame(viewPL.x) + .5f,
-                           self.mapToFrame(viewPL.y) + .5f, 0);
+            DGL_Translatef(self().mapToFrame(viewPL.x) + .5f,
+                           self().mapToFrame(viewPL.y) + .5f, 0);
             DGL_Scalef(1, 1.2f/*aspect correct*/, 1);
-            DGL_Rotatef(360 - self.cameraAngle(), 0, 0, 1);
+            DGL_Rotatef(360 - self().cameraAngle(), 0, 0, 1);
             DGL_Scalef(1, (dfloat)geom.size.height / geom.size.width, 1);
             DGL_Translatef(-(.5f), -(.5f), 0);
 
@@ -1107,7 +1107,7 @@ DENG2_PIMPL(AutomapWidget)
                 IIT_DEMONKEY1, IIT_DEMONKEY2, IIT_DEMONKEY3
             };
 
-            dint player = self.player();
+            dint player = self().player();
             dint num = 0;
             for(inventoryitemtype_t const &item : items)
             {
@@ -1167,7 +1167,7 @@ DENG2_PIMPL(AutomapWidget)
         // Setup the scissor clipper.
         /// @todo Do this in the UI module.
         dint const border = .5f + UIAUTOMAP_BORDER * aspectScale;
-        RectRaw clipRegion; Rect_Raw(&self.geometry(), &clipRegion);
+        RectRaw clipRegion; Rect_Raw(&self().geometry(), &clipRegion);
         clipRegion.origin.x += border;
         clipRegion.origin.y += border;
         clipRegion.size.width  -= 2 * border;

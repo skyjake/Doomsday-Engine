@@ -39,7 +39,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         updateFromVariable();
 
-        self.audienceForToggle() += this;
+        self().audienceForToggle() += this;
         var->audienceForDeletion() += this;
         var->audienceForChange() += this;
     }
@@ -48,7 +48,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         if (!var) return;
 
-        self.setToggleState(!var->value().compare(activeValue)? Active : Inactive,
+        self().setToggleState(!var->value().compare(activeValue)? Active : Inactive,
                             false /*don't notify*/);
     }
 
@@ -57,7 +57,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
         if (!var) return;
 
         var->audienceForChange() -= this;
-        var->set(self.isActive()? activeValue : inactiveValue);
+        var->set(self().isActive()? activeValue : inactiveValue);
         var->audienceForChange() += this;
     }
 
@@ -74,7 +74,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     void variableBeingDeleted(Variable &)
     {
         var = 0;
-        self.disable();
+        self().disable();
     }
 };
 

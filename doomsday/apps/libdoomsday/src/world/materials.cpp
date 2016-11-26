@@ -72,8 +72,8 @@ DENG2_PIMPL(Materials)
 
     ~Impl()
     {
-        self.clearAllMaterialGroups();
-        self.clearAllMaterialSchemes();
+        self().clearAllMaterialGroups();
+        self().clearAllMaterialSchemes();
         clearMaterialManifests();
     }
 

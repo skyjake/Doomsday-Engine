@@ -194,15 +194,15 @@ DENG2_PIMPL(ClientResources)
         createFontScheme("System");
         createFontScheme("Game");
 
-        self.colorPalettes().audienceForAddition() += this;
+        self().colorPalettes().audienceForAddition() += this;
     }
 
     ~Impl()
     {
-        self.clearAllFontSchemes();
+        self().clearAllFontSchemes();
         clearFontManifests();
-        self.clearAllRawTextures();
-        self.purgeCacheQueue();
+        self().clearAllRawTextures();
+        self().purgeCacheQueue();
 
         clearAllTextureSpecs();
         clearMaterialSpecs();
@@ -242,16 +242,16 @@ DENG2_PIMPL(ClientResources)
 
     void clearRuntimeFonts()
     {
-        self.fontScheme("Game").clear();
+        self().fontScheme("Game").clear();
 
-        self.pruneUnusedTextureSpecs();
+        self().pruneUnusedTextureSpecs();
     }
 
     void clearSystemFonts()
     {
-        self.fontScheme("System").clear();
+        self().fontScheme("System").clear();
 
-        self.pruneUnusedTextureSpecs();
+        self().pruneUnusedTextureSpecs();
     }
 
     void clearMaterialSpecs()
@@ -295,7 +295,7 @@ DENG2_PIMPL(ClientResources)
         }
 
         TextureVariantSpec const &primarySpec =
-            self.textureSpec(primaryContext, flags, border, tClass, tMap,
+            self().textureSpec(primaryContext, flags, border, tClass, tMap,
                              wrapS, wrapT, minFilter, magFilter,
                              anisoFilter, mipmapped, gammaCorrection,
                              noStretch, toAlpha);
@@ -435,7 +435,7 @@ DENG2_PIMPL(ClientResources)
 
     bool textureSpecInUse(TextureVariantSpec const &spec)
     {
-        for (res::Texture *texture : self.textures().allTextures())
+        for (res::Texture *texture : self().textures().allTextures())
         {
             for (TextureVariant *variant : static_cast<ClientTexture *>(texture)->variants())
             {
@@ -556,7 +556,7 @@ DENG2_PIMPL(ClientResources)
                                   MaterialVariantSpec const &contextSpec,
                                   bool cacheGroups = true)
     {
-        if (auto const *sprites = self.sprites().tryFindSpriteSet(id))
+        if (auto const *sprites = self().sprites().tryFindSpriteSet(id))
         {
             for (Record const &sprite : *sprites)
             {
@@ -634,9 +634,9 @@ DENG2_PIMPL(ClientResources)
         if (id.isEmpty()) return nullptr;
 
         // First try to find an existing modef.
-        if (self.hasModelDef(id))
+        if (self().hasModelDef(id))
         {
-            return &self.modelDef(id);
+            return &self().modelDef(id);
         }
 
         // Get a new entry.
@@ -689,7 +689,7 @@ DENG2_PIMPL(ClientResources)
             try
             {
                 return fileSys().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
-                                          RLF_DEFAULT, self.resClass(RC_GRAPHIC));
+                                          RLF_DEFAULT, self().resClass(RC_GRAPHIC));
             }
             catch (FS1::NotFoundError const &)
             {}  // Ignore this error.
@@ -697,7 +697,7 @@ DENG2_PIMPL(ClientResources)
 
         /// @throws FS1::NotFoundError if no resource was found.
         return fileSys().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
-                                  self.resClass(RC_GRAPHIC));
+                                  self().resClass(RC_GRAPHIC));
     }
 
     /**
@@ -705,7 +705,7 @@ DENG2_PIMPL(ClientResources)
      */
     short defineSkinAndAddToModelIndex(FrameModel &mdl, Path const &skinPath)
     {
-        if (ClientTexture *tex = static_cast<ClientTexture *>(self.textures().defineTexture("ModelSkins", de::Uri(skinPath))))
+        if (ClientTexture *tex = static_cast<ClientTexture *>(self().textures().defineTexture("ModelSkins", de::Uri(skinPath))))
         {
             // A duplicate? (return existing skin number)
             for (dint i = 0; i < mdl.skinCount(); ++i)
@@ -734,7 +734,7 @@ DENG2_PIMPL(ClientResources)
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
 
-                skin.texture = self.textures().defineTexture("ModelSkins", foundResourceUri);
+                skin.texture = self().textures().defineTexture("ModelSkins", foundResourceUri);
 
                 // We have found one more skin for this model.
                 numFoundSkins += 1;
@@ -753,7 +753,7 @@ DENG2_PIMPL(ClientResources)
             try
             {
                 String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
-                                                      self.resClass(RC_GRAPHIC));
+                                                      self().resClass(RC_GRAPHIC));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -804,7 +804,7 @@ DENG2_PIMPL(ClientResources)
 
         // Find the top and bottom heights.
         dfloat top, bottom;
-        dfloat height = self.model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
+        dfloat height = self().model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
         if (fequal(height, 0.f)) height = 1;
 
         dfloat scale = destHeight / height;
@@ -845,7 +845,7 @@ DENG2_PIMPL(ClientResources)
 
             SubmodelDef &sub = def->subModelDef(i);
 
-            self.model(sub.modelId).frame(sub.frame).bounds(min, max);
+            self().model(sub.modelId).frame(sub.frame).bounds(min, max);
 
             // Half the distance from bottom left to top right.
             dfloat radius = (  def->scale.x * (max.x - min.x)
@@ -918,7 +918,7 @@ DENG2_PIMPL(ClientResources)
             try
             {
                 String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
-                                                      self.resClass(RC_MODEL));
+                                                      self().resClass(RC_MODEL));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1037,7 +1037,7 @@ DENG2_PIMPL(ClientResources)
                     {
                         de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
 
-                        sub->shinySkin = self.textures().defineTexture("ModelReflectionSkins", foundResourceUri);
+                        sub->shinySkin = self().textures().defineTexture("ModelReflectionSkins", foundResourceUri);
                     }
                     catch (FS1::NotFoundError const &)
                     {
@@ -1080,7 +1080,7 @@ DENG2_PIMPL(ClientResources)
                 sprFrame = modef->state->frame;
             }
 
-            if (Record const *sprite = self.sprites().spritePtr(sprNum, sprFrame))
+            if (Record const *sprite = self().sprites().spritePtr(sprNum, sprFrame))
             {
                 scaleModelToSprite(*modef, sprite);
             }
@@ -1094,17 +1094,17 @@ DENG2_PIMPL(ClientResources)
             if (stateModefs[stateNum] < 0)
             {
                 // No modef; use this.
-                stateModefs[stateNum] = self.indexOf(modef);
+                stateModefs[stateNum] = self().indexOf(modef);
             }
             else
             {
                 // Must check intermark; smallest wins!
-                FrameModelDef *other = self.modelDefForState(stateNum);
+                FrameModelDef *other = self().modelDefForState(stateNum);
 
                 if ((modef->interMark <= other->interMark && // Should never be ==
                     modef->select == other->select) || modef->select < other->select) // Smallest selector?
                 {
-                    stateModefs[stateNum] = self.indexOf(modef);
+                    stateModefs[stateNum] = self().indexOf(modef);
                 }
             }
         }
@@ -1116,7 +1116,7 @@ DENG2_PIMPL(ClientResources)
             SubmodelDef *sub = &modef->subModelDef(i);
             if (sub->modelId && sub->frame >= 0)
             {
-                self.model(sub->modelId).frame(sub->frame).bounds(min, max);
+                self().model(sub->modelId).frame(sub->frame).bounds(min, max);
                 modef->setParticleOffset(i, ((max + min) / 2 + sub->offset) * modef->scale + modef->offset);
             }
         }
@@ -1202,7 +1202,7 @@ DENG2_PIMPL(ClientResources)
     void colorPaletteColorTableChanged(res::ColorPalette &colorPalette)
     {
         // Release all GL-textures prepared using @a colorPalette.
-        foreach (res::Texture *texture, self.textures().allTextures())
+        foreach (res::Texture *texture, self().textures().allTextures())
         {
             colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(res::Texture::ColorPaletteAnalysis));
             if (cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))

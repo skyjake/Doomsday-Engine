@@ -35,7 +35,7 @@ DENG2_PIMPL(BaseMap)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self());
     }
 
     void recordBeingDeleted(Record &record)

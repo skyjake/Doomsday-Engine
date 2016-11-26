@@ -59,7 +59,7 @@ DENG2_PIMPL(GLShader)
             LIBGUI_GL.glDeleteShader(name);
             name = 0;
         }
-        self.setState(Asset::NotReady);
+        self().setState(Asset::NotReady);
     }
 };
 

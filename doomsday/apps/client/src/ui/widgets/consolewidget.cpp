@@ -137,47 +137,47 @@ DENG_GUI_PIMPL(ConsoleWidget)
         if (grabbed == RightEdge)
         {
             // Adjust width.
-            width->set(mouse.pos().x - self.rule().left().valuei(), .1f);
+            width->set(mouse.pos().x - self().rule().left().valuei(), .1f);
             return true;
         }
         else if (grabbed == TopEdge)
         {
-            if (mouse.pos().y < self.rule().bottom().valuei())
+            if (mouse.pos().y < self().rule().bottom().valuei())
             {
-                height->set(self.rule().bottom().valuei() - mouse.pos().y, .1f);
+                height->set(self().rule().bottom().valuei() - mouse.pos().y, .1f);
                 log->enablePageKeys(false);
             }
             return true;
         }
 
         // Check for grab at the right edge.
-        Rectanglei pos = self.rule().recti();
+        Rectanglei pos = self().rule().recti();
         pos.topLeft.x = pos.bottomRight.x - grabWidth;
         if (pos.contains(mouse.pos()))
         {
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
-                self.root().window().setCursor(Qt::SizeHorCursor);
+                self().root().window().setCursor(Qt::SizeHorCursor);
             }
         }
         else
         {
             // Maybe a grab at the top edge, then.
-            pos = self.rule().recti();
+            pos = self().rule().recti();
             pos.bottomRight.y = pos.topLeft.y + grabWidth;
             if (pos.contains(mouse.pos()))
             {
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
-                    self.root().window().setCursor(Qt::SizeVerCursor);
+                    self().root().window().setCursor(Qt::SizeVerCursor);
                 }
             }
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
-                self.root().window().setCursor(Qt::ArrowCursor);
+                self().root().window().setCursor(Qt::ArrowCursor);
             }
         }
 
@@ -217,7 +217,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         promptButton->setText(yes? _E(b)_E(F) "$" : ">");
 
         // Bottom of the console must follow the active command line height.
-        self.rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
+        self().rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
         if (scriptMode == yes)
         {
@@ -240,7 +240,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
         scriptMode = yes;
 
-        emit self.commandModeChanged();
+        emit self().commandModeChanged();
     }
 
     struct RightClick : public GuiWidget::IEventHandler

@@ -52,11 +52,11 @@ DENG2_PIMPL(OpenDialog)
         history = st.value("OpenDialog/history", QStringList() << "localhost").toStringList();
         tidyUpHistory();
 
-        self.setWindowTitle(tr("Open Connection"));
-        self.setWindowFlags(self.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+        self().setWindowTitle(tr("Open Connection"));
+        self().setWindowFlags(self().windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
         QVBoxLayout *mainLayout = new QVBoxLayout;
-        self.setLayout(mainLayout);
+        self().setLayout(mainLayout);
         mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
         QFormLayout *form = new QFormLayout;
@@ -80,15 +80,15 @@ DENG2_PIMPL(OpenDialog)
         localCount = new QLabel;
         form->addRow(0, localCount);
         QObject::connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()),
-                         &self, SLOT(updateLocalList()));
+                         thisPublic, SLOT(updateLocalList()));
 
         // Buttons.
         QDialogButtonBox *bbox = new QDialogButtonBox;
         mainLayout->addWidget(bbox);
         QPushButton* yes = bbox->addButton(tr("&Connect"), QDialogButtonBox::YesRole);
         QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-        QObject::connect(yes, SIGNAL(clicked()), &self, SLOT(accept()));
-        QObject::connect(no, SIGNAL(clicked()), &self, SLOT(reject()));
+        QObject::connect(yes, SIGNAL(clicked()), thisPublic, SLOT(accept()));
+        QObject::connect(no, SIGNAL(clicked()), thisPublic, SLOT(reject()));
         yes->setDefault(true);
     }
 

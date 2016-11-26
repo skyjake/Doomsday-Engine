@@ -131,7 +131,7 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        Style const &st = self.style();
+        Style const &st = self().style();
 
         gap = rule(gapId).valuei();
 
@@ -143,15 +143,15 @@ public Font::RichFormat::IStyle
         altAccentColor = st.colors().color("label.altaccent");
         shadowColor    = st.colors().colorf(textShadowColorId);
 
-        glText.setFont(self.font());
+        glText.setFont(self().font());
         glText.forceUpdate();
 
-        self.requestGeometry();
+        self().requestGeometry();
     }
 
     Vector4i margin() const
     {
-        return self.margins().toVector();
+        return self().margins().toVector();
     }
 
     Color richStyleColor(int index) const
@@ -160,7 +160,7 @@ public Font::RichFormat::IStyle
         {
         default:
         case Font::RichFormat::NormalColor:
-            return self.textColor();
+            return self().textColor();
 
         case Font::RichFormat::HighlightColor:
             return highlightColor;
@@ -207,7 +207,7 @@ public Font::RichFormat::IStyle
         shaders().build(drawable.program(), shaderId)
                 << uMvpMatrix << uColor << uAtlas();
 
-        glText.init(atlas(), self.font(), this);
+        glText.init(atlas(), self().font(), this);
 
         if (!image.isNull())
         {
@@ -275,7 +275,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self.contentRect();
+        Rectanglei const contentRect = self().contentRect();
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -453,11 +453,11 @@ public Font::RichFormat::IStyle
         }
         else
         {
-            w = self.rule().width().valuei() - (margin().x + margin().z);
+            w = self().rule().width().valuei() - (margin().x + margin().z);
         }
         if (vertPolicy != Expand)
         {
-            h = self.rule().height().valuei() - (margin().y + margin().w);
+            h = self().rule().height().valuei() - (margin().y + margin().w);
         }
 
         if (hasImage())
@@ -494,8 +494,8 @@ public Font::RichFormat::IStyle
         ContentLayout layout;
         contentPlacement(layout);
         Rectanglef combined = layout.image | layout.text;
-        width->set (combined.width()  + self.margins().width().valuei());
-        height->set(combined.height() + self.margins().height().valuei());
+        width->set (combined.width()  + self().margins().width().valuei());
+        height->set(combined.height() + self().margins().height().valuei());
     }
 
     void updateAppearanceAnimation()
@@ -515,11 +515,11 @@ public Font::RichFormat::IStyle
         // Update the image on the atlas.
         if (!image.isNull() && image->update())
         {
-            self.requestGeometry();
+            self().requestGeometry();
         }
         if (!overlayImage.isNull() && overlayImage->update())
         {
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
         glText.setLineWrapWidth(availableTextWidth());
@@ -527,28 +527,28 @@ public Font::RichFormat::IStyle
         {
             // Need to recompose.
             updateSize();
-            self.requestGeometry();
+            self().requestGeometry();
         }
 
         Rectanglei pos;
-        if (!self.hasChangedPlace(pos) && !self.geometryRequested())
+        if (!self().hasChangedPlace(pos) && !self().geometryRequested())
         {
             // Nothing changed.
             return;
         }
 
         VertexBuf::Builder verts;
-        self.glMakeGeometry(verts);
+        self().glMakeGeometry(verts);
         drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
 
-        self.requestGeometry(false);
+        self().requestGeometry(false);
     }
 
     void draw()
     {
         updateGeometry();
 
-        self.updateModelViewProjection(uMvpMatrix);
+        self().updateModelViewProjection(uMvpMatrix);
         drawable.draw();
     }
 

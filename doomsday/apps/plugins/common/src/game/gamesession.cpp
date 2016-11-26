@@ -209,7 +209,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          mapUri.compose());
         meta.set("mapTime",         ::mapTime);
-        meta.add("gameRules",       self.rules().toRecord());  // Takes ownership.
+        meta.add("gameRules",       self().rules().toRecord());  // Takes ownership.
 
         auto *loadedPackages = new ArrayValue;
         for (String id : PackageLoader::get().loadedPackageIdsInOrder())
@@ -587,7 +587,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         Con_SetUri2("map-id", reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
 
         String hubId;
-        if (Record const *hubRec = defn::Episode(*self.episodeDef()).tryFindHubByMapId(mapUri.compose()))
+        if (Record const *hubRec = defn::Episode(*self().episodeDef()).tryFindHubByMapId(mapUri.compose()))
         {
             hubId = hubRec->gets("id");
         }

@@ -45,9 +45,9 @@ DENG2_PIMPL(Sound)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Change, i)
         {
-            i->soundPropertyChanged(self);
+            i->soundPropertyChanged(self());
         }
-        self.update();
+        self().update();
     }
 
     DENG2_PIMPL_AUDIENCE(Play)

@@ -327,8 +327,8 @@ DENG2_PIMPL(Map)
     ~Impl()
     {
 #ifdef __CLIENT__
-        self.removeAllLumobjs();
-        self.removeAllBiasSources();
+        self().removeAllLumobjs();
+        self().removeAllBiasSources();
 #endif
 
         // Delete thinkers before the map elements, because thinkers may reference them
@@ -546,7 +546,7 @@ DENG2_PIMPL(Map)
             }
 
             validCount++;
-            self.forAllLinesInBox(scanRegion, LIF_SECTOR, [&p] (Line &line)
+            self().forAllLinesInBox(scanRegion, LIF_SECTOR, [&p] (Line &line)
             {
                 testForWindowEffect2(line, p);
                 return LoopContinue;
@@ -575,7 +575,7 @@ DENG2_PIMPL(Map)
         Time begunAt;
 
         LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
-                << (self.hasManifest() ? self.manifest().composeUri() : "(unknown map)") << bspSplitFactor;
+                << (self().hasManifest() ? self().manifest().composeUri() : "(unknown map)") << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
         // them so that the space partitioner can treat them specially.
@@ -912,7 +912,7 @@ DENG2_PIMPL(Map)
         mob.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
 
         validCount++;
-        self.forAllLinesInBox(box, [this, &mob, &box] (Line &line)
+        self().forAllLinesInBox(box, [this, &mob, &box] (Line &line)
         {
             // Do the bounding boxes intercept?
             if (!(   box.minX >= line.bounds().maxX
@@ -1285,7 +1285,7 @@ DENG2_PIMPL(Map)
 
     void spawnMapParticleGens()
     {
-        if (!self.hasManifest()) return;
+        if (!self().hasManifest()) return;
 
         for (dint i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
         {
@@ -1293,14 +1293,14 @@ DENG2_PIMPL(Map)
 
             if (!genDef->map) continue;
 
-            if (*genDef->map != self.manifest().composeUri())
+            if (*genDef->map != self().manifest().composeUri())
                 continue;
 
             // Are we still spawning using this generator?
             if (genDef->spawnAge > 0 && App_World().time() > genDef->spawnAge)
                 continue;
 
-            Generator *gen = self.newGenerator();
+            Generator *gen = self().newGenerator();
             if (!gen) return;  // No more generators.
 
             // Initialize the particle generator.
@@ -1331,7 +1331,7 @@ DENG2_PIMPL(Map)
             if (def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
                 continue;
 
-            Generator *gen = self.newGenerator();
+            Generator *gen = self().newGenerator();
             if (!gen) return;  // No more generators.
 
             // Initialize the particle generator.

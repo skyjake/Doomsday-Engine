@@ -60,8 +60,8 @@ DENG2_OBSERVES(Action, Triggered)
         if (st == Hover && state == Up)
         {
             // Remember the original text color.
-            originalTextColor = self.textColorId();
-            originalTextModColor = self.textModulationColorf();
+            originalTextColor = self().textColorId();
+            originalTextModColor = self().textModulationColorf();
         }
 
         State const prev = state;
@@ -80,10 +80,10 @@ DENG2_OBSERVES(Action, Triggered)
                 switch (hoverColorMode)
                 {
                 case ModulateColor:
-                    self.setTextModulationColorf(originalTextModColor);
+                    self().setTextModulationColorf(originalTextModColor);
                     break;
                 case ReplaceColor:
-                    self.setTextColor(originalTextColor);
+                    self().setTextColor(originalTextColor);
                     break;
                 }
             }
@@ -96,10 +96,10 @@ DENG2_OBSERVES(Action, Triggered)
                 switch (hoverColorMode)
                 {
                 case ModulateColor:
-                    self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
+                    self().setTextModulationColorf(style().colors().colorf(hoverTextColor));
                     break;
                 case ReplaceColor:
-                    self.setTextColor(hoverTextColor);
+                    self().setTextColor(hoverTextColor);
                     break;
                 }
             }
@@ -113,20 +113,20 @@ DENG2_OBSERVES(Action, Triggered)
 
         DENG2_FOR_PUBLIC_AUDIENCE2(StateChange, i)
         {
-            i->buttonStateChanged(self, state);
+            i->buttonStateChanged(self(), state);
         }
     }
 
     void updateHover(Vector2i const &pos)
     {
         if (state == Down) return;
-        if (self.isDisabled())
+        if (self().isDisabled())
         {
             setState(Up);
             return;
         }
 
-        if (self.hitTest(pos))
+        if (self().hitTest(pos))
         {
             if (state == Up) setState(Hover);
         }
@@ -144,19 +144,19 @@ DENG2_OBSERVES(Action, Triggered)
 
     void setDefaultBackground()
     {
-        self.set(Background(style().colors().colorf(bgColorId),
+        self().set(Background(style().colors().colorf(bgColorId),
                             bgType, borderColor(), 6));
     }
 
     void updateBackground()
     {
-        Background bg = self.background();
+        Background bg = self().background();
         if (bg.type == Background::GradientFrame ||
             bg.type == Background::GradientFrameWithRoundedFill)
         {
             bg.solidFill = style().colors().colorf(bgColorId);
             bg.color = borderColor();
-            self.set(bg);
+            self().set(bg);
         }
     }
 
@@ -165,7 +165,7 @@ DENG2_OBSERVES(Action, Triggered)
         if (animating)
         {
             updateBackground();
-            self.requestGeometry();
+            self().requestGeometry();
             if (scale.done() && frameOpacity.done())
             {
                 animating = false;
@@ -177,7 +177,7 @@ DENG2_OBSERVES(Action, Triggered)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Triggered, i)
         {
-            i->buttonActionTriggered(self);
+            i->buttonActionTriggered(self());
         }
     }
 

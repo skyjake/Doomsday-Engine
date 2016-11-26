@@ -453,7 +453,7 @@ DENG2_PIMPL(Textures)
 
         LOG_RES_VERBOSE("Initializing composite textures...");
 
-        //self.textures().textureScheme("Textures").clear();
+        //self().textures().textureScheme("Textures").clear();
 
         // Load texture definitions from TEXTURE1/2 lumps.
         Composites allDefs = loadCompositeTextureDefs();
@@ -475,7 +475,7 @@ DENG2_PIMPL(Textures)
             try
             {
                 TextureManifest &manifest =
-                    self.declareTexture(uri, flags, def.logicalDimensions(),
+                    self().declareTexture(uri, flags, def.logicalDimensions(),
                                         Vector2i(), def.origIndex());
 
                 // Are we redefining an existing texture?
@@ -520,7 +520,7 @@ DENG2_PIMPL(Textures)
 
         LOG_RES_VERBOSE("Initializing Flat textures...");
 
-        //self.textures().textureScheme("Flats").clear();
+        //self().textures().textureScheme("Flats").clear();
 
         LumpIndex const &index = App_FileSystem().nameIndex();
         lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
@@ -560,7 +560,7 @@ DENG2_PIMPL(Textures)
                     !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
                 de::Uri uri(QStringLiteral("Flats"), Path(percentEncodedName));
-                if (self.textureManifestPtr(uri)) continue;
+                if (self().textureManifestPtr(uri)) continue;
 
                 Texture::Flags flags;
                 if (file.container().hasCustom()) flags |= Texture::Custom;
@@ -577,13 +577,13 @@ DENG2_PIMPL(Textures)
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
-                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+                self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
             }
         }
 
         // Define any as yet undefined flat textures.
         /// @todo Defer until necessary (manifest texture is first referenced).
-        self.deriveAllTexturesInScheme("Flats");
+        self().deriveAllTexturesInScheme("Flats");
 
         LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
     }
@@ -594,7 +594,7 @@ DENG2_PIMPL(Textures)
 
         LOG_RES_VERBOSE("Initializing Sprite textures...");
 
-        //self.textures().textureScheme("Sprites").clear();
+        //self().textures().textureScheme("Sprites").clear();
 
         dint uniqueId = 1/*1-based index*/;
 
@@ -673,7 +673,7 @@ DENG2_PIMPL(Textures)
             de::Uri const resourceUri = LumpIndex::composeResourceUrn(i);
             try
             {
-                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+                self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
                 uniqueId++;
             }
             catch (TextureScheme::InvalidPathError const &er)
@@ -691,7 +691,7 @@ DENG2_PIMPL(Textures)
 
         // Define any as yet undefined sprite textures.
         /// @todo Defer until necessary (manifest texture is first referenced).
-        self.deriveAllTexturesInScheme("Sprites");
+        self().deriveAllTexturesInScheme("Sprites");
 
         LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
     }

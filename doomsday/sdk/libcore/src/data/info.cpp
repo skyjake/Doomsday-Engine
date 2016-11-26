@@ -543,7 +543,7 @@ DENG2_PIMPL(Info)
                 blockType = implicitBlockType;
             }
 
-            block.reset(new BlockElement(blockType, blockName, self));
+            block.reset(new BlockElement(blockType, blockName, self()));
             startLine = currentLine;
 
             // How about some attributes?
@@ -615,7 +615,7 @@ DENG2_PIMPL(Info)
             DENG2_ASSERT(finder != 0);
 
             String includePath;
-            String content = finder->findIncludedInfoSource(includeName, self, &includePath);
+            String content = finder->findIncludedInfoSource(includeName, self(), &includePath);
 
             Info included;
             included.setImplicitBlockType(implicitBlockType);

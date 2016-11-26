@@ -221,7 +221,7 @@ DENG2_PIMPL(SkyFixEdge)
         isValid = hi > lo;
         if (!isValid) return;
 
-        pOrigin = Vector3d(self.origin(), lo);
+        pOrigin = Vector3d(self().origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
     }
 };

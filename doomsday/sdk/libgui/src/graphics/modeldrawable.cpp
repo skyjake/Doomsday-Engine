@@ -781,7 +781,7 @@ DENG2_PIMPL(ModelDrawable)
         // Last minute notification in case some additional setup is needed.
         DENG2_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
         {
-            i->modelAboutToGLInit(self);
+            i->modelAboutToGLInit(self());
         }
 
         glData.glInit(sourcePath);

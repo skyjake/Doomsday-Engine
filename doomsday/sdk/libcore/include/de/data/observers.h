@@ -138,10 +138,10 @@
  * @param Var   Variable used in the loop.
  */
 #define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name)
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name)
 
 #define DENG2_FOR_PUBLIC_AUDIENCE2(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self.audienceFor##Name())
+    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name())
 
 namespace de {
 

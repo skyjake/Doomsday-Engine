@@ -44,7 +44,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     {
         bool valid = false;
 
-        String const entry = self.profileName();
+        String const entry = self().profileName();
         if (!entry.isEmpty())
         {
             if (editing && oldName == entry)
@@ -66,7 +66,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         // A game must be selected, too.
         if (!gameChoice->isValidSelection()) valid = false;
 
-        self.buttonWidget(Id1)->enable(valid);
+        self().buttonWidget(Id1)->enable(valid);
     }
 
     void gameChanged()

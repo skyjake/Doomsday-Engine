@@ -55,7 +55,7 @@ DENG2_PIMPL(ClientTexture)
                 LOG_AS("ClientTexture::clearVariants")
                 LOGDEV_RES_WARNING("GLName (%i) still set for a variant of \"%s\" %p. Perhaps it wasn't released?")
                     << variant->glName()
-                    << self.manifest().composeUri()
+                    << self().manifest().composeUri()
                     << this
                     << textualVariantSpec;
             }

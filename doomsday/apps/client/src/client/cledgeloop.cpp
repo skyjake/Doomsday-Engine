@@ -56,9 +56,9 @@ DENG2_PIMPL(ClEdgeLoop)
     {
         Material *choice1 = nullptr, *choice2 = nullptr;
 
-        if (self.hasBackSubsector())
+        if (self().hasBackSubsector())
         {
-            ClientSubsector &backSubsec = self.backSubsector();
+            ClientSubsector &backSubsec = self().backSubsector();
 
             // Our first choice is the back subsector material in the back subsector.
             switch (section)

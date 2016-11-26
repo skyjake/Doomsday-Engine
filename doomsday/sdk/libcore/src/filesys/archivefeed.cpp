@@ -181,7 +181,7 @@ DENG2_PIMPL(ArchiveFeed)
             //folder.add(f);
 
             // We will decide on pruning this.
-            f->setOriginFeed(&self);
+            f->setOriginFeed(thisPublic);
 
             // Include the file in the main index.
             //folder.fileSystem().index(*f);

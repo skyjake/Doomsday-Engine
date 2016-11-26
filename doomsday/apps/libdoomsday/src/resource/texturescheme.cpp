@@ -51,7 +51,7 @@ DENG2_PIMPL(TextureScheme)
 
     ~Impl()
     {
-        self.clear();
+        self().clear();
         DENG_ASSERT(index.isEmpty());
     }
 

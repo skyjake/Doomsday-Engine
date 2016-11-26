@@ -73,12 +73,12 @@ DENG_GUI_PIMPL(LineEditWidget)
     {
         height = new AnimationRule(0);
 
-        self.setFont("editor.plaintext");
+        self().setFont("editor.plaintext");
         updateStyle();
 
         uCursorColor = Vector4f(1, 1, 1, 1);
 
-        self.set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
+        self().set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
     }
 
     ~Impl()
@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(LineEditWidget)
      */
     void updateStyle()
     {
-        font = &self.font();
+        font = &self().font();
 
         updateBackground();
 
@@ -106,7 +106,7 @@ DENG_GUI_PIMPL(LineEditWidget)
     int calculateHeight()
     {
         int const hgt = de::max(font->height().valuei(), wraps.totalHeightInPixels());
-        return hgt + self.margins().height().valuei();
+        return hgt + self().margins().height().valuei();
     }
 
     void updateProjection()
@@ -117,10 +117,10 @@ DENG_GUI_PIMPL(LineEditWidget)
     void updateBackground()
     {
         // If using a gradient frame, update parameters automatically.
-        if (self.background().type == Background::GradientFrame)
+        if (self().background().type == Background::GradientFrame)
         {
             Background bg;
-            if (!self.hasFocus())
+            if (!self().hasFocus())
             {
                 bg = Background(Background::GradientFrame, Vector4f(1, 1, 1, .15f + hovering * .2f), 6);
                 if (unfocusedBackgroundOpacity > 0.f)
@@ -134,14 +134,14 @@ DENG_GUI_PIMPL(LineEditWidget)
                 bg = Background(style().colors().colorf("background"), Background::GradientFrame,
                                 Vector4f(1, 1, 1, .25f + hovering * .3f), 6);
             }
-            self.set(bg);
+            self().set(bg);
         }
     }
 
     void glInit()
     {
         composer.setAtlas(atlas());
-        composer.setText(self.text());
+        composer.setText(self().text());
 
         drawable.addBuffer(ID_BUF_TEXT, new VertexBuf);
         drawable.addBufferWithNewProgram(ID_BUF_CURSOR, new VertexBuf, "cursor");
@@ -165,36 +165,36 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     bool showingHint() const
     {
-        return self.text().isEmpty() && !hint->text().isEmpty() && !self.hasFocus();
+        return self().text().isEmpty() && !hint->text().isEmpty() && !self().hasFocus();
     }
 
     void updateGeometry()
     {
         updateBackground();
 
-        if (composer.update()) self.requestGeometry();
+        if (composer.update()) self().requestGeometry();
 
         // Do we actually need to update geometry?
         Rectanglei pos;
-        if (!self.hasChangedPlace(pos) && !self.geometryRequested())
+        if (!self().hasChangedPlace(pos) && !self().geometryRequested())
         {
             return;
         }
 
         // Generate all geometry.
-        self.requestGeometry(false);
+        self().requestGeometry(false);
 
         VertexBuf::Builder verts;
-        self.glMakeGeometry(verts);
+        self().glMakeGeometry(verts);
         drawable.buffer<VertexBuf>(ID_BUF_TEXT)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
 
         // Cursor.
-        Rectanglei const caret = self.cursorRect();
+        Rectanglei const caret = self().cursorRect();
 
         verts.clear();
         verts.makeQuad(caret, Vector4f(1, 1, 1, 1),
-                       atlas().imageRectf(self.root().solidWhitePixel()).middle());
+                       atlas().imageRectf(self().root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
@@ -202,7 +202,7 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     void updateHover(Vector2i const &pos)
     {
-        if (/*!self.hasFocus() && */ self.hitTest(pos))
+        if (/*!self().hasFocus() && */ self().hitTest(pos))
         {
             if (hovering.target() < 1)
             {
@@ -217,16 +217,16 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     void contentChanged(bool notify)
     {
-        composer.setText(self.text());
+        composer.setText(self().text());
         if (notify)
         {
-            emit self.editorContentChanged();
+            emit self().editorContentChanged();
         }
     }
 
     void atlasContentRepositioned(Atlas &)
     {
-        self.requestGeometry();
+        self().requestGeometry();
     }
 };
 

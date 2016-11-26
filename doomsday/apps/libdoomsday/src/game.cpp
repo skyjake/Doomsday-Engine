@@ -85,7 +85,7 @@ DENG2_PIMPL(Game)
 
     GameProfile const *profile() const
     {
-        return DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfile>();
+        return DoomsdayApp::gameProfiles().tryFind(self().title())->maybeAs<GameProfile>();
     }
 
     StringList packagesFromProfile() const

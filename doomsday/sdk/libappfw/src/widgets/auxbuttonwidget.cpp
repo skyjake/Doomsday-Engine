@@ -30,20 +30,20 @@ DENG_GUI_PIMPL(AuxButtonWidget)
         : Base(i)
         , inverted(false)
     {
-        self.add(aux = new ButtonWidget);
+        self().add(aux = new ButtonWidget);
         aux->setFont("small");
         aux->setTextColor("text");
         aux->setSizePolicy(ui::Expand, ui::Fixed);
         Rule const &unit = rule(RuleBank::UNIT);
         aux->rule()
-                .setInput(Rule::Right,  self.rule().right()  - unit)
-                .setInput(Rule::Top,    self.rule().top()    + unit)
-                .setInput(Rule::Bottom, self.rule().bottom() - unit);
+                .setInput(Rule::Right,  self().rule().right()  - unit)
+                .setInput(Rule::Top,    self().rule().top()    + unit)
+                .setInput(Rule::Bottom, self().rule().bottom() - unit);
 
         aux->audienceForStateChange() += this;
 
-        self.margins().set("dialog.gap").setLeft("gap");
-        self.margins().setRight(aux->rule().width() + rule("gap"));
+        self().margins().set("dialog.gap").setLeft("gap");
+        self().margins().setRight(aux->rule().width() + rule("gap"));
     }
 
     void setAuxBorderColorf(Vector4f const &colorf)

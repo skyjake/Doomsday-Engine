@@ -102,14 +102,14 @@ DENG_GUI_PIMPL(GameColumnWidget)
         , gameFamily(gameFamily)
         , savedItems(savedItems)
     {
-        ScrollAreaWidget &area = self.scrollArea();
+        ScrollAreaWidget &area = self().scrollArea();
 
         area.add(menu = new HomeMenuWidget);
         menu->organizer().setWidgetFactory(*this);
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom());
+                .setInput(Rule::Top,   self().header().rule().bottom());
         menu->margins().setBottom("");
 
         area.add(newProfileButton = new ButtonWidget);
@@ -456,7 +456,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     float actionOpacity() const
     {
-        return self.isHighlighted()? .4f : 0.f;
+        return self().isHighlighted()? .4f : 0.f;
     }
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)

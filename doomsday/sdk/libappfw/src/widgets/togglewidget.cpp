@@ -117,19 +117,19 @@ DENG2_OBSERVES(ButtonWidget, Press)
     Impl(Public *i)
         : Base(i),
           state(Inactive),
-          procImage(new ToggleProceduralImage(self))
+          procImage(new ToggleProceduralImage(*i))
     {
-        self.setImage(procImage); // base class owns it
+        self().setImage(procImage); // base class owns it
 
-        self.audienceForPress() += this;
+        self().audienceForPress() += this;
     }
 
     void buttonPressed(ButtonWidget &)
     {
         // Toggle the state.
-        self.setActive(self.isInactive());
+        self().setActive(self().isInactive());
 
-        emit self.stateChangedByUser(self.toggleState());
+        emit self().stateChangedByUser(self().toggleState());
     }
 
     DENG2_PIMPL_AUDIENCE(Toggle)

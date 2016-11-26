@@ -88,7 +88,7 @@ DENG2_PIMPL(MenuWidget)
     {
         foreach (Item i, items)
         {
-            self.removeAction(*i.action);
+            self().removeAction(*i.action);
         }
         items.clear();
         updateSize();
@@ -116,7 +116,7 @@ DENG2_PIMPL(MenuWidget)
 
     void removeItem(int pos)
     {
-        self.removeAction(*items[pos].action);
+        self().removeAction(*items[pos].action);
         items.removeAt(pos);
         updateSize();
     }

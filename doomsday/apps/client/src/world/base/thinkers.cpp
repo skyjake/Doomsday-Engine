@@ -163,10 +163,10 @@ DENG2_PIMPL(Thinkers)
     {
         // Increment the ID dealer until a free ID is found.
         /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
-        while(self.isUsedMobjId(++iddealer)) {}
+        while(self().isUsedMobjId(++iddealer)) {}
 
         // Mark this ID as used.
-        self.setMobjId(iddealer);
+        self().setMobjId(iddealer);
 
         return iddealer;
     }

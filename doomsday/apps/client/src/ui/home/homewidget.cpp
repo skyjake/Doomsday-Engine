@@ -119,8 +119,8 @@ DENG_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setFont("small");
         taskBarHintButton->setOpacity(.66f);
         taskBarHintButton->rule()
-                .setInput(Rule::Right,  self.rule().right()  - rule("dialog.gap"))
-                .setInput(Rule::Bottom, self.rule().bottom() - rule("dialog.gap") + *dismissOffset);
+                .setInput(Rule::Right,  self().rule().right()  - rule("dialog.gap"))
+                .setInput(Rule::Bottom, self().rule().bottom() - rule("dialog.gap") + *dismissOffset);
         taskBarHintButton->setActionFn([this] () {
             ClientWindow::main().taskBar().open();
         });
@@ -171,7 +171,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
         button.rule()
                 .setInput(Rule::Width,  rule(RuleBank::UNIT))
-                .setInput(Rule::Bottom, self.rule().bottom())
+                .setInput(Rule::Bottom, self().rule().bottom())
                 .setInput(Rule::Top,    tabs->rule().bottom());
     }
 
@@ -241,7 +241,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void aboutToLoadGame(Game const &gameBeingLoaded)
     {
-        self.root().setFocus(nullptr);
+        self().root().setFocus(nullptr);
 
         if (gameBeingLoaded.isNull())
         {
@@ -250,7 +250,7 @@ DENG_GUI_PIMPL(HomeWidget)
         else
         {
             TimeDelta span = DISMISS_SPAN;
-            auto &win = self.root().window().as<ClientWindow>();
+            auto &win = self().root().window().as<ClientWindow>();
             if (win.isGameMinimized())
             {
                 win.busy().clearTransitionFrameToBlack();
@@ -277,14 +277,14 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void moveOffscreen(TimeDelta span = DISMISS_SPAN)
     {
-        self.root().setFocus(nullptr);
+        self().root().setFocus(nullptr);
 
         // Home is being moved offscreen, so the game can take over in full size.
         ClientWindow::main().setGameMinimized(false);
 
         if (fequal(dismissOffset->animation().target(), 0.f))
         {
-            dismissOffset->set(-self.rule().height(), span);
+            dismissOffset->set(-self().rule().height(), span);
             dismissing = true;
         }
     }
@@ -293,7 +293,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         if (!fequal(dismissOffset->animation().target(), 0.f))
         {
-            self.show();
+            self().show();
             dismissOffset->set(0, span);
         }
     }
@@ -302,7 +302,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         if (dismissing && dismissOffset->animation().done())
         {
-            self.hide();
+            self().hide();
             dismissing = false;
         }
     }
@@ -315,8 +315,8 @@ DENG_GUI_PIMPL(HomeWidget)
         col->scrollArea().margins().setTop(tabsBackground->rule().height());
         col->rule()
                 .setInput(Rule::Width,  *columnWidth)
-                .setInput(Rule::Height, self.rule().height());
-        self.add(col);
+                .setInput(Rule::Height, self().rule().height());
+        self().add(col);
 
         Variable *conf = col->configVariable();
         if (conf)
@@ -328,7 +328,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void calculateColumnCount()
     {
-        visibleColumnCount = de::min(de::max(dsize(1), dsize(self.rule().width().valuei() /
+        visibleColumnCount = de::min(de::max(dsize(1), dsize(self().rule().width().valuei() /
                                                              rule("home.column.width").valuei())),
                                      tabs->items().size());
     }
@@ -336,13 +336,13 @@ DENG_GUI_PIMPL(HomeWidget)
     void updateLayout()
     {
         columns.clear();
-        columnWidth->setSource(self.rule().width() / visibleColumnCount);
+        columnWidth->setSource(self().rule().width() / visibleColumnCount);
 
         // Lay out the columns from left to right.
-        SequentialLayout layout(self.rule().left() - *scrollOffset,
-                                self.rule().top()  + *dismissOffset,
+        SequentialLayout layout(self().rule().left() - *scrollOffset,
+                                self().rule().top()  + *dismissOffset,
                                 ui::Right);
-        for (Widget *widget : self.childWidgets())
+        for (Widget *widget : self().childWidgets())
         {
             if (!widget->behavior().testFlag(Widget::Hidden))
             {

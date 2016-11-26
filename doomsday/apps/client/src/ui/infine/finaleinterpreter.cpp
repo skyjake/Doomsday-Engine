@@ -759,7 +759,7 @@ DENG2_PIMPL(FinaleInterpreter)
                 if (!(didSkip = skippingCommand(cmd)))
                 {
                     // Execute forthwith!
-                    cmd->func(*cmd, ops, self);
+                    cmd->func(*cmd, ops, self());
                 }
             }
 

@@ -43,11 +43,11 @@ DENG2_OBSERVES(Variable, Change  )
 
         if (var->value().is<TextValue>())
         {
-            self.setSelected(self.items().findData(var->value().asText()));
+            self().setSelected(self().items().findData(var->value().asText()));
         }
         else
         {
-            self.setSelected(self.items().findData(var->value().asNumber()));
+            self().setSelected(self().items().findData(var->value().asNumber()));
         }
     }
 
@@ -58,11 +58,11 @@ DENG2_OBSERVES(Variable, Change  )
         var->audienceForChange() -= this;
         if (var->value().is<TextValue>())
         {
-            var->set(TextValue(self.selectedItem().data().toString()));
+            var->set(TextValue(self().selectedItem().data().toString()));
         }
         else
         {
-            var->set(NumberValue(self.selectedItem().data().toDouble()));
+            var->set(NumberValue(self().selectedItem().data().toDouble()));
         }
         var->audienceForChange() += this;
     }
@@ -75,7 +75,7 @@ DENG2_OBSERVES(Variable, Change  )
     void variableBeingDeleted(Variable &)
     {
         var = 0;
-        self.disable();
+        self().disable();
     }
 };
 

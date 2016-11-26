@@ -160,7 +160,7 @@ DENG2_PIMPL(FrameModel)
 
     ~Impl()
     {
-        self.clearAllFrames();
+        self().clearAllFrames();
     }
 
 #pragma pack(1)

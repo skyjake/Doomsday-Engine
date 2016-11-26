@@ -35,15 +35,15 @@ DENG2_PIMPL(FolderSelection)
     {
         /*
         // What's up with the extra spacing?
-        QPalette pal = self.palette();
-        pal.setColor(self.backgroundRole(), Qt::red);
-        self.setPalette(pal);
-        self.setAutoFillBackground(true);
+        QPalette pal = self().palette();
+        pal.setColor(self().backgroundRole(), Qt::red);
+        self().setPalette(pal);
+        self().setAutoFillBackground(true);
         */
 
         QHBoxLayout *layout = new QHBoxLayout;
         layout->setContentsMargins(0, 0, 0, 0);
-        self.setLayout(layout);
+        self().setLayout(layout);
 
         if (!extraLabel.isEmpty())
         {

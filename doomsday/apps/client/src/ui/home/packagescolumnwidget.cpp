@@ -92,13 +92,13 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
         countLabel = new LabelWidget;
 
-        ScrollAreaWidget &area = self.scrollArea();
+        ScrollAreaWidget &area = self().scrollArea();
         area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
-        //packages->setMaximumPanelHeight(self.rule().height() - self.margins().height() - rule("gap")*3);
+        //packages->setMaximumPanelHeight(self().rule().height() - self().margins().height() - rule("gap")*3);
         packages->setActionItems(actions);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
-                .setInput(Rule::Top,   self.header().rule().bottom() + rule("gap"))
+                .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
 
         QObject::connect(packages, &PackagesWidget::itemCountChanged,
@@ -115,7 +115,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         });
 
         // Column menu.
-        self.header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items() << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
             return menu;

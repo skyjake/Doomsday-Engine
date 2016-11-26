@@ -97,7 +97,7 @@ DENG2_PIMPL(BiasSource)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(OriginChange, i)
         {
-            i->grabbableOriginChanged(self);
+            i->grabbableOriginChanged(self());
         }
     }
 
@@ -105,7 +105,7 @@ DENG2_PIMPL(BiasSource)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(IntensityChange, i)
         {
-            i->biasSourceIntensityChanged(self, oldIntensity);
+            i->biasSourceIntensityChanged(self(), oldIntensity);
         }
     }
 
@@ -121,7 +121,7 @@ DENG2_PIMPL(BiasSource)
 
         DENG2_FOR_PUBLIC_AUDIENCE(ColorChange, i)
         {
-            i->biasSourceColorChanged(self, oldColor, changedComponents);
+            i->biasSourceColorChanged(self(), oldColor, changedComponents);
         }
     }
 };

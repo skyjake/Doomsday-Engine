@@ -47,7 +47,7 @@ DENG2_PIMPL(ColorEditWidget)
         {
             if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(Modified);
+                self().execAction(Modified);
             }
             return true;
         }
@@ -63,7 +63,7 @@ DENG2_PIMPL(ColorEditWidget)
         {
             if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(Modified);
+                self().execAction(Modified);
             }
             return true;
         }
@@ -79,7 +79,7 @@ DENG2_PIMPL(ColorEditWidget)
         {
             if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(Modified);
+                self().execAction(Modified);
             }
             return true;
         }
@@ -96,7 +96,7 @@ DENG2_PIMPL(ColorEditWidget)
             {
                 if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
                 {
-                    self.execAction(Modified);
+                    self().execAction(Modified);
                 }
                 return true;
             }

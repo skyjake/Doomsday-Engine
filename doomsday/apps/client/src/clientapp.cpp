@@ -228,10 +228,10 @@ DENG2_PIMPL(ClientApp)
         LogBuffer::get().addSink(logAlarm);
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         DoomsdayApp::plugins().audienceForNotification() += this;
-        self.audienceForGameChange() += this;
-        self.audienceForGameUnload() += this;
-        self.audienceForConsoleRegistration() += this;
-        self.games().audienceForProgress() += this;
+        self().audienceForGameChange() += this;
+        self().audienceForGameUnload() += this;
+        self().audienceForConsoleRegistration() += this;
+        self().games().audienceForProgress() += this;
     }
 
     ~Impl()
@@ -242,12 +242,12 @@ DENG2_PIMPL(ClientApp)
 
             LogBuffer::get().removeSink(logAlarm);
 
-            self.players().forAll([] (Player &p)
+            self().players().forAll([] (Player &p)
             {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
             });
-            self.glDeinit();
+            self().glDeinit();
 
             Sys_Shutdown();
             DD_Shutdown();
@@ -291,7 +291,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_psprite_state_changed_t *) data;
-                self.player(args->player).weaponStateChanged(args->state);
+                self().player(args->player).weaponStateChanged(args->state);
             }
             break;
 
@@ -299,7 +299,7 @@ DENG2_PIMPL(ClientApp)
             if (data)
             {
                 auto const *args = (ddnotify_player_weapon_changed_t *) data;
-                self.player(args->player).setWeaponAssetId(args->weaponId);
+                self().player(args->player).setWeaponAssetId(args->weaponId);
             }
             break;
 
@@ -451,7 +451,7 @@ DENG2_PIMPL(ClientApp)
     void printHelpToStdOut()
     {
         printVersionToStdOut();
-        printf("Usage: %s [options]\n", self.commandLine().at(0).toLatin1().constData());
+        printf("Usage: %s [options]\n", self().commandLine().at(0).toLatin1().constData());
         printf(" -iwad (dir)  Set directory containing IWAD files.\n");
         printf(" -file (f)    Load one or more PWAD files at startup.\n");
         printf(" -game (id)   Set game to load at startup.\n");

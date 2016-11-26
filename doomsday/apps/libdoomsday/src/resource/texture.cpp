@@ -61,13 +61,13 @@ DENG2_PIMPL(Texture)
 
     ~Impl()
     {
-        self.clearAnalyses();
+        self().clearAnalyses();
     }
 
     /// Notify iterested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self);
+        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self());
     }
 };
 

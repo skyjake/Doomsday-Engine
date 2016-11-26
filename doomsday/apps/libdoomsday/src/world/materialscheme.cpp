@@ -37,7 +37,7 @@ DENG2_PIMPL(MaterialScheme)
 
     ~Impl()
     {
-        self.clear();
+        self().clear();
         DENG2_ASSERT(index.isEmpty());
     }
 };

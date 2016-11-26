@@ -153,7 +153,7 @@ DENG2_PIMPL(Sector)
         // Ensure planes are cleared first (subsectors may include mappings).
         planes.clear();
 
-        delete [] self._lookupPlanes;
+        delete [] self()._lookupPlanes;
     }
 
     /**
@@ -214,7 +214,7 @@ DENG2_PIMPL(Sector)
 
     void updateEmitterOriginZ()
     {
-        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
+        emitter->origin[2] = (self().floor().height() + self().ceiling().height()) / 2;
     }
 
     void updateSideEmitterOrigins()
@@ -239,10 +239,10 @@ DENG2_PIMPL(Sector)
 
     void updatePlanesLookup()
     {
-        delete [] self._lookupPlanes;
+        delete [] self()._lookupPlanes;
 
-        self._lookupPlanes = new Plane *[planes.size()];
-        Plane **ptr = self._lookupPlanes;
+        self()._lookupPlanes = new Plane *[planes.size()];
+        Plane **ptr = self()._lookupPlanes;
         for (Plane *p : planes)
         {
             *ptr++ = p;

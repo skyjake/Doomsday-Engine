@@ -46,7 +46,7 @@ DENG2_PIMPL(ScriptCommandWidget)
 
     void appStartupCompleted()
     {
-        self.updateCompletion();
+        self().updateCompletion();
     }
 
     void importNativeModules()
@@ -84,7 +84,7 @@ DENG2_PIMPL(ScriptCommandWidget)
             lexi.addTerm(keyword);
         }
 
-        self.setLexicon(lexi);
+        self().setLexicon(lexi);
     }
 
     bool shouldShowAsPopup(Error const &)

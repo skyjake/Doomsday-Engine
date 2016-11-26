@@ -33,7 +33,7 @@ DENG2_PIMPL(DirectoryListDialog)
         array.set(new ArrayValue);
         list = new DirectoryArrayWidget(array);
         list->margins().setZero();
-        self.add(list->detachAddButton(self.area().rule().width()));
+        self().add(list->detachAddButton(self().area().rule().width()));
         list->addButton().hide();
     }
 };

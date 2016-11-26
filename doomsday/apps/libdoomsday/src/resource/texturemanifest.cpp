@@ -46,7 +46,7 @@ DENG2_PIMPL(TextureManifest)
     ~Impl()
     {
         if (texture) texture->audienceForDeletion -= this;
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self());
     }
 
     // Observes Texture Deletion.

@@ -39,7 +39,7 @@ DENG2_PIMPL(VariableSliderWidget)
 
     void init()
     {
-        self.updateFromVariable();
+        self().updateFromVariable();
         QObject::connect(thisPublic, SIGNAL(valueChangedByUser(double)),
                          thisPublic, SLOT(setVariableFromWidget()));
     }
@@ -51,11 +51,11 @@ DENG2_PIMPL(VariableSliderWidget)
         switch (valueType)
         {
         case VariableSliderWidget::Number:
-            self.setValue(var->value<NumberValue>().asNumber());
+            self().setValue(var->value<NumberValue>().asNumber());
             break;
 
         case VariableSliderWidget::Animation:
-            self.setValue(var->value<NativePointerValue>().nativeObject<de::Animation>()->target());
+            self().setValue(var->value<NativePointerValue>().nativeObject<de::Animation>()->target());
             break;
         }
     }
@@ -68,11 +68,11 @@ DENG2_PIMPL(VariableSliderWidget)
         switch (valueType)
         {
         case VariableSliderWidget::Number:
-            var->set(NumberValue(self.value()));
+            var->set(NumberValue(self().value()));
             break;
 
         case VariableSliderWidget::Animation:
-            var->value<NativePointerValue>().nativeObject<de::Animation>()->setValue(float(self.value()));
+            var->value<NativePointerValue>().nativeObject<de::Animation>()->setValue(float(self().value()));
             break;
         }
         var->audienceForChange() += this;
@@ -86,7 +86,7 @@ DENG2_PIMPL(VariableSliderWidget)
     void variableBeingDeleted(Variable &)
     {
         var = 0;
-        self.disable();
+        self().disable();
     }
 };
 

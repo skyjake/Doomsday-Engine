@@ -38,14 +38,14 @@ DENG2_PIMPL(ChoiceWidget)
         menu->clear();
         foreach (String item, items)
         {
-            menu->appendItem(new Action(item, &self, SLOT(updateSelectionFromMenu())));
+            menu->appendItem(new Action(item, thisPublic, SLOT(updateSelectionFromMenu())));
         }
         menu->setCursor(selection);
     }
 
     void updateLabel()
     {
-        self.setLabel(prompt + items[selection], self.attribs());
+        self().setLabel(prompt + items[selection], self().attribs());
     }
 };
 

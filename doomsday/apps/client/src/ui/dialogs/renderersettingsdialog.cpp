@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
     Impl(Public *i) : Base(i)
     {
-        ScrollAreaWidget &area = self.area();
+        ScrollAreaWidget &area = self().area();
 
         area.add(appear = new ProfilePickerWidget(ClientApp::renderSystem().appearanceSettings(),
                                                   tr("appearance"), "profile-picker"));
@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         area.add(disableExtPatches  = new VariableToggleWidget(tr("Disable for patches"),  App::config("resource.noHighResPatches")));
 
         // Set up a separate popup for developer settings.
-        self.add(devPopup = new GridPopupWidget);
+        self().add(devPopup = new GridPopupWidget);
 
         CVarChoiceWidget *rendTex = new CVarChoiceWidget("rend-tex");
         rendTex->items()
@@ -129,7 +129,7 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         /// @todo These widgets should be intelligent enough to fetch their
         /// cvar values when they need to....
 
-        foreach (Widget *child, self.area().childWidgets() + devPopup->content().childWidgets())
+        foreach (Widget *child, self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {

@@ -62,7 +62,7 @@ DENG2_PIMPL(MenuWidget)
             _widget.reset(w);
 
             // Popups need a parent.
-            //d->self.add(_widget);
+            //d->self().add(_widget);
 
             _dir = openingDirection;
         }
@@ -82,13 +82,13 @@ DENG2_PIMPL(MenuWidget)
         void trigger()
         {
             DENG2_ASSERT(bool(_widget));
-            DENG2_ASSERT(d->self.hasRoot());
+            DENG2_ASSERT(d->self().hasRoot());
 
             if (_widget->isOpeningOrClosing()) return;
 
             if (!_widget->parentWidget())
             {
-                d->self.root().add(_widget);
+                d->self().root().add(_widget);
             }
 
             Action::trigger();
@@ -180,8 +180,8 @@ DENG2_PIMPL(MenuWidget)
     SizePolicy rowPolicy = Fixed;
 
     Impl(Public *i)
-        : Base(i),
-          organizer(self)
+        : Base(i)
+        , organizer(*i)
     {
         outContentHeight = new IndirectRule;
 
@@ -191,8 +191,8 @@ DENG2_PIMPL(MenuWidget)
         // The default context is empty.
         setContext(&defaultItems);
 
-        self.audienceForChildAddition() += this;
-        self.audienceForChildRemoval()  += this;
+        self().audienceForChildAddition() += this;
+        self().audienceForChildRemoval()  += this;
     }
 
     ~Impl()
@@ -412,7 +412,7 @@ DENG2_PIMPL(MenuWidget)
         w->audienceForClose()    += this;
         w->audienceForDeletion() += this;
 
-        emit self.subWidgetOpened(w);
+        emit self().subWidgetOpened(w);
 
         // Automatically close other subwidgets when one is opened.
         foreach (auto *panel, openSubs)
@@ -433,7 +433,7 @@ DENG2_PIMPL(MenuWidget)
     int countVisible() const
     {
         int num = 0;
-        foreach (Widget *i, self.childWidgets())
+        foreach (Widget *i, self().childWidgets())
         {
             if (isVisibleItem(i)) ++num;
         }
@@ -446,11 +446,11 @@ DENG2_PIMPL(MenuWidget)
 
         if (organizer.virtualizationEnabled())
         {
-            layout.setLeftTop(self.contentRule().left(),
-                              self.contentRule().top() + organizer.virtualStrut());
+            layout.setLeftTop(self().contentRule().left(),
+                              self().contentRule().top() + organizer.virtualStrut());
         }
 
-        foreach (Widget *child, self.childWidgets())
+        foreach (Widget *child, self().childWidgets())
         {
             GuiWidget *w = child->maybeAs<GuiWidget>();
             if (!isVisibleItem(w)) continue;

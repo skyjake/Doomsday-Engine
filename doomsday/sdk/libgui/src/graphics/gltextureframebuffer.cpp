@@ -72,7 +72,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
     {
         color.clear();
         depthStencil.clear();
-        self.deinit();
+        self().deinit();
         resolvedFbo.deinit();
 
         texFboState.setState(NotReady);
@@ -166,14 +166,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
 
         if (isMultisampled())
         {
-            self.configure(size, ColorDepthStencil, sampleCount());
+            self().configure(size, ColorDepthStencil, sampleCount());
             resolvedFbo.configure(&color, &depthStencil);
         }
         else
         {
             try
             {
-                self.configure(&color, &depthStencil);
+                self().configure(&color, &depthStencil);
                 resolvedFbo.setState(NotReady);
             }
             catch (ConfigError const &er)
@@ -184,7 +184,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
                                    "(depth & stencil will be used for rendering but "
                                    "are inaccessible in shaders): ") << er.asText();
 
-                    self.configure(size, ColorDepthStencil);
+                    self().configure(size, ColorDepthStencil);
                     resolvedFbo.configure(Color, color);
                 }
                 catch (ConfigError const &er)
@@ -195,7 +195,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
                                        "(only depth used for rendering, depth & stencil "
                                        "inaccessible in shaders): ") << er.asText();
 
-                        self.configure(Color, color, Depth);
+                        self().configure(Color, color, Depth);
                         resolvedFbo.setState(NotReady);
                     }
                     catch (ConfigError const &er)
@@ -203,14 +203,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
                         LOG_GL_WARNING("Using final framebuffer configuration fallback 3 "
                                        "(only depth used for rendering, depth & stencil "
                                        "inaccessible in shaders): ") << er.asText();
-                        self.configure(size, ColorDepth);
+                        self().configure(size, ColorDepth);
                         resolvedFbo.configure(GLFramebuffer::Color, color);
                     }
                 }
             }
         }
 
-        self.clear(ColorDepthStencil);
+        self().clear(ColorDepthStencil);
         if (resolvedFbo.isReady()) resolvedFbo.clear(ColorDepthStencil);
 
         LIBGUI_ASSERT_GL_OK();

@@ -106,11 +106,11 @@ DENG2_PIMPL(ConvexSubspace)
     {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-        HEdge *firstNode = self.poly().hedge();
+        HEdge *firstNode = self().poly().hedge();
 
         fanBase = firstNode;
 
-        if(self.poly().hedgeCount() > 3)
+        if(self().poly().hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
             Vertex const *base, *a, *b;

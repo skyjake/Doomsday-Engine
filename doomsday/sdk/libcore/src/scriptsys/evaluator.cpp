@@ -136,7 +136,7 @@ DENG2_PIMPL(Evaluator)
 
         // Begin a new evaluation operation.
         current = expression;
-        expression->push(self);
+        expression->push(self());
 
         // Clear the result stack.
         clearResults();
@@ -149,16 +149,16 @@ DENG2_PIMPL(Evaluator)
             names = top.names();
             /*qDebug() << "Evaluator: Evaluating latest scoped expression" << top.expression
                      << "in" << (top.scope? names->asText() : "null scope");*/
-            pushResult(top.expression->evaluate(self), top.scope);
+            pushResult(top.expression->evaluate(self()), top.scope);
         }
 
         // During function call evaluation the process's context changes. We should
         // now be back at the level we started from.
-        DENG2_ASSERT(&self.process().context() == &context);
+        DENG2_ASSERT(&self().process().context() == &context);
 
         // Exactly one value should remain in the result stack: the result of the
         // evaluated expression.
-        DENG2_ASSERT(self.hasResult());
+        DENG2_ASSERT(self().hasResult());
 
         clearNames();
         current = NULL;

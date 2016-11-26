@@ -159,8 +159,8 @@ DENG_GUI_PIMPL(DialogWidget)
         extraButtons->setGridSize(0, ui::Expand, 1, ui::Expand);
 
         area->rule()
-                .setInput(Rule::Left,  self.rule().left())
-                .setInput(Rule::Top,   self.rule().top())
+                .setInput(Rule::Left,  self().rule().left())
+                .setInput(Rule::Top,   self().rule().top())
                 .setInput(Rule::Width, area->contentRule().width() + area->margins().width());
 
         // Will a title be included?
@@ -183,8 +183,8 @@ DENG_GUI_PIMPL(DialogWidget)
             container->add(heading);
 
             heading->rule()
-                    .setInput(Rule::Top,   self.rule().top())
-                    .setInput(Rule::Left,  self.rule().left())
+                    .setInput(Rule::Top,   self().rule().top())
+                    .setInput(Rule::Left,  self().rule().left())
                     .setInput(Rule::Right, area->rule().right());
 
             area->rule().setInput(Rule::Top, heading->rule().bottom());
@@ -195,10 +195,10 @@ DENG_GUI_PIMPL(DialogWidget)
         // Buttons below the area.
         buttons->rule()
                 .setInput(Rule::Bottom, container->rule().bottom())
-                .setInput(Rule::Right, self.rule().right());
+                .setInput(Rule::Right, self().rule().right());
         extraButtons->rule()
                 .setInput(Rule::Top, buttons->rule().top())
-                .setInput(Rule::Left, self.rule().left());
+                .setInput(Rule::Left, self().rule().left());
 
         // A blank container widget acts as the popup content parent.
         container->rule().setInput(Rule::Width, OperatorRule::maximum(
@@ -217,7 +217,7 @@ DENG_GUI_PIMPL(DialogWidget)
         container->add(area);
         container->add(extraButtons);
         container->add(buttons);
-        self.setContent(container);
+        self().setContent(container);
     }
 
     ~Impl()
@@ -232,7 +232,7 @@ DENG_GUI_PIMPL(DialogWidget)
         if (!rightArea)
         {
             rightArea = new ScrollAreaWidget("rightArea");
-            self.content().add(rightArea);
+            self().content().add(rightArea);
 
             rightArea->rule()
                     .setInput(Rule::Top,    area->rule().top())
@@ -246,12 +246,12 @@ DENG_GUI_PIMPL(DialogWidget)
             }
 
             // Content size is now wider.
-            self.content().rule().setInput(Rule::Width, OperatorRule::maximum(
+            self().content().rule().setInput(Rule::Width, OperatorRule::maximum(
                                            area->rule().width() + rightArea->rule().width(),
                                            buttons->rule().width() + extraButtons->rule().width(),
                                            *minWidth));
 
-            if (self.isOpen()) updateContentHeight();
+            if (self().isOpen()) updateContentHeight();
         }
     }
 
@@ -259,9 +259,9 @@ DENG_GUI_PIMPL(DialogWidget)
     {
         // Determine suitable maximum height.
         Rule const *maxHeight = holdRef(root().viewHeight());
-        if (self.openingDirection() == ui::Down)
+        if (self().openingDirection() == ui::Down)
         {
-            changeRef(maxHeight, *maxHeight - self.anchor().top() - rule("gap"));
+            changeRef(maxHeight, *maxHeight - self().anchor().top() - rule("gap"));
         }
 
         // Scrollable area content height.
@@ -276,12 +276,12 @@ DENG_GUI_PIMPL(DialogWidget)
         // the dialog tries to show the full height of the content area.
         if (!flags.testFlag(WithHeading))
         {
-            self.content().rule().setInput(Rule::Height,
+            self().content().rule().setInput(Rule::Height,
                     OperatorRule::minimum(*maxHeight, areaContentHeight + buttons->rule().height()));
         }
         else
         {
-            self.content().rule().setInput(Rule::Height,
+            self().content().rule().setInput(Rule::Height,
                     OperatorRule::minimum(*maxHeight, (heading? heading->rule().height() : Const(0)) +
                                                        areaContentHeight + buttons->rule().height()));
         }
@@ -412,26 +412,26 @@ DENG_GUI_PIMPL(DialogWidget)
     {
         animatingGlow = true;
         glow.setValueFrom(1, normalGlow, FLASH_ANIM_SPAN);
-        Background bg = self.background();
+        Background bg = self().background();
         bg.color.w = glow;
-        self.set(bg);
+        self().set(bg);
     }
 
     void updateBorderFlash()
     {
-        Background bg = self.background();
+        Background bg = self().background();
         bg.color.w = glow;
-        self.set(bg);
+        self().set(bg);
 
         if (glow.done()) animatingGlow = false;
     }
 
     void updateBackground()
     {
-        Background bg = self.background();
-        if (self.isUsingInfoStyle())
+        Background bg = self().background();
+        if (self().isUsingInfoStyle())
         {
-            bg = self.infoStyleBackground();
+            bg = self().infoStyleBackground();
         }
         else if (Style::get().isBlurringAllowed())
         {
@@ -445,7 +445,7 @@ DENG_GUI_PIMPL(DialogWidget)
             bg.type = Background::BorderGlow;
             bg.solidFill = style().colors().colorf("dialog.background");
         }
-        self.set(bg);
+        self().set(bg);
     }
 };
 

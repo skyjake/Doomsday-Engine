@@ -57,8 +57,8 @@ DENG2_PIMPL(ManualConnectionDialog)
             // Time to show what we found.
             querying = false;
             progress->setRotationSpeed(0);
-            self.editor().enable();
-            self.validate();
+            self().editor().enable();
+            self().validate();
 
             if (link.foundServerCount(ServerLink::Direct) > 0)
             {
@@ -82,12 +82,12 @@ DENG2_PIMPL(ManualConnectionDialog)
 
     ButtonWidget &connectButton()
     {
-        return self.buttonWidget(tr("Connect"));
+        return self().buttonWidget(tr("Connect"));
     }
 
     void aboutToJoinMultiplayerGame(shell::ServerInfo const &) override
     {
-        self.accept();
+        self().accept();
     }
 };
 
