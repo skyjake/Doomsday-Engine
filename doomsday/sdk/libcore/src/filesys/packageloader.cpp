@@ -56,14 +56,17 @@ DENG2_PIMPL(PackageLoader)
      * @param file  Package root.
      * @return @c true, if loaded.
      */
-    bool isLoaded(File const &file) const
+    Package *tryFindLoaded(File const &file) const
     {
         LoadedPackages::const_iterator found = loaded.constFind(Package::identifierForFile(file));
         if (found != loaded.constEnd())
         {
-            return &found.value()->file() == &file;
+            if (&found.value()->file() == &file)
+            {
+                return found.value();
+            }
         }
-        return false;
+        return nullptr;
     }
 
     static bool shouldIgnoreFile(File const &packageFile)
@@ -464,7 +467,12 @@ bool PackageLoader::isLoaded(String const &packageId) const
 
 bool PackageLoader::isLoaded(File const &file) const
 {
-    return d->isLoaded(file);
+    return d->tryFindLoaded(file) != nullptr;
+}
+
+Package const *PackageLoader::tryFindLoaded(File const &file) const
+{
+    return d->tryFindLoaded(file);
 }
 
 PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const

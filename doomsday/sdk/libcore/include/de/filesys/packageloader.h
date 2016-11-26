@@ -110,6 +110,8 @@ public:
 
     bool isLoaded(File const &file) const;
 
+    Package const *tryFindLoaded(File const &file) const;
+
     /**
      * Returns the set of all loaded packages.
      */
