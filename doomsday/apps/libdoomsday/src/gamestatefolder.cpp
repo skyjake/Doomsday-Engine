@@ -22,14 +22,15 @@
 #include "doomsday/DataBundle"
 
 #include <de/App>
+#include <de/ArchiveFolder>
 #include <de/ArrayValue>
 #include <de/Info>
 #include <de/Log>
-#include <de/NumberValue>
 #include <de/NativePath>
-#include <de/ArchiveFolder>
-#include <de/ZipArchive>
+#include <de/NumberValue>
+#include <de/PackageLoader>
 #include <de/Writer>
+#include <de/ZipArchive>
 
 using namespace de;
 
@@ -177,6 +178,16 @@ bool GameStateFolder::isPackageAffectingGameplay(String const &packageId) // sta
         // Collections can be configured, so we need to list the actual files in use
         // rather than just the collection itself.
         return bundle->format() != DataBundle::Collection;
+    }
+
+    if (File const *selected = PackageLoader::get().select(packageId))
+    {
+        auto const &meta = Package::metadata(*selected);
+        if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
+        {
+            // Data files are assumed to affect gameplay.
+            return true;
+        }
     }
     return false;
 }
