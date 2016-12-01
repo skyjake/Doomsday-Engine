@@ -36,6 +36,8 @@ namespace res { class Bundles; }
 class Game;
 class Games;
 class SaveGames;
+class GameStateFolder;
+class AbstractSession;
 
 /**
  * Common application-level state and components.
@@ -137,6 +139,26 @@ public:
             de::StringList const &packageIds,
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) = 0;
+
+    /**
+     * Saves application state to a save folder.
+     *
+     * When saving a game session to disk, this method should be called so the
+     * application gets a chance to include its state in the save as well.
+     *
+     * @param toFolder  Folder where the game state is being written.
+     */
+    virtual void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder);
+
+    /**
+     * Loads application state from a save folder.
+     *
+     * When loading a game session from disk, this method should be called so that
+     * the application can restore its state from the save.
+     *
+     * @param fromFolder  Folder where the game state is being read.
+     */
+    virtual void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder);
 
 public:
     static DoomsdayApp &    app();

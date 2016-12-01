@@ -20,6 +20,7 @@
 #define LIBDOOMSDAY_SESSION_H
 
 #include "libdoomsday.h"
+#include "uri.h"
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
@@ -42,38 +43,21 @@ public:
     DENG2_ERROR(InProgressError);
 
 public:
-    virtual ~AbstractSession() {}
+    AbstractSession();
 
-    /**
-     * Configuration profile.
-     * @todo Remove this. Could just point to a GameProfile instead. -jk
-     */
-    struct Profile
-    {
-        // Unique identifier of the game this profile is used with.
-        de::String gameId;
-
-        // List of resource files (specified via the command line or in a cfg, or found using
-        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
-        QStringList resourceFiles;
-    };
-
-    /**
-     * Returns the current configuration profile for the game session.
-     */
-    static Profile &profile();
-
-    /// Convenient method of looking up the game identity key from the game session profile.
-    static inline de::String gameId()   { return profile().gameId; }
-
-    /// Compose the absolute path of the @em user saved session folder for the game session.
-    static inline de::String savePath() { return de::String("/home/savegames") / profile().gameId; }
+    virtual ~AbstractSession();
 
     /**
      * Determines whether the currently configured game session is in progress. Usually this
      * will not be the case during title sequences (for example).
      */
-    virtual bool hasBegun() const = 0;
+    bool hasBegun() const;
+
+    /**
+     * Returns the current map URI for the game session in progress. If the session has not
+     * yet begun then an empty URI is returned.
+     */
+    de::Uri mapUri() const;
 
     /**
      * Determines whether the game state currently allows the session to be saved.
@@ -101,7 +85,37 @@ public:
      */
     virtual void load(de::String const &saveName) = 0;
 
-protected:  // Saved session management: ---------------------------------------------------
+public:
+    /**
+     * Configuration profile.
+     * @todo Remove this. Could just point to a GameProfile instead. -jk
+     */
+    struct Profile
+    {
+        // Unique identifier of the game this profile is used with.
+        de::String gameId;
+
+        // List of resource files (specified via the command line or in a cfg, or found using
+        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
+        QStringList resourceFiles;
+    };
+
+    /**
+     * Returns the current configuration profile for the game session.
+     */
+    static Profile &profile();
+
+    /// Convenient method of looking up the game identity key from the game session profile.
+    static inline de::String gameId()   { return profile().gameId; }
+
+    /// Compose the absolute path of the @em user saved session folder for the game session.
+    static inline de::String savePath() { return de::String("/home/savegames") / profile().gameId; }
+
+protected:
+    void setMapUri(de::Uri const &uri);
+    void setInProgress(bool inProgress);
+
+//- Saved session management ------------------------------------------------------------
 
     /**
      * Makes a copy of the saved session specified.
@@ -115,6 +129,9 @@ protected:  // Saved session management: ---------------------------------------
      * Removes the saved session at @a path.
      */
     static void removeSaved(de::String const &path);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_SESSION_H

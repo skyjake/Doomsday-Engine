@@ -28,6 +28,7 @@
 #include <de/PackageLoader>
 #include <de/Time>
 #include <de/ZipArchive>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/GameStateFolder>
 #include <doomsday/defs/episode.h>
 #include "api_gl.h"
@@ -117,9 +118,6 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 {
     String episodeId;
     GameRuleset rules;
-    bool inProgress = false;  ///< @c true= session is in progress / internal.save exists.
-
-    de::Uri mapUri;
     duint mapEntryPoint = 0;  ///< Player entry point, for reborn.
 
     bool rememberVisitedMaps = false;
@@ -186,7 +184,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
     void setEpisode(String const &newEpisodeId)
     {
-        DENG2_ASSERT(!inProgress);
+        DENG2_ASSERT(!self().hasBegun());
 
         episodeId = newEpisodeId;
 
@@ -199,7 +197,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     GameStateMetadata metadata()
     {
-        DENG2_ASSERT(inProgress);
+        DENG2_ASSERT(self().hasBegun());
 
         GameStateMetadata meta;
 
@@ -207,7 +205,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         meta.set("gameIdentityKey", AbstractSession::gameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
-        meta.set("mapUri",          mapUri.compose());
+        meta.set("mapUri",          self().mapUri().compose());
         meta.set("mapTime",         ::mapTime);
         meta.add("gameRules",       self().rules().toRecord());  // Takes ownership.
 
@@ -247,7 +245,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     GameStateFolder &updateGameStateFolder(String const &path, GameStateMetadata const &metadata)
     {
-        DENG2_ASSERT(inProgress);
+        DENG2_ASSERT(self().hasBegun());
 
         LOG_AS("GameSession");
         LOG_RES_VERBOSE("Serializing to \"%s\"...") << path;
@@ -282,8 +280,10 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(mapUri.path() + "State")
+        mapsFolder.replaceFile(self().mapUri().path() + "State")
                 << serializeCurrentMapState();
+
+        DoomsdayApp::app().gameSessionWasSaved(self(), *saved);
 
         saved->flush();  // No need to populate; FS2 Files already in sync with source data.
         saved->cacheMetadata(metadata);  // Avoid immediately reopening the .save package.
@@ -500,7 +500,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             }
         }
 
-        inProgress = false;
+        self().setInProgress(false);
 
         if (savePath.compareWithoutCase(internalSavePath))
         {
@@ -559,7 +559,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         }
 #endif
 
-        inProgress = true;
+        self().setInProgress(true);
 
         setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
         //mapEntryPoint = ??; // not saved??
@@ -569,15 +569,20 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String const mapUriAsText = mapUri.compose();
+        String const mapUriAsText = self().mapUri().compose();
         makeMapStateReader(saved, mapUriAsText)->read(mapUriAsText);
+
+        DoomsdayApp::app().gameSessionWasLoaded(self(), saved);
     }
 
     void setMap(de::Uri const &newMapUri)
     {
-        DENG2_ASSERT(inProgress);
+        DENG2_ASSERT(self().hasBegun());
 
-        mapUri = newMapUri;
+        self().setMapUri(newMapUri);
+
+        de::Uri const mapUri = self().mapUri();
+
         if (rememberVisitedMaps)
         {
             visitedMaps << mapUri;
@@ -616,7 +621,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     void reloadMap(bool revisit = false)
     {
-        DENG2_ASSERT(inProgress);
+        DENG2_ASSERT(self().hasBegun());
 
         Pause_End();
 
@@ -637,16 +642,16 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         {
             ::briefDisabled = true;
         }
-        Record const *briefing = finaleBriefing(mapUri);
+        Record const *briefing = finaleBriefing(self().mapUri());
 
         // Restart the map music?
         if (!briefing)
         {
-            S_MapMusic(mapUri);
+            S_MapMusic(self().mapUri());
             S_PauseMusic(true);
         }
 
-        P_SetupMap(mapUri);
+        P_SetupMap(self().mapUri());
 
         if (revisit)
         {
@@ -655,10 +660,11 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             targetPlayerAddrs = nullptr; // player mobj redirection...
 #endif
 
-            String const mapUriAsText = mapUri.compose();
+            String const mapUriAsText = self().mapUri().compose();
             auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath);
             std::unique_ptr<GameStateFolder::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             reader->read(mapUriAsText);
+            DoomsdayApp::app().gameSessionWasLoaded(self(), saved);
         }
 
         if (!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
@@ -864,11 +870,6 @@ GameSession &GameSession::gameSession()
     return *singleton;
 }
 
-bool GameSession::hasBegun() const
-{
-    return d->inProgress;
-}
-
 bool GameSession::isLoadingPossible()
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
@@ -917,11 +918,6 @@ Record const &GameSession::mapInfo() const
     return G_MapInfoForMapUri(mapUri());
 }
 
-de::Uri GameSession::mapUri() const
-{
-    return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
-}
-
 uint GameSession::mapEntryPoint() const
 {
     return d->mapEntryPoint;
@@ -965,7 +961,7 @@ de::Uri GameSession::mapUriForNamedExit(String name) const
             else
             {
                 LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no Exit with ID '%s'")
-                        << d->episodeId << d->mapUri << name;
+                        << d->episodeId << mapUri() << name;
             }
         }
         else if (exits.count() == 1)
@@ -1029,7 +1025,7 @@ void GameSession::end()
 
     AbstractSession::removeSaved(internalSavePath);
 
-    d->inProgress = false;
+    setInProgress(false);
     LOG_MSG("Game ended");
 }
 
@@ -1079,7 +1075,7 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     d->rememberVisitedMaps = true;
 
     // Begin the session.
-    d->inProgress = true;
+    setInProgress(true);
     d->setMapAndEntryPoint(mapUri, mapEntryPoint);
 
     GameStateMetadata metadata = d->metadata();
@@ -1133,7 +1129,7 @@ void GameSession::reloadMap()
         d->resetStateForNewSession();
 
         // Begin the session.
-        d->inProgress = true;
+        setInProgress(true);
         d->reloadMap();
 
         // Create the internal .save session package.
@@ -1184,7 +1180,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         // Are we entering a new hub?
 #if __JHEXEN__
         defn::Episode epsd(*episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(d->mapUri.compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(mapUri().compose());
         if (!currentHub || currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
 #endif
         {
@@ -1197,11 +1193,14 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
+            File &outFile = mapsFolder.replaceFile(mapUri().path() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
 #endif
+
+        DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
+
         // Ensure changes are written to disk right away (otherwise would stay
         // in memory only).
         saved->flush();
@@ -1231,7 +1230,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->setMapAndEntryPoint(nextMapUri, nextMapEntryPoint);
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / d->mapUri.path());
+    bool const revisit = saved && saved->hasState(String("maps") / mapUri().path());
 
     d->reloadMap(revisit);
 
@@ -1255,7 +1254,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    d->acscriptSys.runDeferredTasks(d->mapUri);
+    d->acscriptSys.runDeferredTasks(mapUri());
 #endif
 
     if (saved)
@@ -1278,8 +1277,10 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         auto &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
+        File &outFile = mapsFolder.replaceFile(mapUri().path() + "State");
         outFile << serializeCurrentMapState();
+
+        DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
 
         saved->flush(); // Write all changes to the package.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
@@ -1325,7 +1326,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         d->updateGameStateFolder(internalSavePath, metadata);
 
         // In networked games the server tells the clients to save also.
-        NetSv_SaveGame(metadata.geti("sessionId"));
+        NetSv_SaveGame(metadata.getui("sessionId"));
 
         // Copy the internal saved session to the destination slot.
         AbstractSession::copySaved(savePath, internalSavePath);
@@ -1381,10 +1382,10 @@ acs::System &GameSession::acsSystem()
 
 void GameSession::consoleRegister()  // static
 {
-    static dint  gsvRuleSkill = 0;
-    static char  *gsvEpisode = (char *)"";
-    static uri_s *gsvMap = nullptr;
-    static char  *gsvHub = (char *)"";
+    static dint        gsvRuleSkill = 0;
+    static char const *gsvEpisode = "";
+    static uri_s      *gsvMap = nullptr;
+    static char const *gsvHub = "";
 
 #define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
 

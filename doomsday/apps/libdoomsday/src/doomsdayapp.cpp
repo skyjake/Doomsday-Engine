@@ -674,6 +674,16 @@ void DoomsdayApp::reset()
     d->currentProfile = nullptr;
 }
 
+void DoomsdayApp::gameSessionWasSaved(AbstractSession const &, GameStateFolder &)
+{
+    //qDebug() << "App saving to" << toFolder.description();
+}
+
+void DoomsdayApp::gameSessionWasLoaded(AbstractSession const &, GameStateFolder const &)
+{
+    //qDebug() << "App loading from" << fromFolder.description();
+}
+
 void DoomsdayApp::setGame(Game const &game)
 {
     app().d->currentGame = const_cast<Game *>(&game);

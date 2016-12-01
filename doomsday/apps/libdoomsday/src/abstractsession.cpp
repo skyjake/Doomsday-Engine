@@ -23,10 +23,30 @@
 #include <de/FileSystem>
 #include <de/Log>
 #include <de/Writer>
+#include <doomsday/uri.h>
 
 using namespace de;
 
 static AbstractSession::Profile currentProfile;
+
+DENG2_PIMPL_NOREF(AbstractSession)
+{
+    bool inProgress = false;  ///< @c true: session is in progress / internal.save exists.
+
+    de::Uri mapUri;
+};
+
+AbstractSession::AbstractSession()
+    : d(new Impl)
+{}
+
+AbstractSession::~AbstractSession()
+{}
+
+void AbstractSession::setInProgress(bool inProgress)
+{
+    d->inProgress = inProgress;
+}
 
 AbstractSession::Profile &AbstractSession::profile() //static
 {
@@ -34,7 +54,22 @@ AbstractSession::Profile &AbstractSession::profile() //static
     return currentProfile;
 }
 
-void AbstractSession::removeSaved(String const &path) //static
+bool AbstractSession::hasBegun() const
+{
+    return d->inProgress;
+}
+
+de::Uri AbstractSession::mapUri() const
+{
+    return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
+}
+
+void AbstractSession::setMapUri(Uri const &uri)
+{
+    d->mapUri = uri;
+}
+
+void AbstractSession::removeSaved(String const &path) // static
 {
     if (App::rootFolder().has(path))
     {
@@ -42,7 +77,7 @@ void AbstractSession::removeSaved(String const &path) //static
     }
 }
 
-void AbstractSession::copySaved(String const &destPath, String const &sourcePath) //static
+void AbstractSession::copySaved(String const &destPath, String const &sourcePath) // static
 {
     if (!destPath.compareWithoutCase(sourcePath)) return;
 

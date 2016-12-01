@@ -56,7 +56,6 @@ public:
     GameSession();
     virtual ~GameSession();
 
-    bool hasBegun() const;
     bool isSavingPossible();
     bool isLoadingPossible();
 
@@ -84,12 +83,6 @@ public:
      * is returned instead.
      */
     de::Record const &mapInfo() const;
-
-    /**
-     * Returns the current map URI for the game session in progress. If the session has not
-     * yet begun then an empty URI is returned.
-     */
-    de::Uri mapUri() const;
 
     /**
      * Returns the player entry point for the current map, for the game session in progress.
