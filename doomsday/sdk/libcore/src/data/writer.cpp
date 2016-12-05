@@ -37,6 +37,7 @@ DENG2_PIMPL_NOREF(Writer)
     IByteArray *destination;
     IOStream *stream;
     IByteArray::Offset offset;
+    IByteArray::Offset markOffset = 0;
     IByteArray::Offset const fixedOffset;
 
     Impl(ByteOrder const &order, IByteArray *dest, IByteArray::Offset off)
@@ -265,8 +266,57 @@ void Writer::setOffset(IByteArray::Offset offset)
     {
         throw SeekError("Writer::setOffset", "Cannot change offset when writing to a stream");
     }
-
     d->offset = offset;
+}
+
+void Writer::mark()
+{
+    if (d->stream)
+    {
+        throw SeekError("Writer::mark", "Marking positions is not possible in a stream");
+    }
+    d->markOffset = d->offset;
+}
+
+void Writer::rewind()
+{
+    setOffset(d->markOffset);
+}
+
+Writer &Writer::beginIndeterminateLengthSpan()
+{
+    mark();
+    *this << duint32(0);
+    return *this;
+}
+
+Writer &Writer::endIndeterminateLengthSpan()
+{
+    if (d->stream)
+    {
+        throw SeekError("Writer::endOffsetSpan", "Not possible in a stream");
+    }
+    auto const oldOffset = d->offset;
+    duint32 const delta = duint32(d->offset - d->markOffset) - 4;
+    rewind();
+    *this << delta;
+    setOffset(oldOffset);
+    return *this;
+}
+
+Writer &Writer::operator << (InlineOperation op)
+{
+    switch (op)
+    {
+    case BeginSpan:
+        beginIndeterminateLengthSpan();
+        break;
+
+    case EndSpan:
+        endIndeterminateLengthSpan();
+        break;
+    }
+    return *this;
 }
 
 ByteOrder const &Writer::byteOrder() const
@@ -286,6 +336,14 @@ void Writer::seek(IByteArray::Delta count)
         throw IByteArray::OffsetError("Writer::seek", "Seek past beginning of destination");
     }
     d->offset = IByteArray::Offset(IByteArray::Delta(d->offset) + count);
+}
+
+void Writer::seekToEnd()
+{
+    if (d->destination)
+    {
+        setOffset(d->destination->size() - d->fixedOffset);
+    }
 }
 
 } // namespace de

@@ -51,6 +51,11 @@ public:
     /// Seeking is not possible, e.g., when writing to a stream. @ingroup errors
     DENG2_ERROR(SeekError);
 
+    enum InlineOperation {
+        BeginSpan,
+        EndSpan
+    };
+
 public:
     /**
      * Constructs a new writer.
@@ -212,6 +217,8 @@ public:
     /// Writes a writable object into the destination buffer.
     Writer &operator << (IWritable const &writable);
 
+    Writer &operator << (InlineOperation op);
+
     /**
      * Writes a list of objects. ListType is expected to be an iterable
      * list containing pointers to IWritable objects.
@@ -243,6 +250,30 @@ public:
     void setOffset(IByteArray::Offset offset);
 
     /**
+     * Marks the current write offset. Call rewind() to return to the latest marked
+     * position.
+     */
+    void mark();
+
+    /**
+     * Sets the current write offset to the latest marked position.
+     */
+    void rewind();
+
+    /**
+     * Marks the current offset and writes a temporary zero value at the current offset.
+     * You may proceed to write any amount of data. Call endIndeterminateLengthSpan() to
+     * update the temporary value with the actual length of the span.
+     */
+    Writer &beginIndeterminateLengthSpan();
+
+    /**
+     * Writes the length of the span to the marked starting offset. Does not write
+     * anything to the current offset or change the current offset.
+     */
+    Writer &endIndeterminateLengthSpan();
+
+    /**
      * Returns the byte order of the writer.
      */
     ByteOrder const &byteOrder() const;
@@ -253,6 +284,8 @@ public:
      * @param count Number of bytes to move forward (negative to move backward).
      */
     void seek(IByteArray::Delta count);
+
+    void seekToEnd();
 
     inline void swap(Writer &other) {
         d.swap(other.d);
