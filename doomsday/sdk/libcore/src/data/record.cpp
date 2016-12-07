@@ -112,28 +112,97 @@ DENG2_PIMPL(Record)
         }
     }
 
-    template <typename Predicate>
-    void copyMembersFrom(Record const &other, Predicate excluded)
+    void copyMembersFrom(Record const &other, std::function<bool (Variable const &)> excluded)
     {
-        DENG2_GUARD(this); // and the other?
+        auto const *other_d = other.d.getConst();
+        DENG2_GUARD(other_d);
 
-        DENG2_FOR_EACH_CONST(Members, i, other.d->members)
+        DENG2_FOR_EACH_CONST(Members, i, other_d->members)
         {
-            if (excluded(*i.value())) continue;
-
-            bool const alreadyExists = members.contains(i.key());
-
-            Variable *var = new Variable(*i.value());
-            var->audienceForDeletion() += this;
-            members[i.key()] = var;
-
-            if (!alreadyExists)
+            if (!excluded(*i.value()))
             {
-                // Notify about newly added members.
-                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self(), *var);
-            }
+                bool alreadyExists;
+                Variable *var;
+                {
+                    DENG2_GUARD(this);
+                    alreadyExists = members.contains(i.key());
+                    var = new Variable(*i.value());
+                    var->audienceForDeletion() += this;
+                    members[i.key()] = var;
+                }
 
-            /// @todo Should also notify if the value of an existing variable changes. -jk
+                if (!alreadyExists)
+                {
+                    // Notify about newly added members.
+                    DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self(), *var);
+                }
+
+                /// @todo Should also notify if the value of an existing variable changes. -jk
+            }
+        }
+    }
+
+    void assignPreservingVariables(Record const &other, std::function<bool (Variable const &)> excluded)
+    {
+        auto const *other_d = other.d.getConst();
+        DENG2_GUARD(other_d);
+
+        // Add variables or update existing ones.
+        for (auto i = other_d->members.begin(); i != other_d->members.end(); ++i)
+        {
+            if (!excluded(*i.value()))
+            {
+                Variable *var = nullptr;
+
+                // Already have a variable with this name?
+                {
+                    DENG2_GUARD(this);
+                    auto found = members.constFind(i.key());
+                    if (found != members.constEnd())
+                    {
+                        var = found.value();
+                    }
+                }
+
+                // Change the existing value.
+                if (var)
+                {
+                    if (isSubrecord(*i.value()) && isSubrecord(*var))
+                    {
+                        // Recurse to subrecords.
+                        var->valueAsRecord().d->assignPreservingVariables
+                                (i.value()->valueAsRecord(), excluded);
+                    }
+                    else
+                    {
+                        // Just make a copy.
+                        var->set(i.value()->value());
+                    }
+                }
+                else
+                {
+                    // Add a new one.
+                    DENG2_GUARD(this);
+                    var = new Variable(*i.value());
+                    var->audienceForDeletion() += this;
+                    members[i.key()] = var;
+                }
+            }
+        }
+
+        // Remove variables not present in the other.
+        DENG2_GUARD(this);
+        QMutableHashIterator<String, Variable *> iter(members);
+        while (iter.hasNext())
+        {
+            iter.next();
+            if (!excluded(*iter.value()) && !other.hasMember(iter.key()))
+            {
+                Variable *var = iter.value();
+                iter.remove();
+                var->audienceForDeletion() -= this;
+                delete var;
+            }
         }
     }
 
@@ -146,6 +215,7 @@ DENG2_PIMPL(Record)
     bool isSubrecord(Variable const &var) const
     {
         // Subrecords are owned by this record.
+        // Note: Non-owned Records are likely imports from other modules.
         RecordValue const *value = var.value().maybeAs<RecordValue>();
         return value && value->record() && value->hasOwnership();
     }
@@ -352,6 +422,11 @@ void Record::clear(Behavior behavior)
 void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
     d->copyMembersFrom(other, Impl::ExcludeByBehavior(behavior));
+}
+
+void Record::assignPreservingVariables(Record const &from, Behavior behavior)
+{
+    d->assignPreservingVariables(from, Impl::ExcludeByBehavior(behavior));
 }
 
 Record &Record::operator = (Record const &other)

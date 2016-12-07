@@ -128,6 +128,18 @@ public:
     void copyMembersFrom(Record const &other, Behavior behavior = AllMembers);
 
     /**
+     * Duplicates the contents of @a from into this record. Existing variables with
+     * matching names are kept, with only their values changed. New variables are
+     * added, and missing variables are removed from this record.
+     *
+     * Recursively called on subrecords.
+     *
+     * @param from      Source record.
+     * @param behavior  Assignment behavior.
+     */
+    void assignPreservingVariables(Record const &from, Behavior behavior = AllMembers);
+
+    /**
      * Assignment operator.
      * @return This record.
      */
