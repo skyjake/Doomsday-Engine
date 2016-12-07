@@ -198,7 +198,20 @@ public:
         *this >> count;
         while (count-- > 0) {
             std::unique_ptr<ObjectType> entry(new ObjectType);
-            *this >> *entry.get();
+            *this >> *entry;
+            list.push_back(entry.release());
+        }
+        return *this;
+    }
+
+    template <typename ObjectType, typename ListType>
+    Reader &readObjects(ListType &list,
+                        std::function<ObjectType * ()> constructor) {
+        duint32 count;
+        *this >> count;
+        while (count-- > 0) {
+            std::unique_ptr<ObjectType> entry(constructor());
+            *this >> *entry;
             list.push_back(entry.release());
         }
         return *this;
