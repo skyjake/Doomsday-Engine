@@ -49,6 +49,11 @@ using namespace ::internal;
 DENG2_PIMPL(ClientMobjThinkerData)
 , DENG2_OBSERVES(Asset, Deletion)
 {
+    enum SerialFlagUInt16
+    {
+        HasAnimator = 0x0001,
+    };
+
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<render::StateAnimator> animator;
@@ -59,7 +64,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     Impl(Public *i, Impl const &other) : Base(i)
     {
-        if(other.sync)
+        if (other.sync)
         {
             sync.reset(new RemoteSync(*other.sync));
         }
@@ -82,7 +87,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     bool isStateInCurrentSequence(state_t const *previous)
     {
-        if(!previous) return false;
+        if (!previous) return false;
         return Def_GetState(previous->nextState) == self().mobj()->state;
     }
 
@@ -108,11 +113,11 @@ DENG2_PIMPL(ClientMobjThinkerData)
     void initOnce()
     {
         // Initialization is only done once.
-        if(flags & Initialized) return;
+        if (flags & Initialized) return;
         flags |= Initialized;
 
         // Check for an available model asset.
-        if(modelBank().has(modelId()))
+        if (modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
             auto const &model = modelBank().model<render::Model>(modelId());
@@ -125,13 +130,13 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
-                if(model.flags & render::Model::AutoscaleToThingHeight)
+                if (model.flags & render::Model::AutoscaleToThingHeight)
                 {
                     Vector3f const dims = modelMatrix * model.dimensions();
                     modelMatrix = Matrix4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 model.audienceForDeletion() -= this;
 
@@ -143,7 +148,9 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     void deinit()
     {
-        if(animator)
+        flags &= ~Initialized;
+
+        if (animator)
         {
             animator->model().audienceForDeletion() -= this;
         }
@@ -157,10 +164,10 @@ DENG2_PIMPL(ClientMobjThinkerData)
      */
     void triggerStateAnimations(state_t const *state = nullptr)
     {
-        if(flags & StateChanged)
+        if (flags & StateChanged)
         {
             flags &= ~StateChanged;
-            if(animator)
+            if (animator)
             {
                 animator->triggerByState(state? Def_GetStateName(state) : stateName());
             }
@@ -174,14 +181,14 @@ DENG2_PIMPL(ClientMobjThinkerData)
      */
     void triggerMovementAnimations()
     {
-        if(!animator) return;
+        if (!animator) return;
 
 
     }
 
     void advanceAnimations(TimeDelta const &delta)
     {
-        if(animator)
+        if (animator)
         {
             animator->advanceTime(delta);
         }
@@ -190,10 +197,10 @@ DENG2_PIMPL(ClientMobjThinkerData)
     void triggerParticleGenerators(bool justSpawned)
     {
         // Check for a ptcgen trigger.
-        for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[self().stateIndex()].ptcGens;
+        for (ded_ptcgen_t *pg = runtimeDefs.stateInfo[self().stateIndex()].ptcGens;
             pg; pg = pg->stateNext)
         {
-            if(!(pg->flags & Generator::SpawnOnly) || justSpawned)
+            if (!(pg->flags & Generator::SpawnOnly) || justSpawned)
             {
                 // We are allowed to spawn the generator.
                 Mobj_SpawnParticleGen(self().mobj(), pg);
@@ -238,7 +245,7 @@ bool ClientMobjThinkerData::hasRemoteSync() const
 
 ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
 {
-    if(!hasRemoteSync())
+    if (!hasRemoteSync())
     {
         d->sync.reset(new RemoteSync);
     }
@@ -267,7 +274,7 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     bool const justSpawned = !previousState;
 
     d->initOnce();
-    if((d->flags & StateChanged) && d->isStateInCurrentSequence(previousState))
+    if ((d->flags & StateChanged) && d->isStateInCurrentSequence(previousState))
     {
         /*
          * Mobj state has already been flagged as changed, but triggers for the
@@ -295,8 +302,50 @@ void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
     // Only works when both target and inflictor are real mobjs.
     Mobj_SpawnDamageParticleGen(mobj(), inflictor, damage);
 
-    if(d->animator)
+    if (d->animator)
     {
         d->animator->triggerDamage(damage, inflictor);
     }
 }
+
+void ClientMobjThinkerData::operator << (Reader &from)
+{
+    world::InternalSerialId sid;
+    from >> sid;
+    if (sid != world::CLIENT_MOBJ_THINKER_DATA)
+    {
+        throw DeserializationError("ClientMobjThinkerData::operator <<",
+                                   "Invalid serial identifier " +
+                                   String::number(sid));
+    }
+
+    MobjThinkerData::operator << (from);
+
+    duint16 flags = 0;
+    from >> flags;
+
+    d->deinit();
+
+    if (flags & Impl::HasAnimator) // Animator
+    {
+        d->initOnce();
+        from >> *d->animator;
+    }
+}
+
+void ClientMobjThinkerData::operator >> (Writer &to) const
+{
+    to << world::InternalSerialId(world::CLIENT_MOBJ_THINKER_DATA);
+
+    MobjThinkerData::operator >> (to);
+
+    duint16 const flags = (d->animator? Impl::HasAnimator : 0);
+    to << flags;
+
+    if (d->animator)
+    {
+        // Serialize the animator state.
+        to << *d->animator;
+    }
+}
+

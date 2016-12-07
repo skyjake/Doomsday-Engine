@@ -344,14 +344,6 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
 
-//#ifdef __CLIENT__
-//        // Stop observing client mobjs.
-//        for (mobj_t *mo : clMobjHash)
-//        {
-//            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
-//        }
-//#endif
-
         /// @todo fixme: Free all memory we have ownership of.
         // mobjNodes/lineNodes/lineLinks
     }
@@ -3103,6 +3095,72 @@ void Map::update()
 }
 
 #ifdef __CLIENT__
+
+void Map::serializeInternalState(Writer &to) const
+{
+    BaseMap::serializeInternalState(to);
+
+    // Internal state of thinkers.
+    thinkers().forAll(0x3, [&to] (thinker_t *th)
+    {
+        if (ISerializable const *serial = THINKER_DATA_MAYBE(*th, ISerializable))
+        {
+            to << duint32(th->id)
+               << Writer::BeginSpan
+               << *serial
+               << Writer::EndSpan;
+        }
+        return LoopContinue;
+    });
+
+    // Terminator.
+    to << duint32(0);
+}
+
+void Map::deserializeInternalState(Reader &from)
+{
+    BaseMap::deserializeInternalState(from);
+
+    try
+    {
+        // Internal state of thinkers.
+        forever
+        {
+            duint32 id = 0;
+            from >> id;
+            if (!id) break; // Zero ID terminates the sequence.
+
+            // Span length.
+            duint32 size = 0;
+            from >> size;
+
+            auto const nextOffset = from.offset() + size;
+
+            try
+            {
+                if (mobj_t *mo = thinkers().mobjById(id))
+                {
+                    if (ISerializable *serial = THINKER_DATA_MAYBE(mo->thinker, ISerializable))
+                    {
+                        from >> *serial;
+                    }
+                }
+            }
+            catch (Error const &er)
+            {
+                LOG_MAP_WARNING("Error when reading state of object %i: %s")
+                        << id << er.asText();
+            }
+
+            from.setOffset(nextOffset);
+        }
+    }
+    catch (Error const &er)
+    {
+        LOG_MAP_WARNING("Error when reading state: %s") << er.asText();
+    }
+}
+
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
     DENG2_ASSERT(&App_World().map() == this); // Sanity check.

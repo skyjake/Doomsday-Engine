@@ -78,6 +78,10 @@ public:
     de::Record &objectNamespace() override;
     de::Record const &objectNamespace() const override;
 
+    // ISerializable.
+    void operator >> (de::Writer &to) const override;
+    void operator << (de::Reader &from) override;
+
 private:
     DENG2_PRIVATE(d)
 };

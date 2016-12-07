@@ -111,6 +111,9 @@ public:
 
     de::Matrix4f const &modelTransformation() const;
 
+    void operator << (de::Reader &from) override;
+    void operator >> (de::Writer &to) const override;
+
 private:
     DENG2_PRIVATE(d)
 };

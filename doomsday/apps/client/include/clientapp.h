@@ -62,6 +62,9 @@ public:
             de::String const &userMessageIfIncompatible,
             std::function<void ()> finalizeFunc) override;
 
+    void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder) override;
+    void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder) override;
+
 public:
     /**
      * Reports a new alert to the user.

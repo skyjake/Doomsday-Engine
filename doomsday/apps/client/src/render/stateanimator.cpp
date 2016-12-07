@@ -124,6 +124,19 @@ DENG2_PIMPL(StateAnimator)
             return !atEnd();
         }
 
+        void operator >> (Writer &to) const override
+        {
+            ModelDrawable::Animator::OngoingSequence::operator >> (to);
+            to << duint8(looping) << priority;
+        }
+
+        void operator << (Reader &from) override
+        {
+            ModelDrawable::Animator::OngoingSequence::operator << (from);
+            from.readAs<duint8>(looping);
+            from >> priority;
+        }
+
         static Sequence *make() { return new Sequence; }
     };
 
@@ -136,7 +149,6 @@ DENG2_PIMPL(StateAnimator)
     // Lookups used when drawing or updating state:
     QHash<String, int> indexForPassName;
     QHash<Variable *, int> passForMaterialVariable;
-
     QHash<String, ShaderVars *> passVars;
 
     struct AnimVar
@@ -749,6 +761,29 @@ Record &StateAnimator::objectNamespace()
 Record const &StateAnimator::objectNamespace() const
 {
     return d->names;
+}
+
+void StateAnimator::operator >> (Writer &to) const
+{
+    ModelDrawable::Animator::operator >> (to);
+
+    to << d->currentStateName << d->names;
+}
+
+void StateAnimator::operator << (Reader &from)
+{
+    d->pendingAnimForNode.clear();
+
+    ModelDrawable::Animator::operator << (from);
+
+    from >> d->currentStateName;
+
+    Record storedNames;
+    from >> storedNames;
+
+    // Initialize matching variables with new values, and add variables that are not
+    // found in the current state.
+    d->names.assignPreservingVariables(storedNames, Record::IgnoreDoubleUnderscoreMembers);
 }
 
 } // namespace render

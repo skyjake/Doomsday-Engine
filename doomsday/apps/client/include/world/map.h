@@ -195,6 +195,10 @@ public:
 
 #ifdef __CLIENT__
 
+    void serializeInternalState(de::Writer &to) const override;
+
+    void deserializeInternalState(de::Reader &from) override;
+
 public:  //- Light sources --------------------------------------------------------------
 
     /**

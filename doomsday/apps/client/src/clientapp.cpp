@@ -45,6 +45,8 @@
 #include <de/VRConfig>
 
 #include <doomsday/console/exec.h>
+#include <doomsday/AbstractSession>
+#include <doomsday/GameStateFolder>
 
 #include "audio/audiosystem.h"
 #include "busyrunner.h"
@@ -462,6 +464,11 @@ DENG2_PIMPL(ClientApp)
         printf("For more options and information, see \"man doomsday\".\n");
     }
 #endif
+
+    String pathForMapClientState(String const &mapId)
+    {
+        return String("maps/%sClientState").arg(mapId);
+    }
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
@@ -663,6 +670,35 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
         {
             delete dlg;
         }
+    }
+}
+
+void ClientApp::gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder)
+{
+    DoomsdayApp::gameSessionWasSaved(session, toFolder);
+
+    // Internal map state.
+    File &file = toFolder.replaceFile(d->pathForMapClientState(session.mapUri().compose()));
+    Writer writer(file);
+    world().map().serializeInternalState(writer.withHeader());
+}
+
+void ClientApp::gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder)
+{
+    DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
+
+    try
+    {
+        // Internal map state. This might be missing.
+        if (File const *file = fromFolder.tryLocate<File const>(d->pathForMapClientState(session.mapUri().compose())))
+        {
+            Reader reader(*file);
+            world().map().deserializeInternalState(reader.withHeader());
+        }
+    }
+    catch (Error const &er)
+    {
+        LOGDEV_MAP_WARNING("Internal map state not deserialized: %s") << er.asText();
     }
 }
 
