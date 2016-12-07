@@ -22,8 +22,9 @@
 
 #include "../libdoomsday.h"
 #include "../resource/mapmanifest.h"
-#include <de/Error>
 #include <de/Observers>
+#include <de/Reader>
+#include <de/Writer>
 
 class EntityDatabase;
 
@@ -73,6 +74,10 @@ public:
      */
     EntityDatabase &entityDatabase() const;
 
+    virtual void serializeInternalState(de::Writer &to) const;
+
+    virtual void deserializeInternalState(de::Reader &from);
+
     DENG2_AS_IS_METHODS()
 
 public:
@@ -81,6 +86,17 @@ public:
 
 private:
     DENG2_PRIVATE(d)
+};
+
+typedef de::duint16 InternalSerialId;
+
+// Identifiers for serialized internal state.
+enum InternalSerialIds
+{
+    THINKER_DATA                = 0x0001,
+    MOBJ_THINKER_DATA           = 0x0002,
+    CLIENT_MOBJ_THINKER_DATA    = 0x0003,
+    STATE_ANIMATOR              = 0x0004,
 };
 
 }  // namespace world

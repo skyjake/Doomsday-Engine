@@ -18,6 +18,7 @@
  */
 
 #include "doomsday/world/thinkerdata.h"
+#include "doomsday/world/map.h"
 
 using namespace de;
 
@@ -92,6 +93,30 @@ Record const &ThinkerData::objectNamespace() const
 
 void ThinkerData::initBindings()
 {}
+
+void ThinkerData::operator >> (Writer &to) const
+{
+    to << world::InternalSerialId(world::THINKER_DATA)
+       << d->names;
+}
+
+void ThinkerData::operator << (Reader &from)
+{
+    world::InternalSerialId sid;
+    from >> sid;
+
+    switch (sid)
+    {
+    case world::THINKER_DATA:
+        from >> d->names;
+        break;
+
+    default:
+        throw DeserializationError("ThinkerData::operator <<",
+                                   "Invalid serial identifier " +
+                                   String::number(sid));
+    }
+}
 
 #ifdef DENG2_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;

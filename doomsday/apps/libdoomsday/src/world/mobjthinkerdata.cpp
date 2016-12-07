@@ -73,3 +73,9 @@ void MobjThinkerData::stateChanged(state_t const *)
 
 void MobjThinkerData::damageReceived(int, mobj_t const *)
 {}
+
+void MobjThinkerData::operator << (Reader &from)
+{
+    ThinkerData::operator << (from);
+    initBindings();
+}

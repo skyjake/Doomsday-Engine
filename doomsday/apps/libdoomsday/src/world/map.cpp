@@ -96,4 +96,10 @@ EntityDatabase &BaseMap::entityDatabase() const
     return d->entityDatabase;
 }
 
+void BaseMap::serializeInternalState(Writer &) const
+{}
+
+void BaseMap::deserializeInternalState(Reader &)
+{}
+
 }  // namespace world

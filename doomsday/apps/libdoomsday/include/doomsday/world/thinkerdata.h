@@ -25,6 +25,7 @@
 #include <de/Process>
 #include <de/Id>
 #include <de/IObject>
+#include <de/ISerializable>
 
 /**
  * Base class for thinker private data.
@@ -34,6 +35,7 @@
 class LIBDOOMSDAY_PUBLIC ThinkerData
         : public Thinker::IData
         , public de::IObject
+        , public de::ISerializable
 {
 public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
@@ -42,9 +44,9 @@ public:
     ThinkerData();
     ThinkerData(ThinkerData const &other);
 
-    void setThinker(thinker_s *thinker);
-    void think();
-    IData *duplicate() const;
+    void setThinker(thinker_s *thinker) override;
+    void think() override;
+    IData *duplicate() const override;
 
     thinker_s &thinker();
     thinker_s const &thinker() const;
@@ -57,8 +59,12 @@ public:
     virtual void initBindings();
 
     // Implements IObject.
-    de::Record &objectNamespace();
-    de::Record const &objectNamespace() const;
+    de::Record &objectNamespace() override;
+    de::Record const &objectNamespace() const override;
+
+    // Implements ISerializable.
+    void operator >> (de::Writer &to) const override;
+    void operator << (de::Reader &from) override;
 
 private:
     DENG2_PRIVATE(d)

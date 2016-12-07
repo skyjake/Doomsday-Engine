@@ -58,6 +58,8 @@ public:
      */
     virtual void damageReceived(int points, mobj_t const *inflictor);
 
+    void operator << (de::Reader &from) override;
+
 private:
     DENG2_PRIVATE(d)
 };
