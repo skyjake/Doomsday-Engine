@@ -1889,6 +1889,7 @@ void ModelDrawable::Animator::stop(int index)
 
 void ModelDrawable::Animator::clear()
 {
+    qDeleteAll(d->anims);
     d->anims.clear();
 }
 
@@ -1913,12 +1914,41 @@ Vector4f ModelDrawable::Animator::extraRotationForNode(String const &) const
     return Vector4f();
 }
 
+void ModelDrawable::Animator::operator >> (Writer &to) const
+{
+    to.writeObjects(d->anims);
+}
+
+void ModelDrawable::Animator::operator << (Reader &from)
+{
+    clear();
+    from.readObjects<OngoingSequence>(d->anims, [this] () { return d->constructor(); });
+}
+
 void ModelDrawable::Animator::OngoingSequence::initialize()
 {}
 
 bool ModelDrawable::Animator::OngoingSequence::atEnd() const
 {
     return time >= duration;
+}
+
+void ModelDrawable::Animator::OngoingSequence::operator >> (Writer &to) const
+{
+    to << animId
+       << time
+       << duration
+       << node
+       << duint32(flags);
+}
+
+void ModelDrawable::Animator::OngoingSequence::operator << (Reader &from)
+{
+    from >> animId
+         >> time
+         >> duration
+         >> node;
+    from.readAs<duint32>(flags);
 }
 
 ModelDrawable::Animator::OngoingSequence *

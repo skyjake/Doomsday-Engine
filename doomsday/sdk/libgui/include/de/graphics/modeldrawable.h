@@ -110,14 +110,14 @@ public:
      *
      * @ingroup gl
      */
-    class LIBGUI_PUBLIC Animator : public Deletable
+    class LIBGUI_PUBLIC Animator : public Deletable, public ISerializable
     {
     public:
         /**
          * Specialized animators may derive from OngoingSequence to extend the amount of
          * data associated with each running animation sequence.
          */
-        class LIBGUI_PUBLIC OngoingSequence
+        class LIBGUI_PUBLIC OngoingSequence : public ISerializable
         {
         public:
             enum Flag
@@ -149,6 +149,10 @@ public:
              * Determines if the sequence is at its duration or past it.
              */
             bool atEnd() const;
+
+            // ISerializable.
+            void operator >> (Writer &to) const override;
+            void operator << (Reader &from) override;
 
             /**
              * Constructs an OngoingSequence instance. This is used by default if no other
@@ -263,6 +267,10 @@ public:
          * @return Rotation axis (xyz) and angle (w; degrees).
          */
         virtual Vector4f extraRotationForNode(String const &nodeName) const;
+
+        // ISerializable.
+        void operator >> (Writer &to) const override;
+        void operator << (Reader &from) override;
 
     private:
         DENG2_PRIVATE(d)
