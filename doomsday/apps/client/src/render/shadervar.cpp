@@ -18,7 +18,6 @@
 
 #include "render/shadervar.h"
 
-#include <de/NativePointerValue>
 #include <de/ScriptedInfo>
 #include <de/ScriptSystem>
 
@@ -44,7 +43,7 @@ ShaderVar::~ShaderVar()
 float ShaderVar::currentValue(int index) const
 {
     auto const &val = values.at(index);
-    float v = val.anim.value();
+    float v = val.anim->animation();
     if (val.wrap.isEmpty())
     {
         return v;
@@ -164,9 +163,7 @@ ShaderVars::~ShaderVars()
     qDeleteAll(members.values());
 }
 
-void ShaderVars::addBinding(Record &names, String const &varName, Animation &anim)
+void ShaderVars::addBinding(Record &names, String const &varName, AnimationValue *anim)
 {
-    names.add(varName)
-            .set(new NativePointerValue(&anim, &ScriptSystem::builtInClass(QStringLiteral("Animation"))))
-            .setReadOnly();
+    names.add(varName).set(anim).setReadOnly();
 }

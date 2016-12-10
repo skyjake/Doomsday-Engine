@@ -30,9 +30,9 @@
 #include "render/stateanimator.h"
 #include "render/playerweaponanimator.h"
 
+#include <de/AnimationValue>
 #include <de/App>
 #include <de/DialogContentStylist>
-#include <de/NativePointerValue>
 #include <de/NumberValue>
 #include <de/PackageLoader>
 #include <de/ScriptedInfo>
@@ -92,11 +92,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 .setInput(Rule::Left, instLabel->rule().right())
                 .setInput(Rule::Top,  instLabel->rule().top());
     }
-
-//    ~Impl()
-//    {
-//        App::packageLoader().audienceForActivity() -= this;
-//    }
 
     void setOfLoadedPackagesChanged()
     {
@@ -349,7 +344,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         for (String const &name : names)
         {
-            if (name.startsWith("__") || name == "ASSET" || name == "ID" || name == "uMapTime")
+            if (name.startsWith("__") || name == "ID" || name == "uMapTime")
                 continue;
 
             Variable &var = rec[name];
@@ -357,6 +352,8 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             Ranged range(0, 2);
             double step = .01;
             int precision = 2;
+
+            /// @todo Hardcoded... -jk
 
             if (name == "uGlossiness")
             {
@@ -397,7 +394,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
-            else if (var.value().is<NativePointerValue>()) // assumed to be Animation
+            else if (var.value().is<AnimationValue>())
             {
                 g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);

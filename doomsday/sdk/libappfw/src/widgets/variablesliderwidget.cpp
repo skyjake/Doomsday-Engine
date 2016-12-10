@@ -18,9 +18,8 @@
 
 #include "de/VariableSliderWidget"
 
+#include <de/AnimationValue>
 #include <de/NumberValue>
-#include <de/NativePointerValue>
-#include <de/Animation>
 
 namespace de {
 
@@ -34,7 +33,7 @@ DENG2_PIMPL(VariableSliderWidget)
     Impl(Public *i, Variable &variable) : Base(i), var(&variable)
     {
         var->audienceForDeletion() += this;
-        var->audienceForChange() += this;
+        var->audienceForChange()   += this;
     }
 
     void init()
@@ -55,7 +54,7 @@ DENG2_PIMPL(VariableSliderWidget)
             break;
 
         case VariableSliderWidget::Animation:
-            self().setValue(var->value<NativePointerValue>().nativeObject<de::Animation>()->target());
+            self().setValue(var->value<AnimationValue>().animation().target());
             break;
         }
     }
@@ -72,7 +71,7 @@ DENG2_PIMPL(VariableSliderWidget)
             break;
 
         case VariableSliderWidget::Animation:
-            var->value<NativePointerValue>().nativeObject<de::Animation>()->setValue(float(self().value()));
+            var->value<AnimationValue>().animation().setValue(float(self().value()));
             break;
         }
         var->audienceForChange() += this;
@@ -97,6 +96,7 @@ VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &ran
 {
     if (!variable.value().is<NumberValue>())
     {
+        // Animation is the only other supported type.
         d->valueType = VariableSliderWidget::Animation;
     }
     setRange(range, step);

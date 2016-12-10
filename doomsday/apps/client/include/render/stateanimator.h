@@ -38,7 +38,7 @@ namespace render {
  *
  * The script object has the following constants:
  * - `ID` (Text): asset identifier.
- * - `ASSET` (Record): asset metadata.
+ * - `__asset__` (Record): asset metadata.
  */
 class StateAnimator : public de::ModelDrawable::Animator,
                       public de::IObject
@@ -60,6 +60,11 @@ public:
      */
     void setOwnerNamespace(de::Record &names, de::String const &varName);
 
+    /**
+     * Returns the name of the variable pointing to the owning object's namespace.
+     */
+    de::String ownerNamespaceName() const;
+
     void triggerByState(de::String const &stateName);
 
     void triggerDamage(int points, struct mobj_s const *inflictor);
@@ -75,8 +80,8 @@ public:
     de::Vector4f extraRotationForNode(de::String const &nodeName) const override;
 
     // Implements IObject.
-    de::Record &objectNamespace() override;
-    de::Record const &objectNamespace() const override;
+    de::Record &       objectNamespace()       override;
+    de::Record const & objectNamespace() const override;
 
     // ISerializable.
     void operator >> (de::Writer &to) const override;

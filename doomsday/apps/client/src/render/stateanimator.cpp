@@ -50,8 +50,8 @@ static String const DEF_SPEED         ("speed");
 static String const DEF_ANGLE         ("angle");
 static String const DEF_AXIS          ("axis");
 
-static String const VAR_ID            ("ID");
-static String const VAR_ASSET         ("ASSET");
+static String const VAR_ID            ("ID");           // model asset ID
+static String const VAR_ASSET         ("__asset__");    // runtime reference to asset metadata
 static String const VAR_ENABLED       ("enabled");
 static String const VAR_MATERIAL      ("material");
 
@@ -143,6 +143,7 @@ DENG2_PIMPL(StateAnimator)
     QHash<String, Sequence> pendingAnimForNode;
     String currentStateName;
     Record names; ///< Local context for scripts, i.e., per-object model state.
+    String ownerNamespaceVarName;
 
     ModelDrawable::Appearance appearance;
 
@@ -153,9 +154,9 @@ DENG2_PIMPL(StateAnimator)
 
     struct AnimVar
     {
-        Animation angle { 0, Animation::Linear };
+        SafePtr<AnimationValue> angle; // not owned
         /// Units per second; added to value independently of its animation.
-        Animation speed { 0, Animation::Linear };
+        SafePtr<AnimationValue> speed; // not owned
         Vector3f axis;
     };
     typedef QHash<String, AnimVar *> AnimVars;
@@ -297,9 +298,9 @@ DENG2_PIMPL(StateAnimator)
         try
         {
             std::unique_ptr<AnimVar> var(new AnimVar);
-            var->angle = variableDef.getf(DEF_ANGLE, 0.f);
-            var->speed = variableDef.getf(DEF_SPEED, 0.f);
-            var->axis  = vectorFromValue<Vector3f>(variableDef.get(DEF_AXIS));
+            var->angle.reset(new AnimationValue(Animation(variableDef.getf(DEF_ANGLE, 0.f), Animation::Linear)));
+            var->speed.reset(new AnimationValue(Animation(variableDef.getf(DEF_SPEED, 0.f), Animation::Linear)));
+            var->axis = vectorFromValue<Vector3f>(variableDef.get(DEF_AXIS));
 
             addBinding(variableName.concatenateMember(DEF_ANGLE), var->angle);
             addBinding(variableName.concatenateMember(DEF_SPEED), var->speed);
@@ -318,11 +319,11 @@ DENG2_PIMPL(StateAnimator)
         }
     }
 
-    void addBinding(String const &varName, Animation &anim)
+    void addBinding(String const &varName, AnimationValue *anim)
     {
-        names.add(varName)
-                .set(new NativePointerValue(&anim, &ScriptSystem::builtInClass("Animation")))
-                .setReadOnly();
+        names.add(varName).set(anim).setReadOnly(); // ownership of anim taken
+                //.set(new NativePointerValue(&anim, &ScriptSystem::builtInClass("Animation")))
+                //.setReadOnly();
     }
 
     void deinitVariables()
@@ -512,17 +513,23 @@ Model const &StateAnimator::model() const
 
 void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
-    d->names.add(varName).set(new RecordValue(names));
+    d->ownerNamespaceVarName = varName;
+    d->names.add(d->ownerNamespaceVarName).set(new RecordValue(names));
 
     // Call the onInit() function if there is one.
-    if (d->names.has(QStringLiteral("ASSET.onInit")))
+    if (d->names.has(VAR_ASSET + QStringLiteral(".onInit")))
     {
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("self().ASSET.onInit"),
+                            "self." + VAR_ASSET + ".onInit",
                             "$self");
     }
+}
+
+String StateAnimator::ownerNamespaceName() const
+{
+    return d->ownerNamespaceVarName;
 }
 
 void StateAnimator::triggerByState(String const &stateName)
@@ -608,7 +615,7 @@ void StateAnimator::triggerByState(String const &stateName)
         }
 
         /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
-                << d->names.geti("self().__id__") << seq.name;*/
+                << d->names.geti("self.__id__") << seq.name;*/
         break;
     }
 }
@@ -616,11 +623,11 @@ void StateAnimator::triggerByState(String const &stateName)
 void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
 {
     /*
-     * Here we check for the onDamage() function in the asset. The ASSET
+     * Here we check for the onDamage() function in the asset. The __asset__
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-    if (d->names.has(QStringLiteral("ASSET.onDamage")))
+    if (d->names.has(VAR_ASSET + QStringLiteral(".onDamage")))
     {
         /*
          * We need to provide the StateAnimator instance to the script as an
@@ -630,7 +637,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("self().ASSET.onDamage"),
+                            "self." + VAR_ASSET + ".onDamage",
                             "$self", points,
                             inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);
@@ -655,12 +662,14 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
     // Update animation variables values.
     for (auto *var : d->animVars.values())
     {
-        var->angle.shift(var->speed * elapsed);
+        if (!var->angle || !var->speed) continue;
+
+        var->angle->animation().shift(var->speed->animation() * elapsed);
 
         // Keep the angle in the 0..360 range.
-        float varAngle = var->angle;
-        if (varAngle > 360)    var->angle.shift(-360);
-        else if (varAngle < 0) var->angle.shift(+360);
+        float varAngle = var->angle->animation();
+        if (varAngle > 360)    var->angle->animation().shift(-360);
+        else if (varAngle < 0) var->angle->animation().shift(+360);
     }
 
     for (int i = 0; i < count(); ++i)
@@ -743,7 +752,10 @@ Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
     if (found != d->animVars.constEnd())
     {
         Impl::AnimVar const &var = *found.value();
-        return Vector4f(var.axis, var.angle);
+        if (var.angle)
+        {
+            return Vector4f(var.axis, var.angle->animation());
+        }
     }
     return Vector4f();
 }
@@ -767,11 +779,14 @@ void StateAnimator::operator >> (Writer &to) const
 {
     ModelDrawable::Animator::operator >> (to);
 
-    to << d->currentStateName << d->names;
+    to << d->currentStateName
+       << Record(d->names, Record::IgnoreDoubleUnderscoreMembers);
 }
 
 void StateAnimator::operator << (Reader &from)
 {
+    qDebug() << "StateAnimator: deserializing" << this;
+
     d->pendingAnimForNode.clear();
 
     ModelDrawable::Animator::operator << (from);

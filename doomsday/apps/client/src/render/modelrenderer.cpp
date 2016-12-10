@@ -893,6 +893,16 @@ static render::StateAnimator &animatorInstance(Context &ctx)
                               "No StateAnimator instance available");
 }
 
+static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValues const &)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    if (anim.ownerNamespaceName() == QStringLiteral("__thing__"))
+    {
+        return anim[anim.ownerNamespaceName()].value().duplicate();
+    }
+    return nullptr;
+}
+
 static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::ArgumentValues const &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
@@ -910,6 +920,7 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
     {
         Record &anim = module.addSubrecord("StateAnimator");
         binder.init(anim)
+                << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
                 << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences");
     }
 }

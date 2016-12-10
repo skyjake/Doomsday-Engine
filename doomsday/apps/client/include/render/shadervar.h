@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_RENDER_SHADERVAR_H
 #define DENG_CLIENT_RENDER_SHADERVAR_H
 
-#include <de/Animation>
+#include <de/AnimationValue>
 #include <de/GLUniform>
 #include <de/Range>
 #include <QList>
@@ -31,10 +31,10 @@
 struct ShaderVar
 {
     struct Value {
-        de::Animation anim;
+        de::AnimationValue *anim; // not owned
         de::Rangef wrap;
 
-        Value(de::Animation const &a) : anim(a) {}
+        Value(de::Animation const &a) : anim(new de::AnimationValue(a)) {}
     };
     QList<Value> values;
     de::GLUniform *uniform = nullptr; // owned
@@ -75,7 +75,7 @@ public:
                                     de::Record const &valueDef,
                                     de::Record &bindingNames);
 
-    void addBinding(de::Record &names, de::String const &varName, de::Animation &anim);
+    void addBinding(de::Record &names, de::String const &varName, de::AnimationValue *anim);
 };
 
 #endif // DENG_CLIENT_RENDER_SHADERVAR_H
