@@ -18,16 +18,18 @@
  */
 
 #include "de/Value"
+
+#include "de/AnimationValue"
+#include "de/ArrayValue"
+#include "de/BlockValue"
+#include "de/DictionaryValue"
+#include "de/FunctionValue"
 #include "de/NoneValue"
 #include "de/NumberValue"
-#include "de/TextValue"
-#include "de/ArrayValue"
-#include "de/DictionaryValue"
-#include "de/BlockValue"
-#include "de/FunctionValue"
-#include "de/RecordValue"
-#include "de/TimeValue"
 #include "de/Reader"
+#include "de/RecordValue"
+#include "de/TextValue"
+#include "de/TimeValue"
 
 namespace de {
 
@@ -224,6 +226,10 @@ Value *Value::constructFrom(Reader &reader)
 
     case TIME:
         result.reset(new TimeValue);
+        break;
+
+    case ANIMATION:
+        result.reset(new AnimationValue);
         break;
 
     default:

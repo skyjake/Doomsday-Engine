@@ -88,13 +88,16 @@ Record *NativePointerValue::memberScope() const
     return const_cast<Record *>(d->memberScope);
 }
 
-void NativePointerValue::operator >> (Writer &) const
+void NativePointerValue::operator >> (Writer &to) const
 {
-    throw CannotSerializeError("NativePointerValue::operator >>",
-                               "Cannot serialize native object references");
+    // Native pointers cannot be serialized.
+    to << SerialId(NONE);
 }
 
 void NativePointerValue::operator << (Reader &)
-{}
+{
+    throw CannotSerializeError("NativePointerValue::operator <<",
+                               "Cannot deserialize native object references");
+}
 
 } // namespace de

@@ -17,7 +17,7 @@
  */
 
 #include "de/Animation"
-#include "de/Animation"
+#include "de/AnimationValue"
 #include "de/App"
 #include "de/BlockValue"
 #include "de/Context"
@@ -112,6 +112,11 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
 
 static Animation &animationInstance(Context &ctx)
 {
+    if (AnimationValue *v = ctx.nativeSelf().maybeAs<AnimationValue>())
+    {
+        return v->animation();
+    }
+    // Could also just be a pointer to an Animation.
     Animation *obj = ctx.nativeSelf().as<NativePointerValue>().nativeObject<Animation>();
     if (!obj)
     {

@@ -21,6 +21,7 @@
 #define LIBDENG2_VALUE_H
 
 #include "../libcore.h"
+#include "../Deletable"
 #include "../ISerializable"
 #include "../String"
 
@@ -36,7 +37,7 @@ class Record;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Value : public String::IPatternArg, public ISerializable
+class DENG2_PUBLIC Value : public Deletable, public String::IPatternArg, public ISerializable
 {
 public:
     /// An illegal operation (i.e., one that is not defined by the Value) was attempted.
@@ -338,7 +339,8 @@ protected:
         FUNCTION,
         RECORD,
         TIME,
-        URI
+        URI,
+        ANIMATION,
     };
 };
 
