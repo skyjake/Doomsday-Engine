@@ -283,18 +283,18 @@ void Writer::rewind()
     setOffset(d->markOffset);
 }
 
-Writer &Writer::beginIndeterminateLengthSpan()
+Writer &Writer::beginIndeterminateSpan()
 {
     mark();
     *this << duint32(0);
     return *this;
 }
 
-Writer &Writer::endIndeterminateLengthSpan()
+Writer &Writer::endIndeterminateSpan()
 {
     if (d->stream)
     {
-        throw SeekError("Writer::endOffsetSpan", "Not possible in a stream");
+        throw SeekError("Writer::endIndeterminateSpan", "Not possible in a stream");
     }
     auto const oldOffset = d->offset;
     duint32 const delta = duint32(d->offset - d->markOffset) - 4;
@@ -309,11 +309,11 @@ Writer &Writer::operator << (InlineOperation op)
     switch (op)
     {
     case BeginSpan:
-        beginIndeterminateLengthSpan();
+        beginIndeterminateSpan();
         break;
 
     case EndSpan:
-        endIndeterminateLengthSpan();
+        endIndeterminateSpan();
         break;
     }
     return *this;

@@ -62,6 +62,7 @@ public:
         return *this;
     }
     Type *operator -> () const {
+        if (!_ptr) throw Error("SafePtr::operator ->", "Object has been deleted");
         return _ptr;
     }
     operator Type const * () const {

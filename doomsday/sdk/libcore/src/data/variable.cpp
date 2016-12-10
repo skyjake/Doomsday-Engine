@@ -119,7 +119,7 @@ Variable &Variable::set(Value *v)
     // We'll only determine if actual change occurred if someone is interested.
     if (!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
     {
-        bool notify = true;
+        bool notify;
         try
         {
             // Did it actually change? Let's compare...
@@ -128,6 +128,7 @@ Variable &Variable::set(Value *v)
         catch (Error const &)
         {
             // Perhaps the values weren't comparable?
+            notify = true;
         }
 
         if (notify)

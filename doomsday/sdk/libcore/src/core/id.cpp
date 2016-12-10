@@ -85,6 +85,16 @@ void Id::operator >> (Writer &to) const
 void Id::operator << (Reader &from)
 {
     from >> _id;
+
+    resetGenerator(_id); // Try to avoid overlaps.
+}
+
+void Id::resetGenerator(Id::Type largestKnownId)
+{
+    if (_generator <= largestKnownId)
+    {
+        _generator = largestKnownId + 1;
+    }
 }
 
 } // namespace de

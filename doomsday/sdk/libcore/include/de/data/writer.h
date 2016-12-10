@@ -265,13 +265,13 @@ public:
      * You may proceed to write any amount of data. Call endIndeterminateLengthSpan() to
      * update the temporary value with the actual length of the span.
      */
-    Writer &beginIndeterminateLengthSpan();
+    Writer &beginIndeterminateSpan();
 
     /**
      * Writes the length of the span to the marked starting offset. Does not write
      * anything to the current offset or change the current offset.
      */
-    Writer &endIndeterminateLengthSpan();
+    Writer &endIndeterminateSpan();
 
     /**
      * Returns the byte order of the writer.
