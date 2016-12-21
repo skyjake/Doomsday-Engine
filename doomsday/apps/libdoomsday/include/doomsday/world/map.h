@@ -30,6 +30,8 @@ class EntityDatabase;
 
 namespace world {
 
+class IThinkerMapping;
+
 /**
  * Base class for world maps.
  */
@@ -76,7 +78,7 @@ public:
 
     virtual void serializeInternalState(de::Writer &to) const;
 
-    virtual void deserializeInternalState(de::Reader &from);
+    virtual void deserializeInternalState(de::Reader &from, IThinkerMapping const &);
 
     DENG2_AS_IS_METHODS()
 

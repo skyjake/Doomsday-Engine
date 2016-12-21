@@ -99,7 +99,7 @@ EntityDatabase &BaseMap::entityDatabase() const
 void BaseMap::serializeInternalState(Writer &) const
 {}
 
-void BaseMap::deserializeInternalState(Reader &)
+void BaseMap::deserializeInternalState(Reader &, IThinkerMapping const &)
 {}
 
 }  // namespace world

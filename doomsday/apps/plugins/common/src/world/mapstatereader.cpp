@@ -78,6 +78,7 @@ DENG2_PIMPL(MapStateReader)
     ThingArchive *thingArchive;
     world::MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
+    QHash<Id::Type, thinker_t *> archivedThinkerIds;
 
     Impl(Public *i)
         : Base(i)
@@ -105,12 +106,12 @@ DENG2_PIMPL(MapStateReader)
     void beginSegment(int segId)
     {
 #if __JHEXEN__
-        if(segId == ASEG_END && SV_RawReader().source()->size() - SV_RawReader().offset() < 4)
+        if (segId == ASEG_END && SV_RawReader().source()->size() - SV_RawReader().offset() < 4)
         {
             App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
             return;
         }
-        if(Reader_ReadInt32(reader) != segId)
+        if (Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
             throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
@@ -125,7 +126,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         int segId = Reader_ReadInt32(reader);
-        if(segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
+        if (segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
         {
             /// @throw ReadError Failed alignment check.
             throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
@@ -155,7 +156,7 @@ DENG2_PIMPL(MapStateReader)
     void readConsistencyBytes()
     {
 #if !__JHEXEN__
-        if(Reader_ReadByte(reader) != CONSISTENCY)
+        if (Reader_ReadByte(reader) != CONSISTENCY)
         {
             /// @throw ReadError Failed alignment check.
             throw ReadError("MapStateReader", "Corrupt save game, failed consistency check");
@@ -167,7 +168,7 @@ DENG2_PIMPL(MapStateReader)
     {
         materialArchive = new world::MaterialArchive(::internal::useMaterialArchiveSegments(), false /*empty*/);
 #if !__JHEXEN__
-        if(mapVersion >= 4)
+        if (mapVersion >= 4)
 #endif
         {
             materialArchive->read(*reader, mapVersion < 6? 0 : -1);
@@ -181,9 +182,9 @@ DENG2_PIMPL(MapStateReader)
     void readPlayers()
     {
 #if __JHEXEN__
-        if(saveVersion >= 4)
+        if (saveVersion >= 4)
 #else
-        if(saveVersion >= 5)
+        if (saveVersion >= 5)
 #endif
         {
             beginSegment(ASEG_PLAYER_HEADER);
@@ -199,7 +200,7 @@ DENG2_PIMPL(MapStateReader)
 #if !__JHEXEN__
         ArrayValue const &presentPlayers = self().metadata().geta("players");
 #endif
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for (int i = 0; i < MAXPLAYERS; ++i)
         {
             loaded[i] = 0;
 #if !__JHEXEN__
@@ -210,26 +211,26 @@ DENG2_PIMPL(MapStateReader)
         beginSegment(ASEG_PLAYERS);
         {
 #if __JHEXEN__
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for (int i = 0; i < MAXPLAYERS; ++i)
             {
                 infile[i] = Reader_ReadByte(reader);
             }
 #endif
 
             // Load the players.
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for (int i = 0; i < MAXPLAYERS; ++i)
             {
                 // By default a saved player translates to nothing.
                 saveToRealPlayerNum[i] = -1;
 
-                if(!infile[i]) continue;
+                if (!infile[i]) continue;
 
                 // The ID number will determine which player this actually is.
                 int pid = Reader_ReadInt32(reader);
                 player_t *player = 0;
-                for(int k = 0; k < MAXPLAYERS; ++k)
+                for (int k = 0; k < MAXPLAYERS; ++k)
                 {
-                    if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
+                    if ((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
                        (!IS_NETGAME && k == 0))
                     {
                         // This is our guy.
@@ -242,7 +243,7 @@ DENG2_PIMPL(MapStateReader)
                     }
                 }
 
-                if(!player)
+                if (!player)
                 {
                     // We have a missing player. Use a dummy to load the data.
                     player = &dummyPlayer;
@@ -257,28 +258,28 @@ DENG2_PIMPL(MapStateReader)
 
     void kickMissingPlayers()
     {
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for (int i = 0; i < MAXPLAYERS; ++i)
         {
             bool notLoaded = false;
 
 #if __JHEXEN__
-            if(players[i].plr->inGame)
+            if (players[i].plr->inGame)
             {
                 // Try to find a saved player that corresponds this one.
                 int k;
-                for(k = 0; k < MAXPLAYERS; ++k)
+                for (k = 0; k < MAXPLAYERS; ++k)
                 {
-                    if(saveToRealPlayerNum[k] == i)
+                    if (saveToRealPlayerNum[k] == i)
                     {
                         break;
                     }
                 }
-                if(k < MAXPLAYERS)
+                if (k < MAXPLAYERS)
                     continue; // Found; don't bother this player.
 
                 players[i].playerState = PST_REBORN;
 
-                if(!i)
+                if (!i)
                 {
                     // If the CONSOLEPLAYER isn't in the save, it must be some
                     // other player's file?
@@ -291,9 +292,9 @@ DENG2_PIMPL(MapStateReader)
                 }
             }
 #else
-            if(!loaded[i] && players[i].plr->inGame)
+            if (!loaded[i] && players[i].plr->inGame)
             {
-                if(!i)
+                if (!i)
                 {
                     P_SetMessageWithFlags(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
                 }
@@ -305,7 +306,7 @@ DENG2_PIMPL(MapStateReader)
             }
 #endif
 
-            if(notLoaded)
+            if (notLoaded)
             {
                 // Kick this player out, he doesn't belong here.
                 DD_Executef(false, "kick %i", i);
@@ -318,13 +319,13 @@ DENG2_PIMPL(MapStateReader)
         beginSegment(ASEG_MAP_ELEMENTS);
 
         // Sectors.
-        for(int i = 0; i < numsectors; ++i)
+        for (int i = 0; i < numsectors; ++i)
         {
             SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i), thisPublic);
         }
 
         // Lines.
-        for(int i = 0; i < numlines; ++i)
+        for (int i = 0; i < numlines; ++i)
         {
             SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i), thisPublic);
         }
@@ -339,9 +340,9 @@ DENG2_PIMPL(MapStateReader)
 
         int const writtenPolyobjCount = Reader_ReadInt32(reader);
         DENG2_ASSERT(writtenPolyobjCount == numpolyobjs);
-        for(int i = 0; i < writtenPolyobjCount; ++i)
+        for (int i = 0; i < writtenPolyobjCount; ++i)
         {
-            /*Skip unused version byte*/ if(mapVersion >= 3) Reader_ReadByte(reader);
+            /*Skip unused version byte*/ if (mapVersion >= 3) Reader_ReadByte(reader);
 
             Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
             DENG2_ASSERT(po != 0);
@@ -354,7 +355,7 @@ DENG2_PIMPL(MapStateReader)
 
     static int removeLoadSpawnedThinkerWorker(thinker_t *th, void * /*context*/)
     {
-        if(th->function == (thinkfunc_t) P_MobjThinker)
+        if (th->function == (thinkfunc_t) P_MobjThinker)
         {
             P_MobjRemove((mobj_t *) th, true);
         }
@@ -369,7 +370,7 @@ DENG2_PIMPL(MapStateReader)
     void removeLoadSpawnedThinkers()
     {
 #if !__JHEXEN__
-        if(!IS_SERVER) return; // Not for us.
+        if (!IS_SERVER) return; // Not for us.
 #endif
 
         Thinker_Iterate(0 /*all thinkers*/, removeLoadSpawnedThinkerWorker, 0/*no params*/);
@@ -382,7 +383,7 @@ DENG2_PIMPL(MapStateReader)
         // Only corpses that call A_QueueCorpse from death routine.
         /// @todo fixme: What about mods? Look for this action in the death
         /// state sequence?
-        switch(type)
+        switch (type)
         {
         case MT_CENTAUR:
         case MT_CENTAURLEADER:
@@ -418,7 +419,7 @@ DENG2_PIMPL(MapStateReader)
         mobj_t *mo = (mobj_t *) th;
 
         // Must be a non-iced corpse.
-        if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
+        if ((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
            mobjtypeHasCorpse(mobjtype_t(mo->type)))
         {
             P_AddCorpseToQueue(mo);
@@ -442,7 +443,7 @@ DENG2_PIMPL(MapStateReader)
     {
         MapStateReader *inst = static_cast<MapStateReader *>(context);
 
-        if(th->function != (thinkfunc_t) P_MobjThinker)
+        if (th->function != (thinkfunc_t) P_MobjThinker)
             return false; // Continue iteration.
 
         mobj_t *mo = (mobj_t *) th;
@@ -450,7 +451,7 @@ DENG2_PIMPL(MapStateReader)
         mo->onMobj = inst->mobj(PTR2INT(mo->onMobj), &mo->onMobj);
 
 #if __JHEXEN__
-        switch(mo->type)
+        switch (mo->type)
         {
         // Just tracer
         case MT_BISH_FX:
@@ -460,7 +461,7 @@ DENG2_PIMPL(MapStateReader)
         case MT_THRUSTFLOOR_DOWN:
         case MT_MINOTAUR:
         case MT_SORCFX1:
-            if(inst->mapVersion() >= 3)
+            if (inst->mapVersion() >= 3)
             {
                 mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
@@ -480,7 +481,7 @@ DENG2_PIMPL(MapStateReader)
         // Both tracer and special2
         case MT_HOLY_TAIL:
         case MT_LIGHTNING_CEILING:
-            if(inst->mapVersion() >= 3)
+            if (inst->mapVersion() >= 3)
             {
                 mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
@@ -516,7 +517,7 @@ DENG2_PIMPL(MapStateReader)
         bool const formatHasStasisInfo = (mapVersion >= 6);
 
 #if __JHEXEN__
-        if(mapVersion < 4)
+        if (mapVersion < 4)
             beginSegment(ASEG_MOBJS);
         else
 #endif
@@ -539,22 +540,22 @@ DENG2_PIMPL(MapStateReader)
         forever
         {
 #if __JHEXEN__
-            if(reachedSpecialsBlock)
+            if (reachedSpecialsBlock)
 #endif
             {
                 tClass = Reader_ReadByte(reader);
             }
 
 #if __JHEXEN__
-            if(mapVersion < 4)
+            if (mapVersion < 4)
             {
-                if(reachedSpecialsBlock) // Have we started on the specials yet?
+                if (reachedSpecialsBlock) // Have we started on the specials yet?
                 {
                     // Versions prior to 4 used a different value to mark
                     // the end of the specials data and the thinker class ids
                     // are differrent, so we need to manipulate the thinker
                     // class identifier value.
-                    if(tClass != TC_END)
+                    if (tClass != TC_END)
                     {
                         tClass += 2;
                     }
@@ -564,7 +565,7 @@ DENG2_PIMPL(MapStateReader)
                     tClass = TC_MOBJ;
                 }
 
-                if(tClass == TC_MOBJ && (uint)i == thingArchive->size())
+                if (tClass == TC_MOBJ && (uint)i == thingArchive->size())
                 {
                     beginSegment(ASEG_THINKERS);
                     // We have reached the begining of the "specials" block.
@@ -573,14 +574,14 @@ DENG2_PIMPL(MapStateReader)
                 }
             }
 #else
-            if(mapVersion < 5)
+            if (mapVersion < 5)
             {
-                if(reachedSpecialsBlock)
+                if (reachedSpecialsBlock)
                 {
                     // Versions prior to 5 used a different value to mark
                     // the end of the specials data so we need to manipulate
                     // the thinker class identifier value.
-                    if(tClass == PRE_VER5_END_SPECIALS)
+                    if (tClass == PRE_VER5_END_SPECIALS)
                     {
                         tClass = TC_END;
                     }
@@ -589,7 +590,7 @@ DENG2_PIMPL(MapStateReader)
                         tClass += 3;
                     }
                 }
-                else if(tClass == TC_END)
+                else if (tClass == TC_END)
                 {
                     // We have reached the begining of the "specials" block.
                     reachedSpecialsBlock = true;
@@ -598,7 +599,7 @@ DENG2_PIMPL(MapStateReader)
             }
 #endif
 
-            if(tClass == TC_END)
+            if (tClass == TC_END)
                 break; // End of the list.
 
             ThinkerClassInfo *thInfo = SV_ThinkerInfoForClass(thinkerclass_t(tClass));
@@ -608,7 +609,7 @@ DENG2_PIMPL(MapStateReader)
 
             // Mobjs use a special engine-side allocator.
             thinker_t *th = 0;
-            if(thInfo->thinkclass == TC_MOBJ)
+            if (thInfo->thinkclass == TC_MOBJ)
             {
                 th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
             }
@@ -619,18 +620,25 @@ DENG2_PIMPL(MapStateReader)
 
             bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(reader)) : false);
 
-            if(thInfo->readFunc(th, thisPublic))
+            // Private identifier of the thinker.
+            if (saveVersion >= 15)
+            {
+                Id::Type const privateId = Reader_ReadUInt32(reader);
+                archivedThinkerIds.insert(privateId, th);
+            }
+
+            if (thInfo->readFunc(th, thisPublic))
             {
                 Thinker_Add(th);
             }
 
-            if(putThinkerInStasis)
+            if (putThinkerInStasis)
             {
                 Thinker_SetStasis(th, true);
             }
 
 #if __JHEXEN__
-            if(tClass == TC_MOBJ)
+            if (tClass == TC_MOBJ)
             {
                 i++;
             }
@@ -645,14 +653,14 @@ DENG2_PIMPL(MapStateReader)
         rebuildCorpseQueue();
 
 #else
-        if(IS_SERVER)
+        if (IS_SERVER)
         {
             Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, thisPublic);
 
-            for(int i = 0; i < numlines; ++i)
+            for (int i = 0; i < numlines; ++i)
             {
                 xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
-                if(!xline->xg) continue;
+                if (!xline->xg) continue;
 
                 xline->xg->activator = thingArchive->mobj(PTR2INT(xline->xg->activator),
                                                           &xline->xg->activator);
@@ -686,7 +694,7 @@ DENG2_PIMPL(MapStateReader)
 #if __JHEXEN__
         beginSegment(ASEG_MISC);
 
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for (int i = 0; i < MAXPLAYERS; ++i)
         {
             localQuakeHappening[i] = Reader_ReadInt32(reader);
         }
@@ -700,18 +708,18 @@ DENG2_PIMPL(MapStateReader)
     void readSoundTargets()
     {
 #if !__JHEXEN__
-        if(!IS_SERVER) return; // Not for us.
+        if (!IS_SERVER) return; // Not for us.
 
         // Sound target data was introduced in ver 5
-        if(mapVersion < 5) return;
+        if (mapVersion < 5) return;
 
         int numTargets = Reader_ReadInt32(reader);
-        for(int i = 0; i < numTargets; ++i)
+        for (int i = 0; i < numTargets; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader)));
             DENG2_ASSERT(xsec != 0);
 
-            if(!xsec)
+            if (!xsec)
             {
                 DENG2_UNUSED(Reader_ReadInt16(reader));
                 continue;
@@ -777,7 +785,7 @@ void MapStateReader::read(String const &mapUriStr)
     d->endSegment();
 
     // Cleanup.
-    delete d->thingArchive;     d->thingArchive = 0;
+    //delete d->thingArchive;     d->thingArchive = 0;
     delete d->sideArchive;      d->sideArchive = 0;
     delete d->materialArchive;  d->materialArchive = 0;
 
@@ -797,13 +805,13 @@ void MapStateReader::read(String const &mapUriStr)
     NetSv_LoadGame(metadata().geti("sessionId"));
 
     // Material scrollers must be spawned for older savegame versions.
-    if(d->saveVersion <= 10)
+    if (d->saveVersion <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }
 
     // Let the engine know where the local players are now.
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         R_UpdateConsoleView(i);
     }
@@ -828,6 +836,16 @@ Side *MapStateReader::side(int sideIndex) const
 {
     DENG2_ASSERT(d->sideArchive != 0);
     return reinterpret_cast<Side *>(d->sideArchive->at(sideIndex));
+}
+
+thinker_t *MapStateReader::thinkerForPrivateId(Id::Type id) const
+{
+    auto found = d->archivedThinkerIds.constFind(id);
+    if (found != d->archivedThinkerIds.constEnd())
+    {
+        return found.value();
+    }
+    return nullptr;
 }
 
 player_t *MapStateReader::player(int serialId) const

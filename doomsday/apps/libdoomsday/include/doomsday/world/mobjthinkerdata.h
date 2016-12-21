@@ -32,7 +32,7 @@
 class LIBDOOMSDAY_PUBLIC MobjThinkerData : public ThinkerData
 {
 public:
-    MobjThinkerData();
+    MobjThinkerData(de::Id const &id = de::Id::none());
     MobjThinkerData(MobjThinkerData const &other);
 
     IData *duplicate() const override;

@@ -29,8 +29,9 @@ static String const VAR_ID("__id__");
 DENG2_PIMPL_NOREF(MobjThinkerData)
 {};
 
-MobjThinkerData::MobjThinkerData()
-    : d(new Impl)
+MobjThinkerData::MobjThinkerData(de::Id const &id)
+    : ThinkerData(id)
+    , d(new Impl)
 {}
 
 MobjThinkerData::MobjThinkerData(MobjThinkerData const &other)

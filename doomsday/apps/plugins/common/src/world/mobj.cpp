@@ -417,15 +417,7 @@ dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
 void mobj_s::write(MapStateWriter *msw) const
 {
     Writer1 *writer = msw->writer();
-
-    mobj_t const *original = (mobj_t *) this;
-    ThinkerT<mobj_t> temp(*original);
-    mobj_t *mo = temp;
-
-    // Mangle it!
-    mo->state = (state_t *) (mo->state - STATES);
-    if(mo->player)
-        mo->player = (player_t *) ((mo->player - players) + 1);
+    mobj_t const *mo = this;
 
     // Version.
     // JHEXEN
@@ -462,7 +454,7 @@ void mobj_s::write(MapStateWriter *msw) const
 
 #if !__JHEXEN__
     // A version 2 features: archive number and target.
-    Writer_WriteInt16(writer, msw->serialIdFor((mobj_t*) original));
+    Writer_WriteInt16(writer, msw->serialIdFor(mo));
     Writer_WriteInt16(writer, msw->serialIdFor(mo->target));
 
 # if __JDOOM__ || __JDOOM64__
@@ -503,7 +495,7 @@ void mobj_s::write(MapStateWriter *msw) const
 
     Writer_WriteInt32(writer, mo->type);
     Writer_WriteInt32(writer, mo->tics); // State tic counter.
-    Writer_WriteInt32(writer, PTR2INT(mo->state));
+    Writer_WriteInt32(writer, int(mo->state - STATES) /*PTR2INT(mo->state)*/);
 
 #if __JHEXEN__
     Writer_WriteInt32(writer, mo->damage);
@@ -557,7 +549,10 @@ void mobj_s::write(MapStateWriter *msw) const
     Writer_WriteInt32(writer, mo->threshold);
 
     // Additional info record for player avatars only (only valid if type is MT_PLAYER).
-    Writer_WriteInt32(writer, PTR2INT(mo->player));
+    {
+        int const playerNum = (mo->player? int(mo->player - players + 1) : 0);
+        Writer_WriteInt32(writer, playerNum /*PTR2INT(mo->player)*/);
+    }
 
     // Player number last looked for.
     Writer_WriteInt32(writer, mo->lastLook);
@@ -584,17 +579,17 @@ void mobj_s::write(MapStateWriter *msw) const
 # endif
 
     Writer_WriteByte(writer,  mo->translucency);
-    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
+    Writer_WriteByte(writer,  (byte)(mo->visTarget + 1));
 #endif
 
     Writer_WriteInt32(writer, FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    Writer_WriteInt32(writer, msw->serialIdFor((mobj_t *) original));
+    Writer_WriteInt32(writer, msw->serialIdFor(mo));
     Writer_WriteInt32(writer, mo->tid);
     Writer_WriteInt32(writer, mo->special);
     Writer_Write(writer,      mo->args, sizeof(mo->args));
     Writer_WriteByte(writer,  mo->translucency);
-    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
+    Writer_WriteByte(writer,  (byte)(mo->visTarget + 1));
 
     switch(mo->type)
     {

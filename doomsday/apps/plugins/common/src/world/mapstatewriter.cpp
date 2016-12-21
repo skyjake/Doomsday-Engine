@@ -30,6 +30,7 @@
 #include "thinkerinfo.h"
 
 #include <doomsday/world/MaterialArchive>
+#include <doomsday/world/thinkerdata.h>
 
 namespace internal
 {
@@ -107,16 +108,16 @@ DENG2_PIMPL(MapStateWriter)
         beginSegment(ASEG_PLAYERS);
         {
 #if __JHEXEN__
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for (int i = 0; i < MAXPLAYERS; ++i)
             {
                 Writer_WriteByte(writer, players[i].plr->inGame);
             }
 #endif
 
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for (int i = 0; i < MAXPLAYERS; ++i)
             {
                 player_t *plr = players + i;
-                if(!plr->plr->inGame)
+                if (!plr->plr->inGame)
                     continue;
 
                 Writer_WriteInt32(writer, Net_GetPlayerID(i));
@@ -130,12 +131,12 @@ DENG2_PIMPL(MapStateWriter)
     {
         beginSegment(ASEG_MAP_ELEMENTS);
 
-        for(int i = 0; i < numsectors; ++i)
+        for (int i = 0; i < numsectors; ++i)
         {
             SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i), thisPublic);
         }
 
-        for(int i = 0; i < numlines; ++i)
+        for (int i = 0; i < numlines; ++i)
         {
             SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i), thisPublic);
         }
@@ -149,7 +150,7 @@ DENG2_PIMPL(MapStateWriter)
         beginSegment(ASEG_POLYOBJS);
 
         Writer_WriteInt32(writer, numpolyobjs);
-        for(int i = 0; i < numpolyobjs; ++i)
+        for (int i = 0; i < numpolyobjs; ++i)
         {
             Polyobj *po = Polyobj_ById(i);
             DENG2_ASSERT(po != 0);
@@ -175,19 +176,19 @@ DENG2_PIMPL(MapStateWriter)
 
         // We are only concerned with thinkers we have save info for.
         ThinkerClassInfo *thInfo = SV_ThinkerInfo(*th);
-        if(!thInfo) return false;
+        if (!thInfo) return false;
 
         // Are we excluding players?
-        if(p.excludePlayers)
+        if (p.excludePlayers)
         {
-            if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
+            if (th->function == P_MobjThinker && ((mobj_t *) th)->player)
             {
                 return false;
             }
         }
 
         // Only the server saves this class of thinker?
-        if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
+        if ((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
         {
             return false;
         }
@@ -195,6 +196,10 @@ DENG2_PIMPL(MapStateWriter)
         // Write the header block for this thinker.
         Writer_WriteByte(p.msw->writer(), thInfo->thinkclass); // Thinker type byte.
         Writer_WriteByte(p.msw->writer(), Thinker_InStasis(th)? 1 : 0); // In stasis?
+
+        // Private identifier of the thinker.
+        de::Id::Type const privateId = (th->d? THINKER_DATA(*th, ThinkerData).id().asUInt32() : 0);
+        Writer_WriteUInt32(p.msw->writer(), privateId);
 
         // Write the thinker data.
         thInfo->writeFunc(th, p.msw);
@@ -251,7 +256,7 @@ DENG2_PIMPL(MapStateWriter)
     {
 #if __JHEXEN__
         beginSegment(ASEG_MISC);
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for (int i = 0; i < MAXPLAYERS; ++i)
         {
             Writer_WriteInt32(writer, localQuakeHappening[i]);
         }
@@ -265,14 +270,14 @@ DENG2_PIMPL(MapStateWriter)
     void writeSoundTargets()
     {
 #if !__JHEXEN__
-        if(!IS_SERVER) return; // Not for us.
+        if (!IS_SERVER) return; // Not for us.
 
         // Write the total number.
         int count = 0;
-        for(int i = 0; i < numsectors; ++i)
+        for (int i = 0; i < numsectors; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-            if(xsec->soundTarget)
+            if (xsec->soundTarget)
             {
                 count += 1;
             }
@@ -282,10 +287,10 @@ DENG2_PIMPL(MapStateWriter)
         Writer_WriteInt32(writer, count);
 
         // Write the mobj references using the mobj archive.
-        for(int i = 0; i < numsectors; ++i)
+        for (int i = 0; i < numsectors; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-            if(xsec->soundTarget)
+            if (xsec->soundTarget)
             {
                 Writer_WriteInt32(writer, i);
                 Writer_WriteInt16(writer, thingArchive->serialIdFor(xsec->soundTarget));
@@ -339,10 +344,9 @@ void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
 
     // Cleanup.
     delete d->materialArchive;  d->materialArchive = 0;
-    delete d->thingArchive;     d->thingArchive = 0;
 }
 
-ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
+ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t const *mobj)
 {
     DENG2_ASSERT(d->thingArchive != 0);
     return d->thingArchive->serialIdFor(mobj);

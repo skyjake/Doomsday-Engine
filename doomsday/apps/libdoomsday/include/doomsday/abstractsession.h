@@ -21,6 +21,7 @@
 
 #include "libdoomsday.h"
 #include "uri.h"
+#include "world/ithinkermapping.h"
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
@@ -84,6 +85,15 @@ public:
      * @param saveName  Name of the saved session to be loaded.
      */
     virtual void load(de::String const &saveName) = 0;
+
+    world::IThinkerMapping const *thinkerMapping() const;
+
+    /**
+     * Sets the currently used serialization thinker mapping object.
+     * @param mapping  Thinker mapping. Set to @c nullptr when the mapping is not
+     *                 available. Caller retains ownership.
+     */
+    void setThinkerMapping(world::IThinkerMapping *mapping);
 
 public:
     /**

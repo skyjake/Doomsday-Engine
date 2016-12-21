@@ -21,6 +21,7 @@
 #define LIBDOOMSDAY_GAMESTATEFOLDER_H
 
 #include "libdoomsday.h"
+#include "world/ithinkermapping.h"
 
 #include <de/Error>
 #include <de/Observers>
@@ -69,7 +70,7 @@ public:
     /**
      * Abstract base class for serialized, map state readers.
      */
-    class LIBDOOMSDAY_PUBLIC MapStateReader
+    class LIBDOOMSDAY_PUBLIC MapStateReader : public world::IThinkerMapping
     {
     public:
         /// Base class for read errors. @ingroup errors

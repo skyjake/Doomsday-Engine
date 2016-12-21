@@ -146,9 +146,11 @@ public:
      * When saving a game session to disk, this method should be called so the
      * application gets a chance to include its state in the save as well.
      *
+     * @param session   Game session that is being saved.
      * @param toFolder  Folder where the game state is being written.
      */
-    virtual void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder);
+    virtual void gameSessionWasSaved(AbstractSession const &session,
+                                     GameStateFolder &toFolder);
 
     /**
      * Loads application state from a save folder.
@@ -156,9 +158,11 @@ public:
      * When loading a game session from disk, this method should be called so that
      * the application can restore its state from the save.
      *
+     * @param session     Game session that is being loaded.
      * @param fromFolder  Folder where the game state is being read.
      */
-    virtual void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder);
+    virtual void gameSessionWasLoaded(AbstractSession const &session,
+                                      GameStateFolder const &fromFolder);
 
 public:
     static DoomsdayApp &    app();

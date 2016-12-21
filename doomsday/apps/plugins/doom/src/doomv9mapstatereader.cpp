@@ -896,3 +896,9 @@ void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
     // Inform the engine that map setup must be performed once more.
     R_SetupMap(0, 0);
 }
+
+thinker_t *DoomV9MapStateReader::thinkerForPrivateId(Id::Type) const
+{
+    // Private identifiers not supported.
+    return nullptr;
+}

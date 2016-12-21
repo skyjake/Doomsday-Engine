@@ -1,6 +1,6 @@
-/** @file p_savedef.h Common game-save state management.
+/** @file p_savedef.h  Common game-save state management.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_SAVEGAME_DEFS_H
 #define LIBCOMMON_SAVEGAME_DEFS_H
 
-#define MY_SAVE_VERSION         14
+#define MY_SAVE_VERSION         15
 
 #if __JDOOM__
 #  define MY_SAVE_MAGIC         0x1DEAD666

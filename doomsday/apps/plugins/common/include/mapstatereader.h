@@ -82,6 +82,9 @@ public:
      */
     struct player_s *player(int serialId) const;
 
+    // Implements IThinkerMapping.
+    thinker_t *thinkerForPrivateId(de::Id::Type id) const override;
+
 public: /// @todo refactor away:
     void addMobjToThingArchive(struct mobj_s *mobj, ThingArchive::SerialId);
 

@@ -41,6 +41,8 @@ public:
 
     void read(de::String const &mapUriStr);
 
+    thinker_t *thinkerForPrivateId(de::Id::Type id) const override;
+
 private:
     DENG2_PRIVATE(d)
 };

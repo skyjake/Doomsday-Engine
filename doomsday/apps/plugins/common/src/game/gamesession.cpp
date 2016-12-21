@@ -79,17 +79,6 @@ namespace internal
         return info;
     }
 
-    static Block serializeCurrentMapState(bool excludePlayers = false)
-    {
-        Block data;
-        SV_OpenFileForWrite(data);
-        writer_s *writer = SV_NewWriter();
-        MapStateWriter().write(writer, excludePlayers);
-        Writer_Delete(writer);
-        SV_CloseFile();
-        return data;
-    }
-
     /**
      * Lookup the briefing Finale for the current episode, map (if any).
      */
@@ -240,6 +229,33 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     }
 
     /**
+     * Write the current map state to a file and notify the application about the change
+     * in the game state folder.
+     *
+     * @param dest            Destination file for the serialized map state.
+     * @param saveFolder      Folder containing the save.
+     * @param excludePlayers  Should players be excluded from the state?
+     */
+    void serializeCurrentMapState(File &dest, GameStateFolder &saveFolder, bool excludePlayers = false)
+    {
+        Block data;
+        SV_OpenFileForWrite(data);
+        writer_s *writer = SV_NewWriter();
+        MapStateWriter mapStateWriter;
+        //self().setThinkerMapping(&mapStateWriter);
+        // Serialize the data using the legacy writer_s.
+        mapStateWriter.write(writer, excludePlayers);
+        Writer_Delete(writer);
+        SV_CloseFile();
+
+        // Write to the file.
+        dest << data;
+
+        DoomsdayApp::app().gameSessionWasSaved(self(), saveFolder);
+        //self().setThinkerMapping(nullptr);
+    }
+
+    /**
      * Update/create a new GameStateFolder at the specified @a path from the current
      * game state.
      */
@@ -280,10 +296,13 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(self().mapUri().path() + "State")
-                << serializeCurrentMapState();
-
-        DoomsdayApp::app().gameSessionWasSaved(self(), *saved);
+        //MapStateWriter mapStateWriter;
+        //self().setThinkerMapping(&mapStateWriter);
+        serializeCurrentMapState(mapsFolder.replaceFile(self().mapUri().path() + "State"),
+                                 *saved);
+                //<< serializeCurrentMapState(mapStateWriter);
+        //DoomsdayApp::app().gameSessionWasSaved(self(), *saved);
+        //self().setThinkerMapping(nullptr);
 
         saved->flush();  // No need to populate; FS2 Files already in sync with source data.
         saved->cacheMetadata(metadata);  // Avoid immediately reopening the .save package.
@@ -570,9 +589,11 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 #endif
 
         String const mapUriAsText = self().mapUri().compose();
-        makeMapStateReader(saved, mapUriAsText)->read(mapUriAsText);
-
+        std::unique_ptr<GameStateFolder::MapStateReader> mapReader(makeMapStateReader(saved, mapUriAsText));
+        self().setThinkerMapping(mapReader.get());
+        mapReader->read(mapUriAsText);
         DoomsdayApp::app().gameSessionWasLoaded(self(), saved);
+        self().setThinkerMapping(nullptr);
     }
 
     void setMap(de::Uri const &newMapUri)
@@ -663,8 +684,10 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             String const mapUriAsText = self().mapUri().compose();
             auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath);
             std::unique_ptr<GameStateFolder::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
+            self().setThinkerMapping(reader.get());
             reader->read(mapUriAsText);
             DoomsdayApp::app().gameSessionWasLoaded(self(), saved);
+            self().setThinkerMapping(nullptr);
         }
 
         if (!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
@@ -1194,12 +1217,15 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         else
         {
             File &outFile = mapsFolder.replaceFile(mapUri().path() + "State");
-            outFile << serializeCurrentMapState(true /*exclude players*/);
+            //MapStateWriter mapStateWriter;
+            //self().setThinkerMapping(&mapStateWriter);
+            d->serializeCurrentMapState(outFile, *saved, true /*exclude players*/);
+            //DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
+            //self().setThinkerMapping(nullptr);
+
             // We'll flush whole package soon.
         }
 #endif
-
-        DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
 
         // Ensure changes are written to disk right away (otherwise would stay
         // in memory only).
@@ -1278,9 +1304,11 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         File &outFile = mapsFolder.replaceFile(mapUri().path() + "State");
-        outFile << serializeCurrentMapState();
-
-        DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
+        //MapStateWriter mapStateWriter;
+        //setThinkerMapping(&mapStateWriter);
+        d->serializeCurrentMapState(outFile, *saved);
+        //DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
+        //setThinkerMapping(nullptr);
 
         saved->flush(); // Write all changes to the package.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.

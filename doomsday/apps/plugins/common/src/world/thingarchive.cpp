@@ -34,7 +34,7 @@ DENG2_PIMPL(ThingArchive)
 {
     int version;
     uint size;
-    mobj_t **things;
+    mobj_t const **things;
     bool excludePlayers;
 
     Impl(Public *i)
@@ -59,7 +59,7 @@ DENG2_PIMPL(ThingArchive)
     static int countMobjThinkersToArchive(thinker_t *th, void *context)
     {
         countmobjthinkerstoarchive_params_t &p = *(countmobjthinkerstoarchive_params_t *) context;
-        if(!(Mobj_IsPlayer((mobj_t *) th) && p.excludePlayers))
+        if (!(Mobj_IsPlayer(reinterpret_cast<mobj_t const *>(th)) && p.excludePlayers))
         {
             p.count++;
         }
@@ -96,7 +96,7 @@ void ThingArchive::clear()
 void ThingArchive::initForLoad(uint size)
 {
     d->size   = size;
-    d->things = (mobj_t **)M_Calloc(d->size * sizeof(*d->things));
+    d->things = reinterpret_cast<mobj_t const **>(M_Calloc(d->size * sizeof(*d->things)));
 }
 
 void ThingArchive::initForSave(bool excludePlayers)
@@ -105,10 +105,10 @@ void ThingArchive::initForSave(bool excludePlayers)
     Impl::countmobjthinkerstoarchive_params_t parm; de::zap(parm);
     parm.count          = 0;
     parm.excludePlayers = excludePlayers;
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, Impl::countMobjThinkersToArchive, &parm);
+    Thinker_Iterate(P_MobjThinker, Impl::countMobjThinkersToArchive, &parm);
 
     d->size           = parm.count;
-    d->things         = (mobj_t **)M_Calloc(d->size * sizeof(*d->things));
+    d->things         = reinterpret_cast<mobj_t const **>(M_Calloc(d->size * sizeof(*d->things)));
     d->excludePlayers = excludePlayers;
 }
 
@@ -117,7 +117,7 @@ void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
     DENG_ASSERT(mo != 0);
 
 #if __JHEXEN__
-    if(d->version >= 1)
+    if (d->version >= 1)
 #endif
     {
         serialId -= 1;
@@ -126,7 +126,7 @@ void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
 #if __JHEXEN__
     // Only signed in Hexen.
     DENG2_ASSERT(serialId >= 0);
-    if(serialId < 0) return; // Does this ever occur?
+    if (serialId < 0) return; // Does this ever occur?
 #endif
 
     DENG_ASSERT(d->things != 0);
@@ -138,16 +138,16 @@ ThingArchive::SerialId ThingArchive::serialIdFor(mobj_t const *mo)
 {
     DENG_ASSERT(d->things != 0);
 
-    if(!mo) return 0;
+    if (!mo) return 0;
 
     // We only archive mobj thinkers.
-    if(((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
+    if (mo->thinker.function != P_MobjThinker)
     {
         return 0;
     }
 
 #if __JHEXEN__
-    if(mo->player && d->excludePlayers)
+    if (mo->player && d->excludePlayers)
     {
         return TargetPlayerId;
     }
@@ -155,29 +155,29 @@ ThingArchive::SerialId ThingArchive::serialIdFor(mobj_t const *mo)
 
     uint firstUnused = 0;
     bool found = false;
-    for(uint i = 0; i < d->size; ++i)
+    for (uint i = 0; i < d->size; ++i)
     {
-        if(!d->things[i] && !found)
+        if (!d->things[i] && !found)
         {
             firstUnused = i;
             found = true;
             continue;
         }
 
-        if(d->things[i] == mo)
+        if (d->things[i] == mo)
         {
             return i + 1;
         }
     }
 
-    if(!found)
+    if (!found)
     {
         Con_Error("ThingArchive::serialIdFor: Thing archive exhausted!");
         return 0; // No number available!
     }
 
     // Insert it in the archive.
-    d->things[firstUnused] = const_cast<mobj_t *>(mo);
+    d->things[firstUnused] = mo;
     return firstUnused + 1;
 }
 
@@ -188,7 +188,7 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
 #endif
 
 #if __JHEXEN__
-    if(serialId == TargetPlayerId)
+    if (serialId == TargetPlayerId)
     {
         targetplraddress_t *tpa = (targetplraddress_t *)M_Malloc(sizeof(targetplraddress_t));
 
@@ -204,14 +204,14 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
     DENG_ASSERT(d->things != 0);
 
 #if __JHEXEN__
-    if(d->version < 1)
+    if (d->version < 1)
     {
         // Old format (base 0).
 
         // A NULL reference?
-        if(serialId == -1) return 0;
+        if (serialId == -1) return 0;
 
-        if(serialId < 0 || (unsigned) serialId > d->size - 1)
+        if (serialId < 0 || (unsigned) serialId > d->size - 1)
             return 0;
     }
     else
@@ -220,9 +220,9 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
         // New format (base 1).
 
         // A NULL reference?
-        if(serialId == 0) return 0;
+        if (serialId == 0) return 0;
 
-        if(serialId < 1 || (unsigned) serialId > d->size)
+        if (serialId < 1 || unsigned(serialId) > d->size)
         {
             App_Log(DE2_RES_WARNING, "ThingArchive::mobj: Invalid serialId %i", serialId);
             return 0;
@@ -231,5 +231,5 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
         serialId -= 1;
     }
 
-    return d->things[serialId];
+    return const_cast<mobj_t *>(d->things[serialId]);
 }

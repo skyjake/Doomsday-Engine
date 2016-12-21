@@ -20,23 +20,35 @@
 #include "doomsday/world/thinkerdata.h"
 #include "doomsday/world/map.h"
 
+#include <QMultiHash>
+
 using namespace de;
+
+//static QMultiHash<Id::Type, ThinkerData *> thinkerLookup;
 
 DENG2_PIMPL(ThinkerData)
 {
     thinker_s *think;
+    Id id; ///< Internal unique ID.
     Record names;
 
-    Impl(Public *i) : Base(i), think(0) {}
+    Impl(Public *i, Id const &id)
+        : Base(i)
+        , think(0)
+        , id(id)
+    {}
 
     Impl(Public *i, Impl const &other)
         : Base(i)
         , think(other.think)
+        , id(other.id)
         , names(other.names)
     {}
 
     ~Impl()
     {
+        //thinkerLookup.remove(id, &self());
+
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i)
         {
             i->thinkerBeingDeleted(*think);
@@ -48,11 +60,31 @@ DENG2_PIMPL(ThinkerData)
 
 DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 
-ThinkerData::ThinkerData() : d(new Impl(this))
-{}
+ThinkerData::ThinkerData(Id const &id)
+    : d(new Impl(this, id))
+{
+    DENG2_ASSERT(!d->id.isNone());
+    //thinkerLookup.insert(d->id, this);
+}
 
 ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
-{}
+{
+    DENG2_ASSERT(!d->id.isNone());
+    //thinkerLookup.insert(d->id, this);
+}
+
+Id const &ThinkerData::id() const
+{
+    return d->id;
+}
+
+void ThinkerData::setId(Id const &id)
+{
+    //thinkerLookup.remove(d->id, this);
+    //thinkerLookup.insert(id, this);
+
+    d->id = id;
+}
 
 void ThinkerData::setThinker(thinker_s *thinker)
 {
@@ -97,18 +129,21 @@ void ThinkerData::initBindings()
 void ThinkerData::operator >> (Writer &to) const
 {
     to << world::InternalSerialId(world::THINKER_DATA)
-       << d->names;
+       << d->id
+       << Record(d->names, Record::IgnoreDoubleUnderscoreMembers);
 }
 
 void ThinkerData::operator << (Reader &from)
 {
+    //thinkerLookup.remove(d->id, this);
+
     world::InternalSerialId sid;
     from >> sid;
 
     switch (sid)
     {
     case world::THINKER_DATA:
-        from >> d->names;
+        from >> d->id >> d->names;
         break;
 
     default:
@@ -116,7 +151,20 @@ void ThinkerData::operator << (Reader &from)
                                    "Invalid serial identifier " +
                                    String::number(sid));
     }
+
+    // The thinker has a new ID.
+    //thinkerLookup.insert(d->id, this);
 }
+
+/*ThinkerData *ThinkerData::find(Id const &id)
+{
+    auto found = thinkerLookup.constFind(id);
+    if (found != thinkerLookup.constEnd())
+    {
+        return found.value();
+    }
+    return nullptr;
+}*/
 
 #ifdef DENG2_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;

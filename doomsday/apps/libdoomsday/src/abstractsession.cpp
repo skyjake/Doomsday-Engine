@@ -32,8 +32,8 @@ static AbstractSession::Profile currentProfile;
 DENG2_PIMPL_NOREF(AbstractSession)
 {
     bool inProgress = false;  ///< @c true: session is in progress / internal.save exists.
-
     de::Uri mapUri;
+    world::IThinkerMapping *thinkerMapping = nullptr;
 };
 
 AbstractSession::AbstractSession()
@@ -62,6 +62,16 @@ bool AbstractSession::hasBegun() const
 de::Uri AbstractSession::mapUri() const
 {
     return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
+}
+
+world::IThinkerMapping const *AbstractSession::thinkerMapping() const
+{
+    return d->thinkerMapping;
+}
+
+void AbstractSession::setThinkerMapping(world::IThinkerMapping *mapping)
+{
+    d->thinkerMapping = mapping;
 }
 
 void AbstractSession::setMapUri(Uri const &uri)

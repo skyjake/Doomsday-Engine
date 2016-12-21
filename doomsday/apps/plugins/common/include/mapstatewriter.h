@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "thingarchive.h"
+#include <doomsday/world/ithinkermapping.h>
 
 namespace world { class Material; }
 
@@ -69,9 +70,13 @@ public:
      */
     Writer1 *writer();
 
-    ThingArchive::SerialId serialIdFor(struct mobj_s *mobj);
+    ThingArchive::SerialId serialIdFor(struct mobj_s const *mobj);
     materialarchive_serialid_t serialIdFor(world::Material *material);
     materialarchive_serialid_t serialIdFor(struct material_s *material);
+
+    // Implements world::IThinkerMapping.
+    //int mappedNumberfromThinkerId(de::Id const &thinkerId) const override;
+    //de::Id thinkerIdFromMappedNumber(int mappedNumber) const override;
 
 private:
     DENG2_PRIVATE(d)

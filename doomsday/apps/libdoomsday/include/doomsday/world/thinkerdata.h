@@ -41,8 +41,22 @@ public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
 
 public:
-    ThinkerData();
+    ThinkerData(de::Id const &id = de::Id::none());
     ThinkerData(ThinkerData const &other);
+
+    /**
+     * Returns the unique and persistent ID of the thinker.
+     *
+     * Note that due to historical reasons game-side mobj IDs are separately enumerated
+     * 16-bit numbers.
+     *
+     * @return Thinker ID.
+     *
+     * @todo Use this for identifying all thinkers everywhere, including mobjs.
+     */
+    de::Id const &id() const;
+
+    void setId(de::Id const &id);
 
     void setThinker(thinker_s *thinker) override;
     void think() override;
@@ -65,6 +79,17 @@ public:
     // Implements ISerializable.
     void operator >> (de::Writer &to) const override;
     void operator << (de::Reader &from) override;
+
+public:
+    /*
+     * Finds a thinker based on its unique identifier. This searches all ThinkerData
+     * instances in existence at the moment. If there happens to be multiple ThinkerData
+     * instances with the same ID, returns the most recently created instance.
+     *
+     * @param id  Identifier.
+     * @return Thinker or @c nullptr.
+     */
+    //static ThinkerData *find(de::Id const &id);
 
 private:
     DENG2_PRIVATE(d)
