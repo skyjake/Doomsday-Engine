@@ -80,7 +80,7 @@ public:
     };
 
 public:
-    ClientMobjThinkerData();
+    ClientMobjThinkerData(de::Id const &id = de::Id::none());
     ClientMobjThinkerData(ClientMobjThinkerData const &other);
 
     void think() override;

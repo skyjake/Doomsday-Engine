@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <de/Error>
+#include <de/Id>
 #include "api_thinker.h"
 
 namespace world {
@@ -85,11 +86,18 @@ public:
     de::LoopResult forAll(thinkfunc_t thinkFunc, de::dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
 
     /**
-     * Locates a mobj by it's unique identifier in the map.
+     * Locates a mobj by its unique identifier in the map.
      *
      * @param id  Unique id of the mobj to lookup.
      */
     struct mobj_s *mobjById(de::dint id);
+
+    /**
+     * Finds a thinker by its identifier.
+     * @param id  Thinker ID.
+     * @return Thinker object or @c nullptr.
+     */
+    thinker_t *find(thid_t id);
 
     /**
      * @param id  Thinker id to test.
@@ -127,8 +135,9 @@ world::Map &Thinker_Map(thinker_t const &th);
  *
  * Only call this when the thinker does not have a private data object.
  *
- * @param th  Thinker.
+ * @param th       Thinker.
+ * @param knownId  Known private ID to use for the thinker. If zero, a new ID is generated.
  */
-void Thinker_InitPrivateData(thinker_t *th);
+void Thinker_InitPrivateData(thinker_t *th, de::Id::Type knownId = 0);
 
 #endif  // DENG_WORLD_THINKERS_H

@@ -80,6 +80,7 @@
 #include <de/Rectangle>
 
 #include <de/aabox.h>
+#include <de/charsymbols.h>
 #include <de/nodepile.h>
 #include <de/vector1.h>
 #include <de/timer.h>
@@ -3103,30 +3104,34 @@ void Map::serializeInternalState(Writer &to) const
     // Internal state of thinkers.
     thinkers().forAll(0x3, [&to] (thinker_t *th)
     {
-        if (ISerializable const *serial = THINKER_DATA_MAYBE(*th, ISerializable))
+        if (th->d)
         {
-            to << duint32(th->id)
-               << Writer::BeginSpan
-               << *serial
-               << Writer::EndSpan;
+            ThinkerData const &thinkerData = THINKER_DATA(*th, ThinkerData);
+            if (ISerializable const *serial = THINKER_DATA_MAYBE(*th, ISerializable))
+            {
+                to << thinkerData.id()
+                   << Writer::BeginSpan
+                   << *serial
+                   << Writer::EndSpan;
+            }
         }
         return LoopContinue;
     });
 
     // Terminator.
-    to << duint32(0);
+    to << Id(Id::None);
 }
 
-void Map::deserializeInternalState(Reader &from)
+void Map::deserializeInternalState(Reader &from, world::IThinkerMapping const &thinkerMapping)
 {
-    BaseMap::deserializeInternalState(from);
+    BaseMap::deserializeInternalState(from, thinkerMapping);
 
     try
     {
         // Internal state of thinkers.
         forever
         {
-            duint32 id = 0;
+            Id id { Id::None };
             from >> id;
             if (!id) break; // Zero ID terminates the sequence.
 
@@ -3136,13 +3141,23 @@ void Map::deserializeInternalState(Reader &from)
 
             auto const nextOffset = from.offset() + size;
 
+            //qDebug() << "Found serialized internal state for private ID" << id.asText() << "size" << size;
+
             try
             {
-                if (mobj_t *mo = thinkers().mobjById(id))
+                if (thinker_t *th = thinkerMapping.thinkerForPrivateId(id))
                 {
-                    if (ISerializable *serial = THINKER_DATA_MAYBE(mo->thinker, ISerializable))
+                    // The identifier is changed if necessary.
+                    Thinker_InitPrivateData(th, id);
+                    if (ISerializable *serial = THINKER_DATA_MAYBE(*th, ISerializable))
                     {
                         from >> *serial;
+                    }
+                    else
+                    {
+                        LOG_MAP_WARNING("State for thinker %i is not deserializable "
+                                        DENG2_CHAR_MDASH " internal representation may have "
+                                        "changed, or save data is corrupt") << id;
                     }
                 }
             }

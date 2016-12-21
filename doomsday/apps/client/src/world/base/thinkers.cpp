@@ -92,14 +92,14 @@ struct ThinkerList
     {
         dint num = 0;
         thinker_t *th = sentinel.next;
-        while(th != &sentinel.base() && th)
+        while (th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG2_ASSERT(th->next);
             DENG2_ASSERT(th->prev);
 #endif
             num += 1;
-            if(numInStasis && Thinker_InStasis(th))
+            if (numInStasis && Thinker_InStasis(th))
             {
                 (*numInStasis) += 1;
             }
@@ -110,7 +110,7 @@ struct ThinkerList
 
     void releaseAll()
     {
-        for(thinker_t *th = sentinel.next; th != &sentinel.base() && th; th = th->next)
+        for (thinker_t *th = sentinel.next; th != &sentinel.base() && th; th = th->next)
         {
             Thinker::release(*th);
         }
@@ -124,6 +124,7 @@ DENG2_PIMPL(Thinkers)
 
     QList<ThinkerList *> lists;
     QHash<thid_t, mobj_t *> mobjIdLookup;  ///< public only
+    QHash<thid_t, thinker_t *> thinkerIdLookup; ///< all thinkers with ID
 
     bool inited = false;
 
@@ -145,7 +146,8 @@ DENG2_PIMPL(Thinkers)
 
     void releaseAllThinkers()
     {
-        for(ThinkerList *list : lists)
+        thinkerIdLookup.clear();
+        for (ThinkerList *list : lists)
         {
             list->releaseAll();
         }
@@ -157,13 +159,14 @@ DENG2_PIMPL(Thinkers)
         idtable[0] |= 1;  // ID zero is always "used" (it's not a valid ID).
 
         mobjIdLookup.clear();
+        thinkerIdLookup.clear();
     }
 
     thid_t newMobjId()
     {
         // Increment the ID dealer until a free ID is found.
         /// @todo fixme: What if all IDs are in use? 65535 thinkers!?
-        while(self().isUsedMobjId(++iddealer)) {}
+        while (self().isUsedMobjId(++iddealer)) {}
 
         // Mark this ID as used.
         self().setMobjId(iddealer);
@@ -174,14 +177,14 @@ DENG2_PIMPL(Thinkers)
     ThinkerList *listForThinkFunc(thinkfunc_t func, bool makePublic = true,
                                   bool canCreate = false)
     {
-        for(dint i = 0; i < lists.count(); ++i)
+        for (dint i = 0; i < lists.count(); ++i)
         {
             ThinkerList *list = lists[i];
-            if(list->function() == func && list->isPublic == makePublic)
+            if (list->function() == func && list->isPublic == makePublic)
                 return list;
         }
 
-        if(!canCreate) return nullptr;
+        if (!canCreate) return nullptr;
 
         // A new thinker type.
         lists.append(new ThinkerList(func, makePublic));
@@ -201,14 +204,24 @@ void Thinkers::setMobjId(thid_t id, bool inUse)
 {
     dint c = id >> 5, bit = 1 << (id & 31); //(id % 32);
 
-    if(inUse) d->idtable[c] |= bit;
-    else      d->idtable[c] &= ~bit;
+    if (inUse) d->idtable[c] |= bit;
+    else       d->idtable[c] &= ~bit;
 }
 
 struct mobj_s *Thinkers::mobjById(dint id)
 {
     auto found = d->mobjIdLookup.constFind(id);
-    if(found != d->mobjIdLookup.constEnd())
+    if (found != d->mobjIdLookup.constEnd())
+    {
+        return found.value();
+    }
+    return nullptr;
+}
+
+thinker_t *Thinkers::find(thid_t id)
+{
+    auto found = d->thinkerIdLookup.constFind(id);
+    if (found != d->thinkerIdLookup.constEnd())
     {
         return found.value();
     }
@@ -217,22 +230,22 @@ struct mobj_s *Thinkers::mobjById(dint id)
 
 void Thinkers::add(thinker_t &th, bool makePublic)
 {
-    if(!th.function)
+    if (!th.function)
         throw Error("Thinkers::add", "Invalid thinker function");
 
     // Will it need an ID?
-    if(Thinker_HasMobjFunc(th.function))
+    if (Thinker_HasMobjFunc(th.function))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
 #ifdef __CLIENT__
-        if(!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
+        if (!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
 #endif
         {
             th.id = d->newMobjId();
         }
 
-        if(makePublic && th.id)
+        if (makePublic && th.id)
         {
             d->mobjIdLookup.insert(th.id, reinterpret_cast<mobj_t *>(&th));
         }
@@ -240,6 +253,11 @@ void Thinkers::add(thinker_t &th, bool makePublic)
     else
     {
         th.id = 0;  // Zero is not a valid ID.
+    }
+
+    if (th.id)
+    {
+        d->thinkerIdLookup.insert(th.id, &th);
     }
 
     // Link the thinker to the thinker list.
@@ -250,21 +268,22 @@ void Thinkers::add(thinker_t &th, bool makePublic)
 void Thinkers::remove(thinker_t &th)
 {
     // Has got an ID?
-    if(th.id)
+    if (th.id)
     {
         // Flag the identifier as free.
         setMobjId(th.id, false);
 
         d->mobjIdLookup.remove(th.id);
+        d->thinkerIdLookup.remove(th.id);
 
 #ifdef __SERVER__
         // Then it must be a mobj.
-        auto  *mob = reinterpret_cast<mobj_t *>(&th);
+        auto *mob = reinterpret_cast<mobj_t *>(&th);
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
-        if(!mob->state || !runtimeDefs.states.indexOf(mob->state))
+        if (!mob->state || !runtimeDefs.states.indexOf(mob->state))
         {
             Sv_MobjRemoved(th.id);
         }
@@ -278,18 +297,18 @@ void Thinkers::remove(thinker_t &th)
 
 void Thinkers::initLists(dbyte flags)
 {
-    if(!d->inited)
+    if (!d->inited)
     {
         d->lists.clear();
     }
     else
     {
-        for(dint i = 0; i < d->lists.count(); ++i)
+        for (dint i = 0; i < d->lists.count(); ++i)
         {
             ThinkerList *list = d->lists[i];
 
-            if(list->isPublic && !(flags & 0x1)) continue;
-            if(!list->isPublic && !(flags & 0x2)) continue;
+            if (list->isPublic && !(flags & 0x1)) continue;
+            if (!list->isPublic && !(flags & 0x2)) continue;
 
             list->reinit();
         }
@@ -306,17 +325,17 @@ bool Thinkers::isInited() const
 
 LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)> func) const
 {
-    if(!d->inited) return LoopContinue;
+    if (!d->inited) return LoopContinue;
 
-    for(dint i = 0; i < d->lists.count(); ++i)
+    for (dint i = 0; i < d->lists.count(); ++i)
     {
         ThinkerList *list = d->lists[i];
 
-        if( list->isPublic && !(flags & 0x1)) continue;
-        if(!list->isPublic && !(flags & 0x2)) continue;
+        if ( list->isPublic && !(flags & 0x1)) continue;
+        if (!list->isPublic && !(flags & 0x2)) continue;
 
         thinker_t *th = list->sentinel.next;
-        while(th != &list->sentinel.base() && th)
+        while (th != &list->sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG2_ASSERT(th->next);
@@ -324,7 +343,7 @@ LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)>
 #endif
             thinker_t *next = th->next;
 
-            if(auto result = func(th))
+            if (auto result = func(th))
                 return result;
 
             th = next;
@@ -336,19 +355,19 @@ LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)>
 
 LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<LoopResult (thinker_t *)> func) const
 {
-    if(!d->inited) return LoopContinue;
+    if (!d->inited) return LoopContinue;
 
-    if(!thinkFunc)
+    if (!thinkFunc)
     {
         return forAll(flags, func);
     }
 
-    if(flags & 0x1 /*public*/)
+    if (flags & 0x1 /*public*/)
     {
-        if(ThinkerList *list = d->listForThinkFunc(thinkFunc))
+        if (ThinkerList *list = d->listForThinkFunc(thinkFunc))
         {
             thinker_t *th = list->sentinel.next;
-            while(th != &list->sentinel.base() && th)
+            while (th != &list->sentinel.base() && th)
             {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
                 DENG2_ASSERT(th->next);
@@ -356,19 +375,19 @@ LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<Lo
 #endif
                 thinker_t *next = th->next;
 
-                if(auto result = func(th))
+                if (auto result = func(th))
                     return result;
 
                 th = next;
             }
         }
     }
-    if(flags & 0x2 /*private*/)
+    if (flags & 0x2 /*private*/)
     {
-        if(ThinkerList *list = d->listForThinkFunc(thinkFunc, false /*private*/))
+        if (ThinkerList *list = d->listForThinkFunc(thinkFunc, false /*private*/))
         {
             thinker_t *th = list->sentinel.next;
-            while(th != &list->sentinel.base() && th)
+            while (th != &list->sentinel.base() && th)
             {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
                 DENG2_ASSERT(th->next);
@@ -376,7 +395,7 @@ LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<Lo
 #endif
                 thinker_t *next = th->next;
 
-                if(auto result = func(th))
+                if (auto result = func(th))
                     return result;
 
                 th = next;
@@ -390,9 +409,9 @@ LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<Lo
 dint Thinkers::count(dint *numInStasis) const
 {
     dint total = 0;
-    if(isInited())
+    if (isInited())
     {
-        for(dint i = 0; i < d->lists.count(); ++i)
+        for (dint i = 0; i < d->lists.count(); ++i)
         {
             ThinkerList *list = d->lists[i];
             total += list->count(numInStasis);
@@ -410,31 +429,40 @@ static void unlinkThinkerFromList(thinker_t *th)
 }  // namespace world
 using namespace world;
 
-void Thinker_InitPrivateData(thinker_t *th)
+void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 {
-    DENG2_ASSERT(th->d == nullptr);
+    //DENG2_ASSERT(th->d == nullptr);
 
     /// @todo The game should be asked to create its own private data. -jk
 
-    if(Thinker_HasMobjFunc(th->function))
+    if (th->d == nullptr)
     {
-#ifdef __CLIENT__
-        th->d = new ClientMobjThinkerData;
-#else
-        th->d = new MobjThinkerData;
-#endif
-    }
-    else
-    {
-        // Generic thinker data (Doomsday Script namespace, etc.).
-        th->d = new ThinkerData;
-    }
+        Id const privateId = knownId? Id(knownId) : Id(/* get a new ID */);
 
-    if(th->d)
-    {
+        if (Thinker_HasMobjFunc(th->function))
+        {
+#ifdef __CLIENT__
+            th->d = new ClientMobjThinkerData(privateId);
+#else
+            th->d = new MobjThinkerData(privateId);
+#endif
+        }
+        else
+        {
+            // Generic thinker data (Doomsday Script namespace, etc.).
+            th->d = new ThinkerData(privateId);
+        }
+
         auto &thinkerData = THINKER_DATA(*th, ThinkerData);
         thinkerData.setThinker(th);
         thinkerData.initBindings();
+    }
+    else
+    {
+        DENG2_ASSERT(knownId != 0);
+
+        // Change the private identifier of the existing thinker data.
+        THINKER_DATA(*th, ThinkerData).setId(knownId);
     }
 }
 
@@ -445,7 +473,7 @@ void Thinker_InitPrivateData(thinker_t *th)
 DENG_EXTERN_C struct mobj_s *Mobj_ById(dint id)
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return nullptr;
+    if (!App_World().hasMap()) return nullptr;
     return App_World().map().thinkers().mobjById(id);
 }
 
@@ -453,7 +481,7 @@ DENG_EXTERN_C struct mobj_s *Mobj_ById(dint id)
 void Thinker_Init()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return;
+    if (!App_World().hasMap()) return;
     App_World().map().thinkers().initLists(0x1);  // Init the public thinker lists.
 }
 
@@ -461,18 +489,18 @@ void Thinker_Init()
 void Thinker_Run()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_World().hasMap()) return;
+    if (!App_World().hasMap()) return;
 
     App_World().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
-        if(Thinker_InStasis(th)) return LoopContinue; // Skip.
+        if (Thinker_InStasis(th)) return LoopContinue; // Skip.
 
         // Time to remove it?
-        if(th->function == (thinkfunc_t) -1)
+        if (th->function == (thinkfunc_t) -1)
         {
             unlinkThinkerFromList(th);
 
-            if(th->id)
+            if (th->id)
             {
                 // Recycle for reduced allocation overhead.
                 P_MobjRecycle((mobj_t *) th);
@@ -483,16 +511,16 @@ void Thinker_Run()
                 Thinker::destroy(th);
             }
         }
-        else if(th->function)
+        else if (th->function)
         {
             // Create a private data instance of appropriate type.
-            if(th->d == nullptr) Thinker_InitPrivateData(th);
+            if (!th->d) Thinker_InitPrivateData(th);
 
             // Public thinker callback.
             th->function(th);
 
             // Private thinking.
-            if(th->d) THINKER_DATA(*th, Thinker::IData).think();
+            if (th->d) THINKER_DATA(*th, Thinker::IData).think();
         }
         return LoopContinue;
     });
@@ -501,21 +529,21 @@ void Thinker_Run()
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
-    if(!th) return;
+    if (!th) return;
     Thinker_Map(*th).thinkers().add(*th);
 }
 
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
-    if(!th) return;
+    if (!th) return;
     Thinker_Map(*th).thinkers().remove(*th);
 }
 
 #undef Thinker_Iterate
 dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), void *context)
 {
-    if(!App_World().hasMap()) return false;  // Continue iteration.
+    if (!App_World().hasMap()) return false;  // Continue iteration.
 
     return App_World().map().thinkers().forAll(func, 0x1, [&callback, &context] (thinker_t *th)
     {

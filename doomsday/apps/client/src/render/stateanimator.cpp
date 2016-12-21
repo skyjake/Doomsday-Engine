@@ -421,6 +421,25 @@ DENG2_PIMPL(StateAnimator)
         }
     }
 
+    void updateAnimationValuePointers()
+    {
+        foreach (String passName, passVars.keys())
+        {
+            ShaderVars *vars = passVars[passName];
+            foreach (String name, vars->members.keys())
+            {
+                vars->members[name]->updateValuePointers(names, passName.concatenateMember(name));
+            }
+        }
+
+        foreach (String name, animVars.keys())
+        {
+            AnimVar &animVar = *animVars[name];
+            animVar.angle = &names[name.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
+            animVar.speed = &names[name.concatenateMember(DEF_SPEED)].value<AnimationValue>();
+        }
+    }
+
     /**
      * Checks if a shader definition has a declaration for a variable.
      *
@@ -785,7 +804,7 @@ void StateAnimator::operator >> (Writer &to) const
 
 void StateAnimator::operator << (Reader &from)
 {
-    qDebug() << "StateAnimator: deserializing" << this;
+    //qDebug() << "StateAnimator: deserializing" << this;
 
     d->pendingAnimForNode.clear();
 
@@ -799,6 +818,10 @@ void StateAnimator::operator << (Reader &from)
     // Initialize matching variables with new values, and add variables that are not
     // found in the current state.
     d->names.assignPreservingVariables(storedNames, Record::IgnoreDoubleUnderscoreMembers);
+
+    // Now that some variables have been deserialized, the AnimationValue objects
+    // have been changed.
+    d->updateAnimationValuePointers();
 }
 
 } // namespace render

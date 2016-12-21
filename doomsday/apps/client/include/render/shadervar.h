@@ -60,6 +60,11 @@ public:
      * Copies the current values to the uniform.
      */
     void updateUniform();
+
+    /**
+     * Sets the pointers to the AnimationValue objects by looking them up from a Record.
+     */
+    void updateValuePointers(de::Record &names, de::String const &varName);
 };
 
 struct ShaderVars

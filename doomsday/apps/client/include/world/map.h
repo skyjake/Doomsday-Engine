@@ -28,6 +28,7 @@
 #include <QSet>
 #include <doomsday/BspNode>
 #include <doomsday/world/map.h>
+#include <doomsday/world/ithinkermapping.h>
 #include <doomsday/uri.h>
 #include <de/BinaryTree>
 #include <de/Id>
@@ -197,7 +198,7 @@ public:
 
     void serializeInternalState(de::Writer &to) const override;
 
-    void deserializeInternalState(de::Reader &from) override;
+    void deserializeInternalState(de::Reader &from, world::IThinkerMapping const &thinkerMapping) override;
 
 public:  //- Light sources --------------------------------------------------------------
 

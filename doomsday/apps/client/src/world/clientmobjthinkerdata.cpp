@@ -126,7 +126,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self().objectNamespace(), QStringLiteral("THING"));
+                animator->setOwnerNamespace(self().objectNamespace(), QStringLiteral("__thing__"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
@@ -209,8 +209,9 @@ DENG2_PIMPL(ClientMobjThinkerData)
     }
 };
 
-ClientMobjThinkerData::ClientMobjThinkerData()
-    : d(new Impl(this))
+ClientMobjThinkerData::ClientMobjThinkerData(de::Id const &id)
+    : MobjThinkerData(id)
+    , d(new Impl(this))
 {}
 
 ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)

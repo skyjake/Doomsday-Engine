@@ -467,7 +467,7 @@ DENG2_PIMPL(ClientApp)
 
     String pathForMapClientState(String const &mapId)
     {
-        return String("maps/%sClientState").arg(mapId);
+        return String("maps/%1ClientState").arg(mapId);
     }
 };
 
@@ -673,27 +673,39 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-void ClientApp::gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder)
+void ClientApp::gameSessionWasSaved(AbstractSession const &session,
+                                    GameStateFolder &toFolder)
 {
     DoomsdayApp::gameSessionWasSaved(session, toFolder);
 
-    // Internal map state.
-    File &file = toFolder.replaceFile(d->pathForMapClientState(session.mapUri().compose()));
-    Writer writer(file);
-    world().map().serializeInternalState(writer.withHeader());
+    try
+    {
+        // Internal map state.
+        File &file = toFolder.replaceFile(d->pathForMapClientState(session.mapUri().path()));
+        Writer writer(file);
+        world().map().serializeInternalState(writer.withHeader());
+    }
+    catch (Error const &er)
+    {
+        LOGDEV_MAP_WARNING("Internal map state was not serialized: %s") << er.asText();
+    }
 }
 
-void ClientApp::gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder)
+void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
+                                     GameStateFolder const &fromFolder)
 {
     DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
 
     try
     {
         // Internal map state. This might be missing.
-        if (File const *file = fromFolder.tryLocate<File const>(d->pathForMapClientState(session.mapUri().compose())))
+        if (File const *file = fromFolder.tryLocate<File const>(d->pathForMapClientState(session.mapUri().path())))
         {
+            DENG2_ASSERT(session.thinkerMapping() != nullptr);
+
             Reader reader(*file);
-            world().map().deserializeInternalState(reader.withHeader());
+            world().map().deserializeInternalState(reader.withHeader(),
+                                                   *session.thinkerMapping());
         }
     }
     catch (Error const &er)

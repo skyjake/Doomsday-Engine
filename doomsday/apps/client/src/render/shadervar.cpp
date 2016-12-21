@@ -79,12 +79,30 @@ void ShaderVar::updateUniform()
     }
 }
 
+static char const *componentNames[] = { "x", "y", "z", "w" };
+
+void ShaderVar::updateValuePointers(Record &names, String const &varName)
+{
+    if (values.size() == 1)
+    {
+        values[0].anim = &names[varName].value<AnimationValue>();
+    }
+    else
+    {
+        for (int i = 0; i < values.size(); ++i)
+        {
+            values[i].anim = &names[varName.concatenateMember(componentNames[i])]
+                    .value<AnimationValue>();
+        }
+    }
+}
+
+//---------------------------------------------------------------------------------------
+
 void ShaderVars::initVariableFromDefinition(String const &variableName,
                                             Record const &valueDef,
                                             Record &bindingNames)
 {
-    static char const *componentNames[] = { "x", "y", "z", "w" };
-
     GLUniform::Type uniformType = GLUniform::Float;
     std::unique_ptr<ShaderVar> var(new ShaderVar);
 
