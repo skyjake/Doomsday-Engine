@@ -74,7 +74,7 @@ void AbstractSession::setThinkerMapping(world::IThinkerMapping *mapping)
     d->thinkerMapping = mapping;
 }
 
-void AbstractSession::setMapUri(Uri const &uri)
+void AbstractSession::setMapUri(de::Uri const &uri)
 {
     d->mapUri = uri;
 }
