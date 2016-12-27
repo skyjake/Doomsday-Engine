@@ -41,7 +41,7 @@ DENG2_PIMPL_NOREF(Variable)
     Value *value;
 
     /// Mode flags.
-    Flags mode;
+    Flags flags;
 
     Impl() : value(0) {}
 
@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(Variable)
         : de::IPrivate()
         , name (other.name)
         , value(other.value->duplicate())
-        , mode (other.mode)
+        , flags(other.flags)
     {}
 
     ~Impl()
@@ -70,7 +70,7 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
     : d(new Impl)
 {
     d->name = name;
-    d->mode = m;
+    d->flags = m;
 
     std::unique_ptr<Value> v(initial);
     if (!initial)
@@ -115,6 +115,7 @@ Variable &Variable::set(Value *v)
 
     QScopedPointer<Value> oldValue(d->value); // old value deleted afterwards
     d->value = val.take();
+    d->flags |= ValueHasChanged;
 
     // We'll only determine if actual change occurred if someone is interested.
     if (!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
@@ -133,7 +134,7 @@ Variable &Variable::set(Value *v)
 
         if (notify)
         {
-            DENG2_FOR_AUDIENCE2(Change, i) i->variableValueChanged(*this, *d->value);
+            DENG2_FOR_AUDIENCE2(Change,     i) i->variableValueChanged(*this, *d->value);
             DENG2_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
         }
     }
@@ -213,32 +214,32 @@ Variable::operator ddouble () const
     return value().asNumber();
 }
 
-Variable::Flags Variable::mode() const
+Variable::Flags Variable::flags() const
 {
-    return d->mode;
+    return d->flags;
 }
 
-void Variable::setMode(Flags const &flags, FlagOp operation)
+void Variable::setFlags(Flags const &flags, FlagOp operation)
 {
-    applyFlagOperation(d->mode, flags, operation);
+    applyFlagOperation(d->flags, flags, operation);
 }
 
 Variable &Variable::setReadOnly()
 {
-    d->mode |= ReadOnly;
+    d->flags |= ReadOnly;
     return *this;
 }
 
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if ((dynamic_cast<NoneValue const *>(&v)       && !d->mode.testFlag(AllowNone)) ||
-       (dynamic_cast<NumberValue const *>(&v)     && !d->mode.testFlag(AllowNumber)) ||
-       (dynamic_cast<TextValue const *>(&v)       && !d->mode.testFlag(AllowText)) ||
-       (dynamic_cast<ArrayValue const *>(&v)      && !d->mode.testFlag(AllowArray)) ||
-       (dynamic_cast<DictionaryValue const *>(&v) && !d->mode.testFlag(AllowDictionary)) ||
-       (dynamic_cast<BlockValue const *>(&v)      && !d->mode.testFlag(AllowBlock)) ||
-       (dynamic_cast<TimeValue const *>(&v)       && !d->mode.testFlag(AllowTime)))
+    if ((dynamic_cast<NoneValue const *>(&v)       && !d->flags.testFlag(AllowNone)) ||
+        (dynamic_cast<NumberValue const *>(&v)     && !d->flags.testFlag(AllowNumber)) ||
+        (dynamic_cast<TextValue const *>(&v)       && !d->flags.testFlag(AllowText)) ||
+        (dynamic_cast<ArrayValue const *>(&v)      && !d->flags.testFlag(AllowArray)) ||
+        (dynamic_cast<DictionaryValue const *>(&v) && !d->flags.testFlag(AllowDictionary)) ||
+        (dynamic_cast<BlockValue const *>(&v)      && !d->flags.testFlag(AllowBlock)) ||
+        (dynamic_cast<TimeValue const *>(&v)       && !d->flags.testFlag(AllowTime)))
     {
         return false;
     }
@@ -258,7 +259,7 @@ void Variable::verifyValid(Value const &v) const
 
 void Variable::verifyWritable(Value const &attemptedNewValue)
 {
-    if (d->mode & ReadOnly)
+    if (d->flags & ReadOnly)
     {
         Value const &currentValue = *d->value;
         if (d->value && typeid(currentValue) == typeid(attemptedNewValue) &&
@@ -285,9 +286,9 @@ void Variable::verifyName(String const &s)
 
 void Variable::operator >> (Writer &to) const
 {
-    if (!d->mode.testFlag(NoSerialize))
+    if (!d->flags.testFlag(NoSerialize))
     {
-        to << d->name << duint32(d->mode) << *d->value;
+        to << d->name << duint32(d->flags) << *d->value;
     }
 }
 
@@ -295,7 +296,7 @@ void Variable::operator << (Reader &from)
 {
     duint32 modeFlags = 0;
     from >> d->name >> modeFlags;
-    d->mode = Flags(modeFlags);
+    d->flags = Flags(modeFlags);
     delete d->value;
     try
     {

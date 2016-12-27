@@ -65,6 +65,8 @@ public:
 
     Time lastWrittenAt() const;
 
+    bool hasModifiedVariables() const;
+
     // Implements IObject.
     Record &objectNamespace();
     Record const &objectNamespace() const;

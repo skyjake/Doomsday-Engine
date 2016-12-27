@@ -33,6 +33,7 @@
 #include <de/ByteArrayFile>
 #include <de/CallbackAction>
 #include <de/CommandLine>
+#include <de/Config>
 #include <de/DictionaryValue>
 #include <de/DisplayMode>
 #include <de/Error>
@@ -388,6 +389,10 @@ DENG2_PIMPL(ClientApp)
 
     void periodicAutosave()
     {
+        if (Config::exists())
+        {
+            Config::get().writeIfModified();
+        }
         Con_SaveDefaultsIfChanged();
     }
 

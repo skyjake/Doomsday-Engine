@@ -182,6 +182,21 @@ void Config::write() const
     d->write();
 }
 
+void Config::writeIfModified() const
+{
+    try
+    {
+        if (d->refuge.hasModifiedVariables())
+        {
+            write();
+        }
+    }
+    catch (Error const &er)
+    {
+        LOG_WARNING("Failed to write Config: ") << er.asText();
+    }
+}
+
 Record &Config::objectNamespace()
 {
     return d->config.globals();
@@ -195,6 +210,11 @@ Record const &Config::objectNamespace() const
 Config &Config::get()
 {
     return App::config();
+}
+
+bool de::Config::exists()
+{
+    return App::configExists();
 }
 
 Version Config::upgradedFromVersion() const

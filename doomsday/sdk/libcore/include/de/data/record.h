@@ -499,6 +499,17 @@ public:
     LoopResult forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const;
 
     /**
+     * Checks if the value of any member variables have changed. The check is done
+     * recursively in subrecords.
+     *
+     * @return At least one member variable or variable in a subrecord has changed
+     * its value.
+     */
+    bool anyMembersChanged() const;
+
+    void markAllMembersUnchanged();
+
+    /**
      * Creates a text representation of the record. Each variable name is
      * prefixed with @a prefix.
      *

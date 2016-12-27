@@ -293,6 +293,11 @@ DENG2_PIMPL(App)
         }
     }
 
+    ArchiveFolder &persistPackFolder()
+    {
+        return self().homeFolder().locate<ArchiveFolder>("persist.pack");
+    }
+
     void setOfLoadedPackagesChanged()
     {
         // Make sure the package links are up to date.
@@ -533,6 +538,11 @@ bool App::hasPersistentData()
     return DENG2_APP->d->persistentData != 0;
 }
 
+ArchiveFolder &App::persistPackFolder()
+{
+    return DENG2_APP->d->persistPackFolder();
+}
+
 NativePath App::currentWorkPath()
 {
     return NativePath::workPath();
@@ -607,7 +617,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         }
 
         // Load the persistent data.
-        d->persistentData = &homeFolder().locate<ArchiveFolder>("persist.pack").archive();
+        d->persistentData = &d->persistPackFolder().archive();
     }
 
     // The configuration.

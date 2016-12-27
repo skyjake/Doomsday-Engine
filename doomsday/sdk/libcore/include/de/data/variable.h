@@ -95,6 +95,9 @@ public:
         /// TimeValue allowed as value.
         AllowTime = 0x800,
 
+        /// Automatically set when the variable's value is changed.
+        ValueHasChanged = 0x10000000,
+
         /// The default mode allows reading and writing all types of values,
         /// including NoneValue.
         DefaultMode = AllowNone | AllowNumber | AllowText | AllowArray |
@@ -220,7 +223,7 @@ public:
     /**
      * Returns the current mode flags of the variable.
      */
-    Flags mode() const;
+    Flags flags() const;
 
     /**
      * Sets the mode flags of the variable.
@@ -228,7 +231,7 @@ public:
      * @param flags      New mode flags.
      * @param operation  What to do with @a flags.
      */
-    void setMode(Flags const &flags, FlagOp operation = ReplaceFlags);
+    void setFlags(Flags const &flags, FlagOp operation = ReplaceFlags);
 
     /**
      * Makes the variable read-only.

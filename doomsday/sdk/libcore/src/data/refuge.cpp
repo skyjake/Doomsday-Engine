@@ -19,6 +19,7 @@
 #include "de/Refuge"
 #include "de/App"
 #include "de/Archive"
+#include "de/ArchiveFolder"
 #include "de/Reader"
 #include "de/Writer"
 
@@ -69,6 +70,7 @@ void Refuge::read()
     if (App::hasPersistentData())
     {
         Reader(App::persistentData().entryBlock(d->persistentPath)).withHeader() >> d->names;
+        d->names.markAllMembersUnchanged();
     }
 }
 
@@ -76,8 +78,11 @@ void Refuge::write() const
 {
     if (App::hasPersistentData())
     {
+        d->names.markAllMembersUnchanged();
         Writer(App::mutablePersistentData().entryBlock(d->persistentPath)).withHeader()
             << d->names;
+
+        App::persistPackFolder().flush();
     }
 }
 
@@ -88,6 +93,11 @@ Time Refuge::lastWrittenAt() const
         return App::persistentData().entryStatus(d->persistentPath).modifiedAt;
     }
     return Time::invalidTime();
+}
+
+bool Refuge::hasModifiedVariables() const
+{
+    return d->names.anyMembersChanged();
 }
 
 Record &Refuge::objectNamespace()

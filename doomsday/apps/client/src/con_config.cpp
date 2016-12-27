@@ -328,7 +328,6 @@ void Con_SaveDefaultsIfChanged()
 {
     if (DoomsdayApp::isGameLoaded() && Con_IsChanged())
     {
-        qDebug() << "saving .cfg due to changes...";
         Con_SaveDefaults();
     }
 }

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <de/CommandLine>
+#include <de/Config>
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/Error>
@@ -115,6 +116,10 @@ DENG2_PIMPL(ServerApp)
 
     void periodicAutosave()
     {
+        if (Config::exists())
+        {
+            Config::get().writeIfModified();
+        }
         Con_SaveDefaultsIfChanged();
     }
 

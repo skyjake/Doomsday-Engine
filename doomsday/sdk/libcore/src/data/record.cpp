@@ -87,8 +87,7 @@ DENG2_PIMPL(Record)
         }
     };
 
-    template <typename Predicate>
-    void clear(Predicate excluded)
+    void clear(std::function<bool (Variable const &)> excluded)
     {
         if (!members.empty())
         {
@@ -206,13 +205,13 @@ DENG2_PIMPL(Record)
         }
     }
 
-    bool isRecord(Variable const &var) const
+    static bool isRecord(Variable const &var)
     {
         RecordValue const *value = var.value().maybeAs<RecordValue>();
         return value && value->record();
     }
 
-    bool isSubrecord(Variable const &var) const
+    static bool isSubrecord(Variable const &var)
     {
         // Subrecords are owned by this record.
         // Note: Non-owned Records are likely imports from other modules.
@@ -858,6 +857,44 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
     {
         return func(name, rec);
     });
+}
+
+bool Record::anyMembersChanged() const
+{
+    DENG2_GUARD(d);
+
+    auto const *const_d = d.getConst();
+    for (auto i = const_d->members.begin(); i != const_d->members.end(); ++i)
+    {
+        if (i.value()->flags() & Variable::ValueHasChanged)
+        {
+            return true;
+        }
+    }
+
+    return d->forSubrecords([this] (String const &, Record &rec)
+    {
+        if (rec.anyMembersChanged())
+        {
+            return true;
+        }
+        return false;
+    });
+}
+
+void Record::markAllMembersUnchanged()
+{
+    DENG2_GUARD(d);
+
+    for (auto i = d->members.begin(); i != d->members.end(); ++i)
+    {
+        i.value()->setFlags(Variable::ValueHasChanged, UnsetFlags);
+
+        if (d->isSubrecord(*i.value()))
+        {
+            i.value()->valueAsRecord().markAllMembersUnchanged();
+        }
+    }
 }
 
 String Record::asText(String const &prefix, List *lines) const

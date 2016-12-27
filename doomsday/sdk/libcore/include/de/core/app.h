@@ -35,6 +35,7 @@
 namespace de {
 
 class Archive;
+class ArchiveFolder;
 class CommandLine;
 class Config;
 class Event;
@@ -250,6 +251,8 @@ public:
     static Archive &mutablePersistentData();
 
     static bool hasPersistentData();
+
+    static ArchiveFolder &persistPackFolder();
 
     /**
      * Returns the application's current native working directory.

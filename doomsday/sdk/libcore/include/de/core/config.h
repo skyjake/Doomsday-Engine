@@ -65,6 +65,8 @@ public:
     /// Writes the configuration to /home.
     void write() const;
 
+    void writeIfModified() const;
+
     /**
      * Sets the value of a variable, creating the variable if needed.
      *
@@ -106,6 +108,7 @@ public:
     Record const &objectNamespace() const;
 
     static Config &get();
+    static bool exists();
 
 private:
     DENG2_PRIVATE(d)

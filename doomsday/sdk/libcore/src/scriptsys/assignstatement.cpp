@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/AssignStatement"
@@ -31,7 +31,7 @@ using namespace de;
 AssignStatement::AssignStatement() : _indexCount(0)
 {}
 
-AssignStatement::AssignStatement(Expression *target, Indices const &indices, Expression *value) 
+AssignStatement::AssignStatement(Expression *target, Indices const &indices, Expression *value)
     : _indexCount(0)
 {
     _args.add(value);
@@ -71,7 +71,7 @@ void AssignStatement::execute(Context &context) const
         Value *target = &ref->dereference();
 
         for (dint i = 0; i < _indexCount; ++i)
-        {   
+        {
             // Get the evaluated index.
             QScopedPointer<Value> index(results.popLast()); // Not released -- will be destroyed.
             if (i < _indexCount - 1)
@@ -91,12 +91,12 @@ void AssignStatement::execute(Context &context) const
         // Extract the value from the results array (no copies).
         ref->assign(value.take());
     }
-    
+
     // Should we set the variable to read-only mode?
     if (_args.back().flags() & Expression::ReadOnly)
     {
         DENG2_ASSERT(ref->variable() != NULL);
-        ref->variable()->setMode(Variable::ReadOnly | ref->variable()->mode());
+        ref->variable()->setFlags(Variable::ReadOnly, SetFlags);
     }
 
     context.proceed();
@@ -104,7 +104,7 @@ void AssignStatement::execute(Context &context) const
 
 void AssignStatement::operator >> (Writer &to) const
 {
-    to << SerialId(ASSIGN) << duint8(_indexCount) << _args;    
+    to << SerialId(ASSIGN) << duint8(_indexCount) << _args;
 }
 
 void AssignStatement::operator << (Reader &from)
@@ -113,7 +113,7 @@ void AssignStatement::operator << (Reader &from)
     from >> id;
     if (id != ASSIGN)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("AssignStatement::operator <<", "Invalid ID");
     }
@@ -121,6 +121,6 @@ void AssignStatement::operator << (Reader &from)
     duint8 count;
     from >> count;
     _indexCount = count;
-    
+
     from >> _args;
 }
