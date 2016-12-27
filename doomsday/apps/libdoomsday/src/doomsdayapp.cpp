@@ -54,6 +54,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QCoreApplication>
+#include <QTimer>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -89,6 +90,7 @@ DENG2_PIMPL(DoomsdayApp)
     res::Bundles dataBundles;
     SaveGames saveGames;
     LoopCallback mainCall;
+    QTimer configSaveTimer;
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -127,6 +129,18 @@ DENG2_PIMPL(DoomsdayApp)
 #endif
 
         audienceForFolderPopulation += this;
+
+        // Periodically save the configuration files (after they've been changed).
+        configSaveTimer.setInterval(1000);
+        configSaveTimer.setSingleShot(false);
+        QObject::connect(&configSaveTimer, &QTimer::timeout, [this] ()
+        {
+            DENG2_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
+            {
+                i->periodicAutosave();
+            }
+        });
+        configSaveTimer.start();
     }
 
     ~Impl()
@@ -362,6 +376,7 @@ DENG2_PIMPL(DoomsdayApp)
     DENG2_PIMPL_AUDIENCE(GameChange)
     DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
     DENG2_PIMPL_AUDIENCE(FileRefresh)
+    DENG2_PIMPL_AUDIENCE(PeriodicAutosave)
 };
 
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
@@ -369,6 +384,7 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, FileRefresh)
+DENG2_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     : d(new Impl(this, playerConstructor))

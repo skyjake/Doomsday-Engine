@@ -53,6 +53,9 @@ LIBDOOMSDAY_PUBLIC void Con_InitDatabases();
 LIBDOOMSDAY_PUBLIC void Con_ClearDatabases();
 LIBDOOMSDAY_PUBLIC void Con_Shutdown();
 
+LIBDOOMSDAY_PUBLIC void Con_MarkAsChanged(dd_bool changed);
+LIBDOOMSDAY_PUBLIC dd_bool Con_IsChanged();
+
 void Con_ShutdownDatabases();
 
 LIBDOOMSDAY_PUBLIC void Con_Ticker(timespan_t time);

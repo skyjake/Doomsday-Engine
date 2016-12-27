@@ -63,6 +63,7 @@ DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<Resources> resources;
@@ -78,6 +79,7 @@ DENG2_PIMPL(ServerApp)
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         self().audienceForGameUnload() += this;
         self().audienceForConsoleRegistration() += this;
+        self().audienceForPeriodicAutosave() += this;
     }
 
     ~Impl()
@@ -109,6 +111,11 @@ DENG2_PIMPL(ServerApp)
         {
             Con_SaveDefaults();
         }
+    }
+
+    void periodicAutosave()
+    {
+        Con_SaveDefaultsIfChanged();
     }
 
 #ifdef UNIX

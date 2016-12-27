@@ -61,7 +61,7 @@ static String const STR_COMMENT = "# ";
 
 static void writeHeaderComment(de::Writer &out)
 {
-    if(!App_GameLoaded())
+    if (!App_GameLoaded())
     {
         out.writeText("# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
     }
@@ -86,13 +86,13 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
     DENG2_ASSERT(var != 0);
 
     // Don't archive this cvar?
-    if(var->flags & CVF_NO_ARCHIVE)
+    if (var->flags & CVF_NO_ARCHIVE)
         return 0;
 
     AutoStr const *path = CVar_ComposePath(var);
 
     // First print the comment (help text).
-    if(char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
+    if (char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
     {
         out->writeText(String(str).addLinePrefix(STR_COMMENT) + "\n");
     }
@@ -100,7 +100,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
     out->writeText(String::format("%s %s", Str_Text(path),
                                   var->flags & CVF_PROTECTED? "force " : ""));
 
-    switch(var->type)
+    switch (var->type)
     {
     case CVT_BYTE:  out->writeText(String::format("%d", *(byte *) var->ptr)); break;
     case CVT_INT:   out->writeText(String::format("%d", *(int *) var->ptr)); break;
@@ -108,7 +108,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
 
     case CVT_CHARPTR:
         out->writeText("\"");
-        if(CV_CHARPTR(var))
+        if (CV_CHARPTR(var))
         {
             out->writeText(String(CV_CHARPTR(var)).escaped());
         }
@@ -117,7 +117,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
 
     case CVT_URIPTR:
         out->writeText("\"");
-        if(CV_URIPTR(var))
+        if (CV_URIPTR(var))
         {
             out->writeText(CV_URIPTR(var)->compose().escaped());
         }
@@ -159,11 +159,11 @@ static void writeAliasesToFile(de::Writer &out)
 
 static bool writeConsoleState(Path const &filePath)
 {
-    if(filePath.isEmpty()) return false;
+    if (filePath.isEmpty()) return false;
 
     // Ensure the destination directory exists.
     String fileDir = filePath.toString().fileNamePath();
-    if(!fileDir.isEmpty())
+    if (!fileDir.isEmpty())
     {
         F_MakePath(fileDir.toUtf8());
     }
@@ -184,7 +184,7 @@ static bool writeConsoleState(Path const &filePath)
 
         file.flush();
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_SCR_WARNING("Failed to open \"%s\" for writing: %s")
                 << filePath << er.asText();
@@ -196,11 +196,11 @@ static bool writeConsoleState(Path const &filePath)
 #ifdef __CLIENT__
 static bool writeBindingsState(Path const &filePath)
 {
-    if(filePath.isEmpty()) return false;
+    if (filePath.isEmpty()) return false;
 
     // Ensure the destination directory exists.
     String fileDir = filePath.toString().fileNamePath();
-    if(!fileDir.isEmpty())
+    if (!fileDir.isEmpty())
     {
         F_MakePath(fileDir.toUtf8());
     }
@@ -252,7 +252,7 @@ static bool writeBindingsState(Path const &filePath)
         file.flush();
         return true;
     }
-    catch(Error const &er)
+    catch (Error const &er)
     {
         LOG_SCR_WARNING("Failed opening \"%s\" for writing: %s")
                 << filePath << er.asText();
@@ -263,12 +263,12 @@ static bool writeBindingsState(Path const &filePath)
 
 static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
 {
-    if(!filePath.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
+    if (!filePath.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
     {
         writeConsoleState(filePath);
     }
 #ifdef __CLIENT__
-    if(!bindingsFileName.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
+    if (!bindingsFileName.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
     {
         // Bindings go into a separate file.
         writeBindingsState(bindingsFileName);
@@ -293,7 +293,7 @@ bool Con_ParseCommands(File const &file, int flags)
 
 bool Con_ParseCommands(NativePath const &nativePath, int flags)
 {
-    if(nativePath.exists())
+    if (nativePath.exists())
     {
         std::unique_ptr<File> file(NativeFile::newStandalone(nativePath));
         return Con_ParseCommands(*file, flags);
@@ -310,7 +310,7 @@ void Con_SaveDefaults()
 {
     Path path;
 
-    if(CommandLine_CheckWith("-config", 1))
+    if (CommandLine_CheckWith("-config", 1))
     {
         path = App::fileSystem().accessNativeLocation(CommandLine_NextAsPath(), File::Write);
     }
@@ -321,6 +321,16 @@ void Con_SaveDefaults()
 
     writeState(path, (!isDedicated && App_GameLoaded()?
                              App_CurrentGame().bindingConfig() : ""));
+    Con_MarkAsChanged(false);
+}
+
+void Con_SaveDefaultsIfChanged()
+{
+    if (DoomsdayApp::isGameLoaded() && Con_IsChanged())
+    {
+        qDebug() << "saving .cfg due to changes...";
+        Con_SaveDefaults();
+    }
 }
 
 D_CMD(WriteConsole)

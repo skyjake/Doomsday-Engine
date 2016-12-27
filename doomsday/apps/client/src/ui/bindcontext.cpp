@@ -23,6 +23,7 @@
 #include <QSet>
 #include <QtAlgorithms>
 #include <de/Log>
+#include <doomsday/console/exec.h>
 #include "clientapp.h"
 
 #include "world/p_players.h"
@@ -264,7 +265,6 @@ bool BindContext::willAcquire(int deviceId) const
     return d->acquireAllDevices || d->acquireDevices.contains(deviceId);
 }
 
-
 bool BindContext::willAcquireAll() const
 {
     return d->acquireAllDevices;
@@ -343,6 +343,8 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
 
+        Con_MarkAsChanged(true);
+
         return &bind.def();
     }
     catch (Binding::ConfigureError const &)
@@ -374,6 +376,8 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
+
+        Con_MarkAsChanged(true);
 
         return &bind.def();
     }

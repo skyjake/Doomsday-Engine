@@ -144,6 +144,7 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
     Binder binder;
     QScopedPointer<Updater> updater;
@@ -234,6 +235,7 @@ DENG2_PIMPL(ClientApp)
         self().audienceForGameUnload() += this;
         self().audienceForConsoleRegistration() += this;
         self().games().audienceForProgress() += this;
+        self().audienceForPeriodicAutosave() += this;
     }
 
     ~Impl()
@@ -382,6 +384,11 @@ DENG2_PIMPL(ClientApp)
         }
 
         ClientWindow::main().console().zeroLogHeight();
+    }
+
+    void periodicAutosave()
+    {
+        Con_SaveDefaultsIfChanged();
     }
 
     /**

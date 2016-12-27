@@ -45,6 +45,8 @@ void Con_SetDefaultPath(de::Path const &path);
  */
 void Con_SaveDefaults();
 
+void Con_SaveDefaultsIfChanged();
+
 D_CMD(WriteConsole);
 
 #endif // DENG_CONSOLE_CONFIG_H

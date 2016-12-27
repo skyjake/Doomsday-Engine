@@ -122,6 +122,7 @@ static Binder       consoleBinder;
 static execbuff_t * exBuff;
 static int          exBuffSize;
 static execbuff_t * curExec;
+static bool         consoleChanged = false;
 
 void Con_Register(void)
 {
@@ -301,6 +302,16 @@ void Con_Shutdown(void)
     consoleBinder.deinit();
 
     ConsoleInited = false;
+}
+
+void Con_MarkAsChanged(dd_bool changed)
+{
+    consoleChanged = changed;
+}
+
+dd_bool Con_IsChanged()
+{
+    return consoleChanged;
 }
 
 #if 0 // should use libshell!
@@ -663,6 +674,8 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
             }
             else
             {
+                Con_MarkAsChanged(true);
+
                 switch (cvar->type)
                 {
                 case CVT_BYTE: {
@@ -894,6 +907,7 @@ bool Con_Parse(File const &file, bool silently)
         currentLine += 1;
     }
 
+    Con_MarkAsChanged(false);
     return true;
 }
 

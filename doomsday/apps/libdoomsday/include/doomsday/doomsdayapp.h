@@ -61,6 +61,8 @@ public:
 
     DENG2_DEFINE_AUDIENCE2(FileRefresh, void aboutToRefreshFiles())
 
+    DENG2_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
+
     struct GameChangeParameters
     {
         /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
