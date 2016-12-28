@@ -212,7 +212,7 @@ Config &Config::get()
     return App::config();
 }
 
-bool de::Config::exists()
+bool Config::exists()
 {
     return App::configExists();
 }
