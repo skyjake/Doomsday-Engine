@@ -98,6 +98,7 @@ void P_RecursiveSound(mobj_t *soundTarget, Sector *sec, int soundBlocks)
     P_Iteratep(sec, DMU_LINE, spreadSoundToNeighbors, &parm);
 }
 
+#if 0
 dd_bool P_SectorTagIsBusy(int tag)
 {
     /// @note The sector tag lists cannot be used here as an iteration at a higher
@@ -112,18 +113,16 @@ dd_bool P_SectorTagIsBusy(int tag)
     }
     return false;
 }
+#endif
 
 void P_NotifySectorFinished(int tag)
 {
 #if __JHEXEN__
-    if(!P_SectorTagIsBusy(tag))
+    COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
     {
-        COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
-        {
-            script.sectorFinished(tag);
-            return LoopContinue;
-        });
-    }
+        script.sectorFinished(tag);
+        return LoopContinue;
+    });
 #else
     DENG2_UNUSED(tag);
 #endif
@@ -132,14 +131,11 @@ void P_NotifySectorFinished(int tag)
 void P_NotifyPolyobjFinished(int tag)
 {
 #if __JHEXEN__
-    if(!P_SectorTagIsBusy(tag))
+    COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
     {
-        COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
-        {
-            script.polyobjFinished(tag);
-            return LoopContinue;
-        });
-    }
+        script.polyobjFinished(tag);
+        return LoopContinue;
+    });
 #else
     DENG2_UNUSED(tag);
 #endif

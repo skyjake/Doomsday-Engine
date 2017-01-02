@@ -109,7 +109,8 @@ void T_RotatePoly(void *polyThinker)
         }
 
         pe->dist -= absSpeed;
-        if(pe->dist <= 0)
+
+        if(int(pe->dist) <= 0)
         {
             if(po->specialData == pe)
                 po->specialData = 0;
@@ -243,7 +244,7 @@ void T_MovePoly(void *polyThinker)
         uint const absSpeed = abs(pe->intSpeed);
 
         pe->dist -= absSpeed;
-        if(pe->dist <= 0)
+        if(int(pe->dist) <= 0)
         {
             if(po->specialData == pe)
                 po->specialData = NULL;
@@ -275,7 +276,7 @@ void polyevent_s::write(MapStateWriter *msw) const
 
     Writer_WriteInt32(writer, polyobj);
     Writer_WriteInt32(writer, intSpeed);
-    Writer_WriteInt32(writer, dist);
+    Writer_WriteUInt32(writer, dist);
     Writer_WriteInt32(writer, fangle);
     Writer_WriteInt32(writer, FLT2FIX(speed[VX]));
     Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
@@ -294,7 +295,7 @@ int polyevent_s::read(MapStateReader *msr)
         // Start of used data members.
         polyobj     = Reader_ReadInt32(reader);
         intSpeed    = Reader_ReadInt32(reader);
-        dist        = Reader_ReadInt32(reader);
+        dist        = Reader_ReadUInt32(reader);
         fangle      = Reader_ReadInt32(reader);
         speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
         speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
@@ -309,7 +310,7 @@ int polyevent_s::read(MapStateReader *msr)
         // Start of used data members.
         polyobj     = Reader_ReadInt32(reader);
         intSpeed    = Reader_ReadInt32(reader);
-        dist        = Reader_ReadInt32(reader);
+        dist        = Reader_ReadUInt32(reader);
         fangle      = Reader_ReadInt32(reader);
         speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
         speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
@@ -331,7 +332,7 @@ void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
 
     Writer_WriteInt32(writer, th->polyobj);
     Writer_WriteInt32(writer, th->intSpeed);
-    Writer_WriteInt32(writer, th->dist);
+    Writer_WriteUInt32(writer, th->dist);
     Writer_WriteInt32(writer, th->fangle);
     Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
     Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
@@ -350,7 +351,7 @@ int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
         // Start of used data members.
         th->polyobj     = Reader_ReadInt32(reader);
         th->intSpeed    = Reader_ReadInt32(reader);
-        th->dist        = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadUInt32(reader);
         th->fangle      = Reader_ReadInt32(reader);
         th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
         th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
@@ -365,7 +366,7 @@ int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
         // Start of used data members.
         th->polyobj     = Reader_ReadInt32(reader);
         th->intSpeed    = Reader_ReadInt32(reader);
-        th->dist        = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadUInt32(reader);
         th->fangle      = Reader_ReadInt32(reader);
         th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
         th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));

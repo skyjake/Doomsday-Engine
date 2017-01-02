@@ -36,7 +36,7 @@ extern "C" {
 /// Recursively traverse adjacent sectors, sound blocking lines cut off traversal.
 void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks);
 
-dd_bool P_SectorTagIsBusy(int tag);
+//dd_bool P_SectorTagIsBusy(int tag);
 
 void P_NotifySectorFinished(int tag);
 void P_NotifyPolyobjFinished(int tag);
