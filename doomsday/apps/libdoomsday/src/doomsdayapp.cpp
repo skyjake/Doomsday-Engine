@@ -137,7 +137,10 @@ DENG2_PIMPL(DoomsdayApp)
         {
             DENG2_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
             {
-                i->periodicAutosave();
+                if (!busyMode.isActive())
+                {
+                    i->periodicAutosave();
+                }
             }
         });
         configSaveTimer.start();
