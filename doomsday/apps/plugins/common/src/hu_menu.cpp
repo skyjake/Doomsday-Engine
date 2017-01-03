@@ -826,9 +826,9 @@ int Hu_MenuSaveSlotCommandResponder(Widget &wi, menucommand_e cmd)
 void Hu_MenuInitLoadGameAndSaveGamePages()
 {
 #if __JDOOM__ || __JDOOM64__
-    Vector2i const origin(80, 54);
+    Vector2i const origin(50, 54);
 #else
-    Vector2i const origin(70, 30);
+    Vector2i const origin(40, 30);
 #endif
     Widget::Flags const saveSlotObjectIds[NUMSAVESLOTS] = {
         Widget::Id0, Widget::Id1, Widget::Id2, Widget::Id3, Widget::Id4, Widget::Id5,

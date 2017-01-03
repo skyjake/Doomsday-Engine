@@ -94,8 +94,18 @@ static void drawEditBackground(Vector2i const &origin, int width, float alpha)
     patchinfo_t middleInfo;
     if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
-        DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectf2Tiled(origin.x + leftOffset, origin.y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+        if (!pEditLeft && !pEditRight)
+        {
+            // Stretch the middle patch to the desired width.
+            DGL_SetPatch(pEditMiddle, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+            DGL_DrawRectf2(origin.x, origin.y,
+                           width, middleInfo.geometry.size.height);
+        }
+        else
+        {
+            DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
+            DGL_DrawRectf2Tiled(origin.x + leftOffset, origin.y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+        }
     }
 }
 
@@ -310,8 +320,8 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
 
 void LineEditWidget::updateGeometry()
 {
-    // @todo calculate visible dimensions properly.
-    geometry().setSize(Vector2ui(170, 14));
+    FR_SetFont(mnRendState->textFonts[font()]);
+    geometry().setSize(Vector2ui(FR_CharWidth('w') * d->maxLength - MNDATA_EDIT_BACKGROUND_OFFSET_X*2, 14));
 }
 
 } // namespace menu
