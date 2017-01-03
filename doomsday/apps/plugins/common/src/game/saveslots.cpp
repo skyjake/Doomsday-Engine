@@ -62,11 +62,11 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     {
         LOGDEV_XVERBOSE("Updating SaveSlot '%s' status") << id;
         status = Unused;
-        if(session)
+        if (session)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if(!session->metadata().gets("gameIdentityKey").compareWithoutCase(COMMON_GAMESESSION->gameId()))
+            if (!session->metadata().gets("gameIdentityKey").compareWithoutCase(COMMON_GAMESESSION->gameId()))
             {
                 /// @todo Validate loaded add-ons and checksum the definition database.
                 status = Loadable; // It's good!
@@ -80,21 +80,23 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
 
     void updateMenuWidget(String const pageName)
     {
-        if(!menuWidgetId) return;
+        if (!menuWidgetId) return;
 
-        if(!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
+        if (!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
 
         Page &page = Hu_MenuPage(pageName);
         Widget *wi = page.tryFindWidget(menuWidgetId);
-        if(!wi)
+        if (!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
             return;
         }
         LineEditWidget &edit = wi->as<LineEditWidget>();
 
-        wi->setFlags(Widget::Disabled);
-        if(status == Loadable)
+        // In the Save menu, all slots are available for writing.
+        wi->setFlags(Widget::Disabled, pageName == "LoadGame"? SetFlags : UnsetFlags);
+
+        if (status == Loadable)
         {
             edit.setText(session->metadata().gets("userDescription", ""));
             wi->setFlags(Widget::Disabled, UnsetFlags);
@@ -104,7 +106,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             edit.setText("");
         }
 
-        if(Hu_MenuIsActive() && Hu_MenuPagePtr() == &page)
+        if (Hu_MenuIsActive() && Hu_MenuPagePtr() == &page)
         {
             // Re-open the active page to update focus if necessary.
             Hu_MenuSetPage(&page, true);
@@ -127,7 +129,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWid
     d->userWritable = userWritable;
     d->menuWidgetId = menuWidgetId;
     d->savePath     = GameSession::savePath() / saveName;
-    if(d->savePath.fileNameExtension().isEmpty())
+    if (d->savePath.fileNameExtension().isEmpty())
     {
         d->savePath += ".save";
     }
@@ -159,12 +161,12 @@ String const &SaveSlots::Slot::savePath() const
 void SaveSlots::Slot::bindSaveName(String newName)
 {
     String newPath = GameSession::savePath() / newName;
-    if(newPath.fileNameExtension().isEmpty())
+    if (newPath.fileNameExtension().isEmpty())
     {
         newPath += ".save";
     }
 
-    if(d->savePath != newPath)
+    if (d->savePath != newPath)
     {
         d->savePath = newPath;
         setGameStateFolder(App::rootFolder().tryLocate<GameStateFolder>(d->savePath));
@@ -173,11 +175,11 @@ void SaveSlots::Slot::bindSaveName(String newName)
 
 void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
 {
-    if(d->session == newSession) return;
+    if (d->session == newSession) return;
 
     // We want notification of subsequent changes so that we can update the session status
     // (and the menu, in turn).
-    if(d->session)
+    if (d->session)
     {
         d->session->audienceForMetadataChange() -= d;
     }
@@ -185,18 +187,18 @@ void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
     d->session = newSession;
     d->updateStatus();
 
-    if(d->session)
+    if (d->session)
     {
         d->session->audienceForMetadataChange() += d;
     }
 
     // Should we announce this?
 #if !defined DENG_DEBUG // Always
-    if(isUserWritable())
+    if (isUserWritable())
 #endif
     {
         String statusText;
-        if(d->session)
+        if (d->session)
         {
             statusText = String("associated with \"%1\"").arg(d->session->path());
         }
@@ -238,7 +240,7 @@ DENG2_PIMPL(SaveSlots)
     SaveSlot *slotById(String const &id)
     {
         Slots::const_iterator found = sslots.find(id);
-        if(found != sslots.end())
+        if (found != sslots.end())
         {
             return found->second;
         }
@@ -309,7 +311,7 @@ SaveSlots::SaveSlots() : d(new Impl(this))
 void SaveSlots::add(String const &id, bool userWritable, String const &saveName, int menuWidgetId)
 {
     // Ensure the slot identifier is unique.
-    if(d->slotById(id)) return;
+    if (d->slotById(id)) return;
 
     // Insert a new save slot.
     d->sslots.insert(Impl::SlotItem(id, new Slot(id, userWritable, saveName, menuWidgetId)));
@@ -327,7 +329,7 @@ bool SaveSlots::has(String const &id) const
 
 SaveSlots::Slot &SaveSlots::slot(String const &id) const
 {
-    if(SaveSlot *sslot = d->slotById(id))
+    if (SaveSlot *sslot = d->slotById(id))
     {
         return *sslot;
     }
@@ -342,11 +344,11 @@ SaveSlots::Slot *SaveSlots::slotBySaveName(String const &name) const
 
 SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description) const
 {
-    if(!description.isEmpty())
+    if (!description.isEmpty())
     {
         DENG2_FOR_EACH_CONST(Impl::Slots, i, d->sslots)
         {
-            if(!COMMON_GAMESESSION->savedUserDescription(i->second->saveName())
+            if (!COMMON_GAMESESSION->savedUserDescription(i->second->saveName())
                                       .compareWithoutCase(description))
             {
                 return i->second;
@@ -359,13 +361,13 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
 SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
 {
     // Perhaps a user description of a saved session?
-    if(Slot *sslot = slotBySavedUserDescription(str))
+    if (Slot *sslot = slotBySavedUserDescription(str))
     {
         return sslot;
     }
 
     // Perhaps a saved session file name?
-    if(Slot *sslot = slotBySaveName(str))
+    if (Slot *sslot = slotBySaveName(str))
     {
         return sslot;
     }
@@ -374,11 +376,11 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     String id = str;
 
     // Translate slot id mnemonics.
-    if(!id.compareWithoutCase("last") || !id.compareWithoutCase("<last>"))
+    if (!id.compareWithoutCase("last") || !id.compareWithoutCase("<last>"))
     {
         id = String::number(Con_GetInteger("game-save-last-slot"));
     }
-    else if(!id.compareWithoutCase("quick") || !id.compareWithoutCase("<quick>"))
+    else if (!id.compareWithoutCase("quick") || !id.compareWithoutCase("<quick>"))
     {
         id = String::number(Con_GetInteger("game-save-quick-slot"));
     }

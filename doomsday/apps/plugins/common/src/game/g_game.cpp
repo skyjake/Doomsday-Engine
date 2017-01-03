@@ -2573,7 +2573,7 @@ static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValu
     return true;
 }
 
-D_CMD(DeleteGameStateFolder)
+D_CMD(DeleteSaveGame)
 {
     DENG2_UNUSED(src);
 
@@ -3034,8 +3034,8 @@ void G_ConsoleRegister()
     C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.common.confirmRebornLoad,     0, 0, 1);
     C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.common.loadLastSaveOnReborn,  0, 0, 1);
 
-    C_CMD("deletegamesave",     "ss",       DeleteGameStateFolder);
-    C_CMD("deletegamesave",     "s",        DeleteGameStateFolder);
+    C_CMD("deletegamesave",     "ss",       DeleteSaveGame);
+    C_CMD("deletegamesave",     "s",        DeleteSaveGame);
     C_CMD("endgame",            "s",        EndSession);
     C_CMD("endgame",            "",         EndSession);
     C_CMD("helpscreen",         "",         HelpScreen);
