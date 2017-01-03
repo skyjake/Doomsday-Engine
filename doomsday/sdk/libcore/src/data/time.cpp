@@ -191,11 +191,18 @@ DENG2_PIMPL_NOREF(Time)
         {
             return dateTime == other.dateTime;
         }
-        /**
-         * @todo Implement needed conversion to compare DateTime with high
-         * performance delta time.
-         */
-        DENG2_ASSERT(false);
+        if (flags.testFlag(DateTime))
+        {
+            // This is DateTime but other is high-perf.
+            return fequal(highPerfTimer.startedAt().asDateTime().msecsTo(dateTime)/1000.0,
+                          other.highPerfElapsed);
+        }
+        if (flags.testFlag(HighPerformance))
+        {
+            // This is high-perf and the other is DateTime.
+            return fequal(highPerfElapsed,
+                          highPerfTimer.startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
+        }
         return false;
     }
 
