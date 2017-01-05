@@ -1317,7 +1317,10 @@ static void runGameAction()
                 if(CommandLine_Exists("-game"))
                 {
                     // Launched directly into game, so quit the engine altogether.
-                    Sys_Quit();
+                    // Sys_Quit unloads the game immediately, though, and we're deep
+                    // inside the game plugin at the moment. Therefore, the quitting
+                    // needs to be deferred and initiated from the app event loop.
+                    App_Timer(1, Sys_Quit);
                 }
                 else
                 {
