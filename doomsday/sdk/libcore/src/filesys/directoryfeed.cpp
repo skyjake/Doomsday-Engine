@@ -264,19 +264,56 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     }
 
     // Get file status information.
-    return File::Status(info.size(), info.lastModified());
+    return File::Status(info.isDir()? File::Status::FOLDER : File::Status::FILE,
+                        dsize(info.size()),
+                        info.lastModified());
 }
 
 File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
                                                 Folder &parentFolder)
 {
+    Folder *parent = &parentFolder;
+
     File::Status const status = fileStatus(nativePath);
 
-    auto *source = new NativeFile(nativePath.fileName(), nativePath);
-    source->setStatus(status);
+    // If we're populating a .pack, the possible container .packs must be included as
+    // parent folders (in structure only, not all their contents). Otherwise the .pack
+    // identifier would not be the same.
 
-    File *file = FileSystem::get().interpret(source);
-    parentFolder.add(file);
-    FileSystem::get().index(*file);
-    return *file;
+    if (parentFolder.extension() != ".pack" &&
+        nativePath.fileName().fileNameExtension() == ".pack")
+    {
+        // Extract the portion of the path containing the parent .packs.
+        int const last = nativePath.segmentCount() - 1;
+        Rangei packRange(last, last);
+        while (packRange.start > 0 &&
+               nativePath.segment(packRange.start - 1).toStringRef()
+               .endsWith(".pack", Qt::CaseInsensitive))
+        {
+            packRange.start--;
+        }
+        if (!packRange.isEmpty())
+        {
+            parent = &FS::get().makeFolder(parentFolder.path() /
+                                           nativePath.subPath(packRange).withSeparators('/'),
+                                           FS::DontInheritFeeds);
+        }
+    }
+
+    if (status.type() == File::Status::FILE)
+    {
+        auto *source = new NativeFile(nativePath.fileName(), nativePath);
+        source->setStatus(status);
+        File *file = FileSystem::get().interpret(source);
+        parent->add(file);
+        FileSystem::get().index(*file);
+        return *file;
+    }
+    else
+    {
+        return FS::get().makeFolderWithFeed(parent->path() / nativePath.fileName(),
+                                            new DirectoryFeed(nativePath),
+                                            Folder::PopulateFullTree,
+                                            FS::DontInheritFeeds | FS::PopulateNewFolder);
+    }
 }
