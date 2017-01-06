@@ -266,3 +266,17 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     // Get file status information.
     return File::Status(info.size(), info.lastModified());
 }
+
+File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
+                                                Folder &parentFolder)
+{
+    File::Status const status = fileStatus(nativePath);
+
+    auto *source = new NativeFile(nativePath.fileName(), nativePath);
+    source->setStatus(status);
+
+    File *file = FileSystem::get().interpret(source);
+    parentFolder.add(file);
+    FileSystem::get().index(*file);
+    return *file;
+}

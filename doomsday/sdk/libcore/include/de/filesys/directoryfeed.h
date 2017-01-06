@@ -105,6 +105,17 @@ public:
      */
     static File::Status fileStatus(NativePath const &nativePath);
 
+    /**
+     * Creates and interprets a single native file and adds it to a folder. The created
+     * file is not governed by any feed and will not be pruned during folder pruning.
+     *
+     * @param nativePath    Native path of the source file.
+     * @param parentFolder  Folder where to place the interpreted file.
+     *
+     * @return Reference to the interpreted file.
+     */
+    static File &manuallyPopulateSingleFile(NativePath const &nativePath, Folder &parentFolder);
+
 protected:
     void populateSubFolder(Folder const &folder, String const &entryName);
     void populateFile(Folder const &folder, String const &entryName, PopulatedFiles &populated);
