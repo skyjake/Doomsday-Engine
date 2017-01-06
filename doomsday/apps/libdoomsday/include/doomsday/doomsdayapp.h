@@ -92,6 +92,12 @@ public:
      */
     void initPackageFolders();
 
+    /**
+     * Lists all the files found on the command line "-file" option (and its aliases).
+     * @return List of files.
+     */
+    QList<de::File *> filesFromCommandLine() const;
+
     enum Behavior
     {
         AllowReload = 0x1,

@@ -199,10 +199,24 @@ DENG2_PIMPL(DoomsdayApp)
 
         CommandLine::get().forAllParameters(option, [] (duint pos, String const &)
         {
-            auto &cmdLine = CommandLine::get();
-            cmdLine.makeAbsolutePath(pos);
-            DirectoryFeed::manuallyPopulateSingleFile(cmdLine.at(pos),
-                FS::get().makeFolder(String("/sys/cmdline/arg%1").arg(pos, 3, 10, QChar('0'))));
+            try
+            {
+                auto &cmdLine = CommandLine::get();
+                cmdLine.makeAbsolutePath(pos);
+                Folder &argFolder = FS::get().makeFolder(String("/sys/cmdline/arg%1").arg(pos, 3, 10, QChar('0')));
+                File const &argFile = DirectoryFeed::manuallyPopulateSingleFile
+                        (cmdLine.at(pos), argFolder);
+                // For future reference, store the name of the actual intended file as
+                // metadata in the "arg00N" folder. This way we don't need to go looking
+                // for it again later.
+                argFolder.objectNamespace().set("argPath", argFile.path());
+            }
+            catch (Error const &er)
+            {
+                throw Error("DoomsdayApp::initCommandLineFiles",
+                            QString("Problem with file path in command line argument %1: %2")
+                            .arg(pos).arg(er.asText()));
+            }
         });
     }
 
@@ -463,6 +477,28 @@ void DoomsdayApp::initPackageFolders()
 {
     DENG2_FOR_AUDIENCE2(FileRefresh, i) i->aboutToRefreshFiles();
     d->initPackageFolders();
+}
+
+QList<File *> DoomsdayApp::filesFromCommandLine() const
+{
+    QList<File *> files;
+    FS::locate<Folder const>("/sys/cmdline").forContents([&files] (String name, File &file)
+    {
+        try
+        {
+            if (name.startsWith("arg"))
+            {
+                files << &FS::locate<File>(file.as<Folder>().objectNamespace().gets("argPath"));
+            }
+        }
+        catch (Error const &er)
+        {
+            LOG_RES_ERROR("Problem with a file specified on the command line: %s")
+                    << er.asText();
+        }
+        return LoopContinue;
+    });
+    return files;
 }
 
 void DoomsdayApp::determineGlobalPaths()
