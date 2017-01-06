@@ -210,6 +210,35 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     return found;
 }
 
+int CommandLine::forAllParameters(String const &arg,
+                                  std::function<void (duint, String const &)> paramHandler) const
+{
+    int total = 0;
+    bool inside = false;
+
+    for (Impl::Arguments::const_iterator i = d->arguments.begin();
+         i != d->arguments.end(); ++i)
+    {
+        if (matches(arg, *i))
+        {
+            inside = true;
+        }
+        else if (inside)
+        {
+            if (isOption(*i))
+            {
+                inside = false;
+            }
+            else
+            {
+                paramHandler(i - d->arguments.begin(), *i);
+                ++total;
+            }
+        }
+    }
+    return total;
+}
+
 bool CommandLine::getParameter(String const &arg, String &param) const
 {
     dint pos = check(arg, 1);

@@ -128,6 +128,19 @@ public:
     ArgWithParams check(String const &arg, dint count = 0) const;
 
     /**
+     * Calls a callback function for each of the parameters given to an argumnet.
+     * If there are multiple @a arg options found, all of the parameters given
+     * to each option get called in order.
+     *
+     * @param arg  Argument to look for. Don't use aliases here.
+     * @param paramHandler  Callback for the parameters.
+     *
+     * @return Number of parameters handled.
+     */
+    int forAllParameters(String const &arg,
+                         std::function<void (duint, String const &)> paramHandler) const;
+
+    /**
      * Gets the parameter for an argument.
      *
      * @param arg    Argument to look for. Don't use aliases here. Defines
