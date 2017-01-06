@@ -322,6 +322,20 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
     return *d->extraSegments[reverseIndex - SEGMENT_BUFFER_SIZE];
 }
 
+Path Path::subPath(Rangei const &range) const
+{
+    if (range.isEmpty())
+    {
+        return Path("", d->separator);
+    }
+    Path sub(segment(range.start), d->separator);
+    for (int i = range.start + 1; i < range.end; ++i)
+    {
+        sub = sub / segment(i);
+    }
+    return sub;
+}
+
 bool Path::operator == (Path const &other) const
 {
     if (this == &other) return true;

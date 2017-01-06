@@ -409,6 +409,8 @@ public:
      */
     Segment const &reverseSegment(int reverseIndex) const;
 
+    Path subPath(Rangei const &range) const;
+
     /**
      * @return  Total number of segments in the segment map. There is always
      * at least one segment.

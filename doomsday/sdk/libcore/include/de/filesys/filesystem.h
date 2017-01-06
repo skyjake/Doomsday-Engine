@@ -350,6 +350,12 @@ public:
 
     void timeChanged(Clock const &);
 
+public:
+    template <typename T>
+    static T &locate(String const &path) {
+        return FileSystem::get().root().locate<T>(path);
+    }
+
 private:
     DENG2_PRIVATE(d)
 };
