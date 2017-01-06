@@ -361,6 +361,14 @@ Profiles::AbstractProfile::AbstractProfile(AbstractProfile const &profile)
 Profiles::AbstractProfile::~AbstractProfile()
 {}
 
+Profiles::AbstractProfile &Profiles::AbstractProfile::operator = (AbstractProfile const &other)
+{
+    d->name     = other.d->name;
+    d->readOnly = other.d->readOnly;
+    // owner is not copied
+    return *this;
+}
+
 void Profiles::AbstractProfile::setOwner(Profiles *owner)
 {
     DENG2_ASSERT(d->owner != owner);

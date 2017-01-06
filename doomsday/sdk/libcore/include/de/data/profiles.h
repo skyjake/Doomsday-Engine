@@ -51,6 +51,13 @@ public:
 
         virtual ~AbstractProfile();
 
+        /**
+         * Assigns another profile's data to this one. The owner pointer is not copied.
+         * @param other  Other profile.
+         * @return Reference.
+         */
+        AbstractProfile &operator = (AbstractProfile const &other);
+
         void setOwner(Profiles *owner);
 
         Profiles &owner();

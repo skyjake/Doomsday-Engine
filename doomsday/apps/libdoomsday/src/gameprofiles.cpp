@@ -166,6 +166,16 @@ GameProfiles::Profile::Profile(Profile const &other)
     , d(new Impl(*other.d))
 {}
 
+GameProfiles::Profile &GameProfiles::Profile::operator = (Profile const &other)
+{
+    AbstractProfile::operator = (other);
+    d->gameId = other.d->gameId;
+    d->packages = other.d->packages;
+    d->userCreated = other.d->userCreated;
+    d->useGameRequirements = other.d->useGameRequirements;
+    return *this;
+}
+
 void GameProfiles::Profile::setGame(String const &id)
 {
     d->gameId = id;

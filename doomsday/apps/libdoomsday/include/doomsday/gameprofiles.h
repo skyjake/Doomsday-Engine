@@ -41,6 +41,8 @@ public:
         Profile(de::String const &name = de::String());
         Profile(Profile const &other);
 
+        Profile &operator = (Profile const &other);
+
         void setGame(de::String const &id);
         void setPackages(de::StringList const &packagesInOrder);
         void setUserCreated(bool userCreated);
