@@ -37,12 +37,13 @@
 #include "doomsday/GameStateFolder"
 
 #include <de/App>
-#include <de/Config>
 #include <de/CommandLine>
+#include <de/Config>
 #include <de/DictionaryValue>
 #include <de/DirectoryFeed>
 #include <de/Folder>
 #include <de/Loop>
+#include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 #include <de/c_wrapper.h>
@@ -192,6 +193,19 @@ DENG2_PIMPL(DoomsdayApp)
         }
     }
 
+    void initCommandLineFiles(String const &option)
+    {
+        FileSystem::get().makeFolder("/sys/cmdline", FS::DontInheritFeeds);
+
+        CommandLine::get().forAllParameters(option, [] (duint pos, String const &)
+        {
+            auto &cmdLine = CommandLine::get();
+            cmdLine.makeAbsolutePath(pos);
+            DirectoryFeed::manuallyPopulateSingleFile(cmdLine.at(pos),
+                FS::get().makeFolder(String("/sys/cmdline/arg%1").arg(pos, 3, 10, QChar('0'))));
+        });
+    }
+
     /**
      * Doomsday can locate WAD files from various places. This method attaches
      * a set of feeds to /local/wads/ so that all the native folders where the
@@ -200,7 +214,7 @@ DENG2_PIMPL(DoomsdayApp)
     void initWadFolders()
     {
         // "/local" is for various files on the local computer.
-        Folder &wads = App::fileSystem().makeFolder(PATH_LOCAL_WADS, FS::DontInheritFeeds);
+        Folder &wads = FileSystem::get().makeFolder(PATH_LOCAL_WADS, FS::DontInheritFeeds);
         wads.clear();
         wads.clearFeeds();
 
@@ -300,7 +314,7 @@ DENG2_PIMPL(DoomsdayApp)
 
     void initPackageFolders()
     {
-        Folder &packs = App::fileSystem().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
+        Folder &packs = FileSystem::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
         packs.clear();
         packs.clearFeeds();
 
@@ -400,8 +414,8 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     static GameStateFolder::Interpreter intrpGameStateFolder;
     static DataBundle::Interpreter      intrpDataBundle;
 
-    App::fileSystem().addInterpreter(intrpGameStateFolder);
-    App::fileSystem().addInterpreter(intrpDataBundle);
+    FileSystem::get().addInterpreter(intrpGameStateFolder);
+    FileSystem::get().addInterpreter(intrpDataBundle);
 }
 
 DoomsdayApp::~DoomsdayApp()
@@ -409,7 +423,7 @@ DoomsdayApp::~DoomsdayApp()
 
 void DoomsdayApp::initialize()
 {
-    auto &fs = App::fileSystem();
+    auto &fs = FileSystem::get();
 
     // Folder for temporary native files.
     NativePath tmpPath = NativePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
@@ -428,6 +442,7 @@ void DoomsdayApp::initialize()
     fs.makeFolder("/sys/bundles", FS::DontInheritFeeds)
             .attach(new res::BundleLinkFeed); // prunes expired symlinks
 
+    d->initCommandLineFiles("-file");
     d->initWadFolders();
     d->initPackageFolders();
 
