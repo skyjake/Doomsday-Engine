@@ -418,8 +418,6 @@ DENG2_PIMPL(ClientWindow)
         case Busy:
             game->hide();
             game->disable();
-            //gameUI->hide();
-            //gameUI->disable();
             taskBar->disable();
 
             busy->show();
@@ -432,8 +430,6 @@ DENG2_PIMPL(ClientWindow)
 
             game->show();
             game->enable();
-            //gameUI->show();
-            //gameUI->enable();
             taskBar->enable();
             break;
         }
