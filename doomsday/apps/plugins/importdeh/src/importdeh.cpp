@@ -149,22 +149,6 @@ static void readPatchFiles()
             }
         }
     }
-
-    // Command line options.
-    CommandLine &cmdLine = DENG2_APP->commandLine();
-    for (int p = 0; p < cmdLine.count(); ++p)
-    {
-        char const *arg = *(cmdLine.argv() + p);
-        if (!cmdLine.matches("-deh", arg)) continue;
-
-        while (++p != cmdLine.count() && !cmdLine.isOption(p))
-        {
-            cmdLine.makeAbsolutePath(p);
-            readFile(NativePath(*(cmdLine.argv() + p)));
-        }
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }
 }
 
 /**

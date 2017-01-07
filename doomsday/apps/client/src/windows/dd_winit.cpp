@@ -86,9 +86,6 @@ dd_bool DD_Win32_Init()
     // Initialize COM.
     CoInitialize(NULL);
 
-    // Prepare the command line arguments.
-    DD_InitCommandLine();
-
     Library_Init();
 
     DoomsdayApp::app().determineGlobalPaths();

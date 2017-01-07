@@ -642,30 +642,6 @@ static void readAllDefinitions()
         }
     }
 
-    // Next are any definition files specified on the command line.
-    for (dint p = 0; p < CommandLine_Count(); ++p)
-    {
-        char const *arg = CommandLine_At(p);
-        if (!CommandLine_IsMatchingAlias("-def",  arg) &&
-            !CommandLine_IsMatchingAlias("-defs", arg)) continue;
-
-        while (++p != CommandLine_Count() && !CommandLine_IsOption(p))
-        {
-            // CommandLine cleans the path, expands symbols, and makes it absolute.
-            NativePath searchPath(CommandLine_PathAt(p));
-
-            //Str_Clear(buf); Str_Set(buf, searchPath);
-            //F_FixSlashes(buf, buf);
-            //F_ExpandBasePath(buf, buf);
-            // We must have an absolute path. If we still do not have one then
-            // prepend the current working directory if necessary.
-            //prependWorkPath(buf, buf);
-
-            readDefinitionFile(searchPath.withSeparators('/'));
-        }
-        p--;  /* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }
-
     // Last are DD_DEFNS definition lumps from loaded add-ons.
     /// @todo Shouldn't these be processed before definitions on the command line?
     Def_ReadLumpDefs();

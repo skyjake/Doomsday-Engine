@@ -902,21 +902,59 @@ Game const &App_CurrentGame()
     return DoomsdayApp::game();
 }
 
+static GameProfile automaticProfile;
+
 static GameProfile const *autoselectGameProfile()
 {
-    if (CommandLine_CheckWith("-game", 1))
+    if (auto arg = CommandLine::get().check("-game", 1))
     {
         // Make sure all files have been found so we can determine which games are playable.
         Folder::waitForPopulation();
         DoomsdayApp::bundles().waitForEverythingIdentified();
 
-        char const *identityKey = CommandLine_Next();
+        String const param = arg.params.first();
+        Games &games = DoomsdayApp::games();
 
-        Game &game = App_Games()[identityKey];
-        GameProfile const &prof = DoomsdayApp::gameProfiles().find(game.title()).as<GameProfile>();
-        if (prof.isPlayable())
+        // The argument can be a game ID or a profile name.
+        if (games.contains(param))
         {
-            return &prof;
+            Game &game = games[param];
+            automaticProfile = DoomsdayApp::gameProfiles().find(game.title()).as<GameProfile>();
+        }
+        else if (auto const *prof = DoomsdayApp::gameProfiles().tryFind(param))
+        {
+            automaticProfile = prof->as<GameProfile>();
+        }
+
+        // Append the packages specified on the command line.
+        foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
+        {
+            String packageId;
+            if (auto const *bundle = f->maybeAs<DataBundle>())
+            {
+                packageId = bundle->packageId();
+            }
+            else if (f->extension() == ".pack")
+            {
+                packageId = Package::identifierForFile(*f);
+            }
+            else
+            {
+                LOG_RES_WARNING("Unknown file %s will not be loaded")
+                        << f->description();
+            }
+
+            if (!packageId.isEmpty())
+            {
+                StringList pkgs = automaticProfile.packages();
+                pkgs << packageId;
+                automaticProfile.setPackages(pkgs);
+            }
+        }
+
+        if (automaticProfile.isPlayable())
+        {
+            return &automaticProfile;
         }
     }
 
@@ -1030,30 +1068,10 @@ static void initialize()
     {
         if (GameProfile const *game = autoselectGameProfile())
         {
-            // An implicit game session profile has been defined.
-            // Add all resources specified using -file options on the command line
-            // to the list for the session.
-            AbstractSession::Profile &prof = AbstractSession::profile();
-
-            for (dint p = 0; p < CommandLine_Count(); ++p)
-            {
-                if (!CommandLine_IsMatchingAlias("-file", CommandLine_At(p)))
-                {
-                    continue;
-                }
-
-                while (++p != CommandLine_Count() && !CommandLine_IsOption(p))
-                {
-                    prof.resourceFiles << NativePath(CommandLine_PathAt(p)).expand().withSeparators('/');
-                }
-
-                p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-            }
-
-            // Begin the game session.
 #ifdef __CLIENT__
             ClientWindow::main().home().moveOffscreen(0.0);
 #endif
+            // Begin the game session.
             DoomsdayApp::app().changeGame(*game, DD_ActivateGameWorker);
         }
 #ifdef __SERVER__
@@ -1136,7 +1154,7 @@ static void initialize()
     for (dint p = 1; p < CommandLine_Count() - 1; p++)
     {
         if (stricmp(CommandLine_At(p), "-command") &&
-           stricmp(CommandLine_At(p), "-cmd"))
+            stricmp(CommandLine_At(p), "-cmd"))
         {
             continue;
         }

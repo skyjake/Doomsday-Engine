@@ -522,6 +522,7 @@ ClientApp::ClientApp(int &argc, char **argv)
 void ClientApp::initialize()
 {
     Libdeng_Init();
+    DD_InitCommandLine();
 
 #ifdef UNIX
     // Some common Unix command line options.

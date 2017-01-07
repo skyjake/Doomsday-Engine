@@ -61,7 +61,7 @@ namespace internal
         "PWAD file",
         "data lump",
         "Doomsday Engine definitions",
-        "DeHackEd patch",
+        "DeHackEd patch", // importdeh plugin
         "collection"
     };
 }

@@ -52,8 +52,6 @@ dd_bool DD_Unix_Init(void)
     // We wish to use U.S. English formatting for time and numbers.
     setlocale(LC_ALL, "en_US.UTF-8");
 
-    DD_InitCommandLine();
-
     Library_Init();
 
     // Determine our basedir and other global paths.

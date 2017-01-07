@@ -141,7 +141,6 @@ void DD_PublishAPIs(::Library *lib)
 void DD_InitCommandLine()
 {
     CommandLine_Alias("-game", "-g");
-    CommandLine_Alias("-defs", "-d");
     CommandLine_Alias("-width", "-w");
     CommandLine_Alias("-height", "-h");
     CommandLine_Alias("-winsize", "-wh");
@@ -149,6 +148,10 @@ void DD_InitCommandLine()
     CommandLine_Alias("-window", "-wnd");
     CommandLine_Alias("-nocenter", "-noc");
     CommandLine_Alias("-file", "-f");
+    CommandLine_Alias("-file", "-d");
+    CommandLine_Alias("-file", "-def");
+    CommandLine_Alias("-file", "-defs");
+    CommandLine_Alias("-file", "-deh"); // importdeh plugin
     CommandLine_Alias("-config", "-cfg");
     CommandLine_Alias("-parse", "-p");
     CommandLine_Alias("-cparse", "-cp");
