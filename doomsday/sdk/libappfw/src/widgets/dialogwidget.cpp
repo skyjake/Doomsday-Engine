@@ -318,6 +318,7 @@ DENG_GUI_PIMPL(DialogWidget)
         if (ButtonItem const *i = item.maybeAs<ButtonItem>())
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
+            but.setColorTheme(self().colorTheme());
             if (!i->action())
             {
                 if (i->role() & (Accept | Yes))

@@ -101,6 +101,8 @@ public:
 
     void setColorTheme(ColorTheme theme);
 
+    ColorTheme colorTheme() const;
+
     void enableCloseButton(bool enable);
 
     /**
