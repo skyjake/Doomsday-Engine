@@ -1,4 +1,4 @@
-/** @file packagepopupwidget.h  Popup showing information about a package.
+/** @file packagepopupwidget.h  Popup showing information and actions about a package.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,19 +19,19 @@
 #ifndef DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H
 #define DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H
 
-#include <de/DocumentPopupWidget>
+#include <de/DialogWidget>
 
 /**
  * Popup showing information about a package.
  */
-class PackagePopupWidget : public de::DocumentPopupWidget
+class PackagePopupWidget : public de::DialogWidget
 {
 public:
     PackagePopupWidget(de::String const &packageId);
     PackagePopupWidget(de::File const *packageFile);
 
-protected:
-    bool setup(de::File const *file);
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H

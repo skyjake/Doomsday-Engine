@@ -66,9 +66,9 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     {
         actions << new ui::SubwidgetItem(tr("..."), ui::Down, [this] () -> PopupWidget *
         {
-            String const packageId = packages->actionPackage();
+            return new PackagePopupWidget(packages->actionPackage());
 
-            auto *popMenu = new PopupMenuWidget;
+            /*auto *popMenu = new PopupMenuWidget;
             popMenu->setColorTheme(Inverted);
             popMenu->items() << new ui::SubwidgetItem(tr("Info"), ui::Down,
                 [this, packageId] () -> PopupWidget * {
@@ -87,7 +87,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             popMenu->items()
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
-            return popMenu;
+            return popMenu;*/
         });
 
         countLabel = new LabelWidget;
