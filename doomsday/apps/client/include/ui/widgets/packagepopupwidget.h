@@ -26,9 +26,17 @@
  */
 class PackagePopupWidget : public de::DialogWidget
 {
+    Q_OBJECT
+
 public:
     PackagePopupWidget(de::String const &packageId);
     PackagePopupWidget(de::File const *packageFile);
+
+public slots:
+    void playInGame();
+    void addToProfile();
+    void configure();
+    void uninstall();
 
 private:
     DENG2_PRIVATE(d)

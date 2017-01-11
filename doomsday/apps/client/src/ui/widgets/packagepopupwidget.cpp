@@ -18,24 +18,30 @@
 
 #include "ui/widgets/packagepopupwidget.h"
 
+#include <doomsday/DataBundle>
+
 #include <de/App>
 #include <de/LabelWidget>
 #include <de/DocumentWidget>
 #include <de/PackageLoader>
 #include <de/SequentialLayout>
+#include <de/SignalAction>
 
 using namespace de;
 
-DENG2_PIMPL(PackagePopupWidget)
+DENG_GUI_PIMPL(PackagePopupWidget)
 {
     LabelWidget *title;
     LabelWidget *path;
     DocumentWidget *description;
     LabelWidget *icon;
     LabelWidget *metaInfo;
+    IndirectRule *targetHeight;
 
     Impl(Public *i) : Base(i)
     {
+        targetHeight = new IndirectRule;
+
         self().useInfoStyle();
 
         // The Close button is always available. Other actions are shown depending
@@ -46,34 +52,68 @@ DENG2_PIMPL(PackagePopupWidget)
         createWidgets();
     }
 
+    ~Impl()
+    {
+        releaseRef(targetHeight);
+    }
+
     void createWidgets()
     {
         auto &area = self().area();
 
+        // Left column.
         title = LabelWidget::newWithText("", &area);
         title->setFont("heading");
         title->setSizePolicy(ui::Filled, ui::Expand);
         title->setTextColor("inverted.text");
+        title->setTextLineAlignment(ui::AlignLeft);
+        title->margins().setBottom("");
 
         path = LabelWidget::newWithText("", &area);
         path->setFont("small");
         path->setSizePolicy(ui::Filled, ui::Expand);
         path->setTextColor("inverted.text");
+        path->setTextLineAlignment(ui::AlignLeft);
+        path->margins().setTop("unit");
 
         description = new DocumentWidget;
+        description->setFont("small");
         description->setWidthPolicy(ui::Fixed);
-        description->rule().setInput(Rule::Height, Const(2*150));
+        description->rule().setInput(Rule::Height, *targetHeight - title->rule().height()
+                                     - path->rule().height());
         area.add(description);
 
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top(),
                                 ui::Down);
-        layout.setOverrideWidth(Const(2*300));
+        layout.setOverrideWidth(Const(2*400));
         layout << *title
                << *path
                << *description;
 
-        area.setContentSize(layout.width(), layout.height());
+        // Right column.
+        icon = LabelWidget::newWithText("", &area);
+        icon->setSizePolicy(ui::Filled, ui::Filled);
+        icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
+        icon->setStyleImage("package");
+        icon->setImageColor(style().colors().colorf("inverted.text"));
+        icon->rule().setInput(Rule::Height, Const(2*200));
+
+        metaInfo = LabelWidget::newWithText("", &area);
+        metaInfo->setSizePolicy(ui::Filled, ui::Expand);
+        metaInfo->setTextLineAlignment(ui::AlignLeft);
+        metaInfo->setFont("small");
+        metaInfo->setTextColor("inverted.text");
+
+        SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
+        rightLayout.setOverrideWidth(Const(2*200));
+        rightLayout << *icon
+                    << *metaInfo;
+
+        targetHeight->setSource(rightLayout.height());
+
+        area.setContentSize(layout.width() + rightLayout.width(),
+                            *targetHeight);
     }
 
     bool setup(File const *file)
@@ -87,31 +127,46 @@ DENG2_PIMPL(PackagePopupWidget)
 
         Record const &meta = names.subrecord(Package::VAR_PACKAGE);
 
+        String format;
+        if (DataBundle const *bundle = file->target().maybeAs<DataBundle>())
+        {
+            format = bundle->formatAsText().upperFirstChar();
+        }
+        else
+        {
+            format = tr("Doomsday 2 Package");
+        }
+
         title->setText(meta.gets(Package::VAR_TITLE));
         path->setText(String(_E(b) "%1" _E(.) "\n%2")
-                      .arg("WAD")
-                      .arg(file->source()->description()));
+                      .arg(format)
+                      .arg(file->source()->description().upperFirstChar()));
 
-        String msg;/* = String(_E(1) "%1" _E(.) "\n%2\n"
-                            _E(l) "Version: " _E(.) "%3\n"
-                            _E(l) "License: " _E(.)_E(>) "%4" _E(<)
-                            _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5" _E(.)_E(<))
-                    .arg(meta.gets(Package::VAR_TITLE))
-                    .arg(meta.gets("ID"))
+        String metaMsg = String(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%1\n"
+                                _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%2\n"
+                                _E(Ta)_E(l) "License: " _E(.)_E(Tb) "%3")
                     .arg(meta.gets("version"))
-                    .arg(meta.gets("license"))
-                    .arg(file->description());*/
-
-        msg = "Description of the package.";
-
+                    .arg(meta.gets("tags"))
+                    .arg(meta.gets("license"));
         if (meta.has("author"))
         {
-            msg += "\n" _E(l) "Author(s): " _E(.)_E(>) + meta.gets("author") + _E(<);
+            metaMsg += String("\n" _E(Ta)_E(l) "Author: "
+                              _E(.)_E(Tb) "%1").arg(meta.gets("author"));
+
         }
+        if (meta.has("contact"))
+        {
+            metaMsg += String("\n" _E(Ta)_E(l) "Contact: "
+                              _E(.)_E(Tb) "%1").arg(meta.gets("contact"));
+        }
+        metaInfo->setText(metaMsg);
+
+        // Description text.
+        String msg = "Description of the package.";
 
         if (meta.has("notes"))
         {
-            msg += "\n\n" + meta.gets("notes") + "\n";
+            msg += "\n\n" + meta.gets("notes") + _E(r) "\n";
         }
 
         if (meta.has("requires"))
@@ -135,6 +190,7 @@ DENG2_PIMPL(PackagePopupWidget)
         }
 
         description->setText(msg);
+
         //document().setText(msg);
 
         // Show applicable package actions:
@@ -142,6 +198,23 @@ DENG2_PIMPL(PackagePopupWidget)
         // - add to profile
         // - configure / select contents (in a collection)
         // - uninstall (user packages)
+
+        self().buttons()
+                << new DialogButtonItem(Action,
+                                        style().images().image("play"),
+                                        tr("Play in..."),
+                                        new SignalAction(thisPublic, SLOT(playInGame())))
+                << new DialogButtonItem(Action,
+                                        style().images().image("create"),
+                                        tr("Add to..."),
+                                        new SignalAction(thisPublic, SLOT(addToProfile())))
+                << new DialogButtonItem(Action,
+                                        tr("Show File"),
+                                        new SignalAction(thisPublic, SLOT(uninstall())))
+                << new DialogButtonItem(Action,
+                                        style().images().image("gear"),
+                                        tr("Options"),
+                                        new SignalAction(thisPublic, SLOT(configure())));
 
         return true;
     }
@@ -165,4 +238,24 @@ PackagePopupWidget::PackagePopupWidget(File const *packageFile)
     {
         //document().setText(tr("No package"));
     }
+}
+
+void PackagePopupWidget::playInGame()
+{
+
+}
+
+void PackagePopupWidget::addToProfile()
+{
+
+}
+
+void PackagePopupWidget::configure()
+{
+
+}
+
+void PackagePopupWidget::uninstall()
+{
+
 }

@@ -64,7 +64,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
     Impl(Public *i) : Base(i)
     {
-        actions << new ui::SubwidgetItem(tr("..."), ui::Down, [this] () -> PopupWidget *
+        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
         {
             return new PackagePopupWidget(packages->actionPackage());
 
