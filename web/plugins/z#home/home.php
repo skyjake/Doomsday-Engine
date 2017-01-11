@@ -200,7 +200,6 @@ $(document).ready(function () {
                   dataType:         'xml',
                   maxItems:         5,
                   clearOnSuccess:   true,
-                  useGoogleApi:     false,
                   generateItemHtml: 0
         };
         if(t) {
@@ -208,7 +207,7 @@ $(document).ready(function () {
         }
         var r = e(this).attr('id');
 
-        if(n.useGoogleApi)
+        /*if(n.useGoogleApi)
         {
             e.ajax({
                 url: 'http://ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=' + n.maxItems + '&output=json&q=' + encodeURIComponent(n.feedUri) + '&hl=en&callback=?',
@@ -228,7 +227,7 @@ $(document).ready(function () {
                 }
             });
         }
-        else
+        else*/
         {
             e.ajax({
                 url: n.feedUri,
@@ -240,22 +239,35 @@ $(document).ready(function () {
                         e("#" + r).empty();
                     }
 
-                    var xml = $(t);
-
                     var html = "";
-                    xml.find('item').slice(0, n.maxItems).each(function() {
-                        var self = $(this),
-                        item = { title:       self.children('title').text(),
-                                 link:        self.children('link').text(),
-                                 author:      self.children('author').text(),
-                                 pubDate:     self.children('pubDate').text(),
-                                 atomSummary: self.children('atom\\:summary').text(),
-                                 description: self.children('description').text(),
-                                 author:      self.children('author').text()
-                        }
-                        html += n.generateItemHtml(n, item);
-                    });
-
+                    
+                    if(n.dataType === 'xml') {
+                        var xml = $(t);
+                        xml.find('item').slice(0, n.maxItems).each(function() {
+                            var self = $(this),
+                            item = { title:       self.children('title').text(),
+                                     link:        self.children('link').text(),
+                                     author:      self.children('author').text(),
+                                     pubDate:     self.children('pubDate').text(),
+                                     atomSummary: self.children('atom\\:summary').text(),
+                                     description: self.children('description').text(),
+                                     author:      self.children('author').text()
+                            }
+                            html += n.generateItemHtml(n, item);
+                        });
+                    }
+                    else if (n.dataType === 'json') {
+                        for (var i = 0; i < n.maxItems && i < t.posts.length; ++i) {
+                            var post = t.posts[i];
+                            item = { title:         post.title, 
+                                     link:          post.url,
+                                     author:        post.author.name,
+                                     publishedDate: post.date.substring(0, 10),
+                                     content:       post.content
+                            }
+                            html += n.generateItemHtml(n, item);
+                        }              
+                    }
                     e('#' + r).append('<ol style="list-style-type: none;">' + html + '</ol>');
                 }
             });
@@ -300,10 +312,9 @@ $(document).ready(function () {
     });*/
 
     $('#column2').interpretFeed({
-        feedUri: 'http://dengine.net/blog/category/news/feed',
+        feedUri: 'http://dengine.net/blog/category/news/?json=true',
         dataType: 'json',
         clearOnSuccess: false,
-        useGoogleApi: true,
         maxItems: 2,
         generateItemHtml: function (n, t) {
             var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
@@ -321,10 +332,9 @@ $(document).ready(function () {
     });
 
     $('#column1').interpretFeed({
-        feedUri: 'http://dengine.net/blog/category/dev/feed', 
+        feedUri: 'http://dengine.net/blog/category/dev/?json=true', 
         dataType: 'json',
         clearOnSuccess: false,
-        useGoogleApi: true,
         maxItems: 1,
         generateItemHtml: function (n, t) {
             var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
