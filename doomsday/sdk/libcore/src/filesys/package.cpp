@@ -299,7 +299,7 @@ void Package::validateMetadata(Record const &packageInfo)
 
     String const &topLevelDomain = ident.segment(0).toString();
     if (topLevelDomain == QStringLiteral("feature") ||
-       topLevelDomain == QStringLiteral("asset"))
+        topLevelDomain == QStringLiteral("asset"))
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
         throw ValidationError("Package::validateMetadata",
