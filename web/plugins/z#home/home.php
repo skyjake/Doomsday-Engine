@@ -321,7 +321,7 @@ $(document).ready(function () {
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
+            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time> &mdash; ' + t.author + '</p>';
 
             html += '</header><br />';
             html += '<div class="articlecontent">' + t.content + '</div>';
@@ -341,12 +341,12 @@ $(document).ready(function () {
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
+            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time> &mdash; ' + t.author + '</p>';
 
             html += '</header><br />';
             html += '<div class="articlecontent">' + t.content + '</div>';
             html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine development blog via RSS">All blogs</a></div></div>';
+            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine development blog via RSS">All dev posts</a></div></div>';
             return '<li>' + html + '</li>';
         }
     });
