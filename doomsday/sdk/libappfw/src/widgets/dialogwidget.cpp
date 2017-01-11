@@ -301,7 +301,7 @@ DENG_GUI_PIMPL(DialogWidget)
 
     void updateButtonLayout()
     {
-        buttonItems.sort(dialogButtonOrder);
+        buttonItems.stableSort(dialogButtonOrder);
         needButtonUpdate = false;
     }
 
@@ -543,6 +543,19 @@ PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
         return &btn->as<PopupButtonWidget>();
     }
     return nullptr;
+}
+
+QList<ButtonWidget *> DialogWidget::buttonWidgets() const
+{
+    QList<ButtonWidget *> buttons;
+    foreach (Widget *w, d->buttons->childWidgets())
+    {
+        if (auto *but = w->maybeAs<ButtonWidget>())
+        {
+            buttons << but;
+        }
+    }
+    return buttons;
 }
 
 void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)

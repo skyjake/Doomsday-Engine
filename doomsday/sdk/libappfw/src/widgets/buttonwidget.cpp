@@ -218,6 +218,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
         setHoverTextColor("inverted.text", ReplaceColor);
         setBorderColor("inverted.text");
         setBackgroundColor("inverted.background");
+        setImageColor(style().colors().colorf("inverted.text"));
     }
     else
     {
@@ -227,6 +228,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
         setHoverTextColor("text", ReplaceColor);
         setBorderColor("text");
         setBackgroundColor("background");
+        setImageColor(style().colors().colorf("text"));
     }
     set(bg);
     setTextColor(d->originalTextColor);
