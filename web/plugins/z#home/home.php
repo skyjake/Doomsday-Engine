@@ -326,7 +326,7 @@ $(document).ready(function () {
             html += '</header><br />';
             html += '<div class="articlecontent">' + t.content + '</div>';
             html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine news via RSS">All news</a></div></div>';
+            html += '<div class="links"><a href="http://dengine.net/blog/category/news/feed/atom" class="link-rss" title="Doomsday Engine news via RSS">All news</a></div></div>';
             return '<li>' + html + '</li>';
         }
     });
@@ -346,7 +346,7 @@ $(document).ready(function () {
             html += '</header><br />';
             html += '<div class="articlecontent">' + t.content + '</div>';
             html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine development blog via RSS">All dev posts</a></div></div>';
+            html += '<div class="links"><a href="http://dengine.net/blog/category/dev/feed/atom" class="link-rss" title="Doomsday Engine development blog via RSS">All dev posts</a></div></div>';
             return '<li>' + html + '</li>';
         }
     });
