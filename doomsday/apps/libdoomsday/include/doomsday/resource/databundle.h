@@ -60,6 +60,7 @@ public:
     ~DataBundle();
 
     Format format() const;
+    de::String formatAsText() const;
     de::String description() const;
     de::File &asFile();
     de::File const &asFile() const;

@@ -719,6 +719,11 @@ DataBundle::Format DataBundle::format() const
     return d->format;
 }
 
+String DataBundle::formatAsText() const
+{
+    return ::internal::formatDescriptions[d->format];
+}
+
 String DataBundle::description() const
 {
     if (!d->source)
