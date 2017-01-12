@@ -148,7 +148,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             , _item(&item)
         {
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setStyleImage("package", "default");
+            icon().setStyleImage("package.icon", "default");
             icon().margins().set("gap");
             Rule const &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
@@ -181,7 +181,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         void createTagButtons()
         {
             if (!_item->file) return;
-            
+
             SequentialLayout layout(label().rule().left()   + label().margins().left(),
                                     label().rule().bottom() - label().margins().bottom(),
                                     ui::Right);
@@ -326,13 +326,14 @@ DENG_GUI_PIMPL(PackagesWidget)
             return estimate;
         }
 
+#if 0
         void openContentOptions()
         {
             DENG2_ASSERT(Package::hasOptionalContent(*_item->file));
 
             if (!_optionsPopup)
             {
-                _optionsPopup.reset(new PopupWidget);
+                /*_optionsPopup.reset(new PopupWidget);
                 _optionsPopup->setDeleteAfterDismissed(true);
                 _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
                 _optionsPopup->closeButton().setActionFn([this] ()
@@ -343,18 +344,28 @@ DENG_GUI_PIMPL(PackagesWidget)
 
                 auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
                 opts->rule().setInput(Rule::Width, rule().width());
-                _optionsPopup->setContent(opts);
+                _optionsPopup->setContent(opts);*/
+
+                _optionsPopup.reset(PackageContentOptionsWidget::makePopup
+                                    (packageId(), rule().width(), root().viewHeight()));
+                /*_optionsPopup->closeButton().setActionFn([this] ()
+                {
+                    root().setFocus(this);
+                    _optionsPopup->close();
+                });*/
+
                 add(_optionsPopup);
                 _optionsPopup->open();
             }
         }
+#endif
 
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;
         QList<ButtonWidget *> _tags;
         MenuWidget *_actions = nullptr;
-        SafeWidgetPtr<PopupWidget> _optionsPopup;
+        //SafeWidgetPtr<PopupWidget> _optionsPopup;
         //ScrollAreaWidget *_panelScroll = nullptr;
     };
 
@@ -842,6 +853,7 @@ LineEditWidget &PackagesWidget::searchTermsEditor()
     return *d->search;
 }
 
+/*
 void PackagesWidget::openContentOptions(ui::Item const &item)
 {
     if (auto *widget = d->menu->organizer().itemWidget(item))
@@ -852,6 +864,7 @@ void PackagesWidget::openContentOptions(ui::Item const &item)
         }
     }
 }
+*/
 
 void PackagesWidget::initialize()
 {

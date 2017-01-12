@@ -31,6 +31,10 @@ public:
                                 de::Rule   const &maxHeight,
                                 de::String const &name = de::String());
 
+    static de::PopupWidget *makePopup(de::String const &packageId,
+                                      de::Rule const &width,
+                                      de::Rule const &maxHeight);
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -108,7 +108,7 @@ public:
 
     de::LineEditWidget &searchTermsEditor();
 
-    void openContentOptions(de::ui::Item const &item);
+    //void openContentOptions(de::ui::Item const &item);
 
     // Events.
     void initialize();

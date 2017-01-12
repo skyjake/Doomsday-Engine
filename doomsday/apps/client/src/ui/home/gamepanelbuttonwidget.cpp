@@ -151,7 +151,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         packagesCounter->setOpacity(.5f);
         packagesCounter->setSizePolicy(ui::Expand, ui::Expand);
         packagesCounter->set(GuiWidget::Background());
-        packagesCounter->setStyleImage("package", "small");
+        packagesCounter->setStyleImage("package.icon", "small");
         packagesCounter->setFont("small");
         packagesCounter->margins().setLeft("");
         packagesCounter->setTextAlignment(ui::AlignLeft);

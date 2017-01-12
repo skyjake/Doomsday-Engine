@@ -24,6 +24,7 @@
 #include <de/LabelWidget>
 #include <de/MenuWidget>
 #include <de/PackageLoader>
+#include <de/PopupWidget>
 #include <de/SequentialLayout>
 #include <de/ToggleWidget>
 
@@ -334,4 +335,25 @@ PackageContentOptionsWidget::PackageContentOptionsWidget(String const &packageId
     , d(new Impl(this, packageId, maxHeight))
 {
     d->populate();
+}
+
+PopupWidget *PackageContentOptionsWidget::makePopup(String const &packageId,
+                                                    Rule const &width,
+                                                    Rule const &maxHeight)
+{
+    PopupWidget *pop = new PopupWidget;
+    pop->setDeleteAfterDismissed(true);
+    //pop->setAnchorAndOpeningDirection(rule(), ui::Left);
+    /*pop->closeButton().setActionFn([this] ()
+    {
+        root().setFocus(this);
+        _optionsPopup->close();
+    });*/
+
+    auto *opts = new PackageContentOptionsWidget(packageId, maxHeight);
+    opts->rule().setInput(Rule::Width, width);
+    pop->setContent(opts);
+    //add(_optionsPopup);
+    //_optionsPopup->open();
+    return pop;
 }

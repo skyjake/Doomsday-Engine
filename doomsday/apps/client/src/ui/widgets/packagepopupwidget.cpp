@@ -17,10 +17,13 @@
  */
 
 #include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packagecontentoptionswidget.h"
 
 #include <doomsday/DataBundle>
 
 #include <de/App>
+#include <de/Folder>
+#include <de/ImageFile>
 #include <de/LabelWidget>
 #include <de/DocumentWidget>
 #include <de/PackageLoader>
@@ -37,6 +40,8 @@ DENG_GUI_PIMPL(PackagePopupWidget)
     LabelWidget *icon;
     LabelWidget *metaInfo;
     IndirectRule *targetHeight;
+    String packageId;
+    SafeWidgetPtr<PopupWidget> configurePopup;
 
     Impl(Public *i) : Base(i)
     {
@@ -63,14 +68,13 @@ DENG_GUI_PIMPL(PackagePopupWidget)
 
         // Left column.
         title = LabelWidget::newWithText("", &area);
-        title->setFont("heading");
+        title->setFont("title");
         title->setSizePolicy(ui::Filled, ui::Expand);
-        title->setTextColor("inverted.text");
+        title->setTextColor("inverted.accent");
         title->setTextLineAlignment(ui::AlignLeft);
         title->margins().setBottom("");
 
         path = LabelWidget::newWithText("", &area);
-        path->setFont("small");
         path->setSizePolicy(ui::Filled, ui::Expand);
         path->setTextColor("inverted.text");
         path->setTextLineAlignment(ui::AlignLeft);
@@ -93,17 +97,17 @@ DENG_GUI_PIMPL(PackagePopupWidget)
 
         // Right column.
         icon = LabelWidget::newWithText("", &area);
-        icon->setSizePolicy(ui::Filled, ui::Filled);
-        icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-        icon->setStyleImage("package");
-        icon->setImageColor(style().colors().colorf("inverted.text"));
-        icon->rule().setInput(Rule::Height, Const(2*200));
+        //icon->setSizePolicy(ui::Filled, ui::Filled);
+        //icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
+        //icon->setStyleImage("package.large");
+        //icon->setImageColor(style().colors().colorf("inverted.accent"));
+        icon->rule().setInput(Rule::Height, Const(2*170));
 
         metaInfo = LabelWidget::newWithText("", &area);
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
         metaInfo->setTextLineAlignment(ui::AlignLeft);
         metaInfo->setFont("small");
-        metaInfo->setTextColor("inverted.text");
+        metaInfo->setTextColor("inverted.accent");
 
         SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
         rightLayout.setOverrideWidth(Const(2*200));
@@ -116,25 +120,68 @@ DENG_GUI_PIMPL(PackagePopupWidget)
                             *targetHeight);
     }
 
+    void useDefaultIcon()
+    {
+        icon->setStyleImage("package.large");
+        icon->setImageColor(style().colors().colorf("inverted.accent"));
+        icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
+        icon->setImageScale(.75f);
+        icon->setOpacity(.5f);
+        icon->setBehavior(ContentClipping, false);
+    }
+
+    void useIconFile(String const &packagePath)
+    {
+        try
+        {
+            foreach (String ext, StringList({ ".jpg", ".jpeg", ".png" }))
+            {
+                String const imgPath = packagePath / "icon" + ext;
+                if (ImageFile const *img = FS::get().root().tryLocate<ImageFile const>(imgPath))
+                {
+                    Image iconImage = img->image();
+                    if (iconImage.width() > 512 || iconImage.height() > 512)
+                    {
+                        throw Error("PackagePopupWidget::useIconFile",
+                                    "Icon file " + img->description() + " is too large (max 512x512)");
+                    }
+                    icon->setImage(iconImage);
+                    icon->setImageColor(Vector4f(1, 1, 1, 1));
+                    icon->setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
+                    icon->setImageScale(1);
+                    icon->setBehavior(ContentClipping, true);
+                    return;
+                }
+            }
+        }
+        catch (Error const &er)
+        {
+            LOG_RES_WARNING("Failed to use package icon image: %s") << er.asText();
+        }
+        useDefaultIcon();
+    }
+
     bool setup(File const *file)
     {
-        /*enableCloseButton(true);
-        document().setMaximumLineWidth(rule("home.popup.width").valuei());
-        setPreferredHeight(rule("home.popup.height"));*/
-
         Record const &names = file->objectNamespace();
-        if (!file || !names.has(Package::VAR_PACKAGE)) return false;
-
+        if (!file || !names.has(Package::VAR_PACKAGE))
+        {
+            return false;
+        }
         Record const &meta = names.subrecord(Package::VAR_PACKAGE);
+
+        packageId = meta.gets(Package::VAR_ID);
 
         String format;
         if (DataBundle const *bundle = file->target().maybeAs<DataBundle>())
         {
             format = bundle->formatAsText().upperFirstChar();
+            useDefaultIcon();
         }
         else
         {
             format = tr("Doomsday 2 Package");
+            useIconFile(file->path());
         }
 
         title->setText(meta.gets(Package::VAR_TITLE));
@@ -210,12 +257,16 @@ DENG_GUI_PIMPL(PackagePopupWidget)
                                         new SignalAction(thisPublic, SLOT(addToProfile())))
                 << new DialogButtonItem(Action,
                                         tr("Show File"),
-                                        new SignalAction(thisPublic, SLOT(uninstall())))
-                << new DialogButtonItem(Action,
-                                        style().images().image("gear"),
-                                        tr("Options"),
-                                        new SignalAction(thisPublic, SLOT(configure())));
+                                        new SignalAction(thisPublic, SLOT(uninstall())));
 
+        if (Package::hasOptionalContent(*file))
+        {
+            self().buttons()
+                    << new DialogButtonItem(Action | Id1,
+                                            style().images().image("gear"),
+                                            tr("Options"),
+                                            new SignalAction(thisPublic, SLOT(configure())));
+        }
         return true;
     }
 };
@@ -252,7 +303,38 @@ void PackagePopupWidget::addToProfile()
 
 void PackagePopupWidget::configure()
 {
+    /*_optionsPopup.reset(new PopupWidget);
+    _optionsPopup->setDeleteAfterDismissed(true);
+    _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
+    _optionsPopup->closeButton().setActionFn([this] ()
+    {
+        root().setFocus(this);
+        _optionsPopup->close();
+    });
 
+    auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
+    opts->rule().setInput(Rule::Width, rule().width());
+    _optionsPopup->setContent(opts);*/
+
+    if (d->configurePopup) return;
+
+    PopupWidget *pop = PackageContentOptionsWidget::makePopup
+                        (d->packageId, rule("dialog.packages.width"), root().viewHeight());
+    d->configurePopup.reset(pop);
+    pop->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Left);
+    pop->closeButton().setActionFn([pop] ()
+    {
+        //root().setFocus(this)
+        pop->close();
+    });
+    /*_optionsPopup->closeButton().setActionFn([this] ()
+    {
+        root().setFocus(this);
+        _optionsPopup->close();
+    });*/
+
+    add(pop);
+    pop->open();
 }
 
 void PackagePopupWidget::uninstall()

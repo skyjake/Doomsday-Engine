@@ -125,7 +125,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             // Package icon.
             icon().set(Background());
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setStyleImage("package", "default");
+            icon().setStyleImage("package.icon", "default");
             icon().margins().set("dialog.gap");
             Rule const &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
@@ -219,6 +219,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
+            /*
             if (Package::hasOptionalContent(id))
             {
                 auto *menu = new PopupMenuWidget;
@@ -234,7 +235,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                         }));
                 return menu;
             }
-            else
+            else*/
             {
                 return new PackagePopupWidget(id);
             }
@@ -367,7 +368,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
     {
         heading().setText(tr("Packages: %1").arg(titleText));
     }
-    heading().setImage(style().images().image("package"));
+    heading().setImage(style().images().image("package.icon"));
     buttons()
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))
