@@ -232,6 +232,7 @@ public:
     static String const VAR_PACKAGE_ID;
     static String const VAR_PACKAGE_ALIAS;
     static String const VAR_PACKAGE_TITLE;
+    static String const VAR_ID;
     static String const VAR_TITLE;
 
 private:
