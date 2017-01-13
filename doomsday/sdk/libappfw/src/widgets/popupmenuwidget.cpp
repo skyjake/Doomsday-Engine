@@ -468,6 +468,9 @@ void PopupMenuWidget::preparePanelForOpening()
 {
     // Redo the layout.
     menu().updateLayout();
+    menu().rule().setInput(Rule::Height,
+                           OperatorRule::minimum(menu().rule().inputRule(Rule::Height),
+                                                 root().viewHeight() - margins().height()));
     d->updateItemHitRules();
     d->updateItemMargins();
 
