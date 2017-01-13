@@ -761,7 +761,7 @@ void DoomsdayApp::setGame(Game const &game)
 
 void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
 {
-    auto const &newGame = games()[profile.game()];
+    auto const &newGame = profile.game();
 
     if (!newGame.isNull())
     {
@@ -804,7 +804,7 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
-    auto const &newGame = games()[profile.game()];
+    auto const &newGame = profile.game();
 
     bool const arePackagesDifferent =
             !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),
