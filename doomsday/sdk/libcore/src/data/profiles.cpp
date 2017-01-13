@@ -345,7 +345,11 @@ DENG2_PIMPL(Profiles::AbstractProfile)
             owner->remove(self());
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(Profiles::AbstractProfile, Change)
 
 Profiles::AbstractProfile::AbstractProfile()
     : d(new Impl(this))
@@ -412,6 +416,14 @@ bool Profiles::AbstractProfile::isReadOnly() const
 void Profiles::AbstractProfile::setReadOnly(bool readOnly)
 {
     d->readOnly = readOnly;
+}
+
+void Profiles::AbstractProfile::notifyChange()
+{
+    DENG2_FOR_AUDIENCE2(Change, i)
+    {
+        i->profileChanged(*this);
+    }
 }
 
 } // namespace de
