@@ -107,6 +107,8 @@ public:
      */
     bool isAbsolute() const;
 
+    bool isDirectory() const;
+
     /**
      * Replaces symbols and shorthand in the path with the actual paths.
      * Expands the legacy native path directives '>' and '}' at the start of

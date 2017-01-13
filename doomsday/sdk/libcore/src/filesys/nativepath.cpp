@@ -137,6 +137,12 @@ bool NativePath::isAbsolute() const
     return QDir::isAbsolutePath(expand());
 }
 
+bool NativePath::isDirectory() const
+{
+    QFileInfo info(*this);
+    return info.exists() && info.isDir();
+}
+
 NativePath NativePath::expand(bool *didExpand) const
 {
     if (first() == '>' || first() == '}')

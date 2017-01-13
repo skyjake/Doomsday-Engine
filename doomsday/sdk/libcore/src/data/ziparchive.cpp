@@ -612,7 +612,7 @@ void ZipArchive::operator >> (Writer &to) const
 static bool recognizeZipExtension(String const &ext)
 {
     return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
-            ext == ".box"  || ext == ".pk3"  || ext == ".zip");
+            /*ext == ".box"  ||*/ ext == ".pk3"  || ext == ".zip");
 }
 
 bool ZipArchive::recognize(File const &file)
