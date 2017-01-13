@@ -93,7 +93,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             // The only action on the packages is to view information.
             actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
             {
-                 return new PackagePopupWidget(list->actionPackage());
+                 return new PackageInfoDialog(list->actionPackage());
             });
 
             self().area().add(list = new PackagesWidget(wanted));

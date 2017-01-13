@@ -316,7 +316,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackagePopupWidget(_item->file);
+            return new PackageInfoDialog(_item->file);
         }
 
         float estimatedHeight() const override

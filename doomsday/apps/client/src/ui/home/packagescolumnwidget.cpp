@@ -66,13 +66,13 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     {
         actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
         {
-            return new PackagePopupWidget(packages->actionPackage());
+            return new PackageInfoDialog(packages->actionPackage());
 
             /*auto *popMenu = new PopupMenuWidget;
             popMenu->setColorTheme(Inverted);
             popMenu->items() << new ui::SubwidgetItem(tr("Info"), ui::Down,
                 [this, packageId] () -> PopupWidget * {
-                    return new PackagePopupWidget(packageId);
+                    return new PackageInfoDialog(packageId);
                 });
 
             if (Package::hasOptionalContent(packageId))

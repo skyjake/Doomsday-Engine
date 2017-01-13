@@ -41,7 +41,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         // Action for showing information about the package.
         browser->actionItems().insert(0, new ui::ActionItem(tr("..."), new CallbackAction([this] ()
         {
-            auto *pop = new PackagePopupWidget(browser->actionPackage());
+            auto *pop = new PackageInfoDialog(browser->actionPackage());
             root().addOnTop(pop);
             pop->setDeleteAfterDismissed(true);
             pop->setAnchorAndOpeningDirection(browser->actionWidget()->as<HomeItemWidget>()

@@ -897,7 +897,7 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
     // Game has been set to null, update window.
     ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 
-    if (!upcomingGame.game().isEmpty())
+    if (!upcomingGame.gameId().isEmpty())
     {
         ClientWindow &mainWin = ClientWindow::main();
         mainWin.taskBar().close();

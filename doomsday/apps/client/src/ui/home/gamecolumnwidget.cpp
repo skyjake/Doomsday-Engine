@@ -65,7 +65,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         Game const &game() const
         {
             DENG2_ASSERT(profile != nullptr);
-            return DoomsdayApp::games()[profile->game()];
+            return profile->game();
         }
 
         //String gameId() const { return data().toString(); }
@@ -186,9 +186,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
     bool addItemForProfile(GameProfile &profile)
     {
         auto const &games = DoomsdayApp::games();
-        if (games.contains(profile.game()))
+        if (games.contains(profile.gameId()))
         {
-            if (games[profile.game()].family() == gameFamily)
+            if (profile.game().family() == gameFamily)
             {
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
@@ -296,7 +296,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 if (!prof1.isPlayable() && prof2.isPlayable()) return false;
 
                 // Finally, based on identifier.
-                return prof1.game().compareWithoutCase(prof2.game()) < 0;
+                return prof1.gameId().compareWithoutCase(prof2.gameId()) < 0;
             }
             return year < 0;
         });

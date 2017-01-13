@@ -141,7 +141,7 @@ GameProfile *CreateProfileDialog::makeProfile() const
 void CreateProfileDialog::fetchFrom(GameProfile const &profile)
 {
     editor().setText(profile.name());
-    d->gameChoice->setSelected(d->gameChoice->items().findData(profile.game()));
+    d->gameChoice->setSelected(d->gameChoice->items().findData(profile.gameId()));
     d->packages->setPackages(profile.packages());
 }
 

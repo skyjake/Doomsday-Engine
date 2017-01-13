@@ -16,30 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H
-#define DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H
+#ifndef DENG_CLIENT_UI_PACKAGEINFODIALOG_H
+#define DENG_CLIENT_UI_PACKAGEINFODIALOG_H
 
 #include <de/DialogWidget>
 
 /**
- * Popup showing information about a package.
+ * Dialog showing information about a package.
  */
-class PackagePopupWidget : public de::DialogWidget
+class PackageInfoDialog : public de::DialogWidget
 {
     Q_OBJECT
 
 public:
-    PackagePopupWidget(de::String const &packageId);
-    PackagePopupWidget(de::File const *packageFile);
+    PackageInfoDialog(de::String const &packageId);
+    PackageInfoDialog(de::File const *packageFile);
 
 public slots:
     void playInGame();
     void addToProfile();
     void configure();
-    void uninstall();
+    void showFile();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_PACKAGEPOPUPWIDGET_H
+#endif // DENG_CLIENT_UI_PACKAGEINFODIALOG_H

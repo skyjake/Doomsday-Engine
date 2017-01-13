@@ -20,19 +20,28 @@
 #include "ui/widgets/packagecontentoptionswidget.h"
 
 #include <doomsday/DataBundle>
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
 
 #include <de/App>
+#include <de/ArchiveEntryFile>
+#include <de/CallbackAction>
+#include <de/DirectoryFeed>
+#include <de/DocumentWidget>
 #include <de/Folder>
 #include <de/ImageFile>
 #include <de/LabelWidget>
-#include <de/DocumentWidget>
+#include <de/NativeFile>
 #include <de/PackageLoader>
+#include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 
+#include <QDesktopServices>
+
 using namespace de;
 
-DENG_GUI_PIMPL(PackagePopupWidget)
+DENG_GUI_PIMPL(PackageInfoDialog)
 {
     LabelWidget *title;
     LabelWidget *path;
@@ -41,7 +50,11 @@ DENG_GUI_PIMPL(PackagePopupWidget)
     LabelWidget *metaInfo;
     IndirectRule *targetHeight;
     String packageId;
+    NativePath nativePath;
     SafeWidgetPtr<PopupWidget> configurePopup;
+    SafeWidgetPtr<PopupMenuWidget> profileMenu;
+    enum MenuMode { AddToProfile, PlayInProfile };
+    MenuMode menuMode;
 
     Impl(Public *i) : Base(i)
     {
@@ -142,7 +155,7 @@ DENG_GUI_PIMPL(PackagePopupWidget)
                     Image iconImage = img->image();
                     if (iconImage.width() > 512 || iconImage.height() > 512)
                     {
-                        throw Error("PackagePopupWidget::useIconFile",
+                        throw Error("PackageInfoDialog::useIconFile",
                                     "Icon file " + img->description() + " is too large (max 512x512)");
                     }
                     icon->setImage(iconImage);
@@ -163,20 +176,30 @@ DENG_GUI_PIMPL(PackagePopupWidget)
 
     bool setup(File const *file)
     {
+        if (!file) return false; // Not a package?
+
+        // Look up the package metadata.
         Record const &names = file->objectNamespace();
-        if (!file || !names.has(Package::VAR_PACKAGE))
+        if (!names.has(Package::VAR_PACKAGE))
         {
             return false;
         }
         Record const &meta = names.subrecord(Package::VAR_PACKAGE);
 
         packageId = meta.gets(Package::VAR_ID);
+        nativePath = file->correspondingNativePath();
+        String fileDesc = file->source()->description();
 
         String format;
         if (DataBundle const *bundle = file->target().maybeAs<DataBundle>())
         {
             format = bundle->formatAsText().upperFirstChar();
             useDefaultIcon();
+
+            if (bundle->format() == DataBundle::Collection)
+            {
+                fileDesc = file->target().description();
+            }
         }
         else
         {
@@ -184,10 +207,16 @@ DENG_GUI_PIMPL(PackagePopupWidget)
             useIconFile(file->path());
         }
 
+        if (file->source()->is<ArchiveEntryFile>())
+        {
+            // The file itself makes for a better description.
+            fileDesc = file->description();
+        }
+
         title->setText(meta.gets(Package::VAR_TITLE));
         path->setText(String(_E(b) "%1" _E(.) "\n%2")
                       .arg(format)
-                      .arg(file->source()->description().upperFirstChar()));
+                      .arg(fileDesc.upperFirstChar()));
 
         String metaMsg = String(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%1\n"
                                 _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%2\n"
@@ -247,18 +276,22 @@ DENG_GUI_PIMPL(PackagePopupWidget)
         // - uninstall (user packages)
 
         self().buttons()
-                << new DialogButtonItem(Action,
+                << new DialogButtonItem(Action | Id2,
                                         style().images().image("play"),
                                         tr("Play in..."),
                                         new SignalAction(thisPublic, SLOT(playInGame())))
-                << new DialogButtonItem(Action,
+                << new DialogButtonItem(Action | Id3,
                                         style().images().image("create"),
                                         tr("Add to..."),
-                                        new SignalAction(thisPublic, SLOT(addToProfile())))
-                << new DialogButtonItem(Action,
-                                        tr("Show File"),
-                                        new SignalAction(thisPublic, SLOT(uninstall())));
+                                        new SignalAction(thisPublic, SLOT(addToProfile())));
 
+        if (!nativePath.isEmpty())
+        {
+            self().buttons()
+                    << new DialogButtonItem(Action,
+                                            tr("Show File"),
+                                            new SignalAction(thisPublic, SLOT(showFile())));
+        }
         if (Package::hasOptionalContent(*file))
         {
             self().buttons()
@@ -269,9 +302,68 @@ DENG_GUI_PIMPL(PackagePopupWidget)
         }
         return true;
     }
+
+    static String visibleFamily(String const &family)
+    {
+        if (family.isEmpty()) return tr("Other");
+        return family.upperFirstChar();
+    }
+
+    void openProfileMenu(RuleRectangle const &anchor, bool playableOnly)
+    {
+        if (profileMenu) return;
+
+        profileMenu.reset(new PopupMenuWidget);
+        profileMenu->setDeleteAfterDismissed(true);
+        profileMenu->setAnchorAndOpeningDirection(anchor, ui::Left);
+
+        QList<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
+
+        String lastFamily;
+        for (GameProfile *prof : profs)
+        {
+            if (playableOnly && !prof->isPlayable()) continue;
+
+            if (lastFamily != prof->game().family())
+            {
+                if (!profileMenu->items().isEmpty())
+                {
+                    profileMenu->items() << new ui::Item(ui::Item::Separator);
+                }
+                profileMenu->items()
+                        << new ui::Item(ui::Item::ShownAsLabel | ui::Item::Separator,
+                                        visibleFamily(prof->game().family()));
+                lastFamily = prof->game().family();
+            }
+
+            profileMenu->items()
+                    << new ui::ActionItem(prof->name(), new CallbackAction([this, prof] ()
+            {
+                profileSelectedFromMenu(*prof);
+            }));
+        }
+
+        self().add(profileMenu);
+        profileMenu->open();
+    }
+
+    void profileSelectedFromMenu(GameProfile &profile)
+    {
+        switch (menuMode)
+        {
+        case AddToProfile:
+            StringList pkgs = profile.packages();
+            if (!pkgs.contains(packageId))
+            {
+                pkgs << packageId;
+                profile.setPackages(pkgs);
+            }
+            break;
+        }
+    }
 };
 
-PackagePopupWidget::PackagePopupWidget(String const &packageId)
+PackageInfoDialog::PackageInfoDialog(String const &packageId)
     : DialogWidget("packagepopup")
     , d(new Impl(this))
 {
@@ -281,7 +373,7 @@ PackagePopupWidget::PackagePopupWidget(String const &packageId)
     }
 }
 
-PackagePopupWidget::PackagePopupWidget(File const *packageFile)
+PackageInfoDialog::PackageInfoDialog(File const *packageFile)
     : DialogWidget("packagepopup")
     , d(new Impl(this))
 {
@@ -291,53 +383,40 @@ PackagePopupWidget::PackagePopupWidget(File const *packageFile)
     }
 }
 
-void PackagePopupWidget::playInGame()
+void PackageInfoDialog::playInGame()
 {
-
+    d->menuMode = Impl::PlayInProfile;
+    d->openProfileMenu(buttonWidget(Id2)->rule(), true);
 }
 
-void PackagePopupWidget::addToProfile()
+void PackageInfoDialog::addToProfile()
 {
-
+    d->menuMode = Impl::AddToProfile;
+    d->openProfileMenu(buttonWidget(Id3)->rule(), false);
 }
 
-void PackagePopupWidget::configure()
+void PackageInfoDialog::configure()
 {
-    /*_optionsPopup.reset(new PopupWidget);
-    _optionsPopup->setDeleteAfterDismissed(true);
-    _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
-    _optionsPopup->closeButton().setActionFn([this] ()
-    {
-        root().setFocus(this);
-        _optionsPopup->close();
-    });
+    if (d->configurePopup) return; // Let it close itself.
 
-    auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
-    opts->rule().setInput(Rule::Width, rule().width());
-    _optionsPopup->setContent(opts);*/
-
-    if (d->configurePopup) return;
-
-    PopupWidget *pop = PackageContentOptionsWidget::makePopup
-                        (d->packageId, rule("dialog.packages.width"), root().viewHeight());
+    PopupWidget *pop = PackageContentOptionsWidget::makePopup(
+                d->packageId, rule("dialog.packages.width"), root().viewHeight());
     d->configurePopup.reset(pop);
     pop->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Left);
     pop->closeButton().setActionFn([pop] ()
     {
-        //root().setFocus(this)
         pop->close();
     });
-    /*_optionsPopup->closeButton().setActionFn([this] ()
-    {
-        root().setFocus(this);
-        _optionsPopup->close();
-    });*/
 
     add(pop);
     pop->open();
 }
 
-void PackagePopupWidget::uninstall()
+void PackageInfoDialog::showFile()
 {
-
+    if (!d->nativePath.isEmpty())
+    {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(
+                d->nativePath.isDirectory()? d->nativePath : d->nativePath.fileNamePath()));
+    }
 }

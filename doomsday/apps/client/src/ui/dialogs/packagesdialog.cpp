@@ -150,7 +150,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackagePopupWidget(_item->packageFile());
+            return new PackageInfoDialog(_item->packageFile());
         }
 
     private:
@@ -227,7 +227,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                 menu->items()
                     << new ui::SubwidgetItem(tr("Info"), ui::Up,
                         [this] () -> PopupWidget * {
-                            return new PackagePopupWidget(browser->actionPackage());
+                            return new PackageInfoDialog(browser->actionPackage());
                         })
                     << new ui::ActionItem(style().images().image("gear"), tr("Select Packages"),
                         new CallbackAction([this] () {
@@ -237,7 +237,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
             else*/
             {
-                return new PackagePopupWidget(id);
+                return new PackageInfoDialog(id);
             }
         });
 
