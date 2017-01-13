@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/packagecompatibilitydialog.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 
 #include <doomsday/DoomsdayApp>

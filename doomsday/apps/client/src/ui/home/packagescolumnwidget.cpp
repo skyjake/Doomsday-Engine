@@ -18,8 +18,9 @@
 
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 
 #include <de/CallbackAction>
 #include <de/Config>
@@ -67,27 +68,6 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
         {
             return new PackageInfoDialog(packages->actionPackage());
-
-            /*auto *popMenu = new PopupMenuWidget;
-            popMenu->setColorTheme(Inverted);
-            popMenu->items() << new ui::SubwidgetItem(tr("Info"), ui::Down,
-                [this, packageId] () -> PopupWidget * {
-                    return new PackageInfoDialog(packageId);
-                });
-
-            if (Package::hasOptionalContent(packageId))
-            {
-                auto openOpts = [this] () {
-                    packages->openContentOptions(*packages->actionItem());
-                };
-                popMenu->items() << new ui::ActionItem(style().images().image("gear"),
-                                                       tr("Select Packages"), new CallbackAction(openOpts));
-            }
-
-            popMenu->items()
-                    << new ui::Item(ui::Item::Separator)
-                    << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
-            return popMenu;*/
         });
 
         countLabel = new LabelWidget;
@@ -100,6 +80,14 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
+
+        /*QObject::connect(&packages->menu(), &HomeMenuWidget::openItemContextMenu,
+                         [this] (int pos)
+        {
+            auto &menu = packages->menu();
+            menu.itemWidget<HomeItemWidget>(pos)
+                    .buttonWidget(0).as<ButtonWidget>().trigger();
+        });*/
 
         QObject::connect(packages, &PackagesWidget::itemCountChanged,
                          [this] (duint shown, duint total)
@@ -121,14 +109,6 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             return menu;
         }, ui::Down);
     }
-
-    /*void gameReadinessUpdated() override
-    {
-        if (!mainCall)
-        {
-            mainCall.enqueue([this] () { packages->populate(); });
-        }
-    }*/
 };
 
 PackagesColumnWidget::PackagesColumnWidget()

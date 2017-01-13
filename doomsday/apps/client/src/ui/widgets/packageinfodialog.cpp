@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 
 #include <doomsday/DataBundle>
@@ -319,6 +319,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         QList<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
 
+        auto &items = profileMenu->items();
         String lastFamily;
         for (GameProfile *prof : profs)
         {
@@ -326,18 +327,22 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
             if (lastFamily != prof->game().family())
             {
-                if (!profileMenu->items().isEmpty())
+                if (!items.isEmpty())
                 {
-                    profileMenu->items() << new ui::Item(ui::Item::Separator);
+                    items << new ui::Item(ui::Item::Separator);
                 }
-                profileMenu->items()
-                        << new ui::Item(ui::Item::ShownAsLabel | ui::Item::Separator,
-                                        visibleFamily(prof->game().family()));
+                items << new ui::Item(ui::Item::ShownAsLabel | ui::Item::Separator,
+                                      visibleFamily(prof->game().family()));
                 lastFamily = prof->game().family();
             }
 
-            profileMenu->items()
-                    << new ui::ActionItem(prof->name(), new CallbackAction([this, prof] ()
+            String label = prof->name();
+            if (prof->packages().contains(packageId))
+            {
+                label = _E(C) + label + _E(.) " " _E(s)_E(b)_E(D) + tr("ADDED");
+            }
+
+            items << new ui::ActionItem(label, new CallbackAction([this, prof] ()
             {
                 profileSelectedFromMenu(*prof);
             }));
@@ -351,13 +356,17 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         switch (menuMode)
         {
-        case AddToProfile:
+        case AddToProfile: {
             StringList pkgs = profile.packages();
             if (!pkgs.contains(packageId))
             {
                 pkgs << packageId;
                 profile.setPackages(pkgs);
             }
+            break; }
+
+        case PlayInProfile:
+
             break;
         }
     }

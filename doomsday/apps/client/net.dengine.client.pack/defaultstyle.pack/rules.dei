@@ -18,8 +18,9 @@ rule scrollarea.bar { constant $= UNIT }
 
 popup {
     menu {
-        rule margin { constant $= UNIT }
+        rule margin       { constant $= UNIT }
         rule paddedmargin { constant $= UNIT * 8 }
+        rule width.max    { constant $= UNIT * 100 }
     }
 }
 

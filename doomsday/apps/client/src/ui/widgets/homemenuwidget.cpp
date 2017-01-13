@@ -43,7 +43,8 @@ DENG_GUI_PIMPL(HomeMenuWidget)
             QObject::connect(&widget, SIGNAL(mouseActivity()),
                              thisPublic, SLOT(mouseActivityInItem()));
 
-            QObject::connect(&widget, SIGNAL(selected()), thisPublic, SLOT(itemSelectionChanged()));
+            QObject::connect(&widget, SIGNAL(selected()),
+                             thisPublic, SLOT(itemSelectionChanged()));
         }
     }
 

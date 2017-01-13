@@ -74,12 +74,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
                     }
 
                     if (mouse.state() == MouseEvent::Pressed ||
-                       mouse.state() == MouseEvent::DoubleClick)
+                        mouse.state() == MouseEvent::DoubleClick)
                     {
                         acquireFocus();
                     }
                     if (mouse.state()  == MouseEvent::DoubleClick &&
-                       mouse.button() == MouseEvent::Left)
+                        mouse.button() == MouseEvent::Left)
                     {
                         emit owner.doubleClicked();
                         return true;

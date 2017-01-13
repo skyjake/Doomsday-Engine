@@ -20,7 +20,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/panelbuttonwidget.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 #include "clientapp.h"
 
@@ -326,47 +326,11 @@ DENG_GUI_PIMPL(PackagesWidget)
             return estimate;
         }
 
-#if 0
-        void openContentOptions()
-        {
-            DENG2_ASSERT(Package::hasOptionalContent(*_item->file));
-
-            if (!_optionsPopup)
-            {
-                /*_optionsPopup.reset(new PopupWidget);
-                _optionsPopup->setDeleteAfterDismissed(true);
-                _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
-                _optionsPopup->closeButton().setActionFn([this] ()
-                {
-                    root().setFocus(this);
-                    _optionsPopup->close();
-                });
-
-                auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
-                opts->rule().setInput(Rule::Width, rule().width());
-                _optionsPopup->setContent(opts);*/
-
-                _optionsPopup.reset(PackageContentOptionsWidget::makePopup
-                                    (packageId(), rule().width(), root().viewHeight()));
-                /*_optionsPopup->closeButton().setActionFn([this] ()
-                {
-                    root().setFocus(this);
-                    _optionsPopup->close();
-                });*/
-
-                add(_optionsPopup);
-                _optionsPopup->open();
-            }
-        }
-#endif
-
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;
         QList<ButtonWidget *> _tags;
         MenuWidget *_actions = nullptr;
-        //SafeWidgetPtr<PopupWidget> _optionsPopup;
-        //ScrollAreaWidget *_panelScroll = nullptr;
     };
 
 //- PackagesWidget::Pimpl Methods -------------------------------------------------------
@@ -715,6 +679,11 @@ PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const 
 {
     d->setManualPackages(manualPackageIds);
     populate();
+}
+
+HomeMenuWidget &PackagesWidget::menu()
+{
+    return *d->menu;
 }
 
 ProgressWidget &PackagesWidget::progress()

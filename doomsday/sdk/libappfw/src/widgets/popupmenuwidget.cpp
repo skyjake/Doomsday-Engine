@@ -138,6 +138,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if (LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
             lab->margins().set("popup.menu.margin");
+            lab->setMaximumTextWidth(rule("popup.menu.width.max"));
+            lab->setTextLineAlignment(ui::AlignLeft);
             addToMaxWidth(widget);
         }
 
