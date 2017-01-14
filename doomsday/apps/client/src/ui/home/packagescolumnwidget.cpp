@@ -25,6 +25,7 @@
 #include <de/CallbackAction>
 #include <de/Config>
 #include <de/DirectoryListDialog>
+#include <de/FileSystem>
 #include <de/Loop>
 #include <de/Package>
 #include <de/PopupMenuWidget>
@@ -95,9 +96,12 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         });
 
         // Column menu.
-        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
-            menu->items() << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
+            menu->items()
+                    << new ui::ActionItem(/*style().images().image("refresh"), */tr("Refresh"),
+                                          new CallbackAction([this] () { packages->refreshPackages(); }))
+                    << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
             return menu;
         }, ui::Down);
     }
