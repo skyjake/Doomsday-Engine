@@ -31,6 +31,7 @@ using namespace de;
 DENG_GUI_PIMPL(HomeItemWidget)
 , DENG2_OBSERVES(MenuWidget, ItemTriggered)
 {
+    // Event handler for mouse clicks on the item.
     struct ClickHandler : public GuiWidget::IEventHandler
     {
         Public &owner;
@@ -41,7 +42,6 @@ DENG_GUI_PIMPL(HomeItemWidget)
         void acquireFocus()
         {
             owner.acquireFocus();
-            //emit owner.mouseActivity();
         }
 
         bool handleEvent(GuiWidget &widget, Event const &event)
@@ -65,6 +65,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
                             return true;
 
                         case MouseClickFinished:
+                            owner.itemRightClicked();
                             emit owner.openContextMenu();
                             return true;
 
@@ -384,6 +385,9 @@ void HomeItemWidget::focusLost()
     //setSelected(false);
     //emit deselected();
 }
+
+void HomeItemWidget::itemRightClicked()
+{}
 
 Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
                                    LogoFlags flags)

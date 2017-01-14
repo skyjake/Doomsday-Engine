@@ -74,20 +74,12 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
         ScrollAreaWidget &area = self().scrollArea();
         area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
-        //packages->setMaximumPanelHeight(self().rule().height() - self().margins().height() - rule("gap")*3);
         packages->setActionItems(actions);
+        packages->setRightClickToOpenContextMenu(true);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
-
-        /*QObject::connect(&packages->menu(), &HomeMenuWidget::openItemContextMenu,
-                         [this] (int pos)
-        {
-            auto &menu = packages->menu();
-            menu.itemWidget<HomeItemWidget>(pos)
-                    .buttonWidget(0).as<ButtonWidget>().trigger();
-        });*/
 
         QObject::connect(packages, &PackagesWidget::itemCountChanged,
                          [this] (duint shown, duint total)

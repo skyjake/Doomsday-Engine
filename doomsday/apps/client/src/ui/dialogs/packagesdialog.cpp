@@ -213,32 +213,14 @@ DENG_GUI_PIMPL(PackagesDialog)
         self().rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
                                                           self().name() + ".filter"));
         browser->setActionsAlwaysShown(true);
+        browser->setRightClickToOpenContextMenu(true);
         browser->setPackageStatus(*this);
 
         // Action for showing information about the package.
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
-            /*
-            if (Package::hasOptionalContent(id))
-            {
-                auto *menu = new PopupMenuWidget;
-                menu->setColorTheme(Inverted);
-                menu->items()
-                    << new ui::SubwidgetItem(tr("Info"), ui::Up,
-                        [this] () -> PopupWidget * {
-                            return new PackageInfoDialog(browser->actionPackage());
-                        })
-                    << new ui::ActionItem(style().images().image("gear"), tr("Select Packages"),
-                        new CallbackAction([this] () {
-                            browser->openContentOptions(*browser->actionItem());
-                        }));
-                return menu;
-            }
-            else*/
-            {
-                return new PackageInfoDialog(id);
-            }
+            return new PackageInfoDialog(id);
         });
 
         // Action for (de)selecting the package.

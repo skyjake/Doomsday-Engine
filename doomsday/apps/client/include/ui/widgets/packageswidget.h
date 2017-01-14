@@ -60,12 +60,9 @@ public:
     HomeMenuWidget &menu();
     de::ProgressWidget &progress();
 
+    void setRightClickToOpenContextMenu(bool enable);
     void setPopulationEnabled(bool enable);
-
     void setFilterEditorMinimumY(de::Rule const &minY);
-
-    //void setMaximumPanelHeight(de::Rule const &maxHeight);
-
     void setPackageStatus(IPackageStatus const &packageStatus);
 
     /**

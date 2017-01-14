@@ -121,10 +121,10 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::FilteredData filteredPackages { allPackages };
     ui::ListData defaultActionItems;
     ui::Data const *actionItems = &defaultActionItems;
-    //IndirectRule *maxPanelHeight;
     bool populateEnabled = true;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
+    bool rightClickToOpenContextMenu = false;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
 
@@ -161,17 +161,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             _actions->organizer().audienceForWidgetUpdate()   += this;
             _actions->setGridSize(0, ui::Expand, 1, ui::Expand);
             _actions->setItems(*owner.d->actionItems);
-            connect(this, &HomeItemWidget::doubleClicked, [this] ()
-            {
-                // Click the default action button (the last one).
-                if (!_actions->items().isEmpty())
-                {
-                    if (auto *button = _actions->childWidgets().last()->maybeAs<ButtonWidget>())
-                    {
-                        button->trigger();
-                    }
-                }
-            });
+            connect(this, &HomeItemWidget::doubleClicked, [this] () { triggerAction(); });
             addButton(_actions);
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
@@ -324,6 +314,28 @@ DENG_GUI_PIMPL(PackagesWidget)
             float const fontHeight = style().fonts().font("default").height().value();
             float estimate = fontHeight * 2 + label().margins().height().value();
             return estimate;
+        }
+
+        void triggerAction(bool defaultAction = true)
+        {
+            // Click the default action button (the last one).
+            if (!_actions->items().isEmpty())
+            {
+                auto *w = (defaultAction? _actions->childWidgets().last()
+                                        : _actions->childWidgets().first());
+                if (auto *button = w->maybeAs<ButtonWidget>())
+                {
+                    button->trigger();
+                }
+            }
+        }
+
+        void itemRightClicked() override
+        {
+            if (_owner.d->rightClickToOpenContextMenu)
+            {
+                triggerAction(false);
+            }
         }
 
     private:
@@ -689,6 +701,11 @@ HomeMenuWidget &PackagesWidget::menu()
 ProgressWidget &PackagesWidget::progress()
 {
     return *d->refreshProgress;
+}
+
+void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
+{
+    d->rightClickToOpenContextMenu = enable;
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)

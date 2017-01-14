@@ -73,6 +73,8 @@ public:
     void focusGained() override;
     void focusLost() override;
 
+    virtual void itemRightClicked();
+
 public:
     enum LogoFlag
     {
