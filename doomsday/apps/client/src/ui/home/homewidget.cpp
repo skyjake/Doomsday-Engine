@@ -277,6 +277,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void moveOffscreen(TimeDelta span = DISMISS_SPAN)
     {
+        self().root().clearFocusStack();
         self().root().setFocus(nullptr);
 
         // Home is being moved offscreen, so the game can take over in full size.

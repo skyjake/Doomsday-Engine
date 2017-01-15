@@ -225,7 +225,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         String fileDesc = file->source()->description();
 
         String format;
-        if (DataBundle const *bundle = file->target().maybeAs<DataBundle>())
+        DataBundle const *bundle = file->target().maybeAs<DataBundle>();
+        if (bundle)
         {
             format         = bundle->formatAsText().upperFirstChar();
             compatibleGame = bundle->guessCompatibleGame();
@@ -257,6 +258,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                       .arg(format)
                       .arg(fileDesc.upperFirstChar()));
 
+        // Metadata.
         String metaMsg = String(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%1\n"
                                 _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%2\n"
                                 _E(Ta)_E(l) "License: " _E(.)_E(Tb) "%3")
@@ -276,15 +278,52 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
         metaInfo->setText(metaMsg);
 
-        // Description text.
+        // Full package description.
         String msg;
+
+        // Start with a generic description of the package format.
+
+
         if (compatibleGame.isEmpty())
         {
             msg = "Not enough information to determine which game this package is for.";
         }
         else
         {
-            msg = String("This package is probably meant for %1.").arg(compatibleGame);
+            msg = String("This package is likely meant for " _E(b) "%1" _E(.) ".")
+                    .arg(compatibleGame);
+        }
+
+        if (bundle && bundle->lumpDirectory() &&
+            bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
+        {
+            int const mapCount = bundle->lumpDirectory()->findMaps().count();
+            msg += QString("\n\nContains %1 map%2: ")
+                    .arg(mapCount)
+                    .arg(DENG2_PLURAL_S(mapCount)) +
+                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+        }
+
+        if (!bundle)
+        {
+            if (meta.has("requires"))
+            {
+                msg += "\n\nRequires:";
+                ArrayValue const &reqs = meta.geta("requires");
+                for (Value const *val : reqs.elements())
+                {
+                    msg += "\n - " _E(>) + val->asText() + _E(<);
+                }
+            }
+            if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
+            {
+                msg += "\n\nData files:";
+                ArrayValue const &files = meta.geta("dataFiles");
+                for (Value const *val : files.elements())
+                {
+                    msg += "\n - " _E(>) + val->asText() + _E(<);
+                }
+            }
         }
 
         if (meta.has("notes"))
@@ -292,36 +331,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             msg += "\n\n" + meta.gets("notes") + _E(r) "\n";
         }
 
-        if (meta.has("requires"))
-        {
-            msg += "\n" _E(l) "Requires:" _E(.);
-            ArrayValue const &reqs = meta.geta("requires");
-            for (Value const *val : reqs.elements())
-            {
-                msg += "\n - " _E(>) + val->asText() + _E(<);
-            }
-        }
+        description->setText(msg.trimmed());
 
-        if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
-        {
-            msg += "\n" _E(l) "Data files:" _E(.);
-            ArrayValue const &files = meta.geta("dataFiles");
-            for (Value const *val : files.elements())
-            {
-                msg += "\n - " _E(>) + val->asText() + _E(<);
-            }
-        }
-
-        description->setText(msg);
-
-        //document().setText(msg);
-
-        // Show applicable package actions:
-        // - play in game (WADs, PK3s); does not add in the profile
-        // - add to profile
-        // - configure / select contents (in a collection)
-        // - uninstall (user packages)
-
+        // Show applicable package actions.
         self().buttons()
                 << new DialogButtonItem(Action | Id2,
                                         style().images().image("play"),
@@ -356,6 +368,13 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         return family.upperFirstChar();
     }
 
+    /**
+     * Opens a popup menu listing the available game profiles. The compatible game
+     * is highlighted, as well as profiles that already have this package added.
+     *
+     * @param anchor        Popup menu anchor.
+     * @param playableOnly  Only show profiles that can be started at the moment.
+     */
     void openProfileMenu(RuleRectangle const &anchor, bool playableOnly)
     {
         if (profileMenu) return;
@@ -384,14 +403,21 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             }
 
             String label = prof->name();
+            String color;
             if (prof->packages().contains(packageId))
             {
-                label = _E(C) + label + _E(.) " " _E(s)_E(b)_E(D) + tr("ADDED");
+                color = _E(C);
+                label += " " _E(s)_E(b)_E(D) + tr("ADDED");
             }
-            else if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
+            if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
             {
-                label = _E(1) + label;
+                label = _E(b) + label;
             }
+            if (prof->isUserCreated())
+            {
+                color = _E(F);
+            }
+            label = color + label;
 
             items << new ui::ActionItem(label, new CallbackAction([this, prof] ()
             {
@@ -432,6 +458,7 @@ PackageInfoDialog::PackageInfoDialog(String const &packageId)
     : DialogWidget("packagepopup")
     , d(new Impl(this))
 {
+    qDebug() << "info dialog:" << packageId;
     if (!d->setup(App::packageLoader().select(packageId)))
     {
         //document().setText(packageId);

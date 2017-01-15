@@ -81,7 +81,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
             file->audienceForDeletion() += this;
-            setData(QString(info->gets("ID")));
+            setData(Package::versionedIdentifierForFile(packFile)); //QString(info->gets("ID")));
             setLabel(info->gets(Package::VAR_TITLE));
         }
 
@@ -299,7 +299,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        String packageId() const
+        String packageId() const // unversioned
         {
             return _item->info->gets("ID");
         }
@@ -426,6 +426,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             return filterTerms.isEmpty() ||
                    checkTerms({ item.data().toString(), // ID
+                                item.file->source()->name(), // file name
                                 item.info->gets(VAR_TITLE),
                                 item.info->gets(VAR_TAGS) });
         });
@@ -541,7 +542,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 tags.contains(QStringLiteral("gamedata"))) continue;
 
             // Is this already in the list?
-            ui::DataPos pos = allPackages.findData(pack.objectNamespace().gets(Package::VAR_PACKAGE_ID));
+            ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
             if (pos != ui::Data::InvalidPos)
             {
                 allPackages.at(pos).setFile(pack);
