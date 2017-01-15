@@ -18,10 +18,13 @@
 
 #include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
+#include "resource/idtech1image.h"
+#include "dd_main.h"
 
 #include <doomsday/DataBundle>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
+#include <doomsday/LumpCatalog>
 
 #include <de/App>
 #include <de/ArchiveEntryFile>
@@ -31,6 +34,7 @@
 #include <de/Folder>
 #include <de/ImageFile>
 #include <de/LabelWidget>
+#include <de/Loop>
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/PopupMenuWidget>
@@ -50,6 +54,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     LabelWidget *metaInfo;
     IndirectRule *targetHeight;
     String packageId;
+    String compatibleGame; // guessed
     NativePath nativePath;
     SafeWidgetPtr<PopupWidget> configurePopup;
     SafeWidgetPtr<PopupMenuWidget> profileMenu;
@@ -133,6 +138,39 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                             *targetHeight);
     }
 
+    void setPackageIcon(Image const &iconImage)
+    {
+        icon->setImage(iconImage);
+        icon->setImageColor(Vector4f(1, 1, 1, 1));
+        icon->setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
+        icon->setImageScale(1);
+        icon->setBehavior(ContentClipping, true);
+    }
+
+    bool useGameTitlePicture(DataBundle const &bundle)
+    {
+        auto *lumpDir = bundle.lumpDirectory();
+        if (!lumpDir || (!lumpDir->has("TITLEPIC") && !lumpDir->has("TITLE")))
+        {
+            return false;
+        }
+
+        Game const &game = Games::get()[compatibleGame];
+
+        res::LumpCatalog catalog;
+        catalog.setPackages(game.requiredPackages() + StringList({ packageId }));
+        Image img = IdTech1Image::makeGameLogo(game,
+                                               catalog,
+                                               IdTech1Image::NullImageIfFails |
+                                               IdTech1Image::UnmodifiedAppearance);
+        if (!img.isNull())
+        {
+            setPackageIcon(img);
+            return true;
+        }
+        return false;
+    }
+
     void useDefaultIcon()
     {
         icon->setStyleImage("package.large");
@@ -158,11 +196,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                         throw Error("PackageInfoDialog::useIconFile",
                                     "Icon file " + img->description() + " is too large (max 512x512)");
                     }
-                    icon->setImage(iconImage);
-                    icon->setImageColor(Vector4f(1, 1, 1, 1));
-                    icon->setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
-                    icon->setImageScale(1);
-                    icon->setBehavior(ContentClipping, true);
+                    setPackageIcon(iconImage);
                     return;
                 }
             }
@@ -193,8 +227,13 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         String format;
         if (DataBundle const *bundle = file->target().maybeAs<DataBundle>())
         {
-            format = bundle->formatAsText().upperFirstChar();
-            useDefaultIcon();
+            format         = bundle->formatAsText().upperFirstChar();
+            compatibleGame = bundle->guessCompatibleGame();
+
+            if (!useGameTitlePicture(*bundle))
+            {
+                useDefaultIcon();
+            }
 
             if (bundle->format() == DataBundle::Collection)
             {
@@ -238,7 +277,15 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         metaInfo->setText(metaMsg);
 
         // Description text.
-        String msg = "Description of the package.";
+        String msg;
+        if (compatibleGame.isEmpty())
+        {
+            msg = "Not enough information to determine which game this package is for.";
+        }
+        else
+        {
+            msg = String("This package is probably meant for %1.").arg(compatibleGame);
+        }
 
         if (meta.has("notes"))
         {
@@ -341,6 +388,10 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             {
                 label = _E(C) + label + _E(.) " " _E(s)_E(b)_E(D) + tr("ADDED");
             }
+            else if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
+            {
+                label = _E(1) + label;
+            }
 
             items << new ui::ActionItem(label, new CallbackAction([this, prof] ()
             {
@@ -356,18 +407,23 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         switch (menuMode)
         {
-        case AddToProfile: {
-            StringList pkgs = profile.packages();
-            if (!pkgs.contains(packageId))
-            {
-                pkgs << packageId;
-                profile.setPackages(pkgs);
-            }
-            break; }
-
-        case PlayInProfile:
-
+        case AddToProfile:
+            profile.appendPackage(packageId);
             break;
+
+        case PlayInProfile: {
+            auto &prof = DoomsdayApp::app().adhocProfile();
+            prof = profile;
+            prof.appendPackage(packageId);
+            Loop::timer(0.1, [] {
+                // Switch the game.
+                GLWindow::main().glActivate();
+                BusyMode_FreezeGameForBusyMode();
+                DoomsdayApp::app().changeGame(DoomsdayApp::app().adhocProfile(),
+                                              DD_ActivateGameWorker);
+            });
+            self().accept();
+            break; }
         }
     }
 };

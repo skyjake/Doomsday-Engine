@@ -49,6 +49,8 @@ public:
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
 
+        bool appendPackage(de::String const &id);
+
         de::String gameId() const;
         Game &game() const;
         de::StringList packages() const;

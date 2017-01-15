@@ -235,6 +235,17 @@ void GameProfiles::Profile::setUseGameRequirements(bool useGameRequirements)
     }
 }
 
+bool GameProfiles::Profile::appendPackage(String const &id)
+{
+    if (!d->packages.contains(id))
+    {
+        d->packages << id;
+        notifyChange();
+        return true;
+    }
+    return false;
+}
+
 Game &GameProfiles::Profile::game() const
 {
     return DoomsdayApp::games()[d->gameId];

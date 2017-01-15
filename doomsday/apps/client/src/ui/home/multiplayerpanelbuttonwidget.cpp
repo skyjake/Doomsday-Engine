@@ -20,6 +20,7 @@
 #include "ui/clientwindow.h"
 #include "network/net_main.h"
 #include "network/serverlink.h"
+#include "resource/idtech1image.h"
 #include "clientapp.h"
 #include "dd_main.h"
 
@@ -218,7 +219,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
         /// @todo The server info should include the list of packages.
         if (d->catalog.setPackages(game.requiredPackages()))
         {
-            icon().setImage(makeGameLogo(game, d->catalog));
+            icon().setImage(IdTech1Image::makeGameLogo(game, d->catalog));
         }
     }
     else

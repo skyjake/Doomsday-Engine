@@ -83,6 +83,7 @@ DENG2_PIMPL(DoomsdayApp)
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
+    GameProfile adhocProfile;
     GameProfile const *currentProfile = nullptr;
     StringList preGamePackages;
     GameProfiles gameProfiles;
@@ -617,6 +618,11 @@ void DoomsdayApp::setShuttingDown(bool shuttingDown)
 std::string const &DoomsdayApp::doomsdayBasePath() const
 {
     return d->ddBasePath;
+}
+
+GameProfile &DoomsdayApp::adhocProfile()
+{
+    return d->adhocProfile;
 }
 
 void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)

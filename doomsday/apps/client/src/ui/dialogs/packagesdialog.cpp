@@ -21,6 +21,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/packageinfodialog.h"
+#include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
@@ -277,8 +278,8 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         if (game && catalog.setPackages(requiredPackages + selectedPackages))
         {
-            gameTitle->setImage(HomeItemWidget::makeGameLogo(*game, catalog,
-                                                             HomeItemWidget::UnmodifiedAppearance));
+            gameTitle->setImage(IdTech1Image::makeGameLogo(*game, catalog,
+                                                           IdTech1Image::UnmodifiedAppearance));
             // List of the native required files.
             StringList dataFiles;
             for (String packageId : requiredPackages)

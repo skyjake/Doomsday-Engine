@@ -238,7 +238,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        self().icon().setImage(self().makeGameLogo(game(), catalog));
+        self().icon().setImage(IdTech1Image::makeGameLogo(game(), catalog));
     }
 
     void profileChanged(Profiles::AbstractProfile &)
