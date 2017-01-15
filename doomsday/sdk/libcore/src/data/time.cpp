@@ -368,7 +368,7 @@ String Time::asText(Format format) const
 Time Time::fromText(String const &text, Time::Format format)
 {
     DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
-                 format == CompilerDateTime);
+                 format == CompilerDateTime || format == HumanDate);
 
     if (format == ISOFormat)
     {
@@ -405,6 +405,36 @@ Time Time::fromText(String const &text, Time::Format format)
         QDate date(year, month, day);
         QTime time = QTime::fromString(parts[3], "HH:mm:ss");
         return Time(QDateTime(date, time));
+    }
+    else if (format == HumanDate)
+    {
+        static QStringList const formats({
+            "M/d/yy",
+            "MM/dd/yy",
+            "d.M.yy",
+            "dd.MM.yy",
+
+            "MM/dd/yyyy",
+            "d.M.yyyy",
+            "dd.MM.yyyy",
+            "MM.dd.yyyy", // as a fallback...
+            "yyyy-MM-dd",
+        });
+        for (int i = 0; i < formats.size(); ++i)
+        {
+            String const fmt = formats.at(i);
+            bool const isShortYear = i < 4;
+            QDate date = QDate::fromString(text, fmt);
+            if (date.isValid())
+            {
+                if (isShortYear && date.year() < 1980)
+                {
+                    date.setDate(date.year() + 100, date.month(), date.day()); // Y2K?
+                }
+                return Time(QDateTime(date));
+            }
+        }
+        return Time(QDateTime::fromString(text, Qt::TextDate));
     }
     return Time();
 }

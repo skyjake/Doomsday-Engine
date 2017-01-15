@@ -137,7 +137,8 @@ public:
         BuildNumberAndSecondsSinceStart,
         FriendlyFormat,
         ISODateOnly,
-        CompilerDateTime // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
+        CompilerDateTime, // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
+        HumanDate, ///< human-entered date (only with Time::fromText)
     };
 
 public:

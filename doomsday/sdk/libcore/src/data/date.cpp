@@ -34,7 +34,7 @@ Time Date::asTime() const
 
 Date Date::fromText(String const &text)
 {
-    return Time::fromText(text, ISODateOnly);
+    return Time::fromText(text, HumanDate);
 }
 
 String Date::asText() const
