@@ -206,6 +206,8 @@ public:
 
     static String identifierForFile(File const &file);
 
+    static String versionedIdentifierForFile(File const &file);
+
     /**
      * Locates the file that represents the package where @a file is in.
      *

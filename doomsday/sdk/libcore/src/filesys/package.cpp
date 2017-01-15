@@ -426,6 +426,18 @@ String Package::identifierForFile(File const &file)
     return prefix + extractIdentifier(file.name());
 }
 
+String Package::versionedIdentifierForFile(File const &file)
+{
+    String id = identifierForFile(file);
+    if (id.isEmpty()) return String();
+    auto const id_ver = split(file.name().fileNameWithoutExtension());
+    if (id_ver.second.isValid())
+    {
+        return String("%1_%2").arg(id).arg(id_ver.second.asText());
+    }
+    return id;
+}
+
 File const *Package::containerOfFile(File const &file)
 {
     // Find the containing package.
