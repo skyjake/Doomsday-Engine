@@ -458,7 +458,6 @@ PackageInfoDialog::PackageInfoDialog(String const &packageId)
     : DialogWidget("packagepopup")
     , d(new Impl(this))
 {
-    qDebug() << "info dialog:" << packageId;
     if (!d->setup(App::packageLoader().select(packageId)))
     {
         //document().setText(packageId);
