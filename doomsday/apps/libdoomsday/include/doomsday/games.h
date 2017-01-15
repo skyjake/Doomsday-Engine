@@ -67,11 +67,13 @@ public:
     /// Notified when a worker task is progressing.
     DENG2_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
 
+    static Games &get();
+
 public:
     Games();
 
     /// @return  The special "null" Game instance.
-    Game &nullGame() const;
+    static Game &nullGame();
 
     /// @return  Total number of registered games.
     inline int count() const { return all().count(); }

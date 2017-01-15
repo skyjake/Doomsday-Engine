@@ -21,6 +21,7 @@
 #include <de/Reader>
 #include <de/mathutil.h>
 #include <QList>
+#include <QRegularExpression>
 
 using namespace de;
 
@@ -28,9 +29,13 @@ namespace res {
 
 dsize const LumpDirectory::InvalidPos = dsize(-1);
 
+static QRegularExpression const regExMy ("E[1-5]M[1-9]");
+static QRegularExpression const regMAPxx("MAP[0-3][0-9]");
+
 DENG2_PIMPL_NOREF(LumpDirectory)
 {
     Type type = Invalid;
+    MapType mapType = None;
     duint32 crc = 0;
     QList<Entry> entries;
     QHash<QByteArray, int> index; // points to entries
@@ -72,6 +77,20 @@ DENG2_PIMPL_NOREF(LumpDirectory)
         for (int i = 0; i < entries.size(); ++i)
         {
             index.insert(entries.at(i).name, i);
+
+            // If there are a map lumps, check which kind it is.
+            if (mapType == None)
+            {
+                String const lumpName = String::fromLatin1(entries.at(i).name);
+                if (regExMy.match(lumpName).hasMatch())
+                {
+                    mapType = ExMy;
+                }
+                else if (regMAPxx.match(lumpName).hasMatch())
+                {
+                    mapType = MAPxx;
+                }
+            }
         }
     }
 };
@@ -90,6 +109,11 @@ bool LumpDirectory::isValid() const
 LumpDirectory::Type LumpDirectory::type() const
 {
     return d->type;
+}
+
+LumpDirectory::MapType LumpDirectory::mapType() const
+{
+    return d->mapType;
 }
 
 LumpDirectory::Pos LumpDirectory::count() const

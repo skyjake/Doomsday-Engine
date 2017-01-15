@@ -119,6 +119,13 @@ public:
      */
     res::LumpDirectory const *lumpDirectory() const;
 
+    /**
+     * Attempts to guess which game this data bundle is supposed to be used with.
+     * @return Game identifier. Empty if there was not enough information to make
+     * a guess.
+     */
+    de::String guessCompatibleGame() const;
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;

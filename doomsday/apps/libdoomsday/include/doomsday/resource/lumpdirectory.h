@@ -34,6 +34,7 @@ class LIBDOOMSDAY_PUBLIC LumpDirectory
 {
 public:
     enum Type { Invalid, Iwad, Pwad };
+    enum MapType { None, ExMy, MAPxx };
 
     struct Entry
     {
@@ -59,6 +60,8 @@ public:
     bool isValid() const;
 
     Type type() const;
+
+    MapType mapType() const;
 
     /**
      * Returns the number of lumps.

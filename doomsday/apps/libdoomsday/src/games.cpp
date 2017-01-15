@@ -20,7 +20,7 @@
 
 #include "doomsday/games.h"
 
-#include <doomsday/doomsdayapp.h>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/manifest.h>
@@ -142,9 +142,14 @@ DENG2_AUDIENCE_METHOD(Games, Progress)
 Games::Games() : d(new Impl(this))
 {}
 
-Game &Games::nullGame() const
+Games &Games::get() // static
 {
-    return *d->nullGame;
+    return DoomsdayApp::games();
+}
+
+Game &Games::nullGame() // static
+{
+    return *get().d->nullGame;
 }
 
 int Games::numPlayable() const
