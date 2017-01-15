@@ -98,6 +98,16 @@ public:
 
     de::duint32 lumpSize(de::Block const &lumpName) const;
 
+    QList<LumpDirectory::Pos> findMaps() const;
+
+    de::StringList findMapLumpNames() const;
+
+    /**
+     * Lists all the maps, combining individual maps into contiguous ranges.
+     * @return Lists of map ranges.
+     */
+    de::StringList mapsInContiguousRangesAsText() const;
+
 private:
     DENG2_PRIVATE(d)
 };
