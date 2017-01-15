@@ -641,7 +641,7 @@ DENG2_PIMPL(DataBundle), public Lockable
         static QHash<String, StringList> terms;
         if (terms.isEmpty())
         {
-            terms.insert("doom",    StringList({ "^doom$|[^j]doom[^ s][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
+            terms.insert("doom",    StringList({ "^doom$|\\bdoom[^ s][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
             terms.insert("doom2",   StringList({ "doom2|doom 2|DoomII|Doom II|final\\s*doom" })); //, "\\bmap[0-3][0-9]\\b" }));
             terms.insert("heretic", StringList({ "jheretic|heretic", "d'sparil|serpent rider" })); //, "\\be[1-5]m[1-9]\\b" }));
             terms.insert("hexen",   StringList({ "jhexen|hexen", "korax|mage|warrior|cleric" })); //, "\\bmap[0-3][0-9]\\b" }));
@@ -724,12 +724,12 @@ DENG2_PIMPL(DataBundle), public Lockable
      */
     void determineGameTags(Record &meta)
     {
-        qDebug() << "Determining:" << meta.gets(VAR_TITLE) << meta.gets(VAR_TAGS);
+        //qDebug() << "Determining:" << meta.gets(VAR_TITLE) << meta.gets(VAR_TAGS);
 
         if (!containsAmbiguousGameTags(meta))
         {
             // Already has exactly one game tag.
-            qDebug() << meta.gets(VAR_TITLE) << "- unambiguous";
+            //qDebug() << meta.gets(VAR_TITLE) << "- unambiguous";
             return;
         }
 
@@ -739,18 +739,22 @@ DENG2_PIMPL(DataBundle), public Lockable
         String tag;
         if (identifyMostLikelyGame(meta.gets(VAR_TITLE), tag))
         {
-            qDebug() << meta.gets(VAR_TITLE)<< "- from title:" << tag;
+            //qDebug() << meta.gets(VAR_TITLE)<< "- from title:" << tag;
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
         if (identifyMostLikelyGame(meta.gets("ID"), tag))
         {
-            qDebug() << meta.gets(VAR_TITLE) << "- from package ID:" << tag;
+            //qDebug() << meta.gets(VAR_TITLE) << "- from package ID:" << tag;
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
-        if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
+
+        if (!containsAnyGameTag(meta))
         {
-            qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
-            meta.appendUniqueWord(VAR_TAGS, tag);
+            if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
+            {
+                //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
+                meta.appendUniqueWord(VAR_TAGS, tag);
+            }
         }
 
         if (!containsAnyGameTag(meta))
@@ -762,7 +766,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             {
                 if (identifyMostLikelyGame(path.segment(i), tag))
                 {
-                    qDebug() << meta.gets(VAR_TITLE)<< "- from path:" << tag;
+                    //qDebug() << meta.gets(VAR_TITLE)<< "- from path:" << tag;
                     meta.appendUniqueWord(VAR_TAGS, tag);
                 }
             }
@@ -770,7 +774,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         if (!containsAnyGameTag(meta))
         {
-            qDebug() << meta.gets(VAR_TITLE)<< "- falling back to:" << oldTags;
+            //qDebug() << meta.gets(VAR_TITLE)<< "- falling back to:" << oldTags;
             // Failed to figure out anything, so fall back to the old tags.
             meta.set(VAR_TAGS, oldTags);
         }
@@ -789,7 +793,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                   Version const &packageVersion,
                                                   dint bundleScore)
     {
-        for (int attempt = 0; attempt < 4; ++attempt)
+        for (int attempt = 0; attempt < 3; ++attempt)
         {
             String linkPath = packageId;
             String version = (packageVersion.isValid()? packageVersion.asText() : "");
@@ -801,7 +805,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 break;
 
             case 1: // parse version from parent folder
-            case 2: // parent folder as version label
+            //case 2: // parent folder as version label
                 if (dataFile.path().fileNamePath() != "/local/wads")
                 {
                     Path const filePath(dataFile.path());
@@ -809,7 +813,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                     {
                         auto const &parentName = filePath.reverseSegment(1)
                                 .toString().fileNameWithoutExtension();
-                        if (attempt == 1)
+                        //if (attempt == 1)
                         {
                             Version parsed("");
                             stripVersion(parentName, &parsed);
@@ -818,18 +822,18 @@ DENG2_PIMPL(DataBundle), public Lockable
                                 version = parsed.asText();
                             }
                         }
-                        else
+                        /*else
                         {
                             version = "1.0-" + filePath.reverseSegment(1)
                                     .toString().fileNameWithoutExtension().toLower();
-                        }
+                        }*/
                     }
                 }
                 break;
 
-            case 3: // status
+            case 2: // version from status
                 version = version.concatenateMember(dataFile.status().modifiedAt
-                                                    .asDateTime().toString("yyyyMMdd.hhmmss"));
+                                                    .asDateTime().toString("yyyy.MM.dd.hhmm"));
                 break;
             }
 
