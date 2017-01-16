@@ -558,6 +558,12 @@ String GameColumnWidget::tabHeading() const
     return d->gameFamily.at(0).toUpper() + d->gameFamily.mid(1);
 }
 
+String GameColumnWidget::tabShortcut() const
+{
+    if (name() == "hexen-column") return QStringLiteral("x");
+    return String();
+}
+
 String GameColumnWidget::configVariableName() const
 {
     return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily

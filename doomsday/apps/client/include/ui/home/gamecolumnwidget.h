@@ -34,6 +34,7 @@ public:
                      SaveListData const &savedItems);
 
     de::String tabHeading() const override;
+    de::String tabShortcut() const override;
     de::String configVariableName() const override;
     void setHighlighted(bool highlighted) override;
 

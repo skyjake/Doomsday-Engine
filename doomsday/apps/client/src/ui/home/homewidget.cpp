@@ -211,7 +211,9 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             if (!col.widget->behavior().testFlag(Widget::Hidden))
             {
-                tabs->items() << new TabItem(col.widget->tabHeading(), index++);
+                auto *tabItem = new TabItem(col.widget->tabHeading(), index++);
+                tabItem->setShortcutKey(col.widget->tabShortcut());
+                tabs->items() << tabItem;
             }
         }
     }
