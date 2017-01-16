@@ -74,6 +74,8 @@ typedef enum {
     doom2_tnt,
     doom2_hacx,
     doom2_freedm,
+    doom2_freedoom,
+    doom_freedoom,
     NUM_GAME_MODES
 } gamemode_t;
 
@@ -87,6 +89,8 @@ typedef enum {
 #define GM_DOOM2_TNT        0x40
 #define GM_DOOM2_HACX       0x80
 #define GM_DOOM2_FREEDM     0x100
+#define GM_DOOM2_FREEDOOM   0x200
+#define GM_DOOM_FREEDOOM    0x400
 
 #define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE|GM_DOOM_CHEX)
 #define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX|GM_DOOM2_FREEDM)

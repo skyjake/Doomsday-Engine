@@ -68,6 +68,8 @@ static char const *gameIds[NUM_GAME_MODES] =
     "doom2-tnt",
     "hacx",
     "doom2-freedm",
+    "doom2-freedoom",
+    "doom-freedoom",
 };
 
 #define STARTUPPK3              "libdoom.pk3"
@@ -76,7 +78,6 @@ static char const *gameIds[NUM_GAME_MODES] =
 
 static void setCommonParameters(Game &game)
 {
-    //game.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     game.addRequiredPackage("net.dengine.legacy.doom_2");
 }
 
@@ -150,6 +151,22 @@ int G_RegisterGames(int hookType, int param, void *data)
     setCommonParameters(plut);
     //plut.addResource(RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
     plut.addResource(RC_DEFINITION, 0, "doom2-plut.ded", 0);
+
+    /* DOOM2 - Freedoom Phase 2 */
+    Game &freedoom2 = games.defineGame(gameIds[doom2_freedoom],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "Freedoom: Phase 2",
+                            Game::DEF_AUTHOR, "Freedoom Project",
+                            Game::DEF_RELEASE_DATE, "2009-06-18",
+                            Game::DEF_FAMILY, "",
+                            Game::DEF_TAGS, "freedoom",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedoom.mapinfo"));
+    freedoom2.addRequiredPackage("freedoom.phase2");
+    setCommonParameters(freedoom2);
+    //freedm.addResource(RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
+    freedoom2.addResource(RC_DEFINITION, 0, "doom2-freedoom.ded", 0);
 
     /* DOOM2 - FreeDM */
     Game &freedm = games.defineGame(gameIds[doom2_freedm],

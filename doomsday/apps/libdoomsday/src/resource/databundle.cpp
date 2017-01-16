@@ -166,10 +166,13 @@ DENG2_PIMPL(DataBundle), public Lockable
             // Determine the WAD type, if unspecified.
             format = (lumpDir->type() == res::LumpDirectory::Pwad? Pwad : Iwad);
 
-            /*qDebug() << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
+            /*
+            qDebug() << self().description()
+                     << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
                      << "\nfileName:" << source->name()
                      << "\nfileSize:" << source->size()
-                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();*/
+                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
+                     */
         }
         else if (!self().containerPackageId().isEmpty())
         {
@@ -382,6 +385,8 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                          matched.bestScore))
         {
             LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
+
+            //qDebug() << "linking" << dataFile.path() << chosen.path;
 
             pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, chosen.path)));
 
@@ -832,8 +837,11 @@ DENG2_PIMPL(DataBundle), public Lockable
                 break;
 
             case 2: // version from status
+                // Larger versions are preferred when multiple versions are available,
+                // so use the major version 0 to avoid always preferring these date-based
+                // versions.
                 version = version.concatenateMember(dataFile.status().modifiedAt
-                                                    .asDateTime().toString("yyyy.MM.dd.hhmm"));
+                                                    .asDateTime().toString("0.yyyy.MMdd.hhmm"));
                 break;
             }
 

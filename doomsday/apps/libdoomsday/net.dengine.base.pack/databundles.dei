@@ -200,6 +200,104 @@ package "kaiser.doom64" {
     }
 }
 
+package "freedoom.phase2_0.6.4" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 19801320 
+    lumps <MAP01>
+    lumpDirCRC32: ab472d37
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.7" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 27625596 
+    lumps <MAP01>
+    lumpDirCRC32: 85e31f19
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.8" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 28592816 
+    lumps <MAP01>
+    lumpDirCRC32: 6ce5db8
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.8.1" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 28144744 
+    lumps <MAP01>
+    lumpDirCRC32: 5a5e07d3
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.9" {
+    format: IWAD 
+    fileName <freedoom2.wad, doom2.wad>
+    fileSize: 30426864
+    lumps <MAP01>
+    lumpDirCRC32: a06d5ffa
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.10" {
+    format: IWAD 
+    fileName <freedoom2.wad, doom2.wad>
+    fileSize: 29182560
+    lumps <MAP01>
+    lumpDirCRC32: 42e4d4d7
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2_0.10.1" {
+    format: IWAD 
+    fileName <freedoom2.wad, doom2.wad>
+    fileSize: 29182140
+    lumps <MAP01>
+    lumpDirCRC32: b0dfa116
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.freedm_0.10.1" {
     format: IWAD 
     fileName: freedm.wad
@@ -208,7 +306,7 @@ package "freedoom.freedm_0.10.1" {
     lumpDirCRC32: c3be5175
     info {
         title: Freedoom Deathmatch
-        author: Freedoom Projcet
+        author: Freedoom Project
         license: BSD
         tags: gamedata doom2 mod multiplayer
     }
