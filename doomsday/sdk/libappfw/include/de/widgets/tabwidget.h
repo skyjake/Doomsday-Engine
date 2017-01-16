@@ -48,7 +48,19 @@ public:
             setData(userData);
         }
         TabItem(Image const &img, String const &label)
-            : ImageItem(ShownAsButton, img, label) {}
+            : ImageItem(ShownAsButton, img, label)
+        {}
+        void setShortcutKey(String const &key)
+        {
+            _shortcutKey = key;
+            notifyChange();
+        }
+        String shortcutKey() const
+        {
+            return _shortcutKey;
+        }
+    private:
+        String _shortcutKey;
     };
 
 public:
@@ -73,7 +85,8 @@ public:
     void setCurrent(ui::Data::Pos itemPos);
 
     // Events.
-    void update();
+    void update() override;
+    bool handleEvent(de::Event const &ev) override;
 
 signals:
     void currentTabChanged();
