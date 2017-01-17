@@ -47,7 +47,8 @@ public:
     enum BuiltInFilter {
         NoFilter,
         Multiply,
-        HeightMapToNormals
+        HeightMapToNormals,
+        ColorDesaturate,
     };
 
     DENG2_ERROR(FilterError);

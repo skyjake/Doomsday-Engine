@@ -27,6 +27,7 @@ namespace de {
 
 static String const MULTIPLY            ("Multiply:");
 static String const HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
+static String const COLOR_DESATURATE    ("Color.desaturate");
 
 DENG2_PIMPL(ImageFile)
 {
@@ -49,7 +50,7 @@ DENG2_PIMPL(ImageFile)
         {
             return found.value();
         }
-        if (filter == HeightMapToNormals || filter == Multiply)
+        if (filter != NoFilter) //filter == HeightMapToNormals || filter == Multiply)
         {
             ImageFile *sub = new ImageFile(filter, self());
             filtered.insert(filter, sub);
@@ -72,6 +73,9 @@ DENG2_PIMPL(ImageFile)
 
         case Multiply:
             return MULTIPLY;
+
+        case ColorDesaturate:
+            return COLOR_DESATURATE;
 
         default:
             break;
@@ -118,6 +122,10 @@ String ImageFile::describe() const
         desc += " (filter: multiplied with " + d->filterParameter + ")";
         break;
 
+    case ColorDesaturate:
+        desc += " (filter: desaturate)";
+        break;
+
     default:
         break;
     }
@@ -152,6 +160,10 @@ Image ImageFile::image() const
 
             img = img.multiplied(factorImg);
         }
+        else if (d->filter == ColorDesaturate)
+        {
+            img = img.colorized(Image::Color(255, 255, 255, 255));
+        }
         return img;
     }
     else
@@ -181,6 +193,10 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
         ImageFile *filtered = d->makeOrGetFiltered(Multiply);
         filtered->d->filterParameter = name.substr(MULTIPLY.size());
         return filtered;
+    }
+    else if (!name.compareWithoutCase(COLOR_DESATURATE))
+    {
+        return d->makeOrGetFiltered(ColorDesaturate);
     }
     else if (d->filter == Multiply)
     {
