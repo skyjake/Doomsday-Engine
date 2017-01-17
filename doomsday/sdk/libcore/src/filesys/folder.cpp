@@ -18,13 +18,15 @@
  */
 
 #include "de/Folder"
-#include "de/Feed"
+
+#include "de/DirectoryFeed"
 #include "de/FS"
-#include "de/NumberValue"
-#include "de/Log"
+#include "de/Feed"
 #include "de/Guard"
-#include "de/TaskPool"
+#include "de/Log"
+#include "de/NumberValue"
 #include "de/Task"
+#include "de/TaskPool"
 
 namespace de {
 
@@ -109,6 +111,12 @@ Folder::~Folder()
 
 String Folder::describe() const
 {
+    // As a special case, plain native directories should be described as such.
+    if (auto const *direcFeed = primaryFeedMaybeAs<DirectoryFeed>())
+    {
+        return String("directory \"%1\"").arg(direcFeed->nativePath().pretty());
+    }
+
     String desc;
     if (name().isEmpty())
     {
@@ -495,6 +503,12 @@ void Folder::setPrimaryFeed(Feed &feed)
 
     d->feeds.removeOne(&feed);
     d->feeds.push_front(&feed);
+}
+
+Feed *Folder::primaryFeed() const
+{
+    if (d->feeds.isEmpty()) return nullptr;
+    return d->feeds.front();
 }
 
 void Folder::clearFeeds()

@@ -34,6 +34,7 @@
 #include <de/PackageLoader>
 #include <de/Path>
 #include <QRegExp>
+#include <QRegularExpression>
 #include <QTextCodec>
 
 using namespace de;
@@ -42,6 +43,7 @@ static String const VAR_PATH        ("path");
 static String const VAR_VERSION     ("version");
 static String const VAR_LICENSE     ("license");
 static String const VAR_AUTHOR      ("author");
+static String const VAR_TITLE       ("title");
 static String const VAR_TAGS        ("tags");
 static String const VAR_DATA_FILES  ("dataFiles");
 static String const VAR_BUNDLE_SCORE("bundleScore");
@@ -49,6 +51,8 @@ static String const VAR_REQUIRES    ("requires");
 static String const VAR_RECOMMENDS  ("recommends");
 static String const VAR_EXTRAS      ("extras");
 static String const VAR_CATEGORY    ("category");
+
+static StringList const gameTags({ "doom", "doom2", "heretic", "hexen" });
 
 namespace internal
 {
@@ -162,10 +166,13 @@ DENG2_PIMPL(DataBundle), public Lockable
             // Determine the WAD type, if unspecified.
             format = (lumpDir->type() == res::LumpDirectory::Pwad? Pwad : Iwad);
 
-            /*qDebug() << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
+            /*
+            qDebug() << self().description()
+                     << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
                      << "\nfileName:" << source->name()
                      << "\nfileSize:" << source->size()
-                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();*/
+                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
+                     */
         }
         else if (!self().containerPackageId().isEmpty())
         {
@@ -352,6 +359,10 @@ DENG2_PIMPL(DataBundle), public Lockable
             }
         }
 
+        meta.set("ID", packageId);
+
+        parseNotesForMetadata(meta);
+
         if (container && container->format() == Collection)
         {
             // Box contents are normally hidden.
@@ -374,6 +385,8 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                          matched.bestScore))
         {
             LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
+
+            //qDebug() << "linking" << dataFile.path() << chosen.path;
 
             pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, chosen.path)));
 
@@ -512,6 +525,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             if (!component.compareWithoutCase("game-jdoom"))
             {
                 meta.appendUniqueWord(VAR_TAGS, "doom");
+                meta.appendUniqueWord(VAR_TAGS, "doom2");
             }
             else if (!component.compareWithoutCase("game-jheretic"))
             {
@@ -551,56 +565,223 @@ DENG2_PIMPL(DataBundle), public Lockable
     }
 
     /**
+     * Parses the "notes" entry for metadata in commonly used templates for WAD readmes.
+     */
+    void parseNotesForMetadata(Record &meta)
+    {
+        static QRegularExpression const reTitle
+                ("^\\s*Title\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+        static QRegularExpression const reVersion
+                ("^\\s*Version\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+        static QRegularExpression const reReleaseDate
+                ("^\\s*Release( date)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+        static QRegularExpression const reAuthor
+                ("^\\s*Author(s)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+        static QRegularExpression const reContact
+                ("^\\s*Email address\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+
+        bool foundVersion = false;
+
+        foreach (String line, meta.gets("notes", "").split('\n'))
+        {
+            auto match = reTitle.match(line);
+            if (match.hasMatch())
+            {
+                meta.set(VAR_TITLE, match.captured(1));
+                continue;
+            }
+
+            if (!foundVersion)
+            {
+                match = reReleaseDate.match(line);
+                if (match.hasMatch())
+                {
+                    Date const releaseDate = Date::fromText(match.captured(2).trimmed());
+                    if (releaseDate.isValid())
+                    {
+                        meta.set(VAR_VERSION, QString("%1.%2.%3")
+                                 .arg(releaseDate.year())
+                                 .arg(releaseDate.month())
+                                 .arg(releaseDate.dayOfMonth()));
+                    }
+                    continue;
+                }
+            }
+
+            match = reVersion.match(line);
+            if (match.hasMatch())
+            {
+                Version parsed(match.captured(1).trimmed());
+                if (parsed.isValid())
+                {
+                    meta.set(VAR_VERSION, parsed.asText());
+                    foundVersion = true;
+                }
+                continue;
+            }
+
+            match = reAuthor.match(line);
+            if (match.hasMatch())
+            {
+                meta.set(VAR_AUTHOR, match.captured(2));
+                continue;
+            }
+
+            match = reContact.match(line);
+            if (match.hasMatch())
+            {
+                meta.set("contact", match.captured(1));
+                continue;
+            }
+        }
+    }
+
+    bool identifyMostLikelyGame(String const &text, String &identifiedTag)
+    {
+        if (text.isEmpty()) return false;
+
+        identifiedTag.clear();
+
+        // Look for terms that refer to specific games.
+        static QHash<String, StringList> terms;
+        if (terms.isEmpty())
+        {
+            terms.insert("doom",    StringList({ "^doom$|\\bdoom[^ s][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
+            terms.insert("doom2",   StringList({ "doom2|doom 2|DoomII|Doom II|final\\s*doom" })); //, "\\bmap[0-3][0-9]\\b" }));
+            terms.insert("heretic", StringList({ "jheretic|heretic", "d'sparil|serpent rider" })); //, "\\be[1-5]m[1-9]\\b" }));
+            terms.insert("hexen",   StringList({ "jhexen|hexen", "korax|mage|warrior|cleric" })); //, "\\bmap[0-3][0-9]\\b" }));
+        }
+        QHash<String, int> scores;
+        for (auto i = terms.constBegin(); i != terms.constEnd(); ++i)
+        {
+            for (String const &term : i.value())
+            {
+                QRegularExpression re(term, QRegularExpression::CaseInsensitiveOption);
+                if (re.match(text).hasMatch())
+                {
+                    //qDebug() << "match:" << term << "in" << text.substr(0, 50) << "scoring for:" << i.key();
+                    //scores[i.key()]++;
+                    identifiedTag = i.key();
+                    return true;
+                }
+            }
+        }
+        //if (scores.isEmpty())
+        {
+            return false;
+        }
+        /*QList<std::pair<int, String>> sorted;
+        for (auto i = scores.constBegin(); i != scores.constEnd(); ++i)
+        {
+            sorted.append(std::make_pair(i.value(), i.key()));
+        }
+        qSort(sorted.begin(), sorted.end(), []
+              (std::pair<int, String> const &a, std::pair<int, String> const &b) {
+            return a.first > b.first;
+        });
+        //qDebug() << text << sorted;
+        identifiedTag = sorted.first().second;
+        return true;*/
+    }
+
+    static bool containsAnyGameTag(Record const &meta)
+    {
+        return countGameTags(meta) > 0;
+    }
+
+    static bool containsAmbiguousGameTags(Record const &meta)
+    {
+        return countGameTags(meta) != 1;
+    }
+
+    static int countGameTags(Record const &meta)
+    {
+        int count = 0;
+        for (auto const &tag : gameTags)
+        {
+            if (QRegExp(QString("\\b%1\\b").arg(tag), Qt::CaseInsensitive)
+                    .indexIn(meta.gets(VAR_TAGS)) >= 0)
+            {
+                // Already has at least one game tag.
+                count++;
+            }
+        }
+        return count;
+    }
+
+    static void removeGameTags(Record &meta)
+    {
+        String newTags;
+        foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
+        {
+            if (!gameTags.contains(tag))
+            {
+                if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
+                newTags += tag;
+            }
+        }
+        meta.set(VAR_TAGS, newTags);
+    }
+
+    /**
      * Automatically guesses some appropriate game tags for the bundle.
      * @param meta  Package metadata.
      */
     void determineGameTags(Record &meta)
     {
-        // Collect a list of all game tags.
-        StringList gameTags({ "doom", "doom2", "heretic", "hexen" });
+        //qDebug() << "Determining:" << meta.gets(VAR_TITLE) << meta.gets(VAR_TAGS);
 
-        // TODO: Games may not have been registered yet...
-        /*
-        qDebug() << "Games count:" << DoomsdayApp::games().count();
-        auto aborted = DoomsdayApp::games().forAll([&gameTags, &meta] (Game &game)
+        if (!containsAmbiguousGameTags(meta))
         {
-            auto const tags = game[VAR_TAGS].value().asText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
-            for (auto const &tag : tags)
-            {
-                gameTags << tag;
+            // Already has exactly one game tag.
+            //qDebug() << meta.gets(VAR_TITLE) << "- unambiguous";
+            return;
+        }
 
-                if (QRegExp("\\b" + tag + "\\b", Qt::CaseInsensitive).indexIn(meta.gets(VAR_TAGS)) >= 0)
-                {
-                    // Already has at least one game tag.
-                    return LoopAbort;
-                }
-            }
-            return LoopContinue;
-        });
-        if (aborted) return;*/
+        String const oldTags = meta.gets(VAR_TAGS);
+        removeGameTags(meta);
 
-        for (auto const &tag : gameTags)
+        String tag;
+        if (identifyMostLikelyGame(meta.gets(VAR_TITLE), tag))
         {
-            if (QRegExp("\\b" + tag + "\\b", Qt::CaseInsensitive).indexIn(meta.gets(VAR_TAGS)) >= 0)
+            //qDebug() << meta.gets(VAR_TITLE)<< "- from title:" << tag;
+            meta.appendUniqueWord(VAR_TAGS, tag);
+        }
+        if (identifyMostLikelyGame(meta.gets("ID"), tag))
+        {
+            //qDebug() << meta.gets(VAR_TITLE) << "- from package ID:" << tag;
+            meta.appendUniqueWord(VAR_TAGS, tag);
+        }
+
+        if (!containsAnyGameTag(meta))
+        {
+            if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
             {
-                // Already has at least one game tag.
-                return;
+                //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
+                meta.appendUniqueWord(VAR_TAGS, tag);
             }
         }
 
-        // Look at the path and contents of the bundle to estimate which game it is
-        // compatible with.
-        Path const path(self().asFile().path());
-        for (auto const &tag : gameTags)
+        if (!containsAnyGameTag(meta))
         {
-            QRegExp reTag(tag, Qt::CaseInsensitive);
+            // As a fallback, look at the path to estimate which game it is
+            // compatible with.
+            Path const path(self().asFile().path());
             for (int i = 0; i < path.segmentCount(); ++i)
             {
-                if (reTag.indexIn(path.segment(i)) >= 0)
+                if (identifyMostLikelyGame(path.segment(i), tag))
                 {
+                    //qDebug() << meta.gets(VAR_TITLE)<< "- from path:" << tag;
                     meta.appendUniqueWord(VAR_TAGS, tag);
                 }
             }
+        }
+
+        if (!containsAnyGameTag(meta))
+        {
+            //qDebug() << meta.gets(VAR_TITLE)<< "- falling back to:" << oldTags;
+            // Failed to figure out anything, so fall back to the old tags.
+            meta.set(VAR_TAGS, oldTags);
         }
     }
 
@@ -617,7 +798,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                   Version const &packageVersion,
                                                   dint bundleScore)
     {
-        for (int attempt = 0; attempt < 4; ++attempt)
+        for (int attempt = 0; attempt < 3; ++attempt)
         {
             String linkPath = packageId;
             String version = (packageVersion.isValid()? packageVersion.asText() : "");
@@ -629,7 +810,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 break;
 
             case 1: // parse version from parent folder
-            case 2: // parent folder as version label
+            //case 2: // parent folder as version label
                 if (dataFile.path().fileNamePath() != "/local/wads")
                 {
                     Path const filePath(dataFile.path());
@@ -637,7 +818,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                     {
                         auto const &parentName = filePath.reverseSegment(1)
                                 .toString().fileNameWithoutExtension();
-                        if (attempt == 1)
+                        //if (attempt == 1)
                         {
                             Version parsed("");
                             stripVersion(parentName, &parsed);
@@ -646,19 +827,28 @@ DENG2_PIMPL(DataBundle), public Lockable
                                 version = parsed.asText();
                             }
                         }
-                        else
+                        /*else
                         {
-                            version = "0-" + filePath.reverseSegment(1)
+                            version = "1.0-" + filePath.reverseSegment(1)
                                     .toString().fileNameWithoutExtension().toLower();
-                        }
+                        }*/
                     }
                 }
                 break;
 
-            case 3: // status
+            case 2: // version from status
+                // Larger versions are preferred when multiple versions are available,
+                // so use the major version 0 to avoid always preferring these date-based
+                // versions.
                 version = version.concatenateMember(dataFile.status().modifiedAt
-                                                    .asDateTime().toString("yyyyMMdd.hhmmss"));
+                                                    .asDateTime().toString("0.yyyy.MMdd.hhmm"));
                 break;
+            }
+
+            if (!packageVersion.isValid() && version.isEmpty())
+            {
+                // Do not allow linking invalid versions (0.0).
+                continue;
             }
 
             if (!version.isEmpty())
@@ -703,6 +893,69 @@ DENG2_PIMPL(DataBundle), public Lockable
         // already available.
         return PathAndVersion();
     }
+
+    String guessCompatibleGame() const
+    {
+        if (!pkgLink) return String();
+
+        QSet<QString> tags;
+        foreach (QString tag, Package::tags(*pkgLink)) tags.insert(tag);
+
+        // Check for tags matching game IDs.
+        /*
+        {
+            String matchingGameId;
+            if (DoomsdayApp::games().forAll([&tags, &matchingGameId] (Game &game) {
+                    QRegularExpression re(QString("\\b%1\\b").arg(game.id()));
+                    if (re.match(text).hasMatch())
+                    {
+                        matchinGameId = game.id();
+                        return LoopAbort;
+                    }
+                    return LoopContinue;
+                }))
+            {
+                return matchingGameId;
+            }
+        }*/
+
+        res::LumpDirectory::MapType const mapType = lumpDir? lumpDir->mapType()
+                                                           : res::LumpDirectory::None;
+
+        if (tags.contains("doom") || tags.contains("doom2"))
+        {
+            if (mapType == res::LumpDirectory::MAPxx || !tags.contains("doom"))
+            {
+                return "doom2";
+            }
+            else
+            {
+                if (Games::get()["doom1-ultimate"].isPlayable())
+                {
+                    return "doom1-ultimate";
+                }
+                return "doom1";
+            }
+        }
+        if (tags.contains("hexen"))
+        {
+            return "hexen";
+        }
+        if (tags.contains("heretic"))
+        {
+            if (mapType == res::LumpDirectory::MAPxx)
+            {
+                return "hexen";
+            }
+            if (Games::get()["heretic-ext"].isPlayable())
+            {
+                return "heretic-ext";
+            }
+            return "heretic";
+        }
+        // We couldn't figure it out.
+        return String();
+    }
 };
 
 DataBundle::DataBundle(Format format, File &source)
@@ -717,6 +970,11 @@ DataBundle::~DataBundle()
 DataBundle::Format DataBundle::format() const
 {
     return d->format;
+}
+
+String DataBundle::formatAsText() const
+{
+    return ::internal::formatDescriptions[d->format];
 }
 
 String DataBundle::description() const
@@ -881,6 +1139,11 @@ String DataBundle::containerPackageId() const
 res::LumpDirectory const *DataBundle::lumpDirectory() const
 {
     return d->lumpDir.get();
+}
+
+String DataBundle::guessCompatibleGame() const
+{
+    return d->guessCompatibleGame();
 }
 
 File *DataBundle::Interpreter::interpretFile(File *sourceData) const

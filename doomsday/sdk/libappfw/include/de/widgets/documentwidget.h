@@ -53,6 +53,8 @@ public:
      */
     void setText(String const &styledText);
 
+    String text() const;
+
     /**
      * Sets the policy for managing the widget's width.
      * - ui::Fixed means that the widget's width must be defined externally,

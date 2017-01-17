@@ -306,6 +306,20 @@ public:
     void setPrimaryFeed(Feed &feed);
 
     /**
+     * Returns the primary feed of the folder, if there is one.
+     * @return Feed instance, or @c nullptr.
+     */
+    Feed *primaryFeed() const;
+
+    template <typename Type>
+    Type *primaryFeedMaybeAs() const {
+        if (Feed *f = primaryFeed()) {
+            return dynamic_cast<Type *>(f);
+        }
+        return nullptr;
+    }
+
+    /**
      * Detaches all feeds and deletes the Feed instances. Existing files in the
      * folder are unaffected.
      */

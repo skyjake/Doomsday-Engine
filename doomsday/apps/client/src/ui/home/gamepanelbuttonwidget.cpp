@@ -41,6 +41,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(GamePanelButtonWidget)
+, DENG2_OBSERVES(Profiles::AbstractProfile, Change)
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -62,7 +63,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         {
             // Only saved sessions for this game are to be included.
             auto const &item = it.as<SaveListData::SaveItem>();
-            if (item.gameId() != gameProfile.game())
+            if (item.gameId() != gameProfile.gameId())
             {
                 return false;
             }
@@ -151,7 +152,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         packagesCounter->setOpacity(.5f);
         packagesCounter->setSizePolicy(ui::Expand, ui::Expand);
         packagesCounter->set(GuiWidget::Background());
-        packagesCounter->setStyleImage("package", "small");
+        packagesCounter->setStyleImage("package.icon", "small");
         packagesCounter->setFont("small");
         packagesCounter->margins().setLeft("");
         packagesCounter->setTextAlignment(ui::AlignLeft);
@@ -169,7 +170,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     Game const &game() const
     {
-        return DoomsdayApp::games()[gameProfile.game()];
+        return gameProfile.game();
     }
 
     void updatePackagesIndicator()
@@ -237,7 +238,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        self().icon().setImage(self().makeGameLogo(game(), catalog));
+        self().icon().setImage(IdTech1Image::makeGameLogo(game(), catalog));
+    }
+
+    void profileChanged(Profiles::AbstractProfile &)
+    {
+        self().updateContent();
     }
 };
 
@@ -247,6 +253,8 @@ GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData con
     connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));
     connect(d->saves, SIGNAL(doubleClicked(de::ui::DataPos)), this, SLOT(saveDoubleClicked(de::ui::DataPos)));
     connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
+
+    game.audienceForChange() += d;
 }
 
 void GamePanelButtonWidget::setSelected(bool selected)

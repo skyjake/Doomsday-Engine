@@ -20,13 +20,14 @@
 #ifndef LIBDENG2_FILE_H
 #define LIBDENG2_FILE_H
 
+#include "../AccessorValue"
+#include "../Audience"
 #include "../IIOStream"
+#include "../IObject"
+#include "../NativePath"
+#include "../Record"
 #include "../String"
 #include "../Time"
-#include "../Record"
-#include "../AccessorValue"
-#include "../IObject"
-#include "../Audience"
 #include "../filesys/Node"
 
 #include <QFlags>
@@ -344,6 +345,15 @@ public:
      * above for ownership policy.
      */
     File *reinterpret();
+
+    /**
+     * Looks up the native file path that corresponds to this file, if such a
+     * path exists at all.
+     *
+     * @return Native path. Empty if there is no corresponding native file or
+     * directory.
+     */
+    NativePath correspondingNativePath() const;
 
     // Implements IIOStream.
     IOStream &operator << (IByteArray const &bytes);

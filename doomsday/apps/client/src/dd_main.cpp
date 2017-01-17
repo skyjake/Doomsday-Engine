@@ -1093,7 +1093,7 @@ static void initialize()
             else
             {
                 StringList ids;
-                foreach (GameProfile const *prof, playable) ids << prof->game();
+                foreach (GameProfile const *prof, playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
             App_Error(msg.toLatin1());

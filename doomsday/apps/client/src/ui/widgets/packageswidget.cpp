@@ -20,7 +20,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/panelbuttonwidget.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 #include "clientapp.h"
 
@@ -81,7 +81,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
             file->audienceForDeletion() += this;
-            setData(QString(info->gets("ID")));
+            setData(Package::versionedIdentifierForFile(packFile)); //QString(info->gets("ID")));
             setLabel(info->gets(Package::VAR_TITLE));
         }
 
@@ -121,10 +121,10 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::FilteredData filteredPackages { allPackages };
     ui::ListData defaultActionItems;
     ui::Data const *actionItems = &defaultActionItems;
-    //IndirectRule *maxPanelHeight;
     bool populateEnabled = true;
     bool showHidden = false;
     bool actionOnlyForSelection = true;
+    bool rightClickToOpenContextMenu = false;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
 
@@ -148,7 +148,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             , _item(&item)
         {
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setStyleImage("package", "default");
+            icon().setStyleImage("package.icon", "default");
             icon().margins().set("gap");
             Rule const &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
@@ -161,17 +161,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             _actions->organizer().audienceForWidgetUpdate()   += this;
             _actions->setGridSize(0, ui::Expand, 1, ui::Expand);
             _actions->setItems(*owner.d->actionItems);
-            connect(this, &HomeItemWidget::doubleClicked, [this] ()
-            {
-                // Click the default action button (the last one).
-                if (!_actions->items().isEmpty())
-                {
-                    if (auto *button = _actions->childWidgets().last()->maybeAs<ButtonWidget>())
-                    {
-                        button->trigger();
-                    }
-                }
-            });
+            connect(this, &HomeItemWidget::doubleClicked, [this] () { triggerAction(); });
             addButton(_actions);
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
@@ -181,7 +171,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         void createTagButtons()
         {
             if (!_item->file) return;
-            
+
             SequentialLayout layout(label().rule().left()   + label().margins().left(),
                                     label().rule().bottom() - label().margins().bottom(),
                                     ui::Right);
@@ -309,14 +299,14 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        String packageId() const
+        String packageId() const // unversioned
         {
             return _item->info->gets("ID");
         }
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackagePopupWidget(_item->file);
+            return new PackageInfoDialog(_item->file);
         }
 
         float estimatedHeight() const override
@@ -326,26 +316,25 @@ DENG_GUI_PIMPL(PackagesWidget)
             return estimate;
         }
 
-        void openContentOptions()
+        void triggerAction(bool defaultAction = true)
         {
-            DENG2_ASSERT(Package::hasOptionalContent(*_item->file));
-
-            if (!_optionsPopup)
+            // Click the default action button (the last one).
+            if (!_actions->items().isEmpty())
             {
-                _optionsPopup.reset(new PopupWidget);
-                _optionsPopup->setDeleteAfterDismissed(true);
-                _optionsPopup->setAnchorAndOpeningDirection(rule(), ui::Left);
-                _optionsPopup->closeButton().setActionFn([this] ()
+                auto *w = (defaultAction? _actions->childWidgets().last()
+                                        : _actions->childWidgets().first());
+                if (auto *button = w->maybeAs<ButtonWidget>())
                 {
-                    root().setFocus(this);
-                    _optionsPopup->close();
-                });
+                    button->trigger();
+                }
+            }
+        }
 
-                auto *opts = new PackageContentOptionsWidget(packageId(), root().viewHeight());
-                opts->rule().setInput(Rule::Width, rule().width());
-                _optionsPopup->setContent(opts);
-                add(_optionsPopup);
-                _optionsPopup->open();
+        void itemRightClicked() override
+        {
+            if (_owner.d->rightClickToOpenContextMenu)
+            {
+                triggerAction(false);
             }
         }
 
@@ -354,8 +343,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         PackageItem const *_item;
         QList<ButtonWidget *> _tags;
         MenuWidget *_actions = nullptr;
-        SafeWidgetPtr<PopupWidget> _optionsPopup;
-        //ScrollAreaWidget *_panelScroll = nullptr;
     };
 
 //- PackagesWidget::Pimpl Methods -------------------------------------------------------
@@ -439,6 +426,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             return filterTerms.isEmpty() ||
                    checkTerms({ item.data().toString(), // ID
+                                item.file->source()->name(), // file name
                                 item.info->gets(VAR_TITLE),
                                 item.info->gets(VAR_TAGS) });
         });
@@ -554,7 +542,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 tags.contains(QStringLiteral("gamedata"))) continue;
 
             // Is this already in the list?
-            ui::DataPos pos = allPackages.findData(pack.objectNamespace().gets(Package::VAR_PACKAGE_ID));
+            ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
             if (pos != ui::Data::InvalidPos)
             {
                 allPackages.at(pos).setFile(pack);
@@ -706,9 +694,19 @@ PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const 
     populate();
 }
 
+HomeMenuWidget &PackagesWidget::menu()
+{
+    return *d->menu;
+}
+
 ProgressWidget &PackagesWidget::progress()
 {
     return *d->refreshProgress;
+}
+
+void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
+{
+    d->rightClickToOpenContextMenu = enable;
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)
@@ -842,6 +840,7 @@ LineEditWidget &PackagesWidget::searchTermsEditor()
     return *d->search;
 }
 
+/*
 void PackagesWidget::openContentOptions(ui::Item const &item)
 {
     if (auto *widget = d->menu->organizer().itemWidget(item))
@@ -852,6 +851,7 @@ void PackagesWidget::openContentOptions(ui::Item const &item)
         }
     }
 }
+*/
 
 void PackagesWidget::initialize()
 {

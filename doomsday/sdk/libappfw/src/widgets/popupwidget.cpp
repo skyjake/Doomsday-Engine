@@ -321,6 +321,11 @@ void PopupWidget::setColorTheme(ColorTheme theme)
     d->updateStyle();
 }
 
+GuiWidget::ColorTheme PopupWidget::colorTheme() const
+{
+    return d->colorTheme;
+}
+
 void PopupWidget::enableCloseButton(bool enable)
 {
     if (enable && !d->close)

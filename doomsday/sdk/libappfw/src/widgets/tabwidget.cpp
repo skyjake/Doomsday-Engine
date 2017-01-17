@@ -28,6 +28,7 @@ namespace de {
 
 DENG_GUI_PIMPL(TabWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 , DENG2_OBSERVES(ui::Data,             Addition)
 , DENG2_OBSERVES(ui::Data,             OrderChange)
 , DENG2_OBSERVES(ButtonWidget,         Press)
@@ -48,7 +49,8 @@ DENG_GUI_PIMPL(TabWidget)
         buttons->setGridSize(0, ui::Expand, 1, ui::Expand, GridLayout::ColumnFirst);
 
         buttons->organizer().audienceForWidgetCreation() += this;
-        buttons->items().audienceForAddition() += this;
+        buttons->organizer().audienceForWidgetUpdate()   += this;
+        buttons->items().audienceForAddition()    += this;
         buttons->items().audienceForOrderChange() += this;
 
         // Center the buttons inside the widget.
@@ -80,6 +82,11 @@ DENG_GUI_PIMPL(TabWidget)
         btn.audienceForPress() += this;
     }
 
+    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        widget.as<ButtonWidget>().setShortcutKey(item.as<TabItem>().shortcutKey());
+    }
+
     void buttonPressed(ButtonWidget &button)
     {
         self().setCurrent(buttons->items().find(*buttons->organizer().findItemForWidget(button)));
@@ -107,8 +114,8 @@ DENG_GUI_PIMPL(TabWidget)
 
     void updateSelected()
     {
-        selected->set(Background(style().colors().colorf(invertedStyle? "tab.inverted.selected" : "tab.selected")));
-
+        selected->set(Background(style().colors().colorf(invertedStyle? "tab.inverted.selected"
+                                                                      : "tab.selected")));
         for (ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             bool const sel = (i == current);
@@ -148,6 +155,21 @@ DENG_GUI_PIMPL(TabWidget)
                     .setInput(Rule::Top,    w.rule().bottom());
             }
         }
+    }
+
+    bool handleShortcutKey(KeyEvent const &key)
+    {
+        foreach (auto *w, buttons->childWidgets())
+        {
+            if (ButtonWidget *but = w->maybeAs<ButtonWidget>())
+            {
+                if (but->handleShortcut(key))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 };
 
@@ -192,6 +214,22 @@ void TabWidget::update()
         d->updateSelected();
         d->needUpdate = false;
     }
+}
+
+bool TabWidget::handleEvent(Event const &ev)
+{
+    if (isEnabled())
+    {
+        if (ev.isKeyDown())
+        {
+            KeyEvent const &key = ev.as<KeyEvent>();
+            if (d->handleShortcutKey(key))
+            {
+                return true;
+            }
+        }
+    }
+    return GuiWidget::handleEvent(ev);
 }
 
 } // namespace de

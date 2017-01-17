@@ -199,6 +199,8 @@ public:
     ButtonWidget *buttonWidget(int roleId) const;
     PopupButtonWidget *popupButtonWidget(int roleId) const;
 
+    QList<ButtonWidget *> buttonWidgets() const;
+
     /**
      * Sets the action that will be triggered if the dialog is accepted. The action
      * will be triggered after the dialog has started closing (called from

@@ -129,6 +129,8 @@ public:
     void setDoomsdayBasePath(de::NativePath const &path);
     std::string const &doomsdayBasePath() const;
 
+    GameProfile &adhocProfile();
+
     /**
      * Checks if the currently loaded packages are compatible with the provided list.
      * If the user does not cancel, and the correct packages can be loaded, calls the

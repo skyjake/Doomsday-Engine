@@ -18,12 +18,14 @@
 
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 
 #include <de/CallbackAction>
 #include <de/Config>
 #include <de/DirectoryListDialog>
+#include <de/FileSystem>
 #include <de/Loop>
 #include <de/Package>
 #include <de/PopupMenuWidget>
@@ -64,38 +66,17 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
     Impl(Public *i) : Base(i)
     {
-        actions << new ui::SubwidgetItem(tr("..."), ui::Down, [this] () -> PopupWidget *
+        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
         {
-            String const packageId = packages->actionPackage();
-
-            auto *popMenu = new PopupMenuWidget;
-            popMenu->setColorTheme(Inverted);
-            popMenu->items() << new ui::SubwidgetItem(tr("Info"), ui::Down,
-                [this, packageId] () -> PopupWidget * {
-                    return new PackagePopupWidget(packageId);
-                });
-
-            if (Package::hasOptionalContent(packageId))
-            {
-                auto openOpts = [this] () {
-                    packages->openContentOptions(*packages->actionItem());
-                };
-                popMenu->items() << new ui::ActionItem(style().images().image("gear"),
-                                                       tr("Select Packages"), new CallbackAction(openOpts));
-            }
-
-            popMenu->items()
-                    << new ui::Item(ui::Item::Separator)
-                    << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
-            return popMenu;
+            return new PackageInfoDialog(packages->actionPackage());
         });
 
         countLabel = new LabelWidget;
 
         ScrollAreaWidget &area = self().scrollArea();
         area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
-        //packages->setMaximumPanelHeight(self().rule().height() - self().margins().height() - rule("gap")*3);
         packages->setActionItems(actions);
+        packages->setRightClickToOpenContextMenu(true);
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
@@ -115,20 +96,15 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         });
 
         // Column menu.
-        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
-            menu->items() << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
+            menu->items()
+                    << new ui::ActionItem(/*style().images().image("refresh"), */tr("Refresh"),
+                                          new CallbackAction([this] () { packages->refreshPackages(); }))
+                    << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
             return menu;
         }, ui::Down);
     }
-
-    /*void gameReadinessUpdated() override
-    {
-        if (!mainCall)
-        {
-            mainCall.enqueue([this] () { packages->populate(); });
-        }
-    }*/
 };
 
 PackagesColumnWidget::PackagesColumnWidget()

@@ -37,7 +37,10 @@ image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
 image file     { path = "graphics/file.png" }
-image package  { path = "graphics/package.png" }
+package {
+    image icon  { path = "graphics/package.png" }
+    image large { path = "graphics/package-large.png" }
+}
 close {
     image ring     { path = "graphics/close.png" }
     image ringless { path = "graphics/close-ringless.png" }

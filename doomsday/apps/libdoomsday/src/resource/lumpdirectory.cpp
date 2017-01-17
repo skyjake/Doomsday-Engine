@@ -21,6 +21,7 @@
 #include <de/Reader>
 #include <de/mathutil.h>
 #include <QList>
+#include <QRegularExpression>
 
 using namespace de;
 
@@ -28,9 +29,13 @@ namespace res {
 
 dsize const LumpDirectory::InvalidPos = dsize(-1);
 
+static QRegularExpression const regExMy ("^E[1-9]M[1-9]$");
+static QRegularExpression const regMAPxx("^MAP[0-9][0-9]$");
+
 DENG2_PIMPL_NOREF(LumpDirectory)
 {
     Type type = Invalid;
+    MapType mapType = None;
     duint32 crc = 0;
     QList<Entry> entries;
     QHash<QByteArray, int> index; // points to entries
@@ -54,7 +59,7 @@ DENG2_PIMPL_NOREF(LumpDirectory)
         reader.setOffset(dirOffset);
         reader.readBytes(16 * count, data);
 
-        crc = M_CRC32(data.dataConst(), data.size());
+        crc = M_CRC32(data.dataConst(), uint(data.size()));
 
         // Read all the entries.
         Reader lumpReader(data);
@@ -72,6 +77,20 @@ DENG2_PIMPL_NOREF(LumpDirectory)
         for (int i = 0; i < entries.size(); ++i)
         {
             index.insert(entries.at(i).name, i);
+
+            // If there are a map lumps, check which kind it is.
+            if (mapType == None)
+            {
+                String const lumpName = String::fromLatin1(entries.at(i).name);
+                if (regExMy.match(lumpName).hasMatch())
+                {
+                    mapType = ExMy;
+                }
+                else if (regMAPxx.match(lumpName).hasMatch())
+                {
+                    mapType = MAPxx;
+                }
+            }
         }
     }
 };
@@ -92,9 +111,14 @@ LumpDirectory::Type LumpDirectory::type() const
     return d->type;
 }
 
+LumpDirectory::MapType LumpDirectory::mapType() const
+{
+    return d->mapType;
+}
+
 LumpDirectory::Pos LumpDirectory::count() const
 {
-    return d->entries.size();
+    return Pos(d->entries.size());
 }
 
 LumpDirectory::Entry const &LumpDirectory::entry(Pos pos) const
@@ -105,7 +129,7 @@ LumpDirectory::Entry const &LumpDirectory::entry(Pos pos) const
                           QString("Invalid position %1 (lump count: %2)")
                           .arg(pos).arg(count()));
     }
-    return d->entries.at(pos);
+    return d->entries.at(int(pos));
 }
 
 duint32 LumpDirectory::crc32() const
@@ -133,9 +157,76 @@ LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
     auto found = d->index.constFind(lumpName);
     if (found != d->index.constEnd())
     {
-        return found.value();
+        return Pos(found.value());
     }
     return InvalidPos;
+}
+
+QList<LumpDirectory::Pos> res::LumpDirectory::findMaps() const
+{
+    QList<LumpDirectory::Pos> maps;
+    if (d->mapType != None)
+    {
+        for (auto i = d->index.constBegin(); i != d->index.constEnd(); ++i)
+        {
+            String const name = QString::fromLatin1(i.key());
+            if (regMAPxx.match(name).hasMatch() ||
+                regExMy .match(name).hasMatch())
+            {
+                maps << Pos(i.value());
+            }
+        }
+    }
+    return maps;
+}
+
+StringList LumpDirectory::findMapLumpNames() const
+{
+    StringList maps;
+    foreach (auto pos, findMaps())
+    {
+        maps << String::fromLatin1(entry(pos).name);
+    }
+    qSort(maps);
+    return maps;
+}
+
+StringList LumpDirectory::mapsInContiguousRangesAsText() const
+{
+    StringList mapRanges;
+    auto const maps = findMapLumpNames();
+    static StringList const prefixes({ "MAP", "E1M", "E2M", "E3M", "E4M", "E5M", "E6M",
+                                       "E7M", "E8M", "E9M" });
+
+    foreach (String const &prefix, prefixes)
+    {
+        QList<int> numbers;
+        foreach (String const &map, maps)
+        {
+            if (map.startsWith(prefix))
+            {
+                int number = map.substr(3).toInt(nullptr, 10);
+                numbers.append(number);
+            }
+        }
+
+        auto mapNumberText = [] (int num, int fieldWidth) {
+            return QString("%1").arg(num, fieldWidth, 10, QChar('0'));
+        };
+        int const numFieldWidth = (prefix == QStringLiteral("MAP")? 2 : 0);
+
+        foreach (Rangei range, Rangei::findContiguousRanges(numbers))
+        {
+            String mr = prefix + mapNumberText(range.start, numFieldWidth);
+            if (range.size() > 1)
+            {
+                mr += QString("-%1").arg(mapNumberText(range.end - 1, numFieldWidth));
+            }
+            mapRanges << mr;
+        }
+    }
+
+    return mapRanges;
 }
 
 } // namespace res

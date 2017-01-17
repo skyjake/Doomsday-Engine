@@ -43,6 +43,7 @@ public:
     de::Variable *configVariable() const;
 
     virtual de::String tabHeading() const = 0;
+    virtual de::String tabShortcut() const;
     virtual de::String configVariableName() const;
     virtual void setHighlighted(bool highlighted);
     bool isHighlighted() const;

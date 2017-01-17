@@ -20,6 +20,9 @@
 #define DENG_CLIENT_RESOURCE_IDTECH1IMAGE_H
 
 #include <de/Image>
+#include <doomsday/LumpCatalog>
+
+class Game;
 
 /**
  * Image that imports its content using Id Tech 1 graphics formats.
@@ -54,8 +57,36 @@ public:
      */
     Size nominalSize() const;
 
+public:
+    enum LogoFlag
+    {
+        UnmodifiedAppearance = 0,
+        ColorizedByFamily    = 0x1,
+        Downscale50Percent   = 0x2,
+        NullImageIfFails     = 0x4, // by default returns a small fallback image
+
+        DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
+    };
+    Q_DECLARE_FLAGS(LogoFlags, LogoFlag)
+
+    /**
+     * Prepares a game logo image to be used in items. The image is based on the
+     * game's title screen image in its WAD file(s).
+     *
+     * @param game     Game.
+     * @param catalog  Catalog of selected lumps.
+     *
+     * @return Image.
+     *
+     * @todo This could be moved to a better location / other class. -jk
+     */
+    static de::Image makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
+                                  LogoFlags flags = DefaultLogoFlags);
+
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(IdTech1Image::LogoFlags)
 
 #endif // DENG_CLIENT_RESOURCE_IDTECH1IMAGE_H

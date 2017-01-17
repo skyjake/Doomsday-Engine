@@ -34,6 +34,7 @@ class LIBDOOMSDAY_PUBLIC LumpDirectory
 {
 public:
     enum Type { Invalid, Iwad, Pwad };
+    enum MapType { None, ExMy, MAPxx };
 
     struct Entry
     {
@@ -59,6 +60,8 @@ public:
     bool isValid() const;
 
     Type type() const;
+
+    MapType mapType() const;
 
     /**
      * Returns the number of lumps.
@@ -94,6 +97,16 @@ public:
     LumpDirectory::Pos find(de::Block const &lumpName) const;
 
     de::duint32 lumpSize(de::Block const &lumpName) const;
+
+    QList<LumpDirectory::Pos> findMaps() const;
+
+    de::StringList findMapLumpNames() const;
+
+    /**
+     * Lists all the maps, combining individual maps into contiguous ranges.
+     * @return Lists of map ranges.
+     */
+    de::StringList mapsInContiguousRangesAsText() const;
 
 private:
     DENG2_PRIVATE(d)

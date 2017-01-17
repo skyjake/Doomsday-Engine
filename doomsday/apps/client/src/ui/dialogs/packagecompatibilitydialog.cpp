@@ -17,7 +17,7 @@
  */
 
 #include "ui/dialogs/packagecompatibilitydialog.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 
 #include <doomsday/DoomsdayApp>
@@ -93,7 +93,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             // The only action on the packages is to view information.
             actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
             {
-                 return new PackagePopupWidget(list->actionPackage());
+                 return new PackageInfoDialog(list->actionPackage());
             });
 
             self().area().add(list = new PackagesWidget(wanted));

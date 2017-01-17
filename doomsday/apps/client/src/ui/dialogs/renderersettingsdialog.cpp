@@ -143,7 +143,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText(tr("Renderer Settings"));
-    heading().setImage(style().images().image("renderer"));
+    heading().setStyleImage("renderer");
 
     LabelWidget *appearLabel = LabelWidget::newWithText(tr("Appearance:"), &area());
     appearLabel->setName("appearance-label"); // for lookup from tutorial

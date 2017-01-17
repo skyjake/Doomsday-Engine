@@ -20,7 +20,8 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
-#include "ui/widgets/packagepopupwidget.h"
+#include "ui/widgets/packageinfodialog.h"
+#include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
@@ -125,7 +126,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             // Package icon.
             icon().set(Background());
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setStyleImage("package", "default");
+            icon().setStyleImage("package.icon", "default");
             icon().margins().set("dialog.gap");
             Rule const &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
@@ -150,7 +151,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackagePopupWidget(_item->packageFile());
+            return new PackageInfoDialog(_item->packageFile());
         }
 
     private:
@@ -213,31 +214,14 @@ DENG_GUI_PIMPL(PackagesDialog)
         self().rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
                                                           self().name() + ".filter"));
         browser->setActionsAlwaysShown(true);
+        browser->setRightClickToOpenContextMenu(true);
         browser->setPackageStatus(*this);
 
         // Action for showing information about the package.
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
-            if (Package::hasOptionalContent(id))
-            {
-                auto *menu = new PopupMenuWidget;
-                menu->setColorTheme(Inverted);
-                menu->items()
-                    << new ui::SubwidgetItem(tr("Info"), ui::Up,
-                        [this] () -> PopupWidget * {
-                            return new PackagePopupWidget(browser->actionPackage());
-                        })
-                    << new ui::ActionItem(style().images().image("gear"), tr("Select Packages"),
-                        new CallbackAction([this] () {
-                            browser->openContentOptions(*browser->actionItem());
-                        }));
-                return menu;
-            }
-            else
-            {
-                return new PackagePopupWidget(id);
-            }
+            return new PackageInfoDialog(id);
         });
 
         // Action for (de)selecting the package.
@@ -294,8 +278,8 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         if (game && catalog.setPackages(requiredPackages + selectedPackages))
         {
-            gameTitle->setImage(HomeItemWidget::makeGameLogo(*game, catalog,
-                                                             HomeItemWidget::UnmodifiedAppearance));
+            gameTitle->setImage(IdTech1Image::makeGameLogo(*game, catalog,
+                                                           IdTech1Image::UnmodifiedAppearance));
             // List of the native required files.
             StringList dataFiles;
             for (String packageId : requiredPackages)
@@ -367,7 +351,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
     {
         heading().setText(tr("Packages: %1").arg(titleText));
     }
-    heading().setImage(style().images().image("package"));
+    heading().setImage(style().images().image("package.icon"));
     buttons()
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))

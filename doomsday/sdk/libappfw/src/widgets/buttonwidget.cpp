@@ -42,6 +42,7 @@ DENG2_OBSERVES(Action, Triggered)
     DotPath hoverTextColor;
     DotPath originalTextColor;
     Vector4f originalTextModColor;
+    String shortcut;
 
     Impl(Public *i) : Base(i)
     {
@@ -218,6 +219,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
         setHoverTextColor("inverted.text", ReplaceColor);
         setBorderColor("inverted.text");
         setBackgroundColor("inverted.background");
+        setImageColor(style().colors().colorf("inverted.text"));
     }
     else
     {
@@ -227,6 +229,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
         setHoverTextColor("text", ReplaceColor);
         setBorderColor("text");
         setBackgroundColor("background");
+        setImageColor(style().colors().colorf("text"));
     }
     set(bg);
     setTextColor(d->originalTextColor);
@@ -306,6 +309,31 @@ void ButtonWidget::trigger()
 ButtonWidget::State ButtonWidget::state() const
 {
     return d->state;
+}
+
+void ButtonWidget::setShortcutKey(String const &key)
+{
+    d->shortcut = key;
+}
+
+String ButtonWidget::shortcutKey() const
+{
+    return d->shortcut;
+}
+
+bool ButtonWidget::handleShortcut(KeyEvent const &keyEvent)
+{
+    if (keyEvent.text().isEmpty())
+    {
+        return false;
+    }
+    if ((!d->shortcut.isEmpty() && d->shortcut.startsWith(keyEvent.text(), Qt::CaseInsensitive)) ||
+        text().startsWith(keyEvent.text(), Qt::CaseInsensitive))
+    {
+        trigger();
+        return true;
+    }
+    return false;
 }
 
 bool ButtonWidget::handleEvent(Event const &event)

@@ -26,6 +26,7 @@
 #include "de/Folder"
 #include "de/Guard"
 #include "de/LinkFile"
+#include "de/NativeFile"
 #include "de/NumberValue"
 #include "de/RecordValue"
 #include "de/ScriptSystem"
@@ -361,6 +362,22 @@ File *File::reinterpret()
         fileSystem().index(*result);
     }
     return result;
+}
+
+NativePath File::correspondingNativePath() const
+{
+    if (NativeFile const *native = source()->maybeAs<NativeFile>())
+    {
+        return native->nativePath();
+    }
+    else if (Folder const *folder = target().maybeAs<Folder>())
+    {
+        if (auto *feed = folder->primaryFeedMaybeAs<DirectoryFeed>())
+        {
+            return feed->nativePath();
+        }
+    }
+    return NativePath();
 }
 
 IOStream &File::operator << (IByteArray const &bytes)

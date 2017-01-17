@@ -83,6 +83,7 @@ DENG2_PIMPL(DoomsdayApp)
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
+    GameProfile adhocProfile;
     GameProfile const *currentProfile = nullptr;
     StringList preGamePackages;
     GameProfiles gameProfiles;
@@ -619,6 +620,11 @@ std::string const &DoomsdayApp::doomsdayBasePath() const
     return d->ddBasePath;
 }
 
+GameProfile &DoomsdayApp::adhocProfile()
+{
+    return d->adhocProfile;
+}
+
 void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
 {
     NativePath cleaned = App::commandLine().startupPath() / path; // In case it's relative.
@@ -761,7 +767,7 @@ void DoomsdayApp::setGame(Game const &game)
 
 void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
 {
-    auto const &newGame = games()[profile.game()];
+    auto const &newGame = profile.game();
 
     if (!newGame.isNull())
     {
@@ -804,7 +810,7 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
-    auto const &newGame = games()[profile.game()];
+    auto const &newGame = profile.game();
 
     bool const arePackagesDifferent =
             !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),

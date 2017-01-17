@@ -31,6 +31,7 @@ using namespace de;
 DENG_GUI_PIMPL(HomeItemWidget)
 , DENG2_OBSERVES(MenuWidget, ItemTriggered)
 {
+    // Event handler for mouse clicks on the item.
     struct ClickHandler : public GuiWidget::IEventHandler
     {
         Public &owner;
@@ -41,7 +42,6 @@ DENG_GUI_PIMPL(HomeItemWidget)
         void acquireFocus()
         {
             owner.acquireFocus();
-            //emit owner.mouseActivity();
         }
 
         bool handleEvent(GuiWidget &widget, Event const &event)
@@ -65,6 +65,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
                             return true;
 
                         case MouseClickFinished:
+                            owner.itemRightClicked();
                             emit owner.openContextMenu();
                             return true;
 
@@ -74,12 +75,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
                     }
 
                     if (mouse.state() == MouseEvent::Pressed ||
-                       mouse.state() == MouseEvent::DoubleClick)
+                        mouse.state() == MouseEvent::DoubleClick)
                     {
                         acquireFocus();
                     }
                     if (mouse.state()  == MouseEvent::DoubleClick &&
-                       mouse.button() == MouseEvent::Left)
+                        mouse.button() == MouseEvent::Left)
                     {
                         emit owner.doubleClicked();
                         return true;
@@ -385,46 +386,8 @@ void HomeItemWidget::focusLost()
     //emit deselected();
 }
 
-Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
-                                   LogoFlags flags)
-{
-    try
-    {
-        if (game.isPlayable())
-        {
-            Block const playPal  = catalog.read("PLAYPAL");
-            Block const title    = catalog.read("TITLE");
-            Block const titlePic = catalog.read("TITLEPIC");
-
-            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
-
-            float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
-            Image::Size const finalSize(img.width()  * scaleFactor,
-                                        img.height() * scaleFactor * 1.2f); // VGA aspect
-
-            Image logoImage(img.toQImage().scaled(finalSize.x, finalSize.y,
-                                                  Qt::IgnoreAspectRatio,
-                                                  Qt::SmoothTransformation));
-            if (flags.testFlag(ColorizedByFamily))
-            {
-                String const colorId = "home.icon." +
-                        (game.family().isEmpty()? "other" : game.family());
-                return logoImage.colorized(Style::get().colors().color(colorId));
-            }
-            return logoImage;
-        }
-    }
-    catch (Error const &er)
-    {
-        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
-                << game.title()
-                << er.asText();
-    }
-    // Use a generic logo, some files are missing.
-    QImage img(64, 64, QImage::Format_ARGB32);
-    img.fill(Qt::black);
-    return img;
-}
+void HomeItemWidget::itemRightClicked()
+{}
 
 void HomeItemWidget::addButton(GuiWidget *widget)
 {

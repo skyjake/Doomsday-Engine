@@ -25,6 +25,7 @@
 #include <de/ProgressWidget>
 
 class HomeItemWidget;
+class HomeMenuWidget;
 
 /**
  * Listing of packages with search and filtering options.
@@ -56,14 +57,12 @@ public:
     PackagesWidget(de::StringList const &manualPackageIds,
                    de::String const &name = de::String());
 
+    HomeMenuWidget &menu();
     de::ProgressWidget &progress();
 
+    void setRightClickToOpenContextMenu(bool enable);
     void setPopulationEnabled(bool enable);
-
     void setFilterEditorMinimumY(de::Rule const &minY);
-
-    //void setMaximumPanelHeight(de::Rule const &maxHeight);
-
     void setPackageStatus(IPackageStatus const &packageStatus);
 
     /**
@@ -107,8 +106,6 @@ public:
     void scrollToPackage(de::String const &packageId) const;
 
     de::LineEditWidget &searchTermsEditor();
-
-    void openContentOptions(de::ui::Item const &item);
 
     // Events.
     void initialize();

@@ -112,6 +112,12 @@ public:
 
     State state() const;
 
+    void setShortcutKey(String const &key);
+
+    String shortcutKey() const;
+
+    bool handleShortcut(KeyEvent const &keyEvent);
+
     // Events.
     void update() override;
     bool handleEvent(Event const &event) override;

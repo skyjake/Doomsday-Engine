@@ -113,7 +113,7 @@ struct Range
         return QString("[%1...%2)").arg(start).arg(end);
     }
 
-    typedef QList< Range<Type> > ContiguousRanges;
+    typedef QList<Range<Type>> ContiguousRanges;
 
     /**
      * Finds a sequence of contiguous ranges in the input values. Only use with integer types.

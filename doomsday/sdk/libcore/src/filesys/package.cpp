@@ -33,6 +33,7 @@ String const Package::VAR_PACKAGE      ("package");
 String const Package::VAR_PACKAGE_ID   ("package.ID");
 String const Package::VAR_PACKAGE_ALIAS("package.alias");
 String const Package::VAR_PACKAGE_TITLE("package.title");
+String const Package::VAR_ID           ("ID");
 String const Package::VAR_TITLE        ("title");
 
 static String const PACKAGE_ORDER      ("package.__order__");
@@ -299,7 +300,7 @@ void Package::validateMetadata(Record const &packageInfo)
 
     String const &topLevelDomain = ident.segment(0).toString();
     if (topLevelDomain == QStringLiteral("feature") ||
-       topLevelDomain == QStringLiteral("asset"))
+        topLevelDomain == QStringLiteral("asset"))
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
         throw ValidationError("Package::validateMetadata",
@@ -423,6 +424,18 @@ String Package::identifierForFile(File const &file)
         parent = parent->parent();
     }
     return prefix + extractIdentifier(file.name());
+}
+
+String Package::versionedIdentifierForFile(File const &file)
+{
+    String id = identifierForFile(file);
+    if (id.isEmpty()) return String();
+    auto const id_ver = split(file.name().fileNameWithoutExtension());
+    if (id_ver.second.isValid())
+    {
+        return String("%1_%2").arg(id).arg(id_ver.second.asText());
+    }
+    return id;
 }
 
 File const *Package::containerOfFile(File const &file)

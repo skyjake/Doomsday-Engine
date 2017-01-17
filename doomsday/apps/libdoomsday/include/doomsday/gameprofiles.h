@@ -23,6 +23,7 @@
 
 #include <de/Profiles>
 
+class Game;
 class Games;
 
 /**
@@ -48,7 +49,10 @@ public:
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
 
-        de::String game() const;
+        bool appendPackage(de::String const &id);
+
+        de::String gameId() const;
+        Game &game() const;
         de::StringList packages() const;
         bool isUserCreated() const;
         bool isUsingGameRequirements() const;
@@ -100,6 +104,8 @@ public:
     de::LoopResult forAll(std::function<de::LoopResult (Profile const &)> func) const;
 
     QList<Profile const *> allPlayableProfiles() const;
+
+    QList<Profile *> profilesSortedByFamily();
 
     static Profile const &null();
 

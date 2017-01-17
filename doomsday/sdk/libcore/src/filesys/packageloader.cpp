@@ -170,9 +170,11 @@ DENG2_PIMPL(PackageLoader)
         }
 
         // If the identifier includes a version, only accept that specific version.
-        auto idVer = Package::split(packageId);
-        if (idVer.second.isValid())
+        bool const mustMatchExactVersion = (packageId.contains('_'));
+
+        if (mustMatchExactVersion)
         {
+            auto const idVer = Package::split(packageId);
             found.remove_if([&idVer] (File *f) {
                 Version const pkgVer = f->objectNamespace().gets(VAR_PACKAGE_VERSION);
                 return (pkgVer != idVer.second); // Ignore other versions.

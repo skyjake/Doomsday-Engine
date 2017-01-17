@@ -19,6 +19,9 @@
 #include "resource/idtech1image.h"
 
 #include <doomsday/resource/patch.h>
+#include <doomsday/Game>
+
+#include <de/Style>
 
 using namespace de;
 using namespace res;
@@ -71,4 +74,52 @@ Vector2i IdTech1Image::origin() const
 Image::Size IdTech1Image::nominalSize() const
 {
     return d->nominalSize;
+}
+
+Image IdTech1Image::makeGameLogo(Game const &game,
+                                 res::LumpCatalog const &catalog,
+                                 LogoFlags flags)
+{
+    try
+    {
+        if (game.isPlayable())
+        {
+            Block const playPal  = catalog.read("PLAYPAL");
+            Block const title    = catalog.read("TITLE");
+            Block const titlePic = catalog.read("TITLEPIC");
+
+            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
+
+            float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
+            Image::Size const finalSize(img.width()  * scaleFactor,
+                                        img.height() * scaleFactor * 1.2f); // VGA aspect
+
+            Image logoImage(img.toQImage().scaled(finalSize.x, finalSize.y,
+                                                  Qt::IgnoreAspectRatio,
+                                                  Qt::SmoothTransformation));
+            if (flags & ColorizedByFamily)
+            {
+                String const colorId = "home.icon." +
+                        (game.family().isEmpty()? "other" : game.family());
+                return logoImage.colorized(Style::get().colors().color(colorId));
+            }
+            return logoImage;
+        }
+    }
+    catch (Error const &er)
+    {
+        if (flags & NullImageIfFails) return Image();
+
+        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
+                << game.title()
+                << er.asText();
+    }
+    if (flags & NullImageIfFails)
+    {
+        return Image();
+    }
+    // Use a generic logo, some files are missing.
+    QImage img(64, 64, QImage::Format_ARGB32);
+    img.fill(Qt::black);
+    return img;
 }

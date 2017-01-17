@@ -91,6 +91,8 @@ public:
 
         void setReadOnly(bool readOnly);
 
+        void notifyChange();
+
         virtual bool resetToDefaults() = 0;
 
         /**
@@ -100,6 +102,9 @@ public:
         virtual String toInfoSource() const = 0;
 
         DENG2_AS_IS_METHODS()
+
+    public:
+        DENG2_DEFINE_AUDIENCE2(Change, void profileChanged(AbstractProfile &))
 
     private:
         DENG2_PRIVATE(d)

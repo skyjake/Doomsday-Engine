@@ -36,7 +36,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 
     void updateLabel()
     {
-        self().setStyleImage("package");
+        self().setStyleImage("package.icon");
 
         if (packages.isEmpty())
         {
@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         auto *dlg = new PackagesDialog(dialogTitle);
         if (profile)
         {
-            dlg->setGame(profile->game());
+            dlg->setGame(profile->gameId());
         }
         dlg->setDeleteAfterDismissed(true);
         dlg->setSelectedPackages(packages);

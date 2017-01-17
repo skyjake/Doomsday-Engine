@@ -102,6 +102,29 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func
     });
 }
 
+QList<GameProfile *> GameProfiles::profilesSortedByFamily()
+{
+    QList<GameProfile *> profs;
+    forAll([&profs] (GameProfile &profile)
+    {
+        profs << &profile;
+        return LoopContinue;
+    });
+    qSort(profs.begin(), profs.end(), [] (GameProfile const *a, GameProfile const *b)
+    {
+        String family1 = a->game().family();
+        String family2 = b->game().family();
+        if (family1.isEmpty()) family1 = "other";
+        if (family2.isEmpty()) family2 = "other";
+        if (family1 == family2)
+        {
+            return a->name().compareWithoutCase(b->name()) < 0;
+        }
+        return family1.compareWithoutCase(family2) < 0;
+    });
+    return profs;
+}
+
 QList<GameProfile const *> GameProfiles::allPlayableProfiles() const
 {
     QList<GameProfile const *> playable;
@@ -178,25 +201,57 @@ GameProfiles::Profile &GameProfiles::Profile::operator = (Profile const &other)
 
 void GameProfiles::Profile::setGame(String const &id)
 {
-    d->gameId = id;
+    if (d->gameId != id)
+    {
+        d->gameId = id;
+        notifyChange();
+    }
 }
 
 void GameProfiles::Profile::setPackages(StringList const &packagesInOrder)
 {
-    d->packages = packagesInOrder;
+    if (d->packages != packagesInOrder)
+    {
+        d->packages = packagesInOrder;
+        notifyChange();
+    }
 }
 
 void GameProfiles::Profile::setUserCreated(bool userCreated)
 {
-    d->userCreated = userCreated;
+    if (d->userCreated != userCreated)
+    {
+        d->userCreated = userCreated;
+        notifyChange();
+    }
 }
 
 void GameProfiles::Profile::setUseGameRequirements(bool useGameRequirements)
 {
-    d->useGameRequirements = useGameRequirements;
+    if (d->useGameRequirements != useGameRequirements)
+    {
+        d->useGameRequirements = useGameRequirements;
+        notifyChange();
+    }
 }
 
-String GameProfiles::Profile::game() const
+bool GameProfiles::Profile::appendPackage(String const &id)
+{
+    if (!d->packages.contains(id))
+    {
+        d->packages << id;
+        notifyChange();
+        return true;
+    }
+    return false;
+}
+
+Game &GameProfiles::Profile::game() const
+{
+    return DoomsdayApp::games()[d->gameId];
+}
+
+String GameProfiles::Profile::gameId() const
 {
     return d->gameId;
 }
