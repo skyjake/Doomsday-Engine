@@ -185,7 +185,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         try
         {
-            foreach (String ext, StringList({ ".jpg", ".jpeg", ".png" }))
+            static StringList const imageExts({ ".jpg", ".jpeg", ".png" });
+            foreach (String ext, imageExts)
             {
                 String const imgPath = packagePath / "icon" + ext;
                 if (ImageFile const *img = FS::get().root().tryLocate<ImageFile const>(imgPath))
