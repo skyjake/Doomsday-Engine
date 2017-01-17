@@ -643,25 +643,26 @@ DENG2_PIMPL(DataBundle), public Lockable
         identifiedTag.clear();
 
         // Look for terms that refer to specific games.
-        static QHash<String, StringList> terms;
+        static QList<std::pair<String, StringList>> terms;
         if (terms.isEmpty())
         {
-            terms.insert("doom",    StringList({ "^doom$|\\bdoom[^ s][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
-            terms.insert("doom2",   StringList({ "doom2|doom 2|DoomII|Doom II|final\\s*doom" })); //, "\\bmap[0-3][0-9]\\b" }));
-            terms.insert("heretic", StringList({ "jheretic|heretic", "d'sparil|serpent rider" })); //, "\\be[1-5]m[1-9]\\b" }));
-            terms.insert("hexen",   StringList({ "jhexen|hexen", "korax|mage|warrior|cleric" })); //, "\\bmap[0-3][0-9]\\b" }));
+            terms << std::make_pair(String("doom2"),   StringList({ "doom2|doom 2|DoomII|Doom II|final\\s*doom|plutonia|tnt" })); //, "\\bmap[0-3][0-9]\\b" }));
+            terms << std::make_pair(String("doom"),    StringList({ "^doom$|\\bdoom[^ s2][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
+            terms << std::make_pair(String("heretic"), StringList({ "jheretic|heretic", "d'sparil|serpent rider" })); //, "\\be[1-5]m[1-9]\\b" }));
+            terms << std::make_pair(String("hexen"),   StringList({ "jhexen|hexen", "korax|mage|warrior|cleric" })); //, "\\bmap[0-3][0-9]\\b" }));
         }
         QHash<String, int> scores;
-        for (auto i = terms.constBegin(); i != terms.constEnd(); ++i)
+        for (auto i : terms) //= terms.constBegin(); i != terms.constEnd(); ++i)
         {
-            for (String const &term : i.value())
+            for (String const &term : i.second)
             {
                 QRegularExpression re(term, QRegularExpression::CaseInsensitiveOption);
-                if (re.match(text).hasMatch())
+                auto match = re.match(text);
+                if (match.hasMatch())
                 {
-                    //qDebug() << "match:" << term << "in" << text.substr(0, 50) << "scoring for:" << i.key();
+                    //qDebug() << "match:" << term << "in" << match.captured() << "scoring for:" << i.first;
                     //scores[i.key()]++;
-                    identifiedTag = i.key();
+                    identifiedTag = i.first;
                     return true;
                 }
             }
@@ -739,27 +740,25 @@ DENG2_PIMPL(DataBundle), public Lockable
         }
 
         String const oldTags = meta.gets(VAR_TAGS);
-        removeGameTags(meta);
 
         String tag;
         if (identifyMostLikelyGame(meta.gets(VAR_TITLE), tag))
         {
             //qDebug() << meta.gets(VAR_TITLE)<< "- from title:" << tag;
+            removeGameTags(meta);
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
-        if (identifyMostLikelyGame(meta.gets("ID"), tag))
+        else if (identifyMostLikelyGame(meta.gets("ID"), tag))
         {
             //qDebug() << meta.gets(VAR_TITLE) << "- from package ID:" << tag;
+            removeGameTags(meta);
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
-
-        if (!containsAnyGameTag(meta))
+        else if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
         {
-            if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
-            {
-                //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
-                meta.appendUniqueWord(VAR_TAGS, tag);
-            }
+            //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
+            removeGameTags(meta);
+            meta.appendUniqueWord(VAR_TAGS, tag);
         }
 
         if (!containsAnyGameTag(meta))
