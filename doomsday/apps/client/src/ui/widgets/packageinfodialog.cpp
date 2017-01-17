@@ -53,6 +53,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     LabelWidget *icon;
     LabelWidget *metaInfo;
     IndirectRule *targetHeight;
+    IndirectRule *descriptionWidth;
     String packageId;
     String compatibleGame; // guessed
     NativePath nativePath;
@@ -64,6 +65,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     Impl(Public *i) : Base(i)
     {
         targetHeight = new IndirectRule;
+        descriptionWidth = new IndirectRule;
 
         self().useInfoStyle();
 
@@ -78,6 +80,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     ~Impl()
     {
         releaseRef(targetHeight);
+        releaseRef(descriptionWidth);
     }
 
     void createWidgets()
@@ -108,18 +111,18 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top(),
                                 ui::Down);
-        layout.setOverrideWidth(Const(2*400));
+        layout.setOverrideWidth(*descriptionWidth);
         layout << *title
                << *path
                << *description;
 
         // Right column.
         icon = LabelWidget::newWithText("", &area);
-        //icon->setSizePolicy(ui::Filled, ui::Filled);
+        icon->setSizePolicy(ui::Filled, ui::Filled);
         //icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
         //icon->setStyleImage("package.large");
         //icon->setImageColor(style().colors().colorf("inverted.accent"));
-        icon->rule().setInput(Rule::Height, Const(2*170));
+        icon->rule().setInput(Rule::Height, rule("dialog.packageinfo.icon.height"));
 
         metaInfo = LabelWidget::newWithText("", &area);
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
@@ -128,7 +131,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         metaInfo->setTextColor("inverted.accent");
 
         SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
-        rightLayout.setOverrideWidth(Const(2*200));
+        rightLayout.setOverrideWidth(rule("dialog.packageinfo.metadata.width"));
         rightLayout << *icon
                     << *metaInfo;
 
@@ -142,7 +145,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         icon->setImage(iconImage);
         icon->setImageColor(Vector4f(1, 1, 1, 1));
-        icon->setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
+        icon->setImageFit(ui::FitToWidth | ui::OriginalAspectRatio);
         icon->setImageScale(1);
         icon->setBehavior(ContentClipping, true);
     }
@@ -176,7 +179,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         icon->setStyleImage("package.large");
         icon->setImageColor(style().colors().colorf("inverted.accent"));
         icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-        icon->setImageScale(.75f);
+        //icon->setImageScale(.75f);
         icon->setOpacity(.5f);
         icon->setBehavior(ContentClipping, false);
     }
@@ -473,6 +476,19 @@ PackageInfoDialog::PackageInfoDialog(File const *packageFile)
     {
         //document().setText(tr("No package"));
     }
+}
+
+void PackageInfoDialog::prepare()
+{
+    DialogWidget::prepare();
+
+    // Update the width of the dialog. Don't let it get wider than the window.
+    d->descriptionWidth->setSource(OperatorRule::minimum(
+                                       d->description->text().contains(_E(m))?
+                                           rule("dialog.packageinfo.description.wide")
+                                         : rule("dialog.packageinfo.description.normal"),
+                                       root().viewWidth() - margins().width() -
+                                       d->metaInfo->rule().width()));
 }
 
 void PackageInfoDialog::playInGame()

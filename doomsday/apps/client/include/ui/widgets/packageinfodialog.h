@@ -32,6 +32,9 @@ public:
     PackageInfoDialog(de::String const &packageId);
     PackageInfoDialog(de::File const *packageFile);
 
+protected:
+    void prepare() override;
+
 public slots:
     void playInGame();
     void addToProfile();
