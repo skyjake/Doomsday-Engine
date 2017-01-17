@@ -296,6 +296,11 @@ void DocumentWidget::setText(String const &styledText)
     }
 }
 
+String DocumentWidget::text() const
+{
+    return d->glText.text();
+}
+
 void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
 {
     d->widthPolicy = policy;
