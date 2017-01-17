@@ -78,5 +78,6 @@ home {
         image doom    { path = "graphics/doom/background.jpg" }
         image heretic { path = "graphics/heretic/background.jpg" }
         image hexen   { path = "graphics/hexen/background.jpg" }
+        image other   { path = "graphics/other-background.jpg" }
     }
 }

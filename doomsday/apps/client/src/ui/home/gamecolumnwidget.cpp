@@ -507,6 +507,12 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
         header().setLogoBackground("home.background." + d->gameFamily);
         setBackgroundImage("home.background." + d->gameFamily);
     }
+    else
+    {
+        setBackgroundImage("home.background.other");
+    }
+
+    header().menuButton().hide(); // no items for the menu atm
 
     /// @todo Get these description from the game family defs.
     {

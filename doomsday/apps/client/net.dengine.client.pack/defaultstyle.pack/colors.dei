@@ -17,6 +17,7 @@ inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
     color background { rgb <1.0, 1.0, 1.0, 0.75> }
     color accent     { rgb <0.5, 0.4, 0.2> }
+    color altaccent  { rgb <0.32, 0.38, 0.34> }
     color glow       { rgb <0.0, 0.0, 0.0, 0.15> }
 }
 

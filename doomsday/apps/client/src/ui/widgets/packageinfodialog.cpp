@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
         metaInfo->setTextLineAlignment(ui::AlignLeft);
         metaInfo->setFont("small");
-        metaInfo->setTextColor("inverted.accent");
+        metaInfo->setTextColor("inverted.altaccent");
 
         SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
         rightLayout.setOverrideWidth(rule("dialog.packageinfo.metadata.width"));
@@ -180,7 +180,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     void useDefaultIcon()
     {
         icon->setStyleImage("package.large");
-        icon->setImageColor(style().colors().colorf("inverted.accent"));
+        icon->setImageColor(style().colors().colorf("inverted.altaccent"));
         icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
         //icon->setImageScale(.75f);
         icon->setOpacity(.5f);

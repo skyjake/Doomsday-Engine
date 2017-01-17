@@ -172,7 +172,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                      << "\nfileName:" << source->name()
                      << "\nfileSize:" << source->size()
                      << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
-                     */
+            */
         }
         else if (!self().containerPackageId().isEmpty())
         {
