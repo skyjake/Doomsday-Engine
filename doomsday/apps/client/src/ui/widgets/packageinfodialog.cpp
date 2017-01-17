@@ -54,6 +54,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     LabelWidget *metaInfo;
     IndirectRule *targetHeight;
     IndirectRule *descriptionWidth;
+    IndirectRule *minContentHeight;
     String packageId;
     String compatibleGame; // guessed
     NativePath nativePath;
@@ -66,6 +67,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         targetHeight = new IndirectRule;
         descriptionWidth = new IndirectRule;
+        minContentHeight = new IndirectRule;
 
         self().useInfoStyle();
 
@@ -81,6 +83,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         releaseRef(targetHeight);
         releaseRef(descriptionWidth);
+        releaseRef(minContentHeight);
     }
 
     void createWidgets()
@@ -101,10 +104,12 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         path->setTextLineAlignment(ui::AlignLeft);
         path->margins().setTop("unit");
 
+        AutoRef<Rule> contentHeight(OperatorRule::maximum(*minContentHeight, *targetHeight));
+
         description = new DocumentWidget;
         description->setFont("small");
         description->setWidthPolicy(ui::Fixed);
-        description->rule().setInput(Rule::Height, *targetHeight - title->rule().height()
+        description->rule().setInput(Rule::Height, contentHeight - title->rule().height()
                                      - path->rule().height());
         area.add(description);
 
@@ -136,9 +141,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     << *metaInfo;
 
         targetHeight->setSource(rightLayout.height());
-
-        area.setContentSize(layout.width() + rightLayout.width(),
-                            *targetHeight);
+        area.setContentSize(layout.width() + rightLayout.width(), contentHeight);
     }
 
     void setPackageIcon(Image const &iconImage)
@@ -224,7 +227,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
         Record const &meta = names.subrecord(Package::VAR_PACKAGE);
 
-        packageId = meta.gets(Package::VAR_ID);
+        packageId = Package::versionedIdentifierForFile(*file);
         nativePath = file->correspondingNativePath();
         String fileDesc = file->source()->description();
 
@@ -482,13 +485,20 @@ void PackageInfoDialog::prepare()
 {
     DialogWidget::prepare();
 
+    // Monospace text implies that there is an DOS-style readme text
+    // file included in the notes.
+    bool const useWideLayout = d->description->text().contains(_E(m));
+
     // Update the width of the dialog. Don't let it get wider than the window.
     d->descriptionWidth->setSource(OperatorRule::minimum(
-                                       d->description->text().contains(_E(m))?
+                                       useWideLayout?
                                            rule("dialog.packageinfo.description.wide")
                                          : rule("dialog.packageinfo.description.normal"),
                                        root().viewWidth() - margins().width() -
                                        d->metaInfo->rule().width()));
+
+    d->minContentHeight->setSource(useWideLayout? rule("dialog.packageinfo.content.minheight")
+                                                : ConstantRule::zero());
 }
 
 void PackageInfoDialog::playInGame()

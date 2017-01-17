@@ -299,9 +299,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        String packageId() const // unversioned
+        String packageId() const
         {
-            return _item->info->gets("ID");
+            return _item->data().toString();
         }
 
         PopupWidget *makeInfoPopup() const

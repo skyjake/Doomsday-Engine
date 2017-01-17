@@ -57,6 +57,7 @@ dialog {
     rule multiplayer.width { constant $= UNIT * 80 }
     rule packages.width    { constant $= UNIT * 100 }
     packageinfo {
+        rule content.minheight  { constant $= UNIT * 100 }
         rule description.normal { constant $= UNIT * 100 }
         rule description.wide   { constant $= UNIT * 150 }
         rule icon.height        { constant $= UNIT * 45 }
