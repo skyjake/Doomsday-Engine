@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
 
         container->add(browser = new PackagesWidget);
         browser->setFilterEditorMinimumY(Const(0));
+        browser->setRightClickToOpenContextMenu(true);
         browser->rule().setInput(Rule::Width, rule("sidebar.width"));
 
         // Action for showing information about the package.
