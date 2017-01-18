@@ -294,7 +294,7 @@ package "freedoom.phase1_0.9" {
         title: Freedoom: Phase 1
         author: Freedoom Project
         license: BSD
-        tags: gamedata doom2 mod
+        tags: gamedata doom mod
     }
 }
 
@@ -308,7 +308,7 @@ package "freedoom.phase1_0.10" {
         title: Freedoom: Phase 1
         author: Freedoom Project
         license: BSD
-        tags: gamedata doom2 mod
+        tags: gamedata doom mod
     }
 }
 
@@ -322,7 +322,7 @@ package "freedoom.phase1_0.10.1" {
         title: Freedoom: Phase 1
         author: Freedoom Project
         license: BSD
-        tags: gamedata doom2 mod
+        tags: gamedata doom mod
     }
 }
 
