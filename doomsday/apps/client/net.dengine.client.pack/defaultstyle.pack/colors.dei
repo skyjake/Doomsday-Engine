@@ -15,9 +15,9 @@ color glow        { rgb <1.0, 1.0, 1.0, 0.14> }
 
 inverted {
     color text       { rgb <0.0, 0.0, 0.0> }
-    color background { rgb <1.0, 1.0, 1.0, 0.75> }
+    color background { rgb <0.933, 0.933, 0.933, 0.75> }
     color accent     { rgb <0.5, 0.4, 0.2> }
-    color altaccent  { rgb <0.32, 0.38, 0.34> }
+    color altaccent  { rgb <0.34, 0.4, 0.34> }
     color glow       { rgb <0.0, 0.0, 0.0, 0.15> }
 }
 
@@ -41,7 +41,7 @@ focus {
 
 popup {
     info {
-        color background { rgb <1.0, 1.0, 1.0> }
+        color background { rgb <0.933, 0.933, 0.933> }
         color glow       { rgb $= inverted.glow.rgb }
     }
 }
