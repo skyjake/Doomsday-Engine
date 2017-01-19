@@ -121,5 +121,6 @@ def setDefaults(d)
         d.audio.musicPlugin = 'fmod'
         d.audio.cdPlugin    = 'fmod'
     end
+    record d.audio.fmod
+    d.audio.fmod.speakerMode = '' # defaults to stereo
 end
-

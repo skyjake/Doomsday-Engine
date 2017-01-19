@@ -49,6 +49,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarNativePathWidget *musicSoundfont;
     CVarToggleWidget     *soundInfo;
     GridPopupWidget      *devPopup;
+    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
     VariableChoiceWidget *cdPlugin;
@@ -93,6 +94,13 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin")));
         area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin")));
 
+        area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode")));
+        fmodSpeakerMode->items()
+                << new ChoiceItem(tr("Stereo"), "")
+                << new ChoiceItem(tr("5.1"), "5.1")
+                << new ChoiceItem(tr("7.1"), "7.1")
+                << new ChoiceItem(tr("SRS 5.1/Prologic"), "prologic");
+
         soundPlugin->items()
                 << new ChoiceItem(tr("FMOD"), "fmod")
            #if !defined (DENG_DISABLE_SDLMIXER)
@@ -124,15 +132,17 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
            #endif
                 << new ChoiceItem(tr("Disabled"), "dummy");
 
-        soundPlugin->updateFromVariable();
-        musicPlugin->updateFromVariable();
-        cdPlugin   ->updateFromVariable();
+        soundPlugin    ->updateFromVariable();
+        musicPlugin    ->updateFromVariable();
+        cdPlugin       ->updateFromVariable();
+        fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
         auto changeFunc = [this] (uint) { audioPluginsChanged = true; };
-        QObject::connect(soundPlugin, &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(musicPlugin, &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(cdPlugin,    &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
+        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
     }
 
     void fetch()
@@ -212,6 +222,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     layout << *soundPluginLabel << *d->soundPlugin
            << *musicPluginLabel << *d->musicPlugin
            << *cdPluginLabel    << *d->cdPlugin;
+
+    auto *speakerLabel = LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area());
+    layout << *speakerLabel << *d->fmodSpeakerMode;
 
     area().setContentSize(layout.width(), layout.height());
 

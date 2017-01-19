@@ -49,6 +49,7 @@
 
 #include "doomsday.h"
 #include <de/c_wrapper.h>
+#include <de/Config>
 
 FMOD::System* fmodSystem = 0;
 
@@ -57,14 +58,14 @@ FMOD::System* fmodSystem = 0;
  */
 int DS_Init(void)
 {
-    if(fmodSystem)
+    if (fmodSystem)
     {
         return true; // Already initialized.
     }
 
     // Create the FMOD audio system.
     FMOD_RESULT result;
-    if((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
+    if ((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD::System_Create failed (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem = 0;
@@ -75,28 +76,42 @@ int DS_Init(void)
     // Figure out the system's configured speaker mode.
     FMOD_SPEAKERMODE speakerMode;
     result = fmodSystem->getDriverCaps(0, 0, 0, &speakerMode);
-    if(result == FMOD_OK)
+    if (result == FMOD_OK)
     {
         fmodSystem->setSpeakerMode(speakerMode);
     }
 #endif
 
-    // Manual overrides.
-    if(CommandLine_Exists("-speaker51"))
+    de::String const speakerMode = de::Config::get().gets("audio.fmod.speakerMode", "");
+    if (speakerMode == "5.1")
     {
         fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
     }
-    if(CommandLine_Exists("-speaker71"))
+    else if (speakerMode == "7.1")
     {
         fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
     }
-    if(CommandLine_Exists("-speakerprologic"))
+    else if (speakerMode == "prologic")
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
+    }
+
+    // Manual overrides.
+    if (CommandLine_Exists("-speaker51"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+    }
+    if (CommandLine_Exists("-speaker71"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+    }
+    if (CommandLine_Exists("-speakerprologic"))
     {
         fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
 
     // Initialize FMOD.
-    if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
+    if ((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem->release();
@@ -116,7 +131,7 @@ int DS_Init(void)
     int numPlugins = 0;
     fmodSystem->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
     DSFMOD_TRACE("Plugins loaded: " << numPlugins);
-    for(int i = 0; i < numPlugins; i++)
+    for (int i = 0; i < numPlugins; i++)
     {
         unsigned int handle;
         fmodSystem->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
@@ -157,9 +172,9 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-    if(!fmodSystem) return;
+    if (!fmodSystem) return;
 
-    if(type == SFXEV_END)
+    if (type == SFXEV_END)
     {
         // End of frame, do an update.
         fmodSystem->update();
@@ -168,14 +183,14 @@ void DS_Event(int type)
 
 int DS_Set(int prop, const void* ptr)
 {
-    if(!fmodSystem) return false;
+    if (!fmodSystem) return false;
 
-    switch(prop)
+    switch (prop)
     {
     case AUDIOP_SOUNDFONT_FILENAME: {
         const char* path = reinterpret_cast<const char*>(ptr);
         DSFMOD_TRACE("DS_Set: Soundfont = " << path);
-        if(!path || !strlen(path))
+        if (!path || !strlen(path))
         {
             // Use the default.
             path = 0;
