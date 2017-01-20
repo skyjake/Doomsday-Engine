@@ -39,7 +39,7 @@ static String const VAR_PACKAGE_VERSION("package.version");
 
 DENG2_PIMPL(PackageLoader)
 {
-    LoadedPackages loaded;
+    LoadedPackages loaded; ///< Identifiers are unversioned; only one version can be loaded at a time.
     int loadCounter;
 
     Impl(Public *i) : Base(i), loadCounter(0)
@@ -464,7 +464,15 @@ void PackageLoader::unloadAll()
 
 bool PackageLoader::isLoaded(String const &packageId) const
 {
-    return d->loaded.contains(packageId);
+    // Split ID, check version too if specified.
+    auto const id_ver = Package::split(packageId);
+    auto found = d->loaded.constFind(id_ver.first);
+    if (found == d->loaded.constEnd())
+    {
+        return false;
+    }
+    return (!id_ver.second.isValid() /* no valid version provided in argumnet */ ||
+            id_ver.second == found.value()->version());
 }
 
 bool PackageLoader::isLoaded(File const &file) const

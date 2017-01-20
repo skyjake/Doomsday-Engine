@@ -122,6 +122,12 @@ public:
     String identifier() const;
 
     /**
+     * Version of the loaded package. The version can be specified either in the
+     * file name (following an underscore) or in the metadata.
+     */
+    Version version() const;
+
+    /**
      * Composes a list of assets contained in the package.
      *
      * @return Assets declared in the package metadata.
@@ -236,6 +242,7 @@ public:
     static String const VAR_PACKAGE_TITLE;
     static String const VAR_ID;
     static String const VAR_TITLE;
+    static String const VAR_VERSION;
 
 private:
     DENG2_PRIVATE(d)

@@ -27,6 +27,8 @@
 #include "de/ScriptedInfo"
 #include "de/TimeValue"
 
+#include <QRegularExpression>
+
 namespace de {
 
 String const Package::VAR_PACKAGE      ("package");
@@ -35,6 +37,7 @@ String const Package::VAR_PACKAGE_ALIAS("package.alias");
 String const Package::VAR_PACKAGE_TITLE("package.title");
 String const Package::VAR_ID           ("ID");
 String const Package::VAR_TITLE        ("title");
+String const Package::VAR_VERSION      ("version");
 
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
@@ -45,6 +48,7 @@ static String const PACKAGE_TAGS       ("package.tags");
 
 static String const VAR_ID  ("ID");
 static String const VAR_PATH("path");
+static String const VAR_TAGS("tags");
 
 Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
 
@@ -66,12 +70,23 @@ DENG2_PIMPL(Package)
 , DENG2_OBSERVES(File, Deletion)
 {
     File const *file;
+    Version version; // version of the loaded package
 
     Impl(Public *i, File const *f)
         : Base(i)
         , file(f)
     {
-        if (file) file->audienceForDeletion() += this;
+        if (file)
+        {
+            file->audienceForDeletion() += this;
+
+            // Check the file name first, then metadata.
+            version = split(versionedIdentifierForFile(*file)).second;
+            if (!version.isValid())
+            {
+                version = Version(metadata(*file).gets(VAR_VERSION, String()));
+            }
+        }
     }
 
     void fileBeingDeleted(File const &)
@@ -153,9 +168,14 @@ String Package::identifier() const
     return identifierForFile(*d->file);
 }
 
+Version Package::version() const
+{
+    return d->version;
+}
+
 Package::Assets Package::assets() const
 {
-    return ScriptedInfo::allBlocksOfType("asset", d->packageInfo());
+    return ScriptedInfo::allBlocksOfType(QStringLiteral("asset"), d->packageInfo());
 }
 
 bool Package::executeFunction(String const &name)
@@ -309,7 +329,7 @@ void Package::validateMetadata(Record const &packageInfo)
                               .arg(packageInfo.gets("path")));
     }
 
-    static String const required[] = { "title", "version", "license", "tags" };
+    static String const required[] = { "title", "version", "license", VAR_TAGS };
     for (auto const &req : required)
     {
         if (!packageInfo.has(req))
@@ -319,6 +339,16 @@ void Package::validateMetadata(Record const &packageInfo)
                                           .arg(packageInfo.gets("path"))
                                           .arg(req));
         }
+    }
+
+    static QRegularExpression const regexReservedTags("\\b(loaded)\\b");
+    auto match = regexReservedTags.match(packageInfo.gets(VAR_TAGS));
+    if (match.hasMatch())
+    {
+        throw ValidationError("Package::validateMetadata",
+                              QString("Package \"%1\" has a tag that is reserved for internal use (%2)")
+                              .arg(packageInfo.gets("path"))
+                              .arg(match.captured(1)));
     }
 }
 
