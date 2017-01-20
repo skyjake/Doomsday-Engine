@@ -51,6 +51,7 @@ using namespace de;
 static String const VAR_TITLE ("title");
 static String const VAR_TAGS  ("tags");
 static String const TAG_HIDDEN("hidden");
+static String const TAG_LOADED("loaded");
 
 static TimeDelta const REFILTER_DELAY(0.2);
 
@@ -81,7 +82,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
             file->audienceForDeletion() += this;
-            setData(Package::versionedIdentifierForFile(packFile)); //QString(info->gets("ID")));
+            setData(Package::versionedIdentifierForFile(packFile));
             setLabel(info->gets(Package::VAR_TITLE));
         }
 
@@ -98,6 +99,12 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             file = nullptr;
             info = nullptr;
+        }
+
+        bool isLoaded() const
+        {
+            if (!file) return false;
+            return PackageLoader::get().isLoaded(*file);
         }
     };
 
@@ -123,6 +130,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::Data const *actionItems = &defaultActionItems;
     bool populateEnabled = true;
     bool showHidden = false;
+    bool showOnlyLoaded = false;
     bool actionOnlyForSelection = true;
     bool rightClickToOpenContextMenu = false;
 
@@ -418,8 +426,12 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (!item.info) return false;
 
-            bool const hidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
-            if (showHidden ^ hidden)
+            bool const isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
+            if (showHidden ^ isHidden)
+            {
+                return false;
+            }
+            if (showOnlyLoaded && !item.isLoaded())
             {
                 return false;
             }
@@ -595,8 +607,14 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         filterTerms = terms;
         clearSearch->show(!terms.isEmpty());
-        showHidden = filterTerms.contains(TAG_HIDDEN);
-        if (showHidden) filterTerms.removeAll(TAG_HIDDEN);
+        if ((showOnlyLoaded = filterTerms.contains(TAG_LOADED)) != false)
+        {
+            filterTerms.removeAll(TAG_LOADED);
+        }
+        if ((showHidden = filterTerms.contains(TAG_HIDDEN)) != false)
+        {
+            filterTerms.removeAll(TAG_HIDDEN);
+        }
 
         filteredPackages.refilter();
 
@@ -625,11 +643,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             });
         }
     }
-
-    /*void aboutToRefreshFiles()
-    {
-        showProgressIndicator(true);
-    }*/
 
     /**
      * Checks whether the filter terms can be found in the provided text strings.
