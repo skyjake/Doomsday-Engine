@@ -71,7 +71,10 @@ public:
 
     void glInit()
     {
-        alloc();
+        if (_id.isNone())
+        {
+            alloc();
+        }
     }
 
     void glDeinit()

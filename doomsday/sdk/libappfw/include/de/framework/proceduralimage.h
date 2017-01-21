@@ -59,7 +59,7 @@ public:
      */
     virtual bool update();
 
-    virtual void glInit();
+    virtual void glInit(); // called repeatedly
     virtual void glDeinit();
     virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) = 0;
 

@@ -607,7 +607,7 @@ void LabelWidget::setImage(Image const &image)
     {
         AtlasProceduralImage *proc = new AtlasProceduralImage(*this);
         proc->setImage(image);
-        d->image.reset(proc);
+        setImage(proc);
     }
     else
     {
@@ -798,6 +798,7 @@ void LabelWidget::update()
 
     if (isInitialized())
     {
+        if (d->image) d->image->glInit();
         d->updateGeometry();
     }
     d->updateAppearanceAnimation();

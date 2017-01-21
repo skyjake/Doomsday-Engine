@@ -67,7 +67,10 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
         void glInit()
         {
-            alloc();
+            if (_id.isNone())
+            {
+                alloc();
+            }
         }
 
         void glDeinit()

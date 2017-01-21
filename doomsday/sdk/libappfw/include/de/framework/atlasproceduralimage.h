@@ -39,7 +39,7 @@ class LIBAPPFW_PUBLIC AtlasProceduralImage : public ProceduralImage
 {
 public:
     AtlasProceduralImage(GuiWidget &owner)
-        : _owner(owner), _atlas(0), _needUpdate(false)
+        : _owner(owner), _atlas(0), _id(Id::None), _needUpdate(false)
     {}
 
     ~AtlasProceduralImage()
@@ -71,6 +71,7 @@ public:
         {
             _atlas->release(_id);
             _atlas = 0;
+            _id = Id::None;
         }
     }
 
@@ -94,7 +95,10 @@ public:
 
     void glInit()
     {
-        alloc();
+        if (_id.isNone())
+        {
+            alloc();
+        }
     }
 
     void glDeinit()
