@@ -215,11 +215,13 @@ String NativePath::pretty() const
                 return "(app)" + result.mid(contentsPath.length());
             }
 #endif
+#ifndef WIN32 // Windows users are not familiar with a symbolic home path.
             NativePath homePath = QDir::homePath(); // actual native home dir, not FS2 "/home"
             if (result.beginsWith(homePath))
             {
                 result = NATIVE_HOME_SYMBOLIC + result.mid(homePath.length());
             }
+#endif
         }
     }
 
