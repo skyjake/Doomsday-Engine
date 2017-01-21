@@ -407,6 +407,7 @@ void RenderSystem::glInit()
 void RenderSystem::glDeinit()
 {
     d->models.glDeinit();
+    d->environment.glDeinit();
 }
 
 GLShaderBank &RenderSystem::shaders()

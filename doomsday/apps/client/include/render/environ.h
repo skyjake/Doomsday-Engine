@@ -33,6 +33,8 @@ class Environment
 public:
     Environment();
 
+    void glDeinit();
+
     de::GLTexture const &defaultReflection() const;
 
     /**

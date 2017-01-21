@@ -192,6 +192,11 @@ DENG2_PIMPL(Environment)
 Environment::Environment() : d(new Impl(this))
 {}
 
+void Environment::glDeinit()
+{
+    d->release();
+}
+
 GLTexture const &Environment::defaultReflection() const
 {
     return d->reflectionTextures[Impl::Interior];
