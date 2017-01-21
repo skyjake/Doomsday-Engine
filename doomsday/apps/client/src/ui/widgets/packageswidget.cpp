@@ -147,7 +147,7 @@ DENG_GUI_PIMPL(PackagesWidget)
      */
     class PackageListItemWidget : public HomeItemWidget
                                 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
-                                , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+                                , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
     {
     public:
         PackageListItemWidget(PackageItem const &item, PackagesWidget &owner)
@@ -156,7 +156,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             , _item(&item)
         {
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().setStyleImage("package.icon", "default");
             icon().margins().set("gap");
             Rule const &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
@@ -174,6 +173,17 @@ DENG_GUI_PIMPL(PackagesWidget)
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
             createTagButtons();
+        }
+
+        void setItem(PackageItem const &item)
+        {
+            if (_item != &item)
+            {
+                setSelected(false);
+                _item = &item;
+                destroyTagButtons();
+                createTagButtons();
+            }
         }
 
         void createTagButtons()
@@ -213,6 +223,19 @@ DENG_GUI_PIMPL(PackagesWidget)
                                             style().fonts().font("small").height() +
                                             rule("gap"));
             }
+            else
+            {
+                label().margins().setBottom(rule("gap"));
+            }
+        }
+
+        void destroyTagButtons()
+        {
+            foreach (ButtonWidget *button, _tags)
+            {
+                GuiWidget::destroy(button);
+            }
+            _tags.clear();
         }
 
         void updateTagButtonStyle(ButtonWidget *tag, String const &color)
@@ -269,6 +292,10 @@ DENG_GUI_PIMPL(PackagesWidget)
                 {
                     pkgId = _E(s) + native->nativePath().pretty() + _E(.);
                 }
+            }
+            else
+            {
+                icon().setStyleImage("package.icon", "default");
             }
             label().setText(String(_E(b) "%1\n" _E(l) "%2")
                             .arg(_item->label())
@@ -456,6 +483,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         menu->organizer().setWidgetFactory(*this);
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule(RuleBank::UNIT).valuei() +
                                        int(style().fonts().font("default").height().value()*3));
+        menu->organizer().setRecyclingEnabled(true); // homogeneous widgets
 
         QObject::connect(search, &LineEditWidget::editorContentChanged, [this] () { updateFilterTerms(); });
         QObject::connect(search, &LineEditWidget::enterPressed,         [this] () { focusFirstListedPackage(); });
@@ -678,9 +706,11 @@ DENG_GUI_PIMPL(PackagesWidget)
         return new PackageListItemWidget(item.as<PackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
-        widget.as<PackageListItemWidget>().updateContents();
+        auto &w = widget.as<PackageListItemWidget>();
+        w.setItem(item.as<PackageItem>());
+        w.updateContents();
     }
 };
 
