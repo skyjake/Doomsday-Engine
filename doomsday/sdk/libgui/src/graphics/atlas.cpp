@@ -37,7 +37,7 @@ DENG2_PIMPL(Atlas)
     bool needCommit;
     bool needFullCommit;
     bool mayDefrag;
-    Rectanglei changedArea;
+    QList<Rectanglei> changedAreas;
     Time fullReportedAt;
 
     // Minimum backing size is 1x1 pixels.
@@ -73,25 +73,27 @@ DENG2_PIMPL(Atlas)
         return flags.testFlag(BackingStore);
     }
 
-    void markAsChanged(Rectanglei const &rect)
+    void markAsChanged(Rectanglei const &changedRect)
     {
-        if (needCommit)
-        {
-            // Merge to earlier changes.
-            changedArea |= rect;
-        }
-        else
-        {
-            needCommit  = true;
-            changedArea = rect;
-        }
+        //if (needCommit)
+        //{
+            //changedArea |= rect;
+//        }
+        //else
+        //{
+            needCommit = true;
+            //changedArea = rect;
+        //}
+        // Merge to earlier changes.
+        changedAreas.append(changedRect);
     }
 
     void markFullyChanged()
     {
         needCommit = true;
         needFullCommit = true;
-        changedArea = backing.rect();
+        changedAreas.clear();
+        changedAreas.append(backing.rect());
     }
 
     bool mustCommitFull() const
@@ -107,8 +109,12 @@ DENG2_PIMPL(Atlas)
     {
         if (!needCommit || totalSize == Size(0, 0)) return 0.0f;
 
-        duint totalPx   = totalSize.x * totalSize.y;
-        duint changedPx = changedArea.width() * changedArea.height();
+        duint const totalPx = totalSize.x * totalSize.y;
+        duint changedPx = 0;
+        for (Rectanglei const &rect : changedAreas)
+        {
+            changedPx += rect.width() * rect.height();
+        }
 
         return float(changedPx) / float(totalPx);
     }
@@ -517,21 +523,20 @@ void Atlas::commit() const
     if (d->mustCommitFull())
     {
         DENG2_ASSERT(d->backing.size() == d->totalSize);
-        if (d->flags.testFlag(LogCommitsAsXVerbose))
-        {
-            LOGDEV_GL_XVERBOSE("Full commit ") << d->backing.size().asText();
-        }
+        //qDebug() << "Full commit:" << d->backing.size().asText();
         commitFull(d->backing);
     }
     else
     {
-        if (d->flags.testFlag(LogCommitsAsXVerbose))
+        int count = 0;
+        for (Rectanglei const &rect : d->changedAreas)
         {
-            LOGDEV_GL_XVERBOSE("Partial commit ") << d->changedArea.asText();
+            //qDebug() << count++ << "Partial commit:" << rect.asText();
+            commit(d->backing, rect);
         }
-        commit(d->backing, d->changedArea);
     }
 
+    d->changedAreas.clear();
     d->needCommit = false;
     d->needFullCommit = false;
 }
