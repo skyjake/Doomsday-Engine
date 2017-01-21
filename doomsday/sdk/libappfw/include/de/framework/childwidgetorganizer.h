@@ -124,6 +124,16 @@ public:
      */
     void setVirtualizationEnabled(bool enabled);
 
+    /**
+     * Enables or disables child recycling. Deleted children will be put up for 
+     * recycling instead of being deleted, and new children will first be taken
+     * from the set of old recycled widgets.
+     *
+     * It is only possible to use this when all the items being managed have the
+     * same kind of widget representing them.
+     */
+    void setRecyclingEnabled(bool enabled);
+
     void setVirtualTopEdge(Rule const &topEdge);
 
     void setVisibleArea(Rule const &minimum, Rule const &maximum);

@@ -71,6 +71,9 @@ DENG2_PIMPL(ChildWidgetOrganizer)
     float totalCorrection = 0;
     float correctionPerUnit = 0;
 
+    bool recyclingEnabled = false;
+    QList<GuiWidget *> recycledWidgets; // Not GL-deinitialized to facilitate fast reuse.
+
     Impl(Public *i, GuiWidget *c)
         : Base(i)
         , container(c)
@@ -79,6 +82,11 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     ~Impl()
     {
+        foreach (GuiWidget *recycled, recycledWidgets)
+        {
+            GuiWidget::destroy(recycled);
+        }
+
         releaseRef(virtualTop);
         releaseRef(virtualMin);
         releaseRef(virtualMax);
@@ -130,7 +138,15 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
         ui::Item const &item = dataItems->at(pos);
 
-        GuiWidget *w = factory->makeItemWidget(item, container);
+        GuiWidget *w = nullptr;
+        if (recyclingEnabled && !recycledWidgets.isEmpty())
+        {
+            w = recycledWidgets.takeFirst();
+        }
+        else
+        {
+            w = factory->makeItemWidget(item, container);
+        }
         if (!w) return nullptr; // Unpresentable.
 
         // Update the widget immediately.
@@ -213,7 +229,16 @@ DENG2_PIMPL(ChildWidgetOrganizer)
     {
         //pendingStrutAdjust.remove(w);
         w->audienceForDeletion() -= this;
-        GuiWidget::destroy(w);
+
+        if (recyclingEnabled)
+        {
+            w->orphan();
+            recycledWidgets << w;
+        }
+        else
+        {
+            GuiWidget::destroy(w);
+        }
     }
 
     void clearWidgets()
@@ -578,6 +603,11 @@ void ChildWidgetOrganizer::setVirtualizationEnabled(bool enabled)
         releaseRef(d->estimatedHeight);
         releaseRef(d->virtualStrut);
     }
+}
+
+void ChildWidgetOrganizer::setRecyclingEnabled(bool enabled)
+{
+    d->recyclingEnabled = enabled;
 }
 
 void ChildWidgetOrganizer::setVirtualTopEdge(Rule const &topEdge)
