@@ -34,9 +34,45 @@ namespace de { typedef QtNativeFont PlatformFont; }
 
 namespace de {
 
+namespace internal 
+{
+    struct FontParams
+    {
+        String family;
+        float size;
+        NativeFont::Spec spec;
+
+        FontParams() {}
+
+        FontParams(PlatformFont const &font)
+        {
+            family = font.family();
+            size = font.size();
+            spec.weight = font.weight();
+            spec.style = font.style();
+        }
+
+        bool operator == (FontParams const &other) const
+        {
+            return fequal(size, other.size)
+                && spec == other.spec
+                && family == other.family;
+        }
+    };
+
+    static uint qHash(FontParams const &params)
+    {
+        return ::qHash(params.family) 
+             ^ ::qHash(int(100 * params.size))
+             ^ ::qHash(params.spec.weight)
+             ^ ::qHash(int(params.spec.style));
+    }
+}
+
 DENG2_PIMPL(Font)
 {
     PlatformFont font;
+    QHash<internal::FontParams, PlatformFont *> fontMods;
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
@@ -66,6 +102,8 @@ DENG2_PIMPL(Font)
 
     ~Impl()
     {
+        qDeleteAll(fontMods.values());
+
         releaseRef(heightRule);
         releaseRef(ascentRule);
         releaseRef(descentRule);
@@ -98,6 +136,23 @@ DENG2_PIMPL(Font)
         lineSpacingRule->set(font.lineSpacing());
     }
 
+    PlatformFont &getFontMod(internal::FontParams const &params)
+    {
+        auto found = fontMods.constFind(params);
+        if (found != fontMods.constEnd())
+        {
+            return *found.value();
+        }
+        
+        auto *mod = new PlatformFont;
+        mod->setFamily(params.family);
+        mod->setSize(params.size);
+        mod->setStyle(params.spec.style);
+        mod->setWeight(params.spec.weight);
+        fontMods.insert(params, mod);
+        return *mod;
+    }
+
     /**
      * Produces a font based on this one but with the attribute modifications applied
      * from a rich format range.
@@ -106,16 +161,16 @@ DENG2_PIMPL(Font)
      *
      * @return  Font with applied formatting.
      */
-    PlatformFont alteredFont(RichFormat::Iterator const &rich) const
+    PlatformFont const &alteredFont(RichFormat::Iterator const &rich)
     {
         if (!rich.isDefault())
         {
-            PlatformFont mod = font;
+            internal::FontParams modParams(font);
 
             // Size change.
             if (!fequal(rich.sizeFactor(), 1.f))
             {
-                mod.setSize(mod.size() * rich.sizeFactor());
+                modParams.size *= rich.sizeFactor();
             }
 
             // Style change (including monospace).
@@ -125,13 +180,13 @@ DENG2_PIMPL(Font)
                 break;
 
             case RichFormat::Regular:
-                mod.setFamily(font.family());
-                mod.setStyle(NativeFont::Regular);
+                modParams.family = font.family();
+                modParams.spec.style = NativeFont::Regular;
                 break;
 
             case RichFormat::Italic:
-                mod.setFamily(font.family());
-                mod.setStyle(NativeFont::Italic);
+                modParams.family = font.family();
+                modParams.spec.style = NativeFont::Italic;
                 break;
 
             case RichFormat::Monospace:
@@ -139,10 +194,7 @@ DENG2_PIMPL(Font)
                 {
                     if (Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
-                        mod.setFamily(altFont->d->font.family());
-                        mod.setStyle (altFont->d->font.style());
-                        mod.setWeight(altFont->d->font.weight());
-                        mod.setSize  (altFont->d->font.size());
+                        modParams = internal::FontParams(altFont->d->font);
                     }
                 }
                 break;
@@ -151,11 +203,11 @@ DENG2_PIMPL(Font)
             // Weight change.
             if (rich.weight() != RichFormat::OriginalWeight)
             {
-                mod.setWeight(rich.weight() == RichFormat::Normal? NativeFont::Normal :
-                              rich.weight() == RichFormat::Bold?   NativeFont::Bold   :
-                                                                   NativeFont::Light);
+                modParams.spec.weight = (rich.weight() == RichFormat::Normal? NativeFont::Normal :
+                                         rich.weight() == RichFormat::Bold?   NativeFont::Bold   :
+                                                                              NativeFont::Light);
             }
-            return mod;
+            return getFontMod(modParams);
         }
         return font;
     }
@@ -186,7 +238,7 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        PlatformFont const altFont = d->alteredFont(iter);
+        PlatformFont const &altFont = d->alteredFont(iter);
 
         String const part = textLine.substr(iter.range());
         Rectanglei rect = altFont.measure(part);
@@ -267,7 +319,7 @@ QImage Font::rasterize(String const &textLine,
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        PlatformFont font = d->font;
+        PlatformFont const *font = &d->font;
 
         if (iter.isDefault())
         {
@@ -276,7 +328,7 @@ QImage Font::rasterize(String const &textLine,
         }
         else
         {
-            font = d->alteredFont(iter);
+            font = &d->alteredFont(iter);
 
             if (iter.colorIndex() != RichFormat::OriginalColor)
             {
@@ -306,11 +358,11 @@ QImage Font::rasterize(String const &textLine,
         }
 #endif
 
-        QImage fragment = font.rasterize(part, fg, bg);
-        Rectanglei const bounds = font.measure(part);
+        QImage fragment = font->rasterize(part, fg, bg);
+        Rectanglei const bounds = font->measure(part);
 
         painter.drawImage(QPoint(advance + bounds.left(), d->ascent + bounds.top()), fragment);
-        advance += font.width(part);
+        advance += font->width(part);
     }
     return img;
 }

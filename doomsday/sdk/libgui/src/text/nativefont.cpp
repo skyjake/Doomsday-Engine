@@ -18,47 +18,46 @@
 
 #include "de/NativeFont"
 
-namespace de
-{
-    typedef QMap<String, NativeFont::StyleMapping> Families;
-    static Families families;
-
-    DENG2_PIMPL(NativeFont)
-    {
-        String family;
-        dfloat size;
-        Style style;
-        int weight;
-
-        String cachedText; // Measuring is done repeatedly
-        Rectanglei cachedMeasure;
-
-        Impl(Public *i)
-            : Base(i)
-            , size(12.f)
-            , style(Regular)
-            , weight(Normal)
-        {}
-
-        void prepare()
-        {
-            if (!self().isReady())
-            {
-                self().commit();
-                cachedText.clear();
-                self().setState(Ready);
-            }
-        }
-
-        void markNotReady()
-        {
-            self().setState(NotReady);
-            cachedText.clear();
-        }
-    };
-}
-
 namespace de {
+
+typedef QMap<String, NativeFont::StyleMapping> Families;
+static Families families;
+
+static int const MAX_CACHE_STRING_LENGTH = 200;
+static int const MAX_CACHE_STRINGS = 500;
+
+DENG2_PIMPL(NativeFont)
+{
+    String family;
+    dfloat size;
+    Style style;
+    int weight;
+
+    QHash<QString, Rectanglei> measureCache;
+
+    Impl(Public *i)
+        : Base(i)
+        , size(12.f)
+        , style(Regular)
+        , weight(Normal)
+    {}
+
+    void prepare()
+    {
+        if (!self().isReady())
+        {
+            self().commit();
+            measureCache.clear();
+            self().setState(Ready);
+        }
+    }
+
+    void markNotReady()
+    {
+        self().setState(NotReady);
+        measureCache.clear();
+    }
+};
 
 void NativeFont::defineMapping(String const &family, StyleMapping const &mapping)
 {
@@ -172,16 +171,24 @@ Rectanglei NativeFont::measure(String const &text) const
 {
     d->prepare();
 
-    if (d->cachedText == text)
+    if (text.size() < MAX_CACHE_STRING_LENGTH)
     {
-        return d->cachedMeasure;
+        auto foundInCache = d->measureCache.constFind(text);
+        if (foundInCache != d->measureCache.constEnd())
+        {
+            return foundInCache.value();
+        }
     }
 
     Rectanglei const bounds = nativeFontMeasure(text);
 
     // Remember this for later.
-    d->cachedText = text;
-    d->cachedMeasure = bounds;
+    if (d->measureCache.size() > MAX_CACHE_STRINGS)
+    {
+        // Too many strings, forget everything.
+        d->measureCache.clear();
+    }
+    d->measureCache.insert(text, bounds);
 
     return bounds;
 }

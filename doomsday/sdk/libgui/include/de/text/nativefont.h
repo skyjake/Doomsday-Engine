@@ -62,6 +62,9 @@ public:
 
         Spec(Style s = Regular, dint w = Normal) : style(s), weight(w) {}
 
+        bool operator == (Spec const &other) const {
+            return style == other.style && weight == other.weight;
+        }
         bool operator < (Spec const &other) const { // QMap key order
             if (weight < other.weight) return true;
             if (weight > other.weight) return false;
