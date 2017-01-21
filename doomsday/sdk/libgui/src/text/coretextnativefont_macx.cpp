@@ -21,6 +21,7 @@
 
 #include <QFont>
 #include <QColor>
+#include <QThread>
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreText/CoreText.h>
 
@@ -148,11 +149,45 @@ DENG2_PIMPL(CoreTextNativeFont)
     float height;
     float lineSpacing;
 
-    // Note that while fonts are used from multiple threads, native font instances
-    // are copied once per each rich formatting range so we don't need to worry
-    // about this cached data being used from many threads.
-    String lineText;
-    CTLineRef line;
+    // Note that fonts may be used from multiple threads, so we keep a thread-specific
+    // cache of the most recently created line.
+    struct CachedLine
+    {
+        String lineText;
+        CTLineRef line = nullptr;
+
+        void release()
+        {
+            if (line)
+            {
+                CFRelease(line);
+                line = nullptr;
+            }
+            lineText.clear();
+        }
+    };
+    struct Cache : public QHash<QThread *, CachedLine>, public Lockable
+    {
+        ~Cache()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            for (CachedLine &entry : *this)
+            {
+                entry.release();
+            }
+        }
+
+        CachedLine &cachedLineForCurrentThread()
+        {
+            DENG2_GUARD(this);
+            return (*this)[QThread::currentThread()];
+        }
+    };
+    Cache cache;
 
     Transformation xform;
 
@@ -163,7 +198,6 @@ DENG2_PIMPL(CoreTextNativeFont)
         , descent(0)
         , height(0)
         , lineSpacing(0)
-        , line(0)
         , xform(NoTransform)
     {}
 
@@ -174,7 +208,6 @@ DENG2_PIMPL(CoreTextNativeFont)
         , descent(other.descent)
         , height(other.height)
         , lineSpacing(other.lineSpacing)
-        , line(0)
         , xform(other.xform)
     {}
 
@@ -202,17 +235,7 @@ DENG2_PIMPL(CoreTextNativeFont)
     void release()
     {
         font = 0;
-        releaseLine();
-    }
-
-    void releaseLine()
-    {
-        if (line)
-        {
-            CFRelease(line);
-            line = 0;
-        }
-        lineText.clear();
+        cache.clear();
     }
 
     void updateFontAndMetrics()
@@ -229,12 +252,16 @@ DENG2_PIMPL(CoreTextNativeFont)
         lineSpacing = height + CTFontGetLeading(font);
     }
 
-    void makeLine(String const &text, CGColorRef color = 0)
+    CachedLine &makeLine(String const &text, CGColorRef color = 0)
     {
-        if (lineText == text) return; // Already got it.
+        auto &cachedLine = cache.cachedLineForCurrentThread();
+        if (cachedLine.lineText == text)
+        {
+            return cachedLine; // Already got it.
+        }
 
-        releaseLine();
-        lineText = text;
+        cachedLine.release();
+        cachedLine.lineText = text;
 
         void const *keys[]   = { kCTFontAttributeName, kCTForegroundColorAttributeName };
         void const *values[] = { font, color };
@@ -243,11 +270,12 @@ DENG2_PIMPL(CoreTextNativeFont)
 
         CFStringRef textStr = CFStringCreateWithCharacters(nil, (UniChar *) text.data(), text.size());
         CFAttributedStringRef as = CFAttributedStringCreate(0, textStr, attribs);
-        line = CTLineCreateWithAttributedString(as);
+        cachedLine.line = CTLineCreateWithAttributedString(as);
 
         CFRelease(attribs);
         CFRelease(textStr);
         CFRelease(as);
+        return cachedLine;
     }
 };
 
@@ -319,7 +347,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
     Rectanglei rect(Vector2i(0, -d->ascent),
-                    Vector2i(roundi(CTLineGetTypographicBounds(d->line, NULL, NULL, NULL)),
+                    Vector2i(roundi(CTLineGetTypographicBounds(d->cache.cachedLineForCurrentThread().line, NULL, NULL, NULL)),
                              d->descent));
 
     return rect;
@@ -327,8 +355,8 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 
 int CoreTextNativeFont::nativeFontWidth(String const &text) const
 {
-    d->makeLine(d->applyTransformation(text));
-    return roundi(CTLineGetTypographicBounds(d->line, NULL, NULL, NULL));
+    auto &cachedLine = d->makeLine(d->applyTransformation(text));
+    return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL));
 }
 
 QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
@@ -340,19 +368,18 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
     DENG2_ASSERT(fontCache.fontWeight(d->font) == weight());
 #endif
 
-    //qDebug() << "CoreTextNativeFont: Rasterizing" << text;
-
     // Text color.
     Vector4d const fg = foreground.zyxw().toVector4f() / 255.f;
     CGColorRef fgColor = CGColorCreate(fontCache.colorspace(), &fg.x);
 
     // Ensure the color is used by recreating the attributed line string.
-    d->releaseLine();
+    auto &cachedLine = d->cache.cachedLineForCurrentThread();
+    cachedLine.release();
     d->makeLine(d->applyTransformation(text), fgColor);
 
     // Set up the bitmap for drawing into.
-    Rectanglei const bounds = measure(d->lineText);
-    QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);//_Premultiplied);
+    Rectanglei const bounds = measure(cachedLine.lineText);
+    QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);
     backbuffer.fill(QColor(background.x, background.y, background.z, background.w).rgba());
 
     CGContextRef gc = CGBitmapContextCreate(backbuffer.bits(),
@@ -363,7 +390,7 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
                                             kCGImageAlphaPremultipliedLast);
 
     CGContextSetTextPosition(gc, 0, d->descent);
-    CTLineDraw(d->line, gc);
+    CTLineDraw(cachedLine.line, gc);
 
     CGColorRelease(fgColor);
     CGContextRelease(gc);
