@@ -52,8 +52,6 @@ static String const VAR_RECOMMENDS  ("recommends");
 static String const VAR_EXTRAS      ("extras");
 static String const VAR_CATEGORY    ("category");
 
-static StringList const gameTags({ "doom", "doom2", "heretic", "hexen" });
-
 namespace internal
 {
     static char const *formatDescriptions[] =
@@ -698,7 +696,7 @@ DENG2_PIMPL(DataBundle), public Lockable
     static int countGameTags(Record const &meta)
     {
         int count = 0;
-        for (auto const &tag : gameTags)
+        for (auto const &tag : gameTags())
         {
             if (QRegExp(QString("\\b%1\\b").arg(tag), Qt::CaseInsensitive)
                     .indexIn(meta.gets(VAR_TAGS)) >= 0)
@@ -715,7 +713,7 @@ DENG2_PIMPL(DataBundle), public Lockable
         String newTags;
         foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
         {
-            if (!gameTags.contains(tag))
+            if (!gameTags().contains(tag))
             {
                 if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
                 newTags += tag;
@@ -1232,4 +1230,15 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
     }
 
     return loaded;
+}
+
+StringList DataBundle::gameTags()
+{
+    static StringList const gameTags({ "doom", "doom2", "heretic", "hexen" });
+    return gameTags;
+}
+
+String DataBundle::anyGameTagPattern()
+{
+    return String("\\b(%1)\\b").arg(String::join(gameTags(), "|"));
 }

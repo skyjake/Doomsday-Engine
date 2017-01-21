@@ -798,7 +798,16 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
         d->preGamePackages = PackageLoader::get().loadedPackageIdsInOrder(PackageLoader::NonVersioned);
     }
 
-    profile.loadPackages();
+    try
+    {
+        profile.loadPackages();
+    }
+    catch (Error const &er)
+    {
+        LOG_RES_ERROR("Failed to load the packages of profile \"%s\": %s")
+                << profile.name()
+                << er.asText();
+    }
 }
 
 // from game_init.cpp

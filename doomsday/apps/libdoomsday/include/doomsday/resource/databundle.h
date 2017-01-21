@@ -155,6 +155,9 @@ public:
      */
     static QList<DataBundle const *> loadedBundles();
 
+    static de::StringList gameTags();
+    static de::String anyGameTagPattern();
+
 protected:
     void setFormat(Format format);
 
