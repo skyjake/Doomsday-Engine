@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Font"
@@ -34,7 +34,7 @@ namespace de { typedef QtNativeFont PlatformFont; }
 
 namespace de {
 
-namespace internal 
+namespace internal
 {
     struct FontParams
     {
@@ -62,14 +62,14 @@ namespace internal
 
     static uint qHash(FontParams const &params)
     {
-        return ::qHash(params.family) 
+        return ::qHash(params.family)
              ^ ::qHash(int(100 * params.size))
              ^ ::qHash(params.spec.weight)
              ^ ::qHash(int(params.spec.style));
     }
 }
 
-DENG2_PIMPL(Font)
+DENG2_PIMPL(Font), public Lockable
 {
     PlatformFont font;
     QHash<internal::FontParams, PlatformFont *> fontMods;
@@ -138,12 +138,14 @@ DENG2_PIMPL(Font)
 
     PlatformFont &getFontMod(internal::FontParams const &params)
     {
+        DENG2_GUARD(this);
+
         auto found = fontMods.constFind(params);
         if (found != fontMods.constEnd())
         {
             return *found.value();
         }
-        
+
         auto *mod = new PlatformFont;
         mod->setFamily(params.family);
         mod->setSize(params.size);
