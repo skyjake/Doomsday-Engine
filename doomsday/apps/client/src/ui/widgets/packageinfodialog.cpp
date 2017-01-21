@@ -42,6 +42,7 @@
 #include <de/SignalAction>
 
 #include <QDesktopServices>
+#include <QRegularExpression>
 
 using namespace de;
 
@@ -293,7 +294,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         if (compatibleGame.isEmpty())
         {
-            msg = "Not enough information to determine which game this package is for.";
+            QRegularExpression reg(DataBundle::anyGameTagPattern());
+            if (!reg.match(meta.gets("tags")).hasMatch())
+            {
+                msg = "Not enough information to determine which game this package is for.";
+            }
         }
         else
         {
@@ -309,6 +314,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     .arg(mapCount)
                     .arg(DENG2_PLURAL_S(mapCount)) +
                     String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+        }
+
+        if (meta.has("notes"))
+        {
+            msg += "\n\n" + meta.gets("notes") + _E(r);
         }
 
         if (!bundle)
@@ -331,11 +341,6 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     msg += "\n - " _E(>) + val->asText() + _E(<);
                 }
             }
-        }
-
-        if (meta.has("notes"))
-        {
-            msg += "\n\n" + meta.gets("notes") + _E(r) "\n";
         }
 
         description->setText(msg.trimmed());
