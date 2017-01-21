@@ -190,7 +190,7 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
     switch (fontStyle)
     {
     case Font::RichFormat::Monospace:
-        return &fonts().font("monospace");
+        return &fonts().font(QStringLiteral("monospace"));
 
     default:
         return nullptr;

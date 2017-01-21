@@ -125,6 +125,10 @@ public Font::RichFormat::IStyle
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
+        if (fontStyle == Font::RichFormat::Monospace)
+        {
+            return &style().fonts().font(QStringLiteral("document.monospace"));
+        }
         return style().richStyleFont(fontStyle);
     }
 

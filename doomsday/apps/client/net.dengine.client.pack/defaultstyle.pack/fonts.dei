@@ -167,3 +167,14 @@ slider {
 log {
     font normal inherits default {}
 }
+
+document {
+    font monospace inherits monospace {}
+}
+
+script {
+    # Make monospace a bit smaller on Windows - Courier New is pretty wide.
+    if Version.OS == 'windows'
+        document.monospace.size = '9pt'
+    end
+}
