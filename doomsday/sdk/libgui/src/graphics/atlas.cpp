@@ -528,10 +528,8 @@ void Atlas::commit() const
     }
     else
     {
-        int count = 0;
         for (Rectanglei const &rect : d->changedAreas)
         {
-            //qDebug() << count++ << "Partial commit:" << rect.asText();
             commit(d->backing, rect);
         }
     }

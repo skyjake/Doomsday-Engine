@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ForStatement"
@@ -56,15 +56,15 @@ void ForStatement::execute(Context &context) const
         // Assign the variable specified.
         RefValue &ref = eval.evaluateTo<RefValue>(_iterator);
         ref.assign(nextValue);
-        
+
         // Let's begin the compound.
         context.start(_compound.firstStatement(), this, this, this);
     }
     else
     {
-        context.setIterationValue(NULL);
+        context.setIterationValue(nullptr);
         context.proceed();
-    }            
+    }
 }
 
 void ForStatement::operator >> (Writer &to) const
@@ -78,17 +78,17 @@ void ForStatement::operator << (Reader &from)
     from >> id;
     if (id != FOR)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("ForStatement::operator <<", "Invalid ID");
     }
-    delete _iterator; 
+    delete _iterator;
     delete _iteration;
     _iterator = 0;
     _iteration = 0;
-    
+
     _iterator = Expression::constructFrom(from);
     _iteration = Expression::constructFrom(from);
-    
+
     from >> _compound;
 }

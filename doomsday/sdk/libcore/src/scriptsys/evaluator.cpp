@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Evaluator"
@@ -36,9 +36,12 @@ DENG2_PIMPL(Evaluator)
         Expression const *expression;
         Value *scope; // owned
 
-        ScopedExpression(Expression const *e = 0, Value *s = 0) : expression(e), scope(s) {}
-        Record *names() const {
-            if (!scope) return 0;
+        ScopedExpression(Expression const *e = 0, Value *s = 0)
+            : expression(e), scope(s)
+        {}
+        Record *names() const
+        {
+            if (!scope) return nullptr;
             return scope->memberScope();
         }
     };
@@ -73,6 +76,7 @@ DENG2_PIMPL(Evaluator)
 
     ~Impl()
     {
+        DENG2_ASSERT(stack.isEmpty());
         clearNames();
         clearResults();
     }
@@ -115,6 +119,10 @@ DENG2_PIMPL(Evaluator)
             /*qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
                         << (scope? scope->asText() : "null");*/
             results << ScopedResult(value, scope);
+        }
+        else
+        {
+            DENG2_ASSERT(scope == nullptr);
         }
     }
 
@@ -179,7 +187,7 @@ Context &Evaluator::context()
 }
 
 Process &Evaluator::process()
-{ 
+{
     return d->context.process();
 }
 
@@ -190,8 +198,8 @@ Process const &Evaluator::process() const
 
 void Evaluator::reset()
 {
-    d->current = NULL;
-    
+    d->current = nullptr;
+
     d->clearStack();
     d->clearNames();
 }
@@ -239,7 +247,7 @@ void Evaluator::push(Expression const *expression, Value *scope)
 {
     d->stack.push_back(Impl::ScopedExpression(expression, scope));
 }
-    
+
 void Evaluator::pushResult(Value *value)
 {
     d->pushResult(value);

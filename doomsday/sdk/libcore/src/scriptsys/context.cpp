@@ -59,7 +59,7 @@ DENG2_PIMPL(Context)
         Statement const *flow;
         Statement const *jumpContinue;
         Statement const *jumpBreak;
-        Value *iteration;
+        Value *iteration; // owned
 
     private:
         Statement const *_current;
@@ -112,6 +112,7 @@ DENG2_PIMPL(Context)
             delete names;
         }
         self().reset();
+        DENG2_ASSERT(controlFlow.empty());
     }
 
     /// Returns the topmost control flow information.

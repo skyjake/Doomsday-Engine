@@ -134,7 +134,7 @@ public:
     /**
      * Sets the iteration value of the context.
      *
-     * @param value  Value to be iterated within the context.
+     * @param value  Value to be iterated within the context. Ownership taken.
      */
     void setIterationValue(Value *value);
 

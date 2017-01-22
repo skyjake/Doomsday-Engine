@@ -258,7 +258,7 @@ void Process::execute()
         }
         catch (Error const &err)
         {
-            //std::cerr << "Caught " << err.asText() << " at depth " << depth() << "\n";
+            //qDebug() << "Caught " << err.asText() << " at depth " << depth() << "\n";
 
             // Fast-forward to find a suitable catch statement.
             if (d->jumpIntoCatch(err))
@@ -323,7 +323,6 @@ void Process::finish(Value *returnValue)
             // Return value to the new topmost level.
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue);
         }
-        delete topmost.release();
     }
     else
     {
