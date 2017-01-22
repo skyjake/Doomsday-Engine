@@ -34,7 +34,7 @@ struct ShaderVar
         de::AnimationValue *anim; // not owned
         de::Rangef wrap;
 
-        Value(de::Animation const &a) : anim(new de::AnimationValue(a)) {}
+        Value(de::AnimationValue *a = nullptr) : anim(a) {} // not owned
     };
     QList<Value> values;
     de::GLUniform *uniform = nullptr; // owned
@@ -50,7 +50,7 @@ public:
         values.clear();
         for (int i = 0; i < vec.size(); ++i)
         {
-            values.append(de::Animation(vec[i], de::Animation::Linear));
+            values.append(new de::AnimationValue(de::Animation(vec[i], de::Animation::Linear)));
         }
     }
 

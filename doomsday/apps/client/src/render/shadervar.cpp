@@ -32,7 +32,7 @@ static String const DEF_WRAP("wrap");
 void ShaderVar::init(float value)
 {
     values.clear();
-    values.append(Animation(value, Animation::Linear));
+    values.append(new AnimationValue(Animation(value, Animation::Linear)));
 }
 
 ShaderVar::~ShaderVar()
