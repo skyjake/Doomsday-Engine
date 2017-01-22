@@ -139,6 +139,24 @@ struct CoreTextFontCache : public Lockable
 
 static CoreTextFontCache fontCache;
 
+#ifdef DENG2_DEBUG
+struct LineCounter : public Lockable {
+    int count = 0;
+    ~LineCounter() { DENG2_ASSERT(count == 0); }
+    void inc() {
+        lock();
+        ++count;
+        unlock();
+    }
+    void dec() {
+        lock();
+        --count;
+        unlock();
+    }
+};
+static LineCounter ctLineCounter;
+#endif
+
 DENG2_PIMPL(CoreTextNativeFont)
 {
     enum Transformation { NoTransform, Uppercase, Lowercase };
@@ -162,6 +180,9 @@ DENG2_PIMPL(CoreTextNativeFont)
             {
                 CFRelease(line);
                 line = nullptr;
+#ifdef DENG2_DEBUG
+                ctLineCounter.dec();
+#endif
             }
             lineText.clear();
         }
@@ -271,6 +292,10 @@ DENG2_PIMPL(CoreTextNativeFont)
         CFStringRef textStr = CFStringCreateWithCharacters(nil, (UniChar *) text.data(), text.size());
         CFAttributedStringRef as = CFAttributedStringCreate(0, textStr, attribs);
         cachedLine.line = CTLineCreateWithAttributedString(as);
+
+#ifdef DENG2_DEBUG
+        ctLineCounter.inc();
+#endif
 
         CFRelease(attribs);
         CFRelease(textStr);
@@ -394,6 +419,7 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 
     CGColorRelease(fgColor);
     CGContextRelease(gc);
+    cachedLine.release();
 
     return backbuffer;
 }
