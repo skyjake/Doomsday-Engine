@@ -42,6 +42,7 @@
 #include <de/DictionaryValue>
 #include <de/DirectoryFeed>
 #include <de/Folder>
+#include <de/Garbage>
 #include <de/Loop>
 #include <de/NativeFile>
 #include <de/PackageLoader>
@@ -156,6 +157,7 @@ DENG2_PIMPL(DoomsdayApp)
             gameProfiles.serialize();
         }
         theDoomsdayApp = nullptr;
+        Garbage_Recycle();
     }
 
     void attachWadFeed(String const &description, NativePath const &path)
