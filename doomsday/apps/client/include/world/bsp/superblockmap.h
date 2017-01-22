@@ -86,7 +86,17 @@ private:
     DENG2_PRIVATE(d)
 };
 
-typedef de::BinaryTree<LineSegmentBlock *> LineSegmentBlockTreeNode;
+struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *>
+{
+    LineSegmentBlockTreeNode(LineSegmentBlock *lsb, // owned
+                             LineSegmentBlockTreeNode *parent = nullptr);
+    ~LineSegmentBlockTreeNode();
+
+    LineSegmentBlockTreeNode *childPtr(ChildId side) const;
+    LineSegmentBlockTreeNode *parentPtr() const;
+    LineSegmentBlockTreeNode *rightPtr() const { return childPtr(Right); }
+    LineSegmentBlockTreeNode *leftPtr() const  { return childPtr(Left); }
+};
 
 }  // namespace bsp
 }  // namespace world

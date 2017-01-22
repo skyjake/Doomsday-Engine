@@ -370,11 +370,11 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
 
             if(node.hasRight())
             {
-                costForBlock(node.right());
+                costForBlock(*node.rightPtr());
             }
             if(node.hasLeft())
             {
-                costForBlock(node.left());
+                costForBlock(*node.leftPtr());
             }
         }
     };

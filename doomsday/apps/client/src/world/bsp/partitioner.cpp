@@ -82,26 +82,22 @@ DENG2_PIMPL(Partitioner)
             : rootNode(new LineSegmentBlockTreeNode(new LineSegmentBlock(bounds)))
         {}
 
-        ~LineSegmentBlockTree() { clear(); }
+        ~LineSegmentBlockTree()
+        {
+            clear();
+        }
 
         /// Implicit conversion from LineSegmentBlockTree to root tree node.
-        inline operator LineSegmentBlockTreeNode /*const*/ &() {
+        inline operator LineSegmentBlockTreeNode /*const*/ &()
+        {
             return *rootNode;
         }
 
     private:
-        static int clearUserDataWorker(LineSegmentBlockTreeNode &subtree, void *)
-        {
-            delete subtree.userData();
-            subtree.setUserData(nullptr);
-            return 0; // Continue iteration.
-        }
-
         void clear()
         {
-            if(!rootNode) return;
-            rootNode->traversePostOrder(clearUserDataWorker);
-            delete rootNode; rootNode = nullptr;
+            delete rootNode;
+            rootNode = nullptr;
         }
     };
 

@@ -95,5 +95,29 @@ LineSegmentBlock::All const &LineSegmentBlock::all() const
     return d->segments;
 }
 
+//---------------------------------------------------------------------------------------
+
+LineSegmentBlockTreeNode::LineSegmentBlockTreeNode(LineSegmentBlock *lsb,
+                                                   LineSegmentBlockTreeNode *parent)
+    : BinaryTree<LineSegmentBlock *>(lsb, parent)
+{}
+
+LineSegmentBlockTreeNode::~LineSegmentBlockTreeNode()
+{
+    delete userData();
+}
+
+LineSegmentBlockTreeNode *LineSegmentBlockTreeNode::childPtr(ChildId side) const
+{
+    return static_cast<LineSegmentBlockTreeNode *>
+            (BinaryTree<LineSegmentBlock *>::childPtr(side));
+}
+
+LineSegmentBlockTreeNode *LineSegmentBlockTreeNode::parentPtr() const
+{
+    return static_cast<LineSegmentBlockTreeNode *>
+            (BinaryTree<LineSegmentBlock *>::parentPtr());
+}
+
 }  // namespace bsp
 }  // namespace world
