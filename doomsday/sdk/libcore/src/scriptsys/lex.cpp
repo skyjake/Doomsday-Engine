@@ -246,8 +246,15 @@ bool Lex::parseLiteralNumber(QChar c, TokenBuffer &output)
         // Read until a non-numeric character is found.
         while (isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
                (!isHex && !gotPoint && c == '.') ||
-               (isHex && !gotX && (c == 'x' || c == 'X')))
+               (isHex && !gotX && (c == 'x' || c == 'X')) ||
+               c == '_')
         {
+            if (c == '_')
+            {
+                // Ignore separators.
+                get();
+                continue;
+            }
             // Just one decimal point.
             if (c == '.') gotPoint = true;
             // Just one 'x'.
