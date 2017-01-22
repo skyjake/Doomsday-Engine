@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Counted"
@@ -30,8 +30,8 @@ void Counted::printAllocs()
     qDebug() << "Counted objects:" << Counted::totalCount;
     for (auto i = countedAllocs.constBegin(); i != countedAllocs.constEnd(); ++i)
     {
-        qDebug() << "-=- Object" << i.key();
-        qDebug() << i.value();
+        qDebug() << "-=- Object" << i.key() << "\n";
+        qDebug() << i.value().constData() << "\n";
     }
 }
 # endif
