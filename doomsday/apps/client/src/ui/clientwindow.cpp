@@ -381,6 +381,9 @@ DENG2_PIMPL(ClientWindow)
         {
             nowPlaying->setText(_E(l) + tr("Now playing") + "\n" + _E(b) +
                                 DoomsdayApp::currentGameProfile()->name());
+
+            root.clearFocusStack();
+            root.setFocus(nullptr);
         }
 
         // Check with Style if blurring is allowed.
