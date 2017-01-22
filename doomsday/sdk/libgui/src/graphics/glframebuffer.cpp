@@ -31,6 +31,8 @@ namespace de {
 static Vector2ui const nullSize;
 static GLuint defaultFramebuffer = 0;
 
+static int rBufCounter;
+
 DENG2_PIMPL(GLFramebuffer),
 DENG2_OBSERVES(Asset, Deletion)
 {
@@ -86,7 +88,6 @@ DENG2_OBSERVES(Asset, Deletion)
     Vector4f clearColor;
     Rectangleui activeRect; ///< Initially null.
     int sampleCount;
-    //GLFramebuffer const *proxy;
 
     Impl(Public *i)
         : Base(i)
@@ -129,6 +130,7 @@ DENG2_OBSERVES(Asset, Deletion)
     ~Impl()
     {
         release();
+        qDebug() << "~GLFramebuffer:" << rBufCounter;
     }
 
     bool isDefault() const
@@ -209,6 +211,8 @@ DENG2_OBSERVES(Asset, Deletion)
         GLInfo::EXT_framebuffer_object()->glGenRenderbuffersEXT(1, &renderBufs[id]);
         GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
+
+        ++rBufCounter;
 
         if (sampleCount > 1)
         {
@@ -316,6 +320,11 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void releaseRenderBuffers()
     {
+        for (auto &rb : renderBufs)
+        {
+            if (rb) --rBufCounter;
+        }
+
         GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(MAX_ATTACHMENTS, renderBufs);
         zap(renderBufs);
         zap(bufTextures);
@@ -350,6 +359,7 @@ DENG2_OBSERVES(Asset, Deletion)
         {
             GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(1, &renderBufs[id]);
             renderBufs[id] = 0;
+            --rBufCounter;
         }
     }
 
