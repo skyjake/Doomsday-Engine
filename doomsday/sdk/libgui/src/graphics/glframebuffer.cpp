@@ -86,7 +86,6 @@ DENG2_OBSERVES(Asset, Deletion)
     Vector4f clearColor;
     Rectangleui activeRect; ///< Initially null.
     int sampleCount;
-    //GLFramebuffer const *proxy;
 
     Impl(Public *i)
         : Base(i)
@@ -583,30 +582,8 @@ void GLFramebuffer::glBind() const
 
     GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
 
-/*#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif*/
-
-    /*if (d->proxy)
-    {
-        //qDebug() << "GLFramebuffer: binding proxy of" << d->fbo << "=>";
-        d->proxy->glBind();
-    }
-    else*/
-    {
-        //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
-        /*
-        if (fbo && !GLInfo::EXT_framebuffer_object()->glIsFramebufferEXT(fbo))
-        {
-            qWarning() << "[GLFramebuffer] WARNING! Attempting to bind FBO" << fbo
-                       << "that is not a valid OpenGL FBO";
-        }*/
-
-        //qDebug() << "GLFramebuffer: binding FBO" << d->fbo;
-
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
-        LIBGUI_ASSERT_GL_OK();
-    }
+    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GLFramebuffer::glRelease() const
@@ -615,8 +592,6 @@ void GLFramebuffer::glRelease() const
 
     GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
     LIBGUI_ASSERT_GL_OK();
-
-    //d->updateFromProxy();
 }
 
 QImage GLFramebuffer::toImage() const
