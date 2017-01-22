@@ -19,8 +19,9 @@
 #ifndef LIBDENG2_ANIMATIONVALUE_H
 #define LIBDENG2_ANIMATIONVALUE_H
 
-#include "../Value"
 #include "../Animation"
+#include "../Counted"
+#include "../Value"
 
 namespace de {
 
@@ -33,15 +34,18 @@ class DENG2_PUBLIC AnimationValue : public Value
 public:
     AnimationValue(Animation const &animation = Animation());
 
-    /// Returns the time of the value.
-    Animation &animation() { return _anim; }
+    ~AnimationValue();
 
     /// Returns the time of the value.
-    Animation const &animation() const { return _anim; }
+    Animation &animation() { return *_anim; }
+
+    /// Returns the time of the value.
+    Animation const &animation() const { return *_anim; }
 
     Record *memberScope() const override;
     Text typeId() const override;
     Value *duplicate() const override;
+    Value *duplicateAsReference() const override;
     Text asText() const override;
     Number asNumber() const override;
     bool isTrue() const override;
@@ -52,7 +56,13 @@ public:
     void operator << (Reader &from) override;
 
 private:
-    Animation _anim;
+    struct DENG2_PUBLIC CountedAnimation : public Animation, public Counted {
+        CountedAnimation(Animation const &anim);
+    };
+
+    AnimationValue(CountedAnimation *countedAnim);
+
+    CountedAnimation *_anim;
 };
 
 } // namespace de

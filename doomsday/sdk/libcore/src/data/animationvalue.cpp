@@ -23,7 +23,17 @@
 
 namespace de {
 
-AnimationValue::AnimationValue(Animation const &anim) : _anim(anim)
+AnimationValue::AnimationValue(Animation const &anim)
+    : _anim(new CountedAnimation(anim))
+{}
+
+AnimationValue::~AnimationValue()
+{
+    releaseRef(_anim);
+}
+
+AnimationValue::AnimationValue(CountedAnimation *countedAnim)
+    : _anim(holdRef(countedAnim))
 {}
 
 Record *AnimationValue::memberScope() const
@@ -33,22 +43,27 @@ Record *AnimationValue::memberScope() const
 
 Value *AnimationValue::duplicate() const
 {
-    return new AnimationValue(_anim);
+    return new AnimationValue(*static_cast<Animation *>(_anim)); // makes a separate Animation
+}
+
+Value *AnimationValue::duplicateAsReference() const
+{
+    return new AnimationValue(_anim); // refers to the same Animation
 }
 
 Value::Text AnimationValue::asText() const
 {
-    return _anim.asText();
+    return _anim->asText();
 }
 
 Value::Number AnimationValue::asNumber() const
 {
-    return Number(_anim.value());
+    return Number(_anim->value());
 }
 
 bool AnimationValue::isTrue() const
 {
-    return !_anim.done();
+    return !_anim->done();
 }
 
 dint AnimationValue::compare(Value const &value) const
@@ -62,7 +77,7 @@ dint AnimationValue::compare(Value const &value) const
 
 void AnimationValue::operator >> (Writer &to) const
 {
-    to << SerialId(ANIMATION) << _anim;
+    to << SerialId(ANIMATION) << *_anim;
 }
 
 void AnimationValue::operator << (Reader &from)
@@ -73,12 +88,18 @@ void AnimationValue::operator << (Reader &from)
     {
         throw DeserializationError("AnimationValue::operator <<", "Invalid ID");
     }
-    from >> _anim;
+    from >> *_anim;
 }
 
 Value::Text AnimationValue::typeId() const
 {
     return "Animation";
 }
+
+//---------------------------------------------------------------------------------------
+
+AnimationValue::CountedAnimation::CountedAnimation(Animation const &anim)
+    : Animation(anim)
+{}
 
 } // namespace de
