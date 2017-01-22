@@ -67,6 +67,7 @@ public:
 
     typedef Vector2ui Size;
 
+#if 0
     /**
      * Utility for temporarily using an alternative buffer as one of a render
      * target's attachments. Usage:
@@ -125,6 +126,7 @@ public:
     private:
         DENG2_PRIVATE(d)
     };
+#endif
 
 public:
     static void setDefaultFramebuffer(GLuint defaultFBO);

@@ -16,6 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if 0
+
 #include "de/GLFramebuffer"
 #include "de/GLTexture"
 #include "de/GLInfo"
@@ -132,3 +134,5 @@ GLFramebuffer &GLFramebuffer::AlternativeBuffer::target() const
 }
 
 } // namespace de
+
+#endif

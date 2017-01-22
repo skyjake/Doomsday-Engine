@@ -253,8 +253,18 @@ void Rend_Draw3DPlayerSprites()
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     bool first = true;
+#if 0
     std::unique_ptr<GLFramebuffer::AlternativeBuffer> altDepth;
+
     static bool altDepthSupported = true;
+    /**
+     * @todo It appears that at least with the Intel OpenGL drivers on macOS, somebody is
+     * leaking texture allocations behind the scenes. Unless there is a bug in
+     * GLFramebuffer (which is entirely possible), it is not such a great idea to switch
+     * around the attachments of an FBO. It should be a better approach to create a
+     * persistent second FBO that shares the color attachment but uses an alternative
+     * depth/stencil attachment.
+     */
 
     if (altDepthSupported)
     {
@@ -270,6 +280,7 @@ void Rend_Draw3DPlayerSprites()
             altDepthSupported = false;
         }
     }
+#endif
 
     // Draw HUD vissprites.
     for (vispsprite_t const &spr : visPSprites)
@@ -281,12 +292,12 @@ void Rend_Draw3DPlayerSprites()
         if (first)
         {
             first = false;
-            if (altDepth && altDepth->init())
+            /*if (altDepth && altDepth->init())
             {
                 // Clear the depth before first use.
                 altDepth->target().clear(GLFramebuffer::DepthStencil);
             }
-            else
+            else*/
             {
                 // As a fallback, just clear the depth buffer so models don't clip
                 // into walls.
