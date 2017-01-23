@@ -145,6 +145,11 @@ DENG2_PIMPL(Line::Side)
         Sections(Side &side)
             : sections { new Section(side), new Section(side), new Section(side) }
         {}
+
+        ~Sections()
+        {
+            for (auto *s : sections) delete s;
+        }
     };
 
 #ifdef __CLIENT__
@@ -163,7 +168,7 @@ DENG2_PIMPL(Line::Side)
 
     dint flags = 0;                 ///< @ref sdefFlags
 
-    QList<Segment *> segments;      ///< On "this" side, sorted.
+    QList<Segment *> segments;      ///< On "this" side, sorted. Owned.
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
 
     dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
@@ -175,6 +180,18 @@ DENG2_PIMPL(Line::Side)
 #endif
 
     Impl(Public *i) : Base(i) {}
+
+    ~Impl()
+    {
+        qDeleteAll(segments);
+    }
+
+    void clearSegments()
+    {
+        qDeleteAll(segments);
+        segments.clear();
+        needSortSegments = false;  // An empty list is sorted.
+    }
 
     /**
      * Retrieve the Section associated with @a sectionId.
@@ -482,8 +499,7 @@ SoundEmitter const &Line::Side::topSoundEmitter() const
 
 void Line::Side::clearSegments()
 {
-    d->segments.clear();
-    d->needSortSegments = false;  // An empty list is sorted.
+    d->clearSegments();
 }
 
 Line::Side::Segment *Line::Side::addSegment(HEdge &hedge)
