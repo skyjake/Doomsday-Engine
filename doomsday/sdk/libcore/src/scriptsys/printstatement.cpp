@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/PrintStatement"
@@ -49,7 +49,7 @@ void PrintStatement::execute(Context &context) const
     String msg;
     QTextStream os(&msg);
     bool isFirst = true;
-            
+
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, value.elements())
     {
        if (!isFirst)
@@ -79,7 +79,7 @@ void PrintStatement::operator << (Reader &from)
     from >> id;
     if (id != PRINT)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("PrintStatement::operator <<", "Invalid ID");
     }
