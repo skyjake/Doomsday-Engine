@@ -306,7 +306,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                &parsedVersion);
             if (strippedName != source->name())
             {
-                meta.set("version", parsedVersion.asText());
+                meta.set(VAR_VERSION, parsedVersion.asText());
             }
 
             packageId = stripRedundantParts(formatDomains[format]
@@ -371,7 +371,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
                 << packageId
-                << meta.gets("version")
+                << meta.gets(VAR_VERSION)
                 << ::internal::formatDescriptions[format]
                 << matched.bestScore;
 
@@ -379,7 +379,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         // Finally, make a link that represents the package.
         if (auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
-                                                         meta.gets("version"),
+                                                         meta.gets(VAR_VERSION),
                                                          matched.bestScore))
         {
             LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
@@ -547,7 +547,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             if (english->blockType() == "language")
             {
                 // Doomsday must understand the version number.
-                meta.set(VAR_VERSION, Version(english->keyValue("version")).asText());
+                meta.set(VAR_VERSION, Version(english->keyValue(VAR_VERSION)).asText());
                 meta.set(VAR_AUTHOR,  english->keyValue("author"));
                 meta.set(VAR_LICENSE, english->keyValue("license"));
                 meta.set("contact", english->keyValue("contact"));
