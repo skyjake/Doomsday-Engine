@@ -124,10 +124,20 @@ DENG2_PIMPL(Record)
                 Variable *var;
                 {
                     DENG2_GUARD(this);
-                    alreadyExists = members.contains(i.key());
                     var = new Variable(*i.value());
                     var->audienceForDeletion() += this;
-                    members[i.key()] = var;
+                    auto iter = members.find(i.key());
+                    alreadyExists = (iter != members.end());
+                    if (alreadyExists)
+                    {
+                        iter.value()->audienceForDeletion() -= this;
+                        delete iter.value();
+                        iter.value() = var;
+                    }
+                    else
+                    {
+                        members[i.key()] = var;
+                    }
                 }
 
                 if (!alreadyExists)
