@@ -38,6 +38,9 @@ int main(int argc, char **argv)
         Script testScript("def returnValue(a): return a\n"
                           "returnValue(True) and returnValue(True)\n");
 #endif
+#if 0
+        Script testScript("print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'\n");
+#endif
         Process proc(testScript);
         LOG_MSG("Script parsing is complete! Executing...");
         LOG_MSG("------------------------------------------------------------------------------");

@@ -277,8 +277,7 @@ void DictionaryValue::subtract(Value const &subtrahend)
         throw KeyError("DictionaryValue::subtract",
             "Key '" + subtrahend.asText() + "' does not exist in the dictionary");
     }
-    delete i->second;
-    _elements.erase(i);
+    remove(i);
 }
 
 void DictionaryValue::operator >> (Writer &to) const
