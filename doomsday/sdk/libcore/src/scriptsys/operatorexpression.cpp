@@ -210,7 +210,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             {
                 isResultTrue.push(evaluator);
                 _rightOperand->push(evaluator);
-                return nullptr;
+                result = nullptr;
             }
             break;
 
@@ -224,7 +224,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             {
                 isResultTrue.push(evaluator);
                 _rightOperand->push(evaluator);
-                return nullptr;
+                result = nullptr;
             }
             break;
 
@@ -325,7 +325,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
     // Delete the unnecessary values.
     if (result != rightValue) delete rightValue;
-    if (result != leftValue) delete leftValue;
+    if (result != leftValue)  delete leftValue;
 
     return result;
 }

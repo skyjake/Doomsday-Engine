@@ -61,7 +61,7 @@ DENG2_PIMPL(Evaluator)
     /// Namespace for the current expression.
     Record *names;
 
-    Expressions stack;
+    Expressions expressions;
     Results results;
 
     /// Returned when there is no result to give.
@@ -76,7 +76,7 @@ DENG2_PIMPL(Evaluator)
 
     ~Impl()
     {
-        DENG2_ASSERT(stack.isEmpty());
+        DENG2_ASSERT(expressions.isEmpty());
         clearNames();
         clearResults();
     }
@@ -99,11 +99,11 @@ DENG2_PIMPL(Evaluator)
         results.clear();
     }
 
-    void clearStack()
+    void clearExpressions()
     {
-        while (!stack.empty())
+        while (!expressions.empty())
         {
-            ScopedExpression top = stack.takeLast();
+            ScopedExpression top = expressions.takeLast();
             clearNames();
             names = top.names();
             delete top.scope;
@@ -112,12 +112,13 @@ DENG2_PIMPL(Evaluator)
 
     void pushResult(Value *value, Value *scope = 0 /*take*/)
     {
-        // NULLs are not pushed onto the results stack as they indicate that
+        // NULLs are not pushed onto the results expressions as they indicate that
         // no result was given.
         if (value)
         {
-            /*qDebug() << "Evaluator: Pushing result" << value->asText() << "in scope"
-                        << (scope? scope->asText() : "null");*/
+            /*qDebug() << "Evaluator: Pushing result" << value << value->asText() << "in scope"
+                        << (scope? scope->asText() : "null")
+                        << "result stack size:" << results.size();*/
             results << ScopedResult(value, scope);
         }
         else
@@ -137,8 +138,8 @@ DENG2_PIMPL(Evaluator)
 
     Value &evaluate(Expression const *expression)
     {
-        DENG2_ASSERT(names == NULL);
-        DENG2_ASSERT(stack.empty());
+        DENG2_ASSERT(names == nullptr);
+        DENG2_ASSERT(expressions.empty());
 
         //qDebug() << "Evaluator: Starting evaluation of" << expression;
 
@@ -149,10 +150,10 @@ DENG2_PIMPL(Evaluator)
         // Clear the result stack.
         clearResults();
 
-        while (!stack.empty())
+        while (!expressions.empty())
         {
             // Continue by processing the next step in the evaluation.
-            ScopedExpression top = stack.takeLast();
+            ScopedExpression top = expressions.takeLast();
             clearNames();
             names = top.names();
             /*qDebug() << "Evaluator: Evaluating latest scoped expression" << top.expression
@@ -169,7 +170,7 @@ DENG2_PIMPL(Evaluator)
         DENG2_ASSERT(self().hasResult());
 
         clearNames();
-        current = NULL;
+        current = nullptr;
         return result();
     }
 };
@@ -200,7 +201,7 @@ void Evaluator::reset()
 {
     d->current = nullptr;
 
-    d->clearStack();
+    d->clearExpressions();
     d->clearNames();
 }
 
@@ -245,7 +246,7 @@ Value &Evaluator::result()
 
 void Evaluator::push(Expression const *expression, Value *scope)
 {
-    d->stack.push_back(Impl::ScopedExpression(expression, scope));
+    d->expressions.push_back(Impl::ScopedExpression(expression, scope));
 }
 
 void Evaluator::pushResult(Value *value)
@@ -258,7 +259,7 @@ Value *Evaluator::popResult(Value **evaluationScope)
     DENG2_ASSERT(d->results.size() > 0);
 
     Impl::ScopedResult result = d->results.takeLast();
-    /*qDebug() << "Evaluator: Popping result" << result.result->asText()
+    /*qDebug() << "Evaluator: Popping result" << result.result << result.result->asText()
              << "in scope" << (result.scope? result.scope->asText() : "null");*/
 
     if (evaluationScope)

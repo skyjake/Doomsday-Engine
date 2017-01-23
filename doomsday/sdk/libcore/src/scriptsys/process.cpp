@@ -321,12 +321,19 @@ void Process::finish(Value *returnValue)
         if (topmost->type() == Context::FunctionCall)
         {
             // Return value to the new topmost level.
+            //qDebug() << "Process: Pushing function return value" << returnValue << returnValue->asText();
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue);
+        }
+        else
+        {
+            DENG2_ASSERT(returnValue == nullptr);
         }
     }
     else
     {
         DENG2_ASSERT(d->stack.back()->type() == Context::BaseProcess);
+
+        if (returnValue) delete returnValue; // Possible return value ignored.
 
         // This was the last level.
         d->state = Stopped;
@@ -365,22 +372,18 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
             pushContext(new Context(Context::GlobalNamespace, this, function.globals()));
         }
 
-        // If the function is not in the global namespace, add its own parent
-        // namespace to the stack, too.
-
-
         // Create a new context.
         pushContext(new Context(Context::FunctionCall, this));
 
         // If the scope is defined, create the "self" variable for it.
         if (self)
         {
-            context().names().add(new Variable("self", self /*taken*/));
+            context().names().add(new Variable(QStringLiteral("self"), self /*taken*/));
         }
 
         // Create local variables for the arguments in the new context.
         Function::ArgumentValues::const_iterator b = argValues.begin();
-        Function::Arguments::const_iterator a = function.arguments().begin();
+        Function::Arguments     ::const_iterator a = function.arguments().begin();
         for (; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
             // Records must only be passed as unowned references.

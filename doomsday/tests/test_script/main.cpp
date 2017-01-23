@@ -34,6 +34,10 @@ int main(int argc, char **argv)
         app.initSubsystems(App::DisablePlugins);
 
         Script testScript(app.fileSystem().find("kitchen_sink.de"));
+#if 0
+        Script testScript("def returnValue(a): return a\n"
+                          "returnValue(True) and returnValue(True)\n");
+#endif
         Process proc(testScript);
         LOG_MSG("Script parsing is complete! Executing...");
         LOG_MSG("------------------------------------------------------------------------------");
@@ -49,5 +53,5 @@ int main(int argc, char **argv)
     }
 
     qDebug("Exiting main()...");
-    return 0;        
+    return 0;
 }
