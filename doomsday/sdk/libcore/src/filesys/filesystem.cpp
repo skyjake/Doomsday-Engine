@@ -51,10 +51,16 @@ DENG2_PIMPL_NOREF(FileSystem)
     QSet<FileIndex *> userIndices; // not owned
 
     /// The root folder of the entire file system.
-    Folder root;
+    std::unique_ptr<Folder> root;
+
+    Impl()
+    {
+        root.reset(new Folder);
+    }
 
     ~Impl()
     {
+        root.reset();
         qDeleteAll(typeIndex.values());
         typeIndex.clear();
     }
@@ -91,7 +97,7 @@ void FileSystem::refresh()
     LOG_AS("FS::refresh");
 
     //Time startedAt;
-    d->root.populate(Folder::PopulateAsyncFullTree);
+    d->root->populate(Folder::PopulateAsyncFullTree);
 
     /*LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
     printIndex();*/
@@ -101,7 +107,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
 {
     LOG_AS("FS::makeFolder");
 
-    Folder *subFolder = d->root.tryLocate<Folder>(path);
+    Folder *subFolder = d->root->tryLocate<Folder>(path);
     if (!subFolder)
     {
         // This folder does not exist yet. Let's create it.
@@ -366,12 +372,12 @@ String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flag
 
 Folder &FileSystem::root()
 {
-    return d->root;
+    return *d->root;
 }
 
 Folder const &FileSystem::root() const
 {
-    return d->root;
+    return *d->root;
 }
 
 FileSystem &FileSystem::get() // static
