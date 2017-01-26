@@ -3,6 +3,8 @@
 # All CMakeLists should include this file to gain access to the overall
 # project configuration.
 
+cmake_policy (SET CMP0053 OLD)  # Warning from Qt 5.8.0 modules
+
 get_filename_component (_where "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 message (STATUS "Configuring ${_where}...")
 
