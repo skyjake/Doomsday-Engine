@@ -3163,7 +3163,7 @@ void Map::deserializeInternalState(Reader &from, world::IThinkerMapping const &t
             }
             catch (Error const &er)
             {
-                LOG_MAP_WARNING("Error when reading state of object %i: %s")
+                LOG_MAP_WARNING("Error when reading state of object %s: %s")
                         << id << er.asText();
             }
 

@@ -1413,7 +1413,7 @@ DENG2_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
 namespace internal {
 
 static struct {
-    char const *text;
+    String const text;
     ModelDrawable::TextureMap map;
 } const mappings[] {
     { "diffuse",  ModelDrawable::Diffuse  },
@@ -1443,7 +1443,7 @@ String ModelDrawable::textureMapToText(TextureMap map) // static
         if (mapping.map == map)
             return mapping.text;
     }
-    return "unknown";
+    return QStringLiteral("unknown");
 }
 
 ModelDrawable::ModelDrawable() : d(new Impl(this))
