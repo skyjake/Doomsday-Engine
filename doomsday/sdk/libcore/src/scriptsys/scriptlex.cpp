@@ -98,7 +98,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
             break;
         }
 
-        if (peek() == 0) break;
+        if (peek().isNull()) break;
 
         // This will be the first character of the token.
         QChar c = get();

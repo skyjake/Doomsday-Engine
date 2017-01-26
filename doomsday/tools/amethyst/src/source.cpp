@@ -20,6 +20,8 @@
 #include "exception.h"
 #include <QDebug>
 
+static QChar const EOF_CHAR((ushort)0xffff);
+
 Source::Source() : Linkable(true)
 {
     _lineNumber = 0;
@@ -80,7 +82,7 @@ void Source::nextChar()
     if (chars.isEmpty())
     {
         // We're at the end.
-        _peekedChar = EOF;
+        _peekedChar = EOF_CHAR;
     }
     else
     {
@@ -116,7 +118,7 @@ void Source::skipToMatching()
     int level = 0;
     QChar c;
 
-    while ((c = get()) != EOF)
+    while ((c = get()) != EOF_CHAR)
     {
         if (c == '@')    // Escape sequence.
         {
@@ -147,7 +149,7 @@ bool Source::getTokenOrBlank(String &token)
     // Extract the next token, or blank.
     // First eat whitespace & comments, and keep an eye out for a blank.
     QChar c;
-    while ((c = peek()) != EOF)
+    while ((c = peek()) != EOF_CHAR)
     {
         if (c == '$') // Begin a comment?
         {
@@ -156,7 +158,7 @@ bool Source::getTokenOrBlank(String &token)
             {
                 ignore();
                 // Eat all characters, but keep a look-out for *$.
-                while ((c = peek()) != EOF)
+                while ((c = peek()) != EOF_CHAR)
                 {
                     // Don't loose track of line numbers.
                     if (c == '\n') _lineNumber++;
@@ -171,8 +173,8 @@ bool Source::getTokenOrBlank(String &token)
             }
             else // One-liner.
             {
-                while ((c = peek()) != EOF && c != '\n') ignore();
-                if (c == EOF) break;
+                while ((c = peek()) != EOF_CHAR && c != '\n') ignore();
+                if (c == EOF_CHAR) break;
                 // Eat the newline as well.
                 _lineNumber++;
                 ignore();
@@ -198,7 +200,7 @@ bool Source::getTokenOrBlank(String &token)
     }
 
     // Now extract until whitespace encountered. This becomes the token.
-    while ((c = peek()) != EOF)
+    while ((c = peek()) != EOF_CHAR)
     {
         if (c.isSpace()) break; // The token ends.
         if (!token.isEmpty() && IS_BREAK(c)) break;
