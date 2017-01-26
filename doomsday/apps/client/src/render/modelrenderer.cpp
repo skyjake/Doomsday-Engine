@@ -164,6 +164,9 @@ DENG2_PIMPL(ModelRenderer)
         atlas->setBorderSize(1);
         atlas->setMarginSize(0);
 
+        LOG_GL_MSG("New %ix%i model texture atlas allocated")
+                << atlas->totalSize().x << atlas->totalSize().y;
+
         return atlas;
     }
 

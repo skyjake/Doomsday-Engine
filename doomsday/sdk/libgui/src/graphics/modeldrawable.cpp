@@ -1331,7 +1331,7 @@ DENG2_PIMPL(ModelDrawable)
 
                 // Is this pass disabled?
                 if (appearance && !appearance->passMask.isEmpty() &&
-                                 !appearance->passMask.testBit(i))
+                                  !appearance->passMask.testBit(i))
                 {
                     continue;
                 }
