@@ -13,5 +13,4 @@
 @include <shaders/fx/blur.dei>
 @include <shaders/fx/bloom.dei>
 @include <shaders/fx/post.dei>
-@include <shaders/vr.dei>
 @include <shaders/debug.dei>
