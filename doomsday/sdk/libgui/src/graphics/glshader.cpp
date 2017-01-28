@@ -114,9 +114,11 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 
 void GLShader::compile(Type shaderType, IByteArray const &source)
 {
+    static QByteArray const DEFAULT_VERSION("#version 120\n");
+
 #ifndef LIBGUI_GLES2
     // With non-ES OpenGL, ignore the precision attributes.
-    static QByteArray prefix("#ifndef GL_ES\n#define lowp\n#define mediump\n#define highp\n#endif\n");
+    static QByteArray const PREFIX("#ifndef GL_ES\n#define lowp\n#define mediump\n#define highp\n#endif\n");
 #endif
 
     DENG2_ASSERT(shaderType == Vertex || shaderType == Fragment);
@@ -142,7 +144,13 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
 
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.
-    Block src = prefixToSource(source, prefix + predefs);
+    Block src = prefixToSource(source, PREFIX + predefs);
+
+    // If version has not been specified, use the default one.
+    if (!src.contains("#version"))
+    {
+        src = DEFAULT_VERSION + src;
+    }
 
     char const *srcPtr = src.constData();
     LIBGUI_GL.glShaderSource(d->name, 1, &srcPtr, 0);
