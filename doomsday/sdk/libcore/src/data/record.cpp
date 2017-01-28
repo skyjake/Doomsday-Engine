@@ -184,8 +184,14 @@ DENG2_PIMPL(Record)
                     }
                     else
                     {
+                        // Ignore read-only flags.
+                        Variable::Flags const oldFlags = var->flags();
+                        var->setFlags(Variable::ReadOnly, false);
+
                         // Just make a copy.
                         var->set(i.value()->value());
+
+                        var->setFlags(oldFlags, ReplaceFlags);
                     }
                 }
                 else

@@ -231,7 +231,7 @@ public:
      * @param flags      New mode flags.
      * @param operation  What to do with @a flags.
      */
-    void setFlags(Flags const &flags, FlagOp operation = ReplaceFlags);
+    void setFlags(Flags const &flags, FlagOpArg operation = ReplaceFlags);
 
     /**
      * Makes the variable read-only.

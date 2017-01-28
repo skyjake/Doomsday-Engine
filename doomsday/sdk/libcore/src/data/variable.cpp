@@ -219,7 +219,7 @@ Variable::Flags Variable::flags() const
     return d->flags;
 }
 
-void Variable::setFlags(Flags const &flags, FlagOp operation)
+void Variable::setFlags(Flags const &flags, FlagOpArg operation)
 {
     applyFlagOperation(d->flags, flags, operation);
 }
