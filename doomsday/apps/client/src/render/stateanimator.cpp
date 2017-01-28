@@ -154,6 +154,7 @@ DENG2_PIMPL(StateAnimator)
 
     struct AnimVar
     {
+        String variableName;
         SafePtr<AnimationValue> angle; // not owned
         /// Units per second; added to value independently of its animation.
         SafePtr<AnimationValue> speed; // not owned
@@ -298,6 +299,7 @@ DENG2_PIMPL(StateAnimator)
         try
         {
             std::unique_ptr<AnimVar> var(new AnimVar);
+            var->variableName = variableName;
             var->angle.reset(new AnimationValue(Animation(variableDef.getf(DEF_ANGLE, 0.f), Animation::Linear)));
             var->speed.reset(new AnimationValue(Animation(variableDef.getf(DEF_SPEED, 0.f), Animation::Linear)));
             var->axis = vectorFromValue<Vector3f>(variableDef.get(DEF_AXIS));
@@ -435,8 +437,8 @@ DENG2_PIMPL(StateAnimator)
         foreach (String name, animVars.keys())
         {
             AnimVar &animVar = *animVars[name];
-            animVar.angle = &names[name.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
-            animVar.speed = &names[name.concatenateMember(DEF_SPEED)].value<AnimationValue>();
+            animVar.angle = &names[animVar.variableName.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
+            animVar.speed = &names[animVar.variableName.concatenateMember(DEF_SPEED)].value<AnimationValue>();
         }
     }
 
@@ -483,7 +485,7 @@ DENG2_PIMPL(StateAnimator)
             for (auto i : vars.value()->members)
             {
                 if (!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
-                                        *i->uniform))
+                                         *i->uniform))
                     continue;
 
                 if (operation == Bind)
@@ -815,13 +817,24 @@ void StateAnimator::operator << (Reader &from)
     Record storedNames;
     from >> storedNames;
 
-    // Initialize matching variables with new values, and add variables that are not
-    // found in the current state.
-    d->names.assignPreservingVariables(storedNames, Record::IgnoreDoubleUnderscoreMembers);
+    Record const oldNames = d->names;
+    try
+    {
+        // Initialize matching variables with new values, and add variables that are not
+        // found in the current state.
+        d->names.assignPreservingVariables(storedNames, Record::IgnoreDoubleUnderscoreMembers);
 
-    // Now that some variables have been deserialized, the AnimationValue objects
-    // have been changed.
-    d->updateAnimationValuePointers();
+        // Now that some variables have been deserialized, the AnimationValue objects
+        // have been changed.
+        d->updateAnimationValuePointers();
+    }
+    catch (...)
+    {
+        // Restore valid state.
+        d->names = oldNames;
+        d->updateAnimationValuePointers();
+        throw;
+    }
 }
 
 } // namespace render
