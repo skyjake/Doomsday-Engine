@@ -282,6 +282,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void moveOffscreen(TimeDelta span = DISMISS_SPAN)
     {
+        self().disable();
         self().setBehavior(DisableEventDispatchToChildren);
         self().root().clearFocusStack();
         self().root().setFocus(nullptr);
@@ -302,6 +303,7 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             self().show();
             dismissOffset->set(0, span);
+            self().enable();
             self().setBehavior(DisableEventDispatchToChildren, false);
         }
     }
