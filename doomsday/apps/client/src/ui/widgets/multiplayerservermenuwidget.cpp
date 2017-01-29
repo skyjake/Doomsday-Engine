@@ -37,6 +37,8 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
     static String hostId(shell::ServerInfo const &sv) {
+        //auto const domain = sv.domainName();
+        //return domain.isEmpty()? sv.address().asText() : domain;
         return sv.address().asText();
     }
 
@@ -102,11 +104,21 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
         ui::Data &items = self().items();
 
+        QSet<String> foundHosts;
+        foreach (Address const &host, link.foundServers(mask))
+        {
+            shell::ServerInfo info;
+            if (link.foundServerInfo(host, info, mask))
+            {
+                foundHosts.insert(hostId(info));
+            }
+        }
+
         // Remove obsolete entries.
         for (ui::Data::Pos idx = 0; idx < items.size(); ++idx)
         {
             String const id = items.at(idx).data().toString();
-            if (!link.isFound(Address::parse(id), mask))
+            if (!foundHosts.contains(id))
             {
                 items.remove(idx--);
                 changed = true;

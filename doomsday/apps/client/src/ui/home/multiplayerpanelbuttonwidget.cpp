@@ -17,6 +17,7 @@
  */
 
 #include "ui/home/multiplayerpanelbuttonwidget.h"
+#include "ui/dialogs/serverinfodialog.h"
 #include "ui/clientwindow.h"
 #include "network/net_main.h"
 #include "network/serverlink.h"
@@ -82,6 +83,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         self().panel().setContent(info);
         self().panel().open();
+
+        extra->setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
+            return new ServerInfoDialog(serverInfo);
+        }, ui::Right);
     }
 
     void joinButtonPressed() const
@@ -185,12 +190,14 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     d->serverInfo = info;
     d->gameConfig = info.gameConfig();
 
+#define DIM_MDASH   _E(C) DENG2_CHAR_MDASH _E(.)
+
     //label().setText(info.name);
     String meta;
     int const playerCount = info.playerCount();
     if (playerCount > 0)
     {
-        meta = String("%1 player%2 " DENG2_CHAR_MDASH " ")
+        meta = String("%1 player%2 " DIM_MDASH " ")
                 .arg(playerCount)
                 .arg(DENG2_PLURAL_S(playerCount));
     }
@@ -201,7 +208,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
     if (ClientApp::serverLink().isServerOnLocalNetwork(info.address()))
     {
-        meta = "LAN " DENG2_CHAR_MDASH " " + meta;
+        meta = "LAN " DIM_MDASH " " + meta;
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
@@ -209,7 +216,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
                     .arg(meta));
 
     // Additional information.
-    String infoText = String(info.map()) + " " DENG2_CHAR_MDASH " ";
+    String infoText = String(info.map()) + " " DIM_MDASH " ";
     if (DoomsdayApp::games().contains(info.gameId()))
     {
         auto const &game = DoomsdayApp::games()[info.gameId()];
