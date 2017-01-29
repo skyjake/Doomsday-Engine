@@ -23,18 +23,18 @@
 #include <QX11Info>
 #include <QApplication>
 #include <QScreen>
+#include <de/LogBuffer>
+
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/xf86vmode.h>
 #undef Always
 #undef None
-#undef Status
 
 #include "de/gui/displaymode_native.h"
 
 #include <assert.h>
 #include <vector>
-#include <de/LogBuffer>
 
 namespace de {
 
