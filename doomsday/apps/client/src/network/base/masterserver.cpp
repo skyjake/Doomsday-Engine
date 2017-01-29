@@ -22,7 +22,7 @@
 
 #include <QNetworkAccessManager>
 #include <de/Config>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/shell/ServerInfo>
 #include <de/data/json.h>
 #include <de/memory.h>
@@ -175,7 +175,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
 
     if (reply->error() == QNetworkReply::NoError)
     {
-        LOG_NET_XVERBOSE("Got reply");
+        LOG_NET_XVERBOSE("Got reply", "");
 
         if (d->currentAction == REQUEST_SERVERS)
         {

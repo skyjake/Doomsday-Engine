@@ -20,6 +20,7 @@
 #include <de/App>
 #include <de/Beacon>
 #include <de/CommandLine>
+#include <de/LogBuffer>
 #include <de/NumberValue>
 #include <de/Reader>
 #include <de/TextValue>
@@ -147,8 +148,8 @@ void ServerFinder::found(Address host, Block block)
 
     try
     {
-        LOG_TRACE("Received a server message from %s with %i bytes")
-                << host << block.size();
+        LOG_TRACE("Received a server message from %s with %i bytes",
+                  host << block.size());
 
         shell::ServerInfo receivedInfo;
         Reader(block).withHeader() >> receivedInfo;

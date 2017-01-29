@@ -1,4 +1,4 @@
-/** @file fs_main.cpp 
+/** @file fs_main.cpp
  * @ingroup fs
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -259,7 +259,7 @@ DENG2_PIMPL(FS1)
         try
         {
             Scheme &scheme = self().scheme(search.scheme());
-            LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
+            LOG_RES_XVERBOSE("Using scheme '%s'...", scheme.name());
 
             // Ensure the scheme's index is up to date.
             scheme.rebuild();
@@ -391,7 +391,7 @@ DENG2_PIMPL(FS1)
         // We must have an absolute path.
         path = App_BasePath() / path;
 
-        LOG_RES_XVERBOSE("Trying \"%s\"...") << NativePath(path).pretty();
+        LOG_RES_XVERBOSE("Trying \"%s\"...", NativePath(path).pretty());
 
         bool const reqNativeFile = mode.contains('f');
 
@@ -519,7 +519,7 @@ void FS1::deindex(File1 &file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if (found == d->loadedFiles.end()) return; // Most peculiar..
-    
+
     FileHandle *fileHandle = *found;
 
     d->releaseFileId(file.composePath());
@@ -529,7 +529,7 @@ void FS1::deindex(File1 &file)
 
     d->loadedFiles.erase(found);
     d->loadedFilesCRC = 0;
-    
+
     delete fileHandle;
 }
 

@@ -30,6 +30,7 @@
 
 #include <de/memory.h>
 #include <de/memoryblockset.h>
+#include <de/LogBuffer>
 #include <de/NativePath>
 
 namespace de {

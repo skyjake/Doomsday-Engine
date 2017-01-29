@@ -61,7 +61,7 @@
 #include <de/App>
 #include <de/CommandLine>
 #include <de/Date>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
 #include <de/SignalAction>
 #include <de/Time>
@@ -213,7 +213,7 @@ DENG2_PIMPL(Updater)
         uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
         uri += "&graph";
 
-        LOG_XVERBOSE("Check URI: ") << uri;
+        LOG_XVERBOSE("Check URI: ", uri);
         return uri;
     }
 

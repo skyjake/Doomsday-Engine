@@ -22,6 +22,7 @@
 #include <QMutableListIterator>
 #include <de/ArrayValue>
 #include <de/FileSystem>
+#include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Reader>
@@ -262,7 +263,7 @@ DENG2_PIMPL(NativeTranslator)
 
     void openFile(Path path)
     {
-        LOG_TRACE("openFile: Opening \"%s\"") << path;
+        LOG_TRACE("openFile: Opening \"%s\"", path);
         DENG2_ASSERT(saveFilePtr == 0);
         try
         {
@@ -548,7 +549,7 @@ DENG2_PIMPL(NativeTranslator)
                     delete task;
                 }
             }
-            LOG_XVERBOSE("Translated %i deferred ACScript tasks") << tasks.count();
+            LOG_XVERBOSE("Translated %i deferred ACScript tasks", tasks.count());
         }
 
         /* skip junk */ if (saveVersion < 7) from.seek(12);

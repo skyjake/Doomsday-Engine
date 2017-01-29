@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <de/App>
 #include <de/CommandLine>
+#include <de/LogBuffer>
 #include <de/NativePath>
 #include <de/RecordValue>
 #include <doomsday/DoomsdayApp>
@@ -472,8 +473,8 @@ void R_LoadColorPalettes()
             xlatNum++;
 
             LOG_AS("R_LoadColorPalettes")
-            LOG_RES_XVERBOSE("Reading translation table '%s' as tclass=%i tmap=%i")
-                    << lumpName << cl << i;
+            LOG_RES_XVERBOSE("Reading translation table '%s' as tclass=%i tmap=%i",
+                             lumpName << cl << i);
 
             lumpName += ".lmp";
             if(CentralLumpIndex().contains(lumpName))

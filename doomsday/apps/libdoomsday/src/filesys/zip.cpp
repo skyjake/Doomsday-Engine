@@ -31,7 +31,7 @@
 #include <de/App>
 #include <de/ByteOrder>
 #include <de/NativePath>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <cstring> // memcpy
@@ -562,11 +562,11 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
     LOG_AS("Zip::cacheLump");
 
     LumpFile &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
-    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)")
-            << NativePath(composePath()).pretty()
-            << NativePath(lumpFile.composePath()).pretty()
-            << (unsigned long) lumpFile.info().size
-            << (lumpFile.info().isCompressed()? ", compressed" : "");
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)",
+                        NativePath(composePath()).pretty()
+                        << NativePath(lumpFile.composePath()).pretty()
+                        << (unsigned long) lumpFile.info().size
+                        << (lumpFile.info().isCompressed()? ", compressed" : ""));
 
     // Time to create the cache?
     if (d->dataCache.isNull())
@@ -589,9 +589,8 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
 void Zip::unlockLump(int lumpIndex)
 {
     LOG_AS("Zip::unlockLump");
-    LOGDEV_RES_XVERBOSE("\"%s:%s\"")
-            << NativePath(composePath()).pretty()
-            << NativePath(lump(lumpIndex).composePath()).pretty();
+    LOGDEV_RES_XVERBOSE("\"%s:%s\"", NativePath(composePath()).pretty()
+                        << NativePath(lump(lumpIndex).composePath()).pretty());
 
     if (hasLump(lumpIndex))
     {
@@ -618,19 +617,19 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     LOG_AS("Zip::readLump");
 
     LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
-    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]")
-            << NativePath(composePath()).pretty()
+    LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]",
+               NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
             << (unsigned long) lumpFile.size()
             << (lumpFile.isCompressed()? ", compressed" : "")
             << startOffset
-            << length;
+            << length);
 
     // Try to avoid a file system read by checking for a cached copy.
     if (tryCache)
     {
         uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
-        LOGDEV_RES_XVERBOSE("Cache %s on #%i") << (data? "hit" : "miss") << lumpIndex;
+        LOGDEV_RES_XVERBOSE("Cache %s on #%i", (data? "hit" : "miss") << lumpIndex);
         if (data)
         {
             size_t readBytes = de::min(size_t(lumpFile.size()), length);

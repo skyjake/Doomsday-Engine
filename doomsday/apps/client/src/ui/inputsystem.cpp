@@ -26,6 +26,7 @@
 #include <QtAlgorithms>
 #include <de/timer.h> // SECONDSPERTIC
 #include <de/Record>
+#include <de/LogBuffer>
 #include <de/NumberValue>
 #include <de/Function>
 #include <de/Context>
@@ -433,7 +434,7 @@ DENG2_PIMPL(InputSystem)
         echo.symbolic.id   = 0;
         echo.symbolic.name = nameUtf8.constData();
 
-        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << name;
+        LOG_INPUT_XVERBOSE("Symbolic echo: %s", name);
         self().postEvent(&echo);
     }
 
@@ -561,10 +562,10 @@ DENG2_PIMPL(InputSystem)
             DENG2_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
             std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)")
-                    << ev.toggle.id << char(ev.toggle.id)
+            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)",
+                       ev.toggle.id << char(ev.toggle.id)
                     << ev.toggle.text << strlen(ev.toggle.text)
-                    << ev.toggle.state;
+                    << ev.toggle.state);
 
             self().postEvent(&ev);
         }
@@ -653,8 +654,7 @@ DENG2_PIMPL(InputSystem)
         {
             for (i = 0; i < IMB_MAXBUTTONS; ++i)
             {
-                LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i")
-                        << i << mouse.buttonDowns[i] << mouse.buttonUps[i];
+                LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i", i << mouse.buttonDowns[i] << mouse.buttonUps[i]);
             }
         }
 
@@ -668,13 +668,13 @@ DENG2_PIMPL(InputSystem)
                 if (mouse.buttonDowns[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_DOWN;
-                    LOG_INPUT_XVERBOSE("Mouse button %i down") << i;
+                    LOG_INPUT_XVERBOSE("Mouse button %i down", i);
                     self().postEvent(&ev);
                 }
                 if (mouse.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
-                    LOG_INPUT_XVERBOSE("Mouse button %i up") << i;
+                    LOG_INPUT_XVERBOSE("Mouse button %i up", i);
                     self().postEvent(&ev);
                 }
             }
@@ -710,13 +710,13 @@ DENG2_PIMPL(InputSystem)
                 {
                     ev.toggle.state = ETOG_DOWN;
                     self().postEvent(&ev);
-                    LOG_INPUT_XVERBOSE("Joy button %i down") << i;
+                    LOG_INPUT_XVERBOSE("Joy button %i down", i);
                 }
                 if (state.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
                     self().postEvent(&ev);
-                    LOG_INPUT_XVERBOSE("Joy button %i up") << i;
+                    LOG_INPUT_XVERBOSE("Joy button %i up", i);
                 }
             }
         }
@@ -740,7 +740,7 @@ DENG2_PIMPL(InputSystem)
                         // The new angle becomes active.
                         ev.angle.pos = de::roundf(state.hatAngle[i] / 45);
                     }
-                    LOG_INPUT_XVERBOSE("Joy hat %i angle %f") << i << ev.angle.pos;
+                    LOG_INPUT_XVERBOSE("Joy hat %i angle %f", i << ev.angle.pos);
 
                     self().postEvent(&ev);
 

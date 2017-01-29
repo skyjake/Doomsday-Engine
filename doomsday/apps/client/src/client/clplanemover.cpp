@@ -28,6 +28,8 @@
 #include "world/p_players.h"
 #include "Sector"
 
+#include <de/LogBuffer>
+
 using namespace de;
 
 thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // static
@@ -38,7 +40,7 @@ thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // 
     // Add to the map.
     thinker_s *ptr = th.take();
     plane.map().thinkers().add(*ptr, false /* not public */);
-    LOGDEV_MAP_XVERBOSE("New mover %p") << ptr;
+    LOGDEV_MAP_XVERBOSE("New mover %p", ptr);
 
     // Immediate move?
     if (fequal(speed, 0))

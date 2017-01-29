@@ -22,7 +22,7 @@
 
 #include <de/App>
 #include <de/Folder>
-#include <de/Log>
+#include <de/LogBuffer>
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
@@ -72,7 +72,7 @@ void Def_ReadProcessDED(ded_t *defs, String sourcePath)
     if (!App_FileSystem().checkFileId(uri))
     {
         // Already handled.
-        LOG_RES_XVERBOSE("\"%s\" has already been read") << NativePath(uri.asText()).pretty();
+        LOG_RES_XVERBOSE("\"%s\" has already been read", NativePath(uri.asText()).pretty());
         return;
     }
 

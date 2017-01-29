@@ -25,10 +25,12 @@
 #include "de/PersistentGLWindow"
 #include "de/GuiApp"
 #include "de/DisplayMode"
+
 #include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/Config>
 #include <de/CommandLine>
+#include <de/Config>
+#include <de/LogBuffer>
+#include <de/NumberValue>
 
 #include <QDesktopWidget>
 #include <QResizeEvent>
@@ -57,8 +59,8 @@ static QRect centeredQRect(Vector2ui const &size)
                                desktopRect().size().height());
     Vector2ui const clamped = size.min(screenSize);
 
-    LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i")
-            << screenSize.x << screenSize.y;
+    LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i",
+                       screenSize.x << screenSize.y);
 
     return QRect(desktopRect().topLeft() +
                  QPoint((screenSize.x - clamped.x) / 2,
@@ -961,9 +963,9 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
 {
     GLWindow::resizeEvent(ev);
 
-    LOGDEV_GL_XVERBOSE("Window resized: maximized:%b old:%ix%i new:%ix%i")
-            << isMaximized() << ev->oldSize().width() << ev->oldSize().height()
-            << ev->size().width() << ev->size().height();
+    LOGDEV_GL_XVERBOSE("Window resized: maximized:%b old:%ix%i new:%ix%i",
+                       isMaximized() << ev->oldSize().width() << ev->oldSize().height()
+                       << ev->size().width() << ev->size().height());
 
     /*
     if (!isMaximized() && !isFullScreen())

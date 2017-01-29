@@ -30,7 +30,7 @@
 #include <de/Drawable>
 #include <de/FileSystem>
 #include <de/KdTreeAtlasAllocator>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Range>
 #include <de/Shared>
 
@@ -98,7 +98,7 @@ struct FlareData
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        LOGDEV_GL_XVERBOSE("Releasing shared data");
+        LOGDEV_GL_XVERBOSE("Releasing shared data", "");
     }
 
     Image const &flareImage(String const &name)

@@ -26,6 +26,7 @@
 #include <de/FileSystem>
 #include <de/Folder>
 #include <de/Library>
+#include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/str.h>
 
@@ -81,7 +82,7 @@ static void reopenLibraryIfNeeded(Library *lib)
 
     if (!lib->file->loaded())
     {
-        LOGDEV_RES_XVERBOSE("Re-opening '%s'") << Str_Text(lib->path);
+        LOGDEV_RES_XVERBOSE("Re-opening '%s'", Str_Text(lib->path));
 
         // Make sure the Library gets opened again now.
         lib->file->library();

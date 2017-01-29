@@ -77,6 +77,7 @@
 #include <doomsday/BspNode>
 #include <doomsday/world/Materials>
 
+#include <de/LogBuffer>
 #include <de/Rectangle>
 
 #include <de/aabox.h>
@@ -567,8 +568,8 @@ DENG2_PIMPL(Map)
         // It begins...
         Time begunAt;
 
-        LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
-                << (self().hasManifest() ? self().manifest().composeUri() : "(unknown map)") << bspSplitFactor;
+        LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...",
+                (self().hasManifest() ? self().manifest().composeUri() : "(unknown map)") << bspSplitFactor);
 
         // First we'll scan for so-called "one-way window" constructs and mark
         // them so that the space partitioner can treat them specially.

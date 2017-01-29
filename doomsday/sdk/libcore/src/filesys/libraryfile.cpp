@@ -18,8 +18,9 @@
  */
 
 #include "de/LibraryFile"
-#include "de/NativeFile"
 #include "de/Library"
+#include "de/NativeFile"
+#include "de/LogBuffer"
 
 #include <QLibrary>
 
@@ -130,8 +131,7 @@ File *LibraryFile::Interpreter::interpretFile(File *sourceData) const
 {
     if (recognize(*sourceData))
     {
-        LOG_RES_XVERBOSE("Interpreted ") << sourceData->description()
-                                         << " as a shared library";
+        LOG_RES_XVERBOSE("Interpreted %s as a shared library", sourceData->description());
 
         // It is a shared library intended for Doomsday.
         return new LibraryFile(sourceData);

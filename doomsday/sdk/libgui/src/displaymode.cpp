@@ -24,6 +24,7 @@
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/FunctionValue>
+#include <de/LogBuffer>
 #include <de/NumberValue>
 #include <de/Record>
 #include <de/ScriptSystem>
@@ -326,7 +327,7 @@ int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
     if (Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
         LOG_AS("DisplayMode");
-        LOGDEV_GL_XVERBOSE("Requested mode is the same as current, ignoring request");
+        LOGDEV_GL_XVERBOSE("Requested mode is the same as current, ignoring request", "");
 
         // Already in this mode.
         return false;

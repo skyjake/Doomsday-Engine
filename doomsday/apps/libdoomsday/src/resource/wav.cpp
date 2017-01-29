@@ -24,7 +24,7 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/NativePath>
 #include <de/memory.h>
 #include <de/memoryzone.h>
@@ -96,7 +96,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
     assert(sizeof(wave_format) == 16);
     assert(sizeof(riff_chunk) == 8);
 #endif
-    
+
     // Initialize the format info.
     memset(&wave_format, 0, sizeof(wave_format));
     wave_format.wBlockAlign = 1;
@@ -203,10 +203,10 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
         size_t size = hndl->length();
 
         LOG_AS("WAV_Load");
-        LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
-                << de::NativePath(hndl->file().composePath()).pretty()
-                << size
-                << hndl->tell();
+        LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)",
+                               de::NativePath(hndl->file().composePath()).pretty()
+                            << size
+                            << hndl->tell());
 
         uint8_t *data = (uint8_t *) M_Malloc(size);
 

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <de/c_wrapper.h>
+#include <de/LogBuffer>
 
 #include "doomsday.h"
 

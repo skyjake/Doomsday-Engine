@@ -25,7 +25,7 @@
 #include "de/FS"
 #include "de/Info"
 #include "de/LinkFile"
-#include "de/Log"
+#include "de/LogBuffer"
 #include "de/PackageFeed"
 #include "de/Parser"
 #include "de/Version"
@@ -198,7 +198,7 @@ DENG2_PIMPL(PackageLoader)
             return aVer < bVer;
         });
 
-        LOG_RES_XVERBOSE("Selected '%s': %s") << packageId << found.back()->description();
+        LOG_RES_XVERBOSE("Selected '%s': %s", packageId << found.back()->description());
 
         return found.back();
     }
@@ -269,7 +269,7 @@ DENG2_PIMPL(PackageLoader)
                 catch (Package::NotPackageError const &er)
                 {
                     // This is usually a .pack folder used only for nesting.
-                    LOG_RES_XVERBOSE("\"%s\": %s") << fileName << er.asText();
+                    LOG_RES_XVERBOSE("\"%s\": %s", fileName << er.asText());
                 }
                 catch (Package::ValidationError const &er)
                 {

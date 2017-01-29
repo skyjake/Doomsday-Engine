@@ -28,6 +28,8 @@
 #include "world/thinkers.h"
 #include "world/polyobjdata.h"
 
+#include <de/LogBuffer>
+
 using namespace de;
 
 thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating) // static
@@ -46,9 +48,7 @@ thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating)
     thinker_s *ptr = th.take();
     polyobj.map().thinkers().add(*ptr, false /*not public*/);
 
-    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
-            << ptr
-            << polyobj.indexInMap();
+    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.", ptr << polyobj.indexInMap());
 
     return ptr;
 }
@@ -103,8 +103,8 @@ void ClPolyMover::think()
         //    /* && po->destAngle != -1*/) || !po->angleSpeed)
         if (!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-            LOGDEV_MAP_XVERBOSE("Mover %p reached end of turn, destAngle=%i")
-                    << &thinker() << po->destAngle;
+            LOGDEV_MAP_XVERBOSE("Mover %p reached end of turn, destAngle=%i",
+                                &thinker() << po->destAngle);
 
             // We'll arrive at the destination.
             _rotate = false;

@@ -39,6 +39,7 @@
 #include <de/GLTextureFramebuffer>
 #include <de/GLState>
 #include <de/GLInfo>
+#include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
 #include <de/NumberValue>
 #include <de/SignalAction>
@@ -491,7 +492,7 @@ DENG2_PIMPL(ClientWindow)
         LOG_AS("ClientWindow");
 
         Size size = self().pixelSize();
-        LOG_TRACE("Window resized to %s pixels") << size.asText();
+        LOG_TRACE("Window resized to %s pixels", size.asText());
 
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
@@ -999,7 +1000,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
     else
     {
-        LOG_GL_XVERBOSE("New format is the same as before");
+        LOG_GL_XVERBOSE("New format is the same as before", "");
         return false;
     }
 }

@@ -22,6 +22,7 @@
 
 #include <de/timer.h>
 #include <de/App>
+#include <de/LogBuffer>
 #ifdef __SERVER__
 #  include <de/TextApp>
 #endif
@@ -271,8 +272,8 @@ static void advanceTime(timespan_t delta)
         // case, we will adjust gameTime slightly so that it syncs again.
         if(oldGameTic == SECONDS_TO_TICKS(::gameTime))
         {
-            LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
-                << oldGameTic << ::frameTimePos;
+            LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)",
+                            oldGameTic << ::frameTimePos);
 
             // Realign.
             ::gameTime = (SECONDS_TO_TICKS(::gameTime) + 1) / 35.f;

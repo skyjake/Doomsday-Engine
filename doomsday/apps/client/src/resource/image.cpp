@@ -25,7 +25,7 @@
 #include <doomsday/resource/colorpalettes.h>
 
 #include <de/memory.h>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <QByteArray>
 #include <QImage>
 #include <de/NativePath>
@@ -288,8 +288,8 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     // Still not interpreted?
     if (!img.pixels)
     {
-        LOG_RES_XVERBOSE("\"%s\" unrecognized, trying fallback loader...")
-            << NativePath(filePath).pretty();
+        LOG_RES_XVERBOSE("\"%s\" unrecognized, trying fallback loader...",
+                         NativePath(filePath).pretty());
         return 0; // Not a recognised format. It may still be loadable, however.
     }
 
@@ -553,7 +553,7 @@ static String toTranslationId(int tclass, int tmap)
     if (!tclass && !tmap) return String();
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
-    LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
+    LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i", tclass << tmap << trans);
     return String::number(trans);
 
 #undef NUM_TRANSLATION_MAPS_PER_CLASS

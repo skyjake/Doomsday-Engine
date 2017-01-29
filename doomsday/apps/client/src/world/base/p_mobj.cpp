@@ -27,6 +27,7 @@
 #include <cmath>
 #include <de/vector1.h>
 #include <de/Error>
+#include <de/LogBuffer>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -147,7 +148,7 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
     if (mo->ddFlags & DDMF_MISSILE)
     {
         LOG_AS("Mobj_Destroy");
-        LOG_MAP_XVERBOSE("Destroying missile %i") << mo->thinker.id;
+        LOG_MAP_XVERBOSE("Destroying missile %i", mo->thinker.id);
     }
 #endif
 

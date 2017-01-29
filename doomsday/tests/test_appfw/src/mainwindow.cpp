@@ -26,6 +26,7 @@
 #include <de/GLState>
 #include <de/Garbage>
 #include <de/LabelWidget>
+#include <de/LogBuffer>
 #include <de/VRConfig>
 #include <de/VRWindowTransform>
 
@@ -186,7 +187,7 @@ DENG2_PIMPL(MainWindow)
         LOG_AS("MainWindow");
 
         Size size = self().pixelSize();
-        LOG_TRACE("Window resized to %s pixels") << size.asText();
+        LOG_TRACE("Window resized to %s pixels", size.asText());
 
         // Update viewport.
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));

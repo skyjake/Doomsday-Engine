@@ -25,7 +25,7 @@
 
 #include <de/App>
 #include <de/PackageLoader>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Reader>
 
 #include <QMap>

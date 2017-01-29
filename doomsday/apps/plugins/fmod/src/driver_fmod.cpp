@@ -50,6 +50,7 @@
 #include "doomsday.h"
 #include <de/c_wrapper.h>
 #include <de/Config>
+#include <de/LogBuffer>
 
 FMOD::System* fmodSystem = 0;
 

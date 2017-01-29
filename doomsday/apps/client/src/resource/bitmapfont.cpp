@@ -24,7 +24,7 @@
 #include "sys_system.h" // novideo
 #include "FontManifest"
 #include <doomsday/uri.h>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
 #include <doomsday/busymode.h>
@@ -319,8 +319,8 @@ void BitmapFont::glInit()
         // Upload the texture.
         if(!novideo && !isDedicated)
         {
-            LOG_GL_XVERBOSE("Uploading atlas texture for \"%s\"...")
-                << manifest().composeUri();
+            LOG_GL_XVERBOSE("Uploading atlas texture for \"%s\"...",
+                            manifest().composeUri());
 
             d->texGLName = GL_NewTextureWithParams(DGL_RGBA, d->texDimensions.x, d->texDimensions.y,
                 pixels, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,

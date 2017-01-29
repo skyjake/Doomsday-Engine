@@ -36,7 +36,7 @@
 #include "api_audiod_sfx.h"
 
 extern "C" {
-    
+
 int     DS_Init(void);
 void    DS_Shutdown(void);
 void    DS_Event(int type);
@@ -50,7 +50,7 @@ audiointerface_sfx_generic_t* DMFluid_Sfx();
 
 #define MAX_SYNTH_GAIN      0.4
 
-#define DSFLUIDSYNTH_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FluidSynth] ") << args
+#define DSFLUIDSYNTH_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FluidSynth] ", args)
 
 #include "fluidsynth_music.h"
 

@@ -31,7 +31,7 @@
 #include "dd_main.h"  // App_World()
 
 #include <doomsday/console/cmd.h>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/vector1.h>
 #include <de/Rectangle>
 #include <QList>
@@ -364,7 +364,7 @@ Subsector *Sector::addSubsector(QVector<ConvexSubspace *> const &subspaces)
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
     std::unique_ptr<Subsector> subsec(subsectorConstructor(subspaces));
     d->subsectors << subsec.get();
-    LOG_MAP_XVERBOSE("New Subsector %s (sector-%s)") << subsec->id().asText() << indexInMap();
+    LOG_MAP_XVERBOSE("New Subsector %s (sector-%s)", subsec->id().asText() << indexInMap());
     return subsec.release();
 }
 

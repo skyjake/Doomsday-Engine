@@ -32,6 +32,7 @@
 #include <de/App>
 #include <de/ArchiveFeed>
 #include <de/ArchiveEntryFile>
+#include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/findfile.h>
@@ -80,7 +81,7 @@ static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset = 0)
         if (fs1.accessFile(search))
         {
             // Must already be loaded.
-            LOG_RES_XVERBOSE("\"%s\" already loaded") << NativePath(search.asText()).pretty();
+            LOG_RES_XVERBOSE("\"%s\" already loaded", NativePath(search.asText()).pretty());
         }
     }
     return nullptr;

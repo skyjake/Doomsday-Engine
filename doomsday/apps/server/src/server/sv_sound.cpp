@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "server/sv_sound.h"
 
-#include <de/Log>
+#include <de/LogBuffer>
 #include "network/net_main.h"
 #include "world/p_players.h"
 #include "server/sv_pool.h"
@@ -97,8 +97,8 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t const *origin, dfloat volume,
         }
     }
 
-    LOGDEV_NET_XVERBOSE("Sv_SoundAtVolume: id: #%i volume: %f targets: %x")
-            << soundID << volume << targetPlayers;
+    LOGDEV_NET_XVERBOSE("Sv_SoundAtVolume: id: #%i volume: %f targets: %x",
+                        soundID << volume << targetPlayers);
 
     Sv_NewSoundDelta(soundID, origin, sector, poly, plane, surface, volume,
                      (soundIDAndFlags & DDSF_REPEAT) != 0, targetPlayers);
@@ -114,9 +114,9 @@ void Sv_StopSound(dint soundId, mobj_t const *origin)
     Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
-    LOGDEV_NET_XVERBOSE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p")
-            << soundId << (origin? origin->thinker.id : 0)
-            << origin << sector << poly << plane << surface;
+    LOGDEV_NET_XVERBOSE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p",
+                        soundId << (origin? origin->thinker.id : 0)
+                        << origin << sector << poly << plane << surface);
 
     Sv_NewSoundDelta(soundId, origin, sector, poly, plane, surface, 0/*silence*/,
                      false/*non-repeating*/, -1/*all clients*/);

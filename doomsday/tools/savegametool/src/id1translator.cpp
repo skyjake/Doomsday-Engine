@@ -22,6 +22,7 @@
 #include <de/ArrayValue>
 #include <de/FileSystem>
 #include <de/FixedByteArray>
+#include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/NumberValue>
 #include <de/Reader>
@@ -86,7 +87,7 @@ DENG2_PIMPL(Id1Translator)
 
     void openFile(Path path)
     {
-        LOG_TRACE("openFile: Opening \"%s\"") << path;
+        LOG_TRACE("openFile: Opening \"%s\"", path);
         DENG2_ASSERT(saveFilePtr == 0);
         try
         {

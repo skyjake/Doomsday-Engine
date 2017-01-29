@@ -26,6 +26,7 @@
 #include <de/Drawable>
 #include <de/GLInfo>
 #include <de/GLTextureFramebuffer>
+#include <de/LogBuffer>
 
 #include <QList>
 
@@ -118,7 +119,7 @@ DENG2_PIMPL(PostProcessing)
     {
         if (!frame.isReady()) return;
 
-        LOGDEV_GL_XVERBOSE("Releasing GL resources");
+        LOGDEV_GL_XVERBOSE("Releasing GL resources", "");
         frame.clear();
     }
 

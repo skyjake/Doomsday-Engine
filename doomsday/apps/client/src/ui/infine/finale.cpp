@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/Log>
+#include <de/LogBuffer>
 #include "ui/infine/finale.h"
 
 #include "BindContext"
@@ -146,7 +146,7 @@ bool Finale::requestSkip()
 bool Finale::isMenuTrigger() const
 {
     if (!d->active) return false;
-    LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << d->interpreter.isMenuTrigger();
+    LOG_SCR_XVERBOSE("IsMenuTrigger: %i", d->interpreter.isMenuTrigger());
     return d->interpreter.isMenuTrigger();
 }
 

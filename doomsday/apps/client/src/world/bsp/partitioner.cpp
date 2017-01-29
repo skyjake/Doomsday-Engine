@@ -29,7 +29,7 @@
 #include <QList>
 #include <QtAlgorithms>
 #include <de/vector1.h>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <doomsday/BspNode>
 
 #include "BspLeaf"
@@ -579,8 +579,8 @@ DENG2_PIMPL(Partitioner)
     void addPartitionLineSegments(LineSegmentBlockTreeNode &rights,
                                   LineSegmentBlockTreeNode &lefts)
     {
-        LOG_TRACE("Building line segments along partition %s")
-                << hplane.partition().asText();
+        LOG_TRACE("Building line segments along partition %s",
+                  hplane.partition().asText());
 
         // First, fix any near-distance issues with the intercepts.
         hplane.sortAndMergeIntercepts();

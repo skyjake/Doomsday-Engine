@@ -23,7 +23,7 @@
 
 #include <QList>
 #include <QtAlgorithms>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Vector>
 
 #include "dmu_lib.h"
@@ -83,20 +83,20 @@ namespace internal
         ddouble const s = std::sin(radian);
         return Vector2d(c * point.x - s * point.y, s * point.x + c * point.y);
     }
-    
+
     static void initAABB(coord_t aabb[4], Vector2d const &point)
     {
         DENG2_ASSERT(aabb);
         aabb[BOXLEFT] = aabb[BOXRIGHT ] = point.x;
         aabb[BOXTOP ] = aabb[BOXBOTTOM] = point.y;
     }
-    
+
     static void addToAABB(coord_t aabb[4], Vector2d const &point)
     {
         DENG2_ASSERT(aabb);
         if     (point.x < aabb[BOXLEFT  ]) aabb[BOXLEFT  ] = point.x;
         else if(point.x > aabb[BOXRIGHT ]) aabb[BOXRIGHT ] = point.x;
-    
+
         if     (point.y < aabb[BOXBOTTOM]) aabb[BOXBOTTOM] = point.y;
         else if(point.y > aabb[BOXTOP   ]) aabb[BOXTOP   ] = point.y;
     }
@@ -309,10 +309,10 @@ DENG2_PIMPL(AutomapWidget)
         maxScaleMTOF = dimensions.y / minScale;
 
         LOG_AS("AutomapWidget");
-        LOGDEV_XVERBOSE("updateViewScale: delta:%s dimensions:%s dist:%f scale:%s minmtof:%f")
-                << (topRight - bottomLeft).asText()
+        LOGDEV_XVERBOSE("updateViewScale: delta:%s dimensions:%s dist:%f scale:%s minmtof:%f",
+                   (topRight - bottomLeft).asText()
                 << dimensions.asText() << dist
-                << scale.asText() << minScaleMTOF;
+                << scale.asText() << minScaleMTOF);
 
         // Update previously set view scale accordingly.
         /// @todo  The view scale factor needs to be resolution independent!
@@ -1867,7 +1867,7 @@ void AutomapWidget::setCameraZoomMode(bool yes)
     setScale((d->forceMaxScale ? 0 : d->priorToMaxScale));
     if(oldZoomMax != d->forceMaxScale)
     {
-        LOGDEV_XVERBOSE("Maximum zoom: ") << DENG2_BOOL_YESNO(cameraZoomMode());
+        LOGDEV_XVERBOSE("Maximum zoom: ", DENG2_BOOL_YESNO(cameraZoomMode()));
     }
 }
 

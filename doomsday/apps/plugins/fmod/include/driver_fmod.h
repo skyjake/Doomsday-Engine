@@ -57,7 +57,7 @@
 #include "api_console.h"
 
 extern "C" {
-    
+
 int     DS_Init(void);
 void    DS_Shutdown(void);
 void    DS_Event(int type);
@@ -65,7 +65,7 @@ int     DS_Set(int prop, const void* ptr);
 
 }
 
-#define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ") << args
+#define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ", args)
 
 #define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \

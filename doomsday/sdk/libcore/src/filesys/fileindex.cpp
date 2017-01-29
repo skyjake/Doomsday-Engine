@@ -20,6 +20,7 @@
 #include "de/ReadWriteLockable"
 #include "de/PackageLoader"
 #include "de/App"
+#include "de/LogBuffer"
 
 namespace de {
 
@@ -213,7 +214,7 @@ void FileIndex::print() const
 {
     for (Index::const_iterator i = d->index.begin(); i != d->index.end(); ++i)
     {
-        LOG_TRACE("\"%s\": ") << i->first << i->second->description();
+        LOG_TRACE("\"%s\": ", i->first << i->second->description());
     }
 }
 

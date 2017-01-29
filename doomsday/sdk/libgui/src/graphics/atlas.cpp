@@ -18,6 +18,8 @@
 
 #include "de/Atlas"
 
+#include <de/LogBuffer>
+
 #include <QSet>
 #include <QRect>
 #include <QImage>
@@ -424,7 +426,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
         LOG_AS("Atlas");
         if (!d->fullReportedAt.isValid() || d->fullReportedAt.since() > 1.0)
         {
-            LOGDEV_GL_XVERBOSE("Full with %.1f%% usage") << d->usedPercentage() * 100;
+            LOGDEV_GL_XVERBOSE("Full with %.1f%% usage", d->usedPercentage() * 100);
             d->fullReportedAt = Time::currentHighPerformanceTime();
         }
 

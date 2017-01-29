@@ -36,7 +36,7 @@
 #ifdef __CLIENT__
 #  include <doomsday/world/materialmanifest.h>
 #endif
-#include <de/Log>
+#include <de/LogBuffer>
 #include <array>
 
 using namespace de;
@@ -401,10 +401,9 @@ void Plane::addMover(ClPlaneMover &mover)
     // Forcibly remove the existing mover for this plane.
     if(d->mover)
     {
-        LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
-                << &d->mover->thinker()
-                << sector().indexInMap()
-                << indexInSector();
+        LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i",
+                         &d->mover->thinker() << sector().indexInMap()
+                         << indexInSector());
 
         map().thinkers().remove(d->mover->thinker());
 

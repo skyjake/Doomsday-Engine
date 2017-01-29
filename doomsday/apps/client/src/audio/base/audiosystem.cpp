@@ -53,6 +53,7 @@
 #include <de/App>
 #include <de/CommandLine>
 #include <de/FileSystem>
+#include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/timer.h>
 #include <de/c_wrapper.h>
@@ -1149,7 +1150,7 @@ DENG2_PIMPL(AudioSystem)
         if (nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
 
         // Peform the purge now.
-        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...");
+        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...", "");
         sfxLogicLastPurge = nowTime;
 
         // Check all sounds in the hash.
@@ -2142,8 +2143,8 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
             {
                 // The new sound can't be played because we were unable to stop
                 // enough channels to accommodate the limitation.
-                LOG_AUDIO_XVERBOSE("Not playing soundId:%i because all channels are busy")
-                    << sample->id;
+                LOG_AUDIO_XVERBOSE("Not playing soundId:%i because all channels are busy",
+                                   sample->id);
                 return false;
             }
 
@@ -2238,7 +2239,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
     {
         // A suitable channel was not found.
         allowSfxRefresh(true);
-        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample->id;
+        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i", sample->id);
         return false;
     }
 

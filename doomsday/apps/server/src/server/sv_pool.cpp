@@ -28,6 +28,7 @@
 #include <de/mathutil.h>
 #include <de/timer.h>
 #include <de/vector1.h>
+#include <de/LogBuffer>
 #include "def_main.h"  // Def_SameStateSequence
 
 #include "network/net_main.h"
@@ -709,8 +710,8 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
 #ifdef DENG2_DEBUG
     if (df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
-        LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
-            << number << s.ceiling().heightTarget();
+        LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)",
+                            number << s.ceiling().heightTarget());
     }
 #endif
 
@@ -2368,7 +2369,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
     if (isRepeating)
         df |= SNDDF_REPEAT;
 
-    LOGDEV_NET_XVERBOSE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
+    LOGDEV_NET_XVERBOSE("New sound delta: type=%i id=%i flags=%x", type << id << df);
 
     // This is used by mobj/sector sounds.
     soundDelta.sound = soundId;

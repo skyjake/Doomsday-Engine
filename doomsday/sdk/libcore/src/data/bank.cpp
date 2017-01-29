@@ -25,7 +25,7 @@
 #include "de/WaitableFIFO"
 #include "de/Task"
 #include "de/TaskPool"
-#include "de/Log"
+#include "de/LogBuffer"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/math.h"
@@ -192,8 +192,8 @@ DENG2_PIMPL(Bank)
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds")
-                    << path(bank->d->sepChar) << startedAt.since();
+            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds",
+                             path(bank->d->sepChar) << startedAt.since());
 
             if (loaded.data())
             {
@@ -225,8 +225,8 @@ DENG2_PIMPL(Bank)
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds")
-                            << path(bank->d->sepChar) << startedAt.since();
+                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
+                                     path(bank->d->sepChar) << startedAt.since());
                     return; // Done!
                 }
                 // We cannot use this.
@@ -305,8 +305,8 @@ DENG2_PIMPL(Bank)
 
                 Path const itemPath = path(bank->d->sepChar);
 
-                LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache")
-                        << itemPath << Cache::formatAsText(toCache.format());
+                LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache",
+                                    itemPath << Cache::formatAsText(toCache.format()));
 
                 bank->d->notify(Notification(itemPath, toCache));
             }
@@ -475,7 +475,7 @@ DENG2_PIMPL(Bank)
             {
                 DENG2_ASSERT(_bank.d->serialCache != 0);
 
-                LOG_RES_XVERBOSE("Serializing \"%s\"") << _path;
+                LOG_RES_XVERBOSE("Serializing \"%s\"", _path);
                 item().changeCache(*_bank.d->serialCache);
             }
             catch (Error const &er)
@@ -489,7 +489,7 @@ DENG2_PIMPL(Bank)
         {
             try
             {
-                LOGDEV_RES_XVERBOSE("Unloading \"%s\"") << _path;
+                LOGDEV_RES_XVERBOSE("Unloading \"%s\"", _path);
                 item().changeCache(_bank.d->sourceCache);
             }
             catch (Error const &er)
@@ -885,7 +885,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.reset();
     item.unlock();
 
-    LOG_RES_XVERBOSE("Loading \"%s\"...") << path;
+    LOG_RES_XVERBOSE("Loading \"%s\"...", path);
 
     Time requestedAt;
     d->load(path, BeforeQueued);

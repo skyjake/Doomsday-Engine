@@ -20,6 +20,7 @@
 #include "de/App"
 #include "de/ArrayValue"
 #include "de/Folder"
+#include "de/LogBuffer"
 #include "de/NumberValue"
 #include "de/Process"
 #include "de/RecordValue"
@@ -83,7 +84,7 @@ DENG2_PIMPL(ScriptedInfo)
     {
         processBlock(info.root());
 
-        LOG_SCR_XVERBOSE("Processed contents:\n") << process.globals().asText();
+        LOG_SCR_XVERBOSE("Processed contents:\n", process.globals().asText());
     }
 
     void processElement(Info::Element const *element)
@@ -308,9 +309,8 @@ DENG2_PIMPL(ScriptedInfo)
                     // Reset to the global namespace.
                     currentNamespace = "";
                 }
-                LOG_SCR_XVERBOSE("%s: Namespace set to '%s'")
-                        << block.sourceLocation()
-                        << currentNamespace;
+                LOG_SCR_XVERBOSE("%s: Namespace set to '%s'",
+                                 block.sourceLocation() << currentNamespace);
             }
             else if (!block.name().isEmpty() || isScriptBlock)
             {

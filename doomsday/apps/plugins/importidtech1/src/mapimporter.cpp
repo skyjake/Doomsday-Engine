@@ -25,7 +25,7 @@
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/ByteRefArray>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Reader>
 #include <de/Time>
 #include <de/Vector>
@@ -926,7 +926,7 @@ DENG2_PIMPL(MapImporter)
 
         if(format == Id1MapRecognizer::HexenFormat)
         {
-            LOGDEV_MAP_XVERBOSE("Locating polyobjs...");
+            LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
             DENG2_FOR_EACH(Things, i, things)
             {
                 // A polyobj anchor?
@@ -943,7 +943,7 @@ DENG2_PIMPL(MapImporter)
 
     void transferVertexes()
     {
-        LOGDEV_MAP_XVERBOSE("Transfering vertexes...");
+        LOGDEV_MAP_XVERBOSE("Transfering vertexes...", "");
         dint const numVertexes = vertexCount();
         dint *indices = new dint[numVertexes];
         for(int i = 0; i < numVertexes; ++i)
@@ -956,7 +956,7 @@ DENG2_PIMPL(MapImporter)
 
     void transferSectors()
     {
-        LOGDEV_MAP_XVERBOSE("Transfering sectors...");
+        LOGDEV_MAP_XVERBOSE("Transfering sectors...", "");
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
@@ -984,7 +984,7 @@ DENG2_PIMPL(MapImporter)
 
     void transferLinesAndSides()
     {
-        LOGDEV_MAP_XVERBOSE("Transfering lines and sides...");
+        LOGDEV_MAP_XVERBOSE("Transfering lines and sides...", "");
         DENG2_FOR_EACH(Lines, i, lines)
         {
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
@@ -1056,7 +1056,7 @@ DENG2_PIMPL(MapImporter)
     {
         if(surfaceTints.empty()) return;
 
-        LOGDEV_MAP_XVERBOSE("Transfering surface tints...");
+        LOGDEV_MAP_XVERBOSE("Transfering surface tints...", "");
         DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
         {
             dint idx = i - surfaceTints.begin();
@@ -1074,7 +1074,7 @@ DENG2_PIMPL(MapImporter)
     {
         if(polyobjs.empty()) return;
 
-        LOGDEV_MAP_XVERBOSE("Transfering polyobjs...");
+        LOGDEV_MAP_XVERBOSE("Transfering polyobjs...", "");
         DENG2_FOR_EACH(Polyobjs, i, polyobjs)
         {
             MPE_PolyobjCreate(i->lineIndices.constData(), i->lineIndices.count(),
@@ -1088,7 +1088,7 @@ DENG2_PIMPL(MapImporter)
     {
         if(things.empty()) return;
 
-        LOGDEV_MAP_XVERBOSE("Transfering things...");
+        LOGDEV_MAP_XVERBOSE("Transfering things...", "");
         DENG2_FOR_EACH(Things, i, things)
         {
             dint idx = i - things.begin();

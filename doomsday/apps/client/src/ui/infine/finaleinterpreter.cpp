@@ -24,6 +24,7 @@
 #include <QList>
 #include <de/memory.h>
 #include <de/timer.h>
+#include <de/LogBuffer>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -1536,11 +1537,11 @@ DEFFC(If)
         if (DoomsdayApp::plugins().callAllHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
         {
             val = p.returnVal;
-            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i", token << val);
         }
         else
         {
-            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: no hook (for %s)", token);
         }
     }
     else

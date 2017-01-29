@@ -24,7 +24,7 @@
 #include "de/Writer"
 #include "de/Folder"
 #include "de/FS"
-#include "de/Log"
+#include "de/LogBuffer"
 
 namespace de {
 
@@ -59,13 +59,13 @@ DENG2_PIMPL(ArchiveFeed)
         // directly to store the Archive.
         if (IByteArray *bytes = f.maybeAs<IByteArray>())
         {
-            LOG_RES_XVERBOSE("Source %s is a byte array") << f.description();
+            LOG_RES_XVERBOSE("Source %s is a byte array", f.description());
 
             arch = new ZipArchive(*bytes);
         }
         else
         {
-            LOG_RES_XVERBOSE("Source %s is a stream") << f.description();
+            LOG_RES_XVERBOSE("Source %s is a stream", f.description());
 
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
@@ -243,10 +243,10 @@ bool ArchiveFeed::prune(File &file) const
         if (archive().entryStatus(entryFile->entryPath()).modifiedAt !=
            file.status().modifiedAt)
         {
-            LOG_RES_XVERBOSE("%s has been modified (arch:%s != file:%s)")
-                    << file.description()
-                    << archive().entryStatus(entryFile->entryPath()).modifiedAt.asText()
-                    << file.status().modifiedAt.asText();
+            LOG_RES_XVERBOSE("%s has been modified (arch:%s != file:%s)",
+                             file.description()
+                             << archive().entryStatus(entryFile->entryPath()).modifiedAt.asText()
+                             << file.status().modifiedAt.asText());
             return true;
         }
     }

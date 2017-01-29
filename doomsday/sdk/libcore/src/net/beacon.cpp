@@ -19,6 +19,7 @@
 #include "de/Beacon"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/LogBuffer"
 #include <QUdpSocket>
 #include <QHostInfo>
 #include <QNetworkInterface>
@@ -175,7 +176,7 @@ void Beacon::readIncoming()
         d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
                                 block.size(), &from, &port);
 
-        LOG_NET_XVERBOSE("Received %i bytes from %s port %i") << block.size() << from.toString() << port;
+        LOG_NET_XVERBOSE("Received %i bytes from %s port %i", block.size() << from.toString() << port);
 
         if (block == discoveryMessage)
         {
@@ -244,7 +245,7 @@ void Beacon::continueDiscovery()
 
     Block block(discoveryMessage);
 
-    LOG_NET_XVERBOSE("Broadcasting %i bytes") << block.size();
+    LOG_NET_XVERBOSE("Broadcasting %i bytes", block.size());
 
     // Send a new broadcast to the whole listening range of the beacons.
     for (duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)

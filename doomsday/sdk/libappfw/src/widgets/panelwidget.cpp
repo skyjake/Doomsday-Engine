@@ -19,9 +19,10 @@
 #include "de/PanelWidget"
 #include "de/GuiRootWidget"
 
-#include <de/Drawable>
-#include <de/MouseEvent>
 #include <de/AnimationRule>
+#include <de/Drawable>
+#include <de/LogBuffer>
+#include <de/MouseEvent>
 #include <de/math.h>
 
 #include <QTimer>
@@ -165,8 +166,8 @@ DENG_GUI_PIMPL(PanelWidget)
             {
                 *pendingShow += *assetGroup;
 
-                LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)")
-                        << widget->path() << widget;
+                LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)",
+                                widget->path() << widget);
             }
         }
         else
@@ -186,7 +187,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         pendingShow.reset(new AssetGroup);
 
-        LOGDEV_XVERBOSE("Checking for assets that need waiting for...");
+        LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
         findAssets(content);
 
         if (pendingShow->isEmpty())
@@ -209,7 +210,7 @@ DENG_GUI_PIMPL(PanelWidget)
         // All of the assets in the pending show group are now ready, let's open!
         if (pendingShow->isReady())
         {
-            LOGDEV_XVERBOSE("All assets ready, resuming animation");
+            LOGDEV_XVERBOSE("All assets ready, resuming animation", "");
 
             openingRule->resume();
             pendingShow.reset();

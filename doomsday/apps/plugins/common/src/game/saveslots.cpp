@@ -29,6 +29,7 @@
 #include <doomsday/SaveGames>
 #include <de/App>
 #include <de/Folder>
+#include <de/LogBuffer>
 #include <de/Observers>
 #include <de/Writer>
 #include <de/Loop>
@@ -60,7 +61,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
 
     void updateStatus()
     {
-        LOGDEV_XVERBOSE("Updating SaveSlot '%s' status") << id;
+        LOGDEV_XVERBOSE("Updating SaveSlot '%s' status", id);
         status = Unused;
         if (session)
         {

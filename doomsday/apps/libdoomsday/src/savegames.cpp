@@ -28,6 +28,7 @@
 #include <de/DirectoryFeed>
 #include <de/FileSystem>
 #include <de/Folder>
+#include <de/LogBuffer>
 #include <de/Loop>
 #include <de/ScriptSystem>
 #include <de/Task>
@@ -151,7 +152,7 @@ DENG2_PIMPL(SaveGames)
     void beginConvertLegacySavegame(String const &sourcePath, String const &gameId)
     {
         LOG_AS("SaveGames");
-        LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
+        LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)", sourcePath << gameId);
         Loop::get().audienceForIteration() += this;
         convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
     }

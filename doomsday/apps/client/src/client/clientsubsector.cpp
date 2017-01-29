@@ -40,6 +40,8 @@
 #include "misc/face.h"
 #include "dd_main.h"  // verbose
 
+#include <de/LogBuffer>
+
 #include <QtAlgorithms>
 #include <QHash>
 #include <QMap>

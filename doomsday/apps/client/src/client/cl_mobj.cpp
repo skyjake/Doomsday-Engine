@@ -38,6 +38,7 @@
 
 #include <de/timer.h>
 #include <de/vector1.h>
+#include <de/LogBuffer>
 #include <cmath>
 
 using namespace de;
@@ -81,9 +82,9 @@ void ClMobj_Link(mobj_t *mo)
         // Client mobjs that belong to players remain unlinked.
         return;
     }
-    LOG_MAP_XVERBOSE("ClMobj_Link: id %i, x%f Y%f, solid:%b")
-            << mo->thinker.id << mo->origin[VX] << mo->origin[VY]
-            << (mo->ddFlags & DDMF_SOLID);
+    LOG_NET_XVERBOSE("ClMobj_Link: id %i, x%f Y%f, solid:%b",
+                     mo->thinker.id << mo->origin[VX] << mo->origin[VY]
+                     << (mo->ddFlags & DDMF_SOLID));
 
     Mobj_Link(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : MLF_SECTOR) |
                   (mo->ddFlags & DDMF_SOLID ? MLF_BLOCKMAP : 0));
@@ -98,12 +99,12 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
     if (!isClient || !info) return;
     if (enable)
     {
-        LOG_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
+        LOGDEV_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
         info->flags |= CLMF_LOCAL_ACTIONS;
     }
     else
     {
-        LOG_NET_VERBOSE("Disabled for clmobj %i") << mo->thinker.id;
+        LOGDEV_NET_VERBOSE("Disabled for clmobj %i") << mo->thinker.id;
         info->flags &= ~CLMF_LOCAL_ACTIONS;
     }
 }
@@ -271,7 +272,7 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
         return false;
     }
 
-    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mob->thinker.id << mob->origin[VZ];
+    LOGDEV_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)", mob->thinker.id << mob->origin[VZ]);
 
     info->flags &= ~CLMF_HIDDEN;
 
@@ -284,10 +285,9 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
         S_StartSoundAtVolume(info->sound, mob, info->volume);
     }
 
-    LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
-            << mob->thinker.id
-            << mob->state
-            << ::runtimeDefs.states.indexOf(mob->state);
+    LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)",
+                        mob->thinker.id << mob->state <<
+                        ::runtimeDefs.states.indexOf(mob->state));
 
     return true;
 }
@@ -348,8 +348,8 @@ void ClMobj_ReadDelta()
             fastMom = true;
     }
 
-    LOG_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x)")
-            << id << df << moreFlags;
+    LOGDEV_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x)",
+                        id << df << moreFlags);
 
     // Get the client mobj for this.
     mobj_t *mo = map.clMobjFor(id);
@@ -357,7 +357,7 @@ void ClMobj_ReadDelta()
     bool needsLinking = false, justCreated = false;
     if (!mo)
     {
-        LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
+        LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)", id);
 
         // This is a new ID, allocate a new mobj.
         mo = map.clMobjFor(id, true /* create it now */);
@@ -567,9 +567,9 @@ void ClMobj_ReadDelta()
         // Update players.
         if (d->dPlayer)
         {
-            LOG_NET_XVERBOSE("Updating player %i local mobj with new clmobj state {%f, %f, %f}")
-                    << P_GetDDPlayerIdx(d->dPlayer)
-                    << d->origin[VX] << d->origin[VY] << d->origin[VZ];
+            LOG_NET_XVERBOSE("Updating player %i local mobj with new clmobj state {%f, %f, %f}",
+                             P_GetDDPlayerIdx(d->dPlayer) <<
+                             d->origin[VX] << d->origin[VY] << d->origin[VZ]);
 
             // Players have real mobjs. The client mobj is hidden (unlinked).
             Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df, onFloor);
@@ -586,7 +586,7 @@ void ClMobj_ReadNullDelta()
 
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);
-    LOGDEV_NET_XVERBOSE("Null %i") << id;
+    LOGDEV_NET_XVERBOSE("Null %i", id);
 
     mobj_t *mo = map.clMobjFor(id);
     if (!mo)
@@ -621,7 +621,7 @@ void ClMobj_ReadNullDelta()
 mobj_t *ClMobj_Find(thid_t id)
 {
     if (!App_World().hasMap()) return nullptr;
-    
+
     /// @todo Do not assume the CURRENT map.
     return App_World().map().clMobjFor(id);
 }

@@ -32,7 +32,7 @@
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/Function>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Loop>
 #include <de/Module>
 #include <de/NativePath>
@@ -776,15 +776,15 @@ DENG2_PIMPL(ClientResources)
         }
 
 #ifdef DENG_DEBUG
-        LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
+        LOGDEV_RES_XVERBOSE("Model \"%s\" skins:", NativePath(modelFilePath).pretty());
         dint skinIdx = 0;
         for (FrameModelSkin const &skin : mdl.skins())
         {
             res::TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
-            LOGDEV_RES_XVERBOSE("  %i: %s %s")
-                    << (skinIdx++) << skin.name
+            LOGDEV_RES_XVERBOSE("  %i: %s %s",
+                       (skinIdx++) << skin.name
                     << (texManifest? (String("\"") + texManifest->composeUri() + "\"") : "(missing texture)")
-                    << (texManifest? (String(" => \"") + NativePath(texManifest->resourceUri().compose()).pretty() + "\"") : "");
+                    << (texManifest? (String(" => \"") + NativePath(texManifest->resourceUri().compose()).pretty() + "\"") : ""));
         }
 #endif
     }
@@ -1577,8 +1577,8 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
                 /// to implement the necessary update logic.
-                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing")
-                    << manifest.composeUri();
+                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing",
+                                    manifest.composeUri());
 
                 compFont->rebuildFromDef(def);
             }
@@ -1636,8 +1636,8 @@ AbstractFont *ClientResources::newFontFromFile(de::Uri const &uri, String filePa
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
                 /// to implement the necessary update logic.
-                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing")
-                    << manifest.composeUri();
+                LOGDEV_RES_XVERBOSE("Font with uri \"%s\" already exists, returning existing",
+                                    manifest.composeUri());
 
                 bmapFont->setFilePath(filePath);
             }

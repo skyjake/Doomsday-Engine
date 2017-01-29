@@ -27,7 +27,7 @@
 #include <de/timer.h>
 #include <de/ArrayValue>
 #include <de/NumberValue>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/wad.h>
@@ -300,7 +300,7 @@ void Sv_HandlePacket()
     case PCL_HELLO2: {
         // Get the ID of the client.
         ident_t id = Reader_ReadUInt32(::msgReader);
-        LOG_NET_XVERBOSE("Hello from client %i (%08X)") << from << id;
+        LOG_NET_XVERBOSE("Hello from client %i (%08X)", from << id);
 
         // Check for duplicate IDs.
         if (!ddpl->inGame && !sender->handshake)
@@ -859,8 +859,8 @@ void Sv_StartNetGame(void)
     materialDict = new world::MaterialArchive(false);
     materialDict->addWorldMaterials();
 
-    LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials")
-            << materialDict->count();
+    LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials",
+                        materialDict->count());
 }
 
 void Sv_StopNetGame(void)

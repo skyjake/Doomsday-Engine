@@ -35,6 +35,7 @@
 #include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/LogBuffer>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
@@ -728,8 +729,8 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     if(uploadMethod == gl::Immediate)
     {
         LOGDEV_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! "
-                           "Should have been precached in busy mode?")
-                << content.name << content.width << content.height;
+                           "Should have been precached in busy mode?",
+                           content.name << content.width << content.height);
     }
 
     GL_UploadTextureContent(content, uploadMethod);

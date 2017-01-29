@@ -31,6 +31,8 @@
 #include "world/p_players.h"
 #include "Sector"
 
+#include <de/LogBuffer>
+
 using namespace de;
 
 void Cl_ReadSoundDelta(deltatype_t type)
@@ -77,7 +79,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         }
     }
     else if (type == DT_SECTOR_SOUND) // Plane as emitter
-    {        
+    {
         dint index = deltaId;
         if (!(sector = map.sectorPtr(index)))
         {
@@ -98,7 +100,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     {
         dint index = deltaId;
 
-        LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d") << index;
+        LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d", index);
 
         if (!(emitter = (mobj_t *) (poly = map.polyobjPtr(index))))
         {
@@ -246,7 +248,7 @@ void Cl_Sound()
         return;
     }
 
-    LOGDEV_NET_XVERBOSE("id %i") << sound;
+    LOGDEV_NET_XVERBOSE("id %i", sound);
 
     dint volume = 127;
     if (flags & SNDF_VOLUME)

@@ -41,6 +41,7 @@
 
 #include "driver_fmod.h"
 #include "dd_share.h"
+#include <de/LogBuffer>
 #include <stdlib.h>
 #include <cmath>
 #include <vector>
@@ -156,7 +157,7 @@ static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNEL* chanPtr,
         channel->getUserData(reinterpret_cast<void**>(&buf));
         if(buf)
         {
-            LOGDEV_AUDIO_XVERBOSE("[FMOD] channelCallback: sfxbuffer %p stops") << buf;
+            LOGDEV_AUDIO_XVERBOSE("[FMOD] channelCallback: sfxbuffer %p stops", buf);
             buf->flags &= ~SFXBF_PLAYING;
             // The channel becomes invalid after the sound stops.
             bufferInfo(buf).channel = 0;
@@ -194,7 +195,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     // Allocate extra state information.
     buf->ptr = new BufferInfo;
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_CreateBuffer: Created sfxbuffer %p") << buf;
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_CreateBuffer: Created sfxbuffer %p", buf);
 
     return buf;
 }
@@ -203,7 +204,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     if(!buf) return;
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_DestroyBuffer: Destroying sfxbuffer %p") << buf;
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_DestroyBuffer: Destroying sfxbuffer %p", buf);
 
     BufferInfo& info = bufferInfo(buf);
     if(info.sound)
@@ -279,13 +280,13 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     params.numchannels = 1; // Doomsday only uses mono samples currently.
     params.format = (sample->bytesPer == 1? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16);
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: sfxbuffer %p sample (size:%i, freq:%i, bps:%i)")
-            << buf << sample->size << sample->rate << sample->bytesPer;
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: sfxbuffer %p sample (size:%i, freq:%i, bps:%i)",
+                          buf << sample->size << sample->rate << sample->bytesPer);
 
     // If it has a sample, release it later.
     if(info.sound)
     {
-        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p") << info.sound;
+        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p", info.sound);
         info.sound->release();
         streams.erase(info.sound);
     }
@@ -328,15 +329,15 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     FMOD_RESULT result;
     result = fmodSystem->createSound(sampleData, info.mode, &params, &info.sound);
     DSFMOD_ERRCHECK(result);
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: created Sound %p%s")
-            << info.sound << (streaming? " as streaming" : "");
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: created Sound %p%s",
+                          info.sound << (streaming? " as streaming" : ""));
 
     if(streaming)
     {
         // Keep a record of the playing stream for the PCM read callback.
         streams[info.sound] = buf;
-        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: noting %p belongs to streaming buffer %p")
-                << info.sound << buf;
+        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: noting %p belongs to streaming buffer %p",
+                              info.sound << buf);
     }
 
     // Not started yet.
@@ -361,7 +362,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     if(!buf)
         return;
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: sfxbuffer %p") << buf;
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: sfxbuffer %p", buf);
 
     DS_SFX_Stop(buf);
     buf->sample = 0;
@@ -370,7 +371,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     BufferInfo& info = bufferInfo(buf);
     if(info.sound)
     {
-        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p") << info.sound;
+        LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p", info.sound);
         info.sound->release();
         streams.erase(info.sound);
     }
@@ -413,8 +414,8 @@ void DS_SFX_Play(sfxbuffer_t* buf)
         info.channel->setMode(info.mode);
     }
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Play: sfxbuffer %p, pan:%f, freq:%i, vol:%f, loop:%b")
-            << buf << info.pan << buf->freq << info.volume << ((buf->flags & SFXBF_REPEAT) != 0);
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Play: sfxbuffer %p, pan:%f, freq:%i, vol:%f, loop:%b",
+            buf << info.pan << buf->freq << info.volume << ((buf->flags & SFXBF_REPEAT) != 0));
 
     // Start playing it.
     info.channel->setPaused(false);
@@ -427,7 +428,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 {
     if(!buf) return;
 
-    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Stop: sfxbuffer %p") << buf;
+    LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Stop: sfxbuffer %p", buf);
 
     BufferInfo& info = bufferInfo(buf);
 
@@ -443,7 +444,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
         info.channel->setCallback(0);
         info.channel->setMute(true);
         info.channel = 0;
-    }    
+    }
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;

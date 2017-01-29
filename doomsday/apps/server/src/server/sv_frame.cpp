@@ -19,13 +19,14 @@
 
 #include "de_base.h"
 #include "server/sv_frame.h"
-
-#include <cmath>
 #include "def_main.h"
 #include "sys_system.h"
 #include "network/net_main.h"
 #include "server/sv_pool.h"
 #include "world/p_players.h"
+
+#include <de/LogBuffer>
+#include <cmath>
 
 using namespace de;
 
@@ -136,8 +137,8 @@ void Sv_TransmitFrame()
         }
         else
         {
-            LOG_NET_XVERBOSE("NOT sending at tic %i to plr %i (ready:%b)")
-                << ::lastTransmitTic << i << plr.ready;
+            LOG_NET_XVERBOSE("NOT sending at tic %i to plr %i (ready:%b)",
+                             ::lastTransmitTic << i << plr.ready);
         }
     }
 }

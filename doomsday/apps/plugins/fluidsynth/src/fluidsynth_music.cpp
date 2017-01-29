@@ -24,6 +24,7 @@
 #include <string.h>
 #include <de/concurrency.h>
 #include <de/c_wrapper.h>
+#include <de/LogBuffer>
 #include <vector>
 
 static int sfontId = -1;

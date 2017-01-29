@@ -24,7 +24,9 @@
 #include "de/GLState"
 #include "de/GLInfo"
 #include "de/GLWindow"
+
 #include <de/Asset>
+#include <de/LogBuffer>
 
 namespace de {
 
@@ -185,15 +187,15 @@ DENG2_OBSERVES(Asset, Deletion)
         GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
 
         LIBGUI_ASSERT_GL_OK();
-        LOG_GL_XVERBOSE("Creating FBO %i") << fbo;
+        LOG_GL_XVERBOSE("Creating FBO %i", fbo);
     }
 
     void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i")
-                << fbo << tex.glName() << level << attachmentToId(attachment);
+        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i",
+                        fbo << tex.glName() << level << attachmentToId(attachment));
 
         GLInfo::EXT_framebuffer_object()->glFramebufferTexture2DEXT(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();

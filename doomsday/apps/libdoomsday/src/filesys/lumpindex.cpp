@@ -27,7 +27,7 @@
 #include <QBitArray>
 #include <QHash>
 #include <QVector>
-#include <de/Log>
+#include <de/LogBuffer>
 
 namespace de {
 namespace internal
@@ -72,7 +72,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
     : d(new Impl)
 {
     LOG_AS("LumpIndex::Id1MapRecognizer");
-    LOG_RES_XVERBOSE("Locating data lumps...");
+    LOG_RES_XVERBOSE("Locating data lumps...", "");
 
     // Keep checking lumps to see if its a map data lump.
     dint const numLumps = lumpIndex.size();
@@ -367,7 +367,7 @@ DENG2_PIMPL(LumpIndex)
             (*lumpsByPath)[k].head = i;
         }
 
-        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << thisPublic;
+        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p", thisPublic);
     }
 
     /**

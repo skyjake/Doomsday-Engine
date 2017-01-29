@@ -294,9 +294,9 @@ void Package::parseMetadata(File &packageFile) // static
 
         if (LogBuffer::get().isEnabled(LogEntry::Dev | LogEntry::XVerbose | LogEntry::Resource))
         {
-            LOGDEV_RES_XVERBOSE("Parsed metadata of '%s':\n" _E(m))
-                    << identifierForFile(packageFile)
-                    << packageFile.objectNamespace().asText();
+            LOGDEV_RES_XVERBOSE("Parsed metadata of '%s':\n" _E(m),
+                    identifierForFile(packageFile)
+                    << packageFile.objectNamespace().asText());
         }
     }
 }

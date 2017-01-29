@@ -22,6 +22,7 @@
 #include "gl/gl_draw.h"
 
 #include <de/GLInfo>
+#include <de/LogBuffer>
 
 using namespace de;
 
@@ -47,7 +48,7 @@ DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
         filterColor = newColorClamped;
 
         LOG_AS("GL_SetFilterColor");
-        LOGDEV_GL_XVERBOSE("%s") << filterColor.asText();
+        LOGDEV_GL_XVERBOSE("%s", filterColor.asText());
     }
 }
 

@@ -30,6 +30,7 @@
 #include "BspLeaf"
 #include "Sector"
 
+#include <de/LogBuffer>
 #include <de/Vector>
 
 using namespace de;
@@ -353,8 +354,8 @@ void ClPlayer_ReadDelta()
             // The update will be made when the mobj data is received.
             if (!justCreated) // && num != consolePlayer)
             {
-                LOGDEV_NET_XVERBOSE("Copying clmo %i state to real player %i mobj %p")
-                        << newId << num << ddpl->mo;
+                LOGDEV_NET_XVERBOSE("Copying clmo %i state to real player %i mobj %p",
+                                    newId << num << ddpl->mo);
 
                 Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff, true);
             }
@@ -417,8 +418,8 @@ void ClPlayer_ReadDelta()
         {
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
-        LOG_NET_XVERBOSE("View filter color set remotely to %s")
-                << Vector4f(ddpl->filterColor).asText();
+        LOG_NET_XVERBOSE("View filter color set remotely to %s",
+                         Vector4f(ddpl->filterColor).asText());
     }
 
     if (df & PDF_PSPRITES)

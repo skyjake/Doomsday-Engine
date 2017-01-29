@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/libcore.h"
@@ -65,7 +65,7 @@ DENG2_PIMPL(Library)
 Library::Library(NativePath const &nativePath) : d(new Impl(this))
 {
     LOG_AS("Library");
-    LOG_TRACE("Loading \"%s\"") << nativePath.pretty();
+    LOG_TRACE("Loading \"%s\"", nativePath.pretty());
 
 #ifndef DENG2_USE_DLOPEN
     d->library = new QLibrary(nativePath);
@@ -95,7 +95,7 @@ Library::Library(NativePath const &nativePath) : d(new Impl(this))
         // Query the type identifier.
         d->type = DENG2_SYMBOL(deng_LibraryType)();
     }
-    
+
     // Automatically call the initialization function, if one exists.
     if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
     {
@@ -108,7 +108,7 @@ Library::~Library()
     if (d->library)
     {
         LOG_AS("~Library");
-        LOG_TRACE("Unloading \"%s\"") << d->nativePath().pretty();
+        LOG_TRACE("Unloading \"%s\"", d->nativePath().pretty());
 
         // Automatically call the shutdown function, if one exists.
         if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
@@ -141,14 +141,14 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
         /// @throw SymbolMissingError There is no library loaded at the moment.
         throw SymbolMissingError("Library::symbol", "Library not loaded");
     }
-    
+
     // Already looked up?
     Impl::Symbols::iterator found = d->symbols.find(name);
     if (found != d->symbols.end())
     {
         return found.value();
     }
-    
+
 #ifndef DENG2_USE_DLOPEN
     void *ptr = de::function_cast<void *>(d->library->resolve(name.toLatin1().constData()));
 #else

@@ -25,7 +25,7 @@
 #include <de/ArchiveFolder>
 #include <de/ArrayValue>
 #include <de/Info>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/NativePath>
 #include <de/NumberValue>
 #include <de/PackageLoader>
@@ -202,7 +202,7 @@ File *GameStateFolder::Interpreter::interpretFile(File *sourceData) const
             if (sourceData->extension() == ".save")
             {
                 /// @todo fixme: Don't assume this is a save package.
-                LOG_RES_XVERBOSE("Interpreted %s as a GameStateFolder") << sourceData->description();
+                LOG_RES_XVERBOSE("Interpreted %s as a GameStateFolder", sourceData->description());
                 std::unique_ptr<ArchiveFolder> package;
                 package.reset(new GameStateFolder(*sourceData, sourceData->name()));
 

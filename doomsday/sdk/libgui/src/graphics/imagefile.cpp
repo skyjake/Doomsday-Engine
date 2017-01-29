@@ -20,6 +20,7 @@
 #include "de/HeightMap"
 #include <de/App>
 #include <de/Folder>
+#include <de/LogBuffer>
 
 #include <QHash>
 
@@ -211,8 +212,7 @@ File *ImageFile::Interpreter::interpretFile(File *sourceData) const
 {
     if (Image::recognize(*sourceData))
     {
-        LOG_RES_XVERBOSE("Interpreted ") << sourceData->description()
-                                         << " as an image";
+        LOG_RES_XVERBOSE("Interpreted %s as an image", sourceData->description());
         return new ImageFile(sourceData);
     }
     return nullptr;

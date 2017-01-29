@@ -33,7 +33,7 @@
 
 #include <assert.h>
 #include <vector>
-#include <de/Log>
+#include <de/LogBuffer>
 
 namespace de {
 
@@ -244,7 +244,7 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
         LOG_GL_WARNING("XFree86-VidModeExtension not available.");
         return;
     }
-    LOGDEV_GL_XVERBOSE("event# %i error# %i") << event << error;
+    LOGDEV_GL_XVERBOSE("event# %i error# %i", event << error);
 
     // Ramp size.
     int rampSize = 0;

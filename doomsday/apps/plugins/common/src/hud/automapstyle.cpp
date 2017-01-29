@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstring>
-#include <de/Log>
+#include <de/LogBuffer>
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
 #include "player.h"
@@ -431,7 +431,7 @@ AutomapStyle *ST_AutomapStyle()
 
 void ST_InitAutomapStyle()
 {
-    LOG_XVERBOSE("Initializing automap...");
+    LOG_XVERBOSE("Initializing automap...", "");
     style.applyDefaults();
 }
 

@@ -20,6 +20,7 @@
 #include "world/impulseaccumulator.h"
 
 #include <de/timer.h>
+#include <de/LogBuffer>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__
 #  include "ui/inputsystem.h"
@@ -145,9 +146,9 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
 
             int const localPlayer = P_ConsoleToLocal(playerNum);
             DENG2_ASSERT(localPlayer >= 0);
-            LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s")
-                    << impulse.name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
-                    << symbolicName;
+            LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s",
+                               impulse.name << (localPlayer + 1) << newState
+                               << (nowTime - db.previousClickTime) << symbolicName);
 
             Block symbolicNameUtf8 = symbolicName.toUtf8();
             ddevent_t ev; de::zap(ev);

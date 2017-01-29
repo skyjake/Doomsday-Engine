@@ -18,16 +18,17 @@
  */
 
 #include "de/ZipArchive"
-#include "de/ISerializable"
-#include "de/ByteSubArray"
-#include "de/FixedByteArray"
+#include "de/Block"
 #include "de/ByteArrayFile"
+#include "de/ByteSubArray"
+#include "de/Date"
+#include "de/File"
+#include "de/FixedByteArray"
+#include "de/ISerializable"
+#include "de/LittleEndianByteOrder"
+#include "de/LogBuffer"
 #include "de/Reader"
 #include "de/Writer"
-#include "de/LittleEndianByteOrder"
-#include "de/Block"
-#include "de/File"
-#include "de/Date"
 #include "de/Zeroed"
 
 // Interpretations:
@@ -646,7 +647,7 @@ File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
         try
         {
             // It is a ZIP archive: we will represent it as a folder.
-            LOG_RES_XVERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
+            LOG_RES_XVERBOSE("Interpreted %s as a ZIP format archive", sourceData->description());
 
             std::unique_ptr<ArchiveFolder> package(new ArchiveFolder(*sourceData, sourceData->name()));
 

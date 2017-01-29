@@ -23,7 +23,7 @@
 #include "de/FS"
 #include "de/Feed"
 #include "de/Guard"
-#include "de/Log"
+#include "de/LogBuffer"
 #include "de/NumberValue"
 #include "de/Task"
 #include "de/TaskPool"
@@ -208,7 +208,7 @@ void Folder::populate(PopulationBehaviors behavior)
             // If the file has a designated feed, ask it about pruning.
             if (originFeed && originFeed->prune(*file))
             {
-                LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s") << file->path() << originFeed->description();
+                LOG_RES_XVERBOSE("Pruning \"%s\" due to origin feed %s", file->path() << originFeed->description());
                 mustPrune = true;
             }
             else if (!originFeed)
@@ -220,7 +220,7 @@ void Folder::populate(PopulationBehaviors behavior)
                 {
                     if ((*f)->prune(*file))
                     {
-                        LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s") << file->path() << (*f)->description();
+                        LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s", file->path() << (*f)->description());
                         mustPrune = true;
                         break;
                     }

@@ -63,13 +63,13 @@ DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 ThinkerData::ThinkerData(Id const &id)
     : d(new Impl(this, id))
 {
-    DENG2_ASSERT(!d->id.isNone());
+    //DENG2_ASSERT(!d->id.isNone());
     //thinkerLookup.insert(d->id, this);
 }
 
 ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
 {
-    DENG2_ASSERT(!d->id.isNone());
+    //DENG2_ASSERT(!d->id.isNone());
     //thinkerLookup.insert(d->id, this);
 }
 
