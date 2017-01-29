@@ -243,6 +243,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void aboutToLoadGame(Game const &gameBeingLoaded)
     {
+        self().root().clearFocusStack();
         self().root().setFocus(nullptr);
 
         if (gameBeingLoaded.isNull())
@@ -267,6 +268,8 @@ DENG_GUI_PIMPL(HomeWidget)
         if (!newGame.isNull())
         {
             ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 1.0);
+            self().root().clearFocusStack();
+            self().root().setFocus(nullptr);
         }
     }
 

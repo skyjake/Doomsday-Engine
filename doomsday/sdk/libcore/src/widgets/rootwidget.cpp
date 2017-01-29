@@ -115,11 +115,16 @@ void RootWidget::setFocus(Widget *widget)
     if (widget && widget->behavior().testFlag(Focusable))
     {
         d->focus.reset(widget);
-        if (d->focus) d->focus->focusGained();
+        if (d->focus)
+        {
+            //qDebug() << "focus gained by" << d->focus;
+            d->focus->focusGained();
+        }
     }
 
     if (d->focus != oldFocus)
     {
+        //qDebug() << "focus changed to" << d->focus;
         DENG2_FOR_AUDIENCE2(FocusChange, i)
         {
             i->focusedWidgetChanged(widget);
@@ -154,6 +159,7 @@ bool RootWidget::processEvent(Event const &event)
     // Focus is only for the keyboard.
     if (event.isKey() && focus() && focus()->handleEvent(event))
     {
+        //qDebug() << "focused widget" << focus() << "ate the event";
         // The focused widget ate the event.
         return true;
     }
