@@ -39,6 +39,7 @@ static String const DEF_PROBABILITY   ("prob");
 static String const DEF_NODE          ("node");
 static String const DEF_LOOPING       ("looping");
 static String const DEF_PRIORITY      ("priority");
+static String const DEF_DURATION      ("duration");
 static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
 static String const DEF_RENDER        ("render");
 static String const DEF_PASS          ("pass");
@@ -79,6 +80,7 @@ DENG2_PIMPL(StateAnimator)
         int priority = ANIM_DEFAULT_PRIORITY;
         Scheduler const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
         std::unique_ptr<Scheduler::Clock> clock;
+        TimeDelta overrideDuration = -1.0;
 
         Sequence() {}
 
@@ -103,6 +105,11 @@ DENG2_PIMPL(StateAnimator)
             return *this;
         }
 
+        void initialize() override
+        {
+            ModelDrawable::Animator::OngoingSequence::initialize();
+        }
+
         void apply(Sequence const &other)
         {
             animId   = other.animId;
@@ -110,6 +117,11 @@ DENG2_PIMPL(StateAnimator)
             looping  = other.looping;
             priority = other.priority;
             timeline = other.timeline;
+
+            if (other.overrideDuration >= 0)
+            {
+                duration = other.overrideDuration;
+            }
 
             clock.reset();
         }
@@ -610,6 +622,12 @@ void StateAnimator::triggerByState(String const &stateName)
                                                                        Sequence::NotLooping,
                           priority,
                           timeline);
+
+            if (seq.def->has(DEF_DURATION))
+            {
+                // By default, the animation duration comes from the model file.
+                anim.overrideDuration = seq.def->getd(DEF_DURATION);
+            }
 
             // Do not override higher-priority animations.
             if (auto *existing = find(node)->maybeAs<Sequence>())
