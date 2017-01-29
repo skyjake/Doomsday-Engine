@@ -20,7 +20,7 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
-#include "ui/widgets/packageinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
 #include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"

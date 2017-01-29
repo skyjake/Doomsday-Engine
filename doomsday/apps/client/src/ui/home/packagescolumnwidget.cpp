@@ -18,7 +18,7 @@
 
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
-#include "ui/widgets/packageinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 

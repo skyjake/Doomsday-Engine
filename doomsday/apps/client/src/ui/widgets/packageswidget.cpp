@@ -20,7 +20,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/panelbuttonwidget.h"
-#include "ui/widgets/packageinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 #include "clientapp.h"
 
@@ -66,7 +66,6 @@ PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
 , DENG2_OBSERVES(res::Bundles, Identify)
-//, DENG2_OBSERVES(DoomsdayApp, FileRefresh)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**

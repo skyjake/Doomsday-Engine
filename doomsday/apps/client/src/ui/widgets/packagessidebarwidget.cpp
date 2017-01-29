@@ -18,7 +18,7 @@
 
 #include "ui/widgets/packagessidebarwidget.h"
 #include "ui/widgets/packageswidget.h"
-#include "ui/widgets/packageinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
 
 #include <de/CallbackAction>

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/packageinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 #include "resource/idtech1image.h"
 #include "dd_main.h"
