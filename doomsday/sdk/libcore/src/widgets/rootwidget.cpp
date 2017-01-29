@@ -157,11 +157,19 @@ void RootWidget::draw()
 bool RootWidget::processEvent(Event const &event)
 {
     // Focus is only for the keyboard.
-    if (event.isKey() && focus() && focus()->handleEvent(event))
+    if (event.isKey() && focus())
     {
-        //qDebug() << "focused widget" << focus() << "ate the event";
-        // The focused widget ate the event.
-        return true;
+        if (focus()->isDisabled())
+        {
+            // Disabled widgets shouldn't hold the focus.
+            setFocus(nullptr);
+        }
+        else if (focus()->handleEvent(event))
+        {
+            //qDebug() << "focused widget" << focus() << "ate the event";
+            // The focused widget ate the event.
+            return true;
+        }
     }
     return dispatchEvent(event, &Widget::handleEvent);
 }
