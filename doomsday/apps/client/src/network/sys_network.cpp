@@ -31,7 +31,7 @@
 
 using namespace de;
 
-char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
+//char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
 int   nptIPPort = 0;              ///< Port to connect to by default (cvar).
 
 #ifdef _DEBUG
@@ -40,8 +40,8 @@ D_CMD(NetFreqs);
 
 void N_Register(void)
 {
-    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
-    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
+    //C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
+    //C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
 
 #ifdef _DEBUG
     C_CMD("netfreq", NULL, NetFreqs);

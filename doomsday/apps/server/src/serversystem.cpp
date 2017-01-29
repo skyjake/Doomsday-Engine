@@ -51,6 +51,7 @@
 
 using namespace de;
 
+char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
 int nptIPPort = 0; ///< Server TCP port (cvar).
 
 static de::duint16 Server_ListenPort()
@@ -350,7 +351,8 @@ ServerSystem &App_ServerSystem()
 
 void Server_Register()
 {
-    C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
+    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
+    C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
 
 #ifdef _DEBUG
     C_CMD("netfreq", NULL, NetFreqs);

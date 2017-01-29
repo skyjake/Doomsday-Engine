@@ -37,8 +37,8 @@
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
-extern char    *nptIPAddress;
-extern int      nptIPPort;
+//extern char    *nptIPAddress;
+//extern int      nptIPPort;
 
 ServerLink &Net_ServerLink(void);
 

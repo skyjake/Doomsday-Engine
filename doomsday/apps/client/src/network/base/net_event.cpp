@@ -159,7 +159,7 @@ void N_NETicker(timespan_t time)
     {
         ::masterHeartbeat -= time;
 
-        // Update master every 2 minutes.
+        // Update master periodically.
         if(::masterAware && App_ServerSystem().isListening() &&
            App_World().hasMap() && ::masterHeartbeat < 0)
         {

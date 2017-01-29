@@ -1,3 +1,4 @@
 @summary{
-    TCP/IP address for searching servers.
+    The public address of the server. This is included in server information
+    sent to the master server so that clients can connect using it.
 }

@@ -285,11 +285,22 @@ shell::ServerInfo ServerApp::currentServerInfo()
         info.setMap(mapPath);
     }
 
+    // This will only work if the server has a public IP address.
     QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
-    if (!host.addresses().isEmpty())
+    foreach (QHostAddress hostAddr, host.addresses())
     {
-        /// @todo Maybe check that it's not a loopback address?
-        info.setAddress(Address(host.addresses().at(0), duint16(nptIPPort)));
+        if (!hostAddr.isLoopback())
+        {
+            info.setAddress(Address(hostAddr, duint16(nptIPPort)));
+            break;
+        }
+    }
+
+    String const publicDomain = nptIPAddress;
+    if (!publicDomain.isEmpty())
+    {
+        info.setDomainName(String("%1:%2").arg(publicDomain)
+                           .arg(nptIPPort? nptIPPort : shell::DEFAULT_PORT));
     }
 
     // Let's compile a list of client names.

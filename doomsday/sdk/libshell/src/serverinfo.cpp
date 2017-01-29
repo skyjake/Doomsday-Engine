@@ -28,6 +28,7 @@ namespace shell {
 static String const VAR_VERSION                 ("ver");
 static String const VAR_COMPATIBILITY_VERSION   ("cver");
 static String const VAR_HOST                    ("host");
+static String const VAR_DOMAIN                  ("dom");
 static String const VAR_PORT                    ("port");
 static String const VAR_NAME                    ("name");
 static String const VAR_DESCRIPTION             ("desc");
@@ -114,6 +115,11 @@ Address ServerInfo::address() const
         return Address::parse(gets(VAR_HOST));
     }
     return Address();
+}
+
+String ServerInfo::domainName() const
+{
+    return gets(VAR_DOMAIN, "");
 }
 
 ServerInfo &ServerInfo::setAddress(Address const &address)
@@ -302,6 +308,12 @@ Record ServerInfo::strippedForBroadcast() const
     if (stripped.has(VAR_PLAYERS))  stripped.remove(VAR_PLAYERS);  // count is enough
     if (stripped.has(VAR_PACKAGES)) stripped.remove(VAR_PACKAGES); // queried before connecting
     return stripped;
+}
+
+ServerInfo &ServerInfo::setDomainName(String const &domain)
+{
+    set(VAR_DOMAIN, domain);
+    return *this;
 }
 
 ServerInfo &ServerInfo::setFlags(Flags const &flags)

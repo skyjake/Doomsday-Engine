@@ -504,7 +504,7 @@ desc = Music volume (0-255).
 desc = Network development mode.
 
 [net-ip-address]
-desc = TCP/IP address for searching servers.
+desc = The public address of the server. This is included in server information sent to the master server so that clients can connect using it.
 
 [net-ip-port]
 desc = TCP port to use for control connections.

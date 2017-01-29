@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef SERVERSYSTEM_H
@@ -45,7 +45,7 @@
  * have not been removed/revised.
  */
 class ServerSystem : public QObject, public de::System
-{   
+{
     Q_OBJECT
 
 public:
@@ -104,6 +104,7 @@ dd_bool N_ServerOpen(void);
 dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
+extern char *nptIPAddress; // cvar
 extern int nptIPPort; // cvar
 
 #endif // SERVERSYSTEM_H

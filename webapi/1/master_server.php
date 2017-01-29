@@ -29,7 +29,7 @@
 require_once('api_config.inc.php'); // database config
 
 define('DB_TABLE', 'servers');
-define('EXPIRE_SECONDS', 300);
+define('EXPIRE_SECONDS', 600);
 define('DEFAULT_PORT', 13209);
 
 // Opens the database connection.
@@ -64,6 +64,7 @@ function db_init()
             ."ON UPDATE CURRENT_TIMESTAMP, "
          . "address INT NOT NULL, "
          . "port SMALLINT UNSIGNED NOT NULL, "
+         . "domain VARCHAR(100), "
          . "name VARCHAR(100) NOT NULL, "
          . "description VARCHAR(500), "
          . "version VARCHAR(30) NOT NULL, "
@@ -89,6 +90,7 @@ function parse_announcement($json_data)
     if ($server_info == NULL) return; // JSON parse error.
 
     $address      = ip2long($_SERVER['REMOTE_ADDR']);
+    $domain       = urlencode($server_info->dom);
     $port         = (int) $server_info->port;
     $name         = urlencode($server_info->name);
     $description  = urlencode($server_info->desc);
@@ -109,8 +111,8 @@ function parse_announcement($json_data)
     $db = db_open();
     $table = DB_TABLE;
     db_query($db, "DELETE FROM $table WHERE address = $address AND port = $port");
-    db_query($db, "INSERT INTO $table (address, port, name, description, version, compat, plugin, packages, game_id, game_config, map, player_count, player_max, player_names, flags) "
-        . "VALUES ($address, $port, '$name', '$description', '$version', $compat, '$plugin', '$packages', '$game_id', '$game_config', '$map', $player_count, $player_max, '$player_names', $flags)");
+    db_query($db, "INSERT INTO $table (address, port, domain, name, description, version, compat, plugin, packages, game_id, game_config, map, player_count, player_max, player_names, flags) "
+        . "VALUES ($address, $port, '$domain', '$name', '$description', '$version', $compat, '$plugin', '$packages', '$game_id', '$game_config', '$map', $player_count, $player_max, '$player_names', $flags)");
     $db->close();
 }
 
@@ -133,6 +135,7 @@ function fetch_servers()
             "__obj__" => "Record",
             "host"    => long2ip($row['address']),
             "port"    => (int) $row['port'],
+            "dom"     => urldecode($row['domain']),
             "name"    => urldecode($row['name']),
             "desc"    => urldecode($row['description']),
             "ver"     => urldecode($row['version']),

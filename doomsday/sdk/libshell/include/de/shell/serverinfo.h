@@ -51,6 +51,7 @@ public:
     int compatibilityVersion() const;
 
     Address address() const;
+    String domainName() const;
     duint16 port() const;
     String name() const;
     String description() const;
@@ -70,6 +71,7 @@ public:
 
     ServerInfo &setCompatibilityVersion(int compatVersion);
     ServerInfo &setAddress(Address const &address);
+    ServerInfo &setDomainName(String const &domain);
     ServerInfo &setName(String const &name);
     ServerInfo &setDescription(String const &description);
     ServerInfo &setPluginDescription(String const &pluginDescription);
