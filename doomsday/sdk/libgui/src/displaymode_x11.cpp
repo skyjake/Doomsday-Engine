@@ -28,6 +28,7 @@
 #include <X11/extensions/xf86vmode.h>
 #undef Always
 #undef None
+#undef Status
 
 #include "de/gui/displaymode_native.h"
 
