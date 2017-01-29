@@ -906,12 +906,12 @@ static GameProfile automaticProfile;
 
 static GameProfile const *autoselectGameProfile()
 {
+    // Make sure all files have been found so we can determine which games are playable.
+    Folder::waitForPopulation();
+    DoomsdayApp::bundles().waitForEverythingIdentified();
+
     if (auto arg = CommandLine::get().check("-game", 1))
     {
-        // Make sure all files have been found so we can determine which games are playable.
-        Folder::waitForPopulation();
-        DoomsdayApp::bundles().waitForEverythingIdentified();
-
         String const param = arg.params.first();
         Games &games = DoomsdayApp::games();
 
