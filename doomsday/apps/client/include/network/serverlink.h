@@ -41,8 +41,15 @@ public:
     DENG2_DEFINE_AUDIENCE(Join,  void networkGameJoined())
     DENG2_DEFINE_AUDIENCE(Leave, void networkGameLeft())
 
+    enum Flag
+    {
+        DiscoverLocalServers = 0x1,
+        ManualConnectionOnly = 0,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
 public:
-    ServerLink();
+    ServerLink(Flags flags = DiscoverLocalServers);
 
     void clear();
 
@@ -67,9 +74,14 @@ public:
      * @param resultHandler  Callback for receiving the server profile. ServerLink
      *                       retains ownership of the profile. The profile is @c nullptr
      *                       if server discovery fails and the profile is not available.
+     *                       The callback is called in the main thread (from the app
+     *                       event loop).
      */
     void acquireServerProfile(de::Address const &address,
                               std::function<void (GameProfile const *)> resultHandler);
+
+    void acquireServerProfile(de::String const &domain,
+                              std::function<void (de::Address, GameProfile const *)> resultHandler);
 
     void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0) override;
     void connectHost(de::Address const &address) override;

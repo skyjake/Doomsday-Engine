@@ -17,6 +17,7 @@
  */
 
 #include "ui/dialogs/serverinfodialog.h"
+#include "network/serverlink.h"
 
 #include <de/ButtonWidget>
 #include <de/SequentialLayout>
@@ -25,6 +26,10 @@ using namespace de;
 
 DENG_GUI_PIMPL(ServerInfoDialog)
 {
+    Address host;
+    String domainName;
+    ServerLink link; // querying details from the server
+    GameProfile profile;
     shell::ServerInfo serverInfo;
     LabelWidget *title;
     LabelWidget *subtitle;
@@ -32,6 +37,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
     Impl(Public *i, shell::ServerInfo const &sv)
         : Base(i)
+        , link(ServerLink::ManualConnectionOnly)
         , serverInfo(sv)
     {
         self().useInfoStyle();
@@ -79,15 +85,22 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
     void updateContent()
     {
+        qDebug() << "\n\nupdating with:\n" << serverInfo.asText().toLatin1().constData();
+
         title->setText(serverInfo.name());
 
+        // Title and description.
         {
             StringList lines;
-            if (!serverInfo.domainName().isEmpty())
+            if (!domainName.isEmpty())
             {
-                lines << _E(b) + serverInfo.domainName() + _E(.);
+                lines << _E(b) + domainName + _E(.) +
+                         String(" (%1)").arg(host.asText());
             }
-            lines << _E(b) + serverInfo.address().asText() + _E(.);
+            else
+            {
+                lines << _E(b) + host.asText() + _E(.);
+            }
             if (!serverInfo.description().isEmpty())
             {
                 lines << _E(A) + serverInfo.description() + _E(.);
@@ -95,6 +108,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             subtitle->setText(String::join(lines, "\n"));
         }
 
+        // Additional information.
         {
             String msg;
             auto const players = serverInfo.players();
@@ -117,5 +131,33 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
     : d(new Impl(this, serverInfo))
 {
+    d->domainName = serverInfo.domainName();
+    d->host       = serverInfo.address();
+
     d->updateContent();
+
+    if (!d->domainName.isEmpty())
+    {
+        // Begin a query for the latest details.
+        d->link.acquireServerProfile(d->domainName, [this] (Address resolvedAddress,
+                                                            GameProfile const *profile)
+        {
+            d->host = resolvedAddress;
+
+            qDebug() << "[domain] reply from" << d->host.asText();
+            d->link.foundServerInfo(0, d->serverInfo);
+            d->profile = *profile;
+            d->updateContent();
+        });
+    }
+    else
+    {
+        d->link.acquireServerProfile(d->host, [this] (GameProfile const *profile)
+        {
+            qDebug() << "[ip] reply from" << d->host.asText();
+            d->link.foundServerInfo(0, d->serverInfo);
+            d->profile = *profile;
+            d->updateContent();
+        });
+    }
 }

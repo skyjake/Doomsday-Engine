@@ -57,7 +57,7 @@ enum LinkState
 
 DENG2_PIMPL(ServerLink)
 {
-    shell::ServerFinder finder; ///< Finding local servers.
+    std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
     LinkState state;
     bool fetching;
     typedef QMap<Address, shell::ServerInfo> Servers;
@@ -65,13 +65,19 @@ DENG2_PIMPL(ServerLink)
     Servers fromMaster;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
+    std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
     LoopCallback mainCall;
 
-    Impl(Public *i)
+    Impl(Public *i, Flags flags)
         : Base(i)
         , state(None)
         , fetching(false)
-    {}
+    {
+        if (flags & DiscoverLocalServers)
+        {
+            finder.reset(new shell::ServerFinder);
+        }
+    }
 
     void notifyDiscoveryUpdate()
     {
@@ -122,15 +128,24 @@ DENG2_PIMPL(ServerLink)
                 notifyDiscoveryUpdate();
 
                 // If the server's profile is being acquired, do the callback now.
-                if (profileResultCallback)
+                if (profileResultCallback ||
+                    profileResultCallbackWithAddress)
                 {
                     if (prepareServerProfile(svAddress))
                     {
                         LOG_NET_MSG("Received server's game profile from ") << svAddress;
-                        mainCall.enqueue([this] ()
+                        mainCall.enqueue([this, svAddress] ()
                         {
-                            profileResultCallback(serverProfile.get());
-                            profileResultCallback = nullptr;
+                            if (profileResultCallback)
+                            {
+                                profileResultCallback(serverProfile.get());
+                                profileResultCallback = nullptr;
+                            }
+                            if (profileResultCallbackWithAddress)
+                            {
+                                profileResultCallbackWithAddress(svAddress, serverProfile.get());
+                                profileResultCallbackWithAddress = nullptr;
+                            }
                         });
                     }
                 }
@@ -248,12 +263,12 @@ DENG2_PIMPL(ServerLink)
     Servers allFound(FoundMask const &mask) const
     {
         Servers all;
-        if (mask.testFlag(LocalNetwork))
+        if (finder && mask.testFlag(LocalNetwork))
         {
             // Append the ones from the server finder.
-            foreach (Address const &sv, finder.foundServers())
+            foreach (Address const &sv, finder->foundServers())
             {
-                all.insert(sv, finder.messageFromServer(sv));
+                all.insert(sv, finder->messageFromServer(sv));
             }
         }
         if (mask.testFlag(MasterServer))
@@ -287,16 +302,19 @@ DENG2_PIMPL(ServerLink)
     }
 };
 
-ServerLink::ServerLink() : d(new Impl(this))
+ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
 {
-    connect(&d->finder, SIGNAL(updated()), this, SLOT(localServersFound()));
+    if (d->finder)
+    {
+        connect(d->finder.get(), SIGNAL(updated()), this, SLOT(localServersFound()));
+    }
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
     connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
 }
 
 void ServerLink::clear()
 {
-    d->finder.clear();
+    d->finder->clear();
     // TODO: clear all found servers
 }
 
@@ -375,6 +393,14 @@ void ServerLink::acquireServerProfile(Address const &address,
         d->state = Discovering;
         LOG_NET_MSG("Querying %s for full status") << address;
     }
+}
+
+void ServerLink::acquireServerProfile(String const &domain,
+                                      std::function<void (Address, GameProfile const *)> resultHandler)
+{
+    d->profileResultCallbackWithAddress = resultHandler;
+    discover(domain);
+    LOG_NET_MSG("Querying %s for full status") << domain;
 }
 
 void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
@@ -487,8 +513,9 @@ bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask m
 
 bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 {
+    if (!d->finder) return host.isLocal(); // Best guess...
     Address const addr = shell::checkPort(host);
-    return d->finder.foundServers().contains(addr);
+    return d->finder->foundServers().contains(addr);
 }
 
 bool ServerLink::foundServerInfo(de::Address const &host, shell::ServerInfo &info, FoundMask mask) const
@@ -572,7 +599,7 @@ void ServerLink::handleIncomingPackets()
             break;
 
         case InGame: {
-            /// @todo The incoming packets should go be handled immediately.
+            /// @todo The incoming packets should be handled immediately.
 
             // Post the data into the queue.
             netmessage_t *msg = reinterpret_cast<netmessage_t *>(M_Calloc(sizeof(netmessage_t)));
