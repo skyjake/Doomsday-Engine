@@ -3252,7 +3252,7 @@ static dint expireClMobjsWorker(mobj_t *mob, void *context)
         // Has this mobj timed out?
         if (nowTime - info->time > CLMOBJ_TIMEOUT)
         {
-            LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
+            LOGDEV_MAP_VERBOSE("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
                 << mob->thinker.id
                 << info->time << nowTime
                 << Def_GetStateName(mob->state)
