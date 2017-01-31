@@ -63,6 +63,7 @@ public:
     void useInvertedStyle();
     void useColorTheme(ColorTheme style);
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
+    de::DotPath const &textColorId() const;
 
     void acquireFocus();
 

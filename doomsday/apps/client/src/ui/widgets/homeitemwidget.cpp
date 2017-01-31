@@ -340,6 +340,11 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
     d->updateColors();
 }
 
+DotPath const &HomeItemWidget::textColorId() const
+{
+    return d->textColor;
+}
+
 void HomeItemWidget::acquireFocus()
 {
     root().setFocus(this);
