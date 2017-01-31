@@ -121,6 +121,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ProgressWidget *refreshProgress;
 
     // Packages list:
+    StringList hiddenTags;
     StringList manualPackagePaths; // if empty, all available packages used
     HomeMenuWidget *menu;
     ui::ListDataT<PackageItem> allPackages;
@@ -300,8 +301,6 @@ DENG_GUI_PIMPL(PackagesWidget)
                             .arg(_item->label())
                             .arg(pkgId));
 
-            String auxColor = "accent";
-
             bool const highlight = _owner.d->packageStatus->isPackageHighlighted(packageId());
             _actions->setVariantItemsEnabled(highlight);
 
@@ -315,17 +314,18 @@ DENG_GUI_PIMPL(PackagesWidget)
                 }
             }
 
+            String auxColor = "accent";
             if (highlight)
             {
-                icon().setImageColor(style().colors().colorf("inverted.text"));
                 useColorTheme(_owner.d->unselectedItemHilit, _owner.d->selectedItemHilit);
                 auxColor = "background";
             }
             else
             {
-                icon().setImageColor(style().colors().colorf("text"));
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
             }
+            // Icon matches text color.
+            icon().setImageColor(style().colors().colorf(textColorId()));
 
             for (ButtonWidget *b : _tags)
             {
@@ -385,7 +385,9 @@ DENG_GUI_PIMPL(PackagesWidget)
      * Initializes the PackagesWidget private implementation.
      * @param i  Public instance.
      */
-    Impl(Public *i) : Base(i)
+    Impl(Public *i)
+        : Base(i)
+        , hiddenTags({ "core", "gamedata" })
     {
         defaultActionItems << new ui::VariantActionItem(tr("Load"), tr("Unload"), new CallbackAction([this] ()
         {
@@ -534,6 +536,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         auto &loader = PackageLoader::get();
 
+        manualPackagePaths.clear();
         for (String id : ids)
         {
             if (File const *file = loader.select(id))
@@ -575,10 +578,20 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             File const &pack = App::rootFolder().locate<File>(path);
 
-            // Core packages are mandatory and thus omitted.
+            // Check for tags that should never be shown.
             auto const tags = Package::tags(pack);
-            if (tags.contains(QStringLiteral("core")) ||
-                tags.contains(QStringLiteral("gamedata"))) continue;
+            {
+                bool disregard = false;
+                for (String const &hiddenTag : hiddenTags)
+                {
+                    if (tags.contains(hiddenTag))
+                    {
+                        disregard = true;
+                        break;
+                    }
+                }
+                if (disregard) continue;
+            }
 
             // Is this already in the list?
             ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
@@ -732,8 +745,7 @@ PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const 
     : GuiWidget(name)
     , d(new Impl(this))
 {
-    d->setManualPackages(manualPackageIds);
-    populate();
+    setManualPackageIds(manualPackageIds);
 }
 
 HomeMenuWidget &PackagesWidget::menu()
@@ -746,9 +758,20 @@ ProgressWidget &PackagesWidget::progress()
     return *d->refreshProgress;
 }
 
+void PackagesWidget::setManualPackageIds(StringList const &manualPackageIds)
+{
+    d->setManualPackages(manualPackageIds);
+    populate();
+}
+
 void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
 {
     d->rightClickToOpenContextMenu = enable;
+}
+
+void PackagesWidget::setHiddenTags(StringList const &hiddenTags)
+{
+    d->hiddenTags = hiddenTags;
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)

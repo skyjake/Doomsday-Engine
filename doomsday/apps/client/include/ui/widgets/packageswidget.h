@@ -60,7 +60,9 @@ public:
     HomeMenuWidget &menu();
     de::ProgressWidget &progress();
 
+    void setManualPackageIds(de::StringList const &manualPackageIds);
     void setRightClickToOpenContextMenu(bool enable);
+    void setHiddenTags(de::StringList const &hiddenTags);
     void setPopulationEnabled(bool enable);
     void setFilterEditorMinimumY(de::Rule const &minY);
     void setPackageStatus(IPackageStatus const &packageStatus);
