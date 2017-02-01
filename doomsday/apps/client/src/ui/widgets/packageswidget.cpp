@@ -324,8 +324,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
             }
-            // Icon matches text color.
-            icon().setImageColor(style().colors().colorf(textColorId()));
 
             for (ButtonWidget *b : _tags)
             {

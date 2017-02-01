@@ -195,6 +195,8 @@ DENG_GUI_PIMPL(HomeItemWidget)
         icon->set(bg);
         background->set(bg);
         label->setTextColor(selected? selectedTextColor : textColor);
+        // Icon matches text color.
+        icon->setImageColor(label->textColorf());
     }
 
     /**
@@ -315,10 +317,11 @@ void HomeItemWidget::useColorTheme(ColorTheme style)
 
 void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
 {
+    // Color for a non-selected item.
     if (unselected == Inverted)
     {
-        d->bgColor   = "accent";
-        d->textColor = "inverted.accent";
+        d->bgColor   = "inverted.background";
+        d->textColor = "inverted.text";
     }
     else
     {
@@ -326,10 +329,11 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
         d->textColor = "text";
     }
 
+    // Color for a selected item.
     if (selected == Inverted)
     {
-        d->selectedBgColor   = "accent";
-        d->selectedTextColor = "inverted.text";
+        d->selectedBgColor   = "home.item.background.selected.inverted";
+        d->selectedTextColor = "text";
     }
     else
     {
