@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_BYTESUBARRAY_H
@@ -45,6 +45,12 @@ public:
      * Constructs a non-modifiable sub-array which refers to the @a mainArray.
      */
     ByteSubArray(IByteArray const &mainArray, Offset at, Size size);
+
+    /**
+     * Constructs a non-modifiable sub-array which refers to the @a mainArray.
+     * The sub-array starts at @a at and continues until the end of @a mainArray.
+     */
+    ByteSubArray(IByteArray const &mainArray, Offset at);
 
     virtual ~ByteSubArray() {}
 

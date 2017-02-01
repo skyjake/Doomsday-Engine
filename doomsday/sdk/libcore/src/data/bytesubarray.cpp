@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ByteSubArray"
@@ -26,7 +26,11 @@ ByteSubArray::ByteSubArray(IByteArray &mainArray, Offset at, Size size)
 {}
 
 ByteSubArray::ByteSubArray(IByteArray const &mainArray, Offset at, Size size)
-    : _mainArray(0), _constMainArray(&mainArray), _at(at), _size(size)
+    : _mainArray(nullptr), _constMainArray(&mainArray), _at(at), _size(size)
+{}
+
+ByteSubArray::ByteSubArray(IByteArray const &mainArray, Offset at)
+    : _mainArray(nullptr), _constMainArray(&mainArray), _at(at), _size(mainArray.size() - at)
 {}
 
 ByteSubArray::Size ByteSubArray::size() const
@@ -45,7 +49,7 @@ void ByteSubArray::set(Offset at, Byte const *values, Size count)
     {
         /// @throw NonModifiableError @a mainArray is non-modifiable.
         throw NonModifiableError("ByteSubArray::set", "Array is non-modifiable.");
-    }    
+    }
     _mainArray->set(_at + at, values, count);
     _size = qMax(_size, at + count);
 }
