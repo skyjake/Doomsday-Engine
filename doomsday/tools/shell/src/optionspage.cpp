@@ -36,8 +36,8 @@ DENG2_PIMPL(OptionsPage)
     QString game;
     QWidget *base = nullptr;
     QFormLayout *layout = nullptr;
-    QVBoxLayout *vbox;
-    QDialogButtonBox *buttons;
+    QVBoxLayout *vbox = nullptr;
+    QDialogButtonBox *buttons = nullptr;
     QList<GameOption> gameOptions;
     QHash<GameOption const *, QWidget *> widgets;
     Record gameState;
@@ -52,7 +52,14 @@ DENG2_PIMPL(OptionsPage)
 
         delete base;
         base = nullptr;
-        layout = nullptr;
+
+        delete buttons;
+        buttons = nullptr;
+
+        while (vbox && vbox->count() > 0)
+        {
+            delete vbox->takeAt(0);
+        }
     }
 
     void initForGame(QString gameId)
@@ -63,7 +70,7 @@ DENG2_PIMPL(OptionsPage)
         game = gameId;
         gameOptions = shell::DoomsdayInfo::gameOptions(game);
 
-        base   = new QWidget(thisPublic);
+        base   = new QWidget; //(thisPublic);
         base->setMaximumWidth(320);
         layout = new QFormLayout(base);
 
