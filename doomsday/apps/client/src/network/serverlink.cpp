@@ -434,6 +434,13 @@ void ServerLink::acquireServerProfile(String const &domain,
     LOG_NET_MSG("Querying %s for full status") << domain;
 }
 
+void ServerLink::requestMapOutline(Address const &address)
+{
+    AbstractLink::connectHost(address);
+    d->state = QueryingMapOutline;
+    LOG_NET_VERBOSE("Querying %s for map outline") << address;
+}
+
 void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
 {
     LOG_AS("ServerLink::connectDomain");

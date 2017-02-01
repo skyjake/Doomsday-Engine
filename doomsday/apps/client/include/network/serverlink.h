@@ -85,6 +85,8 @@ public:
     void acquireServerProfile(de::String const &domain,
                               std::function<void (de::Address, GameProfile const *)> resultHandler);
 
+    void requestMapOutline(de::Address const &address);
+
     void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0) override;
     void connectHost(de::Address const &address) override;
 

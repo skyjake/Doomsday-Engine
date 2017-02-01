@@ -33,6 +33,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(ServerInfoDialog)
+, DENG2_OBSERVES(ServerLink, MapOutline)
 , public PackagesWidget::IPackageStatus
 {
     // Server info & status.
@@ -65,6 +66,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         , serverInfo(sv)
         , link(ServerLink::ManualConnectionOnly)
     {
+        link.audienceForMapOutline() += this;
         connect(&queryTimer, &QTimer::timeout, [this] () { beginPendingQuery(); });
 
         self().useInfoStyle();
@@ -226,7 +228,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
     void beginPendingQuery()
     {
-        switch (pendingQuery)
+        Query const handling = pendingQuery;
+        pendingQuery = QueryNone;
+
+        switch (handling)
         {
         case QueryStatus:
             if (!domainName.isEmpty())
@@ -241,6 +246,8 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                     link.foundServerInfo(0, serverInfo);
                     profile = *svProfile;
                     updateContent();
+
+                    startQuery(QueryMapOutline);
                 });
             }
             else
@@ -251,18 +258,24 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                     link.foundServerInfo(0, serverInfo);
                     profile = *svProfile;
                     updateContent();
+
+                    startQuery(QueryMapOutline);
                 });
             }
             break;
 
         case QueryMapOutline:
+            link.requestMapOutline(host);
             break;
 
         case QueryNone:
             break;
         }
+    }
 
-        pendingQuery = QueryNone;
+    void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)
+    {
+        qDebug() << "got outline," << packet.lineCount() << "lines";
     }
 };
 
