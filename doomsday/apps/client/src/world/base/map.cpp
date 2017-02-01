@@ -4023,6 +4023,18 @@ Map::Sectors const &Map::editableSectors() const
     return d->editable.sectors;
 }
 
+void Map::initMapOutlinePacket(shell::MapOutlinePacket &packet)
+{
+    forAllLines([&packet] (Line &line)
+    {
+        packet.addLine(line.from().origin().toVector2i(),
+                       line.to  ().origin().toVector2i(),
+                       (line.front().hasSector() && line.back().hasSector()) ?
+                           shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
+        return LoopContinue;
+    });
+}
+
 Map::Polyobjs const &Map::editablePolyobjs() const
 {
     if (!d->editingEnabled)

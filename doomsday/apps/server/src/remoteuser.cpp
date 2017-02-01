@@ -23,11 +23,13 @@
 #include "network/net_event.h"
 #include "server/sv_def.h"
 #include "serverapp.h"
+#include "world/map.h"
 
 #include <de/data/json.h>
 #include <de/memory.h>
 #include <de/Message>
 #include <de/ByteRefArray>
+#include <de/shell/Protocol>
 
 #include <QCryptographicHash>
 
@@ -56,7 +58,7 @@ DENG2_PIMPL(RemoteUser)
     {
         DENG2_ASSERT(socket != 0);
 
-        QObject::connect(socket, SIGNAL(disconnected()), thisPublic, SLOT(socketDisconnected()));
+        QObject::connect(socket, SIGNAL(disconnected()),  thisPublic, SLOT(socketDisconnected()));
         QObject::connect(socket, SIGNAL(messagesReady()), thisPublic, SLOT(handleIncomingPackets()));
 
         address = socket->peerAddress();
@@ -129,17 +131,21 @@ DENG2_PIMPL(RemoteUser)
         // Status query?
         if (command == "Info?")
         {
-            shell::ServerInfo const info = ServerApp::currentServerInfo(); //Sv_GetInfo(&info);
-            //Str_Init(&msg);
-            //Str_Appendf(&msg, "Info\n");
+            shell::ServerInfo const info = ServerApp::currentServerInfo();
             Block const msg = "Info\n" + composeJSON(info);
-            //Sv_InfoToString(&info, &msg);
-
-            LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg); //Str_Text(&msg);
-
-            self() << msg; //mRefArray(Str_Text(&msg), Str_Length(&msg));
-
-            //Str_Free(&msg);
+            LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
+            self() << msg;
+        }
+        else if (command == "MapOutline?")
+        {
+            shell::MapOutlinePacket packet;
+            if (ServerApp::world().hasMap())
+            {
+                ServerApp::world().map().initMapOutlinePacket(packet);
+            }
+            Block serialized;
+            Writer(serialized).withHeader() << packet;
+            self() << Block("MapOutline\n" + serialized.compressed());
         }
         else if (length >= 5 && command.startsWith("Shell"))
         {

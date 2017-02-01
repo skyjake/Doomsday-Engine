@@ -134,18 +134,9 @@ void ShellUser::sendMapOutline()
 {
     if (!App_World().hasMap()) return;
 
-    std::unique_ptr<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
-
-    App_World().map().forAllLines ([&packet] (Line &line)
-    {
-        packet->addLine(line.from().origin().toVector2i(),
-                        line.to  ().origin().toVector2i(),
-                        (line.front().hasSector() && line.back().hasSector()) ?
-                                 shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
-        return LoopContinue;
-    });
-
-    *this << *packet;
+    shell::MapOutlinePacket packet;
+    App_World().map().initMapOutlinePacket(packet);
+    *this << packet;
 }
 
 void ShellUser::sendPlayerInfo()

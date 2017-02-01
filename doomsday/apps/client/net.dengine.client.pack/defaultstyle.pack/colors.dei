@@ -118,4 +118,10 @@ home {
     color icon.heretic { rgb <0.4, 0.7, 0.25> }
     color icon.hexen   { rgb <1.0, 0.25, 0.1> }
     color icon.other   { rgb <1.0, 1.0, 1.0> }
+    
+    item.background {
+        color selected.inverted { 
+            rgb $= gui.colorMix(background.rgb, altaccent.rgb, 0.333) 
+        }
+    }
 }

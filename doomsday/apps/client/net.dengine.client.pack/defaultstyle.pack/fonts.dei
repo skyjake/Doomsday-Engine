@@ -122,7 +122,11 @@ font small inherits default {
 
 editor {
     font plaintext inherits default {}
-    font hint inherits default {
+    font hint.default inherits default {
+        style: italic
+        weight: light
+    }
+    font hint.small inherits small {
         style: italic
         weight: light
     }

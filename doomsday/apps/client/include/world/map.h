@@ -30,6 +30,7 @@
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
 #include <doomsday/uri.h>
+#include <de/shell/Protocol>
 #include <de/BinaryTree>
 #include <de/Id>
 #include <de/Observers>
@@ -952,6 +953,10 @@ public:  //- Editing -----------------------------------------------------------
     inline de::dint editableLineCount   () const { return editableLines   ().count(); }
     inline de::dint editablePolyobjCount() const { return editablePolyobjs().count(); }
     inline de::dint editableSectorCount () const { return editableSectors ().count(); }
+
+//- Multiplayer -------------------------------------------------------------------------
+
+    void initMapOutlinePacket(de::shell::MapOutlinePacket &packet);
 
 private:
     DENG2_PRIVATE(d)

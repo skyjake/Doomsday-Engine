@@ -140,7 +140,7 @@ public:
     enum LineType
     {
         OneSidedLine = 0,
-        TwoSidedLine = 1
+        TwoSidedLine = 1,
     };
     struct Line
     {
