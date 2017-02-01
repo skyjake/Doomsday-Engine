@@ -31,10 +31,11 @@ DENG_GUI_PIMPL(MapOutlineWidget)
     Rectanglei mapBounds;
 
     // Drawing.
-    DefaultVertexBuf vbuf;
+    DefaultVertexBuf *vbuf = nullptr;
     Drawable drawable;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uColor     { "uColor",     GLUniform::Vec4 };
+    Animation mapOpacity { 0, Animation::Linear };
 
     Impl(Public *i) : Base(i)
     {
@@ -47,26 +48,80 @@ DENG_GUI_PIMPL(MapOutlineWidget)
 
     void glInit()
     {
+        vbuf = new DefaultVertexBuf;
+        drawable.addBuffer(vbuf);
 
+        shaders().build(drawable.program(), "generic.color_ucolor")
+                << uMvpMatrix << uColor;
     }
 
     void glDeinit()
     {
-
+        drawable.clear();
+        vbuf = nullptr;
     }
 
     void makeOutline(shell::MapOutlinePacket const &mapOutline)
     {
-        progress->hide();
+        if (!vbuf) return;
 
         // This is likely called wherever incoming network packets are being processed,
-        // and thus there should be no active OpenGL context.
+        // and thus there should currently be no active OpenGL context.
         root().window().glActivate();
 
-        vbuf.clear();
+        progress->setOpacity(0, 0.5);
+        mapOpacity.setValue(1, 0.5);
 
+        mapBounds = Rectanglei();
+
+        Vector4f const oneSidedColor = style().colors().colorf("inverted.altaccent");
+        Vector4f const twoSidedColor = style().colors().colorf("altaccent");
+
+        DefaultVertexBuf::Builder verts;
+        DefaultVertexBuf::Type vtx;
+
+        for (int i = 0; i < mapOutline.lineCount(); ++i)
+        {
+            auto const &line = mapOutline.line(i);
+
+            vtx.rgba = (line.type == shell::MapOutlinePacket::OneSidedLine? oneSidedColor : twoSidedColor);
+
+            // Two vertices per line.
+            vtx.pos = line.start; verts << vtx;
+            vtx.pos = line.end;   verts << vtx;
+
+            if (i > 0)
+            {
+                mapBounds.include(line.start);
+            }
+            else
+            {
+                mapBounds = Rectanglei(line.start, line.start);
+            }
+            mapBounds.include(line.end);
+        }
+
+//        vtx.rgba = Vector4f(1, 0, 1, 1);
+//        vtx.pos = mapBounds.topLeft; verts << vtx;
+//        vtx.pos = mapBounds.bottomRight; verts << vtx;
+
+        vbuf->setVertices(gl::Lines, verts, gl::Static);
 
         root().window().glDone();
+    }
+
+    Matrix4f modelMatrix() const
+    {
+        DENG2_ASSERT(vbuf);
+
+        if (mapBounds.isNull()) return Matrix4f();
+
+        Rectanglef const rect = self().contentRect();
+        float const scale = de::min(rect.width()  / mapBounds.width(),
+                                    rect.height() / mapBounds.height());
+        return Matrix4f::translate(rect.middle()) *
+               Matrix4f::scale    (scale) *
+               Matrix4f::translate(Vector2f(-mapBounds.middle()));
     }
 };
 
@@ -80,17 +135,15 @@ void MapOutlineWidget::setOutline(shell::MapOutlinePacket const &mapOutline)
     d->makeOutline(mapOutline);
 }
 
-void MapOutlineWidget::viewResized()
-{
-    GuiWidget::viewResized();
-    d->uMvpMatrix = root().projMatrix2D();
-}
-
 void MapOutlineWidget::drawContent()
 {
     GuiWidget::drawContent();
-    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
-    d->drawable.draw();
+    if (d->vbuf && d->vbuf->count())
+    {
+        d->uMvpMatrix = root().projMatrix2D() * d->modelMatrix();
+        d->uColor = Vector4f(1, 1, 1, d->mapOpacity * visibleOpacity());
+        d->drawable.draw();
+    }
 }
 
 void MapOutlineWidget::glInit()

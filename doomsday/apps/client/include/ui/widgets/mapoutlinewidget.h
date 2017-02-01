@@ -33,7 +33,6 @@ public:
     void setOutline(de::shell::MapOutlinePacket const &mapOutline);
 
     // Events.
-    void viewResized() override;
     void drawContent() override;
 
 protected:

@@ -23,6 +23,9 @@
 #include "ui/widgets/mapoutlinewidget.h"
 #include "network/serverlink.h"
 
+#include <doomsday/Games>
+
+#include <de/charsymbols.h>
 #include <de/ButtonWidget>
 #include <de/SequentialLayout>
 #include <de/ui/SubwidgetItem>
@@ -59,6 +62,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *description;
     PackagesWidget *packages = nullptr;
     MapOutlineWidget *mapOutline;
+    LabelWidget *gameState;
     ui::ListData packageActions;
 
     Impl(Public *i, shell::ServerInfo const &sv)
@@ -115,8 +119,13 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         description->setTextLineAlignment(ui::AlignLeft);
 
         mapOutline = new MapOutlineWidget;
-        mapOutline->rule().setInput(Rule::Width, Const(2*4*90));
         area.add(mapOutline);
+        mapOutline->rule().setInput(Rule::Width, Const(2*4*90));
+
+        gameState = LabelWidget::newWithText("", &area);
+        gameState->setFont("small");
+        gameState->setSizePolicy(ui::Filled, ui::Expand);
+        gameState->setTextColor("inverted.altaccent");
 
         updateLayout();
     }
@@ -140,26 +149,30 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         rightLayout << *mapOutline;*/
 
         mapOutline->rule()
-                .setInput(Rule::Height, layout.height())
+                .setInput(Rule::Height, layout.height() - gameState->rule().height())
                 .setLeftTop(title->rule().right(), title->rule().top());
+
+        gameState->rule()
+                .setInput(Rule::Width,  mapOutline->rule().width())
+                .setInput(Rule::Left,   mapOutline->rule().left())
+                .setInput(Rule::Bottom, area.contentRule().bottom());
 
         area.setContentSize(layout.width() + mapOutline->rule().width(),
                             layout.height());
-                            //OperatorRule::maximum(layout.height());
-                                                  //rightLayout.height()));
     }
 
     void updateContent(bool updatePackages = true)
     {
         title->setText(serverInfo.name());
 
+        qDebug() << serverInfo.asText();
+
         // Title and description.
         {
             StringList lines;
             if (!domainName.isEmpty())
             {
-                lines << _E(b) + domainName + _E(.) +
-                         String(" (%1)").arg(host.asText());
+                lines << _E(b) + domainName + _E(.) + String(" (%1)").arg(host.asText());
             }
             else
             {
@@ -175,6 +188,8 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // Additional information.
         {
             String msg;
+            msg = tr("Version: ") + serverInfo.version().asText() + "\n" +
+                  tr("Rules: ")   + serverInfo.gameConfig() + "\n";
             auto const players = serverInfo.players();
             if (players.isEmpty())
             {
@@ -190,9 +205,25 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             description->setText(msg);
         }
 
+        // Game state.
+        {
+            String const gameId = serverInfo.gameId();
+            String gameTitle = gameId;
+            if (Games::get().contains(gameId))
+            {
+                gameTitle = Games::get()[gameId].title();
+            }
+            String msg = String(_E(b) "%1" _E(.) "\n%2 " DENG2_CHAR_MDASH " %3")
+                        .arg(serverInfo.map())
+                        .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
+                                                                         : tr("Deathmatch"))
+                        .arg(gameTitle);
+            gameState->setText(msg);
+        }
+
         if (updatePackages && !serverInfo.packages().isEmpty())
         {
-            qDebug() << "updating with packages:" << serverInfo.packages();
+            //qDebug() << "updating with packages:" << serverInfo.packages();
             if (!packages)
             {
                 packages = new PackagesWidget(serverInfo.packages());
@@ -275,7 +306,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
     void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)
     {
-        qDebug() << "got outline," << packet.lineCount() << "lines";
+        mapOutline->setOutline(packet);
     }
 };
 

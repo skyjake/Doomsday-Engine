@@ -333,7 +333,7 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
     if (selected == Inverted)
     {
         d->selectedBgColor   = "home.item.background.selected.inverted";
-        d->selectedTextColor = "text";
+        d->selectedTextColor = "inverted.text";
     }
     else
     {

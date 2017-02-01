@@ -282,24 +282,29 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
-            String pkgId = packageId();
-            if (pkgId.startsWith("file."))
+            auto pkgIdVer = Package::split(packageId());
+            if (pkgIdVer.first.startsWith("file."))
             {
                 icon().setStyleImage("file", "default");
 
                 // Local files should not be indicated to be packages.
                 if (NativeFile const *native = _item->file->source()->maybeAs<NativeFile>())
                 {
-                    pkgId = _E(s) + native->nativePath().pretty() + _E(.);
+                    pkgIdVer.first = native->nativePath().pretty();
                 }
             }
             else
             {
                 icon().setStyleImage("package.icon", "default");
             }
-            label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                            .arg(_item->label())
-                            .arg(pkgId));
+            String labelText = String(_E(b) "%1\n" _E(l)_E(s) "%2")
+                    .arg(_item->label())
+                    .arg(pkgIdVer.first);
+            if (pkgIdVer.second.isValid())
+            {
+                labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.asText());
+            }
+            label().setText(labelText);
 
             bool const highlight = _owner.d->packageStatus->isPackageHighlighted(packageId());
             _actions->setVariantItemsEnabled(highlight);

@@ -121,7 +121,7 @@ home {
     
     item.background {
         color selected.inverted { 
-            rgb $= gui.colorMix(background.rgb, altaccent.rgb, 0.333) 
+            rgb $= gui.colorMix(accent.rgb, text.rgb, 0.35)
         }
     }
 }
