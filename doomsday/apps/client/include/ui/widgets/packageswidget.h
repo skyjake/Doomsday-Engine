@@ -80,7 +80,8 @@ public:
     void setActionsAlwaysShown(bool showActions);
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
-                       ColorTheme unselectedItemHilit, ColorTheme selectedItemHilit);
+                       ColorTheme unselectedItemHilit, ColorTheme selectedItemHilit,
+                       ColorTheme search = Normal);
 
     void populate();
     void updateItems();

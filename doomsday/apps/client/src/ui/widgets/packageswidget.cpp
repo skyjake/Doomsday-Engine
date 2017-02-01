@@ -431,9 +431,12 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         clearSearch->set(Background());
         clearSearch->setStyleImage("close.ring", "default");
-        clearSearch->setSizePolicy(ui::Expand, ui::Expand);
+        clearSearch->setSizePolicy(ui::Filled, ui::Filled);
+        clearSearch->margins().set("");
         clearSearch->rule()
-                .setInput(Rule::Right, search->rule().right())
+                .setInput(Rule::Right,  search->rule().right() - rule("gap"))
+                .setInput(Rule::Height, search->font().lineSpacing())
+                .setInput(Rule::Width,  search->font().lineSpacing())
                 .setMidAnchorY(search->rule().midY());
         clearSearch->setActionFn([this] () {
             search->setText("");
@@ -817,13 +820,19 @@ void PackagesWidget::setActionsAlwaysShown(bool showActions)
     }
 }
 
-void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
-                                   ColorTheme unselectedItemHilit, ColorTheme selectedItemHilit)
+void PackagesWidget::setColorTheme(ColorTheme unselectedItem,
+                                   ColorTheme selectedItem,
+                                   ColorTheme unselectedItemHilit,
+                                   ColorTheme selectedItemHilit,
+                                   ColorTheme search)
 {
     d->unselectedItem      = unselectedItem;
     d->selectedItem        = selectedItem;
     d->unselectedItemHilit = unselectedItemHilit;
     d->selectedItemHilit   = selectedItemHilit;
+
+    d->search->setColorTheme(search);
+    d->clearSearch->setImageColor(d->search->textColorf());
 
     d->populate();
 }
