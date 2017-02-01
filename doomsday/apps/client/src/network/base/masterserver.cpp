@@ -275,15 +275,11 @@ void N_MasterAnnounceServer(bool isOpen)
 
     LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
-    // This will be freed by the worker after the request has been made.
-    shell::ServerInfo info = ServerApp::currentServerInfo();
-
     // Let's figure out what we want to tell about ourselves.
+    shell::ServerInfo info = ServerApp::currentServerInfo();
     if (!isOpen)
     {
-        auto flags = info.flags();
-        applyFlagOperation(flags, shell::ServerInfo::AllowJoin, false);
-        info.setFlags(flags);
+        info.setFlags(info.flags() & ~shell::ServerInfo::AllowJoin);
     }
 
     DENG2_ASSERT(worker);

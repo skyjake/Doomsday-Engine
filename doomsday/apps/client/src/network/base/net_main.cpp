@@ -1165,7 +1165,7 @@ D_CMD(Net)
     {
         if(!stricmp(argv[1], "announce"))
         {
-            N_MasterAnnounceServer(true);
+            N_MasterAnnounceServer(masterAware? true : false);
         }
         else if(!stricmp(argv[1], "request"))
         {
@@ -1282,6 +1282,16 @@ D_CMD(Login);  // cl_main.cpp
 D_CMD(Logout);  // sv_main.cpp
 #endif
 
+#ifdef __SERVER__
+static void masterAwareChanged()
+{
+    if (isServer)
+    {
+        N_MasterAnnounceServer(masterAware);
+    }
+}
+#endif
+
 void Net_Register()
 {
     C_VAR_BYTE      ("net-queue-show",          &::monitorMsgQueue, 0, 0, 1);
@@ -1302,7 +1312,7 @@ void Net_Register()
 #ifdef __SERVER__
     C_VAR_CHARPTR   ("server-name",             &::serverName, 0, 0, 0);
     C_VAR_CHARPTR   ("server-info",             &::serverInfo, 0, 0, 0);
-    C_VAR_INT       ("server-public",           &::masterAware, 0, 0, 1);
+    C_VAR_INT2      ("server-public",           &::masterAware, 0, 0, 1, masterAwareChanged);
     C_VAR_CHARPTR   ("server-password",         &::netPassword, 0, 0, 0);
     C_VAR_BYTE      ("server-latencies",        &::netShowLatencies, 0, 0, 1);
     C_VAR_INT       ("server-frame-interval",   &::frameInterval, CVF_NO_MAX, 0, 0);
