@@ -32,6 +32,7 @@
 
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
+#include <de/ByteSubArray>
 #include <de/GuiApp>
 #include <de/Message>
 #include <de/MessageDialog>
@@ -49,6 +50,7 @@ enum LinkState
 {
     None,
     Discovering,
+    QueryingMapOutline,
     WaitingForInfoResponse,
     Joining,
     WaitingForJoinResponse,
@@ -153,7 +155,27 @@ DENG2_PIMPL(ServerLink)
             }
             catch (Error const &er)
             {
-                LOG_NET_WARNING("Reply from %s was invalid: %s") << svAddress << er.asText();
+                LOG_NET_WARNING("Info reply from %s was invalid: %s") << svAddress << er.asText();
+            }
+        }
+        else if (reply.size() >= 11 && reply.startsWith("MapOutline\n"))
+        {
+            try
+            {
+                shell::MapOutlinePacket outline;
+                {
+                    Block const data = Block(ByteSubArray(reply, 11)).decompressed();
+                    Reader src(data);
+                    src.withHeader() >> outline;
+                }
+                DENG2_FOR_PUBLIC_AUDIENCE2(MapOutline, i)
+                {
+                    i->mapOutlineReceived(svAddress, outline);
+                }
+            }
+            catch (Error const &er)
+            {
+                LOG_NET_WARNING("MapOutline reply from %s was invalid: %s") << svAddress << er.asText();
             }
         }
         else
@@ -191,10 +213,9 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
-        DENG2_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
+        DENG2_FOR_PUBLIC_AUDIENCE2(Join, i) i->networkGameJoined();
 
-        // G'day mate!  The client is responsible for beginning the
-        // handshake.
+        // G'day mate!  The client is responsible for beginning the handshake.
         Cl_SendHello();
 
         return true;
@@ -544,15 +565,20 @@ Packet *ServerLink::interpret(Message const &msg)
 
 void ServerLink::initiateCommunications()
 {
-    if (d->state == Discovering)
+    switch (d->state)
     {
+    case Discovering:
         // Ask for the serverinfo.
         *this << ByteRefArray("Info?", 5);
-
         d->state = WaitingForInfoResponse;
-    }
-    else if (d->state == Joining)
-    {
+        break;
+
+    case QueryingMapOutline:
+        *this << ByteRefArray("MapOutline?", 11);
+        d->state = WaitingForInfoResponse;
+        break;
+
+    case Joining: {
         ClientWindow::main().glActivate();
 
         Demo_StopPlayback();
@@ -574,10 +600,11 @@ void ServerLink::initiateCommunications()
         d->state = WaitingForJoinResponse;
 
         ClientWindow::main().glDone();
-    }
-    else
-    {
+        break; }
+
+    default:
         DENG2_ASSERT(false);
+        break;
     }
 }
 

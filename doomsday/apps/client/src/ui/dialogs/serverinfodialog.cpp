@@ -17,29 +17,56 @@
  */
 
 #include "ui/dialogs/serverinfodialog.h"
+#include "ui/dialogs/packageinfodialog.h"
+#include "ui/widgets/packageswidget.h"
+#include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/mapoutlinewidget.h"
 #include "network/serverlink.h"
 
 #include <de/ButtonWidget>
 #include <de/SequentialLayout>
+#include <de/ui/SubwidgetItem>
+#include <de/ProgressWidget>
+
+#include <QTimer>
 
 using namespace de;
 
 DENG_GUI_PIMPL(ServerInfoDialog)
+, public PackagesWidget::IPackageStatus
 {
+    // Server info & status.
     Address host;
     String domainName;
-    ServerLink link; // querying details from the server
     GameProfile profile;
     shell::ServerInfo serverInfo;
+
+    // Network queries.
+    ServerLink link; // querying details from the server
+    QTimer queryTimer; // allow the dialog to open nicely before starting network queries
+    enum Query
+    {
+        QueryNone,
+        QueryStatus,
+        QueryMapOutline,
+    };
+    Query pendingQuery = QueryNone;
+
+    // Widgets.
     LabelWidget *title;
     LabelWidget *subtitle;
     LabelWidget *description;
+    PackagesWidget *packages = nullptr;
+    MapOutlineWidget *mapOutline;
+    ui::ListData packageActions;
 
     Impl(Public *i, shell::ServerInfo const &sv)
         : Base(i)
-        , link(ServerLink::ManualConnectionOnly)
         , serverInfo(sv)
+        , link(ServerLink::ManualConnectionOnly)
     {
+        connect(&queryTimer, &QTimer::timeout, [this] () { beginPendingQuery(); });
+
         self().useInfoStyle();
 
         // The Close button is always available. Other actions are shown depending
@@ -47,7 +74,18 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         self().buttons()
                 << new DialogButtonItem(Default | Accept, tr("Close"));
 
+        packageActions << new ui::SubwidgetItem(tr("..."), ui::Right, [this] () -> PopupWidget *
+        {
+             return new PackageInfoDialog(packages->actionPackage());
+        });
+
         createWidgets();
+    }
+
+    bool isPackageHighlighted(String const &) const
+    {
+        // No highlights.
+        return false;
     }
 
     void createWidgets()
@@ -74,19 +112,43 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         description->setTextColor("inverted.text");
         description->setTextLineAlignment(ui::AlignLeft);
 
+        mapOutline = new MapOutlineWidget;
+        mapOutline->rule().setInput(Rule::Width, Const(2*4*90));
+        area.add(mapOutline);
+
+        updateLayout();
+    }
+
+    void updateLayout()
+    {
+        auto &area = self().area();
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top(),
                                 ui::Down);
         layout.setOverrideWidth(Const(2*4*90));
         layout << *title << *subtitle << *description;
+        if (packages)
+        {
+            layout << *packages;
+        }
 
-        area.setContentSize(layout.width(), layout.height());
+        /*SequentialLayout rightLayout(title->rule().right(),
+                                     title->rule().top(),
+                                     ui::Down);
+        rightLayout << *mapOutline;*/
+
+        mapOutline->rule()
+                .setInput(Rule::Height, layout.height())
+                .setLeftTop(title->rule().right(), title->rule().top());
+
+        area.setContentSize(layout.width() + mapOutline->rule().width(),
+                            layout.height());
+                            //OperatorRule::maximum(layout.height());
+                                                  //rightLayout.height()));
     }
 
-    void updateContent()
+    void updateContent(bool updatePackages = true)
     {
-        qDebug() << "\n\nupdating with:\n" << serverInfo.asText().toLatin1().constData();
-
         title->setText(serverInfo.name());
 
         // Title and description.
@@ -125,6 +187,82 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             description->setText(msg);
         }
+
+        if (updatePackages && !serverInfo.packages().isEmpty())
+        {
+            qDebug() << "updating with packages:" << serverInfo.packages();
+            if (!packages)
+            {
+                packages = new PackagesWidget(serverInfo.packages());
+                packages->setHiddenTags(StringList()); // show everything
+                packages->setActionItems(packageActions);
+                packages->setActionsAlwaysShown(true);
+                packages->setPackageStatus(*this);
+                packages->searchTermsEditor().setColorTheme(Inverted);
+                packages->searchTermsEditor().setFont("small");
+                packages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"), "editor.hint.small");
+                packages->searchTermsEditor().margins().setTopBottom("dialog.gap");
+                packages->setColorTheme(Inverted, Inverted, Inverted, Inverted);
+                self().area().add(packages);
+
+                updateLayout();
+            }
+            else
+            {
+                packages->setManualPackageIds(serverInfo.packages());
+            }
+        }
+    }
+
+    void startQuery(Query query)
+    {
+        pendingQuery = query;
+
+        queryTimer.stop();
+        queryTimer.setInterval(500);
+        queryTimer.setSingleShot(true);
+        queryTimer.start();
+    }
+
+    void beginPendingQuery()
+    {
+        switch (pendingQuery)
+        {
+        case QueryStatus:
+            if (!domainName.isEmpty())
+            {
+                // Begin a query for the latest details.
+                link.acquireServerProfile(domainName, [this] (Address resolvedAddress,
+                                                              GameProfile const *svProfile)
+                {
+                    host = resolvedAddress;
+
+                    qDebug() << "[domain] reply from" << host.asText();
+                    link.foundServerInfo(0, serverInfo);
+                    profile = *svProfile;
+                    updateContent();
+                });
+            }
+            else
+            {
+                link.acquireServerProfile(host, [this] (GameProfile const *svProfile)
+                {
+                    qDebug() << "[ip] reply from" << host.asText();
+                    link.foundServerInfo(0, serverInfo);
+                    profile = *svProfile;
+                    updateContent();
+                });
+            }
+            break;
+
+        case QueryMapOutline:
+            break;
+
+        case QueryNone:
+            break;
+        }
+
+        pendingQuery = QueryNone;
     }
 };
 
@@ -134,30 +272,7 @@ ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
     d->domainName = serverInfo.domainName();
     d->host       = serverInfo.address();
 
-    d->updateContent();
+    d->updateContent(false /* don't update packages yet */);
 
-    if (!d->domainName.isEmpty())
-    {
-        // Begin a query for the latest details.
-        d->link.acquireServerProfile(d->domainName, [this] (Address resolvedAddress,
-                                                            GameProfile const *profile)
-        {
-            d->host = resolvedAddress;
-
-            qDebug() << "[domain] reply from" << d->host.asText();
-            d->link.foundServerInfo(0, d->serverInfo);
-            d->profile = *profile;
-            d->updateContent();
-        });
-    }
-    else
-    {
-        d->link.acquireServerProfile(d->host, [this] (GameProfile const *profile)
-        {
-            qDebug() << "[ip] reply from" << d->host.asText();
-            d->link.foundServerInfo(0, d->serverInfo);
-            d->profile = *profile;
-            d->updateContent();
-        });
-    }
+    d->startQuery(Impl::QueryStatus);
 }
