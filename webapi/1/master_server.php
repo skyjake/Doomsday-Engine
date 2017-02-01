@@ -29,7 +29,7 @@
 require_once('api_config.inc.php'); // database config
 
 define('DB_TABLE', 'servers');
-define('EXPIRE_SECONDS', 600);
+define('EXPIRE_SECONDS', 900);
 define('DEFAULT_PORT', 13209);
 
 // Opens the database connection.
@@ -62,7 +62,7 @@ function db_init()
     $sql = "CREATE TABLE $table ("
          . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP "
             ."ON UPDATE CURRENT_TIMESTAMP, "
-         . "address INT NOT NULL, "
+         . "address INT UNSIGNED NOT NULL, "
          . "port SMALLINT UNSIGNED NOT NULL, "
          . "domain VARCHAR(100), "
          . "name VARCHAR(100) NOT NULL, "
@@ -84,12 +84,26 @@ function db_init()
     $db->close();
 }
 
+function is_valid_host($ip)
+{
+    if (($ip & 0xff000000) == 0x7f000000) return false; // No loopback.
+    if (($ip & 0xff) == 0xff) return false; // Broadcast address.
+    return true;
+}
+
 function parse_announcement($json_data)
 {
     $server_info = json_decode($json_data);
     if ($server_info == NULL) return; // JSON parse error.
 
-    $address      = ip2long($_SERVER['REMOTE_ADDR']);
+    $address = ip2long($_SERVER['REMOTE_ADDR']);
+
+    if (!is_valid_host($address))
+    {
+        echo 'Remote host has an invalid address';
+        exit;
+    }
+    
     $domain       = urlencode($server_info->dom);
     $port         = (int) $server_info->port;
     $name         = urlencode($server_info->name);
