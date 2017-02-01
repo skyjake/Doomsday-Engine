@@ -81,7 +81,7 @@ DENG2_PIMPL(ServerLink)
 
     void notifyDiscoveryUpdate()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
+        DENG2_FOR_PUBLIC_AUDIENCE2(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
         emit self().serversDiscovered();
     }
 
@@ -300,7 +300,17 @@ DENG2_PIMPL(ServerLink)
         ClientWindow::main().root().addOnTop(dlg);
         dlg->open(MessageDialog::Modal);
     }
+
+    DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
+    DENG2_PIMPL_AUDIENCE(MapOutline)
+    DENG2_PIMPL_AUDIENCE(Join)
+    DENG2_PIMPL_AUDIENCE(Leave)
 };
+
+DENG2_AUDIENCE_METHOD(ServerLink, DiscoveryUpdate)
+DENG2_AUDIENCE_METHOD(ServerLink, MapOutline)
+DENG2_AUDIENCE_METHOD(ServerLink, Join)
+DENG2_AUDIENCE_METHOD(ServerLink, Leave)
 
 ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
 {
@@ -445,7 +455,7 @@ void ServerLink::disconnect()
         if (gx.NetDisconnect)
             gx.NetDisconnect(true);
 
-        DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
+        DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
 

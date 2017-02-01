@@ -41,8 +41,8 @@ DENG_GUI_PIMPL(MultiplayerStatusWidget)
     {
         timer.setInterval(1000);
 
-        link().audienceForJoin += this;
-        link().audienceForLeave += this;
+        link().audienceForJoin() += this;
+        link().audienceForLeave() += this;
     }
 
     void networkGameJoined()

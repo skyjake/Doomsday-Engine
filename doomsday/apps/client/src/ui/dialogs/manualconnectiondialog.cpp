@@ -47,7 +47,7 @@ DENG2_PIMPL(ManualConnectionDialog)
         , joinWhenEnterPressed(false)
         , autoJoin(true)
     {
-        ClientApp::serverLink().audienceForDiscoveryUpdate += this;
+        ClientApp::serverLink().audienceForDiscoveryUpdate() += this;
     }
 
     void linkDiscoveryUpdate(ServerLink const &link) override

@@ -23,6 +23,7 @@
 #include <de/Address>
 #include <de/Observers>
 #include <de/shell/AbstractLink>
+#include <de/shell/Protocol>
 #include <de/shell/ServerInfo>
 #include <QObject>
 #include "network/net_main.h"
@@ -36,10 +37,11 @@ class ServerLink : public de::shell::AbstractLink
     Q_OBJECT
 
 public:
-    DENG2_DEFINE_AUDIENCE(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
+    DENG2_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
+    DENG2_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
 
-    DENG2_DEFINE_AUDIENCE(Join,  void networkGameJoined())
-    DENG2_DEFINE_AUDIENCE(Leave, void networkGameLeft())
+    DENG2_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
+    DENG2_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
 
     enum Flag
     {

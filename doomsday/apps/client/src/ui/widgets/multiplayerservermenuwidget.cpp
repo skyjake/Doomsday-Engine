@@ -93,7 +93,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
     {
         DoomsdayApp::app().audienceForGameChange()  += this;
         DoomsdayApp::games().audienceForReadiness() += this;
-        link().audienceForDiscoveryUpdate += this;
+        link().audienceForDiscoveryUpdate() += this;
 
         self().organizer().setWidgetFactory(*this);
     }

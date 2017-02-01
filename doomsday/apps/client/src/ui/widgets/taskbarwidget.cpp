@@ -146,8 +146,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
         vertShift = new AnimationRule(0);
 
         DoomsdayApp::app().audienceForGameChange() += this;
-        ClientApp::serverLink().audienceForJoin += this;
-        ClientApp::serverLink().audienceForLeave += this;
+        ClientApp::serverLink().audienceForJoin()  += this;
+        ClientApp::serverLink().audienceForLeave() += this;
 
         updateStyle();
     }
