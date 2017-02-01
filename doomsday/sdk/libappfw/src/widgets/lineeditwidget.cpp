@@ -47,6 +47,8 @@ DENG_GUI_PIMPL(LineEditWidget)
     bool firstUpdateAfterCreation;
 
     // Style.
+    ColorTheme colorTheme = Normal;
+    Vector4f textColor;
     Font const *font;
     Time blinkTime;
     Animation hovering;
@@ -73,12 +75,9 @@ DENG_GUI_PIMPL(LineEditWidget)
     {
         height = new AnimationRule(0);
 
+        self().set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
         self().setFont("editor.plaintext");
         updateStyle();
-
-        uCursorColor = Vector4f(1, 1, 1, 1);
-
-        self().set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
     }
 
     ~Impl()
@@ -92,6 +91,8 @@ DENG_GUI_PIMPL(LineEditWidget)
     void updateStyle()
     {
         font = &self().font();
+        textColor    = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
+        uCursorColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
 
         updateBackground();
 
@@ -120,19 +121,23 @@ DENG_GUI_PIMPL(LineEditWidget)
         if (self().background().type == Background::GradientFrame)
         {
             Background bg;
+            Vector3f const frameColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
             if (!self().hasFocus())
             {
-                bg = Background(Background::GradientFrame, Vector4f(1, 1, 1, .15f + hovering * .2f), 6);
+                bg = Background(Background::GradientFrame, Vector4f(frameColor, .15f + hovering * .2f), 6);
                 if (unfocusedBackgroundOpacity > 0.f)
                 {
-                    bg.solidFill = Vector4f(style().colors().colorf("background").xyz(),
+                    bg.solidFill = Vector4f(style().colors().colorf(colorTheme == Normal? "background"
+                                                                                        : "inverted.background").xyz(),
                                             unfocusedBackgroundOpacity);
                 }
             }
             else
             {
-                bg = Background(style().colors().colorf("background"), Background::GradientFrame,
-                                Vector4f(1, 1, 1, .25f + hovering * .3f), 6);
+                bg = Background(style().colors().colorf(colorTheme == Normal? "background"
+                                                                            : "inverted.background"),
+                                Background::GradientFrame,
+                                Vector4f(frameColor, .25f + hovering * .3f), 6);
             }
             self().set(bg);
         }
@@ -259,13 +264,13 @@ void LineEditWidget::setText(String const &lineText)
     }
 }
 
-void LineEditWidget::setEmptyContentHint(String const &hintText)
+void LineEditWidget::setEmptyContentHint(String const &hintText,
+                                         String const &hintFont)
 {
     if (!d->hint)
     {
         // A child widget will show the hint text.
         d->hint = new LabelWidget;
-        d->hint->setFont("editor.hint");
         d->hint->setTextColor("editor.hint");
         d->hint->setAlignment(ui::AlignLeft);
         d->hint->setBehavior(Unhittable | ContentClipping);
@@ -273,6 +278,7 @@ void LineEditWidget::setEmptyContentHint(String const &hintText)
         d->hint->setOpacity(1);
         add(d->hint);
     }
+    d->hint->setFont(hintFont.isEmpty()? String("editor.hint.default") : hintFont);
     d->hint->setText(hintText);
 }
 
@@ -289,6 +295,12 @@ Rectanglei LineEditWidget::cursorRect() const
 
     return Rectanglei(cp + toDevicePixels(Vector2i(-1, 0)),
                       cp + Vector2i(toDevicePixels(1), d->font->height().valuei()));
+}
+
+void LineEditWidget::setColorTheme(ColorTheme theme)
+{
+    d->colorTheme = theme;
+    d->updateStyle();
 }
 
 void LineEditWidget::setUnfocusedBackgroundOpacity(float opacity)
@@ -320,7 +332,7 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
 
     // Text lines.
-    d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft, textColorf());
+    d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft, d->textColor);
 
     // Underline the possible suggested completion.
     if (isSuggestingCompletion())

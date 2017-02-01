@@ -47,7 +47,7 @@ public:
      *
      * @param hintText  Hint text.
      */
-    void setEmptyContentHint(String const &hintText);
+    void setEmptyContentHint(String const &hintText, String const &hintFont = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -64,6 +64,7 @@ public:
      */
     Rectanglei cursorRect() const;
 
+    void setColorTheme(ColorTheme theme);
     void setUnfocusedBackgroundOpacity(float opacity);
 
     // Events.
