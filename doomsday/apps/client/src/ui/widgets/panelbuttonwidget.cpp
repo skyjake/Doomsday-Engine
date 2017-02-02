@@ -28,6 +28,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
     {
         self().add(drawer = new PanelWidget);
         drawer->set(Background(Vector4f(0, 0, 0, .15f)));
+        drawer->setEatMouseEvents(false);
     }
 };
 
