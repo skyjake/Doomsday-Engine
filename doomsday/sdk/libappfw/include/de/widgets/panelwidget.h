@@ -55,6 +55,13 @@ public:
     void setWaitForContentReady(bool yes);
 
     /**
+     * Enables or disables mouse event eating. The default is that a panel eats
+     * events that hit it.
+     * @param yes  @c true to enable.
+     */
+    void setEatMouseEvents(bool yes);
+
+    /**
      * Sets the size policy for the secondary dimension. For instance, for a
      * panel that opens horizontally, this determines what is done to the
      * widget height.

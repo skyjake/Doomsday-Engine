@@ -38,6 +38,7 @@ DENG_GUI_PIMPL(PanelWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     bool waitForContentReady = true;
+    bool eatMouseEvents = true;
     bool opened = false;
     ui::Direction dir = ui::Down;
     ui::SizePolicy secondaryPolicy = ui::Expand;
@@ -236,6 +237,11 @@ void PanelWidget::setWaitForContentReady(bool yes)
     d->waitForContentReady = yes;
 }
 
+void de::PanelWidget::setEatMouseEvents(bool yes)
+{
+    d->eatMouseEvents = yes;
+}
+
 void PanelWidget::setContent(GuiWidget *content)
 {
     if (d->content)
@@ -324,7 +330,7 @@ void PanelWidget::update()
 
 bool PanelWidget::handleEvent(Event const &event)
 {
-    if (event.type() == Event::MouseButton)
+    if (d->eatMouseEvents && event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
 
@@ -335,7 +341,6 @@ bool PanelWidget::handleEvent(Event const &event)
             return true;
         }
     }
-
     return GuiWidget::handleEvent(event);
 }
 
