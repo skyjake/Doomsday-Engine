@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "networkinterfaces.h"
+#include "../src/net/networkinterfaces.h"
 #include "de/Task"
 #include "de/TaskPool"
 

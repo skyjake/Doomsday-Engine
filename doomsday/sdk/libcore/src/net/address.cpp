@@ -19,7 +19,7 @@
 
 #include "de/Address"
 #include "de/String"
-#include "networkinterfaces.h"
+#include "../src/net/networkinterfaces.h"
 
 #include <QHostInfo>
 #include <QRegularExpression>
