@@ -114,6 +114,8 @@ public slots:
      */
     void close();
 
+    void openOrClose();
+
     /**
      * Immediately hides the panel.
      */

@@ -371,6 +371,18 @@ void PanelWidget::close()
     d->close(0.2);
 }
 
+void PanelWidget::openOrClose()
+{
+    if (isOpen() || isOpeningOrClosing())
+    {
+        close();
+    }
+    else
+    {
+        open();
+    }
+}
+
 void PanelWidget::dismiss()
 {
     if (isHidden()) return;
