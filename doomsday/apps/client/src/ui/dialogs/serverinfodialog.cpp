@@ -27,6 +27,7 @@
 
 #include <de/charsymbols.h>
 #include <de/ButtonWidget>
+#include <de/CallbackAction>
 #include <de/SequentialLayout>
 #include <de/ui/SubwidgetItem>
 #include <de/ProgressWidget>
@@ -60,10 +61,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *title;
     LabelWidget *subtitle;
     LabelWidget *description;
-    PackagesWidget *packages = nullptr;
+    PopupWidget *serverPopup;
+    PackagesWidget *serverPackages;
     MapOutlineWidget *mapOutline;
     LabelWidget *gameState;
-    ui::ListData packageActions;
+    ui::ListData serverPackageActions;
 
     Impl(Public *i, shell::ServerInfo const &sv)
         : Base(i)
@@ -78,12 +80,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
         self().buttons()
-                << new DialogButtonItem(Default | Accept, tr("Close"));
-
-        packageActions << new ui::SubwidgetItem(tr("..."), ui::Right, [this] () -> PopupWidget *
-        {
-             return new PackageInfoDialog(packages->actionPackage());
-        });
+                << new DialogButtonItem(Default | Accept, tr("Close"))
+                << new DialogButtonItem(Action | Id1, style().images().image("package.icon"),
+                                        new CallbackAction([this] () { openServerPackagesPopup(); }))
+                << new DialogButtonItem(Action | Id2, style().images().image("package.icon"),
+                                        new CallbackAction([this] () { openLocalPackagesPopup(); }));
 
         createWidgets();
     }
@@ -99,6 +100,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         auto &area = self().area();
 
         // Left column.
+
         title = LabelWidget::newWithText("", &area);
         title->setFont("title");
         title->setSizePolicy(ui::Filled, ui::Expand);
@@ -113,19 +115,52 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         subtitle->margins().setTop("unit");
 
         description = LabelWidget::newWithText("", &area);
-        description->setFont("small");
+        //description->setFont("small");
         description->setSizePolicy(ui::Filled, ui::Expand);
         description->setTextColor("inverted.text");
         description->setTextLineAlignment(ui::AlignLeft);
 
+        // Right column.
+
+        LabelWidget *bg = new LabelWidget;
+        bg->set(Background(Vector4f(style().colors().colorf("inverted.altaccent"), .1f),
+                           Background::GradientFrameWithRoundedFill,
+                           Vector4f(), 8));
+        area.add(bg);
+
         mapOutline = new MapOutlineWidget;
         area.add(mapOutline);
-        mapOutline->rule().setInput(Rule::Width, Const(2*4*90));
+        mapOutline->rule().setInput(Rule::Width, rule("dialog.serverinfo.mapoutline.width"));
+        mapOutline->margins().set(rule("gap") * 2).setBottom("gap");
 
         gameState = LabelWidget::newWithText("", &area);
-        gameState->setFont("small");
+        //gameState->setFont("small");
         gameState->setSizePolicy(ui::Filled, ui::Expand);
         gameState->setTextColor("inverted.altaccent");
+        gameState->margins().setBottom(mapOutline->margins().top());
+
+        bg->rule().setRect(mapOutline->rule())
+                  .setInput(Rule::Bottom, gameState->rule().bottom());
+
+        serverPackageActions << new ui::SubwidgetItem(tr("..."), ui::Right, [this] () -> PopupWidget *
+        {
+             return new PackageInfoDialog(serverPackages->actionPackage());
+        });
+
+        // Popups.
+
+        serverPopup = new PopupWidget;
+        serverPopup->setAnchorAndOpeningDirection(self().buttonWidget(Id1)->rule(), ui::Up);
+        self().add(serverPopup);
+        serverPackages = new PackagesWidget(PackagesWidget::PopulationDisabled);
+        serverPackages->margins().set("gap");
+        serverPackages->setHiddenTags(StringList()); // show everything
+        serverPackages->setActionItems(serverPackageActions);
+        serverPackages->setActionsAlwaysShown(true);
+        serverPackages->setPackageStatus(*this);
+        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"));
+        serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
+        serverPopup->setContent(serverPackages);
 
         updateLayout();
     }
@@ -136,20 +171,14 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top(),
                                 ui::Down);
-        layout.setOverrideWidth(Const(2*4*90));
+        layout.setOverrideWidth(rule("dialog.serverinfo.description.width"));
         layout << *title << *subtitle << *description;
-        if (packages)
-        {
-            layout << *packages;
-        }
 
-        /*SequentialLayout rightLayout(title->rule().right(),
-                                     title->rule().top(),
-                                     ui::Down);
-        rightLayout << *mapOutline;*/
+        AutoRef<Rule> height(OperatorRule::maximum
+                             (layout.height(), rule("dialog.serverinfo.content.minheight")));
 
         mapOutline->rule()
-                .setInput(Rule::Height, layout.height() - gameState->rule().height())
+                .setInput(Rule::Height, height - gameState->rule().height())
                 .setLeftTop(title->rule().right(), title->rule().top());
 
         gameState->rule()
@@ -157,11 +186,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                 .setInput(Rule::Left,   mapOutline->rule().left())
                 .setInput(Rule::Bottom, area.contentRule().bottom());
 
-        area.setContentSize(layout.width() + mapOutline->rule().width(),
-                            layout.height());
+        area.setContentSize(layout.width() + mapOutline->rule().width(), height);
     }
 
-    void updateContent(bool updatePackages = true)
+    void updateContent()
     {
         title->setText(serverInfo.name());
 
@@ -180,28 +208,31 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             if (!serverInfo.description().isEmpty())
             {
-                lines << _E(A) + serverInfo.description() + _E(.);
+                lines << "\n" _E(A) + serverInfo.description() + _E(.);
             }
             subtitle->setText(String::join(lines, "\n"));
         }
 
         // Additional information.
         {
-            String msg;
-            msg = tr("Version: ") + serverInfo.version().asText() + "\n" +
-                  tr("Rules: ")   + serverInfo.gameConfig() + "\n";
             auto const players = serverInfo.players();
+            String plrDesc;
             if (players.isEmpty())
             {
-                msg += tr("No players.");
+                plrDesc = DENG2_CHAR_MDASH;
             }
             else
             {
-                msg += tr("%1 connected player%2: ")
+                plrDesc = String("%1 " DENG2_CHAR_MDASH " %2")
                         .arg(players.count())
-                        .arg(DENG2_PLURAL_S(players.count()))
-                        + String::join(players, ", ");
+                        .arg(String::join(players, ", "));
             }
+            String msg = String(_E(Ta)_E(l) "%1:" _E(.)_E(Tb) " %2\n"
+                                _E(Ta)_E(l) "%3:" _E(.)_E(Tb) " %4\n"
+                                _E(Ta)_E(l) "%5:" _E(.)_E(Tb) " %6")
+                    .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
+                    .arg(tr("Players")).arg(plrDesc)
+                    .arg(tr("Version")).arg(serverInfo.version().asText());
             description->setText(msg);
         }
 
@@ -213,7 +244,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             {
                 gameTitle = Games::get()[gameId].title();
             }
-            String msg = String(_E(b) "%1" _E(.) "\n%2 " DENG2_CHAR_MDASH " %3")
+            String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DENG2_CHAR_MDASH " %3")
                         .arg(serverInfo.map())
                         .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
                                                                          : tr("Deathmatch"))
@@ -221,31 +252,28 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             gameState->setText(msg);
         }
 
-        if (updatePackages && !serverInfo.packages().isEmpty())
+        if (!serverInfo.packages().isEmpty())
         {
-            //qDebug() << "updating with packages:" << serverInfo.packages();
-            if (!packages)
-            {
-                packages = new PackagesWidget(serverInfo.packages());
-                packages->setHiddenTags(StringList()); // show everything
-                packages->setActionItems(packageActions);
-                packages->setActionsAlwaysShown(true);
-                packages->setPackageStatus(*this);
-                packages->searchTermsEditor().setColorTheme(Inverted);
-                packages->searchTermsEditor().setFont("small");
-                packages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"), "editor.hint.small");
-                packages->searchTermsEditor().margins().setTopBottom("dialog.gap");
-                packages->setColorTheme(Inverted, Inverted, Inverted, Inverted);
-                self().area().add(packages);
+            serverPackages->setPopulationEnabled(true);
+            serverPackages->setManualPackageIds(serverInfo.packages());
 
-                updateLayout();
-            }
-            else
-            {
-                packages->setManualPackageIds(serverInfo.packages());
-            }
+            auto *svBut = self().buttonWidget(Id1);
+            svBut->setTextAlignment(ui::AlignLeft);
+            svBut->setText(tr("Server: %1").arg(serverInfo.packages().size()));
         }
     }
+
+    void openServerPackagesPopup()
+    {
+        serverPopup->openOrClose();
+    }
+
+    void openLocalPackagesPopup()
+    {
+
+    }
+
+//- Queries to the server ---------------------------------------------------------------
 
     void startQuery(Query query)
     {
@@ -273,7 +301,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                 {
                     host = resolvedAddress;
 
-                    qDebug() << "[domain] reply from" << host.asText();
+                    //qDebug() << "[domain] reply from" << host.asText();
                     link.foundServerInfo(0, serverInfo);
                     profile = *svProfile;
                     updateContent();
@@ -285,7 +313,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             {
                 link.acquireServerProfile(host, [this] (GameProfile const *svProfile)
                 {
-                    qDebug() << "[ip] reply from" << host.asText();
+                    //qDebug() << "[ip] reply from" << host.asText();
                     link.foundServerInfo(0, serverInfo);
                     profile = *svProfile;
                     updateContent();
@@ -316,7 +344,7 @@ ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
     d->domainName = serverInfo.domainName();
     d->host       = serverInfo.address();
 
-    d->updateContent(false /* don't update packages yet */);
+    d->updateContent();
 
     d->startQuery(Impl::QueryStatus);
 }

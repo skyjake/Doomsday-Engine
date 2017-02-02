@@ -56,12 +56,20 @@ dialog {
     rule download.width    { constant $= UNIT * 115 }
     rule multiplayer.width { constant $= UNIT * 80 }
     rule packages.width    { constant $= UNIT * 100 }
+
     packageinfo {
         rule content.minheight  { constant $= UNIT * 100 }
         rule description.normal { constant $= UNIT * 100 }
         rule description.wide   { constant $= UNIT * 150 }
         rule icon.height        { constant $= UNIT * 45 }
         rule metadata.width     { constant $= UNIT * 60 }
+    }
+    
+    serverinfo {
+        rule content.minheight { constant $= UNIT * 90 }
+        rule description.width { constant $= UNIT * 90 }
+        rule mapoutline.width  { constant $= UNIT * 90 }
+        rule popup.width       { constant $= UNIT * 110 }
     }
 }
 
@@ -84,7 +92,7 @@ console {
 }
 
 home {
-    rule column.width { constant $= UNIT * 125 } #113.8 }
+    rule column.width { constant $= UNIT * 125 } 
     rule popup.width  { constant $= UNIT * 175 }
     rule popup.height { constant $= UNIT * 120 }
     rule progress     { constant $= UNIT * 60 }
