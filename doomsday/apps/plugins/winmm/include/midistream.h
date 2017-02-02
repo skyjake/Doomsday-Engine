@@ -60,7 +60,7 @@ public:
     int         volumeShift;
 
 protected:
-    static void CALLBACK Callback(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
+    static void CALLBACK Callback(HMIDIOUT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
     LPMIDIHDR   GetFreeBuffer(void);
     int         ResizeWorkBuffer(LPMIDIHDR mh);
     int         GetNextEvent(MIDIEVENT* mev);
