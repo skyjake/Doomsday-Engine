@@ -85,6 +85,7 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
     readDehPatch(deh, lumpIsCustom, NoInclude | IgnoreEOF);
 }
 
+#if 0
 static void readFile(String const &sourcePath, bool sourceIsCustom = true)
 {
     LOG_AS("DehRead::readFile");
@@ -102,6 +103,7 @@ static void readFile(String const &sourcePath, bool sourceIsCustom = true)
 
     readDehPatch(file.readAll(), sourceIsCustom, IgnoreEOF);
 }
+#endif
 
 static void readFile2(String const &path, bool sourceIsCustom = true)
 {
