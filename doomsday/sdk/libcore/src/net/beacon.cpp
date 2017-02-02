@@ -22,7 +22,6 @@
 #include "de/LogBuffer"
 #include <QUdpSocket>
 #include <QHostInfo>
-#include <QNetworkInterface>
 #include <QTimer>
 #include <QMap>
 
