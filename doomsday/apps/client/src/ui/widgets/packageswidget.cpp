@@ -427,9 +427,9 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // Search/filter terms.
         search->rule()
-                .setInput(Rule::Left,  self().rule().left())
-                .setInput(Rule::Right, self().rule().right())
-                .setInput(Rule::Top,   self().rule().top());
+                .setInput(Rule::Left,  self().rule().left()  + self().margins().left())
+                .setInput(Rule::Right, self().rule().right() - self().margins().right())
+                .setInput(Rule::Top,   self().rule().top()   + self().margins().top());
         search->setEmptyContentHint(tr("Search packages"));
         search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() + rule("gap"));
@@ -484,9 +484,9 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
         menu->layout().setRowPadding(Const(0));
         menu->rule()
-                .setInput(Rule::Left,  self().rule().left())
-                .setInput(Rule::Right, self().rule().right())
-                .setInput(Rule::Top,   self().rule().top() + search->rule().height());
+                .setInput(Rule::Left,  self().rule().left()  + self().margins().left())
+                .setInput(Rule::Right, self().rule().right() - self().margins().right())
+                .setInput(Rule::Top,   self().rule().top() + self().margins().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
         menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule(RuleBank::UNIT).valuei() +
                                        int(style().fonts().font("default").height().value()*3));
@@ -508,7 +508,8 @@ DENG_GUI_PIMPL(PackagesWidget)
         // By default, only the progress indicator is shown.
         showProgressIndicator(true);
 
-        self().rule().setInput(Rule::Height, search->rule().height() + menu->rule().height());
+        self().rule().setInput(Rule::Height, search->rule().height() + menu->rule().height() +
+                               self().margins().height());
     }
 
     ~Impl()
@@ -751,6 +752,7 @@ PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const 
     : GuiWidget(name)
     , d(new Impl(this))
 {
+    margins().set(ConstantRule::zero());
     setManualPackageIds(manualPackageIds);
 }
 
@@ -787,7 +789,7 @@ void PackagesWidget::setPopulationEnabled(bool enable)
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
 {
-    d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top()));
+    d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top() + margins().top()));
     changeRef(d->searchMinY, minY);
 }
 
