@@ -137,12 +137,12 @@ struct CoreTextFontCache : public Lockable
 #endif
 };
 
-static CoreTextFontCache fontCache;
-
 #ifdef DENG2_DEBUG
 struct LineCounter : public Lockable {
     int count = 0;
-    ~LineCounter() { DENG2_ASSERT(count == 0); }
+    ~LineCounter() {
+        qDebug() << "[CoreTextNativeFont] Cached line count:" << count;
+    }
     void inc() {
         lock();
         ++count;
@@ -156,6 +156,8 @@ struct LineCounter : public Lockable {
 };
 static LineCounter ctLineCounter;
 #endif
+
+static CoreTextFontCache fontCache;
 
 DENG2_PIMPL(CoreTextNativeFont)
 {

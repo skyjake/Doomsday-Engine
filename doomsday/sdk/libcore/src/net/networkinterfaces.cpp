@@ -49,7 +49,7 @@ DENG2_PIMPL(NetworkInterfaces), public Lockable
                 d->gotAddresses = true;
             }
 
-            qDebug() << "Local IP addresses:" << ipv6;
+            //qDebug() << "Local IP addresses:" << ipv6;
         }
     };
 
