@@ -56,7 +56,7 @@ void checkValid(ServerInfo &info)
 
 ServerInfo::ServerInfo()
 {
-    set(VAR_VERSION, Version::currentBuild().baseNumber());
+    set(VAR_VERSION, Version::currentBuild().fullNumber());
     addArray(VAR_PLAYERS);
 }
 
