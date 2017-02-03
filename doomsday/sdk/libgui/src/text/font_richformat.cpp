@@ -137,6 +137,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
 
         case 'T':
             stack.last().tabStop = de::max(-1, code[1].toLatin1() - 'a');
+            // Note: _E(T`): tabStop -1, i.e., switch to untabbed
             break;
 
         case 'b':
