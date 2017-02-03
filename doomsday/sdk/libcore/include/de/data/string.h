@@ -410,6 +410,12 @@ size_t qchar_strlen(QChar const *str);
 
 typedef QList<String> StringList;
 
+inline StringList toStringList(QStringList const &qstr) {
+    StringList list;
+    foreach (QString const &s, qstr) list << s;
+    return list;
+}
+
 inline String operator / (char const *utf8CStr, String const &str) {
     return String(utf8CStr) / str;
 }
