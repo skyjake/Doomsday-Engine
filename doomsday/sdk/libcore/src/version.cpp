@@ -85,6 +85,11 @@ String Version::baseNumber() const
     return String("%1.%2").arg(major).arg(minor);
 }
 
+String Version::fullNumber() const
+{
+    return String("%1.%2.%3.%4").arg(major).arg(minor).arg(patch).arg(build);
+}
+
 String Version::asText() const
 {
     if (!build) return base();

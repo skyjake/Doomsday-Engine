@@ -214,6 +214,8 @@ public:
 
     static String versionedIdentifierForFile(File const &file);
 
+    static Version versionForFile(File const &file);
+
     /**
      * Locates the file that represents the package where @a file is in.
      *

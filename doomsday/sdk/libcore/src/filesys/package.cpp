@@ -468,6 +468,11 @@ String Package::versionedIdentifierForFile(File const &file)
     return id;
 }
 
+Version Package::versionForFile(File const &file)
+{
+    return split(versionedIdentifierForFile(file)).second;
+}
+
 File const *Package::containerOfFile(File const &file)
 {
     // Find the containing package.

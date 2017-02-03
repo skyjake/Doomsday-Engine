@@ -80,19 +80,24 @@ public:
     bool isValid() const;
 
     /**
-     * Forms a version string in the form "x.y.z". If a release
+     * Returns a version string in the form "x.y.z". If a release
      * label is defined, it will be included, too: "x.y.z-label".
      */
     String base() const;
 
     /**
-     * Forms a version string in the form "x.y.z".
+     * Returns a version string in the form "x.y.z".
      */
     String baseNumber() const;
 
     /**
-     * Forms a version string that includes the build number (unless it is
-     * zero).
+     * Returns a version string in the form "x.y.z.build".
+     */
+    String fullNumber() const;
+
+    /**
+     * Returns a version string that includes the build number (unless it is
+     * zero), in the form "x.y.z-label [#build]".
      */
     String asText() const;
 
