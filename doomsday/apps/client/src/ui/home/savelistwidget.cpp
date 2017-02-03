@@ -21,8 +21,11 @@
 #include "ui/savelistdata.h"
 
 #include <doomsday/game.h>
+#include <doomsday/GameStateFolder>
 
 #include <de/CallbackAction>
+#include <de/DocumentPopupWidget>
+#include <de/FileSystem>
 
 using namespace de;
 
@@ -43,6 +46,27 @@ DENG_GUI_PIMPL(SaveListWidget)
             if (event.type() == Event::MouseButton)
             {
                 MouseEvent const &mouse = event.as<MouseEvent>();
+
+                // Check for right-clicking.
+                if (mouse.button() == MouseEvent::Right)
+                {
+                    switch (button.handleMouseClick(event, MouseEvent::Right))
+                    {
+                    case MouseClickStarted:
+                        return true;
+
+                    case MouseClickAborted:
+                        return true;
+
+                    case MouseClickFinished:
+                        saveRightClicked(button);
+                        return true;
+
+                    default:
+                        return false; // Ignore.
+                    }
+                }
+
                 if (button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
                 {
                     emit d->self().doubleClicked(d->self().items().find(
@@ -51,6 +75,23 @@ DENG_GUI_PIMPL(SaveListWidget)
                 }
             }
             return false;
+        }
+
+        void saveRightClicked(GuiWidget &saveButton)
+        {
+            auto const &saveItem = d->self().organizer()
+                    .findItemForWidget(saveButton)->as<SaveListData::SaveItem>();
+
+            if (GameStateFolder const *saved = FS::get().root().tryLocate<GameStateFolder>(saveItem.savePath()))
+            {
+                auto *docPop = new DocumentPopupWidget;
+                docPop->setDeleteAfterDismissed(true);
+                docPop->setCloseButtonVisible(true);
+                docPop->setAnchorAndOpeningDirection(saveButton.rule(), ui::Right);
+                docPop->document().setText(saved->metadata().asStyledText());
+                saveButton.add(docPop);
+                docPop->open();
+            }
         }
     };
 

@@ -363,7 +363,11 @@ void GameStateFolder::Metadata::parse(String const &source)
 
 String GameStateFolder::Metadata::asStyledText() const
 {
-    String currentMapText = String(_E(l)" - Uri: " _E(.) "%1" _E(.)).arg(gets("mapUri"));
+    String currentMapText = String(
+                _E(Ta)_E(l) "  Episode: " _E(.)_E(Tb) "%1\n"
+                _E(Ta)_E(l) "  Uri: "     _E(.)_E(Tb) "%2")
+            .arg(gets("episode"))
+            .arg(gets("mapUri"));
     // Is the time in the current map known?
     if (has("mapTime"))
     {
@@ -371,34 +375,36 @@ String GameStateFolder::Metadata::asStyledText() const
         int const hours   = time / 3600; time -= hours * 3600;
         int const minutes = time / 60;   time -= minutes * 60;
         int const seconds = time;
-        currentMapText += String("\n" _E(l) " - Time: " _E(.) "%1:%2:%3" )
+        currentMapText += String("\n" _E(Ta)_E(l) "  Time: " _E(.)_E(Tb) "%1:%2:%3" )
                              .arg(hours,   2, 10, QChar('0'))
                              .arg(minutes, 2, 10, QChar('0'))
                              .arg(seconds, 2, 10, QChar('0'));
     }
 
-    // Remove extra space in the
-    String gameRulesText;
     QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
-    rules.replaceInStrings(QRegExp("(.*)\\s*:\\s*([^ ].*)"), _E(l) "\\1: " _E(.) "\\2");
-    for (int i = 0; i < rules.size(); ++i)
+    rules.replaceInStrings(QRegExp("\\s*(.*)\\s*:\\s*([^ ].*)\\s*"), _E(l) "\\1: " _E(.) "\\2");
+    String gameRulesText = String::join(toStringList(rules), "\n - ");
+
+    auto const &pkgs = geta("packages");
+    StringList pkgIds;
+    for (auto const *val : pkgs.elements())
     {
-        if (i) gameRulesText += "\n";
-        gameRulesText += " - " + rules.at(i).trimmed();
+        auto const id_ver = Package::split(val->asText());
+        pkgIds << String("%1 (%2)").arg(id_ver.first).arg(id_ver.second.asText());
     }
 
-    return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: "  _E(.) "%2 "
-                  _E(l) "Session id: "   _E(.) "%3\n"
-                  _E(l) "Episode: "      _E(.) "%4\n"
-                  _E(D)_E(b) "Current map:\n" _E(.)_E(.) "%5\n"
-                  _E(D)_E(b) "Game rules:\n"  _E(.)_E(.) "%6")
+    return String(_E(1) "%1\n" _E(.)
+                  _E(Ta)_E(l) "  Game: "  _E(.)_E(Tb) "%2\n"
+                  _E(Ta)_E(l) "  Session ID: "   _E(.)_E(Tb)_E(m) "0x%3" _E(.) "\n"
+                  _E(T`)_E(D) "Current map:\n" _E(.) "%4\n"
+                  _E(T`)_E(D) "Game rules:\n"  _E(.) " - %5\n"
+                  _E(T`)_E(D) "Packages:\n" _E(.) " - %6")
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))
-             .arg(geti("sessionId", 0))
-             .arg(gets("episode"))
+             .arg(getui("sessionId", 0), 0, 16)
              .arg(currentMapText)
-             .arg(gameRulesText);
+             .arg(gameRulesText)
+             .arg(String::join(pkgIds, "\n - "));
 }
 
 /*
