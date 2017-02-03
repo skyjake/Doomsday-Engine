@@ -185,6 +185,12 @@ void MultiplayerPanelButtonWidget::setSelected(bool selected)
     d->extra->show(selected);
 }
 
+void MultiplayerPanelButtonWidget::itemRightClicked()
+{
+    PanelButtonWidget::itemRightClicked();
+    d->extra->trigger();
+}
+
 void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 {
     d->serverInfo = info;

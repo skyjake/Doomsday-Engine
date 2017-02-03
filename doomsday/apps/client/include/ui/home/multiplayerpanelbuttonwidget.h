@@ -34,6 +34,7 @@ public:
     de::ButtonWidget &joinButton();
 
     void setSelected(bool selected) override;
+    void itemRightClicked() override;
 
     void updateContent(de::shell::ServerInfo const &info);
 
