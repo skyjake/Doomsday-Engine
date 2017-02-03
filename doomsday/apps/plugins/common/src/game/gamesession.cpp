@@ -190,7 +190,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
         GameStateMetadata meta;
 
-        meta.set("sessionId",       duint(Timer_RealMilliseconds() + (mapTime << 24)));
+        meta.set("sessionId",       duint(Timer_RealMilliseconds() + (mapTime << 24)) & DDMAXINT);
         meta.set("gameIdentityKey", AbstractSession::gameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
