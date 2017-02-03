@@ -28,6 +28,7 @@
 #include <de/charsymbols.h>
 #include <de/ButtonWidget>
 #include <de/CallbackAction>
+#include <de/PackageLoader>
 #include <de/SequentialLayout>
 #include <de/ui/SubwidgetItem>
 #include <de/ProgressWidget>
@@ -81,8 +82,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // on what kind of package is being displayed.
         self().buttons()
                 << new DialogButtonItem(Default | Accept, tr("Close"))
-                << new DialogButtonItem(Action | Id1, style().images().image("package.icon"),
-                                        new CallbackAction([this] () { openServerPackagesPopup(); }))
+                << new DialogButtonItem(ActionPopup | Id1, style().images().image("package.icon"))
                 << new DialogButtonItem(Action | Id2, style().images().image("package.icon"),
                                         new CallbackAction([this] () { openLocalPackagesPopup(); }));
 
@@ -150,7 +150,6 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // Popups.
 
         serverPopup = new PopupWidget;
-        serverPopup->setAnchorAndOpeningDirection(self().buttonWidget(Id1)->rule(), ui::Up);
         self().add(serverPopup);
         serverPackages = new PackagesWidget(PackagesWidget::PopulationDisabled);
         serverPackages->margins().set("gap");
@@ -161,6 +160,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"));
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
+
+        auto *svBut = self().popupButtonWidget(Id1);
+        svBut->setPopup(*serverPopup);
+        svBut->setTextAlignment(ui::AlignLeft);
 
         updateLayout();
     }
@@ -254,12 +257,46 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         if (!serverInfo.packages().isEmpty())
         {
-            serverPackages->setPopulationEnabled(true);
-            serverPackages->setManualPackageIds(serverInfo.packages());
+            // Check which of the packages are locally available.
+            StringList available;
+            StringList missing;
+            foreach (String pkgId, serverInfo.packages())
+            {
+                if (PackageLoader::get().select(pkgId))
+                {
+                    available << pkgId;
+                }
+                else
+                {
+                    auto const id_ver = Package::split(pkgId);
+                    pkgId = String("%1 (%2)").arg(id_ver.first).arg(id_ver.second.asText());
+                    Version localVersion;
+                    if (id_ver.second.isValid())
+                    {
+                        // Perhaps we have another version of this package?
+                        if (auto *pkgFile = PackageLoader::get().select(id_ver.first))
+                        {
+                            localVersion = Package::versionForFile(*pkgFile);
+                            missing << String("%1 " _E(s) "(you have: %2)" _E(.))
+                                       .arg(pkgId).arg(localVersion.asText());
+                            continue;
+                        }
+                    }
+                    missing << pkgId;
+                }
+            }
 
-            auto *svBut = self().buttonWidget(Id1);
-            svBut->setTextAlignment(ui::AlignLeft);
-            svBut->setText(tr("Server: %1").arg(serverInfo.packages().size()));
+            if (missing.size() > 0)
+            {
+                description->setText(description->text() +
+                                     _E(T`) "\n\n" _E(b) "Missing packages:" _E(.) "\n- " _E(>) +
+                                     String::join(missing, _E(<) "\n- " _E(>)));
+            }
+
+            serverPackages->setPopulationEnabled(true);
+            serverPackages->setManualPackageIds(available);
+
+            self().buttonWidget(Id1)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
         }
     }
 
