@@ -134,7 +134,7 @@ package "com.idsoftware.doom2_1.9" {
     }
 }
 
-package "com.idsoftware.finaldoom.plutonia" {
+package "com.idsoftware.finaldoom.plutonia_1.9" {
     format: IWAD 
     fileName: plutonia.wad
     fileSize: 17420824 
@@ -148,7 +148,7 @@ package "com.idsoftware.finaldoom.plutonia" {
     }
 }
 
-package "com.idsoftware.finaldoom.tnt" {
+package "com.idsoftware.finaldoom.tnt_1.9" {
     format: IWAD 
     fileName: tnt.wad
     fileSize: 18195736 
