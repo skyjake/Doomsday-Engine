@@ -326,7 +326,7 @@ GuiWidget::ColorTheme PopupWidget::colorTheme() const
     return d->colorTheme;
 }
 
-void PopupWidget::enableCloseButton(bool enable)
+void PopupWidget::setCloseButtonVisible(bool enable)
 {
     if (enable && !d->close)
     {
@@ -351,7 +351,7 @@ void PopupWidget::enableCloseButton(bool enable)
 
 ButtonWidget &PopupWidget::closeButton()
 {
-    enableCloseButton(true);
+    setCloseButtonVisible(true);
     return *d->close;
 }
 

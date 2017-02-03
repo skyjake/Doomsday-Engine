@@ -103,7 +103,7 @@ public:
 
     ColorTheme colorTheme() const;
 
-    void enableCloseButton(bool enable);
+    void setCloseButtonVisible(bool enable);
 
     /**
      * Returns the close button of the popup.
