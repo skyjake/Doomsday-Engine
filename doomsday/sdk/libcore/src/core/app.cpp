@@ -649,7 +649,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         {
             logBuf.setOutputFile(String("/home") / outArg.params.at(0));
         }
-        else
+        else if (d->config->has("log"))
         {
             // Set the log output file.
             logBuf.setOutputFile(d->config->gets("log.file"));
@@ -665,8 +665,11 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     try
     {
-        // The level of enabled messages.
-        d->logFilter.read(d->config->objectNamespace().subrecord("log.filter"));
+        if (d->config->has("log.filter"))
+        {
+            // The level of enabled messages.
+            d->logFilter.read(d->config->subrecord("log.filter"));
+        }
     }
     catch (Error const &er)
     {

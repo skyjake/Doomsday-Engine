@@ -19,6 +19,7 @@
 
 #include <de/CommandLine>
 #include <de/DirectoryFeed>
+#include <de/EscapeParser>
 #include <de/FS>
 #include <de/LogBuffer>
 #include <de/NativeFile>
@@ -55,9 +56,11 @@ int main(int argc, char **argv)
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }
-    catch (Error const &err)
+    catch (Error const &er)
     {
-        qWarning() << err.asText();
+        EscapeParser esc;
+        esc.parse(er.asText());
+        qWarning() << esc.plainText();
     }
 
     qDebug("Exiting main()...");
