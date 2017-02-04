@@ -438,6 +438,15 @@ std::pair<String, Version> Package::split(String const &identifier_version)
     return idVer;
 }
 
+String Package::splitToHumanReadable(String const &identifier_version)
+{
+    auto const id_ver = split(identifier_version);
+    return QObject::tr("%1 " _E(C) "(%2)" _E(.))
+            .arg(id_ver.first)
+            .arg(id_ver.second.isValid()? QObject::tr("version %1").arg(id_ver.second.asText())
+                                        : QObject::tr("any version"));
+}
+
 bool Package::equals(String const &id1, String const &id2)
 {
     return split(id1).first == split(id2).first;
