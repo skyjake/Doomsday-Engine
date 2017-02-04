@@ -389,8 +389,7 @@ String GameStateFolder::Metadata::asStyledText() const
     StringList pkgIds;
     for (auto const *val : pkgs.elements())
     {
-        auto const id_ver = Package::split(val->asText());
-        pkgIds << String("%1 (%2)").arg(id_ver.first).arg(id_ver.second.asText());
+        pkgIds << Package::splitToHumanReadable(val->asText());
     }
 
     return String(_E(1) "%1\n" _E(.)

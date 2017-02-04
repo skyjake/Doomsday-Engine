@@ -108,6 +108,12 @@ public:
     de::StringList requiredPackages() const;
 
     /**
+     * Returns the list of packages that the user has chosen to be loaded when
+     * joining multiplayer using this game. The list of packages is read from Config.
+     */
+    de::StringList localMultiplayerPackages() const;
+
+    /**
      * Determines the status of the game.
      *
      * @see statusAsText()
@@ -271,6 +277,16 @@ public:
     static void consoleRegister();
 
     static de::String logoImageForId(de::String const &id);
+
+    static de::StringList localMultiplayerPackages(de::String const &gameId);
+
+    /**
+     * Sets the packages that will be loaded locally in addition to the server's
+     * packages. This is saved to Config.
+     *
+     * @param packages  List of local packages.
+     */
+    static void setLocalMultiplayerPackages(de::String const &gameId, de::StringList const &packages);
 
 private:
     DENG2_PRIVATE(d)

@@ -30,6 +30,8 @@
 
 #include <de/App>
 #include <de/CommandLine>
+#include <de/Config>
+#include <de/DictionaryValue>
 #include <de/Error>
 #include <de/Log>
 #include <de/PackageLoader>
@@ -149,6 +151,41 @@ void Game::addRequiredPackage(String const &packageId)
 StringList Game::requiredPackages() const
 {
     return d->requiredPackages;
+}
+
+StringList Game::localMultiplayerPackages() const
+{
+    return localMultiplayerPackages(id());
+}
+
+StringList Game::localMultiplayerPackages(String const &gameId) // static
+{
+    try
+    {
+        auto const &pkgDict = Config::get().getdt("resource.localPackagesForGame");
+        TextValue const key(gameId);
+        if (pkgDict.contains(key))
+        {
+            return pkgDict.element(key).as<ArrayValue>().toStringList();
+        }
+        return StringList();
+    }
+    catch (Error const &)
+    {
+        return StringList();
+    }
+}
+
+void Game::setLocalMultiplayerPackages(String const &gameId, StringList const &packages) // static
+{
+    std::unique_ptr<ArrayValue> ids(new ArrayValue);
+    for (String const &pkg : packages)
+    {
+        ids->add(pkg);
+    }
+    Config::get()["resource.localPackagesForGame"]
+            .value().as<DictionaryValue>()
+            .setElement(TextValue(gameId), ids.release());
 }
 
 void Game::addManifest(ResourceManifest &manifest)
