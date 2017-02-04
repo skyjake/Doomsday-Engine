@@ -29,6 +29,8 @@
 #include <de/charsymbols.h>
 #include <de/ButtonWidget>
 #include <de/CallbackAction>
+#include <de/Config>
+#include <de/DictionaryValue>
 #include <de/PackageLoader>
 #include <de/SequentialLayout>
 #include <de/ui/SubwidgetItem>
@@ -183,6 +185,12 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
         self().add(localPackages);
 
+        QObject::connect(localPackages, &PackagesButtonWidget::packageSelectionChanged,
+                         [this] (QStringList const &packages)
+        {
+            setLocalPackagesForGame(profile.gameId(), toStringList(packages));
+        });
+
         updateLayout();
     }
 
@@ -274,9 +282,13 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             gameState->setText(msg);
         }
 
-        localPackages->setDialogTitle(tr("Local Packages for %1 " DENG2_CHAR_MDASH " %2")
-                                      .arg(profile.name()).arg(gameTitle));
-        localPackages->setGameProfile(profile);
+        // Local packages.
+        {
+            localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer")
+                                          .arg(profile.name()));
+            localPackages->setGameProfile(profile);
+            localPackages->setPackages(localPackagesForGame(gameId));
+        }
 
         if (!serverInfo.packages().isEmpty())
         {
@@ -327,6 +339,36 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     void openServerPackagesPopup()
     {
         serverPopup->openOrClose();
+    }
+
+    static StringList localPackagesForGame(String const &gameId)
+    {
+        try
+        {
+            auto const &pkgDict = Config::get().getdt("resource.localPackagesForGame");
+            TextValue const key(gameId);
+            if (pkgDict.contains(key))
+            {
+                return pkgDict.element(key).as<ArrayValue>().toStringList();
+            }
+            return StringList();
+        }
+        catch (Error const &)
+        {
+            return StringList();
+        }
+    }
+
+    static void setLocalPackagesForGame(String const &gameId, StringList const &packages)
+    {
+        std::unique_ptr<ArrayValue> ids(new ArrayValue);
+        for (String const &pkg : packages)
+        {
+            ids->add(pkg);
+        }
+        Config::get()["resource.localPackagesForGame"]
+                .value().as<DictionaryValue>()
+                .setElement(TextValue(gameId), ids.release());
     }
 
 //- Queries to the server ---------------------------------------------------------------
