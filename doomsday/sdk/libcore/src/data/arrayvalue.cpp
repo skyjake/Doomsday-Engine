@@ -318,6 +318,16 @@ void ArrayValue::reverse()
     std::reverse(_elements.begin(), _elements.end());
 }
 
+StringList ArrayValue::toStringList() const
+{
+    StringList list;
+    for (Value const *v : _elements)
+    {
+        list << v->asText();
+    }
+    return list;
+}
+
 void ArrayValue::clear()
 {
     // Delete the values.

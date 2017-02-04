@@ -162,6 +162,9 @@ public:
     /// Reverse the order of the elements.
     void reverse();
 
+    /// Converts each element to text and returns them as a list.
+    StringList toStringList() const;
+
     // Implementations of pure virtual methods.
     Text typeId() const;
     Value *duplicate() const;
