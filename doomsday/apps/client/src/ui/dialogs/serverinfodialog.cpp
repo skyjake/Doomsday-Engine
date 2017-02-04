@@ -188,7 +188,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         QObject::connect(localPackages, &PackagesButtonWidget::packageSelectionChanged,
                          [this] (QStringList const &packages)
         {
-            setLocalPackagesForGame(profile.gameId(), toStringList(packages));
+            Game::setLocalMultiplayerPackages(profile.gameId(), toStringList(packages));
         });
 
         updateLayout();
@@ -284,10 +284,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Local packages.
         {
-            localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer")
-                                          .arg(profile.name()));
+            localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer").arg(gameTitle));
             localPackages->setGameProfile(profile);
-            localPackages->setPackages(localPackagesForGame(gameId));
+            localPackages->setPackages(Game::localMultiplayerPackages(gameId));
         }
 
         if (!serverInfo.packages().isEmpty())
@@ -304,7 +303,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                 else
                 {
                     auto const id_ver = Package::split(pkgId);
-                    pkgId = String("%1 (%2)").arg(id_ver.first).arg(id_ver.second.asText());
+                    pkgId = Package::splitToHumanReadable(pkgId);
                     Version localVersion;
                     if (id_ver.second.isValid())
                     {
@@ -339,36 +338,6 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     void openServerPackagesPopup()
     {
         serverPopup->openOrClose();
-    }
-
-    static StringList localPackagesForGame(String const &gameId)
-    {
-        try
-        {
-            auto const &pkgDict = Config::get().getdt("resource.localPackagesForGame");
-            TextValue const key(gameId);
-            if (pkgDict.contains(key))
-            {
-                return pkgDict.element(key).as<ArrayValue>().toStringList();
-            }
-            return StringList();
-        }
-        catch (Error const &)
-        {
-            return StringList();
-        }
-    }
-
-    static void setLocalPackagesForGame(String const &gameId, StringList const &packages)
-    {
-        std::unique_ptr<ArrayValue> ids(new ArrayValue);
-        for (String const &pkg : packages)
-        {
-            ids->add(pkg);
-        }
-        Config::get()["resource.localPackagesForGame"]
-                .value().as<DictionaryValue>()
-                .setElement(TextValue(gameId), ids.release());
     }
 
 //- Queries to the server ---------------------------------------------------------------

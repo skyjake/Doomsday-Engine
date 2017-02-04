@@ -190,7 +190,14 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
         icon().setImage(nullptr);
     }
-    infoText += "\n" _E(C) + String(info.description());
+    infoText += "\n" _E(C) + String(info.description()) + _E(.);
+
+    int const localCount = Game::localMultiplayerPackages(info.gameId()).size();
+    if (localCount)
+    {
+        infoText += "\n" _E(D)_E(b) + String("%1 local package%2").arg(localCount)
+                .arg(DENG2_PLURAL_S(localCount));
+    }
 
     d->info->setFont("small");
     d->info->setText(infoText);

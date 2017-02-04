@@ -36,11 +36,13 @@
 #include <de/GuiApp>
 #include <de/Message>
 #include <de/MessageDialog>
+#include <de/PackageLoader>
 #include <de/RecordValue>
 #include <de/Socket>
 #include <de/data/json.h>
 #include <de/memory.h>
 #include <de/shell/ServerFinder>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
 #include <QTimer>
 
@@ -375,20 +377,38 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
         auto &win = ClientWindow::main();
         win.glActivate();
 
-        if (!serverProfile->isPlayable())
+        // If additional packages are configured, set up the ad-hoc profile.
+        GameProfile const *joinProfile = serverProfile;
+        auto const localPackages = serverProfile->game().localMultiplayerPackages();
+        if (localPackages.count())
         {
-            auto prettyPkg = [] (String const &pkgId) -> String {
-                auto meta = Package::split(pkgId);
-                if (meta.second.isValid()) {
-                    return String("%1 (version %2)").arg(meta.first).arg(meta.second.asText());
+            // Make sure the packages are available.
+            for (String const &pkg : localPackages)
+            {
+                if (!PackageLoader::get().select(pkg))
+                {
+                    String const errorMsg = tr("The configured local multiplayer "
+                                               "package %1 is unavailable.")
+                            .arg(Package::splitToHumanReadable(pkg));
+                    LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
+                    d->reportError(errorMsg);
+                    return;
                 }
-                return pkgId;
-            };
+            }
 
-            String const errorMsg = QString("Server's game \"%1\" is not playable on this system. "
-                                            "The following packages are unavailable:\n\n%2")
+            auto &adhoc = DoomsdayApp::app().adhocProfile();
+            adhoc = *serverProfile;
+            adhoc.setPackages(serverProfile->packages() + localPackages);
+            joinProfile = &adhoc;
+        }
+
+        if (!joinProfile->isPlayable())
+        {
+            String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
+                                       "The following packages are unavailable:\n\n%2")
                     .arg(info.gameId())
-                    .arg(String::join(de::map(serverProfile->unavailablePackages(), prettyPkg), "\n"));
+                    .arg(String::join(de::map(joinProfile->unavailablePackages(),
+                                              Package::splitToHumanReadable), "\n"));
             LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
             d->reportError(errorMsg);
             return;
@@ -397,7 +417,7 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
         BusyMode_FreezeGameForBusyMode();
         win.taskBar().close();
 
-        DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
+        DoomsdayApp::app().changeGame(*joinProfile, DD_ActivateGameWorker);
 
         connectHost(info.address());
 
