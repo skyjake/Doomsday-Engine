@@ -25,6 +25,8 @@
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
+    Q_OBJECT
+
 public:
     DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
 
@@ -37,6 +39,9 @@ public:
     void itemRightClicked() override;
 
     void updateContent(de::shell::ServerInfo const &info);
+
+public slots:
+    void joinGame();
 
 private:
     DENG2_PRIVATE(d)

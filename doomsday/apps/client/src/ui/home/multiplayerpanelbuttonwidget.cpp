@@ -85,72 +85,20 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self().panel().open();
 
         extra->setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
-            return new ServerInfoDialog(serverInfo);
+            auto *dlg = new ServerInfoDialog(serverInfo);
+            QObject::connect(dlg, SIGNAL(joinGame()), thisPublic, SLOT(joinGame()));
+            return dlg;
         }, ui::Right);
     }
 
     void joinButtonPressed() const
     {
         self().root().setFocus(nullptr);
-
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(serverInfo);
-
-        ClientApp::serverLink().connectToServerAndChangeGame(serverInfo);
-
-#if 0
-        auto &svLink = ClientApp::serverLink();
+        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i)
         {
-            // Automatically leave the current MP game.
-            if (netGame && isClient)
-            {
-                svLink.disconnect();
-            }
-
-            // Get the profile for this.
-            // Use a delayed callback so that the UI is not blocked while we switch games.
-            svLink.acquireServerProfile(info.address(),
-                                        [&svLink, info] (GameProfile const *serverProfile)
-            {
-                if (!serverProfile)
-                {
-                    // Hmm, oopsie?
-                    LOG_NET_ERROR("Failed to connect: not enough information about "
-                                  "server %s") << info.address();
-                    return;
-                }
-
-                auto &win = ClientWindow::main();
-                win.glActivate();
-
-                if (!serverProfile->isPlayable())
-                {
-                    String const errorMsg = QString("Server's game \"%1\" is not playable on this system. "
-                                                    "The following packages are unavailable:\n\n%2")
-                            .arg(info.gameId())
-                            .arg(String::join(serverProfile->unavailablePackages(), "\n"));
-
-                    // Show the error message in a dialog box.
-                    MessageDialog *dlg = new MessageDialog;
-                    dlg->setDeleteAfterDismissed(true);
-                    dlg->title().setText(tr("Cannot Join Game"));
-                    dlg->message().setText(errorMsg);
-                    dlg->buttons()
-                            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept);
-                    dlg->exec(win.root());
-                    return;
-                }
-
-                BusyMode_FreezeGameForBusyMode();
-                win.taskBar().close();
-
-                DoomsdayApp::app().changeGame(*serverProfile, DD_ActivateGameWorker);
-
-                svLink.connectHost(info.address());
-
-                win.glDone();
-            });
+            i->aboutToJoinMultiplayerGame(serverInfo);
         }
-#endif
+        ClientApp::serverLink().connectToServerAndChangeGame(serverInfo);
     }
 
     bool hasConfig(String const &token) const
@@ -246,4 +194,9 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
     d->info->setFont("small");
     d->info->setText(infoText);
+}
+
+void MultiplayerPanelButtonWidget::joinGame()
+{
+    d->joinButtonPressed();
 }

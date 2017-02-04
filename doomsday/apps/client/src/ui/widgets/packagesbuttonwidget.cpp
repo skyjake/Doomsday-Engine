@@ -27,6 +27,8 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 {
     StringList packages;
     String dialogTitle;
+    DotPath dialogIcon { "package.icon" };
+    String labelPrefix;
     String noneLabel;
     GameProfile const *profile = nullptr;
     std::function<void (PackagesDialog &)> setupFunc;
@@ -41,17 +43,15 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         if (packages.isEmpty())
         {
             self().setText(noneLabel);
-            self().setTextColor("text");
-            self().setImageColor(style().colors().colorf("text"));
-
+            self().setTextColor(self().colorTheme() == Normal? "text" : "inverted.text");
             if (!noneLabel.isEmpty()) self().setImage(nullptr);
         }
         else
         {
-            self().setText(String::format("%i", packages.count()));
-            self().setTextColor("accent");
-            self().setImageColor(style().colors().colorf("accent"));
+            self().setText(labelPrefix + String::format("%i", packages.count()));
+            self().setTextColor(self().colorTheme() == Normal? "accent" : "inverted.accent");
         }
+        self().setImageColor(self().textColorf());
     }
 
     void pressed()
@@ -59,6 +59,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         // The Packages dialog allows selecting which packages are loaded, and in
         // which order. One can also browse the available packages.
         auto *dlg = new PackagesDialog(dialogTitle);
+        dlg->heading().setStyleImage(dialogIcon);
         if (profile)
         {
             dlg->setGame(profile->gameId());
@@ -102,6 +103,12 @@ void PackagesButtonWidget::setSetupCallback(std::function<void (PackagesDialog &
     d->setupFunc = func;
 }
 
+void PackagesButtonWidget::setLabelPrefix(String const &labelPrefix)
+{
+    d->labelPrefix = labelPrefix;
+    d->updateLabel();
+}
+
 void PackagesButtonWidget::setNoneLabel(String const &noneLabel)
 {
     d->noneLabel = noneLabel;
@@ -111,6 +118,11 @@ void PackagesButtonWidget::setNoneLabel(String const &noneLabel)
 void PackagesButtonWidget::setDialogTitle(String const &title)
 {
     d->dialogTitle = title;
+}
+
+void PackagesButtonWidget::setDialogIcon(DotPath const &imageId)
+{
+    d->dialogIcon = imageId;
 }
 
 void PackagesButtonWidget::setPackages(StringList const &packageIds)

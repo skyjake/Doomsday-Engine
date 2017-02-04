@@ -132,7 +132,8 @@ public:
 
         ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action);
 
-        ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action);
+        ButtonItem(RoleFlags flags, Image const &image, String const &label,
+                   RefArg<de::Action> action = RefArg<de::Action>());
 
         RoleFlags role() const { return _role; }
 

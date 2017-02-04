@@ -187,7 +187,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         gameTitle->rule()
                 .setInput(Rule::Left,  self().leftArea().contentRule().left())
                 .setInput(Rule::Top,   self().leftArea().contentRule().top())
-                .setInput(Rule::Width, rule("dialog.packages.width"));
+                .setInput(Rule::Width, rule("dialog.packages.left.width"));
         gameDataFiles->rule()
                 .setRect(gameTitle->rule())
                 .clearInput(Rule::Top);
@@ -196,7 +196,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         menu->rule()
                 .setInput(Rule::Left,  self().leftArea().contentRule().left())
                 .setInput(Rule::Top,   gameTitle->rule().bottom())
-                .setInput(Rule::Width, rule("dialog.packages.width"));
+                .setInput(Rule::Width, rule("dialog.packages.left.width"));
         menu->organizer().setWidgetFactory(*this);
         menu->audienceForChildAddition() += this;
         self().leftArea().enableIndicatorDraw(true);
@@ -251,7 +251,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         browser->rule()
                 .setInput(Rule::Left,  self().rightArea().contentRule().left())
                 .setInput(Rule::Top,   self().rightArea().contentRule().top())
-                .setInput(Rule::Width, menu->rule().width());
+                .setInput(Rule::Width, rule("dialog.packages.right.width"));
         self().rightArea().enableIndicatorDraw(true);
         browser->setFilterEditorMinimumY(self().rightArea().rule().top());
     }
@@ -349,9 +349,9 @@ PackagesDialog::PackagesDialog(String const &titleText)
     }
     else
     {
-        heading().setText(tr("Packages: %1").arg(titleText));
+        heading().setText(titleText);
     }
-    heading().setImage(style().images().image("package.icon"));
+    heading().setStyleImage("package.icon");
     buttons()
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))

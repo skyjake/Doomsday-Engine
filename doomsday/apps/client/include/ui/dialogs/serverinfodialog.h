@@ -32,6 +32,9 @@ class ServerInfoDialog : public de::DialogWidget
 public:
     ServerInfoDialog(de::shell::ServerInfo const &serverInfo);
 
+signals:
+    void joinGame();
+
 private:
     DENG2_PRIVATE(d)
 };

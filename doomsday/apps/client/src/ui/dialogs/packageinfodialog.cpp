@@ -523,7 +523,7 @@ void PackageInfoDialog::configure()
     if (d->configurePopup) return; // Let it close itself.
 
     PopupWidget *pop = PackageContentOptionsWidget::makePopup(
-                d->packageId, rule("dialog.packages.width"), root().viewHeight());
+                d->packageId, rule("dialog.packages.left.width"), root().viewHeight());
     d->configurePopup.reset(pop);
     pop->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Left);
     pop->closeButton().setActionFn([pop] ()

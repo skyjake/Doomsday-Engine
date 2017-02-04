@@ -90,7 +90,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
-        packagesButton->setDialogTitle(profile.name());
+        packagesButton->setDialogTitle(tr("Packages for %1").arg(profile.name()));
         packagesButton->setSetupCallback([this] (PackagesDialog &dialog)
         {
             // Add a button for starting the game.

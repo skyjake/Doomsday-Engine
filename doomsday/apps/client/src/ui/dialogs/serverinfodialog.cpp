@@ -21,6 +21,7 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/mapoutlinewidget.h"
+#include "ui/widgets/packagesbuttonwidget.h"
 #include "network/serverlink.h"
 
 #include <doomsday/Games>
@@ -64,6 +65,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *description;
     PopupWidget *serverPopup;
     PackagesWidget *serverPackages;
+    PackagesButtonWidget *localPackages;
     MapOutlineWidget *mapOutline;
     LabelWidget *gameState;
     ui::ListData serverPackageActions;
@@ -82,9 +84,12 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // on what kind of package is being displayed.
         self().buttons()
                 << new DialogButtonItem(Default | Accept, tr("Close"))
-                << new DialogButtonItem(ActionPopup | Id1, style().images().image("package.icon"))
-                << new DialogButtonItem(Action | Id2, style().images().image("package.icon"),
-                                        new CallbackAction([this] () { openLocalPackagesPopup(); }));
+                << new DialogButtonItem(Action, tr("Join Game"), new CallbackAction([this] ()
+                {
+                    self().accept();
+                    emit self().joinGame();
+                }))
+                << new DialogButtonItem(ActionPopup | Id1, style().images().image("package.icon"), tr("Server"));
 
         createWidgets();
     }
@@ -161,9 +166,22 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
 
+        // Action buttons.
+
         auto *svBut = self().popupButtonWidget(Id1);
         svBut->setPopup(*serverPopup);
+        svBut->setText(tr("Server"));
         svBut->setTextAlignment(ui::AlignLeft);
+        svBut->disable();
+
+        localPackages = new PackagesButtonWidget;
+        localPackages->setColorTheme(Inverted);
+        localPackages->setLabelPrefix(tr("Local: "));
+        localPackages->setNoneLabel(tr("Local Packages..."));
+        localPackages->setGameProfile(profile);
+        localPackages->disable();
+        localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
+        self().add(localPackages);
 
         updateLayout();
     }
@@ -196,7 +214,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     {
         title->setText(serverInfo.name());
 
-        qDebug() << serverInfo.asText();
+        //qDebug() << serverInfo.asText();
 
         // Title and description.
         {
@@ -239,14 +257,15 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             description->setText(msg);
         }
 
+        String const gameId = serverInfo.gameId();
+        String gameTitle = gameId;
+        if (Games::get().contains(gameId))
+        {
+            gameTitle = Games::get()[gameId].title();
+        }
+
         // Game state.
         {
-            String const gameId = serverInfo.gameId();
-            String gameTitle = gameId;
-            if (Games::get().contains(gameId))
-            {
-                gameTitle = Games::get()[gameId].title();
-            }
             String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DENG2_CHAR_MDASH " %3")
                         .arg(serverInfo.map())
                         .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
@@ -254,6 +273,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                         .arg(gameTitle);
             gameState->setText(msg);
         }
+
+        localPackages->setDialogTitle(tr("Local Packages for %1 " DENG2_CHAR_MDASH " %2")
+                                      .arg(profile.name()).arg(gameTitle));
+        localPackages->setGameProfile(profile);
 
         if (!serverInfo.packages().isEmpty())
         {
@@ -296,6 +319,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             serverPackages->setPopulationEnabled(true);
             serverPackages->setManualPackageIds(available);
 
+            self().buttonWidget(Id1)->enable();
             self().buttonWidget(Id1)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
         }
     }
@@ -303,11 +327,6 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     void openServerPackagesPopup()
     {
         serverPopup->openOrClose();
-    }
-
-    void openLocalPackagesPopup()
-    {
-
     }
 
 //- Queries to the server ---------------------------------------------------------------
@@ -337,25 +356,14 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                                                               GameProfile const *svProfile)
                 {
                     host = resolvedAddress;
-
-                    //qDebug() << "[domain] reply from" << host.asText();
-                    link.foundServerInfo(0, serverInfo);
-                    profile = *svProfile;
-                    updateContent();
-
-                    startQuery(QueryMapOutline);
+                    statusReceived(*svProfile);
                 });
             }
             else
             {
                 link.acquireServerProfile(host, [this] (GameProfile const *svProfile)
                 {
-                    //qDebug() << "[ip] reply from" << host.asText();
-                    link.foundServerInfo(0, serverInfo);
-                    profile = *svProfile;
-                    updateContent();
-
-                    startQuery(QueryMapOutline);
+                    statusReceived(*svProfile);
                 });
             }
             break;
@@ -367,6 +375,17 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         case QueryNone:
             break;
         }
+    }
+
+    void statusReceived(GameProfile const &svProfile)
+    {
+        link.foundServerInfo(0, serverInfo);
+        profile = svProfile;
+        localPackages->enable();
+        updateContent();
+
+        // We want a complete status of the server.
+        startQuery(QueryMapOutline);
     }
 
     void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)

@@ -282,9 +282,11 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
+            bool isFile = false;
             auto pkgIdVer = Package::split(packageId());
             if (pkgIdVer.first.startsWith("file."))
             {
+                isFile = true;
                 icon().setStyleImage("file", "default");
 
                 // Local files should not be indicated to be packages.
@@ -300,7 +302,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             String labelText = String(_E(b) "%1\n" _E(l)_E(s) "%2")
                     .arg(_item->label())
                     .arg(pkgIdVer.first);
-            if (pkgIdVer.second.isValid())
+            if (!isFile && pkgIdVer.second.isValid())
             {
                 labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.asText());
             }

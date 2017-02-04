@@ -55,8 +55,11 @@ dialog {
     rule message.width     { constant $= UNIT * 115 }
     rule download.width    { constant $= UNIT * 115 }
     rule multiplayer.width { constant $= UNIT * 80 }
-    rule packages.width    { constant $= UNIT * 100 }
-
+    
+    packages {
+        rule left.width  { constant $= UNIT * 100 }
+        rule right.width { constant $= UNIT * 115 }
+    }
     packageinfo {
         rule content.minheight  { constant $= UNIT * 100 }
         rule description.normal { constant $= UNIT * 100 }
@@ -64,7 +67,6 @@ dialog {
         rule icon.height        { constant $= UNIT * 45 }
         rule metadata.width     { constant $= UNIT * 60 }
     }
-    
     serverinfo {
         rule content.minheight { constant $= UNIT * 90 }
         rule description.width { constant $= UNIT * 90 }
