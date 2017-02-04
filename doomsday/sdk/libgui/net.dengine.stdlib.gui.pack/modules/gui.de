@@ -30,43 +30,45 @@ def setDefaults(d)
         d.video = 'opengl'
 
         # Generic user interface settings.
-        record d.ui
-        d.ui.scaleFactor = 1.0  # Overall factor (both rules and fonts).
-        d.ui.showAnnotations = True
+        record d.ui()
+            scaleFactor = 1.0  # Overall factor (both rules and fonts).
+            showAnnotations = True
+        end
            
         # Window manager defaults.
-        record d.window
-        d.window.fsaa = False   # Remove this (should be window-specific).
+        record d.window()
+            fsaa = False   # Remove this (should be window-specific).
     
-        # Configure the main window.
-        record d.window.main
-        d.window.main.showFps = False
-        d.window.main.center  = True
-        d.window.main.fsaa    = False
-        d.window.main.vsync   = True
+            # Configure the main window.
+            record main()
+                showFps = False
+                center  = True
+                fsaa    = False
+                vsync   = True
+            end
+        end
 
         # The default window parameters depend on the original display mode.
         mode = DisplayMode.originalMode()
-
+        
         # By default the fullscreen resolution is the desktop resolution.
-        d.window.main.fullSize = [mode['width'], mode['height']]
+        mainWin = d.window.main
+        mainWin.fullSize = [mode['width'], mode['height']]
     
         # In windowed mode mode, leave some space on the sides so that
         # the first switch to windowed mode does not place the window in an
         # inconvenient location. The reduction is done proportionally.
         offx = mode['width'] * 0.15
         offy = mode['height'] * 0.15
-        d.window.main.rect = [offx, offy, 
-                              mode['width'] - 2*offx,
-                              mode['height'] - 2*offy]
-        d.window.main.colorDepth = mode['depth']
+        mainWin.rect = [offx, offy, mode['width'] - 2*offx, mode['height'] - 2*offy]
+        mainWin.colorDepth = mode['depth']
 
         if Version.OS == 'windows' or Version.OS == 'macx'
-            d.window.main.fullscreen = True
-            d.window.main.maximize   = False
+            mainWin.fullscreen = True
+            mainWin.maximize   = False
         else
-            d.window.main.fullscreen = False
-            d.window.main.maximize   = True
+            mainWin.fullscreen = False
+            mainWin.maximize   = True
         end
 
     catch NotFoundError

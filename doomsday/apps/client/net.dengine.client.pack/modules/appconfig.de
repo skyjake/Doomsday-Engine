@@ -37,6 +37,7 @@ def setDefaults(d)
     # Additional Log defaults.
     d.log.filterBySubsystem = False
     d.log.showMetadata = False
+    
     record d.alert()
         generic  = Log.WARNING
         resource = Log.WARNING
@@ -52,20 +53,23 @@ def setDefaults(d)
     end
     
     # Home.
-    record d.home
-    record d.home.columns
-    d.home.showUnplayableGames = True
-    d.home.showColumnDescription = True
-    d.home.columns.doom = True
-    d.home.columns.heretic = True
-    d.home.columns.hexen = True
-    d.home.columns.otherGames = True
-    d.home.columns.multiplayer = True
+    record d.home()
+        showUnplayableGames = True
+        showColumnDescription = True
+        
+        record columns
+        columns.doom = True
+        columns.heretic = True
+        columns.hexen = True
+        columns.otherGames = True
+        columns.multiplayer = True
+    end
     
     # Input defaults.
-    record d.input
-    record d.input.mouse
-    d.input.mouse.syncSensitivity = True
+    record d.input()
+        record mouse
+        mouse.syncSensitivity = True
+    end
 
     # Defaults for the automatic updater.
     record d.updater()
@@ -90,37 +94,41 @@ def setDefaults(d)
     end
         
     # Resource settings.
-    record d.resource
-    d.resource.iwadFolder = ''
-    d.resource.packageFolder = ''
-    d.resource.noHighResTex = False
-    d.resource.noHighResPatches = False
-    d.resource.highResWithPWAD = True
+    record d.resource()
+        iwadFolder = ''
+        packageFolder = ''
+        noHighResTex = False
+        noHighResPatches = False
+        highResWithPWAD = True
+    end
     
     # Renderer settings.
-    record d.render
-    d.render.pixelDensity = 1.0     # Overall pixel density.
+    record d.render()
+        pixelDensity = 1.0     # Overall pixel density.
 
-    # LensFx settings.
-    record d.render.fx
-    record d.render.fx.resize
-    d.render.fx.resize.factor = 1.0
+        # LensFx settings.
+        record fx
+        record fx.resize
+        fx.resize.factor = 1.0
+    end
     
     # VR/3D settings.
-    record d.vr
-    record d.vr.oculusRift
-    d.vr.oculusRift.pixelDensity = 1.0
+    record d.vr()
+        record oculusRift
+        oculusRift.pixelDensity = 1.0
+    end
     
     # Audio settings.
-    record d.audio
-    d.audio.soundPlugin = 'fmod'
-    if Version.OS == 'macx'
-        d.audio.musicPlugin = 'fluidsynth'
-        d.audio.cdPlugin    = 'dummy'
-    else
-        d.audio.musicPlugin = 'fmod'
-        d.audio.cdPlugin    = 'fmod'
+    record d.audio()
+        soundPlugin = 'fmod'
+        if Version.OS == 'macx'
+            musicPlugin = 'fluidsynth'
+            cdPlugin    = 'dummy'
+        else
+            musicPlugin = 'fmod'
+            cdPlugin    = 'fmod'
+        end
+        record fmod
+        fmod.speakerMode = '' # defaults to stereo
     end
-    record d.audio.fmod
-    d.audio.fmod.speakerMode = '' # defaults to stereo
 end

@@ -43,11 +43,11 @@ def setDefaults(d = None)
     d.importPath = ['']
 
     # Log parameters.
-    record d.log
-
-    # Log message levels.
-    d.log.file       = '/home/doomsday.out'
-    d.log.bufferSize = 1000
+    record d.log()
+        # Log message levels.
+        file       = '/home/doomsday.out'
+        bufferSize = 1000
+    end
 
     # Default log filtering.
     def initFilter(flt, level, dev)
@@ -55,19 +55,22 @@ def setDefaults(d = None)
         flt.allowDev = dev
     end
     import Log
-    record d.log.filter
-    initFilter(record d.log.filter.generic,  Log.MESSAGE, False)
-    initFilter(record d.log.filter.resource, Log.MESSAGE, False)
-    initFilter(record d.log.filter.map,      Log.MESSAGE, False)
-    initFilter(record d.log.filter.script,   Log.MESSAGE, False)
-    initFilter(record d.log.filter.gl,       Log.MESSAGE, False)
-    initFilter(record d.log.filter.audio,    Log.MESSAGE, False)
-    initFilter(record d.log.filter.input,    Log.MESSAGE, False)
-    initFilter(record d.log.filter.network,  Log.MESSAGE, False)
+    record d.log.filter()
+        initFilter(record generic,  Log.MESSAGE, False)
+        initFilter(record resource, Log.MESSAGE, False)
+        initFilter(record map,      Log.MESSAGE, False)
+        initFilter(record script,   Log.MESSAGE, False)
+        initFilter(record gl,       Log.MESSAGE, False)
+        initFilter(record audio,    Log.MESSAGE, False)
+        initFilter(record input,    Log.MESSAGE, False)
+        initFilter(record network,  Log.MESSAGE, False)
+    end
 
     # File system settings.
-    record d.fs
-    d.fs.selectedPackages = {}
+    record d.fs()
+        # Optional package contents that are currently selected.
+        selectedPackages = {}
+    end
 
     # Network settings.
     d.apiUrl = 'http://api.dengine.net/1/'
@@ -80,17 +83,18 @@ def setDefaults(d = None)
     
     # Game mode related information (one for each game plugin):
     # TODO: plugins should have their own Config scripts (when libcore loads them)
-    record d.plugin
-    record d.plugin.doom
-    record d.plugin.heretic
-    record d.plugin.hexen
-    record d.plugin.doom64
+    record d.plugin()
+        record doom
+        record heretic
+        record hexen
+        record doom64
     
-    # Single-shot load hooks.
-    d.plugin.doom.onNextLoad    = []
-    d.plugin.heretic.onNextLoad = []
-    d.plugin.hexen.onNextLoad   = []
-    d.plugin.doom64.onNextLoad  = []
+        # Single-shot load hooks.
+        doom.onNextLoad    = []
+        heretic.onNextLoad = []
+        hexen.onNextLoad   = []
+        doom64.onNextLoad  = []
+    end
 end
 
 def updateWithDefaults()
