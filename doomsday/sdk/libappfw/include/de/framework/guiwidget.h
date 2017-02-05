@@ -188,6 +188,12 @@ public:
         ManualOpacity = 0x10,
 
         /**
+         * Widget will automatically change opacity depending on state. This overrides
+         * ManualOpacity has family behavior.
+         */
+        AutomaticOpacity = 0x200,
+
+        /**
          * Prevents the drawing of the widget contents even if it visible. The
          * texture containing the blurred background is updated regardless.
          */

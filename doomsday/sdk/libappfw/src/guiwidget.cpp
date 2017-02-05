@@ -318,7 +318,7 @@ DENG2_PIMPL(GuiWidget)
             opacityWhenDisabled.setValue(opac, .3f);
         }
         if (firstUpdateAfterCreation ||
-           !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
+            !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
         {
             opacityWhenDisabled.finish();
         }
@@ -867,11 +867,12 @@ void GuiWidget::update()
         d->styleChanged = false;
         updateStyle();
     }
-    if (!familyAttributes().testFlag(ManualOpacity))
+    auto const familyAttribs = familyAttributes();
+    if ( familyAttribs.testFlag(AutomaticOpacity) ||
+        !familyAttribs.testFlag(ManualOpacity))
     {
         d->updateOpacityForDisabledWidgets();
     }
-
     d->firstUpdateAfterCreation = false;
 }
 
