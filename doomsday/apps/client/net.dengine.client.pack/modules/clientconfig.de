@@ -53,14 +53,14 @@ def setDefaults(d)
     # Home.
     record d.home()
         showUnplayableGames = True
-        showColumnDescription = True
-        
-        record columns
-        columns.doom = True
-        columns.heretic = True
-        columns.hexen = True
-        columns.otherGames = True
-        columns.multiplayer = True
+        showColumnDescription = True        
+        record columns()
+            doom = True
+            heretic = True
+            hexen = True
+            otherGames = True
+            multiplayer = True
+        end
     end
     
     # Input defaults.
