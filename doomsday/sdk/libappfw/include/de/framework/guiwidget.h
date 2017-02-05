@@ -222,6 +222,10 @@ public:
          */
         FocusMoveWithArrowKeysDisabled = 0x100,
 
+        /// Set of attributes that apply to all descendants.
+        FamilyAttributes = ManualOpacity | AnimateOpacityWhenEnabledOrDisabled,
+
+        /// Default set of attributes.
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
@@ -350,9 +354,15 @@ public:
     void setAttribute(Attributes const &attr, FlagOpArg op = SetFlags);
 
     /**
-     * Returns the current widget attributes.
+     * Returns this widget's attributes.
      */
     Attributes attributes() const;
+
+    /**
+     * Returns the attributes that apply to this widget a
+     * @return
+     */
+    Attributes familyAttributes() const;
 
     /**
      * Save the state of the widget and all its children (those who support state

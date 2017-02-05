@@ -767,6 +767,19 @@ GuiWidget::Attributes GuiWidget::attributes() const
     return d->attribs;
 }
 
+GuiWidget::Attributes GuiWidget::familyAttributes() const
+{
+    Attributes attribs = d->attribs;
+    for (Widget const *p = parentWidget(); p; p = p->parent())
+    {
+        if (auto const *guiParent = p->maybeAs<GuiWidget>())
+        {
+            attribs |= guiParent->attributes() & FamilyAttributes;
+        }
+    }
+    return attribs;
+}
+
 void GuiWidget::saveState()
 {
     d->saveState();
@@ -854,7 +867,7 @@ void GuiWidget::update()
         d->styleChanged = false;
         updateStyle();
     }
-    if (!d->attribs.testFlag(ManualOpacity))
+    if (!familyAttributes().testFlag(ManualOpacity))
     {
         d->updateOpacityForDisabledWidgets();
     }
