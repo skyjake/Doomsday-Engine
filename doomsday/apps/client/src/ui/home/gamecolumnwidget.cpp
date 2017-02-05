@@ -145,7 +145,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::gameProfiles().audienceForAddition() += this;
-        Config::get()["home.showUnplayableGames"].audienceForChange() += this;
+        Config::get("home.showUnplayableGames").audienceForChange() += this;
     }
 
     ui::Item const *findProfileItem(GameProfile const &profile) const

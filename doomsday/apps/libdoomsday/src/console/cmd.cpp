@@ -412,7 +412,7 @@ D_CMD(MappedConfigVariable)
     auto const found = mappedConfigVariables.constFind(argv[0]);
     DENG2_ASSERT(found != mappedConfigVariables.constEnd()); // mapping must be defined
 
-    Variable &var = App::config()[found.value()];
+    Variable &var = Config::get(found.value());
 
     if (argc == 1)
     {

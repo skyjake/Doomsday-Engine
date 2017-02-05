@@ -40,7 +40,7 @@ using namespace de;
 
 static PopupWidget *makePackageFoldersDialog()
 {
-    Variable &pkgFolders = Config::get()["resource.packageFolder"];
+    Variable &pkgFolders = Config::get("resource.packageFolder");
 
     auto *dlg = new DirectoryListDialog;
     dlg->title().setFont("heading");

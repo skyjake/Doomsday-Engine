@@ -127,7 +127,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
         // Minimum level for log entries.
         parent->add(wgt.level =
-                new VariableChoiceWidget(App::config()[String("log.filter.%1.minLevel").arg(dom.name)]));
+                new VariableChoiceWidget(Config::get(String("log.filter.%1.minLevel").arg(dom.name))));
         wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
         QObject::connect(wgt.level, SIGNAL(selectionChangedByUser(uint)),
@@ -135,13 +135,13 @@ DENG2_PIMPL(LogSettingsDialog)
 
         // Developer messages?
         parent->add(wgt.dev =
-                new VariableToggleWidget(tr("Dev"), App::config()[String("log.filter.%1.allowDev").arg(dom.name)]));
+                new VariableToggleWidget(tr("Dev"), Config::get(String("log.filter.%1.allowDev").arg(dom.name))));
         QObject::connect(wgt.dev, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)),
                          thisPublic, SLOT(updateLogFilter()));
 
         // Raise alerts?
         parent->add(wgt.alert =
-                new VariableToggleWidget(tr("Alerts"), App::config()[String("alert.") + dom.name]));
+                new VariableToggleWidget(tr("Alerts"), Config::get(String("alert.") + dom.name)));
         wgt.alert->setActiveValue(LogEntry::Warning);
         wgt.alert->setInactiveValue(LogEntry::HighestLogLevel + 1);
 

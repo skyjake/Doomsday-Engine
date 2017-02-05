@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 
     static Variable const &showDescriptionVar()
     {
-        return Config::get()["home.showColumnDescription"];
+        return Config::get("home.showColumnDescription");
     }
 };
 

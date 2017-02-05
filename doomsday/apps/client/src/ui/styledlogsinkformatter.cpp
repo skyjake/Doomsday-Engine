@@ -43,17 +43,9 @@ DENG2_PIMPL(StyledLogSinkFormatter)
         if (observe)
         {
             showMetadata = App::config().getb(VAR_METADATA);
-            App::config()[VAR_METADATA].audienceForChange() += this;
+            Config::get(VAR_METADATA).audienceForChange() += this;
         }
     }
-
-//    ~Impl()
-//    {
-//        if (observe)
-//        {
-//            App::config()[VAR_METADATA].audienceForChange() -= this;
-//        }
-//    }
 
     void variableValueChanged(Variable &, Value const &newValue)
     {

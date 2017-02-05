@@ -23,7 +23,6 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <de/Record>
-#include <de/App>
 #include <de/Config>
 #include <de/TextValue>
 #include <de/NumberValue>
@@ -31,57 +30,54 @@
 
 using namespace de;
 
-#define VAR_FREQUENCY       "frequency"
-#define VAR_CHANNEL         "channel"
-#define VAR_LAST_CHECKED    "lastChecked"
-#define VAR_ONLY_MANUAL     "onlyManually"
-#define VAR_DELETE          "delete"
-#define VAR_DOWNLOAD_PATH   "downloadPath"
-#define VAR_DELETE_PATH     "deleteAtStartup"
-#define VAR_AUTO_DOWNLOAD   "autoDownload"
+static String const VAR_FREQUENCY     ("updater.frequency");
+static String const VAR_CHANNEL       ("updater.channel");
+static String const VAR_LAST_CHECKED  ("updater.lastChecked");
+static String const VAR_ONLY_MANUAL   ("updater.onlyManually");
+static String const VAR_DELETE        ("updater.delete");
+static String const VAR_DOWNLOAD_PATH ("updater.downloadPath");
+static String const VAR_DELETE_PATH   ("updater.deleteAtStartup");
+static String const VAR_AUTO_DOWNLOAD ("updater.autoDownload");
 
-#define SUBREC_NAME         "updater"
-#define CONF(name)          SUBREC_NAME "." name
-
-#define SYMBOL_DEFAULT_DOWNLOAD "${DEFAULT}"
+static String const SYMBOL_DEFAULT_DOWNLOAD("${DEFAULT}");
 
 UpdaterSettings::UpdaterSettings()
 {}
 
 UpdaterSettings::Frequency UpdaterSettings::frequency() const
 {
-    return Frequency(App::config().geti(CONF(VAR_FREQUENCY)));
+    return Frequency(Config::get().geti(VAR_FREQUENCY));
 }
 
 UpdaterSettings::Channel UpdaterSettings::channel() const
 {
-    return Channel(App::config().geti(CONF(VAR_CHANNEL)));
+    return Channel(Config::get().geti(VAR_CHANNEL));
 }
 
 de::Time UpdaterSettings::lastCheckTime() const
 {
     // Note that the variable has only AllowTime as the mode.
-    return App::config().getAs<TimeValue>(CONF(VAR_LAST_CHECKED)).time();
+    return Config::get().getAs<TimeValue>(VAR_LAST_CHECKED).time();
 }
 
 bool UpdaterSettings::onlyCheckManually() const
 {
-    return App::config().getb(CONF(VAR_ONLY_MANUAL));
+    return Config::get().getb(VAR_ONLY_MANUAL);
 }
 
 bool UpdaterSettings::autoDownload() const
 {
-    return App::config().getb(CONF(VAR_AUTO_DOWNLOAD));
+    return Config::get().getb(VAR_AUTO_DOWNLOAD);
 }
 
 bool UpdaterSettings::deleteAfterUpdate() const
 {
-    return App::config().getb(CONF(VAR_DELETE));
+    return Config::get().getb(VAR_DELETE);
 }
 
 de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
-    de::NativePath p = App::config().gets(CONF(VAR_DELETE_PATH));
+    de::NativePath p = Config::get().gets(VAR_DELETE_PATH);
     de::String ext = p.toString().fileNameExtension();
     if (p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
@@ -98,7 +94,7 @@ bool UpdaterSettings::isDefaultDownloadPath() const
 
 de::NativePath UpdaterSettings::downloadPath() const
 {
-    de::NativePath dir = App::config().gets(CONF(VAR_DOWNLOAD_PATH));
+    de::NativePath dir = Config::get().gets(VAR_DOWNLOAD_PATH);
     if (dir.toString() == SYMBOL_DEFAULT_DOWNLOAD)
     {
         dir = defaultDownloadPath();
@@ -112,37 +108,37 @@ void UpdaterSettings::setDownloadPath(de::NativePath downloadPath)
     {
         downloadPath = SYMBOL_DEFAULT_DOWNLOAD;
     }
-    App::config().set(CONF(VAR_DOWNLOAD_PATH), downloadPath.toString());
+    Config::get().set(VAR_DOWNLOAD_PATH, downloadPath.toString());
 }
 
 void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
 {
-    App::config().set(CONF(VAR_FREQUENCY), dint(freq));
+    Config::get().set(VAR_FREQUENCY, dint(freq));
 }
 
 void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
 {
-    App::config().set(CONF(VAR_CHANNEL), dint(channel));
+    Config::get().set(VAR_CHANNEL, dint(channel));
 }
 
 void UpdaterSettings::setLastCheckTime(de::Time const &time)
 {
-    App::config()[CONF(VAR_LAST_CHECKED)] = new TimeValue(time);
+    Config::get(VAR_LAST_CHECKED) = new TimeValue(time);
 }
 
 void UpdaterSettings::setOnlyCheckManually(bool onlyManually)
 {
-    App::config().set(CONF(VAR_ONLY_MANUAL), onlyManually);
+    Config::get().set(VAR_ONLY_MANUAL, onlyManually);
 }
 
 void UpdaterSettings::setAutoDownload(bool autoDl)
 {
-    App::config().set(CONF(VAR_AUTO_DOWNLOAD), autoDl);
+    Config::get().set(VAR_AUTO_DOWNLOAD, autoDl);
 }
 
 void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)
 {
-    App::config().set(CONF(VAR_DELETE), deleteAfter);
+    Config::get().set(VAR_DELETE, deleteAfter);
 }
 
 void UpdaterSettings::useDefaultDownloadPath()
@@ -152,7 +148,7 @@ void UpdaterSettings::useDefaultDownloadPath()
 
 void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 {
-    App::config().set(CONF(VAR_DELETE_PATH), deletePath.toString());
+    Config::get().set(VAR_DELETE_PATH, deletePath.toString());
 }
 
 de::NativePath UpdaterSettings::defaultDownloadPath()

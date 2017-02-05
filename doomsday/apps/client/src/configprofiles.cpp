@@ -76,11 +76,11 @@ DENG2_PIMPL(ConfigProfiles)
             case ConfigVariable:
                 if (!qstrcmp(val.typeName(), "QString"))
                 {
-                    App::config()[name].set(TextValue(val.toString()));
+                    Config::get(name).set(TextValue(val.toString()));
                 }
                 else
                 {
-                    App::config()[name].set(NumberValue(val.toDouble()));
+                    Config::get(name).set(NumberValue(val.toDouble()));
                 }
                 break;
             }
@@ -268,7 +268,7 @@ DENG2_PIMPL(ConfigProfiles)
                 break;
 
             case ConfigVariable: {
-                Value const &cfgValue = App::config()[st.name].value();
+                Value const &cfgValue = Config::get(st.name).value();
                 if (cfgValue.is<NumberValue>())
                 {
                     val = cfgValue.asNumber();

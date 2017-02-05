@@ -309,7 +309,7 @@ DENG2_PIMPL(PackageLoader)
                             std::function<void (String const &)> callback) const
     {
         // Packages enabled/disabled for use.
-        DictionaryValue const &selPkgs = Config::get()["fs.selectedPackages"]
+        DictionaryValue const &selPkgs = Config::get("fs.selectedPackages")
                                          .value<DictionaryValue>();
 
         Record const &meta = Package::metadata(packageFile);
