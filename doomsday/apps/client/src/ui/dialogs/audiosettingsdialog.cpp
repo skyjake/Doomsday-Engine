@@ -223,6 +223,11 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
            << *musicPluginLabel << *d->musicPlugin
            << *cdPluginLabel    << *d->cdPlugin;
 
+    auto *padding = new GuiWidget;
+    area().add(padding);
+    padding->rule().setInput(Rule::Height, rule("dialog.gap"));
+    layout.append(*padding, 2);
+
     auto *speakerLabel = LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area());
     layout << *speakerLabel << *d->fmodSpeakerMode;
 

@@ -45,15 +45,14 @@ DENG2_PIMPL(UISettingsDialog)
         auto &area = self().area();
 
         area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor")));
-        area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"), App::config("ui.showAnnotations")));
-
+        area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"),  App::config("ui.showAnnotations")));
         area.add(showColumnDescription = new VariableToggleWidget(tr("Game Descriptions"), App::config("home.showColumnDescription")));
-        area.add(showUnplayable        = new VariableToggleWidget(tr("Show Unplayable Games"), App::config("home.showUnplayableGames")));
-        area.add(showDoom              = new VariableToggleWidget(tr("Show Doom"), App::config("home.columns.doom")));
-        area.add(showHeretic           = new VariableToggleWidget(tr("Show Heretic"), App::config("home.columns.heretic")));
-        area.add(showHexen             = new VariableToggleWidget(tr("Show Hexen"), App::config("home.columns.hexen")));
-        area.add(showOther             = new VariableToggleWidget(tr("Show Other Games"), App::config("home.columns.otherGames")));
-        area.add(showMultiplayer       = new VariableToggleWidget(tr("Show Multiplayer"), App::config("home.columns.multiplayer")));
+        area.add(showUnplayable        = new VariableToggleWidget(tr("Unplayable Games"),  App::config("home.showUnplayableGames")));
+        area.add(showDoom              = new VariableToggleWidget(tr("Doom"),              App::config("home.columns.doom")));
+        area.add(showHeretic           = new VariableToggleWidget(tr("Heretic"),           App::config("home.columns.heretic")));
+        area.add(showHexen             = new VariableToggleWidget(tr("Hexen"),             App::config("home.columns.hexen")));
+        area.add(showOther             = new VariableToggleWidget(tr("Other Games"),       App::config("home.columns.otherGames")));
+        area.add(showMultiplayer       = new VariableToggleWidget(tr("Multiplayer"),       App::config("home.columns.multiplayer")));
 
         uiScale->items()
                 << new ChoiceItem(tr("Huge (200%)"),   2.0)
@@ -102,15 +101,24 @@ UISettingsDialog::UISettingsDialog(String const &name)
            << Const(0) << *annots;
     layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
     layout.append(*library, 2);
-    layout << Const(0) << *d->showColumnDescription
-           << Const(0) << *d->showUnplayable
-           << Const(0) << *d->showDoom
-           << Const(0) << *d->showHeretic
-           << Const(0) << *d->showHexen
-           << Const(0) << *d->showOther
-           << Const(0) << *d->showMultiplayer;
 
-    area().setContentSize(layout.width(), layout.height());
+    auto *showLabel = LabelWidget::newWithText(tr("Show:"), &area());
+    showLabel->rule().setLeftTop(library->rule().left(), library->rule().bottom());
+
+    GridLayout showLayout(showLabel->rule().right(), showLabel->rule().top(),
+                          GridLayout::RowFirst);
+    showLayout.setGridSize(2, 4);
+    showLayout << *d->showDoom
+               << *d->showHeretic
+               << *d->showHexen
+               << *d->showOther
+               << *d->showMultiplayer
+               << *d->showColumnDescription
+               << *d->showUnplayable;
+
+    area().setContentSize(OperatorRule::maximum(layout.width(),
+                                                showLabel->rule().width() + showLayout.width()),
+                          layout.height() + showLayout.height());
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
