@@ -134,7 +134,7 @@ endmacro (deng_target_rpath)
 macro (deng_target_defaults target)
     if (APPLE)
         deng_xcode_attribs (${target})
-        # OS X version numbers come from the Info.plist, we don't need version symlinks.
+        # macOS version numbers come from the Info.plist, we don't need version symlinks.
     else ()
         set_target_properties (${target} PROPERTIES
             VERSION   ${DENG_VERSION}
@@ -194,12 +194,12 @@ function (deng_filter_platform_sources outName)
             if (NOT WIN32)
                 set (filtered YES)
             endif ()
-        elseif ("${fn}" MATCHES ".*_macx\\..*") # OS X specific
+        elseif ("${fn}" MATCHES ".*_macx\\..*") # macOS specific
             if (NOT APPLE)
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_unix\\..*" OR
-                "${fn}" MATCHES ".*/unix/.*") # Unix specific files (Linux / OS X / etc.)
+                "${fn}" MATCHES ".*/unix/.*") # Unix specific files (Linux / macOS / etc.)
             if (NOT UNIX)
                 set (filtered YES)
             endif ()
@@ -247,7 +247,7 @@ macro (deng_merge_sources srcName globbing)
     endif ()
 endmacro()
 
-# Set up resource bundling on OS X.
+# Set up resource bundling on macOS.
 # The arguments are a list of resource files/directories with the
 # destination directory separated by a comma:
 #
@@ -631,7 +631,7 @@ fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.b
     )
 endfunction (deng_bundle_install_names)
 
-# OS X: Install the libraries of a dependency target into the application bundle.
+# macOS: Install the libraries of a dependency target into the application bundle.
 function (deng_install_bundle_deps target)
     if (APPLE)
         sublist (_deps 1 -1 ${ARGV})
@@ -707,10 +707,10 @@ function (deng_install_deployqt target)
 endfunction (deng_install_deployqt)
 
 # Installs a tool executable into the approprite place(s).
-# OS X: Also fix the Qt framework install names that wouldn't be touched by
+# macOS: Also fix the Qt framework install names that wouldn't be touched by
 # the qt deploy utility because they aren't the app bundle binary.
 function (deng_install_tool target)
-    # OS X: Also install to the client application bundle.
+    # macOS: Also install to the client application bundle.
     if (APPLE)
         set (dest "Doomsday.app/Contents/MacOS")
         get_property (name TARGET ${target} PROPERTY OUTPUT_NAME)
@@ -753,7 +753,7 @@ endfunction (deng_install_tool)
 # Install an external library that exists at configuration time.
 # Used to deploy third-party libraries of dependencies. `library` is the
 # full path to the shared library to install.
-# Not applicable to OS X because libraries are not installed but instead
+# Not applicable to macOS because libraries are not installed but instead
 # bundled with the applicatino.
 macro (deng_install_library library)
     if (UNIX AND NOT APPLE)

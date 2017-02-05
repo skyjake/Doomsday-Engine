@@ -3,7 +3,7 @@
 
 PROJECT_NAME        = "Doomsday Client"
 PROJECT_NUMBER      = 2.0
-PROJECT_BRIEF       = "Internal documentation (Mac OS X)"
+PROJECT_BRIEF       = "Internal documentation (macOS)"
 PROJECT_LOGO        = ../../doc/apidoc-logo.png
 HTML_STYLESHEET     = ../../doxygen.css
 OUTPUT_DIRECTORY    = ../../apidoc/mac/

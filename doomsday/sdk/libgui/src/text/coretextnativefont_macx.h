@@ -24,7 +24,7 @@
 namespace de {
 
 /**
- * OS X specific native font implementation that uses Core Text.
+ * macOS specific native font implementation that uses Core Text.
  */
 class CoreTextNativeFont : public NativeFont
 {

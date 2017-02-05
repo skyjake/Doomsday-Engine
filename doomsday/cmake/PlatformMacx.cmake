@@ -12,7 +12,7 @@ set (DENG_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing a
 find_program (CODESIGN_COMMAND codesign)
 mark_as_advanced (CODESIGN_COMMAND)
 
-# Detect OS X version.
+# Detect macOS version.
 execute_process (COMMAND sw_vers -productVersion
     OUTPUT_VARIABLE MACOS_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE

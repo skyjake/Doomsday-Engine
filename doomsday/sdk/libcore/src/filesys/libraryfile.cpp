@@ -96,7 +96,7 @@ bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 bool LibraryFile::recognize(File const &file)
 {
 #ifdef MACOSX
-    // On Mac OS X, plugins are in the .bundle format. The LibraryFile will point
+    // On macOS, plugins are in the .bundle format. The LibraryFile will point
     // to the actual binary inside the bundle. Libraries must be loaded from
     // native files.
     if (NativeFile const *native = file.maybeAs<NativeFile>())

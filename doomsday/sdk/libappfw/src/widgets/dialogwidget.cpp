@@ -50,7 +50,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     if (!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
     {
 #ifdef MACOSX
-        // Default buttons go to the right on OS X.
+        // Default buttons go to the right on macOS.
         return true;
 #else
         // Default buttons to the left.
@@ -60,7 +60,7 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     if (left.role().testFlag(DialogWidget::Default) && !right.role().testFlag(DialogWidget::Default))
     {
 #ifdef MACOSX
-        // Default buttons go to the right on OS X.
+        // Default buttons go to the right on macOS.
         return false;
 #else
         // Default buttons to the left.

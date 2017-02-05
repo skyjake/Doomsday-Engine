@@ -1849,7 +1849,7 @@ void AudioSystem::updateMusicMidiFont()
 
     NativePath path(musMidiFontPath);
 #ifdef MACOSX
-    // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
+    // On macOS we can try to use the basic DLS soundfont that's part of CoreAudio.
     if (path.isEmpty())
     {
         path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";

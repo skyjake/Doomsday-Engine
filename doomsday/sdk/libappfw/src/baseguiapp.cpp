@@ -196,7 +196,7 @@ VRConfig &BaseGuiApp::vr()
 
 void BaseGuiApp::beginNativeUIMode()
 {
-    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
+    // Switch temporarily to windowed mode. Not needed on macOS because the display mode
     // is never changed on that platform.
 #ifndef MACOSX
     auto &win = static_cast<BaseWindow &>(GLWindow::main());

@@ -38,7 +38,7 @@ namespace de {
  * but not on the other platforms. On non-Unix platforms, UnixInfo is
  * instantiated normally but no input files are parsed. There are equivalent
  * mechanisms on these platforms (on Windows, the closest is the registry; on
- * Mac OS X, ~/Library/Preferences/) but these are not directly used by
+ * macOS, ~/Library/Preferences/) but these are not directly used by
  * Doomsday. Instead of these, one should use Config (or QSettings) for
  * platform-independent persistent configuration.
  *

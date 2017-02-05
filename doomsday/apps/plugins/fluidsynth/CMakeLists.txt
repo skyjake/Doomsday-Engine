@@ -23,7 +23,7 @@ option (DENG_FLUIDSYNTH_EMBEDDED
 if (DENG_FLUIDSYNTH_EMBEDDED)
     find_package (Glib)
 
-    # Bundle library dependencies on OS X.
+    # Bundle library dependencies on macOS.
     foreach (fn ${GLIB_LIBRARIES})
         list (APPEND macRes ${fn},Frameworks)
     endforeach ()

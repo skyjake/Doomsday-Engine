@@ -2,7 +2,7 @@
  * @ingroup base
  *
  * These functions provide roughly the same functionality as the ltdl library.
- * Since the ltdl library appears to be broken on Mac OS X, these will be used
+ * Since the ltdl library appears to be broken on macOS, these will be used
  * instead when loading plugin libraries.
  *
  * During startup Doomsday loads multiple game plugins. However, only one can

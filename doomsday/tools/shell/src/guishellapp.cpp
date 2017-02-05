@@ -83,7 +83,7 @@ GuiShellApp::GuiShellApp(int &argc, char **argv)
 #ifdef MACOSX
     setQuitOnLastWindowClosed(false);
 
-    // On Mac OS X, the menu is not window-specific.
+    // On macOS, the menu is not window-specific.
     d->menuBar = new QMenuBar(0);
 
     QMenu *menu = d->menuBar->addMenu(tr("Connection"));

@@ -134,7 +134,7 @@ class Commit:
                 tag = u'Refactor'
             if 'optimization' in tag.lower() or 'optimize' in tag.lower():
                 tag = u'Optimize'
-            if tag == 'osx' or tag.lower() == 'mac' or tag.lower() == 'mac os x':
+            if tag == 'osx' or tag.lower() == 'mac' or tag.lower() == 'mac os x' or tag.lower() == 'macos':
                 tag = u'OS X'
             if tag.lower().startswith('fixed'):
                 tag = tag[5:].strip()
@@ -229,7 +229,7 @@ for commit in byHash.values():
           
 relatedTags = [
     ['Fixed', 'Added', 'Refactor', 'Optimize', 'Revert', 'Cleanup', 'Debug'],
-    ['Windows', 'OS X', 'Linux', 'Unix', 'Debian', 'Ubuntu', 'FreeBSD', 'X11', '64-bit'],
+    ['Windows', 'OS X', 'macOS', 'Linux', 'Unix', 'Debian', 'Ubuntu', 'FreeBSD', 'X11', '64-bit'],
     ['Windows', 'Windows *'],
     ['Qt', 'SDL'],
     ['Builder', 'Builds', 'qmake', 'Project*', 'CMake', 'Distrib', 'GCC', 'MSVC', 'Clang', 'Git', 

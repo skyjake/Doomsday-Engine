@@ -1,4 +1,4 @@
-/** @file cursor_macx.h  Native OS X mouse cursor functions.
+/** @file cursor_macx.h  Native macOS mouse cursor functions.
  * @ingroup ui
  *
  * @authors Copyright © 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
