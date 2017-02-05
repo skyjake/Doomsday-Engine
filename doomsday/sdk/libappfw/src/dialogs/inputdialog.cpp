@@ -1,6 +1,6 @@
 /** @file dialogs/inputdialog.cpp Dialog for querying a string of text from the user.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

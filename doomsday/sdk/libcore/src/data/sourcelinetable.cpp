@@ -1,6 +1,6 @@
 /** @file sourcelinetable.cpp  Table for source paths and line numbers.
  *
- * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

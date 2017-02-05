@@ -1,6 +1,6 @@
 /** @file libshell/src/choicewidget.cpp  Widget for selecting an item from multiple choices.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

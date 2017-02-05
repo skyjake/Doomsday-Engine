@@ -1,7 +1,7 @@
 /** @file stringpool.h  Pool of strings (case insensitive).
  *
  * @author Copyright © 2010-2015 Daniel Swanson <danij@dengine.net>
- * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

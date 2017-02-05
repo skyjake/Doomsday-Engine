@@ -6,7 +6,7 @@
  * vector, the comparison only involves the first two components of @a b
  * (comparing as a 2D vector).
  *
- * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

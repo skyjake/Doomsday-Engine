@@ -3,7 +3,7 @@
  * Implementation does not use QGLFrameBufferObject because it does not allow
  * attaching manually created textures.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

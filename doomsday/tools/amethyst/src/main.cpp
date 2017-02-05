@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2002-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,9 +54,9 @@ void messagePrinter(QtMsgType type, const char* msg)
 void printBanner(void)
 {
 #ifdef _WIN32
-    qDebug() << "### Amethyst (c) 2002-2011 Jaakko Keranen <jaakko.keranen@iki.fi>";
+    qDebug() << "### Amethyst (c) 2002-2017 Jaakko Keranen <jaakko.keranen@iki.fi>";
 #else
-    fwprintf(stderr, L"%ls\n", L"### Amethyst (c) 2002-2011 Jaakko Keränen <jaakko.keranen@iki.fi>");
+    fwprintf(stderr, L"%ls\n", L"### Amethyst (c) 2002-2017 Jaakko Keränen <jaakko.keranen@iki.fi>");
 #endif
     qDebug() << "### " BUILD_STR;
 }

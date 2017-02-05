@@ -39,7 +39,7 @@ for line in inFile.readlines():
         .replace('LIBDENG2_DESC', quoted('Doomsday 2 core library')) \
         .replace('LIBDENG2_VERSION_TEXT', quoted(VERSION)) \
         .replace('LIBDENG2_NICENAME', quoted('libcore')) \
-        .replace('LIBDENG2_COPYRIGHT', quoted('2004-2014 Deng Team')) \
+        .replace('LIBDENG2_COPYRIGHT', quoted('2004-2017 Deng Team')) \
         .replace('LIBDENG2_FILENAME', quoted('deng_core.dll'))
         
     outFile.write(line)

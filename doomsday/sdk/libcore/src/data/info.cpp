@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

@@ -5,7 +5,7 @@
  * per second. Garbage is also thread-specific; recycling must be done
  * separately in each thread.
  *
- * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

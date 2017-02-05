@@ -4,7 +4,7 @@
  * independence from OpenGL as the underlying rendering API. Also, Direct3D
  * uses object-based state management.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

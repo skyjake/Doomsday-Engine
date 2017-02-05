@@ -1,6 +1,6 @@
 /** @file kdtreeatlasallocator.cpp  KD-tree based atlas allocator.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright (c) 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * @par License

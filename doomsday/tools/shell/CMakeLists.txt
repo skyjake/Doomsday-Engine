@@ -1,5 +1,5 @@
 # The Doomsday Engine Project: Server Shell -- GUI Interface
-# Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is distributed under the GNU General Public License
 # version 2 (or, at your option, any later version). Please visit

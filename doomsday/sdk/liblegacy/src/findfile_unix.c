@@ -1,6 +1,6 @@
 /** @file findfile_unix.c Win32-style native file finding.
  *
- * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -21,7 +21,7 @@
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,5 +1,5 @@
 # The Doomsday Engine Project -- Test Suite
-# Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.1)
 project (Tests)

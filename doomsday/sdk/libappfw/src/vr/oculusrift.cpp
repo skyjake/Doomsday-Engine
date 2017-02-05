@@ -1,6 +1,6 @@
 /** @file oculusrift.cpp
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
  *
  * @par License

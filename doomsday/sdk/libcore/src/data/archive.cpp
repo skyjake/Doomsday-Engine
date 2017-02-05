@@ -1,6 +1,6 @@
 /** @file archive.cpp Collection of named memory blocks stored inside a byte array.
  *
- * Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

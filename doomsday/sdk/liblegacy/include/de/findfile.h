@@ -1,6 +1,6 @@
 /** @file de/findfile.h Win32-style native file finding.
  *
- * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

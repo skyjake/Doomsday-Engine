@@ -1,6 +1,6 @@
 /** @file timevalue.cpp Value that holds a Time.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

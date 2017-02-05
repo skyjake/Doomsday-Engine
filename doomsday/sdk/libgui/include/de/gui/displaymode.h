@@ -8,7 +8,7 @@
  * @todo This is C because it was relocated from the client. It should be
  * converted to a C++.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

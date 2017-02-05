@@ -2,7 +2,7 @@
  * @file displaymode_macx.mm
  * Mac OS X implementation of the DisplayMode class. @ingroup gl
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

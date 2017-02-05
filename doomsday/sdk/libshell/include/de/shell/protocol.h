@@ -1,6 +1,6 @@
 /** @file shell/protocol.h  Network protocol for communicating with a server.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

@@ -4,7 +4,7 @@
  * If multithreaded rendering is done at some point in the future, the GL state
  * stack must be part of the thread-local data.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

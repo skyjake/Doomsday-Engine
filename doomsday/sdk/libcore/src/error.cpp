@@ -2,7 +2,7 @@
  * @file error.cpp
  * Exceptions. @ingroup errors
  *
- * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
