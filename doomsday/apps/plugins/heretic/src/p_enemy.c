@@ -1696,7 +1696,7 @@ void C_DECL A_WhirlwindSeek(mobj_t* actor)
 
 void C_DECL A_HeadIceImpact(mobj_t* ice)
 {
-    int i;
+    uint i;
 
     for(i = 0; i < 8; ++i)
     {
@@ -2314,7 +2314,7 @@ void C_DECL A_VolcanoBlast(mobj_t* volcano)
 
 void C_DECL A_VolcBallImpact(mobj_t* ball)
 {
-    int i;
+    uint i;
 
     if(ball->origin[VZ] <= ball->floorZ)
     {

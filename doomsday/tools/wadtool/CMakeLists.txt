@@ -1,5 +1,5 @@
 # WAD Creation Tool for Doomsday
-# (c) 2005-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+# (c) 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPL 2.0+
 
 cmake_minimum_required (VERSION 3.1)

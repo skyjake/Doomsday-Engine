@@ -1338,7 +1338,7 @@ void C_DECL A_MotherMissle(mobj_t *actor)
  */
 void C_DECL A_MotherBallExplode(mobj_t* spread)
 {
-    int i;
+    uint i;
 
     for(i = 0; i < 8; ++i)
     {

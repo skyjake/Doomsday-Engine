@@ -886,13 +886,13 @@ void C_DECL A_DeathBallImpact(mobj_t* ball)
 
 void C_DECL A_SpawnRippers(mobj_t* actor)
 {
-    int                 i;
+    uint i;
 
     for(i = 0; i < 8; ++i)
     {
-        angle_t             angle = i * ANG45;
-        uint                an;
-        mobj_t*             ripper;
+        angle_t angle = i * ANG45;
+        uint    an;
+        mobj_t *ripper;
 
         if((ripper = P_SpawnMobj(MT_RIPPER, actor->origin, angle, 0)))
         {

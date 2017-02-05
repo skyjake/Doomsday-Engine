@@ -3183,7 +3183,7 @@ void C_DECL A_IceGuyDie(mobj_t *mo)
 void C_DECL A_IceGuyMissileExplode(mobj_t *mo)
 {
     mobj_t         *pmo;
-    int             i;
+    uint            i;
 
     for(i = 0; i < 8; ++i)
     {
