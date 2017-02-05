@@ -284,6 +284,20 @@ package "freedoom.phase2_0.10" {
     }
 }
 
+package "freedoom.phase2_0.10.1" {
+    format: IWAD 
+    fileName <freedoom2.wad, doom2.wad>
+    fileSize: 29182140
+    lumps <MAP01>
+    lumpDirCRC32: b0dfa116
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.phase1_0.9" {
     format: IWAD 
     fileName: freedoom1.wad
@@ -323,20 +337,6 @@ package "freedoom.phase1_0.10.1" {
         author: Freedoom Project
         license: BSD
         tags: gamedata doom mod
-    }
-}
-
-package "freedoom.phase2_0.10.1" {
-    format: IWAD 
-    fileName <freedoom2.wad, doom2.wad>
-    fileSize: 29182140
-    lumps <MAP01>
-    lumpDirCRC32: b0dfa116
-    info {
-        title: Freedoom: Phase 2
-        author: Freedoom Project
-        license: BSD
-        tags: gamedata doom2 mod
     }
 }
 
