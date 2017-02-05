@@ -482,6 +482,8 @@ HomeWidget::HomeWidget()
     : GuiWidget("home")
     , d(new Impl(this))
 {
+    setAttribute(ManualOpacity);
+
     // Create the columns.
     ColumnWidget *column;
 
