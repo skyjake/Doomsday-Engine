@@ -392,7 +392,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     {
         link.foundServerInfo(0, serverInfo);
         profile = svProfile;
-        localPackages->enable();
+        if (Game::isLocalPackagesEnabled())
+        {
+            localPackages->enable();
+        }
         updateContent();
 
         // We want a complete status of the server.

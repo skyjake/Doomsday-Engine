@@ -40,6 +40,9 @@
 
 using namespace de;
 
+static String const VAR_RESOURCE_LOCAL_PACKAGES("resource.localPackages");
+static String const VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME("resource.localPackagesForGame");
+
 static String const DEF_ID("ID");
 
 String const Game::DEF_VARIANT_OF("variantOf");
@@ -158,15 +161,23 @@ StringList Game::localMultiplayerPackages() const
     return localMultiplayerPackages(id());
 }
 
+bool Game::isLocalPackagesEnabled() // static
+{
+    return Config::get().getb(VAR_RESOURCE_LOCAL_PACKAGES, false);
+}
+
 StringList Game::localMultiplayerPackages(String const &gameId) // static
 {
     try
     {
-        auto const &pkgDict = Config::get().getdt("resource.localPackagesForGame");
-        TextValue const key(gameId);
-        if (pkgDict.contains(key))
+        if (isLocalPackagesEnabled())
         {
-            return pkgDict.element(key).as<ArrayValue>().toStringList();
+            auto const &pkgDict = Config::get().getdt(VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME);
+            TextValue const key(gameId);
+            if (pkgDict.contains(key))
+            {
+                return pkgDict.element(key).as<ArrayValue>().toStringList();
+            }
         }
         return StringList();
     }
@@ -183,7 +194,7 @@ void Game::setLocalMultiplayerPackages(String const &gameId, StringList const &p
     {
         ids->add(pkg);
     }
-    Config::get()["resource.localPackagesForGame"]
+    Config::get(VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME)
             .value().as<DictionaryValue>()
             .setElement(TextValue(gameId), ids.release());
 }

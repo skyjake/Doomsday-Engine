@@ -28,12 +28,14 @@
 #include <de/SignalAction>
 #include <de/GridPopupWidget>
 #include <de/VariableLineEditWidget>
+#include <de/VariableToggleWidget>
 
 using namespace de;
 using namespace de::ui;
 
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
+    VariableToggleWidget *localPackages;
     VariableLineEditWidget *webApiUrl;
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
@@ -42,12 +44,14 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        area.add(webApiUrl = new VariableLineEditWidget(App::config("apiUrl")));
+        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Packages"), App::config("resource.localPackages")));
 
         // Developer options.
         self().add(devPopup = new GridPopupWidget);
-        devPopup->layout().setGridSize(1, 0);
-        *devPopup << (devInfo = new CVarToggleWidget("net-dev"));
+        *devPopup << LabelWidget::newWithText(tr("Web API:"))
+                  << (webApiUrl = new VariableLineEditWidget(App::config("apiUrl")))
+                  << Const(0)
+                  << (devInfo = new CVarToggleWidget("net-dev"));
         devPopup->commit();
     }
 
@@ -71,13 +75,21 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
-    LabelWidget *webApiUrlLabel = LabelWidget::newWithText(tr("Web API:"), &area());
-
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
-    layout.setGridSize(2, 0);
-    layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *webApiUrlLabel  << *d->webApiUrl;
+    layout.setGridSize(1, 0);
+    //layout.setColumnAlignment(0, ui::AlignRight);
+    layout << *d->localPackages;
+
+    auto *caution = LabelWidget::newWithText(
+                tr("Caution: Loading additional add-ons or mods may cause gameplay bugs "
+                   "or client instability in multiplayer games."), &area());
+    caution->margins().setTop("");
+    caution->setTextLineAlignment(ui::AlignLeft);
+    caution->setMaximumTextWidth(area().rule().width() - area().margins().width());
+    caution->setFont("separator.annotation");
+    caution->setTextColor("altaccent");
+    layout << *caution;
 
     area().setContentSize(layout.width(), layout.height());
 

@@ -435,6 +435,7 @@ DENG2_PIMPL(ClientApp)
 
         networkSettings
                 .define(Prof::ConfigVariable, "apiUrl")
+                .define(Prof::ConfigVariable, "resource.localPackages")
                 .define(Prof::IntCVar,        "net-dev",             0);
 
         audioSettings

@@ -49,7 +49,7 @@ def setDefaults(d)
         # Alert notification dismissed after 3 minutes by default.
         autoHide = 3 * 60
     end
-    
+        
     # Home.
     record d.home()
         showUnplayableGames = True
@@ -93,7 +93,10 @@ def setDefaults(d)
         
     # Resource settings.
     record d.resource()
+        # Local packaegs are disabled by default in MP games.
+        localPackages = False
         localPackagesForGame = {}
+        # Textures.
         noHighResTex = False
         noHighResPatches = False
         highResWithPWAD = True

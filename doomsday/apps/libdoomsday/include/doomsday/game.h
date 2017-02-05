@@ -278,6 +278,13 @@ public:
 
     static de::String logoImageForId(de::String const &id);
 
+    /**
+     * Checks the Config if using local packages is enabled in multiplayer games. The
+     * user has to manually enable local packages because there may be compatibility
+     * problems if the client is using custom resources.
+     */
+    static bool isLocalPackagesEnabled();
+
     static de::StringList localMultiplayerPackages(de::String const &gameId);
 
     /**
