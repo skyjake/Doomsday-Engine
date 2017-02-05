@@ -212,6 +212,11 @@ Config &Config::get()
     return App::config();
 }
 
+Variable &Config::get(String const &name) // static
+{
+    return get()[name];
+}
+
 bool Config::exists()
 {
     return App::configExists();

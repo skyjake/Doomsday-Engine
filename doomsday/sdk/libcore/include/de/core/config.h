@@ -108,6 +108,7 @@ public:
     Record const &objectNamespace() const;
 
     static Config &get();
+    static Variable &get(String const &name);
     static bool exists();
 
 private:
