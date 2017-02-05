@@ -1,6 +1,6 @@
 /** @file sv_infine.cpp  Server-side InFine.
  *
- * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,7 +1,7 @@
 /** @file d_console.h  Doom64 specific console settings and commands.
  * @ingroup libdoom64
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

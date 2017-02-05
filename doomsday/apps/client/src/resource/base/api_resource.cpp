@@ -1,6 +1,6 @@
 /** @file api_resource.cpp  Public API of the resource subsystem.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

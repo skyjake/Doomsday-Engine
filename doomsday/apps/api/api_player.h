@@ -1,7 +1,7 @@
 /** @file api_player.h  Public API for players.
  * @ingroup playsim
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

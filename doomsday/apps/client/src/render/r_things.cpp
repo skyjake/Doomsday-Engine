@@ -1,6 +1,6 @@
 /** @file r_things.cpp  Map Object => Vissprite Projection.
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.

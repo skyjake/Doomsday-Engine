@@ -1,6 +1,6 @@
 /** @file common.c  Top-level libcommon routines.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

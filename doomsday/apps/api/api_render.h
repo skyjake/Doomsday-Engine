@@ -1,7 +1,7 @@
 /** @file api_render.h  Public API of the renderer.
  * @ingroup render
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

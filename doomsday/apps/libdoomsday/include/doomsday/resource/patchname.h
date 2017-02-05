@@ -2,7 +2,7 @@
  * @file patchname.h PatchName
  *
  * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

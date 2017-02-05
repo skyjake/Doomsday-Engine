@@ -1,7 +1,7 @@
 /** @file gl_main.h GL-Graphics Subsystem.
  * @ingroup gl
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

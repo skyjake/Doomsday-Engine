@@ -1,6 +1,6 @@
 /** @file animdef.cpp  ANIMATED and ANIMDEFS -defined texture animation interpreters.
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  * @authors Copyright © 1993-1996 by id Software, Inc.

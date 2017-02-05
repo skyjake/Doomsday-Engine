@@ -3,7 +3,7 @@
  * Player number zero is always the server. In single-player games there is only
  * the server present.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

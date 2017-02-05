@@ -5,7 +5,7 @@
  * MacWindowBehavior. This would make the code easier to follow and more adaptable
  * to the quirks of each platform.
  *
- * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *

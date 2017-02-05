@@ -1,6 +1,6 @@
 /** @file vr.cpp  Stereoscopic rendering and Oculus Rift support.
  *
- * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
  *

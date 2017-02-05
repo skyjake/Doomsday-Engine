@@ -11,7 +11,7 @@
  * from memory after which the chosen game plugin is reloaded (see
  * Library_ReleaseGames()).
  *
- * @authors Copyright © 2006-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

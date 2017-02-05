@@ -6,7 +6,7 @@
  * Most monsters are spawned unaware of all players,
  * but some can be made preaware
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  * @authors Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)

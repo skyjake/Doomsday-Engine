@@ -1,6 +1,6 @@
 /** @file audiodriver.cpp  Audio driver loading and interface management.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

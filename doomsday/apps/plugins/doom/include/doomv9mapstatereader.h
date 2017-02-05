@@ -1,6 +1,6 @@
 /** @file doomv9mapstatereader.h  Doom ver 1.9 saved game map state reader.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *

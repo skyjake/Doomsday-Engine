@@ -1,6 +1,6 @@
 /** @file d_console.cpp  Doom64 specific console settings and commands.
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *

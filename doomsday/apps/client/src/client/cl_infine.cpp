@@ -1,6 +1,6 @@
 /** @file cl_infine.cpp  Clientside InFine.
  *
- * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

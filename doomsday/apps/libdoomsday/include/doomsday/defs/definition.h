@@ -1,6 +1,6 @@
 /** @file definition.h  Base class for definition record accessors.
  *
- * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

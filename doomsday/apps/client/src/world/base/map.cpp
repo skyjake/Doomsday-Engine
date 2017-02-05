@@ -3,7 +3,7 @@
  * @todo This file has grown far too large. It should be split up through the
  * introduction of new abstractions / collections.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License

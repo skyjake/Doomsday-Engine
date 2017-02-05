@@ -1,6 +1,6 @@
 /** @file modelrenderer.h  Model renderer.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

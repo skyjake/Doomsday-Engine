@@ -4,7 +4,7 @@
  * only available in debug builds and provides a view to the layout of the
  * allocated memory inside the zone.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

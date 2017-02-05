@@ -1,7 +1,7 @@
 /** @file rendpoly.h RendPoly data buffers
  * @ingroup render
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

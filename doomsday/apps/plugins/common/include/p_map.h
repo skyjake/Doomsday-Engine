@@ -1,6 +1,6 @@
 /** @file p_map.h Common play/maputil functions.
  *
- * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 1999-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *

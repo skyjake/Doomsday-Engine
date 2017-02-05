@@ -1,6 +1,6 @@
 /** @file automapstyle.h  Style configuration for AutomapWidget.
  *
- * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

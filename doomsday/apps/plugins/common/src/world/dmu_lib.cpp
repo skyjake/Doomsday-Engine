@@ -1,6 +1,6 @@
 /** @file dmu_lib.cpp Helper routines for accessing the DMU API.
  *
- * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

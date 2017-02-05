@@ -2,7 +2,7 @@
  * The Doomsday Engine Project
  * Common OpenGL Shaders: HSV/RGB Color Conversions
  *
- * Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

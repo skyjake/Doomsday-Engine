@@ -1,6 +1,6 @@
 /** @file module.h  Action Code Script (ACS) module.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *

@@ -1,7 +1,7 @@
 /** @file info.cpp  Information look up tables.
  * @ingroup dehread
  *
- * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

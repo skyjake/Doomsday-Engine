@@ -5,7 +5,7 @@
  * mapped to Doomsday Script processes, functions, variables, etc., making the
  * Console a mere convenience layer. -jk
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,6 +1,6 @@
 /** @file variablegroupeditor.h  Editor of a group of variables.
  *
- * @authors Copyright (c) 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

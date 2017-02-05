@@ -1,6 +1,6 @@
 /** @file packageswidget.cpp  Widget for searching and examining packages.
  *
- * @authors Copyright (c) 2015-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

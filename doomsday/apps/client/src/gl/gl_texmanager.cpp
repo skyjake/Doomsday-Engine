@@ -1,6 +1,6 @@
 /** @file gl_texmanager.cpp  GL-Texture management.
  *
- * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 1999-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2002 Graham Jackson <no contact email published>
  *

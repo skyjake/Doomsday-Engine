@@ -4,7 +4,7 @@
  * is deallocated when the map changes. Sv_InitPools() is called in
  * R_SetupMap() to clear out all the old data.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

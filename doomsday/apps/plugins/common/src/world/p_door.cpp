@@ -1,8 +1,8 @@
 /** @file p_door.cpp  Vertical door (opening/closing) thinker.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>

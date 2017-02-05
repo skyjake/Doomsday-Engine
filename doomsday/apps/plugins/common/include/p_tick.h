@@ -1,6 +1,6 @@
 /** @file p_tick.h  Common top-level tick stuff.
  *
- * @authors Copyright © 2006-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

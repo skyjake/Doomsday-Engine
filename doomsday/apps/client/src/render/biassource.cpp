@@ -1,6 +1,6 @@
 /** @file biassource.cpp  Shadow Bias (light) source.
  *
- * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

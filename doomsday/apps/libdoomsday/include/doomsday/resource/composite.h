@@ -1,7 +1,7 @@
 /** @file compositetexture.h  Composite Texture.
  *
  * @author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

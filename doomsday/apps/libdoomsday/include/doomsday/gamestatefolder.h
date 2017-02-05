@@ -1,6 +1,6 @@
 /** @file gamestatefolder.h  Archived game state.
  *
- * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,6 +1,6 @@
 /** @file audiosystem.cpp  Audio subsystem.
  *
- * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au> *
  *

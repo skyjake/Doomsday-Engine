@@ -1,6 +1,6 @@
 /** @file clientsubsector.cpp  Client-side world map subsector.
  *
- * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License

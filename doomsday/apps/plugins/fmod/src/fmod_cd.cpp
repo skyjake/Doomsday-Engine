@@ -1,6 +1,6 @@
 /** @file fmod_cd.cpp  CD audio playback.
  *
- * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

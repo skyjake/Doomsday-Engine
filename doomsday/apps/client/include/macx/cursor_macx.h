@@ -1,7 +1,7 @@
 /** @file cursor_macx.h  Native OS X mouse cursor functions.
  * @ingroup ui
  *
- * @authors Copyright © 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

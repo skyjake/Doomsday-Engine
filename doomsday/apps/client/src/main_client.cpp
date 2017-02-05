@@ -1,7 +1,7 @@
 /** @file main_client.cpp Client application entrypoint.
  * @ingroup base
  *
- * @authors Copyright © 2012-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

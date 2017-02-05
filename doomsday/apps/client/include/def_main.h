@@ -1,7 +1,7 @@
 /** @file def_main.h  Definition subsystem.
  * @ingroup defs
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

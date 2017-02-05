@@ -1,7 +1,7 @@
 /** @file progress.h  Simple wrapper for the Busy progress bar.
  * @ingroup ui
  *
- * @authors Copyright &copy; 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

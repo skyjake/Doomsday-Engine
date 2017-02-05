@@ -1,6 +1,6 @@
 /** @file world/valuetype.h
  *
- * @authors Copyright (c) 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright (c) 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

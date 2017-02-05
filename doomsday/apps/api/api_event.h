@@ -1,7 +1,7 @@
 /** @file api_event.h  Public API for input events and bindings.
  * @ingroup input
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

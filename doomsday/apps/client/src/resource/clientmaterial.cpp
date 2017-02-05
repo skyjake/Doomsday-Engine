@@ -1,7 +1,7 @@
 /** @file clientmaterial.cpp  Client-side material.
  *
  * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

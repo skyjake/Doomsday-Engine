@@ -1,6 +1,6 @@
 /** @file dd_winit.h  Win32 Initialization.
  *
- * @authors Copyright © 2003-2014 Jaakko Kernen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Kernen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

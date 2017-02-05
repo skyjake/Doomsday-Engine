@@ -1,6 +1,6 @@
 /** @file p_setup.c  Doom 64 specfic map data properties.
  *
- * @authors Copyright © 2002-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2002-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,6 +1,6 @@
 /** @file g_game.c  Top-level (common) game routines.
  *
- * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 1999-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  * @authors Copyright © 1993-1996 id Software, Inc.

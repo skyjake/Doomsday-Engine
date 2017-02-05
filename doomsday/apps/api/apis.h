@@ -1,7 +1,7 @@
 /** @file apis.h  Doomsday's public API mechanism.
  * @ingroup base
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,7 +1,7 @@
 /** @file api_busy.h  Public API for additional Busy Mode features.
  * @ingroup base
  *
- * @authors Copyright &copy; 2007-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2007-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

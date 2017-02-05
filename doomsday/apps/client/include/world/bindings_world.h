@@ -1,7 +1,7 @@
 /** @file bindings_world.h
  * @ingroup world
  *
- * @authors Copyright © 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

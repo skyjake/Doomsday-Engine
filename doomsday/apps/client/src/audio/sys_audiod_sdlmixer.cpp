@@ -1,6 +1,6 @@
 /** @file sys_audiod_sdlmixer.cpp  SDL_mixer, for SFX, Ext and Mus interfaces.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

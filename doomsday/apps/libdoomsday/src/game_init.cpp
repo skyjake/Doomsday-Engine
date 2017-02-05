@@ -1,6 +1,6 @@
 /** @file game_init.cpp  Routines for initializing a game.
  *
- * @authors Copyright (c) 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright (c) 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

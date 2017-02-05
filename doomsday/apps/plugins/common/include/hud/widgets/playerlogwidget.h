@@ -1,6 +1,6 @@
 /** @file playerlogwidget.h  Specialized HudWidget for logging player messages.
  *
- * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 id Software, Inc.
  *

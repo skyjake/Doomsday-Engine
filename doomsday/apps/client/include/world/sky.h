@@ -1,7 +1,7 @@
 /** @file sky.h  Sky behavior.
  * @ingroup world
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,7 +1,7 @@
 /** @file games.cpp  Specialized collection for a set of logical Games.
  *
  * @authors Copyright © 2012-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

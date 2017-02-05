@@ -1,6 +1,6 @@
 /** @file cvarlineeditwidget.h  UI widget for an editable line of text in a cvar.
  *
- * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,6 +1,6 @@
 /** @file m_cheat.c  Cheat code sequences.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *

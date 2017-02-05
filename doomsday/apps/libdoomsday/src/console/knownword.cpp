@@ -3,7 +3,7 @@
  *
  * @todo Rewrite this whole thing with sensible C++ data structures and de::String! -jk
  *
- * @authors Copyright &copy; 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -1,6 +1,6 @@
 /** @file dgl_common.cpp  Misc Drawing Routines
  *
- * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

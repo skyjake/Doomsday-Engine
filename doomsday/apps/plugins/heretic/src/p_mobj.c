@@ -1,6 +1,6 @@
 /** @file p_mobj.c World map object interaction.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *

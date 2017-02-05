@@ -15,7 +15,7 @@
  * a bunch of tokens, and the same parsing rules would be applied for
  * everything.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2010-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

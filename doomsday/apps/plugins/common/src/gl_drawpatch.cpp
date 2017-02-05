@@ -1,6 +1,6 @@
 /** @file gl_drawpatch.cpp  Convenient drawing of Patch-textured quads.
  *
- * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License

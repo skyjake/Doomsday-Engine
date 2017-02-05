@@ -1,6 +1,6 @@
 /** @file m_cheat.cpp  Doom64 cheat code sequences
  *
- * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  * @authors Copyright © 1993-1996 id Software, Inc.

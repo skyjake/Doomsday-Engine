@@ -1,6 +1,6 @@
 /** @file rawtexture.h Raw Texture.
  *
- * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License

@@ -6,7 +6,7 @@
  * Note that negative values are not good for the packed write/read routines,
  * as they always have the high bits set.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License

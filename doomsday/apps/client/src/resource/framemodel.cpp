@@ -1,6 +1,6 @@
 /** @file resource/model.cpp  3D model resource (MD2/DMD).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
