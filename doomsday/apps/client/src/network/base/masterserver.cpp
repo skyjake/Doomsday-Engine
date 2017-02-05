@@ -50,7 +50,7 @@ typedef struct job_s {
     Record data;
 } job_t;
 
-dd_bool masterAware = false; // cvar
+dd_bool serverPublic = false; // cvar
 
 static QString masterUrl(char const *suffix = 0)
 {

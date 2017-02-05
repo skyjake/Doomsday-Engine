@@ -378,7 +378,7 @@ dd_bool N_ServerOpen()
         gx.NetServerStart(false);
     }
 
-    if (masterAware)
+    if (serverPublic)
     {
         // Let the master server know that we are running a public server.
         N_MasterAnnounceServer(true);
@@ -391,7 +391,7 @@ dd_bool N_ServerClose()
 {
     if (!App_ServerSystem().isListening()) return true;
 
-    if (masterAware)
+    if (serverPublic)
     {
         // Bye-bye, master server.
         N_MAClear();
