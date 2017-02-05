@@ -242,7 +242,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
     return true;
 }
 
-static MasterWorker* worker;
+static MasterWorker *worker;
 
 void N_MasterInit(void)
 {
