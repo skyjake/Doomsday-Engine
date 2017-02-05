@@ -56,6 +56,8 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         DoomsdayApp::games().audienceForReadiness() += this;
 
         joinButton = new ButtonWidget;
+        joinButton->setAttribute(AutomaticOpacity);
+        joinButton->disable();
         joinButton->setText(tr("Join"));
         joinButton->useInfoStyle();
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
@@ -188,6 +190,10 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
         d->joinButton->disable();
 
         icon().setImage(nullptr);
+    }
+    if (!info.flags().testFlag(shell::ServerInfo::AllowJoin))
+    {
+        d->joinButton->disable();
     }
     infoText += "\n" _E(C) + String(info.description()) + _E(.);
 

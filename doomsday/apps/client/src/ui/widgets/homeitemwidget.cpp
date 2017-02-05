@@ -218,6 +218,7 @@ HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     , d(new Impl(this))
 {
     setBehavior(Focusable | ContentClipping);
+    setAttribute(AutomaticOpacity);
     addEventHandler(new Impl::ClickHandler(*this));
 
     Rule const &iconSize = d->label->margins().height() +

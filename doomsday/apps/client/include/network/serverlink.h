@@ -50,6 +50,8 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
+    static ServerLink &get();
+
 public:
     ServerLink(Flags flags = DiscoverLocalServers);
 

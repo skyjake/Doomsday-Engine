@@ -938,6 +938,9 @@ desc = 1=Enable shiny textures on surfaces of the map.
 [rend-tex]
 desc = 1=Render with textures. 2=Render with gray texture.
 
+[server-allowjoin]
+desc = 1=Allow new clients to join the game.
+
 [server-frame-interval]
 desc = Minimum number of tics between sent frames.
 

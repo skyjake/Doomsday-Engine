@@ -29,6 +29,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
+#include "clientapp.h"
 
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
@@ -683,4 +684,9 @@ void ServerLink::handleIncomingPackets()
             break;
         }
     }
+}
+
+ServerLink &ServerLink::get() // static
+{
+    return ClientApp::serverLink();
 }

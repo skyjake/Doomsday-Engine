@@ -40,6 +40,9 @@
 
 using namespace de;
 
+static DialogWidget::RoleFlags const ID_SV_PACKAGES = DialogWidget::Id1;
+static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
+
 DENG_GUI_PIMPL(ServerInfoDialog)
 , DENG2_OBSERVES(ServerLink, MapOutline)
 , public PackagesWidget::IPackageStatus
@@ -86,14 +89,15 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // on what kind of package is being displayed.
         self().buttons()
                 << new DialogButtonItem(Default | Accept, tr("Close"))
-                << new DialogButtonItem(Action, tr("Join Game"), new CallbackAction([this] ()
-                {
+                << new DialogButtonItem(Action | ID_JOIN, tr("Join Game"), new CallbackAction([this] () {
                     self().accept();
                     emit self().joinGame();
                 }))
-                << new DialogButtonItem(ActionPopup | Id1, style().images().image("package.icon"), tr("Server"));
+                << new DialogButtonItem(ActionPopup | ID_SV_PACKAGES,
+                                        style().images().image("package.icon"), tr("Server"));
 
         createWidgets();
+        self().buttonWidget(ID_JOIN)->disable();
     }
 
     bool isPackageHighlighted(String const &) const
@@ -170,7 +174,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Action buttons.
 
-        auto *svBut = self().popupButtonWidget(Id1);
+        auto *svBut = self().popupButtonWidget(ID_SV_PACKAGES);
         svBut->setPopup(*serverPopup);
         svBut->setText(tr("Server"));
         svBut->setTextAlignment(ui::AlignLeft);
@@ -282,6 +286,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             gameState->setText(msg);
         }
 
+        // Actions.
+        self().buttonWidget(ID_JOIN)->enable(serverInfo.flags().testFlag(shell::ServerInfo::AllowJoin));
+
         // Local packages.
         {
             localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer").arg(gameTitle));
@@ -330,8 +337,8 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             serverPackages->setPopulationEnabled(true);
             serverPackages->setManualPackageIds(available);
 
-            self().buttonWidget(Id1)->enable();
-            self().buttonWidget(Id1)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
+            self().buttonWidget(ID_SV_PACKAGES)->enable();
+            self().buttonWidget(ID_SV_PACKAGES)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
         }
     }
 

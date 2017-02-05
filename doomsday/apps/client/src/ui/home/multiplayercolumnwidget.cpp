@@ -21,15 +21,14 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/home/headerwidget.h"
 #include "ui/clientwindow.h"
-#include "clientapp.h"
+#include "network/serverlink.h"
 
 #include <doomsday/Games>
+#include <de/CallbackAction>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
-
-#include "ui/commandaction.h"
 
 using namespace de;
 
@@ -49,7 +48,8 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                     << new ui::ActionItem(tr("Connect to Server..."),
                                           new SignalAction(&ClientWindow::main().taskBar(),
                                                            SLOT(connectToServerManually())))
-                    << new ui::ActionItem(tr("Refresh List"), new CommandAction("net request"));
+                    << new ui::ActionItem(tr("Refresh List"), new CallbackAction([] () {
+                            ServerLink::get().discoverUsingMaster(); }));
             return menu;
         }, ui::Down);
 

@@ -260,6 +260,7 @@ RemoteUser &ServerSystem::user(Id const &id) const
 
 bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
 {
+    if (!CVar_Byte(Con_FindVariable("server-allowjoin"))) return false;
     // If the server is full, attempts to connect are canceled.
     return (Sv_GetNumConnected() < svMaxPlayers);
 }

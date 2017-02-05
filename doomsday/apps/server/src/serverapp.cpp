@@ -24,6 +24,8 @@
 #include <QDebug>
 #include <stdlib.h>
 
+#include <doomsday/console/var.h>
+
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/Log>
@@ -269,9 +271,10 @@ shell::ServerInfo ServerApp::currentServerInfo()
     // The server player is there, it's just hidden.
     info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
 
-    //info->canJoin = ;
     shell::ServerInfo::Flags flags(0);
-    if (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers)
+    if (CVar_Byte(Con_FindVariable("server-allowjoin"))
+            && isServer != 0
+            && Sv_GetNumPlayers() < svMaxPlayers)
     {
         flags |= shell::ServerInfo::AllowJoin;
     }

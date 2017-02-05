@@ -95,17 +95,19 @@ dint gotFrame;  ///< @c true if a frame packet has been received.
 
 dd_bool firstNetUpdate = true;
 
-byte monitorMsgQueue;
-byte netShowLatencies;
-byte netDev;
-dfloat netConnectTime;
+static byte monitorMsgQueue;
+static byte netDev;
+#ifdef __SERVER__
+static byte netShowLatencies;
+static byte netAllowJoin = true;
+#endif
+//static dfloat netConnectTime;
 //dint netCoordTime = 17;
-dfloat netConnectTimeout = 10;
 dfloat netSimulatedLatencySeconds;
 
 // Local packets are stored into this buffer.
-dd_bool reboundPacket;
-netbuffer_t reboundStore;
+static dd_bool reboundPacket;
+static netbuffer_t reboundStore;
 
 #ifdef __CLIENT__
 static dint coordTimer;
@@ -1305,14 +1307,11 @@ void Net_Register()
     //C_VAR_CHARPTR   ("net-master-path",         &::masterPath, 0, 0, 0);
     C_VAR_CHARPTR   ("net-name",                &::playerName, 0, 0, 0);
 
-#ifdef __CLIENT__
-    C_VAR_FLOAT     ("client-connect-timeout",  &::netConnectTimeout, CVF_NO_MAX, 0, 0);
-#endif
-
 #ifdef __SERVER__
     C_VAR_CHARPTR   ("server-name",             &::serverName, 0, 0, 0);
     C_VAR_CHARPTR   ("server-info",             &::serverInfo, 0, 0, 0);
     C_VAR_INT2      ("server-public",           &::masterAware, 0, 0, 1, masterAwareChanged);
+    C_VAR_BYTE2     ("server-allowjoin",        &netAllowJoin,  0, 0, 1, masterAwareChanged);
     C_VAR_CHARPTR   ("server-password",         &::netPassword, 0, 0, 0);
     C_VAR_BYTE      ("server-latencies",        &::netShowLatencies, 0, 0, 1);
     C_VAR_INT       ("server-frame-interval",   &::frameInterval, CVF_NO_MAX, 0, 0);

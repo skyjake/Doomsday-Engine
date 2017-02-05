@@ -100,8 +100,6 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void linkDiscoveryUpdate(ServerLink const &link) override
     {
-        bool changed = false;
-
         ui::Data &items = self().items();
 
         QSet<String> foundHosts;
@@ -121,7 +119,6 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             if (!foundHosts.contains(id))
             {
                 items.remove(idx--);
-                changed = true;
             }
         }
 
@@ -137,7 +134,6 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
                 // Needs to be added.
                 items.append(new ServerListItem(info,
                         link.isServerOnLocalNetwork(info.address())));
-                changed = true;
             }
             else
             {
@@ -146,33 +142,30 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             }
         }
 
-        if (changed)
+        items.stableSort([] (ui::Item const &a, ui::Item const &b)
         {
-            items.sort([] (ui::Item const &a, ui::Item const &b)
-            {
-                auto const &first  = a.as<ServerListItem>();
-                auto const &second = b.as<ServerListItem>();
+            auto const &first  = a.as<ServerListItem>();
+            auto const &second = b.as<ServerListItem>();
 
-                // LAN games shown first.
-                if (first.isLocal() == second.isLocal())
+            // LAN games shown first.
+            if (first.isLocal() == second.isLocal())
+            {
+                // Sort by number of players.
+                if (first.info().playerCount() == second.info().playerCount())
                 {
-                    // Sort by number of players.
-                    if (first.info().playerCount() == second.info().playerCount())
+                    // Finally, by game ID.
+                    int cmp = first.info().gameId().compareWithCase(second.info().gameId());
+                    if (!cmp)
                     {
-                        // Finally, by game ID.
-                        int cmp = first.info().gameId().compareWithCase(second.info().gameId());
-                        if (!cmp)
-                        {
-                            // Lastly by server name.
-                            return first.info().name().compareWithoutCase(second.info().name()) < 0;
-                        }
-                        return cmp < 0;
+                        // Lastly by server name.
+                        return first.info().name().compareWithoutCase(second.info().name()) < 0;
                     }
-                    return first.info().playerCount() - second.info().playerCount() > 0;
+                    return cmp < 0;
                 }
-                return first.isLocal();
-            });
-        }
+                return first.info().playerCount() - second.info().playerCount() > 0;
+            }
+            return first.isLocal();
+        });
     }
 
     void currentGameChanged(Game const &newGame) override
