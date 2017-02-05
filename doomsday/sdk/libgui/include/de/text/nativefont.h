@@ -40,11 +40,7 @@ namespace de {
 class LIBGUI_PUBLIC NativeFont : public Asset
 {
 public:
-    enum Style
-    {
-        Regular,
-        Italic
-    };
+    enum Style { Regular, Italic };
 
     enum Weight
     {
@@ -55,19 +51,26 @@ public:
         Black      = 100
     };
 
+    enum Transform { NoTransform, Uppercase, Lowercase };
+
     struct Spec
     {
         Style style;
         dint weight;
+        Transform transform;
 
-        Spec(Style s = Regular, dint w = Normal) : style(s), weight(w) {}
+        Spec(Style s = Regular, dint w = Normal, Transform xform = NoTransform)
+            : style(s), weight(w), transform(xform) {}
 
         bool operator == (Spec const &other) const {
-            return style == other.style && weight == other.weight;
+            return style == other.style && weight == other.weight && transform == other.transform;
         }
         bool operator < (Spec const &other) const { // QMap key order
             if (weight < other.weight) return true;
             if (weight > other.weight) return false;
+            if (style == other.style) {
+                return transform < other.transform;
+            }
             return (style < other.style);
         }
     };
@@ -91,11 +94,13 @@ public:
     void setSize(dfloat size);
     void setStyle(Style style);
     void setWeight(dint weight);
+    void setTransform(Transform transform);
 
     String family() const;
     dfloat size() const;
     Style style() const;
     dint weight() const;
+    Transform transform() const;
 
     /**
      * Determines the native font name based on style mappings.

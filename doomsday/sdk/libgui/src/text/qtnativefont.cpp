@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "../src/text/qtnativefont.h"
@@ -44,6 +44,8 @@ QtNativeFont::QtNativeFont(QFont const &font)
     setSize(font.pointSizeF());
     setWeight(font.weight());
     setStyle(font.italic()? Italic : Regular);
+    setTransform(font.capitalization() == QFont::AllUppercase? Uppercase :
+                 font.capitalization() == QFont::AllLowercase? Lowercase : NoTransform);
 }
 
 QtNativeFont::QtNativeFont(QtNativeFont const &other)
@@ -65,6 +67,8 @@ void QtNativeFont::commit() const
     d->font.setPointSizeF(size());
     d->font.setStyle(style() == Italic? QFont::StyleItalic : QFont::StyleNormal);
     d->font.setWeight(weight());
+    d->font.setCapitalization(transform() == Uppercase? QFont::AllUppercase :
+                              transform() == Lowercase? QFont::AllLowercase : QFont::MixedCase);
 
     d->metrics.reset(new QFontMetrics(d->font));
 }

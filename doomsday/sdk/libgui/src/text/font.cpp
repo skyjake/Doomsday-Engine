@@ -46,10 +46,11 @@ namespace internal
 
         FontParams(PlatformFont const &font)
         {
-            family = font.family();
-            size = font.size();
-            spec.weight = font.weight();
-            spec.style = font.style();
+            family         = font.family();
+            size           = font.size();
+            spec.weight    = font.weight();
+            spec.style     = font.style();
+            spec.transform = font.transform();
         }
 
         bool operator == (FontParams const &other) const
@@ -65,7 +66,8 @@ namespace internal
         return ::qHash(params.family)
              ^ ::qHash(int(100 * params.size))
              ^ ::qHash(params.spec.weight)
-             ^ ::qHash(int(params.spec.style));
+             ^ ::qHash(int(params.spec.style))
+             ^ uint(params.spec.transform);
     }
 }
 
@@ -151,6 +153,7 @@ DENG2_PIMPL(Font), public Lockable
         mod->setSize(params.size);
         mod->setStyle(params.spec.style);
         mod->setWeight(params.spec.weight);
+        mod->setTransform(params.spec.transform);
         fontMods.insert(params, mod);
         return *mod;
     }

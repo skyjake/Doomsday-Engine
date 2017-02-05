@@ -32,6 +32,7 @@ DENG2_PIMPL(NativeFont)
     dfloat size;
     Style style;
     int weight;
+    Transform transform;
 
     Lockable mutex;
     QHash<QString, Rectanglei> measureCache;
@@ -41,6 +42,7 @@ DENG2_PIMPL(NativeFont)
         , size(12.f)
         , style(Regular)
         , weight(Normal)
+        , transform(NoTransform)
     {}
 
     void prepare()
@@ -77,10 +79,11 @@ NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Impl(this)
 
 NativeFont &NativeFont::operator = (NativeFont const &other)
 {
-    d->family = other.d->family;
-    d->style  = other.d->style;
-    d->size   = other.d->size;
-    d->weight = other.d->weight;
+    d->family    = other.d->family;
+    d->style     = other.d->style;
+    d->size      = other.d->size;
+    d->weight    = other.d->weight;
+    d->transform = other.d->transform;
     d->markNotReady();
     return *this;
 }
@@ -109,6 +112,12 @@ void NativeFont::setWeight(dint weight)
     d->markNotReady();
 }
 
+void NativeFont::setTransform(de::NativeFont::Transform transform)
+{
+    d->transform = transform;
+    d->markNotReady();
+}
+
 String NativeFont::family() const
 {
     return d->family;
@@ -127,6 +136,11 @@ NativeFont::Style NativeFont::style() const
 dint NativeFont::weight() const
 {
     return d->weight;
+}
+
+NativeFont::Transform NativeFont::transform() const
+{
+    return d->transform;
 }
 
 String NativeFont::nativeFontName() const

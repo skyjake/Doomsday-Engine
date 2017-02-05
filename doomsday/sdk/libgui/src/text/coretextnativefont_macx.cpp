@@ -161,8 +161,6 @@ static CoreTextFontCache fontCache;
 
 DENG2_PIMPL(CoreTextNativeFont)
 {
-    enum Transformation { NoTransform, Uppercase, Lowercase };
-
     CTFontRef font;
     float ascent;
     float descent;
@@ -212,8 +210,6 @@ DENG2_PIMPL(CoreTextNativeFont)
     };
     Cache cache;
 
-    Transformation xform;
-
     Impl(Public *i)
         : Base(i)
         , font(0)
@@ -221,7 +217,6 @@ DENG2_PIMPL(CoreTextNativeFont)
         , descent(0)
         , height(0)
         , lineSpacing(0)
-        , xform(NoTransform)
     {}
 
     Impl(Public *i, Impl const &other)
@@ -231,7 +226,6 @@ DENG2_PIMPL(CoreTextNativeFont)
         , descent(other.descent)
         , height(other.height)
         , lineSpacing(other.lineSpacing)
-        , xform(other.xform)
     {}
 
     ~Impl()
@@ -241,7 +235,7 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     String applyTransformation(String const &str) const
     {
-        switch (xform)
+        switch (self().transform())
         {
         case Uppercase:
             return str.toUpper();
@@ -317,13 +311,11 @@ CoreTextNativeFont::CoreTextNativeFont(String const &family)
 CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
     : NativeFont(font.family()), d(new Impl(this))
 {
-    setSize  (font.pointSizeF());
-    setWeight(font.weight());
-    setStyle (font.italic()? Italic : Regular);
-
-    d->xform = (font.capitalization() == QFont::AllUppercase? Impl::Uppercase :
-                font.capitalization() == QFont::AllLowercase? Impl::Lowercase :
-                                                              Impl::NoTransform);
+    setSize     (font.pointSizeF());
+    setWeight   (font.weight());
+    setStyle    (font.italic()? Italic : Regular);
+    setTransform(font.capitalization() == QFont::AllUppercase? Uppercase :
+                 font.capitalization() == QFont::AllLowercase? Lowercase : NoTransform);
 }
 
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
