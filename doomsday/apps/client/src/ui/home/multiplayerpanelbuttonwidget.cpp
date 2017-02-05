@@ -177,7 +177,6 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
         infoText += game.title();
         d->joinButton->enable();
 
-        /// @todo The server info should include the list of packages.
         if (d->catalog.setPackages(game.requiredPackages()))
         {
             icon().setImage(IdTech1Image::makeGameLogo(game, d->catalog));
