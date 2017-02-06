@@ -60,7 +60,10 @@ Version Version::currentBuild()
 Version::Version(String const &version, int buildNumber)
 {
     parseVersionString(version);
-    build = buildNumber;
+    if (buildNumber)
+    {
+        build = buildNumber;
+    }
 }
 
 bool Version::isValid() const
@@ -108,6 +111,7 @@ void Version::parseVersionString(String const &version)
     if (parts.size() >= 1) major = String(parts[0]).toInt();
     if (parts.size() >= 2) minor = String(parts[1]).toInt(nullptr, 10, String::AllowSuffix);
     if (parts.size() >= 3) patch = String(parts[2]).toInt(nullptr, 10, String::AllowSuffix);
+    if (parts.size() >= 4) build = String(parts[3]).toInt(nullptr, 10, String::AllowSuffix);
 
     if (dashPos >= 0 && dashPos < version.size() - 1)
     {
