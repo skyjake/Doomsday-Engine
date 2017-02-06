@@ -60,10 +60,12 @@ class Sector;
 class Surface;
 class Vertex;
 
+#if 0
 #ifdef __CLIENT__
 class BiasTracker;
 namespace de { class LightGrid; }
 #endif
+#endif // 0
 
 namespace world {
 
@@ -203,6 +205,7 @@ public:
 
 public:  //- Light sources --------------------------------------------------------------
 
+#if 0
     /**
      * Returns the total number of BiasSources in the map.
      */
@@ -270,6 +273,7 @@ public:  //- Light sources -----------------------------------------------------
      * bias sources/surfaces.
      */
     de::duint biasLastChangeOnFrame() const;
+#endif
 
     //- Luminous-objects ----------------------------------------------------------------
 
@@ -708,6 +712,7 @@ public:  //- Data structures ---------------------------------------------------
 
 #ifdef __CLIENT__
 
+#if 0
     /**
      * Returns @c true if a LightGrid has been initialized for the map.
      *
@@ -735,6 +740,7 @@ public:  //- Data structures ---------------------------------------------------
      * (physical dimensions, number of sectors) and should therefore be done "off-line".
      */
     void initLightGrid();
+#endif
 
     /**
      * Returns the set of scrolling surfaces for the map.
@@ -811,6 +817,7 @@ public:  /// @todo Most of the following should be private:
      */
     void buildMaterialLists();
 
+#if 0
     /**
      * Initializes bias lighting for the map. New light sources are initialized from the
      * loaded Light definitions. Map surfaces are prepared for tracking rays.
@@ -818,6 +825,7 @@ public:  /// @todo Most of the following should be private:
      * Must be called before rendering a frame with bias lighting enabled.
      */
     void initBias();
+#endif
 
     /**
      * Initialize the map object => BSP leaf "contact" blockmaps.

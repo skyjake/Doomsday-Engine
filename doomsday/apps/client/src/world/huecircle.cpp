@@ -1,3 +1,5 @@
+#if 0
+
 /** @file huecircle.cpp  HueCircle manipulator, for runtime map editing.
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -95,3 +97,5 @@ Vector3f HueCircle::offset(double angle) const
                     sin(angle) * d->upVec.y,
                     cos(angle) * d->sideVec.z + sin(angle) * d->upVec.z);
 }
+
+#endif

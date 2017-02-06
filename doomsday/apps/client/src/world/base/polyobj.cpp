@@ -53,6 +53,7 @@ static inline bool mobCanBlockMovement(mobj_t const &mob)
     return (mob.ddFlags & DDMF_SOLID) || (mob.dPlayer && !(mob.dPlayer->flags & DDPF_CAMERA));
 }
 
+#if 0
 static void notifyGeometryChanged(Polyobj &pob)
 {
 #ifdef __CLIENT__
@@ -78,6 +79,7 @@ static void notifyGeometryChanged(Polyobj &pob)
     DENG2_UNUSED(pob);
 #endif
 }
+#endif
 
 void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, Line *line)  // static
 {
@@ -382,8 +384,10 @@ bool Polyobj::move(Vector2d const &delta)
         return false;
     }
 
+#if 0
     // Various parties may be interested in this change; signal it.
     notifyGeometryChanged(*this);
+#endif
 
     return true;
 }
@@ -459,9 +463,10 @@ bool Polyobj::rotate(angle_t delta)
 
     updateSurfaceTangents();
 
+#if 0
     // Various parties may be interested in this change; signal it.
     notifyGeometryChanged(*this);
-
+#endif
     return true;
 }
 

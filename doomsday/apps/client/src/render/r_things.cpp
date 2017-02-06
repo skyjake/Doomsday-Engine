@@ -69,8 +69,9 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
     else
     {
         auto &subsec = subspaceAtOrigin.subsector().as<world::ClientSubsector>();
-        Map &map = subsec.sector().map();
 
+#if 0
+        Map &map = subsec.sector().map();
         if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
@@ -83,6 +84,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
             ambientColor = color;
         }
         else
+#endif
         {
             Vector4f const color = subsec.lightSourceColorfIntensity();
 

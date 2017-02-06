@@ -22,7 +22,6 @@
 #include <de/Matrix>
 #include <de/Vector>
 
-class BiasTracker;
 namespace world { class Subsector; }
 
 /**
@@ -41,8 +40,9 @@ public:
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      * @param owner          Subsector which owns the shard (if any).
      */
-    Shard(de::dint numBiasIllums, world::Subsector *owner = nullptr);
+    Shard(/*de::dint numBiasIllums, */world::Subsector *owner = nullptr);
 
+#if 0
     /**
      * Perform bias lighting for the supplied vertex geometry.
      *
@@ -61,6 +61,7 @@ public:
      */
     void lightWithBiasSources(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
                               de::Matrix3f const &tangentMatrix, de::duint biasTime);
+#endif
 
     /**
      * Returns a pointer to the Subsector which owns the shard (if any).
@@ -72,6 +73,7 @@ public:
      */
     void setSubsector(world::Subsector *newOwner);
 
+#if 0
     /**
      * Returns the BiasTracker for the shard.
      */
@@ -81,6 +83,7 @@ public:
      * Schedule a bias lighting update for the Shard following a move/transform.
      */
     void updateBiasAfterMove();
+#endif
 
     /**
      * To be called to register the commands and variables of this module.

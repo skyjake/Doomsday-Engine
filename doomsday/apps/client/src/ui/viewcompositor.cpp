@@ -325,6 +325,7 @@ void ViewCompositor::drawCompositedLayers()
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
+#if 0
         // Draw the widgets of the Shadow Bias Editor (if active).
         SBE_DrawGui();
 
@@ -333,6 +334,7 @@ void ViewCompositor::drawCompositedLayers()
         {
             Rend_LightGridVisual(App_World().map().lightGrid());
         }
+#endif
         Net_Drawer();
         Sfx_ChannelDrawer();
     }

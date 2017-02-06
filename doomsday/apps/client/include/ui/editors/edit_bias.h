@@ -1,3 +1,5 @@
+#if 0
+
 /** @file edit_bias.h Shadow Bias editor UI.
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -55,3 +57,5 @@ HueCircle *SBE_HueCircle();
 #endif // __CLIENT__
 
 #endif // DENG_CLIENT_SHADOWBIAS_EDITOR
+
+#endif // 0

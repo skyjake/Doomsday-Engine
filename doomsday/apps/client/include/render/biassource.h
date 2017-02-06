@@ -1,3 +1,5 @@
+#if 0
+
 /** @file biassource.h  Shadow Bias (light) source.
  *
  * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -210,3 +212,5 @@ private:
 }  // namespace world
 
 #endif  // DENG_CLIENT_RENDER_SHADOWBIAS_SOURCE_H
+
+#endif

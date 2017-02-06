@@ -31,7 +31,7 @@
 #include "world/sector.h"
 #include "world/subsector.h"
 
-#include "render/lightgrid.h"
+#include "render/ilightsource.h"
 
 class Shard;
 
@@ -39,7 +39,7 @@ namespace world {
 
 class ClEdgeLoop;
 
-class ClientSubsector : public Subsector, public de::LightGrid::IBlockLightSource
+class ClientSubsector : public Subsector, public ILightSource
 {
 public:
     /**
@@ -125,6 +125,7 @@ public:
      */
     void markReverbDirty(bool yes = true);
 
+#if 0
 //- Bias lighting ----------------------------------------------------------------------
 
     /**
@@ -141,6 +142,7 @@ public:
      * @see Map::biasLastChangeOnFrame()
      */
     de::duint biasLastChangeOnFrame() const;
+#endif
 
     /**
      * Returns the geometry Shard for the specified @a mapElement and geometry
@@ -154,6 +156,7 @@ public:
      */
     Shard &shard(MapElement &mapElement, de::dint geomId);
 
+#if 0
     /**
      * Shards owned by the Subsector should call this periodically to update
      * their bias lighting contributions.
@@ -163,6 +166,7 @@ public:
      * @return  @c true if one or more BiasIllum contributors was updated.
     */
     bool updateBiasContributors(Shard *shard);
+#endif
 
 //- Decorations -------------------------------------------------------------------------
 

@@ -1,3 +1,5 @@
+#if 0
+
 /** @file biassource.cpp  Shadow Bias (light) source.
  *
  * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -331,3 +333,5 @@ void BiasSource::operator << (de::Reader &from)
 }
 
 }  // namespace world
+
+#endif

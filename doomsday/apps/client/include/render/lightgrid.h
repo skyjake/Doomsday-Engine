@@ -1,3 +1,5 @@
+#if 0
+
 /** @file lightgrid.h  Light Grid (Smoothed ambient sector lighting).
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -181,3 +183,5 @@ private:
 }  // namespace de
 
 #endif  // DENG_CLIENT_RENDER_LIGHTGRID_H
+
+#endif

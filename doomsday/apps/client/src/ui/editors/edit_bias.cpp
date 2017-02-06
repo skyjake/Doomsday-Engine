@@ -1,3 +1,5 @@
+#if 0
+
 /** @file edit_bias.cpp  Shadow Bias editor UI.
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -742,3 +744,5 @@ void SBE_DrawGui()
 }
 
 #endif // __CLIENT__
+
+#endif

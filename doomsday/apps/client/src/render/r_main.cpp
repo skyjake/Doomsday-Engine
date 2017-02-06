@@ -114,8 +114,8 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     else
     {
         DENG2_ASSERT(vs.bspLeaf);
+#if 0
         world::Map const &map = ClientApp::world().map();
-
         if (useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
@@ -130,6 +130,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
             V3f_Set(parm.ambientColor, color.x, color.y, color.z);
         }
         else
+#endif
         {
             auto const &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
             Vector4f const color = subsec.lightSourceColorfIntensity();

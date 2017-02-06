@@ -28,18 +28,19 @@
 
 using namespace de;
 
-static dint devUpdateBiasContributors = true;  //cvar
-
 DENG2_PIMPL_NOREF(Shard)
 {
     world::Subsector *owner = nullptr;
+#if 0
     typedef QVector<BiasIllum *> BiasIllums;
     BiasIllums biasIllums;
     BiasTracker biasTracker;
     duint biasLastUpdateFrame = 0;
+#endif
 
-    ~Impl() { qDeleteAll(biasIllums); }
+    ~Impl() {} //{ qDeleteAll(biasIllums); }
 
+#if 0
     /**
      * Determines whether it is time to update bias lighting contributors.
      */
@@ -59,11 +60,13 @@ DENG2_PIMPL_NOREF(Shard)
         biasLastUpdateFrame = lastChangeFrame;
         return true;
     }
+#endif
 };
 
-Shard::Shard(dint numBiasIllums, world::Subsector *owner) : d(new Impl)
+Shard::Shard(/*dint numBiasIllums, */world::Subsector *owner) : d(new Impl)
 {
     setSubsector(owner);
+#if 0
     if(numBiasIllums)
     {
         d->biasIllums.reserve(numBiasIllums);
@@ -72,8 +75,10 @@ Shard::Shard(dint numBiasIllums, world::Subsector *owner) : d(new Impl)
             d->biasIllums << new BiasIllum(&d->biasTracker);
         }
     }
+#endif
 }
 
+#if 0
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
     Matrix3f const &tangentMatrix, duint biasTime)
 {
@@ -104,6 +109,7 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
         d->biasTracker.markIllumUpdateCompleted();
     }
 }
+#endif
 
 world::Subsector *Shard::subsector() const
 {
@@ -115,6 +121,7 @@ void Shard::setSubsector(world::Subsector *newOwner)
     d->owner = newOwner;
 }
 
+#if 0
 BiasTracker &Shard::biasTracker() const
 {
     return d->biasTracker;
@@ -124,9 +131,14 @@ void Shard::updateBiasAfterMove()
 {
     d->biasTracker.updateAllContributors();
 }
+#endif
 
 void Shard::consoleRegister() // static
 {
+#if 0
+    static dint devUpdateBiasContributors = true;  //cvar
+
     // Development variables.
     C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
+#endif
 }

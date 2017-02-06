@@ -266,6 +266,7 @@ void Hand::worldSystemFrameEnds()
                 }
             }
 
+#if 0
             if(!!d->applyProps)
             {
                 /// @todo There should be a generic mechanism for applying the user's
@@ -288,6 +289,7 @@ void Hand::worldSystemFrameEnds()
                     }
                 }
             }
+#endif
         }
     }
 

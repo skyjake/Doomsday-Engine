@@ -38,9 +38,11 @@ class Sector;
 struct VectorLightData;
 class ClientMaterial;
 class MaterialAnimator;
+#if 0
 namespace de {
     class LightGrid;
 }
+#endif
 namespace world {
     class ConvexSubspace;
     class Subsector;
@@ -101,7 +103,7 @@ DENG_EXTERN_C float extraLightDelta;
 DENG_EXTERN_C int devRendSkyMode;
 DENG_EXTERN_C int gameDrawHUD;
 
-DENG_EXTERN_C int useBias;
+//DENG_EXTERN_C int useBias;
 
 DENG_EXTERN_C int useDynLights;
 DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
@@ -229,7 +231,7 @@ void Rend_DrawLightModMatrix();
 /**
  * Draws the light grid debug visual.
  */
-void Rend_LightGridVisual(de::LightGrid &lg);
+//void Rend_LightGridVisual(de::LightGrid &lg);
 
 /**
  * Determines whether the sky light color tinting is enabled.

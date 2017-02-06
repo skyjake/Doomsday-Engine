@@ -171,10 +171,10 @@ void R_SortVisSprites()
 }
 
 void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
-    world::BspLeaf const &bspLeaf)
+                                      world::BspLeaf const &bspLeaf)
 {
+#if 0
     world::Map &map = ClientApp::world().map();
-
     if(useBias && map.hasLightGrid())
     {
         Vector4f color = map.lightGrid().evaluate(origin);
@@ -190,6 +190,7 @@ void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
         ambientColor.z = color.z;
     }
     else
+#endif
     {
         auto const &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
         Vector4f const color = subsec.lightSourceColorfIntensity();

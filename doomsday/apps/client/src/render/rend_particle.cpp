@@ -456,6 +456,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
     {
         world::Map &map = pinfo->bspLeaf->subspace().sector().map();
 
+#if 0
         if(useBias && map.hasLightGrid())
         {
             Vector4f color = map.lightGrid().evaluate(spr.pose.origin);
@@ -469,6 +470,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
             spr.light.ambientColor.z = color.z;
         }
         else
+#endif
         {
             Vector4f const color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
                                        .lightSourceColorfIntensity();

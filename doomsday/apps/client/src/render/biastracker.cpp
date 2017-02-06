@@ -1,3 +1,5 @@
+#if 0
+
 /** @file biastracker.cpp  Shadow Bias illumination tracker.
  *
  * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -247,3 +249,5 @@ void BiasTracker::markIllumUpdateCompleted()
 {
     d->changedContributions.fill(0);
 }
+
+#endif

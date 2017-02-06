@@ -1,3 +1,5 @@
+#if 0
+
 /** @file huecirclevisual.cpp  HueCircle visualizer.
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -92,3 +94,5 @@ void HueCircleVisual::draw(HueCircle &hueCircle, Vector3d const &viewOrigin,
     }
     LIBGUI_GL.glEnd();
 }
+
+#endif

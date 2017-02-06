@@ -103,8 +103,8 @@ DENG2_PIMPL(ClientSubsector)
 , DENG2_OBSERVES(Subsector, Deletion)
 , DENG2_OBSERVES(Plane,     Deletion)
 
-, DENG2_OBSERVES(Sector, LightColorChange)
-, DENG2_OBSERVES(Sector, LightLevelChange)
+//, DENG2_OBSERVES(Sector, LightColorChange)
+//, DENG2_OBSERVES(Sector, LightLevelChange)
 
 , DENG2_OBSERVES(Line,    FlagsChange)
 , DENG2_OBSERVES(Plane,   HeightChange)
@@ -658,6 +658,7 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
+#if 0
     void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
     {
         if (!hedge) return;
@@ -677,6 +678,7 @@ DENG2_PIMPL(ClientSubsector)
             shard->updateBiasAfterMove();
         }
     }
+#endif
 
     /**
      * Find the GeometryData for a MapElement by the element-unique @a group identifier.
@@ -1231,6 +1233,7 @@ DENG2_PIMPL(ClientSubsector)
                 return LoopContinue;
             });
 
+#if 0
             // Inform bias surfaces of changed geometry?
             if (!::ddMapSetup && ::useBias)
             {
@@ -1257,6 +1260,7 @@ DENG2_PIMPL(ClientSubsector)
                     });
                 });
             }
+#endif
         }
     }
 
@@ -1272,6 +1276,7 @@ DENG2_PIMPL(ClientSubsector)
         markDependentSurfacesForRedecoration(plane);
     }
 
+#if 0
     /// Observes Sector LightLevelChange.
     void sectorLightLevelChanged(Sector &DENG2_DEBUG_ONLY(changed))
     {
@@ -1293,6 +1298,7 @@ DENG2_PIMPL(ClientSubsector)
             self().sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
+#endif
 
     /// Observes Surface MaterialChange
     void surfaceMaterialChanged(Surface &surface)
@@ -1389,9 +1395,11 @@ ClientSubsector::ClientSubsector(QVector<ConvexSubspace *> const &subspaces)
     d->observeSurface(&ceiling->surface());
     d->observeMaterial(ceiling->surface().materialPtr());
 
+#if 0
     // Observe changes to lighting properties in the sector.
     sector().audienceForLightLevelChange() += d;
     sector().audienceForLightColorChange() += d;
+#endif
 }
 
 String ClientSubsector::description() const
@@ -1678,6 +1686,7 @@ dint ClientSubsector::blockLightSourceZBias()
     return 0;
 }
 
+#if 0
 void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
 {
     DENG2_FOR_EACH(Impl::GeometryGroups, g, d->geomGroups)
@@ -1689,7 +1698,9 @@ void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
         }
     }
 }
+#endif
 
+#if 0
 // Determine the number of bias illumination points needed for this geometry.
 // Presently we define a 1:1 mapping to geometry vertices.
 static dint countIlluminationPoints(MapElement &mapElement, dint DENG2_DEBUG_ONLY(group))
@@ -1710,13 +1721,14 @@ static dint countIlluminationPoints(MapElement &mapElement, dint DENG2_DEBUG_ONL
     }
     return 0;
 }
+#endif
 
 Shard &ClientSubsector::shard(MapElement &mapElement, dint geomId)
 {
     auto *gdata = d->geomData(mapElement, geomId, true /*create*/);
     if (!gdata->shard)
     {
-        gdata->shard.reset(new Shard(countIlluminationPoints(mapElement, geomId), this));
+        gdata->shard.reset(new Shard(/*countIlluminationPoints(mapElement, geomId),*/ this));
     }
     return *gdata->shard;
 }
@@ -1730,6 +1742,7 @@ Shard *ClientSubsector::findShard(MapElement &mapElement, dint geomId)
     return nullptr;
 }
 
+#if 0
 /**
  * @todo This could be enhanced so that only the lights on the right side of the
  * surface are taken into consideration.
@@ -1825,6 +1838,7 @@ duint ClientSubsector::biasLastChangeOnFrame() const
 {
     return sector().map().biasLastChangeOnFrame();
 }
+#endif
 
 void ClientSubsector::decorate()
 {

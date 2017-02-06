@@ -608,11 +608,13 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     // Evaluate the ambient light level at our map origin.
     auto const &subsec = Mobj_Subsector(mob).as<ClientSubsector>();
     dfloat ambientLightLevel;
+#if 0
     if (::useBias && subsec.sector().map().hasLightGrid())
     {
         ambientLightLevel = subsec.sector().map().lightGrid().evaluateIntensity(mob.origin);
     }
     else
+#endif
     {
         ambientLightLevel = subsec.lightSourceIntensity();
     }

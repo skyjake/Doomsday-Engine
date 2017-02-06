@@ -621,7 +621,7 @@ DENG2_PIMPL(ClientServerWorld)
 #ifdef __CLIENT__
         GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
 
-        map->initLightGrid();
+        //map->initLightGrid();
         map->initSkyFix();
         map->spawnPlaneParticleGens();
 
@@ -642,7 +642,7 @@ DENG2_PIMPL(ClientServerWorld)
         map->initContactBlockmaps();
         R_InitContactLists(*map);
         rendSys().worldSystemMapChanged(*map);
-        map->initBias();  // Shadow bias sources and surfaces.
+        //map->initBias();  // Shadow bias sources and surfaces.
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
@@ -945,12 +945,14 @@ void ClientServerWorld::endFrame()
     {
         d->updateHandOrigin();
 
+#if 0
         // If the HueCircle is active update the current edit color.
         if(HueCircle *hueCircle = SBE_HueCircle())
         {
             viewdata_t const *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
+#endif
     }
 
     // Notify interested parties that the current frame has ended.

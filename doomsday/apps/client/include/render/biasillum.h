@@ -1,3 +1,5 @@
+#if 0
+
 /** @file biasillum.h  Shadow Bias map point illumination.
  *
  * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -106,3 +108,5 @@ private:
 };
 
 #endif // DENG_CLIENT_RENDER_BIASILLUM_H
+
+#endif

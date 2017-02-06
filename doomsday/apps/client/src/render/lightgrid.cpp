@@ -1,3 +1,5 @@
+#if 0
+
 /** @file lightgrid.cpp  Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -622,3 +624,5 @@ void LightGrid::consoleRegister()  // static
 }
 
 }  // namespace de
+
+#endif

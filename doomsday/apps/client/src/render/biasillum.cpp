@@ -1,3 +1,5 @@
+#if 0
+
 /** @file biasillum.cpp  Shadow Bias map point illumination.
  *
  * @authors Copyright © 2005-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -294,3 +296,5 @@ void BiasIllum::consoleRegister() // static
     // Development variables.
     C_VAR_INT("rend-dev-bias-sight",    &devUseSightCheck,  CVF_NO_ARCHIVE, 0, 1);
 }
+
+#endif

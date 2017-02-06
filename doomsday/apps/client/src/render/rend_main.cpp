@@ -158,7 +158,9 @@ D_CMD(LowRes);
 D_CMD(MipMap);
 D_CMD(TexReset);
 
+#if 0
 dint useBias;  ///< Shadow Bias enabled? cvar
+#endif
 
 FogParams fogParams;
 dfloat fieldOfView = 95.0f;
@@ -294,10 +296,12 @@ dbyte devThinkerIds;             ///< @c 1= Draw (mobj) thinker indicies.
 dbyte rendInfoLums;              ///< @c 1= Print lumobj debug info to the console.
 dbyte devDrawLums;               ///< @c 1= Draw lumobjs origins.
 
+#if 0
 dbyte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
 dfloat devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
+#endif
 
-static void drawBiasEditingVisuals(Map &map);
+//static void drawBiasEditingVisuals(Map &map);
 //static void drawFakeRadioShadowPoints(Map &map);
 static void drawGenerators(Map &map);
 static void drawLumobjs(Map &map);
@@ -369,6 +373,7 @@ static void reportWallDrawn(Line &line)
     }
 }
 
+#if 0
 static void scheduleFullLightGridUpdate()
 {
     if (!ClientApp::world().hasMap()) return;
@@ -379,6 +384,7 @@ static void scheduleFullLightGridUpdate()
         ClientApp::world().map().lightGrid().scheduleFullUpdate();
     }
 }
+#endif
 
 /// World/map renderer reset.
 void Rend_Reset()
@@ -624,8 +630,10 @@ Vector3f Rend_SkyLightColor()
                 skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
             }
 
+#if 0
             // When the sky light color changes we must update the light grid.
             scheduleFullLightGridUpdate();
+#endif
             oldSkyAmbientColor = ambientColor;
         }
 
@@ -851,11 +859,11 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
  * @param luminosityDeltas  Edge luminosity deltas (for walls [left edge, right edge]).
  */
 static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
-    MapElement &mapElement, dint geomGroup, Matrix3f const &surfaceTangents,
+    MapElement &mapElement, dint /*geomGroup*/, Matrix3f const &/*surfaceTangents*/,
     Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
     bool const haveWall = mapElement.is<LineSideSegment>();
-    auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
+    //auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
 
     // Uniform color?
     if(::levelFullBright || !(glowing < 1))
@@ -869,6 +877,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
         return;
     }
 
+#if 0
     if(::useBias)  // Bias lighting model.
     {
         Map &map     = subsec.sector().map();
@@ -907,6 +916,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
         }
     }
     else  // Doom lighting model.
+#endif
     {
         // Blend sector light color with the surface color tint.
         Vector3f const colorBlended = ::curSectorLightColor * color;
@@ -4718,11 +4728,12 @@ void Rend_RenderMap(Map &map)
     drawThinkers(map);
     drawSoundEmitters(map);
     drawGenerators(map);
-    drawBiasEditingVisuals(map);
+    //drawBiasEditingVisuals(map);
 
     GL_SetMultisample(false);
 }
 
+#if 0
 static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
@@ -4751,6 +4762,7 @@ static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
         LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y + size);
     LIBGUI_GL.glEnd();
 }
+#endif
 
 static void drawLabel(String const &label, Vector3d const &origin, dfloat scale, dfloat opacity)
 {
@@ -4783,6 +4795,7 @@ static void drawLabel(String const &label, Vector3d const &origin, ddouble maxDi
  * Visuals for Shadow Bias editing:
  */
 
+#if 0
 static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
@@ -4965,6 +4978,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     GLState::current().setDepthTest(true).apply();
 }
+#endif
 
 void Rend_UpdateLightModMatrix()
 {
@@ -6099,6 +6113,7 @@ static void drawThinkers(Map &map)
     LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
+#if 0
 void Rend_LightGridVisual(LightGrid &lg)
 {
     static Vector3f const red(1, 0, 0);
@@ -6158,6 +6173,7 @@ void Rend_LightGridVisual(LightGrid &lg)
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);
     LIBGUI_GL.glPopMatrix();
 }
+#endif
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
 {
@@ -6336,10 +6352,12 @@ static void useDynlightsChanged()
     });
 }
 
+#if 0
 static void useSkylightChanged()
 {
     scheduleFullLightGridUpdate();
 }
+#endif
 
 static void useSmartFilterChanged()
 {
@@ -6348,7 +6366,7 @@ static void useSmartFilterChanged()
 
 void Rend_Register()
 {
-    C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
+    //C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
     C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
@@ -6368,8 +6386,8 @@ void Rend_Register()
     C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
     C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     C_VAR_INT("rend-light-num", &rendMaxLumobjs, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-light-sky", &rendSkyLight, 0, 0, 1, useSkylightChanged);
-    C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, useSkylightChanged);
+    C_VAR_FLOAT("rend-light-sky", &rendSkyLight, 0, 0, 1/*, useSkylightChanged*/);
+    C_VAR_BYTE("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1/*, useSkylightChanged*/);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
 
@@ -6397,8 +6415,8 @@ void Rend_Register()
     C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8, texQualityChanged);
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
 
-    C_VAR_BYTE("rend-bias-grid-debug", &devLightGrid, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_FLOAT("rend-bias-grid-debug-size", &devLightGridSize, 0, .1f, 100);
+    //C_VAR_BYTE("rend-bias-grid-debug", &devLightGrid, CVF_NO_ARCHIVE, 0, 1);
+    //C_VAR_FLOAT("rend-bias-grid-debug-size", &devLightGridSize, 0, .1f, 100);
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_INT("rend-dev-cull-leafs", &devNoCulling, CVF_NO_ARCHIVE, 0, 1);
@@ -6427,9 +6445,11 @@ void Rend_Register()
     C_CMD_FLAGS("texreset", "", TexReset, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "s", TexReset, CMDF_NO_DEDICATED);
 
-    BiasIllum::consoleRegister();
     LightDecoration::consoleRegister();
+#if 0
+    BiasIllum::consoleRegister();
     LightGrid::consoleRegister();
+#endif
     Lumobj::consoleRegister();
     SkyDrawable::consoleRegister();
     Rend_ModelRegister();

@@ -96,7 +96,9 @@ using namespace de;
 static dint bspSplitFactor = 7;  ///< cvar
 
 #ifdef __CLIENT__
+#if 0
 static dint lgMXSample = 1;  ///< 5 samples per block.
+#endif
 
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special
@@ -257,12 +259,14 @@ DENG2_PIMPL(Map)
         }
     };
 
+#if 0
     struct BiasData
     {
         duint currentTime = 0;        ///< The "current" frame in milliseconds.
         duint lastChangeOnFrame = 0;
         QList<BiasSource *> sources;  ///< All bias light sources (owned).
     };
+#endif
 
 #endif // __CLIENT__
 
@@ -304,9 +308,10 @@ DENG2_PIMPL(Map)
     SurfaceSet scrollingSurfaces;
     SkyDrawable::Animator skyAnimator;
     std::unique_ptr<Generators> generators;
+#if 0
     std::unique_ptr<LightGrid> lightGrid;
-
     BiasData bias;            ///< Map wide "global" data for Bias lighting.
+#endif
     QList<Lumobj *> lumobjs;  ///< All lumobjs (owned).
 
     ClSkyPlane skyFloor;
@@ -330,7 +335,9 @@ DENG2_PIMPL(Map)
     {
 #ifdef __CLIENT__
         self().removeAllLumobjs();
+#if 0
         self().removeAllBiasSources();
+#endif
 #endif
 
         // Delete thinkers before the map elements, because thinkers may reference them
@@ -1176,6 +1183,7 @@ DENG2_PIMPL(Map)
         }
     }
 
+#if 0
     /**
      * Perform preprocessing which must be done before rendering a frame.
      */
@@ -1215,6 +1223,7 @@ DENG2_PIMPL(Map)
             });
         }
     }
+#endif
 
     /**
      * Create new mobj => BSP leaf contacts.
@@ -1552,6 +1561,7 @@ SkyDrawable::Animator &Map::skyAnimator() const
     return d->skyAnimator;
 }
 
+#if 0
 bool Map::hasLightGrid() const
 {
     return bool(d->lightGrid);
@@ -1832,6 +1842,7 @@ void Map::initBias()
 
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
+#endif
 
 void Map::initRadio()
 {
@@ -2964,6 +2975,7 @@ LoopResult Map::forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const
     return LoopContinue;
 }
 
+#if 0
 dint Map::biasSourceCount() const
 {
     return d->bias.sources.count();
@@ -3052,6 +3064,7 @@ duint Map::biasLastChangeOnFrame() const
 {
     return d->bias.lastChangeOnFrame;
 }
+#endif // 0
 
 #endif // __CLIENT__
 
@@ -3187,10 +3200,12 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
 
     if (!freezeRLs)
     {
+#if 0
         // Initialize and/or update the LightGrid.
         initLightGrid();
 
         d->biasBeginFrame();
+#endif
 
         removeAllLumobjs();
 
@@ -3308,7 +3323,7 @@ String Map::objectSummaryAsStyledText() const
 
     if (thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
 #ifdef __CLIENT__
-    if (biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
+    //if (biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
     if (generatorCount())  os << TABBED(generatorCount(),   "Generators");
     if (lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
 #endif
@@ -3393,12 +3408,14 @@ D_CMD(InspectMap)
         LOG_SCR_MSG(_E(l) "Polyobj blockmap: "  _E(.) _E(i)) << map.polyobjBlockmap().dimensions().asText();
     }
 
+#if 0
 #ifdef __CLIENT__
     if (map.hasLightGrid())
     {
         LOG_SCR_MSG(_E(l) "LightGrid: " _E(.) _E(i)) << map.lightGrid().dimensions().asText();
     }
 #endif
+#endif // 0
 
     return true;
 
@@ -3412,8 +3429,10 @@ void Map::consoleRegister() // static
     Sector::consoleRegister();
 
     C_VAR_INT("bsp-factor",                 &bspSplitFactor, CVF_NO_MAX, 0, 0);
+#if 0
 #ifdef __CLIENT__
     C_VAR_INT("rend-bias-grid-multisample", &lgMXSample,     0, 0, 7);
+#endif
 #endif
 
     C_CMD("inspectmap", "", InspectMap);

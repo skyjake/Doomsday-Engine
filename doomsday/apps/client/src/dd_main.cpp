@@ -2373,7 +2373,9 @@ void DD_ConsoleRegister()
     Con_TransitionRegister();
 
     InputSystem::consoleRegister();
+#if 0
     SBE_Register();  // for bias editor
+#endif
     RenderSystem::consoleRegister();
     GL_Register();
     UI_Register();

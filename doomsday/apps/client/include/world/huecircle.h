@@ -1,3 +1,5 @@
+#if 0
+
 /** @file huecircle.h  HueCircle manipulator, for runtime map editing.
  *
  * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -63,3 +65,5 @@ private:
 };
 
 #endif // DENG_WORLD_HUECIRCLE_H
+
+#endif // 0
