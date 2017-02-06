@@ -2378,7 +2378,7 @@ void DD_ConsoleRegister()
 #endif
     RenderSystem::consoleRegister();
     GL_Register();
-    UI_Register();
+    //UI_Register();
     Demo_Register();
     P_ConsoleRegister();
     I_Register();

@@ -1253,9 +1253,9 @@ void ClientResources::initSystemTextures()
     } const texDefs[] = {
         { "bbox",       "bbox" },
         { "gray",       "gray" },
-        { "boxcorner",  "ui/boxcorner" },
-        { "boxfill",    "ui/boxfill" },
-        { "boxshade",   "ui/boxshade" }
+        //{ "boxcorner",  "ui/boxcorner" },
+        //{ "boxfill",    "ui/boxfill" },
+        //{ "boxshade",   "ui/boxshade" }
     };
 
     LOG_RES_VERBOSE("Initializing System textures...");

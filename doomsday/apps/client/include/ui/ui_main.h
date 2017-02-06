@@ -28,18 +28,19 @@
 #  include "MaterialVariantSpec"
 #endif
 
-enum fontstyle_t {
+/*enum fontstyle_t {
     FS_NORMAL,
     FS_BOLD,
     FS_LIGHT,
     FONTSTYLE_COUNT
-};
+};*/
 
 /// Numeric identifiers of predefined colors.
 /// @ingroup infine
 enum {
     UIC_TEXT,
     UIC_TITLE,
+    /*
     UIC_SHADOW,
     UIC_BG_LIGHT,
     UIC_BG_MEDIUM,
@@ -48,39 +49,40 @@ enum {
     UIC_BRD_MED,
     UIC_BRD_LOW,
     UIC_HELP,
+    */
     NUM_UI_COLORS
 };
 
 /// Standard dimensions.
 #define UI_WIDTH            (1000.0f)
 #define UI_HEIGHT           (1000.0f)
-#define UI_BORDER           (UI_WIDTH/120) /// All borders are this wide.
+//#define UI_BORDER           (UI_WIDTH/120) /// All borders are this wide.
 #define UI_SHADOW_OFFSET    (MIN_OF(3, UI_WIDTH/320))
 #define UI_SHADOW_STRENGTH  (.6f)
-#define UI_BUTTON_BORDER    (UI_BORDER)
-#define UI_BAR_WDH          (UI_BORDER * 3)
-#define UI_BAR_BORDER       (UI_BORDER / 2)
-#define UI_BAR_BUTTON_BORDER (3 * UI_BAR_BORDER / 2)
+//#define UI_BUTTON_BORDER    (UI_BORDER)
+//#define UI_BAR_WDH          (UI_BORDER * 3)
+//#define UI_BAR_BORDER       (UI_BORDER / 2)
+//#define UI_BAR_BUTTON_BORDER (3 * UI_BAR_BORDER / 2)
 #define UI_MAX_COLUMNS      10 /// Maximum columns for list box.
 
 typedef struct {
     float red, green, blue;
 } ui_color_t;
 
-DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+DENG_EXTERN_C fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
 
-void UI_Register(void);
+//void UI_Register(void);
 
 void UI_LoadFonts(void);
 
 char const *UI_ChooseFixedFont(void);
-char const *UI_ChooseVariableFont(fontstyle_t style);
+//char const *UI_ChooseVariableFont(fontstyle_t style);
 
 /// @param id  Id number of the color to return e.g. "UIC_TEXT".
 ui_color_t* UI_Color(uint id);
 
 /// @return  Height of the current UI font.
-int UI_FontHeight(void);
+//int UI_FontHeight(void);
 
 /**
  * Background with the "The Doomsday Engine" text superimposed.
@@ -94,14 +96,14 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &size, float al
 void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount);
 void UI_SetColorA(ui_color_t* color, float alpha);
 void UI_SetColor(ui_color_t* color);
-void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int brd, dd_bool filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
+//void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+//void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+//void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int brd, dd_bool filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
 
 /// Draw shadowed text.
 void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha);
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha, int alignFlags, short textFlags);
 
-de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags = 0);
+//de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags = 0);
 
 #endif

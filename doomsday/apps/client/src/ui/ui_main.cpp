@@ -38,15 +38,16 @@
 
 using namespace de;
 
-D_CMD(UIColor);
+//D_CMD(UIColor);
 
-fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
-static int uiFontHgt; /// Height of the UI font.
+fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
+//static int uiFontHgt; /// Height of the UI font.
 
 /// Modify these colors to change the look of the UI.
 static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_TEXT */      { .85f, .87f, 1 },
     /* UIC_TITLE */     { 1, 1, 1 },
+    #if 0
     /* UIC_SHADOW */    { 0, 0, 0 },
     /* UIC_BG_LIGHT */  { .18f, .18f, .22f },
     /* UIC_BG_MEDIUM */ { .4f, .4f, .52f },
@@ -55,17 +56,15 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_BRD_MED */   { 0, 0, 0 },
     /* UIC_BRD_LOW */   { .25f, .25f, .55f },
     /* UIC_HELP */      { .4f, .4f, .52f }
+    #endif
 };
 
-static inline ClientResources &resSys()
-{
-    return ClientApp::resources();
-}
-
+#if 0
 void UI_Register(void)
 {
-    C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 }
+#endif
 
 char const *UI_ChooseFixedFont()
 {
@@ -74,6 +73,7 @@ char const *UI_ChooseFixedFont()
     return "console14";
 }
 
+#if 0
 char const *UI_ChooseVariableFont(fontstyle_t style)
 {
     int const resY = DENG_GAMEVIEW_HEIGHT;
@@ -98,6 +98,7 @@ char const *UI_ChooseVariableFont(fontstyle_t style)
                                      "normalbold24");
     }
 }
+#endif
 
 static AbstractFont *loadSystemFont(char const *name)
 {
@@ -116,7 +117,7 @@ static AbstractFont *loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    AbstractFont *font = resSys().newFontFromFile(uri, Str_Text(&resourcePath));
+    AbstractFont *font = ClientResources::get().newFontFromFile(uri, Str_Text(&resourcePath));
     if (!font)
     {
         App_Error("loadSystemFont: Failed loading font \"%s\".", name);
@@ -134,7 +135,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     {
         try
         {
-            FontManifest &manifest = resSys().fontManifest(de::Uri(uri, RC_NULL));
+            FontManifest &manifest = ClientResources::get().fontManifest(de::Uri(uri, RC_NULL));
             if (manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());
@@ -155,22 +156,22 @@ void UI_LoadFonts()
     if (isDedicated) return;
 
     loadFontIfNeeded(UI_ChooseFixedFont(),             &fontFixed);
-    loadFontIfNeeded(UI_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
-    loadFontIfNeeded(UI_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
-    loadFontIfNeeded(UI_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
+//    loadFontIfNeeded(UI_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
+//    loadFontIfNeeded(UI_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
+//    loadFontIfNeeded(UI_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
 }
 
-de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags)
+/*de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags)
 {
-    return resSys().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
+    return ClientResources::get().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
                                              0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, 1, 0, false, false, false, false);
-}
+}*/
 
-int UI_FontHeight(void)
+/*int UI_FontHeight(void)
 {
     return uiFontHgt;
-}
+}*/
 
 ui_color_t* UI_Color(uint id)
 {
@@ -196,6 +197,7 @@ void UI_SetColor(ui_color_t* color)
     LIBGUI_GL.glColor3f(color->red, color->green, color->blue);
 }
 
+#if 0
 void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* topColor,
     ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
 {
@@ -207,6 +209,7 @@ void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui
 {
     UI_DrawRectEx(origin, size, border, true, topColor, bottomColor, topAlpha, bottomAlpha);
 }
+#endif
 
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha,
     int alignFlags, short textFlags)
@@ -223,6 +226,7 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
     UI_TextOutEx2(text, origin, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
+#if 0
 void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd_bool filled,
     ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
 {
@@ -349,6 +353,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
     }
     LIBGUI_GL.glEnd();
 }
+#endif
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
@@ -359,7 +364,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     // Background gradient picture.
     MaterialSnapshot const &ms =
-        resSys().material(de::Uri("System", Path("ui/background")))
+        ClientResources::get().material(de::Uri("System", Path("ui/background")))
             .prepare(UI_MaterialSpec(TSF_MONOCHROME));
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
     */
@@ -399,6 +404,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
 
+#if 0
 /**
  * CCmd: Change the UI colors.
  */
@@ -437,3 +443,4 @@ D_CMD(UIColor)
     LOG_SCR_ERROR("Unknown UI color '%s'") << argv[1];
     return false;
 }
+#endif

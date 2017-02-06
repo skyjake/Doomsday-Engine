@@ -252,8 +252,8 @@ static void drawCellInfo(Vector2d const &origin_, char const *info)
 
     Point2Raw origin(origin_.x, origin_.y);
     origin.x -= size.width / 2;
-    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    //UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    //UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
 
     origin.x += 8;
     origin.y += size.height / 2;
@@ -281,8 +281,8 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
 
     origin.x -= size.width;
     origin.y -= size.height;
-    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    //UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    //UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
 
     origin.x += 8;
     origin.y += 8 + th/2;
