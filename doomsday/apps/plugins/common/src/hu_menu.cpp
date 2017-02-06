@@ -86,7 +86,7 @@ void Hu_MenuSelectHelp(Widget &wi, Widget::Action action);
 void Hu_MenuSelectControlPanelLink(Widget &wi, Widget::Action action);
 
 void Hu_MenuSelectSingleplayer(Widget &wi, Widget::Action action);
-void Hu_MenuSelectMultiplayer(Widget &wi, Widget::Action action);
+//void Hu_MenuSelectMultiplayer(Widget &wi, Widget::Action action);
 void Hu_MenuSelectEpisode(Widget &wi, Widget::Action action);
 #if __JDOOM__ || __JHERETIC__
 void Hu_MenuActivateNotSharewareEpisode(Widget &wi, Widget::Action action);
@@ -118,7 +118,7 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi);
 void Hu_MenuDrawMainPage(Page const &page, Vector2i const &origin);
 #endif
 
-void Hu_MenuDrawGameTypePage(Page const &page, Vector2i const &origin);
+//void Hu_MenuDrawGameTypePage(Page const &page, Vector2i const &origin);
 void Hu_MenuDrawSkillPage(Page const &page, Vector2i const &origin);
 #if __JHEXEN__
 void Hu_MenuDrawPlayerClassPage(Page const &page, Vector2i const &origin);
@@ -412,8 +412,8 @@ void Hu_MenuInitMainPage()
             .setFixedY(y)
             .setShortcut('n')
             .setFont(MENU_FONT1)
-            .setUserValue(String("GameType"))
-            .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
+            //.setUserValue(String("GameType"))
+            .setAction(Widget::Deactivated, Hu_MenuSelectSingleplayer)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
@@ -511,6 +511,7 @@ void Hu_MenuInitMainPage()
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 }
 
+#if 0
 void Hu_MenuInitGameTypePage()
 {
 #if __JDOOM__ || __JDOOM64__
@@ -545,6 +546,7 @@ void Hu_MenuInitGameTypePage()
             .setAction(Widget::Deactivated, Hu_MenuSelectMultiplayer)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 }
+#endif
 
 void Hu_MenuInitSkillPage()
 {
@@ -614,6 +616,7 @@ void Hu_MenuInitSkillPage()
 #endif
 }
 
+#if 0
 void Hu_MenuInitMultiplayerPage()
 {
 #if __JHERETIC__ || __JHEXEN__
@@ -640,6 +643,7 @@ void Hu_MenuInitMultiplayerPage()
             .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 }
+#endif
 
 void Hu_MenuInitPlayerSetupPage()
 {
@@ -653,7 +657,7 @@ void Hu_MenuInitPlayerSetupPage()
     page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuPagePtr("Multiplayer"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->addWidget(new MobjPreviewWidget)
             .setFixedOrigin(Vector2i(SCREENWIDTH / 2 - origin.x, 60))
@@ -903,6 +907,13 @@ void Hu_MenuInitOptionsPage()
             .setShortcut('t')
             .setFont(MENU_FONT1)
             .setAction(Widget::Deactivated, Hu_MenuSelectControlPanelLink)
+            .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Multiplayer"))
+            .setShortcut('m')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("PlayerSetup"))
+            .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
     page->addWidget(new ButtonWidget("Controls"))
@@ -1817,7 +1828,7 @@ void Hu_MenuInitEpisodePage()
 
     Page *page = Hu_MenuAddPage(new Page("Episode", origin, Page::FixedLayout, Hu_MenuDrawEpisodePage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuPagePtr("GameType"));
+    page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
     if(!episodesById.size())
@@ -2357,19 +2368,19 @@ static void initAllPages()
 {
     Hu_MenuInitColorWidgetPage();
     Hu_MenuInitMainPage();
-    Hu_MenuInitGameTypePage();
+    //Hu_MenuInitGameTypePage();
     Hu_MenuInitEpisodePage();
 #if __JHEXEN__
     Hu_MenuInitPlayerClassPage();
 #endif
     Hu_MenuInitSkillPage();
-    Hu_MenuInitMultiplayerPage();
-    Hu_MenuInitPlayerSetupPage();
+    //Hu_MenuInitMultiplayerPage();
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuInitFilesPage();
 #endif
     Hu_MenuInitLoadGameAndSaveGamePages();
     Hu_MenuInitOptionsPage();
+    Hu_MenuInitPlayerSetupPage();
     Hu_MenuInitGameplayOptionsPage();
     Hu_MenuInitSaveOptionsPage();
     Hu_MenuInitHUDOptionsPage();
@@ -3044,6 +3055,7 @@ void Hu_MenuSelectSingleplayer(Widget & /*wi*/, Widget::Action action)
     Hu_MenuSetPage("Episode");
 }
 
+#if 0
 void Hu_MenuSelectMultiplayer(Widget & /*wi*/, Widget::Action action)
 {
     if(action != Widget::Deactivated) return;
@@ -3063,6 +3075,7 @@ void Hu_MenuSelectMultiplayer(Widget & /*wi*/, Widget::Action action)
 
     Hu_MenuSetPage(&multiplayerPage);
 }
+#endif
 
 void Hu_MenuSelectJoinGame(Widget & /*wi*/, Widget::Action action)
 {
@@ -3169,7 +3182,7 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget &wi, Widget::Action action)
         DD_Executef(false, "setcolor %i", cfg.common.netColor);
     }
 
-    Hu_MenuSetPage("Multiplayer");
+    Hu_MenuSetPage("Options");
 }
 
 void Hu_MenuSelectQuitGame(Widget & /*wi*/, Widget::Action action)
