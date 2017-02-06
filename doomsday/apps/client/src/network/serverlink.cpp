@@ -475,8 +475,12 @@ void ServerLink::requestMapOutline(Address const &address)
 
 void ServerLink::ping(const Address &address)
 {
-    AbstractLink::connectHost(address);
-    d->state = Pinging;
+    if (d->state != Pinging &&
+        d->state != WaitingForPong)
+    {
+        AbstractLink::connectHost(address);
+        d->state = Pinging;
+    }
 }
 
 void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)

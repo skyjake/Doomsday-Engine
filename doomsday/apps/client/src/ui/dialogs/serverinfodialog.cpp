@@ -42,6 +42,7 @@ using namespace de;
 
 static DialogWidget::RoleFlags const ID_SV_PACKAGES = DialogWidget::Id1;
 static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
+static DialogWidget::RoleFlags const ID_PING        = DialogWidget::Id3;
 
 DENG_GUI_PIMPL(ServerInfoDialog)
 , DENG2_OBSERVES(ServerLink, MapOutline)
@@ -53,6 +54,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     String domainName;
     GameProfile profile;
     shell::ServerInfo serverInfo;
+    TimeDelta ping = -1;
 
     // Network queries.
     ServerLink link; // querying details from the server
@@ -96,11 +98,19 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                     self().accept();
                     emit self().joinGame();
                 }))
+                << new DialogButtonItem(Action | ID_PING,
+                                        style().images().image("refresh"), tr("Ping"),
+                                        new CallbackAction([this] () {
+                    ping = -1;
+                    updateContent();
+                    startQuery(QueryPing);
+                }))
                 << new DialogButtonItem(ActionPopup | ID_SV_PACKAGES,
                                         style().images().image("package.icon"), tr("Server"));
 
         createWidgets();
         self().buttonWidget(ID_JOIN)->disable();
+        self().buttonWidget(ID_PING)->disable();
     }
 
     bool isPackageHighlighted(String const &) const
@@ -265,10 +275,13 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             String msg = String(_E(Ta)_E(l) "%1:" _E(.)_E(Tb) " %2\n"
                                 _E(Ta)_E(l) "%3:" _E(.)_E(Tb) " %4\n"
-                                _E(Ta)_E(l) "%5:" _E(.)_E(Tb) " %6")
+                                _E(Ta)_E(l) "%5:" _E(.)_E(Tb) " %6\n"
+                                _E(Ta)_E(l) "%7:" _E(.)_E(Tb) " %8")
                     .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
                     .arg(tr("Players")).arg(plrDesc)
-                    .arg(tr("Version")).arg(serverInfo.version().asText());
+                    .arg(tr("Version")).arg(serverInfo.version().asText())
+                    .arg(tr("Ping"))   .arg(ping < 0.0? String(DENG2_CHAR_MDASH)
+                                                      : String("%1 ms").arg(ping.asMilliSeconds()));
             description->setText(msg);
         }
 
@@ -391,6 +404,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         case QueryPing:
             link.ping(host);
+            self().buttonWidget(ID_PING)->disable();
             break;
 
         case QueryMapOutline:
@@ -424,7 +438,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
     void pingResponse(Address const &, TimeDelta pingTime)
     {
-        qDebug() << "Ping:" << pingTime.asMilliSeconds() << "ms";
+        ping = pingTime;
+        updateContent();
+        self().buttonWidget(ID_PING)->enable();
     }
 };
 
