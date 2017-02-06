@@ -100,7 +100,7 @@ using namespace world;
 dint validCount = 1;  // Increment every time a check is made.
 
 #ifdef __CLIENT__
-static dfloat handDistance = 300;  //cvar
+//static dfloat handDistance = 300;  //cvar
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
@@ -971,7 +971,7 @@ void ClientServerWorld::consoleRegister()  // static
 {
     //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
 #ifdef __CLIENT__
-    C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
+    //C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
 #endif
     Map::consoleRegister();
 }

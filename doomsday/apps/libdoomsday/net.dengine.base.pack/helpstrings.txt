@@ -28,49 +28,6 @@ desc = Bind an input device to a player control.
 desc = Bind a console command to an event.
 inf = USAGE:\nbindevent [(context)] (spec) (command)\nThe event specification (spec) is composed of an event descriptor and optionally any additional conditions for the validity of the binding. The specification may be prefixed with a context name; if omitted, the binding is created in the default "game" context.\nEXAMPLES:\nbindevent key-M-down "toggle ctl-run"\nbindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}\nbindevent shortcut:key-f8 "toggle msg-show"\nbindevent key-equals-down "add view-size 1"\nbindevent key-equals-repeat "add view-size 1"\nSEE ALSO:\n- "Bindings" in wiki\n\n
 
-[blc]
-desc = Set color of light at cursor.
-inf = Params: blc (red) (green) (blue)\nFor example, 'blc 1 0.5 0.2'.
-
-[blclear]
-desc = Delete all lights.
-
-[bldel]
-desc = Delete current/specified light.
-
-[bldup]
-desc = Duplicate current/specified light, grab it.
-
-[bledit]
-desc = Enter bias light edit mode.
-
-[blgrab]
-desc = Grab current/specified light, or ubgrab.
-
-[blhue]
-desc = Show/hide the hue circle for color selection.
-
-[bli]
-desc = Set intensity of light at cursor.
-
-[bllock]
-desc = Lock current/specified light.
-
-[blmenu]
-desc = Show/hide the bias menu.
-
-[blnew]
-desc = Allocate new light and grab it.
-
-[blquit]
-desc = Exit bias light edit mode.
-
-[blsave]
-desc = Write the current lights to a DED file.
-
-[blunlock]
-desc = Unlock current/specified light.
-
 [centerwindow]
 desc = Center the window on the desktop when in windowed mode.
 
@@ -440,33 +397,6 @@ desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smoot
 [ctl-info]
 desc = 1=Show player control state debugging information.
 
-[edit-bias-blink]
-desc = 1=Blink the cursor.
-
-[edit-bias-blue]
-desc = Blue component of the bias light color.
-
-[edit-bias-grab-distance]
-desc = Distance to the grabbed bias light.
-
-[edit-bias-green]
-desc = Green component of the bias light color.
-
-[edit-bias-hide]
-desc = 1=Hide bias light editor's HUD.
-
-[edit-bias-intensity]
-desc = Intensity of the bias light.
-
-[edit-bias-red]
-desc = Red component of the bias light color.
-
-[edit-bias-show-indices]
-desc = 1=Show source indices in 3D view.
-
-[edit-bias-show-sources]
-desc = 1=Show all light sources.
-
 [file-startup]
 desc = The list of WADs to be loaded at startup.
 
@@ -524,33 +454,6 @@ desc = Maximum limit for the frame rate (default: 200).
 [reject-build]
 desc = Automatically generate reject data when necessary, 0=Never, 1=When needed, 2=Always.
 
-[rend-bias-grid-blocksize]
-desc = Size of a grid block in the light grid (default: 31).
-
-[rend-bias-grid-debug-size]
-desc = Size of a grid block in the light grid debug display.
-
-[rend-bias-grid-debug]
-desc = 1=Show the light grid (for debugging).
-
-[rend-bias-grid-multisample]
-desc = Sector to grid block, conversion accuracy multiplier.
-
-[rend-bias-grid]
-desc = 1=Smooth sector lighting is enabled.
-
-[rend-bias-lightspeed]
-desc = Milliseconds it takes for light changes to become effective.
-
-[rend-bias-max]
-desc = Sector lightlevel that retains its normal color.
-
-[rend-bias-min]
-desc = Sector lightlevel that is biased completely to zero.
-
-[rend-bias]
-desc = 1=Enable the experimental shadow bias test setup.
-
 [rend-bloom-complexity]
 desc = 0=One-pass bloom (faster). 1=Two-pass bloom (more realistic).
 
@@ -571,12 +474,6 @@ desc = Field of view.
 
 [rend-camera-smooth]
 desc = 1=Filter camera movement between game tics (OBSOLETE).
-
-[rend-dev-bias-affected]
-desc = 1=Keep track which sources affect which surfaces.
-
-[rend-dev-bias-sight]
-desc = 1=Enable the use of line-of-sight checking with shadow bias.
 
 [rend-dev-blockmap-size]
 desc = Scale multiplier for the blockmap debug display.
@@ -763,9 +660,6 @@ desc = The maximum number of dynamic lights. 0=no limit.
 
 [rend-light-radius-max]
 desc = Maximum radius of dynamic lights (default: 128).
-
-[rend-light-radius-min-bias]
-desc = Minimum dynamic light radius to convert to BIAS light source.
 
 [rend-light-radius-scale]
 desc = A multiplier for dynlight radii (default: 1).
