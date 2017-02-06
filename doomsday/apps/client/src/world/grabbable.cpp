@@ -1,3 +1,5 @@
+#if 0
+
 /** @file grabbable.cpp  Grabbable.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -83,3 +85,5 @@ void Grabbable::setLock(bool enable)
 }
 
 }  // namespace world
+
+#endif

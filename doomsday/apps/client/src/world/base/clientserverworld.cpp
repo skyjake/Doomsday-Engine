@@ -78,8 +78,8 @@
 #  include "client/cledgeloop.h"
 #  include "client/clientsubsector.h"
 
-#  include "Hand"
-#  include "HueCircle"
+//#  include "Hand"
+//#  include "HueCircle"
 #  include "Lumobj"
 
 #  include "render/viewports.h"  // R_ResetViewer
@@ -308,9 +308,11 @@ DENG2_PIMPL(ClientServerWorld)
     Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
     timespan_t time = 0;         ///< World-wide time.
+#if 0
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
 #endif
+#endif // 0
 
     Impl(Public *i) : Base(i)
     {
@@ -769,6 +771,7 @@ DENG2_PIMPL(ClientServerWorld)
     }
 
 #ifdef __CLIENT__
+#if 0
     void updateHandOrigin()
     {
         DENG2_ASSERT(hand != nullptr && self().hasMap());
@@ -776,6 +779,7 @@ DENG2_PIMPL(ClientServerWorld)
         viewdata_t const *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
+#endif // 0
 
     DENG2_PIMPL_AUDIENCE(FrameBegin)
     DENG2_PIMPL_AUDIENCE(FrameEnd)
@@ -914,6 +918,7 @@ void ClientServerWorld::tick(timespan_t elapsed)
 }
 
 #ifdef __CLIENT__
+#if 0
 Hand &ClientServerWorld::hand(ddouble *distance) const
 {
     // Time to create the hand?
@@ -932,6 +937,7 @@ Hand &ClientServerWorld::hand(ddouble *distance) const
     }
     return *d->hand;
 }
+#endif // 0
 
 void ClientServerWorld::beginFrame(bool resetNextViewer)
 {
@@ -941,19 +947,19 @@ void ClientServerWorld::beginFrame(bool resetNextViewer)
 
 void ClientServerWorld::endFrame()
 {
+#if 0
     if(hasMap() && d->hand)
     {
         d->updateHandOrigin();
 
-#if 0
         // If the HueCircle is active update the current edit color.
         if(HueCircle *hueCircle = SBE_HueCircle())
         {
             viewdata_t const *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
-#endif
     }
+#endif
 
     // Notify interested parties that the current frame has ended.
     DENG2_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();

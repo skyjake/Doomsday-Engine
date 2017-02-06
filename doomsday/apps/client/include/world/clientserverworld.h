@@ -31,7 +31,7 @@
 namespace world {
 class Map;
 #ifdef __CLIENT__
-class Hand;
+//class Hand;
 #endif
 }
 
@@ -140,6 +140,7 @@ public:
      */
     void endFrame();
 
+#if 0
     /**
      * Returns the hand of the "user" in the world. Used for manipulating elements
      * for the purposes of runtime map editing.
@@ -148,6 +149,7 @@ public:
      *                  written here if not @c nullptr.
      */
     world::Hand &hand(de::ddouble *distance = nullptr) const;
+#endif
 
 #endif  // __CLIENT__
 

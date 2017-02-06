@@ -30,11 +30,11 @@
 #include "client/cledgeloop.h"
 
 #include "render/rend_main.h" // Rend_SkyLightColor(), useBias
-#include "BiasIllum"
-#include "BiasTracker"
+//#include "BiasIllum"
+//#include "BiasTracker"
 #include "LightDecoration"
 #include "MaterialAnimator"
-#include "Shard"
+//#include "Shard"
 #include "WallEdge"
 
 #include "misc/face.h"
@@ -156,7 +156,9 @@ DENG2_PIMPL(ClientSubsector)
     {
         MapElement *mapElement;
         dint geomId;
+#if 0
         std::unique_ptr<Shard> shard;
+#endif
 
         GeometryData(MapElement *mapElement, dint geomId)
             : mapElement(mapElement)
@@ -198,7 +200,9 @@ DENG2_PIMPL(ClientSubsector)
     std::unique_ptr<BoundaryData> boundaryData;
 
     GeometryGroups geomGroups;
+#if 0
     QHash<Shard *, GeometryData *> shardToGeomData; ///< Reverse lookup.
+#endif
 
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
@@ -711,6 +715,7 @@ DENG2_PIMPL(ClientSubsector)
         return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
     }
 
+#if 0
     /**
      * Find the GeometryData for the given @a shard.
      */
@@ -723,6 +728,7 @@ DENG2_PIMPL(ClientSubsector)
         }
         return nullptr;
     }
+#endif
 
     void addReverbSubspace(ConvexSubspace *subspace)
     {
@@ -1721,7 +1727,6 @@ static dint countIlluminationPoints(MapElement &mapElement, dint DENG2_DEBUG_ONL
     }
     return 0;
 }
-#endif
 
 Shard &ClientSubsector::shard(MapElement &mapElement, dint geomId)
 {
@@ -1742,7 +1747,6 @@ Shard *ClientSubsector::findShard(MapElement &mapElement, dint geomId)
     return nullptr;
 }
 
-#if 0
 /**
  * @todo This could be enhanced so that only the lights on the right side of the
  * surface are taken into consideration.

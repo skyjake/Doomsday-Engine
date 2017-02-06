@@ -37,14 +37,14 @@
 #include "BspLeaf"
 #include "Contact"
 #include "ConvexSubspace"
-#include "Hand"
+//#include "Hand"
 #include "client/clientsubsector.h"
 #include "client/clskyplane.h"
-#include "BiasIllum"
-#include "HueCircleVisual"
+//#include "BiasIllum"
+//#include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
-#include "Shard"
+//#include "Shard"
 #include "SkyFixEdge"
 #include "TriangleStripBuilder"
 #include "WallEdge"
@@ -6463,7 +6463,9 @@ void Rend_Register()
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
+#if 0
     Shard::consoleRegister();
+#endif
     VR_ConsoleRegister();
 }
 

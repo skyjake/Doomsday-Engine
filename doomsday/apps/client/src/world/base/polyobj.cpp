@@ -32,7 +32,7 @@
 #ifdef __CLIENT__
 #  include "client/clientsubsector.h"
 
-#  include "Shard"
+//#  include "Shard"
 #  include "render/rend_main.h"  // useBias
 #endif
 

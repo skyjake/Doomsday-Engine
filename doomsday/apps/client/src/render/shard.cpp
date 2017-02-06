@@ -1,3 +1,5 @@
+#if 0
+
 /** @file shard.cpp  3D map geometry shard.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
@@ -142,3 +144,5 @@ void Shard::consoleRegister() // static
     C_VAR_INT("rend-dev-bias-affected", &devUpdateBiasContributors, CVF_NO_ARCHIVE, 0, 1);
 #endif
 }
+
+#endif

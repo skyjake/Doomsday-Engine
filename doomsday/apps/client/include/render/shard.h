@@ -1,3 +1,5 @@
+#if 0
+
 /** @file shard.h  3D map geometry fragment.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
@@ -95,3 +97,5 @@ private:
 };
 
 #endif  // DENG_CLIENT_RENDER_SHARD_H
+
+#endif

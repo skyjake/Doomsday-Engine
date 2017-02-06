@@ -1,3 +1,5 @@
+#if 0
+
 /** @file grabbable.h  Grabbable.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -188,3 +190,5 @@ private:
 }  // namespace world
 
 #endif // DENG_WORLD_GRABBABLE_H
+
+#endif

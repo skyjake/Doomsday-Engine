@@ -1,3 +1,5 @@
+#if 0
+
 /** @file hand.cpp  Hand (metaphor) for the manipulation of "grabbables".
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -301,3 +303,5 @@ void Hand::worldSystemFrameEnds()
 }
 
 }  // namespace world
+
+#endif

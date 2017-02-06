@@ -1,3 +1,5 @@
+#if 0
+
 /** @file hand.h  Hand (metaphor) for the manipulation of "grabbables".
  *
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -173,3 +175,5 @@ private:
 }  // namespace world
 
 #endif  // DENG_WORLD_HAND_H
+
+#endif

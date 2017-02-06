@@ -50,7 +50,7 @@
 #ifdef __CLIENT__
 #  include "world/clientserverworld.h"
 #  include "Generator"
-#  include "BiasSource"
+//#  include "BiasSource"
 #  include "Lumobj"
 #  include "render/skydrawable.h"
 #endif

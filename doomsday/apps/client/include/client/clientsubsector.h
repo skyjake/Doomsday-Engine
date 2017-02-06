@@ -33,7 +33,7 @@
 
 #include "render/ilightsource.h"
 
-class Shard;
+//class Shard;
 
 namespace world {
 
@@ -142,7 +142,6 @@ public:
      * @see Map::biasLastChangeOnFrame()
      */
     de::duint biasLastChangeOnFrame() const;
-#endif
 
     /**
      * Returns the geometry Shard for the specified @a mapElement and geometry
@@ -156,7 +155,6 @@ public:
      */
     Shard &shard(MapElement &mapElement, de::dint geomId);
 
-#if 0
     /**
      * Shards owned by the Subsector should call this periodically to update
      * their bias lighting contributions.
