@@ -136,6 +136,10 @@ DENG2_PIMPL(RemoteUser)
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
         }
+        else if (command == "Ping?")
+        {
+            self() << Block("Pong");
+        }
         else if (command == "MapOutline?")
         {
             shell::MapOutlinePacket packet;

@@ -45,6 +45,7 @@ static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
 
 DENG_GUI_PIMPL(ServerInfoDialog)
 , DENG2_OBSERVES(ServerLink, MapOutline)
+, DENG2_OBSERVES(ServerLink, PingResponse)
 , public PackagesWidget::IPackageStatus
 {
     // Server info & status.
@@ -60,6 +61,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     {
         QueryNone,
         QueryStatus,
+        QueryPing,
         QueryMapOutline,
     };
     Query pendingQuery = QueryNone;
@@ -80,7 +82,8 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         , serverInfo(sv)
         , link(ServerLink::ManualConnectionOnly)
     {
-        link.audienceForMapOutline() += this;
+        link.audienceForMapOutline()   += this;
+        link.audienceForPingResponse() += this;
         connect(&queryTimer, &QTimer::timeout, [this] () { beginPendingQuery(); });
 
         self().useInfoStyle();
@@ -386,6 +389,10 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             break;
 
+        case QueryPing:
+            link.ping(host);
+            break;
+
         case QueryMapOutline:
             link.requestMapOutline(host);
             break;
@@ -412,6 +419,12 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)
     {
         mapOutline->setOutline(packet);
+        startQuery(QueryPing);
+    }
+
+    void pingResponse(Address const &, TimeDelta pingTime)
+    {
+        qDebug() << "Ping:" << pingTime.asMilliSeconds() << "ms";
     }
 };
 

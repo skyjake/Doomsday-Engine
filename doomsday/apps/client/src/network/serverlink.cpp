@@ -45,6 +45,8 @@
 #include <de/shell/ServerFinder>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
+
+#include <QElapsedTimer>
 #include <QTimer>
 
 using namespace de;
@@ -53,12 +55,16 @@ enum LinkState
 {
     None,
     Discovering,
+    Pinging,
+    WaitingForPong,
     QueryingMapOutline,
     WaitingForInfoResponse,
     Joining,
     WaitingForJoinResponse,
     InGame
 };
+
+static int const NUM_PINGS = 5;
 
 DENG2_PIMPL(ServerLink)
 {
@@ -68,6 +74,9 @@ DENG2_PIMPL(ServerLink)
     typedef QMap<Address, shell::ServerInfo> Servers;
     Servers discovered;
     Servers fromMaster;
+    QElapsedTimer pingTimer;
+    QList<TimeDelta> pings;
+    int pingCounter;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
@@ -326,12 +335,14 @@ DENG2_PIMPL(ServerLink)
     }
 
     DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
+    DENG2_PIMPL_AUDIENCE(PingResponse)
     DENG2_PIMPL_AUDIENCE(MapOutline)
     DENG2_PIMPL_AUDIENCE(Join)
     DENG2_PIMPL_AUDIENCE(Leave)
 };
 
 DENG2_AUDIENCE_METHOD(ServerLink, DiscoveryUpdate)
+DENG2_AUDIENCE_METHOD(ServerLink, PingResponse)
 DENG2_AUDIENCE_METHOD(ServerLink, MapOutline)
 DENG2_AUDIENCE_METHOD(ServerLink, Join)
 DENG2_AUDIENCE_METHOD(ServerLink, Leave)
@@ -460,6 +471,12 @@ void ServerLink::requestMapOutline(Address const &address)
     AbstractLink::connectHost(address);
     d->state = QueryingMapOutline;
     LOG_NET_VERBOSE("Querying %s for map outline") << address;
+}
+
+void ServerLink::ping(const Address &address)
+{
+    AbstractLink::connectHost(address);
+    d->state = Pinging;
 }
 
 void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
@@ -601,6 +618,14 @@ void ServerLink::initiateCommunications()
         d->state = WaitingForInfoResponse;
         break;
 
+    case Pinging:
+        *this << ByteRefArray("Ping?", 5);
+        d->state = WaitingForPong;
+        d->pingCounter = NUM_PINGS;
+        d->pings.clear();
+        d->pingTimer.start();
+        break;
+
     case QueryingMapOutline:
         *this << ByteRefArray("MapOutline?", 11);
         d->state = WaitingForInfoResponse;
@@ -661,6 +686,34 @@ void ServerLink::handleIncomingPackets()
 
         case WaitingForJoinResponse:
             if (!d->handleJoinResponse(*packet)) return;
+            break;
+
+        case WaitingForPong:
+            if (packet->size() == 4 && *packet == "Pong" &&
+                d->pingCounter-- > 0)
+            {
+                d->pings.append(TimeDelta::fromMilliSeconds(d->pingTimer.elapsed()));
+                *this << ByteRefArray("Ping?", 5);
+                d->pingTimer.restart();
+            }
+            else
+            {
+                Address const svAddress = address();
+                disconnect();
+
+                // Notify about the average ping time.
+                if (d->pings.count())
+                {
+                    TimeDelta average = 0;
+                    for (auto const &d : d->pings) average += d;
+                    average = average / d->pings.count();
+
+                    DENG2_FOR_AUDIENCE2(PingResponse, i)
+                    {
+                        i->pingResponse(svAddress, average);
+                    }
+                }
+            }
             break;
 
         case InGame: {
