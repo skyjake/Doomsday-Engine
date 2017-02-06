@@ -71,6 +71,8 @@ DENG2_PIMPL_NOREF(GuiShellApp)
 GuiShellApp::GuiShellApp(int &argc, char **argv)
     : QtGuiApp(argc, argv), d(new Impl)
 {
+    setAttribute(Qt::AA_UseHighDpiPixmaps);
+
     // Metadata.
     setOrganizationDomain ("dengine.net");
     setOrganizationName   ("Deng Team");

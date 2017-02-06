@@ -25,6 +25,7 @@
 #include "consolepage.h"
 #include "preferences.h"
 #include "errorlogdialog.h"
+#include "utils.h"
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
@@ -334,13 +335,13 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->tools->setMovable(false);
     d->tools->setFloatable(false);
 
-    d->statusButton = d->addToolButton(tr("Status"), QIcon(":/images/toolbar_status.png"));
+    d->statusButton = d->addToolButton(tr("Status"), QIcon(imageResourcePath(":/images/toolbar_status.png")));
     d->statusButton->setShortcut(QKeySequence(tr("Ctrl+1")));
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
 
 #ifdef DENG2_DEBUG
-    QIcon icon(":/images/toolbar_placeholder.png");
+    QIcon icon(imageResourcePath(":/images/toolbar_placeholder.png"));
 
     QToolButton *btn = d->addToolButton(tr("Frags"), icon);
     btn->setDisabled(true);
@@ -349,11 +350,11 @@ LinkWindow::LinkWindow(QWidget *parent)
     btn->setDisabled(true);
 #endif
 
-    d->optionsButton = d->addToolButton(tr("Options"), QIcon(":/images/toolbar_placeholder.png"));
+    d->optionsButton = d->addToolButton(tr("Options"), QIcon(imageResourcePath(":/images/toolbar_options.png")));
     d->optionsButton->setShortcut(QKeySequence(tr("Ctrl+2")));
     connect(d->optionsButton, SIGNAL(pressed()), this, SLOT(switchToOptions()));
 
-    d->consoleButton = d->addToolButton(tr("Console"), QIcon(":/images/toolbar_console.png"));
+    d->consoleButton = d->addToolButton(tr("Console"), QIcon(imageResourcePath(":/images/toolbar_console.png")));
     d->consoleButton->setShortcut(QKeySequence(tr("Ctrl+3")));
     connect(d->consoleButton, SIGNAL(pressed()), this, SLOT(switchToConsole()));
 

@@ -84,6 +84,7 @@ DENG2_PIMPL(Preferences)
             appFolder->setPath(st.value("Preferences/appFolder").toString());
 
             QVBoxLayout *bl = new QVBoxLayout;
+            bl->setSpacing(4);
             bl->addWidget(appFolder);
             bl->addWidget(info);
             appGroup->setLayout(bl);
@@ -103,6 +104,7 @@ DENG2_PIMPL(Preferences)
             iwadFolder->setPath(st.value("Preferences/iwadFolder").toString());
 
             QVBoxLayout *bl = new QVBoxLayout;
+            bl->setSpacing(4);
             bl->addWidget(useCustomIwad);
             bl->addWidget(iwadFolder);
             QLabel *info = new QLabel("<small>" +
