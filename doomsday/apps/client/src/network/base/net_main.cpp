@@ -61,11 +61,11 @@
 
 #  include "render/rend_main.h"
 #  include "render/blockmapvisual.h"
-#  include "render/lightgrid.h"
+//#  include "render/lightgrid.h"
 #  include "render/viewports.h"
 
 #  include "api_fontrender.h"
-#  include "ui/editors/edit_bias.h"
+//#  include "ui/editors/edit_bias.h"
 #  include "ui/ui_main.h"
 #  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"

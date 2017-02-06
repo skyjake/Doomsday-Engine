@@ -81,7 +81,7 @@
 #include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
 #include "ui/postprocessing.h"
-#include "ui/editors/edit_bias.h"
+//#include "ui/editors/edit_bias.h"
 
 #include "sys_system.h"
 #include "dd_main.h"

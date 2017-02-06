@@ -24,7 +24,7 @@
 
 #include "clientapp.h"
 
-#include "render/lightgrid.h"
+//#include "render/lightgrid.h"
 
 #include "world/map.h"
 #include "world/bspleaf.h"

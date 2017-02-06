@@ -89,7 +89,7 @@
 #include "busyrunner.h"
 #include "con_config.h"
 #include "sys_system.h"
-#include "ui/editors/edit_bias.h"
+//#include "ui/editors/edit_bias.h"
 #include "gl/svg.h"
 
 #include "world/clientserverworld.h"

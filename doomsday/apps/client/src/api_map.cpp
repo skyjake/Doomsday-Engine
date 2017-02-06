@@ -47,9 +47,9 @@
 #include "Interceptor"
 #include "Surface"
 
-#ifdef __CLIENT__
-#  include "render/lightgrid.h"
-#endif
+//#ifdef __CLIENT__
+//#  include "render/lightgrid.h"
+//#endif
 
 using namespace de;
 using namespace world;
