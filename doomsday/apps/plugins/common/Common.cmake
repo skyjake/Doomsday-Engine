@@ -1,9 +1,9 @@
 set (DIR ${CMAKE_CURRENT_LIST_DIR})
 include_directories (${DIR}/include)
 
-file (GLOB_RECURSE COMMON_HEADERS ${DIR}/include/*)
+file (GLOB_RECURSE COMMON_HEADERS ${DIR}/include/[A-Za-z]*)
 
-file (GLOB COMMON_SOURCES ${DIR}/src/*)
+file (GLOB COMMON_SOURCES ${DIR}/src/[A-Za-z]*)
 
 deng_glob_sources (COMMON_SOURCES ${DIR}/src/hud/*.cpp)
 deng_glob_sources (COMMON_SOURCES ${DIR}/src/menu/*.cpp)

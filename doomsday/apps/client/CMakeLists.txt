@@ -21,7 +21,7 @@ include_directories (include ${DENG_API_DIR})
 add_definitions (-D__DOOMSDAY__=1 -D__CLIENT__=1)
 
 file (GLOB         API_HEADERS ../api/*.h)
-file (GLOB_RECURSE HEADERS     include/*)
+file (GLOB_RECURSE HEADERS     include/[A-Za-z]*)
 file (GLOB         SOURCES     src/*.cpp src/*.c)
 
 deng_merge_sources (audio         src/audio/*.cpp)
