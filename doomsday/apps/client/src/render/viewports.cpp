@@ -81,9 +81,13 @@ dint rendInfoTris;
 
 static viewport_t *currentViewport;
 
-static coord_t *luminousDist;
-static dbyte *luminousClipped;
-static duint *luminousOrder;
+struct FrameLuminous
+{
+    coord_t distance;
+    duint isClipped;
+};
+static QVector<FrameLuminous> frameLuminous;
+
 static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
@@ -1360,9 +1364,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
 
 void R_ClearViewData()
 {
-    M_Free(luminousDist); luminousDist = nullptr;
-    M_Free(luminousClipped); luminousClipped = nullptr;
-    M_Free(luminousOrder); luminousOrder = nullptr;
+    frameLuminous.clear();
 }
 
 /**
@@ -1425,33 +1427,25 @@ ddouble R_ViewerLumobjDistance(dint idx)
     /// @todo Do not assume the current map.
     if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
-        return luminousDist[idx];
+        return frameLuminous.at(idx).distance;
     }
     return 0;
 }
 
 bool R_ViewerLumobjIsClipped(dint idx)
 {
-    // If we are not yet prepared for this, just say everything is clipped.
-    if(!luminousClipped) return true;
-
-    /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if (idx >= 0 && idx < frameLuminous.size())
     {
-        return CPP_BOOL(luminousClipped[idx]);
+        return CPP_BOOL(frameLuminous.at(idx).isClipped);
     }
     return false;
 }
 
 bool R_ViewerLumobjIsHidden(dint idx)
 {
-    // If we are not yet prepared for this, just say everything is hidden.
-    if(!luminousClipped) return true;
-
-    /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if (idx >= 0 && idx < frameLuminous.size())
     {
-        return luminousClipped[idx] == 2;
+        return frameLuminous.at(idx).isClipped == 2;
     }
     return false;
 }
@@ -1459,22 +1453,15 @@ bool R_ViewerLumobjIsHidden(dint idx)
 static void markLumobjClipped(Lumobj const &lob, bool yes = true)
 {
     dint const index = lob.indexInMap();
-    DENG2_ASSERT(index >= 0 && index < lob.map().lumobjCount());
-    luminousClipped[index] = yes? 1 : 0;
-}
-
-/// Used to sort lumobjs by distance from viewpoint.
-static dint lumobjSorter(void const *e1, void const *e2)
-{
-    coord_t a = luminousDist[*(duint const *) e1];
-    coord_t b = luminousDist[*(duint const *) e2];
-    if(a > b) return 1;
-    if(a < b) return -1;
-    return 0;
+    DENG_ASSERT(index >= 0 && index < lob.map().lumobjCount());
+    DENG_ASSERT(index < frameLuminous.size());
+    frameLuminous[index].isClipped = yes? 1 : 0;
 }
 
 void R_BeginFrame()
 {
+    static QVector<int> frameLuminousOrder;
+
     Map &map = ClientApp::world().map();
 
     subspacesVisible.resize(map.subspaceCount());
@@ -1483,14 +1470,16 @@ void R_BeginFrame()
     // Clear all generator visibility flags.
     generatorsVisible.fill(false);
 
-    dint numLuminous = map.lumobjCount();
-    if(!(numLuminous > 0)) return;
+    int numLuminous = map.lumobjCount();
+    if (!numLuminous) return;
 
     // Resize the associated buffers used for per-frame stuff.
-    dint maxLuminous = numLuminous;
-    luminousDist    = (coord_t *)  M_Realloc(luminousDist,    sizeof(*luminousDist)    * maxLuminous);
-    luminousClipped =    (dbyte *) M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
-    luminousOrder   =    (duint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
+    //int maxLuminous = numLuminous;
+    if (frameLuminous.size() < numLuminous)
+    {
+        frameLuminous.resize(numLuminous);
+        frameLuminousOrder.resize(numLuminous);
+    }
 
     // Update viewer => lumobj distances ready for linking and sorting.
     viewdata_t const *viewData = &viewPlayer->viewport();
@@ -1498,50 +1487,55 @@ void R_BeginFrame()
     {
         // Approximate the distance in 3D.
         Vector3d delta = lob.origin() - viewData->current.origin;
-        luminousDist[lob.indexInMap()] = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
+        frameLuminous[lob.indexInMap()].distance = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
         return LoopContinue;
     });
 
-    if(rendMaxLumobjs > 0 && numLuminous > rendMaxLumobjs)
+    if (rendMaxLumobjs > 0 && numLuminous > rendMaxLumobjs)
     {
         // Sort lumobjs by distance from the viewer. Then clip all lumobjs
         // so that only the closest are visible (max loMaxLumobjs).
 
         // Init the lumobj indices, sort array.
-        for(dint i = 0; i < numLuminous; ++i)
-        {
-            luminousOrder[i] = i;
-        }
-        qsort(luminousOrder, numLuminous, sizeof(duint), lumobjSorter);
-
         // Mark all as hidden.
-        std::memset(luminousClipped, 2, numLuminous * sizeof(*luminousClipped));
-
-        dint n = 0;
-        for(dint i = 0; i < numLuminous; ++i)
+        for (int i = 0; i < numLuminous; ++i)
         {
-            if(n++ > rendMaxLumobjs)
+            frameLuminousOrder[i] = i;
+            frameLuminous[i].isClipped = 2;
+        }
+        qSort(frameLuminousOrder.begin(),
+              frameLuminousOrder.begin() + numLuminous,
+              [] (int a, int b)
+        {
+            return frameLuminous[a].distance < frameLuminous[b].distance;
+        });
+
+        for (int i = 0, n = 0; i < numLuminous; ++i)
+        {
+            if (n++ > rendMaxLumobjs)
                 break;
 
             // Unhide this lumobj.
-            luminousClipped[luminousOrder[i]] = 1;
+            frameLuminous[frameLuminousOrder[i]].isClipped = 1;
         }
     }
     else
     {
         // Mark all as clipped.
-        std::memset(luminousClipped, 1, numLuminous * sizeof(*luminousClipped));
+        for (auto &lum : frameLuminous)
+        {
+            lum.isClipped = 1;
+        }
     }
 }
 
 void R_ViewerClipLumobj(Lumobj *lum)
 {
-    if(!lum) return;
+    if (!lum) return;
 
     // Has this already been occluded?
     dint lumIdx = lum->indexInMap();
-    if(luminousClipped[lumIdx] > 1)
-        return;
+    if (frameLuminous.at(lumIdx).isClipped > 1) return;
 
     markLumobjClipped(*lum, false);
 
@@ -1573,7 +1567,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
     if(!lob || !subspace) return;
 
     // Already clipped?
-    if(luminousClipped[lob->indexInMap()])
+    if (frameLuminous.at(lob->indexInMap()).isClipped)
         return;
 
     // We need to figure out if any of the polyobj's segments lies
