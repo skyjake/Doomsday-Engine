@@ -180,7 +180,7 @@ dd_bool Sys_GLPreInit(void)
 
     GL_state.features.blendSubtract = true;
     GL_state.features.genMipmap = true;
-    GL_state.features.multisample = false; // We'll test for availability...
+    //GL_state.features.multisample = false; // We'll test for availability...
     GL_state.features.texCompression = false;
     GL_state.features.texFilterAniso = true;
 
