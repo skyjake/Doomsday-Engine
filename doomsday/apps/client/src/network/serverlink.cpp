@@ -473,7 +473,7 @@ void ServerLink::requestMapOutline(Address const &address)
     LOG_NET_VERBOSE("Querying %s for map outline") << address;
 }
 
-void ServerLink::ping(const Address &address)
+void ServerLink::ping(Address const &address)
 {
     if (d->state != Pinging &&
         d->state != WaitingForPong)
@@ -703,14 +703,15 @@ void ServerLink::handleIncomingPackets()
             else
             {
                 Address const svAddress = address();
+
                 disconnect();
 
                 // Notify about the average ping time.
                 if (d->pings.count())
                 {
                     TimeDelta average = 0;
-                    for (auto const &d : d->pings) average += d;
-                    average = average / d->pings.count();
+                    for (TimeDelta i : d->pings) average += i;
+                    average /= d->pings.count();
 
                     DENG2_FOR_AUDIENCE2(PingResponse, i)
                     {
