@@ -268,7 +268,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             }
 
             meta.set(Package::VAR_TITLE, matched.bestMatch->keyValue("info:title"));
-            meta.set(VAR_VERSION, matched.packageVersion.asText());
+            meta.set(VAR_VERSION, matched.packageVersion.fullNumber());
             meta.set(VAR_AUTHOR,  matched.bestMatch->keyValue("info:author"));
             meta.set(VAR_LICENSE, matched.bestMatch->keyValue("info:license", "Unknown"));
             meta.set(VAR_TAGS,    matched.bestMatch->keyValue("info:tags"));
@@ -307,7 +307,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                                                &parsedVersion);
             if (strippedName != source->name())
             {
-                meta.set(VAR_VERSION, parsedVersion.asText());
+                meta.set(VAR_VERSION, parsedVersion.fullNumber());
             }
 
             packageId = stripRedundantParts(formatDomains[format]
@@ -548,7 +548,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             if (english->blockType() == "language")
             {
                 // Doomsday must understand the version number.
-                meta.set(VAR_VERSION, Version(english->keyValue(VAR_VERSION)).asText());
+                meta.set(VAR_VERSION, Version(english->keyValue(VAR_VERSION)).fullNumber());
                 meta.set(VAR_AUTHOR,  english->keyValue("author"));
                 meta.set(VAR_LICENSE, english->keyValue("license"));
                 meta.set("contact", english->keyValue("contact"));
@@ -613,7 +613,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 Version parsed(match.captured(1).trimmed());
                 if (parsed.isValid())
                 {
-                    meta.set(VAR_VERSION, parsed.asText());
+                    meta.set(VAR_VERSION, parsed.fullNumber());
                     foundVersion = true;
                 }
                 continue;
@@ -799,7 +799,7 @@ DENG2_PIMPL(DataBundle), public Lockable
         for (int attempt = 0; attempt < 3; ++attempt)
         {
             String linkPath = packageId;
-            String version = (packageVersion.isValid()? packageVersion.asText() : "");
+            String version = (packageVersion.isValid()? packageVersion.fullNumber() : "");
 
             // Try a few different ways to generate a locally unique version number.
             switch (attempt)
@@ -822,7 +822,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                             stripVersion(parentName, &parsed);
                             if (parsed.isValid())
                             {
-                                version = parsed.asText();
+                                version = parsed.fullNumber();
                             }
                         }
                         /*else

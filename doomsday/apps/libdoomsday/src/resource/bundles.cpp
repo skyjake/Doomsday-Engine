@@ -349,7 +349,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 
     LOG_RES_VERBOSE("Matched: %s %s %s score: %i")
             << match.packageId
-            << match.packageVersion.asText()
+            << match.packageVersion.fullNumber()
             << bundle.description()
             << match.bestScore;
 
