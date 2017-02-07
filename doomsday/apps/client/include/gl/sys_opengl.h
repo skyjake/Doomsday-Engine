@@ -81,7 +81,7 @@
  */
 typedef struct gl_state_s {
     /// Global config:
-    int multisampleFormat;
+    //int multisampleFormat;
 
     /// Current state:
     dd_bool currentUseFog;
@@ -96,8 +96,6 @@ typedef struct gl_state_s {
         uint multisample : 1;
         uint texCompression : 1;
         uint texFilterAniso : 1;
-        uint texNonPowTwo : 1;
-        uint vsync : 1;
     } features;
 } gl_state_t;
 

@@ -545,8 +545,8 @@ uint ClientTexture::Variant::prepare()
      * @todo fixme: Image dimensions may not be the same as the uploaded
      * texture - defer this logic until all processing has been completed.
      */
-    if((c.flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
-       (!GL_state.features.texNonPowTwo || (c.flags & TXCF_MIPMAP)))
+    if ((c.flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
+        (c.flags & TXCF_MIPMAP))
     {
         d->s = image.size.x / float( de::ceilPow2(image.size.x) );
         d->t = image.size.y / float( de::ceilPow2(image.size.y) );

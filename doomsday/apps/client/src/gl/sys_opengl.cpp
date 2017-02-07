@@ -68,13 +68,6 @@ static void initialize(void)
         GL_state.features.texFilterAniso = false;
     }
 
-    if(!ext.ARB_texture_non_power_of_two ||
-       CommandLine_Exists("-notexnonpow2") ||
-       CommandLine_Exists("-notexnonpowtwo"))
-    {
-        GL_state.features.texNonPowTwo = false;
-    }
-
     if(ext.EXT_blend_subtract)
     {
 #ifdef LIBGUI_USE_GLENTRYPOINTS
@@ -88,6 +81,10 @@ static void initialize(void)
         GL_state.features.blendSubtract = false;
     }
 
+    if (CommandLine_Exists("-texcomp") && !CommandLine_Exists("-notexcomp"))
+    {
+        GL_state.features.texCompression = true;
+    }
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
     if(ext.EXT_texture_compression_s3tc)
@@ -100,27 +97,12 @@ static void initialize(void)
 #else
     GL_state.features.texCompression = false;
 #endif
-    if(!CommandLine_Exists("-texcomp") || CommandLine_Exists("-notexcomp"))
-    {
-        GL_state.features.texCompression = false;
-    }
 
     // Automatic mipmap generation.
     if(!ext.SGIS_generate_mipmap || CommandLine_Exists("-nosgm"))
     {
         GL_state.features.genMipmap = false;
     }
-
-/*#ifdef WIN32
-    if(ext.Windows_EXT_swap_control)
-    {
-        GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
-    }
-    if(!ext.Windows_EXT_swap_control || !wglSwapIntervalEXT)
-        GL_state.features.vsync = false;
-#else*/
-    GL_state.features.vsync = true;
-//#endif
 }
 
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
@@ -194,15 +176,13 @@ dd_bool Sys_GLPreInit(void)
     if(doneEarlyInit) return true; // Already been here??
 
     // Init assuming ideal configuration.
-    GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
+    //GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
 
     GL_state.features.blendSubtract = true;
     GL_state.features.genMipmap = true;
     GL_state.features.multisample = false; // We'll test for availability...
-    GL_state.features.texCompression = true;
+    GL_state.features.texCompression = false;
     GL_state.features.texFilterAniso = true;
-    GL_state.features.texNonPowTwo = true;
-    GL_state.features.vsync = true;
 
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;

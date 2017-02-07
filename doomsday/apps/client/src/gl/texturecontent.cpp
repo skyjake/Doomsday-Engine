@@ -483,10 +483,6 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     if(width > GLInfo::limits().maxTexSize || height > GLInfo::limits().maxTexSize)
         return false;
 
-    if(!GL_state.features.texNonPowTwo &&
-       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
-        return false;
-
     // Negative indices signify a specific mipmap level is being uploaded.
     if(genMipmaps < 0)
     {
@@ -609,10 +605,6 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
         return false;
 
     // Check that the texture dimensions are valid.
-    if(!GL_state.features.texNonPowTwo &&
-       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
-        return false;
-
     if(width > GLInfo::limits().maxTexSize || height > GLInfo::limits().maxTexSize)
         return false;
 

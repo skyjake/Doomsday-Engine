@@ -223,14 +223,13 @@ static void printConfiguration()
     LOG_GL_VERBOSE(_E(b) "Render configuration:");
 
     LOG_GL_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
-    if(GL_state.features.multisample)
+    /*if(GL_state.features.multisample)
     {
         LOG_GL_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
-    }
+    }*/
     LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
     LOG_GL_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
     LOG_GL_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
-    LOG_GL_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
 }
 
 void GL_EarlyInit()
@@ -622,12 +621,12 @@ dd_bool GL_OptimalTextureSize(dint width, dint height, dd_bool noStretch, dd_boo
     dint *optWidth, dint *optHeight)
 {
     DENG2_ASSERT(optWidth && optHeight);
-    if(GL_state.features.texNonPowTwo && !isMipMapped)
+    if (!isMipMapped)
     {
         *optWidth  = width;
         *optHeight = height;
     }
-    else if(noStretch)
+    else if (noStretch)
     {
         *optWidth  = M_CeilPow2(width);
         *optHeight = M_CeilPow2(height);
