@@ -5,9 +5,14 @@ isDryRun = '--dry-run' in sys.argv
 sys.path += ['/Users/jaakko/Scripts']
 import dew
 
-comment     = 'Generated from Amethyst source by wikidocs.py'
-collections = ['engine', 'libcommon', 'libdoom', 'libheretic', 'libhexen']
-modes       = ['command', 'variable']
+comment        = 'Generated from Amethyst source by wikidocs.py'
+collections    = ['engine', 'libcommon', 'libdoom', 'libheretic', 'libhexen']
+collectionText = {'engine':     'Doomsday', 
+                  'libcommon':  'all games', 
+                  'libdoom':    'Doom', 
+                  'libheretic': 'Heretic', 
+                  'libhexen':   'Hexen'}
+modes          = ['command', 'variable']
 
 
 def categoryForMode(m):
@@ -17,15 +22,12 @@ def categoryForMode(m):
 
 def categoryForCollection(col, m):
     """Wiki category for a collection."""
-    if col == 'engine': col = 'Engine'
-    return categoryForMode(m) + ' (%s)' % col
+    return categoryForMode(m) + ' (%s)' % collectionText[col]
     
 def heading(col, m):
     """Heading on the index page for a particular collection."""
     hd = {'command': 'Commands', 'variable': 'Variables'}[m]
-    if col == 'engine': col = 'Doomsday'
-    elif col == 'libcommon': col = 'all games'
-    hd += ' for '  + col
+    hd += ' for '  + collectionText[col]
     return hd
 
 def colWidth(m):
@@ -67,9 +69,9 @@ class Page:
         
     def appendCollectionToTitle(self, col):
         if ')' in self.title:
-            self.title = self.title.replace(')', ' in %s)' % col)
+            self.title = self.title.replace(')', ' in %s)' % collectionText[col])
         else:
-            self.title += ' (%s)' % col
+            self.title += ' (%s)' % collectionText[col]
         
 
 pagesForCollection = {}
@@ -81,7 +83,8 @@ for col in collections:
     for mode in modes:
         print '-', mode
 
-        dirName = os.path.join(col, mode)
+        dirName = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                               '..', '..', 'doc', col, mode)
         files = os.listdir(dirName)
         for fn in files:
             if not fn.endswith('.ame'): continue
