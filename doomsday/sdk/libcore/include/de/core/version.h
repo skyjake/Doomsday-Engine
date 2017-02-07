@@ -88,7 +88,7 @@ public:
     /**
      * Returns a version string in the form "x.y.z".
      */
-    String baseNumber() const;
+    String compactNumber() const;
 
     /**
      * Returns a version string in the form "x.y.z.build".
@@ -99,7 +99,7 @@ public:
      * Returns a version string that includes the build number (unless it is
      * zero), in the form "x.y.z-label [#build]".
      */
-    String asText() const;
+    String asHumanReadableText() const;
 
     /**
      * Converts a textual version and updates the Version instance with the

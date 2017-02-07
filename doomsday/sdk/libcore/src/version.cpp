@@ -74,12 +74,12 @@ bool Version::isValid() const
 
 String Version::base() const
 {
-    String v = baseNumber();
+    String v = compactNumber();
     if (!label.isEmpty()) v += String("-%1").arg(label);
     return v;
 }
 
-String Version::baseNumber() const
+String Version::compactNumber() const
 {
     if (patch != 0)
     {
@@ -90,10 +90,14 @@ String Version::baseNumber() const
 
 String Version::fullNumber() const
 {
-    return String("%1.%2.%3.%4").arg(major).arg(minor).arg(patch).arg(build);
+    if (build != 0)
+    {
+        return String("%1.%2.%3.%4").arg(major).arg(minor).arg(patch).arg(build);
+    }
+    return String("%1.%2.%3").arg(major).arg(minor).arg(patch);
 }
 
-String Version::asText() const
+String Version::asHumanReadableText() const
 {
     if (!build) return base();
     return base() + String(" [#%1]").arg(build);

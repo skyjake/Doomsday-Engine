@@ -353,7 +353,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
-    LOG_NOTE("Build: ") << Version::currentBuild().asText();
+    LOG_NOTE("Build: ") << Version::currentBuild().asHumanReadableText();
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
@@ -698,7 +698,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version::currentBuild().asText();
+    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version::currentBuild().asHumanReadableText();
 }
 
 void App::addSystem(System &system)

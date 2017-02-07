@@ -443,7 +443,7 @@ String Package::splitToHumanReadable(String const &identifier_version)
     auto const id_ver = split(identifier_version);
     return QObject::tr("%1 " _E(C) "(%2)" _E(.))
             .arg(id_ver.first)
-            .arg(id_ver.second.isValid()? QObject::tr("version %1").arg(id_ver.second.asText())
+            .arg(id_ver.second.isValid()? QObject::tr("version %1").arg(id_ver.second.fullNumber())
                                         : QObject::tr("any version"));
 }
 
@@ -472,7 +472,7 @@ String Package::versionedIdentifierForFile(File const &file)
     auto const id_ver = split(file.name().fileNameWithoutExtension());
     if (id_ver.second.isValid())
     {
-        return String("%1_%2").arg(id).arg(id_ver.second.asText());
+        return String("%1_%2").arg(id).arg(id_ver.second.fullNumber());
     }
     return id;
 }
