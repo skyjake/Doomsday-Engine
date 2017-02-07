@@ -501,6 +501,8 @@ public:
      */
     static void recycleTrashedWidgets();
 
+    static void collectNotReadyAssets(AssetGroup &collected, Widget &widget);
+
 protected:
     /**
      * Called by GuiWidget::update() the first time an update is being carried

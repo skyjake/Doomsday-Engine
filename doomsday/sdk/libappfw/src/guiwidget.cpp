@@ -28,6 +28,7 @@
 #include <de/Drawable>
 #include <de/GLTexture>
 #include <de/GLTextureFramebuffer>
+#include <de/LogBuffer>
 #include <de/FocusWidget>
 #include <de/PopupWidget>
 
@@ -1257,6 +1258,27 @@ void GuiWidget::postDrawChildren()
     if (rootWidget.focus() && rootWidget.focus()->parent() == this)
     {
         rootWidget.focusIndicator().draw();
+    }
+}
+
+void GuiWidget::collectNotReadyAssets(AssetGroup &collected, Widget &widget)
+{
+    if (auto *assetGroup = widget.maybeAs<IAssetGroup>())
+    {
+        if (!assetGroup->assets().isReady())
+        {
+            collected += *assetGroup;
+
+            LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)",
+                            widget.path() << &widget);
+        }
+    }
+    else
+    {
+        foreach (Widget *child, widget.children())
+        {
+            collectNotReadyAssets(collected, *child);
+        }
     }
 }
 

@@ -46,7 +46,7 @@ DENG_GUI_PIMPL(PanelWidget)
     AnimationRule *openingRule;
     QTimer dismissTimer;
 
-    QScopedPointer<AssetGroup> pendingShow;
+    std::unique_ptr<AssetGroup> pendingShow;
 
     // GL objects.
     Drawable drawable;
@@ -157,29 +157,6 @@ DENG_GUI_PIMPL(PanelWidget)
         dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
 
-    void findAssets(Widget *widget)
-    {
-        //qDebug() << "checking if" << widget << "is an asset to wait for...";
-
-        if (auto *assetGroup = widget->maybeAs<IAssetGroup>())
-        {
-            if (!assetGroup->assets().isReady())
-            {
-                *pendingShow += *assetGroup;
-
-                LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)",
-                                widget->path() << widget);
-            }
-        }
-        else
-        {
-            foreach (Widget *child, widget->children())
-            {
-                findAssets(child);
-            }
-        }
-    }
-
     void waitForAssetsInContent()
     {
         if (!waitForContentReady) return;
@@ -189,7 +166,8 @@ DENG_GUI_PIMPL(PanelWidget)
         pendingShow.reset(new AssetGroup);
 
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
-        findAssets(content);
+        DENG2_ASSERT(content);
+        GuiWidget::collectNotReadyAssets(*pendingShow, *content);
 
         if (pendingShow->isEmpty())
         {
