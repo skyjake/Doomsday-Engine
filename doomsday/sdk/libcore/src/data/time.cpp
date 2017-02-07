@@ -85,11 +85,11 @@ void TimeDelta::sleep() const
 {
     if (_seconds < 60)
     {
-        internal::SleeperThread::usleep((unsigned long)(_seconds * 1e6));
+        internal::SleeperThread::usleep(static_cast<unsigned long>(_seconds * 1e6));
     }
     else
     {
-        internal::SleeperThread::msleep((unsigned long)(_seconds * 1e3));
+        internal::SleeperThread::msleep(static_cast<unsigned long>(_seconds * 1e3));
     }
 }
 
@@ -101,22 +101,6 @@ void TimeDelta::operator >> (Writer &to) const
 void TimeDelta::operator << (Reader &from)
 {
     from >> _seconds;
-}
-
-TimeDelta TimeDelta::operator + (ddouble const &d) const
-{
-    return _seconds + d;
-}
-
-TimeDelta &TimeDelta::operator += (ddouble const &d)
-{
-    _seconds += d;
-    return *this;
-}
-
-TimeDelta TimeDelta::operator - (ddouble const &d) const
-{
-    return _seconds - d;
 }
 
 DENG2_PIMPL_NOREF(Time)

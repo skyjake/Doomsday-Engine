@@ -69,26 +69,43 @@ public:
          */
         operator ddouble() const { return _seconds; }
 
-        bool operator < (ddouble const &d) const {
+        inline bool operator < (ddouble const &d) const {
             return _seconds < d;
         }
 
-        bool operator > (ddouble const &d) const {
+        inline bool operator > (ddouble const &d) const {
             return _seconds > d;
         }
 
-        bool operator == (ddouble const &d) const {
+        inline bool operator == (ddouble const &d) const {
             return fequal(_seconds, d);
         }
 
-        Delta operator + (ddouble const &d) const;
+        inline Delta operator + (ddouble const &d) const {
+            return _seconds + d;
+        }
 
-        Delta &operator += (ddouble const &d);
+        inline Delta &operator += (ddouble const &d) {
+            _seconds += d;
+            return *this;
+        }
 
-        Delta operator - (ddouble const &d) const;
+        inline Delta operator - (ddouble const &d) const {
+            return _seconds - d;
+        }
 
-        Delta &operator -= (ddouble const &d) {
+        inline Delta &operator -= (ddouble const &d) {
             _seconds -= d;
+            return *this;
+        }
+
+        inline Delta &operator *= (ddouble const &d) {
+            _seconds *= d;
+            return *this;
+        }
+
+        inline Delta &operator /= (ddouble const &d) {
+            _seconds /= d;
             return *this;
         }
 
