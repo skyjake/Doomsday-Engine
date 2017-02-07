@@ -279,7 +279,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                                 _E(Ta)_E(l) "%7:" _E(.)_E(Tb) " %8")
                     .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
                     .arg(tr("Players")).arg(plrDesc)
-                    .arg(tr("Version")).arg(serverInfo.version().asText())
+                    .arg(tr("Version")).arg(serverInfo.version().asHumanReadableText())
                     .arg(tr("Ping"))   .arg(ping < 0.0? String(DENG2_CHAR_MDASH)
                                                       : String("%1 ms").arg(ping.asMilliSeconds()));
             description->setText(msg);
@@ -335,7 +335,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                         {
                             localVersion = Package::versionForFile(*pkgFile);
                             missing << String("%1 " _E(s) "(you have: %2)" _E(.))
-                                       .arg(pkgId).arg(localVersion.asText());
+                                       .arg(pkgId).arg(localVersion.fullNumber());
                             continue;
                         }
                     }

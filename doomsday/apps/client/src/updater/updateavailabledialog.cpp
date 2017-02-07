@@ -120,14 +120,14 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
             self().title().setImage(style().images().image("updater"));
             self().message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
                                    .arg(channel)
-                                   .arg(_E(b) + latestVersion.asText() + _E(.))
-                                   .arg(currentVersion.asText()));
+                                   .arg(_E(b) + latestVersion.asHumanReadableText() + _E(.))
+                                   .arg(currentVersion.asHumanReadableText()));
         }
         else if (channel == builtInType) // same release type
         {
             self().title().setText(tr("Up to Date"));
             self().message().setText(tr("The installed %1 is the latest available %2 build.")
-                                   .arg(currentVersion.asText())
+                                   .arg(currentVersion.asHumanReadableText())
                                    .arg(_E(b) + channel + _E(.)));
         }
         else if (latestVersion < currentVersion)
@@ -136,7 +136,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
             self().title().setText(tr("Up to Date"));
             self().message().setText(tr("The installed %1 is newer than the latest available %2 build.")
-                                   .arg(currentVersion.asText())
+                                   .arg(currentVersion.asHumanReadableText())
                                    .arg(_E(b) + channel + _E(.)));
         }
 

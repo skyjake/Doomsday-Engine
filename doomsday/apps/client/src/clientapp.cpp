@@ -513,7 +513,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     QPixmap const pixmap(doomsdaySplashXpm);
     QSplashScreen *splash = new QSplashScreen(pixmap);
     splash->show();
-    splash->showMessage(Version::currentBuild().asText(),
+    splash->showMessage(Version::currentBuild().asHumanReadableText(),
                         Qt::AlignHCenter | Qt::AlignBottom,
                         QColor(90, 110, 95));
     processEvents();

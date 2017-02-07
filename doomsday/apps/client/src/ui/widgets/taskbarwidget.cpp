@@ -230,11 +230,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
             Version const currentVersion = Version::currentBuild();
             if (String(DOOMSDAY_RELEASE_TYPE) == "Stable")
             {
-                text = _E(b) + currentVersion.baseNumber();
+                text = _E(b) + currentVersion.compactNumber();
             }
             else
             {
-                text = _E(b) + currentVersion.baseNumber() + " " +
+                text = _E(b) + currentVersion.compactNumber() + " " +
                        _E(l) + String("#%1").arg(currentVersion.build);
             }
         }

@@ -304,7 +304,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                     .arg(pkgIdVer.first);
             if (!isFile && pkgIdVer.second.isValid())
             {
-                labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.asText());
+                labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.compactNumber());
             }
             label().setText(labelText);
 

@@ -102,6 +102,7 @@ DENG_GUI_PIMPL(AlertDialog)
         , maxCount(100)
     {
         notification.reset(new PopupButtonWidget);
+        notification->setBehavior(Focusable, false);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());

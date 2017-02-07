@@ -347,8 +347,8 @@ DENG2_PIMPL(Updater)
         Version const currentVersion = Version::currentBuild();
 
         LOG_MSG(_E(b) "Received version information:\n" _E(.)
-                " - installed version: " _E(>) "%s ") << currentVersion.asText();
-        LOG_MSG(" - latest version: " _E(>) "%s") << latestVersion.asText();
+                " - installed version: " _E(>) "%s ") << currentVersion.asHumanReadableText();
+        LOG_MSG(" - latest version: " _E(>) "%s") << latestVersion.asHumanReadableText();
         LOG_MSG(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
         LOG_MSG(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
@@ -364,7 +364,7 @@ DENG2_PIMPL(Updater)
         // Is this newer than what we're running?
         if (gotUpdate)
         {
-            LOG_NOTE("Found an update: " _E(b)) << latestVersion.asText();
+            LOG_NOTE("Found an update: " _E(b)) << latestVersion.asHumanReadableText();
 
             if (!alwaysShowNotification)
             {
@@ -445,7 +445,7 @@ DENG2_PIMPL(Updater)
     void startInstall(de::String distribPackagePath)
     {
 #ifdef MACOSX
-        de::String volName = "Doomsday Engine " + latestVersion.baseNumber();
+        de::String volName = "Doomsday Engine " + latestVersion.compactNumber();
 
 #ifdef DENG2_QT_5_0_OR_NEWER
         QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -458,21 +458,21 @@ DENG2_PIMPL(Updater)
         if (file.open(QFile::WriteOnly | QFile::Truncate))
         {
             QTextStream out(&file);
-            out << "tell application \"System Events\" to set visible of process \"Finder\" to false\n"
+            out << "tell application \"System Events\" to set visible of process \"Finder\" to true\n"
                    "tell application \"Finder\"\n"
                    "  open POSIX file \"" << distribPackagePath << "\"\n"
                    "  -- Wait for it to get mounted\n"
                    "  repeat until name of every disk contains \"" << volName << "\"\n"
                    "    delay 1\n"
                    "  end repeat\n"
-                   "  -- Start the installer\n"
+                   /*"  -- Start the installer\n"
                    "  open file \"" << volName << ":Doomsday.pkg\"\n"
                    "  -- Activate the Installer\n"
                    "  repeat until name of every process contains \"Installer\"\n"
                    "    delay 2\n"
-                   "  end repeat\n"
+                   "  end repeat\n"*/
                    "end tell\n"
-                   "delay 1\n"
+                   /*"delay 1\n"
                    "tell application \"Installer\" to activate\n"
                    "tell application \"Finder\"\n"
                    "  -- Wait for it to finish\n"
@@ -481,7 +481,7 @@ DENG2_PIMPL(Updater)
                    "  end repeat\n"
                    "  -- Unmount\n"
                    "  eject disk \"" << volName << "\"\n"
-                   "end tell\n";
+                   "end tell\n"*/;
             file.close();
         }
         else
