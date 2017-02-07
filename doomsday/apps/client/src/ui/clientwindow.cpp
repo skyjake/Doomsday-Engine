@@ -261,7 +261,10 @@ DENG2_PIMPL(ClientWindow)
         quitButton->setImageColor(style.colors().colorf("accent"));
         quitButton->setTextAlignment(ui::AlignLeft);
         quitButton->set(GuiWidget::Background(style.colors().colorf("background")));
-        quitButton->setActionFn([] () { DENG2_BASE_GUI_APP->quit(); });
+        quitButton->setActionFn([this] () {
+            setupFade(FadeToBlack, 0.1);
+            Loop::get().timer(0.1, [] () { DENG2_BASE_GUI_APP->quit(); });
+        });
         quitButton->rule()
                 .setInput(Rule::Top,    root.viewTop() + style.rules().rule("gap"))
                 .setInput(Rule::Left,   root.viewRight() + *quitX)
@@ -294,15 +297,6 @@ DENG2_PIMPL(ClientWindow)
         root.add(taskBar);
 
         miniGameControls->rule().setInput(Rule::Bottom, taskBar->rule().top());
-
-#if 0
-        // The game selection's height depends on the taskbar.
-        AutoRef<Rule> availHeight = taskBar->rule().top() - gameSelMenu->filter().rule().height();
-        gameSelMenu->rule()
-                .setInput(Rule::AnchorY, gameSelMenu->filter().rule().height() + availHeight / 2)
-                .setInput(Rule::Height,  OperatorRule::minimum(availHeight,
-                        gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
-#endif
 
         // Privileged work-in-progress log.
         privLog = new PrivilegedLogWidget;
@@ -947,24 +941,6 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
 
-    // Configure the GL settings for all subsequently created canvases.
-    /*QGLFormat fmt;
-    fmt.setProfile(QGLFormat::CompatibilityProfile);
-    fmt.setVersion(2, 1);
-    fmt.setDepth(false); // depth and stencil handled in GLTextureFramebuffer
-    fmt.setStencil(false);
-    //fmt.setDepthBufferSize(16);
-    //fmt.setStencilBufferSize(8);
-    fmt.setDoubleBuffer(true);
-
-    if (vrCfg().needsStereoGLFormat())
-    {
-        // Only use a stereo format for modes that require it.
-        LOG_GL_MSG("Using a stereoscopic frame buffer format");
-        fmt.setStereo(true);
-    }*/
-
-//#ifdef WIN32
     if (CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
         fmt.setSwapInterval(0);
@@ -973,28 +949,6 @@ bool ClientWindow::setDefaultGLFormat() // static
     {
         fmt.setSwapInterval(1);
     }
-//#endif
-
-    /*if (GLWindow::mainExists())
-    {
-        // Testing: does this actually do anything?
-        GLWindow::main().canvas().setFormat(fmt);
-    }*/
-
-/*
-    int sampleCount = 1;
-    bool configured = App::config().getb("window.main.fsaa");
-    if (CommandLine_Exists("-nofsaa") || !configured)
-    {
-        LOG_GL_VERBOSE("Multisampling off");
-    }
-    else
-    {
-        sampleCount = 4; // four samples is fine?
-        LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
-    }
-    fmt.setSamples(sampleCount);
-    GLTextureFramebuffer::setDefaultMultisampling(sampleCount);*/
 
     /// @todo Multisampling should only be enabled on the game view FBO. The rest of
     /// the UI is always single-sampled.
