@@ -455,8 +455,7 @@ DENG2_PIMPL(ClientWindow)
         GL_Init2DState();
 
         // Update the capability flags.
-        GL_state.features.multisample = GLTextureFramebuffer::defaultMultisampling() > 1;
-        LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+        LOGDEV_GL_MSG("GL feature: Multisampling: %b") << (GLTextureFramebuffer::defaultMultisampling() > 1);
 
         if (vrCfg().needsStereoGLFormat() && !self().format().stereo())
         {

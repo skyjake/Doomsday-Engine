@@ -153,7 +153,7 @@ void FinalePageWidget::draw() const
     LIBGUI_GL.glPushMatrix();
     //glLoadIdentity();
 
-    GL_SetMultisample(true);
+    //GL_SetMultisample(true);
 
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
@@ -185,7 +185,7 @@ void FinalePageWidget::draw() const
         GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, d->filter[0].value, d->filter[1].value, d->filter[2].value, d->filter[3].value);
     }
 
-    GL_SetMultisample(false);
+    //GL_SetMultisample(false);
 
     LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
     LIBGUI_GL.glPopMatrix();

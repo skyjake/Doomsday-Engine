@@ -19,52 +19,32 @@
 
 #include "de_base.h"
 #include "ui/ui_main.h"
+#include "ui/clientwindow.h"
 
 #include <cmath>
 #include <de/GLState>
 #include <de/GLInfo>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/world/Materials>
+//#include <doomsday/world/Materials>
 
-#include "clientapp.h"
 #include "api_fontrender.h"
 #include "gl/gl_main.h"
-#include "gl/texturecontent.h"
-#include "resource/image.h"
+//#include "gl/texturecontent.h"
+//#include "resource/image.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"
-#include "MaterialAnimator"
+//#include "MaterialAnimator"
 
 using namespace de;
 
-//D_CMD(UIColor);
-
-fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
-//static int uiFontHgt; /// Height of the UI font.
+fontid_t fontFixed;
 
 /// Modify these colors to change the look of the UI.
 static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_TEXT */      { .85f, .87f, 1 },
     /* UIC_TITLE */     { 1, 1, 1 },
-    #if 0
-    /* UIC_SHADOW */    { 0, 0, 0 },
-    /* UIC_BG_LIGHT */  { .18f, .18f, .22f },
-    /* UIC_BG_MEDIUM */ { .4f, .4f, .52f },
-    /* UIC_BG_DARK */   { .28f, .28f, .33f },
-    /* UIC_BRD_HI */    { 1, 1, 1 },
-    /* UIC_BRD_MED */   { 0, 0, 0 },
-    /* UIC_BRD_LOW */   { .25f, .25f, .55f },
-    /* UIC_HELP */      { .4f, .4f, .52f }
-    #endif
 };
-
-#if 0
-void UI_Register(void)
-{
-    //C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
-}
-#endif
 
 char const *UI_ChooseFixedFont()
 {
@@ -72,33 +52,6 @@ char const *UI_ChooseFixedFont()
     if (DENG_GAMEVIEW_WIDTH > 768) return "console18";
     return "console14";
 }
-
-#if 0
-char const *UI_ChooseVariableFont(fontstyle_t style)
-{
-    int const resY = DENG_GAMEVIEW_HEIGHT;
-    int const SMALL_LIMIT = 500;
-    int const MED_LIMIT   = 800;
-
-    switch (style)
-    {
-    default:
-        return (resY < SMALL_LIMIT ? "normal12" :
-                resY < MED_LIMIT   ? "normal18" :
-                                     "normal24");
-
-    case FS_LIGHT:
-        return (resY < SMALL_LIMIT ? "normallight12" :
-                resY < MED_LIMIT   ? "normallight18" :
-                                     "normallight24");
-
-    case FS_BOLD:
-        return (resY < SMALL_LIMIT ? "normalbold12" :
-                resY < MED_LIMIT   ? "normalbold18" :
-                                     "normalbold24");
-    }
-}
-#endif
 
 static AbstractFont *loadSystemFont(char const *name)
 {
@@ -121,7 +74,6 @@ static AbstractFont *loadSystemFont(char const *name)
     if (!font)
     {
         App_Error("loadSystemFont: Failed loading font \"%s\".", name);
-        exit(1); // Unreachable.
     }
 
     Str_Free(&resourcePath);
@@ -155,23 +107,8 @@ void UI_LoadFonts()
 {
     if (isDedicated) return;
 
-    loadFontIfNeeded(UI_ChooseFixedFont(),             &fontFixed);
-//    loadFontIfNeeded(UI_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
-//    loadFontIfNeeded(UI_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
-//    loadFontIfNeeded(UI_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
+    loadFontIfNeeded(UI_ChooseFixedFont(), &fontFixed);
 }
-
-/*de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags)
-{
-    return ClientResources::get().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
-                                             0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                             1, 1, 0, false, false, false, false);
-}*/
-
-/*int UI_FontHeight(void)
-{
-    return uiFontHgt;
-}*/
 
 ui_color_t* UI_Color(uint id)
 {
@@ -197,20 +134,6 @@ void UI_SetColor(ui_color_t* color)
     LIBGUI_GL.glColor3f(color->red, color->green, color->blue);
 }
 
-#if 0
-void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* topColor,
-    ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
-{
-    UI_GradientEx(origin, size, 0, topColor, bottomColor, topAlpha, bottomAlpha);
-}
-
-void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* topColor,
-    ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
-{
-    UI_DrawRectEx(origin, size, border, true, topColor, bottomColor, topAlpha, bottomAlpha);
-}
-#endif
-
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha,
     int alignFlags, short textFlags)
 {
@@ -225,135 +148,6 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
 {
     UI_TextOutEx2(text, origin, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
-
-#if 0
-void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd_bool filled,
-    ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
-{
-    DENG2_ASSERT(origin && size);
-
-    float s[2] = { 0, 1 };
-    float t[2] = { 0, 1 };
-
-    //alpha *= uiAlpha;
-    //bottomAlpha *= uiAlpha;
-    if (alpha <= 0 && bottomAlpha <= 0) return;
-
-    if (border < 0)
-    {
-        border = -border;
-        s[0] = t[0] = 1;
-        s[1] = t[1] = 0;
-    }
-    if (bottomAlpha < 0)
-        bottomAlpha = alpha;
-    if (!bottomColor)
-        bottomColor = topColor;
-
-    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", (filled? Path("ui/boxfill")
-                                                                                  : Path("ui/boxcorner"))))
-            .getAnimator(UI_MaterialSpec());
-
-    // Ensure we've up to date info about the material.
-    matAnimator.prepare();
-
-    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-
-    // The fill comes first, if there's one.
-    LIBGUI_GL.glBegin(GL_QUADS);
-    if (filled)
-    {
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        UI_SetColorA(topColor, alpha);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
-        UI_SetColorA(bottomColor, bottomAlpha);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
-    }
-
-    if (!filled || border > 0)
-    {
-        // Top Left.
-        UI_SetColorA(topColor, alpha);
-        LIBGUI_GL.glTexCoord2f(s[0], t[0]);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
-        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y + border);
-        // Top.
-        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
-        // Top Right.
-        LIBGUI_GL.glTexCoord2f(0.5f, t[0]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y);
-        LIBGUI_GL.glTexCoord2f(s[1], t[0]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y);
-        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
-        // Right.
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + border);
-        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + border);
-        UI_SetColorA(bottomColor, bottomAlpha);
-        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        // Bottom Right.
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(s[1], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(s[1], t[1]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width, origin->y + size->height);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height);
-        // Bottom.
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
-        LIBGUI_GL.glVertex2f(origin->x + size->width - border, origin->y + size->height);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height);
-        // Bottom Left.
-        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(0.5f, t[1]);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height);
-        LIBGUI_GL.glTexCoord2f(s[0], t[1]);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height);
-        // Left.
-        UI_SetColorA(topColor, alpha);
-        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y + border);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + border);
-        UI_SetColorA(bottomColor, bottomAlpha);
-        LIBGUI_GL.glTexCoord2f(0.5f, 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x + border, origin->y + size->height - border);
-        LIBGUI_GL.glTexCoord2f(s[0], 0.5f);
-        LIBGUI_GL.glVertex2f(origin->x, origin->y + size->height - border);
-    }
-    LIBGUI_GL.glEnd();
-}
-#endif
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
@@ -372,7 +166,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     GLState::push();
 
     LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-    if (alpha < 1.0)
+    if (alpha < 1.0f)
     {
         GL_BlendMode(BM_NORMAL);
     }
@@ -403,44 +197,3 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     GLState::pop().apply();
     LIBGUI_GL.glDisable(GL_TEXTURE_2D);
 }
-
-#if 0
-/**
- * CCmd: Change the UI colors.
- */
-D_CMD(UIColor)
-{
-    DENG2_UNUSED2(argc, src);
-
-    struct colorname_s {
-        char const *str;
-        uint colorIdx;
-    } colors[] =
-    {
-        { "text",       UIC_TEXT },
-        { "title",      UIC_TITLE },
-        { "shadow",     UIC_SHADOW },
-        { "bglight",    UIC_BG_LIGHT },
-        { "bgmed",      UIC_BG_MEDIUM },
-        { "bgdark",     UIC_BG_DARK },
-        { "borhigh",    UIC_BRD_HI },
-        { "bormed",     UIC_BRD_MED },
-        { "borlow",     UIC_BRD_LOW },
-        { "help",       UIC_HELP },
-        { 0, 0 }
-    };
-    for (int i = 0; colors[i].str; ++i)
-    {
-        if (stricmp(argv[1], colors[i].str)) continue;
-
-        uint idx = colors[i].colorIdx;
-        ui_colors[idx].red   = strtod(argv[2], 0);
-        ui_colors[idx].green = strtod(argv[3], 0);
-        ui_colors[idx].blue  = strtod(argv[4], 0);
-        return true;
-    }
-
-    LOG_SCR_ERROR("Unknown UI color '%s'") << argv[1];
-    return false;
-}
-#endif

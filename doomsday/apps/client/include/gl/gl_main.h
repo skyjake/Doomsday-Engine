@@ -196,7 +196,7 @@ void GL_SetVSync(dd_bool on);
  *
  * @param on  @c true to enable multisampling, @c false to disable.
  */
-void GL_SetMultisample(dd_bool on);
+//void GL_SetMultisample(dd_bool on);
 
 /**
  * Reconfigure GL fog according to the setup defined in the specified @a mapInfo definition.

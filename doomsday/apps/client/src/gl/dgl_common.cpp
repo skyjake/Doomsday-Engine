@@ -330,40 +330,6 @@ void GL_SetVSync(dd_bool on)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     GLInfo::setSwapInterval(on ? 1 : 0);
-
-#if 0
-#ifdef WIN32
-    {
-        //wglSwapIntervalEXT(on? 1 : 0);
-    }
-#elif defined (MACOSX)
-    {
-        // Tell CGL to wait for vertical refresh.
-        CGLContextObj context = CGLGetCurrentContext();
-        DENG_ASSERT(context != nullptr);
-        if (context)
-        {
-            GLint params[1] = { on? 1 : 0 };
-            CGLSetParameter(context, kCGLCPSwapInterval, params);
-        }
-    }
-#elif defined (Q_WS_X11)
-    {
-        //setXSwapInterval(on? 1 : 0);
-    }
-#endif
-#endif
-}
-
-void GL_SetMultisample(dd_bool on)
-{
-    if(!GL_state.features.multisample) return;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    /// @todo Do this via GLFramebuffer.
-    qDebug() << "GL_SetMultisample:" << on << "(not implemented)";
 }
 
 #undef DGL_SetScissor

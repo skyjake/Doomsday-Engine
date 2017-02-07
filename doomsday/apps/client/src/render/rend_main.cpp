@@ -4673,7 +4673,7 @@ static void drawAllLists(Map &map)
 
 void Rend_RenderMap(Map &map)
 {
-    GL_SetMultisample(true);
+    //GL_SetMultisample(true);
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix();
@@ -4730,7 +4730,7 @@ void Rend_RenderMap(Map &map)
     drawGenerators(map);
     //drawBiasEditingVisuals(map);
 
-    GL_SetMultisample(false);
+    //GL_SetMultisample(false);
 }
 
 #if 0
