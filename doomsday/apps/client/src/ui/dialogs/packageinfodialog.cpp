@@ -66,7 +66,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
     Impl(Public *i) : Base(i)
     {
-        targetHeight = new IndirectRule;
+        targetHeight     = new IndirectRule;
         descriptionWidth = new IndirectRule;
         minContentHeight = new IndirectRule;
 
