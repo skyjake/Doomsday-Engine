@@ -38,13 +38,15 @@ public:
 
     void initFadeToBlack(TimeDelta const &span);
 
-    void start();
+    void start(TimeDelta const &delay = 0.0);
 
     void pause();
 
     void resume();
 
     void cancel();
+
+    bool isStarted() const;
 
     bool isDone() const;
 

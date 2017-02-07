@@ -23,6 +23,7 @@ namespace de {
 DENG2_PIMPL_NOREF(FadeToBlackWidget)
 {
     TimeDelta span = 1;
+    bool started = false;
 };
 
 FadeToBlackWidget::FadeToBlackWidget() : d(new Impl)
@@ -34,17 +35,20 @@ void FadeToBlackWidget::initFadeFromBlack(TimeDelta const &span)
 {
     setOpacity(1);
     d->span = span;
+    d->started = false;
 }
 
 void FadeToBlackWidget::initFadeToBlack(TimeDelta const &span)
 {
     setOpacity(0);
     d->span = span;
+    d->started = false;
 }
 
-void FadeToBlackWidget::start()
+void FadeToBlackWidget::start(TimeDelta const &delay)
 {
-    setOpacity(fequal(opacity().target(), 1)? 0 : 1, d->span);
+    d->started = true;
+    setOpacity(fequal(opacity().target(), 1)? 0 : 1, d->span, delay);
 }
 
 void FadeToBlackWidget::pause()
@@ -59,12 +63,18 @@ void FadeToBlackWidget::resume()
 
 void FadeToBlackWidget::cancel()
 {
+    d->started = true;
     setOpacity(0);
+}
+
+bool FadeToBlackWidget::isStarted() const
+{
+    return d->started;
 }
 
 bool FadeToBlackWidget::isDone() const
 {
-    return opacity().done();
+    return isStarted() && opacity().done();
 }
 
 void FadeToBlackWidget::disposeIfDone()

@@ -48,7 +48,7 @@ static TimeDelta const SCROLL_SPAN = .5;
 static TimeDelta const DISMISS_SPAN = 1.5;
 
 DENG_GUI_PIMPL(HomeWidget)
-, DENG2_OBSERVES(App,          StartupComplete)
+//, DENG2_OBSERVES(App,          StartupComplete)
 , DENG2_OBSERVES(Games,        Readiness)
 , DENG2_OBSERVES(DoomsdayApp,  GameLoad)
 , DENG2_OBSERVES(DoomsdayApp,  GameChange)
@@ -70,7 +70,10 @@ DENG_GUI_PIMPL(HomeWidget)
     IndirectRule *columnWidth;
     LabelWidget *tabsBackground;
     TabWidget *tabs;
+
+    // Fade in.
     SafeWidgetPtr<FadeToBlackWidget> blanker;
+
     int currentOffsetTab = 0;
     AnimationRule *scrollOffset;
     AnimationRule *dismissOffset;
@@ -85,7 +88,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     Impl(Public *i) : Base(i)
     {
-        App::app().audienceForStartupComplete()     += this;
+        //App::app().audienceForStartupComplete()     += this;
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::app().audienceForGameChange()  += this;
         DoomsdayApp::app().audienceForGameLoad()    += this;
@@ -216,11 +219,6 @@ DENG_GUI_PIMPL(HomeWidget)
                 tabs->items() << tabItem;
             }
         }
-    }
-
-    void appStartupCompleted()
-    {
-        blanker->guiDeleteLater();
     }
 
     void gameReadinessUpdated()
@@ -524,7 +522,7 @@ HomeWidget::HomeWidget()
     // Hide content until first update.
     d->blanker.reset(new FadeToBlackWidget);
     d->blanker->rule().setRect(rule());
-    d->blanker->initFadeFromBlack(0);
+    d->blanker->initFadeFromBlack(2.5);
     add(d->blanker);
 
     add(d->taskBarHintButton);
@@ -597,6 +595,15 @@ void HomeWidget::update()
 {
     GuiWidget::update();
     d->checkDismissHiding();
+
+    if (d->blanker)
+    {
+        if (!d->blanker->isStarted())
+        {
+            d->blanker->start(1.5);
+        }
+        d->blanker->disposeIfDone();
+    }
 }
 
 PopupWidget *HomeWidget::makeSettingsPopup()
