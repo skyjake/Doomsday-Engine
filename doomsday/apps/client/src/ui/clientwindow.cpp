@@ -26,7 +26,10 @@
 
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
+#include "ui/viewcompositor.h"
 #include "clientapp.h"
+#include "clientplayer.h"
+
 #include <QSurfaceFormat>
 #include <QTimer>
 #include <QCloseEvent>
@@ -385,6 +388,11 @@ DENG2_PIMPL(ClientWindow)
 
             root.clearFocusStack();
             root.setFocus(nullptr);
+        }
+        else // Back to Home.
+        {
+            // Release all buffered frames.
+            busy->releaseTransitionFrame();
         }
 
         // Check with Style if blurring is allowed.
