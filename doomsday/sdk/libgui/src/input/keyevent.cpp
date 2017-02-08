@@ -253,7 +253,9 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
     case Qt::Key_SysReq:        return DDKEY_PRINT;
     case Qt::Key_Print:         return DDKEY_PRINT;
     case Qt::Key_CapsLock:      return DDKEY_CAPSLOCK;
-
+#ifdef WIN32
+    case Qt::Key_Meta:          return 0; // Ignore Windows key.
+#endif
     default:
         break;
     }
