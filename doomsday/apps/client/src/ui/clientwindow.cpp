@@ -254,6 +254,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Quit shortcut.
         quitButton = new ButtonWidget;
+        quitButton->setBehavior(Widget::Focusable, false);
         quitButton->setText(_E(b)_E(D) + tr("QUIT"));
         quitButton->setFont("small");
         quitButton->setSizePolicy(ui::Expand, ui::Fixed);
@@ -261,15 +262,13 @@ DENG2_PIMPL(ClientWindow)
         quitButton->setImageColor(style.colors().colorf("accent"));
         quitButton->setTextAlignment(ui::AlignLeft);
         quitButton->set(GuiWidget::Background(style.colors().colorf("background")));
-        quitButton->setActionFn([this] () {
-            setupFade(FadeToBlack, 0.1);
-            Loop::get().timer(0.1, [] () { DENG2_BASE_GUI_APP->quit(); });
-        });
+        quitButton->setActionFn([this] () { Con_Execute(CMDS_DDAY, "quit!", false, false); });
         quitButton->rule()
                 .setInput(Rule::Top,    root.viewTop() + style.rules().rule("gap"))
                 .setInput(Rule::Left,   root.viewRight() + *quitX)
                 .setInput(Rule::Height, style.fonts().font("default").height() +
                           style.rules().rule("gap") * 2);
+        quitButton->setOpacity(0);
         root.add(quitButton);
 
         // Alerts notification and popup.
@@ -425,6 +424,7 @@ DENG2_PIMPL(ClientWindow)
             game->hide();
             game->disable();
             taskBar->disable();
+            quitButton->setOpacity(0, 1);
 
             busy->show();
             busy->enable();
@@ -437,6 +437,7 @@ DENG2_PIMPL(ClientWindow)
             game->show();
             game->enable();
             taskBar->enable();
+            quitButton->setOpacity(1, 1);
             break;
         }
 

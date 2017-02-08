@@ -259,6 +259,16 @@ DENG_EXTERN_C void Sys_Quit(void)
         app.changeGame(GameProfiles::null(), DD_ActivateGameWorker);
     }
 
-    // It's time to stop the main loop.
-    DENG2_APP->stopLoop(DD_GameLoopExitCode());
+#ifdef __CLIENT__
+    if (ClientWindow::mainExists())
+    {
+        ClientWindow::main().fadeContent(ClientWindow::FadeToBlack, 0.1);
+        de::Loop::get().timer(0.1, [] () { DENG2_APP->stopLoop(DD_GameLoopExitCode()); });
+    }
+    else
+#endif
+    {
+        // It's time to stop the main loop.
+        DENG2_APP->stopLoop(DD_GameLoopExitCode());
+    }
 }
