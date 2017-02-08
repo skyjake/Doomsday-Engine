@@ -47,7 +47,7 @@ void Con_InitProgress(int maxProgress)
 
 dd_bool Con_IsProgressAnimationCompleted(void)
 {
-    return !progress().isAnimating();
+    return progress().isHidden() || !progress().isAnimating();
 }
 
 void Con_SetProgress(int progressValue)

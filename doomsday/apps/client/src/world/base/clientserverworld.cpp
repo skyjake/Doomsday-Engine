@@ -820,7 +820,7 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
     {
         /// @todo Use progress bar mode and update progress during the setup.
         return DoomsdayApp::app().busyMode().runNewTaskWithName(
-                    BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (::verbose ? BUSYF_CONSOLE_OUTPUT : 0),
+                    BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | BUSYF_TRANSITION | (::verbose ? BUSYF_CONSOLE_OUTPUT : 0),
                     "Loading map...", [this, &mapDef] (void *)
         {
             return d->changeMap(mapDef);

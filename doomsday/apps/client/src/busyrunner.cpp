@@ -181,7 +181,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     BusyVisual_PrepareResources();
 
     de::ProgressWidget &prog = ClientWindow::main().busy().progress();
-    prog.show();
+    prog.show((task->mode & BUSYF_PROGRESS_BAR) != 0);
     prog.setText(task->name);
     prog.setMode(task->mode & BUSYF_ACTIVITY? de::ProgressWidget::Indefinite :
                                               de::ProgressWidget::Ranged);
@@ -244,8 +244,8 @@ void BusyRunner::loop()
     }
 
     if (!d->busyDone ||
-       (canUpload && GL_DeferredTaskCount() > 0) ||
-       !Con_IsProgressAnimationCompleted())
+        (canUpload && GL_DeferredTaskCount() > 0) ||
+        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
         return;

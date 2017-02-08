@@ -130,7 +130,7 @@ void GL_TexReset()
         BusyMode_FreezeGameForBusyMode();
 
         Con_InitProgress(200);
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR| (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     reloadTextures, &useBusyMode, "Reseting textures...");
     }
     else

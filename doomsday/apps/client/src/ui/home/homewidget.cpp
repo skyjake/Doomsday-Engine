@@ -220,7 +220,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void appStartupCompleted()
     {
-        blanker->guiDeleteLater();
+        blanker->start(0.75);
+        //blanker->guiDeleteLater();
     }
 
     void gameReadinessUpdated()
@@ -521,13 +522,13 @@ HomeWidget::HomeWidget()
     d->moveLeft ->rule().setInput(Rule::Left,  rule().left());
     d->moveRight->rule().setInput(Rule::Right, rule().right());
 
+    add(d->taskBarHintButton);
+
     // Hide content until first update.
     d->blanker.reset(new FadeToBlackWidget);
     d->blanker->rule().setRect(rule());
-    d->blanker->initFadeFromBlack(0);
+    d->blanker->initFadeFromBlack(1.75);
     add(d->blanker);
-
-    add(d->taskBarHintButton);
 
     // Define widget layout.
     Rule const &gap = rule("gap");
@@ -597,6 +598,10 @@ void HomeWidget::update()
 {
     GuiWidget::update();
     d->checkDismissHiding();
+    if (d->blanker)
+    {
+        d->blanker->disposeIfDone();
+    }
 }
 
 PopupWidget *HomeWidget::makeSettingsPopup()

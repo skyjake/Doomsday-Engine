@@ -1036,7 +1036,7 @@ static void initialize()
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
 #endif
-    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP /*| BUSYF_PROGRESS_BAR*/ | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
@@ -1052,7 +1052,7 @@ static void initialize()
     // Do deferred uploads.
     Con_SetProgress(100);
 #endif
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP /*| BUSYF_PROGRESS_BAR*/ | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
     //
