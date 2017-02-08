@@ -54,39 +54,3 @@ Material {
     Stage { Texture = "system:gray"; }
   }
 }
-
-#
-# UI Box-corner material.
-#
-Material {
-  Id = "system:ui/boxcorner";
-  Width = 64;
-  Height = 64;
-  Layer {
-    Stage { Texture = "system:ui/boxcorner"; }
-  }
-}
-
-#
-# UI Box-fill material.
-#
-Material {
-  Id = "system:ui/boxfill";
-  Width = 64;
-  Height = 64;
-  Layer {
-    Stage { Texture = "system:ui/boxfill"; }
-  }
-}
-
-#
-# UI Box-shade material.
-#
-Material {
-  Id = "system:ui/boxshade";
-  Width = 128;
-  Height = 128;
-  Layer {
-    Stage { Texture = "system:ui/boxshade"; }
-  }
-}
