@@ -35,6 +35,8 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <de/concurrency.h>
+#include <de/Config>
+#include <de/GLInfo>
 #include <de/Log>
 
 #include <QEventLoop>
@@ -203,6 +205,29 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     d->eventLoop = nullptr;
 
     ClientWindow::main().glActivate(); // after processing other events
+
+#ifdef WIN32
+    /*
+     * Pretty big kludge here: it seems that with Qt 5.6-5.8 on Windows 10,
+     * Nvidia drivers 376.33 (and many other versions), swap interval 
+     * behaves as if it has been set to 2 (30 FPS) whenever a game is started. 
+     * This could be due to some unknown behavior related to the secondary 
+     * event loop used during busy mode. Toggling the swap interval off and 
+     * back on appears to be a valid workaround.
+     */
+    de::Loop::timer(0.1, [] () {
+        ClientWindow::main().glActivate();
+        de::GLInfo::setSwapInterval(0);
+        ClientWindow::main().glDone();
+    });
+    de::Loop::timer(0.5, [] () {
+        ClientWindow::main().glActivate();
+        if (de::Config::get().getb("window.main.vsync")) {
+            de::GLInfo::setSwapInterval(1);
+        }
+        ClientWindow::main().glDone();
+    });
+#endif
 
     // Teardown.
     if (d->busyWillAnimateTransition)
