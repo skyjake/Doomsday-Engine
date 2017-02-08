@@ -73,9 +73,9 @@ enum MenuItemPositions
     // DE menu:
     //POS_GAMES             = 1,
     POS_MULTIPLAYER       = 1,
-    POS_CONNECT           = 2,
+    POS_UNLOAD            = 2,
     POS_GAMES_SEPARATOR   = 3,
-    POS_UNLOAD            = 4,
+    POS_CONNECT           = 4,
     POS_PACKAGES          = 7,
 
     // Config menu:
@@ -497,9 +497,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::Item(ui::Item::Separator, tr("Games"))
             << new ui::ActionItem(style().images().image("home.icon"), "",
                                   new SignalAction(this, SLOT(showOrHideHome())))
-            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
-            << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
             << new ui::ActionItem(tr("Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
