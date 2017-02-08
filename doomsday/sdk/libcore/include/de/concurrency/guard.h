@@ -21,6 +21,8 @@
 #define LIBDENG2_GUARD_H
 
 #include "../libcore.h"
+#include "../Lockable"
+#include "../ReadWriteLockable"
 
 namespace de {
 
@@ -85,20 +87,64 @@ public:
     /**
      * The target object is locked.
      */
-    Guard(Lockable const &target);
-
+    inline Guard(Lockable const &target)
+        : _target(&target), _rwTarget(0)
+    {
+        _target->lock();
+    }
+    
     /**
      * The target object is locked.
      */
-    Guard(Lockable const *target);
+    inline Guard(Lockable const *target)
+        : _target(target), _rwTarget(0)
+    {
+        DENG2_ASSERT(target != 0);
+        _target->lock();
+    }
 
-    Guard(ReadWriteLockable const &target, LockMode mode);
-    Guard(ReadWriteLockable const *target, LockMode mode);
+    inline Guard(ReadWriteLockable const &target, LockMode mode)
+        : _target(0), _rwTarget(&target)
+    {
+        if (mode == Reading)
+        {
+            _rwTarget->lockForRead();
+        }
+        else
+        {
+            _rwTarget->lockForWrite();
+        }
+    }
+    
+    inline Guard(ReadWriteLockable const *target, LockMode mode)
+        : _target(0), _rwTarget(target)
+    {
+        DENG2_ASSERT(_rwTarget != 0);
+        
+        if (mode == Reading)
+        {
+            _rwTarget->lockForRead();
+        }
+        else
+        {
+            _rwTarget->lockForWrite();
+        }
+    }
 
     /**
      * The target object is unlocked.
      */
-    ~Guard();
+    inline ~Guard()
+    {
+        if (_target)
+        {
+            _target->unlock();
+        }
+        if (_rwTarget)
+        {
+            _rwTarget->unlock();
+        }
+    }
 
 private:
     Lockable const *_target;
