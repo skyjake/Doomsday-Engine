@@ -189,7 +189,7 @@ public:
 };
 
 static dint DD_StartupWorker(void *context);
-//static dint DD_DummyWorker(void *context);
+static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
@@ -1036,9 +1036,8 @@ static void initialize()
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
 #endif
-    /*BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_StartupWorker, 0, "Starting up...");*/
-    DD_StartupWorker(nullptr);
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
 #ifdef __CLIENT__
@@ -1049,13 +1048,12 @@ static void initialize()
 #endif
     App_Resources().initSystemTextures();
 
-/*#ifdef __CLIENT__
+#ifdef __CLIENT__
     // Do deferred uploads.
     Con_SetProgress(100);
-#endif*/
-    /*BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_DummyWorker, 0, "Starting up...");
-    */
+#endif
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_DummyWorker, 0, "Buffering...");
 
     //
     // Try to locate all required data files for all registered games.
@@ -1384,7 +1382,7 @@ static dint DD_StartupWorker(void * /*context*/)
     return 0;
 }
 
-#if 0
+#if 1
 /**
  * This only exists so we have something to call while the deferred uploads of the
  * startup are processed.

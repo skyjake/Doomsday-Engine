@@ -54,7 +54,6 @@ DENG_GUI_PIMPL(BusyWidget)
         progress->setImageScale(.2f);
         progress->rule().setRect(self().rule());
         self().add(progress);
-        progress->hide();
     }
 
     void glInit()
