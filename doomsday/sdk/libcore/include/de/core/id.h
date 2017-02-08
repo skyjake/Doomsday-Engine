@@ -100,8 +100,6 @@ public:
 
 private:
     Type _id;
-
-    static Type _generator;
 };
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);

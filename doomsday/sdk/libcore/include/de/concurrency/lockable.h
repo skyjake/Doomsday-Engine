@@ -26,6 +26,8 @@
 #include <QMutex>
 
 namespace de {
+    
+//#define DENG2_LOCKABLE_LOCK_COUNT
 
 /**
  * A mutex that can be used to synchronize access to a resource.  All classes
@@ -47,15 +49,15 @@ public:
     /// Release the lock.
     void unlock() const;
 
-#ifdef DENG2_DEBUG
+#ifdef DENG2_LOCKABLE_LOCK_COUNT
     /// Returns true, if the lock is currently locked.
     bool isLocked() const;
 #endif
 
-private:
+public:
     mutable QMutex _mutex;
 
-#ifdef DENG2_DEBUG
+#ifdef DENG2_LOCKABLE_LOCK_COUNT
     mutable int _lockCount;
     mutable QMutex _countMutex;
 #endif

@@ -39,7 +39,9 @@ void Task::run()
 
     // Cleanup.
     if (_pool) _pool->taskFinishedRunning(*this);
-    Log::disposeThreadLog();
+    
+    // The thread's log is not disposed because task threads are pooled (by TaskPool)
+    // and the log object will be reused in future tasks.
 }
 
 } // namespace de

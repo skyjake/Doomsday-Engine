@@ -22,12 +22,14 @@
 #include "de/Writer"
 #include "de/Reader"
 
+#include <atomic>
+
 namespace de {
 
 // The Id generator starts from one.
-Id::Type Id::_generator = 1;
+static std::atomic_uint idGenerator { 1 };
 
-Id::Id() : _id(_generator++)
+Id::Id() : _id(idGenerator++)
 {
     if (_id == None)
     {
@@ -91,9 +93,9 @@ void Id::operator << (Reader &from)
 
 void Id::resetGenerator(Id::Type largestKnownId)
 {
-    if (_generator <= largestKnownId)
+    if (idGenerator <= largestKnownId)
     {
-        _generator = largestKnownId + 1;
+        idGenerator = largestKnownId + 1;
     }
 }
 

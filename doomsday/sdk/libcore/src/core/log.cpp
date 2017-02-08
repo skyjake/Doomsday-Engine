@@ -30,6 +30,7 @@
 #include <QMap>
 #include <QTextStream>
 #include <QThread>
+#include <QThreadStorage>
 #include <QStringList>
 
 namespace de {
@@ -52,26 +53,28 @@ static int const LINE_BREAKING_SECTION_LENGTH = 30;
 
 namespace internal {
 
+#if 0
 /**
  * @internal
  * The logs table is lockable so that multiple threads can access their logs at
  * the same time.
  */
-class Logs : public std::map<QThread *, Log *>, public Lockable
+class Logs : public Lockable, public QHash<QThread *, Log *>
 {
 public:
     Logs() {}
     ~Logs() {
-        DENG2_GUARD(this);
+        DENG2_GUARD_PTR(this);
         // The logs are owned by the logs table.
-        for (auto log : *this) delete log.second;
+        for (Log *log : *this) delete log;
     }
 };
+#endif
 
 } // namespace internal
 
 /// The logs table contains the log of each thread that uses logging.
-static std::unique_ptr<internal::Logs> logsPtr;
+//static std::unique_ptr<internal::Logs> logsPtr;
 
 /// Unused entry arguments are stored here in the pool.
 static FIFO<LogEntry::Arg> argPool;
@@ -718,50 +721,56 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     return *entry;
 }
 
-static internal::Logs &theLogs()
+/*static internal::Logs &theLogs()
 {
     if (logsPtr.get()) return *logsPtr;
     static Lockable lock;
     DENG2_GUARD(lock);
     if (!logsPtr.get()) logsPtr.reset(new internal::Logs);
     return *logsPtr;
-}
+}*/
+    
+static QThreadStorage<Log> theLogs;
 
 Log &Log::threadLog()
 {
-    internal::Logs &logs = theLogs();
-
-    DENG2_GUARD(logs);
-
     // Each thread has its own log.
-    QThread *thread = QThread::currentThread();
-    auto found = logs.find(thread);
-    if (found == logs.end())
+    //QThread *thread = QThread::currentThread();
+    
+    return theLogs.localData();
+    
+    /*if (!theLogs.hasLocalData())
+    {
+        theLogs.setLocalData(<#de::Log t#>)
+    internal::Logs &logs = theLogs();
+    DENG2_GUARD(logs);
+    
+    auto found = logs.constFind(thread);
+    if (found == logs.constEnd())
     {
         // Create a new log.
-        Log* theLog = new Log;
-        logs[thread] = theLog;
+        Log *theLog = new Log;
+        logs.insert(thread, theLog);
         return *theLog;
     }
     else
     {
-        return *found->second;
-    }
+        return *found.value();
+    }*/
 }
 
 void Log::disposeThreadLog()
 {
-    internal::Logs &logs = theLogs();
-
+    /*internal::Logs &logs = theLogs();
     DENG2_GUARD(logs);
 
     QThread *thread = QThread::currentThread();
     auto found = logs.find(thread);
     if (found != logs.end())
     {
-        delete found->second;
+        delete found.value();
         logs.erase(found);
-    }
+    }*/
 }
 
 LogEntryStager::LogEntryStager(duint32 metadata, String const &format)

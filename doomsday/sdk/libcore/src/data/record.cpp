@@ -37,6 +37,7 @@
 
 #include <QTextStream>
 #include <functional>
+#include <atomic>
 
 namespace de {
 
@@ -53,7 +54,7 @@ String const Record::VAR_NATIVE_SELF = "__self__";
  * Each record is given a unique identifier, so that serialized record
  * references can be tracked to their original target.
  */
-static duint32 recordIdCounter = 0;
+static std::atomic_uint recordIdCounter;
 
 DENG2_PIMPL(Record)
 , public Lockable
