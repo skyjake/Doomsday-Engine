@@ -859,6 +859,11 @@ void G_AutoStartOrBeginTitleLoop()
         }
         else
         {
+            if(startEpisodeId.isEmpty())
+            {
+                // Pick the first playable episode.
+                startEpisodeId = FirstPlayableEpisodeId();
+            }
             // Map warp numbers must be translated in the context of an Episode.
             startMapUri = TranslateMapWarpNumber(startEpisodeId, mapWarpNumber);
         }
