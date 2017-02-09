@@ -21,6 +21,7 @@
 #define LIBDENG2_COUNTED_H
 
 #include "../libcore.h"
+#include <atomic>
 
 namespace de {
 
@@ -86,7 +87,7 @@ protected:
 public:
     /// Number of other things that refer to this object, i.e. have
     /// a pointer to it.
-    mutable dint _refCount;
+    mutable std::atomic_int _refCount;
 
 private:
     template <typename Type>
@@ -94,7 +95,7 @@ private:
 
 #ifdef DENG2_DEBUG
 public:
-    static int totalCount; // Number of Counted objects in existence.
+    static std::atomic_int totalCount; // Number of Counted objects in existence.
 # ifdef DENG_USE_COUNTED_TRACING
     static void printAllocs();
 # endif

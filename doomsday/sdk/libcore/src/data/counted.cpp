@@ -22,7 +22,7 @@
 namespace de {
 
 #ifdef DENG2_DEBUG
-int Counted::totalCount = 0; ///< Should return back to zero when program ends.
+std::atomic_int Counted::totalCount { 0 }; ///< Should return back to zero when program ends.
 # ifdef DENG_USE_COUNTED_TRACING
 static QHash<void *, QByteArray> countedAllocs;
 void Counted::printAllocs()
@@ -76,7 +76,6 @@ void Counted::addRef(dint count) const
 {
     DENG2_ASSERT(_refCount >= 0);
     _refCount += count;
-    DENG2_ASSERT(_refCount >= 0);
 }
 
 } // namespace de
