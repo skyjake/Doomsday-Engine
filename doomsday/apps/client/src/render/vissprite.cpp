@@ -121,7 +121,7 @@ void R_SortVisSprites()
     if(!visSpriteP) return;
 
     dint const count = visSpriteP - visSprites;
-    if(!count) return;
+    if(count <= 0) return;
 
     vissprite_t unsorted;
     unsorted.next = unsorted.prev = &unsorted;

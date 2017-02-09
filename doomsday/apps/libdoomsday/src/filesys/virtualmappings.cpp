@@ -163,7 +163,7 @@ void FS_InitPathLumpMappings()
         FileInfo const &lumpInfo = lump.info();
 
         // Make a copy of it so we can ensure it ends in a null.
-        if (bufSize < lumpInfo.size + 1)
+        if (!buf || bufSize < lumpInfo.size + 1)
         {
             bufSize = lumpInfo.size + 1;
             buf = (uint8_t *) M_Realloc(buf, bufSize);

@@ -379,7 +379,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
             //qDebug() << "min" << _minimumIndent << "nsp" << firstNonSpace
             //         << "bct" << firstBracket;
         }
-        if (firstNonSpace < 0) firstNonSpace = _minimumIndent;
+        //if (firstNonSpace < 0) firstNonSpace = _minimumIndent;
 
         // Check for formatting symbols.
         lineText.replace(DENG2_ESC("R"), String(maxLen - _minimumIndent, '-'));

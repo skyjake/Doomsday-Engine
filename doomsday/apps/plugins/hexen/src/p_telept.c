@@ -240,8 +240,11 @@ dd_bool EV_Teleport(int tid, mobj_t* thing, dd_bool fog)
         mo = P_FindMobjFromTID(tid, &searcher);
     }
 
-    if(!mo)
-        Con_Error("Can't find teleport mapspot\n");
+    if (!mo)
+    {
+        App_Log(DE2_MAP_WARNING, "Can't find teleport mapspot");
+        return false;
+    }
 
     return P_Teleport(thing, mo->origin[VX], mo->origin[VY], mo->angle, fog);
 }

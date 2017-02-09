@@ -2216,10 +2216,14 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
     {
         angle = M_PointToAngle2(inflictor->origin, target->origin);
 
-        if(!target->info->mass)
-            Con_Error("P_DamageMobj: No target->info->mass!\n");
-
-        thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
+        if (target->info->mass)
+        {
+            thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
+        }
+        else
+        {
+            thrust = 0;
+        }
 
         // Make fall forwards sometimes.
         if((damage < 40) && (damage > target->health) &&

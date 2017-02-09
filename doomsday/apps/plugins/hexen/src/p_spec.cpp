@@ -404,7 +404,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
     case 83: // ACS_LockedExecute
 
         // Only players can operate locks.
-        if(!mo->player) break;
+        if(!mo || !mo->player) break;
 
         // Is a lock in effect?
         if(int lock = args[4])

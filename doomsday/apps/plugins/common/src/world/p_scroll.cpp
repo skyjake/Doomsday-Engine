@@ -226,7 +226,7 @@ scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, shor
     /// @todo $nplanes
 #if __JHERETIC__ || __JHEXEN__
     int elementBits;
-    float offset[2];
+    float offset[2] = { 0, 0 };
 
     switch(special)
     {

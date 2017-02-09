@@ -110,7 +110,7 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
 
                 for(c = 0; c < comps; ++c)
                 {
-                    out[c] = (uint8_t)(cumul[c] / count);
+                    out[c] = (count? uint8_t(cumul[c] / count) : 0);
                     cumul[c] = 0;
                 }
                 count = 0;

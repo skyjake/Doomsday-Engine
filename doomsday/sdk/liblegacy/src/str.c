@@ -562,14 +562,16 @@ ddstring_t *Str_Strip(ddstring_t *str)
 dd_bool Str_StartsWith(Str const *ds, char const *text)
 {
     size_t len = strlen(text);
-    if (Str_Size(ds) < len) return false;
+    DENG_ASSERT(ds);
+    if (!ds->str || !text || Str_Size(ds) < len) return false;
     return !strncmp(ds->str, text, len);
 }
 
 dd_bool Str_EndsWith(Str const *ds, char const *text)
 {
     size_t len = strlen(text);
-    if (Str_Size(ds) < len) return false;
+    DENG_ASSERT(ds);
+    if (!ds->str || !text || Str_Size(ds) < len) return false;
     return !strcmp(ds->str + Str_Size(ds) - len, text);
 }
 

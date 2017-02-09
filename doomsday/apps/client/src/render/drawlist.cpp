@@ -801,6 +801,7 @@ DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCo
 
     d->last->data.numIndices = indexCount;
     auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);
+    DENG_ASSERT(d->last != nullptr);
     d->last->data.indices = lti;
     for (duint i = 0; i < d->last->data.numIndices; ++i)
     {

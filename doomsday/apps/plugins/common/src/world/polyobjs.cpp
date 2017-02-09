@@ -54,7 +54,10 @@ static int findMirrorPolyobj(int tag)
 static void startSoundSequence(Polyobj *poEmitter)
 {
 #if __JHEXEN__
-    SN_StartSequence((mobj_t *)poEmitter, SEQ_DOOR_STONE + poEmitter->seqType);
+    if (poEmitter)
+    {
+        SN_StartSequence((mobj_t *)poEmitter, SEQ_DOOR_STONE + poEmitter->seqType);
+    }
 #else
     DENG_UNUSED(poEmitter);
 #endif

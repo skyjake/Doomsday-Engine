@@ -254,12 +254,11 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
     DENG2_GUARD(this);
 
     PathTree::Node *node = d->find(path, flags | RelinquishMatching);
-    if (node)
+    if (node && node != &d->rootNode)
     {
-        delete node;
-
         // One less unique path in the tree.
         d->size--;
+        delete node;        
         return true;
     }
     return false;

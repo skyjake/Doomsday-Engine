@@ -147,11 +147,9 @@ void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, 
     // the current interpolation into the future.
     if (Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
     {
-        coord_t mid[3];
-        float remaining;
-
+        coord_t mid[3] = { 0, 0, 0 };
         // Move the past forward in time so that the interpolation remains continuous.
-        remaining = sm->now.time - sm->at;
+        float remaining = sm->now.time - sm->at;
 
         Smoother_Evaluate(sm, mid);
         sm->at = sm->past.time = sm->points[0].time - remaining;

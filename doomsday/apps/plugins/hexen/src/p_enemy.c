@@ -4430,7 +4430,7 @@ void C_DECL A_KoraxMissile(mobj_t *mob)
  */
 void C_DECL A_KoraxCommand(mobj_t *mob)
 {
-    int numScripts, scriptNumber;
+    int numScripts, scriptNumber = -1;
     vec3d_t offset, pos;
     uint an;
 

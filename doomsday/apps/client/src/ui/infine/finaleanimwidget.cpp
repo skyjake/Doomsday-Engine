@@ -421,7 +421,10 @@ void FinaleAnimWidget::draw(Vector3f const &offset)
     {
         V4f_Set(rgba2, d->otherColor[0].value, d->otherColor[1].value, d->otherColor[2].value, d->otherColor[3].value);
     }
-
+    else
+    {
+        V4f_Set(rgba2, 0, 0, 0, 0);
+    }
     drawPicFrame(this, d->curFrame, _origin, _scale, rgba, (!frameCount()? rgba2 : rgba), angle().value, offset);
 }
 #endif

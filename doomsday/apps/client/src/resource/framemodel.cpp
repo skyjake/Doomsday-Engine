@@ -649,21 +649,19 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     LOG_AS("FrameModel");
 
     // Recognized file types.
-    static ModelFileType modelTypes[] = {
+    static ModelFileType const modelTypes[] = {
         { "DMD",    ".dmd",     Impl::loadDmd },
         { "MD2",    ".md2",     Impl::loadMd2 },
-        { "",       "",         0 } // Terminate.
     };
 
     // Firstly, attempt to guess the resource type from the file extension.
-    ModelFileType *rtypeGuess = 0;
+    ModelFileType const *rtypeGuess = 0;
     String filePath = hndl.file().composePath();
     String ext      = filePath.fileNameExtension();
     if(!ext.isEmpty())
     {
-        for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
+        for (auto const &rtype : modelTypes)
         {
-            ModelFileType &rtype = modelTypes[i];
             if(!rtype.ext.compareWithoutCase(ext))
             {
                 rtypeGuess = &rtype;

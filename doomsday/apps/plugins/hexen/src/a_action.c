@@ -67,7 +67,7 @@ void X_DestroyLUTs(void)
 void C_DECL A_PotteryExplode(mobj_t* actor)
 {
     int i, maxBits = (P_Random() & 3) + 3;
-    mobj_t* potteryBit;
+    mobj_t *potteryBit = NULL;
 
     for(i = 0; i < maxBits; ++i)
     {

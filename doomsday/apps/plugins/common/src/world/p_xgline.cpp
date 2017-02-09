@@ -2599,31 +2599,31 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
     if(evtype == XLE_CROSS &&
        ((((info->flags & LTF_PLAYER_CROSS_A) && activator && !active) ||
          ((info->flags & LTF_MONSTER_CROSS_A) &&
-          (activator_thing->flags & MF_COUNTKILL) && !active) ||
+          (activator_thing && (activator_thing->flags & MF_COUNTKILL)) && !active) ||
          ((info->flags & LTF_MISSILE_CROSS_A) &&
-          (activator_thing->flags & MF_MISSILE) && !active) ||
+          (activator_thing && (activator_thing->flags & MF_MISSILE)) && !active) ||
          ((info->flags & LTF_ANY_CROSS_A) && !active) ||
          ((info->flags & LTF_PLAYER_CROSS_D) && activator && active) ||
          ((info->flags & LTF_MONSTER_CROSS_D) &&
-          (activator_thing->flags & MF_COUNTKILL) && active) ||
+          (activator_thing && (activator_thing->flags & MF_COUNTKILL)) && active) ||
          ((info->flags & LTF_MISSILE_CROSS_D) &&
-          (activator_thing->flags & MF_MISSILE) && active) ||
+          (activator_thing && (activator_thing->flags & MF_MISSILE)) && active) ||
          ((info->flags & LTF_ANY_CROSS_D) && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_HIT &&
        ((((info->flags & LTF_PLAYER_HIT_A) && activator && !active) ||
          ((info->flags & LTF_OTHER_HIT_A) && !activator && !active) ||
          ((info->flags & LTF_MONSTER_HIT_A) &&
-          (activator_thing->flags & MF_COUNTKILL) && !active) ||
+          (activator_thing && (activator_thing->flags & MF_COUNTKILL)) && !active) ||
          ((info->flags & LTF_MISSILE_HIT_A) &&
-          (activator_thing->flags & MF_MISSILE) && !active) ||
+          (activator_thing && (activator_thing->flags & MF_MISSILE)) && !active) ||
          ((info->flags & LTF_ANY_HIT_A) && !active) ||
          ((info->flags & LTF_PLAYER_HIT_D) && activator && active) ||
          ((info->flags & LTF_OTHER_HIT_D) && !activator && active) ||
          ((info->flags & LTF_MONSTER_HIT_D) &&
-          (activator_thing->flags & MF_COUNTKILL) && active) ||
+          (activator_thing && (activator_thing->flags & MF_COUNTKILL)) && active) ||
          ((info->flags & LTF_MISSILE_HIT_D) &&
-           (activator_thing->flags & MF_MISSILE) && active) ||
+           (activator_thing && (activator_thing->flags & MF_MISSILE)) && active) ||
          ((info->flags & LTF_ANY_HIT_D) && active)) || anyTrigger))
         goto type_passes;
     if(evtype == XLE_TICKER &&
@@ -2682,10 +2682,10 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
     }
 
     // More requirements.
-    if((info->flags2 & LTF2_HEALTH_ABOVE) &&
+    if((info->flags2 & LTF2_HEALTH_ABOVE) && activator_thing &&
        activator_thing->health <= info->aparm[0])
         return false;
-    if((info->flags2 & LTF2_HEALTH_BELOW) &&
+    if((info->flags2 & LTF2_HEALTH_BELOW) && activator_thing &&
        activator_thing->health >= info->aparm[1])
         return false;
     if((info->flags2 & LTF2_POWER_ABOVE) &&

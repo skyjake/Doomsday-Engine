@@ -457,10 +457,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 
     /* $unifiedangles */
     mobj_t *mo = P_SpawnMobjXYZ(PCLASS_INFO(pClass)->mobjType, x, y, z, angle, spawnFlags);
-    if(!mo)
+    if (!mo)
+    {
         Con_Error("P_SpawnPlayer: Failed spawning mobj for player %i "
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
+        return;
+    }
 
     App_Log(DE2_DEV_MAP_MSG, "P_SpawnPlayer: Player #%i spawned pos:(%g, %g, %g) angle:%x floorz:%g mobjid:%i",
             plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
@@ -729,6 +732,10 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
             oldWeaponOwned[i] = p->weapons[i].owned;
     }
+    else
+    {
+        for (dd_bool &w : oldWeaponOwned) w = false;
+    }
 #endif
 
     if(IS_CLIENT)
@@ -905,7 +912,8 @@ dd_bool P_CheckSpot(coord_t x, coord_t y)
     // Create a dummy to test with.
     coord_t const pos[3] = { x, y, 0 };
     mobj_t *dummy = P_SpawnMobj(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR);
-    if(!dummy) Con_Error("P_CheckSpot: Failed creating dummy mobj.");
+    DENG_ASSERT(dummy);
+    if (!dummy) return false; //Con_Error("P_CheckSpot: Failed creating dummy mobj.");
 
     dummy->flags &= ~MF_PICKUP;
     //dummy->flags2 &= ~MF2_PASSMOBJ;

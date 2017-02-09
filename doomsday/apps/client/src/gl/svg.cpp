@@ -22,6 +22,7 @@
 #include "gl/svg.h"
 
 #include <de/concurrency.h>
+#include <de/liblegacy.h>
 #include <de/GLInfo>
 #include "sys_system.h"
 #include "gl/gl_main.h"
@@ -213,7 +214,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     if(!lines || lineCount == 0) return NULL;
 
     svg = (Svg*)malloc(sizeof(*svg));
-    if(!svg) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new Svg.", (unsigned long) sizeof(*svg));
+    if(!svg) Libdeng_BadAlloc();
 
     svg->id = uniqueId;
     svg->dlist = 0;
@@ -241,16 +242,21 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
             }
         }
     }
+    if (!finalPointCount || !finalLineCount)
+    {
+        free(svg);
+        return nullptr;
+    }
 
     // Allocate the final point set.
     svg->numPoints = finalPointCount;
     svg->points = (SvgLinePoint*)malloc(sizeof(*svg->points) * svg->numPoints);
-    if(!svg->points) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLinePoint set.", (unsigned long) (sizeof(*svg->points) * finalPointCount));
+    if(!svg->points) Libdeng_BadAlloc();
 
     // Allocate the final line set.
     svg->lineCount = finalLineCount;
     svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * finalLineCount);
-    if(!svg->lines) App_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine set.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
+    if(!svg->lines) Libdeng_BadAlloc();
 
     // Setup the lines.
     slIt = lines;
@@ -297,6 +303,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
         }
 
         // Link circularly?
+        DENG_ASSERT(prev);
         prev->next = lineIsLoop? dlIt->head : NULL;
         dlIt->head->prev = lineIsLoop? prev : NULL;
 

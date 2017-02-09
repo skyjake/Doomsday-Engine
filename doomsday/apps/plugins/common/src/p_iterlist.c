@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <de/liblegacy.h>
 
 #include "doomsday.h"
 #include "common.h"
@@ -44,7 +45,7 @@ struct iterlist_s
 iterlist_t* IterList_New(void)
 {
     iterlist_t* list = (iterlist_t*) malloc(sizeof(*list));
-    if(!list) Con_Error("IterList::New: Failed on allocation of %lu bytes for new IterList.", (unsigned long) sizeof(*list));
+    if (!list) Libdeng_BadAlloc();
 
     list->elements = NULL;
     list->elementsCount = list->maxElements = list->iter = 0;
@@ -79,9 +80,9 @@ int IterList_PushBack(iterlist_t* list, void* data)
 
     if(++list->elementsCount > list->maxElements)
     {
-         list->maxElements = (list->maxElements? list->maxElements * 2 : 8);
-         list->elements = (void**) realloc(list->elements, sizeof(*list->elements) * list->maxElements);
-         if(!list->elements) Con_Error("IterList::PushBack: Failed on (re)allocation of %lu bytes for element list.", (unsigned long) sizeof(*list->elements));
+        list->maxElements = (list->maxElements? list->maxElements * 2 : 8);
+        list->elements = (void**) realloc(list->elements, sizeof(*list->elements) * list->maxElements);
+        if (!list->elements) Libdeng_BadAlloc();
     }
 
     list->elements[list->elementsCount - 1] = data;

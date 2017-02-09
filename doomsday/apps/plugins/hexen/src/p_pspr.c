@@ -822,13 +822,13 @@ void C_DECL A_LightningReady(player_t* plr, pspdef_t* psp)
 
 void C_DECL A_LightningClip(mobj_t *mo)
 {
-    mobj_t         *cMo, *target = 0;
+    mobj_t         *cMo, *target = NULL;
     int             zigZag;
 
     if(mo->type == MT_LIGHTNING_FLOOR)
     {
         mo->origin[VZ] = mo->floorZ;
-        target = mo->lastEnemy->tracer;
+        target = (mo->lastEnemy? mo->lastEnemy->tracer : NULL);
     }
     else if(mo->type == MT_LIGHTNING_CEILING)
     {
@@ -837,7 +837,8 @@ void C_DECL A_LightningClip(mobj_t *mo)
     }
 
     if(mo->type == MT_LIGHTNING_FLOOR)
-    {   // Floor lightning zig-zags, and forces the ceiling lightning to mimic.
+    {
+        // Floor lightning zig-zags, and forces the ceiling lightning to mimic.
         cMo = mo->lastEnemy;
         zigZag = P_Random();
         if((zigZag > 128 && mo->special1 < 2) || mo->special1 < -2)

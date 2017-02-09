@@ -240,7 +240,7 @@ static void disableArrays(int vertices, int colors, int coords)
     DENG_ASSERT(!Sys_GLCheckError());
 }
 
-static inline void enableTexUnit(byte id)
+static inline void enableTexUnit(int id)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -249,7 +249,7 @@ static inline void enableTexUnit(byte id)
     LIBGUI_GL.glEnable(GL_TEXTURE_2D);
 }
 
-static inline void disableTexUnit(byte id)
+static inline void disableTexUnit(int id)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -266,9 +266,12 @@ static inline void disableTexUnit(byte id)
  */
 static void selectTexUnits(int count)
 {
-    for(int i = numTexUnits - 1; i >= count; i--)
+    if (count < numTexUnits)
     {
-        disableTexUnit(i);
+        for (int i = numTexUnits - 1; i >= count; i--)
+        {
+            disableTexUnit(i);
+        }
     }
 
     // Enable the selected units.

@@ -438,6 +438,8 @@ struct Huffman
         dbyte const *lastIn = in + size - 1;
         dbyte bit = 3, lastByteBits;
 
+        if (!data || size == 0) return nullptr;
+        
         zap(huffDec);
         Huff_ResizeBuffer(&huffDec, 256);
 
@@ -461,6 +463,7 @@ struct Huffman
             }
 
             // Did we arrive at a leaf?
+            DENG2_ASSERT(node);
             if (!node->left && !node->right)
             {
                 // This node represents a value.
