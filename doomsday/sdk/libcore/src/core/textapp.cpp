@@ -25,15 +25,23 @@
 namespace de {
 
 DENG2_PIMPL(TextApp)
+, DENG2_OBSERVES(Loop, Iteration)
 {
     Loop loop;
 
     Impl(Public *i) : Base(i)
     {
-        loop.audienceForIteration() += self();
+        loop.audienceForIteration() += this;
 
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);
+    }
+    
+    void loopIteration() override
+    {
+        // Update the clock time. App listens to this clock and will inform
+        // subsystems in the order they've been added in.
+        Clock::get().setTime(Time());
     }
 };
 
@@ -97,13 +105,6 @@ Loop &TextApp::loop()
 NativePath TextApp::appDataPath() const
 {
     return NativePath(QDir::homePath()) / unixHomeFolderName();
-}
-
-void TextApp::loopIteration()
-{
-    // Update the clock time. App listens to this clock and will inform
-    // subsystems in the order they've been added in.
-    Clock::get().setTime(Time());
 }
 
 } // namespace de

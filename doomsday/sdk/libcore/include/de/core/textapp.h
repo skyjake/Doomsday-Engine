@@ -38,8 +38,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC TextApp : public QCoreApplication, public App,
-                             DENG2_OBSERVES(Loop, Iteration)
+class DENG2_PUBLIC TextApp : public QCoreApplication, public App
 {
     Q_OBJECT
 
@@ -58,7 +57,6 @@ public:
 
 protected:
     NativePath appDataPath() const;
-    void loopIteration();
 
 private:
     DENG2_PRIVATE(d)
