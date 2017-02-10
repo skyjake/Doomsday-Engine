@@ -40,6 +40,7 @@
 #include <de/Log>
 
 #include <QEventLoop>
+#include <atomic>
 
 static bool animatedTransitionActive(int busyMode)
 {
@@ -60,7 +61,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
     QEventLoop *eventLoop = nullptr;
 
     thread_t    busyThread = nullptr;
-    bool        busyDone = false;
+    std::atomic_bool busyDone { false };
     timespan_t  busyTime = 0;
     bool        busyWillAnimateTransition = false;
     bool        busyWasIgnoringInput = false;
@@ -190,8 +191,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
-    d->busyThread = Sys_StartThread(task->worker, task->workerData);
-    Thread_SetCallback(d->busyThread, busyWorkerTerminated);
+    d->busyThread = Sys_StartThread(task->worker, task->workerData, busyWorkerTerminated);
 
     DENG_ASSERT(!d->eventLoop);
 

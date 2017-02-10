@@ -74,9 +74,10 @@ DENG2_PIMPL(Bundles)
             DENG2_GUARD(this);
             bundlesToIdentify.insert(dataFile.maybeAs<DataBundle>());
         }
+        // Use a deferred call to avoid spamming.
         if (!mainCall)
         {
-            mainCall.enqueue([this] () { identifyAddedDataBundles(); });
+            mainCall.enqueue([this] () { self().identify(); });
         }
     }
 

@@ -312,16 +312,19 @@ InputDevice::Control::~Control()
 
 String InputDevice::Control::name() const
 {
+    DENG2_GUARD(this);
     return d->name;
 }
 
 void InputDevice::Control::setName(String const &newName)
 {
+    DENG2_GUARD(this);
     d->name = newName;
 }
 
 String InputDevice::Control::fullName() const
 {
+    DENG2_GUARD(this);
     String desc;
     if (hasDevice()) desc += device().name() + "-";
     desc += (d->name.isEmpty()? "<unnamed>" : d->name);
@@ -330,6 +333,7 @@ String InputDevice::Control::fullName() const
 
 InputDevice &InputDevice::Control::device() const
 {
+    DENG2_GUARD(this);
     if (d->device) return *d->device;
     /// @throw MissingDeviceError  Missing InputDevice attribution.
     throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
@@ -337,47 +341,56 @@ InputDevice &InputDevice::Control::device() const
 
 bool InputDevice::Control::hasDevice() const
 {
+    DENG2_GUARD(this);
     return d->device != nullptr;
 }
 
 void InputDevice::Control::setDevice(InputDevice *newDevice)
 {
+    DENG2_GUARD(this);
     d->device = newDevice;
 }
 
 BindContext *InputDevice::Control::bindContext() const
 {
+    DENG2_GUARD(this);
     return d->bindContext;
 }
 
 void InputDevice::Control::setBindContext(BindContext *newContext)
 {
+    DENG2_GUARD(this);
     d->bindContext = newContext;
 }
 
 InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
 {
+    DENG2_GUARD(this);
     return d->flags;
 }
 
 void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
 {
+    DENG2_GUARD(this);
     applyFlagOperation(d->flags, flagsToChange, op);
 }
 
 void InputDevice::Control::clearBindContextAssociation()
 {
+    DENG2_GUARD(this);
     d->prevBindContext = d->bindContext;
     d->bindContext     = nullptr;
-    setBindContextAssociation(Triggered, UnsetFlags);
+    applyFlagOperation(d->flags, Triggered, UnsetFlags);
 }
 
 void InputDevice::Control::expireBindContextAssociationIfChanged()
 {
+    DENG2_GUARD(this);
+    
     // No change?
     if (d->bindContext == d->prevBindContext) return;
 
     // No longer valid.
-    setBindContextAssociation(Expired);
-    setBindContextAssociation(Triggered, UnsetFlags); // Not any more.
+    applyFlagOperation(d->flags, Expired, SetFlags);
+    applyFlagOperation(d->flags, Triggered, UnsetFlags); // Not any more.
 }

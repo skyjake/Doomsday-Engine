@@ -25,12 +25,13 @@
 #include <de/concurrency.h>
 #include <de/c_wrapper.h>
 #include <de/LogBuffer>
+#include <atomic>
 #include <vector>
 
 static int sfontId = -1;
 static fluid_player_t* fsPlayer = 0;
 static thread_t worker;
-static volatile bool workerShouldStop;
+static volatile std::atomic_bool workerShouldStop;
 static sfxbuffer_t* sfxBuf;
 static sfxsample_t streamSample;
 
@@ -243,7 +244,7 @@ static void startWorker()
     DENG_ASSERT(worker == NULL);
 
     workerShouldStop = false;
-    worker = Sys_StartThread(synthWorkThread, 0);
+    worker = Sys_StartThread(synthWorkThread, nullptr, nullptr);
 }
 
 /**

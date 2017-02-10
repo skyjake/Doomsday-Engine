@@ -49,7 +49,7 @@ public:
      * Base class for all controls.
      * @todo Attribute a GUID, to simplify bookkeeping. -ds
      */
-    class Control
+    class Control : public de::Lockable
     {
     public:
         /// No InputDevice is associated with the control. @ingroup errors

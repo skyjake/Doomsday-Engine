@@ -109,27 +109,33 @@ AxisInputControl::~AxisInputControl()
 
 AxisInputControl::Type AxisInputControl::type() const
 {
+    DENG2_GUARD(this);
     return d->type;
 }
 
 void AxisInputControl::setRawInput(bool yes)
 {
+    DENG2_GUARD(this);
     if (yes) d->flags |= IDA_RAW;
-    else    d->flags &= ~IDA_RAW;
+    else     d->flags &= ~IDA_RAW;
 }
 
 bool AxisInputControl::isActive() const
 {
+    DENG2_GUARD(this);
     return (d->flags & IDA_DISABLED) == 0;
 }
 
 bool AxisInputControl::isInverted() const
 {
+    DENG2_GUARD(this);
     return (d->flags & IDA_INVERT) != 0;
 }
 
 void AxisInputControl::update(timespan_t ticLength)
 {
+    DENG2_GUARD(this);
+
     Smoother_Advance(d->smoother, ticLength);
 
     if (d->type == Stick)
@@ -169,16 +175,20 @@ void AxisInputControl::update(timespan_t ticLength)
 
 ddouble AxisInputControl::position() const
 {
+    DENG2_GUARD(this);
     return d->position;
 }
 
 void AxisInputControl::setPosition(ddouble newPosition)
 {
+    DENG2_GUARD(this);
     d->position = newPosition;
 }
 
 void AxisInputControl::applyRealPosition(dfloat pos)
 {
+    DENG2_GUARD(this);
+
     dfloat const oldRealPos  = d->realPosition;
     dfloat const transformed = translateRealPosition(pos);
 
@@ -206,6 +216,8 @@ void AxisInputControl::applyRealPosition(dfloat pos)
 
 dfloat AxisInputControl::translateRealPosition(dfloat realPos) const
 {
+    DENG2_GUARD(this);
+
     // An inactive axis is always zero.
     if (!isActive()) return 0;
 
@@ -238,41 +250,50 @@ dfloat AxisInputControl::translateRealPosition(dfloat realPos) const
 
 dfloat AxisInputControl::deadZone() const
 {
+    DENG2_GUARD(this);
     return d->deadZone;
 }
 
 void AxisInputControl::setDeadZone(dfloat newDeadZone)
 {
+    DENG2_GUARD(this);
     d->deadZone = newDeadZone;
 }
 
 dfloat AxisInputControl::scale() const
 {
+    DENG2_GUARD(this);
     return d->scale;
 }
 
 void AxisInputControl::setScale(dfloat newScale)
 {
+    DENG2_GUARD(this);
     d->scale = newScale;
 }
 
 dfloat AxisInputControl::offset() const
 {
+    DENG2_GUARD(this);
     return d->offset;
 }
 
 void AxisInputControl::setOffset(dfloat newOffset)
 {
+    DENG2_GUARD(this);
     d->offset = newOffset;
 }
 
 duint AxisInputControl::time() const
 {
+    DENG2_GUARD(this);
     return d->time;
 }
 
 String AxisInputControl::description() const
 {
+    DENG2_GUARD(this);
+
     QStringList flags;
     if (!isActive()) flags << "disabled";
     if (isInverted()) flags << "inverted";
@@ -301,11 +322,13 @@ String AxisInputControl::description() const
 
 bool AxisInputControl::inDefaultState() const
 {
+    DENG2_GUARD(this);
     return d->position == 0; // Centered?
 }
 
 void AxisInputControl::reset()
 {
+    DENG2_GUARD(this);
     if (d->type == Pointer)
     {
         // Clear the accumulation.
@@ -318,6 +341,8 @@ void AxisInputControl::reset()
 
 void AxisInputControl::consoleRegister()
 {
+    DENG2_GUARD(this);
+
     DENG2_ASSERT(hasDevice() && !name().isEmpty());
     String controlName = String("input-%1-%2").arg(device().name()).arg(name());
 

@@ -34,6 +34,8 @@
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
+#include <atomic>
+
 using namespace de;
 
 #define NUM_RESERVED_TEXTURENAMES  512
@@ -97,7 +99,7 @@ typedef struct apifunc_s {
 static dd_bool deferredInited = false;
 static mutex_t deferredMutex;
 static DGLuint reservedTextureNames[NUM_RESERVED_TEXTURENAMES];
-static volatile int reservedCount = 0;
+static std::atomic_int reservedCount;
 static volatile deferredtask_t* deferredTaskFirst = NULL;
 static volatile deferredtask_t* deferredTaskLast = NULL;
 

@@ -298,18 +298,19 @@ void D_DrawWindow(Size2Raw const * /*windowSize*/)
 
 void D_EndFrame()
 {
-    if(G_GameState() != GS_MAP) return;
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    if (G_GameState() == GS_MAP)
     {
-        player_t *plr = players + i;
+        for (int i = 0; i < MAXPLAYERS; ++i)
+        {
+            player_t *plr = players + i;
 
-        if(!plr->plr->inGame) continue;
-        if(!plr->plr->mo) continue;
+            if (!plr->plr->inGame) continue;
+            if (!plr->plr->mo) continue;
 
-        // View angles are updated with fractional ticks, so we can just use the current values.
-        R_SetViewAngle(i, Player_ViewYawAngle(i));
-        R_SetViewPitch(i, plr->plr->lookDir);
+            // View angles are updated with fractional ticks, so we can just use the current values.
+            R_SetViewAngle(i, Player_ViewYawAngle(i));
+            R_SetViewPitch(i, plr->plr->lookDir);
+        }
     }
 }
 

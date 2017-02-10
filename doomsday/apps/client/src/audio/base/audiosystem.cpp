@@ -974,7 +974,7 @@ DENG2_PIMPL(AudioSystem)
         if (!disableRefresh)
         {
             // Start the refresh thread. It will run until the Sfx module is shut down.
-            refreshHandle = Sys_StartThread(sfxChannelRefreshThread, nullptr);
+            refreshHandle = Sys_StartThread(sfxChannelRefreshThread, nullptr, nullptr);
             if (!refreshHandle)
             {
                 throw Error("audio::System::initSfx", "Failed to start refresh thread");

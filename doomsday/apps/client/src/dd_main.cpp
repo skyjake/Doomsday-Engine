@@ -906,10 +906,6 @@ static GameProfile automaticProfile;
 
 static GameProfile const *autoselectGameProfile()
 {
-    // Make sure all files have been found so we can determine which games are playable.
-    Folder::waitForPopulation();
-    DoomsdayApp::bundles().waitForEverythingIdentified();
-
     if (auto arg = CommandLine::get().check("-game", 1))
     {
         String const param = arg.params.first();
@@ -1013,7 +1009,7 @@ static void assertTypeSizes()
  * Engine initialization. Once completed the game loop is ready to be started.
  * Called from the app entrypoint function.
  */
-static void initialize()
+static void initializeWithWindowReady()
 {
     DENG2_DEBUG_ONLY( assertTypeSizes(); )
 
@@ -1034,9 +1030,10 @@ static void initialize()
     FR_Init();
 
     // Enter busy mode until startup complete.
-    Con_InitProgress(200);
+    //Con_InitProgress(200);
 #endif
-    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP /*| BUSYF_PROGRESS_BAR*/ | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
@@ -1045,24 +1042,27 @@ static void initialize()
     GL_InitRefresh();
     App_Resources().clearAllTextureSpecs();
     LensFx_Init();
+    R_InitViewWindow();
+    UI_LoadFonts();
 #endif
     App_Resources().initSystemTextures();
 
-#ifdef __CLIENT__
-    // Do deferred uploads.
-    Con_SetProgress(100);
-#endif
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP /*| BUSYF_PROGRESS_BAR*/ | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+//#ifdef __CLIENT__
+//    // Do deferred uploads.
+//    Con_SetProgress(100);
+//#endif
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
     //
     // Try to locate all required data files for all registered games.
     //
-#ifdef __CLIENT__
-    Con_SetProgress(200);
-#endif
+//#ifdef __CLIENT__
+//    Con_SetProgress(200);
+//#endif
+    
     App_Games().checkReadiness();
-
+    
     // Attempt automatic game selection.
     if (!CommandLine_Exists("-noautoselect") || isDedicated)
     {
@@ -1240,7 +1240,6 @@ void DD_FinishInitializationAfterWindowReady()
     // Now we can get the color transfer table as the window is available.
     DisplayMode_SaveOriginalColorTransfer();
 # endif
-
     if (!Sys_GLInitialize())
     {
         App_Error("Error initializing OpenGL.\n");
@@ -1249,12 +1248,12 @@ void DD_FinishInitializationAfterWindowReady()
     {
         ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
     }
-#endif
+#endif // __CLIENT__
 
     // Initialize engine subsystems and initial state.
     try
     {
-        initialize();
+        initializeWithWindowReady();
         App::app().notifyStartupComplete();
         return;
     }
@@ -1315,6 +1314,11 @@ static dint DD_StartupWorker(void * /*context*/)
     //
     // Add required engine resource files.
     //
+    
+    // Make sure all files have been found so we can determine which games are playable.
+    Folder::waitForPopulation();
+    DoomsdayApp::bundles().waitForEverythingIdentified();
+    
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
@@ -1330,6 +1334,10 @@ static dint DD_StartupWorker(void * /*context*/)
         // The data file is an interpreter in /local/wads, whose source is the native file.
         File1::tryLoad(File1::LoadAsVanillaFile,
                        res::DoomsdayPackage::loadableUri(*basePack));
+    }
+    else
+    {
+        throw Error("DD_StartupWorker", "Failed to find \"net.dengine.legacy.base\" package");
     }
 
     // No more files or packages will be loaded in "startup mode" after this point.
@@ -1349,9 +1357,7 @@ static dint DD_StartupWorker(void * /*context*/)
 
 #ifdef __CLIENT__
     R_BuildTexGammaLut(texGamma);
-    UI_LoadFonts();
     R_InitSvgs();
-    R_InitViewWindow();
     R_ResetFrameCount();
 #endif
     //Con_SetProgress(165);
@@ -1402,7 +1408,7 @@ void DD_CheckTimeDemo()
     {
         checked = true;
         if (CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
-           CommandLine_CheckWith("-playdemo", 1))   // Play-once mode.
+            CommandLine_CheckWith("-playdemo", 1))   // Play-once mode.
         {
             Block cmd = String("playdemo %1").arg(CommandLine_Next()).toUtf8();
             Con_Execute(CMDS_CMDLINE, cmd.constData(), false, false);

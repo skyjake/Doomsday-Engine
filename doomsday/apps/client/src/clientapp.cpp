@@ -641,9 +641,12 @@ void ClientApp::postFrame()
     // frame: it is a good time to update the mouse state.
     Mouse_Poll();
 
-    if (gx.EndFrame)
+    if (!BusyMode_Active())
     {
-        gx.EndFrame();
+        if (gx.EndFrame)
+        {
+            gx.EndFrame();
+        }
     }
 
     App_AudioSystem().endFrame();
