@@ -63,6 +63,20 @@ public:
 #endif
 };
 
+template <typename Type>
+struct LockableT : public Lockable
+{
+    typedef Type ValueType;
+    Type value;
+    
+    LockableT() {}
+    LockableT(Type const &initial) : value(initial) {}
+    LockableT(Type &&initial) : value(initial) {}
+    
+    operator Type &() { return value; }
+    operator Type const &() const { return value; }
+};
+    
 } // namespace de
 
 #endif // LIBDENG2_LOCKABLE_H

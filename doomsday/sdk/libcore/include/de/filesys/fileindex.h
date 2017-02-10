@@ -144,7 +144,7 @@ public:
     QList<File *> files() const;
 
 protected:
-    // C++ iterator (not thread safe):
+    // C++ iterator (not thread-safe):
     typedef Index::const_iterator const_iterator;
     Index::const_iterator begin() const;
     Index::const_iterator end() const;

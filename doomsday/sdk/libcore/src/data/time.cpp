@@ -224,10 +224,13 @@ DENG2_PIMPL_NOREF(Time)
 Time::Time() : d(new Impl)
 {}
 
-Time::Time(Time const &other) : ISerializable(), d(new Impl(*other.d))
+Time::Time(Time const &other) : d(new Impl(*other.d))
+{}
+    
+Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
-Time::Time(QDateTime const &t) : ISerializable(), d(new Impl(t))
+Time::Time(QDateTime const &t) : d(new Impl(t))
 {}
 
 Time::Time(TimeDelta const &highPerformanceDelta)
@@ -241,7 +244,13 @@ Time Time::invalidTime()
 
 Time &Time::operator = (Time const &other)
 {
-    d.reset(new Impl(*other.d));
+    *d = *other.d;
+    return *this;
+}
+    
+Time &Time::operator = (Time &&moved)
+{
+    d = std::move(moved.d);
     return *this;
 }
 

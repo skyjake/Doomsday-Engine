@@ -48,7 +48,7 @@ DENG2_PIMPL(ScriptSystem)
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
     typedef QHash<String, Record *> NativeModules;
-    NativeModules nativeModules; // not owned
+    LockableT<NativeModules> nativeModules; // not owned
     Record coreModule;    ///< Script: built-in script classes and functions.
     Record mathModule;    ///< Math: math related functions.
     Record versionModule; ///< Version: information about the platform and build
@@ -121,20 +121,23 @@ DENG2_PIMPL(ScriptSystem)
 
     void addNativeModule(String const &name, Record &module)
     {
-        nativeModules.insert(name, &module); // not owned
+        DENG2_GUARD(nativeModules);
+        nativeModules.value.insert(name, &module); // not owned
         module.audienceForDeletion() += this;
     }
 
     void removeNativeModule(String const &name)
     {
-        if (!nativeModules.contains(name)) return;
+        DENG2_GUARD(nativeModules);
+        if (!nativeModules.value.contains(name)) return;
 
-        nativeModules[name]->audienceForDeletion() -= this;
-        nativeModules.remove(name);
+        nativeModules.value[name]->audienceForDeletion() -= this;
+        nativeModules.value.remove(name);
     }
 
     void recordBeingDeleted(Record &record)
     {
+        DENG2_GUARD(nativeModules);
         QMutableHashIterator<String, Record *> iter(nativeModules);
         while (iter.hasNext())
         {
@@ -206,14 +209,16 @@ void ScriptSystem::removeNativeModule(String const &name)
 
 Record &ScriptSystem::nativeModule(String const &name)
 {
-    Impl::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
-    DENG2_ASSERT(foundNative != d->nativeModules.constEnd());
+    DENG2_GUARD_FOR(d->nativeModules, G);
+    Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
+    DENG2_ASSERT(foundNative != d->nativeModules.value.constEnd());
     return *foundNative.value();
 }
 
 StringList ScriptSystem::nativeModules() const
 {
-    return d->nativeModules.keys();
+    DENG2_GUARD_FOR(d->nativeModules, G);
+    return d->nativeModules.value.keys();
 }
 
 namespace internal {
@@ -309,10 +314,13 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     LOG_AS("ScriptSystem::importModule");
 
     // There are some special native modules.
-    Impl::NativeModules::const_iterator foundNative = d->nativeModules.constFind(name);
-    if (foundNative != d->nativeModules.constEnd())
     {
-        return *foundNative.value();
+        DENG2_GUARD_FOR(d->nativeModules, G);
+        Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
+        if (foundNative != d->nativeModules.value.constEnd())
+        {
+            return *foundNative.value();
+        }
     }
 
     // Maybe we already have this module?

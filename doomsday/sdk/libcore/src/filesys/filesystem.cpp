@@ -46,7 +46,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
     typedef QHash<String, FileIndex *> TypeIndex; // owned
-    TypeIndex typeIndex;
+    LockableT<TypeIndex> typeIndex;
 
     QSet<FileIndex *> userIndices; // not owned
 
@@ -61,13 +61,16 @@ DENG2_PIMPL_NOREF(FileSystem)
     ~Impl()
     {
         root.reset();
-        qDeleteAll(typeIndex.values());
-        typeIndex.clear();
+        
+        DENG2_GUARD(typeIndex);
+        qDeleteAll(typeIndex.value.values());
+        typeIndex.value.clear();
     }
 
     FileIndex &getTypeIndex(String const &typeName)
     {
-        FileIndex *&idx = typeIndex[typeName];
+        DENG2_GUARD(typeIndex);
+        FileIndex *&idx = typeIndex.value[typeName];
         if (!idx)
         {
             idx = new FileIndex;
@@ -341,7 +344,8 @@ void FileSystem::printIndex()
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
     d->index.print();
 
-    DENG2_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex)
+    DENG2_GUARD_FOR(d->typeIndex, G);
+    DENG2_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex.value)
     {
         LOG_DEBUG("Index for type '%s' has %i entries") << i.key() << i.value()->size();
 
@@ -352,7 +356,7 @@ void FileSystem::printIndex()
 
 String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags)
 {
-    String const folders = "/sys/folders";
+    static String const folders = "/sys/folders";
 
     makeFolder(folders);
 

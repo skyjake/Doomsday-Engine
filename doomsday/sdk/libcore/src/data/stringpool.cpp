@@ -20,6 +20,8 @@
 #include "de/StringPool"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/Lockable"
+#include "de/Guard"
 
 #include <vector>
 #include <list>
@@ -146,7 +148,7 @@ typedef std::set<CaselessStringRef> Interns;
 typedef std::vector<CaselessString *> IdMap;
 typedef std::list<InternalId> AvailableIds;
 
-DENG2_PIMPL_NOREF(StringPool)
+DENG2_PIMPL_NOREF(StringPool), public Lockable
 {
     /// Interned strings (owns the CaselessString instances).
     Interns interns;
@@ -171,6 +173,8 @@ DENG2_PIMPL_NOREF(StringPool)
 
     void clear()
     {
+        DENG2_GUARD(this);
+        
         for (dsize i = 0; i < idMap.size(); ++i)
         {
             if (!idMap[i]) continue; // Unused slot.
@@ -184,7 +188,7 @@ DENG2_PIMPL_NOREF(StringPool)
         assertCount();
     }
 
-    void inline assertCount() const
+    inline void assertCount() const
     {
         DENG2_ASSERT(count == interns.size());
         DENG2_ASSERT(count == idMap.size() - available.size());
@@ -276,11 +280,11 @@ DENG2_PIMPL_NOREF(StringPool)
 };
 
 StringPool::StringPool() : d(new Impl)
-{
-}
+{}
 
 StringPool::StringPool(String const *strings, uint count) : d(new Impl)
 {
+    DENG2_GUARD(d);
     for (uint i = 0; strings && i < count; ++i)
     {
         intern(strings[i]);
@@ -294,18 +298,24 @@ void StringPool::clear()
 
 bool StringPool::empty() const
 {
+    DENG2_GUARD(d);
+    
     d->assertCount();
     return !d->count;
 }
 
 dsize StringPool::size() const
 {
+    DENG2_GUARD(d);
+
     d->assertCount();
     return d->count;
 }
 
 StringPool::Id StringPool::intern(String str)
 {
+    DENG2_GUARD(d);
+    
     Interns::iterator found = d->findIntern(str); // O(log n)
     if (found != d->interns.end())
     {
@@ -317,6 +327,8 @@ StringPool::Id StringPool::intern(String str)
 
 String StringPool::internAndRetrieve(String str)
 {
+    DENG2_GUARD(d);
+    
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
 }
@@ -326,6 +338,8 @@ void StringPool::setUserValue(Id id, uint value)
     if (id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
+
+    DENG2_GUARD(d);
 
     DENG2_ASSERT(internalId < d->idMap.size());
     DENG2_ASSERT(d->idMap[internalId] != 0);
@@ -339,6 +353,8 @@ uint StringPool::userValue(Id id) const
 
     InternalId const internalId = IMPORT_ID(id);
 
+    DENG2_GUARD(d);
+
     DENG2_ASSERT(internalId < d->idMap.size());
     DENG2_ASSERT(d->idMap[internalId] != 0);
 
@@ -350,6 +366,8 @@ void StringPool::setUserPointer(Id id, void *ptr)
     if (id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
+
+    DENG2_GUARD(d);
 
     DENG2_ASSERT(internalId < d->idMap.size());
     DENG2_ASSERT(d->idMap[internalId] != 0);
@@ -363,6 +381,8 @@ void *StringPool::userPointer(Id id) const
 
     InternalId const internalId = IMPORT_ID(id);
 
+    DENG2_GUARD(d);
+
     DENG2_ASSERT(internalId < d->idMap.size());
     DENG2_ASSERT(d->idMap[internalId] != 0);
 
@@ -371,6 +391,8 @@ void *StringPool::userPointer(Id id) const
 
 StringPool::Id StringPool::isInterned(String str) const
 {
+    DENG2_GUARD(d);
+
     Interns::const_iterator found = d->findIntern(str); // O(log n)
     if (found != d->interns.end())
     {
@@ -382,6 +404,8 @@ StringPool::Id StringPool::isInterned(String str) const
 
 String StringPool::string(Id id) const
 {
+    DENG2_GUARD(d);
+    
     /// @throws InvalidIdError Provided identifier is not in use.
     return stringRef(id);
 }
@@ -396,6 +420,8 @@ String const &StringPool::stringRef(StringPool::Id id) const
         return emptyString;
     }
 
+    DENG2_GUARD(d);
+
     InternalId const internalId = IMPORT_ID(id);
     DENG2_ASSERT(internalId < d->idMap.size());
     return *d->idMap[internalId];
@@ -403,6 +429,8 @@ String const &StringPool::stringRef(StringPool::Id id) const
 
 bool StringPool::remove(String str)
 {
+    DENG2_GUARD(d);
+
     Interns::iterator found = d->findIntern(str); // O(log n)
     if (found != d->interns.end())
     {
@@ -415,6 +443,8 @@ bool StringPool::remove(String str)
 bool StringPool::removeById(Id id)
 {
     if (id == 0) return false;
+
+    DENG2_GUARD(d);
 
     InternalId const internalId = IMPORT_ID(id);
     if (id >= d->idMap.size()) return false;
@@ -429,6 +459,7 @@ bool StringPool::removeById(Id id)
 
 LoopResult StringPool::forAll(std::function<LoopResult (Id)> func) const
 {
+    DENG2_GUARD(d);
     for (duint i = 0; i < d->idMap.size(); ++i)
     {
         if (d->idMap[i])
@@ -443,6 +474,8 @@ LoopResult StringPool::forAll(std::function<LoopResult (Id)> func) const
 // Implements ISerializable.
 void StringPool::operator >> (Writer &to) const
 {
+    DENG2_GUARD(d);
+
     // Number of strings altogether (includes unused ids).
     to << duint32(d->idMap.size());
 
@@ -456,6 +489,8 @@ void StringPool::operator >> (Writer &to) const
 
 void StringPool::operator << (Reader &from)
 {
+    DENG2_GUARD(d);
+
     clear();
 
     // Read the number of total number of strings.

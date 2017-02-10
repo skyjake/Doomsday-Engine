@@ -19,16 +19,18 @@
 #include "de/SourceLineTable"
 #include "de/PathTree"
 
+#include <atomic>
+
 namespace de {
 
 static int const SOURCE_SHIFT = 17;
 static int const NUMBER_MASK = 0x1ffff;
 
-DENG2_PIMPL_NOREF(SourceLineTable)
+DENG2_PIMPL_NOREF(SourceLineTable), public Lockable
 {
     struct IdNode : public PathTree::Node
     {
-        static LineId counter;
+        static std::atomic_uint counter;
 
         LineId id;
         IdNode(PathTree::NodeArgs const &args)
@@ -39,7 +41,7 @@ DENG2_PIMPL_NOREF(SourceLineTable)
     QHash<duint, IdNode const *> lookup; // reverse lookup
 };
 
-SourceLineTable::LineId SourceLineTable::Impl::IdNode::counter = 0;
+std::atomic_uint SourceLineTable::Impl::IdNode::counter;
 
 SourceLineTable::SourceLineTable() : d(new Impl)
 {}
@@ -47,6 +49,8 @@ SourceLineTable::SourceLineTable() : d(new Impl)
 SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNumber)
 {
     Path const source(path);
+    
+    DENG2_GUARD(d);
 
     auto const *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);
     if (!node)
@@ -66,6 +70,8 @@ String SourceLineTable::sourceLocation(LineId sourceId) const
 SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sourceId) const
 {
     duint const lineNumber = (NUMBER_MASK & sourceId);
+
+    DENG2_GUARD(d);
 
     auto found = d->lookup.constFind(sourceId >> SOURCE_SHIFT);
     if (found != d->lookup.constEnd())

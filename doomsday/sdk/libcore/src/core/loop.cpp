@@ -129,12 +129,9 @@ LoopCallback::~LoopCallback()
 
 bool LoopCallback::isEmpty() const
 {
+    DENG2_GUARD(this);
+    
     return _funcs.isEmpty();
-}
-
-LoopCallback::operator bool() const
-{
-    return !isEmpty();
 }
 
 void LoopCallback::enqueue(Callback func)

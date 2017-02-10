@@ -165,6 +165,8 @@ public:
     Time();
 
     Time(Time const &other);
+    
+    Time(Time &&moved);
 
     Time(QDateTime const &t);
 
@@ -178,6 +180,8 @@ public:
     static Time invalidTime();
 
     Time &operator = (Time const &other);
+
+    Time &operator = (Time &&moved);
 
     bool isValid() const;
 

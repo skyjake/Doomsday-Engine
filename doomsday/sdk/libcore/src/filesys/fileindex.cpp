@@ -147,6 +147,7 @@ void FileIndex::remove(File const &file)
 
 int FileIndex::size() const
 {
+    DENG2_GUARD_READ(d);
     return int(d->index.size());
 }
 
@@ -212,7 +213,8 @@ FileIndex::Index::const_iterator FileIndex::end() const
 
 void FileIndex::print() const
 {
-    for (Index::const_iterator i = d->index.begin(); i != d->index.end(); ++i)
+    DENG2_GUARD_READ(d);
+    for (auto i = begin(); i != end(); ++i)
     {
         LOG_TRACE("\"%s\": ", i->first << i->second->description());
     }
@@ -221,7 +223,6 @@ void FileIndex::print() const
 QList<File *> FileIndex::files() const
 {
     DENG2_GUARD_READ(d);
-
     QList<File *> list;
     for (auto i = begin(); i != end(); ++i)
     {

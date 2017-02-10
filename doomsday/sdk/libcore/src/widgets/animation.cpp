@@ -21,6 +21,8 @@
 #include "de/Reader"
 #include "de/math.h"
 
+#include <atomic>
+
 namespace de {
 
 static float const DEFAULT_SPRING = 3.f;
@@ -57,6 +59,16 @@ enum AnimationFlag
 };
 Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
+
+/// Thread-safe current time for animations.
+struct AnimationTime : DENG2_OBSERVES(Clock, TimeChange) {
+    LockableT<Time> now;
+    void timeChanged(Clock const &clock) override {
+        DENG2_GUARD(now);
+        now.value = clock.time();
+    }
+};
+static AnimationTime theTime;
 
 } // namespace internal
 using namespace internal;
@@ -158,7 +170,7 @@ DENG2_PIMPL_NOREF(Animation)
         return target;
     }
 
-    Time const &currentTime() const
+    Time currentTime() const
     {
         if (flags.testFlag(Paused)) return pauseTime;
         return Animation::currentTime();
@@ -208,7 +220,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
 {
     resume();
 
-    Time const &now = d->currentTime();
+    Time const now = d->currentTime();
 
     if (transitionSpan <= 0)
     {
@@ -238,12 +250,22 @@ void Animation::setValueFrom(float fromValue, float toValue, TimeDelta transitio
 
 float Animation::value() const
 {
-    return d->valueAt(d->currentTime());
+    if (d->flags & Paused)
+    {
+        return d->valueAt(d->pauseTime);
+    }
+    DENG2_GUARD_FOR(theTime.now, G);
+    return d->valueAt(theTime.now);
 }
 
 bool Animation::done() const
 {
-    return (d->currentTime() >= d->targetTime);
+    if (d->flags & Paused)
+    {
+        return d->pauseTime >= d->targetTime;
+    }
+    DENG2_GUARD_FOR(theTime.now, G);
+    return theTime.now.value >= d->targetTime;
 }
 
 float Animation::target() const
@@ -258,7 +280,7 @@ void Animation::adjustTarget(float newTarget)
 
 TimeDelta Animation::remainingTime() const
 {
-    Time const &now = d->currentTime();
+    Time const now = d->currentTime();
     if (now >= d->targetTime)
     {
         return 0;
@@ -318,7 +340,7 @@ Clock const &Animation::clock()
 
 void Animation::operator >> (Writer &to) const
 {
-    Time const &now = currentTime();
+    Time const now = currentTime();
 
     to << d->value << d->target;
     // Write times relative to current frame time.
@@ -329,7 +351,7 @@ void Animation::operator >> (Writer &to) const
 
 void Animation::operator << (Reader &from)
 {
-    Time const &now = currentTime();
+    Time const now = currentTime();
 
     from >> d->value >> d->target;
 
@@ -348,34 +370,23 @@ void Animation::operator << (Reader &from)
 
     from >> d->spring;
 }
-
+    
 void Animation::setClock(Clock const *clock)
 {
+    if (_clock) _clock->audienceForPriorityTimeChange -= theTime;
     _clock = clock;
+    if (clock) clock->audienceForPriorityTimeChange += theTime;
 }
 
-Time const &Animation::currentTime() // static
+Time Animation::currentTime() // static
 {
     DENG2_ASSERT(_clock != 0);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
-
-    static Lockable timeMutex;
-    static Time theTime;
-    static duint32 latestTick = 0;
-
-    duint32 const tc = _clock->tickCount();
-    if (latestTick != tc)
-    {
-        timeMutex.lock();
-        theTime = _clock->time();
-        latestTick = tc;
-        timeMutex.unlock();
-    }
-
-    return theTime;
+    DENG2_GUARD_FOR(theTime.now, G);
+    return theTime.now;
 }
 
 Animation Animation::range(Style style, float from, float to, TimeDelta span, TimeDelta delay)

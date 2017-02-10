@@ -103,7 +103,7 @@ public:
     ~LoopCallback();
 
     bool isEmpty() const;
-    operator bool() const;
+    inline operator bool() const { return !isEmpty(); }
 
     void enqueue(Callback func);
     void loopIteration() override;

@@ -30,11 +30,13 @@ namespace de {
 
 namespace internal
 {
-    struct CallbackTask : public Task
+    class CallbackTask : public Task
     {
-        TaskPool::TaskFunction func;
-        CallbackTask(TaskPool::TaskFunction func) : func(func) {}
-        void runTask() { func(); }
+    public:
+        CallbackTask(TaskPool::TaskFunction func) : _func(func) {}
+        void runTask() override { _func(); }
+    private:
+        TaskPool::TaskFunction _func;
     };
 }
 

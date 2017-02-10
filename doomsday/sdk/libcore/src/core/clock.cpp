@@ -17,6 +17,7 @@
  */
 
 #include "de/Clock"
+#include <atomic>
 
 namespace de {
 
@@ -24,7 +25,7 @@ DENG2_PIMPL_NOREF(Clock)
 {
     Time startedAt;
     Time time;
-    duint32 tickCount { 0 };
+    std::atomic_uint tickCount { 0 };
 
     DENG2_PIMPL_AUDIENCE(TimeChange)
 };

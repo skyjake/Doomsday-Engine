@@ -405,6 +405,7 @@ public:
     ~PrivateAutoPtr() { reset(); }
 
     PrivateAutoPtr &operator = (PrivateAutoPtr &&moved) {
+        reset();
         ptr = moved.ptr;
         moved.ptr = nullptr;
         return *this;

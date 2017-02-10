@@ -177,7 +177,7 @@ public:
      */
     static void setClock(Clock const *clock);
 
-    static Time const &currentTime();
+    static Time currentTime();
 
     static Animation range(Style style, float from, float to, TimeDelta span, TimeDelta delay = 0);
 
