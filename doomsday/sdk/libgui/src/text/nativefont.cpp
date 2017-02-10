@@ -33,8 +33,6 @@ DENG2_PIMPL(NativeFont)
     Style style;
     int weight;
     Transform transform;
-
-    Lockable mutex;
     QHash<QString, Rectanglei> measureCache;
 
     Impl(Public *i)
@@ -188,7 +186,6 @@ Rectanglei NativeFont::measure(String const &text) const
 
     if (text.size() < MAX_CACHE_STRING_LENGTH)
     {
-        DENG2_GUARD_FOR(d->mutex, mtx);
         auto foundInCache = d->measureCache.constFind(text);
         if (foundInCache != d->measureCache.constEnd())
         {
@@ -199,14 +196,12 @@ Rectanglei NativeFont::measure(String const &text) const
     Rectanglei const bounds = nativeFontMeasure(text);
 
     // Remember this for later.
-    d->mutex.lock();
     if (d->measureCache.size() > MAX_CACHE_STRINGS)
     {
         // Too many strings, forget everything.
         d->measureCache.clear();
     }
     d->measureCache.insert(text, bounds);
-    d->mutex.unlock();
 
     return bounds;
 }

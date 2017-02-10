@@ -35,6 +35,9 @@ namespace de {
  * string of text, and draw the text onto an Image. This is an abstract base class for
  * concrete implementations of native fonts.
  *
+ * Each NativeFont is specific to a single thread. This allows text rendering to be
+ * done in multiple background threads without synchronization.
+ *
  * @ingroup gui
  */
 class LIBGUI_PUBLIC NativeFont : public Asset

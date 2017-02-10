@@ -23,6 +23,7 @@
 #include <QFontDatabase>
 #include <QImage>
 #include <QPainter>
+#include <QThreadStorage>
 
 #if defined(MACOSX) && defined(MACOS_10_7)
 #  include "../src/text/coretextnativefont_macx.h"
@@ -71,10 +72,27 @@ namespace internal
     }
 }
 
-DENG2_PIMPL(Font), public Lockable
+DENG2_PIMPL(Font)
 {
-    PlatformFont font;
-    QHash<internal::FontParams, PlatformFont *> fontMods;
+    QFont referenceFont;
+    struct ThreadFonts
+    {
+        PlatformFont font;
+        QHash<internal::FontParams, PlatformFont *> fontMods;
+
+        ~ThreadFonts() {
+            qDeleteAll(fontMods.values());
+        }
+    };
+
+    /**
+     * Each thread uses its own independent set of native font instances. This allows
+     * background threads to freely measure and render text using the native font
+     * instances without any synchronization. Also note that these background threads are
+     * pooled, so there is only a fixed total number of threads accessing these objects.
+     */
+    QThreadStorage<ThreadFonts> fontsForThread;
+
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
@@ -86,7 +104,7 @@ DENG2_PIMPL(Font), public Lockable
         createRules();
     }
 
-    Impl(Public *i, PlatformFont const &qfont) : Base(i), font(qfont)
+    Impl(Public *i, QFont const &qfont) : Base(i), referenceFont(qfont)
     {
 #if 0
         // Development aid: list all available fonts and styles.
@@ -104,7 +122,7 @@ DENG2_PIMPL(Font), public Lockable
 
     ~Impl()
     {
-        qDeleteAll(fontMods.values());
+        //qDeleteAll(fontMods.values());
 
         releaseRef(heightRule);
         releaseRef(ascentRule);
@@ -120,30 +138,44 @@ DENG2_PIMPL(Font), public Lockable
         lineSpacingRule = new ConstantRule(0);
     }
 
+    /**
+     * Initializes the current thread's platform fonts for this Font.
+     */
+    ThreadFonts &getThreadFonts()
+    {
+        if (!fontsForThread.hasLocalData())
+        {
+            fontsForThread.localData().font = PlatformFont(referenceFont);
+        }
+        return fontsForThread.localData();
+    }
+
     void updateMetrics()
     {
-        ascent = font.ascent();
-        if (font.weight() != NativeFont::Normal)
+        auto &plat = getThreadFonts();
+
+        ascent = plat.font.ascent();
+        if (plat.font.weight() != NativeFont::Normal)
         {
             // Use the ascent of the normal weight for non-normal weights;
             // we need to align content to baseline regardless of weight.
-            PlatformFont normalized(font);
+            PlatformFont normalized(plat.font);
             normalized.setWeight(NativeFont::Normal);
             ascent = normalized.ascent();
         }
 
-        ascentRule->set(ascent);
-        descentRule->set(font.descent());
-        heightRule->set(font.height());
-        lineSpacingRule->set(font.lineSpacing());
+        ascentRule     ->set(ascent);
+        descentRule    ->set(plat.font.descent());
+        heightRule     ->set(plat.font.height());
+        lineSpacingRule->set(plat.font.lineSpacing());
     }
 
     PlatformFont &getFontMod(internal::FontParams const &params)
     {
-        DENG2_GUARD(this);
+        auto &plat = getThreadFonts();
 
-        auto found = fontMods.constFind(params);
-        if (found != fontMods.constEnd())
+        auto found = plat.fontMods.constFind(params);
+        if (found != plat.fontMods.constEnd())
         {
             return *found.value();
         }
@@ -154,7 +186,7 @@ DENG2_PIMPL(Font), public Lockable
         mod->setStyle(params.spec.style);
         mod->setWeight(params.spec.weight);
         mod->setTransform(params.spec.transform);
-        fontMods.insert(params, mod);
+        plat.fontMods.insert(params, mod);
         return *mod;
     }
 
@@ -168,9 +200,11 @@ DENG2_PIMPL(Font), public Lockable
      */
     PlatformFont const &alteredFont(RichFormat::Iterator const &rich)
     {
+        auto &plat = getThreadFonts();
+
         if (!rich.isDefault())
         {
-            internal::FontParams modParams(font);
+            internal::FontParams modParams(plat.font);
 
             // Size change.
             if (!fequal(rich.sizeFactor(), 1.f))
@@ -185,12 +219,12 @@ DENG2_PIMPL(Font), public Lockable
                 break;
 
             case RichFormat::Regular:
-                modParams.family = font.family();
+                modParams.family = plat.font.family();
                 modParams.spec.style = NativeFont::Regular;
                 break;
 
             case RichFormat::Italic:
-                modParams.family = font.family();
+                modParams.family = plat.font.family();
                 modParams.spec.style = NativeFont::Italic;
                 break;
 
@@ -199,7 +233,7 @@ DENG2_PIMPL(Font), public Lockable
                 {
                     if (Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
-                        modParams = internal::FontParams(altFont->d->font);
+                        modParams = internal::FontParams(altFont->d->getThreadFonts().font);
                     }
                 }
                 break;
@@ -214,14 +248,16 @@ DENG2_PIMPL(Font), public Lockable
             }
             return getFontMod(modParams);
         }
-        return font;
+
+        // No alterations applied.
+        return plat.font;
     }
 };
 
 Font::Font() : d(new Impl(this))
 {}
 
-Font::Font(Font const &other) : d(new Impl(this, other.d->font))
+Font::Font(Font const &other) : d(new Impl(this, other.d->referenceFont))
 {}
 
 Font::Font(QFont const &font) : d(new Impl(this, font))
@@ -307,8 +343,9 @@ QImage Font::rasterize(String const &textLine,
     Vector4ub fg = foreground;
     Vector4ub bg = background;
 
+    auto const &plat = d->getThreadFonts();
     QImage img(QSize(bounds.width(),
-                     de::max(duint(d->font.height()), bounds.height())),
+                     de::max(duint(plat.font.height()), bounds.height())),
                QImage::Format_ARGB32);
     img.fill(bgColor.rgba());
 
@@ -324,7 +361,7 @@ QImage Font::rasterize(String const &textLine,
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        PlatformFont const *font = &d->font;
+        PlatformFont const *font = &plat.font;
 
         if (iter.isDefault())
         {

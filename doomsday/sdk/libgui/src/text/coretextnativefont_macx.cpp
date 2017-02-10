@@ -24,6 +24,7 @@
 #include <QThread>
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreText/CoreText.h>
+#include <atomic>
 
 namespace de {
 
@@ -109,7 +110,7 @@ struct CoreTextFontCache : public Lockable
         return font;
     }
 
-#ifdef DENG2_DEBUG
+#if 0
     float fontSize(CTFontRef font) const
     {
         DENG2_FOR_EACH_CONST(Fonts, i, fonts)
@@ -137,26 +138,6 @@ struct CoreTextFontCache : public Lockable
 #endif
 };
 
-#ifdef DENG2_DEBUG
-struct LineCounter : public Lockable {
-    int count = 0;
-    ~LineCounter() {
-        qDebug() << "[CoreTextNativeFont] Cached line count:" << count;
-    }
-    void inc() {
-        lock();
-        ++count;
-        unlock();
-    }
-    void dec() {
-        lock();
-        --count;
-        unlock();
-    }
-};
-static LineCounter ctLineCounter;
-#endif
-
 static CoreTextFontCache fontCache;
 
 DENG2_PIMPL(CoreTextNativeFont)
@@ -167,12 +148,15 @@ DENG2_PIMPL(CoreTextNativeFont)
     float height;
     float lineSpacing;
 
-    // Note that fonts may be used from multiple threads, so we keep a thread-specific
-    // cache of the most recently created line.
     struct CachedLine
     {
         String lineText;
         CTLineRef line = nullptr;
+
+        ~CachedLine()
+        {
+            release();
+        }
 
         void release()
         {
@@ -180,35 +164,11 @@ DENG2_PIMPL(CoreTextNativeFont)
             {
                 CFRelease(line);
                 line = nullptr;
-#ifdef DENG2_DEBUG
-                ctLineCounter.dec();
-#endif
             }
             lineText.clear();
         }
     };
-    struct Cache : public QHash<QThread *, CachedLine>, public Lockable
-    {
-        ~Cache()
-        {
-            clear();
-        }
-
-        void clear()
-        {
-            for (CachedLine &entry : *this)
-            {
-                entry.release();
-            }
-        }
-
-        CachedLine &cachedLineForCurrentThread()
-        {
-            DENG2_GUARD(this);
-            return (*this)[QThread::currentThread()];
-        }
-    };
-    Cache cache;
+    CachedLine cache;
 
     Impl(Public *i)
         : Base(i)
@@ -252,7 +212,7 @@ DENG2_PIMPL(CoreTextNativeFont)
     void release()
     {
         font = 0;
-        cache.clear();
+        cache.release();
     }
 
     void updateFontAndMetrics()
@@ -271,14 +231,13 @@ DENG2_PIMPL(CoreTextNativeFont)
 
     CachedLine &makeLine(String const &text, CGColorRef color = 0)
     {
-        auto &cachedLine = cache.cachedLineForCurrentThread();
-        if (cachedLine.lineText == text)
+        if (cache.lineText == text)
         {
-            return cachedLine; // Already got it.
+            return cache; // Already got it.
         }
 
-        cachedLine.release();
-        cachedLine.lineText = text;
+        cache.release();
+        cache.lineText = text;
 
         void const *keys[]   = { kCTFontAttributeName, kCTForegroundColorAttributeName };
         void const *values[] = { font, color };
@@ -287,16 +246,12 @@ DENG2_PIMPL(CoreTextNativeFont)
 
         CFStringRef textStr = CFStringCreateWithCharacters(nil, (UniChar *) text.data(), text.size());
         CFAttributedStringRef as = CFAttributedStringCreate(0, textStr, attribs);
-        cachedLine.line = CTLineCreateWithAttributedString(as);
-
-#ifdef DENG2_DEBUG
-        ctLineCounter.inc();
-#endif
+        cache.line = CTLineCreateWithAttributedString(as);
 
         CFRelease(attribs);
         CFRelease(textStr);
         CFRelease(as);
-        return cachedLine;
+        return cache;
     }
 };
 
@@ -366,7 +321,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
     Rectanglei rect(Vector2i(0, -d->ascent),
-                    Vector2i(roundi(CTLineGetTypographicBounds(d->cache.cachedLineForCurrentThread().line, NULL, NULL, NULL)),
+                    Vector2i(roundi(CTLineGetTypographicBounds(d->cache.line, NULL, NULL, NULL)),
                              d->descent));
 
     return rect;
@@ -392,12 +347,11 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
     CGColorRef fgColor = CGColorCreate(fontCache.colorspace(), &fg.x);
 
     // Ensure the color is used by recreating the attributed line string.
-    auto &cachedLine = d->cache.cachedLineForCurrentThread();
-    cachedLine.release();
+    d->cache.release();
     d->makeLine(d->applyTransformation(text), fgColor);
 
     // Set up the bitmap for drawing into.
-    Rectanglei const bounds = measure(cachedLine.lineText);
+    Rectanglei const bounds = measure(d->cache.lineText);
     QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);
     backbuffer.fill(QColor(background.x, background.y, background.z, background.w).rgba());
 
@@ -409,11 +363,11 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
                                             kCGImageAlphaPremultipliedLast);
 
     CGContextSetTextPosition(gc, 0, d->descent);
-    CTLineDraw(cachedLine.line, gc);
+    CTLineDraw(d->cache.line, gc);
 
     CGColorRelease(fgColor);
     CGContextRelease(gc);
-    cachedLine.release();
+    d->cache.release();
 
     return backbuffer;
 }
