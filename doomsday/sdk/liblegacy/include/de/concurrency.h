@@ -76,7 +76,19 @@ private:
 
 #endif // __DENG__
 
-DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm);
+/**
+ * Starts a new thread.
+ *
+ * @param startpos  Executes while the thread is running. When the function exists,
+ *                  the thread stops.
+ * @param parm             Parameter given to the thread function.
+ * @param terminationFunc  Callback function that is called from the worker thread 
+ *                         right before it exits. The callback is given the exit status
+ *                         of the thread as a parameter.
+ * @return Thread handle.
+ */
+DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm,
+                                     void (*terminationFunc)(systhreadexitstatus_t));
 
 extern "C" {
 #endif // __cplusplus
@@ -92,27 +104,20 @@ extern "C" {
 #endif
 
 /**
- * Stars a new thread with the given callback.
+ * Starts a new thread.
  *
  * @param startpos  Executes while the thread is running. When the function exists,
  *                  the thread stops.
- * @param parm      Parameter passed to the callback.
- *
+ * @param parm             Parameter given to the thread function.
+ * @param terminationFunc  Callback function that is called from the worker thread
+ *                         right before it exits. The callback is given the exit status
+ *                         of the thread as a parameter.
  * @return Thread handle.
  */
-DENG_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm);
+DENG_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm,
+                                     void (*terminationFunc)(systhreadexitstatus_t));
 
 DENG_PUBLIC void Thread_Sleep(int milliseconds);
-
-/**
- * Sets a callback function that is called from the worker thread right before
- * it exits. The callback is given the exit status of the thread as a
- * parameter.
- *
- * @param thread           Thread handle.
- * @param terminationFunc  Callback to call before terminating the thread.
- */
-DENG_PUBLIC void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t));
 
 /**
  * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,

@@ -127,16 +127,17 @@ void Thread_Sleep(int milliseconds)
     de::TimeDelta::fromMilliSeconds(milliseconds).sleep();
 }
 
-thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
+thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm, void (*terminationFunc)(systhreadexitstatus_t))
 {
     CallbackThread *t = new CallbackThread(startpos, parm);
+    t->setTerminationFunc(terminationFunc);
     t->start();
     return t;
 }
 
-thread_t Sys_StartThread(int (*startpos)(void *), void *parm)
+thread_t Sys_StartThread(int (*startpos)(void *), void *parm, void (*terminationFunc)(systhreadexitstatus_t))
 {
-    return Sys_StartThread(systhreadfunc_t(startpos), parm);
+    return Sys_StartThread(systhreadfunc_t(startpos), parm, terminationFunc);
 }
 
 void Thread_KillAbnormally(thread_t handle)

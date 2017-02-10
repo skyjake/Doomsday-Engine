@@ -25,6 +25,7 @@
 #include <de/Image>
 
 #include <QMap>
+#include <atomic>
 
 namespace de {
 
@@ -75,7 +76,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     int indent;                 ///< Current left indentation (in pixels).
     QVector<int> prevIndents;
     int tabStop;
-    volatile bool cancelled = false;
+    std::atomic_bool cancelled { false };
 
     DENG2_ERROR(CancelError);
 
@@ -762,12 +763,15 @@ Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 
 FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
+    DENG2_GUARD(this);
     DENG2_ASSERT(index >= 0 && index < d->lines.size());
     return d->lines[index]->info;
 }
 
 void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
 {
+    DENG2_GUARD(this);
+
     d->rasterized.clear();
 
     for (int i = 0; i < height(); ++i)
@@ -787,19 +791,24 @@ void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
 
 void FontLineWrapping::clearRasterizedLines() const
 {
+    DENG2_GUARD(this);
     d->rasterized.clear();
 }
 
 Image FontLineWrapping::rasterizedSegment(int line, int segment) const
 {
-    DENG2_ASSERT(line >= 0);
-    if (line >= 0 && line < d->rasterized.size())
+    // Check the cached images.
     {
-        auto const &rasterLine = d->rasterized.at(line);
-        if (!rasterLine.segmentImages.isEmpty())
+        DENG2_GUARD(this);
+        DENG2_ASSERT(line >= 0);
+        if (line >= 0 && line < d->rasterized.size())
         {
-            DENG2_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.size());
-            return rasterLine.segmentImages.at(segment);
+            auto const &rasterLine = d->rasterized.at(line);
+            if (!rasterLine.segmentImages.isEmpty())
+            {
+                DENG2_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.size());
+                return rasterLine.segmentImages.at(segment);
+            }
         }
     }
     // Rasterize now, since it wasn't previously rasterized.
