@@ -151,6 +151,7 @@ struct Range
     }
 };
 
+typedef Range<duint16> Rangeui16;
 typedef Range<dint32>  Rangei;
 typedef Range<duint32> Rangeui;
 typedef Range<dint64>  Rangei64;
