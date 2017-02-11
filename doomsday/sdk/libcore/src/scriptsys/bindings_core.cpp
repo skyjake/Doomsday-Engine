@@ -156,7 +156,9 @@ void initCoreModule(Binder &binder, Record &coreModule)
 {
     // Dictionary
     {
-        Record &dict = coreModule.addSubrecord("Dictionary");
+
+        Record &dict = coreModule.addSubrecord("Dictionary")
+                .setFlags(Record::WontBeDeleted); // optimize: nobody needs to observe deletion
         binder.init(dict)
                 << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
                 << DENG2_FUNC_NOARG(Dictionary_Values, "values");
@@ -164,7 +166,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
     // String
     {
-        Record &str = coreModule.addSubrecord("String");
+        Record &str = coreModule.addSubrecord("String").setFlags(Record::WontBeDeleted);
         binder.init(str)
                 << DENG2_FUNC_NOARG(String_Upper, "upper")
                 << DENG2_FUNC_NOARG(String_Lower, "lower")
@@ -176,14 +178,14 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
     // Path
     {
-        Record &path = coreModule.addSubrecord("Path");
+        Record &path = coreModule.addSubrecord("Path").setFlags(Record::WontBeDeleted);
         binder.init(path)
                 << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
     }
 
     // File
     {
-        Record &file = coreModule.addSubrecord("File");
+        Record &file = coreModule.addSubrecord("File").setFlags(Record::WontBeDeleted);
         binder.init(file)
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
@@ -199,7 +201,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
         Function::Defaults setValueFromArgs;
         setValueFromArgs["delay"] = new NumberValue(0.0);
 
-        Record &anim = coreModule.addSubrecord("Animation");
+        Record &anim = coreModule.addSubrecord("Animation").setFlags(Record::WontBeDeleted);
         binder.init(anim)
                 << DENG2_FUNC_NOARG(Animation_Value, "value")
                 << DENG2_FUNC_NOARG(Animation_Target, "target")

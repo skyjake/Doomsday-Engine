@@ -63,6 +63,7 @@ DENG2_PIMPL(Record)
     Record::Members members;
     duint32 uniqueId; ///< Identifier to track serialized references.
     duint32 oldUniqueId;
+    Flags flags = DefaultFlags;
 
     typedef QHash<duint32, Record *> RefMap;
 
@@ -427,6 +428,17 @@ Record::~Record()
         DENG2_GUARD(d);
         clear();
     }
+}
+
+Record &Record::setFlags(Flags flags, FlagOpArg op)
+{
+    applyFlagOperation(d->flags, flags, op);
+    return *this;
+}
+
+Record::Flags Record::flags() const
+{
+    return d->flags;
 }
 
 void Record::clear(Behavior behavior)

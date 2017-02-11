@@ -89,6 +89,17 @@ public:
         IgnoreDoubleUnderscoreMembers
     };
 
+    enum Flag
+    {
+        /// Assume that the Record will not be deleted until the application is terminated.
+        /// Other objects will not need to observe the Record for deletion. Use this only
+        /// for optimization purposes so that large audiences can be avoided.
+        WontBeDeleted = 0x1,
+
+        DefaultFlags = 0,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
     DENG2_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
 
     DENG2_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
@@ -109,6 +120,10 @@ public:
     Record(Record &&moved);
 
     virtual ~Record();
+
+    Record &setFlags(Flags flags, FlagOpArg op = SetFlags);
+
+    Flags flags() const;
 
     /**
      * Deletes all the variables in the record.
@@ -609,6 +624,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Record::Flags)
 
 /// Converts the record into a human-readable text representation.
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Record const &record);

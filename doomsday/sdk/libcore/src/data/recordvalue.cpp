@@ -52,7 +52,8 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
 
     DENG2_ASSERT(d->record != NULL);
 
-    if (!d->ownership.testFlag(OwnsRecord))
+    if (!d->ownership.testFlag(OwnsRecord) &&
+        !d->record->flags().testFlag(Record::WontBeDeleted))
     {
         // If we don't own it, someone may delete the record.
         d->record->audienceForDeletion() += this;
@@ -65,8 +66,11 @@ RecordValue::RecordValue(Record const &record)
 {
     d->record = const_cast<Record *>(&record);
 
-    // Someone may delete the record.
-    d->record->audienceForDeletion() += this;
+    if (!record.flags().testFlag(Record::WontBeDeleted))
+    {
+        // Someone may delete the record.
+        d->record->audienceForDeletion() += this;
+    }
 }
 
 RecordValue::RecordValue(IObject const &object)
@@ -75,8 +79,11 @@ RecordValue::RecordValue(IObject const &object)
 {
     d->record = const_cast<Record *>(&object.objectNamespace());
 
-    // Someone may delete the record.
-    d->record->audienceForDeletion() += this;
+    if (!d->record->flags().testFlag(Record::WontBeDeleted))
+    {
+        // Someone may delete the record.
+        d->record->audienceForDeletion() += this;
+    }
 }
 
 RecordValue::~RecordValue()
@@ -105,13 +112,13 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 
     if (hasOwnership())
     {
-        DENG2_ASSERT(!d->record->audienceForDeletion().contains(this));
+        //DENG2_ASSERT(!d->record->audienceForDeletion().contains(this));
 
         delete d->record;
     }
     else if (d->record)
     {
-        DENG2_ASSERT(d->record->audienceForDeletion().contains(this));
+        //DENG2_ASSERT(d->record->audienceForDeletion().contains(this));
 
         d->record->audienceForDeletion() -= this;
     }
@@ -120,7 +127,8 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
     d->ownership = ownership;
     setAccessedRecord(d->record);
 
-    if (d->record && !d->ownership.testFlag(OwnsRecord))
+    if (d->record && !d->ownership.testFlag(OwnsRecord) &&
+        !d->record->flags().testFlag(Record::WontBeDeleted))
     {
         // Since we don't own it, someone may delete the record.
         d->record->audienceForDeletion() += this;
