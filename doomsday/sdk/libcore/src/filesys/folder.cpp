@@ -25,6 +25,7 @@
 #include "de/Guard"
 #include "de/LogBuffer"
 #include "de/NumberValue"
+#include "de/ScriptSystem"
 #include "de/Task"
 #include "de/TaskPool"
 
@@ -83,11 +84,7 @@ DENG2_PIMPL(Folder), public Lockable
 Folder::Folder(String const &name) : File(name), d(new Impl(this))
 {
     setStatus(Status::FOLDER);
-
-    // Standard info.
-    objectNamespace().add(new Variable("contentSize",
-                                       new Accessor(*this, Accessor::CONTENT_SIZE),
-                                       Accessor::VARIABLE_MODE));
+    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Folder")));
 }
 
 Folder::~Folder()
@@ -536,31 +533,6 @@ String Folder::contentsAsText() const
         return LoopContinue;
     });
     return File::fileListAsText(files);
-}
-
-// Folder::Accessor ---------------------------------------------------------------------
-
-Folder::Accessor::Accessor(Folder &owner, Property prop) : _owner(owner), _prop(prop)
-{}
-
-void Folder::Accessor::update() const
-{
-    DENG2_GUARD(_owner);
-
-    // We need to alter the value content.
-    Accessor *nonConst = const_cast<Accessor *>(this);
-
-    switch (_prop)
-    {
-    case CONTENT_SIZE:
-        nonConst->setValue(QString::number(_owner.d->contents.size()));
-        break;
-    }
-}
-
-Value *Folder::Accessor::duplicateContent() const
-{
-    return new NumberValue(asNumber());
 }
 
 } // namespace de

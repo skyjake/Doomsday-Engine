@@ -27,6 +27,7 @@
 #include "de/Guard"
 #include "de/LinkFile"
 #include "de/NativeFile"
+#include "de/NativePointerValue"
 #include "de/NumberValue"
 #include "de/RecordValue"
 #include "de/ScriptSystem"
@@ -62,15 +63,11 @@ File::File(String const &fileName) : Node(fileName), d(new Impl)
 {
     d->source = this;
 
-    // Core.File provides the member functions for files.
-    d->info.addSuperRecord(ScriptSystem::builtInClass("File"));
+    // Pointer back to the File for script bindings.
+    d->info.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(this)).setReadOnly();
 
-    // Create the default set of info variables common to all files.
-    d->info.add(new Variable("name",       new Accessor(*this, Accessor::NAME),        Accessor::VARIABLE_MODE));
-    d->info.add(new Variable("path",       new Accessor(*this, Accessor::PATH),        Accessor::VARIABLE_MODE));
-    d->info.add(new Variable("type",       new Accessor(*this, Accessor::TYPE),        Accessor::VARIABLE_MODE));
-    d->info.add(new Variable("size",       new Accessor(*this, Accessor::SIZE),        Accessor::VARIABLE_MODE));
-    d->info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT), Accessor::VARIABLE_MODE));
+    // Core.File provides the member functions for files.
+    d->info.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("File")));
 }
 
 File::~File()
@@ -445,51 +442,6 @@ String File::fileListAsText(QList<File const *> files)
 dsize File::size() const
 {
     return status().size;
-}
-
-File::Accessor::Accessor(File &owner, Property prop) : _owner(owner), _prop(prop)
-{
-    /// @todo Accessor should listen for deletion of the owner file.
-}
-
-void File::Accessor::update() const
-{
-    DENG2_GUARD(_owner);
-
-    // We need to alter the value content.
-    Accessor *nonConst = const_cast<Accessor *>(this);
-
-    switch (_prop)
-    {
-    case NAME:
-        nonConst->setValue(_owner.name());
-        break;
-
-    case PATH:
-        nonConst->setValue(_owner.path());
-        break;
-
-    case TYPE:
-        nonConst->setValue(_owner.status().type() == File::Status::FILE? "file" : "folder");
-        break;
-
-    case SIZE:
-        nonConst->setValue(QString::number(_owner.status().size));
-        break;
-
-    case MODIFIED_AT:
-        nonConst->setValue(_owner.status().modifiedAt.asText());
-        break;
-    }
-}
-
-Value *File::Accessor::duplicateContent() const
-{
-    if (_prop == SIZE)
-    {
-        return new NumberValue(asNumber());
-    }
-    return new TextValue(*this);
 }
 
 } // namespace de

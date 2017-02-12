@@ -25,6 +25,7 @@
 #include "de/Script"
 #include "de/ScriptSystem"
 #include "de/ScriptedInfo"
+#include "de/TextValue"
 #include "de/TimeValue"
 
 #include <QRegularExpression>
@@ -235,9 +236,9 @@ void Package::parseMetadata(File &packageFile) // static
 
     if (Folder *folder = packageFile.maybeAs<Folder>())
     {
-        File *initializerScript = folder->tryLocateFile("__init__.de");
-        File *metadataInfo      = folder->tryLocateFile("Info.dei");
-        if (!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
+        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de"));
+        File *metadataInfo      = folder->tryLocateFile(QStringLiteral("Info.dei"));
+        if (!metadataInfo) metadataInfo = folder->tryLocateFile(QStringLiteral("Info")); // alternate name
         Time parsedAt           = Time::invalidTime();
         bool needParse          = true;
 

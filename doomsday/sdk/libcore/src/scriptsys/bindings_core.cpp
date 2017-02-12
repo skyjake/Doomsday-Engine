@@ -29,6 +29,7 @@
 #include "de/Record"
 #include "de/RecordValue"
 #include "de/TextValue"
+#include "de/TimeValue"
 
 namespace de {
 
@@ -62,10 +63,14 @@ static Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const
     return new TextValue(ctx.nativeSelf().asText().lower());
 }
 
+//---------------------------------------------------------------------------------------
+
 static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
 {
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
+
+//---------------------------------------------------------------------------------------
 
 static Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
 {
@@ -77,10 +82,50 @@ static Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues 
     return ctx.nativeSelf().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
 }
 
+//---------------------------------------------------------------------------------------
+
 static File const &fileInstance(Context &ctx)
 {
     // The record is expected to have a path (e.g., File info record).
-    return App::rootFolder().locate<File>(ctx.selfInstance().gets("path", "/"));
+    File *file = ctx.selfInstance().get(Record::VAR_NATIVE_SELF)
+            .as<NativePointerValue>().nativeObject<File>();
+    if (!file)
+    {
+        throw Value::IllegalError("ScriptSystem::fileInstance", "Not a File instance");
+    }
+    return *file;
+}
+
+static Value *Function_File_Name(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(fileInstance(ctx).name());
+}
+
+static Value *Function_File_Path(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(fileInstance(ctx).path());
+}
+
+static Value *Function_File_Type(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(fileInstance(ctx).status().type() == File::Status::FILE? "file" : "folder");
+}
+
+static Value *Function_File_Size(Context &ctx, Function::ArgumentValues const &)
+{
+    return new NumberValue(fileInstance(ctx).size());
+}
+
+static Value *Function_File_ModifiedAt(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TimeValue(fileInstance(ctx).status().modifiedAt);
+}
+
+static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues const &)
+{
+    Folder const &folder = fileInstance(ctx).as<Folder>();
+    DENG2_GUARD(folder);
+    return new NumberValue(folder.contents().size());
 }
 
 static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
@@ -91,7 +136,6 @@ static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const 
     {
         return new RecordValue(found->objectNamespace());
     }
-
     // Wasn't there, result is None.
     return 0;
 }
@@ -110,6 +154,8 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
     return new TextValue(String::fromUtf8(raw));
 }
 
+//---------------------------------------------------------------------------------------
+
 static Animation &animationInstance(Context &ctx)
 {
     if (AnimationValue *v = ctx.nativeSelf().maybeAs<AnimationValue>())
@@ -120,7 +166,7 @@ static Animation &animationInstance(Context &ctx)
     Animation *obj = ctx.nativeSelf().as<NativePointerValue>().nativeObject<Animation>();
     if (!obj)
     {
-        throw Value::IllegalError("ScriptSystem::animationInstance", "No Animation instance available");
+        throw Value::IllegalError("ScriptSystem::animationInstance", "Not an Animation instance");
     }
     return *obj;
 }
@@ -151,6 +197,8 @@ static Value *Function_Animation_SetValueFrom(Context &ctx, Function::ArgumentVa
                                         args.at(3)->asNumber());   // delay
     return nullptr;
 }
+
+//---------------------------------------------------------------------------------------
 
 void initCoreModule(Binder &binder, Record &coreModule)
 {
@@ -187,9 +235,21 @@ void initCoreModule(Binder &binder, Record &coreModule)
     {
         Record &file = coreModule.addSubrecord("File").setFlags(Record::WontBeDeleted);
         binder.init(file)
+                << DENG2_FUNC_NOARG(File_Name, "name")
+                << DENG2_FUNC_NOARG(File_Path, "path")
+                << DENG2_FUNC_NOARG(File_Type, "type")
+                << DENG2_FUNC_NOARG(File_Size, "size")
+                << DENG2_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
                 << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8");
+    }
+
+    // Folder
+    {
+        Record &folder = coreModule.addSubrecord("Folder").setFlags(Record::WontBeDeleted);
+        binder.init(folder)
+                << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
     }
 
     // Animation

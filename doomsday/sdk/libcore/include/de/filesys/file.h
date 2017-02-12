@@ -20,7 +20,6 @@
 #ifndef LIBDENG2_FILE_H
 #define LIBDENG2_FILE_H
 
-#include "../AccessorValue"
 #include "../Audience"
 #include "../IIOStream"
 #include "../IObject"
@@ -132,40 +131,6 @@ public:
 
     private:
         Type _type;
-    };
-
-    /**
-     * Accesses the properties of a File. Allows using properties of a file
-     * (like its name, path or size) as a Value, for instance in script
-     * expressions.
-     *
-     * @ingroup fs
-     */
-    class Accessor : public AccessorValue
-    {
-    public:
-        /// Property of the file to access.
-        enum Property {
-            NAME,
-            PATH,
-            TYPE,
-            SIZE,
-            MODIFIED_AT
-        };
-
-    public:
-        Accessor(File &owner, Property prop);
-
-        /// Update the text content of the accessor.
-        void update() const;
-
-        /// Returns a TextValue with the text content of the accessor,
-        /// except for the SIZE property, which is duplicated as a NumberValue.
-        Value *duplicateContent() const;
-
-    private:
-        File &_owner;
-        Property _prop;
     };
 
 public:

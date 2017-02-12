@@ -25,6 +25,7 @@
 #include "de/Process"
 #include "de/RecordValue"
 #include "de/Script"
+#include "de/TextValue"
 
 #include <algorithm>
 

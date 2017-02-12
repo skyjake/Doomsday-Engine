@@ -48,6 +48,7 @@ int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
 
 String const Record::VAR_SUPER = "__super__";
 String const Record::VAR_FILE  = "__file__";
+String const Record::VAR_INIT  = "__init__";
 String const Record::VAR_NATIVE_SELF = "__self__";
 
 /**

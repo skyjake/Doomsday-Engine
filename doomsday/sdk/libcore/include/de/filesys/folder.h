@@ -66,31 +66,6 @@ public:
     /// Creating a new file was unsuccessful. @ingroup errors
     DENG2_ERROR(NewFileError);
 
-    /**
-     * Accesses the properties of a Folder. Allows using properties of a
-     * folder (like how many items it contains) as a Value, for instance in
-     * script expressions.
-     *
-     * @ingroup fs
-     */
-    class Accessor : public AccessorValue
-    {
-    public:
-        /// Property of the file to access.
-        enum Property {
-            CONTENT_SIZE
-        };
-
-    public:
-        Accessor(Folder &owner, Property prop);
-        void update() const;
-        Value *duplicateContent() const;
-
-    private:
-        Folder &_owner;
-        Property _prop;
-    };
-
     typedef QList<Feed *> Feeds;
     typedef QMap<String, File *> Contents;
 

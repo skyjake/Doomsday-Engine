@@ -41,12 +41,12 @@ DENG2_PIMPL(RecordValue)
     OwnershipFlags oldOwnership; // prior to serialization
 
     Impl(Public *i) : Base(i) {}
-    
+
     // Observes Record deletion.
     void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(deleted))
     {
         if (!record) return; // Not associated with a record any more.
-        
+
         DENG2_ASSERT(record == &deleted);
         DENG2_ASSERT(!ownership.testFlag(OwnsRecord));
         record = nullptr;
@@ -287,9 +287,9 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
     instance->record()->addSuperRecord(*d->record);
 
     // If there is an initializer method, call it now.
-    if (dereference().hasMember("__init__"))
+    if (dereference().hasMember(Record::VAR_INIT))
     {
-        process.call(dereference().function("__init__"), arguments.as<ArrayValue>(),
+        process.call(dereference().function(Record::VAR_INIT), arguments.as<ArrayValue>(),
                      instance->duplicateAsReference());
 
         // Discard the return value from the init function.

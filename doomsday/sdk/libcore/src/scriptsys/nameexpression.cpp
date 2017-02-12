@@ -61,9 +61,10 @@ DENG2_PIMPL_NOREF(NameExpression)
         if (lookInClass && where.hasMember(Record::VAR_SUPER))
         {
             // The namespace is derived from another record. Let's look into each
-            // super-record in turn.
+            // super-record in turn. Check in reverse order; the superclass added last
+            // overrides earlier ones.
             ArrayValue const &supers = where.geta(Record::VAR_SUPER);
-            for (int i = 0; i < int(supers.size()); ++i)
+            for (int i = int(supers.size() - 1); i >= 0; --i)
             {
                 if (Variable *found = findInRecord(
                         name, supers.at(i).as<RecordValue>().dereference(), foundIn))

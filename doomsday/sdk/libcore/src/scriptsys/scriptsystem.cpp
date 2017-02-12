@@ -28,6 +28,7 @@
 #include "de/NumberValue"
 #include "de/Record"
 #include "de/RecordValue"
+#include "de/TextValue"
 #include "de/Version"
 #include "de/math.h"
 

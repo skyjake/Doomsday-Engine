@@ -28,6 +28,7 @@
 #include "de/LogBuffer"
 #include "de/PackageFeed"
 #include "de/Parser"
+#include "de/TextValue"
 #include "de/Version"
 
 #include <QMap>

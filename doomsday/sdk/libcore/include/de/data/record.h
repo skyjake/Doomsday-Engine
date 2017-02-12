@@ -77,6 +77,7 @@ public:
     /// Name of the special variable that identifies the source file.
     static String const VAR_FILE;
 
+    static String const VAR_INIT;
     static String const VAR_NATIVE_SELF;
 
     typedef QHash<String, Variable *> Members;  // unordered
