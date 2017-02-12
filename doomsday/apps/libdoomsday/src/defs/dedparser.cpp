@@ -48,9 +48,10 @@
 #include <de/memory.h>
 #include <de/vector1.h>
 #include <de/App>
-#include <de/NativePath>
 #include <de/ArrayValue>
+#include <de/NativePath>
 #include <de/RecordValue>
+#include <de/TextValue>
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/ded.h"

@@ -47,6 +47,7 @@
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
+#include <de/TextValue>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <de/memoryzone.h>

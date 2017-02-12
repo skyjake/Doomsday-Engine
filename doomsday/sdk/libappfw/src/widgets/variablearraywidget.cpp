@@ -17,6 +17,7 @@
  */
 
 #include "de/VariableArrayWidget"
+#include <de/TextValue>
 
 namespace de {
 

@@ -27,11 +27,12 @@
 #include <doomsday/resource/bundles.h>
 
 #include <de/App>
-#include <de/ScriptSystem>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/Log>
 #include <de/Loop>
+#include <de/ScriptSystem>
+#include <de/TextValue>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 

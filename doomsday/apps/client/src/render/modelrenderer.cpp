@@ -893,7 +893,7 @@ static render::StateAnimator &animatorInstance(Context &ctx)
         }
     }
     throw Value::IllegalError("ModelRenderer::animatorInstance",
-                              "No StateAnimator instance available");
+                              "Not a StateAnimator instance");
 }
 
 static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValues const &)

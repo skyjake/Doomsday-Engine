@@ -29,6 +29,7 @@
 #include <de/NativePath>
 #include <de/NumberValue>
 #include <de/PackageLoader>
+#include <de/TextValue>
 #include <de/Writer>
 #include <de/ZipArchive>
 

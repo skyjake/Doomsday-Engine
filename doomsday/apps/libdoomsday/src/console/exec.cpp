@@ -35,12 +35,13 @@
 #include <de/memory.h>
 #include <de/charsymbols.h>
 #include <de/App>
-#include <de/LogBuffer>
-#include <de/Time>
-#include <de/NativeFile>
-#include <de/Log>
 #include <de/Binder>
+#include <de/Log>
+#include <de/LogBuffer>
+#include <de/NativeFile>
 #include <de/ScriptSystem>
+#include <de/Time>
+#include <de/TextValue>
 
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/game.h"

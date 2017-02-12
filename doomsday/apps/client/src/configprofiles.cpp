@@ -27,6 +27,7 @@
 #include <de/Process>
 #include <de/RecordValue>
 #include <de/Script>
+#include <de/TextValue>
 #include <de/ZipArchive>
 
 #include <doomsday/doomsdayapp.h>

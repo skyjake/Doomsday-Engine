@@ -27,6 +27,7 @@
 #include <de/PopupWidget>
 #include <de/SequentialLayout>
 #include <de/ToggleWidget>
+#include <de/TextValue>
 
 using namespace de;
 

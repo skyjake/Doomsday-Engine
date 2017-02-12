@@ -21,6 +21,7 @@
 #include "de/BaseWindow"
 
 #include <de/NativePath>
+#include <de/TextValue>
 #include <QFileDialog>
 
 namespace de {

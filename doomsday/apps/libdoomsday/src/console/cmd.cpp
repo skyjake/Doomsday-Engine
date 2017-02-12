@@ -26,6 +26,7 @@
 #include <de/App>
 #include <de/Log>
 #include <de/Config>
+#include <de/TextValue>
 #include <QMap>
 
 using namespace de;

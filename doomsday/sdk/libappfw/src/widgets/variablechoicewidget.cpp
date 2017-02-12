@@ -19,6 +19,7 @@
 #include "de/VariableChoiceWidget"
 
 #include <de/NumberValue>
+#include <de/TextValue>
 
 namespace de {
 

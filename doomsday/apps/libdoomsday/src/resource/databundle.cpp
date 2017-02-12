@@ -34,6 +34,7 @@
 #include <de/Package>
 #include <de/PackageLoader>
 #include <de/Path>
+#include <de/TextValue>
 #include <QRegExp>
 #include <QRegularExpression>
 #include <QTextCodec>

@@ -27,6 +27,7 @@
 #include <de/RecordValue>
 #include <de/PackageLoader>
 #include <de/Time>
+#include <de/TextValue>
 #include <de/ZipArchive>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/GameStateFolder>

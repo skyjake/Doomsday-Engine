@@ -38,6 +38,7 @@
 #include <de/ScriptedInfo>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/TextValue>
 
 using namespace de;
 using namespace de::ui;

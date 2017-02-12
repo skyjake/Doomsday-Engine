@@ -43,6 +43,7 @@
 #include <de/LogSink>
 #include <de/NativeFont>
 #include <de/ScriptSystem>
+#include <de/TextValue>
 #include <de/VRConfig>
 
 #include <doomsday/console/exec.h>

@@ -35,6 +35,7 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/PackageLoader>
+#include <de/TextValue>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 
