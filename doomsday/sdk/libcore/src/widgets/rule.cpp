@@ -19,7 +19,7 @@
 
 #include "de/Rule"
 #include "de/math.h"
-#include <unordered_set>
+#include "de/PointerSet"
 
 namespace de {
 
@@ -27,7 +27,7 @@ bool Rule::_invalidRulesExist = false;
 
 DENG2_PIMPL_NOREF(Rule)
 {
-    typedef std::unordered_set<Rule const *> Dependencies;
+    typedef PointerSetT<Rule> Dependencies;
     Dependencies dependencies; // ref'd
 
     /// Current value of the rule.
@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(Rule)
 
     ~Impl()
     {
-        DENG2_ASSERT(dependencies.empty());
+        DENG2_ASSERT(dependencies.isEmpty());
     }
 };
 
@@ -116,7 +116,7 @@ void Rule::setValue(float v)
 
 void Rule::dependsOn(Rule const &dependency)
 {
-    DENG2_ASSERT(d->dependencies.find(&dependency) == d->dependencies.end());
+    DENG2_ASSERT(!d->dependencies.contains(&dependency));
     d->dependencies.insert(de::holdRef(&dependency));
 
     dependency.audienceForRuleInvalidation += this;
@@ -131,8 +131,8 @@ void Rule::independentOf(Rule const &dependency)
 {
     dependency.audienceForRuleInvalidation -= this;
 
-    DENG2_ASSERT(d->dependencies.find(&dependency) != d->dependencies.end());
-    d->dependencies.erase(&dependency);
+    DENG2_ASSERT(d->dependencies.contains(&dependency));
+    d->dependencies.remove(&dependency);
     dependency.release();
 }
 
