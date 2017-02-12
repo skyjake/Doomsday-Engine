@@ -111,11 +111,22 @@ Archive const &ArchiveEntryFile::archive() const
     return *d->archive;
 }
 
+void ArchiveEntryFile::uncache() const
+{
+    DENG2_GUARD(this);
+
+    if (d->readBlock)
+    {
+        archive().uncacheBlock(d->entryPath);
+        d->readBlock = nullptr;
+    }
+}
+
 IByteArray::Size ArchiveEntryFile::size() const
 {
     DENG2_GUARD(this);
 
-    return d->entryData().size();
+    return archive().entryStatus(d->entryPath).size;
 }
 
 void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const

@@ -111,20 +111,28 @@ public:
      */
     IByteArray const *source() const;
 
-    enum CacheAttachment {
-        RemainAttachedToSource = 0,
-        DetachFromSource = 1
+    enum CacheOperation {
+        CacheAndRemainAttachedToSource = 0,
+        CacheAndDetachFromSource = 1,
+        UncacheUnmodifiedEntries = 2,
     };
 
     /**
-     * Loads a copy of the serialized data into memory for all the entries that
-     * don't already have deserialized data stored.
+     * Caches or uncaches archive entries.
      *
-     * @param attach  If DetachFromSource, the archive becomes a standalone
-     *                archive that no longer needs the source byte array to
-     *                remain in existence.
+     * The archive must have a source for any of the caching operations to be possible.
+     *
+     * @param operation  One of the following:
+     *      - CacheAndRemainAttachedToSource: Loads a copy of the serialized data into
+     *          memory for all the entries that don't already have deserialized data stored.
+     *      - CacheAndDetachFromSource: Loads a copy of all the serialized data into memory,
+     *          and the archive becomes a standalone archive that no longer needs the
+     *          source byte array to remain in existence.
+     *      - UncacheUnmodifiedEntries: All entries that have not been modified will be
+     *          released from memory. Accessing them in the future will require reloading
+     *          the entry contents into memory.
      */
-    void cache(CacheAttachment attach = DetachFromSource);
+    void cache(CacheOperation operation = CacheAndDetachFromSource);
 
     /**
      * Determines whether the archive contains an entry (not a folder).
@@ -202,6 +210,12 @@ public:
     Block &entryBlock(Path const &path);
 
     /**
+     * Release all cached data of a block. Unmodified blocks cannot be uncached.
+     * The archive must have a source for uncaching to be possible.
+     */
+    void uncacheBlock(Path const &path) const;
+
+    /**
      * Adds an entry to the archive. The entry will not be committed to the
      * source, but instead remains as-is in memory.
      *
@@ -256,11 +270,11 @@ protected:
         Time modifiedAt;        ///< Latest modification timestamp.
         bool maybeChanged;      ///< @c true, if the data must be re-serialized when writing.
 
-        /// Deserialized data. Can be @c NULL. Entry has ownership.
-        Block *data;
+        /// Deserialized data. Can be @c nullptr. Entry has ownership.
+        std::unique_ptr<Block> data;
 
-        /// Cached copy of the serialized data. Can be @c NULL. Entry has ownership.
-        Block mutable *dataInArchive;
+        /// Cached copy of the serialized data. Can be @c nullptr. Entry has ownership.
+        mutable std::unique_ptr<Block> dataInArchive;
 
         Entry(PathTree::NodeArgs const &args);
         virtual ~Entry();

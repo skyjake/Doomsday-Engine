@@ -29,7 +29,7 @@
 namespace de {
 
 /// Size of the fixed-size portion of the segment buffer.
-static int const SEGMENT_BUFFER_SIZE = 24;
+static int const SEGMENT_BUFFER_SIZE = 8;
 
 static String emptyPath;
 
@@ -90,6 +90,8 @@ String Path::Segment::toString() const
     return range.string()->mid(range.position(), range.size());
 }
 
+//---------------------------------------------------------------------------------------
+
 struct Path::Impl
 {
     DENG2_NO_ASSIGN(Impl)
@@ -127,7 +129,7 @@ struct Path::Impl
      * List of the extra segments that don't fit in segments, in reverse
      * order.
      */
-    QList<Path::Segment *> extraSegments;
+    QList<Path::Segment> extraSegments;
 
     Impl() : separator('/'), segmentCount(0)
     {}
@@ -147,10 +149,7 @@ struct Path::Impl
      */
     void clearSegments()
     {
-        while (!extraSegments.isEmpty())
-        {
-            delete extraSegments.takeFirst();
-        }
+        extraSegments.clear();
         zap(segments);
         segmentCount = 0;
     }
@@ -171,8 +170,8 @@ struct Path::Impl
         else
         {
             // Allocate an "extra" node.
-            segment = new Path::Segment;
-            extraSegments.append(segment);
+            extraSegments.append(Path::Segment());
+            segment = &extraSegments.last();
         }
 
         zapPtr(segment);
@@ -319,7 +318,7 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
     }
 
     // No - an extra segment.
-    return *d->extraSegments[reverseIndex - SEGMENT_BUFFER_SIZE];
+    return d->extraSegments[reverseIndex - SEGMENT_BUFFER_SIZE];
 }
 
 Path Path::subPath(Rangei const &range) const

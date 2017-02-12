@@ -19,6 +19,7 @@
 
 #include "de/ArchiveFeed"
 #include "de/ArchiveEntryFile"
+#include "de/ArchiveFolder"
 #include "de/ByteArrayFile"
 #include "de/ZipArchive"
 #include "de/Writer"
@@ -47,6 +48,11 @@ DENG2_PIMPL(ArchiveFeed)
     ArchiveFeed *parentFeed;
 
     bool allowWrite;
+
+    /// All the entries of this archive that are populated as files.
+    /// Subfeeds use the parent's entry table.
+    typedef LockableT<PointerSetT<ArchiveEntryFile>> EntryTable;
+    EntryTable entries;
 
     Impl(Public *feed, File &f)
         : Base(feed)
@@ -139,6 +145,12 @@ DENG2_PIMPL(ArchiveFeed)
             writeIfModified();
             file = 0;
         }
+        else
+        {
+            auto &table = entryTable();
+            DENG2_GUARD(table);
+            table.value.remove(&deleted.as<ArchiveEntryFile>());
+        }
     }
 
     Archive &archive()
@@ -148,6 +160,19 @@ DENG2_PIMPL(ArchiveFeed)
             return parentFeed->archive();
         }
         return *arch;
+    }
+
+    EntryTable &entryTable()
+    {
+        return parentFeed? parentFeed->d->entries : entries;
+    }
+
+    void addToEntryTable(ArchiveEntryFile *file)
+    {
+        auto &table = entryTable();
+        DENG2_GUARD(table);
+        table.value.insert(file);
+        file->audienceForDeletion() += this;
     }
 
     PopulatedFiles populate(Folder const &folder)
@@ -169,6 +194,7 @@ DENG2_PIMPL(ArchiveFeed)
             String entry = basePath / *i;
 
             std::unique_ptr<ArchiveEntryFile> archFile(new ArchiveEntryFile(*i, archive(), entry));
+            addToEntryTable(archFile.get());
 
             // Write access is inherited from the main source file.
             if (allowWrite) archFile->setMode(File::Write);
@@ -176,15 +202,11 @@ DENG2_PIMPL(ArchiveFeed)
             // Use the status of the entry within the archive.
             archFile->setStatus(archive().entryStatus(entry));
 
-            // Create a new file that accesses this feed's archive and interpret the contents.
+            // Interpret the entry contents.
             File *f = folder.fileSystem().interpret(archFile.release());
-            //folder.add(f);
 
             // We will decide on pruning this.
             f->setOriginFeed(thisPublic);
-
-            // Include the file in the main index.
-            //folder.fileSystem().index(*f);
 
             populated << f;
         }
@@ -263,7 +285,8 @@ File *ArchiveFeed::newFile(String const &name)
     }
     // Add an empty entry.
     archive().add(newEntry, Block());
-    File *file = new ArchiveEntryFile(name, archive(), newEntry);
+    auto *file = new ArchiveEntryFile(name, archive(), newEntry);
+    d->addToEntryTable(file);
     file->setOriginFeed(this);
     return file;
 }
@@ -313,6 +336,32 @@ void ArchiveFeed::rewriteFile()
     {
         DENG2_ASSERT(d->arch != 0);
         d->writeIfModified();
+    }
+}
+
+void ArchiveFeed::uncache()
+{
+    auto &table = d->entryTable();
+    DENG2_GUARD(table);
+    for (auto *entry : table.value)
+    {
+        entry->uncache();
+    }
+}
+
+void ArchiveFeed::uncacheAllEntries(StringList const &folderTypes) // static
+{
+    if (Folder::isPopulatingAsync()) return; // Never mind.
+
+    for (String const &folderType : folderTypes)
+    {
+        foreach (File *file, FileSystem::get().indexFor(folderType).files())
+        {
+            if (auto *feed = file->as<Folder>().primaryFeedMaybeAs<ArchiveFeed>())
+            {
+                feed->uncache();
+            }
+        }
     }
 }
 

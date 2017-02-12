@@ -407,7 +407,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         if (!entry.dataInArchive)
         {
             DENG2_ASSERT(source() != NULL);
-            entry.dataInArchive = new Block(*source(), entry.offset, entry.sizeInArchive);
+            entry.dataInArchive.reset(new Block(*source(), entry.offset, entry.sizeInArchive));
         }
 
         z_stream stream;
@@ -453,6 +453,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
 
         // We're done.
         inflateEnd(&stream);
+        entry.dataInArchive.reset(); // Now have the decompressed version.
     }
 }
 

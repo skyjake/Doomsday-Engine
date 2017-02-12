@@ -108,6 +108,7 @@ void PointerSet::insert(Pointer ptr)
         if (_range.size() == _size)
         {
             DENG2_ASSERT(_size < POINTERSET_MAX_SIZE);
+            if (_size == POINTERSET_MAX_SIZE) return; // Can't do it.
 
             Pointer *oldBase = _pointers;
             duint const oldSize = _size;

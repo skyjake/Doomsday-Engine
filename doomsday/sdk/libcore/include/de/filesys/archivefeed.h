@@ -98,6 +98,15 @@ public:
      */
     void rewriteFile();
 
+    void uncache();
+
+    /**
+     * Uncaches all unmodified indexed archive entries from memory. Doing this at
+     * specific suitable points in the application's lifetime is good so that unnecessary
+     * data is not kept cached.
+     */
+    static void uncacheAllEntries(StringList const &folderTypes);
+
 private:
     DENG2_PRIVATE(d)
 };

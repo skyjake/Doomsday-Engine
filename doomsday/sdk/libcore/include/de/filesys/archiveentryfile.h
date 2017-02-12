@@ -71,6 +71,8 @@ public:
     /// Returns the archive of the file (non-modifiable).
     Archive const &archive() const;
 
+    void uncache() const;
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;

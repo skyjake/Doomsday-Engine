@@ -78,7 +78,7 @@ IByteArray const *Archive::source() const
     return d->source;
 }
 
-void Archive::cache(CacheAttachment attach)
+void Archive::cache(CacheOperation operation)
 {
     if (!d->source)
     {
@@ -89,14 +89,28 @@ void Archive::cache(CacheAttachment attach)
     while (iter.hasNext())
     {
         Entry &entry = static_cast<Entry &>(iter.next());
-        if (!entry.data && !entry.dataInArchive)
+        switch (operation)
         {
-            entry.dataInArchive = new Block(*d->source, entry.offset, entry.sizeInArchive);
+        case CacheAndDetachFromSource:
+        case CacheAndRemainAttachedToSource:
+            if (!entry.data && !entry.dataInArchive)
+            {
+                entry.dataInArchive.reset(new Block(*d->source, entry.offset, entry.sizeInArchive));
+            }
+            break;
+
+        case UncacheUnmodifiedEntries:
+            if (!entry.maybeChanged)
+            {
+                entry.data.reset();
+                entry.dataInArchive.reset();
+            }
+            break;
         }
     }
-    if (attach == DetachFromSource)
+    if (operation == CacheAndDetachFromSource)
     {
-        d->source = 0;
+        d->source = nullptr;
     }
 }
 
@@ -159,21 +173,20 @@ Block const &Archive::entryBlock(Path const &path) const
 {
     DENG2_ASSERT(d->index != 0);
 
-    try
+    // The entry contents will be cached in memory.
+    if (Entry *entry = static_cast<Entry *>(d->index->tryFind(path, PathTree::MatchFull | PathTree::NoBranch)))
     {
-        // We'll need to modify the entry.
-        Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
-        if (entry.data)
+        if (entry->data)
         {
-            // Got it.
-            return *entry.data;
+            // Already got it.
+            return *entry->data;
         }
         std::unique_ptr<Block> cached(new Block);
         d->readEntry(path, *cached.get());
-        entry.data = cached.release();
-        return *entry.data;
+        entry->data.reset(cached.release());
+        return *entry->data;
     }
-    catch (PathTree::NotFoundError const &)
+    else
     {
         /// @throw NotFoundError Entry with @a path was not found.
         throw NotFoundError("Archive::entryBlock", String("'%1' not found").arg(path));
@@ -199,6 +212,29 @@ Block &Archive::entryBlock(Path const &path)
     return const_cast<Block &>(block);
 }
 
+void Archive::uncacheBlock(Path const &path) const
+{
+    if (!d->source) return; // Wouldn't be able to re-cache the data.
+
+    if (Entry *entry = static_cast<Entry *>(d->index->tryFind(path, PathTree::MatchFull | PathTree::NoBranch)))
+    {
+        if (!entry->data && !entry->dataInArchive) return;
+
+        qDebug() << "Archive:" << path << "uncached by archive" << this;
+
+        if (!entry->maybeChanged)
+        {
+            entry->data.reset();
+        }
+        entry->dataInArchive.reset();
+    }
+    else
+    {
+        /// @throw NotFoundError Entry with @a path was not found.
+        throw NotFoundError("Archive::uncacheBlock", String("'%1' not found").arg(path));
+    }
+}
+
 void Archive::add(Path const &path, IByteArray const &data)
 {
     if (path.isEmpty())
@@ -214,7 +250,7 @@ void Archive::add(Path const &path, IByteArray const &data)
     DENG2_ASSERT(d->index != 0);
 
     Entry &entry = static_cast<Entry &>(d->index->insert(path));
-    entry.data         = new Block(data);
+    entry.data.reset(new Block(data));
     entry.modifiedAt   = Time::currentHighPerformanceTime();
     entry.maybeChanged = true;
 
@@ -276,15 +312,9 @@ Archive::Entry::Entry(PathTree::NodeArgs const &args)
     , sizeInArchive(0)
     , modifiedAt(Time::invalidTime())
     , maybeChanged(false)
-    , data(0)
-    , dataInArchive(0)
 {}
 
 Archive::Entry::~Entry()
-{
-    // Entry has ownership of the cached data.
-    delete data;
-    delete dataInArchive;
-}
+{}
 
 } // namespace de
