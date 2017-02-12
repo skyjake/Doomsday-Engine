@@ -21,20 +21,22 @@
 
 namespace de {
 
-static duint16 const POINTERSET_MIN_ALLOC = 2;
-static duint16 const POINTERSET_MAX_SIZE  = 0xffff;
+static duint16          const POINTERSET_MIN_ALLOC      = 2;
+static duint16          const POINTERSET_MAX_SIZE       = 0xffff;
+static PointerSet::Flag const POINTERSET_ITERATION_MASK = 0x00ff;
 
-PointerSet::Flag const PointerSet::AllowInsertionDuringIteration = 0x1;
-PointerSet::Flag const PointerSet::BeingIterated                 = 0x2;
+PointerSet::Flag const PointerSet::AllowInsertionDuringIteration = 0x8000;
 
 PointerSet::PointerSet()
     : _pointers(nullptr)
-    , _flags   (0)
-    , _size    (0)
+    , _iterationObserver(nullptr)
+    , _flags(0)
+    , _size (0)
 {}
 
 PointerSet::PointerSet(PointerSet const &other)
-    : _flags(other._flags)
+    : _iterationObserver(other._iterationObserver)
+    , _flags(other._flags)
     , _size (other._size)
     , _range(other._range)
 {
@@ -45,15 +47,21 @@ PointerSet::PointerSet(PointerSet const &other)
 
 PointerSet::PointerSet(PointerSet &&moved)
     : _pointers(moved._pointers)
-    , _flags   (moved._flags)
-    , _size    (moved._size)
-    , _range   (moved._range)
+    , _iterationObserver(moved._iterationObserver)
+    , _flags(moved._flags)
+    , _size (moved._size)
+    , _range(moved._range)
 {
     moved._pointers = nullptr; // taken
 }
 
 PointerSet::~PointerSet()
 {
+    // PointerSet must not be deleted while someone is iterating it. If this happens,
+    // you need to use Garbage instead of deleting the object immediately (e.g.,
+    // deleting in response to a audience notification).
+    DENG2_ASSERT(!isBeingIterated());
+
     free(_pointers);
 }
 
@@ -79,20 +87,40 @@ void PointerSet::insert(Pointer ptr)
         auto const loc = locate(ptr);
         if (!loc.isEmpty()) return; // Already got it.
 
-        if (_flags & BeingIterated)
+        if (isBeingIterated())
         {
             DENG2_ASSERT(_flags & AllowInsertionDuringIteration);
+
+            if (!(_flags & AllowInsertionDuringIteration))
+            {
+                // This would likely cause the iteration to skip or repeat an item,
+                // or even segfault if a reallocation occurs. Normally we will never
+                // get here (user must ensure that the AllowInsertionDuringIteration
+                // flag is set if needed).
+                return;
+            }
+
+            // User must be aware that the allocation may change.
+            DENG2_ASSERT(_iterationObserver != nullptr);
         }
 
-        // Do we need to expand?
+        // Expand the array when the used range covers the entire array.
         if (_range.size() == _size)
         {
             DENG2_ASSERT(_size < POINTERSET_MAX_SIZE);
 
+            Pointer *oldBase = _pointers;
             duint const oldSize = _size;
+
             _size = (_size < 0x8000? (_size * 2) : POINTERSET_MAX_SIZE);
             _pointers = reinterpret_cast<Pointer *>(realloc(_pointers, sizeof(Pointer) * _size));
             std::memset(_pointers + oldSize, 0, sizeof(Pointer) * (_size - oldSize));
+
+            // If someone is interested, let them know about the relocation.
+            if (_iterationObserver && _pointers != oldBase)
+            {
+                _iterationObserver->pointerSetIteratorsWereInvalidated(oldBase, _pointers);
+            }
         }
 
         // Addition to the ends with room to spare?
@@ -105,12 +133,16 @@ void PointerSet::insert(Pointer ptr)
         {
             _pointers[_range.end++] = ptr;
         }
-        else // Need to move first to make room.
+        else
         {
+            // We need to move existing items first to make room for the insertion.
+
+            // Figure out the smallest portion of the range that needs to move.
             duint16 const middle = (_range.start + _range.end + 1)/2;
             if ((pos > middle && _range.end < _size) || // Less stuff to move toward the end.
                 _range.start == 0)
             {
+                // Move the second half of the range forward, extending it by one.
                 DENG2_ASSERT(_range.end < _size);
                 std::memmove(_pointers + pos + 1,
                              _pointers + pos,
@@ -120,11 +152,14 @@ void PointerSet::insert(Pointer ptr)
             }
             else
             {
+                // Have to move the first half of the range backward.
+                DENG2_ASSERT(_range.start > 0);
                 std::memmove(_pointers + _range.start - 1,
                              _pointers + _range.start,
-                             sizeof(Pointer) * (pos - _range.start + 1));
-                _range.start--;
+                             sizeof(Pointer) * (pos < _range.end? (pos - _range.start + 1) :
+                                                                  (_range.size())));
                 _pointers[pos - 1] = ptr;
+                _range.start--;
             }
         }
     }
@@ -133,6 +168,7 @@ void PointerSet::insert(Pointer ptr)
 void PointerSet::remove(Pointer ptr)
 {
     auto const loc = locate(ptr);
+
     if (!loc.isEmpty())
     {
         DENG2_ASSERT(!_range.isEmpty());
@@ -142,8 +178,7 @@ void PointerSet::remove(Pointer ptr)
         {
             _pointers[_range.start++] = nullptr;
         }
-        else if (loc.start == _range.end - 1 &&
-                 !(_flags & BeingIterated))
+        else if (loc.start == _range.end - 1 && !isBeingIterated())
         {
             _pointers[--_range.end] = nullptr;
         }
@@ -170,8 +205,24 @@ void PointerSet::clear()
     if (_pointers)
     {
         std::memset(_pointers, 0, sizeof(Pointer) * _size);
-        _range = Rangeui16();
+        _range = Rangeui16(_range.end, _range.end);
     }
+}
+
+PointerSet &PointerSet::operator = (PointerSet const &other)
+{
+    auto const bytes = sizeof(Pointer) * other._size;
+
+    if (_size != other._size)
+    {
+        _size = other._size;
+        _pointers = reinterpret_cast<Pointer *>(realloc(_pointers, bytes));
+    }
+    std::memcpy(_pointers, other._pointers, bytes);
+    _flags = other._flags;
+    _range = other._range;
+    _iterationObserver = other._iterationObserver;
+    return *this;
 }
 
 PointerSet &PointerSet::operator = (PointerSet &&moved)
@@ -183,7 +234,36 @@ PointerSet &PointerSet::operator = (PointerSet &&moved)
     _flags = moved._flags;
     _size  = moved._size;
     _range = moved._range;
+
+    _iterationObserver = moved._iterationObserver;
     return *this;
+}
+
+void PointerSet::setBeingIterated(bool yes) const
+{
+    duint16 count = _flags & POINTERSET_ITERATION_MASK;
+    _flags ^= count;
+    if (yes)
+    {
+        DENG2_ASSERT(count != POINTERSET_ITERATION_MASK);
+        ++count;
+    }
+    else
+    {
+        DENG2_ASSERT(count != 0);
+        --count;
+    }
+    _flags |= count & POINTERSET_ITERATION_MASK;
+}
+
+bool PointerSet::isBeingIterated() const
+{
+    return (_flags & POINTERSET_ITERATION_MASK) != 0;
+}
+
+void PointerSet::setIterationObserver(IIterationObserver *observer) const
+{
+    _iterationObserver = observer;
 }
 
 Rangeui16 PointerSet::locate(Pointer ptr) const

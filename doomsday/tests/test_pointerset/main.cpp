@@ -28,7 +28,7 @@ using namespace de;
 void printSet(PointerSet const &pset)
 {
     qDebug() << "[ Size:" << pset.size() << "/" << pset.allocatedSize() << "range:"
-             << pset.usedRange().asText();
+             << pset.usedRange().asText() << "flags:" << QString::number(pset.flags(), 16);
     for (auto const p : pset)
     {
         qDebug() << "   " << QString("%1").arg(reinterpret_cast<dintptr>(p), 16, 16, QChar('0')).toLatin1().constData();
@@ -45,6 +45,9 @@ int main(int, char **)
         PointerSet::Pointer c = reinterpret_cast<PointerSet::Pointer>(0x3000);
         PointerSet::Pointer d = reinterpret_cast<PointerSet::Pointer>(0x4000);
         PointerSet::Pointer e = reinterpret_cast<PointerSet::Pointer>(0x5000);
+//        PointerSet::Pointer f = reinterpret_cast<PointerSet::Pointer>(0x6000);
+//        PointerSet::Pointer g = reinterpret_cast<PointerSet::Pointer>(0x7000);
+//        PointerSet::Pointer h = reinterpret_cast<PointerSet::Pointer>(0x8000);
 
         PointerSet pset;
         qDebug() << "Empty PointerSet:";
@@ -65,6 +68,11 @@ int main(int, char **)
         pset.remove(a);
         qDebug() << "Removed the pointer:";
         printSet(pset);
+        
+        qDebug() << "Adding again:";
+        pset.insert(b);
+        pset.insert(c);
+        printSet(pset);
 
         qDebug() << "Adding everything:";
         pset.insert(d);
@@ -84,11 +92,11 @@ int main(int, char **)
         printSet(pset);
 
         qDebug() << "Adding everything again:";
+        pset.insert(e);
         pset.insert(d);
-        pset.insert(a);
         pset.insert(c);
         pset.insert(b);
-        pset.insert(e);
+        pset.insert(a);
         printSet(pset);
 
         qDebug() << "Removing everything:";
@@ -113,7 +121,8 @@ int main(int, char **)
         pset.insert(c);
         pset.insert(b);
         pset.insert(a);
-        pset.setFlags(PointerSet::BeingIterated);
+        pset.setBeingIterated(true);
+        printSet(pset);
         for (auto i : pset)
         {
             if (i == c)
@@ -133,7 +142,11 @@ int main(int, char **)
             }
             pset.remove(d);
         }
-        pset.setFlags(PointerSet::BeingIterated, false);
+        pset.setBeingIterated(false);
+        printSet(pset);
+
+        qDebug() << "Assignment:";
+        pset = PointerSet();
         printSet(pset);
     }
     catch (Error const &err)
