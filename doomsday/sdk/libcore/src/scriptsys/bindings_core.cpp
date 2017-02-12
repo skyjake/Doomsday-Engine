@@ -121,13 +121,6 @@ static Value *Function_File_ModifiedAt(Context &ctx, Function::ArgumentValues co
     return new TimeValue(fileInstance(ctx).status().modifiedAt);
 }
 
-static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues const &)
-{
-    Folder const &folder = fileInstance(ctx).as<Folder>();
-    DENG2_GUARD(folder);
-    return new NumberValue(folder.contents().size());
-}
-
 static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
 {
     Path const relativePath = args.at(0)->asText();
@@ -152,6 +145,23 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
     Block raw;
     fileInstance(ctx) >> raw;
     return new TextValue(String::fromUtf8(raw));
+}
+
+static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const &)
+{
+    Folder const &folder = fileInstance(ctx).as<Folder>();
+    std::unique_ptr<ArrayValue> array(new ArrayValue);
+    foreach (String name, folder.contents().keys())
+    {
+        *array << new TextValue(name);
+    }
+    return array.release();
+}
+
+static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues const &)
+{
+    Folder const &folder = fileInstance(ctx).as<Folder>();
+    return new NumberValue(folder.contents().size());
 }
 
 //---------------------------------------------------------------------------------------
@@ -249,6 +259,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
     {
         Record &folder = coreModule.addSubrecord("Folder").setFlags(Record::WontBeDeleted);
         binder.init(folder)
+                << DENG2_FUNC_NOARG(Folder_List, "list")
                 << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
     }
 
