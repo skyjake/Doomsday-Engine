@@ -21,6 +21,7 @@
 
 #include <de/AnimationRule>
 #include <de/Drawable>
+#include <de/Garbage>
 #include <de/LogBuffer>
 #include <de/MouseEvent>
 #include <de/math.h>
@@ -45,7 +46,6 @@ DENG_GUI_PIMPL(PanelWidget)
     GuiWidget *content = nullptr;
     AnimationRule *openingRule;
     QTimer dismissTimer;
-
     std::unique_ptr<AssetGroup> pendingShow;
 
     // GL objects.
@@ -192,7 +192,10 @@ DENG_GUI_PIMPL(PanelWidget)
             LOGDEV_XVERBOSE("All assets ready, resuming animation", "");
 
             openingRule->resume();
-            pendingShow.reset();
+
+            // We can't delete the AssetGroup right now because we are in the middle
+            // of an audience notification from it.
+            trash(pendingShow.release());
         }
     }
 
