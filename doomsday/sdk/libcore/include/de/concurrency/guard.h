@@ -77,56 +77,39 @@ class ReadWriteLockable;
 class DENG2_PUBLIC Guard
 {
 public:
-    enum LockMode
-    {
-        Reading,
-        Writing
-    };
+    enum LockMode { Reading, Writing };
 
 public:
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const &target)
-        : _target(&target), _rwTarget(0)
-    {
+    inline Guard(Lockable const &target) : _target(&target), _rwTarget(0) {
         _target->lock();
     }
-    
+
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const *target)
-        : _target(target), _rwTarget(0)
-    {
+    inline Guard(Lockable const *target) : _target(target), _rwTarget(0) {
         DENG2_ASSERT(target != 0);
         _target->lock();
     }
 
-    inline Guard(ReadWriteLockable const &target, LockMode mode)
-        : _target(0), _rwTarget(&target)
-    {
-        if (mode == Reading)
-        {
+    inline Guard(ReadWriteLockable const &target, LockMode mode) : _target(0), _rwTarget(&target) {
+        if (mode == Reading) {
             _rwTarget->lockForRead();
         }
-        else
-        {
+        else {
             _rwTarget->lockForWrite();
         }
     }
-    
-    inline Guard(ReadWriteLockable const *target, LockMode mode)
-        : _target(0), _rwTarget(target)
-    {
+
+    inline Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTarget(target) {
         DENG2_ASSERT(_rwTarget != 0);
-        
-        if (mode == Reading)
-        {
+        if (mode == Reading) {
             _rwTarget->lockForRead();
         }
-        else
-        {
+        else {
             _rwTarget->lockForWrite();
         }
     }
@@ -134,16 +117,9 @@ public:
     /**
      * The target object is unlocked.
      */
-    inline ~Guard()
-    {
-        if (_target)
-        {
-            _target->unlock();
-        }
-        if (_rwTarget)
-        {
-            _rwTarget->unlock();
-        }
+    inline ~Guard() {
+        if (_target)   _target->unlock();
+        if (_rwTarget) _rwTarget->unlock();
     }
 
 private:

@@ -23,11 +23,9 @@
 
 #include "../libcore.h"
 
-#include <QMutex>
+#include <mutex>
 
 namespace de {
-    
-//#define DENG2_LOCKABLE_LOCK_COUNT
 
 /**
  * A mutex that can be used to synchronize access to a resource.  All classes
@@ -40,27 +38,18 @@ namespace de {
 class DENG2_PUBLIC Lockable
 {
 public:
-    Lockable();
-    virtual ~Lockable();
-
     /// Acquire the lock.  Blocks until the operation succeeds.
-    void lock() const;
+    inline void lock() const {
+        _mutex.lock();
+    }
 
     /// Release the lock.
-    void unlock() const;
+    inline void unlock() const {
+        _mutex.unlock();
+    }
 
-#ifdef DENG2_LOCKABLE_LOCK_COUNT
-    /// Returns true, if the lock is currently locked.
-    bool isLocked() const;
-#endif
-
-public:
-    mutable QMutex _mutex;
-
-#ifdef DENG2_LOCKABLE_LOCK_COUNT
-    mutable int _lockCount;
-    mutable QMutex _countMutex;
-#endif
+private:
+    mutable std::recursive_mutex _mutex;
 };
 
 template <typename Type>
@@ -68,15 +57,15 @@ struct LockableT : public Lockable
 {
     typedef Type ValueType;
     Type value;
-    
+
     LockableT() {}
     LockableT(Type const &initial) : value(initial) {}
     LockableT(Type &&initial) : value(initial) {}
-    
+
     operator Type &() { return value; }
     operator Type const &() const { return value; }
 };
-    
+
 } // namespace de
 
 #endif // LIBDENG2_LOCKABLE_H
