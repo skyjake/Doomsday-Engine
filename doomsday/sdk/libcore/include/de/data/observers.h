@@ -402,14 +402,6 @@ public:
         return _members.contains(const_cast<Type *>(&observer));
     }
 
-    const_iterator begin() const {
-        return _members.constBegin();
-    }
-
-    const_iterator end() const {
-        return _members.constEnd();
-    }
-
     /**
      * Allows or denies addition of audience members while the audience is being
      * iterated. By default, addition is not allowed. If additions are allowed, only one
