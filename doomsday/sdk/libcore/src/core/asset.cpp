@@ -47,7 +47,7 @@ Asset::~Asset()
 
 void Asset::setState(State s)
 {
-    State old = d->state;
+    State const old = d->state;
     d->state = s;
     if (old != d->state)
     {
@@ -111,7 +111,9 @@ AssetGroup::AssetGroup() : d(new Impl)
 
 AssetGroup::~AssetGroup()
 {
-    // We are about to be deleted.
+    // We are about to be deleted; no need to notify everyone that the AssetGroup
+    // becomes ready after all its members are removed. The deletion will be
+    // notified anyway immediately afterwards.
     audienceForStateChange().clear();
 
     clear();
@@ -178,6 +180,7 @@ void AssetGroup::assetBeingDeleted(Asset &asset)
 
 void AssetGroup::assetStateChanged(Asset &)
 {
+    DENG2_ASSERT(!d.isNull());
     d->update(*this);
 }
 

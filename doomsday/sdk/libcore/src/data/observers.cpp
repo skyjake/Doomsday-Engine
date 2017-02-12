@@ -28,8 +28,8 @@ ObserverBase::ObserverBase()
 
 ObserverBase::~ObserverBase()
 {
-    DENG2_GUARD(_lock);
-    for (IAudience *observers : _memberOf)
+    DENG2_GUARD(_memberOf);
+    for (IAudience *observers : _memberOf.value)
     {
         observers->removeMember(this);
     }
@@ -37,14 +37,14 @@ ObserverBase::~ObserverBase()
 
 void ObserverBase::addMemberOf(IAudience &observers)
 {
-    DENG2_GUARD(_lock);
-    _memberOf.insert(&observers);
+    DENG2_GUARD(_memberOf);
+    _memberOf.value.insert(&observers);
 }
 
 void ObserverBase::removeMemberOf(IAudience &observers)
 {
-    DENG2_GUARD(_lock);
-    _memberOf.remove(&observers);
+    DENG2_GUARD(_memberOf);
+    _memberOf.value.remove(&observers);
 }
 
 } // namespace de

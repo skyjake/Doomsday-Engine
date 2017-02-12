@@ -23,6 +23,7 @@
 #include "../libcore.h"
 #include "../Lockable"
 #include "../Guard"
+#include "../PointerSet"
 
 #include <QSet>
 
@@ -169,8 +170,7 @@ public:
     void removeMemberOf(IAudience &observers);
 
 private:
-    Lockable _lock;
-    QSet<IAudience *> _memberOf;
+    LockableT<PointerSetT<IAudience>> _memberOf;
 };
 
 /**
@@ -228,30 +228,45 @@ template <typename Type>
 class Observers : public Lockable, public IAudience
 {
 public:
-    typedef QSet<Type *> Members; // note: unordered, hash-based
-    typedef typename Members::iterator iterator;
+    typedef PointerSetT<Type> Members; // note: ordered, array-based
     typedef typename Members::const_iterator const_iterator;
-    typedef typename Members::size_type size_type;
+    typedef int size_type;
 
     /**
-     * Iteration utility for observers. This (or @c foreach) should be used when
+     * Iteration utility for observers. This should be used when
      * notifying observers, because it is safe against the observer removing
      * itself from the observer set, or the set itself being destroyed.
      */
-    class Loop {
+    class Loop : public PointerSet::IIterationObserver {
     public:
-        Loop(Observers const &observers) {
-            DENG2_GUARD(observers);
-            _observers = observers._members;
-            _next = _observers.constBegin();
+        Loop(Observers const &observers) : _audience(&observers)
+                                         , _prevObserver(nullptr) {
+            DENG2_GUARD(_audience);
+            if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
+                _prevObserver = members().iterationObserver();
+                members().setIterationObserver(this);
+            }
+            members().setBeingIterated(true);
+            _next = members().begin();
             next();
         }
+        virtual ~Loop() {
+            DENG2_GUARD(_audience);
+            members().setBeingIterated(false);
+            if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
+                members().setIterationObserver(_prevObserver);
+            }
+        }
         bool done() const {
-            return _current == _observers.constEnd();
+            return _current >= members().end();
         }
         void next() {
             _current = _next;
-            if (_next != _observers.constEnd()) {
+            if (_current < members().begin()) {
+                _current = members().begin();
+                if (_next < _current) _next = _current;
+            }
+            if (_next < members().end()) {
                 ++_next;
             }
         }
@@ -265,8 +280,22 @@ public:
             next();
             return *this;
         }
+        void pointerSetIteratorsWereInvalidated(PointerSet::Pointer const *oldBase,
+                                                PointerSet::Pointer const *newBase) override {
+            if (_prevObserver) {
+                _prevObserver->pointerSetIteratorsWereInvalidated(oldBase, newBase);
+            }
+            _current = reinterpret_cast<const_iterator>(newBase) +
+                       (_current - reinterpret_cast<const_iterator>(oldBase));
+            _next    = reinterpret_cast<const_iterator>(newBase) +
+                       (_next    - reinterpret_cast<const_iterator>(oldBase));
+        }
     private:
-        Members _observers;
+        inline Members const &members() const {
+            return _audience->_members;
+        }
+        Observers const *_audience;
+        PointerSet::IIterationObserver *_prevObserver;
         const_iterator _current;
         const_iterator _next;
     };
@@ -359,7 +388,7 @@ public:
         return _members.size();
     }
 
-    bool isEmpty() const {
+    inline bool isEmpty() const {
         return size() == 0;
     }
 
@@ -373,14 +402,6 @@ public:
         return _members.contains(const_cast<Type *>(&observer));
     }
 
-    iterator begin() {
-        return _members.begin();
-    }
-
-    iterator end() {
-        return _members.end();
-    }
-
     const_iterator begin() const {
         return _members.constBegin();
     }
@@ -389,13 +410,25 @@ public:
         return _members.constEnd();
     }
 
+    /**
+     * Allows or denies addition of audience members while the audience is being
+     * iterated. By default, addition is not allowed. If additions are allowed, only one
+     * Loop can be iterating the audience at a time.
+     *
+     * @param yes  @c true to allow additions, @c false to deny.
+     */
+    void setAdditionAllowedDuringIteration(bool yes) {
+        DENG2_GUARD(this);
+        _members.setFlags(Members::AllowInsertionDuringIteration, yes);
+    }
+
     // Implements IAudience.
     void addMember   (ObserverBase *member) { _add   (static_cast<Type *>(member)); }
     void removeMember(ObserverBase *member) { _remove(static_cast<Type *>(member)); }
 
 private:
     void _disassociateAllMembers() {
-        foreach (Type *observer, _members) {
+        for (Type *observer : _members) {
             observer->removeMemberOf(*this);
         }
     }

@@ -42,6 +42,8 @@ DENG2_PIMPL(Loop)
         DENG2_ASSERT(!loopSingleton);
         loopSingleton = i;
 
+        audienceForIteration.setAdditionAllowedDuringIteration(true);
+
         timer = new QTimer(thisPublic);
         QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
     }
@@ -130,7 +132,7 @@ LoopCallback::~LoopCallback()
 bool LoopCallback::isEmpty() const
 {
     DENG2_GUARD(this);
-    
+
     return _funcs.isEmpty();
 }
 

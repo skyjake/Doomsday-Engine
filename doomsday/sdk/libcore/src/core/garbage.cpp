@@ -46,7 +46,7 @@ struct Garbage : public Lockable
         return i != allocs.end();
     }
 
-    void recycle(GarbageDestructor condition = 0)
+    void recycle(GarbageDestructor condition = nullptr)
     {
         DENG2_GUARD(this);
 
