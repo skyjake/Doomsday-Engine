@@ -1032,7 +1032,7 @@ static void initializeWithWindowReady()
     // Enter busy mode until startup complete.
     //Con_InitProgress(200);
 #endif
-    
+
     BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
@@ -1060,9 +1060,9 @@ static void initializeWithWindowReady()
 //#ifdef __CLIENT__
 //    Con_SetProgress(200);
 //#endif
-    
+
     App_Games().checkReadiness();
-    
+
     // Attempt automatic game selection.
     if (!CommandLine_Exists("-noautoselect") || isDedicated)
     {
@@ -1314,11 +1314,11 @@ static dint DD_StartupWorker(void * /*context*/)
     //
     // Add required engine resource files.
     //
-    
+
     // Make sure all files have been found so we can determine which games are playable.
     Folder::waitForPopulation();
     DoomsdayApp::bundles().waitForEverythingIdentified();
-    
+
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
@@ -1379,6 +1379,10 @@ static dint DD_StartupWorker(void * /*context*/)
     // Any initialization hooks?
     DoomsdayApp::plugins().callAllHooks(HOOK_INIT);
     //Con_SetProgress(200);
+
+    // Release all cached uncompressed entries. If the contents of the compressed
+    // files are needed, they will be decompressed and cached again.
+    DoomsdayApp::app().uncacheFiles();
 
 #ifdef WIN32
     // This thread has finished using COM.

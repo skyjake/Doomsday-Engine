@@ -37,6 +37,7 @@
 #include "doomsday/GameStateFolder"
 
 #include <de/App>
+#include <de/ArchiveFeed>
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/DictionaryValue>
@@ -733,10 +734,19 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
     world::Materials::get().clearAllMaterialSchemes();
 }
 
+void DoomsdayApp::uncacheFiles()
+{
+    ArchiveFeed::uncacheAllEntries(StringList({ DENG2_TYPE_NAME(Folder),
+                                                DENG2_TYPE_NAME(ArchiveFolder),
+                                                DENG2_TYPE_NAME(DataFolder),
+                                                DENG2_TYPE_NAME(GameStateFolder) }));
+}
+
 void DoomsdayApp::reset()
 {
     // Reset the world back to it's initial state (unload the map, reset players, etc...).
     World::get().reset();
+    uncacheFiles();
 
     Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 

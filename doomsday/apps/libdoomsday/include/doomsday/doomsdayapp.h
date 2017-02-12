@@ -98,6 +98,12 @@ public:
      */
     QList<de::File *> filesFromCommandLine() const;
 
+    /**
+     * Release all cached uncompressed entries. If the contents of the compressed
+     * files are needed, they will be decompressed and cached again.
+     */
+    void uncacheFiles();
+
     enum Behavior
     {
         AllowReload = 0x1,
