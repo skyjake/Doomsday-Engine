@@ -322,6 +322,11 @@ Reader &Reader::operator >> (String &text)
     return *this;
 }
 
+Reader &Reader::operator >> (Block &block)
+{
+    return *this >> static_cast<IReadable &>(block);
+}
+
 Reader &Reader::operator >> (IByteArray &byteArray)
 {
     duint size = 0;
@@ -362,17 +367,6 @@ Reader &Reader::readBytesFixedSize(IByteArray &destination)
 {
     FixedByteArray dest(destination);
     return *this >> dest;
-}
-
-Reader &Reader::operator >> (Block &block)
-{
-    duint size = 0;
-    *this >> size;
-
-    block.resize(size);
-    d->readBytes(block.data(), size);
-
-    return *this;
 }
 
 Reader &Reader::operator >> (IReadable &readable)

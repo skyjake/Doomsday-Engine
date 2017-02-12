@@ -143,6 +143,8 @@ public:
     /// Reads a string from the source buffer.
     Reader &operator >> (String &text);
 
+    Reader &operator >> (Block &block);
+
     /// Reads a sequence bytes from the source buffer.
     Reader &operator >> (IByteArray &byteArray);
 
@@ -178,9 +180,6 @@ public:
      * @return Reference to the Reader.
      */
     Reader &readBytesFixedSize(IByteArray &destination);
-
-    /// Reads a Block from the source buffer.
-    Reader &operator >> (Block &block);
 
     /// Reads a serializable object from the source buffer.
     Reader &operator >> (IReadable &readable);

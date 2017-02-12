@@ -109,7 +109,7 @@ public:
         if (checkType(from, packetTypeIdentifier))
         {
             std::unique_ptr<PacketType> p(new PacketType);
-            from >> *static_cast<IReadable *>(p.get());
+            *p << from;
             return p.release();
         }
         return 0;

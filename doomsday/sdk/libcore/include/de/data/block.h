@@ -22,11 +22,13 @@
 
 #include "../IByteArray"
 #include "../IBlock"
+#include "../ISerializable"
 
 #include <QByteArray>
 
 namespace de {
 
+class String;
 class IIStream;
 
 /**
@@ -39,7 +41,8 @@ class IIStream;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Block : public QByteArray, public IByteArray, public IBlock
+class DENG2_PUBLIC Block : public QByteArray, public IByteArray, public IBlock,
+                           public ISerializable
 {
 public:
     Block(Size initialSize = 0);
@@ -89,6 +92,20 @@ public:
     void resize(Size size);
     Byte const *data() const;
 
+    // Implements ISerializable.
+    /**
+     * Writes @a block into the destination buffer. Writes the size of the
+     * block in addition to its contents, so a Reader will not need to know
+     * beforehand how large the block is.
+     *
+     * @param block  Block to write.
+     *
+     * @return  Reference to the Writer.
+     */
+    void operator >> (Writer &to) const;
+
+    void operator << (Reader &from);
+
     Byte *data();
     Byte const *dataConst() const;
 
@@ -111,6 +128,8 @@ public:
 
     Block compressed() const;
     Block decompressed() const;
+    Block md5Hash() const;
+    String asHexadecimalText() const;
 
 public:
     static Block join(QList<Block> const &blocks, Block const &sep = Block());

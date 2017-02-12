@@ -192,6 +192,11 @@ Writer &Writer::operator << (String const &text)
     return *this;
 }
 
+Writer &Writer::operator << (Block const &block)
+{
+    return *this << static_cast<IWritable const &>(block);
+}
+
 Writer &Writer::writeText(String const &text)
 {
     Block const utf8 = text.toUtf8();
@@ -227,16 +232,6 @@ Writer &Writer::writeBytes(dsize count, IByteArray const &array)
 Writer &Writer::writeBytes(IByteArray const &array)
 {
     return *this << FixedByteArray(array);
-}
-
-Writer &Writer::operator << (Block const &block)
-{
-    // First write the length of the block.
-    duint32 size = block.size();
-    *this << size;
-
-    d->write(block.data(), size);
-    return *this;
 }
 
 Writer &Writer::operator << (IWritable const &writable)

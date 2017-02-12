@@ -149,6 +149,8 @@ public:
      */
     Writer &operator << (String const &text);
 
+    Writer &operator << (Block const &block);
+
     /**
      * Writes a string to the destination buffer.
      *
@@ -202,17 +204,6 @@ public:
      * @return Reference to the Writer.
      */
     Writer &writeBytes(IByteArray const &array);
-
-    /**
-     * Writes @a block into the destination buffer. Writes the size of the
-     * block in addition to its contents, so a Reader will not need to know
-     * beforehand how large the block is.
-     *
-     * @param block  Block to write.
-     *
-     * @return  Reference to the Writer.
-     */
-    Writer &operator << (Block const &block);
 
     /// Writes a writable object into the destination buffer.
     Writer &operator << (IWritable const &writable);

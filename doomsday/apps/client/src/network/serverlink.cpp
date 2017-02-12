@@ -682,18 +682,20 @@ void ServerLink::handleIncomingPackets()
         QScopedPointer<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
         if (packet.isNull()) break;
 
+        Block const &packetData = packet->block();
+
         switch (d->state)
         {
         case WaitingForInfoResponse:
-            if (!d->handleInfoResponse(*packet)) return;
+            if (!d->handleInfoResponse(packetData)) return;
             break;
 
         case WaitingForJoinResponse:
-            if (!d->handleJoinResponse(*packet)) return;
+            if (!d->handleJoinResponse(packetData)) return;
             break;
 
         case WaitingForPong:
-            if (packet->size() == 4 && *packet == "Pong" &&
+            if (packetData.size() == 4 && packetData == "Pong" &&
                 d->pingCounter-- > 0)
             {
                 d->pings.append(TimeDelta::fromMilliSeconds(d->pingTimer.elapsed()));
@@ -728,9 +730,9 @@ void ServerLink::handleIncomingPackets()
             netmessage_t *msg = reinterpret_cast<netmessage_t *>(M_Calloc(sizeof(netmessage_t)));
 
             msg->sender = 0; // the server
-            msg->data = new byte[packet->size()];
-            memcpy(msg->data, packet->data(), packet->size());
-            msg->size = packet->size();
+            msg->data = new byte[packetData.size()];
+            memcpy(msg->data, packetData.data(), packetData.size());
+            msg->size = packetData.size();
             msg->handle = msg->data; // needs delete[]
 
             // The message queue will handle the message from now on.

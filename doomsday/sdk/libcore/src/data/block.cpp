@@ -20,6 +20,7 @@
 #include "de/Block"
 #include "de/File"
 
+#include <QCryptographicHash>
 #include <cstring>
 
 namespace de {
@@ -149,6 +150,23 @@ Block::Byte const *Block::data() const
     return reinterpret_cast<Byte const *>(QByteArray::data());
 }
 
+void Block::operator >> (Writer &to) const
+{
+    // First write the length of the block.
+    to << duint32(size());
+
+    to.writeBytes(size(), *this);
+}
+
+void Block::operator << (Reader &from)
+{
+    duint32 size = 0;
+    from >> size;
+
+    resize(size);
+    from.readBytes(size, *this);
+}
+
 Block &Block::operator += (Block const &other)
 {
     QByteArray::append(other);
@@ -183,6 +201,32 @@ Block Block::compressed() const
 Block Block::decompressed() const
 {
     return qUncompress(*this);
+}
+
+Block Block::md5Hash() const
+{
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(*this);
+    return hash.result();
+}
+
+static char asciiHexNumber(char n)
+{
+    if (n < 0 || n > 15) return ' ';
+    return n <= 9? ('0' + n) : ('a' + n - 10);
+}
+
+String Block::asHexadecimalText() const
+{
+    int const count = QByteArray::size();
+    String hex(count * 2, QChar('0'));
+    for (int i = 0; i < count; i++)
+    {
+        auto const ch = duint8(at(i));
+        hex[i*2]     = QChar(asciiHexNumber(ch >> 4));
+        hex[i*2 + 1] = QChar(asciiHexNumber(ch & 0xf));
+    }
+    return hex;
 }
 
 Block Block::join(QList<Block> const &blocks, Block const &sep) // static
