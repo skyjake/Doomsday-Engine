@@ -220,8 +220,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void appStartupCompleted()
     {
-        blanker->start(0.75);
-        //blanker->guiDeleteLater();
+        blanker->start(0.3);
     }
 
     void gameReadinessUpdated()

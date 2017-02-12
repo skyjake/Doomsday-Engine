@@ -61,7 +61,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     ~Impl()
     {
         root.reset();
-        
+
         DENG2_GUARD(typeIndex);
         qDeleteAll(typeIndex.value.values());
         typeIndex.value.clear();
